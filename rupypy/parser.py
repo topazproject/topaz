@@ -18,8 +18,25 @@ class Transformer(object):
 
     def visit_block(self, node):
         stmts = []
-        stmts.append(self.visit_stmt(node.children[0].children[0]))
+        if "star" in node.symbol:
+            starnode = node
+            start_idx = 1
+            while True:
+                stmt = self.visit_line(starnode.children[0])
+                if stmt is not None:
+                    stmts.append(stmt)
+                if len(starnode.children) == 1:
+                    break
+                starnode = starnode.children[1]
+        else:
+            start_idx = 0
+        stmts.append(self.visit_stmt(node.children[start_idx].children[0]))
         return Block(stmts)
+
+    def visit_line(self, node):
+        if len(node.children) == 1:
+            return None
+        return self.visit_stmt(node.children[0].children[0])
 
     def visit_stmt(self, node):
         if node.children[0].symbol == "expr":

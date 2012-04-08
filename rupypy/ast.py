@@ -40,4 +40,4 @@ class Variable(Node):
 
 class ConstantInt(Node):
     def __init__(self, intvalue):
-        self.invalue = intvalue
+        self.intvalue = intvalue
