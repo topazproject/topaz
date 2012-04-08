@@ -14,12 +14,12 @@ _parse = make_parse_function(regexs, rules, eof=True)
 
 class Transformer(object):
     def visit_main(self, node):
-        return self.visit_block(node.children[0])
+        return self.visit_block(node)
 
     def visit_block(self, node):
         stmts = []
-        if "star" in node.symbol:
-            starnode = node
+        if "star" in node.children[0].symbol:
+            starnode = node.children[0]
             start_idx = 1
             while True:
                 stmt = self.visit_line(starnode.children[0])
@@ -28,9 +28,11 @@ class Transformer(object):
                 if len(starnode.children) == 1:
                     break
                 starnode = starnode.children[1]
+                start_idx = 2
         else:
             start_idx = 0
-        stmts.append(self.visit_stmt(node.children[start_idx].children[0]))
+        if start_idx < len(node.children):
+            stmts.append(self.visit_stmt(node.children[start_idx].children[0].children[0]))
         return Block(stmts)
 
     def visit_line(self, node):
