@@ -14,6 +14,12 @@ class Statement(Node):
     def __init__(self, expr):
         self.expr = expr
 
+class BinOp(Node):
+    def __init__(self, op, left, right):
+        self.op = op
+        self.left = left
+        self.right = right
+
 class ConstantInt(Node):
     def __init__(self, intvalue):
         self.invalue = intvalue

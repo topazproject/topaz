@@ -2,7 +2,7 @@ import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
-from rupypy.ast import Block, Statement, ConstantInt
+from rupypy.ast import Block, Statement, BinOp, ConstantInt
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -35,13 +35,26 @@ class Transformer(object):
         symname = node.symbol
         if symname == "arg":
             return self.visit_arg(node.children[0])
-        raise NotImplementedError
+        raise NotImplementedError(symname)
 
     def visit_arg(self, node):
         symname = node.symbol
-        if symname == "primary":
+        if symname in ["additive"]:
+            return self.visit_subexpr(node)
+        elif symname == "primary":
             return self.visit_primary(node.children[0])
-        raise NotImplementedError
+        raise NotImplementedError(symname)
+
+    def visit_subexpr(self, node):
+        if len(node.children) == 1:
+            return self.visit_arg(node.children[0])
+        return BinOp(
+            node.children[1].additional_info,
+            self.visit_arg(node.children[0]),
+            self.visit_arg(node.children[2]),
+        )
+        import py
+        py.test.set_trace()
 
     def visit_primary(self, node):
         symname = node.symbol
