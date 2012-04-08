@@ -32,6 +32,12 @@ class TestParser(object):
             Statement(ConstantInt(2)),
         ])
 
+    def test_multiple_statements_semicolon(self, space):
+        assert space.parse("1; 2") == Block([
+            Statement(ConstantInt(1)),
+            Statement(ConstantInt(2)),
+        ])
+
     def test_send(self, space):
         assert space.parse("puts 2") == Block([Statement(Send(Self(), "puts", [ConstantInt(2)]))])
         assert space.parse("puts 1, 2") == Block([Statement(Send(Self(), "puts", [ConstantInt(1), ConstantInt(2)]))])
