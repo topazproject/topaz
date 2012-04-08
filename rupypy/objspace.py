@@ -6,4 +6,4 @@ class ObjectSpace(object):
         self.transformer = Transformer()
 
     def parse(self, source):
-        return self.transformer.visit_main(_parse(source))
+        return self.transformer.visit_main(_parse(source + "\n"))

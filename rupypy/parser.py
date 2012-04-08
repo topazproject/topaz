@@ -2,7 +2,8 @@ import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
-from rupypy.ast import Block, Statement, BinOp, Send, Self, ConstantInt
+from rupypy.ast import (Block, Statement, Assignment, BinOp, Send, Self,
+    Variable, ConstantInt)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -35,7 +36,16 @@ class Transformer(object):
         symname = node.symbol
         if symname == "arg":
             return self.visit_arg(node.children[0])
+        elif symname == "assignment":
+            return self.visit_assignment(node)
         raise NotImplementedError(symname)
+
+    def visit_assignment(self, node):
+        return Assignment(
+            Variable(node.children[0].children[0].additional_info),
+            self.visit_expr(node.children[2].children[0]),
+        )
+
 
     def visit_arg(self, node):
         symname = node.symbol
@@ -57,15 +67,17 @@ class Transformer(object):
         py.test.set_trace()
 
     def visit_primary(self, node):
-        symname = node.symbol
         if len(node.children) == 1:
-            if node.children[0].symbol == "literal":
+            symname = node.children[0].symbol
+            if symname == "literal":
                 return self.visit_literal(node.children[0])
-            elif node.children[0].symbol == "send":
+            elif symname == "send":
                 return self.visit_send(node.children[0])
+            elif symname == "IDENTIFIER":
+                return Variable(node.children[0].additional_info)
         elif node.children[0].additional_info == "(":
             return self.visit_expr(node.children[1])
-        raise NotImplementedError(symname)
+        raise NotImplementedError(node.symbol)
 
     def visit_send(self, node):
         method = node.children[0].children[0].additional_info

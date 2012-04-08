@@ -14,6 +14,11 @@ class Statement(Node):
     def __init__(self, expr):
         self.expr = expr
 
+class Assignment(Node):
+    def __init__(self, target, value):
+        self.target = target
+        self.value = value
+
 class BinOp(Node):
     def __init__(self, op, left, right):
         self.op = op
@@ -28,6 +33,10 @@ class Send(Node):
 
 class Self(Node):
     pass
+
+class Variable(Node):
+    def __init__(self, name):
+        self.name = name
 
 class ConstantInt(Node):
     def __init__(self, intvalue):
