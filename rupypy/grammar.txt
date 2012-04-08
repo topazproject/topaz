@@ -1,7 +1,7 @@
 IGNORE: "[\n ]";
 
 INTEGER: "[0-9]+";
-ADD_OPER: "[+]";
+ADD_OPER: "[+-]";
 MUL_OPER: "[*]";
 
 main: statement* [EOF];
@@ -15,6 +15,7 @@ arg: additive;
 additive: multitive ADD_OPER additive | multitive;
 multitive: primary MUL_OPER multitive | primary;
 
-primary: literal;
+primary: "(" expr ")" |
+         literal;
 
 literal: INTEGER;

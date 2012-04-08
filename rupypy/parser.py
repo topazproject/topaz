@@ -42,7 +42,7 @@ class Transformer(object):
         if symname in ["additive", "multitive"]:
             return self.visit_subexpr(node)
         elif symname == "primary":
-            return self.visit_primary(node.children[0])
+            return self.visit_primary(node)
         raise NotImplementedError(symname)
 
     def visit_subexpr(self, node):
@@ -58,12 +58,14 @@ class Transformer(object):
 
     def visit_primary(self, node):
         symname = node.symbol
-        if symname == "literal":
+        if len(node.children) == 1:
             return self.visit_literal(node.children[0])
-        raise NotImplementedError
+        elif node.children[0].additional_info == "(":
+            return self.visit_expr(node.children[1])
+        raise NotImplementedError(symname)
 
     def visit_literal(self, node):
-        symname = node.symbol
+        symname = node.children[0].symbol
         if symname == "INTEGER":
-            return ConstantInt(int(node.additional_info))
+            return ConstantInt(int(node.children[0].additional_info))
         raise NotImplementedError
