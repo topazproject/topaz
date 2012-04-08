@@ -1,0 +1,14 @@
+INTEGER: "[0-9]+";
+
+
+main: statement* [EOF];
+
+statement: expr;
+
+expr: arg;
+
+arg: primary;
+
+primary: literal;
+
+literal: INTEGER;
