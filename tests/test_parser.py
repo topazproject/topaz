@@ -1,4 +1,4 @@
-from rupypy.ast import Block, Statement, BinOp, ConstantInt
+from rupypy.ast import Block, Statement, BinOp, Send, Self, ConstantInt
 
 
 class TestParser(object):
@@ -24,3 +24,7 @@ class TestParser(object):
             Statement(ConstantInt(1)),
             Statement(ConstantInt(2)),
         ])
+
+    def test_send(self, space):
+        assert space.parse("puts 2") == Block([Statement(Send(Self(), "puts", [ConstantInt(2)]))])
+        assert space.parse("puts 1, 2") == Block([Statement(Send(Self(), "puts", [ConstantInt(1), ConstantInt(2)]))])

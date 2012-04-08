@@ -20,6 +20,15 @@ class BinOp(Node):
         self.left = left
         self.right = right
 
+class Send(Node):
+    def __init__(self, receiver, method, args):
+        self.receiver = receiver
+        self.method = method
+        self.args = args
+
+class Self(Node):
+    pass
+
 class ConstantInt(Node):
     def __init__(self, intvalue):
         self.invalue = intvalue
