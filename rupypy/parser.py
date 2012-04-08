@@ -18,11 +18,7 @@ class Transformer(object):
 
     def visit_block(self, node):
         stmts = []
-        while True:
-            stmts.append(self.visit_stmt(node.children[0]))
-            if len(node.children) == 1:
-                break
-            node = node.children[1]
+        stmts.append(self.visit_stmt(node.children[0]))
         return Block(stmts)
 
     def visit_stmt(self, node):
