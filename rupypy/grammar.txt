@@ -9,7 +9,7 @@ MUL_OPER: "[*]";
 
 main: line* statement LINE_END? [EOF];
 
-line: statement LINE_END;
+line: statement? LINE_END;
 
 statement: expr;
 
