@@ -18,7 +18,7 @@ class Transformer(object):
 
     def visit_block(self, node):
         stmts = []
-        stmts.append(self.visit_stmt(node.children[0]))
+        stmts.append(self.visit_stmt(node.children[0].children[0]))
         return Block(stmts)
 
     def visit_stmt(self, node):
