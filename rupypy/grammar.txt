@@ -7,7 +7,7 @@ IDENTIFIER: "[a-zA-Z_][a-zA-Z0-9_]*";
 ADD_OPER: "[+-]";
 MUL_OPER: "[*]";
 
-main: line* statement [LINE_END] [EOF];
+main: line* statement LINE_END? [EOF];
 
 line: statement LINE_END;
 
