@@ -28,8 +28,8 @@ additive: multitive ADD_OPER additive | multitive;
 multitive: primary MUL_OPER multitive | primary;
 
 primary: "(" expr ")" |
-         IDENTIFIER |
          send |
+         IDENTIFIER |
          literal;
 
 send: operation send_args;
