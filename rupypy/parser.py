@@ -28,11 +28,13 @@ class Transformer(object):
                 if len(starnode.children) == 1:
                     break
                 starnode = starnode.children[1]
-                start_idx = 2
+                start_idx = 1
         else:
             start_idx = 0
         if start_idx < len(node.children):
-            stmts.append(self.visit_stmt(node.children[start_idx].children[0].children[0]))
+            node = node.children[start_idx].children[0].children[0]
+            if node.symbol != "EOF":
+                stmts.append(self.visit_stmt(node))
         return Block(stmts)
 
     def visit_line(self, node):

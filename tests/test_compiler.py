@@ -61,3 +61,15 @@ class TestCompiler(object):
         LOAD_CONST 5
         RETURN
         """)
+
+    def test_multiple_statements(self, space):
+        self.assert_compiles(space, "1; 2; 3", """
+        LOAD_CONST 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        DISCARD_TOP
+        LOAD_CONST 2
+        DISCARD_TOP
+        LOAD_CONST 3
+        RETURN
+        """)
