@@ -36,17 +36,17 @@ class Interpreter(object):
             if we_are_translated():
                 for i, name in consts.UNROLLING_BYTECODES:
                     if i == instr:
-                        pc = self.run_instr(space, i, name, bytecode, frame, pc)
+                        pc = self.run_instr(space, name, consts.BYTECODE_NUM_ARGS[i], bytecode, frame, pc)
                         break
                 else:
                     raise NotImplementedError
             else:
-                pc = self.run_instr(space, instr, consts.BYTECODE_NAMES[instr], bytecode, frame, pc)
+                pc = self.run_instr(space, consts.BYTECODE_NAMES[instr], consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
 
     @specialize.arg(2, 3)
-    def run_instr(self, space, instr, name, bytecode, frame, pc):
+    def run_instr(self, space, name, num_args, bytecode, frame, pc):
         args = ()
-        for i in unrolling_xrange(consts.BYTECODE_NUM_ARGS[instr]):
+        for i in unrolling_xrange(num_args):
             args += (ord(bytecode.code[pc]),)
             pc += 1
 
