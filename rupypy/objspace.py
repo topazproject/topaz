@@ -14,7 +14,7 @@ from rupypy.parser import Transformer, _parse
 
 class SpaceCache(Cache):
     def __init__(self, space):
-        super(SpaceCache, self).__init__()
+        Cache.__init__(self)
         self.space = space
 
     def _build(self, obj):
@@ -50,6 +50,7 @@ class ObjectSpace(object):
         if boolvalue:
             return W_TrueObject()
         else:
+            raise NotImplementedError("false")
             return W_FalseObject()
 
     def newint(self, intvalue):

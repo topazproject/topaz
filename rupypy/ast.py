@@ -1,3 +1,5 @@
+from pypy.rlib.objectmodel import we_are_translated
+
 from rupypy import consts
 
 
@@ -10,7 +12,10 @@ class Node(object):
         return type(self) is type(other) and self.__dict__ == other.__dict__
 
     def compile(self, ctx):
-        raise NotImplementedError(type(self).__name__)
+        if we_are_translated():
+            raise NotImplementedError
+        else:
+            raise NotImplementedError(type(self).__name__)
 
 class Main(Node):
     def __init__(self, block):
@@ -54,9 +59,7 @@ class BinOp(Node):
         self.right = right
 
     def compile(self, ctx):
-        self.left.compile(ctx)
-        self.right.compile(ctx)
-        ctx.emit(consts.SEND, ctx.create_symbol_const(self.op), 1)
+        Send(self.left, self.op, [self.right]).compile(ctx)
 
 class Send(Node):
     def __init__(self, receiver, method, args):
@@ -66,8 +69,8 @@ class Send(Node):
 
     def compile(self, ctx):
         self.receiver.compile(ctx)
-        for arg in reversed(self.args):
-            arg.compile(ctx)
+        for i in range(len(self.args) - 1, -1, -1):
+            self.args[i].compile(ctx)
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), len(self.args))
 
 class Self(Node):

@@ -1,3 +1,5 @@
+from pypy.rlib.objectmodel import we_are_translated
+
 from rupypy import consts
 
 
@@ -26,19 +28,31 @@ class Interpreter(object):
         while True:
             instr = ord(bytecode.code[pc])
             pc += 1
-            args = ()
-            for i in xrange(consts.BYTECODE_NUM_ARGS[instr]):
-                args += (ord(bytecode.code[pc]),)
-                pc += 1
-
             if instr == consts.RETURN:
                 assert frame.stackpos == 1
                 return frame.pop()
 
-            method = getattr(self, consts.BYTECODE_NAMES[instr])
-            res = method(space, bytecode, frame, pc, *args)
-            if res is not None:
-                pc = res
+            if we_are_translated():
+                for i, name in consts.UNROLLING_BYTECODES:
+                    if i == instr:
+                        pc = self.run_instr(space, instr, name, bytecode, frame, pc)
+                        break
+                else:
+                    raise NotImplementedError
+            else:
+                pc = self.run_instr(space, instr, consts.BYTECODE_NAMES[instr], bytecode, frame, pc)
+
+    def run_instr(self, space, instr, name, bytecode, frame, pc):
+        args = ()
+        for i in xrange(consts.BYTECODE_NUM_ARGS[instr]):
+            args += (ord(bytecode.code[pc]),)
+            pc += 1
+
+        method = getattr(self, name)
+        res = method(space, bytecode, frame, pc, *args)
+        if res is not None:
+            pc = res
+        return pc
 
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
         frame.push(bytecode.consts[idx])
