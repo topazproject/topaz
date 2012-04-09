@@ -2,7 +2,7 @@ import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
-from rupypy.ast import (Block, Statement, Assignment, BinOp, Send, Self,
+from rupypy.ast import (Main, Block, Statement, Assignment, BinOp, Send, Self,
     Variable, ConstantInt)
 
 
@@ -14,7 +14,7 @@ _parse = make_parse_function(regexs, rules, eof=True)
 
 class Transformer(object):
     def visit_main(self, node):
-        return self.visit_block(node)
+        return Main(self.visit_block(node))
 
     def visit_block(self, node):
         stmts = []
