@@ -1,4 +1,5 @@
-from pypy.rlib.objectmodel import we_are_translated
+from pypy.rlib.objectmodel import we_are_translated, specialize
+from pypy.rlib.unroll import unrolling_iterable
 
 from rupypy import consts
 
@@ -35,16 +36,17 @@ class Interpreter(object):
             if we_are_translated():
                 for i, name in consts.UNROLLING_BYTECODES:
                     if i == instr:
-                        pc = self.run_instr(space, instr, name, bytecode, frame, pc)
+                        pc = self.run_instr(space, i, name, bytecode, frame, pc)
                         break
                 else:
                     raise NotImplementedError
             else:
                 pc = self.run_instr(space, instr, consts.BYTECODE_NAMES[instr], bytecode, frame, pc)
 
+    @specialize.arg(2, 3)
     def run_instr(self, space, instr, name, bytecode, frame, pc):
         args = ()
-        for i in xrange(consts.BYTECODE_NUM_ARGS[instr]):
+        for i in unrolling_xrange(consts.BYTECODE_NUM_ARGS[instr]):
             args += (ord(bytecode.code[pc]),)
             pc += 1
 
@@ -68,3 +70,8 @@ class Interpreter(object):
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
+
+
+@specialize.memo()
+def unrolling_xrange(n):
+    return unrolling_iterable(xrange(n))

@@ -1,5 +1,7 @@
 import sys
 
+from pypy.rlib.unroll import unrolling_iterable
+
 
 SEND_EFFECT = 0xFF
 
@@ -28,3 +30,5 @@ for i, (name, num_args, stack_effect) in enumerate(BYTECODES):
     BYTECODE_NAMES.append(name)
     BYTECODE_NUM_ARGS.append(num_args)
     BYTECODE_STACK_EFFECT.append(stack_effect)
+
+UNROLLING_BYTECODES = unrolling_iterable(enumerate(BYTECODE_NAMES))
