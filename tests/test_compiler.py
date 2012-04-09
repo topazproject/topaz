@@ -42,7 +42,7 @@ class TestCompiler(object):
         bc = self.assert_compiles(space, "1 + 2", """
         LOAD_CONST 0
         LOAD_CONST 1
-        SEND 2 2
+        SEND 2 1
         DISCARD_TOP
         LOAD_CONST 3
         RETURN
@@ -55,8 +55,8 @@ class TestCompiler(object):
         LOAD_CONST 0
         LOAD_CONST 1
         LOAD_CONST 2
-        SEND 3 2
-        SEND 4 2
+        SEND 3 1
+        SEND 4 1
         DISCARD_TOP
         LOAD_CONST 5
         RETURN
@@ -102,7 +102,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
-        self.assert_compiles(space, "a = 3; a = 4", """
+        bc = self.assert_compiles(space, "a = 3; a = 4", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
@@ -112,16 +112,18 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+        assert bc.locals == {"a": 0}
 
     def test_load_var(self, space):
-        self.assert_compiles(space, "a", """
+        bc = self.assert_compiles(space, "a", """
         LOAD_SELF
         SEND 0 0
         DISCARD_TOP
         LOAD_CONST 1
         RETURN
         """)
-        self.assert_compiles(space, "a = 3; a", """
+        assert bc.locals == {}
+        bc = self.assert_compiles(space, "a = 3; a", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
@@ -130,3 +132,4 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
+        assert bc.locals == {"a": 0}

@@ -56,7 +56,7 @@ class BinOp(Node):
     def compile(self, ctx):
         self.left.compile(ctx)
         self.right.compile(ctx)
-        ctx.emit(consts.SEND, ctx.create_symbol_const(self.op), 2)
+        ctx.emit(consts.SEND, ctx.create_symbol_const(self.op), 1)
 
 class Send(Node):
     def __init__(self, receiver, method, args):

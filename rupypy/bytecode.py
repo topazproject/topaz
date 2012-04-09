@@ -10,7 +10,7 @@ class CompilerContext(object):
 
     def create_bytecode(self):
         bc = "".join(self.data)
-        return Bytecode(bc, self.count_stackdepth(bc), self.consts)
+        return Bytecode(bc, self.count_stackdepth(bc), self.consts, self.locals)
 
     def count_stackdepth(self, bc):
         i = 0
@@ -53,7 +53,8 @@ class CompilerContext(object):
 
 
 class Bytecode(object):
-    def __init__(self, code, max_stackdepth, consts):
+    def __init__(self, code, max_stackdepth, consts, locals):
         self.code = code
         self.max_stackdepth = max_stackdepth
         self.consts = consts
+        self.locals = locals

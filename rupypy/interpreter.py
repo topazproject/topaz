@@ -2,10 +2,11 @@ from rupypy import consts
 
 
 class Frame(object):
-    def __init__(self, bytecode):
+    def __init__(self, bytecode, w_self):
         self.stack = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
         self.stackpos = 0
+        self.w_self = w_self
 
     def push(self, w_obj):
         self.stack[self.stackpos] = w_obj
@@ -41,6 +42,9 @@ class Interpreter(object):
 
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
         frame.push(bytecode.consts[idx])
+
+    def LOAD_SELF(self, space, bytecode, frame, pc):
+        frame.push(frame.w_self)
 
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = [frame.pop() for _ in range(num_args)]
