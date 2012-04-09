@@ -49,3 +49,15 @@ class TestCompiler(object):
         """)
         assert bc.max_stackdepth == 2
         assert bc.consts[2].symbol == "+"
+
+    def test_multi_term_expr(self, space):
+        self.assert_compiles(space, "1 + 2 * 3", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND 3 2
+        SEND 4 2
+        DISCARD_TOP
+        LOAD_CONST 5
+        RETURN
+        """)
