@@ -18,6 +18,8 @@ class CompilerContext(object):
             c = ord(bc[i])
             i += 1
             stack_effect = consts.BYTECODE_STACK_EFFECT[c]
+            if stack_effect == consts.SEND_EFFECT:
+                stack_effect = -ord(bc[i+1])
             i += consts.BYTECODE_NUM_ARGS[c]
             current_stackdepth += stack_effect
             max_stackdepth = max(max_stackdepth, current_stackdepth)
@@ -36,6 +38,9 @@ class CompilerContext(object):
 
     def create_int_const(self, intvalue):
         return self.create_const(self.space.newint(intvalue))
+
+    def create_symbol_const(self, symbol):
+        return self.create_const(self.space.newsymbol(symbol))
 
 
 class Bytecode(object):

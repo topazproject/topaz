@@ -48,6 +48,11 @@ class BinOp(Node):
         self.left = left
         self.right = right
 
+    def compile(self, ctx):
+        self.left.compile(ctx)
+        self.right.compile(ctx)
+        ctx.emit(consts.SEND, ctx.create_symbol_const(self.op), 2)
+
 class Send(Node):
     def __init__(self, receiver, method, args):
         self.receiver = receiver

@@ -37,3 +37,15 @@ class TestCompiler(object):
         assert c1.intvalue == 1
         assert isinstance(c2, W_TrueObject)
         assert bc.max_stackdepth == 1
+
+    def test_addition(self, space):
+        bc = self.assert_compiles(space, "1 + 2", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 2
+        DISCARD_TOP
+        LOAD_CONST 3
+        RETURN
+        """)
+        assert bc.max_stackdepth == 2
+        assert bc.consts[2].symbol == "+"

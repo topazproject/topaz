@@ -1,6 +1,7 @@
 from rupypy.bytecode import CompilerContext
 from rupypy.objects.boolobject import W_TrueObject
 from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.symbolobject import W_SymbolObject
 from rupypy.parser import Transformer, _parse
 
 
@@ -25,3 +26,6 @@ class ObjectSpace(object):
 
     def newint(self, intvalue):
         return W_IntObject(intvalue)
+
+    def newsymbol(self, symbol):
+        return W_SymbolObject(symbol)

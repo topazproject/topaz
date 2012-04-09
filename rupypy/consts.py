@@ -1,10 +1,16 @@
 import sys
 
+
+SEND_EFFECT = 0xFF
+
 # Name, number of arguments, stack effect
 BYTECODES = [
     ("LOAD_CONST", 1, +1),
 
+    ("SEND", 2, SEND_EFFECT),
+
     ("DISCARD_TOP", 0, -1),
+
     ("RETURN", 0, -1),
 ]
 
