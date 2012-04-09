@@ -8,6 +8,9 @@ BYTECODES = [
     ("LOAD_SELF", 0, +1),
     ("LOAD_CONST", 1, +1),
 
+    ("LOAD_LOCAL", 1, +1),
+    ("STORE_LOCAL", 1, 0),
+
     ("SEND", 2, SEND_EFFECT),
 
     ("DISCARD_TOP", 0, -1),

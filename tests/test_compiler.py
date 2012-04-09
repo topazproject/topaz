@@ -93,3 +93,40 @@ class TestCompiler(object):
         LOAD_CONST 4
         RETURN
         """)
+
+    def test_assignment(self, space):
+        self.assert_compiles(space, "a = 3", """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        RETURN
+        """)
+        self.assert_compiles(space, "a = 3; a = 4", """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_CONST 2
+        RETURN
+        """)
+
+    def test_load_var(self, space):
+        self.assert_compiles(space, "a", """
+        LOAD_SELF
+        SEND 0 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        RETURN
+        """)
+        self.assert_compiles(space, "a = 3; a", """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_LOCAL 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        RETURN
+        """)

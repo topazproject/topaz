@@ -49,7 +49,7 @@ class TestParser(object):
         assert space.parse("puts 1, 2") == Main(Block([Statement(Send(Self(), "puts", [ConstantInt(1), ConstantInt(2)]))]))
 
     def test_assignment(self, space):
-        assert space.parse("a = 3") == Main(Block([Statement(Assignment(Variable("a"), ConstantInt(3)))]))
+        assert space.parse("a = 3") == Main(Block([Statement(Assignment("a", ConstantInt(3)))]))
 
     def test_load_variable(self, space):
         assert space.parse("a") == Main(Block([Statement(Variable("a"))]))

@@ -59,7 +59,7 @@ class Transformer(object):
 
     def visit_assignment(self, node):
         return Assignment(
-            Variable(node.children[0].children[0].additional_info),
+            node.children[0].children[0].additional_info,
             self.visit_expr(node.children[2].children[0]),
         )
 

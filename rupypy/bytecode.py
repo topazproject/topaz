@@ -6,6 +6,7 @@ class CompilerContext(object):
         self.space = space
         self.data = []
         self.consts = []
+        self.locals = {}
 
     def create_bytecode(self):
         bc = "".join(self.data)
@@ -30,6 +31,14 @@ class CompilerContext(object):
         self.data.append(chr(c))
         for arg in args:
             self.data.append(chr(arg))
+
+    def create_local(self, name):
+        if name not in self.locals:
+            self.locals[name] = len(self.locals)
+        return self.locals[name]
+
+    def local_defined(self, name):
+        return name in self.locals
 
     def create_const(self, w_obj):
         i = len(self.consts)

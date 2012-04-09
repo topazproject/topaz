@@ -42,6 +42,11 @@ class Assignment(Node):
         self.target = target
         self.value = value
 
+    def compile(self, ctx):
+        loc = ctx.create_local(self.target)
+        self.value.compile(ctx)
+        ctx.emit(consts.STORE_LOCAL, loc)
+
 class BinOp(Node):
     def __init__(self, op, left, right):
         self.op = op
@@ -72,6 +77,12 @@ class Self(Node):
 class Variable(Node):
     def __init__(self, name):
         self.name = name
+
+    def compile(self, ctx):
+        if ctx.local_defined(self.name):
+            ctx.emit(consts.LOAD_LOCAL, ctx.create_local(self.name))
+        else:
+            Send(Self(), self.name, []).compile(ctx)
 
 class ConstantInt(Node):
     def __init__(self, intvalue):
