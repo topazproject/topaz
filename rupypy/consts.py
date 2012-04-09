@@ -5,6 +5,7 @@ SEND_EFFECT = 0xFF
 
 # Name, number of arguments, stack effect
 BYTECODES = [
+    ("LOAD_SELF", 0, +1),
     ("LOAD_CONST", 1, +1),
 
     ("SEND", 2, SEND_EFFECT),

@@ -59,8 +59,15 @@ class Send(Node):
         self.method = method
         self.args = args
 
+    def compile(self, ctx):
+        self.receiver.compile(ctx)
+        for arg in reversed(self.args):
+            arg.compile(ctx)
+        ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), len(self.args))
+
 class Self(Node):
-    pass
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
 
 class Variable(Node):
     def __init__(self, name):

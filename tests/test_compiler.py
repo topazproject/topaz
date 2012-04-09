@@ -73,3 +73,23 @@ class TestCompiler(object):
         LOAD_CONST 3
         RETURN
         """)
+
+    def test_send(self, space):
+        self.assert_compiles(space, "puts 1", """
+        LOAD_SELF
+        LOAD_CONST 0
+        SEND 1 1
+        DISCARD_TOP
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiles(space, "puts 1, 2, 3", """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND 3 3
+        DISCARD_TOP
+        LOAD_CONST 4
+        RETURN
+        """)

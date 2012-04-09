@@ -33,10 +33,10 @@ class TestParser(object):
         ]))
 
     def test_multiple_statements_semicolon(self, space):
-        # assert space.parse("1; 2") == Main(Block([
-        #     Statement(ConstantInt(1)),
-        #     Statement(ConstantInt(2)),
-        # ]))
+        assert space.parse("1; 2") == Main(Block([
+            Statement(ConstantInt(1)),
+            Statement(ConstantInt(2)),
+        ]))
 
         assert space.parse("1; 2; 3") == Main(Block([
             Statement(ConstantInt(1)),
