@@ -67,3 +67,6 @@ class TestParser(object):
         end
         """) == res
         assert space.parse("if 3; puts 2 end") == res
+        assert space.parse("if 3; end") == Main(Block([
+            Statement(If(ConstantInt(3), Block([])))
+        ]))
