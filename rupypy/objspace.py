@@ -56,6 +56,12 @@ class ObjectSpace(object):
 
     # Methods for allocating new objects.
 
+    def newbool(self, boolvalue):
+        if boolvalue:
+            return self.w_true
+        else:
+            return self.w_false
+
     def newint(self, intvalue):
         return W_IntObject(intvalue)
 

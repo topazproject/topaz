@@ -162,6 +162,19 @@ class TestCompiler(object):
         RETURN
         """)
 
+        self.assert_compiles(space, "x = if 3; end", """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 8
+        LOAD_CONST 1
+        JUMP 10
+        LOAD_CONST 2
+        STORE_LOCAL 0
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_constants(self, space):
         bc = self.assert_compiles(space, "false; true; nil;", """
         LOAD_CONST 0
@@ -176,3 +189,14 @@ class TestCompiler(object):
         RETURN
         """)
         assert bc.consts == [space.w_false, space.w_true, space.w_nil, space.w_true]
+
+    def test_comparison(self, space):
+        self.assert_compiles(space, "1 == 1", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)

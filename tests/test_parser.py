@@ -84,3 +84,13 @@ class TestParser(object):
                 Statement(Send(Self(), "puts", [ConstantInt(4)])),
             ])))
         ]))
+
+    def test_comparison_ops(self, space):
+        assert space.parse("1 == 2; 1 < 2; 1 > 2; 1 != 2; 1 <= 2; 1 >= 2") == Main(Block([
+            Statement(BinOp("==", ConstantInt(1), ConstantInt(2))),
+            Statement(BinOp("<", ConstantInt(1), ConstantInt(2))),
+            Statement(BinOp(">", ConstantInt(1), ConstantInt(2))),
+            Statement(BinOp("!=", ConstantInt(1), ConstantInt(2))),
+            Statement(BinOp("<=", ConstantInt(1), ConstantInt(2))),
+            Statement(BinOp(">=", ConstantInt(1), ConstantInt(2))),
+        ]))

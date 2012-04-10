@@ -29,10 +29,12 @@ class Main(Node):
 
 class Block(Node):
     def __init__(self, stmts):
-        self.stmts = stmts
+        if not stmts:
+            stmts = [Statement(Variable("nil"))]
         # The last item shouldn't be popped.
-        if self.stmts:
-            self.stmts[-1].dont_pop = True
+        stmts[-1].dont_pop = True
+
+        self.stmts = stmts
 
     def compile(self, ctx):
         for idx, stmt in enumerate(self.stmts):

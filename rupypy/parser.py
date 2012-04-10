@@ -67,7 +67,7 @@ class Transformer(object):
 
     def visit_arg(self, node):
         symname = node.symbol
-        if symname in ["additive", "multitive"]:
+        if symname in ["comparison", "additive", "multitive"]:
             return self.visit_subexpr(node)
         elif symname == "primary":
             return self.visit_primary(node)

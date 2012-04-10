@@ -8,6 +8,7 @@ LINE_END: "[\n;]";
 INTEGER: "[0-9]+";
 IDENTIFIER: "[a-zA-Z_][a-zA-Z0-9_]*";
 
+CMP_OPER: "(!=)|(==)|(<=)|(>=)|<|>";
 ADD_OPER: "[+-]";
 MUL_OPER: "[*]";
 
@@ -26,8 +27,9 @@ lhs: IDENTIFIER;
 
 rhs: arg;
 
-arg: additive;
+arg: comparison;
 
+comparison: additive CMP_OPER comparison | additive;
 additive: multitive ADD_OPER additive | multitive;
 multitive: primary MUL_OPER multitive | primary;
 
