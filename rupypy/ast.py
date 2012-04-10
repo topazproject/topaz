@@ -52,6 +52,11 @@ class Assignment(Node):
         self.value.compile(ctx)
         ctx.emit(consts.STORE_LOCAL, loc)
 
+class If(Node):
+    def __init__(self, cond, body):
+        self.cond = cond
+        self.body = body
+
 class BinOp(Node):
     def __init__(self, op, left, right):
         self.op = op

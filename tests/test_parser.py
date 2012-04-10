@@ -1,7 +1,7 @@
 import py
 
-from rupypy.ast import (Main, Block, Statement, Assignment, BinOp, Send, Self,
-    Variable, ConstantInt)
+from rupypy.ast import (Main, Block, Statement, Assignment, If, BinOp, Send,
+    Self, Variable, ConstantInt)
 
 
 class TestParser(object):
@@ -53,3 +53,17 @@ class TestParser(object):
 
     def test_load_variable(self, space):
         assert space.parse("a") == Main(Block([Statement(Variable("a"))]))
+
+    def test_if_statement(self, space):
+        res = Main(Block([
+            Statement(If(ConstantInt(3), Block([
+                Send(Self(), "puts", [ConstantInt(2)])
+            ])))
+        ]))
+        assert space.parse("if 3 then puts 2 end") == res
+        assert space.parse("""
+        if 3
+            puts 2
+        end
+        """) == res
+        assert space.parse("if 3; puts 2 end") == res
