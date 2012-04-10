@@ -3,6 +3,8 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_IntObject(W_Object):
+    _immutable_fields_ = ["intvalue"]
+
     classdef = ClassDef("Fixnum")
 
     def __init__(self, intvalue):

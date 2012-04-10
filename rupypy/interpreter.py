@@ -5,31 +5,38 @@ from rupypy import consts
 
 
 class Frame(object):
+    _virtualizable2_ = ["locals_w[*]", "stack[*]", "stackpos"]
+
     def __init__(self, bytecode, w_self):
+        self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         self.stack = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
         self.stackpos = 0
         self.w_self = w_self
 
     def push(self, w_obj):
-        self.stack[self.stackpos] = w_obj
-        self.stackpos += 1
+        stackpos = jit.promote(self.stackpos)
+        self.stack[stackpos] = w_obj
+        self.stackpos = stackpos + 1
 
     def pop(self):
-        stackpos = self.stackpos - 1
-        assert self.stackpos >= 0
+        stackpos = jit.promote(self.stackpos) - 1
+        assert stackpos >= 0
         w_res = self.stack[stackpos]
         self.stack[stackpos] = None
         self.stackpos = stackpos
         return w_res
 
     def peek(self):
-        return self.stack[self.stackpos - 1]
+        stackpos = jit.promote(self.stackpos) - 1
+        assert stackpos >= 0
+        return self.stack[stackpos]
 
 class Interpreter(object):
     jitdriver = jit.JitDriver(
         greens = ["pc", "bytecode"],
         reds = ["self", "frame"],
+        virtualizables = ["frame"],
     )
 
     def interpret(self, space, frame, bytecode):
@@ -91,6 +98,7 @@ class Interpreter(object):
     def STORE_LOCAL(self, space, bytecode, frame, pc, idx):
         frame.locals_w[idx] = frame.peek()
 
+    @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = [frame.pop() for _ in range(num_args)]
         w_receiver = frame.pop()
