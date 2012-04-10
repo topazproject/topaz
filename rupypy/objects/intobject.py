@@ -1,7 +1,8 @@
-from rupypy.module import ClassDef
+from rupypy.module import ClassDef, finalize
 from rupypy.objects.objectobject import W_Object
 
 
+@finalize
 class W_IntObject(W_Object):
     classdef = ClassDef("Fixnum")
 
@@ -13,7 +14,7 @@ class W_IntObject(W_Object):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr(list(str(self.intvalue)))
+        return space.newstr([x for x in str(self.intvalue)])
 
     @classdef.method("+", other=int)
     def method_add(self, space, other):

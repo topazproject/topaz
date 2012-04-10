@@ -27,6 +27,9 @@ class ObjectSpace(object):
         self.w_top_self = W_Object()
         self.cache = SpaceCache(self)
 
+    def _freeze_(self):
+        return True
+
     @specialize.memo()
     def fromcache(self, key):
         return self.cache.getorbuild(key)

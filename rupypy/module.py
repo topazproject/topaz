@@ -1,7 +1,7 @@
 from pypy.tool.cache import Cache
 
 
-def generate_wrapper(name, orig_func, argspec):
+def generate_wrapper(name, orig_func, argspec, self_cls):
     source = []
     source.append("def %s(self, space, args_w):" % orig_func.__name__)
     source.append("    args = ()")
@@ -18,27 +18,37 @@ def generate_wrapper(name, orig_func, argspec):
         elif argname.startswith("w_"):
             source.append("    args += (args_w[%d],)" % arg_count)
             arg_count += 1
-        elif argname != "self" and argname != "space":
+        elif argname == "self":
+            source.append("    assert isinstance(self, self_cls)")
+        elif argname != "space":
             raise NotImplementedError(argname)
     source.append("    return func(self, space, *args)")
 
     source = "\n".join(source)
-    namespace = {"func": orig_func}
+    namespace = {"func": orig_func, "self_cls": self_cls}
     exec source in namespace
     return namespace[orig_func.__name__]
 
+
+def finalize(cls):
+    cls.classdef.cls = cls
+    return cls
 
 class ClassDef(object):
     def __init__(self, name):
         self.name = name
         self.methods = {}
+        self.cls = None
+
+    def _freeze_(self):
+        return True
 
     def include_module(self, mod):
         self.methods.update(mod.moduledef.methods)
 
     def method(self, name, **argspec):
         def adder(func):
-            self.methods[name] = generate_wrapper(name, func, argspec)
+            self.methods[name] = (func, argspec)
         return adder
 
 
@@ -50,9 +60,9 @@ class ModuleDef(object):
         self.name = name
         self.methods = {}
 
-    def function(self, name):
+    def function(self, name, **argspec):
         def adder(func):
-            self.methods[name] = generate_wrapper(name, func, ())
+            self.methods[name] = (func, argspec)
         return adder
 
 class ClassCache(Cache):
@@ -61,7 +71,10 @@ class ClassCache(Cache):
         self.space = space
 
     def _build(self, classdef):
+        assert classdef.cls is not None, classdef.name
+
         w_class = self.space.newclass(classdef.name)
-        for name, method in classdef.methods.iteritems():
-            w_class.add_method(name, method)
+        for name, (method, argspec) in classdef.methods.iteritems():
+            func = generate_wrapper(name, method, argspec, classdef.cls)
+            w_class.add_method(name, func)
         return w_class

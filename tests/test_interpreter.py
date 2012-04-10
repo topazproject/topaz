@@ -11,3 +11,8 @@ class TestInterpreter(object):
         out, err = capfd.readouterr()
         assert out == "1\n"
         assert not err
+
+    def test_variables(self, space, capfd):
+        space.execute("a = 100; puts a")
+        out, err = capfd.readouterr()
+        assert out == "100\n"

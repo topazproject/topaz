@@ -23,6 +23,9 @@ class Frame(object):
         self.stackpos = stackpos
         return w_res
 
+    def peek(self):
+        return self.stack[self.stackpos - 1]
+
 class Interpreter(object):
     def interpret(self, space, frame, bytecode):
         pc = 0
@@ -61,11 +64,17 @@ class Interpreter(object):
             pc = res
         return pc
 
+    def LOAD_SELF(self, space, bytecode, frame, pc):
+        frame.push(frame.w_self)
+
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
         frame.push(bytecode.consts[idx])
 
-    def LOAD_SELF(self, space, bytecode, frame, pc):
-        frame.push(frame.w_self)
+    def LOAD_LOCAL(self, space, bytecode, frame, pc, idx):
+        frame.push(frame.locals_w[idx])
+
+    def STORE_LOCAL(self, space, bytecode, frame, pc, idx):
+        frame.locals_w[idx] = frame.peek()
 
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = [frame.pop() for _ in range(num_args)]
@@ -75,6 +84,11 @@ class Interpreter(object):
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
+
+    def UNREACHABLE(self, space, bytecode, frame, pc):
+        raise Exception
+    # Handled specially in the main dispatch loop.
+    RETURN = UNREACHABLE
 
 
 @specialize.memo()

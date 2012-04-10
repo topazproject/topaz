@@ -26,11 +26,12 @@ class CompilerContext(object):
             max_stackdepth = max(max_stackdepth, current_stackdepth)
         return max_stackdepth
 
-    def emit(self, c, *args):
-        assert len(args) == consts.BYTECODE_NUM_ARGS[c]
+    def emit(self, c, arg0=-1, arg1=-1):
         self.data.append(chr(c))
-        for arg in args:
-            self.data.append(chr(arg))
+        if arg0 != -1:
+            self.data.append(chr(arg0))
+        if arg1 != -1:
+            self.data.append(chr(arg1))
 
     def create_local(self, name):
         if name not in self.locals:
