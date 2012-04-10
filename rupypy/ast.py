@@ -30,19 +30,22 @@ class Main(Node):
 class Block(Node):
     def __init__(self, stmts):
         self.stmts = stmts
+        # The last item shouldn't be popped.
+        if self.stmts:
+            self.stmts[-1].dont_pop = True
 
     def compile(self, ctx):
         for idx, stmt in enumerate(self.stmts):
-            # The last item shouldn't be popped.
-            stmt.compile(ctx, dont_pop=idx == len(self.stmts) - 1)
+            stmt.compile(ctx)
 
 class Statement(Node):
     def __init__(self, expr):
         self.expr = expr
+        self.dont_pop = False
 
-    def compile(self, ctx, dont_pop):
+    def compile(self, ctx):
         self.expr.compile(ctx)
-        if not dont_pop:
+        if not self.dont_pop:
             ctx.emit(consts.DISCARD_TOP)
 
 class Assignment(Node):
