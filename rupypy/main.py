@@ -1,5 +1,7 @@
 """rupypy"""
 
+import sys
+
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.streamio import open_file_as_stream
 
@@ -24,3 +26,6 @@ def entry_point(argv):
     space = getspace()
     space.execute(source)
     return 0
+
+if __name__ == "__main__":
+    entry_point(sys.argv)

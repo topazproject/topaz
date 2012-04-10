@@ -38,3 +38,7 @@ class W_IntObject(W_Object):
     @classdef.method("<", other=int)
     def method_lt(self, space, other):
         return space.newbool(self.intvalue < other)
+
+    @classdef.method(">", other=int)
+    def method_gt(self, space, other):
+        return space.newbool(self.intvalue > other)
