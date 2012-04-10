@@ -19,6 +19,10 @@ class W_IntObject(W_Object):
     def method_add(self, space, other):
         return space.newint(self.intvalue + other)
 
+    @classdef.method("-", other=int)
+    def method_sub(self, space, other):
+        return space.newint(self.intvalue - other)
+
     @classdef.method("*", other=int)
     def method_mul(self, space, other):
         return space.newint(self.intvalue * other)
