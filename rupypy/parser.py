@@ -80,8 +80,6 @@ class Transformer(object):
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
         )
-        import py
-        py.test.set_trace()
 
     def visit_primary(self, node):
         if len(node.children) == 1:
