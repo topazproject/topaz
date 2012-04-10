@@ -24,7 +24,7 @@ class Main(Node):
     def compile(self, ctx):
         self.block.compile(ctx)
         ctx.emit(consts.DISCARD_TOP)
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newbool(True)))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_true))
         ctx.emit(consts.RETURN)
 
 class Block(Node):
