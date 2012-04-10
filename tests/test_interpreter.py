@@ -25,3 +25,11 @@ class TestInterpreter(object):
         space.execute("x = if 3 then 5 end; puts x")
         out, err = capfd.readouterr()
         assert out == "5\n"
+
+        space.execute("x = if false then 5 end; puts x")
+        out, err = capfd.readouterr()
+        assert out == "nil\n"
+
+        space.execute("x = if nil then 5 end; puts x")
+        out, err = capfd.readouterr()
+        assert out == "nil\n"

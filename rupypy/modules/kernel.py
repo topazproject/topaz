@@ -8,6 +8,10 @@ class Kernel(Module):
 
     @moduledef.function("puts")
     def function_puts(self, space, w_obj):
-        w_str = space.send(w_obj, space.newsymbol("to_s"))
-        os.write(1, space.str_w(w_str))
+        if w_obj is space.w_nil:
+            s = "nil"
+        else:
+            w_str = space.send(w_obj, space.newsymbol("to_s"))
+            s = space.str_w(w_str)
+        os.write(1, s)
         os.write(1, "\n")

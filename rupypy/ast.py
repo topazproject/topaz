@@ -70,8 +70,8 @@ class If(Node):
         self.body.compile(ctx)
         else_pos = ctx.get_pos()
         ctx.emit(consts.JUMP, 0)
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
         ctx.patch_jump(pos)
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
         ctx.patch_jump(else_pos)
 
 class BinOp(Node):
@@ -104,7 +104,14 @@ class Variable(Node):
         self.name = name
 
     def compile(self, ctx):
-        if ctx.local_defined(self.name):
+        named_consts = {
+            "true": ctx.space.w_true,
+            "false": ctx.space.w_false,
+            "nil": ctx.space.w_nil,
+        }
+        if self.name in named_consts:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
+        elif ctx.local_defined(self.name):
             ctx.emit(consts.LOAD_LOCAL, ctx.create_local(self.name))
         else:
             Send(Self(), self.name, []).compile(ctx)

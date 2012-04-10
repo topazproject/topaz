@@ -18,3 +18,6 @@ class W_Object(object):
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)
+
+    def is_true(self, space):
+        return True

@@ -137,7 +137,7 @@ class TestCompiler(object):
     def test_if(self, space):
         self.assert_compiles(space, "if 3 then puts 2 end", """
         LOAD_CONST 0
-        JUMP_IF_FALSE 14
+        JUMP_IF_FALSE 12
         LOAD_SELF
         LOAD_CONST 1
         SEND 2 1
@@ -151,7 +151,7 @@ class TestCompiler(object):
 
         self.assert_compiles(space, "x = if 3 then 2 end", """
         LOAD_CONST 0
-        JUMP_IF_FALSE 10
+        JUMP_IF_FALSE 8
         LOAD_CONST 1
         JUMP 10
         LOAD_CONST 2
@@ -161,3 +161,18 @@ class TestCompiler(object):
         LOAD_CONST 3
         RETURN
         """)
+
+    def test_constants(self, space):
+        bc = self.assert_compiles(space, "false; true; nil;", """
+        LOAD_CONST 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        DISCARD_TOP
+        LOAD_CONST 2
+        DISCARD_TOP
+
+        # This will be LOAD_CONST 1 once we reuse constants
+        LOAD_CONST 3
+        RETURN
+        """)
+        assert bc.consts == [space.w_false, space.w_true, space.w_nil, space.w_true]

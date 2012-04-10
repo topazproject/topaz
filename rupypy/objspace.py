@@ -4,7 +4,7 @@ from pypy.tool.cache import Cache
 from rupypy.bytecode import CompilerContext
 from rupypy.interpreter import Interpreter, Frame
 from rupypy.module import ClassCache
-from rupypy.objects.boolobject import W_TrueObject
+from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.nilobject import W_NilObject
@@ -27,6 +27,9 @@ class ObjectSpace(object):
         self.transformer = Transformer()
         self.w_top_self = W_Object()
         self.cache = SpaceCache(self)
+
+        self.w_true = W_TrueObject()
+        self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
     def _freeze_(self):
@@ -55,10 +58,9 @@ class ObjectSpace(object):
 
     def newbool(self, boolvalue):
         if boolvalue:
-            return W_TrueObject()
+            return self.w_true
         else:
-            raise NotImplementedError("false")
-            return W_FalseObject()
+            return self.w_false
 
     def newint(self, intvalue):
         return W_IntObject(intvalue)
