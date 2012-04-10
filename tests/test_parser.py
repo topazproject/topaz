@@ -57,7 +57,7 @@ class TestParser(object):
     def test_if_statement(self, space):
         res = Main(Block([
             Statement(If(ConstantInt(3), Block([
-                Send(Self(), "puts", [ConstantInt(2)])
+                Statement(Send(Self(), "puts", [ConstantInt(2)]))
             ])))
         ]))
         assert space.parse("if 3 then puts 2 end") == res
@@ -69,4 +69,18 @@ class TestParser(object):
         assert space.parse("if 3; puts 2 end") == res
         assert space.parse("if 3; end") == Main(Block([
             Statement(If(ConstantInt(3), Block([])))
+        ]))
+        r = space.parse("""
+        if 0
+            puts 2
+            puts 3
+            puts 4
+        end
+        """)
+        assert r == Main(Block([
+            Statement(If(ConstantInt(0), Block([
+                Statement(Send(Self(), "puts", [ConstantInt(2)])),
+                Statement(Send(Self(), "puts", [ConstantInt(3)])),
+                Statement(Send(Self(), "puts", [ConstantInt(4)])),
+            ])))
         ]))

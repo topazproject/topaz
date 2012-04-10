@@ -14,12 +14,12 @@ _parse = make_parse_function(regexs, rules, eof=True)
 
 class Transformer(object):
     def visit_main(self, node):
-        return Main(self.visit_block(node))
+        return Main(self.visit_block(node, base_idx=0, ignore_symbols=["EOF"]))
 
-    def visit_block(self, node):
+    def visit_block(self, node, base_idx, ignore_symbols):
         stmts = []
-        if "star" in node.children[0].symbol:
-            starnode = node.children[0]
+        if "star" in node.children[base_idx].symbol:
+            starnode = node.children[base_idx]
             start_idx = 1
             while True:
                 stmt = self.visit_line(starnode.children[0])
@@ -31,9 +31,10 @@ class Transformer(object):
                 start_idx = 1
         else:
             start_idx = 0
-        if start_idx < len(node.children):
-            node = node.children[start_idx].children[0].children[0]
-            if node.symbol != "EOF":
+        if start_idx + base_idx < len(node.children):
+            node = node.children[base_idx + start_idx].children[0].children[0]
+            # Poor man's: not any(sym in node.symbol for sym in ignore_symbols)
+            if not [None for sym in ignore_symbols if sym in node.symbol]:
                 stmts.append(self.visit_stmt(node))
         return Block(stmts)
 
@@ -116,5 +117,5 @@ class Transformer(object):
     def visit_if(self, node):
         return If(
             self.visit_expr(node.children[1]),
-            self.visit_block(node.children[3]),
+            self.visit_block(node, base_idx=3, ignore_symbols=["end"]),
         )

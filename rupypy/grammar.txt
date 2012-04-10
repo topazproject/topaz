@@ -1,3 +1,7 @@
+# compstmt: line* statement? LINE_END?;
+# unfortunately you need to inline this anywhere you want it because ebnf parse
+# doesn't support epsilon productions.
+
 IGNORE: "[ ]";
 LINE_END: "[\n;]";
 
