@@ -33,6 +33,12 @@ class CompilerContext(object):
         if arg1 != -1:
             self.data.append(chr(arg1))
 
+    def get_pos(self):
+        return len(self.data)
+
+    def patch_jump(self, pos):
+        self.data[pos + 1] = chr(len(self.data))
+
     def create_local(self, name):
         if name not in self.locals:
             self.locals[name] = len(self.locals)

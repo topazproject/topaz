@@ -23,6 +23,7 @@ class Main(Node):
 
     def compile(self, ctx):
         self.block.compile(ctx)
+        ctx.emit(consts.DISCARD_TOP)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newbool(True)))
         ctx.emit(consts.RETURN)
 
@@ -31,16 +32,18 @@ class Block(Node):
         self.stmts = stmts
 
     def compile(self, ctx):
-        for stmt in self.stmts:
-            stmt.compile(ctx)
+        for idx, stmt in enumerate(self.stmts):
+            # The last item shouldn't be popped.
+            stmt.compile(ctx, dont_pop=idx == len(self.stmts) - 1)
 
 class Statement(Node):
     def __init__(self, expr):
         self.expr = expr
 
-    def compile(self, ctx):
+    def compile(self, ctx, dont_pop):
         self.expr.compile(ctx)
-        ctx.emit(consts.DISCARD_TOP)
+        if not dont_pop:
+            ctx.emit(consts.DISCARD_TOP)
 
 class Assignment(Node):
     def __init__(self, target, value):
@@ -56,6 +59,17 @@ class If(Node):
     def __init__(self, cond, body):
         self.cond = cond
         self.body = body
+
+    def compile(self, ctx):
+        self.cond.compile(ctx)
+        pos = ctx.get_pos()
+        ctx.emit(consts.JUMP_IF_FALSE, 0)
+        self.body.compile(ctx)
+        else_pos = ctx.get_pos()
+        ctx.emit(consts.JUMP, 0)
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        ctx.patch_jump(pos)
+        ctx.patch_jump(else_pos)
 
 class BinOp(Node):
     def __init__(self, op, left, right):

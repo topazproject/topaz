@@ -133,3 +133,31 @@ class TestCompiler(object):
         RETURN
         """)
         assert bc.locals == {"a": 0}
+
+    def test_if(self, space):
+        self.assert_compiles(space, "if 3 then puts 2 end", """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 14
+        LOAD_SELF
+        LOAD_CONST 1
+        SEND 2 1
+        JUMP 14
+        LOAD_CONST 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+
+        self.assert_compiles(space, "x = if 3 then 2 end", """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 10
+        LOAD_CONST 1
+        JUMP 10
+        LOAD_CONST 2
+        STORE_LOCAL 0
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)

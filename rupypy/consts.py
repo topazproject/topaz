@@ -15,6 +15,9 @@ BYTECODES = [
 
     ("SEND", 2, SEND_EFFECT),
 
+    ("JUMP", 1, 0),
+    ("JUMP_IF_FALSE", 1, -1),
+
     ("DISCARD_TOP", 0, -1),
 
     ("RETURN", 0, -1),

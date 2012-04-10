@@ -7,6 +7,7 @@ from rupypy.module import ClassCache
 from rupypy.objects.boolobject import W_TrueObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
@@ -26,6 +27,7 @@ class ObjectSpace(object):
         self.transformer = Transformer()
         self.w_top_self = W_Object()
         self.cache = SpaceCache(self)
+        self.w_nil = W_NilObject()
 
     def _freeze_(self):
         return True
