@@ -1,5 +1,4 @@
 from pypy.rlib.objectmodel import we_are_translated, specialize
-from pypy.rlib.unroll import unrolling_iterable
 
 from rupypy import consts
 
@@ -89,8 +88,3 @@ class Interpreter(object):
         raise Exception
     # Handled specially in the main dispatch loop.
     RETURN = UNREACHABLE
-
-
-@specialize.memo()
-def unrolling_xrange(n):
-    return unrolling_iterable(xrange(n))
