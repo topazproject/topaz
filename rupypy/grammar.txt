@@ -35,6 +35,7 @@ multitive: primary MUL_OPER multitive | primary;
 
 primary: "(" expr ")" |
          "if" expr then line* statement? LINE_END? "end" |
+         "while" expr do line* statement? LINE_END? "end" |
          send |
          IDENTIFIER |
          literal;
@@ -42,6 +43,10 @@ primary: "(" expr ")" |
 then: LINE_END |
       "then" |
       LINE_END "then";
+
+do: LINE_END |
+    "do" |
+    LINE_END "do";
 
 send: operation send_args;
 

@@ -18,3 +18,8 @@ class TestIntObject(object):
         space.execute("puts 1 != 1")
         out, err = capfd.readouterr()
         assert out == "false\n"
+
+    def test_less(self, space, capfd):
+        space.execute("puts 1 < 2")
+        out, err = capfd.readouterr()
+        assert out == "true\n"

@@ -76,6 +76,25 @@ class If(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
         ctx.patch_jump(else_pos)
 
+class While(Node):
+    def __init__(self, cond, body):
+        self.cond = cond
+        self.body = body
+
+    def compile(self, ctx):
+        start_pos = ctx.get_pos()
+        self.cond.compile(ctx)
+        jump_pos = ctx.get_pos()
+        ctx.emit(consts.JUMP_IF_FALSE, 0)
+        self.body.compile(ctx)
+        # The body leaves an extra item on the stack, discard it.
+        ctx.emit(consts.DISCARD_TOP)
+        ctx.emit(consts.JUMP, start_pos)
+        ctx.patch_jump(jump_pos)
+        # For now, while always returns a nil, eventually it can also return a
+        # value from a break
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
 class BinOp(Node):
     def __init__(self, op, left, right):
         self.op = op

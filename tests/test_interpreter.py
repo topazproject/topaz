@@ -37,3 +37,21 @@ class TestInterpreter(object):
         space.execute("x = if 3 then end; puts x")
         out, err = capfd.readouterr()
         assert out == "nil\n"
+
+    def test_while(self, space, capfd):
+        space.execute("""
+        i = 0
+        while i < 1
+            puts i
+            i = i + 1
+        end
+        """)
+        out, err = capfd.readouterr()
+        assert out == "0\n"
+
+        space.execute("""
+        x = while false do end
+        puts x
+        """)
+        out, err = capfd.readouterr()
+        assert out == "nil\n"

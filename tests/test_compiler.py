@@ -200,3 +200,32 @@ class TestCompiler(object):
         LOAD_CONST 3
         RETURN
         """)
+
+    def test_while(self, space):
+        self.assert_compiles(space, "while true do end", """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 9
+        LOAD_CONST 1
+        DISCARD_TOP
+        JUMP 0
+        LOAD_CONST 2
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
+        self.assert_compiles(space, "while true do puts 5 end", """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 13
+        LOAD_SELF
+        LOAD_CONST 1
+        SEND 2 1
+        DISCARD_TOP
+        JUMP 0
+        LOAD_CONST 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)

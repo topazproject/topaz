@@ -1,7 +1,7 @@
 import py
 
-from rupypy.ast import (Main, Block, Statement, Assignment, If, BinOp, Send,
-    Self, Variable, ConstantInt)
+from rupypy.ast import (Main, Block, Statement, Assignment, If, While, BinOp,
+    Send, Self, Variable, ConstantInt)
 
 
 class TestParser(object):
@@ -93,4 +93,38 @@ class TestParser(object):
             Statement(BinOp("!=", ConstantInt(1), ConstantInt(2))),
             Statement(BinOp("<=", ConstantInt(1), ConstantInt(2))),
             Statement(BinOp(">=", ConstantInt(1), ConstantInt(2))),
+        ]))
+
+    def test_while(self, space):
+        expected = Main(Block([
+            Statement(While(Variable("true"), Block([
+                Statement(Send(Self(), "puts", [ConstantInt(5)]))
+            ])))
+        ]))
+        assert space.parse("while true do puts 5 end") == expected
+        assert space.parse("while true do; puts 5 end") == expected
+        assert space.parse("while true; puts 5 end") == expected
+        assert space.parse("while true; end") == Main(Block([
+            Statement(While(Variable("true"), Block([
+                Statement(Variable("nil"))
+            ])))
+        ]))
+
+        res = space.parse("""
+        i = 0
+        while i < 10 do
+            puts i
+            puts 1
+            puts i
+            puts true
+        end
+        """)
+        assert res == Main(Block([
+            Statement(Assignment("i", ConstantInt(0))),
+            Statement(While(BinOp("<", Variable("i"), ConstantInt(10)), Block([
+                Statement(Send(Self(), "puts", [Variable("i")])),
+                Statement(Send(Self(), "puts", [ConstantInt(1)])),
+                Statement(Send(Self(), "puts", [Variable("i")])),
+                Statement(Send(Self(), "puts", [Variable("true")])),
+            ])))
         ]))
