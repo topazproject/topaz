@@ -1,9 +1,16 @@
-from rupypy.module import ClassDef, finalize
+from rupypy.module import ClassDef
 from rupypy.modules.kernel import Kernel
 
 
-@finalize
+class ObjectMetaclass(type):
+    def __new__(cls, name, bases, attrs):
+        new_cls = super(ObjectMetaclass, cls).__new__(cls, name, bases, attrs)
+        if "classdef" in attrs:
+            attrs["classdef"].cls = new_cls
+        return new_cls
+
 class W_Object(object):
+    __metaclass__ = ObjectMetaclass
     _attrs_ = ()
 
     classdef = ClassDef("Object")

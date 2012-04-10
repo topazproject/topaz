@@ -30,10 +30,6 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
     return namespace[orig_func.__name__]
 
 
-def finalize(cls):
-    cls.classdef.cls = cls
-    return cls
-
 class ClassDef(object):
     def __init__(self, name):
         self.name = name

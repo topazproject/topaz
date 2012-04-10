@@ -1,8 +1,7 @@
-from rupypy.module import ClassDef, finalize
+from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 
 
-@finalize
 class W_IntObject(W_Object):
     classdef = ClassDef("Fixnum")
 
