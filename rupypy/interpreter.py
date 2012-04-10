@@ -81,6 +81,15 @@ class Interpreter(object):
         w_res = space.send(w_receiver, bytecode.consts[meth_idx], args_w)
         frame.push(w_res)
 
+    def JUMP(self, space, bytecode, frame, pc, target_pc):
+        return target_pc
+
+    def JUMP_IF_FALSE(self, space, bytecode, frame, pc, target_pc):
+        if space.is_true(frame.pop()):
+            return pc
+        else:
+            return target_pc
+
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
 

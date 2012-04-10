@@ -16,3 +16,12 @@ class TestInterpreter(object):
         space.execute("a = 100; puts a")
         out, err = capfd.readouterr()
         assert out == "100\n"
+
+    def test_if(self, space, capfd):
+        space.execute("if 3 then puts 2 end")
+        out, err = capfd.readouterr()
+        assert out == "2\n"
+
+        space.execute("x = if 3 then 5 end; puts x")
+        out, err = capfd.readouterr()
+        assert out == "5\n"

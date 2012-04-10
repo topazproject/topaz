@@ -84,6 +84,9 @@ class ObjectSpace(object):
 
     # Methods for implementing the language semantics.
 
+    def is_true(self, w_obj):
+        return w_obj.is_true(self)
+
     def getclass(self, w_receiver):
         return w_receiver.getclass(self)
 

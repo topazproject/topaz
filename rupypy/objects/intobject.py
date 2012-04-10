@@ -8,6 +8,9 @@ class W_IntObject(W_Object):
     def __init__(self, intvalue):
         self.intvalue = intvalue
 
+    def is_true(self, space):
+        return True
+
     def int_w(self, space):
         return self.intvalue
 
