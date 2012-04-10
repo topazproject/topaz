@@ -1,3 +1,4 @@
+from pypy.rlib.objectmodel import specialize
 from pypy.tool.cache import Cache
 
 from rupypy.bytecode import CompilerContext
@@ -26,6 +27,7 @@ class ObjectSpace(object):
         self.w_top_self = W_Object()
         self.cache = SpaceCache(self)
 
+    @specialize.memo()
     def fromcache(self, key):
         return self.cache.getorbuild(key)
 

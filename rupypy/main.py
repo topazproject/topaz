@@ -1,9 +1,14 @@
 """rupypy"""
 
+from pypy.rlib.objectmodel import specialize
 from pypy.rlib.streamio import open_file_as_stream
 
 from rupypy.objspace import ObjectSpace
 
+
+@specialize.memo()
+def getspace():
+    return ObjectSpace()
 
 def entry_point(argv):
     if len(argv) != 2:
@@ -16,6 +21,6 @@ def entry_point(argv):
     finally:
         f.close()
 
-    space = ObjectSpace()
+    space = getspace()
     space.execute(source)
     return 0

@@ -46,9 +46,14 @@ class Interpreter(object):
     @specialize.arg(2, 3)
     def run_instr(self, space, name, num_args, bytecode, frame, pc):
         args = ()
-        for i in unrolling_xrange(num_args):
+        if num_args >= 1:
             args += (ord(bytecode.code[pc]),)
             pc += 1
+        if num_args >= 2:
+            args += (ord(bytecode.code[pc]),)
+            pc += 1
+        if num_args >= 3:
+            raise NotImplementedError
 
         method = getattr(self, name)
         res = method(space, bytecode, frame, pc, *args)
