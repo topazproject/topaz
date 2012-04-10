@@ -1,3 +1,4 @@
+from pypy.rlib import jit
 from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
@@ -26,9 +27,17 @@ class Frame(object):
         return self.stack[self.stackpos - 1]
 
 class Interpreter(object):
+    jitdriver = jit.JitDriver(
+        greens = ["pc", "bytecode"],
+        reds = ["self", "frame"],
+    )
+
     def interpret(self, space, frame, bytecode):
         pc = 0
         while True:
+            self.jitdriver.jit_merge_point(
+                self=self, bytecode=bytecode, frame=frame, pc=pc
+            )
             instr = ord(bytecode.code[pc])
             pc += 1
             if instr == consts.RETURN:
@@ -63,6 +72,13 @@ class Interpreter(object):
             pc = res
         return pc
 
+    def jump(self, bytecode, frame, cur_pc, target_pc):
+        if target_pc < cur_pc:
+            self.jitdriver.can_enter_jit(
+                self=self, bytecode=bytecode, frame=frame, pc=target_pc,
+            )
+        return target_pc
+
     def LOAD_SELF(self, space, bytecode, frame, pc):
         frame.push(frame.w_self)
 
@@ -82,13 +98,13 @@ class Interpreter(object):
         frame.push(w_res)
 
     def JUMP(self, space, bytecode, frame, pc, target_pc):
-        return target_pc
+        return self.jump(bytecode, frame, pc, target_pc)
 
     def JUMP_IF_FALSE(self, space, bytecode, frame, pc, target_pc):
         if space.is_true(frame.pop()):
             return pc
         else:
-            return target_pc
+            return self.jump(bytecode, frame, pc, target_pc)
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
