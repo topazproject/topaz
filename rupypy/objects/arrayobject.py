@@ -16,6 +16,10 @@ class W_ArrayObject(W_Object):
             chars.extend(space.liststr_w(w_s))
         return space.newstr(chars)
 
+    @classdef.method("[]", idx=int)
+    def method_subscript(self, space, idx):
+        return self.items_w[idx]
+
     # classdef.app_method("to_s", """
     # def to_s()
     #     result = ""

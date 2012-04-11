@@ -76,14 +76,20 @@ class Transformer(object):
 
         target = self.visit_primary(node.children[0])
         for trailer in node.children[1].children:
-            if len(trailer.children) == 2:
-                args = self.visit_send_args(trailer.children[1])
-            else:
-                args = []
+            node = trailer.children[0]
+            if node.symbol == "attribute":
+                method = node.children[0].children[0].additional_info
+                if len(node.children) == 1:
+                    args = []
+                else:
+                    args = self.visit_send_args(node.children[1])
+            elif node.symbol == "subscript":
+                args = [self.visit_arg(node.children[0])]
+                method = "[]"
             target = Send(
                 target,
-                trailer.children[0].children[0].additional_info,
-                args
+                method,
+                args,
             )
         return target
 

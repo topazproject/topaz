@@ -40,7 +40,9 @@ send: operation send_args |
 
 trailers: trailer >trailers< | trailer;
 
-trailer: ["\."] operation send_args?;
+trailer: attribute | subscript;
+attribute: ["\."] operation send_args?;
+subscript: ["["] arg ["]"];
 
 primary: "(" expr ")" |
          "[" args "]" |

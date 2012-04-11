@@ -153,3 +153,8 @@ class TestParser(object):
                 Array([ConstantInt(3)]),
             ]))
         ]))
+
+    def test_subscript(self, space):
+        assert space.parse("[1][0]") == Main(Block([
+            Statement(Send(Array([ConstantInt(1)]), "[]", [ConstantInt(0)]))
+        ]))

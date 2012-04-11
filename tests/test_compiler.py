@@ -255,3 +255,15 @@ class TestCompiler(object):
         RETURN
         """)
         assert bc.max_stackdepth == 3
+
+    def test_subscript(self, space):
+        bc = self.assert_compiles(space, "[1][0]", """
+        LOAD_CONST 0
+        BUILD_ARRAY 1
+        LOAD_CONST 1
+        SEND 2 1
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
