@@ -6,11 +6,15 @@ class TestInterpreter(object):
         w_res = space.execute("1 + 1")
         assert isinstance(w_res, W_TrueObject)
 
-    def test_send(self, space, capfd):
+    def test_global_send(self, space, capfd):
         space.execute("puts 1")
         out, err = capfd.readouterr()
         assert out == "1\n"
         assert not err
+
+    def test_obj_send(self, space):
+        w_res = space.execute("return 1.to_s")
+        assert space.str_w(w_res) == "1"
 
     def test_variables(self, space):
         w_res = space.execute("a = 100; return a")
