@@ -1,5 +1,6 @@
 from pypy.rlib import jit
 
+from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 
 
@@ -9,9 +10,12 @@ class VersionTag(object):
 class W_ClassObject(W_Object):
     _immutable_fields_ = ["version?"]
 
-    def __init__(self, name):
-        self.version = VersionTag()
+    classdef = ClassDef("Class", W_Object.classdef)
+
+    def __init__(self, name, superclass):
         self.name = name
+        self.superclass = superclass
+        self.version = VersionTag()
         self.methods_w = {}
 
     def mutated(self):
@@ -22,8 +26,18 @@ class W_ClassObject(W_Object):
         self.methods_w[name] = method
 
     def find_method(self, space, method):
-        return self._find_method_pure(space, method, self.version)
+        res = self._find_method_pure(space, method, self.version)
+        if res is None:
+            if self.superclass is not None:
+                return self.superclass.find_method(space, method)
+            raise LookupError(method)
+        return res
 
     @jit.elidable
     def _find_method_pure(self, space, method, version):
-        return self.methods_w[method]
+        return self.methods_w.get(method)
+
+
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        return space.newstr([c for c in self.name])

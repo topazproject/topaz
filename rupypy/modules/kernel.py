@@ -6,6 +6,10 @@ from rupypy.module import Module, ModuleDef
 class Kernel(Module):
     moduledef = ModuleDef("Kernel")
 
+    @moduledef.function("class")
+    def function_class(self, space):
+        return space.getclass(self)
+
     @moduledef.function("puts")
     def function_puts(self, space, w_obj):
         if w_obj is space.w_nil:

@@ -5,7 +5,7 @@ from rupypy.objects.objectobject import W_Object
 class W_IntObject(W_Object):
     _immutable_fields_ = ["intvalue"]
 
-    classdef = ClassDef("Fixnum")
+    classdef = ClassDef("Fixnum", W_Object.classdef)
 
     def __init__(self, intvalue):
         self.intvalue = intvalue

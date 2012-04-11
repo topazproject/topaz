@@ -71,8 +71,8 @@ class ObjectSpace(object):
     def newstr(self, chars):
         return W_StringObject(chars)
 
-    def newclass(self, name):
-        return W_ClassObject(name)
+    def newclass(self, name, superclass):
+        return W_ClassObject(name, superclass)
 
 
     def int_w(self, w_obj):

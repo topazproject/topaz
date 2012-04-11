@@ -31,9 +31,10 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
 
 
 class ClassDef(object):
-    def __init__(self, name):
+    def __init__(self, name, superclassdef=None):
         self.name = name
         self.methods = {}
+        self.superclassdef = superclassdef
         self.cls = None
 
     def _freeze_(self):
@@ -69,7 +70,12 @@ class ClassCache(Cache):
     def _build(self, classdef):
         assert classdef.cls is not None, classdef.name
 
-        w_class = self.space.newclass(classdef.name)
+        if classdef.superclassdef is None:
+            superclass = None
+        else:
+            superclass = self.space.getclassobject(classdef.superclassdef)
+
+        w_class = self.space.newclass(classdef.name, superclass)
         for name, (method, argspec) in classdef.methods.iteritems():
             func = generate_wrapper(name, method, argspec, classdef.cls)
             w_class.add_method(name, func)
