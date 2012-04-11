@@ -16,7 +16,8 @@ main: line* statement? LINE_END? [EOF];
 
 line: statement? LINE_END;
 
-statement: expr;
+statement: "return" expr |
+            expr;
 
 expr: assignment |
       arg;

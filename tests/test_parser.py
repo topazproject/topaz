@@ -1,7 +1,7 @@
 import py
 
-from rupypy.ast import (Main, Block, Statement, Assignment, If, While, BinOp,
-    Send, Self, Variable, ConstantInt)
+from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Return,
+    BinOp, Send, Self, Variable, ConstantInt)
 
 
 class TestParser(object):
@@ -127,4 +127,9 @@ class TestParser(object):
                 Statement(Send(Self(), "puts", [Variable("i")])),
                 Statement(Send(Self(), "puts", [Variable("true")])),
             ])))
+        ]))
+
+    def test_return(self, space):
+        assert space.parse("return 4") == Main(Block([
+            Return(ConstantInt(4))
         ]))

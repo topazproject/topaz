@@ -55,3 +55,7 @@ class TestInterpreter(object):
         """)
         out, err = capfd.readouterr()
         assert out == "nil\n"
+
+    def test_return(self, space):
+        w_res = space.execute("return 4")
+        assert space.int_w(w_res) == 4

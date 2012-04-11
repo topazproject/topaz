@@ -95,6 +95,14 @@ class While(Node):
         # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
+class Return(Node):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def compile(self, ctx):
+        self.expr.compile(ctx)
+        ctx.emit(consts.RETURN)
+
 class BinOp(Node):
     def __init__(self, op, left, right):
         self.op = op

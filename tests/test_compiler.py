@@ -229,3 +229,13 @@ class TestCompiler(object):
         LOAD_CONST 4
         RETURN
         """)
+
+    def test_return(self, space):
+        self.assert_compiles(space, "return 4", """
+        LOAD_CONST 0
+        RETURN
+        DISCARD_TOP # this is unreachable
+
+        LOAD_CONST 1
+        RETURN
+        """)
