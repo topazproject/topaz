@@ -15,3 +15,12 @@ class W_ArrayObject(W_Object):
             w_s = space.send(w_item, space.newsymbol("to_s"))
             chars.extend(space.liststr_w(w_s))
         return space.newstr(chars)
+
+    # classdef.app_method("to_s", """
+    # def to_s()
+    #     result = ""
+    #     self.each do |o|
+    #         result << o.to_s
+    #     end
+    #     return result
+    # """)
