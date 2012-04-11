@@ -28,11 +28,6 @@ class Transformer(object):
             stmts.append(self.visit_stmt(node))
         return Block(stmts)
 
-    def visit_line(self, node):
-        if len(node.children) == 1:
-            return None
-        return self.visit_stmt(node.children[0].children[0])
-
     def visit_stmt(self, node):
         if len(node.children) == 2:
             return Return(self.visit_expr(node.children[1]))
@@ -60,10 +55,6 @@ class Transformer(object):
             return self.visit_send(node)
         elif symname == "primary":
             return self.visit_primary(node)
-        elif symname == "literal":
-            return self.visit_literal(node)
-        elif symname == "INTEGER":
-            return self.visit_integer(nodec)
         raise NotImplementedError(symname)
 
     def visit_subexpr(self, node):
@@ -74,9 +65,6 @@ class Transformer(object):
         )
 
     def visit_send(self, node):
-        if len(node.children) == 1:
-            return self.visit_primary(node.children[0])
-
         if node.children[0].symbol != "primary":
             return Send(
                 Self(),
@@ -101,15 +89,10 @@ class Transformer(object):
         return [self.visit_arg(n) for n in node.children[0].children]
 
     def visit_primary(self, node):
-        if node.children[0].symbol == "atom":
-            node = node.children[0]
-
         if len(node.children) == 1:
             symname = node.children[0].symbol
             if symname == "literal":
                 return self.visit_literal(node.children[0])
-            elif symname == "send":
-                return self.visit_send(node.children[0])
             elif symname == "IDENTIFIER":
                 return Variable(node.children[0].additional_info)
         elif node.children[0].additional_info == "(":
