@@ -35,7 +35,7 @@ class W_ClassObject(W_Object):
 
     @jit.elidable
     def _find_method_pure(self, space, method, version):
-        return self.methods_w.get(method)
+        return self.methods_w.get(method, None)
 
 
     @classdef.method("to_s")

@@ -40,7 +40,10 @@ class Block(Node):
         for idx, stmt in enumerate(self.stmts):
             stmt.compile(ctx)
 
-class Statement(Node):
+class BaseStatement(Node):
+    pass
+
+class Statement(BaseStatement):
     def __init__(self, expr):
         self.expr = expr
         self.dont_pop = False
@@ -95,7 +98,7 @@ class While(Node):
         # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
-class Return(Node):
+class Return(BaseStatement):
     def __init__(self, expr):
         self.expr = expr
 

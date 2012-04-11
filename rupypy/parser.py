@@ -20,6 +20,8 @@ class Transformer(object):
         if end_idx == -1:
             end_idx = len(node.children)
         stmts = []
+
+        assert end_idx >= 0
         for node in node.children[start_idx:end_idx]:
             if node.symbol == "line":
                 if not node.children:
