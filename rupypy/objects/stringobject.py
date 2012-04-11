@@ -7,3 +7,6 @@ class W_StringObject(W_Object):
 
     def str_w(self, space):
         return "".join(self.chars)
+
+    def liststr_w(self, space):
+        return self.chars

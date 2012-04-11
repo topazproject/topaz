@@ -43,6 +43,7 @@ trailers: trailer >trailers< | trailer;
 trailer: ["\."] operation send_args?;
 
 primary: "(" expr ")" |
+         "[" args "]" |
          "if" expr then line* statement? [LINE_END]? "end" |
          "while" expr do line* statement? [LINE_END]? "end" |
          IDENTIFIER |

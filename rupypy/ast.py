@@ -148,6 +148,16 @@ class Variable(Node):
         else:
             Send(Self(), self.name, []).compile(ctx)
 
+class Array(Node):
+    def __init__(self, items):
+        self.items = items
+
+    def compile(self, ctx):
+        for item in self.items:
+            item.compile(ctx)
+        ctx.emit(consts.BUILD_ARRAY, len(self.items))
+
+
 class ConstantInt(Node):
     def __init__(self, intvalue):
         self.intvalue = intvalue

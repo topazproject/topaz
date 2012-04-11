@@ -1,7 +1,7 @@
 import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Return,
-    BinOp, Send, Self, Variable, ConstantInt)
+    BinOp, Send, Self, Variable, Array, ConstantInt)
 
 
 class TestParser(object):
@@ -135,4 +135,21 @@ class TestParser(object):
     def test_return(self, space):
         assert space.parse("return 4") == Main(Block([
             Return(ConstantInt(4))
+        ]))
+
+    def test_array(self, space):
+        assert space.parse("[1, 2, 3]") == Main(Block([
+            Statement(Array([
+                ConstantInt(1),
+                ConstantInt(2),
+                ConstantInt(3),
+            ]))
+        ]))
+
+        assert space.parse("[[1], [2], [3]]") == Main(Block([
+            Statement(Array([
+                Array([ConstantInt(1)]),
+                Array([ConstantInt(2)]),
+                Array([ConstantInt(3)]),
+            ]))
         ]))

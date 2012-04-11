@@ -4,6 +4,7 @@ from pypy.tool.cache import Cache
 from rupypy.bytecode import CompilerContext
 from rupypy.interpreter import Interpreter, Frame
 from rupypy.module import ClassCache
+from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.intobject import W_IntObject
@@ -71,6 +72,9 @@ class ObjectSpace(object):
     def newstr(self, chars):
         return W_StringObject(chars)
 
+    def newarray(self, items_w):
+        return W_ArrayObject(items_w)
+
     def newclass(self, name, superclass):
         return W_ClassObject(name, superclass)
 
@@ -82,7 +86,12 @@ class ObjectSpace(object):
         return w_obj.symbol_w(self)
 
     def str_w(self, w_obj):
+        """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
+
+    def liststr_w(self, w_obj):
+        """Unpacks a string object as an rlist of chars"""
+        return w_obj.liststr_w(self)
 
     # Methods for implementing the language semantics.
 

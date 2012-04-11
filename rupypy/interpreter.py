@@ -99,6 +99,13 @@ class Interpreter(object):
         frame.locals_w[idx] = frame.peek()
 
     @jit.unroll_safe
+    def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
+        items_w = [None] * n_items
+        for i in xrange(n_items - 1, -1, -1):
+            items_w[i] = frame.pop()
+        frame.push(space.newarray(items_w))
+
+    @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = [frame.pop() for _ in range(num_args)]
         w_receiver = frame.pop()

@@ -21,6 +21,8 @@ class CompilerContext(object):
             stack_effect = consts.BYTECODE_STACK_EFFECT[c]
             if stack_effect == consts.SEND_EFFECT:
                 stack_effect = -ord(bc[i+1])
+            elif stack_effect == consts.ARRAY_EFFECT:
+                stack_effect = -ord(bc[i]) + 1
             i += consts.BYTECODE_NUM_ARGS[c]
             current_stackdepth += stack_effect
             max_stackdepth = max(max_stackdepth, current_stackdepth)

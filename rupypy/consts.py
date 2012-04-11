@@ -4,6 +4,7 @@ from pypy.rlib.unroll import unrolling_iterable
 
 
 SEND_EFFECT = 0xFF
+ARRAY_EFFECT = 0xFE
 
 # Name, number of arguments, stack effect
 BYTECODES = [
@@ -12,6 +13,8 @@ BYTECODES = [
 
     ("LOAD_LOCAL", 1, +1),
     ("STORE_LOCAL", 1, 0),
+
+    ("BUILD_ARRAY", 1, ARRAY_EFFECT),
 
     ("SEND", 2, SEND_EFFECT),
 

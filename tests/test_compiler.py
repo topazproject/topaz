@@ -239,3 +239,19 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
+
+    def test_array(self, space):
+        bc = self.assert_compiles(space, "[[1], [2], [3]]", """
+        LOAD_CONST 0
+        BUILD_ARRAY 1
+        LOAD_CONST 1
+        BUILD_ARRAY 1
+        LOAD_CONST 2
+        BUILD_ARRAY 1
+        BUILD_ARRAY 3
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        assert bc.max_stackdepth == 3
