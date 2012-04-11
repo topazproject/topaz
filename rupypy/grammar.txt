@@ -1,4 +1,4 @@
-# compstmt: line* statement? LINE_END?;
+# compstmt: line* statement? [LINE_END]?;
 # unfortunately you need to inline this anywhere you want it because ebnf parse
 # doesn't support epsilon productions.
 
@@ -12,9 +12,9 @@ CMP_OPER: "(!=)|(==)|(<=)|(>=)|<|>";
 ADD_OPER: "[+-]";
 MUL_OPER: "[*]";
 
-main: line* statement? LINE_END? [EOF];
+main: line* statement? [LINE_END]? [EOF];
 
-line: statement? LINE_END;
+line: statement? [LINE_END];
 
 statement: "return" expr |
             expr;
@@ -30,31 +30,36 @@ rhs: arg;
 
 arg: comparison;
 
-comparison: additive CMP_OPER comparison | additive;
-additive: multitive ADD_OPER additive | multitive;
-multitive: primary MUL_OPER multitive | primary;
+comparison: additive CMP_OPER comparison | <additive>;
+additive: multitive ADD_OPER additive | <multitive>;
+multitive: send MUL_OPER multitive | <send>;
+
+send: operation send_args |
+      primary trailers |
+      <primary>;
+
+trailers: trailer >trailers< | trailer;
+
+trailer: ["\."] operation send_args?;
 
 primary: "(" expr ")" |
-         "if" expr then line* statement? LINE_END? "end" |
-         "while" expr do line* statement? LINE_END? "end" |
-         send |
+         "if" expr then line* statement? [LINE_END]? "end" |
+         "while" expr do line* statement? [LINE_END]? "end" |
          IDENTIFIER |
          literal;
 
-then: LINE_END |
+then: [LINE_END] |
       "then" |
-      LINE_END "then";
+      [LINE_END] "then";
 
-do: LINE_END |
+do: [LINE_END] |
     "do" |
-    LINE_END "do";
-
-send: operation send_args;
+    [LINE_END] "do";
 
 operation: IDENTIFIER;
 
 send_args: args;
 
-args: arg "," args | arg;
+args: arg [","] >args< | arg;
 
 literal: INTEGER;
