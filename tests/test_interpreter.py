@@ -12,49 +12,41 @@ class TestInterpreter(object):
         assert out == "1\n"
         assert not err
 
-    def test_variables(self, space, capfd):
-        space.execute("a = 100; puts a")
-        out, err = capfd.readouterr()
-        assert out == "100\n"
+    def test_variables(self, space):
+        w_res = space.execute("a = 100; return a")
+        assert space.int_w(w_res) == 100
 
-    def test_if(self, space, capfd):
-        space.execute("if 3 then puts 2 end")
-        out, err = capfd.readouterr()
-        assert out == "2\n"
+    def test_if(self, space):
+        w_res = space.execute("if 3 then return 2 end")
+        assert space.int_w(w_res) == 2
 
-        space.execute("x = if 3 then 5 end; puts x")
-        out, err = capfd.readouterr()
-        assert out == "5\n"
+        w_res = space.execute("x = if 3 then 5 end; return x")
+        assert space.int_w(w_res) == 5
 
-        space.execute("x = if false then 5 end; puts x")
-        out, err = capfd.readouterr()
-        assert out == "nil\n"
+        w_res = space.execute("x = if false then 5 end; return x")
+        assert w_res is space.w_nil
 
-        space.execute("x = if nil then 5 end; puts x")
-        out, err = capfd.readouterr()
-        assert out == "nil\n"
+        w_res = space.execute("x = if nil then 5 end; return x")
+        assert w_res is space.w_nil
 
-        space.execute("x = if 3 then end; puts x")
-        out, err = capfd.readouterr()
-        assert out == "nil\n"
+        w_res = space.execute("x = if 3 then end; return x")
+        assert w_res is space.w_nil
 
-    def test_while(self, space, capfd):
-        space.execute("""
+    def test_while(self, space):
+        w_res = space.execute("""
         i = 0
         while i < 1
-            puts i
             i = i + 1
         end
+        return i
         """)
-        out, err = capfd.readouterr()
-        assert out == "0\n"
+        assert space.int_w(w_res) == 1
 
-        space.execute("""
+        w_res = space.execute("""
         x = while false do end
-        puts x
+        return x
         """)
-        out, err = capfd.readouterr()
-        assert out == "nil\n"
+        assert w_res is space.w_nil
 
     def test_return(self, space):
         w_res = space.execute("return 4")

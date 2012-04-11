@@ -1,30 +1,24 @@
 class TestIntObject(object):
-    def test_multiplication(self, space, capfd):
-        space.execute("puts 2 * 3")
-        out, err = capfd.readouterr()
-        assert out == "6\n"
+    def test_multiplication(self, space):
+        w_res = space.execute("return 2 * 3")
+        assert space.int_w(w_res) == 6
 
-    def test_subtraction(self, space, capfd):
-        space.execute("puts 2 - 3")
-        out, err = capfd.readouterr()
-        assert out == "-1\n"
+    def test_subtraction(self, space):
+        w_res = space.execute("return 2 - 3")
+        assert space.int_w(w_res) == -1
 
-    def test_equal(self, space, capfd):
-        space.execute("puts 1 == 1")
-        out, err = capfd.readouterr()
-        assert out == "true\n"
+    def test_equal(self, space):
+        w_res = space.execute("return 1 == 1")
+        assert w_res is space.w_true
 
-    def test_not_equal(self, space, capfd):
-        space.execute("puts 1 != 1")
-        out, err = capfd.readouterr()
-        assert out == "false\n"
+    def test_not_equal(self, space):
+        w_res = space.execute("return 1 != 1")
+        assert w_res is space.w_false
 
-    def test_less(self, space, capfd):
-        space.execute("puts 1 < 2")
-        out, err = capfd.readouterr()
-        assert out == "true\n"
+    def test_less(self, space):
+        w_res = space.execute("return 1 < 2")
+        assert w_res is space.w_true
 
-    def test_greater(self, space, capfd):
-        space.execute("puts 1 > 2")
-        out, err = capfd.readouterr()
-        assert out == "false\n"
+    def test_greater(self, space):
+        w_res = space.execute("return 1 > 2")
+        assert w_res is space.w_false
