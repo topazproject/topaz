@@ -1,3 +1,4 @@
+from pypy.rlib import jit
 from pypy.tool.cache import Cache
 
 from rupypy.interpreter import Interpreter, Frame
@@ -91,6 +92,7 @@ class Function(BaseFunction):
         self.name = name
         self.bytecode = bytecode
 
+    @jit.unroll_safe
     def call(self, space, w_receiver, args_w):
         frame = Frame(self.bytecode, w_receiver)
         # XXX arg count checking
