@@ -86,6 +86,8 @@ class Transformer(object):
             elif node.symbol == "subscript":
                 args = [self.visit_arg(node.children[0])]
                 method = "[]"
+            else:
+                raise NotImplementedError
             target = Send(
                 target,
                 method,
