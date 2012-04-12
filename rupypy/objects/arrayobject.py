@@ -1,9 +1,9 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_BaseObject
 
 
-class W_ArrayObject(W_Object):
-    classdef = ClassDef("Array", W_Object.classdef)
+class W_ArrayObject(W_BaseObject):
+    classdef = ClassDef("Array", W_BaseObject.classdef)
 
     def __init__(self, items_w):
         self.items_w = items_w

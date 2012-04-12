@@ -9,7 +9,7 @@ class ObjectMetaclass(type):
             attrs["classdef"].cls = new_cls
         return new_cls
 
-class W_Object(object):
+class W_BaseObject(object):
     __metaclass__ = ObjectMetaclass
     _attrs_ = ()
 
@@ -19,5 +19,25 @@ class W_Object(object):
     def getclass(self, space):
         return space.getclassobject(self.classdef)
 
+    def add_method(self, space, name, function):
+        # Not legal, I don't think
+        raise NotImplementedError
+
     def is_true(self, space):
         return True
+
+
+class W_Object(W_BaseObject):
+    def __init__(self):
+        self.klass = None
+
+    def getclass(self, space):
+        if self.klass is None:
+            return W_BaseObject.getclass(self, space)
+        return self.klass
+
+    def add_method(self, space, name, function):
+        if self.klass is None:
+            w_current_class = self.getclass(space)
+            self.klass = space.newclass(w_current_class.name, w_current_class)
+        self.klass.add_method(space, name, function)

@@ -48,6 +48,7 @@ primary: "(" expr ")" |
          "[" args "]" |
          "if" expr then line* statement? [LINE_END]? "end" |
          "while" expr do line* statement? [LINE_END]? "end" |
+         "def" IDENTIFIER argdecl line* statement? [LINE_END]? "end" |
          IDENTIFIER |
          literal;
 
@@ -58,6 +59,11 @@ then: [LINE_END] |
 do: [LINE_END] |
     "do" |
     [LINE_END] "do";
+
+argdecl: ["("] arglist? [")"] |
+         arglist? [LINE_END];
+
+arglist: IDENTIFIER [","] >arglist< | IDENTIFIER;
 
 operation: IDENTIFIER;
 

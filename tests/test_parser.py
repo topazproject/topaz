@@ -1,7 +1,7 @@
 import py
 
-from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Return,
-    BinOp, Send, Self, Variable, Array, ConstantInt)
+from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Function,
+    Return, BinOp, Send, Self, Variable, Array, ConstantInt)
 
 
 class TestParser(object):
@@ -157,4 +157,45 @@ class TestParser(object):
     def test_subscript(self, space):
         assert space.parse("[1][0]") == Main(Block([
             Statement(Send(Array([ConstantInt(1)]), "[]", [ConstantInt(0)]))
+        ]))
+
+    def test_def(self, space):
+        assert space.parse("def f() end") == Main(Block([
+            Statement(Function("f", [], Block([])))
+        ]))
+
+        assert space.parse("def f(a, b) a + b end") == Main(Block([
+            Statement(Function("f", ["a", "b"], Block([
+                Statement(BinOp("+", Variable("a"), Variable("b")))
+            ])))
+        ]))
+
+        r = space.parse("""
+        def f(a)
+            puts a
+            puts a
+            puts a
+        end
+        """)
+        assert r == Main(Block([
+            Statement(Function("f", ["a"], Block([
+                Statement(Send(Self(), "puts", [Variable("a")])),
+                Statement(Send(Self(), "puts", [Variable("a")])),
+                Statement(Send(Self(), "puts", [Variable("a")])),
+            ])))
+        ]))
+
+        assert space.parse("x = def f() end") == Main(Block([
+            Statement(Assignment("x", Function("f", [], Block([]))))
+        ]))
+
+        r = space.parse("""
+        def f a, b
+            a + b
+        end
+        """)
+        assert r == Main(Block([
+            Statement(Function("f", ["a", "b"], Block([
+                Statement(BinOp("+", Variable("a"), Variable("b")))
+            ])))
         ]))

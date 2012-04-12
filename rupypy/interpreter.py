@@ -105,6 +105,13 @@ class Interpreter(object):
             items_w[i] = frame.pop()
         frame.push(space.newarray(items_w))
 
+    def DEFINE_FUNCTION(self, space, bytecode, frame, pc):
+        w_code = frame.pop()
+        w_name = frame.pop()
+        func = space.newfunction(w_name, w_code)
+        frame.w_self.add_method(space, space.symbol_w(w_name), func)
+        frame.push(space.w_nil)
+
     @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = [frame.pop() for _ in range(num_args)]

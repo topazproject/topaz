@@ -1,11 +1,11 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_BaseObject
 
 
 class W_IntObject(W_Object):
     _immutable_fields_ = ["intvalue"]
 
-    classdef = ClassDef("Fixnum", W_Object.classdef)
+    classdef = ClassDef("Fixnum", W_BaseObject.classdef)
 
     def __init__(self, intvalue):
         self.intvalue = intvalue

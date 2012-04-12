@@ -1,6 +1,7 @@
 from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
+from rupypy.bytecode import CompilerContext
 
 
 class Node(object):
@@ -97,6 +98,25 @@ class While(Node):
         # For now, while always returns a nil, eventually it can also return a
         # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+class Function(Node):
+    def __init__(self, name, args, body):
+        self.name = name
+        self.args = args
+        self.body = body
+
+    def compile(self, ctx):
+        function_ctx = CompilerContext(ctx.space)
+        for name in self.args:
+            function_ctx.create_local(name)
+        self.body.compile(function_ctx)
+        function_ctx.emit(consts.RETURN)
+        bytecode = function_ctx.create_bytecode()
+
+        ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bytecode)))
+        ctx.emit(consts.DEFINE_FUNCTION)
+
 
 class Return(BaseStatement):
     def __init__(self, expr):

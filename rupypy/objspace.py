@@ -3,10 +3,11 @@ from pypy.tool.cache import Cache
 
 from rupypy.bytecode import CompilerContext
 from rupypy.interpreter import Interpreter, Frame
-from rupypy.module import ClassCache
+from rupypy.module import ClassCache, Function
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
+from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.objectobject import W_Object
@@ -78,6 +79,14 @@ class ObjectSpace(object):
     def newclass(self, name, superclass):
         return W_ClassObject(name, superclass)
 
+    def newcode(self, bytecode):
+        return W_CodeObject(bytecode)
+
+    def newfunction(self, w_name, w_code):
+        name = self.symbol_w(w_name)
+        assert isinstance(w_code, W_CodeObject)
+        bytecode = w_code.bytecode
+        return Function(name, bytecode)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
@@ -107,6 +116,10 @@ class ObjectSpace(object):
     def send(self, w_receiver, w_method, args_w=None):
         if args_w is None:
             args_w = []
+        name = self.symbol_w(w_method)
+
         w_cls = self.getclass(w_receiver)
-        raw_method = w_cls.find_method(self, self.symbol_w(w_method))
-        return raw_method(w_receiver, self, args_w)
+        raw_method = w_cls.find_method(self, name)
+        if raw_method is None:
+            raise LookupError(name)
+        return raw_method.call(self, w_receiver, args_w)

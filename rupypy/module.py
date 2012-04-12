@@ -1,5 +1,7 @@
 from pypy.tool.cache import Cache
 
+from rupypy.interpreter import Interpreter, Frame
+
 
 def generate_wrapper(name, orig_func, argspec, self_cls):
     source = []
@@ -78,5 +80,27 @@ class ClassCache(Cache):
         w_class = self.space.newclass(classdef.name, superclass)
         for name, (method, argspec) in classdef.methods.iteritems():
             func = generate_wrapper(name, method, argspec, classdef.cls)
-            w_class.add_method(name, func)
+            w_class.add_method(self.space, name, BuiltinFunction(func))
         return w_class
+
+class BaseFunction(object):
+    pass
+
+class Function(BaseFunction):
+    def __init__(self, name, bytecode):
+        self.name = name
+        self.bytecode = bytecode
+
+    def call(self, space, w_receiver, args_w):
+        frame = Frame(self.bytecode, w_receiver)
+        # XXX arg count checking
+        for i, w_arg in enumerate(args_w):
+            frame.locals_w[i] = w_arg
+        return Interpreter().interpret(space, frame, self.bytecode)
+
+class BuiltinFunction(BaseFunction):
+    def __init__(self, func):
+        self.func = func
+
+    def call(self, space, w_receiver, args_w):
+        return self.func(w_receiver, space, args_w)

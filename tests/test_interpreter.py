@@ -59,3 +59,15 @@ class TestInterpreter(object):
     def test_array(self, space):
         w_res = space.execute("return [[1], [2], [3]]")
         assert [[space.int_w(w_y) for w_y in w_x.items_w] for w_x in w_res.items_w] == [[1], [2], [3]]
+
+    def test_def_function(self, space):
+        w_res = space.execute("return def f() end")
+        assert w_res is space.w_nil
+
+        w_res = space.execute("""
+        def f(a, b)
+            a + b
+        end
+        return f 1, 2
+        """)
+        assert space.int_w(w_res) == 3

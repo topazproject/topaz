@@ -16,6 +16,8 @@ BYTECODES = [
 
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
 
+    ("DEFINE_FUNCTION", 0, -1),
+
     ("SEND", 2, SEND_EFFECT),
 
     ("JUMP", 1, 0),

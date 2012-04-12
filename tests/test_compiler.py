@@ -5,6 +5,10 @@ from rupypy.objects.boolobject import W_TrueObject
 class TestCompiler(object):
     def assert_compiles(self, space, source, expected_bytecode_str):
         bc = space.compile(source)
+        self.assert_compiled(bc, expected_bytecode_str)
+        return bc
+
+    def assert_compiled(self, bc, expected_bytecode_str):
         expected = []
         for line in expected_bytecode_str.splitlines():
             if "#" in line:
@@ -24,7 +28,6 @@ class TestCompiler(object):
                 i += 1
             actual.append(line)
         assert actual == expected
-        return bc
 
     def test_int_constant(self, space):
         bc = self.assert_compiles(space, "1", """
@@ -264,5 +267,38 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 3
+        RETURN
+        """)
+
+    def test_def_function(self, space):
+        bc = self.assert_compiles(space, "def f() end", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts[1].bytecode, """
+        LOAD_CONST 0
+        RETURN
+        """)
+
+        bc = self.assert_compiles(space, "def f(a, b) a + b end", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts[1].bytecode, """
+        LOAD_LOCAL 0
+        LOAD_LOCAL 1
+        SEND 0 1
         RETURN
         """)
