@@ -11,7 +11,10 @@ class CompilerContext(object):
 
     def create_bytecode(self):
         bc = "".join(self.data)
-        return Bytecode(bc, self.count_stackdepth(bc), self.consts[:], self.locals)
+        locs = [None] * len(self.locals)
+        for name, pos in self.locals.iteritems():
+            locs[pos] = name
+        return Bytecode(bc, self.count_stackdepth(bc), self.consts[:], locs)
 
     def count_stackdepth(self, bc):
         i = 0
@@ -64,7 +67,7 @@ class CompilerContext(object):
 
 
 class Bytecode(object):
-    _immutable_fields_ = ["code", "consts[*]"]
+    _immutable_fields_ = ["code", "consts[*]", "max_stackdepth", "locals[*]"]
 
     def __init__(self, code, max_stackdepth, consts, locals):
         self.code = code

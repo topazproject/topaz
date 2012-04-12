@@ -5,7 +5,7 @@ from rupypy import consts
 
 
 class Frame(object):
-    _virtualizable2_ = ["locals_w[*]", "stack[*]", "stackpos"]
+    _virtualizable2_ = ["locals_w[*]", "stack[*]", "stackpos", "w_self"]
 
     def __init__(self, bytecode, w_self):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
@@ -32,11 +32,15 @@ class Frame(object):
         assert stackpos >= 0
         return self.stack[stackpos]
 
+def get_printable_location(pc, bytecode):
+    return consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
+
 class Interpreter(object):
     jitdriver = jit.JitDriver(
         greens = ["pc", "bytecode"],
         reds = ["self", "frame"],
         virtualizables = ["frame"],
+        get_printable_location=get_printable_location,
     )
 
     def interpret(self, space, frame, bytecode):
@@ -87,7 +91,9 @@ class Interpreter(object):
         return target_pc
 
     def LOAD_SELF(self, space, bytecode, frame, pc):
-        frame.push(frame.w_self)
+        w_self = frame.w_self
+        jit.promote(space.getclass(w_self))
+        frame.push(w_self)
 
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
         frame.push(bytecode.consts[idx])

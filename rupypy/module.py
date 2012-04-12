@@ -88,6 +88,8 @@ class BaseFunction(object):
     pass
 
 class Function(BaseFunction):
+    _immutable_fields_ = ["bytecode"]
+
     def __init__(self, name, bytecode):
         self.name = name
         self.bytecode = bytecode
@@ -101,6 +103,8 @@ class Function(BaseFunction):
         return Interpreter().interpret(space, frame, self.bytecode)
 
 class BuiltinFunction(BaseFunction):
+    _immutable_fields_ = ["func"]
+
     def __init__(self, func):
         self.func = func
 

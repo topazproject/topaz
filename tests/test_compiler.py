@@ -115,7 +115,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        assert bc.locals == {"a": 0}
+        assert bc.locals == ["a"]
 
     def test_load_var(self, space):
         bc = self.assert_compiles(space, "a", """
@@ -125,7 +125,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
-        assert bc.locals == {}
+        assert bc.locals == []
         bc = self.assert_compiles(space, "a = 3; a", """
         LOAD_CONST 0
         STORE_LOCAL 0
@@ -135,7 +135,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
-        assert bc.locals == {"a": 0}
+        assert bc.locals == ["a"]
 
     def test_if(self, space):
         self.assert_compiles(space, "if 3 then puts 2 end", """
