@@ -167,11 +167,11 @@ class TestCompiler(object):
         JUMP_IF_FALSE 8
         LOAD_CONST 1
         JUMP 10
-        LOAD_CONST 2
+        LOAD_CONST 1
         STORE_LOCAL 0
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
@@ -184,11 +184,10 @@ class TestCompiler(object):
         LOAD_CONST 2
         DISCARD_TOP
 
-        # This will be LOAD_CONST 1 once we reuse constants
-        LOAD_CONST 3
+        LOAD_CONST 1
         RETURN
         """)
-        assert bc.consts == [space.w_false, space.w_true, space.w_nil, space.w_true]
+        assert bc.consts == [space.w_false, space.w_true, space.w_nil]
 
     def test_comparison(self, space):
         self.assert_compiles(space, "1 == 1", """
@@ -208,10 +207,10 @@ class TestCompiler(object):
         LOAD_CONST 1
         DISCARD_TOP
         JUMP 0
-        LOAD_CONST 2
+        LOAD_CONST 1
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 0
         RETURN
         """)
 
@@ -226,7 +225,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         DISCARD_TOP
 
-        LOAD_CONST 4
+        LOAD_CONST 0
         RETURN
         """)
 

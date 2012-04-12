@@ -6,6 +6,7 @@ class CompilerContext(object):
         self.space = space
         self.data = []
         self.consts = []
+        self.const_positions = {}
         self.locals = {}
 
     def create_bytecode(self):
@@ -50,9 +51,10 @@ class CompilerContext(object):
         return name in self.locals
 
     def create_const(self, w_obj):
-        i = len(self.consts)
-        self.consts.append(w_obj)
-        return i
+        if w_obj not in self.const_positions:
+            self.const_positions[w_obj] = len(self.consts)
+            self.consts.append(w_obj)
+        return self.const_positions[w_obj]
 
     def create_int_const(self, intvalue):
         return self.create_const(self.space.newint(intvalue))
