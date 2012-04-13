@@ -15,7 +15,7 @@ class W_IntObject(W_BaseObject):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr([x for x in str(self.intvalue)])
+        return space.newstr_fromstr(str(self.intvalue))
 
     @classdef.method("+", other=int)
     def method_add(self, space, other):

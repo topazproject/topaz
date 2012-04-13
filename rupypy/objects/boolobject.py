@@ -7,7 +7,7 @@ class W_TrueObject(W_Object):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr(["t", "r", "u", "e"])
+        return space.newstr_fromstr("true")
 
 class W_FalseObject(W_Object):
     classdef = ClassDef("FalseClass")
@@ -17,4 +17,4 @@ class W_FalseObject(W_Object):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr(["f", "a", "l", "s", "e"])
+        return space.newstr_fromstr("false")

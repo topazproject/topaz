@@ -10,4 +10,4 @@ class W_NilObject(W_Object):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr([])
+        return space.newstr_fromstr("")

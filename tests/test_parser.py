@@ -1,7 +1,7 @@
 import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Function,
-    Return, BinOp, Send, Self, Variable, Array, ConstantInt)
+    Return, BinOp, Send, Self, Variable, Array, ConstantInt, ConstantString)
 
 
 class TestParser(object):
@@ -14,6 +14,7 @@ class TestParser(object):
     def test_multi_term_expr(self, space):
         assert space.parse("1 + 2 * 3") == Main(Block([Statement(BinOp("+", ConstantInt(1), BinOp("*", ConstantInt(2), ConstantInt(3))))]))
         assert space.parse("1 * 2 + 3") == Main(Block([Statement(BinOp("+", BinOp("*", ConstantInt(1), ConstantInt(2)), ConstantInt(3)))]))
+        assert space.parse("2 << 3 * 4") == Main(Block([Statement(BinOp("<<", ConstantInt(2), BinOp("*", ConstantInt(3), ConstantInt(4))))]))
 
     def test_parens(self, space):
         assert space.parse("1 * (2 - 3)") == Main(Block([Statement(BinOp("*", ConstantInt(1), BinOp("-", ConstantInt(2), ConstantInt(3))))]))
@@ -198,4 +199,12 @@ class TestParser(object):
             Statement(Function("f", ["a", "b"], Block([
                 Statement(BinOp("+", Variable("a"), Variable("b")))
             ])))
+        ]))
+
+    def test_string(self, space):
+        assert space.parse('"abc"') == Main(Block([
+            Statement(ConstantString("abc"))
+        ]))
+        assert space.parse('"abc".size') == Main(Block([
+            Statement(Send(ConstantString("abc"), "size", []))
         ]))

@@ -302,3 +302,14 @@ class TestCompiler(object):
         SEND 0 1
         RETURN
         """)
+
+
+    def test_string(self, space):
+        bc = self.assert_compiles(space, '"abc"', """
+        LOAD_CONST 0
+        COPY_STRING
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)

@@ -39,4 +39,4 @@ class W_ClassObject(W_BaseObject):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr([c for c in self.name])
+        return space.newstr_fromstr(self.name)

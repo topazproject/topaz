@@ -111,6 +111,13 @@ class Interpreter(object):
             items_w[i] = frame.pop()
         frame.push(space.newarray(items_w))
 
+    def COPY_STRING(self, space, bytecode, frame, pc):
+        from rupypy.objects.stringobject import W_StringObject
+
+        w_s = frame.pop()
+        assert isinstance(w_s, W_StringObject)
+        frame.push(w_s.copy())
+
     def DEFINE_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()

@@ -71,3 +71,18 @@ class TestInterpreter(object):
         return f 1, 2
         """)
         assert space.int_w(w_res) == 3
+
+    def test_interpter(self, space):
+        w_res = space.execute('return "abc"')
+        assert space.str_w(w_res) == "abc"
+
+        w_res = space.execute("""
+        def test
+            x = ""
+            x << "abc"
+        end
+
+        return [test, test]
+        """)
+
+        assert [space.str_w(w_s) for w_s in w_res.items_w] == ["abc", "abc"]

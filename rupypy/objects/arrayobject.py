@@ -14,7 +14,7 @@ class W_ArrayObject(W_BaseObject):
         for w_item in self.items_w:
             w_s = space.send(w_item, space.newsymbol("to_s"))
             chars.extend(space.liststr_w(w_s))
-        return space.newstr(chars)
+        return space.newstr_fromchars(chars)
 
     @classdef.method("[]", idx=int)
     def method_subscript(self, space, idx):

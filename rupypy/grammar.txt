@@ -6,9 +6,11 @@ IGNORE: "[ ]";
 LINE_END: "[\n;]";
 
 INTEGER: "[0-9]+";
+STRING: "\\"[^\\\\"]*\\"";
 IDENTIFIER: "[a-zA-Z_][a-zA-Z0-9_]*";
 
 CMP_OPER: "(!=)|(==)|(<=)|(>=)|<|>";
+SHIFT_OPER: "<<";
 ADD_OPER: "[+-]";
 MUL_OPER: "[*]";
 
@@ -30,7 +32,8 @@ rhs: arg;
 
 arg: comparison;
 
-comparison: additive CMP_OPER comparison | <additive>;
+comparison: shiftive CMP_OPER comparison | <shiftive>;
+shiftive: additive SHIFT_OPER shiftive | <additive>;
 additive: multitive ADD_OPER additive | <multitive>;
 multitive: send MUL_OPER multitive | <send>;
 
@@ -71,4 +74,4 @@ send_args: args;
 
 args: arg [","] >args< | arg;
 
-literal: INTEGER;
+literal: INTEGER | STRING;

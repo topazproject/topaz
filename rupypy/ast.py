@@ -184,3 +184,11 @@ class ConstantInt(Node):
 
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.intvalue))
+
+class ConstantString(Node):
+    def __init__(self, strvalue):
+        self.strvalue = strvalue
+
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_CONST, ctx.create_string_const(self.strvalue))
+        ctx.emit(consts.COPY_STRING)

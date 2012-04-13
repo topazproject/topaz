@@ -70,8 +70,11 @@ class ObjectSpace(object):
     def newsymbol(self, symbol):
         return W_SymbolObject(symbol)
 
-    def newstr(self, chars):
-        return W_StringObject(chars)
+    def newstr_fromchars(self, chars):
+        return W_StringObject.newstr_fromchars(self, chars)
+
+    def newstr_fromstr(self, strvalue):
+        return W_StringObject.newstr_fromstr(self, strvalue)
 
     def newarray(self, items_w):
         return W_ArrayObject(items_w)
