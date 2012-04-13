@@ -272,6 +272,7 @@ class TestCompiler(object):
 
     def test_def_function(self, space):
         bc = self.assert_compiles(space, "def f() end", """
+        LOAD_SELF
         LOAD_CONST 0
         LOAD_CONST 1
         DEFINE_FUNCTION
@@ -287,6 +288,7 @@ class TestCompiler(object):
         """)
 
         bc = self.assert_compiles(space, "def f(a, b) a + b end", """
+        LOAD_SELF
         LOAD_CONST 0
         LOAD_CONST 1
         DEFINE_FUNCTION
@@ -311,5 +313,62 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 1
+        RETURN
+        """)
+
+    def test_class(self, space):
+        bc = self.assert_compiles(space, """
+        class X
+        end
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_CLASS
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts[2].bytecode, """
+        LOAD_CONST 0
+        DISCARD_TOP
+        LOAD_CONST 0
+        RETURN
+        """)
+
+        bc = self.assert_compiles(space, """
+        class X
+            def m
+                2
+            end
+        end
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_CLASS
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts[2].bytecode, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts[2].bytecode.consts[1].bytecode, """
+        LOAD_CONST 0
         RETURN
         """)

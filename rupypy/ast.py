@@ -105,6 +105,21 @@ class Class(Node):
         self.superclass = superclass
         self.body = body
 
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
+        ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+        body_ctx = CompilerContext(ctx.space)
+        self.body.compile(body_ctx)
+        body_ctx.emit(consts.DISCARD_TOP)
+        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
+        body_ctx.emit(consts.RETURN)
+        bytecode = body_ctx.create_bytecode()
+
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bytecode)))
+        ctx.emit(consts.BUILD_CLASS)
+
 class Function(Node):
     def __init__(self, name, args, body):
         self.name = name
@@ -119,6 +134,7 @@ class Function(Node):
         function_ctx.emit(consts.RETURN)
         bytecode = function_ctx.create_bytecode()
 
+        ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bytecode)))
         ctx.emit(consts.DEFINE_FUNCTION)
