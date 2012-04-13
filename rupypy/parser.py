@@ -71,7 +71,7 @@ class Transformer(object):
         if node.children[0].symbol != "primary":
             return Send(
                 Self(),
-                node.children[0].children[0].additional_info,
+                node.children[0].additional_info,
                 self.visit_send_args(node.children[1])
             )
 

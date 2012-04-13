@@ -37,7 +37,7 @@ shiftive: additive SHIFT_OPER shiftive | <additive>;
 additive: multitive ADD_OPER additive | <multitive>;
 multitive: send MUL_OPER multitive | <send>;
 
-send: operation send_args |
+send: IDENTIFIER send_args |
       primary trailers |
       <primary>;
 
