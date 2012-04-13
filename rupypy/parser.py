@@ -158,4 +158,6 @@ class Transformer(object):
         return ConstantInt(int(node.additional_info))
 
     def visit_string(self, node):
-        return ConstantString(node.additional_info[1:-1])
+        end = len(node.additional_info) - 1
+        assert end >= 0
+        return ConstantString(node.additional_info[1:end])

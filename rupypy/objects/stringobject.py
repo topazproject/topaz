@@ -22,8 +22,8 @@ class ConstantStringStrategy(StringStrategy):
         return W_StringObject(storage, self)
 
     def to_mutable(self, space, s):
-        s.strategy = space.fromcache(MutableStringStrategy)
-        s.storage = s.strategy.erase(self.liststr_w(s.storage))
+        s.strategy = strategy = space.fromcache(MutableStringStrategy)
+        s.storage = strategy.erase(self.liststr_w(s.storage))
 
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
@@ -48,17 +48,17 @@ class W_StringObject(W_BaseObject):
         self.storage = storage
         self.strategy = strategy
 
-    @classmethod
-    def newstr_fromstr(cls, space, strvalue):
+    @staticmethod
+    def newstr_fromstr(space, strvalue):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase(strvalue)
-        return cls(storage, strategy)
+        return W_StringObject(storage, strategy)
 
-    @classmethod
-    def newstr_fromchars(cls, space, chars):
+    @staticmethod
+    def newstr_fromchars(space, chars):
         strategy = space.fromcache(MutableStringStrategy)
         storage = strategy.erase(chars)
-        return cls(storage, strategy)
+        return W_StringObject(storage, strategy)
 
     def str_w(self, space):
         return self.strategy.str_w(self.storage)
@@ -74,7 +74,8 @@ class W_StringObject(W_BaseObject):
     def method_lshift(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
         self.strategy.to_mutable(space, self)
-        assert isinstance(self.strategy, MutableStringStrategy)
-        storage = self.strategy.unerase(self.storage)
+        strategy = self.strategy
+        assert isinstance(strategy, MutableStringStrategy)
+        storage = strategy.unerase(self.storage)
         w_other.strategy.extend_into(w_other.storage, storage)
         return self
