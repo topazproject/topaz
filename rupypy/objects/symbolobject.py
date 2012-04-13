@@ -1,7 +1,7 @@
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_BaseObject
 
 
-class W_SymbolObject(W_Object):
+class W_SymbolObject(W_BaseObject):
     _immutable_fields_ = ["symbol"]
 
     def __init__(self, symbol):
