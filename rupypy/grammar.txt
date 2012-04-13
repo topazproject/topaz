@@ -69,7 +69,7 @@ argdecl: ["("] arglist? [")"] |
 
 arglist: IDENTIFIER [","] >arglist< | IDENTIFIER;
 
-operation: IDENTIFIER;
+operation: IDENTIFIER | "class";
 
 send_args: args;
 
