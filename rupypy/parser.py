@@ -2,8 +2,9 @@ import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
-from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Function,
-    Return, BinOp, Send, Self, Variable, Array, ConstantInt, ConstantString)
+from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Class,
+    Function, Return, BinOp, Send, Self, Variable, Array, ConstantInt,
+    ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -115,6 +116,8 @@ class Transformer(object):
             return self.visit_while(node)
         elif node.children[0].additional_info == "def":
             return self.visit_def(node)
+        elif node.children[0].additional_info == "class":
+            return self.visit_class(node)
         raise NotImplementedError(node.symbol)
 
     def visit_array(self, node):
@@ -147,6 +150,13 @@ class Transformer(object):
             node.children[1].additional_info,
             self.visit_argdecl(node.children[2]),
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
+        )
+
+    def visit_class(self, node):
+        return Class(
+            node.children[1].additional_info,
+            None,
+            self.visit_block(node, start_idx=2, end_idx=len(node.children) - 1),
         )
 
     def visit_argdecl(self, node):

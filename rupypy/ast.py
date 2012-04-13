@@ -99,6 +99,12 @@ class While(Node):
         # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
+class Class(Node):
+    def __init__(self, name, superclass, body):
+        self.name = name
+        self.superclass = superclass
+        self.body = body
+
 class Function(Node):
     def __init__(self, name, args, body):
         self.name = name

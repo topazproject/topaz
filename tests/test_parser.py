@@ -1,7 +1,8 @@
 import py
 
-from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Function,
-    Return, BinOp, Send, Self, Variable, Array, ConstantInt, ConstantString)
+from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Class,
+    Function, Return, BinOp, Send, Self, Variable, Array, ConstantInt,
+    ConstantString)
 
 
 class TestParser(object):
@@ -207,4 +208,25 @@ class TestParser(object):
         ]))
         assert space.parse('"abc".size') == Main(Block([
             Statement(Send(ConstantString("abc"), "size", []))
+        ]))
+
+    def test_class(self, space):
+        r = space.parse("""
+        class X
+        end""")
+        assert r == Main(Block([
+            Statement(Class("X", None, Block([])))
+        ]))
+
+        r = space.parse("""
+        class X
+            def f()
+                2
+            end
+        end
+        """)
+        assert r == Main(Block([
+            Statement(Class("X", None, Block([
+                Statement(Function("f", [], Block([Statement(ConstantInt(2))])))
+            ])))
         ]))

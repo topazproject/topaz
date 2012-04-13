@@ -52,6 +52,7 @@ primary: "(" expr ")" |
          "if" expr then line* statement? [LINE_END]? "end" |
          "while" expr do line* statement? [LINE_END]? "end" |
          "def" IDENTIFIER argdecl line* statement? [LINE_END]? "end" |
+         "class" IDENTIFIER [LINE_END] line* statement? [LINE_END]? "end" |
          IDENTIFIER |
          literal;
 
