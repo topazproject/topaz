@@ -37,11 +37,11 @@ class W_ClassObject(W_BaseObject):
     def _find_method_pure(self, space, method, version):
         return self.methods.get(method, None)
 
-    def set_const(self, name, w_obj):
+    def set_const(self, space, name, w_obj):
         self.mutated()
         self.constants_w[name] = w_obj
 
-    def find_const(self, name):
+    def find_const(self, space, name):
         return self._find_const_pure(name, self.version)
 
     @jit.elidable

@@ -5,14 +5,15 @@ from rupypy import consts
 
 
 class Frame(object):
-    _virtualizable2_ = ["locals_w[*]", "stack[*]", "stackpos", "w_self"]
+    _virtualizable2_ = ["locals_w[*]", "stack[*]", "stackpos", "w_self", "w_scope"]
 
-    def __init__(self, bytecode, w_self):
+    def __init__(self, bytecode, w_self, w_scope):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         self.stack = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
         self.stackpos = 0
         self.w_self = w_self
+        self.w_scope = w_scope
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
@@ -90,18 +91,6 @@ class Interpreter(object):
             )
         return target_pc
 
-    def store_constant(self, space, name, w_obj):
-        from rupypy.objects.objectobject import W_Object
-
-        w_object_cls = space.getclassfor(W_Object)
-        w_object_cls.set_const(name, w_obj)
-
-    def load_constant(self, space, name):
-        from rupypy.objects.objectobject import W_Object
-
-        w_object_cls = space.getclassfor(W_Object)
-        return w_object_cls.find_const(name)
-
     def LOAD_SELF(self, space, bytecode, frame, pc):
         w_self = frame.w_self
         jit.promote(space.getclass(w_self))
@@ -119,14 +108,14 @@ class Interpreter(object):
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts[idx]
         name = space.symbol_w(w_name)
-        w_obj = self.load_constant(space, name)
+        w_obj = space.find_const(frame.w_scope, name)
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts[idx]
         name = space.symbol_w(w_name)
         w_obj = frame.pop()
-        self.store_constant(space, name, w_obj)
+        space.set_const(frame.w_scope, name, w_obj)
         frame.push(w_obj)
 
     @jit.unroll_safe
@@ -146,16 +135,16 @@ class Interpreter(object):
         w_self = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_cls = self.load_constant(space, name)
+        w_cls = space.find_const(frame.w_scope, name)
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.getclassfor(W_Object)
             w_cls = space.newclass(name, superclass)
-            self.store_constant(space, name, w_cls)
+            space.set_const(frame.w_scope, name, w_cls)
 
         assert isinstance(w_bytecode, W_CodeObject)
         bc = w_bytecode.bytecode
-        Interpreter().interpret(space, Frame(bc, w_cls), bc)
+        Interpreter().interpret(space, Frame(bc, w_cls, frame.w_scope), bc)
 
         frame.push(space.w_nil)
 

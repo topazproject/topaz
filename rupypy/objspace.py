@@ -54,7 +54,8 @@ class ObjectSpace(object):
 
     def execute(self, source):
         bc = self.compile(source)
-        return Interpreter().interpret(self, Frame(bc, self.w_top_self), bc)
+        frame = Frame(bc, self.w_top_self, self.getclassfor(W_Object))
+        return Interpreter().interpret(self, frame, bc)
 
     # Methods for allocating new objects.
 
@@ -118,6 +119,12 @@ class ObjectSpace(object):
 
     def getclassobject(self, classdef):
         return self.fromcache(ClassCache).getorbuild(classdef)
+
+    def find_const(self, module, name):
+        return module.find_const(self, name)
+
+    def set_const(self, module, name, value):
+        module.set_const(self, name, value)
 
     def send(self, w_receiver, w_method, args_w=None):
         if args_w is None:
