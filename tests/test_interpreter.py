@@ -100,7 +100,25 @@ class TestInterpreter(object):
             end
         end
         """)
-        assert w_res is space.w_true
+        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        assert w_cls.methods.viewkeys() == {"m", "f"}
+
+    def test_reopen_class(self, space):
+        space.execute("""
+        class X
+            def f
+                3
+            end
+        end
+
+        class X
+            def m
+                5
+            end
+        end
+        """)
+        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        assert w_cls.methods.viewkeys() == {"m", "f"}
 
     def test_constant(self, space):
         w_res = space.execute("Abc = 3; return Abc")

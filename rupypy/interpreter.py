@@ -90,6 +90,18 @@ class Interpreter(object):
             )
         return target_pc
 
+    def store_constant(self, space, name, w_obj):
+        from rupypy.objects.objectobject import W_Object
+
+        w_object_cls = space.getclassfor(W_Object)
+        w_object_cls.set_const(name, w_obj)
+
+    def load_constant(self, space, name):
+        from rupypy.objects.objectobject import W_Object
+
+        w_object_cls = space.getclassfor(W_Object)
+        return w_object_cls.find_const(name)
+
     def LOAD_SELF(self, space, bytecode, frame, pc):
         w_self = frame.w_self
         jit.promote(space.getclass(w_self))
@@ -105,22 +117,16 @@ class Interpreter(object):
         frame.locals_w[idx] = frame.peek()
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
-        from rupypy.objects.objectobject import W_Object
-
         w_name = bytecode.consts[idx]
         name = space.symbol_w(w_name)
-        w_object_cls = space.getclassfor(W_Object)
-        w_obj = w_object_cls.find_const(name)
+        w_obj = self.load_constant(space, name)
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
-        from rupypy.objects.objectobject import W_Object
-
         w_name = bytecode.consts[idx]
         name = space.symbol_w(w_name)
         w_obj = frame.pop()
-        w_object_cls = space.getclassfor(W_Object)
-        w_object_cls.set_const(name, w_obj)
+        self.store_constant(space, name, w_obj)
         frame.push(w_obj)
 
     @jit.unroll_safe
@@ -131,10 +137,23 @@ class Interpreter(object):
         frame.push(space.newarray(items_w))
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):
-        bytecode = frame.pop()
+        from rupypy.objects.codeobject import W_CodeObject
+
+        w_bytecode = frame.pop()
         superclass = frame.pop()
         w_name = frame.pop()
         w_self = frame.pop()
+
+        name = space.symbol_w(w_name)
+        w_cls = self.load_constant(space, name)
+        if w_cls is None:
+            w_cls = space.newclass(name, superclass)
+            self.store_constant(space, name, w_cls)
+
+        assert isinstance(w_bytecode, W_CodeObject)
+        bc = w_bytecode.bytecode
+        Interpreter().interpret(space, Frame(bc, w_cls), bc)
+
         frame.push(space.w_nil)
 
     def COPY_STRING(self, space, bytecode, frame, pc):
