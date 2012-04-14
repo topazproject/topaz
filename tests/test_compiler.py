@@ -390,3 +390,13 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+
+    def test_self(self, space):
+        self.assert_compiles(space, "return self", """
+        LOAD_SELF
+        RETURN
+        DISCARD_TOP
+
+        LOAD_CONST 0
+        RETURN
+        """)

@@ -18,3 +18,17 @@ class TestClassObject(object):
         """)
         w_cls = space.getclassfor(W_Object).constants_w["X"]
         assert w_res.klass is w_cls
+
+        w_res = space.execute("""
+        class X
+            def m
+                self
+            end
+        end
+
+        x = X.new
+        return [x, x.m]
+        """)
+
+        [w_x, w_xm] = w_res.items_w
+        assert w_xm is w_x

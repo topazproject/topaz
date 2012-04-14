@@ -189,6 +189,8 @@ class Variable(Node):
         }
         if self.name in named_consts:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
+        elif self.name == "self":
+            ctx.emit(consts.LOAD_SELF)
         elif ctx.local_defined(self.name):
             ctx.emit(consts.LOAD_LOCAL, ctx.create_local(self.name))
         elif self.name[0].isupper():
