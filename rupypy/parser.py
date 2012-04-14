@@ -2,9 +2,9 @@ import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
-from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Class,
-    Function, Return, BinOp, Send, Self, Variable, Array, ConstantInt,
-    ConstantString)
+from rupypy.ast import (Main, Block, Statement, Assignment,
+    InstanceVariableAssignment, If, While, Class, Function, Return, BinOp,
+    Send, Self, Variable, InstanceVariable, Array, ConstantInt, ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -42,10 +42,14 @@ class Transformer(object):
         return self.visit_arg(node.children[0])
 
     def visit_assignment(self, node):
-        return Assignment(
-            node.children[0].children[0].additional_info,
-            self.visit_expr(node.children[2].children[0]),
-        )
+        target = node.children[0].children[0]
+        value = self.visit_expr(node.children[2].children[0])
+        if len(target.children) == 1:
+            return Assignment(target.children[0].additional_info, value)
+        else:
+            return InstanceVariableAssignment(
+                target.children[1].additional_info, value
+            )
 
     def visit_arg(self, node):
         if node.symbol == "arg":
@@ -104,8 +108,8 @@ class Transformer(object):
             symname = node.children[0].symbol
             if symname == "literal":
                 return self.visit_literal(node.children[0])
-            elif symname == "IDENTIFIER":
-                return Variable(node.children[0].additional_info)
+            elif symname == "varname":
+                return self.visit_varname(node.children[0])
         elif node.children[0].additional_info == "(":
             return self.visit_expr(node.children[1])
         elif node.children[0].additional_info == "[":
@@ -132,6 +136,12 @@ class Transformer(object):
         elif symname == "STRING":
             return self.visit_string(node.children[0])
         raise NotImplementedError(symname)
+
+    def visit_varname(self, node):
+        if len(node.children) == 1:
+            return Variable(node.children[0].additional_info)
+        else:
+            return InstanceVariable(node.children[1].additional_info)
 
     def visit_if(self, node):
         return If(

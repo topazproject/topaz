@@ -1,8 +1,8 @@
 import py
 
-from rupypy.ast import (Main, Block, Statement, Assignment, If, While, Class,
-    Function, Return, BinOp, Send, Self, Variable, Array, ConstantInt,
-    ConstantString)
+from rupypy.ast import (Main, Block, Statement, Assignment,
+    InstanceVariableAssignment, If, While, Class, Function, Return, BinOp,
+    Send, Self, Variable, InstanceVariable, Array, ConstantInt, ConstantString)
 
 
 class TestParser(object):
@@ -230,3 +230,7 @@ class TestParser(object):
                 Statement(Function("f", [], Block([Statement(ConstantInt(2))])))
             ])))
         ]))
+
+    def test_instance_variable(self, space):
+        assert space.parse("@a") == Main(Block([Statement(InstanceVariable("a"))]))
+        assert space.parse("@a = 3") == Main(Block([Statement(InstanceVariableAssignment("a", ConstantInt(3)))]))

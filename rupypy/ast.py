@@ -68,6 +68,16 @@ class Assignment(Node):
             self.value.compile(ctx)
             ctx.emit(consts.STORE_LOCAL, loc)
 
+class InstanceVariableAssignment(Node):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        ctx.emit(consts.LOAD_SELF)
+        ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
 class If(Node):
     def __init__(self, cond, body):
         self.cond = cond
@@ -198,6 +208,14 @@ class Variable(Node):
         else:
             Send(Self(), self.name, []).compile(ctx)
 
+class InstanceVariable(Node):
+    def __init__(self, name):
+        self.name = name
+
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
+        ctx.emit(consts.LOAD_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
 class Array(Node):
     def __init__(self, items):
         self.items = items
@@ -206,7 +224,6 @@ class Array(Node):
         for item in self.items:
             item.compile(ctx)
         ctx.emit(consts.BUILD_ARRAY, len(self.items))
-
 
 class ConstantInt(Node):
     def __init__(self, intvalue):

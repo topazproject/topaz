@@ -400,3 +400,15 @@ class TestCompiler(object):
         LOAD_CONST 0
         RETURN
         """)
+
+    def test_instance_variable(self, space):
+        self.assert_compiles(space, "@a = @b", """
+        LOAD_SELF
+        LOAD_INSTANCE_VAR 0
+        LOAD_SELF
+        STORE_INSTANCE_VAR 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
