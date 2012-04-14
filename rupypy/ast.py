@@ -60,9 +60,13 @@ class Assignment(Node):
         self.value = value
 
     def compile(self, ctx):
-        loc = ctx.create_local(self.target)
-        self.value.compile(ctx)
-        ctx.emit(consts.STORE_LOCAL, loc)
+        if self.target[0].isupper():
+            self.value.compile(ctx)
+            ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.target))
+        else:
+            loc = ctx.create_local(self.target)
+            self.value.compile(ctx)
+            ctx.emit(consts.STORE_LOCAL, loc)
 
 class If(Node):
     def __init__(self, cond, body):
@@ -187,6 +191,8 @@ class Variable(Node):
             ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
         elif ctx.local_defined(self.name):
             ctx.emit(consts.LOAD_LOCAL, ctx.create_local(self.name))
+        elif self.name[0].isupper():
+            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
             Send(Self(), self.name, []).compile(ctx)
 

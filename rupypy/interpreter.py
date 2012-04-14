@@ -104,12 +104,38 @@ class Interpreter(object):
     def STORE_LOCAL(self, space, bytecode, frame, pc, idx):
         frame.locals_w[idx] = frame.peek()
 
+    def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
+        from rupypy.objects.objectobject import W_Object
+
+        w_name = bytecode.consts[idx]
+        name = space.symbol_w(w_name)
+        w_object_cls = space.getclassfor(W_Object)
+        w_obj = w_object_cls.find_const(name)
+        frame.push(w_obj)
+
+    def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
+        from rupypy.objects.objectobject import W_Object
+
+        w_name = bytecode.consts[idx]
+        name = space.symbol_w(w_name)
+        w_obj = frame.pop()
+        w_object_cls = space.getclassfor(W_Object)
+        w_object_cls.set_const(name, w_obj)
+        frame.push(w_obj)
+
     @jit.unroll_safe
     def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
         items_w = [None] * n_items
         for i in xrange(n_items - 1, -1, -1):
             items_w[i] = frame.pop()
         frame.push(space.newarray(items_w))
+
+    def BUILD_CLASS(self, space, bytecode, frame, pc):
+        bytecode = frame.pop()
+        superclass = frame.pop()
+        w_name = frame.pop()
+        w_self = frame.pop()
+        frame.push(space.w_nil)
 
     def COPY_STRING(self, space, bytecode, frame, pc):
         from rupypy.objects.stringobject import W_StringObject

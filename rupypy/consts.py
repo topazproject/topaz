@@ -14,6 +14,9 @@ BYTECODES = [
     ("LOAD_LOCAL", 1, +1),
     ("STORE_LOCAL", 1, 0),
 
+    ("LOAD_CONSTANT", 1, +1),
+    ("STORE_CONSTANT", 1, 0),
+
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
     ("BUILD_CLASS", 0, -3),
     ("COPY_STRING", 0, 0),

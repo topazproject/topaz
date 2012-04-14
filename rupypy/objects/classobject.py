@@ -17,6 +17,7 @@ class W_ClassObject(W_BaseObject):
         self.superclass = superclass
         self.version = VersionTag()
         self.methods = {}
+        self.constants_w = {}
 
     def mutated(self):
         self.version = VersionTag()
@@ -35,6 +36,17 @@ class W_ClassObject(W_BaseObject):
     @jit.elidable
     def _find_method_pure(self, space, method, version):
         return self.methods.get(method, None)
+
+    def set_const(self, name, w_obj):
+        self.mutated()
+        self.constants_w[name] = w_obj
+
+    def find_const(self, name):
+        return self._find_const_pure(name, self.version)
+
+    @jit.elidable
+    def _find_const_pure(self, name, version):
+        return self.constants_w.get(name, None)
 
 
     @classdef.method("to_s")

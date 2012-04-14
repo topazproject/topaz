@@ -113,6 +113,9 @@ class ObjectSpace(object):
     def getclass(self, w_receiver):
         return w_receiver.getclass(self)
 
+    def getclassfor(self, cls):
+        return self.getclassobject(cls.classdef)
+
     def getclassobject(self, classdef):
         return self.fromcache(ClassCache).getorbuild(classdef)
 

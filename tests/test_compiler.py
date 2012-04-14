@@ -372,3 +372,21 @@ class TestCompiler(object):
         LOAD_CONST 0
         RETURN
         """)
+
+    def test_constants(self, space):
+        self.assert_compiles(space, "Abc", """
+        LOAD_CONSTANT 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+
+        self.assert_compiles(space, "Abc = 5", """
+        LOAD_CONST 0
+        STORE_CONSTANT 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)

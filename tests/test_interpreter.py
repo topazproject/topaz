@@ -1,4 +1,5 @@
 from rupypy.objects.boolobject import W_TrueObject
+from rupypy.objects.objectobject import W_Object
 
 
 class TestInterpreter(object):
@@ -86,3 +87,24 @@ class TestInterpreter(object):
         """)
 
         assert [space.str_w(w_s) for w_s in w_res.items_w] == ["abc", "abc"]
+
+    def test_class(self, space):
+        w_res = space.execute("""
+        class X
+            def m
+                self
+            end
+
+            def f
+                2
+            end
+        end
+        """)
+        assert w_res is space.w_true
+
+    def test_constant(self, space):
+        w_res = space.execute("Abc = 3; return Abc")
+        assert space.int_w(w_res)
+
+        w_object_cls = space.getclassfor(W_Object)
+        assert w_object_cls.constants_w["Abc"] is w_res
