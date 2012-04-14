@@ -9,7 +9,7 @@ class Frame(object):
 
     def __init__(self, bytecode, w_self, w_scope):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
-        self.stack = [None] * bytecode.max_stackdepth
+        self.stack_w = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
         self.stackpos = 0
         self.w_self = w_self
@@ -17,21 +17,21 @@ class Frame(object):
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
-        self.stack[stackpos] = w_obj
+        self.stack_w[stackpos] = w_obj
         self.stackpos = stackpos + 1
 
     def pop(self):
         stackpos = jit.promote(self.stackpos) - 1
         assert stackpos >= 0
-        w_res = self.stack[stackpos]
-        self.stack[stackpos] = None
+        w_res = self.stack_w[stackpos]
+        self.stack_w[stackpos] = None
         self.stackpos = stackpos
         return w_res
 
     def peek(self):
         stackpos = jit.promote(self.stackpos) - 1
         assert stackpos >= 0
-        return self.stack[stackpos]
+        return self.stack_w[stackpos]
 
 def get_printable_location(pc, bytecode):
     return consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
@@ -97,7 +97,7 @@ class Interpreter(object):
         frame.push(w_self)
 
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
-        frame.push(bytecode.consts[idx])
+        frame.push(bytecode.consts_w[idx])
 
     def LOAD_LOCAL(self, space, bytecode, frame, pc, idx):
         frame.push(frame.locals_w[idx])
@@ -106,17 +106,29 @@ class Interpreter(object):
         frame.locals_w[idx] = frame.peek()
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
-        w_name = bytecode.consts[idx]
+        w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
         w_obj = space.find_const(frame.w_scope, name)
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
-        w_name = bytecode.consts[idx]
+        w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
         w_obj = frame.pop()
         space.set_const(frame.w_scope, name, w_obj)
         frame.push(w_obj)
+
+    def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        w_obj = frame.pop()
+        w_res = space.find_instance_var(w_obj, space.symbol_w(w_name))
+        frame.push(w_res)
+
+    def STORE_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        w_obj = frame.pop()
+        w_value = frame.peek()
+        space.set_instance_var(w_obj, space.symbol_w(w_name), w_value)
 
     @jit.unroll_safe
     def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
@@ -167,7 +179,7 @@ class Interpreter(object):
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = [frame.pop() for _ in range(num_args)]
         w_receiver = frame.pop()
-        w_res = space.send(w_receiver, bytecode.consts[meth_idx], args_w)
+        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
     def JUMP(self, space, bytecode, frame, pc, target_pc):

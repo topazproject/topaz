@@ -34,6 +34,7 @@ class W_BaseObject(object):
 class W_Object(W_BaseObject):
     def __init__(self, klass=None):
         self.klass = klass
+        self.attrs = {}
 
     def getclass(self, space):
         if self.klass is None:
@@ -45,3 +46,9 @@ class W_Object(W_BaseObject):
             w_current_class = self.getclass(space)
             self.klass = space.newclass(w_current_class.name, w_current_class)
         self.klass.add_method(space, name, function)
+
+    def find_instance_var(self, space, name):
+        return self.attrs[name]
+
+    def set_instance_var(self, space, name, w_value):
+        self.attrs[name] = w_value

@@ -123,8 +123,14 @@ class ObjectSpace(object):
     def find_const(self, module, name):
         return module.find_const(self, name)
 
-    def set_const(self, module, name, value):
-        module.set_const(self, name, value)
+    def set_const(self, module, name, w_value):
+        module.set_const(self, name, w_value)
+
+    def find_instance_var(self, w_obj, name):
+        return w_obj.find_instance_var(self, name)
+
+    def set_instance_var(self, w_obj, name, w_value):
+        w_obj.set_instance_var(self, name, w_value)
 
     def send(self, w_receiver, w_method, args_w=None):
         if args_w is None:

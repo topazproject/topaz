@@ -36,7 +36,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
-        [c1, c2] = bc.consts
+        [c1, c2] = bc.consts_w
         assert c1.intvalue == 1
         assert isinstance(c2, W_TrueObject)
         assert bc.max_stackdepth == 1
@@ -51,7 +51,7 @@ class TestCompiler(object):
         RETURN
         """)
         assert bc.max_stackdepth == 2
-        assert bc.consts[2].symbol == "+"
+        assert bc.consts_w[2].symbol == "+"
 
     def test_multi_term_expr(self, space):
         self.assert_compiles(space, "1 + 2 * 3", """
@@ -190,7 +190,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
-        assert bc.consts == [space.w_false, space.w_true, space.w_nil]
+        assert bc.consts_w == [space.w_false, space.w_true, space.w_nil]
 
     def test_comparison(self, space):
         self.assert_compiles(space, "1 == 1", """
@@ -282,7 +282,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1].bytecode, """
         LOAD_CONST 0
         RETURN
         """)
@@ -298,7 +298,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1].bytecode, """
         LOAD_LOCAL 0
         LOAD_LOCAL 1
         SEND 0 1
@@ -332,7 +332,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts[2].bytecode, """
+        self.assert_compiled(bc.consts_w[2].bytecode, """
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 0
@@ -357,7 +357,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts[2].bytecode, """
+        self.assert_compiled(bc.consts_w[2].bytecode, """
         LOAD_SELF
         LOAD_CONST 0
         LOAD_CONST 1
@@ -368,7 +368,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts[2].bytecode.consts[1].bytecode, """
+        self.assert_compiled(bc.consts_w[2].bytecode.consts_w[1].bytecode, """
         LOAD_CONST 0
         RETURN
         """)
