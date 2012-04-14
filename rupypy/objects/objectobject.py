@@ -51,7 +51,7 @@ class BaseNode(object):
     _attrs_ = ()
 
 class ClassNode(BaseNode):
-    _immutable_attrs_ = ["klass"]
+    _immutable_fields_ = ["klass"]
     def __init__(self, klass):
         self.klass = klass
 
@@ -69,7 +69,7 @@ class ClassNode(BaseNode):
         return new_class_node
 
 class AttributeNode(BaseNode):
-    _immutable_attrs_ = ["prev", "name", "pos"]
+    _immutable_fields_ = ["prev", "name", "pos"]
     def __init__(self, prev, name, pos):
         self.prev = prev
         self.name = name
