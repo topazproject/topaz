@@ -49,6 +49,7 @@ class ClassDef(object):
     def method(self, name, **argspec):
         def adder(func):
             self.methods[name] = (func, argspec)
+            return func
         return adder
 
 

@@ -17,7 +17,7 @@ class TestClassObject(object):
         return X.new
         """)
         w_cls = space.getclassfor(W_Object).constants_w["X"]
-        assert w_res.klass is w_cls
+        assert space.getclass(w_res) is w_cls
 
         w_res = space.execute("""
         class X

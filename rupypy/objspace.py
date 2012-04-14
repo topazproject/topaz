@@ -27,8 +27,8 @@ class SpaceCache(Cache):
 class ObjectSpace(object):
     def __init__(self):
         self.transformer = Transformer()
-        self.w_top_self = W_Object()
         self.cache = SpaceCache(self)
+        self.w_top_self = self.getclassfor(W_Object).method_new(self)
 
         self.w_true = W_TrueObject()
         self.w_false = W_FalseObject()

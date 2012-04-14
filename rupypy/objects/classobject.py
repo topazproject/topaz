@@ -12,9 +12,10 @@ class W_ClassObject(W_BaseObject):
 
     classdef = ClassDef("Class", W_BaseObject.classdef)
 
-    def __init__(self, name, superclass):
+    def __init__(self, name, superclass, is_singleton=False):
         self.name = name
         self.superclass = superclass
+        self.is_singleton = is_singleton
         self.version = VersionTag()
         self.methods = {}
         self.constants_w = {}
@@ -55,6 +56,6 @@ class W_ClassObject(W_BaseObject):
 
     @classdef.method("new")
     def method_new(self, space):
-        w_obj = W_Object(self)
+        w_obj = W_Object(space, self)
         space.send(w_obj, space.newsymbol("initialize"))
         return w_obj
