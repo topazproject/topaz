@@ -26,10 +26,14 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
+    @classdef.method("initialize")
+    def method_initialize(self, space):
+        return self
+
 
 class W_Object(W_BaseObject):
-    def __init__(self):
-        self.klass = None
+    def __init__(self, klass=None):
+        self.klass = klass
 
     def getclass(self, space):
         if self.klass is None:

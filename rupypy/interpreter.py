@@ -138,6 +138,7 @@ class Interpreter(object):
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):
         from rupypy.objects.codeobject import W_CodeObject
+        from rupypy.objects.objectobject import W_Object
 
         w_bytecode = frame.pop()
         superclass = frame.pop()
@@ -147,6 +148,8 @@ class Interpreter(object):
         name = space.symbol_w(w_name)
         w_cls = self.load_constant(space, name)
         if w_cls is None:
+            if superclass is space.w_nil:
+                superclass = space.getclassfor(W_Object)
             w_cls = space.newclass(name, superclass)
             self.store_constant(space, name, w_cls)
 

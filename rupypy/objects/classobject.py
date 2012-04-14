@@ -1,7 +1,7 @@
 from pypy.rlib import jit
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_BaseObject, W_Object
 
 
 class VersionTag(object):
@@ -52,3 +52,9 @@ class W_ClassObject(W_BaseObject):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.name)
+
+    @classdef.method("new")
+    def method_new(self, space):
+        w_obj = W_Object(self)
+        space.send(w_obj, space.newsymbol("initialize"))
+        return w_obj
