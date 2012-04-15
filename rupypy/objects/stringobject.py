@@ -37,6 +37,9 @@ class MutableStringStrategy(StringStrategy):
     def liststr_w(self, storage):
         return self.unerase(storage)
 
+    def to_mutable(self, space, s):
+        pass
+
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
 

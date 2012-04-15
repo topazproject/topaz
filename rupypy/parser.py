@@ -113,7 +113,7 @@ class Transformer(object):
         elif node.children[0].additional_info == "(":
             return self.visit_expr(node.children[1])
         elif node.children[0].additional_info == "[":
-            return self.visit_array(node.children[1])
+            return self.visit_array(node)
         elif node.children[0].additional_info == "if":
             return self.visit_if(node)
         elif node.children[0].additional_info == "while":
@@ -125,9 +125,13 @@ class Transformer(object):
         raise NotImplementedError(node.symbol)
 
     def visit_array(self, node):
-        return Array([
-            self.visit_arg(n) for n in node.children
-        ])
+        if len(node.children) == 3:
+            items = [
+                self.visit_arg(n) for n in node.children[1].children
+            ]
+        else:
+            items = []
+        return Array(items)
 
     def visit_literal(self, node):
         symname = node.children[0].symbol

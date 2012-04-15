@@ -140,6 +140,8 @@ class TestParser(object):
         ]))
 
     def test_array(self, space):
+        assert space.parse("[]") == Main(Block([Statement(Array([]))]))
+
         assert space.parse("[1, 2, 3]") == Main(Block([
             Statement(Array([
                 ConstantInt(1),
@@ -159,6 +161,14 @@ class TestParser(object):
     def test_subscript(self, space):
         assert space.parse("[1][0]") == Main(Block([
             Statement(Send(Array([ConstantInt(1)]), "[]", [ConstantInt(0)]))
+        ]))
+
+        assert space.parse("self[i]") == Main(Block([
+            Statement(Send(Variable("self"), "[]", [Variable("i")]))
+        ]))
+
+        assert space.parse("self[i].to_s") == Main(Block([
+            Statement(Send(Send(Variable("self"), "[]", [Variable("i")]), "to_s", []))
         ]))
 
     def test_def(self, space):

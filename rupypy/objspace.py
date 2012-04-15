@@ -52,9 +52,11 @@ class ObjectSpace(object):
         astnode.compile(c)
         return c.create_bytecode()
 
-    def execute(self, source):
+    def execute(self, source, w_self=None):
         bc = self.compile(source)
-        frame = Frame(bc, self.w_top_self, self.getclassfor(W_Object))
+        if w_self is None:
+            w_self = self.w_top_self
+        frame = Frame(bc, w_self, self.getclassfor(W_Object))
         return Interpreter().interpret(self, frame, bc)
 
     # Methods for allocating new objects.

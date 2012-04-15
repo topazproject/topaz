@@ -270,6 +270,20 @@ class TestCompiler(object):
         RETURN
         """)
 
+        bc = self.assert_compiles(space, "i = 0; self[i].to_s", """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_SELF
+        LOAD_LOCAL 0
+        SEND 1 1
+        SEND 2 0
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_def_function(self, space):
         bc = self.assert_compiles(space, "def f() end", """
         LOAD_SELF

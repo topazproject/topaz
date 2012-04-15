@@ -8,23 +8,25 @@ class W_ArrayObject(W_BaseObject):
     def __init__(self, items_w):
         self.items_w = items_w
 
-    @classdef.method("to_s")
-    def method_to_s(self, space):
-        chars = []
-        for w_item in self.items_w:
-            w_s = space.send(w_item, space.newsymbol("to_s"))
-            chars.extend(space.liststr_w(w_s))
-        return space.newstr_fromchars(chars)
+    classdef.app_method("""
+    def to_s()
+        result = "["
+        i = 0
+        while i < self.length
+            if i > 0
+                result << ", "
+            end
+            result << self[i].to_s
+            i = i + 1
+        end
+        result << "]"
+    end
+    """)
 
     @classdef.method("[]", idx=int)
     def method_subscript(self, space, idx):
         return self.items_w[idx]
 
-    # classdef.app_method("to_s", """
-    # def to_s()
-    #     result = ""
-    #     self.each do |o|
-    #         result << o.to_s
-    #     end
-    #     return result
-    # """)
+    @classdef.method("length")
+    def method_length(self, space):
+        return space.newint(len(self.items_w))

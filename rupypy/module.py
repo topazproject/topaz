@@ -39,6 +39,7 @@ class ClassDef(object):
     def __init__(self, name, superclassdef=None):
         self.name = name
         self.methods = {}
+        self.app_methods = []
         self.superclassdef = superclassdef
         self.cls = None
 
@@ -54,6 +55,8 @@ class ClassDef(object):
             return func
         return adder
 
+    def app_method(self, source):
+        self.app_methods.append(source)
 
 class Module(object):
     pass
@@ -85,6 +88,8 @@ class ClassCache(Cache):
         for name, (method, argspec) in classdef.methods.iteritems():
             func = generate_wrapper(name, method, argspec, classdef.cls)
             w_class.add_method(self.space, name, BuiltinFunction(func))
+        for source in classdef.app_methods:
+            self.space.execute(source, w_class)
         return w_class
 
 class BaseFunction(object):
