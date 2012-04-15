@@ -19,7 +19,10 @@ main: line* statement? [LINE_END]? [EOF];
 line: statement? [LINE_END];
 
 statement: "return" expr |
+            block |
             expr;
+
+block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
 
 expr: assignment |
       arg;
@@ -37,9 +40,11 @@ shiftive: additive SHIFT_OPER shiftive | <additive>;
 additive: multitive ADD_OPER additive | <multitive>;
 multitive: send MUL_OPER multitive | <send>;
 
-send: primary trailers |
-      IDENTIFIER send_args |
+send: real_send |
       <primary>;
+
+real_send: primary trailers |
+           IDENTIFIER send_args;
 
 trailers: trailer >trailers< | trailer;
 

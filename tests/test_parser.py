@@ -2,7 +2,8 @@ import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, BinOp,
-    Send, Self, Variable, InstanceVariable, Array, ConstantInt, ConstantString)
+    Send, SendBlock, Self, Variable, InstanceVariable, Array, ConstantInt,
+    ConstantString)
 
 
 class TestParser(object):
@@ -244,3 +245,35 @@ class TestParser(object):
     def test_instance_variable(self, space):
         assert space.parse("@a") == Main(Block([Statement(InstanceVariable("a"))]))
         assert space.parse("@a = 3") == Main(Block([Statement(InstanceVariableAssignment("a", ConstantInt(3)))]))
+
+    def test_do_block(self, space):
+        r = space.parse("""
+        x.each do
+            puts 1
+        end
+        """)
+        assert r == Main(Block([
+            Statement(SendBlock(Variable("x"), "each", [], [], Block([
+                Statement(Send(Self(), "puts", [ConstantInt(1)]))
+            ])))
+        ]))
+        r = space.parse("""
+        x.each do ||
+            puts 1
+        end
+        """)
+        assert r == Main(Block([
+            Statement(SendBlock(Variable("x"), "each", [], [], Block([
+                Statement(Send(Self(), "puts", [ConstantInt(1)]))
+            ])))
+        ]))
+        r = space.parse("""
+        x.each do |a|
+            puts a
+        end
+        """)
+        assert r == Main(Block([
+            Statement(SendBlock(Variable("x"), "each", [], ["a"], Block([
+                Statement(Send(Self(), "puts", [Variable("a")]))
+            ])))
+        ]))

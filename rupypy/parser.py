@@ -4,7 +4,8 @@ from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, BinOp,
-    Send, Self, Variable, InstanceVariable, Array, ConstantInt, ConstantString)
+    Send, SendBlock, Self, Variable, InstanceVariable, Array, ConstantInt,
+    ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -34,7 +35,25 @@ class Transformer(object):
     def visit_stmt(self, node):
         if len(node.children) == 2:
             return Return(self.visit_expr(node.children[1]))
+        elif len(node.children) == 1 and node.children[0].symbol == "block":
+            return Statement(self.visit_send_block(node.children[0]))
         return Statement(self.visit_expr(node.children[0]))
+
+    def visit_send_block(self, node):
+        send = self.visit_real_send(node.children[0])
+        block_args = []
+        start_idx = 2
+        if node.children[2].symbol == "arglist":
+            block_args = self.visit_arglist(node.children[2])
+            start_idx += 1
+        block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
+        return SendBlock(
+            send.receiver,
+            send.method,
+            send.args,
+            block_args,
+            block,
+        )
 
     def visit_expr(self, node):
         if node.children[0].symbol == "assignment":
@@ -72,6 +91,11 @@ class Transformer(object):
         )
 
     def visit_send(self, node):
+        if node.children[0].symbol == "real_send":
+            return self.visit_real_send(node.children[0])
+        raise NotImplementedError
+
+    def visit_real_send(self, node):
         if node.children[0].symbol != "primary":
             return Send(
                 Self(),
@@ -176,7 +200,10 @@ class Transformer(object):
     def visit_argdecl(self, node):
         if not node.children:
             return []
-        return [n.additional_info for n in node.children[0].children]
+        return self.visit_arglist(node.children[0])
+
+    def visit_arglist(self, node):
+        return [n.additional_info for n in node.children]
 
     def visit_integer(self, node):
         return ConstantInt(int(node.additional_info))

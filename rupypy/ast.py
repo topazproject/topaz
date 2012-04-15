@@ -183,6 +183,14 @@ class Send(Node):
             self.args[i].compile(ctx)
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), len(self.args))
 
+class SendBlock(Node):
+    def __init__(self, receiver, method, args, block_args, block):
+        self.receiver = receiver
+        self.method = method
+        self.args = args
+        self.block_args = block_args
+        self.block = block
+
 class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
