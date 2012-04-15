@@ -426,3 +426,29 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+
+    def test_send_block(self, space):
+        bc = self.assert_compiles(space, """
+        [1, 2, 3].map do |x|
+            x * 2
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_ARRAY 3
+        LOAD_CONST 3
+        BUILD_BLOCK 0
+        SEND_BLOCK 4 1
+        DISCARD_TOP
+
+        LOAD_CONST 5
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[3].bytecode, """
+        LOAD_LOCAL 0
+        LOAD_CONST 0
+        SEND 1 1
+        RETURN
+        """)

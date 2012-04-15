@@ -21,12 +21,14 @@ BYTECODES = [
     ("STORE_INSTANCE_VAR", 1, 0),
 
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
+    ("BUILD_BLOCK", 1, ARRAY_EFFECT),
     ("BUILD_CLASS", 0, -3),
     ("COPY_STRING", 0, 0),
 
     ("DEFINE_FUNCTION", 0, -2),
 
     ("SEND", 2, SEND_EFFECT),
+    ("SEND_BLOCK", 2, SEND_EFFECT),
 
     ("JUMP", 1, 0),
     ("JUMP_IF_FALSE", 1, -1),

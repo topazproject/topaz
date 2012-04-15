@@ -191,6 +191,21 @@ class SendBlock(Node):
         self.block_args = block_args
         self.block = block
 
+    def compile(self, ctx):
+        self.receiver.compile(ctx)
+        for i in range(len(self.args) - 1, -1, -1):
+            self.args[i].compile(ctx)
+
+        block_ctx = CompilerContext(ctx.space)
+        for name in self.block_args:
+            block_ctx.create_local(name)
+        self.block.compile(block_ctx)
+        block_ctx.emit(consts.RETURN)
+        bc = block_ctx.create_bytecode()
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bc)))
+        ctx.emit(consts.BUILD_BLOCK, 0)
+        ctx.emit(consts.SEND_BLOCK, ctx.create_symbol_const(self.method), len(self.args) + 1)
+
 class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
