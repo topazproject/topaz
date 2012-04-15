@@ -23,6 +23,8 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
             arg_count += 1
         elif argname == "self":
             source.append("    assert isinstance(self, self_cls)")
+        elif argname == "args_w":
+            source.append("    args += (args_w,)")
         elif argname != "space":
             raise NotImplementedError(argname)
     source.append("    return func(self, space, *args)")

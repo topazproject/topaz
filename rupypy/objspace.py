@@ -28,7 +28,7 @@ class ObjectSpace(object):
     def __init__(self):
         self.transformer = Transformer()
         self.cache = SpaceCache(self)
-        self.w_top_self = self.getclassfor(W_Object).method_new(self)
+        self.w_top_self = self.send(self.getclassfor(W_Object), self.newsymbol("new"))
 
         self.w_true = W_TrueObject()
         self.w_false = W_FalseObject()

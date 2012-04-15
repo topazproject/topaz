@@ -55,7 +55,7 @@ class W_ClassObject(W_BaseObject):
         return space.newstr_fromstr(self.name)
 
     @classdef.method("new")
-    def method_new(self, space):
+    def method_new(self, space, args_w):
         w_obj = W_Object(space, self)
-        space.send(w_obj, space.newsymbol("initialize"))
+        space.send(w_obj, space.newsymbol("initialize"), args_w)
         return w_obj

@@ -5,7 +5,7 @@ from rupypy import consts
 
 
 class Frame(object):
-    _virtualizable2_ = ["locals_w[*]", "stack[*]", "stackpos", "w_self", "w_scope"]
+    _virtualizable2_ = ["locals_w[*]", "stack_w[*]", "stackpos", "w_self", "w_scope"]
 
     def __init__(self, bytecode, w_self, w_scope):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
