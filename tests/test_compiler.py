@@ -452,3 +452,33 @@ class TestCompiler(object):
         SEND 1 1
         RETURN
         """)
+
+    def test_yield(self, space):
+        bc = self.assert_compiles(space, """
+        def f
+            yield
+            yield 4
+            yield 4, 5
+        end
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[1].bytecode, """
+        YIELD 0
+        DISCARD_TOP
+        LOAD_CONST 0
+        YIELD 1
+        DISCARD_TOP
+        LOAD_CONST 1
+        LOAD_CONST 2
+        YIELD 2
+        RETURN
+        """)

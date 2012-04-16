@@ -166,6 +166,11 @@ class Yield(Node):
     def __init__(self, args):
         self.args = args
 
+    def compile(self, ctx):
+        for arg in self.args:
+            arg.compile(ctx)
+        ctx.emit(consts.YIELD, len(self.args))
+
 class BinOp(Node):
     def __init__(self, op, left, right):
         self.op = op

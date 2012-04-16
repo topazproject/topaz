@@ -37,6 +37,7 @@ BYTECODES = [
     ("DISCARD_TOP", 0, -1),
 
     ("RETURN", 0, -1),
+    ("YIELD", 1, ARRAY_EFFECT),
 ]
 
 BYTECODE_NAMES = []
