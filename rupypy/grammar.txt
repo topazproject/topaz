@@ -90,4 +90,6 @@ args: arg [","] >args< | arg;
 varname: IDENTIFIER |
          "@" IDENTIFIER;
 
-literal: NUMBER | STRING;
+literal: NUMBER | symbol | STRING;
+
+symbol: [":"] IDENTIFIER;

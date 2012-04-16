@@ -3,7 +3,7 @@ import py
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
     BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
-    ConstantInt, ConstantFloat, ConstantString)
+    ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
 
 
 class TestParser(object):
@@ -289,3 +289,6 @@ class TestParser(object):
         assert space.parse("yield") == Main(Block([Statement(Yield([]))]))
         assert space.parse("yield 3, 4") == Main(Block([Statement(Yield([ConstantInt(3), ConstantInt(4)]))]))
         assert space.parse("yield 4") == Main(Block([Statement(Yield([ConstantInt(4)]))]))
+
+    def test_symbol(self, space):
+        assert space.parse(":abc") == Main(Block([Statement(ConstantSymbol("abc"))]))

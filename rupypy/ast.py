@@ -274,6 +274,13 @@ class ConstantFloat(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_float_const(self.floatvalue))
 
+class ConstantSymbol(Node):
+    def __init__(self, symbol):
+        self.symbol = symbol
+
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.symbol))
+
 class ConstantString(Node):
     def __init__(self, strvalue):
         self.strvalue = strvalue

@@ -507,3 +507,14 @@ class TestCompiler(object):
         YIELD 2
         RETURN
         """)
+
+    def test_constant_symbol(self, space):
+        bc = self.assert_compiles(space, ":abc", """
+        LOAD_CONST 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+        [c1, c2] = bc.consts_w
+        assert space.symbol_w(c1) == "abc"
