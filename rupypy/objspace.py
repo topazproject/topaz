@@ -145,7 +145,7 @@ class ObjectSpace(object):
             raise LookupError(name)
         return raw_method.call(self, w_receiver, args_w, block)
 
-    def invoke_block(self, block, *args_w):
+    def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = Frame(bc, self.w_top_self, self.getclassfor(W_Object))
         # XXX arg count checking

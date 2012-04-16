@@ -39,5 +39,5 @@ class W_ArrayObject(W_BaseObject):
     @classdef.method("each")
     def method_each(self, space, block):
         for w_obj in self.items_w:
-            space.invoke_block(block, w_obj)
+            space.invoke_block(block, [w_obj])
         return self

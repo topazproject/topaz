@@ -41,6 +41,7 @@ class Transformer(object):
 
     def visit_send_block(self, node):
         send = self.visit_real_send(node.children[0])
+        assert isinstance(send, Send)
         block_args = []
         start_idx = 2
         if node.children[2].symbol == "arglist":
