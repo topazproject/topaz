@@ -1,3 +1,4 @@
+from pypy.rlib.objectmodel import newlist_hint
 from pypy.rlib.rerased import new_static_erasing_pair
 
 from rupypy.module import ClassDef
@@ -18,6 +19,9 @@ class ConstantStringStrategy(StringStrategy):
         strvalue = self.unerase(storage)
         return [c for c in strvalue]
 
+    def length(self, storage):
+        return len(self.unerase(storage))
+
     def copy(self, storage):
         return W_StringObject(storage, self)
 
@@ -36,6 +40,9 @@ class MutableStringStrategy(StringStrategy):
 
     def liststr_w(self, storage):
         return self.unerase(storage)
+
+    def length(self, storage):
+        return len(self.unerase(storage))
 
     def to_mutable(self, space, s):
         pass
@@ -69,16 +76,30 @@ class W_StringObject(W_BaseObject):
     def liststr_w(self, space):
         return self.strategy.liststr_w(self.storage)
 
+    def length(self):
+        return self.strategy.length(self.storage)
+
     def copy(self):
         return self.strategy.copy(self.storage)
 
-
-    @classdef.method("<<")
-    def method_lshift(self, space, w_other):
-        assert isinstance(w_other, W_StringObject)
+    def extend(self, space, w_other):
         self.strategy.to_mutable(space, self)
         strategy = self.strategy
         assert isinstance(strategy, MutableStringStrategy)
         storage = strategy.unerase(self.storage)
         w_other.strategy.extend_into(w_other.storage, storage)
+
+    @classdef.method("+")
+    def method_plus(self, space, w_other):
+        assert isinstance(w_other, W_StringObject)
+        total_size = self.length() + w_other.length()
+        s = W_StringObject.newstr_fromchars(space, newlist_hint(total_size))
+        s.extend(space, self)
+        s.extend(space, w_other)
+        return s
+
+    @classdef.method("<<")
+    def method_lshift(self, space, w_other):
+        assert isinstance(w_other, W_StringObject)
+        self.extend(space, w_other)
         return self
