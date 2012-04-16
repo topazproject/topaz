@@ -200,10 +200,15 @@ class Transformer(object):
         )
 
     def visit_class(self, node):
+        superclass = None
+        block_start_idx = 2
+        if node.children[2].symbol == "LT":
+            superclass = Variable(node.children[3].additional_info)
+            block_start_idx += 2
         return Class(
             node.children[1].additional_info,
-            None,
-            self.visit_block(node, start_idx=2, end_idx=len(node.children) - 1),
+            superclass,
+            self.visit_block(node, start_idx=block_start_idx, end_idx=len(node.children) - 1),
         )
 
     def visit_argdecl(self, node):

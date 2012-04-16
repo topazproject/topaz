@@ -242,6 +242,10 @@ class TestParser(object):
             ])))
         ]))
 
+        assert space.parse("class X < Object; end") == Main(Block([
+            Statement(Class("X", Variable("Object"), Block([])))
+        ]))
+
     def test_instance_variable(self, space):
         assert space.parse("@a") == Main(Block([Statement(InstanceVariable("a"))]))
         assert space.parse("@a = 3") == Main(Block([Statement(InstanceVariableAssignment("a", ConstantInt(3)))]))

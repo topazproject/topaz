@@ -103,6 +103,18 @@ class TestInterpreter(object):
         w_cls = space.getclassfor(W_Object).constants_w["X"]
         assert w_cls.methods.viewkeys() == {"m", "f"}
 
+        w_res = space.execute("""
+        class Z < X
+            def g
+                3
+            end
+        end
+
+        z = Z.new
+        return [z.f, z.g]
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 3]
+
     def test_reopen_class(self, space):
         space.execute("""
         class X
@@ -168,3 +180,4 @@ class TestInterpreter(object):
         """)
         out, err = capfd.readouterr()
         assert out == "5\n9\n"
+

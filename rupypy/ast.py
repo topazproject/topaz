@@ -122,7 +122,10 @@ class Class(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        if self.superclass is None:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        else:
+            self.superclass.compile(ctx)
 
         body_ctx = CompilerContext(ctx.space)
         self.body.compile(body_ctx)
