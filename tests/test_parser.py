@@ -1,9 +1,9 @@
 import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
-    InstanceVariableAssignment, If, While, Class, Function, Return, BinOp,
-    Send, SendBlock, Self, Variable, InstanceVariable, Array, ConstantInt,
-    ConstantString)
+    InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
+    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
+    ConstantInt, ConstantString)
 
 
 class TestParser(object):
@@ -277,3 +277,8 @@ class TestParser(object):
                 Statement(Send(Self(), "puts", [Variable("a")]))
             ])))
         ]))
+
+    def test_yield(self, space):
+        assert space.parse("yield") == Main(Block([Statement(Yield([]))]))
+        assert space.parse("yield 3, 4") == Main(Block([Statement(Yield([ConstantInt(3), ConstantInt(4)]))]))
+        assert space.parse("yield 4") == Main(Block([Statement(Yield([ConstantInt(4)]))]))

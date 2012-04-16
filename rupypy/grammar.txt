@@ -25,6 +25,7 @@ statement: "return" expr |
 block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
 
 expr: assignment |
+      yield |
       arg;
 
 assignment: lhs "=" rhs;
@@ -32,6 +33,8 @@ assignment: lhs "=" rhs;
 lhs: varname;
 
 rhs: arg;
+
+yield: ["yield"] args?;
 
 arg: comparison;
 

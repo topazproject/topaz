@@ -162,6 +162,10 @@ class Return(BaseStatement):
         self.expr.compile(ctx)
         ctx.emit(consts.RETURN)
 
+class Yield(Node):
+    def __init__(self, args):
+        self.args = args
+
 class BinOp(Node):
     def __init__(self, op, left, right):
         self.op = op

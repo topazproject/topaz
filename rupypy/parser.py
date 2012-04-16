@@ -3,9 +3,9 @@ import os
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
-    InstanceVariableAssignment, If, While, Class, Function, Return, BinOp,
-    Send, SendBlock, Self, Variable, InstanceVariable, Array, ConstantInt,
-    ConstantString)
+    InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
+    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
+    ConstantInt, ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -59,6 +59,8 @@ class Transformer(object):
     def visit_expr(self, node):
         if node.children[0].symbol == "assignment":
             return self.visit_assignment(node.children[0])
+        elif node.children[0].symbol == "yield":
+            return self.visit_yield(node.children[0])
         return self.visit_arg(node.children[0])
 
     def visit_assignment(self, node):
@@ -70,6 +72,12 @@ class Transformer(object):
             return InstanceVariableAssignment(
                 target.children[1].additional_info, value
             )
+
+    def visit_yield(self, node):
+        args = []
+        if node.children:
+            args = self.visit_send_args(node)
+        return Yield(args)
 
     def visit_arg(self, node):
         if node.symbol == "arg":
