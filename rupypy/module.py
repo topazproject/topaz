@@ -6,7 +6,7 @@ from rupypy.interpreter import Interpreter, Frame
 
 def generate_wrapper(name, orig_func, argspec, self_cls):
     source = []
-    source.append("def %s(self, space, args_w):" % orig_func.__name__)
+    source.append("def %s(self, space, args_w, block):" % orig_func.__name__)
     source.append("    args = ()")
     code = orig_func.__code__
     arg_count = 0
@@ -25,6 +25,8 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
             source.append("    assert isinstance(self, self_cls)")
         elif argname == "args_w":
             source.append("    args += (args_w,)")
+        elif argname == "block":
+            source.append("    args += (block,)")
         elif argname != "space":
             raise NotImplementedError(argname)
     source.append("    return func(self, space, *args)")
@@ -103,7 +105,7 @@ class Function(BaseFunction):
         self.bytecode = bytecode
 
     @jit.unroll_safe
-    def call(self, space, w_receiver, args_w):
+    def call(self, space, w_receiver, args_w, block):
         from rupypy.objects.objectobject import W_Object
         # XXX: is scope right?
         frame = Frame(self.bytecode, w_receiver, space.getclassfor(W_Object))
@@ -118,5 +120,5 @@ class BuiltinFunction(BaseFunction):
     def __init__(self, func):
         self.func = func
 
-    def call(self, space, w_receiver, args_w):
-        return self.func(w_receiver, space, args_w)
+    def call(self, space, w_receiver, args_w, block):
+        return self.func(w_receiver, space, args_w, block)

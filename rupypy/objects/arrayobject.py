@@ -30,3 +30,14 @@ class W_ArrayObject(W_BaseObject):
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(len(self.items_w))
+
+    @classdef.method("<<")
+    def method_lshift(self, space, w_obj):
+        self.items_w.append(w_obj)
+        return self
+
+    @classdef.method("each")
+    def method_each(self, space, block):
+        for w_obj in self.items_w:
+            space.invoke_block(block, w_obj)
+        return self

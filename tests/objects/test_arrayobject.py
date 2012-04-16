@@ -16,3 +16,7 @@ class TestArrayObject(object):
     def test_length(self, space):
         w_res = space.execute("return [1, 2, 3].length")
         assert space.int_w(w_res) == 3
+
+    def test_lshift(self, space):
+        w_res = space.execute("return [] << 1")
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1]

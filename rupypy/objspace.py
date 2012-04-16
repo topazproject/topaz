@@ -134,7 +134,7 @@ class ObjectSpace(object):
     def set_instance_var(self, w_obj, name, w_value):
         w_obj.set_instance_var(self, name, w_value)
 
-    def send(self, w_receiver, w_method, args_w=None):
+    def send(self, w_receiver, w_method, args_w=None, block=None):
         if args_w is None:
             args_w = []
         name = self.symbol_w(w_method)
@@ -143,4 +143,12 @@ class ObjectSpace(object):
         raw_method = w_cls.find_method(self, name)
         if raw_method is None:
             raise LookupError(name)
-        return raw_method.call(self, w_receiver, args_w)
+        return raw_method.call(self, w_receiver, args_w, block)
+
+    def invoke_block(self, block, *args_w):
+        bc = block.bytecode
+        frame = Frame(bc, self.w_top_self, self.getclassfor(W_Object))
+        # XXX arg count checking
+        for i, w_arg in enumerate(args_w):
+            frame.locals_w[i] = w_arg
+        return Interpreter().interpret(self, frame, bc)

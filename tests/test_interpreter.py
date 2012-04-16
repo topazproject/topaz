@@ -143,3 +143,12 @@ class TestInterpreter(object):
         return x.get
         """)
         assert space.str_w(w_res) == "abc"
+
+    def test_send_block(self, space, capfd):
+        space.execute("""
+        [1, 2, 3].each do |x|
+            puts x * 2
+        end
+        """)
+        out, err = capfd.readouterr()
+        assert out == "2\n4\n6\n"

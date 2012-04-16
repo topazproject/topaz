@@ -137,6 +137,17 @@ class Interpreter(object):
             items_w[i] = frame.pop()
         frame.push(space.newarray(items_w))
 
+    @jit.unroll_safe
+    def BUILD_BLOCK(self, space, bytecode, frame, pc, n_cells):
+        from rupypy.objects.blockobject import W_BlockObject
+        from rupypy.objects.codeobject import W_CodeObject
+
+        cells = [frame.pop() for _ in range(n_cells)]
+        w_code = frame.pop()
+        assert isinstance(w_code, W_CodeObject)
+        block = W_BlockObject(w_code.bytecode, cells)
+        frame.push(block)
+
     def BUILD_CLASS(self, space, bytecode, frame, pc):
         from rupypy.objects.codeobject import W_CodeObject
         from rupypy.objects.objectobject import W_Object
@@ -180,6 +191,16 @@ class Interpreter(object):
         args_w = [frame.pop() for _ in range(num_args)]
         w_receiver = frame.pop()
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
+        frame.push(w_res)
+
+    def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
+        from rupypy.objects.blockobject import W_BlockObject
+
+        w_block = frame.pop()
+        args_w = [frame.pop() for _ in range(num_args - 1)]
+        w_receiver = frame.pop()
+        assert isinstance(w_block, W_BlockObject)
+        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
     def JUMP(self, space, bytecode, frame, pc, target_pc):
