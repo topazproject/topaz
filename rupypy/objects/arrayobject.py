@@ -36,18 +36,12 @@ class W_ArrayObject(W_BaseObject):
         self.items_w.append(w_obj)
         return self
 
-    @classdef.method("each")
-    def method_each(self, space, block):
-        for w_obj in self.items_w:
-            space.invoke_block(block, [w_obj])
-        return self
-
-    # classdef.app_method("""
-    # def each
-    #     i = 0
-    #     while i < self.length
-    #         yield self[i]
-    #         i += 1
-    #     end
-    # end
-    # """)
+    classdef.app_method("""
+    def each
+        i = 0
+        while i < self.length
+            yield self[i]
+            i = i + 1
+        end
+    end
+    """)
