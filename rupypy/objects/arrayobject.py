@@ -41,3 +41,13 @@ class W_ArrayObject(W_BaseObject):
         for w_obj in self.items_w:
             space.invoke_block(block, [w_obj])
         return self
+
+    # classdef.app_method("""
+    # def each
+    #     i = 0
+    #     while i < self.length
+    #         yield self[i]
+    #         i += 1
+    #     end
+    # end
+    # """)
