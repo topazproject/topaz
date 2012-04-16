@@ -292,3 +292,12 @@ class TestParser(object):
 
     def test_symbol(self, space):
         assert space.parse(":abc") == Main(Block([Statement(ConstantSymbol("abc"))]))
+
+    def test_assign_method(self, space):
+        assert space.parse("self.attribute = 3") == Main(Block([
+            Statement(MethodAssignment(Self(), "attribute", ConstantInt(3)))
+        ]))
+
+        assert space.parse("self.attribute.other_attr.other = 12") == Main(Block([
+            Statement(MethodAssignment(Send(Send(Self(), "attribute", []), "other_attr", []), "other", ConstantInt(12)))
+        ]))
