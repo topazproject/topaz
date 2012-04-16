@@ -5,15 +5,18 @@ from rupypy import consts
 
 
 class Frame(object):
-    _virtualizable2_ = ["locals_w[*]", "stack_w[*]", "stackpos", "w_self", "w_scope"]
+    _virtualizable2_ = [
+        "locals_w[*]", "stack_w[*]", "stackpos", "w_self", "w_scope", "block"
+    ]
 
-    def __init__(self, bytecode, w_self, w_scope):
+    def __init__(self, bytecode, w_self, w_scope, block):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         self.stack_w = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
         self.stackpos = 0
         self.w_self = w_self
         self.w_scope = w_scope
+        self.block = block
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
@@ -166,8 +169,8 @@ class Interpreter(object):
             space.set_const(frame.w_scope, name, w_cls)
 
         assert isinstance(w_bytecode, W_CodeObject)
-        bc = w_bytecode.bytecode
-        Interpreter().interpret(space, Frame(bc, w_cls, frame.w_scope), bc)
+        sub_frame = space.create_frame(w_bytecode.bytecode, w_cls, frame.w_scope)
+        Interpreter().interpret(space, sub_frame, w_bytecode.bytecode)
 
         frame.push(space.w_nil)
 
@@ -214,6 +217,11 @@ class Interpreter(object):
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
+
+    def YIELD(self, space, bytecode, frame, pc, n_args):
+        args_w = [frame.pop() for _ in range(n_args)]
+        w_res = space.invoke_block(frame.block, args_w)
+        frame.push(w_res)
 
     def UNREACHABLE(self, space, bytecode, frame, pc):
         raise Exception

@@ -152,3 +152,19 @@ class TestInterpreter(object):
         """)
         out, err = capfd.readouterr()
         assert out == "2\n4\n6\n"
+
+    def test_yield(self, space, capfd):
+        space.execute("""
+        class X
+            def f
+                yield 2, 3
+                yield 4, 5
+            end
+        end
+
+        X.new.f do |x, y|
+            puts x + y
+        end
+        """)
+        out, err = capfd.readouterr()
+        assert out == "5\n9\n"

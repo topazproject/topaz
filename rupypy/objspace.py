@@ -54,10 +54,15 @@ class ObjectSpace(object):
 
     def execute(self, source, w_self=None):
         bc = self.compile(source)
+        frame = self.create_frame(bc, w_self)
+        return Interpreter().interpret(self, frame, bc)
+
+    def create_frame(self, bc, w_self=None, w_scope=None, block=None):
         if w_self is None:
             w_self = self.w_top_self
-        frame = Frame(bc, w_self, self.getclassfor(W_Object))
-        return Interpreter().interpret(self, frame, bc)
+        if w_scope is None:
+            w_scope = self.getclassfor(W_Object)
+        return Frame(bc, w_self, w_scope, block)
 
     # Methods for allocating new objects.
 
@@ -147,7 +152,7 @@ class ObjectSpace(object):
 
     def invoke_block(self, block, args_w):
         bc = block.bytecode
-        frame = Frame(bc, self.w_top_self, self.getclassfor(W_Object))
+        frame = self.create_frame(bc)
         # XXX arg count checking
         for i, w_arg in enumerate(args_w):
             frame.locals_w[i] = w_arg
