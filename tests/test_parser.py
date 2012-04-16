@@ -3,12 +3,15 @@ import py
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
     BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
-    ConstantInt, ConstantString)
+    ConstantInt, ConstantFloat, ConstantString)
 
 
 class TestParser(object):
     def test_int_constant(self, space):
         assert space.parse("1") == Main(Block([Statement(ConstantInt(1))]))
+
+    def test_float(self, space):
+        assert space.parse("0.2") == Main(Block([Statement(ConstantFloat(0.2))]))
 
     def test_binary_expression(self, space):
         assert space.parse("1+1") == Main(Block([Statement(BinOp("+", ConstantInt(1), ConstantInt(1)))]))

@@ -62,6 +62,9 @@ class CompilerContext(object):
     def create_int_const(self, intvalue):
         return self.create_const(self.space.newint(intvalue))
 
+    def create_float_const(self, floatvalue):
+        return self.create_const(self.space.newfloat(floatvalue))
+
     def create_symbol_const(self, symbol):
         return self.create_const(self.space.newsymbol(symbol))
 

@@ -5,7 +5,7 @@ from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
     BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
-    ConstantInt, ConstantString)
+    ConstantInt, ConstantFloat, ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -168,8 +168,8 @@ class Transformer(object):
 
     def visit_literal(self, node):
         symname = node.children[0].symbol
-        if symname == "INTEGER":
-            return self.visit_integer(node.children[0])
+        if symname == "NUMBER":
+            return self.visit_number(node.children[0])
         elif symname == "STRING":
             return self.visit_string(node.children[0])
         raise NotImplementedError(symname)
@@ -219,8 +219,11 @@ class Transformer(object):
     def visit_arglist(self, node):
         return [n.additional_info for n in node.children]
 
-    def visit_integer(self, node):
-        return ConstantInt(int(node.additional_info))
+    def visit_number(self, node):
+        if "." in node.additional_info:
+            return ConstantFloat(float(node.additional_info))
+        else:
+            return ConstantInt(int(node.additional_info))
 
     def visit_string(self, node):
         end = len(node.additional_info) - 1

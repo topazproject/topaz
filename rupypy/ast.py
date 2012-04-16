@@ -267,6 +267,13 @@ class ConstantInt(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.intvalue))
 
+class ConstantFloat(Node):
+    def __init__(self, floatvalue):
+        self.floatvalue = floatvalue
+
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_CONST, ctx.create_float_const(self.floatvalue))
+
 class ConstantString(Node):
     def __init__(self, strvalue):
         self.strvalue = strvalue

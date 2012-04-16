@@ -37,9 +37,19 @@ class TestCompiler(object):
         RETURN
         """)
         [c1, c2] = bc.consts_w
-        assert c1.intvalue == 1
+        assert space.int_w(c1) == 1
         assert isinstance(c2, W_TrueObject)
         assert bc.max_stackdepth == 1
+
+    def test_float_constant(self, space):
+        bc = self.assert_compiles(space, "1.2", """
+        LOAD_CONST 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        RETURN
+        """)
+        [c1, c2] = bc.consts_w
+        assert space.float_w(c1) == 1.2
 
     def test_addition(self, space):
         bc = self.assert_compiles(space, "1 + 2", """

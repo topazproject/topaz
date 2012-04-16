@@ -8,6 +8,7 @@ from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
+from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.objectobject import W_Object
@@ -75,6 +76,9 @@ class ObjectSpace(object):
     def newint(self, intvalue):
         return W_IntObject(intvalue)
 
+    def newfloat(self, floatvalue):
+        return W_FloatObject(floatvalue)
+
     def newsymbol(self, symbol):
         return W_SymbolObject(symbol)
 
@@ -101,6 +105,9 @@ class ObjectSpace(object):
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
+
+    def float_w(self, w_obj):
+        return w_obj.float_w(self)
 
     def symbol_w(self, w_obj):
         return w_obj.symbol_w(self)
