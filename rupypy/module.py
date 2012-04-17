@@ -15,6 +15,8 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
             spec = argspec[argname]
             if spec is int:
                 source.append("    args += (space.int_w(args_w[%d]),)" % arg_count)
+            elif spec == "symbol":
+                source.append("    args += (space.symbol_w(args_w[%d]),)" % arg_count)
             else:
                 raise NotImplementedError(spec)
             arg_count += 1

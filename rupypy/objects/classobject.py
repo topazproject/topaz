@@ -1,16 +1,17 @@
 from pypy.rlib import jit
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject, W_Object
+from rupypy.objects.moduleobject import W_ModuleObject
+from rupypy.objects.objectobject import W_Object
 
 
 class VersionTag(object):
     pass
 
-class W_ClassObject(W_BaseObject):
+class W_ClassObject(W_ModuleObject):
     _immutable_fields_ = ["version?"]
 
-    classdef = ClassDef("Class", W_BaseObject.classdef)
+    classdef = ClassDef("Class", W_ModuleObject.classdef)
 
     def __init__(self, name, superclass, is_singleton=False):
         self.name = name
