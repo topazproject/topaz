@@ -159,7 +159,7 @@ class ObjectSpace(object):
 
     def invoke_block(self, block, args_w):
         bc = block.bytecode
-        frame = self.create_frame(bc)
+        frame = self.create_frame(bc, w_self=block.w_self)
         # XXX arg count checking
         for i, w_arg in enumerate(args_w):
             frame.locals_w[i] = w_arg

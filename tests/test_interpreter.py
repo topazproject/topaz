@@ -181,3 +181,25 @@ class TestInterpreter(object):
         out, err = capfd.readouterr()
         assert out == "5\n9\n"
 
+class TestBlockScope(object):
+    def test_self(self, space):
+        w_res = space.execute("""
+        class X
+            def initialize
+                @data = []
+            end
+            def process d
+                d.each do |x|
+                    @data << x * 2
+                end
+            end
+            def data
+                @data
+            end
+        end
+
+        x = X.new
+        x.process [1, 2, 3]
+        return x.data
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 4, 6]
