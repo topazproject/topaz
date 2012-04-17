@@ -9,6 +9,7 @@ from rupypy.ast import (Main, Block, Statement, Assignment,
 class TestParser(object):
     def test_int_constant(self, space):
         assert space.parse("1") == Main(Block([Statement(ConstantInt(1))]))
+        assert space.parse("-1") == Main(Block([Statement(ConstantInt(-1))]))
 
     def test_float(self, space):
         assert space.parse("0.2") == Main(Block([Statement(ConstantFloat(0.2))]))
