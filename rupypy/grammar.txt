@@ -11,6 +11,8 @@ IDENTIFIER: "[a-zA-Z_][a-zA-Z0-9_]*";
 
 DOT: "\.";
 LT: "<";
+LPAREN: "\(";
+RPAREN: "\)";
 
 CMP_OPER: "(!=)|(==)|(<=)|(>=)|>";
 SHIFT_OPER: "<<";
@@ -53,15 +55,17 @@ send: real_send |
       <primary>;
 
 real_send: primary trailers |
-           IDENTIFIER send_args;
+           IDENTIFIER send_args |
+           IDENTIFIER [LPAREN] send_args? [RPAREN];
 
 trailers: trailer >trailers< | trailer;
 
 trailer: attribute | subscript;
-attribute: [DOT] operation send_args?;
+attribute: [DOT] operation [LPAREN] send_args? [RPAREN] |
+           [DOT] operation send_args?;
 subscript: ["["] arg ["]"];
 
-primary: "(" expr ")" |
+primary: LPAREN expr RPAREN |
          "[" args? "]" |
          "if" expr then line* statement? [LINE_END]? "end" |
          "while" expr do line* statement? [LINE_END]? "end" |
@@ -78,7 +82,7 @@ do: [LINE_END] |
     "do" |
     [LINE_END] "do";
 
-argdecl: ["("] arglist? [")"] |
+argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];
 
 arglist: IDENTIFIER [","] >arglist< | IDENTIFIER;
