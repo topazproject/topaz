@@ -260,6 +260,20 @@ class Array(Node):
             item.compile(ctx)
         ctx.emit(consts.BUILD_ARRAY, len(self.items))
 
+class Range(Node):
+    def __init__(self, start, stop, inclusive):
+        self.start = start
+        self.stop = stop
+        self.inclusive = inclusive
+
+    def compile(self, ctx):
+        self.start.compile(ctx)
+        self.stop.compile(ctx)
+        if self.inclusive:
+            ctx.emit(consts.BUILD_RANGE_INCLUSIVE)
+        else:
+            ctx.emit(consts.BUILD_RANGE)
+
 class ConstantInt(Node):
     def __init__(self, intvalue):
         self.intvalue = intvalue

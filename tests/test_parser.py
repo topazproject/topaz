@@ -2,7 +2,7 @@ import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
-    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
+    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array, Range,
     ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
 
 
@@ -295,6 +295,11 @@ class TestParser(object):
 
     def test_symbol(self, space):
         assert space.parse(":abc") == Main(Block([Statement(ConstantSymbol("abc"))]))
+
+    def test_range(self, space):
+        assert space.parse("2..3") == Main(Block([Statement(Range(ConstantInt(2), ConstantInt(3), False))]))
+        assert space.parse("2...3") == Main(Block([Statement(Range(ConstantInt(2), ConstantInt(3), True))]))
+        assert space.parse('"abc".."def"') == Main(Block([Statement(Range(ConstantString("abc"), ConstantString("def"), False))]))
 
     @py.test.mark.xfail
     def test_assign_method(self, space):

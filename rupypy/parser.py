@@ -4,7 +4,7 @@ from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
-    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
+    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array, Range,
     ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
 
 
@@ -86,6 +86,8 @@ class Transformer(object):
         symname = node.symbol
         if symname in ["comparison", "shiftive", "additive", "multitive"]:
             return self.visit_subexpr(node)
+        elif symname == "range":
+            return self.visit_range(node)
         elif symname == "send":
             return self.visit_send(node)
         elif symname == "primary":
@@ -97,6 +99,14 @@ class Transformer(object):
             node.children[1].additional_info,
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
+        )
+
+    def visit_range(self, node):
+        inclusive = node.children[1].additional_info == "..."
+        return Range(
+            self.visit_arg(node.children[0]),
+            self.visit_arg(node.children[2]),
+            inclusive=inclusive,
         )
 
     def visit_send(self, node):

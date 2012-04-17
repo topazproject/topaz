@@ -518,3 +518,23 @@ class TestCompiler(object):
         """)
         [c1, c2] = bc.consts_w
         assert space.symbol_w(c1) == "abc"
+
+    def test_range(self, space):
+        self.assert_compiles(space, "1..10", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_RANGE
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiles(space, "1...10", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_RANGE_INCLUSIVE
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)

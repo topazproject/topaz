@@ -12,6 +12,7 @@ from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
 from rupypy.parser import Transformer, _parse, to_ast
@@ -90,6 +91,9 @@ class ObjectSpace(object):
 
     def newarray(self, items_w):
         return W_ArrayObject(items_w)
+
+    def newrange(self, w_start, w_end, inclusive):
+        return W_RangeObject(w_start, w_end, inclusive)
 
     def newclass(self, name, superclass):
         return W_ClassObject(name, superclass)

@@ -14,6 +14,7 @@ LT: "<";
 LPAREN: "\(";
 RPAREN: "\)";
 
+RANGE_OPER: "(\.\.)|(\.\.\.)";
 CMP_OPER: "(!=)|(==)|(<=)|(>=)|>";
 SHIFT_OPER: "<<";
 ADD_OPER: "[+-]";
@@ -42,10 +43,11 @@ rhs: arg;
 
 yield: ["yield"] args?;
 
-arg: comparison;
+arg: range;
 
 cmp_oper: <CMP_OPER> | <LT>;
 
+range: comparison RANGE_OPER range | <comparison>;
 comparison: shiftive cmp_oper comparison | <shiftive>;
 shiftive: additive SHIFT_OPER shiftive | <additive>;
 additive: multitive ADD_OPER additive | <multitive>;
@@ -87,7 +89,7 @@ argdecl: [LPAREN] arglist? [RPAREN] |
 
 arglist: IDENTIFIER [","] >arglist< | IDENTIFIER;
 
-operation: IDENTIFIER | "class";
+operation: IDENTIFIER | "class" | "end";
 
 send_args: args;
 

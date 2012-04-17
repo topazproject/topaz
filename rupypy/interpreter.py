@@ -140,6 +140,18 @@ class Interpreter(object):
             items_w[i] = frame.pop()
         frame.push(space.newarray(items_w))
 
+    def BUILD_RANGE(self, space, bytecode, frame, pc):
+        w_end = frame.pop()
+        w_start = frame.pop()
+        w_range = space.newrange(w_start, w_end, False)
+        frame.push(w_range)
+
+    def BUILD_RANGE_INCLUSIVE(self, space, bytecode, frame, pc):
+        w_end = frame.pop()
+        w_start = frame.pop()
+        w_range = space.newrange(w_start, w_end, True)
+        frame.push(w_range)
+
     @jit.unroll_safe
     def BUILD_BLOCK(self, space, bytecode, frame, pc, n_cells):
         from rupypy.objects.blockobject import W_BlockObject

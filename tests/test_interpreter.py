@@ -181,6 +181,12 @@ class TestInterpreter(object):
         out, err = capfd.readouterr()
         assert out == "5\n9\n"
 
+    def test_range(self, space):
+        w_res = space.execute("return (1..10).begin")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return (1...10).end")
+        assert space.int_w(w_res) == 10
+
 class TestBlockScope(object):
     def test_self(self, space):
         w_res = space.execute("""
