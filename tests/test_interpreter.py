@@ -139,6 +139,20 @@ class TestInterpreter(object):
         w_object_cls = space.getclassfor(W_Object)
         assert w_object_cls.constants_w["Abc"] is w_res
 
+    def test_class_constance(self, space):
+        w_res = space.execute("""
+        class X
+            Constant = 3
+            def f
+                return Constant
+            end
+        end
+        return X.new.f
+        """)
+        assert space.int_w(w_res) == 3
+        w_object_cls = space.getclassfor(W_Object)
+        assert "Constant" not in w_object_cls.constants_w
+
     def test_instance_var(self, space):
         w_res = space.execute("""
         class X

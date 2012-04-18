@@ -109,7 +109,7 @@ class Function(BaseFunction):
     @jit.unroll_safe
     def call(self, space, w_receiver, args_w, block):
         from rupypy.objects.objectobject import W_Object
-        frame = Frame(self.bytecode, w_receiver, space.getclassfor(W_Object), block)
+        frame = Frame(self.bytecode, w_receiver, space.getclass(w_receiver), block)
         # XXX arg count checking
         for i, w_arg in enumerate(args_w):
             frame.locals_w[i] = w_arg

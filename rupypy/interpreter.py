@@ -181,7 +181,7 @@ class Interpreter(object):
             space.set_const(frame.w_scope, name, w_cls)
 
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode.bytecode, w_cls, frame.w_scope)
+        sub_frame = space.create_frame(w_bytecode.bytecode, w_cls, w_cls)
         Interpreter().interpret(space, sub_frame, w_bytecode.bytecode)
 
         frame.push(space.w_nil)
