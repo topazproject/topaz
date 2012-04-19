@@ -58,6 +58,14 @@ class BlockSymbolTable(BaseSymbolTable):
             self.cells[name] = len(self.cells)
             self.parent_symtable.upgrade_to_closure(name)
 
+    def declare_write(self, name):
+        if name not in self.locals and name not in self.cells:
+            if self.parent_symtable.defined(name):
+                self.cells[name] = len(self.cells)
+                self.parent_symtable.upgrade_to_closure(name)
+            else:
+                self.declare_local(name)
+
 
 class CompilerContext(object):
     def __init__(self, space, symtable):
