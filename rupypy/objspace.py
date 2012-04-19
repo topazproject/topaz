@@ -169,4 +169,6 @@ class ObjectSpace(object):
         # XXX arg count checking
         for i, w_arg in enumerate(args_w):
             frame.locals_w[i] = w_arg
+        for i, cell in enumerate(block.cells):
+            frame.cells[i] = cell
         return Interpreter().interpret(self, frame, bc)

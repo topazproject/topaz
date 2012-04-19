@@ -2,17 +2,20 @@ from pypy.rlib import jit
 from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
+from rupypy.objects.cellobject import W_CellObject
 
 
 class Frame(object):
     _virtualizable2_ = [
-        "locals_w[*]", "stack_w[*]", "stackpos", "w_self", "w_scope", "block"
+        "locals_w[*]", "stack_w[*]", "stackpos", "w_self", "w_scope", "block",
+        "cells[*]"
     ]
 
     def __init__(self, bytecode, w_self, w_scope, block):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         self.stack_w = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
+        self.cells = [W_CellObject() for _ in bytecode.cells]
         self.stackpos = 0
         self.w_self = w_self
         self.w_scope = w_scope
@@ -107,6 +110,15 @@ class Interpreter(object):
 
     def STORE_LOCAL(self, space, bytecode, frame, pc, idx):
         frame.locals_w[idx] = frame.peek()
+
+    def LOAD_DEREF(self, space, bytecode, frame, pc, idx):
+        frame.push(frame.cells[idx].get())
+
+    def STORE_DEREF(self, space, bytecode, frame, pc, idx):
+        frame.cells[idx].set(frame.peek())
+
+    def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
+        frame.push(frame.cells[idx])
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]

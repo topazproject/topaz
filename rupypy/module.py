@@ -1,8 +1,6 @@
 from pypy.rlib import jit
 from pypy.tool.cache import Cache
 
-from rupypy.interpreter import Interpreter, Frame
-
 
 def generate_wrapper(name, orig_func, argspec, self_cls):
     source = []
@@ -113,7 +111,9 @@ class Function(BaseFunction):
 
     @jit.unroll_safe
     def call(self, space, w_receiver, args_w, block):
+        from rupypy.interpreter import Interpreter, Frame
         from rupypy.objects.objectobject import W_Object
+
         frame = Frame(self.bytecode, w_receiver, space.getclass(w_receiver), block)
         # XXX arg count checking
         for i, w_arg in enumerate(args_w):

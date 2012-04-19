@@ -185,17 +185,18 @@ class TestInterpreter(object):
         """)
         assert space.str_w(w_res) == "abc"
 
-    def test_send_block(self, space, capfd):
-        space.execute("""
+    def test_send_block(self, space):
+        w_res = space.execute("""
+        res = []
         [1, 2, 3].each do |x|
-            puts x * 2
+            res << (x * 2)
         end
+        return res
         """)
-        out, err = capfd.readouterr()
-        assert out == "2\n4\n6\n"
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 4, 6]
 
-    def test_yield(self, space, capfd):
-        space.execute("""
+    def test_yield(self, space):
+        w_res = space.execute("""
         class X
             def f
                 yield 2, 3
@@ -203,12 +204,13 @@ class TestInterpreter(object):
             end
         end
 
+        res = []
         X.new.f do |x, y|
-            puts x + y
+            res << (x + y)
         end
+        return res
         """)
-        out, err = capfd.readouterr()
-        assert out == "5\n9\n"
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 9]
 
     def test_range(self, space):
         w_res = space.execute("return (1..10).begin")
