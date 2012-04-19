@@ -67,7 +67,7 @@ class ObjectSpace(object):
             w_self = self.w_top_self
         if w_scope is None:
             w_scope = self.getclassfor(W_Object)
-        return Frame(bc, w_self, w_scope, block)
+        return Frame(jit.promote(bc), w_self, w_scope, block)
 
     # Methods for allocating new objects.
 

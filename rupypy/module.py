@@ -111,10 +111,14 @@ class Function(BaseFunction):
 
     @jit.unroll_safe
     def call(self, space, w_receiver, args_w, block):
-        from rupypy.interpreter import Interpreter, Frame
-        from rupypy.objects.objectobject import W_Object
+        from rupypy.interpreter import Interpreter
 
-        frame = Frame(self.bytecode, w_receiver, space.getclass(w_receiver), block)
+        frame = space.create_frame(
+            self.bytecode,
+            w_self=w_receiver,
+            w_scope=space.getclass(w_receiver),
+            block=block
+        )
         # XXX arg count checking
         for i, w_arg in enumerate(args_w):
             frame.locals_w[i] = w_arg
