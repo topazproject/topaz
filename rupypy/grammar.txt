@@ -25,13 +25,13 @@ main: line* statement? [LINE_END]? [EOF];
 line: statement? [LINE_END];
 
 statement: "return" expr |
-            block |
             expr;
 
 block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
 
 expr: assignment |
       yield |
+      block |
       arg;
 
 assignment: lhs "=" rhs;

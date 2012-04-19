@@ -1,9 +1,11 @@
 from rupypy.module import ClassDef
+from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_BaseObject
 
 
 class W_RangeObject(W_BaseObject):
     classdef = ClassDef("Range", W_BaseObject.classdef)
+    classdef.include_module(Enumerable)
 
     def __init__(self, w_start, w_end, inclusive):
         self.w_start = w_start

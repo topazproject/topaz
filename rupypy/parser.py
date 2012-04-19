@@ -35,8 +35,6 @@ class Transformer(object):
     def visit_stmt(self, node):
         if len(node.children) == 2:
             return Return(self.visit_expr(node.children[1]))
-        elif len(node.children) == 1 and node.children[0].symbol == "block":
-            return Statement(self.visit_send_block(node.children[0]))
         return Statement(self.visit_expr(node.children[0]))
 
     def visit_send_block(self, node):
@@ -61,6 +59,8 @@ class Transformer(object):
             return self.visit_assignment(node.children[0])
         elif node.children[0].symbol == "yield":
             return self.visit_yield(node.children[0])
+        elif node.children[0].symbol == "block":
+            return self.visit_send_block(node.children[0])
         return self.visit_arg(node.children[0])
 
     def visit_assignment(self, node):

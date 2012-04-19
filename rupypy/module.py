@@ -52,6 +52,7 @@ class ClassDef(object):
 
     def include_module(self, mod):
         self.methods.update(mod.moduledef.methods)
+        self.app_methods.extend(mod.moduledef.app_methods)
 
     def method(self, name, **argspec):
         def adder(func):
@@ -69,11 +70,15 @@ class ModuleDef(object):
     def __init__(self, name):
         self.name = name
         self.methods = {}
+        self.app_methods = []
 
     def function(self, name, **argspec):
         def adder(func):
             self.methods[name] = (func, argspec)
         return adder
+
+    def app_function(self, source):
+        self.app_methods.append(source)
 
 class ClassCache(Cache):
     def __init__(self, space):
