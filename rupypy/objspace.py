@@ -1,7 +1,7 @@
 from pypy.rlib.objectmodel import specialize
 from pypy.tool.cache import Cache
 
-from rupypy.bytecode import CompilerContext
+from rupypy.compiler import CompilerContext, SymbolTable
 from rupypy.interpreter import Interpreter, Frame
 from rupypy.module import ClassCache, Function
 from rupypy.objects.arrayobject import W_ArrayObject
@@ -50,7 +50,9 @@ class ObjectSpace(object):
 
     def compile(self, source):
         astnode = self.parse(source)
-        c = CompilerContext(self)
+        symtable = SymbolTable()
+        astnode.locate_symbols(symtable)
+        c = CompilerContext(self, symtable)
         astnode.compile(c)
         return c.create_bytecode()
 

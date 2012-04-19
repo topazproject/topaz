@@ -538,3 +538,29 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+
+    def test_block_scope(self, space):
+        bc = self.assert_compiles(space, """
+        x = 5
+        [].each do
+            x
+        end
+        """, """
+        LOAD_CONST 0
+        STORE_DEREF 0
+        DISCARD_TOP
+
+        BUILD_ARRAY 0
+        LOAD_CONST 1
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 2 1
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[1].bytecode, """
+        LOAD_DEREF 0
+        RETURN
+        """)
