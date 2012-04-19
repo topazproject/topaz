@@ -11,6 +11,7 @@ class Frame(object):
         "cells[*]"
     ]
 
+    @jit.unroll_safe
     def __init__(self, bytecode, w_self, w_scope, block):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         self.stack_w = [None] * bytecode.max_stackdepth
@@ -242,6 +243,7 @@ class Interpreter(object):
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
 
+    @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
         args_w = [frame.pop() for _ in range(n_args)]
         w_res = space.invoke_block(frame.block, args_w)

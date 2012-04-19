@@ -1,5 +1,7 @@
 class Bytecode(object):
-    _immutable_fields_ = ["code", "consts[*]", "max_stackdepth", "locals[*]"]
+    _immutable_fields_ = [
+        "code", "consts_w[*]", "max_stackdepth", "locals[*]", "cells[*]"
+    ]
 
     def __init__(self, code, max_stackdepth, consts, locals, cells):
         self.code = code

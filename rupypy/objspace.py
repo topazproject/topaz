@@ -1,3 +1,4 @@
+from pypy.rlib import jit
 from pypy.rlib.objectmodel import specialize
 from pypy.tool.cache import Cache
 
@@ -163,6 +164,7 @@ class ObjectSpace(object):
             raise LookupError(name)
         return raw_method.call(self, w_receiver, args_w, block)
 
+    @jit.unroll_safe
     def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(bc, w_self=block.w_self, block=block.block)
