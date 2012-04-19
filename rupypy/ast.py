@@ -13,7 +13,10 @@ class Node(object):
         return type(self) is type(other) and self.__dict__ == other.__dict__
 
     def locate_symbols(self, symtable):
-        raise NotImplementedError(type(self).__name__)
+        if we_are_translated():
+            raise NotImplementedError
+        else:
+            raise NotImplementedError(type(self).__name__)
 
     def compile(self, ctx):
         if we_are_translated():

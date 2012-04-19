@@ -19,3 +19,13 @@ class W_RangeObject(W_BaseObject):
     @classdef.method("end")
     def method_end(self, space):
         return self.w_end
+
+    classdef.app_method("""
+    def each
+        i = self.begin
+        while i < self.end
+            yield i
+            i = i + 1
+        end
+    end
+    """)

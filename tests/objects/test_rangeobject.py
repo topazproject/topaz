@@ -2,7 +2,6 @@ import py
 
 
 class TestRangeObject(object):
-    @py.test.mark.xfail
     def test_map(self, space):
         w_res = space.execute("""
         return (1..5).map do |x|
