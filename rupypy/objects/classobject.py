@@ -30,9 +30,8 @@ class W_ClassObject(W_ModuleObject):
 
     def find_method(self, space, method):
         res = self._find_method_pure(space, method, self.version)
-        if res is None:
-            if self.superclass is not None:
-                return self.superclass.find_method(space, method)
+        if res is None and self.superclass is not None:
+            res = self.superclass.find_method(space, method)
         return res
 
     @jit.elidable
@@ -44,7 +43,10 @@ class W_ClassObject(W_ModuleObject):
         self.constants_w[name] = w_obj
 
     def find_const(self, space, name):
-        return self._find_const_pure(name, self.version)
+        res = self._find_const_pure(name, self.version)
+        if res is None and self.superclass is not None:
+            res = self.superclass.find_const(space, name)
+        return res
 
     @jit.elidable
     def _find_const_pure(self, name, version):
