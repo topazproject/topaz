@@ -8,7 +8,7 @@ class Node(object):
     _attrs_ = []
 
     def __eq__(self, other):
-        if not isinstance(other, node):
+        if not isinstance(other, Node):
             return NotImplemented
         return type(self) is type(other) and self.__dict__ == other.__dict__
 
