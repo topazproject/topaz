@@ -240,3 +240,16 @@ class TestBlockScope(object):
         return x.data
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 4, 6]
+
+    def test_param_is_cell(self, space):
+        w_res = space.execute("""
+        def sum(arr, start)
+            arr.each do |x|
+                start = start + x
+            end
+            start
+        end
+
+        return sum([1, 2, 3], 4)
+        """)
+        assert space.int_w(w_res) == 10

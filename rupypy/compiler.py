@@ -75,7 +75,7 @@ class CompilerContext(object):
         self.consts = []
         self.const_positions = {}
 
-    def create_bytecode(self):
+    def create_bytecode(self, args):
         bc = "".join(self.data)
         locs = [None] * self.symtable.local_counter
         for name, pos in self.symtable.locals.iteritems():
@@ -83,7 +83,7 @@ class CompilerContext(object):
         cells = [None] * len(self.symtable.cells)
         for name, pos in self.symtable.cells.iteritems():
             cells[pos] = name
-        return Bytecode(bc, self.count_stackdepth(bc), self.consts[:], locs, cells)
+        return Bytecode(bc, self.count_stackdepth(bc), self.consts[:], args, locs, cells)
 
     def count_stackdepth(self, bc):
         i = 0

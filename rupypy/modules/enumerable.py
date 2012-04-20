@@ -13,3 +13,12 @@ class Enumerable(Module):
         result
     end
     """)
+
+    moduledef.app_function("""
+    def inject memo
+        self.each do |x|
+            memo = (yield memo, x)
+        end
+        memo
+    end
+    """)

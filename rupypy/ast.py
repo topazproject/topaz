@@ -187,7 +187,7 @@ class Class(Node):
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode()
+        bytecode = body_ctx.create_bytecode([])
 
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bytecode)))
         ctx.emit(consts.BUILD_CLASS)
@@ -210,7 +210,7 @@ class Function(Node):
         function_ctx = CompilerContext(ctx.space, function_symtable)
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
-        bytecode = function_ctx.create_bytecode()
+        bytecode = function_ctx.create_bytecode(self.args)
 
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
@@ -304,7 +304,7 @@ class SendBlock(Node):
         block_ctx = CompilerContext(ctx.space, block_symtable)
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode()
+        bc = block_ctx.create_bytecode(self.block_args)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bc)))
         # XXX: order!
         for name in block_symtable.cells:

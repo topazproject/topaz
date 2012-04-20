@@ -117,11 +117,9 @@ class Function(BaseFunction):
             self.bytecode,
             w_self=w_receiver,
             w_scope=space.getclass(w_receiver),
-            block=block
+            block=block,
         )
-        # XXX arg count checking
-        for i, w_arg in enumerate(args_w):
-            frame.locals_w[i] = w_arg
+        frame.handle_args(self.bytecode, args_w)
         return Interpreter().interpret(space, frame, self.bytecode)
 
 class BuiltinFunction(BaseFunction):

@@ -602,3 +602,48 @@ class TestCompiler(object):
         RETURN
         """)
         assert space.symbol_w(bc.consts_w[1]) == "abc="
+
+    def test_parameter_is_cell(self, space):
+        bc = self.assert_compiles(space, """
+        def sum(arr, start)
+            arr.each do |x|
+                start = start + x
+            end
+            start
+        end
+
+        sum([], 0)
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_SELF
+        LOAD_CONST 2
+        BUILD_ARRAY 0
+        SEND 3 2
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[1].bytecode, """
+        LOAD_LOCAL 0
+        LOAD_CONST 0
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+        LOAD_DEREF 0
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[1].bytecode.consts_w[0].bytecode, """
+        LOAD_DEREF 0
+        LOAD_LOCAL 0
+        SEND 0 1
+        STORE_DEREF 0
+        RETURN
+        """)

@@ -22,6 +22,20 @@ class Frame(object):
         self.w_scope = w_scope
         self.block = block
 
+    @jit.unroll_safe
+    def handle_args(self, bytecode, args_w):
+        assert len(args_w) == len(bytecode.arg_locs)
+        loc_pos = 0
+        cell_pos = 0
+        for i in xrange(len(bytecode.arg_locs)):
+            loc = bytecode.arg_locs[i]
+            if loc == bytecode.LOCAL:
+                self.locals_w[loc_pos] = args_w[i]
+                loc_pos += 1
+            elif loc == bytecode.CELL:
+                self.cells[cell_pos].set(args_w[i])
+                cell_pos += 1
+
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
         self.stack_w[stackpos] = w_obj
