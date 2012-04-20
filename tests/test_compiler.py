@@ -188,7 +188,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_constants(self, space):
+    def test_named_constants(self, space):
         bc = self.assert_compiles(space, "false; true; nil;", """
         LOAD_CONST 0
         DISCARD_TOP
