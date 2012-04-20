@@ -64,14 +64,9 @@ class Transformer(object):
         return self.visit_arg(node.children[0])
 
     def visit_assignment(self, node):
-        target = node.children[0].children[0]
-        value = self.visit_expr(node.children[2].children[0])
-        if len(target.children) == 1:
-            return Assignment(target.children[0].additional_info, value)
-        else:
-            return InstanceVariableAssignment(
-                target.children[1].additional_info, value
-            )
+        target = self.visit_arg(node.children[0])
+        value = self.visit_arg(node.children[1])
+        return target.convert_to_assignment(value)
 
     def visit_yield(self, node):
         args = []

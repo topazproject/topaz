@@ -106,6 +106,19 @@ class InstanceVariableAssignment(Node):
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
+class MethodAssignment(Node):
+    def __init__(self, receiver, name, value):
+        self.receiver = receiver
+        self.name = name
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.receiver.locate_symbols(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        Send(self.receiver, self.name + "=", [self.value]).compile(ctx)
+
 class If(Node):
     def __init__(self, cond, body):
         self.cond = cond
@@ -248,6 +261,11 @@ class Send(Node):
         self.method = method
         self.args = args
 
+    def convert_to_assignment(self, value):
+        # XXX: this will allow self.foo() = 3; which it shouldn't.
+        assert not self.args
+        return MethodAssignment(self.receiver, self.method, value)
+
     def locate_symbols(self, symtable):
         self.receiver.locate_symbols(symtable)
         for arg in self.args:
@@ -305,6 +323,9 @@ class Variable(Node):
     def __init__(self, name):
         self.name = name
 
+    def convert_to_assignment(self, value):
+        return Assignment(self.name, value)
+
     def locate_symbols(self, symtable):
         if (self.name not in ["true", "false", "nil", "self"] and
             not self.name[0].isupper()):
@@ -332,6 +353,9 @@ class Variable(Node):
 class InstanceVariable(Node):
     def __init__(self, name):
         self.name = name
+
+    def convert_to_assignment(self, value):
+        return InstanceVariableAssignment(self.name, value)
 
     def locate_symbols(self, symtable):
         pass

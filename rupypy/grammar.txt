@@ -34,12 +34,7 @@ expr: assignment |
       block |
       arg;
 
-assignment: lhs "=" rhs;
-
-lhs: varname |
-     send DOT IDENTIFIER;
-
-rhs: arg;
+assignment: send ["="] arg;
 
 yield: ["yield"] args?;
 

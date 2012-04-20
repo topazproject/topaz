@@ -590,3 +590,15 @@ class TestCompiler(object):
         STORE_DEREF 0
         RETURN
         """)
+
+    def test_method_assignment(self, space):
+        bc = self.assert_compiles(space, "self.abc = 3", """
+        LOAD_SELF
+        LOAD_CONST 0
+        SEND 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        assert space.symbol_w(bc.consts_w[1]) == "abc="

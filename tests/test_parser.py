@@ -1,9 +1,9 @@
 import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
-    InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
-    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array, Range,
-    ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
+    InstanceVariableAssignment, MethodAssignment, If, While, Class, Function,
+    Return, Yield, BinOp, Send, SendBlock, Self, Variable, InstanceVariable,
+    Array, Range, ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
 
 
 class TestParser(object):
@@ -302,12 +302,11 @@ class TestParser(object):
         assert space.parse("2...3") == Main(Block([Statement(Range(ConstantInt(2), ConstantInt(3), True))]))
         assert space.parse('"abc".."def"') == Main(Block([Statement(Range(ConstantString("abc"), ConstantString("def"), False))]))
 
-    @py.test.mark.xfail
     def test_assign_method(self, space):
         assert space.parse("self.attribute = 3") == Main(Block([
-            Statement(MethodAssignment(Self(), "attribute", ConstantInt(3)))
+            Statement(MethodAssignment(Variable("self"), "attribute", ConstantInt(3)))
         ]))
 
         assert space.parse("self.attribute.other_attr.other = 12") == Main(Block([
-            Statement(MethodAssignment(Send(Send(Self(), "attribute", []), "other_attr", []), "other", ConstantInt(12)))
+            Statement(MethodAssignment(Send(Send(Variable("self"), "attribute", []), "other_attr", []), "other", ConstantInt(12)))
         ]))
