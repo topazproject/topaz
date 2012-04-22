@@ -1,6 +1,7 @@
 class Bytecode(object):
     _immutable_fields_ = [
-        "code", "consts_w[*]", "max_stackdepth", "locals[*]", "cells[*]", "arg_locs[*]"
+        "code", "consts_w[*]", "max_stackdepth", "locals[*]", "cells[*]",
+        "arg_locs[*]", "arg_pos[*]"
     ]
 
     UNKNOWN = 0

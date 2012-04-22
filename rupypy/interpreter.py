@@ -28,6 +28,7 @@ class Frame(object):
         for i in xrange(len(args_w)):
             loc = bytecode.arg_locs[i]
             pos = bytecode.arg_pos[i]
+            assert pos >= 0
             if loc == bytecode.LOCAL:
                 self.locals_w[pos] = args_w[i]
             elif loc == bytecode.CELL:
