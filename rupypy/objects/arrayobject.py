@@ -1,9 +1,11 @@
 from rupypy.module import ClassDef
+from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_BaseObject
 
 
 class W_ArrayObject(W_BaseObject):
     classdef = ClassDef("Array", W_BaseObject.classdef)
+    classdef.include_module(Enumerable)
 
     def __init__(self, items_w):
         self.items_w = items_w
@@ -41,7 +43,17 @@ class W_ArrayObject(W_BaseObject):
         i = 0
         while i < self.length
             yield self[i]
-            i = i + 1
+            i += 1
         end
+    end
+    """)
+
+    classdef.app_method("""
+    def zip ary
+        result = []
+        self.each_with_index do |obj, idx|
+            result << [obj, ary[idx]]
+        end
+        result
     end
     """)

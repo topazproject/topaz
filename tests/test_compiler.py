@@ -8,15 +8,7 @@ class TestCompiler(object):
         self.assert_compiled(bc, expected_bytecode_str)
         return bc
 
-    def assert_compiled(self, bc, expected_bytecode_str):
-        expected = []
-        for line in expected_bytecode_str.splitlines():
-            if "#" in line:
-                line = line[:line.index("#")]
-            line = line.strip()
-            if line:
-                expected.append(line)
-
+    def get_lines(self, bc):
         actual = []
         i = 0
         while i < len(bc.code):
@@ -27,6 +19,18 @@ class TestCompiler(object):
                 line += " %s" % ord(bc.code[i])
                 i += 1
             actual.append(line)
+        return actual
+
+    def assert_compiled(self, bc, expected_bytecode_str):
+        expected = []
+        for line in expected_bytecode_str.splitlines():
+            if "#" in line:
+                line = line[:line.index("#")]
+            line = line.strip()
+            if line:
+                expected.append(line)
+
+        actual = self.get_lines(bc)
         assert actual == expected
 
     def test_int_constant(self, space):
@@ -560,6 +564,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         RETURN
         """)
+        assert bc.max_stackdepth == 3
         self.assert_compiled(bc.consts_w[1].bytecode, """
         LOAD_DEREF 0
         RETURN
@@ -692,5 +697,50 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 4
+        RETURN
+        """)
+
+    def test_multiple_cells(self, space):
+        bc = self.assert_compiles(space, """
+        i = 0
+        j = 0
+        k = 0
+        [].each do |x|
+            i + j + k + x
+        end
+        """, """
+        LOAD_CONST 0
+        STORE_DEREF 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        STORE_DEREF 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        STORE_DEREF 2
+        DISCARD_TOP
+
+        BUILD_ARRAY 0
+        LOAD_CONST 3
+        LOAD_CLOSURE 2
+        LOAD_CLOSURE 1
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 3
+        SEND_BLOCK 4 1
+        DISCARD_TOP
+
+        LOAD_CONST 5
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[3].bytecode, """
+        LOAD_DEREF 0
+        LOAD_DEREF 1
+        LOAD_DEREF 2
+        LOAD_LOCAL 0
+        SEND 0 1
+        SEND 1 1
+        SEND 2 1
         RETURN
         """)

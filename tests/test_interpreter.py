@@ -206,11 +206,11 @@ class TestInterpreter(object):
 
         res = []
         X.new.f do |x, y|
-            res << (x + y)
+            res << (x - y)
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 9]
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [-1, -1]
 
     def test_range(self, space):
         w_res = space.execute("return (1..10).begin")

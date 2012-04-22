@@ -25,16 +25,13 @@ class Frame(object):
     @jit.unroll_safe
     def handle_args(self, bytecode, args_w):
         assert len(args_w) == len(bytecode.arg_locs)
-        loc_pos = 0
-        cell_pos = 0
         for i in xrange(len(bytecode.arg_locs)):
             loc = bytecode.arg_locs[i]
+            pos = bytecode.arg_pos[i]
             if loc == bytecode.LOCAL:
-                self.locals_w[loc_pos] = args_w[i]
-                loc_pos += 1
+                self.locals_w[pos] = args_w[i]
             elif loc == bytecode.CELL:
-                self.cells[cell_pos].set(args_w[i])
-                cell_pos += 1
+                self.cells[pos].set(args_w[i])
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
@@ -262,7 +259,9 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
-        args_w = [frame.pop() for _ in range(n_args)]
+        args_w = [None] * n_args
+        for i in xrange(n_args -1, -1, -1):
+            args_w[i] = frame.pop()
         w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 

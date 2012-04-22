@@ -67,7 +67,7 @@ class ObjectSpace(object):
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, symtable)
         astnode.compile(c)
-        return c.create_bytecode([])
+        return c.create_bytecode("<string>", [])
 
     def execute(self, source, w_self=None):
         bc = self.compile(source)
@@ -187,9 +187,8 @@ class ObjectSpace(object):
     def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(bc, w_self=block.w_self, block=block.block)
-        # XXX arg count checking
-        for i, w_arg in enumerate(args_w):
-            frame.locals_w[i] = w_arg
-        for i, cell in enumerate(block.cells):
-            frame.cells[i] = cell
+        frame.handle_args(bc, args_w)
+        assert len(block.cells) == len(frame.cells)
+        for idx, cell in enumerate(block.cells):
+            frame.cells[idx] = cell
         return Interpreter().interpret(self, frame, bc)

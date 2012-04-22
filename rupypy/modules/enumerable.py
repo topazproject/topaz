@@ -22,3 +22,13 @@ class Enumerable(Module):
         memo
     end
     """)
+
+    moduledef.app_method("""
+    def each_with_index
+        i = 0
+        self.each do |obj|
+            yield obj, i
+            i += 1
+        end
+    end
+    """)
