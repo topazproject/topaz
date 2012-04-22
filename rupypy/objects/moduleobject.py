@@ -23,6 +23,20 @@ class AttributeWriter(BaseFunction):
 class W_ModuleObject(W_BaseObject):
     classdef = ClassDef("Module", W_BaseObject.classdef)
 
+    def __init__(self, space, name):
+        self.name = name
+        self.klass = None
+
+    def getclass(self, space):
+        if self.klass is not None:
+            return self.klass
+        return W_BaseObject.getclass(self, space)
+
+    def getsingletonclass(self, space):
+        if self.klass is None:
+            self.klass = space.newclass(self.name, space.getclassfor(W_ModuleObject))
+        return self.klass
+
     @classdef.method("attr_accessor", varname="symbol")
     def method_attr_accessor(self, space, varname):
         self.add_method(space, varname, AttributeReader(varname))

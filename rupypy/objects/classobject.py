@@ -13,8 +13,8 @@ class W_ClassObject(W_ModuleObject):
 
     classdef = ClassDef("Class", W_ModuleObject.classdef)
 
-    def __init__(self, name, superclass, is_singleton=False):
-        self.name = name
+    def __init__(self, space, name, superclass, is_singleton=False):
+        W_ModuleObject.__init__(self, space, name)
         self.superclass = superclass
         self.is_singleton = is_singleton
         self.version = VersionTag()

@@ -6,7 +6,7 @@ from rupypy.module import Module, ModuleDef
 class Kernel(Module):
     moduledef = ModuleDef("Kernel")
 
-    @moduledef.function("class")
+    @moduledef.method("class")
     def function_class(self, space):
         return space.getclass(self)
 

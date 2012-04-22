@@ -13,6 +13,8 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
             spec = argspec[argname]
             if spec is int:
                 source.append("    args += (space.int_w(args_w[%d]),)" % arg_count)
+            elif spec == "float":
+                source.append("    args += (space.float_w(space.send(args_w[%d], space.newsymbol('to_f'))),)" % arg_count)
             elif spec == "symbol":
                 source.append("    args += (space.symbol_w(args_w[%d]),)" % arg_count)
             else:
@@ -62,7 +64,16 @@ class ClassDef(object):
         self.app_methods.append(source)
 
 class Module(object):
-    pass
+    @classmethod
+    def build_object(cls, space):
+        from rupypy.objects.moduleobject import W_ModuleObject
+
+        w_mod = space.newmodule(cls.moduledef.name)
+        singleton_class = space.getsingletonclass(w_mod)
+        for name, (method, argspec) in cls.moduledef.singleton_methods.iteritems():
+            func = generate_wrapper(name, method, argspec, W_ModuleObject)
+            singleton_class.add_method(space, name, BuiltinFunction(func))
+        return w_mod
 
 class ModuleDef(object):
     def __init__(self, name):
@@ -70,13 +81,23 @@ class ModuleDef(object):
         self.methods = {}
         self.app_methods = []
 
-    def function(self, name, **argspec):
+        self.singleton_methods = {}
+        self.singleton_add_methods = []
+
+    def method(self, name, **argspec):
         def adder(func):
             self.methods[name] = (func, argspec)
         return adder
 
-    def app_function(self, source):
+    def app_method(self, source):
         self.app_methods.append(source)
+
+    def function(self, name, **argspec):
+        def adder(func):
+            # XXX: should be private, once we have visibility
+            self.methods[name] = (func, argspec)
+            self.singleton_methods[name] = (func, argspec)
+        return adder
 
 class ClassCache(Cache):
     def __init__(self, space):

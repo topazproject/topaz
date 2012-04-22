@@ -5,12 +5,14 @@ from pypy.tool.cache import Cache
 from rupypy.compiler import CompilerContext, SymbolTable
 from rupypy.interpreter import Interpreter, Frame
 from rupypy.module import ClassCache, Function
+from rupypy.modules.math import Math
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.rangeobject import W_RangeObject
@@ -37,12 +39,22 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
+        for module in [Math]:
+            self.add_module(module)
+
     def _freeze_(self):
         return True
 
     @specialize.memo()
     def fromcache(self, key):
         return self.cache.getorbuild(key)
+
+    # Setup methods
+
+    def add_module(self, module):
+        w_module = module.build_object(self)
+        self.set_const(self.getclassfor(W_Object), module.moduledef.name, w_module)
+
 
     # Methods for dealing with source code.
 
@@ -98,8 +110,11 @@ class ObjectSpace(object):
     def newrange(self, w_start, w_end, inclusive):
         return W_RangeObject(w_start, w_end, inclusive)
 
+    def newmodule(self, name):
+        return W_ModuleObject(self, name)
+
     def newclass(self, name, superclass):
-        return W_ClassObject(name, superclass)
+        return W_ClassObject(self, name, superclass)
 
     def newcode(self, bytecode):
         return W_CodeObject(bytecode)
@@ -135,8 +150,12 @@ class ObjectSpace(object):
     def getclass(self, w_receiver):
         return w_receiver.getclass(self)
 
+    def getsingletonclass(self, w_receiver):
+        return w_receiver.getsingletonclass(self)
+
     def getclassfor(self, cls):
         return self.getclassobject(cls.classdef)
+
 
     def getclassobject(self, classdef):
         return self.fromcache(ClassCache).getorbuild(classdef)

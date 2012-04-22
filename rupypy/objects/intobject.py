@@ -17,6 +17,10 @@ class W_IntObject(W_BaseObject):
     def method_to_s(self, space):
         return space.newstr_fromstr(str(self.intvalue))
 
+    @classdef.method("to_f")
+    def method_to_f(self, space):
+        return space.newfloat(float(self.intvalue))
+
     @classdef.method("+", other=int)
     def method_add(self, space, other):
         return space.newint(self.intvalue + other)

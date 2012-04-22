@@ -4,7 +4,7 @@ from rupypy.module import Module, ModuleDef
 class Enumerable(Module):
     moduledef = ModuleDef("Enumerable")
 
-    moduledef.app_function("""
+    moduledef.app_method("""
     def map
         result = []
         self.each do |x|
@@ -14,7 +14,7 @@ class Enumerable(Module):
     end
     """)
 
-    moduledef.app_function("""
+    moduledef.app_method("""
     def inject memo
         self.each do |x|
             memo = (yield memo, x)
