@@ -41,6 +41,7 @@ BYTECODES = [
     ("JUMP_IF_FALSE", 1, -1),
 
     ("DISCARD_TOP", 0, -1),
+    ("DUP_TOP", 0, +1),
 
     ("RETURN", 0, -1),
     ("YIELD", 1, ARRAY_EFFECT),

@@ -50,3 +50,15 @@ class TestClassObject(object):
         return [orig_a, x.a]
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 5]
+
+    def test_attr_reader(self, space):
+        w_res = space.execute("""
+        class X
+            attr_reader :a
+            def initialize
+                @a = 5
+            end
+        end
+        return X.new.a
+        """)
+        assert space.int_w(w_res) == 5

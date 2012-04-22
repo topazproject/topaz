@@ -65,8 +65,9 @@ class Transformer(object):
 
     def visit_assignment(self, node):
         target = self.visit_arg(node.children[0])
-        value = self.visit_arg(node.children[1])
-        return target.convert_to_assignment(value)
+        oper = node.children[1].additional_info
+        value = self.visit_arg(node.children[2])
+        return target.convert_to_assignment(oper, value)
 
     def visit_yield(self, node):
         args = []

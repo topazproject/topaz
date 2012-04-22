@@ -27,3 +27,7 @@ class W_ModuleObject(W_BaseObject):
     def method_attr_accessor(self, space, varname):
         self.add_method(space, varname, AttributeReader(varname))
         self.add_method(space, varname + "=", AttributeWriter(varname))
+
+    @classdef.method("attr_reader", varname="symbol")
+    def method_attr_reader(self, space, varname):
+        self.add_method(space, varname, AttributeReader(varname))

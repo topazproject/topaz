@@ -62,7 +62,7 @@ class TestParser(object):
         assert space.parse("2.to_s(10)") == Main(Block([Statement(Send(ConstantInt(2), "to_s", [ConstantInt(10)]))]))
 
     def test_assignment(self, space):
-        assert space.parse("a = 3") == Main(Block([Statement(Assignment("a", ConstantInt(3)))]))
+        assert space.parse("a = 3") == Main(Block([Statement(Assignment("=", "a", ConstantInt(3)))]))
 
     def test_load_variable(self, space):
         assert space.parse("a") == Main(Block([Statement(Variable("a"))]))
@@ -133,7 +133,7 @@ class TestParser(object):
         end
         """)
         assert res == Main(Block([
-            Statement(Assignment("i", ConstantInt(0))),
+            Statement(Assignment("=", "i", ConstantInt(0))),
             Statement(While(BinOp("<", Variable("i"), ConstantInt(10)), Block([
                 Statement(Send(Self(), "puts", [Variable("i")])),
                 Statement(Send(Self(), "puts", [ConstantInt(1)])),
@@ -206,7 +206,7 @@ class TestParser(object):
         ]))
 
         assert space.parse("x = def f() end") == Main(Block([
-            Statement(Assignment("x", Function("f", [], Block([]))))
+            Statement(Assignment("=", "x", Function("f", [], Block([]))))
         ]))
 
         r = space.parse("""
@@ -255,7 +255,7 @@ class TestParser(object):
 
     def test_instance_variable(self, space):
         assert space.parse("@a") == Main(Block([Statement(InstanceVariable("a"))]))
-        assert space.parse("@a = 3") == Main(Block([Statement(InstanceVariableAssignment("a", ConstantInt(3)))]))
+        assert space.parse("@a = 3") == Main(Block([Statement(InstanceVariableAssignment("=", "a", ConstantInt(3)))]))
 
     def test_do_block(self, space):
         r = space.parse("""
@@ -304,9 +304,22 @@ class TestParser(object):
 
     def test_assign_method(self, space):
         assert space.parse("self.attribute = 3") == Main(Block([
-            Statement(MethodAssignment(Variable("self"), "attribute", ConstantInt(3)))
+            Statement(MethodAssignment("=", Variable("self"), "attribute", ConstantInt(3)))
         ]))
 
         assert space.parse("self.attribute.other_attr.other = 12") == Main(Block([
-            Statement(MethodAssignment(Send(Send(Variable("self"), "attribute", []), "other_attr", []), "other", ConstantInt(12)))
+            Statement(MethodAssignment("=", Send(Send(Variable("self"), "attribute", []), "other_attr", []), "other", ConstantInt(12)))
+        ]))
+
+    def test_augmented_assignment(self, space):
+        assert space.parse("i += 1") == Main(Block([
+            Statement(Assignment("+=", "i", ConstantInt(1)))
+        ]))
+
+        assert space.parse("self.x += 2") == Main(Block([
+            Statement(MethodAssignment("+=", Variable("self"), "x", ConstantInt(2)))
+        ]))
+
+        assert space.parse("@a += 3") == Main(Block([
+            Statement(InstanceVariableAssignment("+=", "a", ConstantInt(3)))
         ]))

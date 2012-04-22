@@ -14,6 +14,7 @@ LT: "<";
 LPAREN: "\(";
 RPAREN: "\)";
 
+ASSIGNMENT_OPER: "(\+=)|=";
 RANGE_OPER: "(\.\.)|(\.\.\.)";
 CMP_OPER: "(!=)|(==)|(<=)|(>=)|>";
 SHIFT_OPER: "<<";
@@ -34,7 +35,7 @@ expr: assignment |
       block |
       arg;
 
-assignment: send ["="] arg;
+assignment: send ASSIGNMENT_OPER arg;
 
 yield: ["yield"] args?;
 

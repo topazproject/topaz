@@ -71,7 +71,8 @@ class Statement(BaseStatement):
             ctx.emit(consts.DISCARD_TOP)
 
 class Assignment(Node):
-    def __init__(self, target, value):
+    def __init__(self, oper, target, value):
+        self.oper = oper
         self.target = target
         self.value = value
 
@@ -81,11 +82,14 @@ class Assignment(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
+        if self.oper != "=":
+            Variable(self.target).compile(ctx)
+        self.value.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
         if self.target[0].isupper():
-            self.value.compile(ctx)
             ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.target))
         else:
-            self.value.compile(ctx)
             if ctx.symtable.is_local(self.target):
                 loc = ctx.symtable.get_local_num(self.target)
                 ctx.emit(consts.STORE_LOCAL, loc)
@@ -94,7 +98,8 @@ class Assignment(Node):
                 ctx.emit(consts.STORE_DEREF, loc)
 
 class InstanceVariableAssignment(Node):
-    def __init__(self, name, value):
+    def __init__(self, oper, name, value):
+        self.oper = oper
         self.name = name
         self.value = value
 
@@ -102,12 +107,17 @@ class InstanceVariableAssignment(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
+        if self.oper != "=":
+            InstanceVariable(self.name).compile(ctx)
         self.value.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 class MethodAssignment(Node):
-    def __init__(self, receiver, name, value):
+    def __init__(self, oper, receiver, name, value):
+        self.oper = oper
         self.receiver = receiver
         self.name = name
         self.value = value
@@ -117,7 +127,14 @@ class MethodAssignment(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.receiver, self.name + "=", [self.value]).compile(ctx)
+        self.receiver.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.DUP_TOP)
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.name), 0)
+        self.value.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
+        ctx.emit(consts.SEND, ctx.create_symbol_const(self.name + "="), 1)
 
 class If(Node):
     def __init__(self, cond, body):
@@ -261,10 +278,10 @@ class Send(Node):
         self.method = method
         self.args = args
 
-    def convert_to_assignment(self, value):
+    def convert_to_assignment(self, oper, value):
         # XXX: this will allow self.foo() = 3; which it shouldn't.
         assert not self.args
-        return MethodAssignment(self.receiver, self.method, value)
+        return MethodAssignment(oper, self.receiver, self.method, value)
 
     def locate_symbols(self, symtable):
         self.receiver.locate_symbols(symtable)
@@ -323,8 +340,8 @@ class Variable(Node):
     def __init__(self, name):
         self.name = name
 
-    def convert_to_assignment(self, value):
-        return Assignment(self.name, value)
+    def convert_to_assignment(self, oper, value):
+        return Assignment(oper, self.name, value)
 
     def locate_symbols(self, symtable):
         if (self.name not in ["true", "false", "nil", "self"] and
@@ -354,8 +371,8 @@ class InstanceVariable(Node):
     def __init__(self, name):
         self.name = name
 
-    def convert_to_assignment(self, value):
-        return InstanceVariableAssignment(self.name, value)
+    def convert_to_assignment(self, oper, value):
+        return InstanceVariableAssignment(oper, self.name, value)
 
     def locate_symbols(self, symtable):
         pass

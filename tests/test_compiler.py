@@ -647,3 +647,50 @@ class TestCompiler(object):
         STORE_DEREF 0
         RETURN
         """)
+
+    def test_augmented_assignment(self, space):
+        self.assert_compiles(space, "i = 0; i += 1", """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        DISCARD_TOP
+
+        LOAD_LOCAL 0
+        LOAD_CONST 1
+        SEND 2 1
+        STORE_LOCAL 0
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
+        bc = self.assert_compiles(space, "self.x.y += 1", """
+        LOAD_SELF
+        SEND 0 0
+        DUP_TOP
+        SEND 1 0
+        LOAD_CONST 2
+        SEND 3 1
+        SEND 4 1
+        DISCARD_TOP
+
+        LOAD_CONST 5
+        RETURN
+        """)
+        assert space.symbol_w(bc.consts_w[0]) == "x"
+        assert space.symbol_w(bc.consts_w[1]) == "y"
+        assert space.symbol_w(bc.consts_w[3]) == "+"
+        assert space.symbol_w(bc.consts_w[4]) == "y="
+
+        self.assert_compiles(space, "@a += 2", """
+        LOAD_SELF
+        LOAD_INSTANCE_VAR 0
+        LOAD_CONST 1
+        SEND 2 1
+        LOAD_SELF
+        STORE_INSTANCE_VAR 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
