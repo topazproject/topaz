@@ -218,6 +218,41 @@ class TestInterpreter(object):
         w_res = space.execute("return (1...10).end")
         assert space.int_w(w_res) == 10
 
+    def test_augmented_assignment(self, space):
+        w_res = space.execute("i = 0; i += 5; return i")
+        assert space.int_w(w_res) == 5
+        w_res = space.execute("""
+        class X
+            attr_accessor :a
+            def initialize
+                self.a = 5
+            end
+        end
+        x = X.new
+        x.a += 5
+        return x.a
+        """)
+        assert space.int_w(w_res) == 10
+
+        w_res = space.execute("""
+        class Counter
+            attr_reader :value
+            def initialize start
+                @value = start
+            end
+            def incr
+                @value += 1
+            end
+        end
+
+        c = Counter.new 0
+        c.incr
+        c.incr
+        c.incr
+        return c.value
+        """)
+        assert space.int_w(w_res) == 3
+
 class TestBlockScope(object):
     def test_self(self, space):
         w_res = space.execute("""
@@ -254,37 +289,3 @@ class TestBlockScope(object):
         """)
         assert space.int_w(w_res) == 10
 
-    def test_augmented_assignment(self, space):
-        w_res = space.execute("i = 0; i += 5; return i")
-        assert space.int_w(w_res) == 5
-        w_res = space.execute("""
-        class X
-            attr_accessor :a
-            def initialize
-                self.a = 5
-            end
-        end
-        x = X.new
-        x.a += 5
-        return x.a
-        """)
-        assert space.int_w(w_res) == 10
-
-        w_res = space.execute("""
-        class Counter
-            attr_reader :value
-            def initialize start
-                @value = start
-            end
-            def incr
-                @value += 1
-            end
-        end
-
-        c = Counter.new 0
-        c.incr
-        c.incr
-        c.incr
-        return c.value
-        """)
-        assert space.int_w(w_res) == 3
