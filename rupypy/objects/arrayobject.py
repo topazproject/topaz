@@ -14,12 +14,11 @@ class W_ArrayObject(W_BaseObject):
     def to_s()
         result = "["
         i = 0
-        while i < self.length
+        self.each_with_index do |obj, i|
             if i > 0
                 result << ", "
             end
-            result << self[i].to_s
-            i = i + 1
+            result << obj.to_s
         end
         result << "]"
     end

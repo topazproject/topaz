@@ -25,7 +25,7 @@ class Frame(object):
     @jit.unroll_safe
     def handle_args(self, bytecode, args_w):
         assert len(args_w) == len(bytecode.arg_locs)
-        for i in xrange(len(bytecode.arg_locs)):
+        for i in xrange(len(args_w)):
             loc = bytecode.arg_locs[i]
             pos = bytecode.arg_pos[i]
             if loc == bytecode.LOCAL:

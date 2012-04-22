@@ -25,7 +25,7 @@ class W_RangeObject(W_BaseObject):
         i = self.begin
         while i < self.end
             yield i
-            i = i + 1
+            i += 1
         end
     end
     """)

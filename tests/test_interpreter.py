@@ -41,7 +41,7 @@ class TestInterpreter(object):
         w_res = space.execute("""
         i = 0
         while i < 1
-            i = i + 1
+            i += 1
         end
         return i
         """)
@@ -281,7 +281,7 @@ class TestBlockScope(object):
         w_res = space.execute("""
         def sum(arr, start)
             arr.each do |x|
-                start = start + x
+                start += x
             end
             start
         end
