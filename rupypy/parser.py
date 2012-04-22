@@ -59,8 +59,6 @@ class Transformer(object):
             return self.visit_assignment(node.children[0])
         elif node.children[0].symbol == "yield":
             return self.visit_yield(node.children[0])
-        elif node.children[0].symbol == "block":
-            return self.visit_send_block(node.children[0])
         return self.visit_arg(node.children[0])
 
     def visit_assignment(self, node):
@@ -88,6 +86,8 @@ class Transformer(object):
             return self.visit_send(node)
         elif symname == "primary":
             return self.visit_primary(node)
+        elif symname == "block":
+            return self.visit_send_block(node)
         raise NotImplementedError(symname)
 
     def visit_subexpr(self, node):

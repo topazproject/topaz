@@ -28,18 +28,17 @@ line: statement? [LINE_END];
 statement: "return" expr |
             expr;
 
-block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
-
 expr: assignment |
       yield |
-      block |
       arg;
 
 assignment: send ASSIGNMENT_OPER arg;
 
 yield: ["yield"] args?;
 
-arg: range;
+arg: block | range;
+
+block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
 
 cmp_oper: <CMP_OPER> | <LT>;
 
