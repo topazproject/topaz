@@ -303,6 +303,7 @@ class SendBlock(Node):
         self.block = block
 
     def locate_symbols(self, symtable):
+        self.receiver.locate_symbols(symtable)
         for arg in self.args:
             arg.locate_symbols(symtable)
 
@@ -325,11 +326,15 @@ class SendBlock(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bc)))
 
         ops = [None] * len(block_symtable.cells)
+        num_cells = 0
         for name, pos in block_symtable.cells.iteritems():
-            ops[pos] = name
+            if name not in self.block_args:
+                ops[pos] = name
+                num_cells += 1
         for idx in range(len(ops) - 1, -1, -1):
-            ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(ops[idx]))
-        ctx.emit(consts.BUILD_BLOCK, len(block_symtable.cells))
+            if ops[idx] is not None:
+                ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(ops[idx]))
+        ctx.emit(consts.BUILD_BLOCK, num_cells)
         ctx.emit(consts.SEND_BLOCK, ctx.create_symbol_const(self.method), len(self.args) + 1)
 
 class Self(Node):

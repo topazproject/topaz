@@ -56,3 +56,15 @@ class W_ArrayObject(W_BaseObject):
         result
     end
     """)
+
+    classdef.app_method("""
+    def product ary
+        result = []
+        self.each do |obj|
+            ary.each do |other|
+                result << [obj, other]
+            end
+        end
+        result
+    end
+    """)

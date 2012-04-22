@@ -20,15 +20,14 @@ class BaseSymbolTable(object):
             self.locals[name] = self.local_counter
             self.local_counter += 1
 
+    def is_defined(self, name):
+        return self.is_local(name) or self.is_cell(name)
+
     def is_local(self, name):
         return name in self.locals
 
     def get_local_num(self, name):
         return self.locals[name]
-
-    def upgrade_to_closure(self, name):
-        del self.locals[name]
-        self.cells[name] = len(self.cells)
 
     def is_cell(self, name):
         return name in self.cells
@@ -38,13 +37,16 @@ class BaseSymbolTable(object):
 
 class SymbolTable(BaseSymbolTable):
     def declare_write(self, name):
-        self.declare_local(name)
+        if not self.is_defined(name):
+            self.declare_local(name)
 
     def declare_read(self, name):
         pass
 
-    def defined(self, name):
-        return self.is_local(name)
+    def upgrade_to_closure(self, name):
+        del self.locals[name]
+        self.cells[name] = len(self.cells)
+
 
 class BlockSymbolTable(BaseSymbolTable):
     def __init__(self, parent_symtable):
@@ -52,19 +54,29 @@ class BlockSymbolTable(BaseSymbolTable):
         self.parent_symtable = parent_symtable
 
     def declare_read(self, name):
-        if  (name not in self.locals and name not in self.cells and
-            self.parent_symtable.defined(name)):
+        if (name not in self.locals and name not in self.cells and
+            self.parent_symtable.is_defined(name)):
 
             self.cells[name] = len(self.cells)
             self.parent_symtable.upgrade_to_closure(name)
 
     def declare_write(self, name):
         if name not in self.locals and name not in self.cells:
-            if self.parent_symtable.defined(name):
+            if self.parent_symtable.is_defined(name):
                 self.cells[name] = len(self.cells)
                 self.parent_symtable.upgrade_to_closure(name)
             else:
                 self.declare_local(name)
+
+    def is_defined(self, name):
+        return BaseSymbolTable.is_defined(self, name) or self.parent_symtable.is_defined(name)
+
+    def upgrade_to_closure(self, name):
+        if self.is_local(name):
+            del self.locals[name]
+        else:
+            self.parent_symtable.upgrade_to_closure(name)
+        self.cells[name] = len(self.cells)
 
 
 class CompilerContext(object):

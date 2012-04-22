@@ -290,3 +290,14 @@ class TestBlockScope(object):
         """)
         assert space.int_w(w_res) == 10
 
+    def test_nested_block(self, space):
+        w_res = space.execute("""
+        result = []
+        [1, 2, 3].each do |x|
+            [3, 4, 5].each do |y|
+                result << x - y
+            end
+        end
+        return result
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [-2, -3, -4, -1, -2, -3, 0, -1, -2]

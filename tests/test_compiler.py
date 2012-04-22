@@ -744,3 +744,46 @@ class TestCompiler(object):
         SEND 2 1
         RETURN
         """)
+
+    def test_nested_block(self, space):
+        bc = self.assert_compiles(space, """
+        sums = []
+        [].each do |x|
+            [].each do |y|
+                sums << x + y
+            end
+        end
+        """, """
+        BUILD_ARRAY 0
+        STORE_DEREF 0
+        DISCARD_TOP
+
+        BUILD_ARRAY 0
+        LOAD_CONST 0
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0].bytecode, """
+        BUILD_ARRAY 0
+        LOAD_CONST 0
+        LOAD_CLOSURE 1
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 2
+        SEND_BLOCK 1 1
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0].bytecode.consts_w[0].bytecode, """
+        LOAD_DEREF 0
+        LOAD_DEREF 1
+        LOAD_LOCAL 0
+        SEND 0 1
+        SEND 1 1
+        RETURN
+        """)

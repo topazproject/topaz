@@ -24,3 +24,7 @@ class TestArrayObject(object):
     def test_zip(self, space):
         w_res = space.execute("return [1, 2, 3].zip([3, 2, 1])")
         assert [[space.int_w(w_x) for w_x in w_sub.items_w] for w_sub in w_res.items_w] == [[1, 3], [2, 2], [3, 1]]
+
+    def test_product(self, space):
+        w_res = space.execute("return [1, 2].product([3, 4])")
+        assert [[space.int_w(w_x) for w_x in w_sub.items_w] for w_sub in w_res.items_w] == [[1, 3], [1, 4], [2, 3], [2, 4]]
