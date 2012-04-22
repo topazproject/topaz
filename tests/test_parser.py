@@ -323,3 +323,15 @@ class TestParser(object):
         assert space.parse("@a += 3") == Main(Block([
             Statement(InstanceVariableAssignment("+=", "a", ConstantInt(3)))
         ]))
+
+    def test_block_Result(self, space):
+        r = space.parse("""
+        [].inject(0) do |s, x|
+            s + x
+        end * 5
+        """)
+        assert r == Main(Block([
+            Statement(BinOp("*", SendBlock(Array([]), "inject", [ConstantInt(0)], ["s", "x"], Block([
+                Statement(BinOp("+", Variable("s"), Variable("x")))
+            ])), ConstantInt(5)))
+        ]))

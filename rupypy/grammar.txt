@@ -36,9 +36,7 @@ assignment: send ASSIGNMENT_OPER arg;
 
 yield: ["yield"] args?;
 
-arg: block | range;
-
-block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
+arg: range;
 
 cmp_oper: <CMP_OPER> | <LT>;
 
@@ -48,8 +46,11 @@ shiftive: additive SHIFT_OPER shiftive | <additive>;
 additive: multitive ADD_OPER additive | <multitive>;
 multitive: send MUL_OPER multitive | <send>;
 
-send: real_send |
+send: <block> |
+      real_send |
       <primary>;
+
+block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
 
 real_send: primary trailers |
            IDENTIFIER send_args |

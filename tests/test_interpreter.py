@@ -253,6 +253,7 @@ class TestInterpreter(object):
         """)
         assert space.int_w(w_res) == 3
 
+
 class TestBlockScope(object):
     def test_self(self, space):
         w_res = space.execute("""
