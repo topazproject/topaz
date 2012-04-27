@@ -227,6 +227,12 @@ class Function(Node):
     def compile(self, ctx):
         function_symtable = ctx.symtable.get_subscope(self)
         function_ctx = CompilerContext(ctx.space, function_symtable)
+        for arg in self.args:
+            if function_symtable.is_local(arg):
+                function_symtable.get_local_num(arg)
+            elif function_symtable.is_cell(arg):
+                function_symtable.get_cell_num(arg)
+
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
         bytecode = function_ctx.create_bytecode(self.name, self.args)
@@ -333,20 +339,23 @@ class SendBlock(Node):
 
         block_symtable = ctx.symtable.get_subscope(self)
         block_ctx = CompilerContext(ctx.space, block_symtable)
+        for arg in self.block_args:
+            if block_symtable.is_local(arg):
+                block_symtable.get_local_num(arg)
+            elif block_symtable.is_cell(arg):
+                block_symtable.get_cell_num(arg)
+
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
         bc = block_ctx.create_bytecode("<block>", self.block_args)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bc)))
 
-        ops = [None] * len(block_symtable.cells)
         num_cells = 0
-        for name, pos in block_symtable.cells.iteritems():
-            if name not in self.block_args:
-                ops[pos] = name
+        for name, pos in sorted(block_symtable.cell_numbers.iteritems(), key=lambda (n, p): p, reverse=True):
+            if block_symtable.cells[name] == block_symtable.FREEVAR:
+                ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(name))
                 num_cells += 1
-        for idx in range(len(ops) - 1, -1, -1):
-            if ops[idx] is not None:
-                ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(ops[idx]))
+
         ctx.emit(consts.BUILD_BLOCK, num_cells)
         ctx.emit(consts.SEND_BLOCK, ctx.create_symbol_const(self.method), len(self.args) + 1)
 

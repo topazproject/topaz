@@ -3,11 +3,16 @@ from rupypy.bytecode import Bytecode
 
 
 class BaseSymbolTable(object):
+    FREEVAR = 0
+    CELLVAR = 1
+
     def __init__(self):
         self.subscopes = {}
         self.locals = {}
-        self.local_counter = 0
         self.cells = {}
+
+        self.local_numbers = {}
+        self.cell_numbers = {}
 
     def add_subscope(self, node, symtable):
         self.subscopes[node] = symtable
@@ -17,8 +22,7 @@ class BaseSymbolTable(object):
 
     def declare_local(self, name):
         if name not in self.locals:
-            self.locals[name] = self.local_counter
-            self.local_counter += 1
+            self.locals[name] = None
 
     def is_defined(self, name):
         return self.is_local(name) or self.is_cell(name)
@@ -27,13 +31,17 @@ class BaseSymbolTable(object):
         return name in self.locals
 
     def get_local_num(self, name):
-        return self.locals[name]
+        if name not in self.local_numbers:
+            self.local_numbers[name] = len(self.local_numbers)
+        return self.local_numbers[name]
 
     def is_cell(self, name):
         return name in self.cells
 
     def get_cell_num(self, name):
-        return self.cells[name]
+        if name not in self.cell_numbers:
+            self.cell_numbers[name] = len(self.cell_numbers)
+        return self.cell_numbers[name]
 
 class SymbolTable(BaseSymbolTable):
     def declare_write(self, name):
@@ -45,7 +53,7 @@ class SymbolTable(BaseSymbolTable):
 
     def upgrade_to_closure(self, name):
         del self.locals[name]
-        self.cells[name] = len(self.cells)
+        self.cells[name] = self.CELLVAR
 
 
 class BlockSymbolTable(BaseSymbolTable):
@@ -57,13 +65,13 @@ class BlockSymbolTable(BaseSymbolTable):
         if (name not in self.locals and name not in self.cells and
             self.parent_symtable.is_defined(name)):
 
-            self.cells[name] = len(self.cells)
+            self.cells[name] = self.FREEVAR
             self.parent_symtable.upgrade_to_closure(name)
 
     def declare_write(self, name):
         if name not in self.locals and name not in self.cells:
             if self.parent_symtable.is_defined(name):
-                self.cells[name] = len(self.cells)
+                self.cells[name] = self.FREEVAR
                 self.parent_symtable.upgrade_to_closure(name)
             else:
                 self.declare_local(name)
@@ -74,9 +82,10 @@ class BlockSymbolTable(BaseSymbolTable):
     def upgrade_to_closure(self, name):
         if self.is_local(name):
             del self.locals[name]
+            self.cells[name] = self.CELLVAR
         else:
             self.parent_symtable.upgrade_to_closure(name)
-        self.cells[name] = len(self.cells)
+            self.cells[name] = self.FREEVAR
 
 
 class CompilerContext(object):
@@ -89,13 +98,12 @@ class CompilerContext(object):
 
     def create_bytecode(self, code_name, args):
         bc = "".join(self.data)
-        locs = [None] * self.symtable.local_counter
-        for name, pos in self.symtable.locals.iteritems():
+        locs = [None] * len(self.symtable.locals)
+        for name, pos in self.symtable.local_numbers.iteritems():
             locs[pos] = name
-        cells = [None] * len(self.symtable.cells)
-        for name, pos in self.symtable.cells.iteritems():
-            cells[pos] = name
-        return Bytecode(code_name, bc, self.count_stackdepth(bc), self.consts[:], args, locs, cells)
+        freevars = None
+        cellvars = None
+        return Bytecode(code_name, bc, self.count_stackdepth(bc), self.consts[:], args, locs, freevars, cellvars)
 
     def count_stackdepth(self, bc):
         i = 0
