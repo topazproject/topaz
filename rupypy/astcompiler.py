@@ -98,18 +98,20 @@ class CompilerContext(object):
 
     def create_bytecode(self, code_name, args):
         bc = "".join(self.data)
-        locs = [None] * len(self.symtable.locals)
+        locs = [None] * len(self.symtable.local_numbers)
         for name, pos in self.symtable.local_numbers.iteritems():
             locs[pos] = name
-        freevars = []
+
         cellvars = []
-        for name, type in sorted(self.symtable.cells.iteritems(), key=lambda (name, _): self.symtable.cell_numbers[name]):
-            if type == self.symtable.FREEVAR:
-                freevars.append(name)
-            elif type == self.symtable.CELLVAR:
+        freevars = []
+        for name, kind in sorted(self.symtable.cells.iteritems(), key=lambda (name, _): self.symtable.cell_numbers[name]):
+            if kind == self.symtable.CELLVAR:
                 cellvars.append(name)
+            elif kind == self.symtable.FREEVAR:
+                freevars.append(name)
             else:
                 assert False
+
         return Bytecode(
             code_name,
             bc,

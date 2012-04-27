@@ -768,6 +768,8 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+        assert bc.freevars == []
+        assert bc.cellvars == ["sums"]
 
         self.assert_compiled(bc.consts_w[0].bytecode, """
         BUILD_ARRAY 0
@@ -778,6 +780,8 @@ class TestCompiler(object):
         SEND_BLOCK 1 1
         RETURN
         """)
+        assert bc.consts_w[0].bytecode.freevars == ["sums"]
+        assert bc.consts_w[0].bytecode.cellvars == ["x"]
 
         self.assert_compiled(bc.consts_w[0].bytecode.consts_w[0].bytecode, """
         LOAD_DEREF 1
@@ -787,6 +791,8 @@ class TestCompiler(object):
         SEND 1 1
         RETURN
         """)
+        assert bc.consts_w[0].bytecode.consts_w[0].bytecode.freevars == ["x", "sums"]
+        assert bc.consts_w[0].bytecode.consts_w[0].bytecode.cellvars == []
 
     def test_unary_op(self, space):
         bc = self.assert_compiles(space, "(-a)", """

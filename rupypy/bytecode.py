@@ -23,8 +23,8 @@ class Bytecode(object):
             if arg in locals:
                 arg_locs[idx] = self.LOCAL
                 arg_pos[idx] = locals.index(arg)
-            elif arg in cellvars or arg in freevars:
+            elif arg in cellvars:
                 arg_locs[idx] = self.CELL
-                arg_pos[idx] = (cellvars + freevars).index(arg)
+                arg_pos[idx] = cellvars.index(arg)
         self.arg_locs = arg_locs
         self.arg_pos = arg_pos
