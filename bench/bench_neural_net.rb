@@ -52,13 +52,11 @@ class Neuron
   def update_weights(rate)
     synapses_in.each do |synapse|
       temp_weight = synapse.weight
-      synapse.weight += (rate * LEARNING_RATE * error * synapse.source_neuron.output) +
-        (MOMENTUM * ( synapse.weight - synapse.prev_weight))
+      synapse.weight += (rate * LEARNING_RATE * error * synapse.source_neuron.output) + (MOMENTUM * ( synapse.weight - synapse.prev_weight))
       synapse.prev_weight = temp_weight
     end
     temp_threshold = threshold
-    self.threshold += (rate * LEARNING_RATE * error * -1) + 
-      (MOMENTUM * (threshold - prev_threshold))
+    self.threshold += (rate * LEARNING_RATE * error * -1) + (MOMENTUM * (threshold - prev_threshold))
     self.prev_threshold = temp_threshold
   end
 end
@@ -141,5 +139,4 @@ end
   puts xor.current_outputs
   xor.feed_forward([1, 1])
   puts xor.current_outputs
-  puts x
 end

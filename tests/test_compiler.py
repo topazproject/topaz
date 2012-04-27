@@ -800,3 +800,36 @@ class TestCompiler(object):
         """)
         [_, sym, _] = bc.consts_w
         assert space.symbol_w(sym) == "-@"
+
+    def test_assignment_in_block_closure(self, space):
+        bc = self.assert_compiles(space, """
+        [].each do
+            x = 3
+            [].each do
+                x
+            end
+        end
+        """, """
+        BUILD_ARRAY
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0].bytecode, """
+        LOAD_CONST 0
+        STORE_DEREF 0
+        BUILD_ARRAY 0
+        LOAD_CONST 1
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 2 1
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0].bytecode.consts_w[1].bytecode, """
+        LOAD_DEREF 0
+        RETURN
+        """)
