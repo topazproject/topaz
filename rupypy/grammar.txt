@@ -14,7 +14,7 @@ LT: "<";
 LPAREN: "\(";
 RPAREN: "\)";
 
-ASSIGNMENT_OPER: "(\+=)|=";
+ASSIGNMENT_OPER: "(\+=)|(-=)|=";
 RANGE_OPER: "(\.\.)|(\.\.\.)";
 CMP_OPER: "(!=)|(==)|(<=)|(>=)|>";
 SHIFT_OPER: "<<";
