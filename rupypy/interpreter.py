@@ -16,7 +16,7 @@ class Frame(object):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         self.stack_w = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
-        self.cells = [W_CellObject() for _ in bytecode.cells]
+        self.cells = [W_CellObject() for _ in bytecode.cellvars] + [None] * len(bytecode.freevars)
         self.stackpos = 0
         self.w_self = w_self
         self.w_scope = w_scope

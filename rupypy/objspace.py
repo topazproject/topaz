@@ -196,6 +196,7 @@ class ObjectSpace(object):
         bc = block.bytecode
         frame = self.create_frame(bc, w_self=block.w_self, block=block.block)
         frame.handle_args(bc, args_w)
+        assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
-            frame.cells[idx] = cell
+            frame.cells[len(bc.cellvars) + idx] = cell
         return Interpreter().interpret(self, frame, bc)

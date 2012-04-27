@@ -723,8 +723,8 @@ class TestCompiler(object):
 
         BUILD_ARRAY 0
         LOAD_CONST 3
-        LOAD_CLOSURE 2
         LOAD_CLOSURE 1
+        LOAD_CLOSURE 2
         LOAD_CLOSURE 0
         BUILD_BLOCK 3
         SEND_BLOCK 4 1
@@ -736,8 +736,8 @@ class TestCompiler(object):
 
         self.assert_compiled(bc.consts_w[3].bytecode, """
         LOAD_DEREF 0
-        LOAD_DEREF 1
         LOAD_DEREF 2
+        LOAD_DEREF 1
         LOAD_LOCAL 0
         SEND 0 1
         SEND 1 1
@@ -772,16 +772,16 @@ class TestCompiler(object):
         self.assert_compiled(bc.consts_w[0].bytecode, """
         BUILD_ARRAY 0
         LOAD_CONST 0
-        LOAD_CLOSURE 1
         LOAD_CLOSURE 0
+        LOAD_CLOSURE 1
         BUILD_BLOCK 2
         SEND_BLOCK 1 1
         RETURN
         """)
 
         self.assert_compiled(bc.consts_w[0].bytecode.consts_w[0].bytecode, """
-        LOAD_DEREF 0
         LOAD_DEREF 1
+        LOAD_DEREF 0
         LOAD_LOCAL 0
         SEND 0 1
         SEND 1 1
@@ -810,7 +810,7 @@ class TestCompiler(object):
             end
         end
         """, """
-        BUILD_ARRAY
+        BUILD_ARRAY 0
         LOAD_CONST 0
         BUILD_BLOCK 0
         SEND_BLOCK 1 1
@@ -822,6 +822,7 @@ class TestCompiler(object):
         self.assert_compiled(bc.consts_w[0].bytecode, """
         LOAD_CONST 0
         STORE_DEREF 0
+        DISCARD_TOP
         BUILD_ARRAY 0
         LOAD_CONST 1
         LOAD_CLOSURE 0

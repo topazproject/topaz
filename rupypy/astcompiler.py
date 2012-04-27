@@ -101,9 +101,25 @@ class CompilerContext(object):
         locs = [None] * len(self.symtable.locals)
         for name, pos in self.symtable.local_numbers.iteritems():
             locs[pos] = name
-        freevars = None
-        cellvars = None
-        return Bytecode(code_name, bc, self.count_stackdepth(bc), self.consts[:], args, locs, freevars, cellvars)
+        freevars = []
+        cellvars = []
+        for name, type in sorted(self.symtable.cells.iteritems(), key=lambda (name, _): self.symtable.cell_numbers[name]):
+            if type == self.symtable.FREEVAR:
+                freevars.append(name)
+            elif type == self.symtable.CELLVAR:
+                cellvars.append(name)
+            else:
+                assert False
+        return Bytecode(
+            code_name,
+            bc,
+            self.count_stackdepth(bc),
+            self.consts[:],
+            args,
+            locs,
+            cellvars,
+            freevars,
+        )
 
     def count_stackdepth(self, bc):
         i = 0

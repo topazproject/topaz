@@ -339,6 +339,10 @@ class SendBlock(Node):
 
         block_symtable = ctx.symtable.get_subscope(self)
         block_ctx = CompilerContext(ctx.space, block_symtable)
+        for name, kind in block_symtable.cells.iteritems():
+            if kind == block_symtable.FREEVAR:
+                block_symtable.get_cell_num(name)
+
         for arg in self.block_args:
             if block_symtable.is_local(arg):
                 block_symtable.get_local_num(arg)
