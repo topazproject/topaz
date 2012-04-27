@@ -4,8 +4,8 @@ from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
-    BinOp, Send, SendBlock, Self, Variable, InstanceVariable, Array, Range,
-    ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
+    BinOp, UnaryOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
+    Range, ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -82,6 +82,8 @@ class Transformer(object):
             return self.visit_subexpr(node)
         elif symname == "range":
             return self.visit_range(node)
+        elif symname == "unary_op":
+            return self.visit_unaryop(node)
         elif symname == "send":
             return self.visit_send(node)
         elif symname == "primary":
@@ -95,6 +97,12 @@ class Transformer(object):
             node.children[1].additional_info,
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
+        )
+
+    def visit_unaryop(self, node):
+        return UnaryOp(
+            node.children[0].additional_info,
+            self.visit_arg(node.children[1]),
         )
 
     def visit_range(self, node):

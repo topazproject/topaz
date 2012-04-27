@@ -44,7 +44,9 @@ range: comparison RANGE_OPER range | <comparison>;
 comparison: shiftive cmp_oper comparison | <shiftive>;
 shiftive: additive SHIFT_OPER shiftive | <additive>;
 additive: multitive ADD_OPER additive | <multitive>;
-multitive: send MUL_OPER multitive | <send>;
+multitive: send MUL_OPER multitive | <unary_op>;
+
+unary_op: [LPAREN] ADD_OPER arg [RPAREN] | <send>;
 
 send: <block> |
       real_send |

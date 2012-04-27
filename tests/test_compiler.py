@@ -787,3 +787,16 @@ class TestCompiler(object):
         SEND 1 1
         RETURN
         """)
+
+    def test_unary_op(self, space):
+        bc = self.assert_compiles(space, "(-a)", """
+        LOAD_SELF
+        SEND 0 0
+        SEND 1 0
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        [_, sym, _] = bc.consts_w
+        assert space.symbol_w(sym) == "-@"

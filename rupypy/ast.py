@@ -272,6 +272,17 @@ class BinOp(Node):
     def compile(self, ctx):
         Send(self.left, self.op, [self.right]).compile(ctx)
 
+class UnaryOp(Node):
+    def __init__(self, op, value):
+        self.op = op
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        Send(self.value, self.op + "@", []).compile(ctx)
+
 class Send(Node):
     def __init__(self, receiver, method, args):
         self.receiver = receiver

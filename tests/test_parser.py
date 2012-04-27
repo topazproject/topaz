@@ -2,8 +2,9 @@ import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, MethodAssignment, If, While, Class, Function,
-    Return, Yield, BinOp, Send, SendBlock, Self, Variable, InstanceVariable,
-    Array, Range, ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
+    Return, Yield, BinOp, UnaryOp, Send, SendBlock, Self, Variable,
+    InstanceVariable, Array, Range, ConstantInt, ConstantFloat, ConstantSymbol,
+    ConstantString)
 
 
 class TestParser(object):
@@ -324,7 +325,7 @@ class TestParser(object):
             Statement(InstanceVariableAssignment("+=", "a", ConstantInt(3)))
         ]))
 
-    def test_block_Result(self, space):
+    def test_block_result(self, space):
         r = space.parse("""
         [].inject(0) do |s, x|
             s + x
@@ -334,4 +335,12 @@ class TestParser(object):
             Statement(BinOp("*", SendBlock(Array([]), "inject", [ConstantInt(0)], ["s", "x"], Block([
                 Statement(BinOp("+", Variable("s"), Variable("x")))
             ])), ConstantInt(5)))
+        ]))
+
+    def test_unary_neg(self, space):
+        assert space.parse("(-b)") == Main(Block([
+            Statement(UnaryOp("-", Variable("b")))
+        ]))
+        assert space.parse("Math.exp(-a)") == Main(Block([
+            Statement(Send(Variable("Math"), "exp", [UnaryOp("-", Variable("a"))]))
         ]))
