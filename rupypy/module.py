@@ -44,6 +44,7 @@ class ClassDef(object):
         self.name = name
         self.methods = {}
         self.app_methods = []
+        self.singleton_methods = {}
         self.superclassdef = superclassdef
         self.cls = None
 
@@ -62,6 +63,12 @@ class ClassDef(object):
 
     def app_method(self, source):
         self.app_methods.append(source)
+
+    def singleton_method(self, name, **argspec):
+        def adder(func):
+            self.singleton_methods[name] = (func, argspec)
+            return func
+        return adder
 
 class Module(object):
     @classmethod
@@ -105,6 +112,8 @@ class ClassCache(Cache):
         self.space = space
 
     def _build(self, classdef):
+        from rupypy.objects.classobject import W_ClassObject
+
         assert classdef.cls is not None, classdef.name
 
         if classdef.superclassdef is None:
@@ -116,8 +125,15 @@ class ClassCache(Cache):
         for name, (method, argspec) in classdef.methods.iteritems():
             func = generate_wrapper(name, method, argspec, classdef.cls)
             w_class.add_method(self.space, name, BuiltinFunction(func))
+
         for source in classdef.app_methods:
             self.space.execute(source, w_class)
+
+        if classdef.singleton_methods:
+            singleton_class = self.space.getsingletonclass(w_class)
+            for name, (method, argspec) in classdef.singleton_methods.iteritems():
+                func = generate_wrapper(name, method, argspec, W_ClassObject)
+                singleton_class.add_method(self.space, name, BuiltinFunction(func))
         return w_class
 
 class BaseFunction(object):

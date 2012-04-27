@@ -34,7 +34,7 @@ class W_ModuleObject(W_BaseObject):
 
     def getsingletonclass(self, space):
         if self.klass is None:
-            self.klass = space.newclass(self.name, space.getclassfor(W_ModuleObject))
+            self.klass = space.newclass(self.name, space.getclassfor(type(self)), is_singleton=True)
         return self.klass
 
     @classdef.method("attr_accessor", varname="symbol")

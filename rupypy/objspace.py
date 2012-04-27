@@ -4,6 +4,7 @@ from pypy.tool.cache import Cache
 
 from rupypy.compiler import CompilerContext, SymbolTable
 from rupypy.interpreter import Interpreter, Frame
+from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, Function
 from rupypy.modules.math import Math
 from rupypy.objects.arrayobject import W_ArrayObject
@@ -39,6 +40,9 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
+        for cls in [W_Random]:
+            self.add_class(cls)
+
         for module in [Math]:
             self.add_module(module)
 
@@ -55,6 +59,8 @@ class ObjectSpace(object):
         w_module = module.build_object(self)
         self.set_const(self.getclassfor(W_Object), module.moduledef.name, w_module)
 
+    def add_class(self, cls):
+        self.set_const(self.getclassfor(W_Object), cls.classdef.name, self.getclassfor(cls))
 
     # Methods for dealing with source code.
 
@@ -113,8 +119,8 @@ class ObjectSpace(object):
     def newmodule(self, name):
         return W_ModuleObject(self, name)
 
-    def newclass(self, name, superclass):
-        return W_ClassObject(self, name, superclass)
+    def newclass(self, name, superclass, is_singleton=False):
+        return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
 
     def newcode(self, bytecode):
         return W_CodeObject(bytecode)

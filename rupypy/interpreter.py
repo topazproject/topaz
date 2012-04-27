@@ -137,6 +137,7 @@ class Interpreter(object):
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
         w_obj = space.find_const(frame.w_scope, name)
+        assert w_obj is not None
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
