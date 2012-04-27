@@ -1,5 +1,3 @@
-# from bryanbibat's gist: https://gist.github.com/2348802
-
 class Synapse
   attr_accessor :weight, :prev_weight
   attr_accessor :source_neuron, :dest_neuron
@@ -27,9 +25,6 @@ class Neuron
   end
 
   def calculate_output
-    # calculate output based on the previous layer
-    # use logistic function
-
     activation = synapses_in.inject(0.0) do |sum, synapse| 
       sum + synapse.weight * synapse.source_neuron.output 
     end
@@ -74,9 +69,15 @@ class NeuralNetwork
   def initialize(inputs, hidden, outputs)
     self.prng = Random.new
 
-    @input_layer = (1..inputs).map { Neuron.new(prng) }
-    @hidden_layer = (1..hidden).map { Neuron.new(prng) }
-    @output_layer = (1..outputs).map { Neuron.new(prng) }
+    @input_layer = (1..inputs).map do
+        Neuron.new(prng)
+    end
+    @hidden_layer = (1..hidden).map do
+        Neuron.new(prng)
+    end
+    @output_layer = (1..outputs).map do
+        Neuron.new(prng)
+    end
 
     @input_layer.product(@hidden_layer).each do |source, dest|
       synapse = Synapse.new(source, dest, prng)
@@ -96,44 +97,49 @@ class NeuralNetwork
     @output_layer.zip(targets).each do |neuron, target|
       neuron.output_train(0.3, target)
     end
-    @hidden_layer.each { |neuron| neuron.hidden_train(0.3) }
+    @hidden_layer.each do |neuron|
+        neuron.hidden_train(0.3)
+    end
   end
 
   def feed_forward(inputs)
     @input_layer.zip(inputs).each do |neuron, input|
       neuron.output = input
     end
-    @hidden_layer.each { |neuron| neuron.calculate_output }
-    @output_layer.each { |neuron| neuron.calculate_output }
+    @hidden_layer.each do|neuron|
+        neuron.calculate_output
+    end
+    @output_layer.each do |neuron|
+        neuron.calculate_output
+    end
   end
 
   def current_outputs
-    @output_layer.map { |neuron| neuron.output }
+    @output_layer.map do |neuron|
+        neuron.output
+    end
   end
 
 end
 
-require 'benchmark'
 
-(ARGV[0] || 5).to_i.times do
-  x = Benchmark.measure do |x|
-    xor = NeuralNetwork.new(2, 10, 1)
-  
-    10000.times do 
-      xor.train([0, 0], [0])
-      xor.train([1, 0], [1])
-      xor.train([0, 1], [1])
-      xor.train([1, 1], [0])
-    end
-  
-    xor.feed_forward([0, 0])
-    puts xor.current_outputs
-    xor.feed_forward([0, 1])
-    puts xor.current_outputs
-    xor.feed_forward([1, 0])
-    puts xor.current_outputs
-    xor.feed_forward([1, 1])
-    puts xor.current_outputs
+5.times do
+  xor = NeuralNetwork.new(2, 10, 1)
+
+  10000.times do
+    xor.train([0, 0], [0])
+    xor.train([1, 0], [1])
+    xor.train([0, 1], [1])
+    xor.train([1, 1], [0])
   end
+
+  xor.feed_forward([0, 0])
+  puts xor.current_outputs
+  xor.feed_forward([0, 1])
+  puts xor.current_outputs
+  xor.feed_forward([1, 0])
+  puts xor.current_outputs
+  xor.feed_forward([1, 1])
+  puts xor.current_outputs
   puts x
 end

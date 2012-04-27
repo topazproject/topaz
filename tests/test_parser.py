@@ -17,6 +17,7 @@ class TestParser(object):
 
     def test_binary_expression(self, space):
         assert space.parse("1+1") == Main(Block([Statement(BinOp("+", ConstantInt(1), ConstantInt(1)))]))
+        assert space.parse("1/1") == Main(Block([Statement(BinOp("/", ConstantInt(1), ConstantInt(1)))]))
 
     def test_multi_term_expr(self, space):
         assert space.parse("1 + 2 * 3") == Main(Block([Statement(BinOp("+", ConstantInt(1), BinOp("*", ConstantInt(2), ConstantInt(3))))]))
@@ -64,6 +65,9 @@ class TestParser(object):
 
     def test_assignment(self, space):
         assert space.parse("a = 3") == Main(Block([Statement(Assignment("=", "a", ConstantInt(3)))]))
+        assert space.parse("a = b = 3") == Main(Block([
+            Statement(Assignment("=", "a", Assignment("=", "b", ConstantInt(3))))
+        ]))
 
     def test_load_variable(self, space):
         assert space.parse("a") == Main(Block([Statement(Variable("a"))]))

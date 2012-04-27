@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+
 from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
-from rupypy.compiler import CompilerContext, SymbolTable, BlockSymbolTable
+from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
 
 
 class Node(object):

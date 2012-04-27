@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import specialize
 from pypy.tool.cache import Cache
 
-from rupypy.compiler import CompilerContext, SymbolTable
+from rupypy.astcompiler import CompilerContext, SymbolTable
 from rupypy.interpreter import Interpreter, Frame
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, Function

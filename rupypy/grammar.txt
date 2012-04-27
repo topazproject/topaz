@@ -19,7 +19,7 @@ RANGE_OPER: "(\.\.)|(\.\.\.)";
 CMP_OPER: "(!=)|(==)|(<=)|(>=)|>";
 SHIFT_OPER: "<<";
 ADD_OPER: "[+-]";
-MUL_OPER: "[*]";
+MUL_OPER: "[*/]";
 
 main: line* statement? [LINE_END]? [EOF];
 
@@ -32,7 +32,7 @@ expr: assignment |
       yield |
       arg;
 
-assignment: send ASSIGNMENT_OPER arg;
+assignment: send ASSIGNMENT_OPER expr;
 
 yield: ["yield"] args?;
 

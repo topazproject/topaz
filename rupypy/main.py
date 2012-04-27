@@ -1,5 +1,7 @@
 """rupypy"""
 
+from __future__ import absolute_import
+
 import sys
 
 from pypy.rlib.objectmodel import specialize
