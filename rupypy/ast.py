@@ -354,8 +354,13 @@ class SendBlock(Node):
         bc = block_ctx.create_bytecode("<block>", self.block_args)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bc)))
 
+
+        cells = [None] * len(block_symtable.cell_numbers)
+        for name, pos in block_symtable.cell_numbers.iteritems():
+            cells[pos] = name
         num_cells = 0
-        for name, pos in sorted(block_symtable.cell_numbers.iteritems(), key=lambda (n, p): p, reverse=True):
+        for i in xrange(len(cells) - 1, -1, -1):
+            name = cells[i]
             if block_symtable.cells[name] == block_symtable.FREEVAR:
                 ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(name))
                 num_cells += 1

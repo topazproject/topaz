@@ -104,7 +104,13 @@ class CompilerContext(object):
 
         cellvars = []
         freevars = []
-        for name, kind in sorted(self.symtable.cells.iteritems(), key=lambda (name, _): self.symtable.cell_numbers[name]):
+
+        cells = [None] * len(self.symtable.cell_numbers)
+        for name, pos in self.symtable.cell_numbers.iteritems():
+            cells[pos] = name
+
+        for name in cells:
+            kind = self.symtable.cells[name]
             if kind == self.symtable.CELLVAR:
                 cellvars.append(name)
             elif kind == self.symtable.FREEVAR:
