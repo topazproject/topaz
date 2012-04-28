@@ -15,6 +15,10 @@ class W_FloatObject(W_BaseObject):
     def method_to_f(self, space):
         return self
 
-    @classdef.method("*")
-    def method_mul(self, space, w_other):
-        return space.newfloat(self.floatvalue * space.float_w(w_other))
+    @classdef.method("+", other="float")
+    def method_add(self, space, other):
+        return space.newfloat(self.floatvalue + other)
+
+    @classdef.method("*", other="float")
+    def method_mul(self, space, other):
+        return space.newfloat(self.floatvalue * other)
