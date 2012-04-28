@@ -38,18 +38,19 @@ class TestClassObject(object):
     def test_attr_accessor(self, space):
         w_res = space.execute("""
         class X
-            attr_accessor :a
+            attr_accessor :a, :b, :c
             def initialize a
                 @a = a
+                self.b = 25
             end
         end
 
         x = X.new(3)
         orig_a = x.a
         x.a = 5
-        return [orig_a, x.a]
+        return [orig_a, x.a, x.b]
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 5]
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 5, 25]
 
     def test_attr_reader(self, space):
         w_res = space.execute("""
