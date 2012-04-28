@@ -30,3 +30,7 @@ class W_FloatObject(W_BaseObject):
     @classdef.method("*", other="float")
     def method_mul(self, space, other):
         return space.newfloat(self.floatvalue * other)
+
+    @classdef.method("/", other="float")
+    def method_div(self, space, other):
+        return space.newfloat(self.floatvalue / other)

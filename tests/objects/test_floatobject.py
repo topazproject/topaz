@@ -14,6 +14,10 @@ class TestFloatObject(object):
         w_res = space.execute("return 1.2 * 2")
         assert space.float_w(w_res) == 2.4
 
+    def test_div(self, space):
+        w_res = space.execute("return 5.0 / 2.0")
+        assert space.float_w(w_res) == 2.5
+
     def test_neg(self, space):
         w_res = space.execute("return (-5.0)")
         assert space.float_w(w_res) == -5.0
