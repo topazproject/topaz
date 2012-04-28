@@ -234,6 +234,7 @@ class Interpreter(object):
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
+    @jit.unroll_safe
     def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
         from rupypy.objects.blockobject import W_BlockObject
 
