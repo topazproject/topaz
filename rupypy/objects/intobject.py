@@ -13,6 +13,9 @@ class W_IntObject(W_BaseObject):
     def int_w(self, space):
         return self.intvalue
 
+    def float_w(self, space):
+        return float(self.intvalue)
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(str(self.intvalue))
