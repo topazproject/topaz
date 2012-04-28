@@ -15,6 +15,10 @@ class W_FloatObject(W_BaseObject):
     def method_to_f(self, space):
         return self
 
+    @classdef.method("-@")
+    def method_neg(self, space):
+        return space.newfloat(-self.floatvalue)
+
     @classdef.method("+", other="float")
     def method_add(self, space, other):
         return space.newfloat(self.floatvalue + other)
