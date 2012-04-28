@@ -48,3 +48,13 @@ class W_IntObject(W_BaseObject):
     @classdef.method(">", other=int)
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
+
+    classdef.app_method("""
+    def times
+        i = 0
+        while i < self
+            yield i
+            i += 1
+        end
+    end
+    """)

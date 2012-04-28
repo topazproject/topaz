@@ -22,3 +22,13 @@ class TestIntObject(object):
     def test_greater(self, space):
         w_res = space.execute("return 1 > 2")
         assert w_res is space.w_false
+
+    def test_times(self, space):
+        w_res = space.execute("""
+        res = []
+        3.times do |x|
+            res << x
+        end
+        return res
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [0, 1, 2]
