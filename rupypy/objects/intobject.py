@@ -1,4 +1,5 @@
 from rupypy.module import ClassDef
+from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.objectobject import W_BaseObject
 
 
@@ -28,9 +29,12 @@ class W_IntObject(W_BaseObject):
     def method_add(self, space, other):
         return space.newint(self.intvalue + other)
 
-    @classdef.method("-", other=int)
-    def method_sub(self, space, other):
-        return space.newint(self.intvalue - other)
+    @classdef.method("-")
+    def method_sub(self, space, w_other):
+        if isinstance(w_other, W_FloatObject):
+            return space.newfloat(self.intvalue - space.float_w(w_other))
+        else:
+            return space.newint(self.intvalue - space.int_w(w_other))
 
     @classdef.method("*", other=int)
     def method_mul(self, space, other):

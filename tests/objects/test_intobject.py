@@ -7,6 +7,9 @@ class TestIntObject(object):
         w_res = space.execute("return 2 - 3")
         assert space.int_w(w_res) == -1
 
+        w_res = space.execute("return 2 - 3.5")
+        assert space.float_w(w_res) == -1.5
+
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
         assert w_res is space.w_true
