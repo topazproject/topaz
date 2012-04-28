@@ -11,6 +11,10 @@ class W_FloatObject(W_BaseObject):
     def float_w(self, space):
         return self.floatvalue
 
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        return space.newstr_fromstr(str(self.floatvalue))
+
     @classdef.method("to_f")
     def method_to_f(self, space):
         return self

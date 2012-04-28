@@ -24,3 +24,7 @@ class TestFloatObject(object):
 
         w_res = space.execute("return (-(4.0 + 1.0))")
         assert space.float_w(w_res) == -5.0
+
+    def test_to_s(self, space):
+        w_res = space.execute("return 1.5.to_s")
+        assert space.str_w(w_res) == "1.5"
