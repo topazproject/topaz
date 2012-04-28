@@ -301,3 +301,13 @@ class TestBlockScope(object):
         return result
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [-2, -3, -4, -1, -2, -3, 0, -1, -2]
+
+    def test_no_accepted_arguments(self, space):
+        w_res = space.execute("""
+        result = []
+        2.times do
+            result << "hello"
+        end
+        return result
+        """)
+        assert [space.str_w(w_x) for w_x in w_res.items_w] == ["hello", "hello"]
