@@ -23,6 +23,8 @@ class W_RangeObject(W_BaseObject):
     classdef.app_method("""
     def each
         i = self.begin
+        yield i
+        i += 1
         while i < self.end
             yield i
             i += 1
