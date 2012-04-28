@@ -195,6 +195,10 @@ class ObjectSpace(object):
     def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(bc, w_self=block.w_self, block=block.block)
+        if len(args_w) == 1 and isinstance(args_w[0], W_ArrayObject) and len(bc.arg_locs) >= 2:
+            w_arg = args_w[0]
+            assert isinstance(w_arg, W_ArrayObject)
+            args_w = w_arg.items_w
         if len(bc.arg_locs) != 0:
             frame.handle_args(bc, args_w)
         assert len(block.cells) == len(bc.freevars)

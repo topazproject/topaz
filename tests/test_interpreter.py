@@ -311,3 +311,13 @@ class TestBlockScope(object):
         return result
         """)
         assert [space.str_w(w_x) for w_x in w_res.items_w] == ["hello", "hello"]
+
+    def test_multi_arg_block_array(self, space):
+        w_res = space.execute("""
+        res = []
+        [[1, 2], [3, 4]].each do |x, y|
+            res << x - y
+        end
+        return res
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [-1, -1]
