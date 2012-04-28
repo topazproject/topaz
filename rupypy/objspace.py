@@ -194,7 +194,7 @@ class ObjectSpace(object):
     @jit.unroll_safe
     def invoke_block(self, block, args_w):
         bc = block.bytecode
-        frame = self.create_frame(bc, w_self=block.w_self, block=block.block)
+        frame = self.create_frame(bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block)
         if len(args_w) == 1 and isinstance(args_w[0], W_ArrayObject) and len(bc.arg_locs) >= 2:
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)

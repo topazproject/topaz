@@ -186,7 +186,7 @@ class Interpreter(object):
         cells = [frame.pop() for _ in range(n_cells)]
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
-        block = W_BlockObject(w_code.bytecode, frame.w_self, cells, frame.block)
+        block = W_BlockObject(w_code.bytecode, frame.w_self, frame.w_scope, cells, frame.block)
         frame.push(block)
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):

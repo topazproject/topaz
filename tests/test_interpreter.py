@@ -168,6 +168,20 @@ class TestInterpreter(object):
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 5]
 
+    def test_class_constant_block(self, space):
+        w_res = space.execute("""
+        class X
+            Constant = 5
+            def f
+                (1..3).map do
+                    Constant
+                end
+            end
+        end
+        return X.new.f
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 5]
+
     def test_instance_var(self, space):
         w_res = space.execute("""
         class X
