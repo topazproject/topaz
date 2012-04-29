@@ -50,6 +50,13 @@ class MapTransitionCache(object):
 class BaseNode(object):
     _attrs_ = ()
 
+    def add_attr(self, space, w_obj, name):
+        attr_node = space.fromcache(MapTransitionCache).transition_add_attr(w_obj.map, name, len(w_obj.storage))
+        w_obj.map = attr_node
+        w_obj.storage.append(None)
+        return attr_node.pos
+
+
 class ClassNode(BaseNode):
     _immutable_fields_ = ["klass"]
     def __init__(self, klass):
@@ -58,15 +65,15 @@ class ClassNode(BaseNode):
     def get_class(self):
         return self.klass
 
-    def find_attr(self, space, w_obj, name):
-        return None
+    def find_attr(self, space, name):
+        return -1
 
-    def set_attr(self, space, w_obj, name, w_value):
-        attr_node = space.fromcache(MapTransitionCache).transition_add_attr(w_obj.map, name, len(w_obj.storage))
-        attr_node.add_attr(space, w_obj, name, w_value)
+    def find_set_attr(self, space, name):
+        return -1
 
     def change_class(self, space, w_obj, new_class_node):
         return new_class_node
+
 
 class AttributeNode(BaseNode):
     _immutable_fields_ = ["prev", "name", "pos"]
@@ -75,25 +82,23 @@ class AttributeNode(BaseNode):
         self.name = name
         self.pos = pos
 
+    @jit.elidable
     def get_class(self):
         return self.prev.get_class()
 
-    def find_attr(self, space, w_obj, name):
+    @jit.elidable
+    def find_attr(self, space, name):
         if name == self.name:
-            return w_obj.storage[self.pos]
+            return self.pos
         else:
-            return self.prev.find_attr(space, w_obj, name)
+            return self.prev.find_attr(space, name)
 
-    def set_attr(self, space, w_obj, name, w_value):
+    @jit.elidable
+    def find_set_attr(self, space, name):
         if name == self.name:
-            w_obj.storage[self.pos] = w_value
+            return self.pos
         else:
-            self.prev.set_attr(space, w_obj, name, w_value)
-
-    def add_attr(self, space, w_obj, name, w_value):
-        assert name == self.name
-        w_obj.map = self
-        w_obj.storage.append(w_value)
+            return self.prev.find_set_attr(space, name)
 
 
 class W_Object(W_BaseObject):
@@ -102,7 +107,7 @@ class W_Object(W_BaseObject):
         self.storage = []
 
     def getclass(self, space):
-        return self.map.get_class()
+        return jit.promote(self.map).get_class()
 
     def add_method(self, space, name, function):
         klass = self.getclass(space)
@@ -113,7 +118,13 @@ class W_Object(W_BaseObject):
         self.getclass(space).add_method(space, name, function)
 
     def find_instance_var(self, space, name):
-        return jit.promote(self.map).find_attr(space, self, name)
+        idx = jit.promote(self.map).find_attr(space, name)
+        if idx == -1:
+            return space.w_nil
+        return self.storage[idx]
 
     def set_instance_var(self, space, name, w_value):
-        self.map.set_attr(space, self, name, w_value)
+        idx = jit.promote(self.map).find_set_attr(space, name)
+        if idx == -1:
+            idx = self.map.add_attr(space, self, name)
+        self.storage[idx] = w_value

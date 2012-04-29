@@ -53,3 +53,15 @@ class TestMapDict(object):
         return X.new.attrs
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 4, 5]
+
+    def test_unitialized_att(self, space):
+        w_res = space.execute("""
+        class X
+            attr_accessor :a
+            def attrs
+                [self.a, @b]
+            end
+        end
+        return X.new.attrs
+        """)
+        assert w_res.items_w == [space.w_nil, space.w_nil]
