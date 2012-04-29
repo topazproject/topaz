@@ -3,6 +3,8 @@ from rupypy.objects.objectobject import W_BaseObject
 
 
 class W_FloatObject(W_BaseObject):
+    _immutable_fields_ = ["floatvalue"]
+
     classdef = ClassDef("Float", W_BaseObject.classdef)
 
     def __init__(self, floatvalue):
