@@ -192,6 +192,23 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_unless(self, space):
+        self.assert_compiles(space, "unless 1 == 2 then puts 5 end", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        JUMP_IF_FALSE 13
+        LOAD_CONST 3
+        JUMP 19
+        LOAD_SELF
+        LOAD_CONST 4
+        SEND 5 1
+        DISCARD_TOP
+
+        LOAD_CONST 6
+        RETURN
+        """)
+
     def test_named_constants(self, space):
         bc = self.assert_compiles(space, "false; true; nil;", """
         LOAD_CONST 0

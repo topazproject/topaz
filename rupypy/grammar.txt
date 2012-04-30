@@ -68,6 +68,7 @@ subscript: ["["] arg ["]"];
 primary: LPAREN expr RPAREN |
          "[" args? "]" |
          "if" expr then line* statement? [LINE_END]? "end" |
+         "unless" expr then line* statement? [LINE_END]? "end" |
          "while" expr do line* statement? [LINE_END]? "end" |
          "def" IDENTIFIER argdecl line* statement? [LINE_END]? "end" |
          "class" IDENTIFIER (LT IDENTIFIER)? [LINE_END] line* statement? [LINE_END]? "end" |

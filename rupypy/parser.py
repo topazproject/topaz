@@ -163,6 +163,8 @@ class Transformer(object):
             return self.visit_array(node)
         elif node.children[0].additional_info == "if":
             return self.visit_if(node)
+        elif node.children[0].additional_info == "unless":
+            return self.visit_unless(node)
         elif node.children[0].additional_info == "while":
             return self.visit_while(node)
         elif node.children[0].additional_info == "def":
@@ -199,6 +201,14 @@ class Transformer(object):
     def visit_if(self, node):
         return If(
             self.visit_expr(node.children[1]),
+            self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
+            Block([]),
+        )
+
+    def visit_unless(self, node):
+        return If(
+            self.visit_expr(node.children[1]),
+            Block([]),
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
         )
 

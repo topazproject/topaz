@@ -76,7 +76,7 @@ class TestParser(object):
         res = Main(Block([
             Statement(If(ConstantInt(3), Block([
                 Statement(Send(Self(), "puts", [ConstantInt(2)]))
-            ])))
+            ]), Block([])))
         ]))
         assert space.parse("if 3 then puts 2 end") == res
         assert space.parse("""
@@ -86,7 +86,7 @@ class TestParser(object):
         """) == res
         assert space.parse("if 3; puts 2 end") == res
         assert space.parse("if 3; end") == Main(Block([
-            Statement(If(ConstantInt(3), Block([])))
+            Statement(If(ConstantInt(3), Block([]), Block([])))
         ]))
         r = space.parse("""
         if 0
@@ -100,7 +100,7 @@ class TestParser(object):
                 Statement(Send(Self(), "puts", [ConstantInt(2)])),
                 Statement(Send(Self(), "puts", [ConstantInt(3)])),
                 Statement(Send(Self(), "puts", [ConstantInt(4)])),
-            ])))
+            ]), Block([])))
         ]))
 
     def test_comparison_ops(self, space):
@@ -347,4 +347,16 @@ class TestParser(object):
         ]))
         assert space.parse("Math.exp(-a)") == Main(Block([
             Statement(Send(Variable("Math"), "exp", [UnaryOp("-", Variable("a"))]))
+        ]))
+
+    def test_unless(self, space):
+        r = space.parse("""
+        unless 1 == 2 then
+            return 4
+        end
+        """)
+        assert r == Main(Block([
+            Statement(If(BinOp("==", ConstantInt(1), ConstantInt(2)), Block([]), Block([
+                Return(ConstantInt(4))
+            ])))
         ]))

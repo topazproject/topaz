@@ -139,9 +139,10 @@ class MethodAssignment(Node):
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.name + "="), 1)
 
 class If(Node):
-    def __init__(self, cond, body):
+    def __init__(self, cond, body, elsebody):
         self.cond = cond
         self.body = body
+        self.elsebody = elsebody
 
     def locate_symbols(self, symtable):
         self.cond.locate_symbols(symtable)
@@ -155,7 +156,7 @@ class If(Node):
         else_pos = ctx.get_pos()
         ctx.emit(consts.JUMP, 0)
         ctx.patch_jump(pos)
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        self.elsebody.compile(ctx)
         ctx.patch_jump(else_pos)
 
 class While(Node):
