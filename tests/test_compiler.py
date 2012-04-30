@@ -424,6 +424,7 @@ class TestCompiler(object):
         """, """
         LOAD_SELF
         LOAD_CONST 0
+        LOAD_SCOPE
         LOAD_CONSTANT 1
         LOAD_CONST 2
         BUILD_CLASS
@@ -435,6 +436,7 @@ class TestCompiler(object):
 
     def test_constants(self, space):
         self.assert_compiles(space, "Abc", """
+        LOAD_SCOPE
         LOAD_CONSTANT 0
         DISCARD_TOP
 
@@ -855,5 +857,25 @@ class TestCompiler(object):
         """)
         self.assert_compiled(bc.consts_w[0].bytecode.consts_w[1].bytecode, """
         LOAD_DEREF 0
+        RETURN
+        """)
+
+    def test_lookup_constant(self, space):
+        self.assert_compiles(space, "Module::Constant", """
+        LOAD_SCOPE
+        LOAD_CONSTANT 0
+        LOAD_CONSTANT 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiles(space, "Module::constant", """
+        LOAD_SCOPE
+        LOAD_CONSTANT 0
+        SEND 1 0
+        DISCARD_TOP
+
+        LOAD_CONST 2
         RETURN
         """)

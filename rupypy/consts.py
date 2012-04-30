@@ -10,6 +10,7 @@ BLOCK_EFFECT = 0xFD
 # Name, number of arguments, stack effect
 BYTECODES = [
     ("LOAD_SELF", 0, +1),
+    ("LOAD_SCOPE", 0, +1),
     ("LOAD_CONST", 1, +1),
 
     ("LOAD_LOCAL", 1, +1),
@@ -19,7 +20,7 @@ BYTECODES = [
     ("STORE_DEREF", 1, 0),
     ("LOAD_CLOSURE", 1, +1),
 
-    ("LOAD_CONSTANT", 1, +1),
+    ("LOAD_CONSTANT", 1, 0),
     ("STORE_CONSTANT", 1, 0),
 
     ("LOAD_INSTANCE_VAR", 1, +1),

@@ -4,8 +4,9 @@ from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
-    BinOp, UnaryOp, Send, SendBlock, Self, Variable, InstanceVariable, Array,
-    Range, ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
+    BinOp, UnaryOp, Send, SendBlock, LookupConstant, Self, Variable,
+    InstanceVariable, Array, Range, ConstantInt, ConstantFloat, ConstantSymbol,
+    ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -129,22 +130,25 @@ class Transformer(object):
         target = self.visit_primary(node.children[0])
         for trailer in node.children[1].children:
             node = trailer.children[0]
-            if node.symbol == "attribute":
-                method = node.children[0].children[0].additional_info
-                if len(node.children) == 1:
-                    args = []
-                else:
-                    args = self.visit_send_args(node.children[1])
-            elif node.symbol == "subscript":
-                args = [self.visit_arg(node.children[0])]
-                method = "[]"
+            if node.symbol in ["attribute", "subscript"]:
+                if node.symbol == "attribute":
+                    method = node.children[0].children[0].additional_info
+                    if len(node.children) == 1:
+                        args = []
+                    else:
+                        args = self.visit_send_args(node.children[1])
+                elif node.symbol == "subscript":
+                    args = [self.visit_arg(node.children[0])]
+                    method = "[]"
+                target = Send(
+                    target,
+                    method,
+                    args,
+                )
+            elif node.symbol == "constant":
+                target = LookupConstant(target, node.children[1].additional_info)
             else:
                 raise NotImplementedError
-            target = Send(
-                target,
-                method,
-                args,
-            )
         return target
 
     def visit_send_args(self, node):

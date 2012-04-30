@@ -2,9 +2,9 @@ import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, MethodAssignment, If, While, Class, Function,
-    Return, Yield, BinOp, UnaryOp, Send, SendBlock, Self, Variable,
-    InstanceVariable, Array, Range, ConstantInt, ConstantFloat, ConstantSymbol,
-    ConstantString)
+    Return, Yield, BinOp, UnaryOp, Send, SendBlock, LookupConstant, Self,
+    Variable, InstanceVariable, Array, Range, ConstantInt, ConstantFloat,
+    ConstantSymbol, ConstantString)
 
 
 class TestParser(object):
@@ -359,4 +359,9 @@ class TestParser(object):
             Statement(If(BinOp("==", ConstantInt(1), ConstantInt(2)), Block([]), Block([
                 Return(ConstantInt(4))
             ])))
+        ]))
+
+    def test_constant_lookup(self, space):
+        assert space.parse("Module::Constant") == Main(Block([
+            Statement(LookupConstant(Variable("Module"), "Constant"))
         ]))

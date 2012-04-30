@@ -267,6 +267,15 @@ class TestInterpreter(object):
         """)
         assert space.int_w(w_res) == 3
 
+    def test_lookup_constant(self, space):
+        w_res = space.execute("""
+        class X
+            Constant = 3
+        end
+        return X::Constant
+        """)
+        assert space.int_w(w_res) == 3
+
 
 class TestBlockScope(object):
     def test_self(self, space):

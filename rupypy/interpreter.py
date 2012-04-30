@@ -115,6 +115,9 @@ class Interpreter(object):
         jit.promote(space.getclass(w_self))
         frame.push(w_self)
 
+    def LOAD_SCOPE(self, space, bytecode, frame, pc):
+        frame.push(frame.w_scope)
+
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
         frame.push(bytecode.consts_w[idx])
 
@@ -134,9 +137,10 @@ class Interpreter(object):
         frame.push(frame.cells[idx])
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
+        w_scope = frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
-        w_obj = space.find_const(frame.w_scope, name)
+        w_obj = space.find_const(w_scope, name)
         assert w_obj is not None
         frame.push(w_obj)
 

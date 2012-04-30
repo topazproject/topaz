@@ -60,10 +60,11 @@ real_send: primary trailers |
 
 trailers: trailer >trailers< | trailer;
 
-trailer: attribute | subscript;
+trailer: attribute | subscript | constant;
 attribute: [DOT] operation [LPAREN] send_args? [RPAREN] |
            [DOT] operation send_args?;
 subscript: ["["] arg ["]"];
+constant: "::" IDENTIFIER;
 
 primary: LPAREN expr RPAREN |
          "[" args? "]" |

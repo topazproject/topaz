@@ -369,6 +369,21 @@ class SendBlock(Node):
         ctx.emit(consts.BUILD_BLOCK, num_cells)
         ctx.emit(consts.SEND_BLOCK, ctx.create_symbol_const(self.method), len(self.args) + 1)
 
+class LookupConstant(Node):
+    def __init__(self, value, name):
+        self.value = value
+        self.name = name
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        if self.name[0].isupper():
+            self.value.compile(ctx)
+            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+        else:
+            Send(self.value, self.name, []).compile(ctx)
+
 class Self(Node):
     def locate_symbols(self, symtable):
         pass
@@ -403,6 +418,7 @@ class Variable(Node):
         elif ctx.symtable.is_cell(self.name):
             ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
         elif self.name[0].isupper():
+            ctx.emit(consts.LOAD_SCOPE)
             ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
             Send(Self(), self.name, []).compile(ctx)
