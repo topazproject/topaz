@@ -1,5 +1,5 @@
 from rupypy import consts
-from rupypy.bytecode import Bytecode
+from rupypy.objects.codeobject import W_CodeObject
 
 
 class BaseSymbolTable(object):
@@ -89,9 +89,10 @@ class BlockSymbolTable(BaseSymbolTable):
 
 
 class CompilerContext(object):
-    def __init__(self, space, symtable):
+    def __init__(self, space, symtable, filepath):
         self.space = space
         self.symtable = symtable
+        self.filepath = filepath
         self.data = []
         self.consts = []
         self.const_positions = {}
@@ -118,8 +119,9 @@ class CompilerContext(object):
             else:
                 assert False
 
-        return Bytecode(
+        return W_CodeObject(
             code_name,
+            self.filepath,
             bc,
             self.count_stackdepth(bc),
             self.consts[:],
@@ -146,6 +148,10 @@ class CompilerContext(object):
             current_stackdepth += stack_effect
             max_stackdepth = max(max_stackdepth, current_stackdepth)
         return max_stackdepth
+
+    def get_subctx(self, node):
+        subscope = self.symtable.get_subscope(node)
+        return CompilerContext(self.space, subscope, self.filepath)
 
     def emit(self, c, arg0=-1, arg1=-1):
         self.data.append(chr(c))

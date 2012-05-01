@@ -118,6 +118,9 @@ class Interpreter(object):
     def LOAD_SCOPE(self, space, bytecode, frame, pc):
         frame.push(frame.w_scope)
 
+    def LOAD_CODE(self, space, bytecode, frame, pc):
+        frame.push(bytecode)
+
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
         frame.push(bytecode.consts_w[idx])
 
@@ -190,7 +193,7 @@ class Interpreter(object):
         cells = [frame.pop() for _ in range(n_cells)]
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
-        block = W_BlockObject(w_code.bytecode, frame.w_self, frame.w_scope, cells, frame.block)
+        block = W_BlockObject(w_code, frame.w_self, frame.w_scope, cells, frame.block)
         frame.push(block)
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):
@@ -211,8 +214,8 @@ class Interpreter(object):
             space.set_const(frame.w_scope, name, w_cls)
 
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode.bytecode, w_cls, w_cls)
-        Interpreter().interpret(space, sub_frame, w_bytecode.bytecode)
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls)
+        Interpreter().interpret(space, sub_frame, w_bytecode)
 
         frame.push(space.w_nil)
 

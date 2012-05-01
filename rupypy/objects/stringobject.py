@@ -89,6 +89,10 @@ class W_StringObject(W_BaseObject):
         storage = strategy.unerase(self.storage)
         w_other.strategy.extend_into(w_other.storage, storage)
 
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        return self
+
     @classdef.method("+")
     def method_plus(self, space, w_other):
         assert isinstance(w_other, W_StringObject)

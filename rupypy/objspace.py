@@ -69,16 +69,16 @@ class ObjectSpace(object):
     def parse(self, source):
         return self.transformer.visit_main(to_ast().transform(_parse(source)))
 
-    def compile(self, source):
+    def compile(self, source, filepath):
         astnode = self.parse(source)
         symtable = SymbolTable()
         astnode.locate_symbols(symtable)
-        c = CompilerContext(self, symtable)
+        c = CompilerContext(self, symtable, filepath)
         astnode.compile(c)
         return c.create_bytecode("<string>", [])
 
-    def execute(self, source, w_self=None):
-        bc = self.compile(source)
+    def execute(self, source, w_self=None, filepath="-e"):
+        bc = self.compile(source, filepath)
         frame = self.create_frame(bc, w_self)
         return Interpreter().interpret(self, frame, bc)
 
@@ -124,14 +124,10 @@ class ObjectSpace(object):
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
 
-    def newcode(self, bytecode):
-        return W_CodeObject(bytecode)
-
     def newfunction(self, w_name, w_code):
         name = self.symbol_w(w_name)
         assert isinstance(w_code, W_CodeObject)
-        bytecode = w_code.bytecode
-        return Function(name, bytecode)
+        return Function(name, w_code)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)

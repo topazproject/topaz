@@ -276,6 +276,10 @@ class TestInterpreter(object):
         """)
         assert space.int_w(w_res) == 3
 
+    def test___FILE__(self, space):
+        w_res = space.execute("return __FILE__")
+        assert space.str_w(w_res) == "-e"
+
 
 class TestBlockScope(object):
     def test_self(self, space):

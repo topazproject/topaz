@@ -26,7 +26,7 @@ def entry_point(argv):
         f.close()
 
     space = getspace()
-    space.execute(source)
+    space.execute(source, filepath=argv[1])
     return 0
 
 if __name__ == "__main__":

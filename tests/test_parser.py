@@ -365,3 +365,8 @@ class TestParser(object):
         assert space.parse("Module::Constant") == Main(Block([
             Statement(LookupConstant(Variable("Module"), "Constant"))
         ]))
+
+    def test___FILE__(self, space):
+        assert space.parse("__FILE__") == Main(Block([Statement(Variable("__FILE__"))]))
+        with py.test.raises(Exception):
+            space.parse("__FILE__ = 5")

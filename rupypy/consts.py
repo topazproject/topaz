@@ -11,6 +11,7 @@ BLOCK_EFFECT = 0xFD
 BYTECODES = [
     ("LOAD_SELF", 0, +1),
     ("LOAD_SCOPE", 0, +1),
+    ("LOAD_CODE", 0, +1),
     ("LOAD_CONST", 1, +1),
 
     ("LOAD_LOCAL", 1, +1),

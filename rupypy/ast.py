@@ -201,15 +201,14 @@ class Class(Node):
         else:
             self.superclass.compile(ctx)
 
-        body_symtable = ctx.symtable.get_subscope(self)
-        body_ctx = CompilerContext(ctx.space, body_symtable)
+        body_ctx = ctx.get_subctx(self)
         self.body.compile(body_ctx)
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode(self.name, [])
 
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bytecode)))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_CLASS)
 
 class Function(Node):
@@ -226,13 +225,12 @@ class Function(Node):
         self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
-        function_symtable = ctx.symtable.get_subscope(self)
-        function_ctx = CompilerContext(ctx.space, function_symtable)
+        function_ctx = ctx.get_subctx(self)
         for arg in self.args:
-            if function_symtable.is_local(arg):
-                function_symtable.get_local_num(arg)
-            elif function_symtable.is_cell(arg):
-                function_symtable.get_cell_num(arg)
+            if function_ctx.symtable.is_local(arg):
+                function_ctx.symtable.get_local_num(arg)
+            elif function_ctx.symtable.is_cell(arg):
+                function_ctx.symtable.get_cell_num(arg)
 
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
@@ -240,7 +238,7 @@ class Function(Node):
 
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bytecode)))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.DEFINE_FUNCTION)
 
 
@@ -338,31 +336,30 @@ class SendBlock(Node):
         for i in range(len(self.args) - 1, -1, -1):
             self.args[i].compile(ctx)
 
-        block_symtable = ctx.symtable.get_subscope(self)
-        block_ctx = CompilerContext(ctx.space, block_symtable)
-        for name, kind in block_symtable.cells.iteritems():
-            if kind == block_symtable.CELLVAR:
-                block_symtable.get_cell_num(name)
+        block_ctx = ctx.get_subctx(self)
+        for name, kind in block_ctx.symtable.cells.iteritems():
+            if kind == block_ctx.symtable.CELLVAR:
+                block_ctx.symtable.get_cell_num(name)
 
         for arg in self.block_args:
-            if block_symtable.is_local(arg):
-                block_symtable.get_local_num(arg)
-            elif block_symtable.is_cell(arg):
-                block_symtable.get_cell_num(arg)
+            if block_ctx.symtable.is_local(arg):
+                block_ctx.symtable.get_local_num(arg)
+            elif block_ctx.symtable.is_cell(arg):
+                block_ctx.symtable.get_cell_num(arg)
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
         bc = block_ctx.create_bytecode("<block>", self.block_args)
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.newcode(bc)))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
 
-        cells = [None] * len(block_symtable.cell_numbers)
-        for name, pos in block_symtable.cell_numbers.iteritems():
+        cells = [None] * len(block_ctx.symtable.cell_numbers)
+        for name, pos in block_ctx.symtable.cell_numbers.iteritems():
             cells[pos] = name
         num_cells = 0
         for i in xrange(len(cells) - 1, -1, -1):
             name = cells[i]
-            if block_symtable.cells[name] == block_symtable.FREEVAR:
+            if block_ctx.symtable.cells[name] == block_ctx.symtable.FREEVAR:
                 ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(name))
                 num_cells += 1
 
@@ -396,6 +393,8 @@ class Variable(Node):
         self.name = name
 
     def convert_to_assignment(self, oper, value):
+        if self.name == "__FILE__":
+            raise Exception
         return Assignment(oper, self.name, value)
 
     def locate_symbols(self, symtable):
@@ -413,6 +412,9 @@ class Variable(Node):
             ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
         elif self.name == "self":
             ctx.emit(consts.LOAD_SELF)
+        elif self.name == "__FILE__":
+            ctx.emit(consts.LOAD_CODE)
+            ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)
         elif ctx.symtable.is_local(self.name):
             ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(self.name))
         elif ctx.symtable.is_cell(self.name):

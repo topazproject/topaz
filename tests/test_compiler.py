@@ -4,7 +4,7 @@ from rupypy.objects.boolobject import W_TrueObject
 
 class TestCompiler(object):
     def assert_compiles(self, space, source, expected_bytecode_str):
-        bc = space.compile(source)
+        bc = space.compile(source, None)
         self.assert_compiled(bc, expected_bytecode_str)
         return bc
 
@@ -327,7 +327,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_CONST 0
         RETURN
         """)
@@ -343,7 +343,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_LOCAL 0
         LOAD_LOCAL 1
         SEND 0 1
@@ -377,7 +377,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2].bytecode, """
+        self.assert_compiled(bc.consts_w[2], """
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 0
@@ -402,7 +402,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2].bytecode, """
+        self.assert_compiled(bc.consts_w[2], """
         LOAD_SELF
         LOAD_CONST 0
         LOAD_CONST 1
@@ -413,7 +413,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2].bytecode.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[2].consts_w[1], """
         LOAD_CONST 0
         RETURN
         """)
@@ -494,7 +494,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[3].bytecode, """
+        self.assert_compiled(bc.consts_w[3], """
         LOAD_LOCAL 0
         LOAD_CONST 0
         SEND 1 1
@@ -519,7 +519,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1], """
         YIELD 0
         DISCARD_TOP
         LOAD_CONST 0
@@ -584,7 +584,7 @@ class TestCompiler(object):
         RETURN
         """)
         assert bc.max_stackdepth == 3
-        self.assert_compiled(bc.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_DEREF 0
         RETURN
         """)
@@ -609,7 +609,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_LOCAL 0
         STORE_DEREF 0
         RETURN
@@ -654,7 +654,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_LOCAL 0
         LOAD_CONST 0
         LOAD_CLOSURE 0
@@ -664,7 +664,7 @@ class TestCompiler(object):
         LOAD_DEREF 0
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[1].bytecode.consts_w[0].bytecode, """
+        self.assert_compiled(bc.consts_w[1].consts_w[0], """
         LOAD_DEREF 0
         LOAD_LOCAL 0
         SEND 0 1
@@ -753,7 +753,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[3].bytecode, """
+        self.assert_compiled(bc.consts_w[3], """
         LOAD_DEREF 0
         LOAD_DEREF 1
         LOAD_DEREF 2
@@ -790,7 +790,7 @@ class TestCompiler(object):
         assert bc.freevars == []
         assert bc.cellvars == ["sums"]
 
-        self.assert_compiled(bc.consts_w[0].bytecode, """
+        self.assert_compiled(bc.consts_w[0], """
         BUILD_ARRAY 0
         LOAD_CONST 0
         LOAD_CLOSURE 0
@@ -799,10 +799,10 @@ class TestCompiler(object):
         SEND_BLOCK 1 1
         RETURN
         """)
-        assert bc.consts_w[0].bytecode.freevars == ["sums"]
-        assert bc.consts_w[0].bytecode.cellvars == ["x"]
+        assert bc.consts_w[0].freevars == ["sums"]
+        assert bc.consts_w[0].cellvars == ["x"]
 
-        self.assert_compiled(bc.consts_w[0].bytecode.consts_w[0].bytecode, """
+        self.assert_compiled(bc.consts_w[0].consts_w[0], """
         LOAD_DEREF 0
         LOAD_DEREF 1
         LOAD_LOCAL 0
@@ -810,8 +810,8 @@ class TestCompiler(object):
         SEND 1 1
         RETURN
         """)
-        assert bc.consts_w[0].bytecode.consts_w[0].bytecode.freevars == ["sums", "x"]
-        assert bc.consts_w[0].bytecode.consts_w[0].bytecode.cellvars == []
+        assert bc.consts_w[0].consts_w[0].freevars == ["sums", "x"]
+        assert bc.consts_w[0].consts_w[0].cellvars == []
 
     def test_unary_op(self, space):
         bc = self.assert_compiles(space, "(-a)", """
@@ -844,7 +844,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[0].bytecode, """
+        self.assert_compiled(bc.consts_w[0], """
         LOAD_CONST 0
         STORE_DEREF 0
         DISCARD_TOP
@@ -855,7 +855,7 @@ class TestCompiler(object):
         SEND_BLOCK 2 1
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[0].bytecode.consts_w[1].bytecode, """
+        self.assert_compiled(bc.consts_w[0].consts_w[1], """
         LOAD_DEREF 0
         RETURN
         """)
@@ -877,5 +877,15 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 2
+        RETURN
+        """)
+
+    def test___FILE__(self, space):
+        self.assert_compiles(space, "__FILE__", """
+        LOAD_CODE
+        SEND 0 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
         RETURN
         """)
