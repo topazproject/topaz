@@ -206,7 +206,7 @@ class Class(Node):
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode(self.name, [])
+        bytecode = body_ctx.create_bytecode(self.name, [], [])
 
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_CLASS)
@@ -220,27 +220,42 @@ class Function(Node):
     def locate_symbols(self, symtable):
         body_symtable = SymbolTable()
         symtable.add_subscope(self, body_symtable)
-        for name in self.args:
-            body_symtable.declare_local(name)
+        for arg in self.args:
+            body_symtable.declare_local(arg.name)
+            if arg.defl is not None:
+                arg.defl.locate_symbols(body_symtable)
         self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
         function_ctx = ctx.get_subctx(self)
+        defaults = []
         for arg in self.args:
-            if function_ctx.symtable.is_local(arg):
-                function_ctx.symtable.get_local_num(arg)
-            elif function_ctx.symtable.is_cell(arg):
-                function_ctx.symtable.get_cell_num(arg)
+            if function_ctx.symtable.is_local(arg.name):
+                function_ctx.symtable.get_local_num(arg.name)
+            elif function_ctx.symtable.is_cell(arg.name):
+                function_ctx.symtable.get_cell_num(arg.name)
+
+            arg_ctx = CompilerContext(ctx.space, function_ctx.symtable, ctx.filepath)
+            if arg.defl is not None:
+                arg.defl.compile(arg_ctx)
+                arg_ctx.emit(consts.RETURN)
+                bc = arg_ctx.create_bytecode(self.name + ":" + arg.name, [], [])
+                defaults.append(bc)
 
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
-        bytecode = function_ctx.create_bytecode(self.name, self.args)
+        arg_names = [a.name for a in self.args]
+        bytecode = function_ctx.create_bytecode(self.name, arg_names, defaults)
 
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.DEFINE_FUNCTION)
 
+class Argument(Node):
+    def __init__(self, name, defl=None):
+        self.name = name
+        self.defl = defl
 
 class Return(BaseStatement):
     def __init__(self, expr):
@@ -328,7 +343,7 @@ class SendBlock(Node):
         block_symtable = BlockSymbolTable(symtable)
         symtable.add_subscope(self, block_symtable)
         for arg in self.block_args:
-            block_symtable.declare_local(arg)
+            block_symtable.declare_local(arg.name)
         self.block.locate_symbols(block_symtable)
 
     def compile(self, ctx):
@@ -342,14 +357,14 @@ class SendBlock(Node):
                 block_ctx.symtable.get_cell_num(name)
 
         for arg in self.block_args:
-            if block_ctx.symtable.is_local(arg):
-                block_ctx.symtable.get_local_num(arg)
-            elif block_ctx.symtable.is_cell(arg):
-                block_ctx.symtable.get_cell_num(arg)
+            if block_ctx.symtable.is_local(arg.name):
+                block_ctx.symtable.get_local_num(arg.name)
+            elif block_ctx.symtable.is_cell(arg.name):
+                block_ctx.symtable.get_cell_num(arg.name)
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode("<block>", self.block_args)
+        bc = block_ctx.create_bytecode("<block>", [a.name for a in self.block_args], [])
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
 

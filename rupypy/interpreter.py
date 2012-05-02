@@ -22,17 +22,25 @@ class Frame(object):
         self.w_scope = w_scope
         self.block = block
 
+    def _set_arg(self, bytecode, i, w_value):
+        loc = bytecode.arg_locs[i]
+        pos = bytecode.arg_pos[i]
+        assert pos >= 0
+        if loc == bytecode.LOCAL:
+            self.locals_w[pos] = w_value
+        elif loc == bytecode.CELL:
+            self.cells[pos].set(w_value)
+
     @jit.unroll_safe
-    def handle_args(self, bytecode, args_w):
-        assert len(args_w) == len(bytecode.arg_locs)
+    def handle_args(self, space, bytecode, args_w):
+        assert 0 <= len(bytecode.arg_locs) - len(args_w) <= len(bytecode.defaults)
         for i in xrange(len(args_w)):
-            loc = bytecode.arg_locs[i]
-            pos = bytecode.arg_pos[i]
-            assert pos >= 0
-            if loc == bytecode.LOCAL:
-                self.locals_w[pos] = args_w[i]
-            elif loc == bytecode.CELL:
-                self.cells[pos].set(args_w[i])
+            self._set_arg(bytecode, i, args_w[i])
+        defl_start = len(args_w) - (len(bytecode.arg_locs) - len(bytecode.defaults))
+        for defl_idx, i in enumerate(xrange(len(args_w), len(bytecode.arg_locs))):
+            bc = bytecode.defaults[defl_idx + defl_start]
+            w_value = Interpreter().interpret(space, self, bc)
+            self._set_arg(bytecode, i, w_value)
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)

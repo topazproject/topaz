@@ -280,6 +280,19 @@ class TestInterpreter(object):
         w_res = space.execute("return __FILE__")
         assert space.str_w(w_res) == "-e"
 
+    def test_default_arguments(self, space):
+        w_res = space.execute("""
+        def f(a, b=3, c=b)
+            [a, b, c]
+        end
+        return f 1
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1, 3, 3]
+        w_res = space.execute("return f 5, 6")
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 6]
+        w_res = space.execute("return f 5, 6, 10")
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 10]
+
 
 class TestBlockScope(object):
     def test_self(self, space):

@@ -75,7 +75,7 @@ class ObjectSpace(object):
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, symtable, filepath)
         astnode.compile(c)
-        return c.create_bytecode("<string>", [])
+        return c.create_bytecode("<string>", [], [])
 
     def execute(self, source, w_self=None, filepath="-e"):
         bc = self.compile(source, filepath)
@@ -196,7 +196,7 @@ class ObjectSpace(object):
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
         if len(bc.arg_locs) != 0:
-            frame.handle_args(bc, args_w)
+            frame.handle_args(self, bc, args_w)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell

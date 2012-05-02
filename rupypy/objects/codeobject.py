@@ -5,7 +5,7 @@ from rupypy.objects.objectobject import W_BaseObject
 class W_CodeObject(W_BaseObject):
     _immutable_fields_ = [
         "code", "consts_w[*]", "max_stackdepth", "locals[*]", "cellvars[*]",
-        "freevars[*]", "arg_locs[*]", "arg_pos[*]"
+        "freevars[*]", "arg_locs[*]", "arg_pos[*]", "defaults[*]"
     ]
 
     classdef = ClassDef("Code", W_BaseObject.classdef)
@@ -15,13 +15,14 @@ class W_CodeObject(W_BaseObject):
     CELL = 2
 
     def __init__(self, name, filepath, code, max_stackdepth, consts, args,
-                 locals, cellvars, freevars):
+                 defaults, locals, cellvars, freevars):
 
         self.name = name
         self.filepath = filepath
         self.code = code
         self.max_stackdepth = max_stackdepth
         self.consts_w = consts
+        self.defaults = defaults
         self.locals = locals
         self.cellvars = cellvars
         self.freevars = freevars

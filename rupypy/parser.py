@@ -3,8 +3,8 @@ import os
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
-    InstanceVariableAssignment, If, While, Class, Function, Return, Yield,
-    BinOp, UnaryOp, Send, SendBlock, LookupConstant, Self, Variable,
+    InstanceVariableAssignment, If, While, Class, Function, Argument, Return,
+    Yield, BinOp, UnaryOp, Send, SendBlock, LookupConstant, Self, Variable,
     InstanceVariable, Array, Range, ConstantInt, ConstantFloat, ConstantSymbol,
     ConstantString)
 
@@ -247,7 +247,24 @@ class Transformer(object):
         return self.visit_arglist(node.children[0])
 
     def visit_arglist(self, node):
-        return [n.additional_info for n in node.children]
+        # 0 indicates no defaults have been seen, 1 indicates a section of
+        # defaults has been started (but not finished), and 2 indicates that
+        # there have been defaults and then normal args after it, at this point
+        # seeing another default argument is an error
+        default_seen = 0
+        args = []
+        for n in node.children:
+            name = n.children[0].additional_info
+            if len(n.children) == 2:
+                if default_seen == 2:
+                    raise Exception
+                default_seen = 1
+                args.append(Argument(name, self.visit_arg(n.children[1])))
+            else:
+                if default_seen == 1:
+                    default_seen = 2
+                args.append(Argument(name))
+        return args
 
     def visit_number(self, node):
         if "." in node.additional_info:

@@ -889,3 +889,36 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
+
+    def test_default_argument(self, space):
+        bc = self.assert_compiles(space, """
+        def f(a, b=3, c=b)
+            [a, b, c]
+        end
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[1], """
+        LOAD_LOCAL 0
+        LOAD_LOCAL 1
+        LOAD_LOCAL 2
+        BUILD_ARRAY 3
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[1].defaults[0], """
+        LOAD_CONST 0
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[1].defaults[1], """
+        LOAD_LOCAL 1
+        RETURN
+        """)

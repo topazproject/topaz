@@ -2,8 +2,8 @@ import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
     InstanceVariableAssignment, MethodAssignment, If, While, Class, Function,
-    Return, Yield, BinOp, UnaryOp, Send, SendBlock, LookupConstant, Self,
-    Variable, InstanceVariable, Array, Range, ConstantInt, ConstantFloat,
+    Argument, Return, Yield, BinOp, UnaryOp, Send, SendBlock, LookupConstant,
+    Self, Variable, InstanceVariable, Array, Range, ConstantInt, ConstantFloat,
     ConstantSymbol, ConstantString)
 
 
@@ -190,7 +190,7 @@ class TestParser(object):
         ]))
 
         assert space.parse("def f(a, b) a + b end") == Main(Block([
-            Statement(Function("f", ["a", "b"], Block([
+            Statement(Function("f", [Argument("a"), Argument("b")], Block([
                 Statement(BinOp("+", Variable("a"), Variable("b")))
             ])))
         ]))
@@ -203,7 +203,7 @@ class TestParser(object):
         end
         """)
         assert r == Main(Block([
-            Statement(Function("f", ["a"], Block([
+            Statement(Function("f", [Argument("a")], Block([
                 Statement(Send(Self(), "puts", [Variable("a")])),
                 Statement(Send(Self(), "puts", [Variable("a")])),
                 Statement(Send(Self(), "puts", [Variable("a")])),
@@ -220,7 +220,7 @@ class TestParser(object):
         end
         """)
         assert r == Main(Block([
-            Statement(Function("f", ["a", "b"], Block([
+            Statement(Function("f", [Argument("a"), Argument("b")], Block([
                 Statement(BinOp("+", Variable("a"), Variable("b")))
             ])))
         ]))
@@ -289,7 +289,7 @@ class TestParser(object):
         end
         """)
         assert r == Main(Block([
-            Statement(SendBlock(Variable("x"), "each", [], ["a"], Block([
+            Statement(SendBlock(Variable("x"), "each", [], [Argument("a")], Block([
                 Statement(Send(Self(), "puts", [Variable("a")]))
             ])))
         ]))
@@ -336,7 +336,7 @@ class TestParser(object):
         end * 5
         """)
         assert r == Main(Block([
-            Statement(BinOp("*", SendBlock(Array([]), "inject", [ConstantInt(0)], ["s", "x"], Block([
+            Statement(BinOp("*", SendBlock(Array([]), "inject", [ConstantInt(0)], [Argument("s"), Argument("x")], Block([
                 Statement(BinOp("+", Variable("s"), Variable("x")))
             ])), ConstantInt(5)))
         ]))
@@ -370,3 +370,36 @@ class TestParser(object):
         assert space.parse("__FILE__") == Main(Block([Statement(Variable("__FILE__"))]))
         with py.test.raises(Exception):
             space.parse("__FILE__ = 5")
+
+    def test_function_default_arguments(self, space):
+        function = lambda name, args: Main(Block([Statement(Function(name, args, Block([])))]))
+
+        r = space.parse("""
+        def f(a, b=3)
+        end
+        """)
+        assert r == function("f", [Argument("a"), Argument("b", ConstantInt(3))])
+
+        r = space.parse("""
+        def f(a, b, c=b)
+        end
+        """)
+        assert r == function("f", [Argument("a"), Argument("b"), Argument("c", Variable("b"))])
+
+        r = space.parse("""
+        def f(a=3, b)
+        end
+        """)
+        assert r == function("f", [Argument("a", ConstantInt(3)), Argument("b")])
+
+        r = space.parse("""
+        def f(a, b=3, c)
+        end
+        """)
+        assert r == function("f", [Argument("a"), Argument("b", ConstantInt(3)), Argument("c")])
+
+        with py.test.raises(Exception):
+            space.parse("""
+            def f(a, b=3, c, d=5)
+            end
+            """)

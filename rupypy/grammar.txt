@@ -10,11 +10,12 @@ STRING: "\\"[^\\\\"]*\\"";
 IDENTIFIER: "[a-zA-Z_][a-zA-Z0-9_]*";
 
 DOT: "\.";
+EQ: "=";
 LT: "<";
 LPAREN: "\(";
 RPAREN: "\)";
 
-ASSIGNMENT_OPER: "(\+=)|(-=)|=";
+AUG_ASSIGNMENT_OPER: "(\+=)|(-=)";
 RANGE_OPER: "(\.\.)|(\.\.\.)";
 CMP_OPER: "(!=)|(==)|(<=)|(>=)|>";
 SHIFT_OPER: "<<";
@@ -32,7 +33,9 @@ expr: assignment |
       yield |
       arg;
 
-assignment: send ASSIGNMENT_OPER expr;
+assignment_oper: <AUG_ASSIGNMENT_OPER> | <EQ>;
+
+assignment: send assignment_oper expr;
 
 yield: ["yield"] args?;
 
@@ -87,7 +90,9 @@ do: [LINE_END] |
 argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];
 
-arglist: IDENTIFIER [","] >arglist< | IDENTIFIER;
+arglist: argdef [","] >arglist< | argdef;
+
+argdef: IDENTIFIER [EQ] arg | IDENTIFIER;
 
 operation: IDENTIFIER | "class" | "end";
 
