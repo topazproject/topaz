@@ -37,10 +37,10 @@ class Frame(object):
         for i in xrange(len(args_w)):
             self._set_arg(bytecode, i, args_w[i])
         defl_start = len(args_w) - (len(bytecode.arg_locs) - len(bytecode.defaults))
-        for defl_idx, i in enumerate(xrange(len(args_w), len(bytecode.arg_locs))):
-            bc = bytecode.defaults[defl_idx + defl_start]
+        for i in xrange(len(bytecode.arg_locs) - len(args_w)):
+            bc = bytecode.defaults[i + defl_start]
             w_value = Interpreter().interpret(space, self, bc)
-            self._set_arg(bytecode, i, w_value)
+            self._set_arg(bytecode, i + len(args_w), w_value)
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)

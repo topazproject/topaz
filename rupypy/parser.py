@@ -140,6 +140,8 @@ class Transformer(object):
                 elif node.symbol == "subscript":
                     args = [self.visit_arg(node.children[0])]
                     method = "[]"
+                else:
+                    assert False
                 target = Send(
                     target,
                     method,
