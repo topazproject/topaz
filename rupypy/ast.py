@@ -187,10 +187,47 @@ class TryExcept(Node):
         self.body = body
         self.except_handlers = except_handlers
 
+    def locate_symbols(self, symtable):
+        self.body.locate_symbols(symtable)
+        for handler in self.except_handlers:
+            handler.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        setup_pos = ctx.get_pos()
+        ctx.emit(consts.SETUP_EXCEPT, 0)
+        self.body.compile(ctx)
+        ctx.emit(consts.POP_BLOCK)
+        no_exc_pos = []
+        no_exc_pos.append(ctx.get_pos())
+        ctx.emit(consts.JUMP, 0)
+        ctx.patch_jump(setup_pos)
+        last_handler_pos = -1
+        for handler in self.except_handlers:
+            if last_handler_pos != -1:
+                ctx.patch_jump(last_handler_pos)
+            handler.exception.compile(ctx)
+            ctx.emit(consts.COMPARE_EXC)
+            last_handler_pos = ctx.get_pos()
+            ctx.emit(consts.JUMP_IF_FALSE, 0)
+            ctx.emit(consts.DISCARD_TOP)
+            handler.body.compile(ctx)
+            no_exc_pos.append(ctx.get_pos())
+            ctx.emit(consts.JUMP, 0)
+        ctx.patch_jump(last_handler_pos)
+        ctx.emit(consts.DISCARD_TOP)
+        ctx.emit(consts.END_FINALLY)
+        for pos in no_exc_pos:
+            ctx.patch_jump(pos)
+
+
 class ExceptHandler(Node):
     def __init__(self, exception, body):
         self.exception = exception
         self.body = body
+
+    def locate_symbols(self, symtable):
+        self.exception.locate_symbols(symtable)
+        self.body.locate_symbols(symtable)
 
 class Class(Node):
     def __init__(self, name, superclass, body):

@@ -922,3 +922,35 @@ class TestCompiler(object):
         LOAD_LOCAL 1
         RETURN
         """)
+
+    def test_exceptions(self, space):
+        self.assert_compiles(space, """
+        begin
+            1 / 0
+        rescue ZeroDivisionError
+            puts "zero!"
+        end
+        """, """
+        SETUP_EXCEPT 12
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        POP_BLOCK
+        JUMP 30
+        LOAD_SCOPE
+        LOAD_CONSTANT 3
+        COMPARE_EXC
+        JUMP_IF_FALSE 28
+        DISCARD_TOP
+        LOAD_SELF
+        LOAD_CONST 4
+        COPY_STRING
+        SEND 5 1
+        JUMP 30
+        DISCARD_TOP
+        END_FINALLY
+        DISCARD_TOP
+
+        LOAD_CONST 6
+        RETURN
+        """)

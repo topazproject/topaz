@@ -2,13 +2,14 @@ from pypy.rlib import jit
 from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
+from rupypy.error import RubyError
 from rupypy.objects.cellobject import W_CellObject
 
 
 class Frame(object):
     _virtualizable2_ = [
         "locals_w[*]", "stack_w[*]", "stackpos", "w_self", "w_scope", "block",
-        "cells[*]"
+        "cells[*]", "lastblock",
     ]
 
     @jit.unroll_safe
@@ -21,6 +22,7 @@ class Frame(object):
         self.w_self = w_self
         self.w_scope = w_scope
         self.block = block
+        self.lastblock = None
 
     def _set_arg(self, bytecode, i, w_value):
         loc = bytecode.arg_locs[i]
@@ -60,6 +62,12 @@ class Frame(object):
         assert stackpos >= 0
         return self.stack_w[stackpos]
 
+    def popblock(self):
+        lastblock = self.lastblock
+        if lastblock is not None:
+            self.lastblock = lastblock.lastblock
+        return lastblock
+
 def get_printable_location(pc, bytecode):
     return consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
 
@@ -74,24 +82,33 @@ class Interpreter(object):
     def interpret(self, space, frame, bytecode):
         pc = 0
         while True:
-            self.jitdriver.jit_merge_point(
-                self=self, bytecode=bytecode, frame=frame, pc=pc
-            )
-            instr = ord(bytecode.code[pc])
-            pc += 1
-            if instr == consts.RETURN:
-                assert frame.stackpos == 1
-                return frame.pop()
+            try:
+                pc = self.handle_bytecode(space, pc, frame, bytecode)
+            except Return as e:
+                return e.w_value
+            except RubyError as e:
+                pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
 
-            if we_are_translated():
-                for i, name in consts.UNROLLING_BYTECODES:
-                    if i == instr:
-                        pc = self.run_instr(space, name, consts.BYTECODE_NUM_ARGS[i], bytecode, frame, pc)
-                        break
-                else:
-                    raise NotImplementedError
+    def handle_bytecode(self, space, pc, frame, bytecode):
+        self.jitdriver.jit_merge_point(
+            self=self, bytecode=bytecode, frame=frame, pc=pc
+        )
+        instr = ord(bytecode.code[pc])
+        pc += 1
+        if instr == consts.RETURN:
+            assert frame.stackpos == 1
+            raise Return(frame.pop())
+
+        if we_are_translated():
+            for i, name in consts.UNROLLING_BYTECODES:
+                if i == instr:
+                    pc = self.run_instr(space, name, consts.BYTECODE_NUM_ARGS[i], bytecode, frame, pc)
+                    break
             else:
-                pc = self.run_instr(space, consts.BYTECODE_NAMES[instr], consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
+                raise NotImplementedError
+        else:
+            pc = self.run_instr(space, consts.BYTECODE_NAMES[instr], consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
+        return pc
 
     @specialize.arg(2, 3)
     def run_instr(self, space, name, num_args, bytecode, frame, pc):
@@ -110,6 +127,12 @@ class Interpreter(object):
         if res is not None:
             pc = res
         return pc
+
+    def handle_ruby_error(self, space, pc, frame, bytecode, e):
+        block = frame.popblock()
+        if block is None:
+            raise e
+        return block.target_pc
 
     def jump(self, bytecode, frame, cur_pc, target_pc):
         if target_pc < cur_pc:
@@ -260,6 +283,12 @@ class Interpreter(object):
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
+    def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
+        frame.lastblock = ExceptBlock(target_pc, frame.lastblock)
+
+    def COMPARE_EXC(self, space, bytecode, frame, pc):
+        x
+
     def JUMP(self, space, bytecode, frame, pc, target_pc):
         return self.jump(bytecode, frame, pc, target_pc)
 
@@ -287,3 +316,18 @@ class Interpreter(object):
         raise Exception
     # Handled specially in the main dispatch loop.
     RETURN = UNREACHABLE
+
+class FrameBlock(object):
+    def __init__(self, target_pc, lastblock):
+        self.target_pc = target_pc
+        self.lastblock = lastblock
+
+class ExceptBlock(FrameBlock):
+    pass
+
+class ExitFrame(Exception):
+    pass
+
+class Return(ExitFrame):
+    def __init__(self, w_value):
+        self.w_value = w_value

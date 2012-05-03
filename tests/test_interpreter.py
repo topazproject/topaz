@@ -293,6 +293,16 @@ class TestInterpreter(object):
         w_res = space.execute("return f 5, 6, 10")
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 10]
 
+    def test_exceptions(self, space):
+        w_res = space.execute("""
+        return begin
+            1 / 0
+        rescue ZeroDivisionError
+            5
+        end
+        """)
+        assert space.int_w(w_res) == 5
+
 
 class TestBlockScope(object):
     def test_self(self, space):

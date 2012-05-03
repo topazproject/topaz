@@ -14,6 +14,7 @@ from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.floatobject import W_FloatObject
+from rupypy.objects.exceptionobject import W_ZeroDivisionError
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
@@ -42,11 +43,13 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
-        for cls in [W_Random]:
+        for cls in [W_ZeroDivisionError, W_Random]:
             self.add_class(cls)
 
         for module in [Math]:
             self.add_module(module)
+
+        self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
 
     def _freeze_(self):
         return True

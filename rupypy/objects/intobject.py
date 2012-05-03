@@ -1,3 +1,4 @@
+from rupypy.error import RubyError
 from rupypy.module import ClassDef
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.objectobject import W_BaseObject
@@ -39,6 +40,13 @@ class W_IntObject(W_BaseObject):
     @classdef.method("*", other=int)
     def method_mul(self, space, other):
         return space.newint(self.intvalue * other)
+
+    @classdef.method("/", other=int)
+    def method_div(self, space, other):
+        try:
+            return space.newint(self.intvalue / 0)
+        except ZeroDivisionError:
+            raise RubyError(space.w_ZeroDivisionError, "divided by 0")
 
     @classdef.method("==", other=int)
     def method_eq(self, space, other):
