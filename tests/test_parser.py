@@ -1,10 +1,10 @@
 import py
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
-    InstanceVariableAssignment, MethodAssignment, If, While, Class, Function,
-    Argument, Return, Yield, BinOp, UnaryOp, Send, SendBlock, LookupConstant,
-    Self, Variable, InstanceVariable, Array, Range, ConstantInt, ConstantFloat,
-    ConstantSymbol, ConstantString)
+    InstanceVariableAssignment, MethodAssignment, If, While, TryExcept,
+    ExceptHandler, Class, Function, Argument, Return, Yield, BinOp, UnaryOp,
+    Send, SendBlock, LookupConstant, Self, Variable, InstanceVariable, Array,
+    Range, ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
 
 
 class TestParser(object):
@@ -403,3 +403,22 @@ class TestParser(object):
             def f(a, b=3, c, d=5)
             end
             """)
+
+    def test_exceptions(self, space):
+        r = space.parse("""
+        begin
+            1 + 1
+        rescue ZeroDivisionError
+            puts "zero"
+        end
+        """)
+        assert r == Main(Block([
+            Statement(TryExcept(
+                Block([Statement(BinOp("+", ConstantInt(1), ConstantInt(1)))]),
+                [
+                    ExceptHandler(Variable("ZeroDivisionError"), Block([
+                        Statement(Send(Self(), "puts", [ConstantString("zero")]))
+                    ]))
+                ]
+            ))
+        ]))

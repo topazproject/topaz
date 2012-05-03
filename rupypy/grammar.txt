@@ -76,6 +76,7 @@ primary: LPAREN expr RPAREN |
          "while" expr do line* statement? [LINE_END]? "end" |
          "def" IDENTIFIER argdecl line* statement? [LINE_END]? "end" |
          "class" IDENTIFIER (LT IDENTIFIER)? [LINE_END] line* statement? [LINE_END]? "end" |
+         "begin" line* statement? [LINE_END]? "rescue" IDENTIFIER line* statement? [LINE_END]? "end" |
          varname |
          literal;
 
@@ -94,7 +95,7 @@ arglist: argdef [","] >arglist< | argdef;
 
 argdef: IDENTIFIER [EQ] arg | IDENTIFIER;
 
-operation: IDENTIFIER | "class" | "end";
+operation: IDENTIFIER | "class" | "end" | "begin";
 
 send_args: args;
 

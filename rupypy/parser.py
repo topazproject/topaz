@@ -3,10 +3,10 @@ import os
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy.ast import (Main, Block, Statement, Assignment,
-    InstanceVariableAssignment, If, While, Class, Function, Argument, Return,
-    Yield, BinOp, UnaryOp, Send, SendBlock, LookupConstant, Self, Variable,
-    InstanceVariable, Array, Range, ConstantInt, ConstantFloat, ConstantSymbol,
-    ConstantString)
+    InstanceVariableAssignment, If, While, TryExcept, ExceptHandler, Class,
+    Function, Argument, Return, Yield, BinOp, UnaryOp, Send, SendBlock,
+    LookupConstant, Self, Variable, InstanceVariable, Array, Range,
+    ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -177,6 +177,8 @@ class Transformer(object):
             return self.visit_def(node)
         elif node.children[0].additional_info == "class":
             return self.visit_class(node)
+        elif node.children[0].additional_info == "begin":
+            return self.visit_begin(node)
         raise NotImplementedError(node.symbol)
 
     def visit_array(self, node):
@@ -242,6 +244,13 @@ class Transformer(object):
             superclass,
             self.visit_block(node, start_idx=block_start_idx, end_idx=len(node.children) - 1),
         )
+
+    def visit_begin(self, node):
+        assert node.children[3].additional_info == "rescue"
+        body_block = self.visit_block(node, start_idx=1, end_idx=3)
+        exception = Variable(node.children[4].additional_info)
+        except_block = self.visit_block(node, start_idx=5, end_idx=len(node.children) - 1)
+        return TryExcept(body_block, [ExceptHandler(exception, except_block)])
 
     def visit_argdecl(self, node):
         if not node.children:

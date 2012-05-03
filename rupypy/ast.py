@@ -182,6 +182,16 @@ class While(Node):
         # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
+class TryExcept(Node):
+    def __init__(self, body, except_handlers):
+        self.body = body
+        self.except_handlers = except_handlers
+
+class ExceptHandler(Node):
+    def __init__(self, exception, body):
+        self.exception = exception
+        self.body = body
+
 class Class(Node):
     def __init__(self, name, superclass, body):
         self.name = name
