@@ -328,6 +328,16 @@ class TestInterpreter(BaseRuPyPyTest):
                 5
             end
             """)
+        w_res = space.execute("""
+        return begin
+            1 / 0
+        rescue NoMethodError
+            5
+        rescue ZeroDivisionError
+            10
+        end
+        """)
+        assert space.int_w(w_res) == 10
 
 
 class TestBlockScope(object):
