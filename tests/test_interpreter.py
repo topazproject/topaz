@@ -1,8 +1,10 @@
 from rupypy.objects.boolobject import W_TrueObject
 from rupypy.objects.objectobject import W_Object
 
+from .base import BaseRuPyPyTest
 
-class TestInterpreter(object):
+
+class TestInterpreter(BaseRuPyPyTest):
     def test_add(self, space):
         w_res = space.execute("1 + 1")
         assert isinstance(w_res, W_TrueObject)
@@ -310,6 +312,22 @@ class TestInterpreter(object):
         end
         """)
         assert space.str_w(w_res) == "divided by 0"
+        w_res = space.execute("""
+        return begin
+            1 + 1
+        rescue ZeroDivisionError
+            5
+        end
+        """)
+        assert space.int_w(w_res) == 2
+        with self.raises("NoMethodError"):
+            space.execute("""
+            begin
+                [].dsafdsafsa
+            rescue ZeroDivisionError
+                5
+            end
+            """)
 
 
 class TestBlockScope(object):

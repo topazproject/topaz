@@ -287,10 +287,17 @@ class Interpreter(object):
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = ExceptBlock(target_pc, frame.lastblock)
 
+    def END_FINALLY(self, space, bytecode, frame, pc):
+        w_exc = frame.pop()
+        raise RubyError(w_exc)
+
     def COMPARE_EXC(self, space, bytecode, frame, pc):
         w_expected = frame.pop()
         w_actual = frame.peek()
         frame.push(space.newbool(w_expected is space.getclass(w_actual)))
+
+    def POP_BLOCK(self, space, bytecode, frame, pc):
+        frame.popblock()
 
     def JUMP(self, space, bytecode, frame, pc, target_pc):
         return self.jump(bytecode, frame, pc, target_pc)

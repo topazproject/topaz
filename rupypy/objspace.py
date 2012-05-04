@@ -15,7 +15,7 @@ from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.exceptionobject import W_ZeroDivisionError
+from rupypy.objects.exceptionobject import W_NoMethodError, W_ZeroDivisionError
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
@@ -44,12 +44,13 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
-        for cls in [W_ZeroDivisionError, W_Random]:
+        for cls in [W_NoMethodError, W_ZeroDivisionError, W_Random]:
             self.add_class(cls)
 
         for module in [Math]:
             self.add_module(module)
 
+        self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
 
     def _freeze_(self):
@@ -188,7 +189,7 @@ class ObjectSpace(object):
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
         if raw_method is None:
-            raise LookupError(name)
+            self.raise_(self.w_NoMethodError, "undefined method `%s`" % name)
         return raw_method.call(self, w_receiver, args_w, block)
 
     @jit.unroll_safe

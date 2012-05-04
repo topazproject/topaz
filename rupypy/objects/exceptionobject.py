@@ -23,6 +23,14 @@ class W_StandardError(W_ExceptionObject):
     classdef = ClassDef("StandardError", W_ExceptionObject.classdef)
     method_allocate = new_exception_allocate(classdef)
 
+class W_NameError(W_StandardError):
+    classdef = ClassDef("NameError", W_StandardError.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
+class W_NoMethodError(W_NameError):
+    classdef = ClassDef("NoMethodError", W_NameError.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
 class W_ZeroDivisionError(W_StandardError):
     classdef = ClassDef("ZeroDivisionError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)

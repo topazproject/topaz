@@ -216,7 +216,6 @@ class TryExcept(Node):
             no_exc_pos.append(ctx.get_pos())
             ctx.emit(consts.JUMP, 0)
         ctx.patch_jump(last_handler_pos)
-        ctx.emit(consts.DISCARD_TOP)
         ctx.emit(consts.END_FINALLY)
         for pos in no_exc_pos:
             ctx.patch_jump(pos)
