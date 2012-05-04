@@ -954,3 +954,33 @@ class TestCompiler(object):
         LOAD_CONST 6
         RETURN
         """)
+        self.assert_compiles(space, """
+        begin
+            1 / 0
+        rescue ZeroDivisionError => e
+            puts e
+        end
+        """, """
+        SETUP_EXCEPT 12
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        POP_BLOCK
+        JUMP 31
+        LOAD_SCOPE
+        LOAD_CONSTANT 3
+        COMPARE_EXC
+        JUMP_IF_FALSE 29
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_SELF
+        LOAD_LOCAL 0
+        SEND 4 1
+        JUMP 31
+        DISCARD_TOP
+        END_FINALLY
+        DISCARD_TOP
+
+        LOAD_CONST 5
+        RETURN
+        """)

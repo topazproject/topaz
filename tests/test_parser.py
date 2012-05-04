@@ -416,8 +416,26 @@ class TestParser(object):
             Statement(TryExcept(
                 Block([Statement(BinOp("+", ConstantInt(1), ConstantInt(1)))]),
                 [
-                    ExceptHandler(Variable("ZeroDivisionError"), Block([
+                    ExceptHandler(Variable("ZeroDivisionError"), None, Block([
                         Statement(Send(Self(), "puts", [ConstantString("zero")]))
+                    ]))
+                ]
+            ))
+        ]))
+
+        r = space.parse("""
+        begin
+            1 / 0
+        rescue ZeroDivisionError => e
+            puts e
+        end
+        """)
+        assert r == Main(Block([
+            Statement(TryExcept(
+                Block([Statement(BinOp("/", ConstantInt(1), ConstantInt(0)))]),
+                [
+                    ExceptHandler(Variable("ZeroDivisionError"), "e", Block([
+                        Statement(Send(Self(), "puts", [Variable("e")]))
                     ]))
                 ]
             ))

@@ -1,4 +1,3 @@
 class RubyError(Exception):
-    def __init__(self, w_type, msg):
-        self.w_type = w_type
-        self.msg = msg
+    def __init__(self, w_value):
+        self.w_value = w_value

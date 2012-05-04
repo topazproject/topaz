@@ -5,6 +5,7 @@ from pypy.rlib.objectmodel import specialize
 from pypy.tool.cache import Cache
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
+from rupypy.error import RubyError
 from rupypy.interpreter import Interpreter, Frame
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, Function
@@ -204,3 +205,7 @@ class ObjectSpace(object):
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell
         return Interpreter().interpret(self, frame, bc)
+
+    def raise_(self, w_type, msg):
+        w_exc = self.send(w_type, self.newsymbol("new"), [self.newstr_fromstr(msg)])
+        raise RubyError(w_exc)

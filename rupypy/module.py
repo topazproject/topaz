@@ -13,6 +13,8 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
             spec = argspec[argname]
             if spec is int:
                 source.append("    args += (space.int_w(args_w[%d]),)" % arg_count)
+            elif spec is str:
+                source.append("    args += (space.str_w(args_w[%d]),)" % arg_count)
             elif spec == "float":
                 source.append("    args += (space.float_w(space.send(args_w[%d], space.newsymbol('to_f'))),)" % arg_count)
             elif spec == "symbol":

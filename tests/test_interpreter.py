@@ -302,6 +302,14 @@ class TestInterpreter(object):
         end
         """)
         assert space.int_w(w_res) == 5
+        w_res = space.execute("""
+        return begin
+            1 / 0
+        rescue ZeroDivisionError => e
+            e.to_s
+        end
+        """)
+        assert space.str_w(w_res) == "divided by 0"
 
 
 class TestBlockScope(object):

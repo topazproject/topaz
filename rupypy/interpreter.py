@@ -132,7 +132,7 @@ class Interpreter(object):
         block = frame.popblock()
         if block is None:
             raise e
-        frame.push(e.w_type)
+        frame.push(e.w_value)
         return block.target_pc
 
     def jump(self, bytecode, frame, cur_pc, target_pc):
@@ -290,7 +290,7 @@ class Interpreter(object):
     def COMPARE_EXC(self, space, bytecode, frame, pc):
         w_expected = frame.pop()
         w_actual = frame.peek()
-        frame.push(space.newbool(w_expected is w_actual))
+        frame.push(space.newbool(w_expected is space.getclass(w_actual)))
 
     def JUMP(self, space, bytecode, frame, pc, target_pc):
         return self.jump(bytecode, frame, pc, target_pc)

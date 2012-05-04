@@ -209,6 +209,8 @@ class TryExcept(Node):
             ctx.emit(consts.COMPARE_EXC)
             last_handler_pos = ctx.get_pos()
             ctx.emit(consts.JUMP_IF_FALSE, 0)
+            if handler.name:
+                ctx.emit(consts.STORE_LOCAL, ctx.symtable.get_local_num(handler.name))
             ctx.emit(consts.DISCARD_TOP)
             handler.body.compile(ctx)
             no_exc_pos.append(ctx.get_pos())
@@ -221,12 +223,15 @@ class TryExcept(Node):
 
 
 class ExceptHandler(Node):
-    def __init__(self, exception, body):
+    def __init__(self, exception, name, body):
         self.exception = exception
+        self.name = name
         self.body = body
 
     def locate_symbols(self, symtable):
         self.exception.locate_symbols(symtable)
+        if self.name is not None:
+            symtable.declare_local(self.name)
         self.body.locate_symbols(symtable)
 
 class Class(Node):
