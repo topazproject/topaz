@@ -82,6 +82,9 @@ class Interpreter(object):
     def interpret(self, space, frame, bytecode):
         pc = 0
         while True:
+            self.jitdriver.jit_merge_point(
+                self=self, bytecode=bytecode, frame=frame, pc=pc
+            )
             try:
                 pc = self.handle_bytecode(space, pc, frame, bytecode)
             except Return as e:
@@ -90,9 +93,6 @@ class Interpreter(object):
                 pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
 
     def handle_bytecode(self, space, pc, frame, bytecode):
-        self.jitdriver.jit_merge_point(
-            self=self, bytecode=bytecode, frame=frame, pc=pc
-        )
         instr = ord(bytecode.code[pc])
         pc += 1
         if instr == consts.RETURN:
