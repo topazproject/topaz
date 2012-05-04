@@ -81,16 +81,17 @@ class Interpreter(object):
 
     def interpret(self, space, frame, bytecode):
         pc = 0
-        while True:
-            self.jitdriver.jit_merge_point(
-                self=self, bytecode=bytecode, frame=frame, pc=pc
-            )
-            try:
-                pc = self.handle_bytecode(space, pc, frame, bytecode)
-            except Return as e:
-                return e.w_value
-            except RubyError as e:
-                pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
+        try:
+            while True:
+                self.jitdriver.jit_merge_point(
+                    self=self, bytecode=bytecode, frame=frame, pc=pc
+                )
+                try:
+                    pc = self.handle_bytecode(space, pc, frame, bytecode)
+                except RubyError as e:
+                    pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
+        except Return as e:
+            return e.w_value
 
     def handle_bytecode(self, space, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])

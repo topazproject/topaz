@@ -246,10 +246,13 @@ class Transformer(object):
         )
 
     def visit_begin(self, node):
-        assert node.children[3].symbol == "rescue"
         body_block = self.visit_block(node, start_idx=1, end_idx=3)
-        except_handler = self.visit_rescue(node.children[3])
-        return TryExcept(body_block, [except_handler])
+        idx = 3
+        handlers = []
+        while node.children[idx].symbol == "rescue":
+            handlers.append(self.visit_rescue(node.children[idx]))
+            idx += 1
+        return TryExcept(body_block, handlers)
 
     def visit_rescue(self, node):
         exception = Variable(node.children[1].additional_info)
