@@ -238,6 +238,11 @@ class ExceptHandler(Node):
             symtable.declare_local(self.name)
         self.body.locate_symbols(symtable)
 
+class TryFinally(Node):
+    def __init__(self, body, finally_body):
+        self.body = body
+        self.finally_body = finally_body
+
 class Class(Node):
     def __init__(self, name, superclass, body):
         self.name = name

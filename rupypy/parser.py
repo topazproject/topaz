@@ -2,11 +2,7 @@ import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
-from rupypy.ast import (Main, Block, Statement, Assignment,
-    InstanceVariableAssignment, If, While, TryExcept, ExceptHandler, Class,
-    Function, Argument, Return, Yield, BinOp, UnaryOp, Send, SendBlock,
-    LookupConstant, Self, Variable, InstanceVariable, Array, Range,
-    ConstantInt, ConstantFloat, ConstantSymbol, ConstantString)
+from rupypy import ast
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -17,7 +13,7 @@ _parse = make_parse_function(regexs, rules, eof=True)
 
 class Transformer(object):
     def visit_main(self, node):
-        return Main(self.visit_block(node))
+        return ast.Main(self.visit_block(node))
 
     def visit_block(self, node, start_idx=0, end_idx=-1):
         if end_idx == -1:
@@ -31,23 +27,23 @@ class Transformer(object):
                     continue
                 node = node.children[0]
             stmts.append(self.visit_stmt(node))
-        return Block(stmts)
+        return ast.Block(stmts)
 
     def visit_stmt(self, node):
         if len(node.children) == 2:
-            return Return(self.visit_expr(node.children[1]))
-        return Statement(self.visit_expr(node.children[0]))
+            return ast.Return(self.visit_expr(node.children[1]))
+        return ast.Statement(self.visit_expr(node.children[0]))
 
     def visit_send_block(self, node):
         send = self.visit_real_send(node.children[0])
-        assert isinstance(send, Send)
+        assert isinstance(send, ast.Send)
         block_args = []
         start_idx = 2
         if node.children[2].symbol == "arglist":
             block_args = self.visit_arglist(node.children[2])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
-        return SendBlock(
+        return ast.SendBlock(
             send.receiver,
             send.method,
             send.args,
@@ -72,7 +68,7 @@ class Transformer(object):
         args = []
         if node.children:
             args = self.visit_send_args(node)
-        return Yield(args)
+        return ast.Yield(args)
 
     def visit_arg(self, node):
         if node.symbol == "arg":
@@ -94,21 +90,21 @@ class Transformer(object):
         raise NotImplementedError(symname)
 
     def visit_subexpr(self, node):
-        return BinOp(
+        return ast.BinOp(
             node.children[1].additional_info,
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
         )
 
     def visit_unaryop(self, node):
-        return UnaryOp(
+        return ast.UnaryOp(
             node.children[0].additional_info,
             self.visit_arg(node.children[1]),
         )
 
     def visit_range(self, node):
         inclusive = node.children[1].additional_info == "..."
-        return Range(
+        return ast.Range(
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
             inclusive=inclusive,
@@ -121,8 +117,8 @@ class Transformer(object):
 
     def visit_real_send(self, node):
         if node.children[0].symbol != "primary":
-            return Send(
-                Self(),
+            return ast.Send(
+                ast.Self(),
                 node.children[0].additional_info,
                 self.visit_send_args(node.children[1])
             )
@@ -142,13 +138,13 @@ class Transformer(object):
                     method = "[]"
                 else:
                     assert False
-                target = Send(
+                target = ast.Send(
                     target,
                     method,
                     args,
                 )
             elif node.symbol == "constant":
-                target = LookupConstant(target, node.children[1].additional_info)
+                target = ast.LookupConstant(target, node.children[1].additional_info)
             else:
                 raise NotImplementedError
         return target
@@ -188,7 +184,7 @@ class Transformer(object):
             ]
         else:
             items = []
-        return Array(items)
+        return ast.Array(items)
 
     def visit_literal(self, node):
         symname = node.children[0].symbol
@@ -202,32 +198,32 @@ class Transformer(object):
 
     def visit_varname(self, node):
         if len(node.children) == 1:
-            return Variable(node.children[0].additional_info)
+            return ast.Variable(node.children[0].additional_info)
         else:
-            return InstanceVariable(node.children[1].additional_info)
+            return ast.InstanceVariable(node.children[1].additional_info)
 
     def visit_if(self, node):
-        return If(
+        return ast.If(
             self.visit_expr(node.children[1]),
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
-            Block([]),
+            ast.Block([]),
         )
 
     def visit_unless(self, node):
-        return If(
+        return ast.If(
             self.visit_expr(node.children[1]),
-            Block([]),
+            ast.Block([]),
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
         )
 
     def visit_while(self, node):
-        return While(
+        return ast.While(
             self.visit_expr(node.children[1]),
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
         )
 
     def visit_def(self, node):
-        return Function(
+        return ast.Function(
             node.children[1].additional_info,
             self.visit_argdecl(node.children[2]),
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
@@ -237,9 +233,9 @@ class Transformer(object):
         superclass = None
         block_start_idx = 2
         if node.children[2].symbol == "LT":
-            superclass = Variable(node.children[3].additional_info)
+            superclass = ast.Variable(node.children[3].additional_info)
             block_start_idx += 2
-        return Class(
+        return ast.Class(
             node.children[1].additional_info,
             superclass,
             self.visit_block(node, start_idx=block_start_idx, end_idx=len(node.children) - 1),
@@ -252,20 +248,26 @@ class Transformer(object):
         while node.children[idx].symbol == "rescue":
             handlers.append(self.visit_rescue(node.children[idx]))
             idx += 1
-        return TryExcept(body_block, handlers)
+        if handlers:
+            body_block = ast.TryExcept(body_block, handlers)
+        if node.children[idx].symbol == "ensure":
+            ensure_node = node.children[idx]
+            block = self.visit_block(ensure_node, start_idx=1, end_idx=len(ensure_node.children))
+            body_block = ast.TryFinally(body_block, block)
+        return body_block
 
     def visit_rescue(self, node):
         exception = None
         idx = 1
         if node.children[1].symbol == "IDENTIFIER":
-            exception = Variable(node.children[1].additional_info)
+            exception = ast.Variable(node.children[1].additional_info)
             idx += 1
         name = None
         if "=>" in node.children[idx].symbol:
             name = node.children[idx + 1].additional_info
             idx += 2
         block = self.visit_block(node, start_idx=idx, end_idx=len(node.children))
-        return ExceptHandler(exception, name, block)
+        return ast.ExceptHandler(exception, name, block)
 
     def visit_argdecl(self, node):
         if not node.children:
@@ -285,23 +287,23 @@ class Transformer(object):
                 if default_seen == 2:
                     raise Exception
                 default_seen = 1
-                args.append(Argument(name, self.visit_arg(n.children[1])))
+                args.append(ast.Argument(name, self.visit_arg(n.children[1])))
             else:
                 if default_seen == 1:
                     default_seen = 2
-                args.append(Argument(name))
+                args.append(ast.Argument(name))
         return args
 
     def visit_number(self, node):
         if "." in node.additional_info:
-            return ConstantFloat(float(node.additional_info))
+            return ast.ConstantFloat(float(node.additional_info))
         else:
-            return ConstantInt(int(node.additional_info))
+            return ast.ConstantInt(int(node.additional_info))
 
     def visit_symbol(self, node):
-        return ConstantSymbol(node.children[0].additional_info)
+        return ast.ConstantSymbol(node.children[0].additional_info)
 
     def visit_string(self, node):
         end = len(node.additional_info) - 1
         assert end >= 0
-        return ConstantString(node.additional_info[1:end])
+        return ast.ConstantString(node.additional_info[1:end])
