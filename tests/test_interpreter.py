@@ -295,50 +295,6 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("return f 5, 6, 10")
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 10]
 
-    def test_exceptions(self, space):
-        w_res = space.execute("""
-        return begin
-            1 / 0
-        rescue ZeroDivisionError
-            5
-        end
-        """)
-        assert space.int_w(w_res) == 5
-        w_res = space.execute("""
-        return begin
-            1 / 0
-        rescue ZeroDivisionError => e
-            e.to_s
-        end
-        """)
-        assert space.str_w(w_res) == "divided by 0"
-        w_res = space.execute("""
-        return begin
-            1 + 1
-        rescue ZeroDivisionError
-            5
-        end
-        """)
-        assert space.int_w(w_res) == 2
-        with self.raises("NoMethodError"):
-            space.execute("""
-            begin
-                [].dsafdsafsa
-            rescue ZeroDivisionError
-                5
-            end
-            """)
-        w_res = space.execute("""
-        return begin
-            1 / 0
-        rescue NoMethodError
-            5
-        rescue ZeroDivisionError
-            10
-        end
-        """)
-        assert space.int_w(w_res) == 10
-
 
 class TestBlockScope(object):
     def test_self(self, space):
@@ -407,3 +363,70 @@ class TestBlockScope(object):
         return res
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [-1, -1]
+
+class TestExceptions(BaseRuPyPyTest):
+    def test_simple(self, space):
+        w_res = space.execute("""
+        return begin
+            1 / 0
+        rescue ZeroDivisionError
+            5
+        end
+        """)
+        assert space.int_w(w_res) == 5
+
+    def test_bind_to_name(self, space):
+        w_res = space.execute("""
+        return begin
+            1 / 0
+        rescue ZeroDivisionError => e
+            e.to_s
+        end
+        """)
+        assert space.str_w(w_res) == "divided by 0"
+
+    def test_rescue_no_exception(self, space):
+        w_res = space.execute("""
+        return begin
+            1 + 1
+        rescue ZeroDivisionError
+            5
+        end
+        """)
+        assert space.int_w(w_res) == 2
+
+    def test_uncaught_exception(self, space):
+        with self.raises("NoMethodError"):
+            space.execute("""
+            begin
+                [].dsafdsafsa
+            rescue ZeroDivisionError
+                5
+            end
+            """)
+
+    def test_multiple_rescues(self, space):
+        w_res = space.execute("""
+        return begin
+            1 / 0
+        rescue NoMethodError
+            5
+        rescue ZeroDivisionError
+            10
+        end
+        """)
+        assert space.int_w(w_res) == 10
+
+    def test_nested_rescue(self, space):
+        w_res = space.execute("""
+        return begin
+            begin
+                1 / 0
+            rescue NoMethodError
+                10
+            end
+        rescue ZeroDivisionError
+            5
+        end
+        """)
+        assert space.int_w(w_res) == 5
