@@ -97,7 +97,7 @@ class W_StringObject(W_BaseObject):
     def method_plus(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
         total_size = self.length() + w_other.length()
-        s = W_StringObject.newstr_fromchars(space, newlist_hint(total_size))
+        s = space.newstr_fromchars(newlist_hint(total_size))
         s.extend(space, self)
         s.extend(space, w_other)
         return s

@@ -147,10 +147,6 @@ class ObjectSpace(object):
         """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
 
-    def liststr_w(self, w_obj):
-        """Unpacks a string object as an rlist of chars"""
-        return w_obj.liststr_w(self)
-
     # Methods for implementing the language semantics.
 
     def is_true(self, w_obj):
