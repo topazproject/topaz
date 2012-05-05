@@ -1005,3 +1005,27 @@ class TestCompiler(object):
         LOAD_CONST 4
         RETURN
         """)
+
+        self.assert_compiles(space, """
+        begin
+            1 / 0
+        ensure
+            puts "ensure"
+        end
+        """, """
+        SETUP_FINALLY 10
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        POP_BLOCK
+        LOAD_SELF
+        LOAD_CONST 3
+        COPY_STRING
+        SEND 4 1
+        DISCARD_TOP
+        END_FINALLY
+        DISCARD_TOP
+
+        LOAD_CONST 5
+        RETURN
+        """)

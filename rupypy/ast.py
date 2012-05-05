@@ -243,6 +243,20 @@ class TryFinally(Node):
         self.body = body
         self.finally_body = finally_body
 
+    def locate_symbols(self, symtable):
+        self.body.locate_symbols(symtable)
+        self.finally_body.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        pos = ctx.get_pos()
+        ctx.emit(consts.SETUP_FINALLY, 0)
+        self.body.compile(ctx)
+        ctx.emit(consts.POP_BLOCK)
+        ctx.patch_jump(pos)
+        self.finally_body.compile(ctx)
+        ctx.emit(consts.DISCARD_TOP)
+        ctx.emit(consts.END_FINALLY)
+
 class Class(Node):
     def __init__(self, name, superclass, body):
         self.name = name
