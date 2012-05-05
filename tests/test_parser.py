@@ -463,3 +463,19 @@ class TestParser(object):
                 ]
             ))
         ]))
+
+        r = space.parse("""
+        begin
+            1 / 0
+        rescue
+            5
+        end
+        """)
+        assert r == Main(Block([
+            Statement(TryExcept(
+                Block([Statement(BinOp("/", ConstantInt(1), ConstantInt(0)))]),
+                [
+                    ExceptHandler(None, None, Block([Statement(ConstantInt(5))]))
+                ]
+            ))
+        ]))

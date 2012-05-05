@@ -255,13 +255,16 @@ class Transformer(object):
         return TryExcept(body_block, handlers)
 
     def visit_rescue(self, node):
-        exception = Variable(node.children[1].additional_info)
-        block_start = 2
+        exception = None
+        idx = 1
+        if node.children[1].symbol == "IDENTIFIER":
+            exception = Variable(node.children[1].additional_info)
+            idx += 1
         name = None
-        if "=>" in node.children[2].symbol:
-            name = node.children[3].additional_info
-            block_start += 2
-        block = self.visit_block(node, start_idx=block_start, end_idx=len(node.children))
+        if "=>" in node.children[idx].symbol:
+            name = node.children[idx + 1].additional_info
+            idx += 2
+        block = self.visit_block(node, start_idx=idx, end_idx=len(node.children))
         return ExceptHandler(exception, name, block)
 
     def visit_argdecl(self, node):

@@ -982,3 +982,26 @@ class TestCompiler(object):
         LOAD_CONST 5
         RETURN
         """)
+
+        self.assert_compiles(space, """
+        begin
+            1 / 0
+        rescue
+            5
+        end
+        """, """
+        SETUP_EXCEPT 12
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        POP_BLOCK
+        JUMP 18
+        DISCARD_TOP
+        LOAD_CONST 3
+        JUMP 18
+        END_FINALLY
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)

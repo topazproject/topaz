@@ -88,7 +88,7 @@ do: [LINE_END] |
     "do" |
     [LINE_END] "do";
 
-rescue: "rescue" IDENTIFIER ("=>" IDENTIFIER)? line* statement? [LINE_END]?;
+rescue: "rescue" IDENTIFIER? ("=>" IDENTIFIER)? line* statement? [LINE_END]?;
 
 argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];
