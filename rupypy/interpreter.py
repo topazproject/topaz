@@ -3,6 +3,7 @@ from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
 from rupypy.error import RubyError
+from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.cellobject import W_CellObject
 
 
@@ -68,6 +69,13 @@ class Frame(object):
             self.lastblock = lastblock.lastblock
         return lastblock
 
+    def unrollstack(self, kind):
+        while self.lastblock is not None:
+            block = self.popblock()
+            if block.handling_mask & kind:
+                return block
+            block.cleanupstack(self)
+
 def get_printable_location(pc, bytecode):
     return consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
 
@@ -96,10 +104,6 @@ class Interpreter(object):
     def handle_bytecode(self, space, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])
         pc += 1
-        if instr == consts.RETURN:
-            assert frame.stackpos == 1
-            raise Return(frame.pop())
-
         if we_are_translated():
             for i, name in consts.UNROLLING_BYTECODES:
                 if i == instr:
@@ -130,11 +134,11 @@ class Interpreter(object):
         return pc
 
     def handle_ruby_error(self, space, pc, frame, bytecode, e):
-        block = frame.popblock()
+        block = frame.unrollstack(ApplicationException.kind)
         if block is None:
             raise e
-        frame.push(e.w_value)
-        return block.target_pc
+        unroller = ApplicationException(e)
+        return block.handle(frame, unroller)
 
     def jump(self, bytecode, frame, cur_pc, target_pc):
         if target_pc < cur_pc:
@@ -286,11 +290,22 @@ class Interpreter(object):
         frame.push(w_res)
 
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
-        frame.lastblock = ExceptBlock(target_pc, frame.lastblock)
+        frame.lastblock = ExceptBlock(target_pc, frame.lastblock, frame.stackpos)
+
+    def SETUP_FINALLY(self, space, bytecode, frame, pc, target_pc):
+        frame.lastblock = FinallyBlock(target_pc, frame.lastblock, frame.stackpos)
 
     def END_FINALLY(self, space, bytecode, frame, pc):
-        w_exc = frame.pop()
-        raise RubyError(w_exc)
+        frame.pop()
+        unroller = frame.pop()
+        if isinstance(unroller, SuspendedUnroller):
+            block = frame.unrollstack(unroller.kind)
+            if block is None:
+                w_result = unroller.nomoreblocks()
+                raise Return(w_result)
+            else:
+                return block.handle(frame, unroller)
+        return pc
 
     def COMPARE_EXC(self, space, bytecode, frame, pc):
         w_expected = frame.pop()
@@ -315,6 +330,14 @@ class Interpreter(object):
     def DUP_TOP(self, space, bytecode, frame, pc):
         frame.push(frame.peek())
 
+    def RETURN(self, space, bytecode, frame, pc):
+        w_returnvalue = frame.pop()
+        block = frame.unrollstack(ReturnValue.kind)
+        if block is None:
+            raise Return(w_returnvalue)
+        unroller = ReturnValue(w_returnvalue)
+        return block.handle(frame, unroller)
+
     @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
         args_w = [None] * n_args
@@ -325,20 +348,47 @@ class Interpreter(object):
 
     def UNREACHABLE(self, space, bytecode, frame, pc):
         raise Exception
-    # Handled specially in the main dispatch loop.
-    RETURN = UNREACHABLE
 
-class FrameBlock(object):
-    def __init__(self, target_pc, lastblock):
-        self.target_pc = target_pc
-        self.lastblock = lastblock
-
-class ExceptBlock(FrameBlock):
-    pass
-
-class ExitFrame(Exception):
-    pass
-
-class Return(ExitFrame):
+class Return(Exception):
     def __init__(self, w_value):
         self.w_value = w_value
+
+
+class SuspendedUnroller(W_BaseObject):
+    pass
+
+class ApplicationException(SuspendedUnroller):
+    kind = 1 << 1
+
+    def __init__(self, e):
+        self.e = e
+
+    def nomoreblocks(self):
+        raise self.e
+
+class ReturnValue(SuspendedUnroller):
+    kind = 1 << 2
+
+class FrameBlock(object):
+    def __init__(self, target_pc, lastblock, stackdepth):
+        self.target_pc = target_pc
+        self.lastblock = lastblock
+        self.stackdepth = stackdepth
+
+    def cleanupstack(self, frame):
+        while frame.stackpos > self.stackdepth:
+            frame.pop()
+
+class ExceptBlock(FrameBlock):
+    handling_mask = ApplicationException.kind
+
+    def handle(self, frame, unroller):
+        self.cleanupstack(frame)
+        e = unroller.e
+        frame.push(unroller)
+        frame.push(e.w_value)
+        return self.target_pc
+
+class FinallyBlock(FrameBlock):
+    pass
+

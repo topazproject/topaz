@@ -41,7 +41,7 @@ BYTECODES = [
 
     ("SETUP_EXCEPT", 1, 0),
     ("SETUP_FINALLY", 1, 0),
-    ("END_FINALLY", 0, -1),
+    ("END_FINALLY", 0, -2),
     ("COMPARE_EXC", 0, +1),
     ("POP_BLOCK", 0, 0),
 
