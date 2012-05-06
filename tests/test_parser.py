@@ -567,3 +567,48 @@ class TestParser(object):
                 ])
             ))
         ]))
+
+        r = space.parse("""
+        begin
+            1 / 0
+        rescue ZeroDivisionError
+            puts "rescue"
+        ensure
+            puts "ensure"
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.TryFinally(
+                ast.TryExcept(ast.Block([
+                    ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0)))
+                ]), [
+                    ast.ExceptHandler(ast.Variable("ZeroDivisionError"), None, ast.Block([
+                        ast.Statement(ast.Send(ast.Self(), "puts", [ast.ConstantString("rescue")]))
+                    ]))
+                ]),
+                ast.Block([
+                    ast.Statement(ast.Send(ast.Self(), "puts", [ast.ConstantString("ensure")]))
+                ])
+            ))
+        ]))
+
+        r = space.parse("""
+        begin
+            1 + 1
+            1 / 0
+        rescue
+            puts "rescue"
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.TryExcept(
+                ast.Block([
+                    ast.Statement(ast.BinOp("+", ast.ConstantInt(1), ast.ConstantInt(1))),
+                    ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0))),
+                ]), [
+                    ast.ExceptHandler(None, None, ast.Block([
+                        ast.Statement(ast.Send(ast.Self(), "puts", [ast.ConstantString("rescue")]))
+                    ]))
+                ]
+            ))
+        ]))

@@ -430,3 +430,18 @@ class TestExceptions(BaseRuPyPyTest):
         end
         """)
         assert space.int_w(w_res) == 5
+
+    def test_simple_ensure(self, space):
+        w_res = space.execute("""
+        res = []
+        begin
+            res << 1
+            1 / 0
+        rescue ZeroDivisionError
+            res << 2
+        ensure
+            res << 3
+        end
+        return res
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1, 2, 3]

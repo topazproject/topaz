@@ -242,8 +242,12 @@ class Transformer(object):
         )
 
     def visit_begin(self, node):
-        body_block = self.visit_block(node, start_idx=1, end_idx=3)
-        idx = 3
+        idx = 0
+        while idx < len(node.children):
+            if node.children[idx].symbol in ["rescue", "ensure"]:
+                break
+            idx += 1
+        body_block = self.visit_block(node, start_idx=1, end_idx=idx)
         handlers = []
         while node.children[idx].symbol == "rescue":
             handlers.append(self.visit_rescue(node.children[idx]))
