@@ -1013,19 +1013,20 @@ class TestCompiler(object):
             puts "ensure"
         end
         """, """
-        SETUP_FINALLY 10
+        SETUP_FINALLY 12
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        LOAD_SELF
         LOAD_CONST 3
+        LOAD_SELF
+        LOAD_CONST 4
         COPY_STRING
-        SEND 4 1
+        SEND 5 1
         DISCARD_TOP
         END_FINALLY
         DISCARD_TOP
 
-        LOAD_CONST 5
+        LOAD_CONST 6
         RETURN
         """)

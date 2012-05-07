@@ -247,6 +247,8 @@ class TryFinally(Node):
         body = ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
         ctx.emit(consts.POP_BLOCK)
+        # Put a None on the stack where an exception would be.
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
         ctx.use_next_block(end)
         self.finally_body.compile(ctx)
         ctx.emit(consts.DISCARD_TOP)
