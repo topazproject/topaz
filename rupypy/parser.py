@@ -85,7 +85,7 @@ class Transformer(object):
             return self.visit_send(node)
         elif symname == "primary":
             return self.visit_primary(node)
-        elif symname == "block":
+        elif symname == "do_block":
             return self.visit_send_block(node)
         raise NotImplementedError(symname)
 
@@ -131,6 +131,12 @@ class Transformer(object):
                     method = node.children[0].children[0].additional_info
                     if len(node.children) == 1:
                         args = []
+                    elif node.children[1].symbol == "block":
+                        block_args, block = self.visit_braces_block(node.children[1])
+                        target = ast.SendBlock(
+                            target, method, [], block_args, block
+                        )
+                        continue
                     else:
                         args = self.visit_send_args(node.children[1])
                 elif node.symbol == "subscript":
@@ -138,11 +144,17 @@ class Transformer(object):
                     method = "[]"
                 else:
                     assert False
-                target = ast.Send(
-                    target,
-                    method,
-                    args,
-                )
+                if len(node.children) == 3:
+                    block_args, block = self.visit_braces_block(node.children[2])
+                    target = ast.SendBlock(
+                        target, method, args, block_args, block
+                    )
+                else:
+                    target = ast.Send(
+                        target,
+                        method,
+                        args,
+                    )
             elif node.symbol == "constant":
                 target = ast.LookupConstant(target, node.children[1].additional_info)
             else:
@@ -151,6 +163,15 @@ class Transformer(object):
 
     def visit_send_args(self, node):
         return [self.visit_arg(n) for n in node.children[0].children]
+
+    def visit_braces_block(self, node):
+        block_args = []
+        start_idx = 0
+        if node.children[start_idx].symbol == "arglist":
+            block_args = self.visit_arglist(node.children[start_idx])
+            start_idx += 1
+        block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children))
+        return block_args, block
 
     def visit_primary(self, node):
         if len(node.children) == 1:

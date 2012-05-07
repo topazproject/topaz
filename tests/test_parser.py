@@ -336,6 +336,19 @@ class TestParser(object):
             ])))
         ]))
 
+    def test_block(self, space):
+        assert space.parse("[].map { |x| x }") == ast.Main(ast.Block([
+            ast.Statement(ast.SendBlock(ast.Array([]), "map", [], [ast.Argument("x")], ast.Block([
+                ast.Statement(ast.Variable("x"))
+            ])))
+        ]))
+        assert space.parse("[].inject(0) { |x, s| x + s }") == ast.Main(ast.Block([
+            ast.Statement(ast.SendBlock(ast.Array([]), "inject", [ast.ConstantInt(0)], [ast.Argument("x"), ast.Argument("s")], ast.Block([
+                ast.Statement(ast.BinOp("+", ast.Variable("x"), ast.Variable("s")))
+            ])))
+        ]))
+
+
     def test_yield(self, space):
         assert space.parse("yield") == ast.Main(ast.Block([
             ast.Statement(ast.Yield([]))

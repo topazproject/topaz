@@ -51,20 +51,23 @@ multitive: send MUL_OPER multitive | <unary_op>;
 
 unary_op: [LPAREN] ADD_OPER arg [RPAREN] | <send>;
 
-send: <block> |
+send: <do_block> |
       real_send |
       <primary>;
 
-block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
+do_block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
 
 real_send: primary trailers |
-           IDENTIFIER send_args |
-           IDENTIFIER [LPAREN] send_args? [RPAREN];
+           IDENTIFIER send_args block? |
+           IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
+
+block: ["{"] (["|"] arglist? ["|"])? line* statement? [LINE_END]? ["}"];
 
 trailers: trailer >trailers< | trailer;
 
 trailer: attribute | subscript | constant;
-attribute: [DOT] operation [LPAREN] send_args? [RPAREN] |
+attribute: [DOT] operation [LPAREN] send_args? [RPAREN] block? |
+           [DOT] operation block |
            [DOT] operation send_args?;
 subscript: ["["] arg ["]"];
 constant: "::" IDENTIFIER;
