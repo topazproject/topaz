@@ -149,15 +149,15 @@ class If(Node):
         self.body.locate_symbols(symtable)
 
     def compile(self, ctx):
+        end = ctx.new_block()
+        otherwise = ctx.new_block()
         self.cond.compile(ctx)
-        pos = ctx.get_pos()
-        ctx.emit(consts.JUMP_IF_FALSE, 0)
+        ctx.emit_jump(consts.JUMP_IF_FALSE, otherwise)
         self.body.compile(ctx)
-        else_pos = ctx.get_pos()
-        ctx.emit(consts.JUMP, 0)
-        ctx.patch_jump(pos)
+        ctx.emit_jump(consts.JUMP, end)
+        ctx.use_next_block(otherwise)
         self.elsebody.compile(ctx)
-        ctx.patch_jump(else_pos)
+        ctx.use_next_block(end)
 
 class While(Node):
     def __init__(self, cond, body):
@@ -169,15 +169,17 @@ class While(Node):
         self.body.locate_symbols(symtable)
 
     def compile(self, ctx):
-        start_pos = ctx.get_pos()
+        end = ctx.new_block()
+        loop = ctx.new_block()
+
+        ctx.use_next_block(loop)
         self.cond.compile(ctx)
-        jump_pos = ctx.get_pos()
-        ctx.emit(consts.JUMP_IF_FALSE, 0)
+        ctx.emit_jump(consts.JUMP_IF_FALSE, end)
         self.body.compile(ctx)
         # The body leaves an extra item on the stack, discard it.
         ctx.emit(consts.DISCARD_TOP)
-        ctx.emit(consts.JUMP, start_pos)
-        ctx.patch_jump(jump_pos)
+        ctx.emit_jump(consts.JUMP, loop)
+        ctx.use_next_block(end)
         # For now, while always returns a nil, eventually it can also return a
         # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
@@ -193,36 +195,28 @@ class TryExcept(Node):
             handler.locate_symbols(symtable)
 
     def compile(self, ctx):
-        setup_pos = ctx.get_pos()
-        ctx.emit(consts.SETUP_EXCEPT, 0)
+        exc = ctx.new_block()
+        end = ctx.new_block()
+        ctx.emit_jump(consts.SETUP_EXCEPT, exc)
+        body = ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
         ctx.emit(consts.POP_BLOCK)
-        no_exc_pos = []
-        no_exc_pos.append(ctx.get_pos())
-        ctx.emit(consts.JUMP, 0)
-        ctx.patch_jump(setup_pos)
-        last_handler_pos = -1
+        ctx.emit_jump(consts.JUMP, end)
+        ctx.use_next_block(exc)
         for handler in self.except_handlers:
-            if last_handler_pos != -1:
-                ctx.patch_jump(last_handler_pos)
+            next_except = ctx.new_block()
             if handler.exception is not None:
                 handler.exception.compile(ctx)
                 ctx.emit(consts.COMPARE_EXC)
-                last_handler_pos = ctx.get_pos()
-                ctx.emit(consts.JUMP_IF_FALSE, 0)
-            else:
-                last_handler_pos = -1
+                ctx.emit_jump(consts.JUMP_IF_FALSE, next_except)
             if handler.name:
                 ctx.emit(consts.STORE_LOCAL, ctx.symtable.get_local_num(handler.name))
             ctx.emit(consts.DISCARD_TOP)
             handler.body.compile(ctx)
-            no_exc_pos.append(ctx.get_pos())
-            ctx.emit(consts.JUMP, 0)
-        if last_handler_pos != -1:
-            ctx.patch_jump(last_handler_pos)
+            ctx.emit_jump(consts.JUMP, end)
+            ctx.use_next_block(next_except)
         ctx.emit(consts.END_FINALLY)
-        for pos in no_exc_pos:
-            ctx.patch_jump(pos)
+        ctx.use_next_block(end)
 
 
 class ExceptHandler(Node):
@@ -248,11 +242,12 @@ class TryFinally(Node):
         self.finally_body.locate_symbols(symtable)
 
     def compile(self, ctx):
-        pos = ctx.get_pos()
-        ctx.emit(consts.SETUP_FINALLY, 0)
+        end = ctx.new_block()
+        ctx.emit_jump(consts.SETUP_FINALLY, end)
+        body = ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
         ctx.emit(consts.POP_BLOCK)
-        ctx.patch_jump(pos)
+        ctx.use_next_block(end)
         self.finally_body.compile(ctx)
         ctx.emit(consts.DISCARD_TOP)
         ctx.emit(consts.END_FINALLY)

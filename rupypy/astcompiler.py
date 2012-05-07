@@ -93,12 +93,12 @@ class CompilerContext(object):
         self.space = space
         self.symtable = symtable
         self.filepath = filepath
-        self.data = []
         self.consts = []
         self.const_positions = {}
 
+        self.current_block = self.first_block = self.new_block()
+
     def create_bytecode(self, code_name, args, defaults):
-        bc = "".join(self.data)
         locs = [None] * len(self.symtable.local_numbers)
         for name, pos in self.symtable.local_numbers.iteritems():
             locs[pos] = name
@@ -119,11 +119,13 @@ class CompilerContext(object):
             else:
                 assert False
 
+        blocks = self.first_block.post_order()
+
         return W_CodeObject(
             code_name,
             self.filepath,
-            bc,
-            self.count_stackdepth(bc),
+            self.get_code(blocks),
+            self.count_stackdepth(blocks),
             self.consts[:],
             args,
             defaults,
@@ -132,40 +134,75 @@ class CompilerContext(object):
             freevars,
         )
 
-    def count_stackdepth(self, bc):
-        i = 0
-        current_stackdepth = max_stackdepth = 0
-        while i < len(bc):
-            c = ord(bc[i])
-            i += 1
-            stack_effect = consts.BYTECODE_STACK_EFFECT[c]
-            if stack_effect == consts.SEND_EFFECT:
-                stack_effect = -ord(bc[i+1])
-            elif stack_effect == consts.ARRAY_EFFECT:
-                stack_effect = -ord(bc[i]) + 1
-            elif stack_effect == consts.BLOCK_EFFECT:
-                stack_effect = -ord(bc[i])
-            i += consts.BYTECODE_NUM_ARGS[c]
-            current_stackdepth += stack_effect
-            max_stackdepth = max(max_stackdepth, current_stackdepth)
-        return max_stackdepth
+    def get_code(self, blocks):
+        offsets = {}
+        code_size = 0
+        for block in blocks:
+            offsets[block] = code_size
+            code_size += len(block.get_code())
+        for block in blocks:
+            block.patch_locs(offsets)
+        return "".join([block.get_code() for block in blocks])
+
+    def count_stackdepth(self, blocks):
+        for b in blocks:
+            b.marked = False
+            b.initial_depth = -1
+        return self._count_stackdepth(blocks[0], 0, 0)
+
+    def _count_stackdepth(self, block, depth, max_depth):
+        if block.marked or block.initial_depth >= depth:
+            return max_depth
+
+        block.marked = True
+        block.initial_depth = depth
+
+        for instr in block.instrs:
+            depth += self._instr_stack_effect(instr)
+            max_depth = max(max_depth, depth)
+            if instr.has_jump():
+                target_depth = depth
+                jump_op = instr.opcode
+                if jump_op in [consts.SETUP_FINALLY, consts.SETUP_EXCEPT]:
+                    target_depth += 2
+                    max_depth = max(max_depth, target_depth)
+                max_depth = self._count_stackdepth(instr.jump, target_depth, max_depth)
+        if block.next_block is not None:
+            max_depth = self._count_stackdepth(block.next_block, depth, max_depth)
+        block.marked = False
+        return max_depth
+
+    def _instr_stack_effect(self, instr):
+        stack_effect = consts.BYTECODE_STACK_EFFECT[instr.opcode]
+        if stack_effect == consts.SEND_EFFECT:
+            stack_effect = -instr.arg1
+        elif stack_effect == consts.ARRAY_EFFECT:
+            stack_effect = -instr.arg0 + 1
+        elif stack_effect == consts.BLOCK_EFFECT:
+            stack_effect = -instr.arg0
+        return stack_effect
+
+    def new_block(self):
+        return Block()
+
+    def use_block(self, block):
+        self.current_block = block
+
+    def use_next_block(self, block):
+        self.current_block.next_block = block
+        self.use_block(block)
+
+    def emit(self, opcode, arg0=-1, arg1=-1):
+        self.current_block.instrs.append(Instruction(opcode, arg0, arg1))
+
+    def emit_jump(self, opcode, target):
+        instr = Instruction(opcode, 0, -1)
+        instr.jump = target
+        self.current_block.instrs.append(instr)
 
     def get_subctx(self, node):
         subscope = self.symtable.get_subscope(node)
         return CompilerContext(self.space, subscope, self.filepath)
-
-    def emit(self, c, arg0=-1, arg1=-1):
-        self.data.append(chr(c))
-        if arg0 != -1:
-            self.data.append(chr(arg0))
-        if arg1 != -1:
-            self.data.append(chr(arg1))
-
-    def get_pos(self):
-        return len(self.data)
-
-    def patch_jump(self, pos):
-        self.data[pos + 1] = chr(len(self.data))
 
     def create_const(self, w_obj):
         if w_obj not in self.const_positions:
@@ -184,3 +221,58 @@ class CompilerContext(object):
 
     def create_string_const(self, strvalue):
         return self.create_const(self.space.newstr_fromstr(strvalue))
+
+
+class Block(object):
+    def __init__(self):
+        self.instrs = []
+        self.marked = False
+        self.next_block = None
+
+    def post_order(self):
+        blocks = []
+        self._post_order(blocks)
+        blocks.reverse()
+        return blocks
+
+    def _post_order(self, blocks):
+        if self.marked:
+            return
+        self.marked = True
+        if self.next_block is not None:
+            self.next_block._post_order(blocks)
+        for instr in self.instrs:
+            if instr.has_jump():
+                instr.jump._post_order(blocks)
+        blocks.append(self)
+
+    def patch_locs(self, offsets):
+        for instr in self.instrs:
+            instr.patch_loc(offsets)
+
+    def get_code(self):
+        code = []
+        for instr in self.instrs:
+            instr.emit(code)
+        return "".join(code)
+
+class Instruction(object):
+    def __init__(self, opcode, arg0, arg1):
+        self.opcode = opcode
+        self.arg0 = arg0
+        self.arg1 = arg1
+        self.jump = None
+
+    def emit(self, code):
+        code.append(chr(self.opcode))
+        if self.arg0 != -1:
+            code.append(chr(self.arg0))
+        if self.arg1 != -1:
+            code.append(chr(self.arg1))
+
+    def has_jump(self):
+        return self.jump is not None
+
+    def patch_loc(self, offsets):
+        if self.has_jump():
+            self.arg0 = offsets[self.jump]
