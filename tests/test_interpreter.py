@@ -470,3 +470,14 @@ class TestExceptions(BaseRuPyPyTest):
         return res
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [1, 2, 3]
+
+    def test_ensure_return(self, space):
+        w_res = space.execute("""
+        res = []
+        begin
+            return res
+        ensure
+            res << 1
+        end
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1]

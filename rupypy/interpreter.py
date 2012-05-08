@@ -147,7 +147,7 @@ class Interpreter(object):
         if block is None:
             raise e
         unroller = ApplicationException(e)
-        return block.handle(frame, unroller)
+        return block.handle(space, frame, unroller)
 
     def jump(self, bytecode, frame, cur_pc, target_pc):
         if target_pc < cur_pc:
@@ -313,7 +313,7 @@ class Interpreter(object):
                 w_result = unroller.nomoreblocks()
                 raise Return(w_result)
             else:
-                return block.handle(frame, unroller)
+                return block.handle(space, frame, unroller)
         return pc
 
     def COMPARE_EXC(self, space, bytecode, frame, pc):
@@ -345,7 +345,7 @@ class Interpreter(object):
         if block is None:
             raise Return(w_returnvalue)
         unroller = ReturnValue(w_returnvalue)
-        return block.handle(frame, unroller)
+        return block.handle(space, frame, unroller)
 
     @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
@@ -378,6 +378,12 @@ class ApplicationException(SuspendedUnroller):
 class ReturnValue(SuspendedUnroller):
     kind = 1 << 2
 
+    def __init__(self, w_returnvalue):
+        self.w_returnvalue = w_returnvalue
+
+    def nomoreblocks(self):
+        return self.w_returnvalue
+
 class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):
         self.target_pc = target_pc
@@ -391,7 +397,7 @@ class FrameBlock(object):
 class ExceptBlock(FrameBlock):
     handling_mask = ApplicationException.kind
 
-    def handle(self, frame, unroller):
+    def handle(self, space, frame, unroller):
         self.cleanupstack(frame)
         e = unroller.e
         frame.push(unroller)
@@ -399,5 +405,11 @@ class ExceptBlock(FrameBlock):
         return self.target_pc
 
 class FinallyBlock(FrameBlock):
-    pass
+    # Handles everything.
+    handling_mask = -1
 
+    def handle(self, space, frame, unroller):
+        self.cleanupstack(frame)
+        frame.push(unroller)
+        frame.push(space.w_nil)
+        return self.target_pc
