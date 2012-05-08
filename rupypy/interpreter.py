@@ -80,6 +80,7 @@ class Frame(object):
             self.lastblock = lastblock.lastblock
         return lastblock
 
+    @jit.unroll_safe
     def unrollstack(self, kind):
         while self.lastblock is not None:
             block = self.popblock()
