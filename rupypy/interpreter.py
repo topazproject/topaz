@@ -35,7 +35,7 @@ class Frame(object):
             self.cells[pos].set(w_value)
 
     @jit.unroll_safe
-    def handle_args(self, space, bytecode, args_w):
+    def handle_args(self, space, bytecode, args_w, block):
         assert 0 <= len(bytecode.arg_locs) - len(args_w) <= len(bytecode.defaults)
         for i in xrange(len(args_w)):
             self._set_arg(bytecode, i, args_w[i])
@@ -44,6 +44,15 @@ class Frame(object):
             bc = bytecode.defaults[i + defl_start]
             w_value = Interpreter().interpret(space, self, bc)
             self._set_arg(bytecode, i + len(args_w), w_value)
+        if bytecode.block_arg_pos != -1:
+            if block is None:
+                w_block = space.w_nil
+            else:
+                w_block = space.newproc(block)
+            if bytecode.block_arg_loc == bytecode.LOCAL:
+                self.locals_w[bytecode.block_arg_pos] = w_block
+            elif bytecode.block_arg_loc == bytecode.CELL:
+                self.cells[bytecode.block_arg_pos].set(w_block)
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)

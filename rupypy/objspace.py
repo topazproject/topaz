@@ -20,6 +20,7 @@ from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
@@ -80,7 +81,7 @@ class ObjectSpace(object):
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, symtable, filepath)
         astnode.compile(c)
-        return c.create_bytecode("<string>", [], [])
+        return c.create_bytecode("<string>", [], [], None)
 
     def execute(self, source, w_self=None, filepath="-e"):
         bc = self.compile(source, filepath)
@@ -133,6 +134,9 @@ class ObjectSpace(object):
         name = self.symbol_w(w_name)
         assert isinstance(w_code, W_CodeObject)
         return Function(name, w_code)
+
+    def newproc(self, block):
+        return W_ProcObject(block)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
@@ -197,7 +201,7 @@ class ObjectSpace(object):
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
         if len(bc.arg_locs) != 0:
-            frame.handle_args(self, bc, args_w)
+            frame.handle_args(self, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell

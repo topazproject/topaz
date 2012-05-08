@@ -15,7 +15,7 @@ class W_CodeObject(W_BaseObject):
     CELL = 2
 
     def __init__(self, name, filepath, code, max_stackdepth, consts, args,
-                 defaults, locals, cellvars, freevars):
+                 block_arg, defaults, locals, cellvars, freevars):
 
         self.name = name
         self.filepath = filepath
@@ -27,8 +27,9 @@ class W_CodeObject(W_BaseObject):
         self.cellvars = cellvars
         self.freevars = freevars
 
-        arg_locs = [self.UNKNOWN] * len(args)
-        arg_pos = [-1] * len(args)
+        n_args = len(args)
+        arg_locs = [self.UNKNOWN] * n_args
+        arg_pos = [-1] * n_args
         for idx, arg in enumerate(args):
             if arg in locals:
                 arg_locs[idx] = self.LOCAL
@@ -38,6 +39,18 @@ class W_CodeObject(W_BaseObject):
                 arg_pos[idx] = cellvars.index(arg)
         self.arg_locs = arg_locs
         self.arg_pos = arg_pos
+
+        block_arg_pos = -1
+        block_arg_loc = self.UNKNOWN
+        if block_arg is not None:
+            if block_arg in locals:
+                block_arg_loc = self.LOCAL
+                block_arg_pos = locals.index(block_arg)
+            elif arg in cellvars:
+                block_arg_loc = self.CELL
+                block_arg_pos = cellvars.index(arg)
+        self.block_arg_loc = block_arg_loc
+        self.block_arg_pos = block_arg_pos
 
     @classdef.method("filepath")
     def method_filepath(self, space):

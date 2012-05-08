@@ -1030,3 +1030,24 @@ class TestCompiler(object):
         LOAD_CONST 6
         RETURN
         """)
+
+    def test_block_argument(self, space):
+        bc = self.assert_compiles(space, """
+        def f(a, &b)
+            b
+        end
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        w_code = bc.consts_w[1]
+        assert w_code.locals == ["a", "b"]
+        assert w_code.block_arg_pos == 1
+        assert w_code.block_arg_loc == w_code.LOCAL

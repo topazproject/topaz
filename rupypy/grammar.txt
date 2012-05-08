@@ -14,6 +14,7 @@ EQ: "=";
 LT: "<";
 LPAREN: "\(";
 RPAREN: "\)";
+AMP: "&";
 
 AUG_ASSIGNMENT_OPER: "(\+=)|(-=)";
 RANGE_OPER: "(\.\.)|(\.\.\.)";
@@ -58,8 +59,11 @@ send: <do_block> |
 do_block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
 
 real_send: primary trailers |
+           global_block |
            IDENTIFIER send_args block? |
            IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
+
+global_block: IDENTIFIER block;
 
 block: ["{"] (["|"] arglist? ["|"])? line* statement? [LINE_END]? ["}"];
 
@@ -100,7 +104,9 @@ argdecl: [LPAREN] arglist? [RPAREN] |
 
 arglist: argdef [","] >arglist< | argdef;
 
-argdef: IDENTIFIER [EQ] arg | IDENTIFIER;
+argdef: IDENTIFIER [EQ] arg |
+        AMP IDENTIFIER |
+        IDENTIFIER;
 
 operation: IDENTIFIER | "class" | "end" | "begin";
 

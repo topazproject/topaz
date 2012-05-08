@@ -158,7 +158,7 @@ class Function(BaseFunction):
             w_scope=space.getclass(w_receiver),
             block=block,
         )
-        frame.handle_args(space, self.bytecode, args_w)
+        frame.handle_args(space, self.bytecode, args_w, block)
         return Interpreter().interpret(space, frame, self.bytecode)
 
 class BuiltinFunction(BaseFunction):

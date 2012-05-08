@@ -296,7 +296,7 @@ class TestInterpreter(BaseRuPyPyTest):
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 10]
 
 
-class TestBlockScope(object):
+class TestBlocks(object):
     def test_self(self, space):
         w_res = space.execute("""
         class X
@@ -363,6 +363,15 @@ class TestBlockScope(object):
         return res
         """)
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [-1, -1]
+
+    def test_block_argument(self, space):
+        w_res = space.execute("""
+        def f(&b)
+            b.call
+        end
+        return f { 5 }
+        """)
+        assert space.int_w(w_res) == 5
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):

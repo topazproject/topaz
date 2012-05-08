@@ -40,7 +40,7 @@ class Transformer(object):
         block_args = []
         start_idx = 2
         if node.children[2].symbol == "arglist":
-            block_args = self.visit_arglist(node.children[2])
+            block_args, _ = self.visit_arglist(node.children[2])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
         return ast.SendBlock(
@@ -117,11 +117,26 @@ class Transformer(object):
 
     def visit_real_send(self, node):
         if node.children[0].symbol != "primary":
-            return ast.Send(
-                ast.Self(),
-                node.children[0].additional_info,
-                self.visit_send_args(node.children[1])
-            )
+            if node.children[0].symbol == "global_block":
+                node = node.children[0]
+                block_args, block = self.visit_braces_block(node.children[1])
+                return ast.SendBlock(
+                    ast.Self(),
+                    node.children[0].additional_info,
+                    [],
+                    block_args,
+                    block,
+                )
+            target = ast.Self()
+            name = node.children[0].additional_info
+            args = self.visit_send_args(node.children[1])
+            if len(node.children) == 3:
+                block_args, block = self.visit_braces_block(node.children[2])
+                return ast.SendBlock(
+                    target, name, args, block_args, block
+                )
+            else:
+                return ast.Send(target, name, args)
 
         target = self.visit_primary(node.children[0])
         for trailer in node.children[1].children:
@@ -168,7 +183,7 @@ class Transformer(object):
         block_args = []
         start_idx = 0
         if node.children[start_idx].symbol == "arglist":
-            block_args = self.visit_arglist(node.children[start_idx])
+            block_args, _ = self.visit_arglist(node.children[start_idx])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children))
         return block_args, block
@@ -244,9 +259,11 @@ class Transformer(object):
         )
 
     def visit_def(self, node):
+        args, block_arg = self.visit_argdecl(node.children[2])
         return ast.Function(
             node.children[1].additional_info,
-            self.visit_argdecl(node.children[2]),
+            args,
+            block_arg,
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
         )
 
@@ -296,7 +313,7 @@ class Transformer(object):
 
     def visit_argdecl(self, node):
         if not node.children:
-            return []
+            return [], None
         return self.visit_arglist(node.children[0])
 
     def visit_arglist(self, node):
@@ -305,19 +322,25 @@ class Transformer(object):
         # there have been defaults and then normal args after it, at this point
         # seeing another default argument is an error
         default_seen = 0
+        block_arg = None
         args = []
         for n in node.children:
-            name = n.children[0].additional_info
-            if len(n.children) == 2:
+            if block_arg:
+                raise Exception
+            if len(n.children) == 2 and n.children[0].symbol == "AMP":
+                block_arg = n.children[1].additional_info
+            elif len(n.children) == 2:
+                name = n.children[0].additional_info
                 if default_seen == 2:
                     raise Exception
                 default_seen = 1
                 args.append(ast.Argument(name, self.visit_arg(n.children[1])))
             else:
+                name = n.children[0].additional_info
                 if default_seen == 1:
                     default_seen = 2
                 args.append(ast.Argument(name))
-        return args
+        return args, block_arg
 
     def visit_number(self, node):
         if "." in node.additional_info:

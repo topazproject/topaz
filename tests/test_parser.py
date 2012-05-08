@@ -222,11 +222,11 @@ class TestParser(object):
 
     def test_def(self, space):
         assert space.parse("def f() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function("f", [], ast.Block([])))
+            ast.Statement(ast.Function("f", [], None, ast.Block([])))
         ]))
 
         assert space.parse("def f(a, b) a + b end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function("f", [ast.Argument("a"), ast.Argument("b")], ast.Block([
+            ast.Statement(ast.Function("f", [ast.Argument("a"), ast.Argument("b")], None, ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("a"), ast.Variable("b")))
             ])))
         ]))
@@ -239,7 +239,7 @@ class TestParser(object):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function("f", [ast.Argument("a")], ast.Block([
+            ast.Statement(ast.Function("f", [ast.Argument("a")], None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(), "puts", [ast.Variable("a")])),
                 ast.Statement(ast.Send(ast.Self(), "puts", [ast.Variable("a")])),
                 ast.Statement(ast.Send(ast.Self(), "puts", [ast.Variable("a")])),
@@ -247,7 +247,7 @@ class TestParser(object):
         ]))
 
         assert space.parse("x = def f() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("=", "x", ast.Function("f", [], ast.Block([]))))
+            ast.Statement(ast.Assignment("=", "x", ast.Function("f", [], None, ast.Block([]))))
         ]))
 
         r = space.parse("""
@@ -256,10 +256,33 @@ class TestParser(object):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function("f", [ast.Argument("a"), ast.Argument("b")], ast.Block([
+            ast.Statement(ast.Function("f", [ast.Argument("a"), ast.Argument("b")], None, ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("a"), ast.Variable("b")))
             ])))
         ]))
+
+        r = space.parse("""
+        def f(&b)
+            b
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function("f", [], "b", ast.Block([
+                ast.Statement(ast.Variable("b"))
+            ])))
+        ]))
+        with py.test.raises(Exception):
+            space.parse("""
+            def f(&b, a)
+                b
+            end
+            """)
+        with py.test.raises(Exception):
+            space.parse("""
+            def f(&b, &c)
+                b
+            end
+            """)
 
     def test_string(self, space):
         assert space.parse('"abc"') == ast.Main(ast.Block([
@@ -286,7 +309,7 @@ class TestParser(object):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Class("X", None, ast.Block([
-                ast.Statement(ast.Function("f", [], ast.Block([
+                ast.Statement(ast.Function("f", [], None, ast.Block([
                     ast.Statement(ast.ConstantInt(2))
                 ])))
             ])))
@@ -347,6 +370,17 @@ class TestParser(object):
                 ast.Statement(ast.BinOp("+", ast.Variable("x"), ast.Variable("s")))
             ])))
         ]))
+        assert space.parse("f { 5 }") == ast.Main(ast.Block([
+            ast.Statement(ast.SendBlock(ast.Self(), "f", [], [], ast.Block([
+                ast.Statement(ast.ConstantInt(5))
+            ])))
+        ]))
+        assert space.parse("f(3) { 5 }") == ast.Main(ast.Block([
+            ast.Statement(ast.SendBlock(ast.Self(), "f", [ast.ConstantInt(3)], [], ast.Block([
+                ast.Statement(ast.ConstantInt(5))
+            ])))
+        ]))
+
 
 
     def test_yield(self, space):
@@ -444,7 +478,7 @@ class TestParser(object):
 
     def test_function_default_arguments(self, space):
         function = lambda name, args: ast.Main(ast.Block([
-            ast.Statement(ast.Function(name, args, ast.Block([])))
+            ast.Statement(ast.Function(name, args, None, ast.Block([])))
         ]))
 
         r = space.parse("""

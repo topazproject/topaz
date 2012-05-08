@@ -98,7 +98,7 @@ class CompilerContext(object):
 
         self.current_block = self.first_block = self.new_block()
 
-    def create_bytecode(self, code_name, args, defaults):
+    def create_bytecode(self, code_name, args, defaults, block_arg):
         locs = [None] * len(self.symtable.local_numbers)
         for name, pos in self.symtable.local_numbers.iteritems():
             locs[pos] = name
@@ -120,7 +120,6 @@ class CompilerContext(object):
                 assert False
 
         blocks = self.first_block.post_order()
-
         return W_CodeObject(
             code_name,
             self.filepath,
@@ -128,6 +127,7 @@ class CompilerContext(object):
             self.count_stackdepth(blocks),
             self.consts[:],
             args,
+            block_arg,
             defaults,
             locs,
             cellvars,
