@@ -49,10 +49,12 @@ class Frame(object):
                 w_block = space.w_nil
             else:
                 w_block = space.newproc(block)
+            pos = bytecode.block_arg_pos
+            assert pos >= 0
             if bytecode.block_arg_loc == bytecode.LOCAL:
-                self.locals_w[bytecode.block_arg_pos] = w_block
+                self.locals_w[pos] = w_block
             elif bytecode.block_arg_loc == bytecode.CELL:
-                self.cells[bytecode.block_arg_pos].set(w_block)
+                self.cells[pos].set(w_block)
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
