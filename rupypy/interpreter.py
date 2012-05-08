@@ -111,7 +111,7 @@ class Interpreter(object):
                 except RubyError as e:
                     pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
         except Return as e:
-            return e.w_value
+            return frame.pop()
 
     def handle_bytecode(self, space, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])
@@ -314,7 +314,8 @@ class Interpreter(object):
             block = frame.unrollstack(unroller.kind)
             if block is None:
                 w_result = unroller.nomoreblocks()
-                raise Return(w_result)
+                frame.push(w_result)
+                raise Return
             else:
                 return block.handle(space, frame, unroller)
         return pc
@@ -325,7 +326,8 @@ class Interpreter(object):
         frame.push(space.newbool(w_expected is space.getclass(w_actual)))
 
     def POP_BLOCK(self, space, bytecode, frame, pc):
-        frame.popblock()
+        block = frame.popblock()
+        block.cleanup(space, frame)
 
     def JUMP(self, space, bytecode, frame, pc, target_pc):
         return self.jump(bytecode, frame, pc, target_pc)
@@ -346,7 +348,8 @@ class Interpreter(object):
         w_returnvalue = frame.pop()
         block = frame.unrollstack(ReturnValue.kind)
         if block is None:
-            raise Return(w_returnvalue)
+            frame.push(w_returnvalue)
+            raise Return
         unroller = ReturnValue(w_returnvalue)
         return block.handle(space, frame, unroller)
 
@@ -362,9 +365,7 @@ class Interpreter(object):
         raise Exception
 
 class Return(Exception):
-    def __init__(self, w_value):
-        self.w_value = w_value
-
+    pass
 
 class SuspendedUnroller(W_BaseObject):
     pass
@@ -391,7 +392,8 @@ class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):
         self.target_pc = target_pc
         self.lastblock = lastblock
-        self.stackdepth = stackdepth
+        # Leave one extra item on there, as the return value from this suite.
+        self.stackdepth = stackdepth + 1
 
     def cleanupstack(self, frame):
         while frame.stackpos > self.stackdepth:
@@ -399,6 +401,9 @@ class FrameBlock(object):
 
 class ExceptBlock(FrameBlock):
     handling_mask = ApplicationException.kind
+
+    def cleanup(self, space, frame):
+        self.cleanupstack(frame)
 
     def handle(self, space, frame, unroller):
         self.cleanupstack(frame)
@@ -410,6 +415,10 @@ class ExceptBlock(FrameBlock):
 class FinallyBlock(FrameBlock):
     # Handles everything.
     handling_mask = -1
+
+    def cleanup(self, space, frame):
+        self.cleanupstack(frame)
+        frame.push(space.w_nil)
 
     def handle(self, space, frame, unroller):
         self.cleanupstack(frame)

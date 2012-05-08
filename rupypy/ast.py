@@ -212,6 +212,7 @@ class TryExcept(Node):
             if handler.name:
                 ctx.emit(consts.STORE_LOCAL, ctx.symtable.get_local_num(handler.name))
             ctx.emit(consts.DISCARD_TOP)
+            ctx.emit(consts.DISCARD_TOP)
             handler.body.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)
             ctx.use_next_block(next_except)

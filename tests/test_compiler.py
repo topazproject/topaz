@@ -936,17 +936,18 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 29
+        JUMP 30
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 28
+        JUMP_IF_FALSE 29
+        DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_CONST 4
         COPY_STRING
         SEND 5 1
-        JUMP 29
+        JUMP 30
         END_FINALLY
         DISCARD_TOP
 
@@ -965,17 +966,18 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 30
+        JUMP 31
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 29
+        JUMP_IF_FALSE 30
         STORE_LOCAL 0
+        DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_LOCAL 0
         SEND 4 1
-        JUMP 30
+        JUMP 31
         END_FINALLY
         DISCARD_TOP
 
@@ -995,17 +997,17 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 18
+        JUMP 19
+        DISCARD_TOP
         DISCARD_TOP
         LOAD_CONST 3
-        JUMP 18
+        JUMP 19
         END_FINALLY
         DISCARD_TOP
 
         LOAD_CONST 4
         RETURN
         """)
-
         self.assert_compiles(space, """
         begin
             1 / 0
