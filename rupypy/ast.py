@@ -295,8 +295,8 @@ class Function(Node):
         symtable.add_subscope(self, body_symtable)
         for arg in self.args:
             body_symtable.declare_local(arg.name)
-            if arg.get_defl() is not None:
-                arg.get_defl().locate_symbols(body_symtable)
+            if arg.defl is not None:
+                arg.defl.locate_symbols(body_symtable)
         if self.block_arg is not None:
             body_symtable.declare_local(self.block_arg)
         self.body.locate_symbols(body_symtable)
@@ -311,8 +311,8 @@ class Function(Node):
                 function_ctx.symtable.get_cell_num(arg.name)
 
             arg_ctx = CompilerContext(ctx.space, function_ctx.symtable, ctx.filepath)
-            if arg.get_defl() is not None:
-                arg.get_defl().compile(arg_ctx)
+            if arg.defl is not None:
+                arg.defl.compile(arg_ctx)
                 arg_ctx.emit(consts.RETURN)
                 bc = arg_ctx.create_bytecode(self.name + ":" + arg.name, [], [], None)
                 defaults.append(bc)
@@ -332,21 +332,10 @@ class Function(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.DEFINE_FUNCTION)
 
-class BaseArgument(Node):
-    def __init__(self, name):
-        self.name = name
-
-class Argument(BaseArgument):
+class Argument(Node):
     def __init__(self, name, defl=None):
-        BaseArgument.__init__(self, name)
+        self.name = name
         self.defl = defl
-
-    def get_defl(self):
-        return self.defl
-
-class BlockArgument(BaseArgument):
-    def get_defl(self):
-        return None
 
 class Return(BaseStatement):
     def __init__(self, expr):

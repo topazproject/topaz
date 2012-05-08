@@ -373,6 +373,22 @@ class TestBlocks(object):
         """)
         assert space.int_w(w_res) == 5
 
+        w_res = space.execute("""
+        def g(&b)
+            b
+        end
+        return g
+        """)
+        assert w_res is space.w_nil
+
+        w_res = space.execute("""
+        def h(&b)
+            [1, 2, 3].map { |x| b.call(x) }
+        end
+        return h { |x| x * 3 }
+        """)
+        assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 6, 9]
+
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):
         w_res = space.execute("""

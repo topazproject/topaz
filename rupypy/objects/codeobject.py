@@ -46,9 +46,9 @@ class W_CodeObject(W_BaseObject):
             if block_arg in locals:
                 block_arg_loc = self.LOCAL
                 block_arg_pos = locals.index(block_arg)
-            elif arg in cellvars:
+            elif block_arg in cellvars:
                 block_arg_loc = self.CELL
-                block_arg_pos = cellvars.index(arg)
+                block_arg_pos = cellvars.index(block_arg)
         self.block_arg_loc = block_arg_loc
         self.block_arg_pos = block_arg_pos
 
