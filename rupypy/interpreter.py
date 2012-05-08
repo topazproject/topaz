@@ -395,6 +395,7 @@ class FrameBlock(object):
         # Leave one extra item on there, as the return value from this suite.
         self.stackdepth = stackdepth + 1
 
+    @jit.unroll_safe
     def cleanupstack(self, frame):
         while frame.stackpos > self.stackdepth:
             frame.pop()
