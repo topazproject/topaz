@@ -13,7 +13,7 @@ expr: assignment |
       yield |
       arg;
 
-assignment_oper: <EQ> | <PLUS_EQUAL>;
+assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL>;
 
 assignment: send assignment_oper expr;
 

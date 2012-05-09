@@ -254,6 +254,10 @@ class Lexer(object):
         if ch.isdigit():
             self.add(ch)
             return NUMBER
+        elif ch == "=":
+            self.add(ch)
+            self.emit("MINUS_EQUAL")
+            return None
         elif ch == " " or self.prev(2) not in ["(", " ", None]:
             self.emit("MINUS")
         else:

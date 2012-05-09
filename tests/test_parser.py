@@ -429,6 +429,9 @@ class TestParser(object):
         assert space.parse("i += 1") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment("+=", "i", ast.ConstantInt(1)))
         ]))
+        assert space.parse("i -= 1") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment("-=", "i", ast.ConstantInt(1)))
+        ]))
 
         assert space.parse("self.x += 2") == ast.Main(ast.Block([
             ast.Statement(ast.MethodAssignment("+=", ast.Variable("self"), "x", ast.ConstantInt(2)))
