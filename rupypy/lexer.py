@@ -1,10 +1,12 @@
 import sys
 
+from pypy.rlib.objectmodel import we_are_translated
 from pypy.rlib.parsing.lexer import Token, SourcePos
 from pypy.rlib.rstring import StringBuilder
+from pypy.rlib.unroll import unrolling_iterable
 
 
-TOKENS = [
+TOKENS = unrolling_iterable([
     "RETURN",
     "YIELD",
     "IF",
@@ -33,7 +35,7 @@ TOKENS = [
     "DOTDOT",
     "COLON",
     "STRING",
-]
+])
 for token in TOKENS:
     setattr(sys.modules[__name__], token, token)
 
@@ -91,7 +93,15 @@ class Lexer(object):
             if state is None:
                 state = self.handle_generic(ch)
             else:
-                state = getattr(self, "handle_%s" % state)(ch)
+                if we_are_translated():
+                    for token in TOKENS:
+                        if state == token:
+                            state = getattr(self, "handle_" + token)(ch)
+                            break
+                    else:
+                        raise NotImplementedError
+                else:
+                    state = getattr(self, "handle_" + state)(ch)
             self.idx += 1
         self.finish_token(state)
         self.emit("EOF")
