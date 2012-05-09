@@ -268,6 +268,25 @@ class Interpreter(object):
 
         frame.push(space.w_nil)
 
+    def BUILD_MODULE(self, space, bytecode, frame, pc):
+        from rupypy.objects.codeobject import W_CodeObject
+
+        w_bytecode = frame.pop()
+        w_name = frame.pop()
+        w_scope = frame.pop()
+
+        name = space.symbol_w(w_name)
+        w_mod = space.find_const(w_scope, name)
+        if w_mod is None:
+            w_mod = space.newmodule(name)
+            space.set_const(w_scope, name, w_mod)
+
+        assert isinstance(w_bytecode, W_CodeObject)
+        sub_frame = space.create_frame(w_bytecode, w_mod, w_mod)
+        Interpreter().interpret(space, sub_frame, w_bytecode)
+
+        frame.push(space.w_nil)
+
     def COPY_STRING(self, space, bytecode, frame, pc):
         from rupypy.objects.stringobject import W_StringObject
 

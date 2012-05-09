@@ -659,3 +659,16 @@ class TestParser(object):
                 ]
             ))
         ]))
+
+    def test_module(self, space):
+        r = space.parse("""
+        module M
+            def method
+            end
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Module("M", ast.Block([
+                ast.Statement(ast.Function("method", [], None, ast.Block([])))
+            ])))
+        ]))

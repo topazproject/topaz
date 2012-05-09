@@ -209,6 +209,8 @@ class Transformer(object):
             return self.visit_def(node)
         elif node.children[0].additional_info == "class":
             return self.visit_class(node)
+        elif node.children[0].additional_info == "module":
+            return self.visit_module(node)
         elif node.children[0].additional_info == "begin":
             return self.visit_begin(node)
         raise NotImplementedError(node.symbol)
@@ -277,6 +279,12 @@ class Transformer(object):
             node.children[1].additional_info,
             superclass,
             self.visit_block(node, start_idx=block_start_idx, end_idx=len(node.children) - 1),
+        )
+
+    def visit_module(self, node):
+        return ast.Module(
+            node.children[1].additional_info,
+            self.visit_block(node, start_idx=2, end_idx=len(node.children) - 1)
         )
 
     def visit_begin(self, node):

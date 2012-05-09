@@ -1053,3 +1053,25 @@ class TestCompiler(object):
         assert w_code.locals == ["a", "b"]
         assert w_code.block_arg_pos == 1
         assert w_code.block_arg_loc == w_code.LOCAL
+
+    def test_module(self, space):
+        bc = self.assert_compiles(space, """
+        module M
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_MODULE
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[1], """
+        LOAD_CONST 0
+        DISCARD_TOP
+        LOAD_CONST 0
+        RETURN
+        """)

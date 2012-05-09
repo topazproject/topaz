@@ -1,3 +1,5 @@
+from pypy.rlib import jit
+
 from rupypy.module import ClassDef, BaseFunction
 from rupypy.objects.objectobject import W_BaseObject
 
@@ -20,12 +22,33 @@ class AttributeWriter(BaseFunction):
         space.set_instance_var(w_obj, self.varname, w_value)
         return w_value
 
+class VersionTag(object):
+    pass
+
 class W_ModuleObject(W_BaseObject):
+    _immutable_fields_ = ["version?"]
+
     classdef = ClassDef("Module", W_BaseObject.classdef)
 
     def __init__(self, space, name):
         self.name = name
         self.klass = None
+        self.version = VersionTag()
+        self.methods = {}
+
+    def mutated(self):
+        self.version = VersionTag()
+
+    def add_method(self, space, name, method):
+        self.mutated()
+        self.methods[name] = method
+
+    def find_method(self, space, method):
+        return self._find_method_pure(space, method, self.version)
+
+    @jit.elidable
+    def _find_method_pure(self, space, method, version):
+        return self.methods.get(method, None)
 
     def getclass(self, space):
         if self.klass is not None:

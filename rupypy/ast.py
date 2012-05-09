@@ -284,6 +284,29 @@ class Class(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_CLASS)
 
+class Module(Node):
+    def __init__(self, name, body):
+        self.name = name
+        self.body = body
+
+    def locate_symbols(self, symtable):
+        body_symtable = SymbolTable()
+        symtable.add_subscope(self, body_symtable)
+        self.body.locate_symbols(body_symtable)
+
+    def compile(self, ctx):
+        body_ctx = ctx.get_subctx(self)
+        self.body.compile(body_ctx)
+        body_ctx.emit(consts.DISCARD_TOP)
+        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
+        body_ctx.emit(consts.RETURN)
+        bytecode = body_ctx.create_bytecode(self.name, [], [], None)
+
+        ctx.emit(consts.LOAD_SCOPE)
+        ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+        ctx.emit(consts.BUILD_MODULE)
+
 class Function(Node):
     def __init__(self, name, args, block_arg, body):
         self.name = name

@@ -1,4 +1,5 @@
 from rupypy.objects.boolobject import W_TrueObject
+from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.objectobject import W_Object
 
 from .base import BaseRuPyPyTest
@@ -294,6 +295,21 @@ class TestInterpreter(BaseRuPyPyTest):
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 6]
         w_res = space.execute("return f 5, 6, 10")
         assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 10]
+
+    def test_module(self, space):
+        w_res = space.execute("""
+        module M
+            def method
+                5
+            end
+        end
+        return M
+        """)
+        assert isinstance(w_res, W_ModuleObject)
+        assert w_res.name == "M"
+
+        with self.raises("NoMethodError"):
+            space.execute("M.method")
 
 
 class TestBlocks(object):
