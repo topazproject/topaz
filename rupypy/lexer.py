@@ -26,7 +26,6 @@ TOKENS = unrolling_iterable([
     "PLUS",
     "MINUS",
     "STAR",
-    "DIV",
     "EQ",
     "LT",
     "GT",
@@ -330,3 +329,9 @@ class Lexer(object):
         else:
             self.emit("COLON")
             return self.handle_generic(ch)
+
+    def handle_UNREACHABLE(self, ch):
+        raise NotImplementedError
+    handle_DEF = handle_CLASS = handle_MODULE = handle_IF = handle_UNLESS =\
+        handle_THEN = handle_WHILE = handle_DO = handle_YIELD = handle_RETURN =\
+        handle_BEGIN = handle_RESCUE = handle_ENSURE = handle_END = handle_UNREACHABLE
