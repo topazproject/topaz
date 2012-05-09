@@ -486,6 +486,10 @@ class SendBlock(Node):
         ctx.emit(consts.BUILD_BLOCK, num_cells)
         ctx.emit(consts.SEND_BLOCK, ctx.create_symbol_const(self.method), len(self.args) + 1)
 
+class Splat(Node):
+    def __init__(self, value):
+        self.value = value
+
 class LookupConstant(Node):
     def __init__(self, value, name):
         self.value = value

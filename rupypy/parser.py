@@ -3,12 +3,14 @@ import os
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 
 from rupypy import ast
+from rupypy.lexer import Lexer
+from rupypy.utils import make_parse_function
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
     grammar = f.read()
-regexs, rules, to_ast = parse_ebnf(grammar)
-_parse = make_parse_function(regexs, rules, eof=True)
+
+_parse, ToASTVisitor = make_parse_function(grammar, Lexer)
 
 
 class Transformer(object):
@@ -81,6 +83,8 @@ class Transformer(object):
             return self.visit_range(node)
         elif symname == "unary_op":
             return self.visit_unaryop(node)
+        elif symname == "splat":
+            return ast.Splat(self.visit_arg(node.children[0]))
         elif symname == "send":
             return self.visit_send(node)
         elif symname == "primary":
@@ -313,7 +317,7 @@ class Transformer(object):
             exception = ast.Variable(node.children[1].additional_info)
             idx += 1
         name = None
-        if "=>" in node.children[idx].symbol:
+        if node.children[idx].symbol == "ARROW":
             name = node.children[idx + 1].additional_info
             idx += 2
         block = self.visit_block(node, start_idx=idx, end_idx=len(node.children))
@@ -360,6 +364,4 @@ class Transformer(object):
         return ast.ConstantSymbol(node.children[0].additional_info)
 
     def visit_string(self, node):
-        end = len(node.additional_info) - 1
-        assert end >= 0
-        return ast.ConstantString(node.additional_info[1:end])
+        return ast.ConstantString(node.additional_info)

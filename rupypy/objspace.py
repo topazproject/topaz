@@ -24,7 +24,7 @@ from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
-from rupypy.parser import Transformer, _parse, to_ast
+from rupypy.parser import Transformer, _parse, ToASTVisitor
 
 
 class SpaceCache(Cache):
@@ -73,7 +73,7 @@ class ObjectSpace(object):
     # Methods for dealing with source code.
 
     def parse(self, source):
-        return self.transformer.visit_main(to_ast().transform(_parse(source)))
+        return self.transformer.visit_main(ToASTVisitor().transform(_parse(source)))
 
     def compile(self, source, filepath):
         astnode = self.parse(source)

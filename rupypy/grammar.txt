@@ -2,70 +2,53 @@
 # unfortunately you need to inline this anywhere you want it because ebnf parse
 # doesn't support epsilon productions.
 
-IGNORE: "[ ]";
-LINE_END: "[\n;]";
-
-NUMBER: "-?[0-9]+(\.[0-9]+)?";
-STRING: "\\"[^\\\\"]*\\"";
-IDENTIFIER: "[a-zA-Z_][a-zA-Z0-9_]*";
-
-DOT: "\.";
-EQ: "=";
-LT: "<";
-LPAREN: "\(";
-RPAREN: "\)";
-AMP: "&";
-
-AUG_ASSIGNMENT_OPER: "(\+=)|(-=)";
-RANGE_OPER: "(\.\.)|(\.\.\.)";
-CMP_OPER: "(!=)|(==)|(<=)|(>=)|>";
-SHIFT_OPER: "<<";
-ADD_OPER: "[+-]";
-MUL_OPER: "[*/]";
-
 main: line* statement? [LINE_END]? [EOF];
 
 line: statement? [LINE_END];
 
-statement: "return" expr |
-            expr;
+statement: RETURN expr |
+           expr;
 
 expr: assignment |
       yield |
       arg;
 
-assignment_oper: <AUG_ASSIGNMENT_OPER> | <EQ>;
+assignment_oper: <EQ> | <PLUS_EQUAL>;
 
 assignment: send assignment_oper expr;
 
-yield: ["yield"] args?;
+yield: [YIELD] args?;
 
 arg: range;
 
-cmp_oper: <CMP_OPER> | <LT>;
+range_oper: <DOTDOT> | <DOTDOTDOT>;
+cmp_oper: <EQUAL> | <NE> | <LT> | <LE> | <GT> | <GE>;
+shift_oper: <LSHIFT>;
+add_oper: <PLUS> | <MINUS>;
+mul_oper: <DIV> | <MUL>;
 
-range: comparison RANGE_OPER range | <comparison>;
+range: comparison range_oper range | <comparison>;
 comparison: shiftive cmp_oper comparison | <shiftive>;
-shiftive: additive SHIFT_OPER shiftive | <additive>;
-additive: multitive ADD_OPER additive | <multitive>;
-multitive: send MUL_OPER multitive | <unary_op>;
+shiftive: additive shift_oper shiftive | <additive>;
+additive: multitive add_oper additive | <multitive>;
+multitive: send mul_oper multitive | <unary_op>;
 
-unary_op: [LPAREN] ADD_OPER arg [RPAREN] | <send>;
+unary_op: UNARY_MINUS arg | <send>;
 
 send: <do_block> |
       real_send |
       <primary>;
 
-do_block: real_send "do" (["|"] arglist? ["|"])? line* statement? [LINE_END]? "end";
+do_block: real_send DO ([PIPE] arglist? [PIPE])? line* statement? [LINE_END]? END;
 
 real_send: primary trailers |
            global_block |
-           IDENTIFIER send_args block? |
+           IDENTIFIER  send_args block? |
            IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
 
 global_block: IDENTIFIER block;
 
-block: ["{"] (["|"] arglist? ["|"])? line* statement? [LINE_END]? ["}"];
+block: [LBRACE] ([PIPE] arglist? [PIPE])? line* statement? [LINE_END]? [RBRACE];
 
 trailers: trailer >trailers< | trailer;
 
@@ -73,51 +56,55 @@ trailer: attribute | subscript | constant;
 attribute: [DOT] operation [LPAREN] send_args? [RPAREN] block? |
            [DOT] operation block |
            [DOT] operation send_args?;
-subscript: ["["] arg ["]"];
-constant: "::" IDENTIFIER;
+subscript: [LBRACKET] arg [RBRACKET];
+constant: COLONCOLON IDENTIFIER;
 
 primary: LPAREN expr RPAREN |
-         "[" args? "]" |
-         "if" expr then line* statement? [LINE_END]? "end" |
-         "unless" expr then line* statement? [LINE_END]? "end" |
-         "while" expr do line* statement? [LINE_END]? "end" |
-         "def" IDENTIFIER argdecl line* statement? [LINE_END]? "end" |
-         "class" IDENTIFIER (LT IDENTIFIER)? [LINE_END] line* statement? [LINE_END]? "end" |
-         "module" IDENTIFIER line* statement? [LINE_END]? "end" |
-         "begin" line* statement? [LINE_END]? rescue* ensure? "end" |
+         LBRACKET args? RBRACKET |
+         IF expr then line* statement? [LINE_END]? END |
+         UNLESS expr then line* statement? [LINE_END]? END |
+         WHILE expr do line* statement? [LINE_END]? END |
+         DEF IDENTIFIER argdecl line* statement? [LINE_END]? END |
+         CLASS IDENTIFIER (LT IDENTIFIER)? [LINE_END] line* statement? [LINE_END]? END |
+         MODULE IDENTIFIER line* statement? [LINE_END]? END |
+         BEGIN line* statement? [LINE_END]? rescue* ensure? END |
          varname |
          literal;
 
 then: [LINE_END] |
-      "then" |
-      [LINE_END] "then";
+      THEN |
+      [LINE_END] THEN;
 
 do: [LINE_END] |
-    "do" |
-    [LINE_END] "do";
+    DO |
+    [LINE_END] DO;
 
-rescue: "rescue" IDENTIFIER? ("=>" IDENTIFIER)? line* statement? [LINE_END]?;
+rescue: RESCUE IDENTIFIER? (ARROW IDENTIFIER)? line* statement? [LINE_END]?;
 
-ensure: "ensure" line* statement? [LINE_END]?;
+ensure: ENSURE line* statement? [LINE_END]?;
 
 argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];
 
-arglist: argdef [","] >arglist< | argdef;
+arglist: argdef [COMMA] >arglist< | argdef;
 
 argdef: IDENTIFIER [EQ] arg |
         AMP IDENTIFIER |
         IDENTIFIER;
 
-operation: IDENTIFIER | "class" | "end" | "begin";
+operation: IDENTIFIER | CLASS | END | BEGIN;
 
 send_args: args;
 
-args: arg [","] >args< | arg;
+args: arg [COMMA] >args< | argument;
+
+argument: <arg> | <splat>;
+
+splat: [UNARY_STAR] arg;
 
 varname: IDENTIFIER |
-         "@" IDENTIFIER;
+         AT_SIGN IDENTIFIER;
 
 literal: NUMBER | symbol | STRING;
 
-symbol: [":"] IDENTIFIER;
+symbol: [COLON] IDENTIFIER;

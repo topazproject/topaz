@@ -92,6 +92,12 @@ class TestParser(object):
         assert space.parse("2.to_s(10)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10)]))
         ]))
+        assert space.parse("2.to_s(*10)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Splat(ast.ConstantInt(10))]))
+        ]))
+        assert space.parse("2.to_s(10, *x)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Splat(ast.Variable("x"))]))
+        ]))
 
     def test_assignment(self, space):
         assert space.parse("a = 3") == ast.Main(ast.Block([
@@ -445,7 +451,7 @@ class TestParser(object):
         ]))
 
     def test_unary_neg(self, space):
-        assert space.parse("(-b)") == ast.Main(ast.Block([
+        assert space.parse("-b") == ast.Main(ast.Block([
             ast.Statement(ast.UnaryOp("-", ast.Variable("b")))
         ]))
         assert space.parse("Math.exp(-a)") == ast.Main(ast.Block([
