@@ -415,7 +415,7 @@ class Send(Node):
         self.method = method
         self.args = args
 
-    def convert_to_assignment(self, oper, value):
+    def convert_to_assignment(self, transformer, node, oper, value):
         # XXX: this will allow self.foo() = 3; which it shouldn't.
         assert not self.args
         return MethodAssignment(oper, self.receiver, self.method, value)
@@ -540,9 +540,9 @@ class Variable(Node):
     def __init__(self, name):
         self.name = name
 
-    def convert_to_assignment(self, oper, value):
-        if self.name == "__FILE__":
-            raise Exception
+    def convert_to_assignment(self, transormer, node, oper, value):
+        if self.name == "__FILE__" or "?" in self.name:
+            transormer.error(node)
         return Assignment(oper, self.name, value)
 
     def locate_symbols(self, symtable):
@@ -577,7 +577,7 @@ class InstanceVariable(Node):
     def __init__(self, name):
         self.name = name
 
-    def convert_to_assignment(self, oper, value):
+    def convert_to_assignment(self, transormer, node, oper, value):
         return InstanceVariableAssignment(oper, self.name, value)
 
     def locate_symbols(self, symtable):

@@ -1,6 +1,7 @@
 import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
+from pypy.rlib.parsing.parsing import ParseError, ErrorInformation
 
 from rupypy import ast
 from rupypy.lexer import Lexer
@@ -14,6 +15,9 @@ _parse, ToASTVisitor = make_parse_function(grammar, Lexer)
 
 
 class Transformer(object):
+    def error(self, node):
+        raise ParseError(node.getsourcepos(), ErrorInformation(node.getsourcepos()))
+
     def visit_main(self, node):
         return ast.Main(self.visit_block(node))
 
@@ -64,7 +68,7 @@ class Transformer(object):
         target = self.visit_arg(node.children[0])
         oper = node.children[1].additional_info
         value = self.visit_expr(node.children[2])
-        return target.convert_to_assignment(oper, value)
+        return target.convert_to_assignment(self, node.children[0], oper, value)
 
     def visit_yield(self, node):
         args = []
@@ -338,13 +342,13 @@ class Transformer(object):
         args = []
         for n in node.children:
             if block_arg:
-                raise Exception
+                self.error(n)
             if len(n.children) == 2 and n.children[0].symbol == "AMP":
                 block_arg = n.children[1].additional_info
             elif len(n.children) == 2:
                 name = n.children[0].additional_info
                 if default_seen == 2:
-                    raise Exception
+                    self.error(n)
                 default_seen = 1
                 args.append(ast.Argument(name, self.visit_arg(n.children[1])))
             else:

@@ -1,9 +1,9 @@
-import py
-
 from rupypy import ast
 
+from .base import BaseRuPyPyTest
 
-class TestParser(object):
+
+class TestParser(BaseRuPyPyTest):
     def test_int_constant(self, space):
         assert space.parse("1") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantInt(1))
@@ -42,7 +42,7 @@ class TestParser(object):
         ]))
 
     def test_multiple_statements_no_sep(self, space):
-        with py.test.raises(Exception):
+        with self.raises("SyntaxError"):
             space.parse("3 3")
 
     def test_multiple_statements(self, space):
@@ -277,13 +277,13 @@ class TestParser(object):
                 ast.Statement(ast.Variable("b"))
             ])))
         ]))
-        with py.test.raises(Exception):
+        with self.raises("SyntaxError"):
             space.parse("""
             def f(&b, a)
                 b
             end
             """)
-        with py.test.raises(Exception):
+        with self.raises("SyntaxError"):
             space.parse("""
             def f(&b, &c)
                 b
@@ -482,7 +482,7 @@ class TestParser(object):
         assert space.parse("__FILE__") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("__FILE__"))
         ]))
-        with py.test.raises(Exception):
+        with self.raises("SyntaxError"):
             space.parse("__FILE__ = 5")
 
     def test_function_default_arguments(self, space):
@@ -514,7 +514,7 @@ class TestParser(object):
         """)
         assert r == function("f", [ast.Argument("a"), ast.Argument("b", ast.ConstantInt(3)), ast.Argument("c")])
 
-        with py.test.raises(Exception):
+        with self.raises("SyntaxError"):
             space.parse("""
             def f(a, b=3, c, d=5)
             end
@@ -681,3 +681,18 @@ class TestParser(object):
                 ast.Statement(ast.Function("method", [], None, ast.Block([])))
             ])))
         ]))
+
+    def test_question_mark(self, space):
+        assert space.parse("obj.method?") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Variable("obj"), "method?", []))
+        ]))
+        assert space.parse("def method?() end") == ast.Main(ast.Block([
+            ast.Statement(ast.Function("method?", [], None, ast.Block([])))
+        ]))
+        assert space.parse("method?") == ast.Main(ast.Block([
+            ast.Statement(ast.Variable("method?"))
+        ]))
+        with self.raises("SyntaxError"):
+            space.parse("method? = 4")
+        with self.raises("SyntaxError"):
+            space.parse("obj.meth?od")

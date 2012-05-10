@@ -38,6 +38,9 @@ TOKENS = unrolling_iterable([
 for token in TOKENS:
     setattr(sys.modules[__name__], token, token)
 
+class LexerError(Exception):
+    def __init__(self, pos):
+        self.pos = pos
 
 class Lexer(object):
     keywords = {
@@ -65,6 +68,9 @@ class Lexer(object):
         self.lineno = 0
         self.columno = 0
 
+    def current_pos(self):
+        return SourcePos(self.idx, self.lineno, self.columno)
+
     def peek(self):
         return self.text[self.idx + 1]
 
@@ -80,8 +86,7 @@ class Lexer(object):
         if value is None:
             value = "".join(self.current_value)
         self.current_value = []
-        pos = SourcePos(self.idx, self.lineno, self.columno)
-        self.tokens.append(Token(token, value, pos))
+        self.tokens.append(Token(token, value, self.current_pos()))
 
     def tokenize(self):
         state = None
@@ -102,6 +107,7 @@ class Lexer(object):
                 else:
                     state = getattr(self, "handle_" + state)(ch)
             self.idx += 1
+            self.columno += 1
         self.finish_token(state)
         self.emit("EOF")
         return self.tokens
@@ -203,9 +209,10 @@ class Lexer(object):
             self.emit("PIPE")
             return None
         elif ch == "\n":
-            self.lineno += 1
             self.add(ch)
             self.emit("LINE_END")
+            self.lineno += 1
+            self.columno = 0
             return None
         elif ch == ";":
             self.add(ch)
@@ -235,7 +242,9 @@ class Lexer(object):
         return STRING
 
     def handle_IDENTIFIER(self, ch):
-        if ch.isalnum() or ch == "_":
+        if ch.isalnum() or ch in "_?":
+            if "?" in self.current_value:
+                raise LexerError(self.current_pos())
             self.add(ch)
             return IDENTIFIER
         else:

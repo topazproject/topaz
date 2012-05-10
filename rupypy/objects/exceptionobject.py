@@ -34,3 +34,11 @@ class W_NoMethodError(W_NameError):
 class W_ZeroDivisionError(W_StandardError):
     classdef = ClassDef("ZeroDivisionError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
+
+class W_ScriptError(W_ExceptionObject):
+    classdef = ClassDef("ScriptError", W_ExceptionObject.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
+class W_SyntaxError(W_ScriptError):
+    classdef = ClassDef("SyntaxError", W_ScriptError.classdef)
+    method_allocate = new_exception_allocate(classdef)

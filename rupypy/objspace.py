@@ -2,11 +2,13 @@ from __future__ import absolute_import
 
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import specialize
+from pypy.rlib.parsing.parsing import ParseError
 from pypy.tool.cache import Cache
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
 from rupypy.error import RubyError
 from rupypy.interpreter import Interpreter, Frame
+from rupypy.lexer import LexerError
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, Function
 from rupypy.modules.math import Math
@@ -15,7 +17,8 @@ from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.exceptionobject import W_NoMethodError, W_ZeroDivisionError
+from rupypy.objects.exceptionobject import (W_NoMethodError,
+    W_ZeroDivisionError, W_SyntaxError)
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
@@ -45,7 +48,7 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
-        for cls in [W_NoMethodError, W_ZeroDivisionError, W_Random]:
+        for cls in [W_NoMethodError, W_ZeroDivisionError, W_SyntaxError, W_Random]:
             self.add_class(cls)
 
         for module in [Math]:
@@ -53,6 +56,7 @@ class ObjectSpace(object):
 
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
+        self.w_SyntaxError = self.getclassfor(W_SyntaxError)
 
     def _freeze_(self):
         return True
@@ -73,7 +77,11 @@ class ObjectSpace(object):
     # Methods for dealing with source code.
 
     def parse(self, source):
-        return self.transformer.visit_main(ToASTVisitor().transform(_parse(source)))
+        try:
+            st = ToASTVisitor().transform(_parse(source))
+            return self.transformer.visit_main(st)
+        except (LexerError, ParseError):
+            self.raise_(self.w_SyntaxError)
 
     def compile(self, source, filepath):
         astnode = self.parse(source)
@@ -216,6 +224,6 @@ class ObjectSpace(object):
             frame.cells[len(bc.cellvars) + idx] = cell
         return Interpreter().interpret(self, frame, bc)
 
-    def raise_(self, w_type, msg):
+    def raise_(self, w_type, msg=""):
         w_exc = self.send(w_type, self.newsymbol("new"), [self.newstr_fromstr(msg)])
         raise RubyError(w_exc)
