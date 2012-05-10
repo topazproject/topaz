@@ -1,7 +1,7 @@
 import os
 
 from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
-from pypy.rlib.parsing.parsing import ParseError, ErrorInformation
+from pypy.rlib.parsing.parsing import ParseError
 
 from rupypy import ast
 from rupypy.lexer import Lexer
@@ -16,7 +16,7 @@ _parse, ToASTVisitor = make_parse_function(grammar, Lexer)
 
 class Transformer(object):
     def error(self, node):
-        raise ParseError(node.getsourcepos(), ErrorInformation(node.getsourcepos()))
+        raise ParseError(node.getsourcepos(), None)
 
     def visit_main(self, node):
         return ast.Main(self.visit_block(node))
