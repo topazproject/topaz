@@ -415,6 +415,29 @@ class TestBlocks(object):
         """)
         assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 5, 3, 7, 8, 1]
 
+        w_res = space.execute("""
+        class ToA
+            def to_a
+                [1, 2, 3, 4, 5, 6]
+            end
+        end
+
+        return f *ToA.new
+        """)
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 2, 3, 4, 5, 6]
+
+        w_res = space.execute("""
+        class ToAry
+            def to_ary
+                [1, 5, 6, 7, 8, 9]
+            end
+        end
+
+        return f *ToAry.new
+        """)
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 5, 6, 7, 8, 9]
+
+
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):
         w_res = space.execute("""
