@@ -22,4 +22,4 @@ class TestKernel(object):
         end
         return result
         """)
-        assert [[space.int_w(w_x) for w_x in w_sub.items_w] for w_sub in w_res.items_w] == [[5, 0], [6, 1], [7, 2], [8, 3], [9, 4]]
+        assert [[space.int_w(w_x) for w_x in space.listview(w_sub)] for w_sub in space.listview(w_res)] == [[5, 0], [6, 1], [7, 2], [8, 3], [9, 4]]

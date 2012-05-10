@@ -427,9 +427,27 @@ class Send(Node):
 
     def compile(self, ctx):
         self.receiver.compile(ctx)
-        for i in range(len(self.args) - 1, -1, -1):
-            self.args[i].compile(ctx)
-        ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), len(self.args))
+        if self.is_splat():
+            for arg in self.args:
+                arg.compile(ctx)
+                if isinstance(arg, Splat):
+                    ctx.emit(consts.COERCE_ARRAY)
+                else:
+                    ctx.emit(consts.BUILD_ARRAY, 1)
+            for i in range(len(self.args) - 1):
+                ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+            ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const(self.method))
+        else:
+            for arg in self.args:
+                arg.compile(ctx)
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), len(self.args))
+
+    def is_splat(self):
+        for arg in self.args:
+            if isinstance(arg, Splat):
+                return True
+        return False
+
 
 class SendBlock(Node):
     def __init__(self, receiver, method, args, block_args, block):
@@ -452,8 +470,8 @@ class SendBlock(Node):
 
     def compile(self, ctx):
         self.receiver.compile(ctx)
-        for i in range(len(self.args) - 1, -1, -1):
-            self.args[i].compile(ctx)
+        for arg in self.args:
+            arg.compile(ctx)
 
         block_ctx = ctx.get_subctx(self)
         for name, kind in block_ctx.symtable.cells.iteritems():
@@ -489,6 +507,12 @@ class SendBlock(Node):
 class Splat(Node):
     def __init__(self, value):
         self.value = value
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
 
 class LookupConstant(Node):
     def __init__(self, value, name):

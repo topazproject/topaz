@@ -151,6 +151,9 @@ class ObjectSpace(object):
         """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
 
+    def listview(self, w_obj):
+        return w_obj.listview(self)
+
     # Methods for implementing the language semantics.
 
     def is_true(self, w_obj):
@@ -191,6 +194,12 @@ class ObjectSpace(object):
         if raw_method is None:
             self.raise_(self.w_NoMethodError, "undefined method `%s`" % name)
         return raw_method.call(self, w_receiver, args_w, block)
+
+    def respond_to(self, w_receiver, w_method):
+        name = self.symbol_w(w_method)
+        w_cls = self.getclass(w_receiver)
+        raw_method = w_cls.find_method(self, name)
+        return raw_method is not None
 
     @jit.unroll_safe
     def invoke_block(self, block, args_w):

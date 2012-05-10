@@ -10,6 +10,9 @@ class W_ArrayObject(W_BaseObject):
     def __init__(self, items_w):
         self.items_w = items_w
 
+    def listview(self, space):
+        return self.items_w
+
     classdef.app_method("""
     def to_s()
         result = "["
@@ -31,6 +34,11 @@ class W_ArrayObject(W_BaseObject):
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(len(self.items_w))
+
+    @classdef.method("+")
+    def method_add(self, space, w_other):
+        assert isinstance(w_other, W_ArrayObject)
+        return space.newarray(self.items_w + w_other.items_w)
 
     @classdef.method("<<")
     def method_lshift(self, space, w_obj):

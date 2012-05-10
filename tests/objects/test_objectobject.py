@@ -35,7 +35,7 @@ class TestObjectObject(object):
         x = X.new 2, 3
         return x.attrs
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 3]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 3]
 
 class TestMapDict(object):
     def test_simple_attr(self, space):
@@ -52,7 +52,7 @@ class TestMapDict(object):
         end
         return X.new.attrs
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 4, 5]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [3, 4, 5]
 
     def test_unitialized_att(self, space):
         w_res = space.execute("""
@@ -64,4 +64,4 @@ class TestMapDict(object):
         end
         return X.new.attrs
         """)
-        assert w_res.items_w == [space.w_nil, space.w_nil]
+        assert space.listview(w_res) == [space.w_nil, space.w_nil]

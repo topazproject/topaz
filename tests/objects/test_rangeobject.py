@@ -8,7 +8,7 @@ class TestRangeObject(object):
             x * 5
         end
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 10]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 10]
 
     def test_starting_point_always_returned(self, space):
         w_res = space.execute("""
@@ -16,4 +16,4 @@ class TestRangeObject(object):
             x
         end
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1]

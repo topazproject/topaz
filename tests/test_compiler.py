@@ -645,8 +645,8 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_SELF
-        LOAD_CONST 2
         BUILD_ARRAY 0
+        LOAD_CONST 2
         SEND 3 2
         DISCARD_TOP
 
@@ -1073,5 +1073,29 @@ class TestCompiler(object):
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 0
+        RETURN
+        """)
+
+    def test_splat_send(self, space):
+        self.assert_compiles(space, """
+        puts *1, 2, 3, *x
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        COERCE_ARRAY
+        LOAD_CONST 1
+        BUILD_ARRAY 1
+        LOAD_CONST 2
+        BUILD_ARRAY 1
+        LOAD_SELF
+        SEND 3 0
+        COERCE_ARRAY
+        SEND 4 1
+        SEND 5 1
+        SEND 6 1
+        SEND_SPLAT 7
+        DISCARD_TOP
+
+        LOAD_CONST 8
         RETURN
         """)

@@ -96,7 +96,7 @@ operation: IDENTIFIER | CLASS | END | BEGIN;
 
 send_args: args;
 
-args: arg [COMMA] >args< | argument;
+args: argument [COMMA] >args< | argument;
 
 argument: <arg> | <splat>;
 

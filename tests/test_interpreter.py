@@ -62,7 +62,7 @@ class TestInterpreter(BaseRuPyPyTest):
 
     def test_array(self, space):
         w_res = space.execute("return [[1], [2], [3]]")
-        assert [[space.int_w(w_y) for w_y in w_x.items_w] for w_x in w_res.items_w] == [[1], [2], [3]]
+        assert [[space.int_w(w_y) for w_y in space.listview(w_x)] for w_x in space.listview(w_res)] == [[1], [2], [3]]
 
     def test_def_function(self, space):
         w_res = space.execute("return def f() end")
@@ -89,7 +89,7 @@ class TestInterpreter(BaseRuPyPyTest):
         return [test, test]
         """)
 
-        assert [space.str_w(w_s) for w_s in w_res.items_w] == ["abc", "abc"]
+        assert [space.str_w(w_s) for w_s in space.listview(w_res)] == ["abc", "abc"]
 
     def test_class(self, space):
         w_res = space.execute("""
@@ -116,7 +116,7 @@ class TestInterpreter(BaseRuPyPyTest):
         z = Z.new
         return [z.f, z.g]
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 3]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 3]
 
     def test_reopen_class(self, space):
         space.execute("""
@@ -169,7 +169,7 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return Y.new.f
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 5]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [3, 5]
 
     def test_class_constant_block(self, space):
         w_res = space.execute("""
@@ -183,7 +183,7 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return X.new.f
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 5]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 5]
 
     def test_instance_var(self, space):
         w_res = space.execute("""
@@ -210,7 +210,7 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 4, 6]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 4, 6]
 
     def test_yield(self, space):
         w_res = space.execute("""
@@ -227,7 +227,7 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [-1, -1]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [-1, -1]
 
     def test_range(self, space):
         w_res = space.execute("return (1..10).begin")
@@ -290,11 +290,11 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return f 1
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1, 3, 3]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 3, 3]
         w_res = space.execute("return f 5, 6")
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 6]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 6, 6]
         w_res = space.execute("return f 5, 6, 10")
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [5, 6, 10]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 6, 10]
 
     def test_module(self, space):
         w_res = space.execute("""
@@ -333,7 +333,7 @@ class TestBlocks(object):
         x.process [1, 2, 3]
         return x.data
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [2, 4, 6]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 4, 6]
 
     def test_param_is_cell(self, space):
         w_res = space.execute("""
@@ -358,7 +358,7 @@ class TestBlocks(object):
         end
         return result
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [-2, -3, -4, -1, -2, -3, 0, -1, -2]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [-2, -3, -4, -1, -2, -3, 0, -1, -2]
 
     def test_no_accepted_arguments(self, space):
         w_res = space.execute("""
@@ -368,7 +368,7 @@ class TestBlocks(object):
         end
         return result
         """)
-        assert [space.str_w(w_x) for w_x in w_res.items_w] == ["hello", "hello"]
+        assert [space.str_w(w_x) for w_x in space.listview(w_res)] == ["hello", "hello"]
 
     def test_multi_arg_block_array(self, space):
         w_res = space.execute("""
@@ -378,7 +378,7 @@ class TestBlocks(object):
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [-1, -1]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [-1, -1]
 
     def test_block_argument(self, space):
         w_res = space.execute("""
@@ -403,7 +403,17 @@ class TestBlocks(object):
         end
         return h { |x| x * 3 }
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 6, 9]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [3, 6, 9]
+
+    def test_splat(self, space):
+        w_res = space.execute("""
+        def f(a, b, c, d, e, f)
+            [a, b, c, d, e, f]
+        end
+
+        return f(*2, *[5, 3], *[], 7, 8, *[1], *nil)
+        """)
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 5, 3, 7, 8, 1]
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):
@@ -485,7 +495,7 @@ class TestExceptions(BaseRuPyPyTest):
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1, 2, 3]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 2, 3]
 
     def test_ensure_return(self, space):
         w_res = space.execute("""
@@ -496,7 +506,7 @@ class TestExceptions(BaseRuPyPyTest):
             res << 1
         end
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [1]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1]
 
     def test_rescue_loop(self, space):
         w_res = space.execute("""

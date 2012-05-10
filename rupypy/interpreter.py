@@ -69,6 +69,13 @@ class Frame(object):
         self.stackpos = stackpos
         return w_res
 
+    @jit.unroll_safe
+    def popitemsreverse(self, n):
+        items_w = [None] * n
+        for i in xrange(n - 1, -1, -1):
+            items_w[i] = self.pop()
+        return items_w
+
     def peek(self):
         stackpos = jit.promote(self.stackpos) - 1
         assert stackpos >= 0
@@ -217,9 +224,7 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
-        items_w = [None] * n_items
-        for i in xrange(n_items - 1, -1, -1):
-            items_w[i] = frame.pop()
+        items_w = frame.popitemsreverse(n_items)
         frame.push(space.newarray(items_w))
 
     def BUILD_RANGE(self, space, bytecode, frame, pc):
@@ -294,6 +299,23 @@ class Interpreter(object):
         assert isinstance(w_s, W_StringObject)
         frame.push(w_s.copy())
 
+    def COERCE_ARRAY(self, space, bytecode, frame, pc):
+        from rupypy.objects.arrayobject import W_ArrayObject
+
+        w_obj = frame.pop()
+        if w_obj is space.w_nil:
+            frame.push(space.newarray([]))
+        elif isinstance(w_obj, W_ArrayObject):
+            frame.push(w_obj)
+        else:
+            if space.respond_to(w_obj, space.newsymbol("to_a")):
+                w_obj = space.send(w_obj, space.newsymbol("to_a"))
+            elif space.respond_to(w_obj, space.newsymbol("to_ary")):
+                w_obj = space.send(w_obj, space.newsymbol("to_ary"))
+            if not isinstance(w_obj, W_ArrayObject):
+                w_obj = space.newarray([w_obj])
+            frame.push(w_obj)
+
     def DEFINE_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()
@@ -304,7 +326,7 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
-        args_w = [frame.pop() for _ in range(num_args)]
+        args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
@@ -314,10 +336,16 @@ class Interpreter(object):
         from rupypy.objects.blockobject import W_BlockObject
 
         w_block = frame.pop()
-        args_w = [frame.pop() for _ in range(num_args - 1)]
+        args_w = frame.popitemsreverse(num_args - 1)
         w_receiver = frame.pop()
         assert isinstance(w_block, W_BlockObject)
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        frame.push(w_res)
+
+    def SEND_SPLAT(self, space, bytecode, frame, pc, meth_idx):
+        args_w = space.listview(frame.pop())
+        w_receiver = frame.pop()
+        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):

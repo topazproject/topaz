@@ -32,7 +32,7 @@ class TestClassObject(object):
         return [x, x.m]
         """)
 
-        [w_x, w_xm] = w_res.items_w
+        [w_x, w_xm] = space.listview(w_res)
         assert w_xm is w_x
 
     def test_attr_accessor(self, space):
@@ -50,7 +50,7 @@ class TestClassObject(object):
         x.a = 5
         return [orig_a, x.a, x.b]
         """)
-        assert [space.int_w(w_x) for w_x in w_res.items_w] == [3, 5, 25]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [3, 5, 25]
 
     def test_attr_reader(self, space):
         w_res = space.execute("""

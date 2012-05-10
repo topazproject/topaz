@@ -33,12 +33,15 @@ BYTECODES = [
     ("BUILD_BLOCK", 1, BLOCK_EFFECT),
     ("BUILD_CLASS", 0, -3),
     ("BUILD_MODULE", 0, -2),
+
     ("COPY_STRING", 0, 0),
+    ("COERCE_ARRAY", 0, 0),
 
     ("DEFINE_FUNCTION", 0, -2),
 
     ("SEND", 2, SEND_EFFECT),
     ("SEND_BLOCK", 2, SEND_EFFECT),
+    ("SEND_SPLAT", 1, -1),
 
     ("SETUP_EXCEPT", 1, 0),
     ("SETUP_FINALLY", 1, 0),
