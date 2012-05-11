@@ -13,6 +13,34 @@ class W_ClassObject(W_ModuleObject):
         self.superclass = superclass
         self.is_singleton = is_singleton
         self.constants_w = {}
+        self._lazy_constants_w = None
+
+    def _freeze_(self):
+        "NOT_RPYTHON"
+        if self._lazy_constants_w is not None:
+            for name in self._lazy_constants_w.keys():
+                self._load_lazy(name)
+            self._lazy_constants_w = None
+        return False
+
+    def _lazy_set_const(self, space, name, obj):
+        "NOT_RPYTHON"
+        if self._lazy_constants_w is None:
+            self._lazy_constants_w = {}
+        self._lazy_constants_w[name] = (space, obj)
+
+    def _load_lazy(self, name):
+        "NOT_RPYTHON"
+        obj = self._lazy_constants_w.pop(name, None)
+        if obj is not None:
+            space, obj = obj
+            if hasattr(obj, "classdef"):
+                self.set_const(self, obj.classdef.name, space.getclassfor(obj))
+            elif hasattr(obj, "moduledef"):
+                w_module = obj.build_object(space)
+                self.set_const(self, obj.moduledef.name, w_module)
+            else:
+                assert False
 
     def getsingletonclass(self, space):
         if self.klass is None:
@@ -39,6 +67,8 @@ class W_ClassObject(W_ModuleObject):
 
     @jit.elidable
     def _find_const_pure(self, name, version):
+        if self._lazy_constants_w is not None:
+            self._load_lazy(name)
         return self.constants_w.get(name, None)
 
     @classdef.method("to_s")
