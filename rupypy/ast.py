@@ -267,7 +267,7 @@ class Class(Node):
         self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
-        ctx.emit(consts.LOAD_SELF)
+        ctx.emit(consts.LOAD_SCOPE)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         if self.superclass is None:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))

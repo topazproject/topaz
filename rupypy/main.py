@@ -14,6 +14,7 @@ from rupypy.objspace import ObjectSpace
 def getspace():
     return ObjectSpace()
 
+
 def entry_point(argv):
     if len(argv) != 2:
         print __doc__

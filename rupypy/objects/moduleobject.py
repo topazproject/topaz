@@ -7,14 +7,17 @@ from rupypy.objects.objectobject import W_BaseObject
 
 class AttributeReader(W_FunctionObject):
     _immutable_fields_ = ["varname"]
+
     def __init__(self, varname):
         self.varname = varname
 
     def call(self, space, w_obj, args_w, block):
         return space.find_instance_var(w_obj, self.varname)
 
+
 class AttributeWriter(W_FunctionObject):
     _immutable_fields_ = ["varname"]
+
     def __init__(self, varname):
         self.varname = varname
 
@@ -23,8 +26,10 @@ class AttributeWriter(W_FunctionObject):
         space.set_instance_var(w_obj, self.varname, w_value)
         return w_value
 
+
 class VersionTag(object):
     pass
+
 
 class W_ModuleObject(W_BaseObject):
     _immutable_fields_ = ["version?"]

@@ -84,6 +84,7 @@ class Module(object):
             singleton_class.add_method(space, name, W_BuiltinFunction(func))
         return w_mod
 
+
 class ModuleDef(object):
     def __init__(self, name):
         self.name = name
@@ -108,6 +109,7 @@ class ModuleDef(object):
             self.singleton_methods[name] = (func, argspec)
         return adder
 
+
 class ClassCache(Cache):
     def __init__(self, space):
         super(ClassCache, self).__init__()
@@ -130,7 +132,7 @@ class ClassCache(Cache):
             w_class.add_method(self.space, name, W_BuiltinFunction(func))
 
         for source in classdef.app_methods:
-            self.space.execute(source, w_class)
+            self.space.execute(source, w_self=w_class, w_scope=w_class)
 
         if classdef.singleton_methods:
             singleton_class = self.space.getsingletonclass(w_class)

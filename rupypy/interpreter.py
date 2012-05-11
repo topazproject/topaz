@@ -264,15 +264,15 @@ class Interpreter(object):
         w_bytecode = frame.pop()
         superclass = frame.pop()
         w_name = frame.pop()
-        w_self = frame.pop()
+        w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_cls = space.find_const(frame.w_scope, name)
+        w_cls = space.find_const(w_scope, name)
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.getclassfor(W_Object)
             w_cls = space.newclass(name, superclass)
-            space.set_const(frame.w_scope, name, w_cls)
+            space.set_const(w_scope, name, w_cls)
 
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = space.create_frame(w_bytecode, w_cls, w_cls)

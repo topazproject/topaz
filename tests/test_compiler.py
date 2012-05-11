@@ -354,9 +354,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-
     def test_string(self, space):
-        bc = self.assert_compiles(space, '"abc"', """
+        self.assert_compiles(space, '"abc"', """
         LOAD_CONST 0
         COPY_STRING
         DISCARD_TOP
@@ -370,7 +369,7 @@ class TestCompiler(object):
         class X
         end
         """, """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
         LOAD_CONST 2
@@ -395,7 +394,7 @@ class TestCompiler(object):
             end
         end
         """, """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
         LOAD_CONST 2
@@ -428,7 +427,7 @@ class TestCompiler(object):
         class X < Object
         end
         """, """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_SCOPE
         LOAD_CONSTANT 1

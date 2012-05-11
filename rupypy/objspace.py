@@ -102,9 +102,9 @@ class ObjectSpace(object):
         astnode.compile(c)
         return c.create_bytecode("<string>", [], [], None)
 
-    def execute(self, source, w_self=None, filepath="-e"):
+    def execute(self, source, w_self=None, w_scope=None, filepath="-e"):
         bc = self.compile(source, filepath)
-        frame = self.create_frame(bc, w_self)
+        frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
         return Interpreter().interpret(self, frame, bc)
 
     def create_frame(self, bc, w_self=None, w_scope=None, block=None):

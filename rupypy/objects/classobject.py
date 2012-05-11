@@ -34,7 +34,6 @@ class W_ClassObject(W_ModuleObject):
     def _find_const_pure(self, name, version):
         return self.constants_w.get(name, None)
 
-
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.name)

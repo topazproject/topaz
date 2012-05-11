@@ -1,6 +1,3 @@
-import py
-
-
 class TestRangeObject(object):
     def test_map(self, space):
         w_res = space.execute("""
