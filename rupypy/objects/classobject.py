@@ -14,6 +14,13 @@ class W_ClassObject(W_ModuleObject):
         self.is_singleton = is_singleton
         self.constants_w = {}
 
+    def getsingletonclass(self, space):
+        if self.klass is None:
+            self.klass = space.newclass(
+                self.name, space.getclassfor(W_ClassObject), is_singleton=True
+            )
+        return self.klass
+
     def find_method(self, space, method):
         res = W_ModuleObject.find_method(self, space, method)
         if res is None and self.superclass is not None:
