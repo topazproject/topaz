@@ -6,6 +6,7 @@ from rupypy.objects.objectobject import W_BaseObject
 class W_FunctionObject(W_BaseObject):
     pass
 
+
 class W_UserFunction(W_FunctionObject):
     _immutable_fields_ = ["bytecode"]
 
@@ -25,6 +26,7 @@ class W_UserFunction(W_FunctionObject):
         )
         frame.handle_args(space, self.bytecode, args_w, block)
         return Interpreter().interpret(space, frame, self.bytecode)
+
 
 class W_BuiltinFunction(W_FunctionObject):
     _immutable_fields_ = ["func"]

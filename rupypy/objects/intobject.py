@@ -1,4 +1,5 @@
 from rupypy.module import ClassDef
+from rupypy.objects.exceptionobject import W_ZeroDivisionError
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.objectobject import W_BaseObject
 
@@ -45,7 +46,9 @@ class W_IntObject(W_BaseObject):
         try:
             return space.newint(self.intvalue / 0)
         except ZeroDivisionError:
-            raise space.raise_(space.w_ZeroDivisionError, "divided by 0")
+            raise space.raise_(space.getclassfor(W_ZeroDivisionError),
+                "divided by 0"
+            )
 
     @classdef.method("==", other=int)
     def method_eq(self, space, other):

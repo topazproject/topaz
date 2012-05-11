@@ -40,21 +40,21 @@ class W_ModuleObject(W_BaseObject):
         self.name = name
         self.klass = None
         self.version = VersionTag()
-        self.methods = {}
+        self.methods_w = {}
 
     def mutated(self):
         self.version = VersionTag()
 
-    def add_method(self, space, name, method):
+    def define_method(self, space, name, method):
         self.mutated()
-        self.methods[name] = method
+        self.methods_w[name] = method
 
     def find_method(self, space, method):
         return self._find_method_pure(space, method, self.version)
 
     @jit.elidable
     def _find_method_pure(self, space, method, version):
-        return self.methods.get(method, None)
+        return self.methods_w.get(method, None)
 
     def getclass(self, space):
         if self.klass is not None:
@@ -70,9 +70,9 @@ class W_ModuleObject(W_BaseObject):
     def method_attr_accessor(self, space, args_w):
         for w_arg in args_w:
             varname = space.symbol_w(w_arg)
-            self.add_method(space, varname, AttributeReader(varname))
-            self.add_method(space, varname + "=", AttributeWriter(varname))
+            self.define_method(space, varname, AttributeReader(varname))
+            self.define_method(space, varname + "=", AttributeWriter(varname))
 
     @classdef.method("attr_reader", varname="symbol")
     def method_attr_reader(self, space, varname):
-        self.add_method(space, varname, AttributeReader(varname))
+        self.define_method(space, varname, AttributeReader(varname))

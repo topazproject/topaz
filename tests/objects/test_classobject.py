@@ -1,5 +1,3 @@
-import py
-
 from rupypy.objects.objectobject import W_Object
 
 

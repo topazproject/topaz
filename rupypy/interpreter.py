@@ -328,7 +328,15 @@ class Interpreter(object):
         w_name = frame.pop()
         w_scope = frame.pop()
         assert isinstance(w_func, W_FunctionObject)
-        w_scope.add_method(space, space.symbol_w(w_name), w_func)
+        w_scope.define_method(space, space.symbol_w(w_name), w_func)
+        frame.push(space.w_nil)
+
+    def ATTACH_FUNCTION(self, space, bytecode, frame, pc):
+        w_func = frame.pop()
+        w_name = frame.pop()
+        w_obj = frame.pop()
+        assert isinstance(w_func, W_FunctionObject)
+        w_obj.attach_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
     @jit.unroll_safe

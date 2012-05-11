@@ -1,6 +1,5 @@
 import os
 
-from pypy.rlib.parsing.ebnfparse import parse_ebnf, make_parse_function
 from pypy.rlib.parsing.parsing import ParseError
 
 from rupypy import ast
@@ -269,9 +268,17 @@ class Transformer(object):
         )
 
     def visit_def(self, node):
+        name_node = node.children[1]
+        if len(name_node.children) == 1:
+            parent = None
+            name = name_node.children[0].additional_info
+        else:
+            parent = ast.Variable(name_node.children[0].additional_info)
+            name = name_node.children[1].additional_info
         args, block_arg = self.visit_argdecl(node.children[2])
         return ast.Function(
-            node.children[1].additional_info,
+            parent,
+            name,
             args,
             block_arg,
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),

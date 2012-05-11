@@ -39,6 +39,7 @@ BYTECODES = [
     ("COERCE_ARRAY", 0, 0),
 
     ("DEFINE_FUNCTION", 0, -2),
+    ("ATTACH_FUNCTION", 0, -2),
 
     ("SEND", 2, SEND_EFFECT),
     ("SEND_BLOCK", 2, SEND_EFFECT),

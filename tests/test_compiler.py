@@ -290,7 +290,7 @@ class TestCompiler(object):
         assert bc.max_stackdepth == 3
 
     def test_subscript(self, space):
-        bc = self.assert_compiles(space, "[1][0]", """
+        self.assert_compiles(space, "[1][0]", """
         LOAD_CONST 0
         BUILD_ARRAY 1
         LOAD_CONST 1
@@ -301,7 +301,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, "i = 0; self[i].to_s", """
+        self.assert_compiles(space, "i = 0; self[i].to_s", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
@@ -1110,5 +1110,24 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 8
+        RETURN
+        """)
+
+    def test_singleton_method(self, space):
+        self.assert_compiles(space, """
+        def Array.hello
+            "hello world"
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONSTANT 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        LOAD_CONST 3
+        BUILD_FUNCTION
+        ATTACH_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 4
         RETURN
         """)

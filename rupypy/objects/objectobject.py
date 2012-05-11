@@ -11,6 +11,7 @@ class ObjectMetaclass(type):
             attrs["classdef"].cls = new_cls
         return new_cls
 
+
 class W_BaseObject(object):
     __metaclass__ = ObjectMetaclass
     _attrs_ = ()
@@ -21,9 +22,9 @@ class W_BaseObject(object):
     def getclass(self, space):
         return space.getclassobject(self.classdef)
 
-    def add_method(self, space, name, function):
-        # Not legal, I don't think
-        raise NotImplementedError
+    def attach_method(self, space, name, func):
+        w_cls = space.getsingletonclass(self)
+        w_cls.define_method(space, name, func)
 
     def is_true(self, space):
         return True
@@ -31,6 +32,7 @@ class W_BaseObject(object):
     @classdef.method("initialize")
     def method_initialize(self, space):
         return self
+
 
 class MapTransitionCache(object):
     def __init__(self, space):
@@ -47,6 +49,7 @@ class MapTransitionCache(object):
     def transition_add_attr(self, node, name, pos):
         return self.add_transitions.setdefault((node, name), AttributeNode(node, name, pos))
 
+
 class BaseNode(object):
     _attrs_ = ()
 
@@ -59,6 +62,7 @@ class BaseNode(object):
 
 class ClassNode(BaseNode):
     _immutable_fields_ = ["klass"]
+
     def __init__(self, klass):
         self.klass = klass
 
@@ -77,6 +81,7 @@ class ClassNode(BaseNode):
 
 class AttributeNode(BaseNode):
     _immutable_fields_ = ["prev", "name", "pos"]
+
     def __init__(self, prev, name, pos):
         self.prev = prev
         self.name = name
@@ -108,14 +113,6 @@ class W_Object(W_BaseObject):
 
     def getclass(self, space):
         return jit.promote(self.map).get_class()
-
-    def add_method(self, space, name, function):
-        klass = self.getclass(space)
-        if not klass.is_singleton:
-            new_klass = space.newclass(klass.name, klass)
-            new_class_node = space.fromcache(MapTransitionCache).get_class_node(new_klass)
-            self.map = self.map.change_class(space, self, new_class_node)
-        self.getclass(space).add_method(space, name, function)
 
     def find_instance_var(self, space, name):
         idx = jit.promote(self.map).find_attr(space, name)

@@ -106,7 +106,7 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         """)
         w_cls = space.getclassfor(W_Object).constants_w["X"]
-        assert w_cls.methods.viewkeys() == {"m", "f"}
+        assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
         w_res = space.execute("""
         class Z < X
@@ -135,7 +135,7 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         """)
         w_cls = space.getclassfor(W_Object).constants_w["X"]
-        assert w_cls.methods.viewkeys() == {"m", "f"}
+        assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
     def test_constant(self, space):
         w_res = space.execute("Abc = 3; return Abc")
@@ -312,6 +312,19 @@ class TestInterpreter(BaseRuPyPyTest):
 
         with self.raises("NoMethodError"):
             space.execute("M.method")
+
+    def test_singleton_method(self, space):
+        w_res = space.execute("""
+        def Array.hello
+            "hello world"
+        end
+
+        return Array.hello
+        """)
+        assert space.str_w(w_res) == "hello world"
+
+        with self.raises("NoMethodError"):
+            space.execute("[].hello")
 
 
 class TestBlocks(object):

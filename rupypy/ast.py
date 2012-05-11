@@ -307,14 +307,19 @@ class Module(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_MODULE)
 
+
 class Function(Node):
-    def __init__(self, name, args, block_arg, body):
+    def __init__(self, parent, name, args, block_arg, body):
+        self.parent = parent
         self.name = name
         self.args = args
         self.block_arg = block_arg
         self.body = body
 
     def locate_symbols(self, symtable):
+        if self.parent is not None:
+            self.parent.locate_symbols(symtable)
+
         body_symtable = SymbolTable()
         symtable.add_subscope(self, body_symtable)
         for arg in self.args:
@@ -351,12 +356,19 @@ class Function(Node):
         arg_names = [a.name for a in self.args]
         bytecode = function_ctx.create_bytecode(self.name, arg_names, defaults, self.block_arg)
 
-        ctx.emit(consts.LOAD_SCOPE)
+        if self.parent is None:
+            ctx.emit(consts.LOAD_SCOPE)
+        else:
+            self.parent.compile(ctx)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_FUNCTION)
-        ctx.emit(consts.DEFINE_FUNCTION)
+        if self.parent is None:
+            ctx.emit(consts.DEFINE_FUNCTION)
+        else:
+            ctx.emit(consts.ATTACH_FUNCTION)
+
 
 class Argument(Node):
     def __init__(self, name, defl=None):
