@@ -39,17 +39,23 @@ class SpaceCache(Cache):
     def _build(self, obj):
         return obj(self.space)
 
+
 class ObjectSpace(object):
     def __init__(self):
         self.transformer = Transformer()
         self.cache = SpaceCache(self)
-        self.w_top_self = self.send(self.getclassfor(W_Object), self.newsymbol("new"))
+        self.w_top_self = self.send(self.getclassfor(W_Object),
+            self.newsymbol("new")
+        )
 
         self.w_true = W_TrueObject()
         self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
-        for cls in [W_Object, W_NoMethodError, W_ZeroDivisionError, W_SyntaxError, W_Random]:
+        for cls in [
+            W_Object, W_NoMethodError, W_ZeroDivisionError, W_SyntaxError,
+            W_Random
+        ]:
             self.add_class(cls)
 
         for module in [Math]:
@@ -70,10 +76,14 @@ class ObjectSpace(object):
 
     def add_module(self, module):
         w_module = module.build_object(self)
-        self.set_const(self.getclassfor(W_Object), module.moduledef.name, w_module)
+        self.set_const(self.getclassfor(W_Object),
+            module.moduledef.name, w_module
+        )
 
     def add_class(self, cls):
-        self.set_const(self.getclassfor(W_Object), cls.classdef.name, self.getclassfor(cls))
+        self.set_const(self.getclassfor(W_Object),
+            cls.classdef.name, self.getclassfor(cls)
+        )
 
     # Methods for dealing with source code.
 
@@ -177,7 +187,6 @@ class ObjectSpace(object):
     def getclassfor(self, cls):
         return self.getclassobject(cls.classdef)
 
-
     def getclassobject(self, classdef):
         return self.fromcache(ClassCache).getorbuild(classdef)
 
@@ -213,8 +222,11 @@ class ObjectSpace(object):
     @jit.unroll_safe
     def invoke_block(self, block, args_w):
         bc = block.bytecode
-        frame = self.create_frame(bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block)
-        if len(args_w) == 1 and isinstance(args_w[0], W_ArrayObject) and len(bc.arg_locs) >= 2:
+        frame = self.create_frame(
+            bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block
+        )
+        if (len(args_w) == 1 and
+            isinstance(args_w[0], W_ArrayObject) and len(bc.arg_locs) >= 2):
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
@@ -226,5 +238,6 @@ class ObjectSpace(object):
         return Interpreter().interpret(self, frame, bc)
 
     def raise_(self, w_type, msg=""):
-        w_exc = self.send(w_type, self.newsymbol("new"), [self.newstr_fromstr(msg)])
+        w_new_sym = self.newsymbol("new")
+        w_exc = self.send(w_type, w_new_sym, [self.newstr_fromstr(msg)])
         raise RubyError(w_exc)
