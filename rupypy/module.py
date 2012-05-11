@@ -1,4 +1,3 @@
-from pypy.rlib import jit
 from pypy.tool.cache import Cache
 
 
@@ -75,13 +74,14 @@ class ClassDef(object):
 class Module(object):
     @classmethod
     def build_object(cls, space):
+        from rupypy.objects.functionobject import W_BuiltinFunction
         from rupypy.objects.moduleobject import W_ModuleObject
 
         w_mod = space.newmodule(cls.moduledef.name)
         singleton_class = space.getsingletonclass(w_mod)
         for name, (method, argspec) in cls.moduledef.singleton_methods.iteritems():
             func = generate_wrapper(name, method, argspec, W_ModuleObject)
-            singleton_class.add_method(space, name, BuiltinFunction(func))
+            singleton_class.add_method(space, name, W_BuiltinFunction(func))
         return w_mod
 
 class ModuleDef(object):
@@ -115,6 +115,7 @@ class ClassCache(Cache):
 
     def _build(self, classdef):
         from rupypy.objects.classobject import W_ClassObject
+        from rupypy.objects.functionobject import W_BuiltinFunction
 
         assert classdef.cls is not None, classdef.name
 
@@ -126,7 +127,7 @@ class ClassCache(Cache):
         w_class = self.space.newclass(classdef.name, superclass)
         for name, (method, argspec) in classdef.methods.iteritems():
             func = generate_wrapper(name, method, argspec, classdef.cls)
-            w_class.add_method(self.space, name, BuiltinFunction(func))
+            w_class.add_method(self.space, name, W_BuiltinFunction(func))
 
         for source in classdef.app_methods:
             self.space.execute(source, w_class)
@@ -135,37 +136,5 @@ class ClassCache(Cache):
             singleton_class = self.space.getsingletonclass(w_class)
             for name, (method, argspec) in classdef.singleton_methods.iteritems():
                 func = generate_wrapper(name, method, argspec, W_ClassObject)
-                singleton_class.add_method(self.space, name, BuiltinFunction(func))
+                singleton_class.add_method(self.space, name, W_BuiltinFunction(func))
         return w_class
-
-class BaseFunction(object):
-    pass
-
-class Function(BaseFunction):
-    _immutable_fields_ = ["bytecode"]
-
-    def __init__(self, name, bytecode):
-        self.name = name
-        self.bytecode = bytecode
-
-    @jit.unroll_safe
-    def call(self, space, w_receiver, args_w, block):
-        from rupypy.interpreter import Interpreter
-
-        frame = space.create_frame(
-            self.bytecode,
-            w_self=w_receiver,
-            w_scope=space.getclass(w_receiver),
-            block=block,
-        )
-        frame.handle_args(space, self.bytecode, args_w, block)
-        return Interpreter().interpret(space, frame, self.bytecode)
-
-class BuiltinFunction(BaseFunction):
-    _immutable_fields_ = ["func"]
-
-    def __init__(self, func):
-        self.func = func
-
-    def call(self, space, w_receiver, args_w, block):
-        return self.func(w_receiver, space, args_w, block)

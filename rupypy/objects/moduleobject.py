@@ -1,10 +1,11 @@
 from pypy.rlib import jit
 
-from rupypy.module import ClassDef, BaseFunction
+from rupypy.module import ClassDef
+from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_BaseObject
 
 
-class AttributeReader(BaseFunction):
+class AttributeReader(W_FunctionObject):
     _immutable_fields_ = ["varname"]
     def __init__(self, varname):
         self.varname = varname
@@ -12,7 +13,7 @@ class AttributeReader(BaseFunction):
     def call(self, space, w_obj, args_w, block):
         return space.find_instance_var(w_obj, self.varname)
 
-class AttributeWriter(BaseFunction):
+class AttributeWriter(W_FunctionObject):
     _immutable_fields_ = ["varname"]
     def __init__(self, varname):
         self.varname = varname

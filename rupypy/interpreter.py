@@ -5,6 +5,7 @@ from rupypy import consts
 from rupypy.error import RubyError
 from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.cellobject import W_CellObject
+from rupypy.objects.functionobject import W_FunctionObject
 
 
 class Frame(object):
@@ -239,6 +240,12 @@ class Interpreter(object):
         w_range = space.newrange(w_start, w_end, True)
         frame.push(w_range)
 
+    def BUILD_FUNCTION(self, space, bytecode, frame, pc):
+        w_code = frame.pop()
+        w_name = frame.pop()
+        w_func = space.newfunction(w_name, w_code)
+        frame.push(w_func)
+
     @jit.unroll_safe
     def BUILD_BLOCK(self, space, bytecode, frame, pc, n_cells):
         from rupypy.objects.blockobject import W_BlockObject
@@ -317,11 +324,11 @@ class Interpreter(object):
             frame.push(w_obj)
 
     def DEFINE_FUNCTION(self, space, bytecode, frame, pc):
-        w_code = frame.pop()
+        w_func = frame.pop()
         w_name = frame.pop()
-        w_self = frame.pop()
-        func = space.newfunction(w_name, w_code)
-        w_self.add_method(space, space.symbol_w(w_name), func)
+        w_scope = frame.pop()
+        assert isinstance(w_func, W_FunctionObject)
+        w_scope.add_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
     @jit.unroll_safe

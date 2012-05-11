@@ -317,33 +317,37 @@ class TestCompiler(object):
 
     def test_def_function(self, space):
         bc = self.assert_compiles(space, "def f() end", """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 2
+        LOAD_CONST 3
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1], """
+        self.assert_compiled(bc.consts_w[2], """
         LOAD_CONST 0
         RETURN
         """)
 
         bc = self.assert_compiles(space, "def f(a, b) a + b end", """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 2
+        LOAD_CONST 3
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1], """
+        self.assert_compiled(bc.consts_w[2], """
         LOAD_LOCAL 0
         LOAD_LOCAL 1
         SEND 0 1
@@ -403,17 +407,19 @@ class TestCompiler(object):
         """)
 
         self.assert_compiled(bc.consts_w[2], """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 2
+        LOAD_CONST 3
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2].consts_w[1], """
+        self.assert_compiled(bc.consts_w[2].consts_w[2], """
         LOAD_CONST 0
         RETURN
         """)
@@ -509,17 +515,19 @@ class TestCompiler(object):
             yield 4, 5
         end
         """, """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 2
+        LOAD_CONST 3
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1], """
+        self.assert_compiled(bc.consts_w[2], """
         YIELD 0
         DISCARD_TOP
         LOAD_CONST 0
@@ -638,23 +646,25 @@ class TestCompiler(object):
 
         sum([], 0)
         """, """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
         LOAD_SELF
         BUILD_ARRAY 0
-        LOAD_CONST 2
-        SEND 3 2
+        LOAD_CONST 3
+        SEND 4 2
         DISCARD_TOP
 
-        LOAD_CONST 4
+        LOAD_CONST 5
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1], """
+        self.assert_compiled(bc.consts_w[2], """
         LOAD_LOCAL 0
         LOAD_CONST 0
         LOAD_CLOSURE 0
@@ -664,7 +674,7 @@ class TestCompiler(object):
         LOAD_DEREF 0
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[1].consts_w[0], """
+        self.assert_compiled(bc.consts_w[2].consts_w[0], """
         LOAD_DEREF 0
         LOAD_LOCAL 0
         SEND 0 1
@@ -896,17 +906,19 @@ class TestCompiler(object):
             [a, b, c]
         end
         """, """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 2
+        LOAD_CONST 3
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1], """
+        self.assert_compiled(bc.consts_w[2], """
         LOAD_LOCAL 0
         LOAD_LOCAL 1
         LOAD_LOCAL 2
@@ -914,11 +926,11 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[1].defaults[0], """
+        self.assert_compiled(bc.consts_w[2].defaults[0], """
         LOAD_CONST 0
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[1].defaults[1], """
+        self.assert_compiled(bc.consts_w[2].defaults[1], """
         LOAD_LOCAL 1
         RETURN
         """)
@@ -1039,17 +1051,19 @@ class TestCompiler(object):
             b
         end
         """, """
-        LOAD_SELF
+        LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 2
+        LOAD_CONST 3
         RETURN
         """)
 
-        w_code = bc.consts_w[1]
+        w_code = bc.consts_w[2]
         assert w_code.locals == ["a", "b"]
         assert w_code.block_arg_pos == 1
         assert w_code.block_arg_loc == w_code.LOCAL

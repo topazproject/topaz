@@ -10,13 +10,14 @@ from rupypy.error import RubyError
 from rupypy.interpreter import Interpreter, Frame
 from rupypy.lexer import LexerError
 from rupypy.lib.random import W_Random
-from rupypy.module import ClassCache, Function
+from rupypy.module import ClassCache
 from rupypy.modules.math import Math
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.floatobject import W_FloatObject
+from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError)
 from rupypy.objects.intobject import W_IntObject
@@ -48,7 +49,7 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject()
         self.w_nil = W_NilObject()
 
-        for cls in [W_NoMethodError, W_ZeroDivisionError, W_SyntaxError, W_Random]:
+        for cls in [W_Object, W_NoMethodError, W_ZeroDivisionError, W_SyntaxError, W_Random]:
             self.add_class(cls)
 
         for module in [Math]:
@@ -141,7 +142,7 @@ class ObjectSpace(object):
     def newfunction(self, w_name, w_code):
         name = self.symbol_w(w_name)
         assert isinstance(w_code, W_CodeObject)
-        return Function(name, w_code)
+        return W_UserFunction(name, w_code)
 
     def newproc(self, block):
         return W_ProcObject(block)

@@ -351,9 +351,11 @@ class Function(Node):
         arg_names = [a.name for a in self.args]
         bytecode = function_ctx.create_bytecode(self.name, arg_names, defaults, self.block_arg)
 
-        ctx.emit(consts.LOAD_SELF)
+        ctx.emit(consts.LOAD_SCOPE)
+        ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+        ctx.emit(consts.BUILD_FUNCTION)
         ctx.emit(consts.DEFINE_FUNCTION)
 
 class Argument(Node):

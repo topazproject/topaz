@@ -30,6 +30,7 @@ BYTECODES = [
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
     ("BUILD_RANGE", 0, -1),
     ("BUILD_RANGE_INCLUSIVE", 0, -1),
+    ("BUILD_FUNCTION", 0, -1),
     ("BUILD_BLOCK", 1, BLOCK_EFFECT),
     ("BUILD_CLASS", 0, -3),
     ("BUILD_MODULE", 0, -2),

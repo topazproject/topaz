@@ -75,6 +75,8 @@ class TestInterpreter(BaseRuPyPyTest):
         return f 1, 2
         """)
         assert space.int_w(w_res) == 3
+        w_res = space.execute("return Object.f(5, -2)")
+        assert space.int_w(w_res) == 3
 
     def test_interpter(self, space):
         w_res = space.execute('return "abc"')
