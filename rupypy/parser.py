@@ -54,6 +54,7 @@ class Transformer(object):
             send.args,
             block_args,
             block,
+            node.getsourcepos().lineno
         )
 
     def visit_expr(self, node):
@@ -71,9 +72,9 @@ class Transformer(object):
 
     def visit_yield(self, node):
         args = []
-        if node.children:
-            args = self.visit_send_args(node)
-        return ast.Yield(args)
+        if len(node.children) == 2:
+            args = self.visit_send_args(node.children[1])
+        return ast.Yield(args, node.children[0].getsourcepos().lineno)
 
     def visit_arg(self, node):
         if node.symbol == "arg":
@@ -101,12 +102,14 @@ class Transformer(object):
             node.children[1].additional_info,
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
+            node.getsourcepos().lineno,
         )
 
     def visit_unaryop(self, node):
         return ast.UnaryOp(
             node.children[0].additional_info,
             self.visit_arg(node.children[1]),
+            node.getsourcepos().lineno
         )
 
     def visit_range(self, node):
@@ -128,22 +131,23 @@ class Transformer(object):
                 node = node.children[0]
                 block_args, block = self.visit_braces_block(node.children[1])
                 return ast.SendBlock(
-                    ast.Self(),
+                    ast.Self(node.getsourcepos().lineno),
                     node.children[0].additional_info,
                     [],
                     block_args,
                     block,
+                    node.getsourcepos().lineno
                 )
-            target = ast.Self()
+            target = ast.Self(node.getsourcepos().lineno)
             name = node.children[0].additional_info
-            args = self.visit_send_args(node.children[1])
+            args = self.visit_send_args(node.children[1].children[0])
             if len(node.children) == 3:
                 block_args, block = self.visit_braces_block(node.children[2])
                 return ast.SendBlock(
-                    target, name, args, block_args, block
+                    target, name, args, block_args, block, node.getsourcepos().lineno
                 )
             else:
-                return ast.Send(target, name, args)
+                return ast.Send(target, name, args, node.getsourcepos().lineno)
 
         target = self.visit_primary(node.children[0])
         for trailer in node.children[1].children:
@@ -156,11 +160,11 @@ class Transformer(object):
                     elif node.children[1].symbol == "block":
                         block_args, block = self.visit_braces_block(node.children[1])
                         target = ast.SendBlock(
-                            target, method, [], block_args, block
+                            target, method, [], block_args, block, node.getsourcepos().lineno
                         )
                         continue
                     else:
-                        args = self.visit_send_args(node.children[1])
+                        args = self.visit_send_args(node.children[1].children[0])
                 elif node.symbol == "subscript":
                     args = [self.visit_arg(node.children[0])]
                     method = "[]"
@@ -169,22 +173,23 @@ class Transformer(object):
                 if len(node.children) == 3:
                     block_args, block = self.visit_braces_block(node.children[2])
                     target = ast.SendBlock(
-                        target, method, args, block_args, block
+                        target, method, args, block_args, block, node.getsourcepos().lineno
                     )
                 else:
                     target = ast.Send(
                         target,
                         method,
                         args,
+                        node.getsourcepos().lineno
                     )
             elif node.symbol == "constant":
-                target = ast.LookupConstant(target, node.children[1].additional_info)
+                target = ast.LookupConstant(target, node.children[1].additional_info, node.getsourcepos().lineno)
             else:
                 raise NotImplementedError
         return target
 
     def visit_send_args(self, node):
-        return [self.visit_arg(n) for n in node.children[0].children]
+        return [self.visit_arg(n) for n in node.children]
 
     def visit_braces_block(self, node):
         block_args = []
@@ -243,7 +248,7 @@ class Transformer(object):
 
     def visit_varname(self, node):
         if len(node.children) == 1:
-            return ast.Variable(node.children[0].additional_info)
+            return ast.Variable(node.children[0].additional_info, node.children[0].getsourcepos().lineno)
         else:
             return ast.InstanceVariable(node.children[1].additional_info)
 
@@ -273,7 +278,7 @@ class Transformer(object):
             parent = None
             name = name_node.children[0].additional_info
         else:
-            parent = ast.Variable(name_node.children[0].additional_info)
+            parent = ast.Variable(name_node.children[0].additional_info, name_node.getsourcepos().lineno)
             name = name_node.children[1].additional_info
         args, block_arg = self.visit_argdecl(node.children[2])
         return ast.Function(
@@ -288,7 +293,7 @@ class Transformer(object):
         superclass = None
         block_start_idx = 2
         if node.children[2].symbol == "LT":
-            superclass = ast.Variable(node.children[3].additional_info)
+            superclass = ast.Variable(node.children[3].additional_info, node.children[3].getsourcepos().lineno)
             block_start_idx += 2
         return ast.Class(
             node.children[1].additional_info,
@@ -325,7 +330,7 @@ class Transformer(object):
         exception = None
         idx = 1
         if node.children[1].symbol == "IDENTIFIER":
-            exception = ast.Variable(node.children[1].additional_info)
+            exception = ast.Variable(node.children[1].additional_info, node.children[1].getsourcepos().lineno)
             idx += 1
         name = None
         if node.children[idx].symbol == "ARROW":

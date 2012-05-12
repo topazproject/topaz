@@ -3,8 +3,8 @@ from rupypy.objects.boolobject import W_TrueObject
 
 
 class TestCompiler(object):
-    def assert_compiles(self, space, source, expected_bytecode_str):
-        bc = space.compile(source, None)
+    def assert_compiles(self, ec, source, expected_bytecode_str):
+        bc = ec.space.compile(ec, source, None)
         self.assert_compiled(bc, expected_bytecode_str)
         return bc
 
@@ -33,30 +33,30 @@ class TestCompiler(object):
         actual = self.get_lines(bc)
         assert actual == expected
 
-    def test_int_constant(self, space):
-        bc = self.assert_compiles(space, "1", """
+    def test_int_constant(self, ec):
+        bc = self.assert_compiles(ec, "1", """
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 1
         RETURN
         """)
         [c1, c2] = bc.consts_w
-        assert space.int_w(c1) == 1
+        assert ec.space.int_w(c1) == 1
         assert isinstance(c2, W_TrueObject)
         assert bc.max_stackdepth == 1
 
-    def test_float_constant(self, space):
-        bc = self.assert_compiles(space, "1.2", """
+    def test_float_constant(self, ec):
+        bc = self.assert_compiles(ec, "1.2", """
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 1
         RETURN
         """)
         [c1, c2] = bc.consts_w
-        assert space.float_w(c1) == 1.2
+        assert ec.space.float_w(c1) == 1.2
 
-    def test_addition(self, space):
-        bc = self.assert_compiles(space, "1 + 2", """
+    def test_addition(self, ec):
+        bc = self.assert_compiles(ec, "1 + 2", """
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
@@ -67,8 +67,8 @@ class TestCompiler(object):
         assert bc.max_stackdepth == 2
         assert bc.consts_w[2].symbol == "+"
 
-    def test_multi_term_expr(self, space):
-        self.assert_compiles(space, "1 + 2 * 3", """
+    def test_multi_term_expr(self, ec):
+        self.assert_compiles(ec, "1 + 2 * 3", """
         LOAD_CONST 0
         LOAD_CONST 1
         LOAD_CONST 2
@@ -79,8 +79,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_multiple_statements(self, space):
-        self.assert_compiles(space, "1; 2; 3", """
+    def test_multiple_statements(self, ec):
+        self.assert_compiles(ec, "1; 2; 3", """
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 1
@@ -91,8 +91,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_send(self, space):
-        self.assert_compiles(space, "puts 1", """
+    def test_send(self, ec):
+        self.assert_compiles(ec, "puts 1", """
         LOAD_SELF
         LOAD_CONST 0
         SEND 1 1
@@ -100,7 +100,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        self.assert_compiles(space, "puts 1, 2, 3", """
+        self.assert_compiles(ec, "puts 1, 2, 3", """
         LOAD_SELF
         LOAD_CONST 0
         LOAD_CONST 1
@@ -111,15 +111,15 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_assignment(self, space):
-        self.assert_compiles(space, "a = 3", """
+    def test_assignment(self, ec):
+        self.assert_compiles(ec, "a = 3", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
         LOAD_CONST 1
         RETURN
         """)
-        bc = self.assert_compiles(space, "a = 3; a = 4", """
+        bc = self.assert_compiles(ec, "a = 3; a = 4", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
@@ -131,8 +131,8 @@ class TestCompiler(object):
         """)
         assert bc.locals == ["a"]
 
-    def test_load_var(self, space):
-        bc = self.assert_compiles(space, "a", """
+    def test_load_var(self, ec):
+        bc = self.assert_compiles(ec, "a", """
         LOAD_SELF
         SEND 0 0
         DISCARD_TOP
@@ -140,7 +140,7 @@ class TestCompiler(object):
         RETURN
         """)
         assert bc.locals == []
-        bc = self.assert_compiles(space, "a = 3; a", """
+        bc = self.assert_compiles(ec, "a = 3; a", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
@@ -151,8 +151,8 @@ class TestCompiler(object):
         """)
         assert bc.locals == ["a"]
 
-    def test_if(self, space):
-        self.assert_compiles(space, "if 3 then puts 2 end", """
+    def test_if(self, ec):
+        self.assert_compiles(ec, "if 3 then puts 2 end", """
         LOAD_CONST 0
         JUMP_IF_FALSE 12
         LOAD_SELF
@@ -166,7 +166,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiles(space, "x = if 3 then 2 end", """
+        self.assert_compiles(ec, "x = if 3 then 2 end", """
         LOAD_CONST 0
         JUMP_IF_FALSE 8
         LOAD_CONST 1
@@ -179,7 +179,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiles(space, "x = if 3; end", """
+        self.assert_compiles(ec, "x = if 3; end", """
         LOAD_CONST 0
         JUMP_IF_FALSE 8
         LOAD_CONST 1
@@ -192,8 +192,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_unless(self, space):
-        self.assert_compiles(space, "unless 1 == 2 then puts 5 end", """
+    def test_unless(self, ec):
+        self.assert_compiles(ec, "unless 1 == 2 then puts 5 end", """
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
@@ -209,8 +209,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_named_constants(self, space):
-        bc = self.assert_compiles(space, "false; true; nil;", """
+    def test_named_constants(self, ec):
+        bc = self.assert_compiles(ec, "false; true; nil;", """
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 1
@@ -221,10 +221,10 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
-        assert bc.consts_w == [space.w_false, space.w_true, space.w_nil]
+        assert bc.consts_w == [ec.space.w_false, ec.space.w_true, ec.space.w_nil]
 
-    def test_comparison(self, space):
-        self.assert_compiles(space, "1 == 1", """
+    def test_comparison(self, ec):
+        self.assert_compiles(ec, "1 == 1", """
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
@@ -234,8 +234,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_while(self, space):
-        self.assert_compiles(space, "while true do end", """
+    def test_while(self, ec):
+        self.assert_compiles(ec, "while true do end", """
         LOAD_CONST 0
         JUMP_IF_FALSE 9
         LOAD_CONST 1
@@ -248,7 +248,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiles(space, "while true do puts 5 end", """
+        self.assert_compiles(ec, "while true do puts 5 end", """
         LOAD_CONST 0
         JUMP_IF_FALSE 13
         LOAD_SELF
@@ -263,8 +263,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_return(self, space):
-        self.assert_compiles(space, "return 4", """
+    def test_return(self, ec):
+        self.assert_compiles(ec, "return 4", """
         LOAD_CONST 0
         RETURN
         DISCARD_TOP # this is unreachable
@@ -273,8 +273,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_array(self, space):
-        bc = self.assert_compiles(space, "[[1], [2], [3]]", """
+    def test_array(self, ec):
+        bc = self.assert_compiles(ec, "[[1], [2], [3]]", """
         LOAD_CONST 0
         BUILD_ARRAY 1
         LOAD_CONST 1
@@ -289,8 +289,8 @@ class TestCompiler(object):
         """)
         assert bc.max_stackdepth == 3
 
-    def test_subscript(self, space):
-        self.assert_compiles(space, "[1][0]", """
+    def test_subscript(self, ec):
+        self.assert_compiles(ec, "[1][0]", """
         LOAD_CONST 0
         BUILD_ARRAY 1
         LOAD_CONST 1
@@ -301,7 +301,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiles(space, "i = 0; self[i].to_s", """
+        self.assert_compiles(ec, "i = 0; self[i].to_s", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
@@ -315,8 +315,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_def_function(self, space):
-        bc = self.assert_compiles(space, "def f() end", """
+    def test_def_function(self, ec):
+        bc = self.assert_compiles(ec, "def f() end", """
         LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
@@ -334,7 +334,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, "def f(a, b) a + b end", """
+        bc = self.assert_compiles(ec, "def f(a, b) a + b end", """
         LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
@@ -354,8 +354,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_string(self, space):
-        self.assert_compiles(space, '"abc"', """
+    def test_string(self, ec):
+        self.assert_compiles(ec, '"abc"', """
         LOAD_CONST 0
         COPY_STRING
         DISCARD_TOP
@@ -364,8 +364,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_class(self, space):
-        bc = self.assert_compiles(space, """
+    def test_class(self, ec):
+        bc = self.assert_compiles(ec, """
         class X
         end
         """, """
@@ -387,7 +387,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, """
+        bc = self.assert_compiles(ec, """
         class X
             def m
                 2
@@ -423,7 +423,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, """
+        bc = self.assert_compiles(ec, """
         class X < Object
         end
         """, """
@@ -439,8 +439,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_constants(self, space):
-        self.assert_compiles(space, "Abc", """
+    def test_constants(self, ec):
+        self.assert_compiles(ec, "Abc", """
         LOAD_SCOPE
         LOAD_CONSTANT 0
         DISCARD_TOP
@@ -449,7 +449,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiles(space, "Abc = 5", """
+        self.assert_compiles(ec, "Abc = 5", """
         LOAD_CONST 0
         STORE_CONSTANT 1
         DISCARD_TOP
@@ -458,8 +458,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_self(self, space):
-        self.assert_compiles(space, "return self", """
+    def test_self(self, ec):
+        self.assert_compiles(ec, "return self", """
         LOAD_SELF
         RETURN
         DISCARD_TOP
@@ -468,8 +468,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_instance_variable(self, space):
-        self.assert_compiles(space, "@a = @b", """
+    def test_instance_variable(self, ec):
+        self.assert_compiles(ec, "@a = @b", """
         LOAD_SELF
         LOAD_INSTANCE_VAR 0
         LOAD_SELF
@@ -480,8 +480,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_send_block(self, space):
-        bc = self.assert_compiles(space, """
+    def test_send_block(self, ec):
+        bc = self.assert_compiles(ec, """
         [1, 2, 3].map do |x|
             x * 2
         end
@@ -506,8 +506,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_yield(self, space):
-        bc = self.assert_compiles(space, """
+    def test_yield(self, ec):
+        bc = self.assert_compiles(ec, """
         def f
             yield
             yield 4
@@ -538,8 +538,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_constant_symbol(self, space):
-        bc = self.assert_compiles(space, ":abc", """
+    def test_constant_symbol(self, ec):
+        bc = self.assert_compiles(ec, ":abc", """
         LOAD_CONST 0
         DISCARD_TOP
 
@@ -547,10 +547,10 @@ class TestCompiler(object):
         RETURN
         """)
         [c1, c2] = bc.consts_w
-        assert space.symbol_w(c1) == "abc"
+        assert ec.space.symbol_w(c1) == "abc"
 
-    def test_range(self, space):
-        self.assert_compiles(space, "1..10", """
+    def test_range(self, ec):
+        self.assert_compiles(ec, "1..10", """
         LOAD_CONST 0
         LOAD_CONST 1
         BUILD_RANGE
@@ -559,7 +559,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        self.assert_compiles(space, "1...10", """
+        self.assert_compiles(ec, "1...10", """
         LOAD_CONST 0
         LOAD_CONST 1
         BUILD_RANGE_INCLUSIVE
@@ -569,8 +569,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_block_scope(self, space):
-        bc = self.assert_compiles(space, """
+    def test_block_scope(self, ec):
+        bc = self.assert_compiles(ec, """
         x = 5
         [].each do
             x
@@ -596,7 +596,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, """
+        bc = self.assert_compiles(ec, """
         x = nil
         [].each do |y|
             x = y
@@ -622,8 +622,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_method_assignment(self, space):
-        bc = self.assert_compiles(space, "self.abc = 3", """
+    def test_method_assignment(self, ec):
+        bc = self.assert_compiles(ec, "self.abc = 3", """
         LOAD_SELF
         LOAD_CONST 0
         SEND 1 1
@@ -632,10 +632,10 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        assert space.symbol_w(bc.consts_w[1]) == "abc="
+        assert ec.space.symbol_w(bc.consts_w[1]) == "abc="
 
-    def test_parameter_is_cell(self, space):
-        bc = self.assert_compiles(space, """
+    def test_parameter_is_cell(self, ec):
+        bc = self.assert_compiles(ec, """
         def sum(arr, start)
             arr.each do |x|
                 start = start + x
@@ -681,8 +681,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_augmented_assignment(self, space):
-        self.assert_compiles(space, "i = 0; i += 1", """
+    def test_augmented_assignment(self, ec):
+        self.assert_compiles(ec, "i = 0; i += 1", """
         LOAD_CONST 0
         STORE_LOCAL 0
         DISCARD_TOP
@@ -697,7 +697,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, "self.x.y += 1", """
+        bc = self.assert_compiles(ec, "self.x.y += 1", """
         LOAD_SELF
         SEND 0 0
         DUP_TOP
@@ -710,12 +710,12 @@ class TestCompiler(object):
         LOAD_CONST 5
         RETURN
         """)
-        assert space.symbol_w(bc.consts_w[0]) == "x"
-        assert space.symbol_w(bc.consts_w[1]) == "y"
-        assert space.symbol_w(bc.consts_w[3]) == "+"
-        assert space.symbol_w(bc.consts_w[4]) == "y="
+        assert ec.space.symbol_w(bc.consts_w[0]) == "x"
+        assert ec.space.symbol_w(bc.consts_w[1]) == "y"
+        assert ec.space.symbol_w(bc.consts_w[3]) == "+"
+        assert ec.space.symbol_w(bc.consts_w[4]) == "y="
 
-        self.assert_compiles(space, "@a += 2", """
+        self.assert_compiles(ec, "@a += 2", """
         LOAD_SELF
         LOAD_INSTANCE_VAR 0
         LOAD_CONST 1
@@ -728,8 +728,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_multiple_cells(self, space):
-        bc = self.assert_compiles(space, """
+    def test_multiple_cells(self, ec):
+        bc = self.assert_compiles(ec, """
         i = 0
         j = 0
         k = 0
@@ -773,8 +773,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_nested_block(self, space):
-        bc = self.assert_compiles(space, """
+    def test_nested_block(self, ec):
+        bc = self.assert_compiles(ec, """
         sums = []
         [].each do |x|
             [].each do |y|
@@ -822,8 +822,8 @@ class TestCompiler(object):
         assert bc.consts_w[0].consts_w[0].freevars == ["sums", "x"]
         assert bc.consts_w[0].consts_w[0].cellvars == []
 
-    def test_unary_op(self, space):
-        bc = self.assert_compiles(space, "(-a)", """
+    def test_unary_op(self, ec):
+        bc = self.assert_compiles(ec, "(-a)", """
         LOAD_SELF
         SEND 0 0
         SEND 1 0
@@ -833,10 +833,10 @@ class TestCompiler(object):
         RETURN
         """)
         [_, sym, _] = bc.consts_w
-        assert space.symbol_w(sym) == "-@"
+        assert ec.space.symbol_w(sym) == "-@"
 
-    def test_assignment_in_block_closure(self, space):
-        bc = self.assert_compiles(space, """
+    def test_assignment_in_block_closure(self, ec):
+        bc = self.assert_compiles(ec, """
         [].each do
             x = 3
             [].each do
@@ -869,8 +869,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_lookup_constant(self, space):
-        self.assert_compiles(space, "Module::Constant", """
+    def test_lookup_constant(self, ec):
+        self.assert_compiles(ec, "Module::Constant", """
         LOAD_SCOPE
         LOAD_CONSTANT 0
         LOAD_CONSTANT 1
@@ -879,7 +879,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        self.assert_compiles(space, "Module::constant", """
+        self.assert_compiles(ec, "Module::constant", """
         LOAD_SCOPE
         LOAD_CONSTANT 0
         SEND 1 0
@@ -889,8 +889,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test___FILE__(self, space):
-        self.assert_compiles(space, "__FILE__", """
+    def test___FILE__(self, ec):
+        self.assert_compiles(ec, "__FILE__", """
         LOAD_CODE
         SEND 0 0
         DISCARD_TOP
@@ -899,8 +899,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_default_argument(self, space):
-        bc = self.assert_compiles(space, """
+    def test_default_argument(self, ec):
+        bc = self.assert_compiles(ec, """
         def f(a, b=3, c=b)
             [a, b, c]
         end
@@ -934,8 +934,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_exceptions(self, space):
-        self.assert_compiles(space, """
+    def test_exceptions(self, ec):
+        self.assert_compiles(ec, """
         begin
             1 / 0
         rescue ZeroDivisionError
@@ -965,7 +965,7 @@ class TestCompiler(object):
         LOAD_CONST 6
         RETURN
         """)
-        self.assert_compiles(space, """
+        self.assert_compiles(ec, """
         begin
             1 / 0
         rescue ZeroDivisionError => e
@@ -996,7 +996,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiles(space, """
+        self.assert_compiles(ec, """
         begin
             1 / 0
         rescue
@@ -1019,7 +1019,7 @@ class TestCompiler(object):
         LOAD_CONST 4
         RETURN
         """)
-        self.assert_compiles(space, """
+        self.assert_compiles(ec, """
         begin
             1 / 0
         ensure
@@ -1044,8 +1044,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_block_argument(self, space):
-        bc = self.assert_compiles(space, """
+    def test_block_argument(self, ec):
+        bc = self.assert_compiles(ec, """
         def f(a, &b)
             b
         end
@@ -1067,8 +1067,8 @@ class TestCompiler(object):
         assert w_code.block_arg_pos == 1
         assert w_code.block_arg_loc == w_code.LOCAL
 
-    def test_module(self, space):
-        bc = self.assert_compiles(space, """
+    def test_module(self, ec):
+        bc = self.assert_compiles(ec, """
         module M
         end
         """, """
@@ -1089,8 +1089,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_splat_send(self, space):
-        self.assert_compiles(space, """
+    def test_splat_send(self, ec):
+        self.assert_compiles(ec, """
         puts *1, 2, 3, *x
         """, """
         LOAD_SELF
@@ -1113,8 +1113,8 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_singleton_method(self, space):
-        self.assert_compiles(space, """
+    def test_singleton_method(self, ec):
+        self.assert_compiles(ec, """
         def Array.hello
             "hello world"
         end

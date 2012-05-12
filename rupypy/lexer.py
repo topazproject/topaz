@@ -2,7 +2,6 @@ import sys
 
 from pypy.rlib.objectmodel import we_are_translated
 from pypy.rlib.parsing.lexer import Token, SourcePos
-from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.unroll import unrolling_iterable
 
 
@@ -38,9 +37,11 @@ TOKENS = unrolling_iterable([
 for token in TOKENS:
     setattr(sys.modules[__name__], token, token)
 
+
 class LexerError(Exception):
     def __init__(self, pos):
         self.pos = pos
+
 
 class Lexer(object):
     keywords = {
@@ -65,7 +66,7 @@ class Lexer(object):
         self.current_value = []
         self.tokens = []
         self.idx = 0
-        self.lineno = 0
+        self.lineno = 1
         self.columno = 0
 
     def current_pos(self):

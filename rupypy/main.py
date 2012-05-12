@@ -2,12 +2,16 @@
 
 from __future__ import absolute_import
 
+import os
 import sys
 
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.streamio import open_file_as_stream
 
+from rupypy.error import RubyError
+from rupypy.executioncontext import ExecutionContext
 from rupypy.objspace import ObjectSpace
+from rupypy.utils import format_traceback
 
 
 @specialize.memo()
@@ -27,7 +31,14 @@ def entry_point(argv):
         f.close()
 
     space = getspace()
-    space.execute(source, filepath=argv[1])
+    ec = ExecutionContext(space)
+    try:
+        space.execute(ec, source, filepath=argv[1])
+    except RubyError as e:
+        lines = format_traceback(space, e.w_value)
+        for line in lines:
+            os.write(2, line)
+        return 1
     return 0
 
 if __name__ == "__main__":

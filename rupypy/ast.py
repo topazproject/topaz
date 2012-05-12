@@ -7,7 +7,10 @@ from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
 
 
 class Node(object):
-    _attrs_ = []
+    _attrs_ = ["lineno"]
+
+    def __init__(self, lineno):
+        self.lineno = lineno
 
     def __eq__(self, other):
         if not isinstance(other, Node):
@@ -39,10 +42,11 @@ class Main(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_true))
         ctx.emit(consts.RETURN)
 
+
 class Block(Node):
     def __init__(self, stmts):
         if not stmts:
-            stmts = [Statement(Variable("nil"))]
+            stmts = [Statement(Variable("nil", -1))]
         # The last item shouldn't be popped.
         stmts[-1].dont_pop = True
 
@@ -72,8 +76,10 @@ class Statement(BaseStatement):
         if not self.dont_pop:
             ctx.emit(consts.DISCARD_TOP)
 
+
 class Assignment(Node):
-    def __init__(self, oper, target, value):
+    def __init__(self, oper, target, value, lineno):
+        Node.__init__(self, lineno)
         self.oper = oper
         self.target = target
         self.value = value
@@ -85,7 +91,7 @@ class Assignment(Node):
 
     def compile(self, ctx):
         if self.oper != "=":
-            Variable(self.target).compile(ctx)
+            Variable(self.target, self.lineno).compile(ctx)
         self.value.compile(ctx)
         if self.oper != "=":
             ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
@@ -274,15 +280,16 @@ class Class(Node):
         else:
             self.superclass.compile(ctx)
 
-        body_ctx = ctx.get_subctx(self)
+        body_ctx = ctx.get_subctx(self.name, self)
         self.body.compile(body_ctx)
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode(self.name, [], [], None)
+        bytecode = body_ctx.create_bytecode([], [], None)
 
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_CLASS)
+
 
 class Module(Node):
     def __init__(self, name, body):
@@ -295,12 +302,12 @@ class Module(Node):
         self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
-        body_ctx = ctx.get_subctx(self)
+        body_ctx = ctx.get_subctx(self.name, self)
         self.body.compile(body_ctx)
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode(self.name, [], [], None)
+        bytecode = body_ctx.create_bytecode([], [], None)
 
         ctx.emit(consts.LOAD_SCOPE)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
@@ -331,7 +338,7 @@ class Function(Node):
         self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
-        function_ctx = ctx.get_subctx(self)
+        function_ctx = ctx.get_subctx(self.name, self)
         defaults = []
         for arg in self.args:
             if function_ctx.symtable.is_local(arg.name):
@@ -339,11 +346,11 @@ class Function(Node):
             elif function_ctx.symtable.is_cell(arg.name):
                 function_ctx.symtable.get_cell_num(arg.name)
 
-            arg_ctx = CompilerContext(ctx.space, function_ctx.symtable, ctx.filepath)
+            arg_ctx = CompilerContext(ctx.space, self.name, function_ctx.symtable, ctx.filepath)
             if arg.defl is not None:
                 arg.defl.compile(arg_ctx)
                 arg_ctx.emit(consts.RETURN)
-                bc = arg_ctx.create_bytecode(self.name + ":" + arg.name, [], [], None)
+                bc = arg_ctx.create_bytecode([], [], None)
                 defaults.append(bc)
         if self.block_arg is not None:
             if function_ctx.symtable.is_local(self.block_arg):
@@ -354,7 +361,7 @@ class Function(Node):
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
         arg_names = [a.name for a in self.args]
-        bytecode = function_ctx.create_bytecode(self.name, arg_names, defaults, self.block_arg)
+        bytecode = function_ctx.create_bytecode(arg_names, defaults, self.block_arg)
 
         if self.parent is None:
             ctx.emit(consts.LOAD_SCOPE)
@@ -386,8 +393,10 @@ class Return(BaseStatement):
         self.expr.compile(ctx)
         ctx.emit(consts.RETURN)
 
+
 class Yield(Node):
-    def __init__(self, args):
+    def __init__(self, args, lineno):
+        Node.__init__(self, lineno)
         self.args = args
 
     def locate_symbols(self, symtable):
@@ -397,10 +406,13 @@ class Yield(Node):
     def compile(self, ctx):
         for arg in self.args:
             arg.compile(ctx)
+        ctx.current_lineno = self.lineno
         ctx.emit(consts.YIELD, len(self.args))
 
+
 class BinOp(Node):
-    def __init__(self, op, left, right):
+    def __init__(self, op, left, right, lineno):
+        Node.__init__(self, lineno)
         self.op = op
         self.left = left
         self.right = right
@@ -410,10 +422,12 @@ class BinOp(Node):
         self.right.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.left, self.op, [self.right]).compile(ctx)
+        Send(self.left, self.op, [self.right], self.lineno).compile(ctx)
+
 
 class UnaryOp(Node):
-    def __init__(self, op, value):
+    def __init__(self, op, value, lineno):
+        Node.__init__(self, lineno)
         self.op = op
         self.value = value
 
@@ -421,13 +435,15 @@ class UnaryOp(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.value, self.op + "@", []).compile(ctx)
+        Send(self.value, self.op + "@", [], self.lineno).compile(ctx)
+
 
 class Send(Node):
-    def __init__(self, receiver, method, args):
+    def __init__(self, receiver, method, args, lineno):
         self.receiver = receiver
         self.method = method
         self.args = args
+        self.lineno = lineno
 
     def convert_to_assignment(self, transformer, node, oper, value):
         # XXX: this will allow self.foo() = 3; which it shouldn't.
@@ -450,10 +466,12 @@ class Send(Node):
                     ctx.emit(consts.BUILD_ARRAY, 1)
             for i in range(len(self.args) - 1):
                 ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+            ctx.current_lineno = self.lineno
             ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const(self.method))
         else:
             for arg in self.args:
                 arg.compile(ctx)
+            ctx.current_lineno = self.lineno
             ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), len(self.args))
 
     def is_splat(self):
@@ -464,7 +482,8 @@ class Send(Node):
 
 
 class SendBlock(Node):
-    def __init__(self, receiver, method, args, block_args, block):
+    def __init__(self, receiver, method, args, block_args, block, lineno):
+        Node.__init__(self, lineno)
         self.receiver = receiver
         self.method = method
         self.args = args
@@ -487,7 +506,7 @@ class SendBlock(Node):
         for arg in self.args:
             arg.compile(ctx)
 
-        block_ctx = ctx.get_subctx(self)
+        block_ctx = ctx.get_subctx("block in %s" % ctx.code_name, self)
         for name, kind in block_ctx.symtable.cells.iteritems():
             if kind == block_ctx.symtable.CELLVAR:
                 block_ctx.symtable.get_cell_num(name)
@@ -501,9 +520,10 @@ class SendBlock(Node):
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
         block_args = [a.name for a in self.block_args]
-        bc = block_ctx.create_bytecode("<block>", block_args, [], None)
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
+        bc = block_ctx.create_bytecode(block_args, [], None)
 
+        ctx.current_lineno = self.lineno
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)
         for name, pos in block_ctx.symtable.cell_numbers.iteritems():
@@ -518,6 +538,7 @@ class SendBlock(Node):
         ctx.emit(consts.BUILD_BLOCK, num_cells)
         ctx.emit(consts.SEND_BLOCK, ctx.create_symbol_const(self.method), len(self.args) + 1)
 
+
 class Splat(Node):
     def __init__(self, value):
         self.value = value
@@ -528,8 +549,10 @@ class Splat(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
 
+
 class LookupConstant(Node):
-    def __init__(self, value, name):
+    def __init__(self, value, name, lineno):
+        Node.__init__(self, lineno)
         self.value = value
         self.name = name
 
@@ -541,7 +564,8 @@ class LookupConstant(Node):
             self.value.compile(ctx)
             ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
-            Send(self.value, self.name, []).compile(ctx)
+            Send(self.value, self.name, [], self.lineno).compile(ctx)
+
 
 class Self(Node):
     def locate_symbols(self, symtable):
@@ -550,14 +574,16 @@ class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
 
+
 class Variable(Node):
-    def __init__(self, name):
+    def __init__(self, name, lineno):
+        Node.__init__(self, lineno)
         self.name = name
 
     def convert_to_assignment(self, transormer, node, oper, value):
         if self.name == "__FILE__" or "?" in self.name:
             transormer.error(node)
-        return Assignment(oper, self.name, value)
+        return Assignment(oper, self.name, value, node.getsourcepos().lineno)
 
     def locate_symbols(self, symtable):
         if (self.name not in ["true", "false", "nil", "self"] and
@@ -585,7 +611,8 @@ class Variable(Node):
             ctx.emit(consts.LOAD_SCOPE)
             ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
-            Send(Self(), self.name, []).compile(ctx)
+            Send(Self(self.lineno), self.name, [], self.lineno).compile(ctx)
+
 
 class InstanceVariable(Node):
     def __init__(self, name):

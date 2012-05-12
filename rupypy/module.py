@@ -1,9 +1,11 @@
 from pypy.tool.cache import Cache
 
+from rupypy.executioncontext import ExecutionContext
+
 
 def generate_wrapper(name, orig_func, argspec, self_cls):
     source = []
-    source.append("def %s(self, space, args_w, block):" % orig_func.__name__)
+    source.append("def %s(self, ec, args_w, block):" % orig_func.__name__)
     source.append("    args = ()")
     code = orig_func.__code__
     arg_count = 0
@@ -11,13 +13,13 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
         if argname in argspec:
             spec = argspec[argname]
             if spec is int:
-                source.append("    args += (space.int_w(args_w[%d]),)" % arg_count)
+                source.append("    args += (ec.space.int_w(args_w[%d]),)" % arg_count)
             elif spec is str:
-                source.append("    args += (space.str_w(args_w[%d]),)" % arg_count)
+                source.append("    args += (ec.space.str_w(args_w[%d]),)" % arg_count)
             elif spec == "float":
-                source.append("    args += (space.float_w(space.send(args_w[%d], space.newsymbol('to_f'))),)" % arg_count)
+                source.append("    args += (ec.space.float_w(ec.space.send(ec, args_w[%d], ec.space.newsymbol('to_f'))),)" % arg_count)
             elif spec == "symbol":
-                source.append("    args += (space.symbol_w(args_w[%d]),)" % arg_count)
+                source.append("    args += (ec.space.symbol_w(args_w[%d]),)" % arg_count)
             else:
                 raise NotImplementedError(spec)
             arg_count += 1
@@ -30,9 +32,13 @@ def generate_wrapper(name, orig_func, argspec, self_cls):
             source.append("    args += (args_w,)")
         elif argname == "block":
             source.append("    args += (block,)")
-        elif argname != "space":
+        elif argname == "space":
+            source.append("    args += (ec.space,)")
+        elif argname == "ec":
+            source.append("    args += (ec,)")
+        else:
             raise NotImplementedError(argname)
-    source.append("    return func(self, space, *args)")
+    source.append("    return func(self, *args)")
 
     source = "\n".join(source)
     namespace = {"func": orig_func, "self_cls": self_cls}
@@ -81,7 +87,7 @@ class Module(object):
         w_mod = space.newmodule(cls.moduledef.name)
         for name, (method, argspec) in cls.moduledef.singleton_methods.iteritems():
             func = generate_wrapper(name, method, argspec, W_ModuleObject)
-            w_mod.attach_method(space, name, W_BuiltinFunction(func))
+            w_mod.attach_method(space, name, W_BuiltinFunction(name, func))
         return w_mod
 
 
@@ -129,12 +135,14 @@ class ClassCache(Cache):
         w_class = self.space.newclass(classdef.name, superclass)
         for name, (method, argspec) in classdef.methods.iteritems():
             func = generate_wrapper(name, method, argspec, classdef.cls)
-            w_class.define_method(self.space, name, W_BuiltinFunction(func))
+            w_class.define_method(self.space, name, W_BuiltinFunction(name, func))
 
         for source in classdef.app_methods:
-            self.space.execute(source, w_self=w_class, w_scope=w_class)
+            self.space.execute(ExecutionContext(self.space), source,
+                w_self=w_class, w_scope=w_class
+            )
 
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
             func = generate_wrapper(name, method, argspec, W_ClassObject)
-            w_class.attach_method(self.space, name, W_BuiltinFunction(func))
+            w_class.attach_method(self.space, name, W_BuiltinFunction(name, func))
         return w_class

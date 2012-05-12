@@ -43,6 +43,7 @@ class BaseSymbolTable(object):
             self.cell_numbers[name] = len(self.cell_numbers)
         return self.cell_numbers[name]
 
+
 class SymbolTable(BaseSymbolTable):
     def declare_write(self, name):
         if not self.is_defined(name):
@@ -89,16 +90,18 @@ class BlockSymbolTable(BaseSymbolTable):
 
 
 class CompilerContext(object):
-    def __init__(self, space, symtable, filepath):
+    def __init__(self, space, code_name, symtable, filepath):
         self.space = space
+        self.code_name = code_name
         self.symtable = symtable
         self.filepath = filepath
         self.consts = []
         self.const_positions = {}
+        self.current_lineno = -1
 
         self.current_block = self.first_block = self.new_block()
 
-    def create_bytecode(self, code_name, args, defaults, block_arg):
+    def create_bytecode(self, args, defaults, block_arg):
         locs = [None] * len(self.symtable.local_numbers)
         for name, pos in self.symtable.local_numbers.iteritems():
             locs[pos] = name
@@ -120,10 +123,11 @@ class CompilerContext(object):
                 assert False
 
         blocks = self.first_block.post_order()
+        code, lineno_table = self.get_code_lineno_table(blocks)
         return W_CodeObject(
-            code_name,
+            self.code_name,
             self.filepath,
-            self.get_code(blocks),
+            code,
             self.count_stackdepth(blocks),
             self.consts[:],
             args,
@@ -132,17 +136,26 @@ class CompilerContext(object):
             locs,
             cellvars,
             freevars,
+            lineno_table,
         )
 
-    def get_code(self, blocks):
+    def get_code_lineno_table(self, blocks):
         offsets = {}
         code_size = 0
         for block in blocks:
             offsets[block] = code_size
-            code_size += len(block.get_code())
+            code = []
+            linenos = []
+            block.get_code(code, linenos)
+            code_size += len(code)
         for block in blocks:
             block.patch_locs(offsets)
-        return "".join([block.get_code() for block in blocks])
+
+        code = []
+        linenos = []
+        for block in blocks:
+            block.get_code(code, linenos)
+        return "".join(code), linenos
 
     def count_stackdepth(self, blocks):
         for b in blocks:
@@ -193,16 +206,17 @@ class CompilerContext(object):
         self.use_block(block)
 
     def emit(self, opcode, arg0=-1, arg1=-1):
-        self.current_block.instrs.append(Instruction(opcode, arg0, arg1))
+        instr = Instruction(opcode, arg0, arg1, self.current_lineno)
+        self.current_block.instrs.append(instr)
 
     def emit_jump(self, opcode, target):
-        instr = Instruction(opcode, 0, -1)
+        instr = Instruction(opcode, 0, -1, self.current_lineno)
         instr.jump = target
         self.current_block.instrs.append(instr)
 
-    def get_subctx(self, node):
+    def get_subctx(self, name, node):
         subscope = self.symtable.get_subscope(node)
-        return CompilerContext(self.space, subscope, self.filepath)
+        return CompilerContext(self.space, name, subscope, self.filepath)
 
     def create_const(self, w_obj):
         if w_obj not in self.const_positions:
@@ -250,25 +264,29 @@ class Block(object):
         for instr in self.instrs:
             instr.patch_loc(offsets)
 
-    def get_code(self):
-        code = []
+    def get_code(self, code, linenos):
         for instr in self.instrs:
-            instr.emit(code)
+            instr.emit(code, linenos)
         return "".join(code)
 
+
 class Instruction(object):
-    def __init__(self, opcode, arg0, arg1):
+    def __init__(self, opcode, arg0, arg1, lineno):
         self.opcode = opcode
         self.arg0 = arg0
         self.arg1 = arg1
+        self.lineno = lineno
         self.jump = None
 
-    def emit(self, code):
+    def emit(self, code, linenos):
         code.append(chr(self.opcode))
+        linenos.append(self.lineno)
         if self.arg0 != -1:
             code.append(chr(self.arg0))
+            linenos.append(self.lineno)
         if self.arg1 != -1:
             code.append(chr(self.arg1))
+            linenos.append(self.lineno)
 
     def has_jump(self):
         return self.jump is not None

@@ -17,7 +17,7 @@ assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL>;
 
 assignment: send assignment_oper expr;
 
-yield: [YIELD] args?;
+yield: YIELD args?;
 
 arg: range;
 

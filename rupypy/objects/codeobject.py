@@ -15,7 +15,7 @@ class W_CodeObject(W_BaseObject):
     CELL = 2
 
     def __init__(self, name, filepath, code, max_stackdepth, consts, args,
-                 block_arg, defaults, locals, cellvars, freevars):
+                 block_arg, defaults, locals, cellvars, freevars, lineno_table):
 
         self.name = name
         self.filepath = filepath
@@ -26,6 +26,7 @@ class W_CodeObject(W_BaseObject):
         self.locals = locals
         self.cellvars = cellvars
         self.freevars = freevars
+        self.lineno_table = lineno_table
 
         n_args = len(args)
         arg_locs = [self.UNKNOWN] * n_args

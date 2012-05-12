@@ -76,9 +76,9 @@ class W_ClassObject(W_ModuleObject):
         return space.newstr_fromstr(self.name)
 
     @classdef.method("new")
-    def method_new(self, space, args_w):
-        w_obj = space.send(self, space.newsymbol("allocate"), args_w)
-        space.send(w_obj, space.newsymbol("initialize"), args_w)
+    def method_new(self, ec, args_w):
+        w_obj = ec.space.send(ec, self, ec.space.newsymbol("allocate"), args_w)
+        ec.space.send(ec, w_obj, ec.space.newsymbol("initialize"), args_w)
         return w_obj
 
     @classdef.method("allocate")

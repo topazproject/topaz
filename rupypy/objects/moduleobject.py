@@ -11,8 +11,8 @@ class AttributeReader(W_FunctionObject):
     def __init__(self, varname):
         self.varname = varname
 
-    def call(self, space, w_obj, args_w, block):
-        return space.find_instance_var(w_obj, self.varname)
+    def call(self, ec, w_obj, args_w, block):
+        return ec.space.find_instance_var(w_obj, self.varname)
 
 
 class AttributeWriter(W_FunctionObject):
@@ -21,9 +21,9 @@ class AttributeWriter(W_FunctionObject):
     def __init__(self, varname):
         self.varname = varname
 
-    def call(self, space, w_obj, args_w, block):
+    def call(self, ec, w_obj, args_w, block):
         [w_value] = args_w
-        space.set_instance_var(w_obj, self.varname, w_value)
+        ec.space.set_instance_var(w_obj, self.varname, w_value)
         return w_value
 
 

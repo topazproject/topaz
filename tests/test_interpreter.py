@@ -6,83 +6,83 @@ from .base import BaseRuPyPyTest
 
 
 class TestInterpreter(BaseRuPyPyTest):
-    def test_add(self, space):
-        w_res = space.execute("1 + 1")
+    def test_add(self, ec):
+        w_res = ec.space.execute(ec, "1 + 1")
         assert isinstance(w_res, W_TrueObject)
 
-    def test_global_send(self, space, capfd):
-        space.execute("puts 1")
+    def test_global_send(self, ec, capfd):
+        ec.space.execute(ec, "puts 1")
         out, err = capfd.readouterr()
         assert out == "1\n"
         assert not err
 
-    def test_obj_send(self, space):
-        w_res = space.execute("return 1.to_s")
-        assert space.str_w(w_res) == "1"
+    def test_obj_send(self, ec):
+        w_res = ec.space.execute(ec, "return 1.to_s")
+        assert ec.space.str_w(w_res) == "1"
 
-    def test_variables(self, space):
-        w_res = space.execute("a = 100; return a")
-        assert space.int_w(w_res) == 100
+    def test_variables(self, ec):
+        w_res = ec.space.execute(ec, "a = 100; return a")
+        assert ec.space.int_w(w_res) == 100
 
-    def test_if(self, space):
-        w_res = space.execute("if 3 then return 2 end")
-        assert space.int_w(w_res) == 2
+    def test_if(self, ec):
+        w_res = ec.space.execute(ec, "if 3 then return 2 end")
+        assert ec.space.int_w(w_res) == 2
 
-        w_res = space.execute("x = if 3 then 5 end; return x")
-        assert space.int_w(w_res) == 5
+        w_res = ec.space.execute(ec, "x = if 3 then 5 end; return x")
+        assert ec.space.int_w(w_res) == 5
 
-        w_res = space.execute("x = if false then 5 end; return x")
-        assert w_res is space.w_nil
+        w_res = ec.space.execute(ec, "x = if false then 5 end; return x")
+        assert w_res is ec.space.w_nil
 
-        w_res = space.execute("x = if nil then 5 end; return x")
-        assert w_res is space.w_nil
+        w_res = ec.space.execute(ec, "x = if nil then 5 end; return x")
+        assert w_res is ec.space.w_nil
 
-        w_res = space.execute("x = if 3 then end; return x")
-        assert w_res is space.w_nil
+        w_res = ec.space.execute(ec, "x = if 3 then end; return x")
+        assert w_res is ec.space.w_nil
 
-    def test_while(self, space):
-        w_res = space.execute("""
+    def test_while(self, ec):
+        w_res = ec.space.execute(ec, """
         i = 0
         while i < 1
             i += 1
         end
         return i
         """)
-        assert space.int_w(w_res) == 1
+        assert ec.space.int_w(w_res) == 1
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         x = while false do end
         return x
         """)
-        assert w_res is space.w_nil
+        assert w_res is ec.space.w_nil
 
-    def test_return(self, space):
-        w_res = space.execute("return 4")
-        assert space.int_w(w_res) == 4
+    def test_return(self, ec):
+        w_res = ec.space.execute(ec, "return 4")
+        assert ec.space.int_w(w_res) == 4
 
-    def test_array(self, space):
-        w_res = space.execute("return [[1], [2], [3]]")
-        assert [[space.int_w(w_y) for w_y in space.listview(w_x)] for w_x in space.listview(w_res)] == [[1], [2], [3]]
+    def test_array(self, ec):
+        w_res = ec.space.execute(ec, "return [[1], [2], [3]]")
+        assert [[ec.space.int_w(w_y) for w_y in ec.space.listview(w_x)] for w_x in ec.space.listview(w_res)] == [[1], [2], [3]]
 
-    def test_def_function(self, space):
-        w_res = space.execute("return def f() end")
-        assert w_res is space.w_nil
+    def test_def_function(self, ec):
+        w_res = ec.space.execute(ec, "return def f() end")
+        assert w_res is ec.space.w_nil
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         def f(a, b)
             a + b
         end
         return f 1, 2
         """)
-        assert space.int_w(w_res) == 3
-        w_res = space.execute("return Object.f(5, -2)")
-        assert space.int_w(w_res) == 3
+        assert ec.space.int_w(w_res) == 3
+        w_res = ec.space.execute(ec, "return Object.f(5, -2)")
+        assert ec.space.int_w(w_res) == 3
 
-    def test_interpter(self, space):
-        w_res = space.execute('return "abc"')
-        assert space.str_w(w_res) == "abc"
+    def test_interpter(self, ec):
+        w_res = ec.space.execute(ec, 'return "abc"')
+        assert ec.space.str_w(w_res) == "abc"
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         def test
             x = ""
             x << "abc"
@@ -91,10 +91,10 @@ class TestInterpreter(BaseRuPyPyTest):
         return [test, test]
         """)
 
-        assert [space.str_w(w_s) for w_s in space.listview(w_res)] == ["abc", "abc"]
+        assert [ec.space.str_w(w_s) for w_s in ec.space.listview(w_res)] == ["abc", "abc"]
 
-    def test_class(self, space):
-        w_res = space.execute("""
+    def test_class(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             def m
                 self
@@ -105,10 +105,10 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = ec.space.getclassfor(W_Object).constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         class Z < X
             def g
                 3
@@ -118,10 +118,10 @@ class TestInterpreter(BaseRuPyPyTest):
         z = Z.new
         return [z.f, z.g]
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 3]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 3]
 
-    def test_reopen_class(self, space):
-        space.execute("""
+    def test_reopen_class(self, ec):
+        ec.space.execute(ec, """
         class X
             def f
                 3
@@ -134,18 +134,18 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = ec.space.getclassfor(W_Object).constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
-    def test_constant(self, space):
-        w_res = space.execute("Abc = 3; return Abc")
-        assert space.int_w(w_res)
+    def test_constant(self, ec):
+        w_res = ec.space.execute(ec, "Abc = 3; return Abc")
+        assert ec.space.int_w(w_res)
 
-        w_object_cls = space.getclassfor(W_Object)
+        w_object_cls = ec.space.getclassfor(W_Object)
         assert w_object_cls.constants_w["Abc"] is w_res
 
-    def test_class_constant(self, space):
-        w_res = space.execute("""
+    def test_class_constant(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             Constant = 3
             def f
@@ -154,12 +154,12 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return X.new.f
         """)
-        assert space.int_w(w_res) == 3
-        w_object_cls = space.getclassfor(W_Object)
+        assert ec.space.int_w(w_res) == 3
+        w_object_cls = ec.space.getclassfor(W_Object)
         assert "Constant" not in w_object_cls.constants_w
 
-    def test_subclass_constant(self, space):
-        w_res = space.execute("""
+    def test_subclass_constant(self, ec):
+        w_res = ec.space.execute(ec, """
         GlobalConstant = 5
         class X
             Constant = 3
@@ -171,10 +171,10 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return Y.new.f
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [3, 5]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [3, 5]
 
-    def test_class_constant_block(self, space):
-        w_res = space.execute("""
+    def test_class_constant_block(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             Constant = 5
             def f
@@ -185,10 +185,10 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return X.new.f
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 5]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [5, 5]
 
-    def test_instance_var(self, space):
-        w_res = space.execute("""
+    def test_instance_var(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             def set val
                 @a = val
@@ -202,20 +202,20 @@ class TestInterpreter(BaseRuPyPyTest):
         x.set "abc"
         return x.get
         """)
-        assert space.str_w(w_res) == "abc"
+        assert ec.space.str_w(w_res) == "abc"
 
-    def test_send_block(self, space):
-        w_res = space.execute("""
+    def test_send_block(self, ec):
+        w_res = ec.space.execute(ec, """
         res = []
         [1, 2, 3].each do |x|
             res << (x * 2)
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 4, 6]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 4, 6]
 
-    def test_yield(self, space):
-        w_res = space.execute("""
+    def test_yield(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             def f
                 yield 2, 3
@@ -229,18 +229,18 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [-1, -1]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [-1, -1]
 
-    def test_range(self, space):
-        w_res = space.execute("return (1..10).begin")
-        assert space.int_w(w_res) == 1
-        w_res = space.execute("return (1...10).end")
-        assert space.int_w(w_res) == 10
+    def test_range(self, ec):
+        w_res = ec.space.execute(ec, "return (1..10).begin")
+        assert ec.space.int_w(w_res) == 1
+        w_res = ec.space.execute(ec, "return (1...10).end")
+        assert ec.space.int_w(w_res) == 10
 
-    def test_augmented_assignment(self, space):
-        w_res = space.execute("i = 0; i += 5; return i")
-        assert space.int_w(w_res) == 5
-        w_res = space.execute("""
+    def test_augmented_assignment(self, ec):
+        w_res = ec.space.execute(ec, "i = 0; i += 5; return i")
+        assert ec.space.int_w(w_res) == 5
+        w_res = ec.space.execute(ec, """
         class X
             attr_accessor :a
             def initialize
@@ -251,9 +251,9 @@ class TestInterpreter(BaseRuPyPyTest):
         x.a += 5
         return x.a
         """)
-        assert space.int_w(w_res) == 10
+        assert ec.space.int_w(w_res) == 10
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         class Counter
             attr_reader :value
             def initialize start
@@ -270,36 +270,36 @@ class TestInterpreter(BaseRuPyPyTest):
         c.incr
         return c.value
         """)
-        assert space.int_w(w_res) == 3
+        assert ec.space.int_w(w_res) == 3
 
-    def test_lookup_constant(self, space):
-        w_res = space.execute("""
+    def test_lookup_constant(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             Constant = 3
         end
         return X::Constant
         """)
-        assert space.int_w(w_res) == 3
+        assert ec.space.int_w(w_res) == 3
 
-    def test___FILE__(self, space):
-        w_res = space.execute("return __FILE__")
-        assert space.str_w(w_res) == "-e"
+    def test___FILE__(self, ec):
+        w_res = ec.space.execute(ec, "return __FILE__")
+        assert ec.space.str_w(w_res) == "-e"
 
-    def test_default_arguments(self, space):
-        w_res = space.execute("""
+    def test_default_arguments(self, ec):
+        w_res = ec.space.execute(ec, """
         def f(a, b=3, c=b)
             [a, b, c]
         end
         return f 1
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 3, 3]
-        w_res = space.execute("return f 5, 6")
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 6, 6]
-        w_res = space.execute("return f 5, 6, 10")
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 6, 10]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 3, 3]
+        w_res = ec.space.execute(ec, "return f 5, 6")
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [5, 6, 6]
+        w_res = ec.space.execute(ec, "return f 5, 6, 10")
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [5, 6, 10]
 
-    def test_module(self, space):
-        w_res = space.execute("""
+    def test_module(self, ec):
+        w_res = ec.space.execute(ec, """
         module M
             def method
                 5
@@ -311,25 +311,25 @@ class TestInterpreter(BaseRuPyPyTest):
         assert w_res.name == "M"
 
         with self.raises("NoMethodError"):
-            space.execute("M.method")
+            ec.space.execute(ec, "M.method")
 
-    def test_singleton_method(self, space):
-        w_res = space.execute("""
+    def test_singleton_method(self, ec):
+        w_res = ec.space.execute(ec, """
         def Array.hello
             "hello world"
         end
 
         return Array.hello
         """)
-        assert space.str_w(w_res) == "hello world"
+        assert ec.space.str_w(w_res) == "hello world"
 
         with self.raises("NoMethodError"):
-            space.execute("[].hello")
+            ec.space.execute(ec, "[].hello")
 
 
 class TestBlocks(object):
-    def test_self(self, space):
-        w_res = space.execute("""
+    def test_self(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             def initialize
                 @data = []
@@ -348,10 +348,10 @@ class TestBlocks(object):
         x.process [1, 2, 3]
         return x.data
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 4, 6]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 4, 6]
 
-    def test_param_is_cell(self, space):
-        w_res = space.execute("""
+    def test_param_is_cell(self, ec):
+        w_res = ec.space.execute(ec, """
         def sum(arr, start)
             arr.each do |x|
                 start += x
@@ -361,10 +361,10 @@ class TestBlocks(object):
 
         return sum([1, 2, 3], 4)
         """)
-        assert space.int_w(w_res) == 10
+        assert ec.space.int_w(w_res) == 10
 
-    def test_nested_block(self, space):
-        w_res = space.execute("""
+    def test_nested_block(self, ec):
+        w_res = ec.space.execute(ec, """
         result = []
         [1, 2, 3].each do |x|
             [3, 4, 5].each do |y|
@@ -373,64 +373,64 @@ class TestBlocks(object):
         end
         return result
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [-2, -3, -4, -1, -2, -3, 0, -1, -2]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [-2, -3, -4, -1, -2, -3, 0, -1, -2]
 
-    def test_no_accepted_arguments(self, space):
-        w_res = space.execute("""
+    def test_no_accepted_arguments(self, ec):
+        w_res = ec.space.execute(ec, """
         result = []
         2.times do
             result << "hello"
         end
         return result
         """)
-        assert [space.str_w(w_x) for w_x in space.listview(w_res)] == ["hello", "hello"]
+        assert [ec.space.str_w(w_x) for w_x in ec.space.listview(w_res)] == ["hello", "hello"]
 
-    def test_multi_arg_block_array(self, space):
-        w_res = space.execute("""
+    def test_multi_arg_block_array(self, ec):
+        w_res = ec.space.execute(ec, """
         res = []
         [[1, 2], [3, 4]].each do |x, y|
             res << x - y
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [-1, -1]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [-1, -1]
 
-    def test_block_argument(self, space):
-        w_res = space.execute("""
+    def test_block_argument(self, ec):
+        w_res = ec.space.execute(ec, """
         def f(&b)
             b.call
         end
         return f { 5 }
         """)
-        assert space.int_w(w_res) == 5
+        assert ec.space.int_w(w_res) == 5
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         def g(&b)
             b
         end
         return g
         """)
-        assert w_res is space.w_nil
+        assert w_res is ec.space.w_nil
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         def h(&b)
             [1, 2, 3].map { |x| b.call(x) }
         end
         return h { |x| x * 3 }
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [3, 6, 9]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [3, 6, 9]
 
-    def test_splat(self, space):
-        w_res = space.execute("""
+    def test_splat(self, ec):
+        w_res = ec.space.execute(ec, """
         def f(a, b, c, d, e, f)
             [a, b, c, d, e, f]
         end
 
         return f(*2, *[5, 3], *[], 7, 8, *[1], *nil)
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 5, 3, 7, 8, 1]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 5, 3, 7, 8, 1]
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         class ToA
             def to_a
                 [1, 2, 3, 4, 5, 6]
@@ -439,9 +439,9 @@ class TestBlocks(object):
 
         return f *ToA.new
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 2, 3, 4, 5, 6]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 2, 3, 4, 5, 6]
 
-        w_res = space.execute("""
+        w_res = ec.space.execute(ec, """
         class ToAry
             def to_ary
                 [1, 5, 6, 7, 8, 9]
@@ -450,43 +450,43 @@ class TestBlocks(object):
 
         return f *ToAry.new
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 5, 6, 7, 8, 9]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 5, 6, 7, 8, 9]
 
 
 class TestExceptions(BaseRuPyPyTest):
-    def test_simple(self, space):
-        w_res = space.execute("""
+    def test_simple(self, ec):
+        w_res = ec.space.execute(ec, """
         return begin
             1 / 0
         rescue ZeroDivisionError
             5
         end
         """)
-        assert space.int_w(w_res) == 5
+        assert ec.space.int_w(w_res) == 5
 
-    def test_bind_to_name(self, space):
-        w_res = space.execute("""
+    def test_bind_to_name(self, ec):
+        w_res = ec.space.execute(ec, """
         return begin
             1 / 0
         rescue ZeroDivisionError => e
             e.to_s
         end
         """)
-        assert space.str_w(w_res) == "divided by 0"
+        assert ec.space.str_w(w_res) == "divided by 0"
 
-    def test_rescue_no_exception(self, space):
-        w_res = space.execute("""
+    def test_rescue_no_exception(self, ec):
+        w_res = ec.space.execute(ec, """
         return begin
             1 + 1
         rescue ZeroDivisionError
             5
         end
         """)
-        assert space.int_w(w_res) == 2
+        assert ec.space.int_w(w_res) == 2
 
-    def test_uncaught_exception(self, space):
+    def test_uncaught_exception(self, ec):
         with self.raises("NoMethodError"):
-            space.execute("""
+            ec.space.execute(ec, """
             begin
                 [].dsafdsafsa
             rescue ZeroDivisionError
@@ -494,8 +494,8 @@ class TestExceptions(BaseRuPyPyTest):
             end
             """)
 
-    def test_multiple_rescues(self, space):
-        w_res = space.execute("""
+    def test_multiple_rescues(self, ec):
+        w_res = ec.space.execute(ec, """
         return begin
             1 / 0
         rescue NoMethodError
@@ -504,10 +504,10 @@ class TestExceptions(BaseRuPyPyTest):
             10
         end
         """)
-        assert space.int_w(w_res) == 10
+        assert ec.space.int_w(w_res) == 10
 
-    def test_nested_rescue(self, space):
-        w_res = space.execute("""
+    def test_nested_rescue(self, ec):
+        w_res = ec.space.execute(ec, """
         return begin
             begin
                 1 / 0
@@ -518,10 +518,10 @@ class TestExceptions(BaseRuPyPyTest):
             5
         end
         """)
-        assert space.int_w(w_res) == 5
+        assert ec.space.int_w(w_res) == 5
 
-    def test_simple_ensure(self, space):
-        w_res = space.execute("""
+    def test_simple_ensure(self, ec):
+        w_res = ec.space.execute(ec, """
         res = []
         begin
             res << 1
@@ -533,10 +533,10 @@ class TestExceptions(BaseRuPyPyTest):
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1, 2, 3]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 2, 3]
 
-    def test_ensure_return(self, space):
-        w_res = space.execute("""
+    def test_ensure_return(self, ec):
+        w_res = ec.space.execute(ec, """
         res = []
         begin
             return res
@@ -544,10 +544,10 @@ class TestExceptions(BaseRuPyPyTest):
             res << 1
         end
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [1]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1]
 
-    def test_rescue_loop(self, space):
-        w_res = space.execute("""
+    def test_rescue_loop(self, ec):
+        w_res = ec.space.execute(ec, """
         i = 0
         while i < 3
             begin
@@ -558,4 +558,4 @@ class TestExceptions(BaseRuPyPyTest):
         end
         return i
         """)
-        assert space.int_w(w_res) == 3
+        assert ec.space.int_w(w_res) == 3

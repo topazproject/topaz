@@ -11,11 +11,11 @@ class Kernel(Module):
         return space.getclass(self)
 
     @moduledef.function("puts")
-    def function_puts(self, space, w_obj):
-        if w_obj is space.w_nil:
+    def function_puts(self, ec, w_obj):
+        if w_obj is ec.space.w_nil:
             s = "nil"
         else:
-            w_str = space.send(w_obj, space.newsymbol("to_s"))
-            s = space.str_w(w_str)
+            w_str = ec.space.send(ec, w_obj, ec.space.newsymbol("to_s"))
+            s = ec.space.str_w(w_str)
         os.write(1, s)
         os.write(1, "\n")

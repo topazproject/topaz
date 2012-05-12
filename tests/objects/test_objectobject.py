@@ -2,12 +2,12 @@ from rupypy.objects.intobject import W_IntObject
 
 
 class TestObjectObject(object):
-    def test_class(self, space):
-        w_res = space.execute("return 1.class")
-        assert w_res is space.getclassobject(W_IntObject.classdef)
+    def test_class(self, ec):
+        w_res = ec.space.execute(ec, "return 1.class")
+        assert w_res is ec.space.getclassfor(W_IntObject)
 
-    def test_initialize(self, space):
-        w_res = space.execute("""
+    def test_initialize(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             def initialize
                 @a = 3
@@ -19,10 +19,10 @@ class TestObjectObject(object):
         end
         return X.new.foo
         """)
-        assert space.int_w(w_res) == 3
+        assert ec.space.int_w(w_res) == 3
 
-    def test_initialize_args(self, space):
-        w_res = space.execute("""
+    def test_initialize_args(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             def initialize a, b
                 @a = a
@@ -35,11 +35,12 @@ class TestObjectObject(object):
         x = X.new 2, 3
         return x.attrs
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [2, 3]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 3]
+
 
 class TestMapDict(object):
-    def test_simple_attr(self, space):
-        w_res = space.execute("""
+    def test_simple_attr(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             def initialize
                 @a = 3
@@ -52,10 +53,10 @@ class TestMapDict(object):
         end
         return X.new.attrs
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [3, 4, 5]
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [3, 4, 5]
 
-    def test_unitialized_att(self, space):
-        w_res = space.execute("""
+    def test_unitialized_att(self, ec):
+        w_res = ec.space.execute(ec, """
         class X
             attr_accessor :a
             def attrs
@@ -64,4 +65,4 @@ class TestMapDict(object):
         end
         return X.new.attrs
         """)
-        assert space.listview(w_res) == [space.w_nil, space.w_nil]
+        assert ec.space.listview(w_res) == [ec.space.w_nil, ec.space.w_nil]
