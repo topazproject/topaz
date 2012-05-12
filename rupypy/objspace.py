@@ -115,8 +115,8 @@ class ObjectSpace(object):
             return Interpreter().interpret(ec, frame, bc)
         except RubyError as e:
             exception_occured = True
-            if e.w_value.frameref is None:
-                e.w_value.frameref = frame
+            if e.w_value.frame is None:
+                e.w_value.frame = frame
             raise
         finally:
             ec.leave(frame, exception_occured)

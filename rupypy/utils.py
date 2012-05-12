@@ -26,7 +26,7 @@ def make_parse_function(grammar, lexer_cls):
 def format_traceback(space, exc):
     lines = []
     last_instr_idx = 0
-    frame = exc.frameref
+    frame = exc.frame
     lines.append("%s:%d:in `%s': %s (%s)\n" % (
         frame.get_filename(),
         frame.get_lineno(exc.last_instructions[last_instr_idx]),

@@ -13,7 +13,7 @@ class W_ExceptionObject(W_BaseObject):
 
     def __init__(self, msg):
         self.msg = msg
-        self.frameref = None
+        self.frame = None
         self.last_instructions = []
 
     method_allocate = new_exception_allocate(classdef)

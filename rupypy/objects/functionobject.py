@@ -43,8 +43,8 @@ class W_BuiltinFunction(W_FunctionObject):
             return self.func(w_receiver, ec, args_w, block)
         except RubyError as e:
             exception_occured = True
-            if e.w_value.frameref is None:
-                e.w_value.frameref = frame
+            if e.w_value.frame is None:
+                e.w_value.frame = frame
             e.w_value.last_instructions.append(-1)
             raise
         finally:
