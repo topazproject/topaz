@@ -37,13 +37,15 @@ class W_BuiltinFunction(W_FunctionObject):
 
     def call(self, ec, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
+        exception_occured = False
         ec.enter(frame)
         try:
             return self.func(w_receiver, ec, args_w, block)
         except RubyError as e:
+            exception_occured = True
             if e.w_value.frameref is None:
                 e.w_value.frameref = frame
             e.w_value.last_instructions.append(-1)
             raise
         finally:
-            ec.leave(frame)
+            ec.leave(frame, exception_occured)

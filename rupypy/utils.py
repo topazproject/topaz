@@ -35,7 +35,7 @@ def format_traceback(space, exc):
         space.getclass(exc).name,
     ))
     last_instr_idx += 1
-    frame = frame.backref
+    frame = frame.backref()
     while frame is not None:
         lines.append("\tfrom %s:%d:in `%s'\n" % (
             frame.get_filename(),
@@ -43,5 +43,5 @@ def format_traceback(space, exc):
             frame.get_code_name(),
         ))
         last_instr_idx += 1
-        frame = frame.backref
+        frame = frame.backref()
     return lines

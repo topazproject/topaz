@@ -4,7 +4,8 @@ from rupypy.objects.cellobject import W_CellObject
 
 
 class BaseFrame(object):
-    pass
+    def __init__(self):
+        self.backref = jit.vref_None
 
 
 class Frame(BaseFrame):
@@ -16,6 +17,7 @@ class Frame(BaseFrame):
     @jit.unroll_safe
     def __init__(self, bytecode, w_self, w_scope, block):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
+        BaseFrame.__init__(self)
         self.bytecode = bytecode
         self.stack_w = [None] * bytecode.max_stackdepth
         self.locals_w = [None] * len(bytecode.locals)
@@ -24,7 +26,6 @@ class Frame(BaseFrame):
         self.w_self = w_self
         self.w_scope = w_scope
         self.block = block
-        self.backref = None
         self.lastblock = None
 
     def _set_arg(self, bytecode, i, w_value):
@@ -111,14 +112,14 @@ class Frame(BaseFrame):
 
 class BuiltinFrame(BaseFrame):
     def __init__(self, name):
+        BaseFrame.__init__(self)
         self.name = name
-        self.backref = None
 
     def get_filename(self):
-        return self.backref.get_filename()
+        return self.backref().get_filename()
 
     def get_lineno(self, idx):
-        return self.backref.get_lineno(idx)
+        return self.backref().get_lineno(idx)
 
     def get_code_name(self):
         return self.name

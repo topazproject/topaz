@@ -110,14 +110,16 @@ class ObjectSpace(object):
 
     def execute_frame(self, ec, frame, bc):
         ec.enter(frame)
+        exception_occured = False
         try:
             return Interpreter().interpret(ec, frame, bc)
         except RubyError as e:
+            exception_occured = True
             if e.w_value.frameref is None:
                 e.w_value.frameref = frame
             raise
         finally:
-            ec.leave(frame)
+            ec.leave(frame, exception_occured)
 
     # Methods for allocating new objects.
 
