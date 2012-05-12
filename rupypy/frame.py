@@ -6,6 +6,7 @@ from rupypy.objects.cellobject import W_CellObject
 class BaseFrame(object):
     def __init__(self):
         self.backref = jit.vref_None
+        self.escaped = False
 
 
 class Frame(BaseFrame):
@@ -38,7 +39,7 @@ class Frame(BaseFrame):
             self.cells[pos].set(w_value)
 
     @jit.unroll_safe
-    def handle_args(self, space, bytecode, args_w, block):
+    def handle_args(self, ec, bytecode, args_w, block):
         from rupypy.interpreter import Interpreter
 
         assert 0 <= len(bytecode.arg_locs) - len(args_w) <= len(bytecode.defaults)
@@ -47,13 +48,13 @@ class Frame(BaseFrame):
         defl_start = len(args_w) - (len(bytecode.arg_locs) - len(bytecode.defaults))
         for i in xrange(len(bytecode.arg_locs) - len(args_w)):
             bc = bytecode.defaults[i + defl_start]
-            w_value = Interpreter().interpret(space, self, bc)
+            w_value = Interpreter().interpret(ec, self, bc)
             self._set_arg(bytecode, i + len(args_w), w_value)
         if bytecode.block_arg_pos != -1:
             if block is None:
-                w_block = space.w_nil
+                w_block = ec.space.w_nil
             else:
-                w_block = space.newproc(block)
+                w_block = ec.space.newproc(block)
             pos = bytecode.block_arg_pos
             assert pos >= 0
             if bytecode.block_arg_loc == bytecode.LOCAL:

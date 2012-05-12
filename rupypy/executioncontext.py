@@ -13,6 +13,9 @@ class ExecutionContext(object):
     def leave(self, frame, got_exception):
         frame_vref = self.topframeref
         self.topframeref = frame.backref
-        if got_exception:
+        if frame.escaped or got_exception:
+            back = frame.backref()
+            if back is not None:
+                back.escaped = True
             frame_vref()
         jit.virtual_ref_finish(frame_vref, frame)

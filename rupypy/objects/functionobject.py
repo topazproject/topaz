@@ -24,7 +24,7 @@ class W_UserFunction(W_FunctionObject):
             w_scope=ec.space.getclass(w_receiver),
             block=block,
         )
-        frame.handle_args(ec.space, self.bytecode, args_w, block)
+        frame.handle_args(ec, self.bytecode, args_w, block)
         return ec.space.execute_frame(ec, frame, self.bytecode)
 
 

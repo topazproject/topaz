@@ -14,7 +14,7 @@ def get_printable_location(pc, bytecode):
 class Interpreter(object):
     jitdriver = jit.JitDriver(
         greens=["pc", "bytecode"],
-        reds=["self", "frame"],
+        reds=["self", "ec", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
     )
@@ -24,7 +24,7 @@ class Interpreter(object):
         try:
             while True:
                 self.jitdriver.jit_merge_point(
-                    self=self, bytecode=bytecode, frame=frame, pc=pc
+                    self=self, ec=ec, bytecode=bytecode, frame=frame, pc=pc
                 )
                 try:
                     pc = self.handle_bytecode(ec, pc, frame, bytecode)
@@ -65,18 +65,18 @@ class Interpreter(object):
             pc = res
         return pc
 
-    def handle_ruby_error(self, space, pc, frame, bytecode, e):
+    def handle_ruby_error(self, ec, pc, frame, bytecode, e):
         e.w_value.last_instructions.append(pc)
         block = frame.unrollstack(ApplicationException.kind)
         if block is None:
             raise e
         unroller = ApplicationException(e)
-        return block.handle(space, frame, unroller)
+        return block.handle(ec.space, frame, unroller)
 
-    def jump(self, bytecode, frame, cur_pc, target_pc):
+    def jump(self, ec, bytecode, frame, cur_pc, target_pc):
         if target_pc < cur_pc:
             self.jitdriver.can_enter_jit(
-                self=self, bytecode=bytecode, frame=frame, pc=target_pc,
+                self=self, ec=ec, bytecode=bytecode, frame=frame, pc=target_pc,
             )
         return target_pc
 
@@ -282,7 +282,7 @@ class Interpreter(object):
     def SETUP_FINALLY(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = FinallyBlock(target_pc, frame.lastblock, frame.stackpos)
 
-    def END_FINALLY(self, space, bytecode, frame, pc):
+    def END_FINALLY(self, ec, bytecode, frame, pc):
         frame.pop()
         unroller = frame.pop()
         if isinstance(unroller, SuspendedUnroller):
@@ -292,7 +292,7 @@ class Interpreter(object):
                 frame.push(w_result)
                 raise Return
             else:
-                return block.handle(space, frame, unroller)
+                return block.handle(ec.space, frame, unroller)
         return pc
 
     def COMPARE_EXC(self, ec, bytecode, frame, pc):
@@ -304,14 +304,14 @@ class Interpreter(object):
         block = frame.popblock()
         block.cleanup(ec.space, frame)
 
-    def JUMP(self, space, bytecode, frame, pc, target_pc):
-        return self.jump(bytecode, frame, pc, target_pc)
+    def JUMP(self, ec, bytecode, frame, pc, target_pc):
+        return self.jump(ec, bytecode, frame, pc, target_pc)
 
     def JUMP_IF_FALSE(self, ec, bytecode, frame, pc, target_pc):
         if ec.space.is_true(frame.pop()):
             return pc
         else:
-            return self.jump(bytecode, frame, pc, target_pc)
+            return self.jump(ec, bytecode, frame, pc, target_pc)
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
@@ -365,6 +365,7 @@ class ReturnValue(SuspendedUnroller):
     def nomoreblocks(self):
         return self.w_returnvalue
 
+
 class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):
         self.target_pc = target_pc
@@ -376,6 +377,7 @@ class FrameBlock(object):
     def cleanupstack(self, frame):
         while frame.stackpos > self.stackdepth:
             frame.pop()
+
 
 class ExceptBlock(FrameBlock):
     handling_mask = ApplicationException.kind
@@ -389,6 +391,7 @@ class ExceptBlock(FrameBlock):
         frame.push(unroller)
         frame.push(e.w_value)
         return self.target_pc
+
 
 class FinallyBlock(FrameBlock):
     # Handles everything.

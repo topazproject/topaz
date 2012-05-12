@@ -19,7 +19,7 @@ from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
-from rupypy.objects.exceptionobject import (W_NoMethodError,
+from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError)
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
@@ -238,7 +238,7 @@ class ObjectSpace(object):
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
         if len(bc.arg_locs) != 0:
-            frame.handle_args(self, bc, args_w, None)
+            frame.handle_args(ec, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell
@@ -247,4 +247,5 @@ class ObjectSpace(object):
     def raise_(self, ec, w_type, msg=""):
         w_new_sym = self.newsymbol("new")
         w_exc = self.send(ec, w_type, w_new_sym, [self.newstr_fromstr(msg)])
+        assert isinstance(w_exc, W_ExceptionObject)
         raise RubyError(w_exc)
