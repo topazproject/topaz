@@ -189,7 +189,8 @@ class Interpreter(object):
 
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = ec.space.create_frame(w_bytecode, w_cls, w_cls)
-        ec.space.execute_frame(ec, sub_frame, w_bytecode)
+        with ec.visit_frame(sub_frame):
+            ec.space.execute_frame(ec, sub_frame, w_bytecode)
 
         frame.push(ec.space.w_nil)
 
@@ -208,7 +209,8 @@ class Interpreter(object):
 
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = ec.space.create_frame(w_bytecode, w_mod, w_mod)
-        ec.space.execute_frame(ec, sub_frame, w_bytecode)
+        with ec.visit_frame(sub_frame):
+            ec.space.execute_frame(ec, sub_frame, w_bytecode)
 
         frame.push(ec.space.w_nil)
 

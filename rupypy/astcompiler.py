@@ -124,11 +124,14 @@ class CompilerContext(object):
 
         blocks = self.first_block.post_order()
         code, lineno_table = self.get_code_lineno_table(blocks)
+        depth = self.count_stackdepth(blocks)
+        for default in defaults:
+            depth = max(depth, default.max_stackdepth)
         return W_CodeObject(
             self.code_name,
             self.filepath,
             code,
-            self.count_stackdepth(blocks),
+            depth,
             self.consts[:],
             args,
             block_arg,

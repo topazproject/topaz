@@ -1131,3 +1131,21 @@ class TestCompiler(object):
         LOAD_CONST 4
         RETURN
         """)
+
+    def test_stack_depth_default_arg(self, ec):
+        bc = self.assert_compiles(ec, """
+        def f(a=1/2)
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        assert bc.consts_w[2].max_stackdepth == 2

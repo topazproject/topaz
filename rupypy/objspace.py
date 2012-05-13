@@ -99,7 +99,8 @@ class ObjectSpace(object):
     def execute(self, ec, source, w_self=None, w_scope=None, filepath="-e"):
         bc = self.compile(ec, source, filepath)
         frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
-        return self.execute_frame(ec, frame, bc)
+        with ec.visit_frame(frame):
+            return self.execute_frame(ec, frame, bc)
 
     def create_frame(self, bc, w_self=None, w_scope=None, block=None):
         if w_self is None:
@@ -109,17 +110,7 @@ class ObjectSpace(object):
         return Frame(jit.promote(bc), w_self, w_scope, block)
 
     def execute_frame(self, ec, frame, bc):
-        ec.enter(frame)
-        exception_occured = False
-        try:
-            return Interpreter().interpret(ec, frame, bc)
-        except RubyError as e:
-            exception_occured = True
-            if e.w_value.frame is None:
-                e.w_value.frame = frame
-            raise
-        finally:
-            ec.leave(frame, exception_occured)
+        return Interpreter().interpret(ec, frame, bc)
 
     # Methods for allocating new objects.
 
@@ -242,7 +233,9 @@ class ObjectSpace(object):
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell
-        return ec.space.execute_frame(ec, frame, bc)
+
+        with ec.visit_frame(frame):
+            return ec.space.execute_frame(ec, frame, bc)
 
     def raise_(self, ec, w_type, msg=""):
         w_new_sym = self.newsymbol("new")

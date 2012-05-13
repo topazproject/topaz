@@ -1,3 +1,5 @@
+import py
+
 from rupypy.main import entry_point
 
 
@@ -8,6 +10,16 @@ class TestMain(object):
         res = entry_point(["rupypy", str(f)])
         assert res == status
         return f
+
+    def assert_traceback(self, tmpdir, capfd, src, expected):
+        f = self.run(tmpdir, src, status=1)
+        out, err = capfd.readouterr()
+        assert not out
+        actual_lines = err.splitlines()
+        expected_lines = []
+        for line in expected:
+            expected_lines.append(line.format(f))
+        assert actual_lines == expected_lines
 
     def test_simple(self, tmpdir, capfd):
         self.run(tmpdir, "puts 5")
@@ -21,19 +33,27 @@ class TestMain(object):
         assert out == "{}\n".format(f)
 
     def test_traceback_printed(self, tmpdir, capfd):
-        f = self.run(tmpdir, """
+        self.assert_traceback(tmpdir, capfd, """
         def f
             yield
         end
 
         f { 1 / 0}
-        """, status=1)
-        out, err = capfd.readouterr()
-        assert not out
-        lines = err.splitlines()
-        assert lines == [
-            "{}:6:in `/': divided by 0 (ZeroDivisionError)".format(f),
-            "\tfrom {}:6:in `block in <main>'".format(f),
-            "\tfrom {}:3:in `f'".format(f),
-            "\tfrom {}:6:in `<main>'".format(f),
-        ]
+        """, [
+            "{}:6:in `/': divided by 0 (ZeroDivisionError)",
+            "\tfrom {}:6:in `block in <main>'",
+            "\tfrom {}:3:in `f'",
+            "\tfrom {}:6:in `<main>'",
+        ])
+
+    @py.test.mark.xfail
+    def test_traceback_default_arg(self, tmpdir, capfd):
+        self.assert_traceback(tmpdir, capfd, """
+        def f(a=1/2)
+        end
+        f
+        """, [
+            "{}:2:in `/': divided by 0 (ZeroDivisionError)",
+            "\tfrom {}:2:in `f'",
+            "\tfrom {}:4:in `<main>'",
+        ])

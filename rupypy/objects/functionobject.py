@@ -1,6 +1,5 @@
 from pypy.rlib import jit
 
-from rupypy.error import RubyError
 from rupypy.frame import BuiltinFrame
 from rupypy.objects.objectobject import W_BaseObject
 
@@ -24,8 +23,9 @@ class W_UserFunction(W_FunctionObject):
             w_scope=ec.space.getclass(w_receiver),
             block=block,
         )
-        frame.handle_args(ec, self.bytecode, args_w, block)
-        return ec.space.execute_frame(ec, frame, self.bytecode)
+        with ec.visit_frame(frame):
+            frame.handle_args(ec, self.bytecode, args_w, block)
+            return ec.space.execute_frame(ec, frame, self.bytecode)
 
 
 class W_BuiltinFunction(W_FunctionObject):
@@ -37,15 +37,5 @@ class W_BuiltinFunction(W_FunctionObject):
 
     def call(self, ec, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
-        exception_occured = False
-        ec.enter(frame)
-        try:
+        with ec.visit_frame(frame, append_instr=True):
             return self.func(w_receiver, ec, args_w, block)
-        except RubyError as e:
-            exception_occured = True
-            if e.w_value.frame is None:
-                e.w_value.frame = frame
-            e.w_value.last_instructions.append(-1)
-            raise
-        finally:
-            ec.leave(frame, exception_occured)
