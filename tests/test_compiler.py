@@ -450,6 +450,7 @@ class TestCompiler(object):
         """)
 
         self.assert_compiles(ec, "Abc = 5", """
+        LOAD_SCOPE
         LOAD_CONST 0
         STORE_CONSTANT 1
         DISCARD_TOP
@@ -886,6 +887,27 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 2
+        RETURN
+        """)
+
+    def test_assign_constant(self, ec):
+        self.assert_compiles(ec, "abc::Constant = 5; abc::Constant += 1", """
+        LOAD_SELF
+        SEND 0 0
+        LOAD_CONST 1
+        STORE_CONSTANT 2
+        DISCARD_TOP
+
+        LOAD_SELF
+        SEND 3 0
+        DUP_TOP
+        LOAD_CONSTANT 4
+        LOAD_CONST 5
+        SEND 6 1
+        STORE_CONSTANT 7
+        DISCARD_TOP
+
+        LOAD_CONST 8
         RETURN
         """)
 

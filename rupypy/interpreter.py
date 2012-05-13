@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated, specialize
 from rupypy import consts
 from rupypy.error import RubyError
 from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.exceptionobject import W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 
 
@@ -114,14 +115,19 @@ class Interpreter(object):
         w_name = bytecode.consts_w[idx]
         name = ec.space.symbol_w(w_name)
         w_obj = ec.space.find_const(w_scope, name)
-        assert w_obj is not None
+        if w_obj is None:
+            ec.space.raise_(ec, ec.space.getclassfor(W_NameError),
+                "uninitialized constant %s" % name
+            )
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, ec, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         name = ec.space.symbol_w(w_name)
-        w_value = frame.peek()
-        ec.space.set_const(frame.w_scope, name, w_value)
+        w_value = frame.pop()
+        w_scope = frame.pop()
+        ec.space.set_const(w_scope, name, w_value)
+        frame.push(w_value)
 
     def LOAD_INSTANCE_VAR(self, ec, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]

@@ -98,15 +98,12 @@ class Assignment(Node):
         self.value.compile(ctx)
         if self.oper != "=":
             ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        if self.target[0].isupper():
-            ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.target))
-        else:
-            if ctx.symtable.is_local(self.target):
-                loc = ctx.symtable.get_local_num(self.target)
-                ctx.emit(consts.STORE_LOCAL, loc)
-            elif ctx.symtable.is_cell(self.target):
-                loc = ctx.symtable.get_cell_num(self.target)
-                ctx.emit(consts.STORE_DEREF, loc)
+        if ctx.symtable.is_local(self.target):
+            loc = ctx.symtable.get_local_num(self.target)
+            ctx.emit(consts.STORE_LOCAL, loc)
+        elif ctx.symtable.is_cell(self.target):
+            loc = ctx.symtable.get_cell_num(self.target)
+            ctx.emit(consts.STORE_DEREF, loc)
 
 
 class InstanceVariableAssignment(Node):
@@ -166,6 +163,28 @@ class GlobalAssignment(Node):
         if self.oper != "=":
             ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
         ctx.emit(consts.STORE_GLOBAL, ctx.create_symbol_const(self.name))
+
+
+class ConstantAssignment(Node):
+    def __init__(self, oper, receiver, name, value):
+        self.oper = oper
+        self.receiver = receiver
+        self.name = name
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.receiver.locate_symbols(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.receiver.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.DUP_TOP)
+            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+        self.value.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
+        ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
 
 class If(Node):
@@ -585,6 +604,9 @@ class LookupConstant(Node):
         self.value = value
         self.name = name
 
+    def convert_to_assignment(self, transformer, node, oper, value):
+        return ConstantAssignment(oper, self.value, self.name, value)
+
     def locate_symbols(self, symtable):
         self.value.locate_symbols(symtable)
 
@@ -602,6 +624,14 @@ class Self(Node):
 
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
+
+
+class Scope(Node):
+    def locate_symbols(self, symtable):
+        pass
+
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_SCOPE)
 
 
 class Variable(Node):
@@ -636,9 +666,6 @@ class Variable(Node):
             ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(self.name))
         elif ctx.symtable.is_cell(self.name):
             ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
-        elif self.name[0].isupper():
-            ctx.emit(consts.LOAD_SCOPE)
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
             Send(Self(self.lineno), self.name, [], self.lineno).compile(ctx)
 

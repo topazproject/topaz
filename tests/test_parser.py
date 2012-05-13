@@ -323,7 +323,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
         assert ec.space.parse(ec, "class X < Object; end") == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", ast.Variable("Object", 1), ast.Block([])))
+            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(1), "Object", 1), ast.Block([])))
         ]))
 
     def test_instance_variable(self, ec):
@@ -457,7 +457,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.UnaryOp("-", ast.Variable("b", 1), 1))
         ]))
         assert ec.space.parse(ec, "Math.exp(-a)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("Math", 1), "exp", [ast.UnaryOp("-", ast.Variable("a", 1), 1)], 1))
+            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.UnaryOp("-", ast.Variable("a", 1), 1)], 1))
         ]))
 
     def test_unless(self, ec):
@@ -474,7 +474,10 @@ class TestParser(BaseRuPyPyTest):
 
     def test_constant_lookup(self, ec):
         assert ec.space.parse(ec, "Module::Constant") == ast.Main(ast.Block([
-            ast.Statement(ast.LookupConstant(ast.Variable("Module", 1), "Constant", 1))
+            ast.Statement(ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Constant", 1))
+        ]))
+        assert ec.space.parse(ec, "abc::Constant = 5") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantAssignment("=", ast.Variable("abc", 1), "Constant", ast.ConstantInt(5)))
         ]))
 
     def test___FILE__(self, ec):
@@ -533,7 +536,7 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("+", ast.ConstantInt(1), ast.ConstantInt(1), 3))
                 ]),
                 [
-                    ast.ExceptHandler(ast.Variable("ZeroDivisionError", 4), None, ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), None, ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("zero")], 5))
                     ]))
                 ]
@@ -553,7 +556,7 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 3))
                 ]),
                 [
-                    ast.ExceptHandler(ast.Variable("ZeroDivisionError", 4), "e", ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), "e", ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], 5))
                     ]))
                 ]
@@ -575,10 +578,10 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 3))
                 ]),
                 [
-                    ast.ExceptHandler(ast.Variable("ZeroDivisionError", 4), "e", ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), "e", ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], 5))
                     ])),
-                    ast.ExceptHandler(ast.Variable("NoMethodError", 6), None, ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(6), "NoMethodError", 6), None, ast.Block([
                         ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("?")], 7))
                     ])),
                 ]
@@ -637,7 +640,7 @@ class TestParser(BaseRuPyPyTest):
                 ast.TryExcept(ast.Block([
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 3))
                 ]), [
-                    ast.ExceptHandler(ast.Variable("ZeroDivisionError", 4), None, ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), None, ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("rescue")], 5))
                     ]))
                 ]),
@@ -703,7 +706,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(ast.Variable("Array", 2), "hello", [], None, ast.Block([
+            ast.Statement(ast.Function(ast.LookupConstant(ast.Scope(2), "Array", 2), "hello", [], None, ast.Block([
                 ast.Statement(ast.ConstantString("hello world")),
             ])))
         ]))

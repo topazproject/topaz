@@ -65,7 +65,7 @@ primary: LPAREN expr RPAREN |
          UNLESS expr then line* statement? [LINE_END]? END |
          WHILE expr do line* statement? [LINE_END]? END |
          DEF function_name argdecl line* statement? [LINE_END]? END |
-         CLASS IDENTIFIER (LT IDENTIFIER)? [LINE_END] line* statement? [LINE_END]? END |
+         CLASS IDENTIFIER (LT varname)? [LINE_END] line* statement? [LINE_END]? END |
          MODULE IDENTIFIER line* statement? [LINE_END]? END |
          BEGIN line* statement? [LINE_END]? rescue* ensure? END |
          varname |
@@ -79,11 +79,11 @@ do: [LINE_END] |
     DO |
     [LINE_END] DO;
 
-rescue: RESCUE IDENTIFIER? (ARROW IDENTIFIER)? line* statement? [LINE_END]?;
+rescue: RESCUE varname? (ARROW IDENTIFIER)? line* statement? [LINE_END]?;
 
 ensure: ENSURE line* statement? [LINE_END]?;
 
-function_name: IDENTIFIER [DOT] IDENTIFIER |
+function_name: varname [DOT] IDENTIFIER |
                IDENTIFIER;
 
 argdecl: [LPAREN] arglist? [RPAREN] |

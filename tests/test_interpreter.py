@@ -364,6 +364,17 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = ec.space.execute(ec, "$abc = 3; return $abc")
         assert ec.space.int_w(w_res) == 3
 
+    def test_assign_constant(self, ec):
+        w_res = ec.space.execute(ec, """
+        class X
+        end
+        X::Constant = 5
+        return X::Constant
+        """)
+        assert ec.space.int_w(w_res) == 5
+        with self.raises("NameError"):
+            ec.space.execute(ec, "Constant")
+
 
 class TestBlocks(object):
     def test_self(self, ec):

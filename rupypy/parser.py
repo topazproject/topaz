@@ -251,6 +251,8 @@ class Transformer(object):
             return ast.InstanceVariable(node.children[1].additional_info)
         elif node.children[0].symbol == "DOLLAR":
             return ast.Global("$" + node.children[1].additional_info)
+        elif node.children[0].additional_info[0].isupper():
+            return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.children[0].additional_info, node.getsourcepos().lineno)
         else:
             return ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
 
@@ -280,7 +282,7 @@ class Transformer(object):
             parent = None
             name = name_node.children[0].additional_info
         else:
-            parent = ast.Variable(name_node.children[0].additional_info, name_node.getsourcepos().lineno)
+            parent = self.visit_varname(name_node.children[0])
             name = name_node.children[1].additional_info
         args, block_arg = self.visit_argdecl(node.children[2])
         return ast.Function(
@@ -295,7 +297,7 @@ class Transformer(object):
         superclass = None
         block_start_idx = 2
         if node.children[2].symbol == "LT":
-            superclass = ast.Variable(node.children[3].additional_info, node.children[3].getsourcepos().lineno)
+            superclass = self.visit_varname(node.children[3])
             block_start_idx += 2
         return ast.Class(
             node.children[1].additional_info,
@@ -331,8 +333,8 @@ class Transformer(object):
     def visit_rescue(self, node):
         exception = None
         idx = 1
-        if node.children[1].symbol == "IDENTIFIER":
-            exception = ast.Variable(node.children[1].additional_info, node.children[1].getsourcepos().lineno)
+        if node.children[1].symbol == "varname":
+            exception = self.visit_varname(node.children[1])
             idx += 1
         name = None
         if node.children[idx].symbol == "ARROW":
