@@ -154,8 +154,8 @@ class ObjectSpace(object):
         assert isinstance(w_code, W_CodeObject)
         return W_UserFunction(name, w_code)
 
-    def newproc(self, block):
-        return W_ProcObject(block)
+    def newproc(self, block, is_lambda=False):
+        return W_ProcObject(block, is_lambda)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
