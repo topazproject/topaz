@@ -29,6 +29,7 @@ class Node(object):
         else:
             raise NotImplementedError(type(self).__name__)
 
+
 class Main(Node):
     def __init__(self, block):
         self.block = block
@@ -60,8 +61,10 @@ class Block(Node):
         for idx, stmt in enumerate(self.stmts):
             stmt.compile(ctx)
 
+
 class BaseStatement(Node):
     pass
+
 
 class Statement(BaseStatement):
     def __init__(self, expr):
@@ -105,6 +108,7 @@ class Assignment(Node):
                 loc = ctx.symtable.get_cell_num(self.target)
                 ctx.emit(consts.STORE_DEREF, loc)
 
+
 class InstanceVariableAssignment(Node):
     def __init__(self, oper, name, value):
         self.oper = oper
@@ -122,6 +126,7 @@ class InstanceVariableAssignment(Node):
             ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
 
 class MethodAssignment(Node):
     def __init__(self, oper, receiver, name, value):
@@ -144,6 +149,25 @@ class MethodAssignment(Node):
             ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.name + "="), 1)
 
+
+class GlobalAssignment(Node):
+    def __init__(self, oper, name, value):
+        self.oper = oper
+        self.name = name
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        if self.oper != "=":
+            Global(self.name).compile(ctx)
+        self.value.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
+        ctx.emit(consts.STORE_GLOBAL, ctx.create_symbol_const(self.name))
+
+
 class If(Node):
     def __init__(self, cond, body, elsebody):
         self.cond = cond
@@ -164,6 +188,7 @@ class If(Node):
         ctx.use_next_block(otherwise)
         self.elsebody.compile(ctx)
         ctx.use_next_block(end)
+
 
 class While(Node):
     def __init__(self, cond, body):
@@ -190,6 +215,7 @@ class While(Node):
         # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
+
 class TryExcept(Node):
     def __init__(self, body, except_handlers):
         self.body = body
@@ -204,7 +230,7 @@ class TryExcept(Node):
         exc = ctx.new_block()
         end = ctx.new_block()
         ctx.emit_jump(consts.SETUP_EXCEPT, exc)
-        body = ctx.use_next_block(ctx.new_block())
+        ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
         ctx.emit(consts.POP_BLOCK)
         ctx.emit_jump(consts.JUMP, end)
@@ -239,6 +265,7 @@ class ExceptHandler(Node):
             symtable.declare_local(self.name)
         self.body.locate_symbols(symtable)
 
+
 class TryFinally(Node):
     def __init__(self, body, finally_body):
         self.body = body
@@ -251,7 +278,7 @@ class TryFinally(Node):
     def compile(self, ctx):
         end = ctx.new_block()
         ctx.emit_jump(consts.SETUP_FINALLY, end)
-        body = ctx.use_next_block(ctx.new_block())
+        ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
         ctx.emit(consts.POP_BLOCK)
         # Put a None on the stack where an exception would be.
@@ -260,6 +287,7 @@ class TryFinally(Node):
         self.finally_body.compile(ctx)
         ctx.emit(consts.DISCARD_TOP)
         ctx.emit(consts.END_FINALLY)
+
 
 class Class(Node):
     def __init__(self, name, superclass, body):
@@ -381,6 +409,7 @@ class Argument(Node):
     def __init__(self, name, defl=None):
         self.name = name
         self.defl = defl
+
 
 class Return(BaseStatement):
     def __init__(self, expr):
@@ -614,6 +643,20 @@ class Variable(Node):
             Send(Self(self.lineno), self.name, [], self.lineno).compile(ctx)
 
 
+class Global(Node):
+    def __init__(self, name):
+        self.name = name
+
+    def convert_to_assignment(self, transormer, node, oper, value):
+        return GlobalAssignment(oper, self.name, value)
+
+    def locate_symbols(self, symtable):
+        pass
+
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_GLOBAL, ctx.create_symbol_const(self.name))
+
+
 class InstanceVariable(Node):
     def __init__(self, name):
         self.name = name
@@ -627,6 +670,7 @@ class InstanceVariable(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.LOAD_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
 
 class Array(Node):
     def __init__(self, items):

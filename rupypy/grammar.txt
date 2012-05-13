@@ -106,7 +106,8 @@ argument: <arg> | <splat>;
 splat: [UNARY_STAR] arg;
 
 varname: IDENTIFIER |
-         AT_SIGN IDENTIFIER;
+         AT_SIGN IDENTIFIER |
+         DOLLAR IDENTIFIER;
 
 literal: NUMBER | symbol | STRING;
 

@@ -326,6 +326,44 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises("NoMethodError"):
             ec.space.execute(ec, "[].hello")
 
+    def test_splat(self, ec):
+        w_res = ec.space.execute(ec, """
+        def f(a, b, c, d, e, f)
+            [a, b, c, d, e, f]
+        end
+
+        return f(*2, *[5, 3], *[], 7, 8, *[1], *nil)
+        """)
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 5, 3, 7, 8, 1]
+
+        w_res = ec.space.execute(ec, """
+        class ToA
+            def to_a
+                [1, 2, 3, 4, 5, 6]
+            end
+        end
+
+        return f *ToA.new
+        """)
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 2, 3, 4, 5, 6]
+
+        w_res = ec.space.execute(ec, """
+        class ToAry
+            def to_ary
+                [1, 5, 6, 7, 8, 9]
+            end
+        end
+
+        return f *ToAry.new
+        """)
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 5, 6, 7, 8, 9]
+
+    def test_global_variables(self, ec):
+        w_res = ec.space.execute(ec, "return $abc")
+        assert w_res is ec.space.w_nil
+        w_res = ec.space.execute(ec, "$abc = 3; return $abc")
+        assert ec.space.int_w(w_res) == 3
+
 
 class TestBlocks(object):
     def test_self(self, ec):
@@ -419,38 +457,6 @@ class TestBlocks(object):
         return h { |x| x * 3 }
         """)
         assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [3, 6, 9]
-
-    def test_splat(self, ec):
-        w_res = ec.space.execute(ec, """
-        def f(a, b, c, d, e, f)
-            [a, b, c, d, e, f]
-        end
-
-        return f(*2, *[5, 3], *[], 7, 8, *[1], *nil)
-        """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 5, 3, 7, 8, 1]
-
-        w_res = ec.space.execute(ec, """
-        class ToA
-            def to_a
-                [1, 2, 3, 4, 5, 6]
-            end
-        end
-
-        return f *ToA.new
-        """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 2, 3, 4, 5, 6]
-
-        w_res = ec.space.execute(ec, """
-        class ToAry
-            def to_ary
-                [1, 5, 6, 7, 8, 9]
-            end
-        end
-
-        return f *ToAry.new
-        """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 5, 6, 7, 8, 9]
 
 
 class TestExceptions(BaseRuPyPyTest):

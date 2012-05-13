@@ -707,3 +707,13 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.ConstantString("hello world")),
             ])))
         ]))
+
+    def test_global_var(self, ec):
+        r = ec.space.parse(ec, """
+        $abc = 3
+        $abc
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.GlobalAssignment("=", "$abc", ast.ConstantInt(3))),
+            ast.Statement(ast.Global("$abc")),
+        ]))

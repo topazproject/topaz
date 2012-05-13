@@ -1149,3 +1149,24 @@ class TestCompiler(object):
         RETURN
         """)
         assert bc.consts_w[2].max_stackdepth == 2
+
+    def test_global_variable(self, ec):
+        self.assert_compiles(ec, """
+        $abc = 3
+        $abc
+        $abc += 1
+        """, """
+        LOAD_CONST 0
+        STORE_GLOBAL 1
+        DISCARD_TOP
+        LOAD_GLOBAL 2
+        DISCARD_TOP
+        LOAD_GLOBAL 3
+        LOAD_CONST 4
+        SEND 5 1
+        STORE_GLOBAL 6
+        DISCARD_TOP
+
+        LOAD_CONST 7
+        RETURN
+        """)

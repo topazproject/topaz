@@ -205,6 +205,10 @@ class Lexer(object):
             self.add(ch)
             self.emit("AT_SIGN")
             return None
+        elif ch == "$":
+            self.add(ch)
+            self.emit("DOLLAR")
+            return None
         elif ch == "|":
             self.add(ch)
             self.emit("PIPE")

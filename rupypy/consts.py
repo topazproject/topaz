@@ -27,6 +27,9 @@ BYTECODES = [
     ("LOAD_INSTANCE_VAR", 1, +1),
     ("STORE_INSTANCE_VAR", 1, 0),
 
+    ("LOAD_GLOBAL", 1, +1),
+    ("STORE_GLOBAL", 1, 0),
+
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
     ("BUILD_RANGE", 0, -1),
     ("BUILD_RANGE_INCLUSIVE", 0, -1),

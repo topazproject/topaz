@@ -120,9 +120,8 @@ class Interpreter(object):
     def STORE_CONSTANT(self, ec, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         name = ec.space.symbol_w(w_name)
-        w_obj = frame.pop()
-        ec.space.set_const(frame.w_scope, name, w_obj)
-        frame.push(w_obj)
+        w_value = frame.peek()
+        ec.space.set_const(frame.w_scope, name, w_value)
 
     def LOAD_INSTANCE_VAR(self, ec, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
@@ -135,6 +134,16 @@ class Interpreter(object):
         w_obj = frame.pop()
         w_value = frame.peek()
         ec.space.set_instance_var(w_obj, ec.space.symbol_w(w_name), w_value)
+
+    def LOAD_GLOBAL(self, ec, bytecode, frame, pc, idx):
+        name = ec.space.symbol_w(bytecode.consts_w[idx])
+        w_value = ec.space.globals.get(ec.space, name)
+        frame.push(w_value)
+
+    def STORE_GLOBAL(self, ec, bytecode, frame, pc, idx):
+        name = ec.space.symbol_w(bytecode.consts_w[idx])
+        w_value = frame.peek()
+        ec.space.globals.set(ec.space, name, w_value)
 
     @jit.unroll_safe
     def BUILD_ARRAY(self, ec, bytecode, frame, pc, n_items):

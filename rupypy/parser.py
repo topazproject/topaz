@@ -247,10 +247,12 @@ class Transformer(object):
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
-        if len(node.children) == 1:
-            return ast.Variable(node.children[0].additional_info, node.children[0].getsourcepos().lineno)
-        else:
+        if node.children[0].symbol == "AT_SIGN":
             return ast.InstanceVariable(node.children[1].additional_info)
+        elif node.children[0].symbol == "DOLLAR":
+            return ast.Global("$" + node.children[1].additional_info)
+        else:
+            return ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
 
     def visit_if(self, node):
         return ast.If(
