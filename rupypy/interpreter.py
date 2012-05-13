@@ -137,9 +137,10 @@ class Interpreter(object):
 
     def STORE_INSTANCE_VAR(self, ec, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
+        w_value = frame.pop()
         w_obj = frame.pop()
-        w_value = frame.peek()
         ec.space.set_instance_var(w_obj, ec.space.symbol_w(w_name), w_value)
+        frame.push(w_value)
 
     def LOAD_GLOBAL(self, ec, bytecode, frame, pc, idx):
         name = ec.space.symbol_w(bytecode.consts_w[idx])

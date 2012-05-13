@@ -116,12 +116,12 @@ class InstanceVariableAssignment(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
         if self.oper != "=":
             InstanceVariable(self.name).compile(ctx)
         self.value.compile(ctx)
         if self.oper != "=":
             ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 

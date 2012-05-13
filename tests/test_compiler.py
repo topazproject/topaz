@@ -472,8 +472,8 @@ class TestCompiler(object):
     def test_instance_variable(self, ec):
         self.assert_compiles(ec, "@a = @b", """
         LOAD_SELF
-        LOAD_INSTANCE_VAR 0
         LOAD_SELF
+        LOAD_INSTANCE_VAR 0
         STORE_INSTANCE_VAR 1
         DISCARD_TOP
 
@@ -718,10 +718,10 @@ class TestCompiler(object):
 
         self.assert_compiles(ec, "@a += 2", """
         LOAD_SELF
+        LOAD_SELF
         LOAD_INSTANCE_VAR 0
         LOAD_CONST 1
         SEND 2 1
-        LOAD_SELF
         STORE_INSTANCE_VAR 3
         DISCARD_TOP
 
