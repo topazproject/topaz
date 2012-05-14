@@ -61,7 +61,7 @@ constant: COLONCOLON IDENTIFIER;
 
 primary: LPAREN expr RPAREN |
          LBRACKET args? RBRACKET |
-         IF expr then line* statement? [LINE_END]? END |
+         IF if else? [END] |
          UNLESS expr then line* statement? [LINE_END]? END |
          WHILE expr do line* statement? [LINE_END]? END |
          DEF function_name argdecl line* statement? [LINE_END]? END |
@@ -71,6 +71,8 @@ primary: LPAREN expr RPAREN |
          varname |
          literal;
 
+if: expr then line* statement? [LINE_END]?;
+
 then: [LINE_END] |
       THEN |
       [LINE_END] THEN;
@@ -78,6 +80,8 @@ then: [LINE_END] |
 do: [LINE_END] |
     DO |
     [LINE_END] DO;
+
+else: ELSE line* statement? [LINE_END]?;
 
 rescue: RESCUE varname? (ARROW IDENTIFIER)? line* statement? [LINE_END]?;
 

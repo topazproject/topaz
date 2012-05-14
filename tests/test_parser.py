@@ -113,7 +113,6 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_if_statement(self, ec):
-
         res = lambda lineno: ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
                 ast.Statement(ast.Send(ast.Self(lineno), "puts", [ast.ConstantInt(2)], lineno))
@@ -142,6 +141,16 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.Send(ast.Self(4), "puts", [ast.ConstantInt(3)], 4)),
                 ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(4)], 5)),
             ]), ast.Block([])))
+        ]))
+
+    def test_else(self, ec):
+        r = ec.space.parse(ec, """if 3 then 5 else 4 end""")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
+                ast.Statement(ast.ConstantInt(5))
+            ]), ast.Block([
+                ast.Statement(ast.ConstantInt(4))
+            ])))
         ]))
 
     def test_comparison_ops(self, ec):

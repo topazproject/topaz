@@ -201,12 +201,10 @@ class Transformer(object):
         return block_args, block
 
     def visit_primary(self, node):
-        if len(node.children) == 1:
-            symname = node.children[0].symbol
-            if symname == "literal":
-                return self.visit_literal(node.children[0])
-            elif symname == "varname":
-                return self.visit_varname(node.children[0])
+        if node.children[0].symbol == "literal":
+            return self.visit_literal(node.children[0])
+        elif node.children[0].symbol == "varname":
+            return self.visit_varname(node.children[0])
         elif node.children[0].additional_info == "(":
             return self.visit_expr(node.children[1])
         elif node.children[0].additional_info == "[":
@@ -257,11 +255,15 @@ class Transformer(object):
             return ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
 
     def visit_if(self, node):
-        return ast.If(
-            self.visit_expr(node.children[1]),
-            self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
-            ast.Block([]),
-        )
+        if_node = node.children[1]
+        if_cond = self.visit_expr(if_node.children[0])
+        if_block = self.visit_block(if_node, start_idx=2, end_idx=len(if_node.children))
+        if len(node.children) == 3:
+            else_node = node.children[2]
+            else_block = self.visit_block(else_node, start_idx=1, end_idx=len(else_node.children))
+        else:
+            else_block = ast.Block([])
+        return ast.If(if_cond, if_block, else_block)
 
     def visit_unless(self, node):
         return ast.If(
