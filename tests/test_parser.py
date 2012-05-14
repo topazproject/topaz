@@ -753,3 +753,13 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.GlobalAssignment("=", "$abc", ast.ConstantInt(3))),
             ast.Statement(ast.Global("$abc")),
         ]))
+
+    def test_comments(self, ec):
+        r = ec.space.parse(ec, """
+        #abc 123
+        1 + 1 # more comment
+        # another comment
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("+", ast.ConstantInt(1), ast.ConstantInt(1), 3))
+        ]))

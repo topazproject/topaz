@@ -35,6 +35,7 @@ TOKENS = unrolling_iterable([
     "DOTDOT",
     "COLON",
     "STRING",
+    "COMMENT",
 ])
 for token in TOKENS:
     setattr(sys.modules[__name__], token, token)
@@ -227,6 +228,8 @@ class Lexer(object):
             self.add(ch)
             self.emit("LINE_END")
             return None
+        elif ch == "#":
+            return COMMENT
         assert False, ch
 
     def handle_NUMBER(self, ch):
@@ -351,6 +354,11 @@ class Lexer(object):
         else:
             self.emit("COLON")
             return self.handle_generic(ch)
+
+    def handle_COMMENT(self, ch):
+        if ch == "\n":
+            return self.handle_generic(ch)
+        return COMMENT
 
     def handle_UNREACHABLE(self, ch):
         raise NotImplementedError
