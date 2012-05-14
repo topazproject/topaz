@@ -105,13 +105,16 @@ argdef: IDENTIFIER [EQ] arg |
 
 operation: IDENTIFIER | CLASS | END | BEGIN;
 
-send_args: args;
+send_args: args ([COMMA] block_arg)? |
+           block_arg;
 
 args: argument [COMMA] >args< | argument;
 
 argument: <arg> | <splat>;
 
 splat: [UNARY_STAR] arg;
+
+block_arg: [AMP] arg;
 
 varname: IDENTIFIER |
          AT_SIGN IDENTIFIER |

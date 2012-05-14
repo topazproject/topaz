@@ -387,7 +387,7 @@ class TestInterpreter(BaseRuPyPyTest):
             ec.space.execute(ec, "Constant")
 
 
-class TestBlocks(object):
+class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):
         w_res = ec.space.execute(ec, """
         class X
@@ -479,6 +479,23 @@ class TestBlocks(object):
         return h { |x| x * 3 }
         """)
         assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [3, 6, 9]
+
+    def test_block_argument_send(self, ec):
+        w_res = ec.space.execute(ec, """
+        f = lambda { |x| x * 2 }
+        return [1, 2, 3].map(&f)
+        """)
+        assert self.unwrap(ec.space, w_res) == [2, 4, 6]
+        w_res = ec.space.execute(ec, """
+        def x(&b)
+            b
+        end
+        return x(&nil)
+        """)
+        assert w_res is ec.space.w_nil
+
+        with self.raises("TypeError"):
+            ec.space.execute(ec, "f(&3)")
 
 
 class TestExceptions(BaseRuPyPyTest):

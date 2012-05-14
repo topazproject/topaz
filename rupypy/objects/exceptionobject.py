@@ -28,6 +28,11 @@ class W_StandardError(W_ExceptionObject):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_TypeError(W_ExceptionObject):
+    classdef = ClassDef("TypeError", W_StandardError.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_NameError(W_StandardError):
     classdef = ClassDef("NameError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)

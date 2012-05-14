@@ -599,6 +599,13 @@ class BlockArgument(Node):
     def __init__(self, value):
         self.value = value
 
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        ctx.emit(consts.COERCE_BLOCK)
+
 
 class LookupConstant(Node):
     def __init__(self, value, name, lineno):

@@ -765,11 +765,14 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_send_block_argument(self, ec):
-        import py
-        py.test.skip()
         r = ec.space.parse(ec, "f(&b)")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.BlockArgument(ast.Send(ast.Self(1), "b", [], None, 1)), 1))
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.BlockArgument(ast.Variable("b", 1)), 1))
+        ]))
+
+        r = ec.space.parse(ec, "f(3, 4, &a)")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantInt(3), ast.ConstantInt(4)], ast.BlockArgument(ast.Variable("a", 1)), 1))
         ]))
 
         with self.raises("SyntaxError"):

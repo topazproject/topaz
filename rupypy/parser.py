@@ -42,6 +42,8 @@ class Transformer(object):
     def visit_send_block(self, node):
         send = self.visit_real_send(node.children[0])
         assert isinstance(send, ast.Send)
+        if send.block_arg is not None:
+            self.error(node)
         block_args = []
         start_idx = 2
         if node.children[2].symbol == "arglist":
@@ -72,7 +74,7 @@ class Transformer(object):
     def visit_yield(self, node):
         args = []
         if len(node.children) == 2:
-            args = self.visit_send_args(node.children[1])
+            args = [self.visit_arg(n) for n in node.children[1].children]
         return ast.Yield(args, node.children[0].getsourcepos().lineno)
 
     def visit_arg(self, node):
@@ -138,18 +140,19 @@ class Transformer(object):
                 )
             target = ast.Self(node.getsourcepos().lineno)
             name = node.children[0].additional_info
-            args = self.visit_send_args(node.children[1].children[0])
+            args, block_argument = self.visit_send_args(node.children[1])
             if len(node.children) == 3:
+                if block_argument is not None:
+                    self.error(node)
                 block_args, block = self.visit_braces_block(node.children[2])
-                block = ast.SendBlock(block_args, block)
-            else:
-                block = None
-            return ast.Send(target, name, args, block, node.getsourcepos().lineno)
+                block_argument = ast.SendBlock(block_args, block)
+            return ast.Send(target, name, args, block_argument, node.getsourcepos().lineno)
 
         target = self.visit_primary(node.children[0])
         for trailer in node.children[1].children:
             node = trailer.children[0]
             if node.symbol in ["attribute", "subscript"]:
+                block_argument = None
                 if node.symbol == "attribute":
                     method = node.children[0].children[0].additional_info
                     if len(node.children) == 1:
@@ -161,22 +164,22 @@ class Transformer(object):
                         )
                         continue
                     else:
-                        args = self.visit_send_args(node.children[1].children[0])
+                        args, block_argument = self.visit_send_args(node.children[1])
                 elif node.symbol == "subscript":
                     args = [self.visit_arg(node.children[0])]
                     method = "[]"
                 else:
                     assert False
                 if len(node.children) == 3:
+                    if block_argument is not None:
+                        self.error(node)
                     block_args, block = self.visit_braces_block(node.children[2])
-                    block = ast.SendBlock(block_args, block)
-                else:
-                    block = None
+                    block_argument = ast.SendBlock(block_args, block)
                 target = ast.Send(
                     target,
                     method,
                     args,
-                    block,
+                    block_argument,
                     node.getsourcepos().lineno
                 )
             elif node.symbol == "constant":
@@ -186,7 +189,15 @@ class Transformer(object):
         return target
 
     def visit_send_args(self, node):
-        return [self.visit_arg(n) for n in node.children]
+        block_argument = None
+        args = []
+        idx = 0
+        if node.children[idx].symbol == "args":
+            args = [self.visit_arg(n) for n in node.children[idx].children]
+            idx += 1
+        if idx < len(node.children) and node.children[idx].symbol == "block_arg":
+            block_argument = ast.BlockArgument(self.visit_arg(node.children[idx].children[0]))
+        return args,  block_argument
 
     def visit_braces_block(self, node):
         block_args = []

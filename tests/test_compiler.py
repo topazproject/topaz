@@ -1209,3 +1209,18 @@ class TestCompiler(object):
         LOAD_CONST 7
         RETURN
         """)
+
+    def test_send_block_argument(self, ec):
+        self.assert_compiles(ec, """
+        f(&b)
+        """, """
+        LOAD_SELF
+        LOAD_SELF
+        SEND 0 0
+        COERCE_BLOCK
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)

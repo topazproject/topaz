@@ -40,6 +40,7 @@ BYTECODES = [
 
     ("COPY_STRING", 0, 0),
     ("COERCE_ARRAY", 0, 0),
+    ("COERCE_BLOCK", 0, 0),
 
     ("DEFINE_FUNCTION", 0, -2),
     ("ATTACH_FUNCTION", 0, -2),

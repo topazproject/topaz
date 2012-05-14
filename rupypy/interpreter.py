@@ -4,8 +4,9 @@ from pypy.rlib.objectmodel import we_are_translated, specialize
 from rupypy import consts
 from rupypy.error import RubyError
 from rupypy.objects.objectobject import W_BaseObject
-from rupypy.objects.exceptionobject import W_NameError
+from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
+from rupypy.objects.procobject import W_ProcObject
 
 
 def get_printable_location(pc, bytecode):
@@ -254,6 +255,17 @@ class Interpreter(object):
                 w_obj = ec.space.newarray([w_obj])
             frame.push(w_obj)
 
+    def COERCE_BLOCK(self, ec, bytecode, frame, pc):
+        w_block = frame.pop()
+        if w_block is ec.space.w_nil:
+            frame.push(w_block)
+        elif isinstance(w_block, W_ProcObject):
+            frame.push(w_block.block)
+        else:
+            ec.space.raise_(ec, ec.space.getclassfor(W_TypeError),
+                "wrong argument type"
+            )
+
     def DEFINE_FUNCTION(self, ec, bytecode, frame, pc):
         w_func = frame.pop()
         w_name = frame.pop()
@@ -284,7 +296,10 @@ class Interpreter(object):
         w_block = frame.pop()
         args_w = frame.popitemsreverse(num_args - 1)
         w_receiver = frame.pop()
-        assert isinstance(w_block, W_BlockObject)
+        if w_block is ec.space.w_nil:
+            w_block = None
+        else:
+            assert isinstance(w_block, W_BlockObject)
         w_res = ec.space.send(ec, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
