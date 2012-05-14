@@ -358,6 +358,17 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 5, 6, 7, 8, 9]
 
+    def test_send_block_splat(self, ec):
+        w_res = ec.space.execute(ec, """
+        def f(a)
+            x = yield
+            return a + x
+        end
+
+        return f(*2) { 5 }
+        """)
+        assert ec.space.int_w(w_res) == 7
+
     def test_global_variables(self, ec):
         w_res = ec.space.execute(ec, "return $abc")
         assert w_res is ec.space.w_nil

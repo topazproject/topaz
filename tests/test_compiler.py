@@ -1135,6 +1135,23 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_block_splat_send(self, ec):
+        self.assert_compiles(ec, """
+        f(*x) { |a| a }
+        """, """
+        LOAD_SELF
+        LOAD_SELF
+        SEND 0 0
+        COERCE_ARRAY
+        LOAD_CONST 1
+        BUILD_BLOCK 0
+        SEND_BLOCK_SPLAT 2
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_singleton_method(self, ec):
         self.assert_compiles(ec, """
         def Array.hello

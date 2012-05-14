@@ -69,34 +69,34 @@ class TestParser(BaseRuPyPyTest):
 
     def test_send(self, ec):
         assert ec.space.parse(ec, "puts 2") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(2)], 1))
+            ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(2)], None, 1))
         ]))
         assert ec.space.parse(ec, "puts 1, 2") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(1), ast.ConstantInt(2)], 1))
+            ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(1), ast.ConstantInt(2)], None, 1))
         ]))
         assert ec.space.parse(ec, "puts(1, 2)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(1), ast.ConstantInt(2)], 1))
+            ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(1), ast.ConstantInt(2)], None, 1))
         ]))
         assert ec.space.parse(ec, "2.to_s") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [], 1))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [], None, 1))
         ]))
         assert ec.space.parse(ec, "2.to_s 10") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10)], 1))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10)], None, 1))
         ]))
         assert ec.space.parse(ec, "2.to_s.to_i") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Send(ast.ConstantInt(2), "to_s", [], 1), "to_i", [], 1))
+            ast.Statement(ast.Send(ast.Send(ast.ConstantInt(2), "to_s", [], None, 1), "to_i", [], None, 1))
         ]))
         assert ec.space.parse(ec, "2.to_s()") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [], 1))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [], None, 1))
         ]))
         assert ec.space.parse(ec, "2.to_s(10)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10)], 1))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10)], None, 1))
         ]))
         assert ec.space.parse(ec, "2.to_s(*10)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Splat(ast.ConstantInt(10))], 1))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Splat(ast.ConstantInt(10))], None, 1))
         ]))
         assert ec.space.parse(ec, "2.to_s(10, *x)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Splat(ast.Variable("x", 1))], 1))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Splat(ast.Variable("x", 1))], None, 1))
         ]))
 
     def test_assignment(self, ec):
@@ -115,7 +115,7 @@ class TestParser(BaseRuPyPyTest):
     def test_if_statement(self, ec):
         res = lambda lineno: ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
-                ast.Statement(ast.Send(ast.Self(lineno), "puts", [ast.ConstantInt(2)], lineno))
+                ast.Statement(ast.Send(ast.Self(lineno), "puts", [ast.ConstantInt(2)], None, lineno))
             ]), ast.Block([])))
         ]))
         assert ec.space.parse(ec, "if 3 then puts 2 end") == res(1)
@@ -137,9 +137,9 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0), ast.Block([
-                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(2)], 3)),
-                ast.Statement(ast.Send(ast.Self(4), "puts", [ast.ConstantInt(3)], 4)),
-                ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(4)], 5)),
+                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(2)], None, 3)),
+                ast.Statement(ast.Send(ast.Self(4), "puts", [ast.ConstantInt(3)], None, 4)),
+                ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(4)], None, 5)),
             ]), ast.Block([])))
         ]))
 
@@ -190,7 +190,7 @@ class TestParser(BaseRuPyPyTest):
     def test_while(self, ec):
         expected = ast.Main(ast.Block([
             ast.Statement(ast.While(ast.Variable("true", 1), ast.Block([
-                ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)], 1))
+                ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)], None, 1))
             ])))
         ]))
         assert ec.space.parse(ec, "while true do puts 5 end") == expected
@@ -214,10 +214,10 @@ class TestParser(BaseRuPyPyTest):
         assert res == ast.Main(ast.Block([
             ast.Statement(ast.Assignment("=", "i", ast.ConstantInt(0), 2)),
             ast.Statement(ast.While(ast.BinOp("<", ast.Variable("i", 3), ast.ConstantInt(10), 3), ast.Block([
-                ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], 4)),
-                ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], 5)),
-                ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], 6)),
-                ast.Statement(ast.Send(ast.Self(7), "puts", [ast.Variable("true", 7)], 7)),
+                ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
+                ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
+                ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], None, 6)),
+                ast.Statement(ast.Send(ast.Self(7), "puts", [ast.Variable("true", 7)], None, 7)),
             ])))
         ]))
 
@@ -249,15 +249,15 @@ class TestParser(BaseRuPyPyTest):
 
     def test_subscript(self, ec):
         assert ec.space.parse(ec, "[1][0]") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Array([ast.ConstantInt(1)]), "[]", [ast.ConstantInt(0)], 1))
+            ast.Statement(ast.Send(ast.Array([ast.ConstantInt(1)]), "[]", [ast.ConstantInt(0)], None, 1))
         ]))
 
         assert ec.space.parse(ec, "self[i]") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("self", 1), "[]", [ast.Variable("i", 1)], 1))
+            ast.Statement(ast.Send(ast.Variable("self", 1), "[]", [ast.Variable("i", 1)], None, 1))
         ]))
 
         assert ec.space.parse(ec, "self[i].to_s") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Send(ast.Variable("self", 1), "[]", [ast.Variable("i", 1)], 1), "to_s", [], 1))
+            ast.Statement(ast.Send(ast.Send(ast.Variable("self", 1), "[]", [ast.Variable("i", 1)], None, 1), "to_s", [], None, 1))
         ]))
 
     def test_def(self, ec):
@@ -280,9 +280,9 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [ast.Argument("a")], None, ast.Block([
-                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], 3)),
-                ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("a", 4)], 4)),
-                ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("a", 5)], 5)),
+                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], None, 3)),
+                ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("a", 4)], None, 4)),
+                ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("a", 5)], None, 5)),
             ])))
         ]))
 
@@ -329,7 +329,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.ConstantString("abc"))
         ]))
         assert ec.space.parse(ec, '"abc".size') == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantString("abc"), "size", [], 1))
+            ast.Statement(ast.Send(ast.ConstantString("abc"), "size", [], None, 1))
         ]))
 
     def test_class(self, ec):
@@ -374,9 +374,9 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.SendBlock(ast.Variable("x", 2), "each", [], [], ast.Block([
-                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], 3))
-            ]), 2))
+            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], ast.Block([
+                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], None, 3))
+            ])), 2))
         ]))
         r = ec.space.parse(ec, """
         x.each do ||
@@ -384,9 +384,9 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.SendBlock(ast.Variable("x", 2), "each", [], [], ast.Block([
-                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], 3))
-            ]), 2))
+            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], ast.Block([
+                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], None, 3))
+            ])), 2))
         ]))
         r = ec.space.parse(ec, """
         x.each do |a|
@@ -394,31 +394,31 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.SendBlock(ast.Variable("x", 2), "each", [], [ast.Argument("a")], ast.Block([
-                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], 3))
-            ]), 2))
+            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([ast.Argument("a")], ast.Block([
+                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], None, 3))
+            ])), 2))
         ]))
 
     def test_block(self, ec):
         assert ec.space.parse(ec, "[].map { |x| x }") == ast.Main(ast.Block([
-            ast.Statement(ast.SendBlock(ast.Array([]), "map", [], [ast.Argument("x")], ast.Block([
+            ast.Statement(ast.Send(ast.Array([]), "map", [], ast.SendBlock([ast.Argument("x")], ast.Block([
                 ast.Statement(ast.Variable("x", 1))
-            ]), 1))
+            ])), 1))
         ]))
         assert ec.space.parse(ec, "[].inject(0) { |x, s| x + s }") == ast.Main(ast.Block([
-            ast.Statement(ast.SendBlock(ast.Array([]), "inject", [ast.ConstantInt(0)], [ast.Argument("x"), ast.Argument("s")], ast.Block([
+            ast.Statement(ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("x"), ast.Argument("s")], ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("x", 1), ast.Variable("s", 1), 1))
-            ]), 1))
+            ])), 1))
         ]))
         assert ec.space.parse(ec, "f { 5 }") == ast.Main(ast.Block([
-            ast.Statement(ast.SendBlock(ast.Self(1), "f", [], [], ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], ast.Block([
                 ast.Statement(ast.ConstantInt(5))
-            ]), 1))
+            ])), 1))
         ]))
         assert ec.space.parse(ec, "f(3) { 5 }") == ast.Main(ast.Block([
-            ast.Statement(ast.SendBlock(ast.Self(1), "f", [ast.ConstantInt(3)], [], ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantInt(3)], ast.SendBlock([], ast.Block([
                 ast.Statement(ast.ConstantInt(5))
-            ]), 1))
+            ])), 1))
         ]))
 
     def test_yield(self, ec):
@@ -454,7 +454,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
         assert ec.space.parse(ec, "self.attribute.other_attr.other = 12") == ast.Main(ast.Block([
-            ast.Statement(ast.MethodAssignment("=", ast.Send(ast.Send(ast.Variable("self", 1), "attribute", [], 1), "other_attr", [], 1), "other", ast.ConstantInt(12)))
+            ast.Statement(ast.MethodAssignment("=", ast.Send(ast.Send(ast.Variable("self", 1), "attribute", [], None, 1), "other_attr", [], None, 1), "other", ast.ConstantInt(12)))
         ]))
 
     def test_augmented_assignment(self, ec):
@@ -480,9 +480,9 @@ class TestParser(BaseRuPyPyTest):
         end * 5
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.BinOp("*", ast.SendBlock(ast.Array([]), "inject", [ast.ConstantInt(0)], [ast.Argument("s"), ast.Argument("x")], ast.Block([
+            ast.Statement(ast.BinOp("*", ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("s"), ast.Argument("x")], ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("s", 3), ast.Variable("x", 3), 3))
-            ]), 2), ast.ConstantInt(5), 2))
+            ])), 2), ast.ConstantInt(5), 2))
         ]))
 
     def test_unary_neg(self, ec):
@@ -490,7 +490,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.UnaryOp("-", ast.Variable("b", 1), 1))
         ]))
         assert ec.space.parse(ec, "Math.exp(-a)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.UnaryOp("-", ast.Variable("a", 1), 1)], 1))
+            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.UnaryOp("-", ast.Variable("a", 1), 1)], None, 1))
         ]))
 
     def test_unless(self, ec):
@@ -570,7 +570,7 @@ class TestParser(BaseRuPyPyTest):
                 ]),
                 [
                     ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), None, ast.Block([
-                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("zero")], 5))
+                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("zero")], None, 5))
                     ]))
                 ]
             ))
@@ -590,7 +590,7 @@ class TestParser(BaseRuPyPyTest):
                 ]),
                 [
                     ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), "e", ast.Block([
-                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], 5))
+                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], None, 5))
                     ]))
                 ]
             ))
@@ -612,10 +612,10 @@ class TestParser(BaseRuPyPyTest):
                 ]),
                 [
                     ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), "e", ast.Block([
-                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], 5))
+                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], None, 5))
                     ])),
                     ast.ExceptHandler(ast.LookupConstant(ast.Scope(6), "NoMethodError", 6), None, ast.Block([
-                        ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("?")], 7))
+                        ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("?")], None, 7))
                     ])),
                 ]
             ))
@@ -654,7 +654,7 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 3))
                 ]),
                 ast.Block([
-                    ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("ensure")], 5))
+                    ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("ensure")], None, 5))
                 ])
             ))
         ]))
@@ -674,11 +674,11 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 3))
                 ]), [
                     ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), None, ast.Block([
-                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("rescue")], 5))
+                        ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("rescue")], None, 5))
                     ]))
                 ]),
                 ast.Block([
-                    ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("ensure")], 7))
+                    ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("ensure")], None, 7))
                 ])
             ))
         ]))
@@ -698,7 +698,7 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 4)),
                 ]), [
                     ast.ExceptHandler(None, None, ast.Block([
-                        ast.Statement(ast.Send(ast.Self(6), "puts", [ast.ConstantString("rescue")], 6))
+                        ast.Statement(ast.Send(ast.Self(6), "puts", [ast.ConstantString("rescue")], None, 6))
                     ]))
                 ]
             ))
@@ -719,7 +719,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_question_mark(self, ec):
         assert ec.space.parse(ec, "obj.method?") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("obj", 1), "method?", [], 1))
+            ast.Statement(ast.Send(ast.Variable("obj", 1), "method?", [], None, 1))
         ]))
         assert ec.space.parse(ec, "def method?() end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "method?", [], None, ast.Block([])))
@@ -763,3 +763,26 @@ class TestParser(BaseRuPyPyTest):
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("+", ast.ConstantInt(1), ast.ConstantInt(1), 3))
         ]))
+
+    def test_send_block_argument(self, ec):
+        import py
+        py.test.skip()
+        r = ec.space.parse(ec, "f(&b)")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.BlockArgument(ast.Send(ast.Self(1), "b", [], None, 1)), 1))
+        ]))
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "f(&b, &b)")
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "f(&b, a)")
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "f(&b) {}")
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, """
+            f(&b) do ||
+            end
+            """)

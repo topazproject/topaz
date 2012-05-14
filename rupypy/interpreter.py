@@ -294,6 +294,16 @@ class Interpreter(object):
         w_res = ec.space.send(ec, w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
+    def SEND_BLOCK_SPLAT(self, ec, bytecode, frame, pc, meth_idx):
+        from rupypy.objects.blockobject import W_BlockObject
+
+        w_block = frame.pop()
+        args_w = ec.space.listview(frame.pop())
+        w_receiver = frame.pop()
+        assert isinstance(w_block, W_BlockObject)
+        w_res = ec.space.send(ec, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        frame.push(w_res)
+
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = ExceptBlock(target_pc, frame.lastblock, frame.stackpos)
 

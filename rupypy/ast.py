@@ -470,7 +470,7 @@ class BinOp(Node):
         self.right.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.left, self.op, [self.right], self.lineno).compile(ctx)
+        Send(self.left, self.op, [self.right], None, self.lineno).compile(ctx)
 
 
 class UnaryOp(Node):
@@ -483,14 +483,15 @@ class UnaryOp(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.value, self.op + "@", [], self.lineno).compile(ctx)
+        Send(self.value, self.op + "@", [], None, self.lineno).compile(ctx)
 
 
 class Send(Node):
-    def __init__(self, receiver, method, args, lineno):
+    def __init__(self, receiver, method, args, block_arg, lineno):
         self.receiver = receiver
         self.method = method
         self.args = args
+        self.block_arg = block_arg
         self.lineno = lineno
 
     def convert_to_assignment(self, transformer, node, oper, value):
@@ -503,6 +504,9 @@ class Send(Node):
         for arg in self.args:
             arg.locate_symbols(symtable)
 
+        if self.block_arg is not None:
+            self.block_arg.locate_symbols(symtable)
+
     def compile(self, ctx):
         self.receiver.compile(ctx)
         if self.is_splat():
@@ -514,13 +518,22 @@ class Send(Node):
                     ctx.emit(consts.BUILD_ARRAY, 1)
             for i in range(len(self.args) - 1):
                 ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
-            ctx.current_lineno = self.lineno
-            ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const(self.method))
         else:
             for arg in self.args:
                 arg.compile(ctx)
-            ctx.current_lineno = self.lineno
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), len(self.args))
+        if self.block_arg is not None:
+            self.block_arg.compile(ctx)
+
+        ctx.current_lineno = self.lineno
+        symbol = ctx.create_symbol_const(self.method)
+        if self.is_splat() and self.block_arg is not None:
+            ctx.emit(consts.SEND_BLOCK_SPLAT, symbol)
+        elif self.is_splat():
+            ctx.emit(consts.SEND_SPLAT, symbol)
+        elif self.block_arg is not None:
+            ctx.emit(consts.SEND_BLOCK, symbol, len(self.args) + 1)
+        else:
+            ctx.emit(consts.SEND, symbol, len(self.args))
 
     def is_splat(self):
         for arg in self.args:
@@ -529,20 +542,23 @@ class Send(Node):
         return False
 
 
+class Splat(Node):
+    def __init__(self, value):
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+
+
 class SendBlock(Node):
-    def __init__(self, receiver, method, args, block_args, block, lineno):
-        Node.__init__(self, lineno)
-        self.receiver = receiver
-        self.method = method
-        self.args = args
+    def __init__(self, block_args, block):
         self.block_args = block_args
         self.block = block
 
     def locate_symbols(self, symtable):
-        self.receiver.locate_symbols(symtable)
-        for arg in self.args:
-            arg.locate_symbols(symtable)
-
         block_symtable = BlockSymbolTable(symtable)
         symtable.add_subscope(self, block_symtable)
         for arg in self.block_args:
@@ -550,15 +566,10 @@ class SendBlock(Node):
         self.block.locate_symbols(block_symtable)
 
     def compile(self, ctx):
-        self.receiver.compile(ctx)
-        for arg in self.args:
-            arg.compile(ctx)
-
         block_ctx = ctx.get_subctx("block in %s" % ctx.code_name, self)
         for name, kind in block_ctx.symtable.cells.iteritems():
             if kind == block_ctx.symtable.CELLVAR:
                 block_ctx.symtable.get_cell_num(name)
-
         for arg in self.block_args:
             if block_ctx.symtable.is_local(arg.name):
                 block_ctx.symtable.get_local_num(arg.name)
@@ -569,8 +580,6 @@ class SendBlock(Node):
         block_ctx.emit(consts.RETURN)
         block_args = [a.name for a in self.block_args]
         bc = block_ctx.create_bytecode(block_args, [], None)
-
-        ctx.current_lineno = self.lineno
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)
@@ -584,18 +593,11 @@ class SendBlock(Node):
                 num_cells += 1
 
         ctx.emit(consts.BUILD_BLOCK, num_cells)
-        ctx.emit(consts.SEND_BLOCK, ctx.create_symbol_const(self.method), len(self.args) + 1)
 
 
-class Splat(Node):
+class BlockArgument(Node):
     def __init__(self, value):
         self.value = value
-
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        self.value.compile(ctx)
 
 
 class LookupConstant(Node):
@@ -615,7 +617,7 @@ class LookupConstant(Node):
             self.value.compile(ctx)
             ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
-            Send(self.value, self.name, [], self.lineno).compile(ctx)
+            Send(self.value, self.name, [], None, self.lineno).compile(ctx)
 
 
 class Self(Node):
@@ -667,7 +669,7 @@ class Variable(Node):
         elif ctx.symtable.is_cell(self.name):
             ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
         else:
-            Send(Self(self.lineno), self.name, [], self.lineno).compile(ctx)
+            Send(Self(self.lineno), self.name, [], None, self.lineno).compile(ctx)
 
 
 class Global(Node):

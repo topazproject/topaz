@@ -48,12 +48,11 @@ class Transformer(object):
             block_args, _ = self.visit_arglist(node.children[2])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
-        return ast.SendBlock(
+        return ast.Send(
             send.receiver,
             send.method,
             send.args,
-            block_args,
-            block,
+            ast.SendBlock(block_args, block),
             node.getsourcepos().lineno
         )
 
@@ -130,12 +129,11 @@ class Transformer(object):
             if node.children[0].symbol == "global_block":
                 node = node.children[0]
                 block_args, block = self.visit_braces_block(node.children[1])
-                return ast.SendBlock(
+                return ast.Send(
                     ast.Self(node.getsourcepos().lineno),
                     node.children[0].additional_info,
                     [],
-                    block_args,
-                    block,
+                    ast.SendBlock(block_args, block),
                     node.getsourcepos().lineno
                 )
             target = ast.Self(node.getsourcepos().lineno)
@@ -143,11 +141,10 @@ class Transformer(object):
             args = self.visit_send_args(node.children[1].children[0])
             if len(node.children) == 3:
                 block_args, block = self.visit_braces_block(node.children[2])
-                return ast.SendBlock(
-                    target, name, args, block_args, block, node.getsourcepos().lineno
-                )
+                block = ast.SendBlock(block_args, block)
             else:
-                return ast.Send(target, name, args, node.getsourcepos().lineno)
+                block = None
+            return ast.Send(target, name, args, block, node.getsourcepos().lineno)
 
         target = self.visit_primary(node.children[0])
         for trailer in node.children[1].children:
@@ -159,8 +156,8 @@ class Transformer(object):
                         args = []
                     elif node.children[1].symbol == "block":
                         block_args, block = self.visit_braces_block(node.children[1])
-                        target = ast.SendBlock(
-                            target, method, [], block_args, block, node.getsourcepos().lineno
+                        target = ast.Send(
+                            target, method, [], ast.SendBlock(block_args, block), node.getsourcepos().lineno
                         )
                         continue
                     else:
@@ -172,16 +169,16 @@ class Transformer(object):
                     assert False
                 if len(node.children) == 3:
                     block_args, block = self.visit_braces_block(node.children[2])
-                    target = ast.SendBlock(
-                        target, method, args, block_args, block, node.getsourcepos().lineno
-                    )
+                    block = ast.SendBlock(block_args, block)
                 else:
-                    target = ast.Send(
-                        target,
-                        method,
-                        args,
-                        node.getsourcepos().lineno
-                    )
+                    block = None
+                target = ast.Send(
+                    target,
+                    method,
+                    args,
+                    block,
+                    node.getsourcepos().lineno
+                )
             elif node.symbol == "constant":
                 target = ast.LookupConstant(target, node.children[1].additional_info, node.getsourcepos().lineno)
             else:
