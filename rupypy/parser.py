@@ -197,7 +197,7 @@ class Transformer(object):
         if node.children[start_idx].symbol == "arglist":
             block_args, _ = self.visit_arglist(node.children[start_idx])
             start_idx += 1
-        block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children))
+        block = self.visit_block(node, start_idx=start_idx)
         return block_args, block
 
     def visit_primary(self, node):
@@ -257,12 +257,28 @@ class Transformer(object):
     def visit_if(self, node):
         if_node = node.children[1]
         if_cond = self.visit_expr(if_node.children[0])
-        if_block = self.visit_block(if_node, start_idx=2, end_idx=len(if_node.children))
-        if len(node.children) == 3:
+        if_block = self.visit_block(if_node, start_idx=2)
+
+        idx = 2
+        conditions = []
+        if len(node.children) > idx and node.children[idx].symbol == "elsifs":
+            for node in node.children[idx].children:
+                cond = self.visit_expr(node.children[1])
+                body = self.visit_block(node, start_idx=3)
+                conditions.append((cond, body))
+            idx += 1
+        if len(node.children) > idx and node.children[idx].symbol == "else":
             else_node = node.children[2]
-            else_block = self.visit_block(else_node, start_idx=1, end_idx=len(else_node.children))
+            else_block = self.visit_block(else_node, start_idx=1)
         else:
             else_block = ast.Block([])
+
+        for idx in range(len(conditions) - 1, -1, -1):
+            cond, block = conditions[idx]
+            else_block = ast.Block([
+                ast.Statement(ast.If(cond, block, else_block))
+            ])
+
         return ast.If(if_cond, if_block, else_block)
 
     def visit_unless(self, node):
@@ -328,7 +344,7 @@ class Transformer(object):
             body_block = ast.TryExcept(body_block, handlers)
         if node.children[idx].symbol == "ensure":
             ensure_node = node.children[idx]
-            block = self.visit_block(ensure_node, start_idx=1, end_idx=len(ensure_node.children))
+            block = self.visit_block(ensure_node, start_idx=1)
             body_block = ast.TryFinally(body_block, block)
         return body_block
 
@@ -342,7 +358,7 @@ class Transformer(object):
         if node.children[idx].symbol == "ARROW":
             name = node.children[idx + 1].additional_info
             idx += 2
-        block = self.visit_block(node, start_idx=idx, end_idx=len(node.children))
+        block = self.visit_block(node, start_idx=idx)
         return ast.ExceptHandler(exception, name, block)
 
     def visit_argdecl(self, node):
