@@ -7,8 +7,7 @@ def make_parse_function(grammar, lexer_cls):
     visitor = ParserBuilder()
     tokens = ebnf_lexer.tokenize(grammar, True)
     s = ebnf_parser.parse(tokens)
-    s = s.visit(EBNFToAST())
-    [s] = s
+    [s] = s.visit(EBNFToAST())
     s.visit(visitor)
 
     rules, changes = visitor.get_rules_and_changes()
