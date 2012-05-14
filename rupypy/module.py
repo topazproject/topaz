@@ -1,49 +1,7 @@
 from pypy.tool.cache import Cache
 
 from rupypy.executioncontext import ExecutionContext
-
-
-def generate_wrapper(name, orig_func, argspec, self_cls):
-    source = []
-    source.append("def %s(self, ec, args_w, block):" % orig_func.__name__)
-    source.append("    args = ()")
-    code = orig_func.__code__
-    arg_count = 0
-    for i, argname in enumerate(code.co_varnames[:code.co_argcount]):
-        if argname in argspec:
-            spec = argspec[argname]
-            if spec is int:
-                source.append("    args += (ec.space.int_w(args_w[%d]),)" % arg_count)
-            elif spec is str:
-                source.append("    args += (ec.space.str_w(args_w[%d]),)" % arg_count)
-            elif spec == "float":
-                source.append("    args += (ec.space.float_w(ec.space.send(ec, args_w[%d], ec.space.newsymbol('to_f'))),)" % arg_count)
-            elif spec == "symbol":
-                source.append("    args += (ec.space.symbol_w(args_w[%d]),)" % arg_count)
-            else:
-                raise NotImplementedError(spec)
-            arg_count += 1
-        elif argname.startswith("w_"):
-            source.append("    args += (args_w[%d],)" % arg_count)
-            arg_count += 1
-        elif argname == "self":
-            source.append("    assert isinstance(self, self_cls)")
-        elif argname == "args_w":
-            source.append("    args += (args_w,)")
-        elif argname == "block":
-            source.append("    args += (block,)")
-        elif argname == "space":
-            source.append("    args += (ec.space,)")
-        elif argname == "ec":
-            source.append("    args += (ec,)")
-        else:
-            raise NotImplementedError(argname)
-    source.append("    return func(self, *args)")
-
-    source = "\n".join(source)
-    namespace = {"func": orig_func, "self_cls": self_cls}
-    exec source in namespace
-    return namespace[orig_func.__name__]
+from rupypy.gateway import WrapperGenerator
 
 
 class ClassDef(object):
@@ -74,7 +32,7 @@ class ClassDef(object):
     def singleton_method(self, name, **argspec):
         def adder(func):
             self.singleton_methods[name] = (func, argspec)
-            return func
+            return staticmethod(func)
         return adder
 
 
@@ -86,7 +44,7 @@ class Module(object):
 
         w_mod = space.newmodule(cls.moduledef.name)
         for name, (method, argspec) in cls.moduledef.singleton_methods.iteritems():
-            func = generate_wrapper(name, method, argspec, W_ModuleObject)
+            func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
             w_mod.attach_method(space, name, W_BuiltinFunction(name, func))
         return w_mod
 
@@ -134,7 +92,7 @@ class ClassCache(Cache):
 
         w_class = self.space.newclass(classdef.name, superclass)
         for name, (method, argspec) in classdef.methods.iteritems():
-            func = generate_wrapper(name, method, argspec, classdef.cls)
+            func = WrapperGenerator(name, method, argspec, classdef.cls).generate_wrapper()
             w_class.define_method(self.space, name, W_BuiltinFunction(name, func))
 
         for source in classdef.app_methods:
@@ -143,6 +101,6 @@ class ClassCache(Cache):
             )
 
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
-            func = generate_wrapper(name, method, argspec, W_ClassObject)
+            func = WrapperGenerator(name, method, argspec, W_ClassObject).generate_wrapper()
             w_class.attach_method(self.space, name, W_BuiltinFunction(name, func))
         return w_class

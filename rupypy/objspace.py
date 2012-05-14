@@ -18,6 +18,7 @@ from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
+from rupypy.objects.fileobject import W_FileObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
@@ -54,8 +55,8 @@ class ObjectSpace(object):
         self.w_nil = W_NilObject()
 
         for cls in [
-            W_Object, W_ArrayObject, W_NoMethodError, W_ZeroDivisionError,
-            W_SyntaxError, W_Random
+            W_Object, W_ArrayObject, W_FileObject, W_NoMethodError,
+            W_ZeroDivisionError, W_SyntaxError, W_Random,
         ]:
             self.add_class(cls)
 

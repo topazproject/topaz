@@ -26,7 +26,7 @@ class W_IntObject(W_BaseObject):
     def method_to_f(self, space):
         return space.newfloat(float(self.intvalue))
 
-    @classdef.method("+", other=int)
+    @classdef.method("+", other="int")
     def method_add(self, space, other):
         return space.newint(self.intvalue + other)
 
@@ -37,11 +37,11 @@ class W_IntObject(W_BaseObject):
         else:
             return space.newint(self.intvalue - space.int_w(w_other))
 
-    @classdef.method("*", other=int)
+    @classdef.method("*", other="int")
     def method_mul(self, space, other):
         return space.newint(self.intvalue * other)
 
-    @classdef.method("/", other=int)
+    @classdef.method("/", other="int")
     def method_div(self, ec, other):
         try:
             return ec.space.newint(self.intvalue / 0)
@@ -50,19 +50,19 @@ class W_IntObject(W_BaseObject):
                 "divided by 0"
             )
 
-    @classdef.method("==", other=int)
+    @classdef.method("==", other="int")
     def method_eq(self, space, other):
         return space.newbool(self.intvalue == other)
 
-    @classdef.method("!=", other=int)
+    @classdef.method("!=", other="int")
     def method_ne(self, space, other):
         return space.newbool(self.intvalue != other)
 
-    @classdef.method("<", other=int)
+    @classdef.method("<", other="int")
     def method_lt(self, space, other):
         return space.newbool(self.intvalue < other)
 
-    @classdef.method(">", other=int)
+    @classdef.method(">", other="int")
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
 

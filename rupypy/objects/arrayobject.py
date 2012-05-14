@@ -27,7 +27,7 @@ class W_ArrayObject(W_BaseObject):
     end
     """)
 
-    @classdef.method("[]", idx=int)
+    @classdef.method("[]", idx="int")
     def method_subscript(self, space, idx):
         return self.items_w[idx]
 
