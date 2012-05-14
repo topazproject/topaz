@@ -712,6 +712,7 @@ class Array(Node):
             item.compile(ctx)
         ctx.emit(consts.BUILD_ARRAY, len(self.items))
 
+
 class Range(Node):
     def __init__(self, start, stop, inclusive):
         self.start = start
@@ -730,12 +731,14 @@ class Range(Node):
         else:
             ctx.emit(consts.BUILD_RANGE)
 
+
 class ConstantNode(Node):
     def locate_symbols(self, symtable):
         pass
 
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, self.create_const(ctx))
+
 
 class ConstantInt(ConstantNode):
     def __init__(self, intvalue):
@@ -744,6 +747,7 @@ class ConstantInt(ConstantNode):
     def create_const(self, ctx):
         return ctx.create_int_const(self.intvalue)
 
+
 class ConstantFloat(ConstantNode):
     def __init__(self, floatvalue):
         self.floatvalue = floatvalue
@@ -751,12 +755,14 @@ class ConstantFloat(ConstantNode):
     def create_const(self, ctx):
         return ctx.create_float_const(self.floatvalue)
 
+
 class ConstantSymbol(ConstantNode):
     def __init__(self, symbol):
         self.symbol = symbol
 
     def create_const(self, ctx):
         return ctx.create_symbol_const(self.symbol)
+
 
 class ConstantString(ConstantNode):
     def __init__(self, strvalue):
