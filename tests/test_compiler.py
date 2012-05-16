@@ -1224,3 +1224,51 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+
+    def test_declare_splat_argument(self, ec):
+        bc = self.assert_compiles(ec, """
+        def f(*args)
+            args
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[2], """
+        LOAD_LOCAL 0
+        RETURN
+        """)
+
+        bc = self.assert_compiles(ec, """
+        def f(*args)
+            return lambda { args }
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[2], """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 1 1
+        RETURN
+        RETURN
+        """)

@@ -332,7 +332,7 @@ class Class(Node):
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None)
+        bytecode = body_ctx.create_bytecode([], [], None, None)
 
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_CLASS)
@@ -354,7 +354,7 @@ class Module(Node):
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None)
+        bytecode = body_ctx.create_bytecode([], [], None, None)
 
         ctx.emit(consts.LOAD_SCOPE)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
@@ -363,10 +363,11 @@ class Module(Node):
 
 
 class Function(Node):
-    def __init__(self, parent, name, args, block_arg, body):
+    def __init__(self, parent, name, args, splat_arg, block_arg, body):
         self.parent = parent
         self.name = name
         self.args = args
+        self.splat_arg = splat_arg
         self.block_arg = block_arg
         self.body = body
 
@@ -382,6 +383,8 @@ class Function(Node):
                 arg.defl.locate_symbols(body_symtable)
         if self.block_arg is not None:
             body_symtable.declare_local(self.block_arg)
+        if self.splat_arg is not None:
+            body_symtable.declare_local(self.splat_arg)
         self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
@@ -397,7 +400,7 @@ class Function(Node):
             if arg.defl is not None:
                 arg.defl.compile(arg_ctx)
                 arg_ctx.emit(consts.RETURN)
-                bc = arg_ctx.create_bytecode([], [], None)
+                bc = arg_ctx.create_bytecode([], [], None, None)
                 defaults.append(bc)
         if self.block_arg is not None:
             if function_ctx.symtable.is_local(self.block_arg):
@@ -408,7 +411,9 @@ class Function(Node):
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
         arg_names = [a.name for a in self.args]
-        bytecode = function_ctx.create_bytecode(arg_names, defaults, self.block_arg)
+        bytecode = function_ctx.create_bytecode(
+            arg_names, defaults, self.splat_arg, self.block_arg
+        )
 
         if self.parent is None:
             ctx.emit(consts.LOAD_SCOPE)
@@ -579,7 +584,7 @@ class SendBlock(Node):
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
         block_args = [a.name for a in self.block_args]
-        bc = block_ctx.create_bytecode(block_args, [], None)
+        bc = block_ctx.create_bytecode(block_args, [], None, None)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)

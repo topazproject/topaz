@@ -262,11 +262,11 @@ class TestParser(BaseRuPyPyTest):
 
     def test_def(self, ec):
         assert ec.space.parse(ec, "def f() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [], None, ast.Block([])))
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([])))
         ]))
 
         assert ec.space.parse(ec, "def f(a, b) a + b end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b")], None, ast.Block([
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b")], None, None, ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("a", 1), ast.Variable("b", 1), 1))
             ])))
         ]))
@@ -279,7 +279,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [ast.Argument("a")], None, ast.Block([
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a")], None, None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], None, 3)),
                 ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("a", 4)], None, 4)),
                 ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("a", 5)], None, 5)),
@@ -287,7 +287,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
         assert ec.space.parse(ec, "x = def f() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("=", "x", ast.Function(None, "f", [], None, ast.Block([])), 1))
+            ast.Statement(ast.Assignment("=", "x", ast.Function(None, "f", [], None, None, ast.Block([])), 1))
         ]))
 
         r = ec.space.parse(ec, """
@@ -296,7 +296,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b")], None, ast.Block([
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b")], None, None, ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("a", 3), ast.Variable("b", 3), 3))
             ])))
         ]))
@@ -307,7 +307,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [], "b", ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, "b", ast.Block([
                 ast.Statement(ast.Variable("b", 3))
             ])))
         ]))
@@ -349,7 +349,7 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Class("X", None, ast.Block([
-                ast.Statement(ast.Function(None, "f", [], None, ast.Block([
+                ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([
                     ast.Statement(ast.ConstantInt(2))
                 ])))
             ])))
@@ -522,7 +522,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_function_default_arguments(self, ec):
         function = lambda name, args: ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, name, args, None, ast.Block([])))
+            ast.Statement(ast.Function(None, name, args, None, None, ast.Block([])))
         ]))
 
         r = ec.space.parse(ec, """
@@ -713,7 +713,7 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Module("M", ast.Block([
-                ast.Statement(ast.Function(None, "method", [], None, ast.Block([])))
+                ast.Statement(ast.Function(None, "method", [], None, None, ast.Block([])))
             ])))
         ]))
 
@@ -722,7 +722,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Variable("obj", 1), "method?", [], None, 1))
         ]))
         assert ec.space.parse(ec, "def method?() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "method?", [], None, ast.Block([])))
+            ast.Statement(ast.Function(None, "method?", [], None, None, ast.Block([])))
         ]))
         assert ec.space.parse(ec, "method?") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("method?", 1))
@@ -739,7 +739,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(ast.LookupConstant(ast.Scope(2), "Array", 2), "hello", [], None, ast.Block([
+            ast.Statement(ast.Function(ast.LookupConstant(ast.Scope(2), "Array", 2), "hello", [], None, None, ast.Block([
                 ast.Statement(ast.ConstantString("hello world")),
             ])))
         ]))
@@ -789,3 +789,20 @@ class TestParser(BaseRuPyPyTest):
             f(&b) do ||
             end
             """)
+
+    def test_declare_splat_argument(self, ec):
+        r = ec.space.parse(ec, "def f(*args) end")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], "args", None, ast.Block([])))
+        ]))
+
+        r = ec.space.parse(ec, "def f(*args, &g) end")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], "args", "g", ast.Block([])))
+        ]))
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "def f(*args, g)")
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "def f(*args, g=5)")

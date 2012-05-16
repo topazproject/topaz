@@ -97,7 +97,7 @@ class ObjectSpace(object):
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, "<main>", symtable, filepath)
         astnode.compile(c)
-        return c.create_bytecode([], [], None)
+        return c.create_bytecode([], [], None, None)
 
     def execute(self, ec, source, w_self=None, w_scope=None, filepath="-e"):
         bc = self.compile(ec, source, filepath)

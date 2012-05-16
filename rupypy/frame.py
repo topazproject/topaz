@@ -29,9 +29,12 @@ class Frame(BaseFrame):
         self.block = block
         self.lastblock = None
 
-    def _set_arg(self, bytecode, i, w_value):
+    def _set_normal_arg(self, bytecode, i, w_value):
         loc = bytecode.arg_locs[i]
         pos = bytecode.arg_pos[i]
+        self._set_arg(bytecode, loc, pos, w_value)
+
+    def _set_arg(self, bytecode, loc, pos, w_value):
         assert pos >= 0
         if loc == bytecode.LOCAL:
             self.locals_w[pos] = w_value
@@ -42,25 +45,28 @@ class Frame(BaseFrame):
     def handle_args(self, ec, bytecode, args_w, block):
         from rupypy.interpreter import Interpreter
 
-        assert 0 <= len(bytecode.arg_locs) - len(args_w) <= len(bytecode.defaults)
-        for i in xrange(len(args_w)):
-            self._set_arg(bytecode, i, args_w[i])
+        assert len(args_w) >= (len(bytecode.arg_locs) - len(bytecode.defaults))
+        assert bytecode.splat_arg_pos != -1 or 0 <= len(bytecode.arg_locs) - len(args_w)
+
+        for i in xrange(min(len(args_w), len(bytecode.arg_locs))):
+            self._set_normal_arg(bytecode, i, args_w[i])
         defl_start = len(args_w) - (len(bytecode.arg_locs) - len(bytecode.defaults))
         for i in xrange(len(bytecode.arg_locs) - len(args_w)):
             bc = bytecode.defaults[i + defl_start]
             w_value = Interpreter().interpret(ec, self, bc)
-            self._set_arg(bytecode, i + len(args_w), w_value)
+            self._set_normal_arg(bytecode, i + len(args_w), w_value)
+
+        if bytecode.splat_arg_pos != -1:
+            splat_args_w = args_w[len(bytecode.arg_locs):]
+            w_splat_args = ec.space.newarray(splat_args_w)
+            self._set_arg(bytecode, bytecode.splat_arg_loc, bytecode.splat_arg_pos, w_splat_args)
+
         if bytecode.block_arg_pos != -1:
             if block is None:
                 w_block = ec.space.w_nil
             else:
                 w_block = ec.space.newproc(block)
-            pos = bytecode.block_arg_pos
-            assert pos >= 0
-            if bytecode.block_arg_loc == bytecode.LOCAL:
-                self.locals_w[pos] = w_block
-            elif bytecode.block_arg_loc == bytecode.CELL:
-                self.cells[pos].set(w_block)
+            self._set_arg(bytecode, bytecode.block_arg_loc, bytecode.block_arg_pos, w_block)
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)

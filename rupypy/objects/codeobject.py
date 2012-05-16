@@ -15,7 +15,8 @@ class W_CodeObject(W_BaseObject):
     CELL = 2
 
     def __init__(self, name, filepath, code, max_stackdepth, consts, args,
-                 block_arg, defaults, locals, cellvars, freevars, lineno_table):
+                 splat_arg, block_arg, defaults, locals, cellvars, freevars,
+                 lineno_table):
 
         self.name = name
         self.filepath = filepath
@@ -32,26 +33,34 @@ class W_CodeObject(W_BaseObject):
         arg_locs = [self.UNKNOWN] * n_args
         arg_pos = [-1] * n_args
         for idx, arg in enumerate(args):
-            if arg in locals:
-                arg_locs[idx] = self.LOCAL
-                arg_pos[idx] = locals.index(arg)
-            elif arg in cellvars:
-                arg_locs[idx] = self.CELL
-                arg_pos[idx] = cellvars.index(arg)
+            arg_locs[idx], arg_pos[idx] = self._get_arg_pos_loc(arg, locals, cellvars)
         self.arg_locs = arg_locs
         self.arg_pos = arg_pos
 
-        block_arg_pos = -1
         block_arg_loc = self.UNKNOWN
+        block_arg_pos = -1
         if block_arg is not None:
-            if block_arg in locals:
-                block_arg_loc = self.LOCAL
-                block_arg_pos = locals.index(block_arg)
-            elif block_arg in cellvars:
-                block_arg_loc = self.CELL
-                block_arg_pos = cellvars.index(block_arg)
+            block_arg_loc, block_arg_pos = self._get_arg_pos_loc(block_arg, locals, cellvars)
         self.block_arg_loc = block_arg_loc
         self.block_arg_pos = block_arg_pos
+
+        splat_arg_loc = self.UNKNOWN
+        splat_arg_pos = -1
+        if splat_arg is not None:
+            splat_arg_loc, splat_arg_pos = self._get_arg_pos_loc(splat_arg, locals, cellvars)
+        self.splat_arg_loc = splat_arg_loc
+        self.splat_arg_pos = splat_arg_pos
+
+    def _get_arg_pos_loc(self, arg, locals, cellvars):
+        if arg in locals:
+            loc = self.LOCAL
+            pos = locals.index(arg)
+        elif arg in cellvars:
+            loc = self.CELL
+            pos = cellvars.index(arg)
+        else:
+            raise SystemError
+        return loc, pos
 
     @classdef.method("filepath")
     def method_filepath(self, space):

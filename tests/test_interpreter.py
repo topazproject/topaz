@@ -386,6 +386,16 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises("NameError"):
             ec.space.execute(ec, "Constant")
 
+    def test_receive_splat_argument(self, ec):
+        w_res = ec.space.execute(ec, """
+        def f(*args)
+            args
+        end
+
+        return f(1, 2, *[3, 4])
+        """)
+        assert self.unwrap(ec.space, w_res) == [1, 2, 3, 4]
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):

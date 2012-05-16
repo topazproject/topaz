@@ -101,7 +101,7 @@ class CompilerContext(object):
 
         self.current_block = self.first_block = self.new_block()
 
-    def create_bytecode(self, args, defaults, block_arg):
+    def create_bytecode(self, args, defaults, splat_arg, block_arg):
         locs = [None] * len(self.symtable.local_numbers)
         for name, pos in self.symtable.local_numbers.iteritems():
             locs[pos] = name
@@ -134,6 +134,7 @@ class CompilerContext(object):
             depth,
             self.consts[:],
             args,
+            splat_arg,
             block_arg,
             defaults,
             locs,

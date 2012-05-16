@@ -47,7 +47,7 @@ class Transformer(object):
         block_args = []
         start_idx = 2
         if node.children[2].symbol == "arglist":
-            block_args, _ = self.visit_arglist(node.children[2])
+            block_args, _, _ = self.visit_arglist(node.children[2])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
         return ast.Send(
@@ -203,7 +203,7 @@ class Transformer(object):
         block_args = []
         start_idx = 0
         if node.children[start_idx].symbol == "arglist":
-            block_args, _ = self.visit_arglist(node.children[start_idx])
+            block_args, _, _ = self.visit_arglist(node.children[start_idx])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx)
         return block_args, block
@@ -310,11 +310,12 @@ class Transformer(object):
         else:
             parent = self.visit_varname(name_node.children[0])
             name = name_node.children[1].additional_info
-        args, block_arg = self.visit_argdecl(node.children[2])
+        args, splat_arg, block_arg = self.visit_argdecl(node.children[2])
         return ast.Function(
             parent,
             name,
             args,
+            splat_arg,
             block_arg,
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
         )
@@ -371,7 +372,7 @@ class Transformer(object):
 
     def visit_argdecl(self, node):
         if not node.children:
-            return [], None
+            return [], None, None
         return self.visit_arglist(node.children[0])
 
     def visit_arglist(self, node):
@@ -381,24 +382,30 @@ class Transformer(object):
         # seeing another default argument is an error
         default_seen = 0
         block_arg = None
+        splat_arg = None
         args = []
         for n in node.children:
             if block_arg:
                 self.error(n)
             if len(n.children) == 2 and n.children[0].symbol == "AMP":
                 block_arg = n.children[1].additional_info
-            elif len(n.children) == 2:
-                name = n.children[0].additional_info
-                if default_seen == 2:
-                    self.error(n)
-                default_seen = 1
-                args.append(ast.Argument(name, self.visit_arg(n.children[1])))
             else:
-                name = n.children[0].additional_info
-                if default_seen == 1:
-                    default_seen = 2
-                args.append(ast.Argument(name))
-        return args, block_arg
+                if splat_arg:
+                    self.error(n)
+                if len(n.children) == 2 and n.children[0].symbol == "UNARY_STAR":
+                    splat_arg = n.children[1].additional_info
+                elif len(n.children) == 2:
+                    name = n.children[0].additional_info
+                    if default_seen == 2:
+                        self.error(n)
+                    default_seen = 1
+                    args.append(ast.Argument(name, self.visit_arg(n.children[1])))
+                else:
+                    name = n.children[0].additional_info
+                    if default_seen == 1:
+                        default_seen = 2
+                    args.append(ast.Argument(name))
+        return args, splat_arg, block_arg
 
     def visit_number(self, node):
         if "." in node.additional_info:
