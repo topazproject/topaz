@@ -835,6 +835,17 @@ class TestParser(BaseRuPyPyTest):
             ))
         ]))
 
+    def test_and(self, ec):
+        assert ec.space.parse(ec, "3 && 4") == ast.Main(ast.Block([
+            ast.Statement(ast.And(ast.ConstantInt(3), ast.ConstantInt(4)))
+        ]))
+        assert ec.space.parse(ec, "4 || 5 && 6") == ast.Main(ast.Block([
+            ast.Statement(ast.Or(
+                ast.ConstantInt(4),
+                ast.And(ast.ConstantInt(5), ast.ConstantInt(6))
+            ))
+        ]))
+
     def test_not(self, ec):
         assert ec.space.parse(ec, "!3") == ast.Main(ast.Block([
             ast.Statement(ast.Not(ast.ConstantInt(3)))

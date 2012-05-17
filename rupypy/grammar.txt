@@ -22,7 +22,7 @@ yield: YIELD args?;
 arg: range;
 
 range_oper: <DOTDOT> | <DOTDOTDOT>;
-bool_oper: <OR>;
+bool_oper: <OR> | <AND>;
 cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE>;
 shift_oper: <LSHIFT>;
 add_oper: <PLUS> | <MINUS>;

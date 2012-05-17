@@ -1306,7 +1306,25 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         DUP_TOP
-        JUMP_IF_TRUE 17
+        JUMP_IF_TRUE 18
+        DISCARD_TOP
+        LOAD_CONST 3
+        LOAD_CONST 4
+        SEND 5 1
+        DISCARD_TOP
+
+        LOAD_CONST 6
+        RETURN
+        """)
+
+    def test_and(self, ec):
+        self.assert_compiles(ec, "3 + 4 && 5 * 6", """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        DUP_TOP
+        JUMP_IF_FALSE 18
+        DISCARD_TOP
         LOAD_CONST 3
         LOAD_CONST 4
         SEND 5 1

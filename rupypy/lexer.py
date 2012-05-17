@@ -35,6 +35,7 @@ TOKENS = unrolling_iterable([
     "DOT",
     "DOTDOT",
     "COLON",
+    "AMP",
     "PIPE",
     "STRING",
     "DOUBLESTRING",
@@ -210,8 +211,7 @@ class Lexer(object):
             return None
         elif ch == "&":
             self.add(ch)
-            self.emit("AMP")
-            return None
+            return AMP
         elif ch == "@":
             self.add(ch)
             self.emit("AT_SIGN")
@@ -374,6 +374,14 @@ class Lexer(object):
         else:
             self.emit("COLON")
             return self.handle_generic(ch)
+
+    def handle_AMP(self, ch):
+        if ch == "&":
+            self.add(ch)
+            self.emit("AND")
+            return None
+        self.emit("AMP")
+        return self.handle_generic(ch)
 
     def handle_COMMENT(self, ch):
         if ch == "\n":

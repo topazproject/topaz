@@ -104,7 +104,10 @@ class Transformer(object):
         rhs = self.visit_arg(node.children[2])
         if op == "||":
             return ast.Or(lhs, rhs)
-        return ast.BinOp(op, lhs, rhs, node.getsourcepos().lineno)
+        elif op == "&&":
+            return ast.And(lhs, rhs)
+        else:
+            return ast.BinOp(op, lhs, rhs, node.getsourcepos().lineno)
 
     def visit_unaryop(self, node):
         op = node.children[0].additional_info
