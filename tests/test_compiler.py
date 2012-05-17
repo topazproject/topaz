@@ -1315,3 +1315,13 @@ class TestCompiler(object):
         LOAD_CONST 6
         RETURN
         """)
+
+    def test_not(self, ec):
+        self.assert_compiles(ec, "!3", """
+        LOAD_CONST 0
+        UNARY_NOT
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)

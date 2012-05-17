@@ -831,3 +831,8 @@ class TestParser(BaseRuPyPyTest):
                 ast.BinOp("*", ast.ConstantInt(4), ast.ConstantInt(5), 1),
             ))
         ]))
+
+    def test_not(self, ec):
+        assert ec.space.parse(ec, "!3") == ast.Main(ast.Block([
+            ast.Statement(ast.Not(ast.ConstantInt(3)))
+        ]))

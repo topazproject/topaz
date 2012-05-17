@@ -367,6 +367,10 @@ class Interpreter(object):
         else:
             return self.jump(ec, bytecode, frame, pc, target_pc)
 
+    def UNARY_NOT(self, ec, bytecode, frame, pc):
+        w_obj = frame.pop()
+        frame.push(ec.space.newbool(not ec.space.is_true(w_obj)))
+
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
 

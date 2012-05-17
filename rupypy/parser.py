@@ -107,11 +107,11 @@ class Transformer(object):
         return ast.BinOp(op, lhs, rhs, node.getsourcepos().lineno)
 
     def visit_unaryop(self, node):
-        return ast.UnaryOp(
-            node.children[0].additional_info,
-            self.visit_arg(node.children[1]),
-            node.getsourcepos().lineno
-        )
+        op = node.children[0].additional_info
+        value = self.visit_arg(node.children[1])
+        if op == "!":
+            return ast.Not(value)
+        return ast.UnaryOp(op, value, node.getsourcepos().lineno)
 
     def visit_range(self, node):
         inclusive = node.children[1].additional_info == "..."

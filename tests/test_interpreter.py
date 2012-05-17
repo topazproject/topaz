@@ -423,6 +423,12 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = ec.space.execute(ec, "return nil || 12")
         assert ec.space.int_w(w_res) == 12
 
+    def test_not(self, ec):
+        w_res = ec.space.execute(ec, "return !3")
+        assert w_res is ec.space.w_false
+        w_res = ec.space.execute(ec, "return !!3")
+        assert w_res is ec.space.w_true
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):

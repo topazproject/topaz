@@ -340,6 +340,7 @@ class Lexer(object):
             self.add(ch)
             self.emit("NE")
             return None
+        self.emit(EXCLAMATION)
         return self.handle_generic(ch)
 
     def handle_DOT(self, ch):

@@ -22,11 +22,12 @@ yield: YIELD args?;
 arg: range;
 
 range_oper: <DOTDOT> | <DOTDOTDOT>;
+bool_oper: <OR>;
 cmp_oper: <EQUAL> | <NE> | <LT> | <LE> | <GT> | <GE>;
 shift_oper: <LSHIFT>;
 add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MUL>;
-bool_oper: <OR>;
+unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
 
 range: bool range_oper range | <bool>;
 bool: comparison bool_oper bool | <comparison>;
@@ -35,7 +36,7 @@ shiftive: additive shift_oper shiftive | <additive>;
 additive: multitive add_oper additive | <multitive>;
 multitive: unary_op mul_oper multitive | <unary_op>;
 
-unary_op: UNARY_MINUS arg | <send>;
+unary_op: unary_oper arg | <send>;
 
 send: <do_block> |
       real_send |
