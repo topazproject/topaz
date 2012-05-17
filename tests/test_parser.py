@@ -850,3 +850,10 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "!3") == ast.Main(ast.Block([
             ast.Statement(ast.Not(ast.ConstantInt(3)))
         ]))
+
+    def test_inline_if(self, ec):
+        assert ec.space.parse(ec, "return 5 if 3") == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
+                ast.Return(ast.ConstantInt(5))
+            ]), ast.Block([])))
+        ]))

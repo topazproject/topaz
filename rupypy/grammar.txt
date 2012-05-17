@@ -6,8 +6,13 @@ main: line* statement? [LINE_END]? [EOF];
 
 line: statement? [LINE_END];
 
-statement: RETURN expr |
-           expr;
+statement: inline_if |
+           <real_statement>;
+
+inline_if: real_statement IF expr;
+
+real_statement: RETURN expr |
+                expr;
 
 expr: assignment |
       yield |

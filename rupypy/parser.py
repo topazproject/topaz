@@ -35,7 +35,14 @@ class Transformer(object):
         return ast.Block(stmts)
 
     def visit_stmt(self, node):
-        if len(node.children) == 2:
+        if node.children[0].symbol == "inline_if":
+            node = node.children[0]
+            return ast.Statement(ast.If(
+                self.visit_expr(node.children[2]),
+                ast.Block([self.visit_stmt(node.children[0])]),
+                ast.Block([]),
+            ))
+        elif node.children[0].symbol == "RETURN":
             return ast.Return(self.visit_expr(node.children[1]))
         return ast.Statement(self.visit_expr(node.children[0]))
 
