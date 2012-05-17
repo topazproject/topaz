@@ -28,6 +28,7 @@ TOKENS = unrolling_iterable([
     "MINUS",
     "STAR",
     "EQ",
+    "EQEQ",
     "LT",
     "GT",
     "EXCLAMATION",
@@ -306,13 +307,20 @@ class Lexer(object):
     def handle_EQ(self, ch):
         if ch == "=":
             self.add(ch)
-            self.emit("EQUAL")
-            return None
+            return EQEQ
         elif ch == ">":
             self.add(ch)
             self.emit("ARROW")
             return None
         self.emit("EQ")
+        return self.handle_generic(ch)
+
+    def handle_EQEQ(self, ch):
+        if ch == "=":
+            self.add(ch)
+            self.emit("EQEQEQ")
+            return None
+        self.emit("EQEQ")
         return self.handle_generic(ch)
 
     def handle_LT(self, ch):

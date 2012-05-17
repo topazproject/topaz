@@ -23,7 +23,7 @@ arg: range;
 
 range_oper: <DOTDOT> | <DOTDOTDOT>;
 bool_oper: <OR>;
-cmp_oper: <EQUAL> | <NE> | <LT> | <LE> | <GT> | <GE>;
+cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE>;
 shift_oper: <LSHIFT>;
 add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MUL>;
