@@ -34,6 +34,7 @@ TOKENS = unrolling_iterable([
     "DOT",
     "DOTDOT",
     "COLON",
+    "PIPE",
     "STRING",
     "DOUBLESTRING",
     "SINGLESTRING",
@@ -220,8 +221,7 @@ class Lexer(object):
             return None
         elif ch == "|":
             self.add(ch)
-            self.emit("PIPE")
-            return None
+            return PIPE
         elif ch == "\n":
             self.add(ch)
             self.emit("LINE_END")
@@ -370,6 +370,14 @@ class Lexer(object):
         if ch == "\n":
             return self.handle_generic(ch)
         return COMMENT
+
+    def handle_PIPE(self, ch):
+        if ch == "|":
+            self.add(ch)
+            self.emit("OR")
+            return None
+        self.emit("PIPE")
+        return self.handle_generic(ch)
 
     def handle_UNREACHABLE(self, ch):
         raise NotImplementedError

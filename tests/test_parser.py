@@ -820,3 +820,14 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "/a/") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantRegexp("a")),
         ]))
+
+    def test_or(self, ec):
+        assert ec.space.parse(ec, "3 || 4") == ast.Main(ast.Block([
+            ast.Statement(ast.Or(ast.ConstantInt(3), ast.ConstantInt(4)))
+        ]))
+        assert ec.space.parse(ec, "3 + 4 || 4 * 5") == ast.Main(ast.Block([
+            ast.Statement(ast.Or(
+                ast.BinOp("+", ast.ConstantInt(3), ast.ConstantInt(4), 1),
+                ast.BinOp("*", ast.ConstantInt(4), ast.ConstantInt(5), 1),
+            ))
+        ]))

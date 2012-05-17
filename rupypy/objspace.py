@@ -89,7 +89,9 @@ class ObjectSpace(object):
         try:
             st = ToASTVisitor().transform(_parse(source))
             return self.transformer.visit_main(st)
-        except (LexerError, ParseError):
+        except ParseError as e:
+            self.raise_(ec, self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
+        except LexerError:
             self.raise_(ec, self.getclassfor(W_SyntaxError))
 
     def compile(self, ec, source, filepath):

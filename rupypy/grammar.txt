@@ -26,12 +26,14 @@ cmp_oper: <EQUAL> | <NE> | <LT> | <LE> | <GT> | <GE>;
 shift_oper: <LSHIFT>;
 add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MUL>;
+bool_oper: <OR>;
 
-range: comparison range_oper range | <comparison>;
+range: bool range_oper range | <bool>;
+bool: comparison bool_oper bool | <comparison>;
 comparison: shiftive cmp_oper comparison | <shiftive>;
 shiftive: additive shift_oper shiftive | <additive>;
 additive: multitive add_oper additive | <multitive>;
-multitive: send mul_oper multitive | <unary_op>;
+multitive: unary_op mul_oper multitive | <unary_op>;
 
 unary_op: UNARY_MINUS arg | <send>;
 
@@ -39,7 +41,10 @@ send: <do_block> |
       real_send |
       <primary>;
 
-do_block: real_send DO ([PIPE] arglist? [PIPE])? line* statement? [LINE_END]? END;
+do_block: real_send DO block_args? line* statement? [LINE_END]? END;
+
+block_args: [PIPE] arglist? [PIPE] |
+            [OR];
 
 real_send: primary trailers |
            global_block |
@@ -48,7 +53,7 @@ real_send: primary trailers |
 
 global_block: IDENTIFIER block;
 
-block: [LBRACE] ([PIPE] arglist? [PIPE])? line* statement? [LINE_END]? [RBRACE];
+block: [LBRACE] block_args? line* statement? [LINE_END]? [RBRACE];
 
 trailers: trailer >trailers< | trailer;
 

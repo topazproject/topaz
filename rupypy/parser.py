@@ -46,8 +46,8 @@ class Transformer(object):
             self.error(node)
         block_args = []
         start_idx = 2
-        if node.children[2].symbol == "arglist":
-            block_args, _, _ = self.visit_arglist(node.children[2])
+        if node.children[2].symbol == "block_args":
+            block_args = self.visit_block_args(node.children[2])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
         return ast.Send(
@@ -82,7 +82,7 @@ class Transformer(object):
             node = node.children[0]
 
         symname = node.symbol
-        if symname in ["comparison", "shiftive", "additive", "multitive"]:
+        if symname in ["comparison", "shiftive", "additive", "multitive", "bool"]:
             return self.visit_subexpr(node)
         elif symname == "range":
             return self.visit_range(node)
@@ -99,12 +99,12 @@ class Transformer(object):
         raise NotImplementedError(symname)
 
     def visit_subexpr(self, node):
-        return ast.BinOp(
-            node.children[1].additional_info,
-            self.visit_arg(node.children[0]),
-            self.visit_arg(node.children[2]),
-            node.getsourcepos().lineno,
-        )
+        op = node.children[1].additional_info
+        lhs = self.visit_arg(node.children[0])
+        rhs = self.visit_arg(node.children[2])
+        if op == "||":
+            return ast.Or(lhs, rhs)
+        return ast.BinOp(op, lhs, rhs, node.getsourcepos().lineno)
 
     def visit_unaryop(self, node):
         return ast.UnaryOp(
@@ -202,8 +202,8 @@ class Transformer(object):
     def visit_braces_block(self, node):
         block_args = []
         start_idx = 0
-        if node.children[start_idx].symbol == "arglist":
-            block_args, _, _ = self.visit_arglist(node.children[start_idx])
+        if node.children[start_idx].symbol == "block_args":
+            block_args = self.visit_block_args(node.children[start_idx])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx)
         return block_args, block
@@ -383,6 +383,12 @@ class Transformer(object):
         if not node.children:
             return [], None, None
         return self.visit_arglist(node.children[0])
+
+    def visit_block_args(self, node):
+        block_args = []
+        if node.children:
+            block_args, _, _ = self.visit_arglist(node.children[0])
+        return block_args
 
     def visit_arglist(self, node):
         # 0 indicates no defaults have been seen, 1 indicates a section of

@@ -417,6 +417,12 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(ec.space, w_res) == [1, 2, 3, 4]
 
+    def test_or(self, ec):
+        w_res = ec.space.execute(ec, "return 3 + 4 || 5")
+        assert ec.space.int_w(w_res) == 7
+        w_res = ec.space.execute(ec, "return nil || 12")
+        assert ec.space.int_w(w_res) == 12
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):

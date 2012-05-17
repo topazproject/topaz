@@ -519,6 +519,27 @@ class UnaryOp(Node):
         Send(self.value, self.op + "@", [], None, self.lineno).compile(ctx)
 
 
+class Or(Node):
+    def __init__(self, lhs, rhs):
+        self.lhs = lhs
+        self.rhs = rhs
+
+    def locate_symbols(self, symtable):
+        self.lhs.locate_symbols(symtable)
+        self.rhs.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        end = ctx.new_block()
+        otherwise = ctx.new_block()
+
+        self.lhs.compile(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit_jump(consts.JUMP_IF_TRUE, end)
+        ctx.use_next_block(otherwise)
+        self.rhs.compile(ctx)
+        ctx.use_next_block(end)
+
+
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):
         self.receiver = receiver

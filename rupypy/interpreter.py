@@ -355,6 +355,12 @@ class Interpreter(object):
     def JUMP(self, ec, bytecode, frame, pc, target_pc):
         return self.jump(ec, bytecode, frame, pc, target_pc)
 
+    def JUMP_IF_TRUE(self, ec, bytecode, frame, pc, target_pc):
+        if ec.space.is_true(frame.pop()):
+            return self.jump(ec, bytecode, frame, pc, target_pc)
+        else:
+            return pc
+
     def JUMP_IF_FALSE(self, ec, bytecode, frame, pc, target_pc):
         if ec.space.is_true(frame.pop()):
             return pc

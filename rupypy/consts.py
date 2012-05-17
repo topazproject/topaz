@@ -58,6 +58,7 @@ BYTECODES = [
     ("POP_BLOCK", 0, 0),
 
     ("JUMP", 1, 0),
+    ("JUMP_IF_TRUE", 1, -1),
     ("JUMP_IF_FALSE", 1, -1),
 
     ("DISCARD_TOP", 0, -1),
