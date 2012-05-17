@@ -35,7 +35,7 @@ BYTECODES = [
     ("BUILD_RANGE_INCLUSIVE", 0, -1),
     ("BUILD_FUNCTION", 0, -1),
     ("BUILD_BLOCK", 1, BLOCK_EFFECT),
-    ("BUILD_CLASS", 0, -3),
+    ("BUILD_CLASS", 0, -2),
     ("BUILD_MODULE", 0, -2),
 
     ("COPY_STRING", 0, 0),
@@ -44,6 +44,7 @@ BYTECODES = [
 
     ("DEFINE_FUNCTION", 0, -2),
     ("ATTACH_FUNCTION", 0, -2),
+    ("EVALUATE_CLASS", 0, -1),
 
     ("SEND", 2, SEND_EFFECT),
     ("SEND_BLOCK", 2, SEND_EFFECT),

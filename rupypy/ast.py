@@ -326,6 +326,7 @@ class Class(Node):
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
         else:
             self.superclass.compile(ctx)
+        ctx.emit(consts.BUILD_CLASS)
 
         body_ctx = ctx.get_subctx(self.name, self)
         self.body.compile(body_ctx)
@@ -335,7 +336,7 @@ class Class(Node):
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
-        ctx.emit(consts.BUILD_CLASS)
+        ctx.emit(consts.EVALUATE_CLASS)
 
 
 class Module(Node):

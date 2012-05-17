@@ -372,8 +372,9 @@ class TestCompiler(object):
         LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_CLASS
+        LOAD_CONST 2
+        EVALUATE_CLASS
         DISCARD_TOP
 
         LOAD_CONST 3
@@ -397,8 +398,9 @@ class TestCompiler(object):
         LOAD_SCOPE
         LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_CLASS
+        LOAD_CONST 2
+        EVALUATE_CLASS
         DISCARD_TOP
 
         LOAD_CONST 3
@@ -431,8 +433,9 @@ class TestCompiler(object):
         LOAD_CONST 0
         LOAD_SCOPE
         LOAD_CONSTANT 1
-        LOAD_CONST 2
         BUILD_CLASS
+        LOAD_CONST 2
+        EVALUATE_CLASS
         DISCARD_TOP
 
         LOAD_CONST 3

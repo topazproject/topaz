@@ -188,10 +188,8 @@ class Interpreter(object):
         frame.push(block)
 
     def BUILD_CLASS(self, ec, bytecode, frame, pc):
-        from rupypy.objects.codeobject import W_CodeObject
         from rupypy.objects.objectobject import W_Object
 
-        w_bytecode = frame.pop()
         superclass = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
@@ -204,12 +202,7 @@ class Interpreter(object):
             w_cls = ec.space.newclass(name, superclass)
             ec.space.set_const(w_scope, name, w_cls)
 
-        assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = ec.space.create_frame(w_bytecode, w_cls, w_cls)
-        with ec.visit_frame(sub_frame):
-            ec.space.execute_frame(ec, sub_frame, w_bytecode)
-
-        frame.push(ec.space.w_nil)
+        frame.push(w_cls)
 
     def BUILD_MODULE(self, ec, bytecode, frame, pc):
         from rupypy.objects.codeobject import W_CodeObject
@@ -280,6 +273,18 @@ class Interpreter(object):
         w_obj = frame.pop()
         assert isinstance(w_func, W_FunctionObject)
         w_obj.attach_method(ec.space, ec.space.symbol_w(w_name), w_func)
+        frame.push(ec.space.w_nil)
+
+    def EVALUATE_CLASS(self, ec, bytecode, frame, pc):
+        from rupypy.objects.codeobject import W_CodeObject
+
+        w_bytecode = frame.pop()
+        w_cls = frame.pop()
+        assert isinstance(w_bytecode, W_CodeObject)
+        sub_frame = ec.space.create_frame(w_bytecode, w_cls, w_cls)
+        with ec.visit_frame(sub_frame):
+            ec.space.execute_frame(ec, sub_frame, w_bytecode)
+
         frame.push(ec.space.w_nil)
 
     @jit.unroll_safe
