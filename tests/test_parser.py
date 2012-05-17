@@ -331,6 +331,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"abc".size') == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantString("abc"), "size", [], None, 1))
         ]))
+        assert ec.space.parse(ec, "'abc'") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("abc"))
+        ]))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """

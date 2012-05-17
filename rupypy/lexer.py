@@ -35,6 +35,8 @@ TOKENS = unrolling_iterable([
     "DOTDOT",
     "COLON",
     "STRING",
+    "DOUBLESTRING",
+    "SINGLESTRING",
     "COMMENT",
 ])
 for token in TOKENS:
@@ -186,7 +188,9 @@ class Lexer(object):
             self.emit("RBRACE")
             return None
         elif ch == '"':
-            return STRING
+            return DOUBLESTRING
+        elif ch == "'":
+            return SINGLESTRING
         elif ch == " ":
             return None
         elif ch == "=":
@@ -246,12 +250,19 @@ class Lexer(object):
             self.emit("NUMBER")
             return self.handle_generic(ch)
 
-    def handle_STRING(self, ch):
+    def handle_DOUBLESTRING(self, ch):
         if ch == '"':
             self.emit("STRING")
             return None
         self.add(ch)
-        return STRING
+        return DOUBLESTRING
+
+    def handle_SINGLESTRING(self, ch):
+        if ch == "'":
+            self.emit("STRING")
+            return None
+        self.add(ch)
+        return SINGLESTRING
 
     def handle_IDENTIFIER(self, ch):
         if ch.isalnum() or ch in "_?":
