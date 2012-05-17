@@ -65,6 +65,7 @@ primary: LPAREN expr RPAREN |
          UNLESS expr then line* statement? [LINE_END]? END |
          WHILE expr do line* statement? [LINE_END]? END |
          DEF function_name argdecl line* statement? [LINE_END]? END |
+         CLASS LSHIFT arg [LINE_END] line* statement? [LINE_END]? END |
          CLASS IDENTIFIER (LT varname)? [LINE_END] line* statement? [LINE_END]? END |
          MODULE IDENTIFIER line* statement? [LINE_END]? END |
          BEGIN line* statement? [LINE_END]? rescue* ensure? END |

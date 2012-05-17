@@ -321,6 +321,13 @@ class Transformer(object):
         )
 
     def visit_class(self, node):
+        if node.children[1].symbol == "LSHIFT":
+            return ast.SingletonClass(
+                self.visit_arg(node.children[2]),
+                self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
+                node.getsourcepos().lineno,
+            )
+
         superclass = None
         block_start_idx = 2
         if node.children[2].symbol == "LT":

@@ -137,6 +137,27 @@ class TestInterpreter(BaseRuPyPyTest):
         w_cls = ec.space.getclassfor(W_Object).constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
+    def test_singleton_class(self, ec):
+        w_res = ec.space.execute(ec, """
+        class X
+            def initialize
+                @a = 3
+            end
+        end
+
+        x = X.new
+        class << x
+            def m
+                6
+            end
+        end
+        return x.m
+        """)
+        assert ec.space.int_w(w_res) == 6
+
+        with self.raises("NoMethodError"):
+            ec.space.execute(ec, "X.new.m")
+
     def test_constant(self, ec):
         w_res = ec.space.execute(ec, "Abc = 3; return Abc")
         assert ec.space.int_w(w_res)

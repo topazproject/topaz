@@ -442,6 +442,21 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_singleton_class(self, ec):
+        self.assert_compiles(ec, """
+        class << self
+        end
+        """, """
+        LOAD_SELF
+        SEND 0 0
+        LOAD_CONST 1
+        EVALUATE_CLASS
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_constants(self, ec):
         self.assert_compiles(ec, "Abc", """
         LOAD_SCOPE

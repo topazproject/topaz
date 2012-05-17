@@ -339,6 +339,33 @@ class Class(Node):
         ctx.emit(consts.EVALUATE_CLASS)
 
 
+class SingletonClass(Node):
+    def __init__(self, value, body, lineno):
+        Node.__init__(self, lineno)
+        self.value = value
+        self.body = body
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+        body_symtable = SymbolTable()
+        symtable.add_subscope(self, body_symtable)
+        self.body.locate_symbols(body_symtable)
+
+    def compile(self, ctx):
+        Send(self.value, "singleton_class", [], None, self.lineno).compile(ctx)
+
+        body_ctx = ctx.get_subctx("singletonclass", self)
+        self.body.compile(body_ctx)
+        body_ctx.emit(consts.DISCARD_TOP)
+        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
+        body_ctx.emit(consts.RETURN)
+        bytecode = body_ctx.create_bytecode([], [], None, None)
+
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+        ctx.emit(consts.EVALUATE_CLASS)
+
+
 class Module(Node):
     def __init__(self, name, body):
         self.name = name

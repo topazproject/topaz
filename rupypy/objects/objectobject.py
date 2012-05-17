@@ -33,6 +33,10 @@ class W_BaseObject(object):
     def method_initialize(self, space):
         return self
 
+    @classdef.method("singleton_class")
+    def method_singleton_class(self, space):
+        return space.getsingletonclass(self)
+
 
 class MapTransitionCache(object):
     def __init__(self, space):
@@ -75,8 +79,8 @@ class ClassNode(BaseNode):
     def find_set_attr(self, space, name):
         return -1
 
-    def change_class(self, space, w_obj, new_class_node):
-        return new_class_node
+    def change_class(self, space, w_cls):
+        return space.fromcache(MapTransitionCache).get_class_node(w_cls)
 
 
 class AttributeNode(BaseNode):
@@ -105,6 +109,10 @@ class AttributeNode(BaseNode):
         else:
             return self.prev.find_set_attr(space, name)
 
+    def change_class(self, space, w_cls):
+        prev = self.prev.change_class(space, w_cls)
+        return space.fromcache(MapTransitionCache).transition_add_attr(prev, self.name, self.pos)
+
 
 class W_Object(W_BaseObject):
     def __init__(self, space, klass):
@@ -113,6 +121,14 @@ class W_Object(W_BaseObject):
 
     def getclass(self, space):
         return jit.promote(self.map).get_class()
+
+    def getsingletonclass(self, space):
+        w_cls = jit.promote(self.map).get_class()
+        if w_cls.is_singleton:
+            return w_cls
+        w_cls = space.newclass(w_cls.name, w_cls, is_singleton=True)
+        self.map = self.map.change_class(space, w_cls)
+        return w_cls
 
     def find_instance_var(self, space, name):
         idx = jit.promote(self.map).find_attr(space, name)
