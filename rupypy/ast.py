@@ -816,3 +816,11 @@ class ConstantString(ConstantNode):
     def compile(self, ctx):
         ConstantNode.compile(self, ctx)
         ctx.emit(consts.COPY_STRING)
+
+
+class ConstantRegexp(ConstantNode):
+    def __init__(self, regexp):
+        self.regexp = regexp
+
+    def create_const(self, ctx):
+        return ctx.create_const(ctx.space.newregexp(self.regexp))

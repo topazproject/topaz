@@ -29,6 +29,7 @@ from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.rangeobject import W_RangeObject
+from rupypy.objects.regexpobject import W_RegexpObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
 from rupypy.parser import Transformer, _parse, ToASTVisitor
@@ -143,6 +144,9 @@ class ObjectSpace(object):
 
     def newrange(self, w_start, w_end, inclusive):
         return W_RangeObject(w_start, w_end, inclusive)
+
+    def newregexp(self, regexp):
+        return W_RegexpObject(regexp)
 
     def newmodule(self, name):
         return W_ModuleObject(self, name)

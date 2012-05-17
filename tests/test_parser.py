@@ -812,3 +812,8 @@ class TestParser(BaseRuPyPyTest):
 
         with self.raises("SyntaxError"):
             ec.space.parse(ec, "def f(*args, g=5)")
+
+    def test_regexp(self, ec):
+        assert ec.space.parse(ec, "/a/") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantRegexp("a")),
+        ]))

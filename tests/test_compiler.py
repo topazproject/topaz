@@ -1290,3 +1290,12 @@ class TestCompiler(object):
         RETURN
         RETURN
         """)
+
+    def test_regexp(self, ec):
+        self.assert_compiles(ec, "/a/", """
+        LOAD_CONST 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
