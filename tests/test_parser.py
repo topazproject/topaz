@@ -869,3 +869,10 @@ class TestParser(BaseRuPyPyTest):
                 ast.Return(ast.ConstantInt(5))
             ]), ast.Block([])))
         ]))
+
+    def test_inline_until(self, ec):
+        assert ec.space.parse(ec, "i += 1 until 3") == ast.Main(ast.Block([
+            ast.Statement(ast.Until(ast.ConstantInt(3), ast.Block([
+                ast.Statement(ast.Assignment("+=", "i", ast.ConstantInt(1), 1))
+            ])))
+        ]))
