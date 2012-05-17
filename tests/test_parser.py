@@ -224,6 +224,18 @@ class TestParser(BaseRuPyPyTest):
             ])))
         ]))
 
+    def test_until(self, ec):
+        r = ec.space.parse(ec, """
+        until 3
+            5
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Until(ast.ConstantInt(3), ast.Block([
+                ast.Statement(ast.ConstantInt(5))
+            ])))
+        ]))
+
     def test_return(self, ec):
         assert ec.space.parse(ec, "return 4") == ast.Main(ast.Block([
             ast.Return(ast.ConstantInt(4))

@@ -235,6 +235,29 @@ class While(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
 
+class Until(Node):
+    def __init__(self, cond, body):
+        self.cond = cond
+        self.body = body
+
+    def locate_symbols(self, symtable):
+        self.cond.locate_symbols(symtable)
+        self.body.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        end = ctx.new_block()
+        loop = ctx.new_block()
+
+        ctx.use_next_block(loop)
+        self.cond.compile(ctx)
+        ctx.emit_jump(consts.JUMP_IF_TRUE, end)
+        self.body.compile(ctx)
+        ctx.emit(consts.DISCARD_TOP)
+        ctx.emit_jump(consts.JUMP, loop)
+        ctx.use_next_block(end)
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+
 class TryExcept(Node):
     def __init__(self, body, except_handlers):
         self.body = body

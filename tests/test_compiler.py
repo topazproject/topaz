@@ -263,6 +263,20 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_until(self, ec):
+        self.assert_compiles(ec, "until false do 5 end", """
+        LOAD_CONST 0
+        JUMP_IF_TRUE 9
+        LOAD_CONST 1
+        DISCARD_TOP
+        JUMP 0
+        LOAD_CONST 2
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_return(self, ec):
         self.assert_compiles(ec, "return 4", """
         LOAD_CONST 0

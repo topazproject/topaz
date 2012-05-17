@@ -233,6 +233,8 @@ class Transformer(object):
             return self.visit_unless(node)
         elif node.children[0].additional_info == "while":
             return self.visit_while(node)
+        elif node.children[0].additional_info == "until":
+            return self.visit_until(node)
         elif node.children[0].additional_info == "def":
             return self.visit_def(node)
         elif node.children[0].additional_info == "class":
@@ -310,6 +312,12 @@ class Transformer(object):
 
     def visit_while(self, node):
         return ast.While(
+            self.visit_expr(node.children[1]),
+            self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
+        )
+
+    def visit_until(self, node):
+        return ast.Until(
             self.visit_expr(node.children[1]),
             self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
         )
