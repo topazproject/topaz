@@ -761,7 +761,7 @@ class Variable(Node):
         self.name = name
 
     def convert_to_assignment(self, transormer, node, oper, value):
-        if self.name == "__FILE__" or "?" in self.name:
+        if self.name == "__FILE__" or "?" in self.name or "!" in self.name:
             transormer.error(node)
         return Assignment(oper, self.name, value, node.getsourcepos().lineno)
 

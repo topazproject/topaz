@@ -753,8 +753,19 @@ class TestParser(BaseRuPyPyTest):
         ]))
         with self.raises("SyntaxError"):
             ec.space.parse(ec, "method? = 4")
+
+    def test_exclamation_point(self, ec):
+        assert ec.space.parse(ec, "obj.method!") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Variable("obj", 1), "method!", [], None, 1))
+        ]))
+        assert ec.space.parse(ec, "def method!() end") == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "method!", [], None, None, ast.Block([])))
+        ]))
+        assert ec.space.parse(ec, "method!") == ast.Main(ast.Block([
+            ast.Statement(ast.Variable("method!", 1))
+        ]))
         with self.raises("SyntaxError"):
-            ec.space.parse(ec, "obj.meth?od")
+            ec.space.parse(ec, "method! = 4")
 
     def test_singleton_method(self, ec):
         r = ec.space.parse(ec, """

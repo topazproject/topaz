@@ -268,9 +268,11 @@ class Lexer(object):
         return SINGLESTRING
 
     def handle_IDENTIFIER(self, ch):
-        if ch.isalnum() or ch in "_?":
-            if "?" in self.current_value:
-                raise LexerError(self.current_pos())
+        if ch in "!?":
+            self.add(ch)
+            self.emit(IDENTIFIER)
+            return None
+        elif ch.isalnum() or ch == "_":
             self.add(ch)
             return IDENTIFIER
         else:
