@@ -349,6 +349,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "'abc'") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("abc"))
         ]))
+        assert ec.space.parse(ec, '"\n"') == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("\n"))
+        ]))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
@@ -879,6 +882,14 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
                 ast.Return(ast.ConstantInt(5))
             ]), ast.Block([])))
+        ]))
+
+    def test_inline_unless(self, ec):
+        assert ec.space.parse(ec, "return 5 unless 3") == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(3),
+                ast.Block([]),
+                ast.Block([ast.Return(ast.ConstantInt(5))]),
+            ))
         ]))
 
     def test_inline_until(self, ec):

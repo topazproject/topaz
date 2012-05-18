@@ -79,7 +79,7 @@ class Lexer(object):
         self.tokens = []
         self.idx = 0
         self.lineno = 1
-        self.columno = 0
+        self.columno = 1
 
     def current_pos(self):
         return SourcePos(self.idx, self.lineno, self.columno)
@@ -270,7 +270,7 @@ class Lexer(object):
     def handle_IDENTIFIER(self, ch):
         if ch in "!?":
             self.add(ch)
-            self.emit(IDENTIFIER)
+            self.emit_identifier()
             return None
         elif ch.isalnum() or ch == "_":
             self.add(ch)
@@ -352,7 +352,7 @@ class Lexer(object):
             self.add(ch)
             self.emit("NE")
             return None
-        self.emit(EXCLAMATION)
+        self.emit("EXCLAMATION")
         return self.handle_generic(ch)
 
     def handle_DOT(self, ch):

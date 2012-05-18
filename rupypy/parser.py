@@ -65,6 +65,12 @@ class Transformer(object):
                 ast.Block([self.visit_stmt(node.children[0])]),
                 ast.Block([]),
             )
+        elif node.symbol == "inline_unless":
+            return ast.If(
+                self.visit_expr(node.children[2]),
+                ast.Block([]),
+                ast.Block([self.visit_stmt(node.children[0])]),
+            )
         elif node.symbol == "inline_until":
             return ast.Until(
                 self.visit_expr(node.children[2]),

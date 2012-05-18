@@ -7,10 +7,13 @@ main: line* statement? [LINE_END]? [EOF];
 line: statement? [LINE_END];
 
 statement: inline_if |
+           inline_unless |
            inline_until |
            <real_statement>;
 
 inline_if: real_statement IF expr;
+
+inline_unless: real_statement UNLESS expr;
 
 inline_until: real_statement UNTIL expr;
 
