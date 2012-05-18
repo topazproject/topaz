@@ -31,6 +31,10 @@ class W_ArrayObject(W_BaseObject):
     def method_subscript(self, space, idx):
         return self.items_w[idx]
 
+    @classdef.method("[]=", idx="int")
+    def method_subscript_assign(self, space, idx, w_obj):
+        self.items_w[idx] = w_obj
+
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(len(self.items_w))

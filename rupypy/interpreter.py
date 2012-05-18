@@ -377,6 +377,16 @@ class Interpreter(object):
     def DUP_TOP(self, space, bytecode, frame, pc):
         frame.push(frame.peek())
 
+    @jit.unroll_safe
+    def DUP_TOPX(self, space, bytecode, frame, pc, n):
+        objs_w = [None] * n
+        for i in xrange(n):
+            objs_w[i] = frame.pop()
+        for i in xrange(n - 1, -1, -1):
+            frame.push(objs_w[i])
+        for i in xrange(n - 1, -1, -1):
+            frame.push(objs_w[i])
+
     def RETURN(self, ec, bytecode, frame, pc):
         w_returnvalue = frame.pop()
         block = frame.unrollstack(ReturnValue.kind)

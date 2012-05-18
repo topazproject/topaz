@@ -429,6 +429,20 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = ec.space.execute(ec, "return !!3")
         assert w_res is ec.space.w_true
 
+    def test_subscript_assignment(self, ec):
+        w_res = ec.space.execute(ec, """
+        x = [0]
+        x[0] = 5
+        return x[0]
+        """)
+        assert ec.space.int_w(w_res) == 5
+        w_res = ec.space.execute(ec, """
+        x = [0]
+        x[0] += 2
+        return x[0]
+        """)
+        assert ec.space.int_w(w_res) == 2
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):

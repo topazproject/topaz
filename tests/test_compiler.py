@@ -1357,3 +1357,28 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
+
+    def test_subscript_assignment(self, ec):
+        self.assert_compiles(ec, "self[3] = 5", """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 2
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        self.assert_compiles(ec, "self[3] += 1", """
+        LOAD_SELF
+        LOAD_CONST 0
+        DUP_TOPX 2
+        SEND 1 1
+        LOAD_CONST 2
+        SEND 3 1
+        SEND 4 2
+        DISCARD_TOP
+
+        LOAD_CONST 5
+        RETURN
+        """)

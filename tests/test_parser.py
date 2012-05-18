@@ -267,15 +267,20 @@ class TestParser(BaseRuPyPyTest):
 
     def test_subscript(self, ec):
         assert ec.space.parse(ec, "[1][0]") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Array([ast.ConstantInt(1)]), "[]", [ast.ConstantInt(0)], None, 1))
+            ast.Statement(ast.Subscript(ast.Array([ast.ConstantInt(1)]), [ast.ConstantInt(0)], 1))
         ]))
 
         assert ec.space.parse(ec, "self[i]") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("self", 1), "[]", [ast.Variable("i", 1)], None, 1))
+            ast.Statement(ast.Subscript(ast.Variable("self", 1), [ast.Variable("i", 1)], 1))
         ]))
 
         assert ec.space.parse(ec, "self[i].to_s") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Send(ast.Variable("self", 1), "[]", [ast.Variable("i", 1)], None, 1), "to_s", [], None, 1))
+            ast.Statement(ast.Send(ast.Subscript(ast.Variable("self", 1), [ast.Variable("i", 1)], 1), "to_s", [], None, 1))
+        ]))
+
+    def test_subscript_assginment(self, ec):
+        assert ec.space.parse(ec, "x[0] = 5") == ast.Main(ast.Block([
+            ast.Statement(ast.SubscriptAssignment("=", ast.Variable("x", 1), [ast.ConstantInt(0)], ast.ConstantInt(5), 1))
         ]))
 
     def test_def(self, ec):

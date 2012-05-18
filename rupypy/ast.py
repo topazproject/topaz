@@ -147,6 +147,33 @@ class MethodAssignment(Node):
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.name + "="), 1)
 
 
+class SubscriptAssignment(Node):
+    def __init__(self, oper, target, args, value, lineno):
+        Node.__init__(self, lineno)
+        self.oper = oper
+        self.target = target
+        self.args = args
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols(symtable)
+        for arg in self.args:
+            arg.locate_symbols(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.target.compile(ctx)
+        for arg in self.args:
+            arg.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.DUP_TOPX, len(self.args) + 1)
+            ctx.emit(consts.SEND, ctx.create_symbol_const("[]"), len(self.args))
+        self.value.compile(ctx)
+        if self.oper != "=":
+            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
+        ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), len(self.args) + 1)
+
+
 class GlobalAssignment(Node):
     def __init__(self, oper, name, value):
         self.oper = oper
@@ -717,6 +744,24 @@ class BlockArgument(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.COERCE_BLOCK)
+
+
+class Subscript(Node):
+    def __init__(self, target, args, lineno):
+        Node.__init__(self, lineno)
+        self.target = target
+        self.args = args
+
+    def convert_to_assignment(self, transformer, node, oper, value):
+        return SubscriptAssignment(oper, self.target, self.args, value, self.lineno)
+
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols(symtable)
+        for arg in self.args:
+            arg.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        Send(self.target, "[]", self.args, None, self.lineno).compile(ctx)
 
 
 class LookupConstant(Node):

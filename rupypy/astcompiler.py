@@ -197,6 +197,8 @@ class CompilerContext(object):
             stack_effect = -instr.arg0 + 1
         elif stack_effect == consts.BLOCK_EFFECT:
             stack_effect = -instr.arg0
+        elif stack_effect == consts.DUP_TOPX_EFFECT:
+            stack_effect = instr.arg0
         return stack_effect
 
     def new_block(self):
