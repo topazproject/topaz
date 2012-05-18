@@ -36,7 +36,11 @@ class Transformer(object):
 
     def visit_stmt(self, node):
         if node.children[0].symbol == "RETURN":
-            return ast.Return(self.visit_expr(node.children[1]))
+            if len(node.children) == 2:
+                obj = self.visit_expr(node.children[1])
+            else:
+                obj = ast.Variable("nil", node.getsourcepos().lineno)
+            return ast.Return(obj)
         return ast.Statement(self.visit_expr(node.children[0]))
 
     def visit_send_block(self, node):

@@ -17,7 +17,7 @@ inline_unless: real_statement UNLESS expr;
 
 inline_until: real_statement UNTIL expr;
 
-real_statement: RETURN expr |
+real_statement: RETURN expr? |
                 expr;
 
 expr: assignment |
