@@ -922,11 +922,11 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [], None, ast.Block([
-                ast.Statement(ast.If(ast.Assignment("x", ast.ConstantInt(3)),
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([
+                ast.Statement(ast.If(ast.Assignment("=", "x", ast.ConstantInt(3), 3),
                     ast.Block([]),
                     ast.Block([
-                        ast.Return(ast.Variable("nil", 1))
+                        ast.Return(ast.Variable("nil", 3))
                     ])
                 ))
             ])))
