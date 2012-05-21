@@ -111,6 +111,8 @@ class Transformer(object):
             return self.visit_unaryop(node)
         elif symname == "splat":
             return ast.Splat(self.visit_arg(node.children[0]))
+        elif symname == "ternary":
+            return self.visit_ternary(node)
         elif symname == "send":
             return self.visit_send(node)
         elif symname == "primary":
@@ -143,6 +145,13 @@ class Transformer(object):
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
             inclusive=inclusive,
+        )
+
+    def visit_ternary(self, node):
+        return ast.If(
+            self.visit_arg(node.children[0]),
+            ast.Block([ast.Statement(self.visit_arg(node.children[2]))]),
+            ast.Block([ast.Statement(self.visit_arg(node.children[4]))]),
         )
 
     def visit_send(self, node):

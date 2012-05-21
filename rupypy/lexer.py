@@ -191,6 +191,10 @@ class Lexer(object):
         elif ch == ":":
             self.add(ch)
             return "COLON"
+        elif ch == "?":
+            self.add(ch)
+            self.emit("QUESTION")
+            return None
         elif ch == ",":
             self.add(ch)
             self.emit("COMMA")

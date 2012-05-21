@@ -30,7 +30,9 @@ assignment: send assignment_oper expr;
 
 yield: YIELD args?;
 
-arg: range;
+arg: ternary;
+
+ternary: range QUESTION ternary COLON ternary | <range>;
 
 range_oper: <DOTDOT> | <DOTDOTDOT>;
 bool_oper: <OR> | <AND>;

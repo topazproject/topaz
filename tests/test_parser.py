@@ -931,3 +931,11 @@ class TestParser(BaseRuPyPyTest):
                 ))
             ])))
         ]))
+
+    def test_ternary_operator(self, ec):
+        assert ec.space.parse(ec, "3 ? 2 : 5") == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(3),
+                ast.Block([ast.Statement(ast.ConstantInt(2))]),
+                ast.Block([ast.Statement(ast.ConstantInt(5))]),
+            ))
+        ]))
