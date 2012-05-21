@@ -11,11 +11,11 @@ statement: inline_if |
            inline_until |
            <real_statement>;
 
-inline_if: real_statement IF expr;
+inline_if: real_statement IF_INLINE expr;
 
-inline_unless: real_statement UNLESS expr;
+inline_unless: real_statement UNLESS_INLINE expr;
 
-inline_until: real_statement UNTIL expr;
+inline_until: real_statement UNTIL_INLINE expr;
 
 real_statement: RETURN expr? |
                 expr;

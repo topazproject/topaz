@@ -1,50 +1,13 @@
-import sys
-
 from pypy.rlib.objectmodel import we_are_translated
 from pypy.rlib.parsing.lexer import Token, SourcePos
 from pypy.rlib.unroll import unrolling_iterable
 
 
-TOKENS = unrolling_iterable([
-    "RETURN",
-    "YIELD",
-    "IF",
-    "UNLESS",
-    "THEN",
-    "ELSIF",
-    "ELSE",
-    "WHILE",
-    "UNTIL",
-    "DO",
-    "BEGIN",
-    "RESCUE",
-    "ENSURE",
-    "DEF",
-    "CLASS",
-    "MODULE",
-    "END",
-    "NUMBER",
-    "IDENTIFIER",
-    "PLUS",
-    "MINUS",
-    "STAR",
-    "EQ",
-    "EQEQ",
-    "LT",
-    "GT",
-    "EXCLAMATION",
-    "DOT",
-    "DOTDOT",
-    "COLON",
-    "AMP",
-    "PIPE",
-    "STRING",
-    "DOUBLESTRING",
-    "SINGLESTRING",
-    "COMMENT",
+STATES = unrolling_iterable([
+    "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "EQ",
+    "EQEQ", "LT", "GT", "PIPE", "AMP", "COLON", "EXCLAMATION", "SINGLESTRING",
+    "DOUBLESTRING", "COMMENT",
 ])
-for token in TOKENS:
-    setattr(sys.modules[__name__], token, token)
 
 
 class LexerError(Exception):
@@ -54,29 +17,33 @@ class LexerError(Exception):
 
 class Lexer(object):
     keywords = {
-        "return": RETURN,
-        "yield": YIELD,
-        "if": IF,
-        "unless": UNLESS,
-        "then": THEN,
-        "elsif": ELSIF,
-        "else": ELSE,
-        "while": WHILE,
-        "until": UNTIL,
-        "do": DO,
-        "begin": BEGIN,
-        "rescue": RESCUE,
-        "ensure": ENSURE,
-        "def": DEF,
-        "class": CLASS,
-        "module": MODULE,
-        "end": END,
+        "return": ["RETURN"],
+        "yield": ["YIELD"],
+        "if": ["IF", "IF_INLINE"],
+        "unless": ["UNLESS", "UNLESS_INLINE"],
+        "then": ["THEN"],
+        "elsif": ["ELSIF"],
+        "else": ["ELSE"],
+        "while": ["WHILE"],
+        "until": ["UNTIL", "UNTIL_INLINE"],
+        "do": ["DO"],
+        "begin": ["BEGIN"],
+        "rescue": ["RESCUE"],
+        "ensure": ["ENSURE"],
+        "def": ["DEF"],
+        "class": ["CLASS"],
+        "module": ["MODULE"],
+        "end": ["END"],
     }
+    EXPR_BEG = 0
+    EXPR_VALUE = 1
+    EXPR_NAME = 2
 
     def __init__(self, text):
         self.text = text
         self.current_value = []
         self.tokens = []
+        self.context = self.EXPR_BEG
         self.idx = 0
         self.lineno = 1
         self.columno = 1
@@ -111,13 +78,14 @@ class Lexer(object):
                 state = self.handle_generic(ch)
             else:
                 if we_are_translated():
-                    for token in TOKENS:
-                        if state == token:
-                            state = getattr(self, "handle_" + token)(ch)
+                    for expected_state in STATES:
+                        if state == expected_state:
+                            state = getattr(self, "handle_" + expected_state)(ch)
                             break
                     else:
                         raise NotImplementedError
                 else:
+                    assert state in STATES
                     state = getattr(self, "handle_" + state)(ch)
             self.idx += 1
             self.columno += 1
@@ -126,48 +94,64 @@ class Lexer(object):
         return self.tokens
 
     def finish_token(self, state):
-        if state == NUMBER:
+        if state == "NUMBER":
             self.emit("NUMBER")
-        elif state == IDENTIFIER:
+        elif state == "IDENTIFIER":
             self.emit_identifier()
         elif state is not None:
             assert False
 
     def emit_identifier(self):
-        if "".join(self.current_value) in self.keywords:
-            self.emit(self.keywords["".join(self.current_value)])
+        value = "".join(self.current_value)
+        name = True
+        if value in self.keywords:
+            tokens = self.keywords[value]
+            if len(tokens) == 2:
+                [normal, inline] = tokens
+                name = False
+            else:
+                [normal] = [inline] = tokens
+
+            if self.context in [self.EXPR_BEG, self.EXPR_VALUE]:
+                self.emit(normal)
+            else:
+                self.emit(inline)
         else:
             self.emit("IDENTIFIER")
+        if name:
+            self.context = self.EXPR_NAME
+        else:
+            self.context = self.EXPR_NAME
 
     def handle_generic(self, ch):
         if ch.isdigit():
             self.add(ch)
-            return NUMBER
+            return "NUMBER"
         elif ch.isalpha() or ch == "_":
             self.add(ch)
-            return IDENTIFIER
+            return "IDENTIFIER"
         elif ch == "+":
             self.add(ch)
-            return PLUS
+            return "PLUS"
         elif ch == "-":
             self.add(ch)
-            return MINUS
+            return "MINUS"
         elif ch == "*":
             self.add(ch)
-            return STAR
-        elif ch  == "/":
+            return "STAR"
+        elif ch == "/":
             self.add(ch)
             self.emit("DIV")
             return None
         elif ch == "<":
             self.add(ch)
-            return LT
+            return "LT"
         elif ch == ">":
             self.add(ch)
-            return GT
+            return "GT"
         elif ch == "!":
             self.add(ch)
-            return EXCLAMATION
+            return "EXCLAMATION"
         elif ch == "(":
             self.add(ch)
             self.emit("LPAREN")
@@ -193,27 +177,27 @@ class Lexer(object):
             self.emit("RBRACE")
             return None
         elif ch == '"':
-            return DOUBLESTRING
+            return "DOUBLESTRING"
         elif ch == "'":
-            return SINGLESTRING
+            return "SINGLESTRING"
         elif ch == " ":
             return None
         elif ch == "=":
             self.add(ch)
-            return EQ
+            return "EQ"
         elif ch == ".":
             self.add(ch)
-            return DOT
+            return "DOT"
         elif ch == ":":
             self.add(ch)
-            return COLON
+            return "COLON"
         elif ch == ",":
             self.add(ch)
             self.emit("COMMA")
             return None
         elif ch == "&":
             self.add(ch)
-            return AMP
+            return "AMP"
         elif ch == "@":
             self.add(ch)
             self.emit("AT_SIGN")
@@ -224,19 +208,20 @@ class Lexer(object):
             return None
         elif ch == "|":
             self.add(ch)
-            return PIPE
+            return "PIPE"
         elif ch == "\n":
             self.add(ch)
             self.emit("LINE_END")
             self.lineno += 1
             self.columno = 0
+            self.context = self.EXPR_BEG
             return None
         elif ch == ";":
             self.add(ch)
             self.emit("LINE_END")
             return None
         elif ch == "#":
-            return COMMENT
+            return "COMMENT"
         assert False, ch
 
     def handle_NUMBER(self, ch):
@@ -245,10 +230,10 @@ class Lexer(object):
                 self.emit("NUMBER")
                 return self.handle_generic(ch)
             self.add(ch)
-            return NUMBER
+            return "NUMBER"
         elif ch.isdigit():
             self.add(ch)
-            return NUMBER
+            return "NUMBER"
         else:
             self.emit("NUMBER")
             return self.handle_generic(ch)
@@ -258,14 +243,14 @@ class Lexer(object):
             self.emit("STRING")
             return None
         self.add(ch)
-        return DOUBLESTRING
+        return "DOUBLESTRING"
 
     def handle_SINGLESTRING(self, ch):
         if ch == "'":
             self.emit("STRING")
             return None
         self.add(ch)
-        return SINGLESTRING
+        return "SINGLESTRING"
 
     def handle_IDENTIFIER(self, ch):
         if ch in "!?":
@@ -274,7 +259,7 @@ class Lexer(object):
             return None
         elif ch.isalnum() or ch == "_":
             self.add(ch)
-            return IDENTIFIER
+            return "IDENTIFIER"
         else:
             self.emit_identifier()
             return self.handle_generic(ch)
@@ -290,7 +275,7 @@ class Lexer(object):
     def handle_MINUS(self, ch):
         if ch.isdigit():
             self.add(ch)
-            return NUMBER
+            return "NUMBER"
         elif ch == "=":
             self.add(ch)
             self.emit("MINUS_EQUAL")
@@ -311,11 +296,12 @@ class Lexer(object):
     def handle_EQ(self, ch):
         if ch == "=":
             self.add(ch)
-            return EQEQ
+            return "EQEQ"
         elif ch == ">":
             self.add(ch)
             self.emit("ARROW")
             return None
+        self.context = self.EXPR_BEG
         self.emit("EQ")
         return self.handle_generic(ch)
 
@@ -358,7 +344,7 @@ class Lexer(object):
     def handle_DOT(self, ch):
         if ch == ".":
             self.add(ch)
-            return DOTDOT
+            return "DOTDOT"
         self.emit("DOT")
         return self.handle_generic(ch)
 
@@ -390,7 +376,7 @@ class Lexer(object):
     def handle_COMMENT(self, ch):
         if ch == "\n":
             return self.handle_generic(ch)
-        return COMMENT
+        return "COMMENT"
 
     def handle_PIPE(self, ch):
         if ch == "|":
@@ -399,10 +385,3 @@ class Lexer(object):
             return None
         self.emit("PIPE")
         return self.handle_generic(ch)
-
-    def handle_UNREACHABLE(self, ch):
-        raise NotImplementedError
-    handle_DEF = handle_CLASS = handle_MODULE = handle_IF = handle_UNLESS =\
-        handle_THEN = handle_ELSIF = handle_ELSE = handle_WHILE = handle_DO =\
-        handle_YIELD = handle_RETURN = handle_BEGIN = handle_RESCUE =\
-        handle_ENSURE = handle_END = handle_UNREACHABLE
