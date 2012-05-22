@@ -1414,3 +1414,41 @@ class TestCompiler(object):
         LOAD_CONST 6
         RETURN
         """)
+
+    def test_hash(self, ec):
+        self.assert_compiles(ec, "{}", """
+        BUILD_HASH
+        DISCARD_TOP
+
+        LOAD_CONST 0
+        RETURN
+        """)
+        self.assert_compiles(ec, "{:abc => 4}", """
+        BUILD_HASH
+        DUP_TOP
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 2
+        DISCARD_TOP
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        self.assert_compiles(ec, "{:abc => 4, :def => 5}", """
+        BUILD_HASH
+        DUP_TOP
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 2
+        DISCARD_TOP
+        DUP_TOP
+        LOAD_CONST 3
+        LOAD_CONST 4
+        SEND 5 2
+        DISCARD_TOP
+        DISCARD_TOP
+
+        LOAD_CONST 6
+        RETURN
+        """)

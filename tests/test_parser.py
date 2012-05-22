@@ -997,3 +997,14 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "3 && /a/") == ast.Main(ast.Block([
             ast.Statement(ast.And(ast.ConstantInt(3), ast.ConstantRegexp("a")))
         ]))
+
+    def test_hash(self, ec):
+        assert ec.space.parse(ec, "{}") == ast.Main(ast.Block([
+            ast.Statement(ast.Hash([]))
+        ]))
+        assert ec.space.parse(ec, "{:abc => 3, :def => 5}") == ast.Main(ast.Block([
+            ast.Statement(ast.Hash([
+                (ast.ConstantSymbol("abc"), ast.ConstantInt(3)),
+                (ast.ConstantSymbol("def"), ast.ConstantInt(5)),
+            ]))
+        ]))

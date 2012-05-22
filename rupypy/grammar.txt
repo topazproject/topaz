@@ -82,6 +82,7 @@ constant: COLONCOLON IDENTIFIER;
 
 primary: LPAREN expr RPAREN |
          LBRACKET args? RBRACKET |
+         LBRACE assocs? RBRACE |
          IF if elsifs? else? [END] |
          UNLESS expr then line* statement? [LINE_END]? END |
          WHILE expr do line* statement? [LINE_END]? END |
@@ -144,6 +145,10 @@ argument: <arg> | <splat>;
 splat: [UNARY_STAR] arg;
 
 block_arg: [AMP] arg;
+
+assocs: assoc [COMMA] >assocs< | assoc;
+
+assoc: arg ARROW arg;
 
 varname: IDENTIFIER |
          AT_SIGN IDENTIFIER |

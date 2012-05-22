@@ -911,6 +911,25 @@ class Array(Node):
         ctx.emit(consts.BUILD_ARRAY, len(self.items))
 
 
+class Hash(Node):
+    def __init__(self, items):
+        self.items = items
+
+    def locate_symbols(self, symtable):
+        for k, v in self.items:
+            k.locate_symbols(symtable)
+            v.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        ctx.emit(consts.BUILD_HASH)
+        for k, v in self.items:
+            ctx.emit(consts.DUP_TOP)
+            k.compile(ctx)
+            v.compile(ctx)
+            ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), 2)
+            ctx.emit(consts.DISCARD_TOP)
+
+
 class Range(Node):
     def __init__(self, start, stop, inclusive):
         self.start = start

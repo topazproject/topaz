@@ -253,6 +253,8 @@ class Transformer(object):
             return self.visit_expr(node.children[1])
         elif node.children[0].additional_info == "[":
             return self.visit_array(node)
+        elif node.children[0].additional_info == "{":
+            return self.visit_hash(node)
         elif node.children[0].additional_info == "if":
             return self.visit_if(node)
         elif node.children[0].additional_info == "unless":
@@ -281,6 +283,16 @@ class Transformer(object):
         else:
             items = []
         return ast.Array(items)
+
+    def visit_hash(self, node):
+        if len(node.children) == 3:
+            items = [
+                (self.visit_arg(n.children[0]), self.visit_arg(n.children[2]))
+                for n in node.children[1].children
+            ]
+        else:
+            items = []
+        return ast.Hash(items)
 
     def visit_literal(self, node):
         symname = node.children[0].symbol
