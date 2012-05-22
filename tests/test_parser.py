@@ -854,9 +854,12 @@ class TestParser(BaseRuPyPyTest):
             ec.space.parse(ec, "def f(*args, g=5)")
 
     def test_regexp(self, ec):
-        assert ec.space.parse(ec, "/a/") == ast.Main(ast.Block([
-            ast.Statement(ast.ConstantRegexp("a")),
+        re = lambda re: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantRegexp(re))
         ]))
+
+        assert ec.space.parse(ec, r"/a/") == re("a")
+        assert ec.space.parse(ec, r"/\w/") == re(r"\w")
 
     def test_or(self, ec):
         assert ec.space.parse(ec, "3 || 4") == ast.Main(ast.Block([

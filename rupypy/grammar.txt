@@ -142,9 +142,6 @@ varname: IDENTIFIER |
          AT_SIGN IDENTIFIER |
          DOLLAR IDENTIFIER;
 
-literal: NUMBER | symbol | STRING | regexp;
+literal: NUMBER | symbol | STRING | REGEXP;
 
 symbol: [COLON] IDENTIFIER;
-
-# XXX: doesn't match all regexes by far
-regexp: [DIV] IDENTIFIER [DIV];

@@ -4,9 +4,9 @@ from pypy.rlib.unroll import unrolling_iterable
 
 
 STATES = unrolling_iterable([
-    "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "EQ",
-    "EQEQ", "LT", "GT", "PIPE", "AMP", "COLON", "EXCLAMATION", "SINGLESTRING",
-    "DOUBLESTRING", "COMMENT",
+    "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
+    "EQ", "EQEQ", "LT", "GT", "PIPE", "AMP", "COLON", "EXCLAMATION",
+    "SINGLESTRING", "DOUBLESTRING", "REGEXP", "COMMENT",
 ])
 
 
@@ -38,6 +38,7 @@ class Lexer(object):
     EXPR_BEG = 0
     EXPR_VALUE = 1
     EXPR_NAME = 2
+    EXPR_END = 3
 
     def __init__(self, text):
         self.text = text
@@ -62,10 +63,13 @@ class Lexer(object):
     def add(self, ch):
         self.current_value.append(ch)
 
+    def clear(self):
+        self.current_value = []
+
     def emit(self, token, value=None):
         if value is None:
             value = "".join(self.current_value)
-        self.current_value = []
+        self.clear()
         self.tokens.append(Token(token, value, self.current_pos()))
 
     def tokenize(self):
@@ -141,8 +145,7 @@ class Lexer(object):
             return "STAR"
         elif ch == "/":
             self.add(ch)
-            self.emit("DIV")
-            return None
+            return "SLASH"
         elif ch == "<":
             self.add(ch)
             return "LT"
@@ -229,6 +232,7 @@ class Lexer(object):
         assert False, ch
 
     def handle_NUMBER(self, ch):
+        self.context = self.EXPR_END
         if ch == ".":
             if not self.peek().isdigit():
                 self.emit("NUMBER")
@@ -295,6 +299,16 @@ class Lexer(object):
             self.emit("MUL")
         else:
             self.emit("UNARY_STAR")
+        return self.handle_generic(ch)
+
+    def handle_SLASH(self, ch):
+        if self.context in [self.EXPR_BEG, self.EXPR_VALUE]:
+            self.clear()
+            self.add(ch)
+            return "REGEXP"
+        elif ch == "=":
+            self.emit("DIV_EQUAL")
+        self.emit("DIV")
         return self.handle_generic(ch)
 
     def handle_EQ(self, ch):
@@ -389,3 +403,10 @@ class Lexer(object):
             return None
         self.emit("PIPE")
         return self.handle_generic(ch)
+
+    def handle_REGEXP(self, ch):
+        if ch == "/":
+            self.emit("REGEXP")
+            return None
+        self.add(ch)
+        return "REGEXP"

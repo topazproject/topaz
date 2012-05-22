@@ -286,7 +286,7 @@ class Transformer(object):
             return self.visit_symbol(node.children[0])
         elif symname == "STRING":
             return self.visit_string(node.children[0])
-        elif symname == "regexp":
+        elif symname == "REGEXP":
             return self.visit_regexp(node.children[0])
         raise NotImplementedError(symname)
 
@@ -477,4 +477,4 @@ class Transformer(object):
         return ast.ConstantString(node.additional_info)
 
     def visit_regexp(self, node):
-        return ast.ConstantRegexp(node.children[0].additional_info)
+        return ast.ConstantRegexp(node.additional_info)
