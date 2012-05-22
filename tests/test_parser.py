@@ -975,3 +975,8 @@ class TestParser(BaseRuPyPyTest):
                 (ast.ConstantRegexp("a"), ast.Block([]))
             ], ast.Block([])))
         ]))
+
+    def test_and_regexp(self, ec):
+        assert ec.space.parse(ec, "3 && /a/") == ast.Main(ast.Block([
+            ast.Statement(ast.And(ast.ConstantInt(3), ast.ConstantRegexp("a")))
+        ]))

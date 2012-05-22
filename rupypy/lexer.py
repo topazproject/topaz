@@ -398,6 +398,7 @@ class Lexer(object):
         if ch == "&":
             self.add(ch)
             self.emit("AND")
+            self.context = self.EXPR_BEG
             return None
         self.emit("AMP")
         return self.handle_generic(ch)
