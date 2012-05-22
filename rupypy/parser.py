@@ -103,7 +103,7 @@ class Transformer(object):
             node = node.children[0]
 
         symname = node.symbol
-        if symname in ["comparison", "shiftive", "additive", "multitive", "bool"]:
+        if symname in ["comparison", "shiftive", "additive", "multitive", "bool", "match"]:
             return self.visit_subexpr(node)
         elif symname == "range":
             return self.visit_range(node)
@@ -129,6 +129,8 @@ class Transformer(object):
             return ast.Or(lhs, rhs)
         elif op == "&&":
             return ast.And(lhs, rhs)
+        elif op == "!~":
+            return ast.Not(ast.BinOp("=~", lhs, rhs, node.getsourcepos().lineno))
         else:
             return ast.BinOp(op, lhs, rhs, node.getsourcepos().lineno)
 

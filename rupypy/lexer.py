@@ -330,6 +330,10 @@ class Lexer(object):
             self.add(ch)
             self.emit("ARROW")
             return None
+        elif ch == "~":
+            self.add(ch)
+            self.emit("EQUAL_TILDE")
+            return None
         self.context = self.EXPR_BEG
         self.emit("EQ")
         return self.handle_generic(ch)
@@ -366,6 +370,10 @@ class Lexer(object):
         if ch == "=":
             self.add(ch)
             self.emit("NE")
+            return None
+        elif ch == "~":
+            self.add(ch)
+            self.emit("EXCLAMATION_TILDE")
             return None
         self.emit("EXCLAMATION")
         return self.handle_generic(ch)

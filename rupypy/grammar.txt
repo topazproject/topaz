@@ -35,6 +35,7 @@ arg: ternary;
 ternary: range QUESTION ternary COLON ternary | <range>;
 
 range_oper: <DOTDOT> | <DOTDOTDOT>;
+match_oper: <EQUAL_TILDE> | <EXCLAMATION_TILDE>;
 bool_oper: <OR> | <AND>;
 cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE>;
 shift_oper: <LSHIFT>;
@@ -42,7 +43,8 @@ add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
 unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
 
-range: bool range_oper range | <bool>;
+range: match range_oper range | <match>;
+match: bool match_oper match | <bool>;
 bool: comparison bool_oper bool | <comparison>;
 comparison: shiftive cmp_oper comparison | <shiftive>;
 shiftive: additive shift_oper shiftive | <additive>;
