@@ -1,22 +1,14 @@
-.. RuPyPy documentation master file, created by
-   sphinx-quickstart on Tue May 22 16:43:32 2012.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Welcome to RuPyPy
+=================
 
-Welcome to RuPyPy's documentation!
-==================================
-
-Contents:
+RuPyPy is a high performance implementation of the Ruby programming language,
+written in Python on top of `PyPy`_.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+
+   contributing
 
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+.. _`PyPy`: http://pypy.org
