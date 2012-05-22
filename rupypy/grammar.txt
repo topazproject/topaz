@@ -39,7 +39,7 @@ bool_oper: <OR> | <AND>;
 cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE>;
 shift_oper: <LSHIFT>;
 add_oper: <PLUS> | <MINUS>;
-mul_oper: <DIV> | <MUL>;
+mul_oper: <DIV> | <MODULO> | <MUL>;
 unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
 
 range: bool range_oper range | <bool>;

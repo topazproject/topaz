@@ -27,6 +27,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "1===1") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("===", ast.ConstantInt(1), ast.ConstantInt(1), 1))
         ]))
+        assert ec.space.parse(ec, "2 % 3") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("%", ast.ConstantInt(2), ast.ConstantInt(3), 1))
+        ]))
 
     def test_multi_term_expr(self, ec):
         assert ec.space.parse(ec, "1 + 2 * 3") == ast.Main(ast.Block([

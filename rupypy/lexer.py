@@ -223,6 +223,10 @@ class Lexer(object):
         elif ch == "|":
             self.add(ch)
             return "PIPE"
+        elif ch == "%":
+            self.add(ch)
+            self.emit("MODULO")
+            return None
         elif ch == "\n":
             self.add(ch)
             self.emit("LINE_END")
