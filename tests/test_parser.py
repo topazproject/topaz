@@ -477,9 +477,11 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_symbol(self, ec):
-        assert ec.space.parse(ec, ":abc") == ast.Main(ast.Block([
-            ast.Statement(ast.ConstantSymbol("abc"))
+        sym = lambda s: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantSymbol(s))
         ]))
+        assert ec.space.parse(ec, ":abc") == sym("abc")
+        assert ec.space.parse(ec, ":abc_abc") == sym("abc_abc")
 
     def test_range(self, ec):
         assert ec.space.parse(ec, "2..3") == ast.Main(ast.Block([

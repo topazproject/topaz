@@ -287,7 +287,7 @@ class Lexer(object):
             return self.handle_generic(ch)
 
     def handle_SYMBOL(self, ch):
-        if not ch.isalnum():
+        if not (ch.isalnum() or ch == "_"):
             self.emit("SYMBOL")
             return self.handle_generic(ch)
         self.add(ch)
