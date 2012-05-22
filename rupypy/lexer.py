@@ -6,7 +6,7 @@ from pypy.rlib.unroll import unrolling_iterable
 STATES = unrolling_iterable([
     "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
     "EQ", "EQEQ", "LT", "GT", "PIPE", "AMP", "COLON", "EXCLAMATION",
-    "SINGLESTRING", "DOUBLESTRING", "REGEXP", "COMMENT",
+    "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP", "COMMENT",
 ])
 
 
@@ -115,6 +115,8 @@ class Lexer(object):
             self.emit("NUMBER")
         elif state == "IDENTIFIER":
             self.emit_identifier()
+        elif state == "SYMBOL":
+            self.emit("SYMBOL")
         elif state is not None:
             assert False
 
@@ -283,6 +285,13 @@ class Lexer(object):
             self.emit_identifier()
             return self.handle_generic(ch)
 
+    def handle_SYMBOL(self, ch):
+        if not ch.isalnum():
+            self.emit("SYMBOL")
+            return self.handle_generic(ch)
+        self.add(ch)
+        return "SYMBOL"
+
     def handle_PLUS(self, ch):
         if ch == "=":
             self.add(ch)
@@ -398,9 +407,13 @@ class Lexer(object):
             self.add(ch)
             self.emit("COLONCOLON")
             return None
-        else:
+        elif self.context == self.EXPR_END or ch == " ":
             self.emit("COLON")
             return self.handle_generic(ch)
+        else:
+            self.clear()
+            self.add(ch)
+            return "SYMBOL"
 
     def handle_AMP(self, ch):
         if ch == "&":

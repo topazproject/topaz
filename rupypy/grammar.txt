@@ -149,6 +149,4 @@ varname: IDENTIFIER |
          AT_SIGN IDENTIFIER |
          DOLLAR IDENTIFIER;
 
-literal: NUMBER | symbol | STRING | REGEXP;
-
-symbol: [COLON] IDENTIFIER;
+literal: NUMBER | SYMBOL | STRING | REGEXP;

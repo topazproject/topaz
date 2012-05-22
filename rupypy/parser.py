@@ -286,7 +286,7 @@ class Transformer(object):
         symname = node.children[0].symbol
         if symname == "NUMBER":
             return self.visit_number(node.children[0])
-        elif symname == "symbol":
+        elif symname == "SYMBOL":
             return self.visit_symbol(node.children[0])
         elif symname == "STRING":
             return self.visit_string(node.children[0])
@@ -492,7 +492,7 @@ class Transformer(object):
             return ast.ConstantInt(int(node.additional_info))
 
     def visit_symbol(self, node):
-        return ast.ConstantSymbol(node.children[0].additional_info)
+        return ast.ConstantSymbol(node.additional_info)
 
     def visit_string(self, node):
         return ast.ConstantString(node.additional_info)
