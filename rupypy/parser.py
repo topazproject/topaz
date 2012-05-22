@@ -297,8 +297,8 @@ class Transformer(object):
     def visit_varname(self, node):
         if node.children[0].symbol == "AT_SIGN":
             return ast.InstanceVariable(node.children[1].additional_info)
-        elif node.children[0].symbol == "DOLLAR":
-            return ast.Global("$" + node.children[1].additional_info)
+        elif node.children[0].symbol == "GLOBAL":
+            return ast.Global(node.children[0].additional_info)
         elif node.children[0].additional_info[0].isupper():
             return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.children[0].additional_info, node.getsourcepos().lineno)
         else:

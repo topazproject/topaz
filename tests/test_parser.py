@@ -808,6 +808,9 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.GlobalAssignment("=", "$abc", ast.ConstantInt(3))),
             ast.Statement(ast.Global("$abc")),
         ]))
+        assert ec.space.parse(ec, "$>") == ast.Main(ast.Block([
+            ast.Statement(ast.Global("$>"))
+        ]))
 
     def test_comments(self, ec):
         r = ec.space.parse(ec, """

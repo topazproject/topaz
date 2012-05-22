@@ -147,6 +147,6 @@ block_arg: [AMP] arg;
 
 varname: IDENTIFIER |
          AT_SIGN IDENTIFIER |
-         DOLLAR IDENTIFIER;
+         GLOBAL;
 
 literal: NUMBER | SYMBOL | STRING | REGEXP;

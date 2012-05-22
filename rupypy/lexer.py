@@ -5,7 +5,7 @@ from pypy.rlib.unroll import unrolling_iterable
 
 STATES = unrolling_iterable([
     "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
-    "EQ", "EQEQ", "LT", "GT", "PIPE", "AMP", "COLON", "EXCLAMATION",
+    "EQ", "EQEQ", "LT", "GT", "PIPE", "AMP", "COLON", "EXCLAMATION", "GLOBAL",
     "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP", "COMMENT",
 ])
 
@@ -117,6 +117,8 @@ class Lexer(object):
             self.emit_identifier()
         elif state == "SYMBOL":
             self.emit("SYMBOL")
+        elif state == "GLOBAL":
+            self.emit("GLOBAL")
         elif state is not None:
             assert False
 
@@ -220,8 +222,7 @@ class Lexer(object):
             return None
         elif ch == "$":
             self.add(ch)
-            self.emit("DOLLAR")
-            return None
+            return "GLOBAL"
         elif ch == "|":
             self.add(ch)
             return "PIPE"
@@ -436,6 +437,17 @@ class Lexer(object):
             return None
         self.emit("PIPE")
         return self.handle_generic(ch)
+
+    def handle_GLOBAL(self, ch):
+        if ch == ">":
+            self.add(ch)
+            self.emit("GLOBAL")
+            return None
+        elif not ch.isalnum():
+            self.emit("GLOBAL")
+            return self.handle_generic(ch)
+        self.add(ch)
+        return "GLOBAL"
 
     def handle_REGEXP(self, ch):
         if ch == "/":
