@@ -15,32 +15,43 @@ class LexerError(Exception):
         self.pos = pos
 
 
+class Keyword(object):
+    def __init__(self, normal_token, inline_token, context):
+        self.normal_token = normal_token
+        self.inline_token = inline_token
+        self.context = context
+
+
 class Lexer(object):
-    keywords = {
-        "return": ["RETURN"],
-        "yield": ["YIELD"],
-        "if": ["IF", "IF_INLINE"],
-        "unless": ["UNLESS", "UNLESS_INLINE"],
-        "then": ["THEN"],
-        "elsif": ["ELSIF"],
-        "else": ["ELSE"],
-        "while": ["WHILE"],
-        "until": ["UNTIL", "UNTIL_INLINE"],
-        "do": ["DO"],
-        "begin": ["BEGIN"],
-        "rescue": ["RESCUE"],
-        "ensure": ["ENSURE"],
-        "def": ["DEF"],
-        "class": ["CLASS"],
-        "module": ["MODULE"],
-        "case": ["CASE"],
-        "when": ["WHEN"],
-        "end": ["END"],
-    }
     EXPR_BEG = 0
     EXPR_VALUE = 1
     EXPR_NAME = 2
-    EXPR_END = 3
+    EXPR_MID = 3
+    EXPR_END = 4
+    EXPR_ARG = 5
+    EXPR_CLASS = 6
+
+    keywords = {
+        "return": Keyword("RETURN", "RETURN", EXPR_MID),
+        "yield": Keyword("YIELD", "YIELD", EXPR_ARG),
+        "if": Keyword("IF", "IF_INLINE", EXPR_BEG),
+        "unless": Keyword("UNLESS", "UNLESS_INLINE", EXPR_BEG),
+        "then": Keyword("THEN", "THEN", EXPR_BEG),
+        "elsif": Keyword("ELSIF", "ELSIF", EXPR_BEG),
+        "else": Keyword("ELSE", "ELSE", EXPR_BEG),
+        "while": Keyword("WHILE", "WHILE", EXPR_BEG),
+        "until": Keyword("UNTIL", "UNTIL_INLINE", EXPR_BEG),
+        "do": Keyword("DO", "DO", EXPR_BEG),
+        "begin": Keyword("BEGIN", "BEGIN", EXPR_BEG),
+        "rescue": Keyword("RESCUE", "RESCUE", EXPR_MID),
+        "ensure": Keyword("ENSURE", "ENSURE", EXPR_BEG),
+        "def": Keyword("DEF", "DEF", EXPR_NAME),
+        "class": Keyword("CLASS", "CLASS", EXPR_CLASS),
+        "module": Keyword("MODULE", "MODULE", EXPR_BEG),
+        "case": Keyword("CASE", "CASE", EXPR_BEG),
+        "when": Keyword("WHEN", "WHEN", EXPR_BEG),
+        "end": Keyword("END", "END", EXPR_END),
+    }
 
     def __init__(self, text):
         self.text = text
@@ -109,24 +120,18 @@ class Lexer(object):
 
     def emit_identifier(self):
         value = "".join(self.current_value)
-        name = True
+        context = self.context
         if value in self.keywords:
-            tokens = self.keywords[value]
-            if len(tokens) == 2:
-                [normal, inline] = tokens
-                name = False
-            else:
-                [normal] = [inline] = tokens
+            keyword = self.keywords[value]
+            self.context = keyword.context
 
-            if self.context in [self.EXPR_BEG, self.EXPR_VALUE]:
-                self.emit(normal)
+            if context in [self.EXPR_BEG, self.EXPR_VALUE]:
+                self.emit(keyword.normal_token)
             else:
-                self.emit(inline)
+                self.emit(keyword.inline_token)
+                self.context = self.EXPR_BEG
         else:
             self.emit("IDENTIFIER")
-        if name:
-            self.context = self.EXPR_NAME
-        else:
             self.context = self.EXPR_NAME
 
     def handle_generic(self, ch):
