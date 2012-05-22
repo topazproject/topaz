@@ -89,6 +89,7 @@ primary: LPAREN expr RPAREN |
          CLASS IDENTIFIER (LT varname)? [LINE_END] line* statement? [LINE_END]? END |
          MODULE IDENTIFIER line* statement? [LINE_END]? END |
          BEGIN line* statement? [LINE_END]? rescue* ensure? END |
+         CASE expr [LINE_END] whens else? END |
          varname |
          literal;
 
@@ -111,6 +112,10 @@ else: ELSE line* statement? [LINE_END]?;
 rescue: RESCUE varname? (ARROW IDENTIFIER)? line* statement? [LINE_END]?;
 
 ensure: ENSURE line* statement? [LINE_END]?;
+
+whens: when >whens< | when;
+
+when: WHEN expr then line* statement? [LINE_END]?;
 
 function_name: varname [DOT] IDENTIFIER |
                IDENTIFIER;

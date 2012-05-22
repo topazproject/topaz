@@ -1382,3 +1382,35 @@ class TestCompiler(object):
         LOAD_CONST 5
         RETURN
         """)
+
+    def test_case(self, ec):
+        self.assert_compiles(ec, """
+        case self
+        when 5
+            6
+        when self
+            76
+        end
+        """, """
+        LOAD_SELF
+        DUP_TOP
+        LOAD_CONST 0
+        SEND 1 1
+        JUMP_IF_FALSE 14
+        DISCARD_TOP
+        LOAD_CONST 2
+        JUMP 29
+        DUP_TOP
+        LOAD_SELF
+        SEND 3 1
+        JUMP_IF_FALSE 26
+        DISCARD_TOP
+        LOAD_CONST 4
+        JUMP 29
+        DISCARD_TOP
+        LOAD_CONST 5
+        DISCARD_TOP
+
+        LOAD_CONST 6
+        RETURN
+        """)

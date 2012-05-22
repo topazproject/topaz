@@ -33,6 +33,8 @@ class Lexer(object):
         "def": ["DEF"],
         "class": ["CLASS"],
         "module": ["MODULE"],
+        "case": ["CASE"],
+        "when": ["WHEN"],
         "end": ["END"],
     }
     EXPR_BEG = 0

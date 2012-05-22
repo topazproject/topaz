@@ -513,6 +513,38 @@ class Argument(Node):
         self.defl = defl
 
 
+class Case(Node):
+    def __init__(self, cond, whens, elsebody):
+        self.cond = cond
+        self.whens = whens
+        self.elsebody = elsebody
+
+    def locate_symbols(self, symtable):
+        self.cond.locate_symbols(symtable)
+        for when, block in self.whens:
+            when.locate_symbols(symtable)
+            block.locate_symbols(symtable)
+        self.elsebody.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        end = ctx.new_block()
+
+        self.cond.compile(ctx)
+        for when, block in self.whens:
+            next_when = ctx.new_block()
+            ctx.emit(consts.DUP_TOP)
+            when.compile(ctx)
+            ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
+            ctx.emit_jump(consts.JUMP_IF_FALSE, next_when)
+            ctx.emit(consts.DISCARD_TOP)
+            block.compile(ctx)
+            ctx.emit_jump(consts.JUMP, end)
+            ctx.use_next_block(next_when)
+        ctx.emit(consts.DISCARD_TOP)
+        self.elsebody.compile(ctx)
+        ctx.use_next_block(end)
+
+
 class Return(BaseStatement):
     def __init__(self, expr):
         self.expr = expr

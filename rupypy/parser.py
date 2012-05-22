@@ -267,6 +267,8 @@ class Transformer(object):
             return self.visit_module(node)
         elif node.children[0].additional_info == "begin":
             return self.visit_begin(node)
+        elif node.children[0].additional_info == "case":
+            return self.visit_case(node)
         raise NotImplementedError(node.symbol)
 
     def visit_array(self, node):
@@ -420,6 +422,23 @@ class Transformer(object):
             idx += 2
         block = self.visit_block(node, start_idx=idx)
         return ast.ExceptHandler(exception, name, block)
+
+    def visit_case(self, node):
+        cond = self.visit_expr(node.children[1])
+        whens = []
+        for n in node.children[2].children:
+            expr = self.visit_expr(n.children[1])
+            block = self.visit_block(n, start_idx=3)
+            whens.append((expr, block))
+        if node.children[3].symbol == "else":
+            elsebody = self.visit_block(node.children[3], start_idx=1)
+        else:
+            elsebody = ast.Block([])
+        return ast.Case(
+            cond,
+            whens,
+            elsebody,
+        )
 
     def visit_argdecl(self, node):
         if not node.children:

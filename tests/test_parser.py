@@ -942,3 +942,21 @@ class TestParser(BaseRuPyPyTest):
                 ast.Block([ast.Statement(ast.ConstantInt(5))]),
             ))
         ]))
+
+    def test_case(self, ec):
+        r = ec.space.parse(ec, """
+        case 3
+        when 5 then
+            6
+        when 4
+            7
+        else
+            9
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Case(ast.ConstantInt(3), [
+                (ast.ConstantInt(5), ast.Block([ast.Statement(ast.ConstantInt(6))])),
+                (ast.ConstantInt(4), ast.Block([ast.Statement(ast.ConstantInt(7))]))
+            ], ast.Block([ast.Statement(ast.ConstantInt(9))])))
+        ]))
