@@ -1452,3 +1452,17 @@ class TestCompiler(object):
         LOAD_CONST 6
         RETURN
         """)
+
+    def test_or_equal(self, ec):
+        self.assert_compiles(ec, "@a ||= 4", """
+        LOAD_SELF
+        DUP_TOP
+        LOAD_INSTANCE_VAR 0
+        JUMP_IF_TRUE 8
+        LOAD_CONST 1
+        STORE_INSTANCE_VAR 2
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)

@@ -476,6 +476,32 @@ class AugmentedAssignment(Node):
         self.target.compile_store(ctx)
 
 
+class OrEqual(Node):
+    def __init__(self, target, value):
+        self.target = target
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        otherwise = ctx.new_block()
+        end = ctx.new_block()
+
+        dup_needed = self.target.compile_receiver(ctx)
+        if dup_needed == 1:
+            ctx.emit(consts.DUP_TOP)
+        elif dup_needed > 0:
+            ctx.emit(consts.DUP_TOPX, dup_needed)
+        self.target.compile_load(ctx)
+        ctx.emit_jump(consts.JUMP_IF_TRUE, end)
+        ctx.use_next_block(otherwise)
+        self.value.compile(ctx)
+        ctx.use_next_block(end)
+        self.target.compile_store(ctx)
+
+
 class BinOp(Node):
     def __init__(self, op, left, right, lineno):
         Node.__init__(self, lineno)

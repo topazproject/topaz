@@ -5,8 +5,8 @@ from pypy.rlib.unroll import unrolling_iterable
 
 STATES = unrolling_iterable([
     "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
-    "EQ", "EQEQ", "LT", "GT", "PIPE", "AMP", "COLON", "EXCLAMATION", "GLOBAL",
-    "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP", "COMMENT",
+    "EQ", "EQEQ", "LT", "GT", "PIPE", "OR", "AMP", "COLON", "EXCLAMATION",
+    "GLOBAL", "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP", "COMMENT",
 ])
 
 
@@ -451,13 +451,20 @@ class Lexer(object):
     def handle_PIPE(self, ch):
         if ch == "|":
             self.add(ch)
-            self.emit("OR")
-            return None
+            return "OR"
         self.emit("PIPE")
         if self.context == self.EXPR_NAME:
             self.context = self.EXPR_ARG
         else:
             self.context = self.EXPR_BEG
+        return self.handle_generic(ch)
+
+    def handle_OR(self, ch):
+        if ch == "=":
+            self.add(ch)
+            self.emit("OR_EQUAL")
+            return None
+        self.emit("OR")
         return self.handle_generic(ch)
 
     def handle_GLOBAL(self, ch):

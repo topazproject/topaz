@@ -1042,3 +1042,9 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Self(2), "f", [], ast.SendBlock([], ast.Block([])), 2)),
             ast.Statement(ast.ConstantInt(1))
         ]))
+
+    def test_or_equal(self, ec):
+        r = ec.space.parse(ec, "@a ||= 5")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
+        ]))

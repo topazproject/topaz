@@ -93,6 +93,8 @@ class Transformer(object):
         target.validate_assignment(self, node)
         if oper == "=":
             return ast.Assignment(target, value)
+        elif oper == "||=":
+            return ast.OrEqual(target, value)
         else:
             return ast.AugmentedAssignment(oper[0], target, value)
 
