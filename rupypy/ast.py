@@ -495,8 +495,10 @@ class OrEqual(Node):
         elif dup_needed > 0:
             ctx.emit(consts.DUP_TOPX, dup_needed)
         self.target.compile_load(ctx)
+        ctx.emit(consts.DUP_TOP)
         ctx.emit_jump(consts.JUMP_IF_TRUE, end)
         ctx.use_next_block(otherwise)
+        ctx.emit(consts.DISCARD_TOP)
         self.value.compile(ctx)
         ctx.use_next_block(end)
         self.target.compile_store(ctx)

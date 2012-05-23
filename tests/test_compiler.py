@@ -1458,7 +1458,9 @@ class TestCompiler(object):
         LOAD_SELF
         DUP_TOP
         LOAD_INSTANCE_VAR 0
+        DUP_TOP
         JUMP_IF_TRUE 8
+        DISCARD_TOP
         LOAD_CONST 1
         STORE_INSTANCE_VAR 2
         DISCARD_TOP
