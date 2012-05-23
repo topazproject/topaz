@@ -200,6 +200,7 @@ class Lexer(object):
         elif ch == "}":
             self.add(ch)
             self.emit("RBRACE")
+            self.context = self.EXPR_ENDFN
             return None
         elif ch == '"':
             return "DOUBLESTRING"

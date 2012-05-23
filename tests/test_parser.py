@@ -1009,11 +1009,21 @@ class TestParser(BaseRuPyPyTest):
             ]))
         ]))
 
-    def test_newline_mid_expr(self, ec):
+    def test_newline(self, ec):
         r = ec.space.parse(ec, """
         x = 123 &&
             456
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Assignment("=", "x", ast.And(ast.ConstantInt(123), ast.ConstantInt(456)), 2))
+        ]))
+
+        r = ec.space.parse(ec, """
+        f {
+        }
+        1
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(2), "f", [], ast.SendBlock([], ast.Block([])), 2)),
+            ast.Statement(ast.ConstantInt(1))
         ]))
