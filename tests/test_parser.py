@@ -490,6 +490,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "yield 4") == ast.Main(ast.Block([
             ast.Statement(ast.Yield([ast.ConstantInt(4)], 1))
         ]))
+        assert ec.space.parse(ec, "yield(*5)") == ast.Main(ast.Block([
+            ast.Statement(ast.Yield([ast.Splat(ast.ConstantInt(5))], 1))
+        ]))
 
     def test_symbol(self, ec):
         sym = lambda s: ast.Main(ast.Block([
@@ -1048,3 +1051,4 @@ class TestParser(BaseRuPyPyTest):
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
         ]))
+

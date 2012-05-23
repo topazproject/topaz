@@ -28,7 +28,8 @@ assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <OR_EQUAL>;
 
 assignment: send assignment_oper expr;
 
-yield: YIELD args?;
+yield: YIELD [LPAREN] args? [RPAREN] |
+       YIELD args?;
 
 arg: ternary;
 
