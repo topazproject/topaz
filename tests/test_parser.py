@@ -433,7 +433,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], ast.Block([
+            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], None, 3))
             ])), 2))
         ]))
@@ -443,7 +443,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], ast.Block([
+            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], None, 3))
             ])), 2))
         ]))
@@ -453,30 +453,35 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([ast.Argument("a")], ast.Block([
+            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([ast.Argument("a")], None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], None, 3))
             ])), 2))
         ]))
 
     def test_block(self, ec):
         assert ec.space.parse(ec, "[].map { |x| x }") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Array([]), "map", [], ast.SendBlock([ast.Argument("x")], ast.Block([
+            ast.Statement(ast.Send(ast.Array([]), "map", [], ast.SendBlock([ast.Argument("x")], None, ast.Block([
                 ast.Statement(ast.Variable("x", 1))
             ])), 1))
         ]))
         assert ec.space.parse(ec, "[].inject(0) { |x, s| x + s }") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("x"), ast.Argument("s")], ast.Block([
+            ast.Statement(ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("x"), ast.Argument("s")], None, ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("x", 1), ast.Variable("s", 1), 1))
             ])), 1))
         ]))
         assert ec.space.parse(ec, "f { 5 }") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([
                 ast.Statement(ast.ConstantInt(5))
             ])), 1))
         ]))
         assert ec.space.parse(ec, "f(3) { 5 }") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantInt(3)], ast.SendBlock([], ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantInt(3)], ast.SendBlock([], None, ast.Block([
                 ast.Statement(ast.ConstantInt(5))
+            ])), 1))
+        ]))
+        assert ec.space.parse(ec, "f { |*v| v }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], "v", ast.Block([
+                ast.Statement(ast.Variable("v", 1))
             ])), 1))
         ]))
 
@@ -544,7 +549,7 @@ class TestParser(BaseRuPyPyTest):
         end * 5
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.BinOp("*", ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("s"), ast.Argument("x")], ast.Block([
+            ast.Statement(ast.BinOp("*", ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("s"), ast.Argument("x")], None, ast.Block([
                 ast.Statement(ast.BinOp("+", ast.Variable("s", 3), ast.Variable("x", 3), 3))
             ])), 2), ast.ConstantInt(5), 2))
         ]))
@@ -1042,7 +1047,7 @@ class TestParser(BaseRuPyPyTest):
         1
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(2), "f", [], ast.SendBlock([], ast.Block([])), 2)),
+            ast.Statement(ast.Send(ast.Self(2), "f", [], ast.SendBlock([], None, ast.Block([])), 2)),
             ast.Statement(ast.ConstantInt(1))
         ]))
 

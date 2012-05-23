@@ -49,16 +49,17 @@ class Transformer(object):
         if send.block_arg is not None:
             self.error(node)
         block_args = []
+        splat_arg = None
         start_idx = 2
         if node.children[2].symbol == "block_args":
-            block_args = self.visit_block_args(node.children[2])
+            block_args, splat_arg = self.visit_block_args(node.children[2])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
         return ast.Send(
             send.receiver,
             send.method,
             send.args,
-            ast.SendBlock(block_args, block),
+            ast.SendBlock(block_args, splat_arg, block),
             node.getsourcepos().lineno
         )
 
@@ -171,12 +172,12 @@ class Transformer(object):
         if node.children[0].symbol != "primary":
             if node.children[0].symbol == "global_block":
                 node = node.children[0]
-                block_args, block = self.visit_braces_block(node.children[1])
+                block_args, splat_arg, block = self.visit_braces_block(node.children[1])
                 return ast.Send(
                     ast.Self(node.getsourcepos().lineno),
                     node.children[0].additional_info,
                     [],
-                    ast.SendBlock(block_args, block),
+                    ast.SendBlock(block_args, splat_arg, block),
                     node.getsourcepos().lineno
                 )
             target = ast.Self(node.getsourcepos().lineno)
@@ -185,8 +186,8 @@ class Transformer(object):
             if len(node.children) == 3:
                 if block_argument is not None:
                     self.error(node)
-                block_args, block = self.visit_braces_block(node.children[2])
-                block_argument = ast.SendBlock(block_args, block)
+                block_args, splat_arg, block = self.visit_braces_block(node.children[2])
+                block_argument = ast.SendBlock(block_args, splat_arg, block)
             return ast.Send(target, name, args, block_argument, node.getsourcepos().lineno)
 
         target = self.visit_primary(node.children[0])
@@ -199,9 +200,13 @@ class Transformer(object):
                     if len(node.children) == 1:
                         args = []
                     elif node.children[1].symbol == "block":
-                        block_args, block = self.visit_braces_block(node.children[1])
+                        block_args, splat_arg, block = self.visit_braces_block(node.children[1])
                         target = ast.Send(
-                            target, method, [], ast.SendBlock(block_args, block), node.getsourcepos().lineno
+                            target,
+                            method,
+                            [],
+                            ast.SendBlock(block_args, splat_arg, block),
+                            node.getsourcepos().lineno
                         )
                         continue
                     else:
@@ -215,8 +220,8 @@ class Transformer(object):
                 if len(node.children) == 3:
                     if block_argument is not None:
                         self.error(node)
-                    block_args, block = self.visit_braces_block(node.children[2])
-                    block_argument = ast.SendBlock(block_args, block)
+                    block_args, splat_arg, block = self.visit_braces_block(node.children[2])
+                    block_argument = ast.SendBlock(block_args, splat_arg, block)
                 target = ast.Send(
                     target,
                     method,
@@ -243,12 +248,13 @@ class Transformer(object):
 
     def visit_braces_block(self, node):
         block_args = []
+        splat_arg = None
         start_idx = 0
         if node.children[start_idx].symbol == "block_args":
-            block_args = self.visit_block_args(node.children[start_idx])
+            block_args, splat_arg = self.visit_block_args(node.children[start_idx])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx)
-        return block_args, block
+        return block_args, splat_arg, block
 
     def visit_primary(self, node):
         if node.children[0].symbol == "literal":
@@ -467,9 +473,10 @@ class Transformer(object):
 
     def visit_block_args(self, node):
         block_args = []
+        splat_arg = None
         if node.children:
-            block_args, _, _ = self.visit_arglist(node.children[0])
-        return block_args
+            block_args, splat_arg, _ = self.visit_arglist(node.children[0])
+        return block_args, splat_arg
 
     def visit_arglist(self, node):
         # 0 indicates no defaults have been seen, 1 indicates a section of

@@ -666,8 +666,9 @@ class Splat(Node):
 
 
 class SendBlock(Node):
-    def __init__(self, block_args, block):
+    def __init__(self, block_args, splat_arg, block):
         self.block_args = block_args
+        self.splat_arg = splat_arg
         self.block = block
 
     def locate_symbols(self, symtable):

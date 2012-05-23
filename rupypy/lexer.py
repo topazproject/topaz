@@ -333,7 +333,7 @@ class Lexer(object):
         return self.handle_generic(ch)
 
     def handle_STAR(self, ch):
-        if ch == " " or self.prev(2) not in ["(", " "]:
+        if ch == " " or self.prev(2) not in ["(", "|", " "]:
             self.emit("MUL")
         else:
             self.emit("UNARY_STAR")
