@@ -80,140 +80,6 @@ class Statement(BaseStatement):
             ctx.emit(consts.DISCARD_TOP)
 
 
-class Assignment(Node):
-    def __init__(self, oper, target, value, lineno):
-        Node.__init__(self, lineno)
-        self.oper = oper
-        self.target = target
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        if not self.target[0].isupper():
-            symtable.declare_write(self.target)
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        if self.oper != "=":
-            Variable(self.target, self.lineno).compile(ctx)
-        self.value.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        if ctx.symtable.is_local(self.target):
-            loc = ctx.symtable.get_local_num(self.target)
-            ctx.emit(consts.STORE_LOCAL, loc)
-        elif ctx.symtable.is_cell(self.target):
-            loc = ctx.symtable.get_cell_num(self.target)
-            ctx.emit(consts.STORE_DEREF, loc)
-
-
-class InstanceVariableAssignment(Node):
-    def __init__(self, oper, name, value):
-        self.oper = oper
-        self.name = name
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        ctx.emit(consts.LOAD_SELF)
-        if self.oper != "=":
-            InstanceVariable(self.name).compile(ctx)
-        self.value.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
-
-
-class MethodAssignment(Node):
-    def __init__(self, oper, receiver, name, value):
-        self.oper = oper
-        self.receiver = receiver
-        self.name = name
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        self.receiver.locate_symbols(symtable)
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        self.receiver.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.DUP_TOP)
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.name), 0)
-        self.value.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        ctx.emit(consts.SEND, ctx.create_symbol_const(self.name + "="), 1)
-
-
-class SubscriptAssignment(Node):
-    def __init__(self, oper, target, args, value, lineno):
-        Node.__init__(self, lineno)
-        self.oper = oper
-        self.target = target
-        self.args = args
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        self.target.locate_symbols(symtable)
-        for arg in self.args:
-            arg.locate_symbols(symtable)
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        self.target.compile(ctx)
-        for arg in self.args:
-            arg.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.DUP_TOPX, len(self.args) + 1)
-            ctx.emit(consts.SEND, ctx.create_symbol_const("[]"), len(self.args))
-        self.value.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), len(self.args) + 1)
-
-
-class GlobalAssignment(Node):
-    def __init__(self, oper, name, value):
-        self.oper = oper
-        self.name = name
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        if self.oper != "=":
-            Global(self.name).compile(ctx)
-        self.value.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        ctx.emit(consts.STORE_GLOBAL, ctx.create_symbol_const(self.name))
-
-
-class ConstantAssignment(Node):
-    def __init__(self, oper, receiver, name, value):
-        self.oper = oper
-        self.receiver = receiver
-        self.name = name
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        self.receiver.locate_symbols(symtable)
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        self.receiver.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.DUP_TOP)
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
-        self.value.compile(ctx)
-        if self.oper != "=":
-            ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper[0]), 1)
-        ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
-
-
 class If(Node):
     def __init__(self, cond, body, elsebody):
         self.cond = cond
@@ -573,6 +439,43 @@ class Yield(Node):
         ctx.emit(consts.YIELD, len(self.args))
 
 
+class Assignment(Node):
+    def __init__(self, target, value):
+        self.target = target
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.target.compile_receiver(ctx)
+        self.value.compile(ctx)
+        self.target.compile_store(ctx)
+
+
+class AugmentedAssignment(Node):
+    def __init__(self, oper, target, value):
+        self.oper = oper
+        self.target = target
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        dup_needed = self.target.compile_receiver(ctx)
+        if dup_needed == 1:
+            ctx.emit(consts.DUP_TOP)
+        elif dup_needed > 0:
+            ctx.emit(consts.DUP_TOPX, dup_needed)
+        self.target.compile_load(ctx)
+        self.value.compile(ctx)
+        ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper), 1)
+        self.target.compile_store(ctx)
+
+
 class BinOp(Node):
     def __init__(self, op, left, right, lineno):
         Node.__init__(self, lineno)
@@ -665,10 +568,9 @@ class Send(Node):
         self.block_arg = block_arg
         self.lineno = lineno
 
-    def convert_to_assignment(self, transformer, node, oper, value):
-        # XXX: this will allow self.foo() = 3; which it shouldn't.
-        assert not self.args
-        return MethodAssignment(oper, self.receiver, self.method, value)
+    def validate_assignment(self, transformer, node):
+        if self.args or self.block_arg:
+            transformer.error(node)
 
     def locate_symbols(self, symtable):
         self.receiver.locate_symbols(symtable)
@@ -677,6 +579,9 @@ class Send(Node):
 
         if self.block_arg is not None:
             self.block_arg.locate_symbols(symtable)
+
+    def locate_symbols_assignment(self, symtable):
+        self.receiver.locate_symbols(symtable)
 
     def compile(self, ctx):
         self.receiver.compile(ctx)
@@ -711,6 +616,16 @@ class Send(Node):
             if isinstance(arg, Splat):
                 return True
         return False
+
+    def compile_receiver(self, ctx):
+        self.receiver.compile(ctx)
+        return 1
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.SEND, ctx.create_symbol_const(self.method), 0)
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.SEND, ctx.create_symbol_const(self.method + "="), 1)
 
 
 class Splat(Node):
@@ -784,16 +699,31 @@ class Subscript(Node):
         self.target = target
         self.args = args
 
-    def convert_to_assignment(self, transformer, node, oper, value):
-        return SubscriptAssignment(oper, self.target, self.args, value, self.lineno)
+    def validate_assignment(self, transformer, node):
+        pass
 
     def locate_symbols(self, symtable):
         self.target.locate_symbols(symtable)
         for arg in self.args:
             arg.locate_symbols(symtable)
 
+    def locate_symbols_assignment(self, symtable):
+        self.locate_symbols(symtable)
+
     def compile(self, ctx):
         Send(self.target, "[]", self.args, None, self.lineno).compile(ctx)
+
+    def compile_receiver(self, ctx):
+        self.target.compile(ctx)
+        for arg in self.args:
+            arg.compile(ctx)
+        return len(self.args) + 1
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.SEND, ctx.create_symbol_const("[]"), len(self.args))
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), len(self.args) + 1)
 
 
 class LookupConstant(Node):
@@ -802,11 +732,14 @@ class LookupConstant(Node):
         self.value = value
         self.name = name
 
-    def convert_to_assignment(self, transformer, node, oper, value):
-        return ConstantAssignment(oper, self.value, self.name, value)
+    def validate_assignment(self, transformer, node):
+        pass
 
     def locate_symbols(self, symtable):
         self.value.locate_symbols(symtable)
+
+    def locate_symbols_assignment(self, symtable):
+        self.locate_symbols(symtable)
 
     def compile(self, ctx):
         if self.name[0].isupper():
@@ -814,6 +747,16 @@ class LookupConstant(Node):
             ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
             Send(self.value, self.name, [], None, self.lineno).compile(ctx)
+
+    def compile_receiver(self, ctx):
+        self.value.compile(ctx)
+        return 1
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
 
 class Self(Node):
@@ -837,15 +780,17 @@ class Variable(Node):
         Node.__init__(self, lineno)
         self.name = name
 
-    def convert_to_assignment(self, transormer, node, oper, value):
+    def validate_assignment(self, transformer, node):
         if self.name == "__FILE__" or "?" in self.name or "!" in self.name:
-            transormer.error(node)
-        return Assignment(oper, self.name, value, node.getsourcepos().lineno)
+            transformer.error(node)
 
     def locate_symbols(self, symtable):
         if (self.name not in ["true", "false", "nil", "self"] and
             not self.name[0].isupper()):
             symtable.declare_read(self.name)
+
+    def locate_symbols_assignment(self, symtable):
+        symtable.declare_write(self.name)
 
     def compile(self, ctx):
         named_consts = {
@@ -867,34 +812,73 @@ class Variable(Node):
         else:
             Send(Self(self.lineno), self.name, [], None, self.lineno).compile(ctx)
 
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_load(self, ctx):
+        self.compile(ctx)
+
+    def compile_store(self, ctx):
+        if ctx.symtable.is_local(self.name):
+            loc = ctx.symtable.get_local_num(self.name)
+            ctx.emit(consts.STORE_LOCAL, loc)
+        elif ctx.symtable.is_cell(self.name):
+            loc = ctx.symtable.get_cell_num(self.name)
+            ctx.emit(consts.STORE_DEREF, loc)
+
 
 class Global(Node):
     def __init__(self, name):
         self.name = name
 
-    def convert_to_assignment(self, transormer, node, oper, value):
-        return GlobalAssignment(oper, self.name, value)
+    def validate_assignment(self, transformer, node):
+        pass
 
     def locate_symbols(self, symtable):
         pass
 
+    def locate_symbols_assignment(self, symtable):
+        pass
+
     def compile(self, ctx):
         ctx.emit(consts.LOAD_GLOBAL, ctx.create_symbol_const(self.name))
+
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_load(self, ctx):
+        self.compile(ctx)
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_GLOBAL, ctx.create_symbol_const(self.name))
 
 
 class InstanceVariable(Node):
     def __init__(self, name):
         self.name = name
 
-    def convert_to_assignment(self, transormer, node, oper, value):
-        return InstanceVariableAssignment(oper, self.name, value)
+    def validate_assignment(self, transformer, node):
+        pass
 
     def locate_symbols(self, symtable):
+        pass
+
+    def locate_symbols_assignment(self, symtable):
         pass
 
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
         ctx.emit(consts.LOAD_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
+    def compile_receiver(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
+        return 1
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.LOAD_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 
 class Array(Node):

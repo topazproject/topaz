@@ -750,7 +750,7 @@ class TestCompiler(object):
 
         self.assert_compiles(ec, "@a += 2", """
         LOAD_SELF
-        LOAD_SELF
+        DUP_TOP
         LOAD_INSTANCE_VAR 0
         LOAD_CONST 1
         SEND 2 1

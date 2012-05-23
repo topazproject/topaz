@@ -90,7 +90,11 @@ class Transformer(object):
         target = self.visit_arg(node.children[0])
         oper = node.children[1].additional_info
         value = self.visit_expr(node.children[2])
-        return target.convert_to_assignment(self, node.children[0], oper, value)
+        target.validate_assignment(self, node)
+        if oper == "=":
+            return ast.Assignment(target, value)
+        else:
+            return ast.AugmentedAssignment(oper[0], target, value)
 
     def visit_yield(self, node):
         args = []

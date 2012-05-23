@@ -116,10 +116,10 @@ class TestParser(BaseRuPyPyTest):
 
     def test_assignment(self, ec):
         assert ec.space.parse(ec, "a = 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("=", "a", ast.ConstantInt(3), 1))
+            ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.ConstantInt(3)))
         ]))
         assert ec.space.parse(ec, "a = b = 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("=", "a", ast.Assignment("=", "b", ast.ConstantInt(3), 1), 1))
+            ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.Assignment(ast.Variable("b", 1), ast.ConstantInt(3))))
         ]))
 
     def test_load_variable(self, ec):
@@ -227,7 +227,7 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert res == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("=", "i", ast.ConstantInt(0), 2)),
+            ast.Statement(ast.Assignment(ast.Variable("i", 2), ast.ConstantInt(0))),
             ast.Statement(ast.While(ast.BinOp("<", ast.Variable("i", 3), ast.ConstantInt(10), 3), ast.Block([
                 ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
                 ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
@@ -304,7 +304,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_subscript_assginment(self, ec):
         assert ec.space.parse(ec, "x[0] = 5") == ast.Main(ast.Block([
-            ast.Statement(ast.SubscriptAssignment("=", ast.Variable("x", 1), [ast.ConstantInt(0)], ast.ConstantInt(5), 1))
+            ast.Statement(ast.Assignment(ast.Subscript(ast.Variable("x", 1), [ast.ConstantInt(0)], 1), ast.ConstantInt(5)))
         ]))
 
     def test_def(self, ec):
@@ -334,7 +334,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
         assert ec.space.parse(ec, "x = def f() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("=", "x", ast.Function(None, "f", [], None, None, ast.Block([])), 1))
+            ast.Statement(ast.Assignment(ast.Variable("x", 1), ast.Function(None, "f", [], None, None, ast.Block([]))))
         ]))
 
         r = ec.space.parse(ec, """
@@ -423,7 +423,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.InstanceVariable("a"))
         ]))
         assert ec.space.parse(ec, "@a = 3") == ast.Main(ast.Block([
-            ast.Statement(ast.InstanceVariableAssignment("=", "a", ast.ConstantInt(3)))
+            ast.Statement(ast.Assignment(ast.InstanceVariable("a"), ast.ConstantInt(3)))
         ]))
 
     def test_do_block(self, ec):
@@ -511,27 +511,27 @@ class TestParser(BaseRuPyPyTest):
 
     def test_assign_method(self, ec):
         assert ec.space.parse(ec, "self.attribute = 3") == ast.Main(ast.Block([
-            ast.Statement(ast.MethodAssignment("=", ast.Variable("self", 1), "attribute", ast.ConstantInt(3)))
+            ast.Statement(ast.Assignment(ast.Send(ast.Variable("self", 1), "attribute", [], None, 1), ast.ConstantInt(3)))
         ]))
 
         assert ec.space.parse(ec, "self.attribute.other_attr.other = 12") == ast.Main(ast.Block([
-            ast.Statement(ast.MethodAssignment("=", ast.Send(ast.Send(ast.Variable("self", 1), "attribute", [], None, 1), "other_attr", [], None, 1), "other", ast.ConstantInt(12)))
+            ast.Statement(ast.Assignment(ast.Send(ast.Send(ast.Send(ast.Variable("self", 1), "attribute", [], None, 1), "other_attr", [], None, 1), "other", [], None, 1), ast.ConstantInt(12)))
         ]))
 
     def test_augmented_assignment(self, ec):
         assert ec.space.parse(ec, "i += 1") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("+=", "i", ast.ConstantInt(1), 1))
+            ast.Statement(ast.AugmentedAssignment("+", ast.Variable("i", 1), ast.ConstantInt(1)))
         ]))
         assert ec.space.parse(ec, "i -= 1") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("-=", "i", ast.ConstantInt(1), 1))
+            ast.Statement(ast.AugmentedAssignment("-", ast.Variable("i", 1), ast.ConstantInt(1)))
         ]))
 
         assert ec.space.parse(ec, "self.x += 2") == ast.Main(ast.Block([
-            ast.Statement(ast.MethodAssignment("+=", ast.Variable("self", 1), "x", ast.ConstantInt(2)))
+            ast.Statement(ast.AugmentedAssignment("+", ast.Send(ast.Variable("self", 1), "x", [], None, 1), ast.ConstantInt(2)))
         ]))
 
         assert ec.space.parse(ec, "@a += 3") == ast.Main(ast.Block([
-            ast.Statement(ast.InstanceVariableAssignment("+=", "a", ast.ConstantInt(3)))
+            ast.Statement(ast.AugmentedAssignment("+", ast.InstanceVariable("a"), ast.ConstantInt(3)))
         ]))
 
     def test_block_result(self, ec):
@@ -571,7 +571,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Constant", 1))
         ]))
         assert ec.space.parse(ec, "abc::Constant = 5") == ast.Main(ast.Block([
-            ast.Statement(ast.ConstantAssignment("=", ast.Variable("abc", 1), "Constant", ast.ConstantInt(5)))
+            ast.Statement(ast.Assignment(ast.LookupConstant(ast.Variable("abc", 1), "Constant", 1), ast.ConstantInt(5)))
         ]))
 
     def test___FILE__(self, ec):
@@ -822,7 +822,7 @@ class TestParser(BaseRuPyPyTest):
         $abc
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.GlobalAssignment("=", "$abc", ast.ConstantInt(3))),
+            ast.Statement(ast.Assignment(ast.Global("$abc"), ast.ConstantInt(3))),
             ast.Statement(ast.Global("$abc")),
         ]))
         assert ec.space.parse(ec, "$>") == ast.Main(ast.Block([
@@ -935,13 +935,13 @@ class TestParser(BaseRuPyPyTest):
     def test_inline_until(self, ec):
         assert ec.space.parse(ec, "i += 1 until 3") == ast.Main(ast.Block([
             ast.Statement(ast.Until(ast.ConstantInt(3), ast.Block([
-                ast.Statement(ast.Assignment("+=", "i", ast.ConstantInt(1), 1))
+                ast.Statement(ast.AugmentedAssignment("+", ast.Variable("i", 1), ast.ConstantInt(1)))
             ])))
         ]))
 
     def test_inline_precedence(self, ec):
         assert ec.space.parse(ec, "return unless x = 3") == ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.Assignment("=", "x", ast.ConstantInt(3), 1),
+            ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 1), ast.ConstantInt(3)),
                 ast.Block([]),
                 ast.Block([
                     ast.Return(ast.Variable("nil", 1)),
@@ -955,7 +955,7 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([
-                ast.Statement(ast.If(ast.Assignment("=", "x", ast.ConstantInt(3), 3),
+                ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 3), ast.ConstantInt(3)),
                     ast.Block([]),
                     ast.Block([
                         ast.Return(ast.Variable("nil", 3))
@@ -1030,7 +1030,7 @@ class TestParser(BaseRuPyPyTest):
             456
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment("=", "x", ast.And(ast.ConstantInt(123), ast.ConstantInt(456)), 2))
+            ast.Statement(ast.Assignment(ast.Variable("x", 2), ast.And(ast.ConstantInt(123), ast.ConstantInt(456))))
         ]))
 
         r = ec.space.parse(ec, """
