@@ -103,7 +103,7 @@ class Transformer(object):
             node = node.children[0]
 
         symname = node.symbol
-        if symname in ["comparison", "shiftive", "additive", "multitive", "bool", "match"]:
+        if symname in ["comparison", "shiftive", "additive", "multitive", "bool", "match", "or", "and"]:
             return self.visit_subexpr(node)
         elif symname == "range":
             return self.visit_range(node)
