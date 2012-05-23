@@ -287,6 +287,18 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Subscript(ast.Variable("self", 1), [ast.Variable("i", 1)], 1), "to_s", [], None, 1))
         ]))
 
+        assert ec.space.parse(ec, "a[:a][:a]") == ast.Main(ast.Block([
+            ast.Statement(ast.Subscript(
+                ast.Subscript(
+                    ast.Variable("a", 1),
+                    [ast.ConstantSymbol("a")],
+                    1
+                ),
+                [ast.ConstantSymbol("a")],
+                1,
+            ))
+        ]))
+
     def test_subscript_assginment(self, ec):
         assert ec.space.parse(ec, "x[0] = 5") == ast.Main(ast.Block([
             ast.Statement(ast.SubscriptAssignment("=", ast.Variable("x", 1), [ast.ConstantInt(0)], ast.ConstantInt(5), 1))

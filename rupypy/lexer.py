@@ -187,6 +187,7 @@ class Lexer(object):
         elif ch == "[":
             self.add(ch)
             self.emit("LBRACKET")
+            self.context = self.EXPR_ARG
             return None
         elif ch == "]":
             self.add(ch)
