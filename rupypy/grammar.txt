@@ -133,7 +133,7 @@ argdef: IDENTIFIER [EQ] arg |
         AMP IDENTIFIER |
         IDENTIFIER;
 
-operation: IDENTIFIER | CLASS | END | BEGIN;
+operation: IDENTIFIER;
 
 send_args: args ([COMMA] block_arg)? |
            block_arg;

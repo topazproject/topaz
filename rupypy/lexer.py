@@ -30,6 +30,8 @@ class Lexer(object):
     EXPR_END = 4
     EXPR_ARG = 5
     EXPR_CLASS = 6
+    EXPR_DOT = 7
+    EXPR_ENDFN = 8
 
     keywords = {
         "return": Keyword("RETURN", "RETURN", EXPR_MID),
@@ -125,7 +127,7 @@ class Lexer(object):
     def emit_identifier(self):
         value = "".join(self.current_value)
         context = self.context
-        if value in self.keywords:
+        if value in self.keywords and self.context != self.EXPR_DOT:
             keyword = self.keywords[value]
             self.context = keyword.context
 
@@ -136,7 +138,15 @@ class Lexer(object):
                 self.context = self.EXPR_BEG
         else:
             self.emit("IDENTIFIER")
-            self.context = self.EXPR_NAME
+            if self.context in [
+                self.EXPR_BEG, self.EXPR_MID, self.EXPR_VALUE, self.EXPR_CLASS,
+                self.EXPR_ARG, self.EXPR_DOT
+            ]:
+                self.context = self.EXPR_ARG
+            elif self.context == self.EXPR_NAME:
+                self.context = self.EXPR_ENDFN
+            else:
+                self.context = self.EXPR_END
 
     def handle_generic(self, ch):
         if ch.isdigit():
@@ -181,6 +191,7 @@ class Lexer(object):
         elif ch == "]":
             self.add(ch)
             self.emit("RBRACKET")
+            self.context = self.EXPR_END
             return None
         elif ch == "{":
             self.add(ch)
@@ -232,8 +243,9 @@ class Lexer(object):
             self.emit("MODULO")
             return None
         elif ch == "\n":
-            self.add(ch)
-            self.emit("LINE_END")
+            if self.context != self.EXPR_BEG:
+                self.add(ch)
+                self.emit("LINE_END")
             self.lineno += 1
             self.columno = 0
             self.context = self.EXPR_BEG
@@ -262,6 +274,7 @@ class Lexer(object):
             return self.handle_generic(ch)
 
     def handle_DOUBLESTRING(self, ch):
+        self.context = self.EXPR_END
         if ch == '"':
             self.emit("STRING")
             return None
@@ -288,6 +301,7 @@ class Lexer(object):
             return self.handle_generic(ch)
 
     def handle_SYMBOL(self, ch):
+        self.context = self.EXPR_END
         if not (ch.isalnum() or ch == "_"):
             self.emit("SYMBOL")
             return self.handle_generic(ch)
@@ -393,6 +407,7 @@ class Lexer(object):
         if ch == ".":
             self.add(ch)
             return "DOTDOT"
+        self.context = self.EXPR_DOT
         self.emit("DOT")
         return self.handle_generic(ch)
 
@@ -437,9 +452,14 @@ class Lexer(object):
             self.emit("OR")
             return None
         self.emit("PIPE")
+        if self.context == self.EXPR_NAME:
+            self.context = self.EXPR_ARG
+        else:
+            self.context = self.EXPR_BEG
         return self.handle_generic(ch)
 
     def handle_GLOBAL(self, ch):
+        self.context = self.EXPR_END
         if ch == ">":
             self.add(ch)
             self.emit("GLOBAL")
@@ -451,6 +471,7 @@ class Lexer(object):
         return "GLOBAL"
 
     def handle_REGEXP(self, ch):
+        self.context = self.EXPR_END
         if ch == "/":
             self.emit("REGEXP")
             return None
