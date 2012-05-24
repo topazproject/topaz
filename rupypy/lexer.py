@@ -484,6 +484,9 @@ class Lexer(object):
         return "GLOBAL"
 
     def handle_QUESTION(self, ch):
+        if ch == " ":
+            self.emit("QUESTION")
+            return self.handle_generic(ch)
         self.clear()
         self.add(ch)
         self.emit("STRING")
