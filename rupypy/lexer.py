@@ -432,17 +432,14 @@ class Lexer(object):
             self.add(ch)
             self.emit("COLONCOLON")
             return None
-        elif self.context == self.EXPR_END or ch == " ":
+        elif self.context == self.EXPR_END or ch == " " or not (ch.isalnum() or ch == "_"):
             self.emit("COLON")
             self.context = self.EXPR_BEG
             return self.handle_generic(ch)
-        elif ch.isalnum() or ch == "_":
+        else:
             self.clear()
             self.add(ch)
             return "SYMBOL"
-        else:
-            self.emit("COLON")
-            return self.handle_generic(ch)
 
     def handle_AMP(self, ch):
         if ch == "&":
