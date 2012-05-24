@@ -53,8 +53,9 @@ class SymbolTable(BaseSymbolTable):
         pass
 
     def upgrade_to_closure(self, name):
-        del self.locals[name]
-        self.cells[name] = self.CELLVAR
+        if name in self.locals:
+            del self.locals[name]
+            self.cells[name] = self.CELLVAR
 
 
 class BlockSymbolTable(BaseSymbolTable):

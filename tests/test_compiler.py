@@ -655,6 +655,39 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_multiple_blocks(self, ec):
+        bc = self.assert_compiles(ec, """
+        def f obj
+            g { obj }
+            g { obj }
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_FUNCTION
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[2], """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+        LOAD_SELF
+        LOAD_CONST 2
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 3 1
+        RETURN
+        """)
+
     def test_method_assignment(self, ec):
         bc = self.assert_compiles(ec, "self.abc = 3", """
         LOAD_SELF
