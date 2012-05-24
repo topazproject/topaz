@@ -1021,6 +1021,12 @@ class TestParser(BaseRuPyPyTest):
             )),
             ast.Statement(ast.ConstantInt(0)),
         ]))
+        assert ec.space.parse(ec, "0 ? (0) :(0)") == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(0),
+                ast.Block([ast.Statement(ast.ConstantInt(0))]),
+                ast.Block([ast.Statement(ast.ConstantInt(0))]),
+            ))
+        ]))
 
     def test_case(self, ec):
         r = ec.space.parse(ec, """
