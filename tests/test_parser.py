@@ -384,6 +384,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"\n"') == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("\n"))
         ]))
+        assert ec.space.parse(ec, "?-") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("-"))
+        ]))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """

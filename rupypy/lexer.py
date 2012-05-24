@@ -6,7 +6,8 @@ from pypy.rlib.unroll import unrolling_iterable
 STATES = unrolling_iterable([
     "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
     "EQ", "EQEQ", "LT", "GT", "PIPE", "OR", "AMP", "COLON", "EXCLAMATION",
-    "GLOBAL", "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP", "COMMENT",
+    "QUESTION", "GLOBAL", "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP",
+    "COMMENT",
 ])
 
 
@@ -220,8 +221,11 @@ class Lexer(object):
             return "COLON"
         elif ch == "?":
             self.add(ch)
-            self.emit("QUESTION")
-            return None
+            if self.context in [self.EXPR_END, self.EXPR_ENDFN]:
+                self.emit("QUESTION")
+                return None
+            else:
+                return "QUESTION"
         elif ch == ",":
             self.add(ch)
             self.emit("COMMA")
@@ -478,6 +482,12 @@ class Lexer(object):
             return self.handle_generic(ch)
         self.add(ch)
         return "GLOBAL"
+
+    def handle_QUESTION(self, ch):
+        self.clear()
+        self.add(ch)
+        self.emit("STRING")
+        return None
 
     def handle_REGEXP(self, ch):
         self.context = self.EXPR_END
