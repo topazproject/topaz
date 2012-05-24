@@ -80,7 +80,7 @@ trailer: subscript | attribute | constant;
 attribute: [DOT] operation [LPAREN] send_args? [RPAREN] block? |
            [DOT] operation block |
            [DOT] operation send_args?;
-subscript: [LBRACKET] arg [RBRACKET];
+subscript: [LSUBSCRIPT] arg [RBRACKET];
 constant: COLONCOLON IDENTIFIER;
 
 primary: LPAREN expr RPAREN |

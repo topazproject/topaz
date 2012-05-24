@@ -180,6 +180,7 @@ class Lexer(object):
         elif ch == "(":
             self.add(ch)
             self.emit("LPAREN")
+            self.context = self.EXPR_BEG
             return None
         elif ch == ")":
             self.add(ch)
@@ -188,8 +189,13 @@ class Lexer(object):
             return None
         elif ch == "[":
             self.add(ch)
-            self.emit("LBRACKET")
-            self.context = self.EXPR_ARG
+            if (self.context not in [self.EXPR_END, self.EXPR_ENDFN] and
+                (self.prev(1) is None or not self.prev(1).isalnum())):
+                self.emit("LBRACKET")
+                self.context = self.EXPR_ARG
+            else:
+                self.emit("LSUBSCRIPT")
+                self.context = self.EXPR_BEG
             return None
         elif ch == "]":
             self.add(ch)
@@ -322,6 +328,7 @@ class Lexer(object):
             self.emit("PLUS_EQUAL")
             return None
         self.emit("PLUS")
+        self.context = self.EXPR_BEG
         return self.handle_generic(ch)
 
     def handle_MINUS(self, ch):
