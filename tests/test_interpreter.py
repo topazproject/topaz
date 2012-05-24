@@ -293,6 +293,16 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert ec.space.int_w(w_res) == 3
 
+    def test_or_equal(self, ec):
+        w_res = ec.space.execute(ec, """
+        x = nil
+        x ||= 5
+        v = x
+        x ||= 3
+        return [v, x]
+        """)
+        assert self.unwrap(ec.space, w_res) == [5, 5]
+
     def test_lookup_constant(self, ec):
         w_res = ec.space.execute(ec, """
         class X
