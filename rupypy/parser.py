@@ -403,7 +403,7 @@ class Transformer(object):
         superclass = None
         block_start_idx = 2
         if node.children[2].symbol == "LT":
-            superclass = self.visit_varname(node.children[3])
+            superclass = self.visit_arg(node.children[3])
             block_start_idx += 2
         return ast.Class(
             node.children[1].additional_info,
