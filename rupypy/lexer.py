@@ -359,6 +359,7 @@ class Lexer(object):
             return "REGEXP"
         elif ch == "=":
             self.emit("DIV_EQUAL")
+            return None
         self.emit("DIV")
         return self.handle_generic(ch)
 

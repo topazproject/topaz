@@ -302,6 +302,12 @@ class TestInterpreter(BaseRuPyPyTest):
         return [v, x]
         """)
         assert self.unwrap(ec.space, w_res) == [5, 5]
+        w_res = ec.space.execute(ec, """
+        x = [nil]
+        x[0] ||= 5
+        return x
+        """)
+        assert self.unwrap(ec.space, w_res) == [5]
 
     def test_lookup_constant(self, ec):
         w_res = ec.space.execute(ec, """
