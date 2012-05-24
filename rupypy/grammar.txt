@@ -65,7 +65,8 @@ do_block: real_send DO block_args? line* statement? [LINE_END]? END;
 block_args: [PIPE] arglist? [PIPE] |
             [OR];
 
-real_send: primary trailers |
+real_send: primary final_trailer |
+           primary trailers final_trailer? |
            global_block |
            IDENTIFIER send_args block? |
            IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
@@ -77,11 +78,14 @@ block: [LBRACE] block_args? line* statement? [LINE_END]? [RBRACE];
 trailers: trailer >trailers< | trailer;
 
 trailer: subscript | attribute | constant;
-attribute: [DOT] operation [LPAREN] send_args? [RPAREN] block? |
-           [DOT] operation block |
-           [DOT] operation send_args?;
 subscript: [LBRACKET] arg [RBRACKET];
+attribute: [DOT] operation [LPAREN] send_args? [RPAREN] |
+           [DOT] operation;
 constant: COLONCOLON IDENTIFIER;
+
+final_trailer: [DOT] operation send_args |
+               [DOT] operation [LPAREN] send_args? [RPAREN] block |
+               [DOT] operation block;
 
 primary: LPAREN expr RPAREN |
          LBRACKET args? RBRACKET |
