@@ -191,70 +191,48 @@ class Transformer(object):
             return ast.Send(target, name, args, block_argument, node.getsourcepos().lineno)
 
         target = self.visit_primary(node.children[0])
-        if node.children[1].symbol == "trailers":
-            for trailer in node.children[1].children:
-                node = trailer.children[0]
-                if node.symbol in ["attribute", "subscript"]:
-                    block_argument = None
-                    if node.symbol == "attribute":
-                        method = node.children[0].children[0].additional_info
-                        if len(node.children) == 1:
-                            args = []
-                        elif node.children[1].symbol == "block":
-                            block_args, splat_arg, block = self.visit_braces_block(node.children[1])
-                            target = ast.Send(
-                                target,
-                                method,
-                                [],
-                                ast.SendBlock(block_args, splat_arg, block),
-                                node.getsourcepos().lineno
-                            )
-                            continue
-                        else:
-                            args, block_argument = self.visit_send_args(node.children[1])
-                    elif node.symbol == "subscript":
-                        args = [self.visit_arg(node.children[0])]
-                        target = ast.Subscript(target, args, node.getsourcepos().lineno)
+        for trailer in node.children[1].children:
+            node = trailer.children[0]
+            if node.symbol in ["attribute", "subscript"]:
+                block_argument = None
+                if node.symbol == "attribute":
+                    method = node.children[0].children[0].additional_info
+                    if len(node.children) == 1:
+                        args = []
+                    elif node.children[1].symbol == "block":
+                        block_args, splat_arg, block = self.visit_braces_block(node.children[1])
+                        target = ast.Send(
+                            target,
+                            method,
+                            [],
+                            ast.SendBlock(block_args, splat_arg, block),
+                            node.getsourcepos().lineno
+                        )
                         continue
                     else:
-                        assert False
-                    if len(node.children) == 3:
-                        if block_argument is not None:
-                            self.error(node)
-                        block_args, splat_arg, block = self.visit_braces_block(node.children[2])
-                        block_argument = ast.SendBlock(block_args, splat_arg, block)
-                    target = ast.Send(
-                        target,
-                        method,
-                        args,
-                        block_argument,
-                        node.getsourcepos().lineno
-                    )
-                elif node.symbol == "constant":
-                    target = ast.LookupConstant(target, node.children[1].additional_info, node.getsourcepos().lineno)
+                        args, block_argument = self.visit_send_args(node.children[1])
+                elif node.symbol == "subscript":
+                    args = [self.visit_arg(node.children[0])]
+                    target = ast.Subscript(target, args, node.getsourcepos().lineno)
+                    continue
                 else:
-                    raise NotImplementedError
-        elif node.children[1].symbol == "final_trailer":
-            trailer = node.children[1]
-            method = trailer.children[0].children[0].additional_info
-            args = []
-            block_argument = None
-            idx = 1
-            if len(trailer.children) > idx and trailer.children[idx].symbol == "send_args":
-                args, block_argument = self.visit_send_args(trailer.children[idx])
-                idx += 1
-            if len(trailer.children) > idx and trailer.children[idx].symbol == "block":
-                if block_argument is not None:
-                    self.error(trailer)
-                block_args, splat_arg, block = self.visit_braces_block(trailer.children[idx])
-                block_argument = ast.SendBlock(block_args, splat_arg, block)
-            target = ast.Send(
-                target,
-                method,
-                args,
-                block_argument,
-                node.getsourcepos().lineno
-            )
+                    assert False
+                if len(node.children) == 3:
+                    if block_argument is not None:
+                        self.error(node)
+                    block_args, splat_arg, block = self.visit_braces_block(node.children[2])
+                    block_argument = ast.SendBlock(block_args, splat_arg, block)
+                target = ast.Send(
+                    target,
+                    method,
+                    args,
+                    block_argument,
+                    node.getsourcepos().lineno
+                )
+            elif node.symbol == "constant":
+                target = ast.LookupConstant(target, node.children[1].additional_info, node.getsourcepos().lineno)
+            else:
+                raise NotImplementedError
         return target
 
     def visit_send_args(self, node):
