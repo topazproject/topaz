@@ -433,6 +433,7 @@ class Lexer(object):
             return None
         elif self.context == self.EXPR_END or ch == " ":
             self.emit("COLON")
+            self.context = self.EXPR_BEG
             return self.handle_generic(ch)
         else:
             self.clear()
@@ -492,6 +493,7 @@ class Lexer(object):
         self.clear()
         self.add(ch)
         self.emit("STRING")
+        self.context = self.EXPR_END
         return None
 
     def handle_REGEXP(self, ch):
