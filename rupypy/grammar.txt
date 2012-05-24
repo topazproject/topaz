@@ -65,8 +65,8 @@ do_block: real_send DO block_args? line* statement? [LINE_END]? END;
 block_args: [PIPE] arglist? [PIPE] |
             [OR];
 
-real_send: primary trailers final_trailer? |
-           primary final_trailer |
+real_send: primary final_trailer |
+           primary trailers final_trailer? |
            global_block |
            IDENTIFIER send_args block? |
            IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
