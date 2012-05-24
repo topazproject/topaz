@@ -223,6 +223,7 @@ class Lexer(object):
             self.add(ch)
             if self.context in [self.EXPR_END, self.EXPR_ENDFN]:
                 self.emit("QUESTION")
+                self.context = self.EXPR_VALUE
                 return None
             else:
                 return "QUESTION"
@@ -486,6 +487,7 @@ class Lexer(object):
     def handle_QUESTION(self, ch):
         if ch == " ":
             self.emit("QUESTION")
+            self.context = self.EXPR_VALUE
             return self.handle_generic(ch)
         self.clear()
         self.add(ch)
