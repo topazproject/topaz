@@ -184,6 +184,7 @@ class Lexer(object):
         elif ch == ")":
             self.add(ch)
             self.emit("RPAREN")
+            self.context = self.EXPR_ENDFN
             return None
         elif ch == "[":
             self.add(ch)
