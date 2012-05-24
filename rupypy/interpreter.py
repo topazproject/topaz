@@ -53,11 +53,13 @@ class Interpreter(object):
     def run_instr(self, ec, name, num_args, bytecode, frame, pc):
         args = ()
         if num_args >= 1:
-            args += (ord(bytecode.code[pc]),)
-            pc += 1
+            v = ord(bytecode.code[pc]) + (ord(bytecode.code[pc + 1]) << 8)
+            args += (v,)
+            pc += 2
         if num_args >= 2:
-            args += (ord(bytecode.code[pc]),)
-            pc += 1
+            v = ord(bytecode.code[pc]) + (ord(bytecode.code[pc + 1]) << 8)
+            args += (v,)
+            pc += 2
         if num_args >= 3:
             raise NotImplementedError
 

@@ -16,8 +16,9 @@ class TestCompiler(object):
             line = consts.BYTECODE_NAMES[c]
             i += 1
             for j in xrange(consts.BYTECODE_NUM_ARGS[c]):
-                line += " %s" % ord(bc.code[i])
-                i += 1
+                v = ord(bc.code[i]) + (ord(bc.code[i + 1]) << 8)
+                line += " %s" % v
+                i += 2
             actual.append(line)
         return actual
 
@@ -154,11 +155,11 @@ class TestCompiler(object):
     def test_if(self, ec):
         self.assert_compiles(ec, "if 3 then puts 2 end", """
         LOAD_CONST 0
-        JUMP_IF_FALSE 12
+        JUMP_IF_FALSE 18
         LOAD_SELF
         LOAD_CONST 1
         SEND 2 1
-        JUMP 14
+        JUMP 21
         LOAD_CONST 3
         DISCARD_TOP
 
@@ -168,9 +169,9 @@ class TestCompiler(object):
 
         self.assert_compiles(ec, "x = if 3 then 2 end", """
         LOAD_CONST 0
-        JUMP_IF_FALSE 8
+        JUMP_IF_FALSE 12
         LOAD_CONST 1
-        JUMP 10
+        JUMP 15
         LOAD_CONST 2
         STORE_LOCAL 0
         DISCARD_TOP
@@ -181,9 +182,9 @@ class TestCompiler(object):
 
         self.assert_compiles(ec, "x = if 3; end", """
         LOAD_CONST 0
-        JUMP_IF_FALSE 8
+        JUMP_IF_FALSE 12
         LOAD_CONST 1
-        JUMP 10
+        JUMP 15
         LOAD_CONST 1
         STORE_LOCAL 0
         DISCARD_TOP
@@ -197,9 +198,9 @@ class TestCompiler(object):
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
-        JUMP_IF_FALSE 13
+        JUMP_IF_FALSE 20
         LOAD_CONST 3
-        JUMP 19
+        JUMP 29
         LOAD_SELF
         LOAD_CONST 4
         SEND 5 1
@@ -237,7 +238,7 @@ class TestCompiler(object):
     def test_while(self, ec):
         self.assert_compiles(ec, "while true do end", """
         LOAD_CONST 0
-        JUMP_IF_FALSE 9
+        JUMP_IF_FALSE 13
         LOAD_CONST 1
         DISCARD_TOP
         JUMP 0
@@ -250,7 +251,7 @@ class TestCompiler(object):
 
         self.assert_compiles(ec, "while true do puts 5 end", """
         LOAD_CONST 0
-        JUMP_IF_FALSE 13
+        JUMP_IF_FALSE 19
         LOAD_SELF
         LOAD_CONST 1
         SEND 2 1
@@ -266,7 +267,7 @@ class TestCompiler(object):
     def test_until(self, ec):
         self.assert_compiles(ec, "until false do 5 end", """
         LOAD_CONST 0
-        JUMP_IF_TRUE 9
+        JUMP_IF_TRUE 13
         LOAD_CONST 1
         DISCARD_TOP
         JUMP 0
@@ -1029,23 +1030,23 @@ class TestCompiler(object):
             puts "zero!"
         end
         """, """
-        SETUP_EXCEPT 12
+        SETUP_EXCEPT 18
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 30
+        JUMP 42
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 29
+        JUMP_IF_FALSE 41
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_CONST 4
         COPY_STRING
         SEND 5 1
-        JUMP 30
+        JUMP 42
         END_FINALLY
         DISCARD_TOP
 
@@ -1059,23 +1060,23 @@ class TestCompiler(object):
             puts e
         end
         """, """
-        SETUP_EXCEPT 12
+        SETUP_EXCEPT 18
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 31
+        JUMP 44
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 30
+        JUMP_IF_FALSE 43
         STORE_LOCAL 0
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_LOCAL 0
         SEND 4 1
-        JUMP 31
+        JUMP 44
         END_FINALLY
         DISCARD_TOP
 
@@ -1090,16 +1091,16 @@ class TestCompiler(object):
             5
         end
         """, """
-        SETUP_EXCEPT 12
+        SETUP_EXCEPT 18
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 19
+        JUMP 27
         DISCARD_TOP
         DISCARD_TOP
         LOAD_CONST 3
-        JUMP 19
+        JUMP 27
         END_FINALLY
         DISCARD_TOP
 
@@ -1113,7 +1114,7 @@ class TestCompiler(object):
             puts "ensure"
         end
         """, """
-        SETUP_FINALLY 12
+        SETUP_FINALLY 18
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
@@ -1353,7 +1354,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         DUP_TOP
-        JUMP_IF_TRUE 18
+        JUMP_IF_TRUE 27
         DISCARD_TOP
         LOAD_CONST 3
         LOAD_CONST 4
@@ -1370,7 +1371,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         DUP_TOP
-        JUMP_IF_FALSE 18
+        JUMP_IF_FALSE 27
         DISCARD_TOP
         LOAD_CONST 3
         LOAD_CONST 4
@@ -1429,17 +1430,17 @@ class TestCompiler(object):
         DUP_TOP
         LOAD_CONST 0
         SEND 1 1
-        JUMP_IF_FALSE 14
+        JUMP_IF_FALSE 20
         DISCARD_TOP
         LOAD_CONST 2
-        JUMP 29
+        JUMP 41
         DUP_TOP
         LOAD_SELF
         SEND 3 1
-        JUMP_IF_FALSE 26
+        JUMP_IF_FALSE 37
         DISCARD_TOP
         LOAD_CONST 4
-        JUMP 29
+        JUMP 41
         DISCARD_TOP
         LOAD_CONST 5
         DISCARD_TOP
@@ -1492,7 +1493,7 @@ class TestCompiler(object):
         DUP_TOP
         LOAD_INSTANCE_VAR 0
         DUP_TOP
-        JUMP_IF_TRUE 10
+        JUMP_IF_TRUE 13
         DISCARD_TOP
         LOAD_CONST 1
         STORE_INSTANCE_VAR 2

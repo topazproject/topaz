@@ -279,6 +279,8 @@ class Block(object):
 
 class Instruction(object):
     def __init__(self, opcode, arg0, arg1, lineno):
+        assert arg0 < 1 << 16
+        assert arg1 < 1 << 16
         self.opcode = opcode
         self.arg0 = arg0
         self.arg1 = arg1
@@ -289,10 +291,14 @@ class Instruction(object):
         code.append(chr(self.opcode))
         linenos.append(self.lineno)
         if self.arg0 != -1:
-            code.append(chr(self.arg0))
+            code.append(chr(self.arg0 & 0xFF))
+            code.append(chr(self.arg0 >> 8))
+            linenos.append(self.lineno)
             linenos.append(self.lineno)
         if self.arg1 != -1:
-            code.append(chr(self.arg1))
+            code.append(chr(self.arg1 & 0xFF))
+            code.append(chr(self.arg1 >> 8))
+            linenos.append(self.lineno)
             linenos.append(self.lineno)
 
     def has_jump(self):
