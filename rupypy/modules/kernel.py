@@ -31,6 +31,17 @@ class Kernel(Module):
         if not path.endswith(".rb"):
             path += ".rb"
 
+        if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
+            w_load_path = ec.space.globals.get(ec.space, "$LOAD_PATH")
+            for w_base in ec.space.listview(w_load_path):
+                base = ec.space.str_w(w_base)
+                if os.path.exists(os.path.join(base, path)):
+                    path = os.path.join(base, path)
+                    break
+
+        if not os.path.exists(path):
+            ERROR
+
         f = open_file_as_stream(path)
         try:
             contents = f.readall()

@@ -296,6 +296,7 @@ class Lexer(object):
         return "DOUBLESTRING"
 
     def handle_SINGLESTRING(self, ch):
+        self.context = self.EXPR_END
         if ch == "'":
             self.emit("STRING")
             return None
@@ -488,7 +489,7 @@ class Lexer(object):
             self.add(ch)
             self.emit("GLOBAL")
             return None
-        elif not ch.isalnum():
+        elif not (ch.isalnum() or ch == "_"):
             self.emit("GLOBAL")
             return self.handle_generic(ch)
         self.add(ch)

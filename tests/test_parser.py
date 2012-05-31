@@ -844,11 +844,11 @@ class TestParser(BaseRuPyPyTest):
 
     def test_global_var(self, ec):
         r = ec.space.parse(ec, """
-        $abc = 3
+        $abc_123 = 3
         $abc
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.Global("$abc"), ast.ConstantInt(3))),
+            ast.Statement(ast.Assignment(ast.Global("$abc_123"), ast.ConstantInt(3))),
             ast.Statement(ast.Global("$abc")),
         ]))
         assert ec.space.parse(ec, "$>") == ast.Main(ast.Block([

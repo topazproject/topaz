@@ -46,3 +46,17 @@ class TestRequire(object):
         """ % str(f)[:-3])
         assert ec.space.int_w(w_res) == -9
 
+    def test_load_path(self, ec, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        def t(a, b)
+            a - b
+        end
+        """)
+        w_res = ec.space.execute(ec, """
+        $LOAD_PATH = ['%s']
+        require 't.rb'
+
+        return t(2, 5)
+        """ % str(tmpdir))
+        assert ec.space.int_w(w_res) == -3
