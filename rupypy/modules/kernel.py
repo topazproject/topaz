@@ -1,7 +1,5 @@
 import os
 
-from pypy.rlib.streamio import open_file_as_stream
-
 from rupypy.module import Module, ModuleDef
 
 
@@ -28,6 +26,11 @@ class Kernel(Module):
 
     @moduledef.function("require", path="path")
     def function_require(self, ec, path):
+        from pypy.rlib.streamio import open_file_as_stream
+
+        if not path.endswith(".rb"):
+            path += ".rb"
+
         f = open_file_as_stream(path)
         try:
             contents = f.readall()

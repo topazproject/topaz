@@ -31,3 +31,18 @@ class TestRequire(object):
         return t(5, 10)
         """ % str(f))
         assert ec.space.int_w(w_res) == -5
+
+    def test_no_ext(self, ec, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        def t(a, b)
+            a - b
+        end
+        """)
+        w_res = ec.space.execute(ec, """
+        require '%s'
+
+        return t(12, 21)
+        """ % str(f)[:-3])
+        assert ec.space.int_w(w_res) == -9
+
