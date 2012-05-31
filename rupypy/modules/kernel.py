@@ -1,5 +1,7 @@
 import os
 
+from pypy.rlib.streamio import open_file_as_stream
+
 from rupypy.module import Module, ModuleDef
 
 
@@ -23,3 +25,14 @@ class Kernel(Module):
             s = ec.space.str_w(w_str)
         os.write(1, s)
         os.write(1, "\n")
+
+    @moduledef.function("require", path="path")
+    def function_require(self, ec, path):
+        f = open_file_as_stream(path)
+        try:
+            contents = f.readall()
+        finally:
+            f.close()
+
+        ec.space.execute(ec, contents, filepath=path)
+        return ec.space.w_true

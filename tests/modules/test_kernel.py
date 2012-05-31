@@ -15,3 +15,19 @@ class TestKernel(object):
         w_cls, w_lambda = ec.space.listview(w_res)
         assert w_cls is ec.space.getclassfor(W_ProcObject)
         assert w_lambda is ec.space.w_true
+
+
+class TestRequire(object):
+    def test_simple(self, ec, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        def t(a, b)
+            a - b
+        end
+        """)
+        w_res = ec.space.execute(ec, """
+        require '%s'
+
+        return t(5, 10)
+        """ % str(f))
+        assert ec.space.int_w(w_res) == -5
