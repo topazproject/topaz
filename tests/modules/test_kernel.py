@@ -60,3 +60,9 @@ class TestRequire(object):
         return t(2, 5)
         """ % str(tmpdir))
         assert ec.space.int_w(w_res) == -3
+
+    def test_stdlib_default_load_path(self, ec):
+        w_res = ec.space.execute(ec, """
+        return require 'prettyprint'
+        """)
+        assert w_res is ec.space.w_true

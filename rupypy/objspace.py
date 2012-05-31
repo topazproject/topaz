@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import os
+
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.parsing.parsing import ParseError
@@ -63,6 +65,13 @@ class ObjectSpace(object):
 
         for module in [Math]:
             self.add_module(module)
+
+        w_load_path = self.newarray([
+            self.newstr_fromstr(
+                os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
+            )
+        ])
+        self.globals.set(self, "$LOAD_PATH", w_load_path)
 
     def _freeze_(self):
         return True
