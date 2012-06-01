@@ -39,3 +39,17 @@ class TestEnumberable(object):
         end
         """)
         assert w_res is ec.space.w_false
+
+    def test_any(self, ec):
+        w_res = ec.space.execute(ec, """
+        return ["ant", "bear", "cat"].any? do |word|
+            word.length >= 3
+        end
+        """)
+        assert w_res is ec.space.w_true
+
+    def test_any_false(self, ec):
+        w_res = ec.space.execute(ec, """
+        return [nil, nil, nil].any?
+        """)
+        assert w_res is ec.space.w_false

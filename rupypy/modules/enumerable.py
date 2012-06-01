@@ -41,3 +41,12 @@ class Enumerable(Module):
         return true
     end
     """)
+
+    moduledef.app_method("""
+    def any?
+        self.each do |obj|
+            return true if obj
+        end
+        return false
+    end
+    """)
