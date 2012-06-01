@@ -23,3 +23,11 @@ class TestEnumberable(object):
         return result
         """)
         assert [[ec.space.int_w(w_x) for w_x in ec.space.listview(w_sub)] for w_sub in ec.space.listview(w_res)] == [[5, 0], [6, 1], [7, 2], [8, 3], [9, 4]]
+
+    def test_all(self, ec):
+        w_res = ec.space.execute(ec, """
+        return ["ant", "bear", "cat"].all? do |word|
+            word.length >= 3
+        end
+        """)
+        assert ec.space.w_true
