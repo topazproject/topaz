@@ -53,13 +53,15 @@ class Interpreter(object):
     @specialize.arg(2, 3)
     def run_instr(self, ec, name, num_args, bytecode, frame, pc):
         args = ()
+        # Do not change these from * 256 to << 8, lshift has defined overflow
+        # semantics which cause it to not propogate the nonnegative-ness.
         if num_args >= 1:
-            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) << 8)
+            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) * 256)
             check_nonneg(v)
             args += (v,)
             pc += 2
         if num_args >= 2:
-            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) << 8)
+            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) * 256)
             check_nonneg(v)
             args += (v,)
             pc += 2
