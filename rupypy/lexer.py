@@ -5,7 +5,7 @@ from pypy.rlib.unroll import unrolling_iterable
 
 STATES = unrolling_iterable([
     "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
-    "EQ", "EQEQ", "LT", "GT", "PIPE", "OR", "AMP", "COLON", "EXCLAMATION",
+    "EQ", "EQEQ", "LT", "GT", "LEGT", "PIPE", "OR", "AMP", "COLON", "EXCLAMATION",
     "QUESTION", "GLOBAL", "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP",
     "COMMENT",
 ])
@@ -398,6 +398,14 @@ class Lexer(object):
             self.emit("LE")
             return None
         self.emit("LT")
+        return self.handle_generic(ch)
+
+    def handle_LE(self, ch):
+        if ch == ">":
+            self.add(ch)
+            self.emit("LEGT")
+            return None
+        self.emit("LE")
         return self.handle_generic(ch)
 
     def handle_GT(self, ch):
