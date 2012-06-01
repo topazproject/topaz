@@ -1,4 +1,11 @@
 class TestIntObject(object):
+    def test_addition(self, ec):
+        w_res = ec.space.execute(ec, "return 1 + 2")
+        assert ec.space.int_w(w_res) == 3
+        
+        w_res = ec.space.execute(ec, "return 1 + 2.5")
+        assert ec.space.float_w(w_res) == 3.5
+    
     def test_multiplication(self, ec):
         w_res = ec.space.execute(ec, "return 2 * 3")
         assert ec.space.int_w(w_res) == 6
