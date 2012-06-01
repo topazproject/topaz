@@ -1,4 +1,7 @@
-class TestArrayObject(object):
+from ..base import BaseRuPyPyTest
+
+
+class TestArrayObject(BaseRuPyPyTest):
     def test_to_s(self, ec):
         w_res = ec.space.execute(ec, "return [].to_s")
         assert ec.space.str_w(w_res) == "[]"
@@ -32,3 +35,7 @@ class TestArrayObject(object):
     def test_product(self, ec):
         w_res = ec.space.execute(ec, "return [1, 2].product([3, 4])")
         assert [[ec.space.int_w(w_x) for w_x in ec.space.listview(w_sub)] for w_sub in ec.space.listview(w_res)] == [[1, 3], [1, 4], [2, 3], [2, 4]]
+
+    def test_unshift(self, ec):
+        w_res = ec.space.execute(ec, "return [1, 2].unshift(3, 4)")
+        assert self.unwrap(ec.space, w_res) == [3, 4, 1, 2]
