@@ -16,7 +16,7 @@ class TestCompiler(object):
             line = consts.BYTECODE_NAMES[c]
             i += 1
             for j in xrange(consts.BYTECODE_NUM_ARGS[c]):
-                v = ord(bc.code[i]) + (ord(bc.code[i + 1]) << 8)
+                v = ord(bc.code[i]) | (ord(bc.code[i + 1]) << 8)
                 line += " %s" % v
                 i += 2
             actual.append(line)

@@ -1,4 +1,5 @@
 from pypy.rlib import jit
+from pypy.rlib.debug import check_nonneg
 from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
@@ -53,11 +54,13 @@ class Interpreter(object):
     def run_instr(self, ec, name, num_args, bytecode, frame, pc):
         args = ()
         if num_args >= 1:
-            v = ord(bytecode.code[pc]) + (ord(bytecode.code[pc + 1]) << 8)
+            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) << 8)
+            check_nonneg(v)
             args += (v,)
             pc += 2
         if num_args >= 2:
-            v = ord(bytecode.code[pc]) + (ord(bytecode.code[pc + 1]) << 8)
+            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) << 8)
+            check_nonneg(v)
             args += (v,)
             pc += 2
         if num_args >= 3:
