@@ -36,9 +36,9 @@ class _VisitFrameContextManager(object):
         self.ec.enter(self.frame)
 
     def __exit__(self, exc_type, exc_value, tb):
-        if (exc_value is not None and isinstance(exc_value, RubyError) and
-            exc_value.w_value.frame is None):
-            exc_value.w_value.frame = self.frame
+        if exc_value is not None and isinstance(exc_value, RubyError):
+            if exc_value.w_value.frame is None:
+                exc_value.w_value.frame = self.frame
             if self.append_instr:
                 exc_value.w_value.last_instructions.append(-1)
 

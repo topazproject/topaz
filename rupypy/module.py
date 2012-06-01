@@ -56,7 +56,6 @@ class ModuleDef(object):
         self.app_methods = []
 
         self.singleton_methods = {}
-        self.singleton_add_methods = []
 
     def method(self, name, **argspec):
         def adder(func):
