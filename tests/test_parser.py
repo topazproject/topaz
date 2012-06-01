@@ -397,6 +397,18 @@ class TestParser(BaseRuPyPyTest):
             end
             """)
 
+    def test_def_names(self, ec):
+        def test_name(s):
+            r = ec.space.parse(ec, """
+            def %s
+            end
+            """ % s)
+            assert r == ast.Main(ast.Block([
+                ast.Statement(ast.Function(None, s, [], None, None, ast.Block([])))
+            ]))
+        test_name("abc")
+        test_name("<=>")
+
     def test_string(self, ec):
         assert ec.space.parse(ec, '"abc"') == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("abc"))

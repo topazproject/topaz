@@ -131,8 +131,10 @@ whens: when >whens< | when;
 
 when: WHEN expr then line* statement? [LINE_END]?;
 
-function_name: varname [DOT] IDENTIFIER |
-               IDENTIFIER;
+function_name: varname [DOT] method_name |
+               method_name;
+
+method_name: <IDENTIFIER> | <LEGT>;
 
 argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];
