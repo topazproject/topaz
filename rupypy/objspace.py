@@ -73,6 +73,7 @@ class ObjectSpace(object):
             )
         ])
         self.globals.set(self, "$LOAD_PATH", w_load_path)
+        self.globals.set(self, "$:", w_load_path)
 
     def _freeze_(self):
         return True
