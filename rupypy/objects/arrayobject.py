@@ -31,26 +31,26 @@ class W_ArrayObject(W_BaseObject):
     @classdef.method("[]")
     def method_subscript(self, space, w_idx):
         if isinstance(w_idx, W_RangeObject):
-            start = w_idx.w_start.intvalue
+            start = space.int_w(w_idx.w_start)
             if w_idx.inclusive:
-                end = w_idx.w_end.intvalue
+                end = space.int_w(w_idx.w_end)
             else:
-                end = w_idx.w_end.intvalue + 1
+                end = space.int_w(w_idx.w_end) + 1
             return W_ArrayObject(self.items_w[start:end])
         else:
-            return self.items_w[w_idx.intvalue]
+            return self.items_w[space.int_w(w_idx)]
 
     @classdef.method("[]=")
     def method_subscript_assign(self, space, w_idx, w_obj):
         if isinstance(w_idx, W_RangeObject):
-            start = w_idx.w_start.intvalue
+            start = space.int_w(w_idx.w_start)
             if w_idx.inclusive:
-                end = w_idx.w_end.intvalue
+                end = space.int_w(w_idx.w_end)
             else:
-                end = w_idx.w_end.intvalue + 1
+                end = space.int_w(w_idx.w_end) + 1
             self.items_w[start:end] = [w_obj]
         else:
-            self.items_w[w_idx.intvalue] = w_obj
+            self.items_w[space.int_w(w_idx)] = w_obj
 
     @classdef.method("length")
     def method_length(self, space):
@@ -71,11 +71,8 @@ class W_ArrayObject(W_BaseObject):
         self[idx]
     end
     """)
-    classdef.app_method("""
-    def size
-        self.length
-    end
-    """)
+
+    classdef.alias("length", "size")
 
     classdef.app_method("""
     def each

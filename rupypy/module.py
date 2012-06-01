@@ -35,6 +35,9 @@ class ClassDef(object):
             return staticmethod(func)
         return adder
 
+    def alias(self, target, alias):
+        self.methods[alias] = self.methods[target]
+
 
 class Module(object):
     @classmethod

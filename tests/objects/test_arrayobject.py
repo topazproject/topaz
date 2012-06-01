@@ -33,7 +33,7 @@ class TestArrayObject(object):
         w_res = ec.space.execute(ec, "return [1, 2].product([3, 4])")
         assert [[ec.space.int_w(w_x) for w_x in ec.space.listview(w_sub)] for w_sub in ec.space.listview(w_res)] == [[1, 3], [1, 4], [2, 3], [2, 4]]
 
-    def no_test_size(self, ec):
+    def test_size(self, ec):
         w_res = ec.space.execute(ec, "return [1, 2].size")
         assert ec.space.int_w(w_res) == 2
 
