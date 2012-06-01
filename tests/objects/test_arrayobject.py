@@ -44,4 +44,11 @@ class TestArrayObject(object):
     def test_range_exclusive(self, ec):
         w_res = ec.space.execute(ec, "return [1, 2, 3, 4, 5][1...3]")
         assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 3]
-    
+
+    def test_range_assignment(self, ec):
+        w_res = ec.space.execute(ec, "x = [1, 2, 3]; x[1..2] = 4; return x")
+        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1, 4]
+
+    def test_at(self, ec):
+        w_res = ec.space.execute(ec, "return [1, 2, 3, 4, 5].at(2)")
+        assert ec.space.int_w(w_res) == 3
