@@ -36,7 +36,7 @@ class W_ArrayObject(W_BaseObject):
                 end = space.int_w(w_idx.w_end)
             else:
                 end = space.int_w(w_idx.w_end) + 1
-            return W_ArrayObject(self.items_w[start:end])
+            return space.newarray(self.items_w[start:end])
         else:
             return self.items_w[space.int_w(w_idx)]
 
