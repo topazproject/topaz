@@ -32,8 +32,6 @@ class Kernel(Module):
 
         from rupypy.objects.exceptionobject import W_LoadError
 
-        path = assert_str0(path)
-
         if not path.endswith(".rb"):
             path += ".rb"
 
@@ -41,13 +39,12 @@ class Kernel(Module):
             w_load_path = ec.space.globals.get(ec.space, "$LOAD_PATH")
             for w_base in ec.space.listview(w_load_path):
                 base = ec.space.str_w(w_base)
-                base = assert_str0(base)
-                if os.path.exists(os.path.join(base, path)):
+                full = os.path.join(base, path)
+                if os.path.exists(assert_str0(full)):
                     path = os.path.join(base, path)
                     break
 
-        path = assert_str0(path)
-        if not os.path.exists(path):
+        if not os.path.exists(assert_str0(path)):
             ec.space.raise_(ec, ec.space.getclassfor(W_LoadError))
 
         f = open_file_as_stream(path)
