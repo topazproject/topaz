@@ -82,3 +82,12 @@ class W_IntObject(W_BaseObject):
         end
     end
     """)
+
+    @classdef.method("<=>", other="int")
+    def method_comparator(self, space, other):
+        if self.intvalue < other:
+            return space.newint(-1)
+        elif self.intvalue == other:
+            return space.newint(0)
+        elif self.intvalue > other:
+            return space.newint(1)
