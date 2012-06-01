@@ -681,6 +681,30 @@ class TestExceptions(BaseRuPyPyTest):
         """)
         assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1]
 
+    def test_ensure_block_return(self, ec):
+        w_res = ec.space.execute(ec, """
+        def h
+            yield
+        end
+        def g(res)
+            h {
+                begin
+                    return 5
+                ensure
+                    res << 12
+                end
+            }
+            10
+        end
+        def f
+            res = []
+            res << g(res)
+            res
+        end
+        return f
+        """)
+        assert self.unwrap(ec.space, w_res) == [12, 5]
+
     def test_rescue_loop(self, ec):
         w_res = ec.space.execute(ec, """
         i = 0

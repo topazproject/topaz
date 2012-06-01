@@ -352,8 +352,7 @@ class Interpreter(object):
         if isinstance(unroller, SuspendedUnroller):
             block = frame.unrollstack(unroller.kind)
             if block is None:
-                w_result = unroller.nomoreblocks()
-                raise Return(w_result)
+                unroller.nomoreblocks()
             else:
                 return block.handle(ec.space, frame, unroller)
         return pc
@@ -444,6 +443,7 @@ class RaiseReturn(Exception):
 class SuspendedUnroller(W_BaseObject):
     pass
 
+
 class ApplicationException(SuspendedUnroller):
     kind = 1 << 1
 
@@ -453,6 +453,7 @@ class ApplicationException(SuspendedUnroller):
     def nomoreblocks(self):
         raise self.e
 
+
 class ReturnValue(SuspendedUnroller):
     kind = 1 << 2
 
@@ -460,11 +461,19 @@ class ReturnValue(SuspendedUnroller):
         self.w_returnvalue = w_returnvalue
 
     def nomoreblocks(self):
-        return self.w_returnvalue
+        raise Return(self.w_returnvalue)
 
 
 class RaiseReturnValue(SuspendedUnroller):
     kind = 1 << 2
+
+    def __init__(self, parent_interp, w_returnvalue):
+        self.parent_interp = parent_interp
+        self.w_returnvalue = w_returnvalue
+
+    def nomoreblocks(self):
+        raise RaiseReturn(self.parent_interp, self.w_returnvalue)
+
 
 class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):
