@@ -190,7 +190,7 @@ class Lexer(object):
         elif ch == "[":
             self.add(ch)
             if (self.context not in [self.EXPR_END, self.EXPR_ENDFN] and
-                (self.prev(1) is None or not self.prev(1).isalnum())):
+                (self.prev(1) is None or not self.prev(1)[0].isalnum())):
                 self.emit("LBRACKET")
                 self.context = self.EXPR_ARG
             else:

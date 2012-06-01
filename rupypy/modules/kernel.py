@@ -28,6 +28,8 @@ class Kernel(Module):
     def function_require(self, ec, path):
         from pypy.rlib.streamio import open_file_as_stream
 
+        from rupypy.objects.exceptionobject import W_LoadError
+
         if not path.endswith(".rb"):
             path += ".rb"
 
@@ -40,7 +42,7 @@ class Kernel(Module):
                     break
 
         if not os.path.exists(path):
-            ERROR
+            ec.space.raise_(ec, ec.space.getclassfor(W_LoadError))
 
         f = open_file_as_stream(path)
         try:

@@ -23,6 +23,16 @@ class W_ExceptionObject(W_BaseObject):
         return space.newstr_fromstr(self.msg)
 
 
+class W_ScriptError(W_ExceptionObject):
+    classdef = ClassDef("ScriptError", W_ExceptionObject.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
+
+class W_LoadError(W_ScriptError):
+    classdef = ClassDef("LoadError", W_ScriptError.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_StandardError(W_ExceptionObject):
     classdef = ClassDef("StandardError", W_ExceptionObject.classdef)
     method_allocate = new_exception_allocate(classdef)

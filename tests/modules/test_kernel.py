@@ -1,5 +1,7 @@
 from rupypy.objects.procobject import W_ProcObject
 
+from ..base import BaseRuPyPyTest
+
 
 class TestKernel(object):
     def test_puts_nil(self, ec, capfd):
@@ -17,7 +19,7 @@ class TestKernel(object):
         assert w_lambda is ec.space.w_true
 
 
-class TestRequire(object):
+class TestRequire(BaseRuPyPyTest):
     def test_simple(self, ec, tmpdir):
         f = tmpdir.join("t.rb")
         f.write("""
@@ -66,3 +68,7 @@ class TestRequire(object):
         return require 'prettyprint'
         """)
         assert w_res is ec.space.w_true
+
+    def test_nonexistance(self, ec):
+        with self.raises("LoadError"):
+            ec.space.execute(ec, "require 'xxxxxxx'")
