@@ -1,7 +1,7 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_BaseObject
-
+from rupypy.objects.rangeobject import W_RangeObject
 
 class W_ArrayObject(W_BaseObject):
     classdef = ClassDef("Array", W_BaseObject.classdef)
@@ -29,7 +29,15 @@ class W_ArrayObject(W_BaseObject):
 
     @classdef.method("[]", idx="int")
     def method_subscript(self, space, idx):
-        return self.items_w[idx]
+        if isinstance(idx, W_RangeObject):
+            start = idx.w_start.intvalue
+            if idx.inclusive:
+                end = idx.w_end.intvalue
+            else:
+                end = idx.w_end.intvalue + 1
+            return W_ArrayObject(self.items_w[start:end])
+        else:
+            return self.items_w[idx]
 
     @classdef.method("[]=", idx="int")
     def method_subscript_assign(self, space, idx, w_obj):
@@ -48,6 +56,12 @@ class W_ArrayObject(W_BaseObject):
     def method_lshift(self, space, w_obj):
         self.items_w.append(w_obj)
         return self
+        
+    classdef.app_method("""
+    def size
+        self.length
+    end
+    """)
 
     classdef.app_method("""
     def each
