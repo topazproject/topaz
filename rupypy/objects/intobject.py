@@ -26,9 +26,12 @@ class W_IntObject(W_BaseObject):
     def method_to_f(self, space):
         return space.newfloat(float(self.intvalue))
 
-    @classdef.method("+", other="int")
-    def method_add(self, space, other):
-        return space.newint(self.intvalue + other)
+    @classdef.method("+")
+    def method_add(self, space, w_other):
+        if isinstance(w_other, W_FloatObject):
+            return space.newfloat(self.intvalue + space.float_w(w_other))
+        else:
+            return space.newint(self.intvalue + space.int_w(w_other))
 
     @classdef.method("-")
     def method_sub(self, space, w_other):

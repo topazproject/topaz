@@ -1,6 +1,7 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.rangeobject import W_RangeObject
 
 
 class W_ArrayObject(W_BaseObject):
@@ -27,13 +28,29 @@ class W_ArrayObject(W_BaseObject):
     end
     """)
 
-    @classdef.method("[]", idx="int")
-    def method_subscript(self, space, idx):
-        return self.items_w[idx]
+    @classdef.method("[]")
+    def method_subscript(self, space, w_idx):
+        if isinstance(w_idx, W_RangeObject):
+            start = space.int_w(w_idx.w_start)
+            if w_idx.inclusive:
+                end = space.int_w(w_idx.w_end)
+            else:
+                end = space.int_w(w_idx.w_end) + 1
+            return space.newarray(self.items_w[start:end])
+        else:
+            return self.items_w[space.int_w(w_idx)]
 
-    @classdef.method("[]=", idx="int")
-    def method_subscript_assign(self, space, idx, w_obj):
-        self.items_w[idx] = w_obj
+    @classdef.method("[]=")
+    def method_subscript_assign(self, space, w_idx, w_obj):
+        if isinstance(w_idx, W_RangeObject):
+            start = space.int_w(w_idx.w_start)
+            if w_idx.inclusive:
+                end = space.int_w(w_idx.w_end)
+            else:
+                end = space.int_w(w_idx.w_end) + 1
+            self.items_w[start:end] = [w_obj]
+        else:
+            self.items_w[space.int_w(w_idx)] = w_obj
 
     @classdef.method("length")
     def method_length(self, space):
@@ -55,6 +72,14 @@ class W_ArrayObject(W_BaseObject):
             w_obj = args_w[i]
             self.items_w.insert(0, w_obj)
         return self
+
+    classdef.app_method("""
+    def at idx
+        self[idx]
+    end
+    """)
+
+    classdef.alias("length", "size")
 
     classdef.app_method("""
     def each
