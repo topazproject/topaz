@@ -1,4 +1,4 @@
-class TestKernel(object):
+class TestEnumberable(object):
     def test_inject(self, ec):
         w_res = ec.space.execute(ec, """
         return (5..10).inject(1) do |prod, n|
