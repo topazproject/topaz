@@ -395,8 +395,7 @@ class Lexer(object):
             return None
         elif ch == "=":
             self.add(ch)
-            self.emit("LE")
-            return None
+            return "LE"
         self.emit("LT")
         return self.handle_generic(ch)
 
