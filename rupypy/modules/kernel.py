@@ -32,6 +32,7 @@ class Kernel(Module):
 
         from rupypy.objects.exceptionobject import W_LoadError
 
+        assert path is not None
         if not path.endswith(".rb"):
             path += ".rb"
 
