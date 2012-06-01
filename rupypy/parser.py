@@ -182,7 +182,11 @@ class Transformer(object):
                 )
             target = ast.Self(node.getsourcepos().lineno)
             name = node.children[0].additional_info
-            args, block_argument = self.visit_send_args(node.children[1])
+            if len(node.children) >= 2:
+                args, block_argument = self.visit_send_args(node.children[1])
+            else:
+                args = []
+                block_argument = None
             if len(node.children) == 3:
                 if block_argument is not None:
                     self.error(node)
@@ -288,9 +292,10 @@ class Transformer(object):
         raise NotImplementedError(node.symbol)
 
     def visit_array(self, node):
-        if len(node.children) == 3:
+        contents = node.children[1]
+        if contents.children:
             items = [
-                self.visit_arg(n) for n in node.children[1].children
+                self.visit_arg(n) for n in contents.children[0].children
             ]
         else:
             items = []

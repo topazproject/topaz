@@ -4,6 +4,11 @@
 
 main: line* statement? [LINE_END]? [EOF];
 
+# XXX: LINE_END includes ';' which isn't valid for here, split LINE_END into
+# two tokens and then have a non-terminal here for their union.
+array_trailer: LINE_END |
+               COMMA;
+
 line: statement? [LINE_END];
 
 statement: inline_if |
@@ -84,7 +89,7 @@ subscript: [LSUBSCRIPT] arg [RBRACKET];
 constant: COLONCOLON IDENTIFIER;
 
 primary: LPAREN expr RPAREN |
-         LBRACKET args? RBRACKET |
+         LBRACKET array |
          LBRACE assocs? RBRACE |
          IF if elsifs? else? [END] |
          UNLESS expr then line* statement? [LINE_END]? END |
@@ -98,6 +103,9 @@ primary: LPAREN expr RPAREN |
          CASE expr [LINE_END] whens else? END |
          varname |
          literal;
+
+array: [RBRACKET] |
+       args [array_trailer]? [RBRACKET];
 
 if: expr then line* statement? [LINE_END]?;
 
