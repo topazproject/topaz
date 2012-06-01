@@ -1,3 +1,4 @@
+import os
 import platform
 
 import py
@@ -47,7 +48,7 @@ class TestMain(object):
         [version, out] = out.splitlines()
         assert version.startswith("rupypy")
         assert "1.9.3" in version
-        assert platform.processor() in version
+        assert os.uname()[4] in version
         assert platform.system().lower() in version
         assert out == "5"
 
