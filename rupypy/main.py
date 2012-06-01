@@ -50,7 +50,7 @@ def entry_point(argv):
 
         ec = ExecutionContext(space)
         try:
-            space.execute(ec, source, filepath=argv[1])
+            space.execute(ec, source, filepath=path)
         except RubyError as e:
             lines = format_traceback(space, e.w_value)
             for line in lines:
