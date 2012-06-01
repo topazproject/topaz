@@ -1,5 +1,6 @@
 Authors
 =======
 
-* Alex Gaynor
 * Maciej Fijalkowski
+* Alex Gaynor
+* Curt Micol
