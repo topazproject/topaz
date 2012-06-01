@@ -25,6 +25,7 @@ from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError)
+from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
@@ -152,6 +153,9 @@ class ObjectSpace(object):
 
     def newarray(self, items_w):
         return W_ArrayObject(items_w)
+
+    def newhash(self):
+        return W_HashObject()
 
     def newrange(self, w_start, w_end, inclusive):
         return W_RangeObject(w_start, w_end, inclusive)

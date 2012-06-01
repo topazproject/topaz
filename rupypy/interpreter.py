@@ -160,6 +160,9 @@ class Interpreter(object):
         items_w = frame.popitemsreverse(n_items)
         frame.push(ec.space.newarray(items_w))
 
+    def BUILD_HASH(self, ec, bytecode, frame, pc):
+        frame.push(ec.space.newhash())
+
     def BUILD_RANGE(self, ec, bytecode, frame, pc):
         w_end = frame.pop()
         w_start = frame.pop()

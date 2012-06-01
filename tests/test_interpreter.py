@@ -459,6 +459,9 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert ec.space.int_w(w_res) == 2
 
+    def test_empty_hash(self, ec):
+        ec.space.execute(ec, "return {}")
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):
