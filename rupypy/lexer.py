@@ -485,7 +485,7 @@ class Lexer(object):
 
     def handle_GLOBAL(self, ch):
         self.context = self.EXPR_END
-        if ch == ">":
+        if ch in ">:":
             self.add(ch)
             self.emit("GLOBAL")
             return None

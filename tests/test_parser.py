@@ -851,9 +851,11 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Assignment(ast.Global("$abc_123"), ast.ConstantInt(3))),
             ast.Statement(ast.Global("$abc")),
         ]))
-        assert ec.space.parse(ec, "$>") == ast.Main(ast.Block([
-            ast.Statement(ast.Global("$>"))
+        simple_global = lambda s: ast.Main(ast.Block([
+            ast.Statement(ast.Global(s))
         ]))
+        assert ec.space.parse(ec, "$>") == simple_global("$>")
+        assert ec.space.parse(ec, "$:") == simple_global("$:")
 
     def test_comments(self, ec):
         r = ec.space.parse(ec, """
