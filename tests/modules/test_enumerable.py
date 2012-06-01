@@ -30,4 +30,12 @@ class TestEnumberable(object):
             word.length >= 3
         end
         """)
-        assert ec.space.w_true
+        assert w_res is ec.space.w_true
+
+    def test_all_false(self, ec):
+        w_res = ec.space.execute(ec, """
+        return ["ant", "bear", "cat"].all? do |word|
+            word.length >= 4
+        end
+        """)
+        assert w_res is ec.space.w_false
