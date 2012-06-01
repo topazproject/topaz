@@ -8,6 +8,7 @@ from pypy.rlib.streamio import open_file_as_stream
 
 from rupypy.error import RubyError
 from rupypy.executioncontext import ExecutionContext
+from rupypy.objects.objectobject import W_Object
 from rupypy.objspace import ObjectSpace
 from rupypy.utils import format_traceback
 
@@ -18,8 +19,11 @@ def getspace():
 
 
 def entry_point(argv):
+    space = getspace()
+
     verbose = False
     path = None
+    argv_w = []
     idx = 1
     while idx < len(argv):
         arg = argv[idx]
@@ -28,7 +32,11 @@ def entry_point(argv):
             verbose = True
         else:
             path = arg
-            break
+            while idx < len(argv):
+                arg = argv[idx]
+                idx += 1
+                argv_w.append(space.newstr_fromstr(arg))
+    space.set_const(space.getclassfor(W_Object), "ARGV", space.newarray(argv_w))
 
     if verbose:
         system, _, _, _, cpu = os.uname()
@@ -40,7 +48,6 @@ def entry_point(argv):
         finally:
             f.close()
 
-        space = getspace()
         ec = ExecutionContext(space)
         try:
             space.execute(ec, source, filepath=argv[1])

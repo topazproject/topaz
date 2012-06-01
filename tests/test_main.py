@@ -6,7 +6,7 @@ from rupypy.main import entry_point
 
 
 class TestMain(object):
-    def run(self, tmpdir, source=None, status=0, ruby_args=[]):
+    def run(self, tmpdir, source=None, status=0, ruby_args=[], argv=[]):
         args = ["rupypy"]
         args += ruby_args
         if source is not None:
@@ -15,6 +15,7 @@ class TestMain(object):
             args.append(str(f))
         else:
             f = None
+        args += argv
         res = entry_point(args)
         assert res == status
         return f
@@ -54,6 +55,20 @@ class TestMain(object):
         out, err = capfd.readouterr()
         [version] = out.splitlines()
         assert version.startswith("rupypy")
+
+    def test_arguments(self, tmpdir, capfd):
+        self.run(tmpdir, """
+        ARGV.each_with_index do |arg, i|
+            puts i.to_s + ": " + arg
+        end
+        """, argv=["abc", "123", "easy"])
+        out, err = capfd.readouterr()
+        lines = out.splitlines()
+        assert lines == [
+            "0: abc",
+            "1: 123",
+            "2: easy",
+        ]
 
     def test_traceback_printed(self, tmpdir, capfd):
         self.assert_traceback(tmpdir, capfd, """
