@@ -36,17 +36,17 @@ class Enumerable(Module):
     moduledef.app_method("""
     def all?
         self.each do |obj|
-            return false unless obj
+            return false unless (yield obj)
         end
-        return true
+        true
     end
     """)
 
     moduledef.app_method("""
     def any?
         self.each do |obj|
-            return true if obj
+            return true if (yield obj)
         end
-        return false
+        false
     end
     """)

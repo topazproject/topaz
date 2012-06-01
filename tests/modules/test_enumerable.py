@@ -40,6 +40,12 @@ class TestEnumberable(object):
         """)
         assert w_res is ec.space.w_false
 
+    def test_all_empty(self, ec):
+        w_res = ec.space.execute(ec, """
+        return [].all?
+        """)
+        assert w_res is ec.space.w_true
+
     def test_any(self, ec):
         w_res = ec.space.execute(ec, """
         return ["ant", "bear", "cat"].any? do |word|
