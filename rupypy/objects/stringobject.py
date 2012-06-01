@@ -9,6 +9,7 @@ class StringStrategy(object):
     def __init__(self, space):
         pass
 
+
 class ConstantStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("constant")
 
@@ -31,6 +32,7 @@ class ConstantStringStrategy(StringStrategy):
 
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
+
 
 class MutableStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("mutable")
@@ -107,3 +109,7 @@ class W_StringObject(W_BaseObject):
         assert isinstance(w_other, W_StringObject)
         self.extend(space, w_other)
         return self
+
+    @classdef.method("length")
+    def method_length(self, space):
+        return space.newint(self.length())

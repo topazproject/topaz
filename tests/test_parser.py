@@ -193,13 +193,14 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_comparison_ops(self, ec):
-        assert ec.space.parse(ec, "1 == 2; 1 < 2; 1 > 2; 1 != 2; 1 <= 2; 1 >= 2") == ast.Main(ast.Block([
+        assert ec.space.parse(ec, "1 == 2; 1 < 2; 1 > 2; 1 != 2; 1 <= 2; 1 >= 2; 1 <=> 2") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("==", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
             ast.Statement(ast.BinOp("<", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
             ast.Statement(ast.BinOp(">", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
             ast.Statement(ast.BinOp("!=", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
             ast.Statement(ast.BinOp("<=", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
             ast.Statement(ast.BinOp(">=", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
+            ast.Statement(ast.BinOp("<=>", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
         ]))
 
     def test_while(self, ec):
@@ -851,9 +852,11 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Assignment(ast.Global("$abc_123"), ast.ConstantInt(3))),
             ast.Statement(ast.Global("$abc")),
         ]))
-        assert ec.space.parse(ec, "$>") == ast.Main(ast.Block([
-            ast.Statement(ast.Global("$>"))
+        simple_global = lambda s: ast.Main(ast.Block([
+            ast.Statement(ast.Global(s))
         ]))
+        assert ec.space.parse(ec, "$>") == simple_global("$>")
+        assert ec.space.parse(ec, "$:") == simple_global("$:")
 
     def test_comments(self, ec):
         r = ec.space.parse(ec, """

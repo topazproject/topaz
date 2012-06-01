@@ -66,6 +66,13 @@ class W_ArrayObject(W_BaseObject):
         self.items_w.append(w_obj)
         return self
 
+    @classdef.method("unshift")
+    def method_unshift(self, space, args_w):
+        for i in xrange(len(args_w) - 1, -1, -1):
+            w_obj = args_w[i]
+            self.items_w.insert(0, w_obj)
+        return self
+
     classdef.app_method("""
     def at idx
         self[idx]

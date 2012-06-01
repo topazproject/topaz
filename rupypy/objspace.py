@@ -25,6 +25,7 @@ from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError)
+from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
@@ -72,6 +73,7 @@ class ObjectSpace(object):
             )
         ])
         self.globals.set(self, "$LOAD_PATH", w_load_path)
+        self.globals.set(self, "$:", w_load_path)
 
     def _freeze_(self):
         return True
@@ -117,12 +119,14 @@ class ObjectSpace(object):
         with ec.visit_frame(frame):
             return self.execute_frame(ec, frame, bc)
 
-    def create_frame(self, bc, w_self=None, w_scope=None, block=None):
+    def create_frame(self, bc, w_self=None, w_scope=None, block=None,
+        parent_interp=None):
+
         if w_self is None:
             w_self = self.w_top_self
         if w_scope is None:
             w_scope = self.getclassfor(W_Object)
-        return Frame(jit.promote(bc), w_self, w_scope, block)
+        return Frame(jit.promote(bc), w_self, w_scope, block, parent_interp)
 
     def execute_frame(self, ec, frame, bc):
         return Interpreter().interpret(ec, frame, bc)
@@ -152,6 +156,9 @@ class ObjectSpace(object):
 
     def newarray(self, items_w):
         return W_ArrayObject(items_w)
+
+    def newhash(self):
+        return W_HashObject()
 
     def newrange(self, w_start, w_end, inclusive):
         return W_RangeObject(w_start, w_end, inclusive)
@@ -239,7 +246,8 @@ class ObjectSpace(object):
     def invoke_block(self, ec, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(
-            bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block
+            bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block,
+            parent_interp=block.parent_interp,
         )
         if (len(args_w) == 1 and
             isinstance(args_w[0], W_ArrayObject) and len(bc.arg_locs) >= 2):

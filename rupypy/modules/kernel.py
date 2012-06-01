@@ -1,5 +1,7 @@
 import os
 
+from pypy.rlib.rstring import assert_str0
+
 from rupypy.module import Module, ModuleDef
 
 
@@ -28,6 +30,9 @@ class Kernel(Module):
     def function_require(self, ec, path):
         from pypy.rlib.streamio import open_file_as_stream
 
+        from rupypy.objects.exceptionobject import W_LoadError
+
+        assert path is not None
         if not path.endswith(".rb"):
             path += ".rb"
 
@@ -35,12 +40,13 @@ class Kernel(Module):
             w_load_path = ec.space.globals.get(ec.space, "$LOAD_PATH")
             for w_base in ec.space.listview(w_load_path):
                 base = ec.space.str_w(w_base)
-                if os.path.exists(os.path.join(base, path)):
+                full = os.path.join(base, path)
+                if os.path.exists(assert_str0(full)):
                     path = os.path.join(base, path)
                     break
 
-        if not os.path.exists(path):
-            ERROR
+        if not os.path.exists(assert_str0(path)):
+            ec.space.raise_(ec, ec.space.getclassfor(W_LoadError))
 
         f = open_file_as_stream(path)
         try:

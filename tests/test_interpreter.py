@@ -459,6 +459,9 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert ec.space.int_w(w_res) == 2
 
+    def test_empty_hash(self, ec):
+        ec.space.execute(ec, "return {}")
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):
@@ -570,6 +573,20 @@ class TestBlocks(BaseRuPyPyTest):
         with self.raises("TypeError"):
             ec.space.execute(ec, "f(&3)")
 
+    def test_block_return(self, ec):
+        w_res = ec.space.execute(ec, """
+        def f
+            yield
+            10
+        end
+        def g
+            f { return 15 }
+            5
+        end
+        return g
+        """)
+        assert ec.space.int_w(w_res) == 15
+
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, ec):
@@ -663,6 +680,30 @@ class TestExceptions(BaseRuPyPyTest):
         end
         """)
         assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1]
+
+    def test_ensure_block_return(self, ec):
+        w_res = ec.space.execute(ec, """
+        def h
+            yield
+        end
+        def g(res)
+            h {
+                begin
+                    return 5
+                ensure
+                    res << 12
+                end
+            }
+            10
+        end
+        def f
+            res = []
+            res << g(res)
+            res
+        end
+        return f
+        """)
+        assert self.unwrap(ec.space, w_res) == [12, 5]
 
     def test_rescue_loop(self, ec):
         w_res = ec.space.execute(ec, """

@@ -55,3 +55,7 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_at(self, ec):
         w_res = ec.space.execute(ec, "return [1, 2, 3, 4, 5].at(2)")
         assert ec.space.int_w(w_res) == 3
+
+    def test_unshift(self, ec):
+        w_res = ec.space.execute(ec, "return [1, 2].unshift(3, 4)")
+        assert self.unwrap(ec.space, w_res) == [3, 4, 1, 2]

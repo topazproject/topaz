@@ -1,4 +1,5 @@
 from pypy.rlib import jit
+from pypy.rlib.debug import check_nonneg
 from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
@@ -32,8 +33,12 @@ class Interpreter(object):
                     pc = self.handle_bytecode(ec, pc, frame, bytecode)
                 except RubyError as e:
                     pc = self.handle_ruby_error(ec, pc, frame, bytecode, e)
+        except RaiseReturn as e:
+            if e.parent_interp is self:
+                return e.w_value
+            raise
         except Return as e:
-            return frame.pop()
+            return e.w_value
 
     def handle_bytecode(self, ec, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])
@@ -52,12 +57,16 @@ class Interpreter(object):
     @specialize.arg(2, 3)
     def run_instr(self, ec, name, num_args, bytecode, frame, pc):
         args = ()
+        # Do not change these from * 256 to << 8, lshift has defined overflow
+        # semantics which cause it to not propogate the nonnegative-ness.
         if num_args >= 1:
-            v = ord(bytecode.code[pc]) + (ord(bytecode.code[pc + 1]) << 8)
+            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) * 256)
+            check_nonneg(v)
             args += (v,)
             pc += 2
         if num_args >= 2:
-            v = ord(bytecode.code[pc]) + (ord(bytecode.code[pc + 1]) << 8)
+            v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) * 256)
+            check_nonneg(v)
             args += (v,)
             pc += 2
         if num_args >= 3:
@@ -160,6 +169,9 @@ class Interpreter(object):
         items_w = frame.popitemsreverse(n_items)
         frame.push(ec.space.newarray(items_w))
 
+    def BUILD_HASH(self, ec, bytecode, frame, pc):
+        frame.push(ec.space.newhash())
+
     def BUILD_RANGE(self, ec, bytecode, frame, pc):
         w_end = frame.pop()
         w_start = frame.pop()
@@ -186,7 +198,9 @@ class Interpreter(object):
         cells = [frame.pop() for _ in range(n_cells)]
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
-        block = W_BlockObject(w_code, frame.w_self, frame.w_scope, cells, frame.block)
+        block = W_BlockObject(
+            w_code, frame.w_self, frame.w_scope, cells, frame.block, self
+        )
         frame.push(block)
 
     def BUILD_CLASS(self, ec, bytecode, frame, pc):
@@ -338,9 +352,7 @@ class Interpreter(object):
         if isinstance(unroller, SuspendedUnroller):
             block = frame.unrollstack(unroller.kind)
             if block is None:
-                w_result = unroller.nomoreblocks()
-                frame.push(w_result)
-                raise Return
+                unroller.nomoreblocks()
             else:
                 return block.handle(ec.space, frame, unroller)
         return pc
@@ -393,9 +405,16 @@ class Interpreter(object):
         w_returnvalue = frame.pop()
         block = frame.unrollstack(ReturnValue.kind)
         if block is None:
-            frame.push(w_returnvalue)
-            raise Return
+            raise Return(w_returnvalue)
         unroller = ReturnValue(w_returnvalue)
+        return block.handle(ec.space, frame, unroller)
+
+    def RAISE_RETURN(self, ec, bytecode, frame, pc):
+        w_returnvalue = frame.pop()
+        block = frame.unrollstack(RaiseReturnValue.kind)
+        if block is None:
+            raise RaiseReturn(frame.parent_interp, w_returnvalue)
+        unroller = RaiseReturnValue(frame.parent_interp, w_returnvalue)
         return block.handle(ec.space, frame, unroller)
 
     @jit.unroll_safe
@@ -411,11 +430,19 @@ class Interpreter(object):
 
 
 class Return(Exception):
-    pass
+    def __init__(self, w_value):
+        self.w_value = w_value
+
+
+class RaiseReturn(Exception):
+    def __init__(self, parent_interp, w_value):
+        self.parent_interp = parent_interp
+        self.w_value = w_value
 
 
 class SuspendedUnroller(W_BaseObject):
     pass
+
 
 class ApplicationException(SuspendedUnroller):
     kind = 1 << 1
@@ -426,6 +453,7 @@ class ApplicationException(SuspendedUnroller):
     def nomoreblocks(self):
         raise self.e
 
+
 class ReturnValue(SuspendedUnroller):
     kind = 1 << 2
 
@@ -433,7 +461,18 @@ class ReturnValue(SuspendedUnroller):
         self.w_returnvalue = w_returnvalue
 
     def nomoreblocks(self):
-        return self.w_returnvalue
+        raise Return(self.w_returnvalue)
+
+
+class RaiseReturnValue(SuspendedUnroller):
+    kind = 1 << 2
+
+    def __init__(self, parent_interp, w_returnvalue):
+        self.parent_interp = parent_interp
+        self.w_returnvalue = w_returnvalue
+
+    def nomoreblocks(self):
+        raise RaiseReturn(self.parent_interp, self.w_returnvalue)
 
 
 class FrameBlock(object):

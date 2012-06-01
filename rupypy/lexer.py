@@ -5,7 +5,7 @@ from pypy.rlib.unroll import unrolling_iterable
 
 STATES = unrolling_iterable([
     "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
-    "EQ", "EQEQ", "LT", "GT", "PIPE", "OR", "AMP", "COLON", "EXCLAMATION",
+    "EQ", "EQEQ", "LT", "GT", "LE", "LEGT", "PIPE", "OR", "AMP", "COLON", "EXCLAMATION",
     "QUESTION", "GLOBAL", "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP",
     "COMMENT",
 ])
@@ -190,7 +190,7 @@ class Lexer(object):
         elif ch == "[":
             self.add(ch)
             if (self.context not in [self.EXPR_END, self.EXPR_ENDFN] and
-                (self.prev(1) is None or not self.prev(1).isalnum())):
+                (self.prev(1) is None or not self.prev(1)[0].isalnum())):
                 self.emit("LBRACKET")
                 self.context = self.EXPR_ARG
             else:
@@ -395,9 +395,16 @@ class Lexer(object):
             return None
         elif ch == "=":
             self.add(ch)
-            self.emit("LE")
-            return None
+            return "LE"
         self.emit("LT")
+        return self.handle_generic(ch)
+
+    def handle_LE(self, ch):
+        if ch == ">":
+            self.add(ch)
+            self.emit("LEGT")
+            return None
+        self.emit("LE")
         return self.handle_generic(ch)
 
     def handle_GT(self, ch):
@@ -485,7 +492,7 @@ class Lexer(object):
 
     def handle_GLOBAL(self, ch):
         self.context = self.EXPR_END
-        if ch == ">":
+        if ch in ">:":
             self.add(ch)
             self.emit("GLOBAL")
             return None
