@@ -31,3 +31,27 @@ class TestExpandPath(BaseRuPyPyTest):
         assert self.unwrap(ec.space, w_res) == os.environ["HOME"]
         w_res = ec.space.execute(ec, """return File.expand_path("~/a", "/tmp/random")""")
         assert self.unwrap(ec.space, w_res) == os.path.join(os.environ["HOME"], "a")
+
+
+class TestDirname(BaseRuPyPyTest):
+    def test_simple(self, ec):
+        w_res = ec.space.execute(ec, """
+        return [
+            File.dirname("/home/guido"),
+            File.dirname("/home/guido/test.txt"),
+            File.dirname("test.txt"),
+            File.dirname("/home///guido//file.txt"),
+            File.dirname(""),
+            File.dirname("/"),
+            File.dirname("/foo/foo")
+        ]
+        """)
+        assert self.unwrap(ec.space, w_res) == [
+            "/home",
+            "/home/guido",
+            ".",
+            "/home///guido",
+            ".",
+            "/",
+            "/foo",
+        ]

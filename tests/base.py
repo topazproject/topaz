@@ -22,4 +22,6 @@ class BaseRuPyPyTest(object):
             return space.str_w(w_obj)
         elif isinstance(w_obj, W_ArrayObject):
             return [self.unwrap(space, w_x) for w_x in space.listview(w_obj)]
+        elif w_obj is space.w_nil:
+            return None
         raise NotImplementedError(type(w_obj))

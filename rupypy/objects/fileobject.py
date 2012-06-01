@@ -7,6 +7,17 @@ from rupypy.objects.objectobject import W_BaseObject
 class W_FileObject(W_BaseObject):
     classdef = ClassDef("File", W_BaseObject.classdef)
 
+    @classdef.singleton_method("dirname", path="path")
+    def method_dirname(self, space, path):
+        if "/" not in path:
+            return space.newstr_fromstr(".")
+        idx = path.rfind("/")
+        while idx > 0 and path[idx - 1] == "/":
+            idx -= 1
+        if idx == 0:
+            return space.newstr_fromstr("/")
+        return space.newstr_fromstr(path[:idx])
+
     @classdef.singleton_method("expand_path", path="path", dir="path")
     def method_expand_path(self, space, path, dir=None):
         if path and path[0] == "~":
