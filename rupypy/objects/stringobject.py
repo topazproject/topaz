@@ -107,3 +107,7 @@ class W_StringObject(W_BaseObject):
         assert isinstance(w_other, W_StringObject)
         self.extend(space, w_other)
         return self
+
+    @classdef.method("length")
+    def method_length(self, space):
+        return space.newint(self.length())
