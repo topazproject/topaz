@@ -36,6 +36,8 @@ class W_ArrayObject(W_BaseObject):
                 end = space.int_w(w_idx.w_end)
             else:
                 end = space.int_w(w_idx.w_end) + 1
+            assert start >= 0
+            assert end >= 0
             return space.newarray(self.items_w[start:end])
         else:
             return self.items_w[space.int_w(w_idx)]
@@ -48,6 +50,8 @@ class W_ArrayObject(W_BaseObject):
                 end = space.int_w(w_idx.w_end)
             else:
                 end = space.int_w(w_idx.w_end) + 1
+            assert start >= 0
+            assert end >= 0
             self.items_w[start:end] = [w_obj]
         else:
             self.items_w[space.int_w(w_idx)] = w_obj

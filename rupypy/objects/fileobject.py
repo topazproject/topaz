@@ -16,6 +16,7 @@ class W_FileObject(W_BaseObject):
             idx -= 1
         if idx == 0:
             return space.newstr_fromstr("/")
+        assert idx >= 0
         return space.newstr_fromstr(path[:idx])
 
     @classdef.singleton_method("expand_path", path="path", dir="path")
