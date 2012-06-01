@@ -1,6 +1,6 @@
 import os
 
-from pypy.rlib.rstring import check_str0
+from pypy.rlib.rstring import assert_str0
 
 from rupypy.module import Module, ModuleDef
 
@@ -32,7 +32,7 @@ class Kernel(Module):
 
         from rupypy.objects.exceptionobject import W_LoadError
 
-        check_str0(path)
+        assert_str0(path)
 
         if not path.endswith(".rb"):
             path += ".rb"
@@ -41,7 +41,7 @@ class Kernel(Module):
             w_load_path = ec.space.globals.get(ec.space, "$LOAD_PATH")
             for w_base in ec.space.listview(w_load_path):
                 base = ec.space.str_w(w_base)
-                check_str0(base)
+                assert_str0(base)
                 if os.path.exists(os.path.join(base, path)):
                     path = os.path.join(base, path)
                     break
