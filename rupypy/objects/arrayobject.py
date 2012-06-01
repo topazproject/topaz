@@ -28,29 +28,29 @@ class W_ArrayObject(W_BaseObject):
     end
     """)
 
-    @classdef.method("[]", idx="int")
-    def method_subscript(self, space, idx):
-        if isinstance(idx, W_RangeObject):
-            start = idx.w_start.intvalue
-            if idx.inclusive:
-                end = idx.w_end.intvalue
+    @classdef.method("[]")
+    def method_subscript(self, space, w_idx):
+        if isinstance(w_idx, W_RangeObject):
+            start = w_idx.w_start.intvalue
+            if w_idx.inclusive:
+                end = w_idx.w_end.intvalue
             else:
-                end = idx.w_end.intvalue + 1
+                end = w_idx.w_end.intvalue + 1
             return W_ArrayObject(self.items_w[start:end])
         else:
-            return self.items_w[idx]
+            return self.items_w[w_idx.intvalue]
 
-    @classdef.method("[]=", idx="int")
-    def method_subscript_assign(self, space, idx, w_obj):
-        if isinstance(idx, W_RangeObject):
-            start = idx.w_start.intvalue
-            if idx.inclusive:
-                end = idx.w_end.intvalue
+    @classdef.method("[]=")
+    def method_subscript_assign(self, space, w_idx, w_obj):
+        if isinstance(w_idx, W_RangeObject):
+            start = w_idx.w_start.intvalue
+            if w_idx.inclusive:
+                end = w_idx.w_end.intvalue
             else:
-                end = idx.w_end.intvalue + 1
+                end = w_idx.w_end.intvalue + 1
             self.items_w[start:end] = [w_obj]
         else:
-            self.items_w[idx] = w_obj
+            self.items_w[w_idx.intvalue] = w_obj
 
     @classdef.method("length")
     def method_length(self, space):

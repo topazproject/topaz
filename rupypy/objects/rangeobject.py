@@ -12,10 +12,6 @@ class W_RangeObject(W_BaseObject):
         self.w_end = w_end
         self.inclusive = inclusive
 
-    # TODO: create an explicit range object. This code is misleading!
-    def int_w(self, space):
-        return self
-
     @classdef.method("begin")
     def method_begin(self, space):
         return self.w_start
