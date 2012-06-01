@@ -118,12 +118,14 @@ class ObjectSpace(object):
         with ec.visit_frame(frame):
             return self.execute_frame(ec, frame, bc)
 
-    def create_frame(self, bc, w_self=None, w_scope=None, block=None):
+    def create_frame(self, bc, w_self=None, w_scope=None, block=None,
+        parent_interp=None):
+
         if w_self is None:
             w_self = self.w_top_self
         if w_scope is None:
             w_scope = self.getclassfor(W_Object)
-        return Frame(jit.promote(bc), w_self, w_scope, block)
+        return Frame(jit.promote(bc), w_self, w_scope, block, parent_interp)
 
     def execute_frame(self, ec, frame, bc):
         return Interpreter().interpret(ec, frame, bc)
@@ -243,7 +245,8 @@ class ObjectSpace(object):
     def invoke_block(self, ec, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(
-            bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block
+            bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block,
+            parent_interp=block.parent_interp,
         )
         if (len(args_w) == 1 and
             isinstance(args_w[0], W_ArrayObject) and len(bc.arg_locs) >= 2):

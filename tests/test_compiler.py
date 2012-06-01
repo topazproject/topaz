@@ -1502,3 +1502,21 @@ class TestCompiler(object):
         LOAD_CONST 3
         RETURN
         """)
+
+    def test_block_return(self, ec):
+        bc = self.assert_compiles(ec, "f { return 5 }", """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        RAISE_RETURN
+        RETURN
+        """)

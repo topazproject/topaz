@@ -69,6 +69,7 @@ BYTECODES = [
     ("DUP_TOPX", 1, DUP_TOPX_EFFECT),
 
     ("RETURN", 0, -1),
+    ("RAISE_RETURN", 0, -1),
     ("YIELD", 1, ARRAY_EFFECT),
 ]
 

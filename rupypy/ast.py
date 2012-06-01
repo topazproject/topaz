@@ -420,7 +420,10 @@ class Return(BaseStatement):
 
     def compile(self, ctx):
         self.expr.compile(ctx)
-        ctx.emit(consts.RETURN)
+        if isinstance(ctx.symtable, BlockSymbolTable):
+            ctx.emit(consts.RAISE_RETURN)
+        else:
+            ctx.emit(consts.RETURN)
 
 
 class Yield(Node):

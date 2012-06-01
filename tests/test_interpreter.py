@@ -573,6 +573,20 @@ class TestBlocks(BaseRuPyPyTest):
         with self.raises("TypeError"):
             ec.space.execute(ec, "f(&3)")
 
+    def test_block_return(self, ec):
+        w_res = ec.space.execute(ec, """
+        def f
+            yield
+            10
+        end
+        def g
+            f { return 15 }
+            5
+        end
+        return g
+        """)
+        assert ec.space.int_w(w_res) == 15
+
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, ec):

@@ -33,8 +33,12 @@ class Interpreter(object):
                     pc = self.handle_bytecode(ec, pc, frame, bytecode)
                 except RubyError as e:
                     pc = self.handle_ruby_error(ec, pc, frame, bytecode, e)
+        except RaiseReturn as e:
+            if e.parent_interp is self:
+                return e.w_value
+            raise
         except Return as e:
-            return frame.pop()
+            return e.w_value
 
     def handle_bytecode(self, ec, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])
@@ -194,7 +198,9 @@ class Interpreter(object):
         cells = [frame.pop() for _ in range(n_cells)]
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
-        block = W_BlockObject(w_code, frame.w_self, frame.w_scope, cells, frame.block)
+        block = W_BlockObject(
+            w_code, frame.w_self, frame.w_scope, cells, frame.block, self
+        )
         frame.push(block)
 
     def BUILD_CLASS(self, ec, bytecode, frame, pc):
@@ -347,8 +353,7 @@ class Interpreter(object):
             block = frame.unrollstack(unroller.kind)
             if block is None:
                 w_result = unroller.nomoreblocks()
-                frame.push(w_result)
-                raise Return
+                raise Return(w_result)
             else:
                 return block.handle(ec.space, frame, unroller)
         return pc
@@ -401,9 +406,16 @@ class Interpreter(object):
         w_returnvalue = frame.pop()
         block = frame.unrollstack(ReturnValue.kind)
         if block is None:
-            frame.push(w_returnvalue)
-            raise Return
+            raise Return(w_returnvalue)
         unroller = ReturnValue(w_returnvalue)
+        return block.handle(ec.space, frame, unroller)
+
+    def RAISE_RETURN(self, ec, bytecode, frame, pc):
+        w_returnvalue = frame.pop()
+        block = frame.unrollstack(RaiseReturnValue.kind)
+        if block is None:
+            raise RaiseReturn(frame.parent_interp, w_returnvalue)
+        unroller = RaiseReturnValue(frame.parent_interp, w_returnvalue)
         return block.handle(ec.space, frame, unroller)
 
     @jit.unroll_safe
@@ -419,7 +431,14 @@ class Interpreter(object):
 
 
 class Return(Exception):
-    pass
+    def __init__(self, w_value):
+        self.w_value = w_value
+
+
+class RaiseReturn(Exception):
+    def __init__(self, parent_interp, w_value):
+        self.parent_interp = parent_interp
+        self.w_value = w_value
 
 
 class SuspendedUnroller(W_BaseObject):
@@ -443,6 +462,9 @@ class ReturnValue(SuspendedUnroller):
     def nomoreblocks(self):
         return self.w_returnvalue
 
+
+class RaiseReturnValue(SuspendedUnroller):
+    kind = 1 << 2
 
 class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):

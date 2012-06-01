@@ -16,7 +16,7 @@ class Frame(BaseFrame):
     ]
 
     @jit.unroll_safe
-    def __init__(self, bytecode, w_self, w_scope, block):
+    def __init__(self, bytecode, w_self, w_scope, block, parent_interp):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         BaseFrame.__init__(self)
         self.bytecode = bytecode
@@ -27,6 +27,7 @@ class Frame(BaseFrame):
         self.w_self = w_self
         self.w_scope = w_scope
         self.block = block
+        self.parent_interp = parent_interp
         self.lastblock = None
 
     def _set_normal_arg(self, bytecode, i, w_value):
