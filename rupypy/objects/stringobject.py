@@ -117,9 +117,11 @@ class W_StringObject(W_BaseObject):
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
-        if self.str_w(space) < w_other.str_w(space):
+        s1 = space.str_w(self)
+        s2 = space.str_w(w_other)
+        if s1 < s2:
             return space.newint(-1)
-        elif self.str_w(space) == w_other.str_w(space):
+        elif s1 == s2:
             return space.newint(0)
-        elif self.str_w(space) > w_other.str_w(space):
+        elif s1 > s2:
             return space.newint(1)
