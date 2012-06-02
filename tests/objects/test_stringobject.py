@@ -14,3 +14,7 @@ class TestStringObject(object):
     def test_length(self, ec):
         w_res = ec.space.execute(ec, "return 'ABC'.length")
         assert ec.space.int_w(w_res) == 3
+
+    def test_comparator(self, ec):
+        w_res = ec.space.execute(ec, "return 'a' <=> 'b'")
+        assert ec.space.int_w(w_res) == -1
