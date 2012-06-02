@@ -31,4 +31,14 @@ class Comparable(Module):
     #     return false
     # end
     # """)
->>>>>>> Add < and > to Comparable
+
+    # moduledef.app_method("""
+    # def >= other
+    #     if self > other
+    #         return true
+    #     elsif self == other
+    #         return true
+    #     end
+    #     return false
+    # end
+    # """)
