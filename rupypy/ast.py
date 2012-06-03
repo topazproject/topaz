@@ -89,6 +89,7 @@ class If(Node):
     def locate_symbols(self, symtable):
         self.cond.locate_symbols(symtable)
         self.body.locate_symbols(symtable)
+        self.elsebody.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()

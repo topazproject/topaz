@@ -210,6 +210,26 @@ class TestCompiler(object):
         RETURN
         """)
 
+        self.assert_compiles(ec, """
+        unless 0
+            a = 4
+        end
+        a
+        """, """
+        LOAD_CONST 0
+        JUMP_IF_FALSE 12
+        LOAD_CONST 1
+        JUMP 18
+        LOAD_CONST 2
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_LOCAL 0
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_named_constants(self, ec):
         bc = self.assert_compiles(ec, "false; true; nil;", """
         LOAD_CONST 0
