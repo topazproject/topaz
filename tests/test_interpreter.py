@@ -179,6 +179,17 @@ class TestInterpreter(BaseRuPyPyTest):
         w_object_cls = ec.space.getclassfor(W_Object)
         assert "Constant" not in w_object_cls.constants_w
 
+    def test_module_constant(self, ec):
+        w_res = ec.space.execute(ec, """
+        ExternalConst = 10
+        module Y
+            Constant = 5
+            OtherConstant = ExternalConst
+        end
+        return [Y::Constant, Y::OtherConstant]
+        """)
+        assert self.unwrap(ec.space, w_res) == [5, 10]
+
     def test_subclass_constant(self, ec):
         w_res = ec.space.execute(ec, """
         GlobalConstant = 5

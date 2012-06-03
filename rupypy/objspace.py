@@ -168,7 +168,7 @@ class ObjectSpace(object):
         return W_RegexpObject(regexp)
 
     def newmodule(self, name):
-        return W_ModuleObject(self, name)
+        return W_ModuleObject(self, name, self.getclassfor(W_Object))
 
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
