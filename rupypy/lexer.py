@@ -88,6 +88,9 @@ class Lexer(object):
         self.clear()
         self.tokens.append(Token(token, value, self.current_pos()))
 
+    def error(self):
+        raise LexerError(self.current_pos())
+
     def tokenize(self):
         state = None
 
@@ -285,7 +288,7 @@ class Lexer(object):
             return "NUMBER"
         elif ch == "_":
             if not self.peek().isdigit():
-                raise LexerError(self.current_pos())
+                self.error()
             return "NUMBER"
         else:
             self.emit("NUMBER")
