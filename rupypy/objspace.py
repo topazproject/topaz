@@ -15,6 +15,7 @@ from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache
+from rupypy.modules.comparable import Comparable
 from rupypy.modules.math import Math
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
@@ -64,7 +65,7 @@ class ObjectSpace(object):
         ]:
             self.add_class(cls)
 
-        for module in [Math]:
+        for module in [Math, Comparable]:
             self.add_module(module)
 
         w_load_path = self.newarray([
