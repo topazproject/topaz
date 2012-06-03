@@ -85,6 +85,13 @@ class TestMain(object):
             "\tfrom {}:6:in `<main>'",
         ])
 
+    def test_traceback_load_const(self, tmpdir, capfd):
+        self.assert_traceback(tmpdir, capfd, """
+        UnknownConst
+        """, [
+            "{}:2:in `<main>': uninitialized constant UnknownConst (NameError)",
+        ])
+
     @py.test.mark.xfail
     def test_traceback_default_arg(self, tmpdir, capfd):
         self.assert_traceback(tmpdir, capfd, """

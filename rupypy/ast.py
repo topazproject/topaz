@@ -806,6 +806,7 @@ class LookupConstant(Node):
     def compile(self, ctx):
         if self.name[0].isupper():
             self.value.compile(ctx)
+            ctx.current_lineno = self.lineno
             ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
             Send(self.value, self.name, [], None, self.lineno).compile(ctx)
