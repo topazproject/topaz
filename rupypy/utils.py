@@ -1,3 +1,4 @@
+from pypy.rlib.objectmodel import specialize
 from pypy.rlib.parsing.ebnfparse import (ParserBuilder, EBNFToAST,
     TransformerMaker, lexer as ebnf_lexer, parser as ebnf_parser)
 from pypy.rlib.parsing.parsing import PackratParser
@@ -44,3 +45,27 @@ def format_traceback(space, exc):
         last_instr_idx += 1
         frame = frame.backref()
     return lines
+
+
+class Cache(object):
+    def __init__(self, space):
+        self.space = space
+        self.contents = {}
+
+    @specialize.memo()
+    def getorbuild(self, key):
+        try:
+            return self.contents[key]
+        except KeyError:
+            builder = self._build(key)
+            self.contents[key] = builder.next()
+            try:
+                builder.next()
+            except StopIteration:
+                pass
+            else:
+                raise RuntimeError("generator didn't stop")
+            return self.contents[key]
+
+    def _freeze_(self):
+        return True

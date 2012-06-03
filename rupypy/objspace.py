@@ -14,7 +14,7 @@ from rupypy.globals import Globals
 from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError
 from rupypy.lib.random import W_Random
-from rupypy.module import ClassCache
+from rupypy.module import ClassCache, ModuleCache
 from rupypy.modules.comparable import Comparable
 from rupypy.modules.math import Math
 from rupypy.objects.arrayobject import W_ArrayObject
@@ -213,6 +213,9 @@ class ObjectSpace(object):
 
     def getclassobject(self, classdef):
         return self.fromcache(ClassCache).getorbuild(classdef)
+
+    def getmoduleobject(self, moduledef):
+        return self.fromcache(ModuleCache).getorbuild(moduledef)
 
     def find_const(self, module, name):
         return module.find_const(self, name)

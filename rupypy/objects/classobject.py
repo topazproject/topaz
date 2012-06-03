@@ -37,8 +37,7 @@ class W_ClassObject(W_ModuleObject):
             if hasattr(obj, "classdef"):
                 self.set_const(self, obj.classdef.name, space.getclassfor(obj))
             elif hasattr(obj, "moduledef"):
-                w_module = obj.build_object(space)
-                self.set_const(self, obj.moduledef.name, w_module)
+                self.set_const(self, obj.moduledef.name, space.getmoduleobject(obj.moduledef))
             else:
                 assert False
 

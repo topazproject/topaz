@@ -68,6 +68,11 @@ class W_ModuleObject(W_BaseObject):
             )
         return self.klass
 
+    @classdef.method("include")
+    def method_include(self, space, w_mod):
+        self.mutated()
+        self.methods_w.update(w_mod.methods_w)
+
     @classdef.method("attr_accessor")
     def method_attr_accessor(self, space, args_w):
         for w_arg in args_w:
