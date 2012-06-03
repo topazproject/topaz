@@ -462,6 +462,14 @@ class TestInterpreter(BaseRuPyPyTest):
     def test_empty_hash(self, ec):
         ec.space.execute(ec, "return {}")
 
+    def test_multiple_assignment(self, ec):
+        w_res = ec.space.execute(ec, """
+        a = [3]
+        a[0], Object::Const, b = [5, 4]
+        return [a, Object::Const, b]
+        """)
+        assert self.unwrap(ec.space, w_res) == [[5], 4, None]
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):

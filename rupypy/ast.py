@@ -471,8 +471,8 @@ class AugmentedAssignment(Node):
         dup_needed = self.target.compile_receiver(ctx)
         if dup_needed == 1:
             ctx.emit(consts.DUP_TOP)
-        elif dup_needed > 0:
-            ctx.emit(consts.DUP_TOPX, dup_needed)
+        elif dup_needed == 2:
+            ctx.emit(consts.DUP_TWO)
         self.target.compile_load(ctx)
         self.value.compile(ctx)
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper), 1)
@@ -495,8 +495,8 @@ class OrEqual(Node):
         dup_needed = self.target.compile_receiver(ctx)
         if dup_needed == 1:
             ctx.emit(consts.DUP_TOP)
-        elif dup_needed > 0:
-            ctx.emit(consts.DUP_TOPX, dup_needed)
+        elif dup_needed == 2:
+            ctx.emit(consts.DUP_TWO)
         self.target.compile_load(ctx)
         ctx.emit(consts.DUP_TOP)
         ctx.emit_jump(consts.JUMP_IF_TRUE, end)
@@ -505,6 +505,32 @@ class OrEqual(Node):
         self.value.compile(ctx)
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
+
+
+class MultiAssignment(Node):
+    def __init__(self, targets, value):
+        self.targets = targets
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        for target in self.targets:
+            target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.UNPACK_SEQUENCE, len(self.targets))
+        for target in self.targets:
+            elems = target.compile_receiver(ctx)
+            if elems == 1:
+                ctx.emit(consts.ROT_TWO)
+            elif elems == 2:
+                ctx.emit(consts.ROT_THREE)
+                ctx.emit(consts.ROT_THREE)
+            target.compile_store(ctx)
+            ctx.emit(consts.DISCARD_TOP)
 
 
 class BinOp(Node):
@@ -749,13 +775,16 @@ class Subscript(Node):
         self.target.compile(ctx)
         for arg in self.args:
             arg.compile(ctx)
-        return len(self.args) + 1
+        ctx.emit(consts.BUILD_ARRAY, len(self.args))
+        return 2
 
     def compile_load(self, ctx):
-        ctx.emit(consts.SEND, ctx.create_symbol_const("[]"), len(self.args))
+        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]"))
 
     def compile_store(self, ctx):
-        ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), len(self.args) + 1)
+        ctx.emit(consts.BUILD_ARRAY, 1)
+        ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
 
 
 class LookupConstant(Node):

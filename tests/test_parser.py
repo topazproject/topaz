@@ -122,6 +122,21 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.Assignment(ast.Variable("b", 1), ast.ConstantInt(3))))
         ]))
 
+    def test_multi_assignment(self, ec):
+        assert ec.space.parse(ec, "a.x, b[:idx], c::Const, d = 3") == ast.Main(ast.Block([
+            ast.Statement(ast.MultiAssignment(
+                [
+                    ast.Send(ast.Variable("a", 1), "x", [], None, 1),
+                    ast.Subscript(ast.Variable("b", 1), [ast.ConstantSymbol("idx")], 1),
+                    ast.LookupConstant(ast.Variable("c", 1), "Const", 1),
+                    ast.Variable("d", 1),
+                ],
+                ast.ConstantInt(3)
+            ))
+        ]))
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "a, b += 3")
+
     def test_load_variable(self, ec):
         assert ec.space.parse(ec, "a") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("a", 1))

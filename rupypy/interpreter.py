@@ -275,6 +275,17 @@ class Interpreter(object):
                 "wrong argument type"
             )
 
+    @jit.unroll_safe
+    def UNPACK_SEQUENCE(self, ec, bytecode, frame, pc, n_items):
+        w_obj = frame.pop()
+        items_w = ec.space.listview(w_obj)
+        for i in xrange(n_items - 1, -1, -1):
+            try:
+                w_obj = items_w[i]
+            except IndexError:
+                w_obj = ec.space.w_nil
+            frame.push(w_obj)
+
     def DEFINE_FUNCTION(self, ec, bytecode, frame, pc):
         w_func = frame.pop()
         w_name = frame.pop()
@@ -391,15 +402,27 @@ class Interpreter(object):
     def DUP_TOP(self, space, bytecode, frame, pc):
         frame.push(frame.peek())
 
-    @jit.unroll_safe
-    def DUP_TOPX(self, space, bytecode, frame, pc, n):
-        objs_w = [None] * n
-        for i in xrange(n):
-            objs_w[i] = frame.pop()
-        for i in xrange(n - 1, -1, -1):
-            frame.push(objs_w[i])
-        for i in xrange(n - 1, -1, -1):
-            frame.push(objs_w[i])
+    def DUP_TWO(self, space, bytecode, frame, pc):
+        w_1 = frame.pop()
+        w_2 = frame.pop()
+        frame.push(w_2)
+        frame.push(w_1)
+        frame.push(w_2)
+        frame.push(w_1)
+
+    def ROT_TWO(self, space, bytecode, frame, pc):
+        w_1 = frame.pop()
+        w_2 = frame.pop()
+        frame.push(w_1)
+        frame.push(w_2)
+
+    def ROT_THREE(self, space, bytecode, frame, pc):
+        w_1 = frame.pop()
+        w_2 = frame.pop()
+        w_3 = frame.pop()
+        frame.push(w_1)
+        frame.push(w_3)
+        frame.push(w_2)
 
     def RETURN(self, ec, bytecode, frame, pc):
         w_returnvalue = frame.pop()

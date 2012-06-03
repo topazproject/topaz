@@ -1396,24 +1396,30 @@ class TestCompiler(object):
         self.assert_compiles(ec, "self[3] = 5", """
         LOAD_SELF
         LOAD_CONST 0
+        BUILD_ARRAY 1
         LOAD_CONST 1
-        SEND 2 2
+        BUILD_ARRAY 1
+        SEND 2 1
+        SEND_SPLAT 3
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 4
         RETURN
         """)
         self.assert_compiles(ec, "self[3] += 1", """
         LOAD_SELF
         LOAD_CONST 0
-        DUP_TOPX 2
-        SEND 1 1
+        BUILD_ARRAY 1
+        DUP_TWO
+        SEND_SPLAT 1
         LOAD_CONST 2
         SEND 3 1
-        SEND 4 2
+        BUILD_ARRAY 1
+        SEND 4 1
+        SEND_SPLAT 5
         DISCARD_TOP
 
-        LOAD_CONST 5
+        LOAD_CONST 6
         RETURN
         """)
 
@@ -1518,5 +1524,51 @@ class TestCompiler(object):
         self.assert_compiled(bc.consts_w[0], """
         LOAD_CONST 0
         RAISE_RETURN
+        RETURN
+        """)
+
+    def test_multi_assignment(self, ec):
+        self.assert_compiles(ec, """
+        a = b = c = d = nil
+        a.x, b[:idx], c::Const, d = 3
+        """, """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        STORE_LOCAL 1
+        STORE_LOCAL 2
+        STORE_LOCAL 3
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        DUP_TOP
+        COERCE_ARRAY
+        UNPACK_SEQUENCE 4
+
+        LOAD_LOCAL 3
+        ROT_TWO
+        SEND 2 1
+        DISCARD_TOP
+
+        LOAD_LOCAL 2
+        LOAD_CONST 3
+        BUILD_ARRAY 1
+        ROT_THREE
+        ROT_THREE
+        BUILD_ARRAY 1
+        SEND 4 1
+        SEND_SPLAT 5
+        DISCARD_TOP
+
+        LOAD_LOCAL 1
+        ROT_TWO
+        STORE_CONSTANT 6
+        DISCARD_TOP
+
+        STORE_LOCAL 0
+        DISCARD_TOP
+
+        DISCARD_TOP
+
+        LOAD_CONST 7
         RETURN
         """)

@@ -6,7 +6,7 @@ from pypy.rlib.unroll import unrolling_iterable
 SEND_EFFECT = 0xFF
 ARRAY_EFFECT = 0xFE
 BLOCK_EFFECT = 0xFD
-DUP_TOPX_EFFECT = 0xFC
+UNPACK_EFFECT = 0xFC
 
 # Name, number of arguments, stack effect
 BYTECODES = [
@@ -43,6 +43,7 @@ BYTECODES = [
     ("COPY_STRING", 0, 0),
     ("COERCE_ARRAY", 0, 0),
     ("COERCE_BLOCK", 0, 0),
+    ("UNPACK_SEQUENCE", 1, UNPACK_EFFECT),
 
     ("DEFINE_FUNCTION", 0, -2),
     ("ATTACH_FUNCTION", 0, -2),
@@ -66,7 +67,9 @@ BYTECODES = [
 
     ("DISCARD_TOP", 0, -1),
     ("DUP_TOP", 0, +1),
-    ("DUP_TOPX", 1, DUP_TOPX_EFFECT),
+    ("DUP_TWO", 0, +2),
+    ("ROT_TWO", 0, 0),
+    ("ROT_THREE", 0, 0),
 
     ("RETURN", 0, -1),
     ("RAISE_RETURN", 0, -1),

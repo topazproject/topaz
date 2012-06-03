@@ -31,7 +31,9 @@ expr: assignment |
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <DIV_EQUAL> | <OR_EQUAL>;
 
-assignment: send assignment_oper expr;
+assignment: assign_target assignment_oper expr;
+
+assign_target: send [COMMA] >assign_target< | send;
 
 yield: YIELD [LPAREN] args? [RPAREN] |
        YIELD args?;

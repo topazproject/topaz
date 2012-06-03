@@ -88,16 +88,22 @@ class Transformer(object):
         return self.visit_arg(node.children[0])
 
     def visit_assignment(self, node):
-        target = self.visit_arg(node.children[0])
+        targets = [self.visit_arg(n) for n in node.children[0].children]
         oper = node.children[1].additional_info
         value = self.visit_expr(node.children[2])
-        target.validate_assignment(self, node)
-        if oper == "=":
-            return ast.Assignment(target, value)
-        elif oper == "||=":
-            return ast.OrEqual(target, value)
+        if len(targets) == 1:
+            [target] = targets
+            target.validate_assignment(self, node)
+            if oper == "=":
+                return ast.Assignment(target, value)
+            elif oper == "||=":
+                return ast.OrEqual(target, value)
+            else:
+                return ast.AugmentedAssignment(oper[0], target, value)
         else:
-            return ast.AugmentedAssignment(oper[0], target, value)
+            if oper != "=":
+                self.error(node.children[1])
+            return ast.MultiAssignment(targets, value)
 
     def visit_yield(self, node):
         args = []
