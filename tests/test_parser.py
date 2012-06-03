@@ -11,6 +11,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "-1") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantInt(-1))
         ]))
+        assert ec.space.parse(ec, "1_1") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(11))
+        ]))
 
     def test_float(self, ec):
         assert ec.space.parse(ec, "0.2") == ast.Main(ast.Block([

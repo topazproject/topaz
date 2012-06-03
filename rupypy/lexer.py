@@ -283,6 +283,10 @@ class Lexer(object):
         elif ch.isdigit():
             self.add(ch)
             return "NUMBER"
+        elif ch == "_":
+            if not self.peek().isdigit():
+                raise LexerError(self.current_pos())
+            return "NUMBER"
         else:
             self.emit("NUMBER")
             return self.handle_generic(ch)
