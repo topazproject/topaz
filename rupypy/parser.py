@@ -175,6 +175,11 @@ class Transformer(object):
         raise NotImplementedError
 
     def visit_real_send(self, node):
+        if node.children[0].symbol == "ambigious_binop":
+            node = node.children[0]
+            lhs = ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
+            rhs = self.visit_arg(node.children[2])
+            return ast.MaybeBinop(node.children[1].additional_info, lhs, rhs, node.getsourcepos().lineno)
         if node.children[0].symbol != "primary":
             if node.children[0].symbol == "global_block":
                 node = node.children[0]

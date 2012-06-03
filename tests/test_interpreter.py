@@ -1,3 +1,5 @@
+import math
+
 from rupypy.objects.boolobject import W_TrueObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.objectobject import W_Object
@@ -480,6 +482,17 @@ class TestInterpreter(BaseRuPyPyTest):
         return [a, Object::Const, b]
         """)
         assert self.unwrap(ec.space, w_res) == [[5], 4, None]
+
+    def test_minus(self, ec):
+        w_res = ec.space.execute(ec, """
+        def a(x)
+            Math.sin(x)
+        end
+        b = 1
+        c = 1
+        return [(a -b), (c -b)]
+        """)
+        assert self.unwrap(ec.space, w_res) == [math.sin(-1), 0]
 
 
 class TestBlocks(BaseRuPyPyTest):

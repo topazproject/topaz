@@ -69,6 +69,10 @@ class W_IntObject(W_BaseObject):
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
 
+    @classdef.method("-@")
+    def method_neg(self, space):
+        return space.newint(-self.intvalue)
+
     classdef.app_method("""
     def times
         i = 0

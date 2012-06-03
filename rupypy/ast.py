@@ -549,6 +549,31 @@ class BinOp(Node):
         Send(self.left, self.op, [self.right], None, self.lineno).compile(ctx)
 
 
+class MaybeBinop(Node):
+    def __init__(self, op, left, right, lineno):
+        Node.__init__(self, lineno)
+        self.op = op
+        self.left = left
+        self.right = right
+
+    def locate_symbols(self, symtable):
+        if symtable.is_defined(self.left.name):
+            self.left.locate_symbols(symtable)
+        self.right.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        if ctx.symtable.is_defined(self.left.name):
+            Send(self.left, self.op, [self.right], None, self.lineno).compile(ctx)
+        else:
+            Send(
+                Self(self.lineno),
+                self.left.name,
+                [UnaryOp(self.op, self.right, self.lineno)],
+                None,
+                self.lineno
+            ).compile(ctx)
+
+
 class UnaryOp(Node):
     def __init__(self, op, value, lineno):
         Node.__init__(self, lineno)

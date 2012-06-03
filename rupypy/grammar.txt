@@ -74,6 +74,7 @@ block_args: [PIPE] arglist? [PIPE] |
 
 real_send: primary trailers |
            global_block |
+           ambigious_binop |
            IDENTIFIER send_args block? |
            IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
 
@@ -89,6 +90,8 @@ attribute: [DOT] operation [LPAREN] send_args? [RPAREN] block? |
            [DOT] operation send_args?;
 subscript: [LSUBSCRIPT] arg [RBRACKET];
 constant: COLONCOLON IDENTIFIER;
+
+ambigious_binop: IDENTIFIER UNARY_MINUS arg;
 
 primary: LPAREN expr RPAREN |
          LBRACKET array |

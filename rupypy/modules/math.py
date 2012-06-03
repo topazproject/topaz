@@ -11,3 +11,7 @@ class Math(Module):
     @moduledef.function("exp", value="float")
     def method_exp(self, space, value):
         return space.newfloat(math.exp(value))
+
+    @moduledef.function("sin", value="float")
+    def method_sin(self, space, value):
+        return space.newfloat(math.sin(value))
