@@ -56,6 +56,7 @@ class W_ArrayObject(W_BaseObject):
         else:
             self.items_w[space.int_w(w_idx)] = w_obj
 
+    @classdef.method("size")
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(len(self.items_w))
@@ -82,8 +83,6 @@ class W_ArrayObject(W_BaseObject):
         self[idx]
     end
     """)
-
-    classdef.alias("length", "size")
 
     classdef.app_method("""
     def each
