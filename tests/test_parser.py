@@ -310,6 +310,13 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "return") == ast.Main(ast.Block([
             ast.Return(ast.Variable("nil", 1))
         ]))
+        assert ec.space.parse(ec, "return 3, 4, 5") == ast.Main(ast.Block([
+            ast.Return(ast.Array([
+                ast.ConstantInt(3),
+                ast.ConstantInt(4),
+                ast.ConstantInt(5),
+            ]))
+        ]))
 
     def test_array(self, ec):
         assert ec.space.parse(ec, "[]") == ast.Main(ast.Block([

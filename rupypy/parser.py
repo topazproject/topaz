@@ -37,7 +37,11 @@ class Transformer(object):
     def visit_stmt(self, node):
         if node.children[0].symbol == "RETURN":
             if len(node.children) == 2:
-                obj = self.visit_expr(node.children[1])
+                objs = [self.visit_expr(n) for n in node.children[1].children]
+                if len(objs) == 1:
+                    [obj] = objs
+                else:
+                    obj = ast.Array(objs)
             else:
                 obj = ast.Variable("nil", node.getsourcepos().lineno)
             return ast.Return(obj)
