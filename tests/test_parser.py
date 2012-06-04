@@ -78,6 +78,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, ":a <=> :a") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("<=>", ast.ConstantSymbol("a"), ast.ConstantSymbol("a"), 1))
         ]))
+        assert ec.space.parse(ec, ":a != ?-") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("!=", ast.ConstantSymbol("a"), ast.ConstantString("-"), 1))
+        ]))
 
     def test_multi_term_expr(self, ec):
         assert ec.space.parse(ec, "1 + 2 * 3") == ast.Main(ast.Block([

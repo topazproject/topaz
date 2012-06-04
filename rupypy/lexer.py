@@ -458,6 +458,7 @@ class Lexer(object):
         if ch == "=":
             self.add(ch)
             self.emit("NE")
+            self.set_expression_context()
             return None
         elif ch == "~":
             self.add(ch)
