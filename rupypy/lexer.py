@@ -73,6 +73,9 @@ class Lexer(object):
     def is_arg(self):
         return self.context in [self.EXPR_ARG]
 
+    def set_expression_context(self):
+        self.context = self.EXPR_BEG
+
     def current_pos(self):
         return SourcePos(self.idx, self.lineno, self.columno)
 
@@ -415,7 +418,7 @@ class Lexer(object):
             self.emit("EQEQEQ")
             return None
         self.emit("EQEQ")
-        self.context = self.EXPR_BEG
+        self.set_expression_context()
         return self.handle_generic(ch)
 
     def handle_LT(self, ch):
@@ -434,6 +437,7 @@ class Lexer(object):
         if ch == ">":
             self.add(ch)
             self.emit("LEGT")
+            self.set_expression_context()
             return None
         self.emit("LE")
         return self.handle_generic(ch)
