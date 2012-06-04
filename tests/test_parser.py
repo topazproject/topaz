@@ -27,7 +27,6 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.ConstantInt(2))
         ]))
 
-
     def test_float(self, ec):
         assert ec.space.parse(ec, "0.2") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(0.2))
@@ -63,6 +62,9 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert ec.space.parse(ec, "$a << []") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("<<", ast.Global("$a"), ast.Array([]), 1))
+        ]))
+        assert ec.space.parse(ec, "5 or 3") == ast.Main(ast.Block([
+            ast.Statement(ast.Or(ast.ConstantInt(5), ast.ConstantInt(3)))
         ]))
 
     def test_multi_term_expr(self, ec):

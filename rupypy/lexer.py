@@ -54,6 +54,8 @@ class Lexer(object):
         "case": Keyword("CASE", "CASE", EXPR_BEG),
         "when": Keyword("WHEN", "WHEN", EXPR_BEG),
         "end": Keyword("END", "END", EXPR_END),
+
+        "or": Keyword("OR_LITERAL", "OR_LITERAL", EXPR_BEG),
     }
 
     def __init__(self, text):

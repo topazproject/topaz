@@ -116,7 +116,7 @@ class Transformer(object):
             node = node.children[0]
 
         symname = node.symbol
-        if symname in ["comparison", "shiftive", "additive", "multitive", "bool", "match", "or", "and"]:
+        if symname in ["comparison", "shiftive", "additive", "multitive", "bool", "match", "or", "and", "literal_bool"]:
             return self.visit_subexpr(node)
         elif symname == "range":
             return self.visit_range(node)
@@ -138,6 +138,9 @@ class Transformer(object):
         op = node.children[1].additional_info
         lhs = self.visit_arg(node.children[0])
         rhs = self.visit_arg(node.children[2])
+        if op == "or":
+            op = "||"
+
         if op == "||":
             return ast.Or(lhs, rhs)
         elif op == "&&":

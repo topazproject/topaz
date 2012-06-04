@@ -40,8 +40,9 @@ yield: YIELD [LPAREN] args? [RPAREN] |
 
 arg: ternary;
 
-ternary: range QUESTION ternary COLON ternary | <range>;
+ternary: literal_bool QUESTION ternary COLON ternary | <literal_bool>;
 
+literal_bool_oper: <OR_LITERAL>;
 range_oper: <DOTDOT> | <DOTDOTDOT>;
 match_oper: <EQUAL_TILDE> | <EXCLAMATION_TILDE>;
 bool_oper: <OR> | <AND>;
@@ -51,6 +52,7 @@ add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
 unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
 
+literal_bool: range literal_bool_oper literal_bool | <range>;
 range: match range_oper range | <match>;
 match: bool match_oper match | <bool>;
 bool: comparison bool_oper bool | <comparison>;
