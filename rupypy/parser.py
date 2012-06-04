@@ -38,28 +38,32 @@ class Transformer(object):
         if node.children[0].symbol == "contained_statement":
             return self.visit_stmt(node.children[0])
         if node.children[0].symbol == "return_expr":
-            ret_node = node.children[0]
-            if len(ret_node.children) == 2:
-                objs = [self.visit_expr(n) for n in ret_node.children[1].children]
-                if len(objs) == 1:
-                    [obj] = objs
-                else:
-                    obj = ast.Array(objs)
-            else:
-                obj = ast.Variable("nil", ret_node.getsourcepos().lineno)
-            return ast.Return(obj)
+            return ast.Return(self.visit_return_expr(node.children[0]))
         if node.children[0].symbol == "literal_bool":
-            child = node.children[0]
-            op = child.children[1].additional_info
-            lhs = self.visit_stmt(child.children[0])
-            rhs = self.visit_stmt(child.children[2])
-            if op == "and":
-                return ast.LiteralAnd(lhs, rhs)
-            else: # "or"
-                return ast.LiteralOr(lhs, rhs)
+            return self.visit_literal_bool(node.children[0])
         if node.children[0].symbol == "literal_not":
             return ast.LiteralNot(self.visit_stmt(node.children[0].children[1]))
         return ast.Statement(self.visit_expr(node.children[0]))
+
+    def visit_return_expr(self, node):
+        if len(node.children) == 2:
+            objs = [self.visit_expr(n) for n in node.children[1].children]
+            if len(objs) == 1:
+                [obj] = objs
+            else:
+                obj = ast.Array(objs)
+        else:
+            obj = ast.Variable("nil", node.getsourcepos().lineno)
+        return obj
+
+    def visit_literal_bool(self, node):
+        op = node.children[1].additional_info
+        lhs = self.visit_stmt(node.children[0])
+        rhs = self.visit_stmt(node.children[2])
+        if op == "and":
+            return ast.LiteralAnd(lhs, rhs)
+        else: # "or"
+            return ast.LiteralOr(lhs, rhs)
 
     def visit_send_block(self, node):
         send = self.visit_real_send(node.children[0])
