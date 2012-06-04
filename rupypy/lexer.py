@@ -409,6 +409,7 @@ class Lexer(object):
             self.emit("EQEQEQ")
             return None
         self.emit("EQEQ")
+        self.context = self.EXPR_BEG
         return self.handle_generic(ch)
 
     def handle_LT(self, ch):
