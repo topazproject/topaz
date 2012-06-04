@@ -35,6 +35,8 @@ class Transformer(object):
         return ast.Block(stmts)
 
     def visit_stmt(self, node):
+        if node.children[0].symbol == "contained_statement":
+            return self.visit_stmt(node.children[0])
         if node.children[0].symbol == "return_expr":
             ret_node = node.children[0]
             if len(ret_node.children) == 2:
@@ -55,6 +57,8 @@ class Transformer(object):
                 return ast.LiteralAnd(lhs, rhs)
             else: # "or"
                 return ast.LiteralOr(lhs, rhs)
+        if node.children[0].symbol == "literal_not":
+            return ast.LiteralNot(self.visit_stmt(node.children[0].children[1]))
         return ast.Statement(self.visit_expr(node.children[0]))
 
     def visit_send_block(self, node):

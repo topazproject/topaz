@@ -52,8 +52,8 @@ real_statement: literal_bool;
 literal_bool: contained_statement literal_bool_oper literal_bool | <contained_statement>;
 literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;
 
-contained_statement: literal_not | DEFINEDP expr | <return_expr> | <expr>;
-literal_not: <NOT_LITERAL> contained_statement;
+contained_statement: literal_not | DEFINEDP expr | return_expr | expr;
+literal_not: NOT_LITERAL contained_statement;
 return_expr: RETURN exprs?;
 exprs: expr [COMMA] >exprs< | expr;
 

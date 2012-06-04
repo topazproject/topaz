@@ -655,6 +655,10 @@ class Not(Node):
         self.value.compile(ctx)
         ctx.emit(consts.UNARY_NOT)
 
+class LiteralNot(Not):
+    def __init__(self, value):
+        self.value = value
+        value.dont_pop = True
 
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):
