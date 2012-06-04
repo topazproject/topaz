@@ -230,7 +230,7 @@ class Transformer(object):
                     else:
                         args, block_argument = self.visit_send_args(node.children[1])
                 elif node.symbol == "subscript":
-                    args = [self.visit_arg(node.children[0])]
+                    args = [self.visit_arg(n) for n in node.children[0].children]
                     target = ast.Subscript(target, args, node.getsourcepos().lineno)
                     continue
                 else:

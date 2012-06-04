@@ -90,7 +90,7 @@ trailer: subscript | attribute | constant;
 attribute: [DOT] operation [LPAREN] send_args? [RPAREN] block? |
            [DOT] operation block |
            [DOT] operation send_args?;
-subscript: [LSUBSCRIPT] arg [RBRACKET];
+subscript: [LSUBSCRIPT] args [RBRACKET];
 constant: COLONCOLON IDENTIFIER;
 
 ambigious_binop: IDENTIFIER UNARY_MINUS arg;

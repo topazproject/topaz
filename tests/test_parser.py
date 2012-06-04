@@ -381,6 +381,13 @@ class TestParser(BaseRuPyPyTest):
                 1,
             ))
         ]))
+        assert ec.space.parse(ec, "r[0, 0]") == ast.Main(ast.Block([
+            ast.Statement(ast.Subscript(
+                ast.Variable("r", 1),
+                [ast.ConstantInt(0), ast.ConstantInt(0)],
+                1,
+            ))
+        ]))
 
     def test_subscript_assginment(self, ec):
         assert ec.space.parse(ec, "x[0] = 5") == ast.Main(ast.Block([
