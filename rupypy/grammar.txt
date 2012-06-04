@@ -175,7 +175,7 @@ when: WHEN exprs then line* statement? [LINE_END]?;
 function_name: varname [DOT] method_name |
                method_name;
 
-method_name: <IDENTIFIER> | <LEGT> | <EQEQEQ> | <LT> | <GT> | <GE> | <LE>;
+method_name: <IDENTIFIER> | <LEGT> | <EQEQEQ> | <LT> | <GT> | <GE> | <LE> | <EQEQ>;
 
 argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];
