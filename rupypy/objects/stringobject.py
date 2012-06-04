@@ -113,3 +113,15 @@ class W_StringObject(W_BaseObject):
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(self.length())
+
+    @classdef.method("<=>")
+    def method_comparator(self, space, w_other):
+        assert isinstance(w_other, W_StringObject)
+        s1 = space.str_w(self)
+        s2 = space.str_w(w_other)
+        if s1 < s2:
+            return space.newint(-1)
+        elif s1 == s2:
+            return space.newint(0)
+        elif s1 > s2:
+            return space.newint(1)

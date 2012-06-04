@@ -14,3 +14,15 @@ class TestStringObject(object):
     def test_length(self, ec):
         w_res = ec.space.execute(ec, "return 'ABC'.length")
         assert ec.space.int_w(w_res) == 3
+
+    def test_comparator_lt(self, ec):
+        w_res = ec.space.execute(ec, "return 'a' <=> 'b'")
+        assert ec.space.int_w(w_res) == -1
+
+    def test_comparator_eq(self, ec):
+        w_res = ec.space.execute(ec, "return 'a' <=> 'a'")
+        assert ec.space.int_w(w_res) == 0
+
+    def test_comparator_gt(self, ec):
+        w_res = ec.space.execute(ec, "return 'b' <=> 'a'")
+        assert ec.space.int_w(w_res) == 1

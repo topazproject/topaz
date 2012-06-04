@@ -1,0 +1,2 @@
+class TestComparable(object):
+    pass
