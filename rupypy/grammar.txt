@@ -11,6 +11,29 @@ array_trailer: LINE_END |
 
 line: statement? [LINE_END];
 
+# operator expressions, ordered by precedence
+# Operator     		Description
+# [ ] [ ]=		Element reference, element set
+# **			Exponentiation		 
+# ! ~ + -		Not, complement, unary plus and minus
+# * / %			Multiply, divide, and modulo
+# + -          	      	Plus and minus		 
+# >> <<		      	Right and left shift	 
+# &		      	Bitwise `and' 		
+# ^ |		      	Bitwise exclusive `or' and regular `or'
+# <= < > >=	      	Comparison operators
+# <=> == === != =~ !~ 	Equality and pattern match operators
+# &&	     	   	Logical `and'		 
+# ||			Logical `or'		 
+# .. ...		Range (inclusive and exclusive)
+# ? :			Ternary if-then-else	 
+# = %= { /= -= += |= &= >>= <<= *= &&= ||= **=	Assignment
+# defined?	     	Check if symbol defined
+# not			`literal_not`
+# or and		`literal_bool`
+# if unless while until	`inline_*`
+# begin/end	  	Block expression 
+
 statement: inline_if |
            inline_unless |
            inline_until |
