@@ -43,6 +43,14 @@ class TestIntObject(object):
         """)
         assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [0, 1, 2]
 
-    def test_comparator(self, ec):
+    def test_comparator_lt(self, ec):
         w_res = ec.space.execute(ec, "return 1 <=> 2")
         assert ec.space.int_w(w_res) == -1
+
+    def test_comparator_eq(self, ec):
+        w_res = ec.space.execute(ec, "return 1 <=> 1")
+        assert ec.space.int_w(w_res) == 0
+
+    def test_comparator_gt(self, ec):
+        w_res = ec.space.execute(ec, "return 2 <=> 1")
+        assert ec.space.int_w(w_res) == 1
