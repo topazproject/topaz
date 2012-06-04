@@ -115,6 +115,7 @@ class W_ModuleObject(W_BaseObject):
 
     @classdef.method("include")
     def method_include(self, space, w_mod):
+        assert isinstance(w_mod, W_ModuleObject)
         self.mutated()
         self.methods_w.update(w_mod.methods_w)
 
