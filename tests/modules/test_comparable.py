@@ -8,13 +8,12 @@ class TestComparable(object):
         assert w_res is ec.space.w_true
 
     def test_ge(self, ec):
-        pass
+        w_res = ec.space.execute(ec, "return 'b' <= 'b'")
+        assert w_res is ec.space.w_true
 
     def test_le(self, ec):
-        pass
-
-    def test_eqeq(self, ec):
-        pass
+        w_res = ec.space.execute(ec, "return 'c' >= 'b'")
+        assert w_res is ec.space.w_true
 
     def test_between(self, ec):
         pass

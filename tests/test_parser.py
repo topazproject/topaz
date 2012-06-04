@@ -498,6 +498,8 @@ class TestParser(BaseRuPyPyTest):
         test_name("===")
         test_name(">")
         test_name("<")
+        test_name(">=")
+        test_name("<=")
 
     def test_string(self, ec):
         assert ec.space.parse(ec, '"abc"') == ast.Main(ast.Block([

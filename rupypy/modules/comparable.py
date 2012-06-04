@@ -15,3 +15,21 @@ class Comparable(Module):
         return (self <=> other) < 0
     end
     """)
+
+    moduledef.app_method("""
+    def >= other
+        unless (self <=> other) < 0
+             return true
+        end
+        return false
+    end
+    """)
+
+    moduledef.app_method("""
+    def <= other
+        unless (self <=> other) < 0
+             return true
+        end
+        return false
+    end
+    """)
