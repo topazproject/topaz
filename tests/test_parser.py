@@ -61,6 +61,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "2 & 3 | 5") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("|", ast.BinOp("&", ast.ConstantInt(2), ast.ConstantInt(3), 1), ast.ConstantInt(5), 1))
         ]))
+        assert ec.space.parse(ec, "$a << []") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("<<", ast.Global("$a"), ast.Array([]), 1))
+        ]))
 
     def test_multi_term_expr(self, ec):
         assert ec.space.parse(ec, "1 + 2 * 3") == ast.Main(ast.Block([
@@ -1189,4 +1192,3 @@ class TestParser(BaseRuPyPyTest):
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
         ]))
-

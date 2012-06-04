@@ -412,6 +412,7 @@ class Lexer(object):
         if ch == "<":
             self.add(ch)
             self.emit("LSHIFT")
+            self.context = self.EXPR_BEG
             return None
         elif ch == "=":
             self.add(ch)
