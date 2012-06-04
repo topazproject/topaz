@@ -499,6 +499,17 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Class("X", ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Object", 1), ast.Block([])))
         ]))
 
+        r = ec.space.parse(ec, """
+        class X < Object; end
+
+        def f
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(2), "Object", 2), ast.Block([]))),
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([]))),
+        ]))
+
     def test_singleton_class(self, ec):
         r = ec.space.parse(ec, "class << self; end")
         assert r == ast.Main(ast.Block([

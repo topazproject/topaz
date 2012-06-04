@@ -141,7 +141,8 @@ class Lexer(object):
                 self.emit(keyword.normal_token)
             else:
                 self.emit(keyword.inline_token)
-                self.context = self.EXPR_BEG
+                if keyword.inline_token != keyword.normal_token:
+                    self.context = self.EXPR_BEG
         else:
             self.emit("IDENTIFIER")
             if self.context in [
