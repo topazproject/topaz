@@ -527,8 +527,14 @@ class Transformer(object):
         return args, splat_arg, block_arg
 
     def visit_number(self, node):
-        if "." in node.additional_info:
+        if "." in node.additional_info or "E" in node.additional_info:
             return ast.ConstantFloat(float(node.additional_info))
+        elif "X" in node.additional_info:
+            return ast.ConstantInt(int(node.additional_info[2:], 16))
+        elif "O" in node.additional_info:
+            return ast.ConstantInt(int(node.additional_info[2:], 8))
+        elif "B" in node.additional_info:
+            return ast.ConstantInt(int(node.additional_info[2:], 2))
         else:
             return ast.ConstantInt(int(node.additional_info))
 

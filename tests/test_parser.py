@@ -14,10 +14,29 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "1_1") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantInt(11))
         ]))
+        assert ec.space.parse(ec, "0d10") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(10))
+        ]))
+        assert ec.space.parse(ec, "0xA") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(10))
+        ]))
+        assert ec.space.parse(ec, "0o10") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(8))
+        ]))
+        assert ec.space.parse(ec, "0b10") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(2))
+        ]))
+
 
     def test_float(self, ec):
         assert ec.space.parse(ec, "0.2") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(0.2))
+        ]))
+        assert ec.space.parse(ec, "1E1") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantFloat(10.0))
+        ]))
+        assert ec.space.parse(ec, "1e1") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantFloat(10.0))
         ]))
 
     def test_binary_expression(self, ec):
