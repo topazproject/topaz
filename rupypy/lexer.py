@@ -67,6 +67,12 @@ class Lexer(object):
         self.lineno = 1
         self.columno = 1
 
+    def is_beg(self):
+        return self.context in [self.EXPR_BEG, self.EXPR_MID, self.EXPR_CLASS, self.EXPR_VALUE]
+
+    def is_arg(self):
+        return self.context in [self.EXPR_ARG]
+
     def current_pos(self):
         return SourcePos(self.idx, self.lineno, self.columno)
 
@@ -356,17 +362,17 @@ class Lexer(object):
         return self.handle_generic(ch)
 
     def handle_MINUS(self, ch):
-        if ch.isdigit():
-            self.add(ch)
-            return "NUMBER"
-        elif ch == "=":
+        if ch == "=":
             self.add(ch)
             self.emit("MINUS_EQUAL")
             return None
-        elif ch == " " or self.prev(2) not in ["(", " ", None]:
-            self.emit("MINUS")
-        else:
+        elif self.is_beg() or (self.is_arg() and self.prev(2) == " " and ch != " "):
+            if ch.isdigit():
+                self.add(ch)
+                return "NUMBER"
             self.emit("UNARY_MINUS")
+            return self.handle_generic(ch)
+        self.emit("MINUS")
         return self.handle_generic(ch)
 
     def handle_STAR(self, ch):
