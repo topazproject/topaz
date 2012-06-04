@@ -375,10 +375,20 @@ class Transformer(object):
         return ast.If(if_cond, if_block, else_block)
 
     def visit_unless(self, node):
+        unless_node = node.children[1]
+        unless_cond = self.visit_expr(unless_node.children[0])
+        unless_block = self.visit_block(unless_node, start_idx=2)
+
+        idx = 2
+        if len(node.children) > idx and node.children[idx].symbol == "else":
+            else_node = node.children[2]
+            else_block = self.visit_block(else_node, start_idx=1)
+        else:
+            else_block = ast.Block([])
         return ast.If(
-            self.visit_expr(node.children[1]),
-            ast.Block([]),
-            self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
+            unless_cond,
+            else_block,
+            unless_block,
         )
 
     def visit_while(self, node):

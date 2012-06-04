@@ -685,6 +685,20 @@ class TestParser(BaseRuPyPyTest):
             ])))
         ]))
 
+        r = ec.space.parse(ec, """
+        unless 0
+            5
+        else
+            7
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(0),
+                ast.Block([ast.Statement(ast.ConstantInt(7))]),
+                ast.Block([ast.Statement(ast.ConstantInt(5))]),
+            ))
+        ]))
+
     def test_constant_lookup(self, ec):
         assert ec.space.parse(ec, "Module::Constant") == ast.Main(ast.Block([
             ast.Statement(ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Constant", 1))
