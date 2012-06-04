@@ -277,18 +277,31 @@ class Lexer(object):
 
     def handle_NUMBER(self, ch):
         self.context = self.EXPR_END
+        if ch in "xXbBdDoO" and self.current_value == ["0"]:
+            if ch == "x" or ch == "X":
+                self.add("X")
+            elif ch == "b" or ch == "B":
+                self.add("B")
+            elif ch == "o" or ch == "O":
+                self.add("O")
+            return "NUMBER"
         if ch == ".":
             if not self.peek().isdigit():
                 self.emit("NUMBER")
                 return self.handle_generic(ch)
             self.add(ch)
             return "NUMBER"
-        elif ch.isdigit():
+        elif ch.isdigit() or ("X" in self.current_value and ch in "abcdefABCDEF"):
             self.add(ch)
             return "NUMBER"
         elif ch == "_":
             if not self.peek().isdigit():
                 self.error()
+            return "NUMBER"
+        elif ch == "E" or ch == "e":
+            if not self.peek().isdigit():
+                self.error()
+            self.add("E")
             return "NUMBER"
         else:
             self.emit("NUMBER")
