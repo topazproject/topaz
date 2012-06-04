@@ -45,9 +45,16 @@ inline_unless: real_statement UNLESS_INLINE expr;
 
 inline_until: real_statement UNTIL_INLINE expr;
 
-real_statement: RETURN exprs? |
-                expr;
+inline_while: real_statement WHILE_INLINE expr;
 
+real_statement: literal_bool;
+
+literal_bool: contained_statement literal_bool_oper literal_bool | <contained_statement>;
+literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;
+
+contained_statement: literal_not | DEFINEDP expr | <return_expr> | <expr>;
+literal_not: <NOT_LITERAL> contained_statement;
+return_expr: RETURN exprs?;
 exprs: expr [COMMA] >exprs< | expr;
 
 expr: assignment |
@@ -65,9 +72,8 @@ yield: YIELD [LPAREN] args? [RPAREN] |
 
 arg: ternary;
 
-ternary: literal_bool QUESTION ternary COLON ternary | <literal_bool>;
+ternary: range QUESTION ternary COLON ternary | <range>;
 
-literal_bool_oper: <OR_LITERAL>;
 range_oper: <DOTDOT> | <DOTDOTDOT>;
 match_oper: <EQUAL_TILDE> | <EXCLAMATION_TILDE>;
 bool_oper: <OR> | <AND>;
@@ -77,7 +83,6 @@ add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
 unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
 
-literal_bool: range literal_bool_oper literal_bool | <range>;
 range: match range_oper range | <match>;
 match: bool match_oper match | <bool>;
 bool: comparison bool_oper bool | <comparison>;

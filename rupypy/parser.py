@@ -35,16 +35,26 @@ class Transformer(object):
         return ast.Block(stmts)
 
     def visit_stmt(self, node):
-        if node.children[0].symbol == "RETURN":
-            if len(node.children) == 2:
-                objs = [self.visit_expr(n) for n in node.children[1].children]
+        if node.children[0].symbol == "return_expr":
+            ret_node = node.children[0]
+            if len(ret_node.children) == 2:
+                objs = [self.visit_expr(n) for n in ret_node.children[1].children]
                 if len(objs) == 1:
                     [obj] = objs
                 else:
                     obj = ast.Array(objs)
             else:
-                obj = ast.Variable("nil", node.getsourcepos().lineno)
+                obj = ast.Variable("nil", ret_node.getsourcepos().lineno)
             return ast.Return(obj)
+        if node.children[0].symbol == "literal_bool":
+            child = node.children[0]
+            op = child.children[1].additional_info
+            lhs = self.visit_stmt(child.children[0])
+            rhs = self.visit_stmt(child.children[2])
+            if op == "and":
+                return ast.LiteralAnd(lhs, rhs)
+            else: # "or"
+                return ast.LiteralOr(lhs, rhs)
         return ast.Statement(self.visit_expr(node.children[0]))
 
     def visit_send_block(self, node):
