@@ -33,6 +33,7 @@ class Lexer(object):
     EXPR_CLASS = 6
     EXPR_DOT = 7
     EXPR_ENDFN = 8
+    EXPR_FNAME = 9
 
     keywords = {
         "return": Keyword("RETURN", "RETURN", EXPR_MID),
@@ -48,7 +49,7 @@ class Lexer(object):
         "begin": Keyword("BEGIN", "BEGIN", EXPR_BEG),
         "rescue": Keyword("RESCUE", "RESCUE", EXPR_MID),
         "ensure": Keyword("ENSURE", "ENSURE", EXPR_BEG),
-        "def": Keyword("DEF", "DEF", EXPR_NAME),
+        "def": Keyword("DEF", "DEF", EXPR_FNAME),
         "class": Keyword("CLASS", "CLASS", EXPR_CLASS),
         "module": Keyword("MODULE", "MODULE", EXPR_BEG),
         "case": Keyword("CASE", "CASE", EXPR_BEG),
@@ -74,7 +75,10 @@ class Lexer(object):
         return self.context in [self.EXPR_ARG]
 
     def set_expression_context(self):
-        self.context = self.EXPR_BEG
+        if self.context in [self.EXPR_DOT, self.EXPR_FNAME]:
+            self.context = self.EXPR_ARG
+        else:
+            self.context = self.EXPR_BEG
 
     def current_pos(self):
         return SourcePos(self.idx, self.lineno, self.columno)
