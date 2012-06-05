@@ -967,8 +967,8 @@ class InstanceVariable(Node):
         pass
 
     def compile(self, ctx):
-        ctx.emit(consts.LOAD_SELF)
-        ctx.emit(consts.LOAD_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+        self.compile_receiver(ctx)
+        self.compile_load(ctx)
 
     def compile_receiver(self, ctx):
         ctx.emit(consts.LOAD_SELF)
@@ -979,6 +979,14 @@ class InstanceVariable(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
+
+class ClassVariable(Node):
+    def __init__(self, name):
+        self.name = name
+
+    def validate_assignment(self, transformer, node):
+        pass
 
 
 class Array(Node):

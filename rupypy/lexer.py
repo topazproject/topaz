@@ -225,6 +225,7 @@ class Lexer(object):
         elif ch == "{":
             self.add(ch)
             self.emit("LBRACE")
+            self.context = self.EXPR_BEG
             return None
         elif ch == "}":
             self.add(ch)
@@ -275,6 +276,10 @@ class Lexer(object):
         elif ch == "%":
             self.add(ch)
             self.emit("MODULO")
+            return None
+        elif ch == "^":
+            self.add(ch)
+            self.emit("CARET")
             return None
         elif ch == "\n":
             if self.context != self.EXPR_BEG:
@@ -341,7 +346,7 @@ class Lexer(object):
         return "SINGLESTRING"
 
     def handle_IDENTIFIER(self, ch):
-        if ch in "!?":
+        if ch in "!?" or (ch == "=" and self.context == self.EXPR_FNAME):
             self.add(ch)
             self.emit_identifier()
             return None
@@ -413,6 +418,7 @@ class Lexer(object):
         elif ch == "~":
             self.add(ch)
             self.emit("EQUAL_TILDE")
+            self.set_expression_context()
             return None
         self.context = self.EXPR_BEG
         self.emit("EQ")

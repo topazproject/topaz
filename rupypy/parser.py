@@ -308,7 +308,7 @@ class Transformer(object):
         block_args = []
         splat_arg = None
         start_idx = 0
-        if node.children[start_idx].symbol == "block_args":
+        if start_idx < len(node.children) and node.children[start_idx].symbol == "block_args":
             block_args, splat_arg = self.visit_block_args(node.children[start_idx])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx)
@@ -380,6 +380,8 @@ class Transformer(object):
 
     def visit_varname(self, node):
         if node.children[0].symbol == "AT_SIGN":
+            if node.children[1].symbol == "AT_SIGN":
+                return ast.ClassVariable(node.children[2].additional_info)
             return ast.InstanceVariable(node.children[1].additional_info)
         elif node.children[0].symbol == "GLOBAL":
             return ast.Global(node.children[0].additional_info)

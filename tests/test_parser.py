@@ -57,6 +57,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "2 !~ 3") == ast.Main(ast.Block([
             ast.Statement(ast.Not(ast.BinOp("=~", ast.ConstantInt(2), ast.ConstantInt(3), 1)))
         ]))
+        assert ec.space.parse(ec, "1 =~ /v/") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("=~", ast.ConstantInt(1), ast.ConstantRegexp("v"), 1))
+        ]))
         assert ec.space.parse(ec, "2 & 3 | 5") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("|", ast.BinOp("&", ast.ConstantInt(2), ast.ConstantInt(3), 1), ast.ConstantInt(5), 1))
         ]))
@@ -86,6 +89,9 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert ec.space.parse(ec, ":a != ?-") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("!=", ast.ConstantSymbol("a"), ast.ConstantString("-"), 1))
+        ]))
+        assert ec.space.parse(ec, "1 ^ 2") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("^", ast.ConstantInt(1), ast.ConstantInt(2), 1))
         ]))
 
     def test_multi_term_expr(self, ec):
@@ -488,6 +494,7 @@ class TestParser(BaseRuPyPyTest):
             ]))
         test_name("abc")
         test_name("<=>")
+        test_name("foo=")
 
     def test_string(self, ec):
         assert ec.space.parse(ec, '"abc"') == ast.Main(ast.Block([
@@ -1274,7 +1281,6 @@ class TestParser(BaseRuPyPyTest):
             ], ast.Block([])))
         ]))
 
-
     def test_case_regexp(self, ec):
         r = ec.space.parse(ec, """
         case 0
@@ -1318,6 +1324,13 @@ class TestParser(BaseRuPyPyTest):
                 (ast.Yield([], 1), ast.ConstantInt(5))
             ]))
         ]))
+        r = ec.space.parse(ec, """
+        x ||= {
+        }
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.OrEqual(ast.Variable("x", 2), ast.Hash([])))
+        ]))
 
     def test_newline(self, ec):
         r = ec.space.parse(ec, """
@@ -1342,4 +1355,12 @@ class TestParser(BaseRuPyPyTest):
         r = ec.space.parse(ec, "@a ||= 5")
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
+        ]))
+
+    def test_class_variables(self, ec):
+        r = ec.space.parse(ec, """
+        @@a = @@b
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.ClassVariable("a"), ast.ClassVariable("b")))
         ]))
