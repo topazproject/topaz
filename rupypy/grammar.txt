@@ -11,6 +11,29 @@ array_trailer: LINE_END |
 
 line: statement? [LINE_END];
 
+# operator expressions, ordered by precedence
+# Operator     		Description
+# [ ] [ ]=		Element reference, element set
+# **			Exponentiation		 
+# ! ~ + -		Not, complement, unary plus and minus
+# * / %			Multiply, divide, and modulo
+# + -          	      	Plus and minus		 
+# >> <<		      	Right and left shift	 
+# &		      	Bitwise `and' 		
+# ^ |		      	Bitwise exclusive `or' and regular `or'
+# <= < > >=	      	Comparison operators
+# <=> == === != =~ !~ 	Equality and pattern match operators
+# &&	     	   	Logical `and'		 
+# ||			Logical `or'		 
+# .. ...		Range (inclusive and exclusive)
+# ? :			Ternary if-then-else	 
+# = %= { /= -= += |= &= >>= <<= *= &&= ||= **=	Assignment
+# defined?	     	Check if symbol defined
+# not			`literal_not`
+# or and		`literal_bool`
+# if unless while until	`inline_*`
+# begin/end	  	Block expression 
+
 statement: inline_if |
            inline_unless |
            inline_until |
@@ -25,19 +48,22 @@ inline_until: real_statement UNTIL_INLINE expr;
 
 inline_while: real_statement WHILE_INLINE expr;
 
-real_statement: RETURN exprs? |
-                expr;
+real_statement: return_expr | expr;
 
+return_expr: RETURN exprs?;
 exprs: expr [COMMA] >exprs< | expr;
 
-expr: assignment |
-      yield |
-      arg;
+expr: <literal_bool>;
+
+literal_bool: contained_expr literal_bool_oper literal_bool | <contained_expr>;
+literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;
+
+contained_expr: literal_not | definedp | assignment | yield | arg;
+definedp: DEFINEDP expr;
+literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <DIV_EQUAL> | <OR_EQUAL>;
-
 assignment: assign_target assignment_oper expr;
-
 assign_target: send [COMMA] >assign_target< | send;
 
 yield: YIELD [LPAREN] args? [RPAREN] |
@@ -45,9 +71,8 @@ yield: YIELD [LPAREN] args? [RPAREN] |
 
 arg: ternary;
 
-ternary: literal_bool QUESTION ternary COLON ternary | <literal_bool>;
+ternary: range QUESTION ternary COLON ternary | <range>;
 
-literal_bool_oper: <OR_LITERAL>;
 range_oper: <DOTDOT> | <DOTDOTDOT>;
 match_oper: <EQUAL_TILDE> | <EXCLAMATION_TILDE>;
 bool_oper: <OR> | <AND>;
@@ -57,7 +82,6 @@ add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
 unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
 
-literal_bool: range literal_bool_oper literal_bool | <range>;
 range: match range_oper range | <match>;
 match: bool match_oper match | <bool>;
 bool: comparison bool_oper bool | <comparison>;
