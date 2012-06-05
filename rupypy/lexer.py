@@ -47,7 +47,7 @@ class Lexer(object):
         "until": Keyword("UNTIL", "UNTIL_INLINE", EXPR_BEG),
         "do": Keyword("DO", "DO", EXPR_BEG),
         "begin": Keyword("BEGIN", "BEGIN", EXPR_BEG),
-        "rescue": Keyword("RESCUE", "RESCUE", EXPR_MID),
+        "rescue": Keyword("RESCUE", "RESCUE_INLINE", EXPR_MID),
         "ensure": Keyword("ENSURE", "ENSURE", EXPR_BEG),
         "def": Keyword("DEF", "DEF", EXPR_FNAME),
         "class": Keyword("CLASS", "CLASS", EXPR_CLASS),

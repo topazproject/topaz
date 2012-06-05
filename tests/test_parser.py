@@ -1150,6 +1150,16 @@ class TestParser(BaseRuPyPyTest):
             ])))
         ]))
 
+    def test_inline_rescue(self, ec):
+        assert ec.space.parse(ec, "foo rescue bar") == ast.Main(ast.Block([
+            ast.Statement(ast.TryExcept(
+                ast.Block([ast.Statement(ast.Variable("foo", 1))]),
+                [
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(1), "StandardError", 1), None, ast.Block([ast.Statement(ast.Variable("bar", 1))]))
+                ]
+            ))
+        ]))
+
     def test_inline_precedence(self, ec):
         assert ec.space.parse(ec, "return unless x = 3") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 1), ast.ConstantInt(3)),

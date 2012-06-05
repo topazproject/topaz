@@ -93,7 +93,18 @@ class Transformer(object):
                 self.visit_expr(node.children[2]),
                 ast.Block([self.visit_stmt(node.children[0])]),
             )
-        if node.symbol == "contained_expr":
+        elif node.symbol == "inline_rescue":
+            return ast.TryExcept(
+                ast.Block([self.visit_stmt(node.children[0])]),
+                [
+                    ast.ExceptHandler(
+                        ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), "StandardError", node.getsourcepos().lineno),
+                        None,
+                        ast.Block([ast.Statement(self.visit_expr(node.children[2]))])
+                    )
+                ]
+            )
+        elif node.symbol == "contained_expr":
             if node.children[0].symbol == "assignment":
                 return self.visit_assignment(node.children[0])
             elif node.children[0].symbol == "yield":
