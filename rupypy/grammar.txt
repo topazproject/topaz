@@ -37,6 +37,7 @@ line: statement? [LINE_END];
 statement: inline_if |
            inline_unless |
            inline_until |
+           inline_while |
            <real_statement>;
 
 inline_if: real_statement IF_INLINE expr;

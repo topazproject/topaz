@@ -43,7 +43,7 @@ class Lexer(object):
         "then": Keyword("THEN", "THEN", EXPR_BEG),
         "elsif": Keyword("ELSIF", "ELSIF", EXPR_BEG),
         "else": Keyword("ELSE", "ELSE", EXPR_BEG),
-        "while": Keyword("WHILE", "WHILE", EXPR_BEG),
+        "while": Keyword("WHILE", "WHILE_INLINE", EXPR_BEG),
         "until": Keyword("UNTIL", "UNTIL_INLINE", EXPR_BEG),
         "do": Keyword("DO", "DO", EXPR_BEG),
         "begin": Keyword("BEGIN", "BEGIN", EXPR_BEG),
