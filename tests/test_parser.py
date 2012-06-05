@@ -1274,7 +1274,6 @@ class TestParser(BaseRuPyPyTest):
             ], ast.Block([])))
         ]))
 
-
     def test_case_regexp(self, ec):
         r = ec.space.parse(ec, """
         case 0
@@ -1342,4 +1341,13 @@ class TestParser(BaseRuPyPyTest):
         r = ec.space.parse(ec, "@a ||= 5")
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
+        ]))
+
+    def test_xxx(self, ec):
+        r = ec.space.parse(ec, """
+        x ||= {
+        }
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.OrEqual(ast.Variable("x", 2), ast.Hash([])))
         ]))

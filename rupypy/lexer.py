@@ -225,6 +225,7 @@ class Lexer(object):
         elif ch == "{":
             self.add(ch)
             self.emit("LBRACE")
+            self.context = self.EXPR_BEG
             return None
         elif ch == "}":
             self.add(ch)
