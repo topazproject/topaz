@@ -52,7 +52,7 @@ real_statement: return_expr | expr;
 return_expr: RETURN exprs?;
 exprs: expr [COMMA] >exprs< | expr;
 
-expr: literal_bool;
+expr: <literal_bool>;
 
 literal_bool: contained_expr literal_bool_oper literal_bool | <contained_expr>;
 literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;

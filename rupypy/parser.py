@@ -88,8 +88,6 @@ class Transformer(object):
                 self.visit_expr(node.children[2]),
                 ast.Block([self.visit_stmt(node.children[0])]),
             )
-        if node.symbol == "expr":
-            node = node.children[0]
         if node.symbol == "contained_expr":
             if node.children[0].symbol == "assignment":
                 return self.visit_assignment(node.children[0])
