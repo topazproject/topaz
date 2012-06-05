@@ -481,6 +481,7 @@ class Lexer(object):
             self.add(ch)
             self.emit("DOTDOTDOT")
             return None
+        self.context = self.EXPR_BEG
         self.emit("DOTDOT")
         return self.handle_generic(ch)
 

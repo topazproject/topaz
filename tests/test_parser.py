@@ -653,6 +653,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"abc".."def"') == ast.Main(ast.Block([
             ast.Statement(ast.Range(ast.ConstantString("abc"), ast.ConstantString("def"), False))
         ]))
+        assert ec.space.parse(ec, "1..-1") == ast.Main(ast.Block([
+            ast.Statement(ast.Range(ast.ConstantInt(1), ast.ConstantInt(-1), False))
+        ]))
 
     def test_assign_method(self, ec):
         assert ec.space.parse(ec, "self.attribute = 3") == ast.Main(ast.Block([
