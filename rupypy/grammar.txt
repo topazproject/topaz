@@ -125,7 +125,7 @@ ambigious_binop: IDENTIFIER UNARY_MINUS arg;
 
 primary: LPAREN expr RPAREN |
          LBRACKET array |
-         LBRACE assocs? RBRACE |
+         LBRACE hash |
          IF if elsifs? else? [END] |
          UNLESS if else? [END] |
          WHILE expr do line* statement? [LINE_END]? END |
@@ -141,6 +141,9 @@ primary: LPAREN expr RPAREN |
 
 array: [RBRACKET] |
        args [array_trailer]? [RBRACKET];
+
+hash: [RBRACE] |
+      assocs [array_trailer]? [RBRACE];
 
 if: expr then line* statement? [LINE_END]?;
 

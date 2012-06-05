@@ -345,10 +345,11 @@ class Transformer(object):
         return ast.Array(items)
 
     def visit_hash(self, node):
-        if len(node.children) == 3:
+        contents = node.children[1]
+        if contents.children:
             items = [
                 (self.visit_expr(n.children[0]), self.visit_expr(n.children[2]))
-                for n in node.children[1].children
+                for n in contents.children[0].children
             ]
         else:
             items = []

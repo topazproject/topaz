@@ -1292,6 +1292,16 @@ class TestParser(BaseRuPyPyTest):
                 (ast.ConstantSymbol("def"), ast.ConstantInt(5)),
             ]))
         ]))
+        r = ec.space.parse(ec, """
+        {
+            :k => :v
+        }
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Hash([
+                (ast.ConstantSymbol("k"), ast.ConstantSymbol("v")),
+            ]))
+        ]))
         assert ec.space.parse(ec, "{a = 2 => 3, yield => 5}") == ast.Main(ast.Block([
             ast.Statement(ast.Hash([
                 (ast.Assignment(ast.Variable("a", 1), ast.ConstantInt(2)), ast.ConstantInt(3)),
