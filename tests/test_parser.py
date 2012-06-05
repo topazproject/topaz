@@ -1320,6 +1320,13 @@ class TestParser(BaseRuPyPyTest):
                 (ast.Yield([], 1), ast.ConstantInt(5))
             ]))
         ]))
+        r = ec.space.parse(ec, """
+        x ||= {
+        }
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.OrEqual(ast.Variable("x", 2), ast.Hash([])))
+        ]))
 
     def test_newline(self, ec):
         r = ec.space.parse(ec, """
@@ -1344,13 +1351,4 @@ class TestParser(BaseRuPyPyTest):
         r = ec.space.parse(ec, "@a ||= 5")
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
-        ]))
-
-    def test_xxx(self, ec):
-        r = ec.space.parse(ec, """
-        x ||= {
-        }
-        """)
-        assert r == ast.Main(ast.Block([
-            ast.Statement(ast.OrEqual(ast.Variable("x", 2), ast.Hash([])))
         ]))
