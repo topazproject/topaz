@@ -347,7 +347,7 @@ class Transformer(object):
     def visit_hash(self, node):
         if len(node.children) == 3:
             items = [
-                (self.visit_arg(n.children[0]), self.visit_arg(n.children[2]))
+                (self.visit_expr(n.children[0]), self.visit_expr(n.children[2]))
                 for n in node.children[1].children
             ]
         else:

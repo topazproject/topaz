@@ -1275,6 +1275,12 @@ class TestParser(BaseRuPyPyTest):
                 (ast.ConstantSymbol("def"), ast.ConstantInt(5)),
             ]))
         ]))
+        assert ec.space.parse(ec, "{a = 2 => 3, yield => 5}") == ast.Main(ast.Block([
+            ast.Statement(ast.Hash([
+                (ast.Assignment(ast.Variable("a", 1), ast.ConstantInt(2)), ast.ConstantInt(3)),
+                (ast.Yield([], 1), ast.ConstantInt(5))
+            ]))
+        ]))
 
     def test_newline(self, ec):
         r = ec.space.parse(ec, """

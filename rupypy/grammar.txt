@@ -196,7 +196,7 @@ block_arg: [AMP] arg;
 
 assocs: assoc [COMMA] >assocs< | assoc;
 
-assoc: arg ARROW arg;
+assoc: contained_expr ARROW contained_expr;
 
 varname: IDENTIFIER |
          AT_SIGN IDENTIFIER |
