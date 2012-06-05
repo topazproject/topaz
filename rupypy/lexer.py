@@ -489,7 +489,7 @@ class Lexer(object):
             self.add(ch)
             self.emit("COLONCOLON")
             return None
-        elif self.context == self.EXPR_END or ch == " " or not (ch.isalnum() or ch == "_"):
+        elif self.context == self.EXPR_END or ch == " " or not (ch.isalnum() or ch in "_@"):
             self.emit("COLON")
             self.context = self.EXPR_BEG
             return self.handle_generic(ch)
