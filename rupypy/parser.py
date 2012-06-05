@@ -88,15 +88,18 @@ class Transformer(object):
                 self.visit_expr(node.children[2]),
                 ast.Block([self.visit_stmt(node.children[0])]),
             )
-        if node.children[0].symbol == "assignment":
-            return self.visit_assignment(node.children[0])
-        elif node.children[0].symbol == "yield":
-            return self.visit_yield(node.children[0])
-        elif node.children[0].symbol == "literal_not":
-            return ast.Not(self.visit_expr(node.children[0].children[1]))
-        elif node.children[0].symbol == "literal_bool":
-            return self.visit_literal_bool(node.children[0])
-        return self.visit_arg(node.children[0])
+        if node.symbol == "expr":
+            node = node.children[0]
+        if node.symbol == "contained_expr":
+            if node.children[0].symbol == "assignment":
+                return self.visit_assignment(node.children[0])
+            elif node.children[0].symbol == "yield":
+                return self.visit_yield(node.children[0])
+            elif node.children[0].symbol == "literal_not":
+                return ast.Not(self.visit_expr(node.children[0].children[1]))
+            return self.visit_arg(node.children[0])
+        elif node.symbol == "literal_bool":
+            return self.visit_literal_bool(node)
 
     def visit_literal_bool(self, node):
         op = node.children[1].additional_info
