@@ -1247,6 +1247,19 @@ class TestParser(BaseRuPyPyTest):
                 (ast.ConstantInt(4), ast.Block([ast.Statement(ast.ConstantInt(7))]))
             ], ast.Block([ast.Statement(ast.ConstantInt(9))])))
         ]))
+        r = ec.space.parse(ec, """
+        case 3
+        when 4,5 then
+            6
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Case(ast.ConstantInt(3), [
+                (ast.ConstantInt(4), ast.Block([ast.Statement(ast.ConstantInt(6))])),
+                (ast.ConstantInt(5), ast.Block([ast.Statement(ast.ConstantInt(6))]))
+            ], ast.Block([])))
+        ]))
+
 
     def test_case_regexp(self, ec):
         r = ec.space.parse(ec, """
