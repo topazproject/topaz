@@ -164,7 +164,7 @@ ensure: ENSURE line* statement? [LINE_END]?;
 
 whens: when >whens< | when;
 
-when: WHEN expr then line* statement? [LINE_END]?;
+when: WHEN exprs then line* statement? [LINE_END]?;
 
 function_name: varname [DOT] method_name |
                method_name;
