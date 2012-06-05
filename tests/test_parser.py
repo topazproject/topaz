@@ -1352,3 +1352,11 @@ class TestParser(BaseRuPyPyTest):
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
         ]))
+
+    def test_class_variables(self, ec):
+        r = ec.space.parse(ec, """
+        @@a = @@b
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.ClassVariable("a"), ast.ClassVariable("b")))
+        ]))

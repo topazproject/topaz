@@ -380,6 +380,8 @@ class Transformer(object):
 
     def visit_varname(self, node):
         if node.children[0].symbol == "AT_SIGN":
+            if node.children[1].symbol == "AT_SIGN":
+                return ast.ClassVariable(node.children[2].additional_info)
             return ast.InstanceVariable(node.children[1].additional_info)
         elif node.children[0].symbol == "GLOBAL":
             return ast.Global(node.children[0].additional_info)
