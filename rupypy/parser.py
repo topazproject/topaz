@@ -308,7 +308,7 @@ class Transformer(object):
         block_args = []
         splat_arg = None
         start_idx = 0
-        if node.children[start_idx].symbol == "block_args":
+        if start_idx < len(node.children) and node.children[start_idx].symbol == "block_args":
             block_args, splat_arg = self.visit_block_args(node.children[start_idx])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx)
