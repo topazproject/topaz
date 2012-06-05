@@ -1097,6 +1097,13 @@ class TestParser(BaseRuPyPyTest):
             ])))
         ]))
 
+    def test_inline_while(self, ec):
+        assert ec.space.parse(ec, "i += 1 while 3") == ast.Main(ast.Block([
+            ast.Statement(ast.While(ast.ConstantInt(3), ast.Block([
+                ast.Statement(ast.AugmentedAssignment("+", ast.Variable("i", 1), ast.ConstantInt(1)))
+            ])))
+        ]))
+
     def test_inline_precedence(self, ec):
         assert ec.space.parse(ec, "return unless x = 3") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 1), ast.ConstantInt(3)),

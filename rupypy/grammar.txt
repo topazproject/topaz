@@ -14,6 +14,7 @@ line: statement? [LINE_END];
 statement: inline_if |
            inline_unless |
            inline_until |
+           inline_while |
            <real_statement>;
 
 inline_if: real_statement IF_INLINE expr;
@@ -21,6 +22,8 @@ inline_if: real_statement IF_INLINE expr;
 inline_unless: real_statement UNLESS_INLINE expr;
 
 inline_until: real_statement UNTIL_INLINE expr;
+
+inline_while: real_statement WHILE_INLINE expr;
 
 real_statement: RETURN exprs? |
                 expr;
