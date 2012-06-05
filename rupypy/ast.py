@@ -630,7 +630,6 @@ class And(Node):
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
 
-
 class Not(Node):
     def __init__(self, value):
         self.value = value
@@ -641,7 +640,6 @@ class Not(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.UNARY_NOT)
-
 
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):
