@@ -36,10 +36,10 @@ class Transformer(object):
 
     def visit_stmt(self, node):
         if node.children[0].symbol == "return_expr":
-            return ast.Return(self.visit_return_expr(node.children[0]))
+            return ast.Return(self.visit_return(node.children[0]))
         return ast.Statement(self.visit_expr(node.children[0]))
 
-    def visit_return_expr(self, node):
+    def visit_return(self, node):
         if len(node.children) == 2:
             objs = [self.visit_expr(n) for n in node.children[1].children]
             if len(objs) == 1:
@@ -110,7 +110,7 @@ class Transformer(object):
         rhs = self.visit_expr(node.children[2])
         if op == "and":
             return ast.And(lhs, rhs)
-        else: # "or"
+        elif op == "or":
             return ast.Or(lhs, rhs)
 
     def visit_assignment(self, node):
