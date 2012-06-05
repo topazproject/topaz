@@ -45,11 +45,8 @@ class Comparable(Module):
 
     moduledef.app_method("""
     def between? min, max
-        if (self <=> min) > 0
-             return true
-        elif (self <=> max) < 0
-             return true
-        end
-        return false
+        return false if self < min
+        return false if self > max
+        return true
     end
     """)

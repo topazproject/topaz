@@ -23,6 +23,14 @@ class TestComparable(object):
         w_res = ec.space.execute(ec, "return 'a' == 'b'")
         assert w_res is ec.space.w_false
 
-    def test_between(self, ec):
-        w_res = ec.space.execute(ec, "return 'b'.between?('a', 'c')")
+    def test_between_true(self, ec):
+        w_res = ec.space.execute(ec, "return 'c'.between?('b', 'd')")
         assert w_res is ec.space.w_true
+
+    def test_between_false_low(self, ec):
+        w_res = ec.space.execute(ec, "return 'a'.between?('b', 'd')")
+        assert w_res is ec.space.w_false
+
+    def test_between_false_high(self, ec):
+        w_res = ec.space.execute(ec, "return 'e'.between?('b', 'd')")
+        assert w_res is ec.space.w_false
