@@ -346,7 +346,7 @@ class Lexer(object):
         return "SINGLESTRING"
 
     def handle_IDENTIFIER(self, ch):
-        if ch in "!?":
+        if ch in "!?" or (ch == "=" and self.context == self.EXPR_FNAME):
             self.add(ch)
             self.emit_identifier()
             return None
