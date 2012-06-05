@@ -418,6 +418,7 @@ class Lexer(object):
         elif ch == "~":
             self.add(ch)
             self.emit("EQUAL_TILDE")
+            self.set_expression_context()
             return None
         self.context = self.EXPR_BEG
         self.emit("EQ")

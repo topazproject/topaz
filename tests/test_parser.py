@@ -57,6 +57,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "2 !~ 3") == ast.Main(ast.Block([
             ast.Statement(ast.Not(ast.BinOp("=~", ast.ConstantInt(2), ast.ConstantInt(3), 1)))
         ]))
+        assert ec.space.parse(ec, "1 =~ /v/") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("=~", ast.ConstantInt(1), ast.ConstantRegexp("v"), 1))
+        ]))
         assert ec.space.parse(ec, "2 & 3 | 5") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("|", ast.BinOp("&", ast.ConstantInt(2), ast.ConstantInt(3), 1), ast.ConstantInt(5), 1))
         ]))
