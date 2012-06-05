@@ -8,6 +8,15 @@ class W_SymbolObject(W_BaseObject):
     def __init__(self, symbol):
         self.symbol = symbol
 
+    def __eq__(self, other):
+        return type(self) == type(other) and self.__hash__() == other.__hash__()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return self.symbol.__hash__()
+
     def symbol_w(self, space):
         return self.symbol
 

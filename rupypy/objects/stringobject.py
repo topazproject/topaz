@@ -60,6 +60,15 @@ class W_StringObject(W_BaseObject):
         self.storage = storage
         self.strategy = strategy
 
+    def __eq__(self, other):
+        return type(self) == type(other) and self.__hash__() == other.__hash__()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return self.strategy.str_w(self.storage).__hash__()
+
     @staticmethod
     def newstr_fromstr(space, strvalue):
         strategy = space.fromcache(ConstantStringStrategy)
