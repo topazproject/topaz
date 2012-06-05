@@ -441,13 +441,29 @@ class Transformer(object):
             parent = self.visit_varname(name_node.children[0])
             name = name_node.children[1].additional_info
         args, splat_arg, block_arg = self.visit_argdecl(node.children[2])
+
+        idx = 3
+        while idx < len(node.children) and node.children[idx].symbol not in ["rescue", "ensure"]:
+            idx += 1
+        body = self.visit_block(node, start_idx=3, end_idx=idx)
+        handlers = []
+        while idx < len(node.children) and node.children[idx].symbol == "rescue":
+            handlers.append(self.visit_rescue(node.children[idx]))
+            idx += 1
+        if handlers:
+            body = ast.TryExcept(body, handlers)
+        if idx < len(node.children) and  node.children[idx].symbol == "ensure":
+            ensure_node = node.children[idx]
+            block = self.visit_block(ensure_node, start_idx=1)
+            body = ast.TryFinally(body, block)
+
         return ast.Function(
             parent,
             name,
             args,
             splat_arg,
             block_arg,
-            self.visit_block(node, start_idx=3, end_idx=len(node.children) - 1),
+            body,
         )
 
     def visit_class(self, node):

@@ -927,6 +927,39 @@ class TestParser(BaseRuPyPyTest):
             ))
         ]))
 
+    def test_def_exceptions(self, ec):
+        r = ec.space.parse(ec, """
+        def f
+            3
+        rescue Exception => e
+            5
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.TryExcept(
+                ast.Block([ast.Statement(ast.ConstantInt(3))]),
+                [
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "Exception", 4), "e", ast.Block([
+                        ast.Statement(ast.ConstantInt(5))
+                    ]))
+                ]
+            )))
+        ]))
+
+        r = ec.space.parse(ec, """
+        def f
+            10
+        ensure
+            5
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.TryFinally(
+                ast.Block([ast.Statement(ast.ConstantInt(10))]),
+                ast.Block([ast.Statement(ast.ConstantInt(5))]),
+            )))
+        ]))
+
     def test_module(self, ec):
         r = ec.space.parse(ec, """
         module M
