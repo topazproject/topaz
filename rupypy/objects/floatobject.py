@@ -13,6 +13,15 @@ class W_FloatObject(W_BaseObject):
     def float_w(self, space):
         return self.floatvalue
 
+    def __eq__(self, other):
+        return type(self) == type(other) and self.__hash__() == other.__hash__()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return self.floatvalue.__hash__()
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(str(self.floatvalue))
