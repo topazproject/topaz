@@ -64,13 +64,13 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.BinOp("<<", ast.Global("$a"), ast.Array([]), 1))
         ]))
         assert ec.space.parse(ec, "5 or 3") == ast.Main(ast.Block([
-            ast.LiteralOr(ast.Statement(ast.ConstantInt(5)),
-                          ast.Statement(ast.ConstantInt(3)))
+            ast.Statement(ast.Or(ast.ConstantInt(5),
+                                        ast.ConstantInt(3)))
         ]))
         assert ec.space.parse(ec, "puts 5 and 3") == ast.Main(ast.Block([
-            ast.LiteralAnd(ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)],
-                                                  None, 1)),
-                           ast.Statement(ast.ConstantInt(3)))
+            ast.Statement(ast.And(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)],
+                                                  None, 1),
+                                         ast.ConstantInt(3)))
         ]))
         assert ec.space.parse(ec, "x[0] == ?-") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("==",
@@ -1081,7 +1081,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Not(ast.ConstantInt(3)))
         ]))
         assert ec.space.parse(ec, "not 3") == ast.Main(ast.Block([
-            ast.LiteralNot(ast.Statement(ast.ConstantInt(3)))
+            ast.Statement(ast.Not(ast.ConstantInt(3)))
         ]))
 
     def test_inline_if(self, ec):

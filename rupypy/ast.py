@@ -630,20 +630,6 @@ class And(Node):
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
 
-class LiteralAnd(And):
-    def __init__(self, lhs, rhs):
-        self.lhs = lhs
-        self.rhs = rhs
-        lhs.dont_pop = True
-        rhs.dont_pop = True
-
-class LiteralOr(Or):
-    def __init__(self, lhs, rhs):
-        self.lhs = lhs
-        self.rhs = rhs
-        lhs.dont_pop = True
-        rhs.dont_pop = True
-
 class Not(Node):
     def __init__(self, value):
         self.value = value
@@ -654,11 +640,6 @@ class Not(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.UNARY_NOT)
-
-class LiteralNot(Not):
-    def __init__(self, value):
-        self.value = value
-        value.dont_pop = True
 
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):

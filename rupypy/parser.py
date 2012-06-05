@@ -35,14 +35,8 @@ class Transformer(object):
         return ast.Block(stmts)
 
     def visit_stmt(self, node):
-        if node.children[0].symbol == "contained_statement":
-            return self.visit_stmt(node.children[0])
         if node.children[0].symbol == "return_expr":
             return ast.Return(self.visit_return_expr(node.children[0]))
-        if node.children[0].symbol == "literal_bool":
-            return self.visit_literal_bool(node.children[0])
-        if node.children[0].symbol == "literal_not":
-            return ast.LiteralNot(self.visit_stmt(node.children[0].children[1]))
         return ast.Statement(self.visit_expr(node.children[0]))
 
     def visit_return_expr(self, node):
@@ -55,15 +49,6 @@ class Transformer(object):
         else:
             obj = ast.Variable("nil", node.getsourcepos().lineno)
         return obj
-
-    def visit_literal_bool(self, node):
-        op = node.children[1].additional_info
-        lhs = self.visit_stmt(node.children[0])
-        rhs = self.visit_stmt(node.children[2])
-        if op == "and":
-            return ast.LiteralAnd(lhs, rhs)
-        else: # "or"
-            return ast.LiteralOr(lhs, rhs)
 
     def visit_send_block(self, node):
         send = self.visit_real_send(node.children[0])
@@ -107,7 +92,20 @@ class Transformer(object):
             return self.visit_assignment(node.children[0])
         elif node.children[0].symbol == "yield":
             return self.visit_yield(node.children[0])
+        elif node.children[0].symbol == "literal_not":
+            return ast.Not(self.visit_expr(node.children[0].children[1]))
+        elif node.children[0].symbol == "literal_bool":
+            return self.visit_literal_bool(node.children[0])
         return self.visit_arg(node.children[0])
+
+    def visit_literal_bool(self, node):
+        op = node.children[1].additional_info
+        lhs = self.visit_expr(node.children[0])
+        rhs = self.visit_expr(node.children[2])
+        if op == "and":
+            return ast.And(lhs, rhs)
+        else: # "or"
+            return ast.Or(lhs, rhs)
 
     def visit_assignment(self, node):
         targets = [self.visit_arg(n) for n in node.children[0].children]

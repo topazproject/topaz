@@ -47,24 +47,22 @@ inline_until: real_statement UNTIL_INLINE expr;
 
 inline_while: real_statement WHILE_INLINE expr;
 
-real_statement: literal_bool;
+real_statement: return_expr | expr;
 
-literal_bool: contained_statement literal_bool_oper literal_bool | <contained_statement>;
-literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;
-
-contained_statement: literal_not | DEFINEDP expr | return_expr | expr;
-literal_not: NOT_LITERAL contained_statement;
 return_expr: RETURN exprs?;
 exprs: expr [COMMA] >exprs< | expr;
 
-expr: assignment |
-      yield |
-      arg;
+expr: literal_bool;
+
+literal_bool: contained_expr literal_bool_oper literal_bool | <contained_expr>;
+literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;
+
+contained_expr: <literal_not> | <definedp> | <assignment> | <yield> | <arg>;
+definedp: DEFINEDP expr;
+literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <DIV_EQUAL> | <OR_EQUAL>;
-
 assignment: assign_target assignment_oper expr;
-
 assign_target: send [COMMA] >assign_target< | send;
 
 yield: YIELD [LPAREN] args? [RPAREN] |
