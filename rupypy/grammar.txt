@@ -77,7 +77,7 @@ ternary: range QUESTION ternary COLON ternary | <range>;
 
 range_oper: <DOTDOT> | <DOTDOTDOT>;
 match_oper: <EQUAL_TILDE> | <EXCLAMATION_TILDE>;
-bool_oper: <OR> | <AND>;
+bool_oper: <OR> | <AND> | <CARET>;
 cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE> | <LEGT>;
 shift_oper: <LSHIFT>;
 add_oper: <PLUS> | <MINUS>;

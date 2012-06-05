@@ -277,6 +277,10 @@ class Lexer(object):
             self.add(ch)
             self.emit("MODULO")
             return None
+        elif ch == "^":
+            self.add(ch)
+            self.emit("CARET")
+            return None
         elif ch == "\n":
             if self.context != self.EXPR_BEG:
                 self.add(ch)
