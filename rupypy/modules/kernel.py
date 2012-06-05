@@ -25,6 +25,7 @@ class Kernel(Module):
             s = ec.space.str_w(w_str)
         os.write(1, s)
         os.write(1, "\n")
+        return ec.space.w_nil
 
     @moduledef.function("require", path="path")
     def function_require(self, ec, path):
