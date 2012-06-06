@@ -372,7 +372,7 @@ class Transformer(object):
             return self.visit_number(node.children[0])
         elif symname == "SYMBOL":
             return self.visit_symbol(node.children[0])
-        elif symname == "STRING":
+        elif symname in ["SSTRING", "DSTRING"]:
             return self.visit_string(node.children[0])
         elif symname == "REGEXP":
             return self.visit_regexp(node.children[0])
@@ -614,6 +614,8 @@ class Transformer(object):
         return ast.ConstantSymbol(node.additional_info)
 
     def visit_string(self, node):
+        if "#{" in node.additional_info and node.symbol == "DSTRING":
+            return ast.DynamicString(node.additional_info)
         return ast.ConstantString(node.additional_info)
 
     def visit_regexp(self, node):

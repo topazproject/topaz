@@ -519,6 +519,11 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.ConstantString("-"))
         ]))
 
+    def test_dynamic_string(self, ec):
+        assert ec.space.parse(ec, '"#{x}"') == ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString("#{x}"))
+        ]))
+
     def test_class(self, ec):
         r = ec.space.parse(ec, """
         class X

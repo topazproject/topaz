@@ -1085,3 +1085,8 @@ class ConstantRegexp(ConstantNode):
 
     def create_const(self, ctx):
         return ctx.create_const(ctx.space.newregexp(self.regexp))
+
+
+class DynamicString(Node):
+    def __init__(self, strvalue):
+        self.strvalue = strvalue

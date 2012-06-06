@@ -7,7 +7,8 @@ STATES = unrolling_iterable([
     "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
     "EQ", "EQEQ", "LT", "GT", "LE", "PIPE", "OR", "AMP", "COLON",
     "EXCLAMATION", "QUESTION", "GLOBAL", "SINGLESTRING", "DOUBLESTRING",
-    "SYMBOL", "REGEXP", "COMMENT",
+    "DOUBLESTRING_POUND", "DOUBLESTRING_DYNAMIC_CONTENT", "SYMBOL", "REGEXP",
+    "COMMENT",
 ])
 
 
@@ -332,15 +333,31 @@ class Lexer(object):
     def handle_DOUBLESTRING(self, ch):
         self.context = self.EXPR_END
         if ch == '"':
-            self.emit("STRING")
+            self.emit("DSTRING")
             return None
+        elif ch == "#":
+            self.add(ch)
+            return "DOUBLESTRING_POUND"
         self.add(ch)
         return "DOUBLESTRING"
+
+    def handle_DOUBLESTRING_POUND(self, ch):
+        self.add(ch)
+        if ch == "{":
+            return "DOUBLESTRING_DYNAMIC_CONTENT"
+        else:
+            return "DOUBLESTRING"
+
+    def handle_DOUBLESTRING_DYNAMIC_CONTENT(self, ch):
+        self.add(ch)
+        if ch == "}":
+            return "DOUBLESTRING"
+        return "DOUBLESTRING_DYNAMIC_CONTENT"
 
     def handle_SINGLESTRING(self, ch):
         self.context = self.EXPR_END
         if ch == "'":
-            self.emit("STRING")
+            self.emit("SSTRING")
             return None
         self.add(ch)
         return "SINGLESTRING"
