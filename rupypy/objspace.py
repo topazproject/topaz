@@ -52,6 +52,7 @@ class ObjectSpace(object):
     def __init__(self):
         self.transformer = Transformer()
         self.cache = SpaceCache(self)
+        self.symbol_cache = {}
         self.globals = Globals()
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
@@ -147,7 +148,11 @@ class ObjectSpace(object):
         return W_FloatObject(floatvalue)
 
     def newsymbol(self, symbol):
-        return W_SymbolObject(symbol)
+        try:
+            w_sym = self.symbol_cache[symbol]
+        except KeyError:
+            w_sym = self.symbol_cache[symbol] = W_SymbolObject(symbol)
+        return w_sym
 
     def newstr_fromchars(self, chars):
         return W_StringObject.newstr_fromchars(self, chars)

@@ -1,4 +1,5 @@
 from pypy.rlib import jit
+from pypy.rlib.objectmodel import compute_unique_id
 
 from rupypy.module import ClassDef
 from rupypy.modules.kernel import Kernel
@@ -30,8 +31,12 @@ class W_BaseObject(object):
         return True
 
     @classdef.method("initialize")
-    def method_initialize(self, space):
+    def method_initialize(self):
         return self
+
+    @classdef.method("object_id")
+    def method_object_id(self, space):
+        return space.newint(compute_unique_id(self))
 
     @classdef.method("singleton_class")
     def method_singleton_class(self, space):

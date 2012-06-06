@@ -354,17 +354,17 @@ class TestCompiler(object):
         bc = self.assert_compiles(ec, "def f() end", """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_CONST 0
         RETURN
         """)
@@ -372,17 +372,17 @@ class TestCompiler(object):
         bc = self.assert_compiles(ec, "def f(a, b) a + b end", """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_LOCAL 0
         LOAD_LOCAL 1
         SEND 0 1
@@ -445,17 +445,17 @@ class TestCompiler(object):
         self.assert_compiled(bc.consts_w[2], """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2].consts_w[2], """
+        self.assert_compiled(bc.consts_w[2].consts_w[1], """
         LOAD_CONST 0
         RETURN
         """)
@@ -570,17 +570,17 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         YIELD 0
         DISCARD_TOP
         LOAD_CONST 0
@@ -685,16 +685,16 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_SELF
         LOAD_CONST 0
         LOAD_CLOSURE 0
@@ -705,7 +705,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         LOAD_CLOSURE 0
         BUILD_BLOCK 1
-        SEND_BLOCK 3 1
+        SEND_BLOCK 1 1
         RETURN
         """)
 
@@ -734,23 +734,23 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
         LOAD_SELF
         BUILD_ARRAY 0
-        LOAD_CONST 3
-        SEND 4 2
+        LOAD_CONST 2
+        SEND 0 2
         DISCARD_TOP
 
-        LOAD_CONST 5
+        LOAD_CONST 3
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_LOCAL 0
         LOAD_CONST 0
         LOAD_CLOSURE 0
@@ -760,7 +760,7 @@ class TestCompiler(object):
         LOAD_DEREF 0
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[2].consts_w[0], """
+        self.assert_compiled(bc.consts_w[1].consts_w[0], """
         LOAD_DEREF 0
         LOAD_LOCAL 0
         SEND 0 1
@@ -808,10 +808,10 @@ class TestCompiler(object):
         LOAD_INSTANCE_VAR 0
         LOAD_CONST 1
         SEND 2 1
-        STORE_INSTANCE_VAR 3
+        STORE_INSTANCE_VAR 0
         DISCARD_TOP
 
-        LOAD_CONST 4
+        LOAD_CONST 3
         RETURN
         """)
 
@@ -855,8 +855,8 @@ class TestCompiler(object):
         LOAD_DEREF 2
         LOAD_LOCAL 0
         SEND 0 1
-        SEND 1 1
-        SEND 2 1
+        SEND 0 1
+        SEND 0 1
         RETURN
         """)
 
@@ -985,15 +985,15 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_SELF
-        SEND 3 0
+        SEND 0 0
         DUP_TOP
-        LOAD_CONSTANT 4
-        LOAD_CONST 5
-        SEND 6 1
-        STORE_CONSTANT 7
+        LOAD_CONSTANT 2
+        LOAD_CONST 3
+        SEND 4 1
+        STORE_CONSTANT 2
         DISCARD_TOP
 
-        LOAD_CONST 8
+        LOAD_CONST 5
         RETURN
         """)
 
@@ -1015,17 +1015,17 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_LOCAL 0
         LOAD_LOCAL 1
         LOAD_LOCAL 2
@@ -1033,11 +1033,11 @@ class TestCompiler(object):
         RETURN
         """)
 
-        self.assert_compiled(bc.consts_w[2].defaults[0], """
+        self.assert_compiled(bc.consts_w[1].defaults[0], """
         LOAD_CONST 0
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[2].defaults[1], """
+        self.assert_compiled(bc.consts_w[1].defaults[1], """
         LOAD_LOCAL 1
         RETURN
         """)
@@ -1160,17 +1160,17 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
-        w_code = bc.consts_w[2]
+        w_code = bc.consts_w[1]
         assert w_code.locals == ["a", "b"]
         assert w_code.block_arg_pos == 1
         assert w_code.block_arg_loc == w_code.LOCAL
@@ -1212,12 +1212,12 @@ class TestCompiler(object):
         SEND 3 0
         COERCE_ARRAY
         SEND 4 1
-        SEND 5 1
-        SEND 6 1
-        SEND_SPLAT 7
+        SEND 4 1
+        SEND 4 1
+        SEND_SPLAT 5
         DISCARD_TOP
 
-        LOAD_CONST 8
+        LOAD_CONST 6
         RETURN
         """)
 
@@ -1247,13 +1247,13 @@ class TestCompiler(object):
         LOAD_SCOPE
         LOAD_CONSTANT 0
         LOAD_CONST 1
+        LOAD_CONST 1
         LOAD_CONST 2
-        LOAD_CONST 3
         BUILD_FUNCTION
         ATTACH_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 4
+        LOAD_CONST 3
         RETURN
         """)
 
@@ -1264,16 +1264,16 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
-        assert bc.consts_w[2].max_stackdepth == 2
+        assert bc.consts_w[1].max_stackdepth == 2
 
     def test_global_variable(self, ec):
         self.assert_compiles(ec, """
@@ -1284,15 +1284,15 @@ class TestCompiler(object):
         LOAD_CONST 0
         STORE_GLOBAL 1
         DISCARD_TOP
-        LOAD_GLOBAL 2
+        LOAD_GLOBAL 1
         DISCARD_TOP
-        LOAD_GLOBAL 3
-        LOAD_CONST 4
-        SEND 5 1
-        STORE_GLOBAL 6
+        LOAD_GLOBAL 1
+        LOAD_CONST 2
+        SEND 3 1
+        STORE_GLOBAL 1
         DISCARD_TOP
 
-        LOAD_CONST 7
+        LOAD_CONST 4
         RETURN
         """)
 
@@ -1319,16 +1319,16 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_LOCAL 0
         RETURN
         """)
@@ -1340,16 +1340,16 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
+        LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_FUNCTION
         DEFINE_FUNCTION
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
-        self.assert_compiled(bc.consts_w[2], """
+        self.assert_compiled(bc.consts_w[1], """
         LOAD_SELF
         LOAD_CONST 0
         LOAD_CLOSURE 0
@@ -1435,11 +1435,11 @@ class TestCompiler(object):
         LOAD_CONST 2
         SEND 3 1
         BUILD_ARRAY 1
-        SEND 4 1
-        SEND_SPLAT 5
+        SEND 3 1
+        SEND_SPLAT 4
         DISCARD_TOP
 
-        LOAD_CONST 6
+        LOAD_CONST 5
         RETURN
         """)
 
@@ -1463,17 +1463,17 @@ class TestCompiler(object):
         JUMP 47
         DUP_TOP
         LOAD_SELF
-        SEND 3 1
+        SEND 1 1
         JUMP_IF_TRUE 36
         JUMP 43
         DISCARD_TOP
-        LOAD_CONST 4
+        LOAD_CONST 3
         JUMP 47
         DISCARD_TOP
-        LOAD_CONST 5
+        LOAD_CONST 4
         DISCARD_TOP
 
-        LOAD_CONST 6
+        LOAD_CONST 5
         RETURN
         """)
 
@@ -1490,17 +1490,17 @@ class TestCompiler(object):
         JUMP_IF_TRUE 30
         DUP_TOP
         LOAD_CONST 3
-        SEND 4 1
+        SEND 2 1
         JUMP_IF_TRUE 30
         JUMP 37
         DISCARD_TOP
-        LOAD_CONST 5
+        LOAD_CONST 4
         JUMP 41
         DISCARD_TOP
-        LOAD_CONST 6
+        LOAD_CONST 5
         DISCARD_TOP
 
-        LOAD_CONST 7
+        LOAD_CONST 6
         RETURN
         """)
 
@@ -1534,11 +1534,11 @@ class TestCompiler(object):
         DUP_TOP
         LOAD_CONST 3
         LOAD_CONST 4
-        SEND 5 2
+        SEND 2 2
         DISCARD_TOP
         DISCARD_TOP
 
-        LOAD_CONST 6
+        LOAD_CONST 5
         RETURN
         """)
 
@@ -1551,10 +1551,10 @@ class TestCompiler(object):
         JUMP_IF_TRUE 13
         DISCARD_TOP
         LOAD_CONST 1
-        STORE_INSTANCE_VAR 2
+        STORE_INSTANCE_VAR 0
         DISCARD_TOP
 
-        LOAD_CONST 3
+        LOAD_CONST 2
         RETURN
         """)
 
