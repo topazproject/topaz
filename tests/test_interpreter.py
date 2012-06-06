@@ -494,6 +494,23 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(ec.space, w_res) == [math.sin(-1), 0]
 
+    def test_case(self, ec):
+        w_res = ec.space.execute(ec, """
+        res = []
+        4.times do |i|
+            case i
+            when 0, 1
+                res << 0
+            when 2
+                res << 1
+            else
+                res << 2
+            end
+        end
+        return res
+        """)
+        assert self.unwrap(ec.space, w_res) == [0, 0, 1, 2]
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):

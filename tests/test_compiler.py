@@ -1456,22 +1456,51 @@ class TestCompiler(object):
         DUP_TOP
         LOAD_CONST 0
         SEND 1 1
-        JUMP_IF_FALSE 20
+        JUMP_IF_TRUE 16
+        JUMP 23
         DISCARD_TOP
         LOAD_CONST 2
-        JUMP 41
+        JUMP 47
         DUP_TOP
         LOAD_SELF
         SEND 3 1
-        JUMP_IF_FALSE 37
+        JUMP_IF_TRUE 36
+        JUMP 43
         DISCARD_TOP
         LOAD_CONST 4
-        JUMP 41
+        JUMP 47
         DISCARD_TOP
         LOAD_CONST 5
         DISCARD_TOP
 
         LOAD_CONST 6
+        RETURN
+        """)
+
+        self.assert_compiles(ec, """
+        case 4
+        when 5, 6
+            7
+        end
+        """, """
+        LOAD_CONST 0
+        DUP_TOP
+        LOAD_CONST 1
+        SEND 2 1
+        JUMP_IF_TRUE 30
+        DUP_TOP
+        LOAD_CONST 3
+        SEND 4 1
+        JUMP_IF_TRUE 30
+        JUMP 37
+        DISCARD_TOP
+        LOAD_CONST 5
+        JUMP 41
+        DISCARD_TOP
+        LOAD_CONST 6
+        DISCARD_TOP
+
+        LOAD_CONST 7
         RETURN
         """)
 

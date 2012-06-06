@@ -389,7 +389,8 @@ class Case(Node):
     def locate_symbols(self, symtable):
         self.cond.locate_symbols(symtable)
         for when, block in self.whens:
-            when.locate_symbols(symtable)
+            for expr in when:
+                expr.locate_symbols(symtable)
             block.locate_symbols(symtable)
         self.elsebody.locate_symbols(symtable)
 
@@ -399,10 +400,17 @@ class Case(Node):
         self.cond.compile(ctx)
         for when, block in self.whens:
             next_when = ctx.new_block()
-            ctx.emit(consts.DUP_TOP)
-            when.compile(ctx)
-            ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
-            ctx.emit_jump(consts.JUMP_IF_FALSE, next_when)
+            when_block = ctx.new_block()
+
+            for expr in when:
+                next_expr = ctx.new_block()
+                ctx.emit(consts.DUP_TOP)
+                expr.compile(ctx)
+                ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
+                ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
+                ctx.use_next_block(next_expr)
+            ctx.emit_jump(consts.JUMP, next_when)
+            ctx.use_next_block(when_block)
             ctx.emit(consts.DISCARD_TOP)
             block.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)

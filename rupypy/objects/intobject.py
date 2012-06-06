@@ -53,6 +53,7 @@ class W_IntObject(W_BaseObject):
                 "divided by 0"
             )
 
+    @classdef.method("===", other="int")
     @classdef.method("==", other="int")
     def method_eq(self, space, other):
         return space.newbool(self.intvalue == other)

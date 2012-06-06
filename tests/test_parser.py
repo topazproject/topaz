@@ -1272,8 +1272,8 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                (ast.ConstantInt(5), ast.Block([ast.Statement(ast.ConstantInt(6))])),
-                (ast.ConstantInt(4), ast.Block([ast.Statement(ast.ConstantInt(7))]))
+                ([ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
+                ([ast.ConstantInt(4)], ast.Block([ast.Statement(ast.ConstantInt(7))]))
             ], ast.Block([ast.Statement(ast.ConstantInt(9))])))
         ]))
         r = ec.space.parse(ec, """
@@ -1284,8 +1284,7 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                (ast.ConstantInt(4), ast.Block([ast.Statement(ast.ConstantInt(6))])),
-                (ast.ConstantInt(5), ast.Block([ast.Statement(ast.ConstantInt(6))]))
+                ([ast.ConstantInt(4), ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
             ], ast.Block([])))
         ]))
 
@@ -1297,7 +1296,7 @@ class TestParser(BaseRuPyPyTest):
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(0), [
-                (ast.ConstantRegexp("a"), ast.Block([]))
+                ([ast.ConstantRegexp("a")], ast.Block([]))
             ], ast.Block([])))
         ]))
 
