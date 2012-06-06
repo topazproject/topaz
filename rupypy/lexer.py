@@ -581,7 +581,7 @@ class Lexer(object):
             return self.handle_generic(ch)
         self.clear()
         self.add(ch)
-        self.emit("STRING")
+        self.emit("SSTRING")
         self.context = self.EXPR_END
         return None
 
