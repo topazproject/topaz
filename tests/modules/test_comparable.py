@@ -7,11 +7,15 @@ class TestComparable(object):
         w_res = ec.space.execute(ec, "return 'a' < 'b'")
         assert w_res is ec.space.w_true
 
-    def test_ge(self, ec):
+    def test_le(self, ec):
         w_res = ec.space.execute(ec, "return 'b' <= 'b'")
         assert w_res is ec.space.w_true
+        w_res = ec.space.execute(ec, "return 'a' <= 'b'")
+        assert w_res is ec.space.w_true
+        w_res = ec.space.execute(ec, "return 'c' <= 'b'")
+        assert w_res is ec.space.w_false
 
-    def test_le(self, ec):
+    def test_ge(self, ec):
         w_res = ec.space.execute(ec, "return 'c' >= 'b'")
         assert w_res is ec.space.w_true
 
