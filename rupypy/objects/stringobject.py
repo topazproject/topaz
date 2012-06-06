@@ -2,6 +2,7 @@ from pypy.rlib.objectmodel import newlist_hint
 from pypy.rlib.rerased import new_static_erasing_pair
 
 from rupypy.module import ClassDef
+from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_BaseObject
 
 
@@ -55,6 +56,7 @@ class MutableStringStrategy(StringStrategy):
 
 class W_StringObject(W_BaseObject):
     classdef = ClassDef("String")
+    classdef.include_module(Comparable)
 
     def __init__(self, storage, strategy):
         self.storage = storage
