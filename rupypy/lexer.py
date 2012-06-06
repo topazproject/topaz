@@ -354,7 +354,13 @@ class Lexer(object):
             self.add(ch)
             return "IDENTIFIER"
         else:
+            context = self.context
             self.emit_identifier()
+            if context == self.EXPR_FNAME and ch == ".":
+                self.add(ch)
+                self.emit("DOT")
+                self.context = self.EXPR_FNAME
+                return "IDENTIFIER"
             return self.handle_generic(ch)
 
     def handle_SYMBOL(self, ch):
