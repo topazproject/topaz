@@ -209,4 +209,8 @@ varname: IDENTIFIER |
          AT_SIGN IDENTIFIER |
          GLOBAL;
 
-literal: NUMBER | SYMBOL | SSTRING | DSTRING | REGEXP;
+literal: NUMBER | SYMBOL | SSTRING | REGEXP | string_value;
+
+string_value: [STRING_BEGIN] string_contents* [STRING_END];
+
+string_contents: <STRING_VALUE>;

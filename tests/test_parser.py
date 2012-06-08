@@ -504,16 +504,16 @@ class TestParser(BaseRuPyPyTest):
 
     def test_string(self, ec):
         assert ec.space.parse(ec, '"abc"') == ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString("abc"))
+            ast.Statement(ast.DynamicString([ast.ConstantString("abc")]))
         ]))
         assert ec.space.parse(ec, '"abc".size') == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantString("abc"), "size", [], None, 1))
+            ast.Statement(ast.Send(ast.DynamicString([ast.ConstantString("abc")]), "size", [], None, 1))
         ]))
         assert ec.space.parse(ec, "'abc'") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("abc"))
         ]))
         assert ec.space.parse(ec, '"\n"') == ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString("\n"))
+            ast.Statement(ast.DynamicString([ast.ConstantString("\n")]))
         ]))
         assert ec.space.parse(ec, "?-") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("-"))
@@ -521,7 +521,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_dynamic_string(self, ec):
         assert ec.space.parse(ec, '"#{x}"') == ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString("#{x}"))
+            ast.Statement(ast.DynamicString([ast.ConstantString("#{x}")]))
         ]))
 
     def test_class(self, ec):
@@ -668,7 +668,7 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "2...3") == ast.Main(ast.Block([
             ast.Statement(ast.Range(ast.ConstantInt(2), ast.ConstantInt(3), True))
         ]))
-        assert ec.space.parse(ec, '"abc".."def"') == ast.Main(ast.Block([
+        assert ec.space.parse(ec, "'abc'..'def'") == ast.Main(ast.Block([
             ast.Statement(ast.Range(ast.ConstantString("abc"), ast.ConstantString("def"), False))
         ]))
         assert ec.space.parse(ec, "1..-1") == ast.Main(ast.Block([
@@ -805,7 +805,7 @@ class TestParser(BaseRuPyPyTest):
         begin
             1 + 1
         rescue ZeroDivisionError
-            puts "zero"
+            puts 'zero'
         end
         """)
         assert r == ast.Main(ast.Block([
@@ -847,7 +847,7 @@ class TestParser(BaseRuPyPyTest):
         rescue ZeroDivisionError => e
             puts e
         rescue NoMethodError
-            puts "?"
+            puts '?'
         end
         """)
         assert r == ast.Main(ast.Block([
@@ -890,7 +890,7 @@ class TestParser(BaseRuPyPyTest):
         begin
             1 / 0
         ensure
-            puts "ensure"
+            puts 'ensure'
         end
         """)
         assert r == ast.Main(ast.Block([
@@ -908,9 +908,9 @@ class TestParser(BaseRuPyPyTest):
         begin
             1 / 0
         rescue ZeroDivisionError
-            puts "rescue"
+            puts 'rescue'
         ensure
-            puts "ensure"
+            puts 'ensure'
         end
         """)
         assert r == ast.Main(ast.Block([
@@ -933,7 +933,7 @@ class TestParser(BaseRuPyPyTest):
             1 + 1
             1 / 0
         rescue
-            puts "rescue"
+            puts 'rescue'
         end
         """)
         assert r == ast.Main(ast.Block([
@@ -1024,7 +1024,7 @@ class TestParser(BaseRuPyPyTest):
     def test_singleton_method(self, ec):
         r = ec.space.parse(ec, """
         def Array.hello
-            "hello world"
+            'hello world'
         end
         """)
         assert r == ast.Main(ast.Block([

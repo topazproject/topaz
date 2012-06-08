@@ -1088,5 +1088,17 @@ class ConstantRegexp(ConstantNode):
 
 
 class DynamicString(Node):
-    def __init__(self, strvalue):
-        self.strvalue = strvalue
+    def __init__(self, strvalues):
+        self.strvalues = strvalues
+
+    def locate_symbols(self, symtable):
+        for strvalue in self.strvalues:
+            strvalue.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        for strvalue in self.strvalues:
+            strvalue.compile(ctx)
+            if not isinstance(strvalue, ConstantString):
+                ctx.emit(consts.SEND, ctx.create_symbol_const("to_s"), 0)
+        if len(self.strvalues) != 1:
+            ctx.emit(consts.BUILD_STRING, len(self.strvalues))
