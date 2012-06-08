@@ -80,7 +80,7 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = ec.space.execute(ec, "return Object.f(5, -2)")
         assert ec.space.int_w(w_res) == 3
 
-    def test_interpter(self, ec):
+    def test_interpreter(self, ec):
         w_res = ec.space.execute(ec, 'return "abc"')
         assert ec.space.str_w(w_res) == "abc"
 
@@ -510,6 +510,13 @@ class TestInterpreter(BaseRuPyPyTest):
         return res
         """)
         assert self.unwrap(ec.space, w_res) == [0, 0, 1, 2]
+
+    def test_dynamic_string(self, ec):
+        w_res = ec.space.execute(ec, """
+        x = 123
+        return "abc, #{x}, easy"
+        """)
+        assert ec.space.str_w(w_res) == "abc, 123, easy"
 
 
 class TestBlocks(BaseRuPyPyTest):

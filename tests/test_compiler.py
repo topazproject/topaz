@@ -399,6 +399,27 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_dynamic_string(self, ec):
+        self.assert_compiles(ec, """
+        x = 123
+        "abc, #{x}, easy"
+        """, """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        DISCARD_TOP
+        LOAD_CONST 1
+        COPY_STRING
+        LOAD_LOCAL 0
+        SEND 2 0
+        LOAD_CONST 3
+        COPY_STRING
+        BUILD_STRING 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+
     def test_class(self, ec):
         bc = self.assert_compiles(ec, """
         class X

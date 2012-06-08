@@ -1,6 +1,6 @@
 from pypy.rlib import jit
 from pypy.rlib.debug import check_nonneg
-from pypy.rlib.objectmodel import we_are_translated, specialize
+from pypy.rlib.objectmodel import we_are_translated, specialize, newlist_hint
 
 from rupypy import consts
 from rupypy.error import RubyError
@@ -8,6 +8,7 @@ from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.procobject import W_ProcObject
+from rupypy.objects.stringobject import W_StringObject
 
 
 def get_printable_location(pc, bytecode):
@@ -168,6 +169,20 @@ class Interpreter(object):
     def BUILD_ARRAY(self, ec, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)
         frame.push(ec.space.newarray(items_w))
+
+    @jit.unroll_safe
+    def BUILD_STRING(self, ec, bytecode, frame, pc, n_items):
+        items_w = frame.popitemsreverse(n_items)
+        total_length = 0
+        for w_item in items_w:
+            assert isinstance(w_item, W_StringObject)
+            total_length += w_item.length()
+
+        storage = newlist_hint(total_length)
+        for w_item in items_w:
+            assert isinstance(w_item, W_StringObject)
+            w_item.strategy.extend_into(w_item.storage, storage)
+        frame.push(ec.space.newstr_fromchars(storage))
 
     def BUILD_HASH(self, ec, bytecode, frame, pc):
         frame.push(ec.space.newhash())
