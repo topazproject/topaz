@@ -13,7 +13,7 @@ class Keyword(object):
         self.state = state
 
 
-class Lexer(object):
+class BaseLexer(object):
     EOF = chr(0)
 
     EXPR_BEG = 0
@@ -53,13 +53,37 @@ class Lexer(object):
         "not": Keyword("NOT_LITERAL", "NOT_LITERAL", EXPR_BEG),
     }
 
+    def __init__(self):
+        self.tokens = []
+        self.current_value = []
+
+    def peek(self):
+        ch = self.read()
+        self.unread()
+        return ch
+
+    def add(self, ch):
+        self.current_value.append(ch)
+
+    def clear(self):
+        del self.current_value[:]
+
+    def current_pos(self):
+        return SourcePos(self.get_idx(), self.get_lineno(), self.get_columno())
+
+    def emit(self, token):
+        value = "".join(self.current_value)
+        self.clear()
+        self.tokens.append(Token(token, value, self.current_pos()))
+
+
+class Lexer(BaseLexer):
     def __init__(self, source):
+        BaseLexer.__init__(self)
         self.source = source
         self.idx = 0
         self.lineno = 1
         self.columno = 1
-        self.tokens = []
-        self.current_value = []
         self.state = self.EXPR_BEG
 
     def tokenize(self):
@@ -176,19 +200,14 @@ class Lexer(object):
         self.idx -= 1
         self.columno -= 1
 
-    def peek(self):
-        ch = self.read()
-        self.unread()
-        return ch
+    def get_idx(self):
+        return self.idx
 
-    def add(self, ch):
-        self.current_value.append(ch)
+    def get_lineno(self):
+        return self.lineno
 
-    def clear(self):
-        del self.current_value[:]
-
-    def current_pos(self):
-        return SourcePos(self.idx, self.lineno, self.columno)
+    def get_columno(self):
+        return self.columno
 
     def is_beg(self):
         return self.state in [self.EXPR_BEG, self.EXPR_MID, self.EXPR_CLASS, self.EXPR_VALUE]
@@ -204,11 +223,6 @@ class Lexer(object):
             self.state = self.EXPR_ARG
         else:
             self.state = self.EXPR_BEG
-
-    def emit(self, token):
-        value = "".join(self.current_value)
-        self.clear()
-        self.tokens.append(Token(token, value, self.current_pos()))
 
     def emit_identifier(self):
         value = "".join(self.current_value)
@@ -578,21 +592,74 @@ class Lexer(object):
         self.state = self.EXPR_BEG
 
 
-class StringLexer(object):
+class StringLexer(BaseLexer):
     def __init__(self, lexer):
+        BaseLexer.__init__(self)
         self.lexer = lexer
 
+    def get_idx(self):
+        return self.lexer.get_idx()
+
+    def get_lineno(self):
+        return self.lexer.get_lineno()
+
+    def get_columno(self):
+        return self.lexer.get_columno()
+
+    def read(self):
+        return self.lexer.read()
+
+    def unread(self):
+        return self.lexer.unread()
+
+    def emit_str(self):
+        if self.current_value:
+            self.emit("STRING_VALUE")
+
     def tokenize(self):
-        self.lexer.emit("STRING_BEGIN")
+        self.emit("STRING_BEGIN")
         while True:
-            ch = self.lexer.read()
+            ch = self.read()
             if ch == self.lexer.EOF:
-                self.lexer.unread()
-                break
+                self.unread()
+                return
             elif ch == '"':
+                self.emit_str()
                 break
+            elif ch == "#" and self.peek() == "{":
+                self.emit_str()
+                self.read()
+                self.tokenize_interpolation()
             else:
-                self.lexer.add(ch)
-        self.lexer.emit("STRING_VALUE")
-        self.lexer.emit("STRING_END")
+                self.add(ch)
+        self.emit("STRING_END")
+        self.lexer.tokens.extend(self.tokens)
         self.lexer.state = self.lexer.EXPR_END
+
+    def tokenize_interpolation(self):
+        self.emit("DSTRING_START")
+        braces = 1
+        chars = []
+        while True:
+            ch = self.read()
+            if ch == self.lexer.EOF:
+                self.unread()
+                return
+            elif ch == "{":
+                chars.append(ch)
+                braces += 1
+            elif ch == "}":
+                braces -= 1
+                if braces == 0:
+                    break
+                else:
+                    chars.append(ch)
+            elif ch == '"':
+                StringLexer(self).tokenize()
+            else:
+                chars.append(ch)
+        lexer_tokens = Lexer("".join(chars)).tokenize()
+        # Remove the EOF
+        lexer_tokens.pop()
+        self.tokens.extend(lexer_tokens)
+        self.emit("DSTRING_END")

@@ -624,8 +624,11 @@ class Transformer(object):
             if n.symbol == "STRING_VALUE":
                 components.append(ast.ConstantString(n.additional_info))
             else:
-                assert False
-        return ast.DynamicString(components)
+                components.append(self.visit_arg(n))
+        if components:
+            return ast.DynamicString(components)
+        else:
+            return ast.ConstantString("")
 
     def visit_regexp(self, node):
         return ast.ConstantRegexp(node.additional_info)

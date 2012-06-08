@@ -518,11 +518,18 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "?-") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("-"))
         ]))
+        assert ec.space.parse(ec, '""') == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(""))
+        ]))
 
     def test_dynamic_string(self, ec):
-        assert ec.space.parse(ec, '"#{x}"') == ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString([ast.ConstantString("#{x}")]))
-        ]))
+        dyn_string = lambda *components: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString(list(components)))
+         ]))
+        assert ec.space.parse(ec, '"#{x}"') == dyn_string(ast.Variable("x", 1))
+        assert ec.space.parse(ec, '"abc #{2} abc"') == dyn_string(ast.ConstantString("abc "), ast.ConstantInt(2), ast.ConstantString(" abc"))
+        assert ec.space.parse(ec, '"#{"}"}"') == dyn_string(ast.DynamicString([ast.ConstantString("}")]))
+        assert ec.space.parse(ec, '"#{f { 2 }}"') == dyn_string(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
