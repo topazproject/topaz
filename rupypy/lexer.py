@@ -117,7 +117,9 @@ class Lexer(BaseLexer):
             elif ch == ">":
                 self.greater_than(ch)
             elif ch == '"':
-                StringLexer(self).tokenize()
+                tokens = StringLexer(self).tokenize()
+                self.tokens.extend(tokens)
+                self.state = self.EXPR_END
             elif ch == "'":
                 self.single_quote(ch)
             elif ch == "?":
@@ -593,6 +595,9 @@ class Lexer(BaseLexer):
 
 
 class StringLexer(BaseLexer):
+    CODE = 0
+    STRING = 1
+
     def __init__(self, lexer):
         BaseLexer.__init__(self)
         self.lexer = lexer
@@ -633,29 +638,40 @@ class StringLexer(BaseLexer):
             else:
                 self.add(ch)
         self.emit("STRING_END")
-        self.lexer.tokens.extend(self.tokens)
-        self.lexer.state = self.lexer.EXPR_END
+        return self.tokens
 
     def tokenize_interpolation(self):
         self.emit("DSTRING_START")
-        braces = 1
         chars = []
+        context = [self.CODE]
+        braces_count = [1]
         while True:
             ch = self.read()
             if ch == self.lexer.EOF:
                 self.unread()
                 return
-            elif ch == "{":
+            elif ch == "{" and context[-1] == self.CODE:
                 chars.append(ch)
-                braces += 1
-            elif ch == "}":
-                braces -= 1
-                if braces == 0:
-                    break
-                else:
-                    chars.append(ch)
-            elif ch == '"':
-                StringLexer(self).tokenize()
+                braces_count[-1] += 1
+            elif ch == "}" and context[-1] == self.CODE:
+                braces_count[-1] -= 1
+                if braces_count[-1] == 0:
+                    braces_count.pop()
+                    if not braces_count:
+                        break
+                chars.append(ch)
+            elif ch == '"' and context[-1] == self.STRING:
+                chars.append(ch)
+                context.pop()
+            elif ch == '"' and context[-1] == self.CODE:
+                chars.append(ch)
+                context.append(self.STRING)
+            elif ch == "#" and self.peek() == "{":
+                chars.append(ch)
+                ch = self.read()
+                chars.append(ch)
+                braces_count.append(1)
+                self.context.append(self.CODE)
             else:
                 chars.append(ch)
         lexer_tokens = Lexer("".join(chars)).tokenize()

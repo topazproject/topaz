@@ -530,6 +530,7 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"abc #{2} abc"') == dyn_string(ast.ConstantString("abc "), ast.ConstantInt(2), ast.ConstantString(" abc"))
         assert ec.space.parse(ec, '"#{"}"}"') == dyn_string(ast.DynamicString([ast.ConstantString("}")]))
         assert ec.space.parse(ec, '"#{f { 2 }}"') == dyn_string(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))
+        assert ec.space.parse(ec, '"#{p("")}"') == dyn_string(ast.Send(ast.Self(1), "p", [ast.ConstantString("")], None, 1))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
