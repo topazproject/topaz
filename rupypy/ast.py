@@ -982,6 +982,26 @@ class ClassVariable(Node):
     def validate_assignment(self, transformer, node):
         pass
 
+    def locate_symbols(self, symtable):
+        pass
+
+    def locate_symbols_assignment(self, symtable):
+        pass
+
+    def compile(self, ctx):
+        self.compile_receiver(ctx)
+        self.compile_load(ctx)
+
+    def compile_receiver(self, ctx):
+        ctx.emit(consts.LOAD_SCOPE)
+        return 1
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.LOAD_CLASS_VAR, ctx.create_symbol_const(self.name))
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_CLASS_VAR, ctx.create_symbol_const(self.name))
+
 
 class Array(Node):
     def __init__(self, items):
