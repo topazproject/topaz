@@ -183,8 +183,7 @@ class Lexer(BaseLexer):
             elif ch == "$":
                 self.dollar(ch)
             elif ch == "@":
-                self.add(ch)
-                self.emit("AT_SIGN")
+                self.at(ch)
             else:
                 self.identifier(ch)
             space_seen = False
@@ -229,7 +228,7 @@ class Lexer(BaseLexer):
     def emit_identifier(self):
         value = "".join(self.current_value)
         state = self.state
-        if value in self.keywords and self.state != self.EXPR_DOT:
+        if value in self.keywords and self.state not in [self.EXPR_DOT, self.EXPR_FNAME]:
             keyword = self.keywords[value]
             self.state = keyword.state
 
@@ -345,11 +344,7 @@ class Lexer(BaseLexer):
         self.state = self.EXPR_END
         while True:
             ch = self.read()
-            if ch == self.EOF:
-                self.emit("GLOBAL")
-                self.unread()
-                break
-            elif ch in ">:":
+            if ch in ">:":
                 self.add(ch)
                 self.emit("GLOBAL")
                 break
@@ -358,6 +353,25 @@ class Lexer(BaseLexer):
             else:
                 self.unread()
                 self.emit("GLOBAL")
+                break
+
+    def at(self, ch):
+        self.add(ch)
+        ch = self.read()
+        if ch == "@":
+            self.add(ch)
+            token = "CLASS_VAR"
+        else:
+            self.unread()
+            token = "INSTANCE_VAR"
+        self.state = self.EXPR_END
+        while True:
+            ch = self.read()
+            if ch.isalnum() or ch == "_":
+                self.add(ch)
+            else:
+                self.unread()
+                self.emit(token)
                 break
 
     def plus(self, ch):
@@ -574,16 +588,9 @@ class Lexer(BaseLexer):
             self.state = self.EXPR_BEG
             self.emit("COLON")
         else:
-            self.add(ch2)
-            self.state = self.EXPR_END
-            while True:
-                ch = self.read()
-                if ch.isalnum() or ch == "_":
-                    self.add(ch)
-                else:
-                    self.unread()
-                    self.emit("SYMBOL")
-                    break
+            self.unread()
+            self.state = self.EXPR_FNAME
+            self.emit("SYMBOL_BEGIN")
 
     def left_bracket(self, ch, space_seen):
         self.add(ch)

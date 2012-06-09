@@ -205,14 +205,16 @@ assocs: assoc [COMMA] >assocs< | assoc;
 
 assoc: contained_expr ARROW contained_expr;
 
-varname: IDENTIFIER |
-         AT_SIGN AT_SIGN IDENTIFIER |
-         AT_SIGN IDENTIFIER |
-         GLOBAL;
+varname: IDENTIFIER | CLASS_VAR | INSTANCE_VAR | GLOBAL;
 
-literal: NUMBER | SYMBOL | SSTRING | REGEXP | string_value;
+literal: NUMBER | symbol | SSTRING | REGEXP | string;
 
-string_value: [STRING_BEGIN] string_contents* [STRING_END];
+symbol: [SYMBOL_BEGIN] symbol_contents;
+
+symbol_contents: <varname> | <string>;
+
+string: [STRING_BEGIN] string_contents* [STRING_END];
 
 string_contents: <STRING_VALUE> |
                  [DSTRING_START] <arg> [DSTRING_END];
+

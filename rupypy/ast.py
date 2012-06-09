@@ -1122,3 +1122,7 @@ class DynamicString(Node):
                 ctx.emit(consts.SEND, ctx.create_symbol_const("to_s"), 0)
         if len(self.strvalues) != 1:
             ctx.emit(consts.BUILD_STRING, len(self.strvalues))
+
+class Symbol(Node):
+    def __init__(self, value):
+        self.value = value
