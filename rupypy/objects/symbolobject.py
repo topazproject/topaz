@@ -14,6 +14,7 @@ class W_SymbolObject(W_BaseObject):
         return self.symbol
 
     @classdef.method("to_s")
+    @classdef.method("id2name")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.symbol)
 
@@ -27,3 +28,7 @@ class W_SymbolObject(W_BaseObject):
     @classdef.method("[]")
     def method_subscript(self, space, w_idx):
         return self.method_to_s(space).method_subscript(space, w_idx)
+
+    @classdef.method("length")
+    def method_length(self, space):
+        return self.method_to_s(space).method_length(space)

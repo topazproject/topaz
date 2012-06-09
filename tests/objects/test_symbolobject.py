@@ -30,3 +30,7 @@ class TestSymbolObject(BaseRuPyPyTest):
     def test_subscript(self, ec):
         w_res = ec.space.execute(ec, "return :abc[1]")
         assert ec.space.str_w(w_res) == "b"
+
+    def test_length(self, ec):
+        w_res = ec.space.execute(ec, "return :abc.length")
+        assert ec.space.int_w(w_res) == 3
