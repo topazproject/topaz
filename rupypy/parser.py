@@ -127,7 +127,11 @@ class Transformer(object):
     def visit_assignment(self, node):
         targets = [self.visit_arg(n) for n in node.children[0].children]
         oper = node.children[1].additional_info
-        value = self.visit_expr(node.children[2])
+        values = [self.visit_expr(n) for n in node.children[2].children]
+        if len(values) == 1:
+            [value] = values
+        else:
+            value = ast.Array(values)
         if len(targets) == 1:
             [target] = targets
             target.validate_assignment(self, node)

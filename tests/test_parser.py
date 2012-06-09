@@ -191,6 +191,9 @@ class TestParser(BaseRuPyPyTest):
                 ast.ConstantInt(3)
             ))
         ]))
+        assert ec.space.parse(ec, "a = 2, 3") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.Array([ast.ConstantInt(2), ast.ConstantInt(3)])))
+        ]))
         with self.raises("SyntaxError"):
             ec.space.parse(ec, "a, b += 3")
 
