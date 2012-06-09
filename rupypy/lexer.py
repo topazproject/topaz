@@ -627,7 +627,7 @@ class StringLexer(BaseLexer):
             ch = self.read()
             if ch == self.lexer.EOF:
                 self.unread()
-                return
+                return self.tokens
             elif ch == '"':
                 self.emit_str()
                 break
@@ -657,6 +657,7 @@ class StringLexer(BaseLexer):
                 braces_count[-1] -= 1
                 if braces_count[-1] == 0:
                     braces_count.pop()
+                    context.pop()
                     if not braces_count:
                         break
                 chars.append(ch)
@@ -671,7 +672,7 @@ class StringLexer(BaseLexer):
                 ch = self.read()
                 chars.append(ch)
                 braces_count.append(1)
-                self.context.append(self.CODE)
+                context.append(self.CODE)
             else:
                 chars.append(ch)
         lexer_tokens = Lexer("".join(chars)).tokenize()

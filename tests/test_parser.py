@@ -66,6 +66,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "$a << []") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("<<", ast.Global("$a"), ast.Array([]), 1))
         ]))
+        assert ec.space.parse(ec, "3 >> 2") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp(">>", ast.ConstantInt(3), ast.ConstantInt(2), 1))
+        ]))
         assert ec.space.parse(ec, "5 or 3") == ast.Main(ast.Block([
             ast.Statement(ast.Or(ast.ConstantInt(5),
                                         ast.ConstantInt(3)))
@@ -531,6 +534,7 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"#{"}"}"') == dyn_string(ast.DynamicString([ast.ConstantString("}")]))
         assert ec.space.parse(ec, '"#{f { 2 }}"') == dyn_string(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))
         assert ec.space.parse(ec, '"#{p("")}"') == dyn_string(ast.Send(ast.Self(1), "p", [ast.ConstantString("")], None, 1))
+        assert ec.space.parse(ec, '"#{"#{2}"}"') == dyn_string(ast.DynamicString([ast.ConstantInt(2)]))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
@@ -698,6 +702,9 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert ec.space.parse(ec, "i -= 1") == ast.Main(ast.Block([
             ast.Statement(ast.AugmentedAssignment("-", ast.Variable("i", 1), ast.ConstantInt(1)))
+        ]))
+        assert ec.space.parse(ec, "i *= 5") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("*", ast.Variable("i", 1), ast.ConstantInt(5)))
         ]))
 
         assert ec.space.parse(ec, "self.x += 2") == ast.Main(ast.Block([

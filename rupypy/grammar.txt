@@ -64,7 +64,8 @@ literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;
 contained_expr: literal_not | assignment | yield | arg;
 literal_not: NOT_LITERAL contained_expr;
 
-assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <DIV_EQUAL> | <OR_EQUAL>;
+assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
+                 <DIV_EQUAL> | <OR_EQUAL>;
 assignment: assign_target assignment_oper expr;
 assign_target: send [COMMA] >assign_target< | send;
 
@@ -79,7 +80,7 @@ range_oper: <DOTDOT> | <DOTDOTDOT>;
 match_oper: <EQUAL_TILDE> | <EXCLAMATION_TILDE>;
 bool_oper: <OR> | <AND> | <CARET>;
 cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE> | <LEGT>;
-shift_oper: <LSHIFT>;
+shift_oper: <LSHIFT> | <RSHIFT>;
 add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
 unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
