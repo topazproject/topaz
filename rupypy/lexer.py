@@ -151,7 +151,7 @@ class Lexer(BaseLexer):
             elif ch == ":":
                 self.colon(ch)
             elif ch == "/":
-                self.slash(ch)
+                self.slash(ch, space_seen)
             elif ch == "^":
                 self.add(ch)
                 self.set_expression_state()
@@ -405,7 +405,7 @@ class Lexer(BaseLexer):
                 self.emit("MUL")
             self.set_expression_state()
 
-    def slash(self, ch):
+    def slash(self, ch, space_seen):
         if self.is_beg():
             self.regexp()
         else:
