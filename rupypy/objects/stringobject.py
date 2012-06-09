@@ -4,6 +4,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.rangeobject import W_RangeObject
 
 
 class StringStrategy(object):
@@ -127,3 +128,17 @@ class W_StringObject(W_BaseObject):
             return space.newint(0)
         elif s1 > s2:
             return space.newint(1)
+
+    @classdef.method("[]")
+    def method_subscript(self, space, w_idx):
+        if isinstance(w_idx, W_RangeObject):
+            start = space.int_w(w_idx.w_start)
+            if w_idx.inclusive:
+                end = space.int_w(w_idx.w_end)
+            else:
+                end = space.int_w(w_idx.w_end) + 1
+            assert start >= 0
+            assert end >= 0
+            return space.newstr_fromstr(space.str_w(self)[start:end])
+        else:
+            return space.newstr_fromstr(space.str_w(self)[space.int_w(w_idx)])

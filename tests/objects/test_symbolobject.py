@@ -26,3 +26,7 @@ class TestSymbolObject(BaseRuPyPyTest):
         w_res = ec.space.execute(ec, "return [:x.object_id, :x.object_id]")
         id1, id2 = self.unwrap(ec.space, w_res)
         assert id1 == id2
+
+    def test_subscript(self, ec):
+        w_res = ec.space.execute(ec, "return :abc[1]")
+        assert ec.space.str_w(w_res) == "b"
