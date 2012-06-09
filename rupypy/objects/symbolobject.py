@@ -23,3 +23,7 @@ class W_SymbolObject(W_BaseObject):
         s1 = self.method_to_s(space)
         s2 = w_other.method_to_s(space)
         return s1.method_comparator(space, s2)
+
+    @classdef.method("[]")
+    def method_subscript(self, space, w_idx):
+        return self.method_to_s(space).method_subscript(space, w_idx)
