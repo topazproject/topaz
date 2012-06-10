@@ -1401,6 +1401,17 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_dynamic_regexp(self, ec):
+        self.assert_compiles(ec, "/#{2}/", """
+        LOAD_CONST 0
+        SEND 1 0
+        BUILD_REGEXP
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_or(self, ec):
         self.assert_compiles(ec, "3 + 4 || 5 * 6", """
         LOAD_CONST 0
