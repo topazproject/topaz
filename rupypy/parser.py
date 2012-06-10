@@ -380,7 +380,7 @@ class Transformer(object):
             return self.visit_sstring(node.children[0])
         elif symname == "string":
             return self.visit_dstring(node.children[0])
-        elif symname == "REGEXP":
+        elif symname == "regexp":
             return self.visit_regexp(node.children[0])
         raise NotImplementedError(symname)
 
@@ -639,4 +639,7 @@ class Transformer(object):
             return ast.ConstantString("")
 
     def visit_regexp(self, node):
-        return ast.ConstantRegexp(node.additional_info)
+        if node.children[0].children[0].symbol == "STRING_VALUE":
+            return ast.ConstantRegexp(node.children[0].children[0].additional_info)
+        else:
+            raise NotImplementedError("DynamicRegexp not implemented")

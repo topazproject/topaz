@@ -325,17 +325,11 @@ class Lexer(BaseLexer):
                 self.add(ch)
 
     def regexp(self):
+        self.emit("REGEXP_BEGIN")
+        tokens = StringLexer(self, ("/", "/"), True).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("REGEXP_END")
         self.state = self.EXPR_END
-        while True:
-            ch = self.read()
-            if ch == self.EOF:
-                self.unread()
-                break
-            elif ch == "/":
-                self.emit("REGEXP")
-                break
-            else:
-                self.add(ch)
 
     def dollar(self, ch):
         self.add(ch)
