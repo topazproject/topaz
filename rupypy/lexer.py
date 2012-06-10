@@ -324,9 +324,11 @@ class Lexer(BaseLexer):
             else:
                 self.add(ch)
 
-    def regexp(self):
+    def regexp(self, begin_end = None):
+        if begin_end == None:
+            begin_end = ("/", "/")
         self.emit("REGEXP_BEGIN")
-        tokens = StringLexer(self, ("/", "/"), True).tokenize()
+        tokens = StringLexer(self, begin_end, True).tokenize()
         self.tokens.extend(tokens)
         self.emit("REGEXP_END")
         self.state = self.EXPR_END
@@ -624,29 +626,16 @@ class Lexer(BaseLexer):
             end = begin
 
         if ch == "Q":
-            self.emit("STRING_BEGIN")
-            next_char = self.read()
-            while next_char != end:
-                self.add(next_char)
-                next_char = self.read()
-            self.emit("STRING_VALUE")
-            self.emit("STRING_END")
+            tokens = StringLexer(self, (begin, end), True).tokenize()
+            self.tokens.extend(tokens)
         elif ch == "q":
-            self.emit("STRING_BEGIN")
-            next_char = self.read()
-            while next_char != end:
-                self.add(next_char)
-                next_char = self.read()
-            self.emit("STRING_VALUE")
-            self.emit("STRING_END")
+            tokens = StringLexer(self, (begin, end), False).tokenize()
+            self.tokens.extend(tokens)
         elif ch == "r":
-            next_char = self.read()
-            while next_char != end:
-                self.add(next_char)
-                next_char = self.read()
-            self.emit("REGEXP")
+            self.regexp((begin, end))
         else:
             raise NotImplementedError('%' + ch)
+        self.state = self.EXPR_END
 
 class StringLexer(BaseLexer):
     CODE = 0
