@@ -14,7 +14,7 @@ class W_NilObject(W_BaseObject):
 
     @classdef.method("nil?")
     def method_nil(self, space):
-        return True #newbool?
+        return space.newbool(True)
 
     @classdef.method("to_s")
     def method_to_s(self, space):

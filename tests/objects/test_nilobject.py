@@ -7,7 +7,7 @@ class TestNilObject(BaseRuPyPyTest):
 
     def test_nil(self, ec):
         w_res = ec.space.execute(ec, "return nil.nil?")
-        assert w_res == True
+        assert ec.space.bool_w(w_res) == True
 
     def test_to_s(self, ec):
         w_res = ec.space.execute(ec, "return nil.to_s")
