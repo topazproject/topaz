@@ -539,6 +539,26 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"#{p("")}"') == dyn_string(ast.Send(ast.Self(1), "p", [ast.ConstantString("")], None, 1))
         assert ec.space.parse(ec, '"#{"#{2}"}"') == dyn_string(ast.DynamicString([ast.ConstantInt(2)]))
 
+    def test_percent_terms(self, ec):
+        dyn_string = lambda *components: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString(list(components)))
+        ]))
+        assert ec.space.parse(ec, '%{1}') == dyn_string(ast.ConstantString("1"))
+        assert ec.space.parse(ec, '%Q{1}') == dyn_string(ast.ConstantString("1"))
+        assert ec.space.parse(ec, '%Q{#{2}}') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q(#{2})') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q<#{2}>') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q[#{2}]') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q^#{2}^') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%{{}}') == dyn_string(ast.ConstantString("{}"))
+        assert ec.space.parse(ec, '%[[]]') == dyn_string(ast.ConstantString("[]"))
+        assert ec.space.parse(ec, '%<<>>') == dyn_string(ast.ConstantString("<>"))
+        assert ec.space.parse(ec, '%(())') == dyn_string(ast.ConstantString("()"))
+        assert ec.space.parse(ec, '%q{#{2}}') == dyn_string(ast.ConstantString("#{2}"))
+        assert ec.space.parse(ec, '%r{2}') == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantRegexp("2"))
+        ]))
+
     def test_class(self, ec):
         r = ec.space.parse(ec, """
         class X
