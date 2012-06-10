@@ -658,9 +658,26 @@ class StringLexer(BaseLexer):
     CODE = 0
     STRING = 1
 
-    def __init__(self, lexer):
+    def __init__(self, lexer, begin_end = None, is_interpolating = None):
         BaseLexer.__init__(self)
         self.lexer = lexer
+
+        if is_interpolating == None:
+            self.is_interpolating = True
+        else:
+            self.is_interpolating = is_interpolating
+
+        if begin_end == None:
+            self.begin = self.end = '"'
+        elif len(begin_end) == 1:
+            self.begin = self.end = begin_end[0]
+        else:
+            self.begin = begin_end[0]
+            self.end = begin_end[1]
+
+        if self.begin == self.end:
+            self.begin = None
+        self.nesting = 0
 
     def get_idx(self):
         return self.lexer.get_idx()
@@ -688,10 +705,17 @@ class StringLexer(BaseLexer):
             if ch == self.lexer.EOF:
                 self.unread()
                 return self.tokens
-            elif ch == '"':
-                self.emit_str()
-                break
-            elif ch == "#" and self.peek() == "{":
+            elif ch == self.begin:
+                self.nesting += 1
+                self.add(ch)
+            elif ch == self.end:
+                if self.nesting == 0:
+                    self.emit_str()
+                    break
+                else:
+                    self.nesting -= 1
+                    self.add(ch)
+            elif ch == "#" and self.peek() == "{" and self.is_interpolating:
                 self.emit_str()
                 self.read()
                 self.tokenize_interpolation()
