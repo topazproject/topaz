@@ -324,9 +324,7 @@ class Lexer(BaseLexer):
             else:
                 self.add(ch)
 
-    def regexp(self, begin_end = None):
-        if begin_end == None:
-            begin_end = ("/", "/")
+    def regexp(self, begin_end = ("/", "/")):
         self.emit("REGEXP_BEGIN")
         tokens = StringLexer(self, begin_end, True).tokenize()
         self.tokens.extend(tokens)
@@ -641,22 +639,14 @@ class StringLexer(BaseLexer):
     CODE = 0
     STRING = 1
 
-    def __init__(self, lexer, begin_end = None, is_interpolating = None):
+    def __init__(self, lexer, begin_end = ('"', '"'), is_interpolating = True):
         BaseLexer.__init__(self)
         self.lexer = lexer
 
-        if is_interpolating == None:
-            self.is_interpolating = True
-        else:
-            self.is_interpolating = is_interpolating
+        self.is_interpolating = is_interpolating
 
-        if begin_end == None:
-            self.begin = self.end = '"'
-        elif len(begin_end) == 1:
-            self.begin = self.end = begin_end[0]
-        else:
-            self.begin = begin_end[0]
-            self.end = begin_end[1]
+        self.begin = begin_end[0]
+        self.end = begin_end[1]
 
         if self.begin == self.end:
             self.begin = None

@@ -184,10 +184,6 @@ class Interpreter(object):
             w_item.strategy.extend_into(w_item.storage, storage)
         frame.push(ec.space.newstr_fromchars(storage))
 
-    def BUILD_REGEXP(self, ec, bytecode, frame, pc):
-        string = frame.pop()
-        frame.push(ec.space.newregexp(string))
-
     def BUILD_HASH(self, ec, bytecode, frame, pc):
         frame.push(ec.space.newhash())
 
@@ -258,6 +254,10 @@ class Interpreter(object):
             ec.space.execute_frame(ec, sub_frame, w_bytecode)
 
         frame.push(ec.space.w_nil)
+
+    def BUILD_REGEXP(self, ec, bytecode, frame, pc):
+        w_string = frame.pop()
+        frame.push(ec.space.newregexp(ec.space.str_w(w_string)))
 
     def COPY_STRING(self, space, bytecode, frame, pc):
         from rupypy.objects.stringobject import W_StringObject
