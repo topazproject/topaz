@@ -177,9 +177,7 @@ class Lexer(BaseLexer):
                 self.emit("LBRACE")
                 self.state = self.EXPR_BEG
             elif ch == "%":
-                self.add(ch)
-                self.set_expression_state()
-                self.emit("MODULO")
+                self.percent(ch, space_seen)
             elif ch == "$":
                 self.dollar(ch)
             elif ch == "@":
@@ -600,6 +598,55 @@ class Lexer(BaseLexer):
             self.emit("LSUBSCRIPT")
         self.state = self.EXPR_BEG
 
+    def percent(self, ch, space_seen):
+        c = self.read()
+        if self.is_beg() or (self.is_arg() and space_seen and c.isspace()):
+            return self.quote(c)
+        else:
+            self.unread()
+            self.add(ch)
+            self.set_expression_state()
+            self.emit("MODULO")
+
+    def quote(self, ch):
+        if not ch.isalnum():
+            begin = ch
+            ch = 'Q'
+            short_hand = True
+        else:
+            short_hand = False
+            begin = self.read()
+            if (begin.isalnum()):
+                self.error()
+        if begin == "(":
+            end = ")"
+        elif begin == "[":
+            end = "]"
+        elif begin == "{":
+            end = "}"
+        elif begin == "<":
+            end = ">"
+        else:
+            end = begin
+
+        if ch == "Q":
+            self.emit("STRING_BEGIN")
+            next_char = self.read()
+            while next_char != end:
+                self.add(next_char)
+                next_char = self.read()
+            self.emit("STRING_VALUE")
+            self.emit("STRING_END")
+        elif ch == "q":
+            self.emit("STRING_BEGIN")
+            next_char = self.read()
+            while next_char != end:
+                self.add(next_char)
+                next_char = self.read()
+            self.emit("STRING_VALUE")
+            self.emit("STRING_END")
+        else:
+            raise NotImplementedError('%' + ch)
 
 class StringLexer(BaseLexer):
     CODE = 0
