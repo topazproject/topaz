@@ -645,6 +645,12 @@ class Lexer(BaseLexer):
                 next_char = self.read()
             self.emit("STRING_VALUE")
             self.emit("STRING_END")
+        elif ch == "r":
+            next_char = self.read()
+            while next_char != end:
+                self.add(next_char)
+                next_char = self.read()
+            self.emit("REGEXP")
         else:
             raise NotImplementedError('%' + ch)
 
