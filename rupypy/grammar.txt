@@ -64,8 +64,9 @@ literal_bool_oper: <OR_LITERAL> | <AND_LITERAL>;
 contained_expr: literal_not | assignment | yield | arg;
 literal_not: NOT_LITERAL contained_expr;
 
-assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <DIV_EQUAL> | <OR_EQUAL>;
-assignment: assign_target assignment_oper expr;
+assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
+                 <DIV_EQUAL> | <OR_EQUAL>;
+assignment: assign_target assignment_oper exprs;
 assign_target: send [COMMA] >assign_target< | send;
 
 yield: YIELD [LPAREN] args? [RPAREN] |
@@ -79,7 +80,7 @@ range_oper: <DOTDOT> | <DOTDOTDOT>;
 match_oper: <EQUAL_TILDE> | <EXCLAMATION_TILDE>;
 bool_oper: <OR> | <AND> | <CARET>;
 cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE> | <LEGT>;
-shift_oper: <LSHIFT>;
+shift_oper: <LSHIFT> | <RSHIFT>;
 add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
 unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
@@ -204,14 +205,16 @@ assocs: assoc [COMMA] >assocs< | assoc;
 
 assoc: contained_expr ARROW contained_expr;
 
-varname: IDENTIFIER |
-         AT_SIGN AT_SIGN IDENTIFIER |
-         AT_SIGN IDENTIFIER |
-         GLOBAL;
+varname: IDENTIFIER | CLASS_VAR | INSTANCE_VAR | GLOBAL;
 
-literal: NUMBER | SYMBOL | SSTRING | REGEXP | string_value;
+literal: NUMBER | symbol | SSTRING | REGEXP | string;
 
-string_value: [STRING_BEGIN] string_contents* [STRING_END];
+symbol: [SYMBOL_BEGIN] symbol_contents;
+
+symbol_contents: <varname> | <string>;
+
+string: [STRING_BEGIN] string_contents* [STRING_END];
 
 string_contents: <STRING_VALUE> |
                  [DSTRING_START] <arg> [DSTRING_END];
+

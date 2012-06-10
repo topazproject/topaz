@@ -555,6 +555,18 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_class_variables(self, ec):
+        self.assert_compiles(ec, "@@a = @@b", """
+        LOAD_SCOPE
+        LOAD_SCOPE
+        LOAD_CLASS_VAR 0
+        STORE_CLASS_VAR 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_send_block(self, ec):
         bc = self.assert_compiles(ec, """
         [1, 2, 3].map do |x|

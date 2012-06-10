@@ -66,6 +66,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "$a << []") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("<<", ast.Global("$a"), ast.Array([]), 1))
         ]))
+        assert ec.space.parse(ec, "3 >> 2") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp(">>", ast.ConstantInt(3), ast.ConstantInt(2), 1))
+        ]))
         assert ec.space.parse(ec, "5 or 3") == ast.Main(ast.Block([
             ast.Statement(ast.Or(ast.ConstantInt(5),
                                         ast.ConstantInt(3)))
@@ -82,7 +85,7 @@ class TestParser(BaseRuPyPyTest):
             1,))
         ]))
         assert ec.space.parse(ec, "@x-1") == ast.Main(ast.Block([
-            ast.Statement(ast.BinOp("-", ast.InstanceVariable("x"), ast.ConstantInt(1), 1))
+            ast.Statement(ast.BinOp("-", ast.InstanceVariable("@x"), ast.ConstantInt(1), 1))
         ]))
         assert ec.space.parse(ec, ":a <=> :a") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("<=>", ast.ConstantSymbol("a"), ast.ConstantSymbol("a"), 1))
@@ -187,6 +190,9 @@ class TestParser(BaseRuPyPyTest):
                 ],
                 ast.ConstantInt(3)
             ))
+        ]))
+        assert ec.space.parse(ec, "a = 2, 3") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.Array([ast.ConstantInt(2), ast.ConstantInt(3)])))
         ]))
         with self.raises("SyntaxError"):
             ec.space.parse(ec, "a, b += 3")
@@ -530,6 +536,8 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"abc #{2} abc"') == dyn_string(ast.ConstantString("abc "), ast.ConstantInt(2), ast.ConstantString(" abc"))
         assert ec.space.parse(ec, '"#{"}"}"') == dyn_string(ast.DynamicString([ast.ConstantString("}")]))
         assert ec.space.parse(ec, '"#{f { 2 }}"') == dyn_string(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))
+        assert ec.space.parse(ec, '"#{p("")}"') == dyn_string(ast.Send(ast.Self(1), "p", [ast.ConstantString("")], None, 1))
+        assert ec.space.parse(ec, '"#{"#{2}"}"') == dyn_string(ast.DynamicString([ast.ConstantInt(2)]))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
@@ -581,10 +589,10 @@ class TestParser(BaseRuPyPyTest):
 
     def test_instance_variable(self, ec):
         assert ec.space.parse(ec, "@a") == ast.Main(ast.Block([
-            ast.Statement(ast.InstanceVariable("a"))
+            ast.Statement(ast.InstanceVariable("@a"))
         ]))
         assert ec.space.parse(ec, "@a = 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.InstanceVariable("a"), ast.ConstantInt(3)))
+            ast.Statement(ast.Assignment(ast.InstanceVariable("@a"), ast.ConstantInt(3)))
         ]))
 
     def test_do_block(self, ec):
@@ -667,6 +675,11 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, ":abc") == sym("abc")
         assert ec.space.parse(ec, ":abc_abc") == sym("abc_abc")
         assert ec.space.parse(ec, ":@abc") == sym("@abc")
+        assert ec.space.parse(ec, ":@@abc") == sym("@@abc")
+        assert ec.space.parse(ec, ":$abc") == sym("$abc")
+        assert ec.space.parse(ec, ':"@abc"') == ast.Main(ast.Block([
+            ast.Statement(ast.Symbol(ast.DynamicString([ast.ConstantString("@abc")])))
+        ]))
 
     def test_range(self, ec):
         assert ec.space.parse(ec, "2..3") == ast.Main(ast.Block([
@@ -698,13 +711,16 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "i -= 1") == ast.Main(ast.Block([
             ast.Statement(ast.AugmentedAssignment("-", ast.Variable("i", 1), ast.ConstantInt(1)))
         ]))
+        assert ec.space.parse(ec, "i *= 5") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("*", ast.Variable("i", 1), ast.ConstantInt(5)))
+        ]))
 
         assert ec.space.parse(ec, "self.x += 2") == ast.Main(ast.Block([
             ast.Statement(ast.AugmentedAssignment("+", ast.Send(ast.Variable("self", 1), "x", [], None, 1), ast.ConstantInt(2)))
         ]))
 
         assert ec.space.parse(ec, "@a += 3") == ast.Main(ast.Block([
-            ast.Statement(ast.AugmentedAssignment("+", ast.InstanceVariable("a"), ast.ConstantInt(3)))
+            ast.Statement(ast.AugmentedAssignment("+", ast.InstanceVariable("@a"), ast.ConstantInt(3)))
         ]))
 
         assert ec.space.parse(ec, "x /= 2") == ast.Main(ast.Block([
@@ -1378,7 +1394,7 @@ class TestParser(BaseRuPyPyTest):
     def test_or_equal(self, ec):
         r = ec.space.parse(ec, "@a ||= 5")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.OrEqual(ast.InstanceVariable("a"), ast.ConstantInt(5)))
+            ast.Statement(ast.OrEqual(ast.InstanceVariable("@a"), ast.ConstantInt(5)))
         ]))
 
     def test_class_variables(self, ec):
@@ -1386,5 +1402,5 @@ class TestParser(BaseRuPyPyTest):
         @@a = @@b
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.ClassVariable("a"), ast.ClassVariable("b")))
+            ast.Statement(ast.Assignment(ast.ClassVariable("@@a"), ast.ClassVariable("@@b")))
         ]))

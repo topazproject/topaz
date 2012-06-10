@@ -123,9 +123,9 @@ class W_ModuleObject(W_BaseObject):
     def method_attr_accessor(self, space, args_w):
         for w_arg in args_w:
             varname = space.symbol_w(w_arg)
-            self.define_method(space, varname, AttributeReader(varname))
-            self.define_method(space, varname + "=", AttributeWriter(varname))
+            self.method_attr_reader(space, varname)
+            self.define_method(space, varname + "=", AttributeWriter("@" + varname))
 
     @classdef.method("attr_reader", varname="symbol")
     def method_attr_reader(self, space, varname):
-        self.define_method(space, varname, AttributeReader(varname))
+        self.define_method(space, varname, AttributeReader("@" + varname))

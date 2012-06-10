@@ -127,7 +127,11 @@ class Transformer(object):
     def visit_assignment(self, node):
         targets = [self.visit_arg(n) for n in node.children[0].children]
         oper = node.children[1].additional_info
-        value = self.visit_expr(node.children[2])
+        values = [self.visit_expr(n) for n in node.children[2].children]
+        if len(values) == 1:
+            [value] = values
+        else:
+            value = ast.Array(values)
         if len(targets) == 1:
             [target] = targets
             target.validate_assignment(self, node)
@@ -370,21 +374,21 @@ class Transformer(object):
         symname = node.children[0].symbol
         if symname == "NUMBER":
             return self.visit_number(node.children[0])
-        elif symname == "SYMBOL":
+        elif symname == "symbol":
             return self.visit_symbol(node.children[0])
         elif symname == "SSTRING":
             return self.visit_sstring(node.children[0])
-        elif symname == "string_value":
+        elif symname == "string":
             return self.visit_dstring(node.children[0])
         elif symname == "REGEXP":
             return self.visit_regexp(node.children[0])
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
-        if node.children[0].symbol == "AT_SIGN":
-            if node.children[1].symbol == "AT_SIGN":
-                return ast.ClassVariable(node.children[2].additional_info)
-            return ast.InstanceVariable(node.children[1].additional_info)
+        if node.children[0].symbol == "INSTANCE_VAR":
+            return ast.InstanceVariable(node.children[0].additional_info)
+        elif node.children[0].symbol == "CLASS_VAR":
+            return ast.ClassVariable(node.children[0].additional_info)
         elif node.children[0].symbol == "GLOBAL":
             return ast.Global(node.children[0].additional_info)
         elif node.children[0].additional_info[0].isupper():
@@ -613,7 +617,11 @@ class Transformer(object):
             return ast.ConstantInt(int(node.additional_info))
 
     def visit_symbol(self, node):
-        return ast.ConstantSymbol(node.additional_info)
+        node = node.children[0]
+        if node.symbol == "varname":
+            return ast.ConstantSymbol(node.children[0].additional_info)
+        else:
+            return ast.Symbol(self.visit_dstring(node))
 
     def visit_sstring(self, node):
         return ast.ConstantString(node.additional_info)
