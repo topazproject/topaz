@@ -1123,6 +1123,17 @@ class DynamicString(Node):
         if len(self.strvalues) != 1:
             ctx.emit(consts.BUILD_STRING, len(self.strvalues))
 
+class DynamicRegexp(Node):
+    def __init__(self, dstring):
+        self.dstring = dstring
+
+    def locate_symbols(self, symtable):
+        self.dstring.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.dstring.compile(ctx)
+        ctx.emit(consts.BUILD_REGEXP)
+
 class Symbol(Node):
     def __init__(self, value):
         self.value = value

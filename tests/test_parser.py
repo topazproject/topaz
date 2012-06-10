@@ -555,9 +555,6 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '%<<>>') == dyn_string(ast.ConstantString("<>"))
         assert ec.space.parse(ec, '%(())') == dyn_string(ast.ConstantString("()"))
         assert ec.space.parse(ec, '%q{#{2}}') == dyn_string(ast.ConstantString("#{2}"))
-        assert ec.space.parse(ec, '%r{2}') == ast.Main(ast.Block([
-            ast.Statement(ast.ConstantRegexp("2"))
-        ]))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
@@ -1155,9 +1152,14 @@ class TestParser(BaseRuPyPyTest):
         re = lambda re: ast.Main(ast.Block([
             ast.Statement(ast.ConstantRegexp(re))
         ]))
-
+        dyn_re = lambda re: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicRegexp(re))
+        ]))
         assert ec.space.parse(ec, r"/a/") == re("a")
         assert ec.space.parse(ec, r"/\w/") == re(r"\w")
+        assert ec.space.parse(ec, '%r{2}') == re("2")
+        assert ec.space.parse(ec, '%r{#{2}}') == dyn_re(ast.DynamicString([ast.ConstantInt(2)]))
+        assert ec.space.parse(ec, '/#{2}/') == dyn_re(ast.DynamicString([ast.ConstantInt(2)]))
 
     def test_or(self, ec):
         assert ec.space.parse(ec, "3 || 4") == ast.Main(ast.Block([

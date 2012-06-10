@@ -184,6 +184,10 @@ class Interpreter(object):
             w_item.strategy.extend_into(w_item.storage, storage)
         frame.push(ec.space.newstr_fromchars(storage))
 
+    def BUILD_REGEXP(self, ec, bytecode, frame, pc):
+        string = frame.pop()
+        frame.push(ec.space.newregexp(string))
+
     def BUILD_HASH(self, ec, bytecode, frame, pc):
         frame.push(ec.space.newhash())
 

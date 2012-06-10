@@ -642,4 +642,4 @@ class Transformer(object):
         if node.children[0].children[0].symbol == "STRING_VALUE":
             return ast.ConstantRegexp(node.children[0].children[0].additional_info)
         else:
-            raise NotImplementedError("DynamicRegexp not implemented")
+            return ast.DynamicRegexp(self.visit_dstring(node.children[0]))
