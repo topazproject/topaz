@@ -382,6 +382,8 @@ class Transformer(object):
             return self.visit_dstring(node.children[0])
         elif symname == "regexp":
             return self.visit_regexp(node.children[0])
+        elif symname == "shellout":
+            return self.visit_shellout(node.children[0])
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
@@ -643,3 +645,10 @@ class Transformer(object):
             return ast.ConstantRegexp(node.children[0].children[0].additional_info)
         else:
             return ast.DynamicRegexp(self.visit_dstring(node.children[0]))
+
+    def visit_shellout(self, node):
+        return ast.Send(ast.Self(node.getsourcepos().lineno),
+                        "`",
+                        [self.visit_dstring(node.children[0])],
+                        None,
+                        node.getsourcepos().lineno)
