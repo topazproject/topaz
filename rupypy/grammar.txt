@@ -168,7 +168,7 @@ elsif: ELSIF expr then line* statement? [LINE_END]?;
 
 else: ELSE line* statement? [LINE_END]?;
 
-rescue: RESCUE varname? (ARROW IDENTIFIER)? line* statement? [LINE_END]?;
+rescue: RESCUE varname? (ARROW varname)? line* statement? [LINE_END]?;
 
 ensure: ENSURE line* statement? [LINE_END]?;
 

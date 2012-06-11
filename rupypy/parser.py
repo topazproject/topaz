@@ -544,12 +544,12 @@ class Transformer(object):
         if node.children[1].symbol == "varname":
             exception = self.visit_varname(node.children[1])
             idx += 1
-        name = None
+        target = None
         if node.children[idx].symbol == "ARROW":
-            name = node.children[idx + 1].additional_info
+            target = self.visit_varname(node.children[idx + 1])
             idx += 2
         block = self.visit_block(node, start_idx=idx)
-        return ast.ExceptHandler(exception, name, block)
+        return ast.ExceptHandler(exception, target, block)
 
     def visit_case(self, node):
         cond = self.visit_expr(node.children[1])
