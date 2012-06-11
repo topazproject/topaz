@@ -647,8 +647,10 @@ class Transformer(object):
             return ast.DynamicRegexp(self.visit_dstring(node.children[0]))
 
     def visit_shellout(self, node):
-        return ast.Send(ast.Self(node.getsourcepos().lineno),
-                        "`",
-                        [self.visit_dstring(node.children[0])],
-                        None,
-                        node.getsourcepos().lineno)
+        return ast.Send(
+            ast.Self(node.getsourcepos().lineno),
+            "`",
+            [self.visit_dstring(node.children[0])],
+            None,
+            node.getsourcepos().lineno
+        )

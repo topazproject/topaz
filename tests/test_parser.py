@@ -1433,12 +1433,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_shellout(self, ec):
         shellout = lambda *components: ast.Main(ast.Block([
-            ast.Statement(ast.Send(
-                            ast.Self(1),
-                            "`",
-                            [ast.DynamicString(list(components))],
-                            None,
-                            1))
+            ast.Statement(ast.Send(ast.Self(1), "`", [ast.DynamicString(list(components))], None, 1))
         ]))
         assert ec.space.parse(ec, "`ls`") == shellout(ast.ConstantString("ls"))
         assert ec.space.parse(ec, '%x(ls)') == shellout(ast.ConstantString("ls"))
