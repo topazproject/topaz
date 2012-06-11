@@ -182,6 +182,8 @@ class Lexer(BaseLexer):
                 self.dollar(ch)
             elif ch == "@":
                 self.at(ch)
+            elif ch == "`":
+                self.backtick(ch)
             else:
                 self.identifier(ch)
             space_seen = False
@@ -592,6 +594,22 @@ class Lexer(BaseLexer):
             self.emit("LSUBSCRIPT")
         self.state = self.EXPR_BEG
 
+    def backtick(self, ch):
+        if self.state == self.EXPR_FNAME:
+            self.add(ch)
+            self.emit_identifier()
+        elif self.state == self.EXPR_DOT:
+            raise NotImplementedError("`")
+        else:
+            self.shellout("`", "`")
+
+    def shellout(self, begin, end):
+        self.emit("SHELL_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("SHELL_END")
+        self.state = self.EXPR_END
+
     def percent(self, ch, space_seen):
         c = self.read()
         if self.is_beg() or (self.is_arg() and space_seen and c.isspace()):
@@ -631,6 +649,8 @@ class Lexer(BaseLexer):
         elif ch == "q":
             tokens = StringLexer(self, begin, end, interpolate=False).tokenize()
             self.tokens.extend(tokens)
+        elif ch == "x":
+            self.shellout(begin, end)
         elif ch == "r":
             self.regexp(begin, end)
         else:
