@@ -534,7 +534,8 @@ class TestParser(BaseRuPyPyTest):
     def test_escape_character(self, ec):
         string = lambda content: ast.Main(ast.Block([
             ast.Statement(ast.ConstantString(content))
-         ]))
+        ]))
+
         assert ec.space.parse(ec, '?\\\\') == string("\\")
         assert ec.space.parse(ec, '?\\n') == string("\n")
         assert ec.space.parse(ec, '?\\t') == string("\t")
