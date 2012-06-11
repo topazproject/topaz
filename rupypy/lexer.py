@@ -340,18 +340,20 @@ class Lexer(BaseLexer):
     def dollar(self, ch):
         self.add(ch)
         self.state = self.EXPR_END
-        while True:
-            ch = self.read()
-            if ch in ">:":
-                self.add(ch)
-                self.emit("GLOBAL")
-                break
-            elif ch.isalnum() or ch == "_":
-                self.add(ch)
-            else:
-                self.unread()
-                self.emit("GLOBAL")
-                break
+        ch = self.read()
+        if ch in "$>:":
+            self.add(ch)
+            self.emit("GLOBAL")
+        else:
+            self.unread()
+            while True:
+                ch = self.read()
+                if ch.isalnum() or ch == "_":
+                    self.add(ch)
+                else:
+                    self.unread()
+                    self.emit("GLOBAL")
+                    break
 
     def at(self, ch):
         self.add(ch)
