@@ -596,7 +596,7 @@ class Lexer(BaseLexer):
         c = self.read()
         if self.is_beg() or (self.is_arg() and space_seen and c.isspace()):
             return self.quote(c)
-        elif (c == "="):
+        elif c == "=":
             self.add(ch)
             self.emit("MODULO_EQUAL")
         else:
