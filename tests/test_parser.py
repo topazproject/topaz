@@ -1144,6 +1144,7 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "$:") == simple_global("$:")
         assert ec.space.parse(ec, "$$") == simple_global("$$")
         assert ec.space.parse(ec, "$?") == simple_global("$?")
+        assert ec.space.parse(ec, "$\\") == simple_global("$\\")
 
     def test_comments(self, ec):
         r = ec.space.parse(ec, """
