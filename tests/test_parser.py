@@ -530,6 +530,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '""') == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString(""))
         ]))
+        assert ec.space.parse(ec, '?\001') == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("\001"))
+        ]))
 
     def test_dynamic_string(self, ec):
         dyn_string = lambda *components: ast.Main(ast.Block([

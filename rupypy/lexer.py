@@ -567,6 +567,9 @@ class Lexer(BaseLexer):
                 self.emit("QUESTION")
             else:
                 self.add(ch2)
+                if ch2 == "\\":
+                    while not self.peek().isspace():
+                        self.add(self.read())
                 self.emit("SSTRING")
                 self.state = self.EXPR_END
 
