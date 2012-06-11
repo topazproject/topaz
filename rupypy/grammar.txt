@@ -65,7 +65,7 @@ contained_expr: literal_not | assignment | yield | arg;
 literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
-                 <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL>;
+                 <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL>;
 assignment: assign_target assignment_oper exprs;
 assign_target: send [COMMA] >assign_target< | send;
 

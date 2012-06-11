@@ -1470,6 +1470,12 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.OrEqual(ast.InstanceVariable("@a"), ast.ConstantInt(5)))
         ]))
 
+    def test_and_equal(self, ec):
+        r = ec.space.parse(ec, "x &&= 10")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.AndEqual(ast.Variable("x", 1), ast.ConstantInt(10)))
+        ]))
+
     def test_class_variables(self, ec):
         r = ec.space.parse(ec, """
         @@a = @@b

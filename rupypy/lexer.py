@@ -462,7 +462,13 @@ class Lexer(BaseLexer):
         self.set_expression_state()
         if ch2 == "&":
             self.add(ch2)
-            self.emit("AND")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.emit("AND_EQUAL")
+            else:
+                self.unread()
+                self.emit("AND")
         else:
             self.unread()
             self.emit("AMP")

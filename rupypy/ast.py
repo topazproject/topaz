@@ -516,6 +516,12 @@ class OrEqual(Node):
         self.target.compile_store(ctx)
 
 
+class AndEqual(Node):
+    def __init__(self, target, value):
+        self.target = target
+        self.value = value
+
+
 class MultiAssignment(Node):
     def __init__(self, targets, value):
         self.targets = targets

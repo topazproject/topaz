@@ -141,6 +141,8 @@ class Transformer(object):
                 return ast.Assignment(target, value)
             elif oper == "||=":
                 return ast.OrEqual(target, value)
+            elif oper == "&&=":
+                return ast.AndEqual(target, value)
             else:
                 return ast.AugmentedAssignment(oper[0], target, value)
         else:
