@@ -1,5 +1,7 @@
-from pypy.rlib.parsing.lexer import Token, SourcePos
 import string
+
+from pypy.rlib.parsing.lexer import Token, SourcePos
+
 
 class LexerError(Exception):
     def __init__(self, pos):
@@ -601,7 +603,7 @@ class Lexer(BaseLexer):
             raise NotImplementedError("UTF-8 escape not implemented")
         elif c in "x0":
             buf = ""
-            for i in (1, 2):
+            for i in xrange(2):
                 ch2 = self.read()
                 if ch2.isalnum():
                     if c == "x" and not ch2 in string.hexdigits:
