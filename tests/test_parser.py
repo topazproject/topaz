@@ -698,7 +698,7 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, ":@@abc") == sym("@@abc")
         assert ec.space.parse(ec, ":$abc") == sym("$abc")
         assert ec.space.parse(ec, ':"@abc"') == ast.Main(ast.Block([
-            ast.Statement(ast.Symbol(ast.DynamicString([ast.ConstantString("@abc")])))
+            ast.Statement(ast.Symbol(ast.DynamicString([ast.ConstantString("@abc")]), 1))
         ]))
 
     def test_range(self, ec):

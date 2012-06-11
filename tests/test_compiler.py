@@ -420,6 +420,17 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_dynamic_symbol(self, ec):
+        self.assert_compiles(ec, ':"#{2}"', """
+        LOAD_CONST 0
+        SEND 1 0
+        SEND 2 0
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_class(self, ec):
         bc = self.assert_compiles(ec, """
         class X
