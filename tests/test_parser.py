@@ -776,6 +776,11 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.UnaryOp("-", ast.Variable("a", 1), 1)], None, 1))
         ]))
 
+    def test_unary_ops(self, ec):
+        assert ec.space.parse(ec, "~3") == ast.Main(ast.Block([
+            ast.Statement(ast.UnaryOp("~", ast.ConstantInt(3), 1))
+        ]))
+
     def test_unless(self, ec):
         r = ec.space.parse(ec, """
         unless 1 == 2 then

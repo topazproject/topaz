@@ -966,6 +966,17 @@ class TestCompiler(object):
         [_, sym, _] = bc.consts_w
         assert ec.space.symbol_w(sym) == "-@"
 
+        bc = self.assert_compiles(ec, "~3", """
+        LOAD_CONST 0
+        SEND 1 0
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        [_, sym, _] = bc.consts_w
+        assert ec.space.symbol_w(sym) == "~"
+
     def test_assignment_in_block_closure(self, ec):
         bc = self.assert_compiles(ec, """
         [].each do

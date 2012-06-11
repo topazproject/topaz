@@ -592,7 +592,10 @@ class UnaryOp(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.value, self.op + "@", [], None, self.lineno).compile(ctx)
+        op = self.op
+        if op in "-":
+            op += "@"
+        Send(self.value, op, [], None, self.lineno).compile(ctx)
 
 
 class Or(Node):

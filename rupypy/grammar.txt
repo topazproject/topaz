@@ -83,7 +83,7 @@ cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE> | <LEGT>;
 shift_oper: <LSHIFT> | <RSHIFT>;
 add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
-unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
+unary_oper: <UNARY_MINUS> | <TILDE> | <EXCLAMATION>;
 
 range: match range_oper range | <match>;
 match: bool match_oper match | <bool>;

@@ -165,7 +165,9 @@ class Lexer(BaseLexer):
                 self.state = self.EXPR_BEG
                 self.emit("COMMA")
             elif ch == "~":
-                assert False
+                self.add(ch)
+                self.state = self.EXPR_BEG
+                self.emit("TILDE")
             elif ch == "(":
                 self.add(ch)
                 self.state = self.EXPR_BEG
