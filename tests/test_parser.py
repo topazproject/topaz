@@ -549,6 +549,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Block([ast.Statement(ast.Variable("nil", 1))]),
             ast.Block([]),
         ))
+        assert ec.space.parse(ec, '"\\""') == dyn_string(ast.ConstantString('"'))
 
     def test_percent_terms(self, ec):
         dyn_string = lambda *components: ast.Main(ast.Block([
@@ -566,6 +567,8 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '%<<>>') == dyn_string(ast.ConstantString("<>"))
         assert ec.space.parse(ec, '%(())') == dyn_string(ast.ConstantString("()"))
         assert ec.space.parse(ec, '%q{#{2}}') == dyn_string(ast.ConstantString("#{2}"))
+        assert ec.space.parse(ec, '%{\\{}') == dyn_string(ast.ConstantString('{'))
+        assert ec.space.parse(ec, '%{\\}}') == dyn_string(ast.ConstantString('}'))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
