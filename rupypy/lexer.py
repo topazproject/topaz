@@ -1,3 +1,5 @@
+import string
+
 from pypy.rlib.parsing.lexer import Token, SourcePos
 
 
@@ -117,7 +119,7 @@ class Lexer(BaseLexer):
             elif ch == ">":
                 self.greater_than(ch)
             elif ch == '"':
-                tokens = StringLexer(self).tokenize()
+                tokens = StringLexer(self, '"', '"').tokenize()
                 self.tokens.extend(tokens)
                 self.state = self.EXPR_END
             elif ch == "'":
@@ -165,7 +167,9 @@ class Lexer(BaseLexer):
                 self.state = self.EXPR_BEG
                 self.emit("COMMA")
             elif ch == "~":
-                assert False
+                self.add(ch)
+                self.state = self.EXPR_BEG
+                self.emit("TILDE")
             elif ch == "(":
                 self.add(ch)
                 self.state = self.EXPR_BEG
@@ -177,13 +181,13 @@ class Lexer(BaseLexer):
                 self.emit("LBRACE")
                 self.state = self.EXPR_BEG
             elif ch == "%":
-                self.add(ch)
-                self.set_expression_state()
-                self.emit("MODULO")
+                self.percent(ch, space_seen)
             elif ch == "$":
                 self.dollar(ch)
             elif ch == "@":
                 self.at(ch)
+            elif ch == "`":
+                self.backtick(ch)
             else:
                 self.identifier(ch)
             space_seen = False
@@ -326,34 +330,30 @@ class Lexer(BaseLexer):
             else:
                 self.add(ch)
 
-    def regexp(self):
+    def regexp(self, begin, end):
+        self.emit("REGEXP_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("REGEXP_END")
         self.state = self.EXPR_END
-        while True:
-            ch = self.read()
-            if ch == self.EOF:
-                self.unread()
-                break
-            elif ch == "/":
-                self.emit("REGEXP")
-                break
-            else:
-                self.add(ch)
 
     def dollar(self, ch):
         self.add(ch)
         self.state = self.EXPR_END
-        while True:
-            ch = self.read()
-            if ch in ">:":
-                self.add(ch)
-                self.emit("GLOBAL")
-                break
-            elif ch.isalnum() or ch == "_":
-                self.add(ch)
-            else:
-                self.unread()
-                self.emit("GLOBAL")
-                break
+        ch = self.read()
+        if ch in "$>:?\\":
+            self.add(ch)
+            self.emit("GLOBAL")
+        else:
+            self.unread()
+            while True:
+                ch = self.read()
+                if ch.isalnum() or ch == "_":
+                    self.add(ch)
+                else:
+                    self.unread()
+                    self.emit("GLOBAL")
+                    break
 
     def at(self, ch):
         self.add(ch)
@@ -421,7 +421,7 @@ class Lexer(BaseLexer):
 
     def slash(self, ch, space_seen):
         if self.is_beg():
-            self.regexp()
+            self.regexp("/", "/")
         else:
             ch2 = self.read()
             if ch2 == "=":
@@ -432,7 +432,7 @@ class Lexer(BaseLexer):
             else:
                 self.unread()
                 if self.is_arg() and space_seen and not ch2.isspace():
-                    self.regexp()
+                    self.regexp("/", "/")
                 else:
                     self.add(ch)
                     self.set_expression_state()
@@ -462,7 +462,13 @@ class Lexer(BaseLexer):
         self.set_expression_state()
         if ch2 == "&":
             self.add(ch2)
-            self.emit("AND")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.emit("AND_EQUAL")
+            else:
+                self.unread()
+                self.emit("AND")
         else:
             self.unread()
             self.emit("AMP")
@@ -570,9 +576,79 @@ class Lexer(BaseLexer):
                 self.state = self.EXPR_VALUE
                 self.emit("QUESTION")
             else:
-                self.add(ch2)
+                if ch2 == "\\":
+                    self.add(self.read_escape())
+                else:
+                    self.add(ch2)
                 self.emit("SSTRING")
                 self.state = self.EXPR_END
+
+    def read_escape(self):
+        c = self.read()
+        if c == self.EOF:
+            self.error()
+        elif c == "\\":
+            return "\\"
+        elif c == "n":
+            return "\n"
+        elif c == "t":
+            return "\t"
+        elif c == "r":
+            return "\r"
+        elif c == "f":
+            return "\f"
+        elif c == "v":
+            return "\v"
+        elif c == "a":
+            return "\a"
+        elif c == "b":
+            return "\b"
+        elif c == "e":
+            return "\x1b"
+        elif c == "s":
+            return " "
+        elif c == "u":
+            raise NotImplementedError("UTF-8 escape not implemented")
+        elif c in "x0":
+            buf = ""
+            for i in xrange(2):
+                ch2 = self.read()
+                if ch2.isalnum():
+                    if c == "x" and not ch2 in string.hexdigits:
+                        self.error()
+                    if c == "0" and not ch2 in string.octdigits:
+                        self.error()
+                    buf += ch2
+                else:
+                    break
+            if c == "x":
+                return chr(int(buf, 16))
+            elif c == "0":
+                return chr(int(buf, 8))
+        elif c == "M":
+            if self.read() != "-":
+                self.error()
+            c = self.read()
+            if c == "\\":
+                return chr(ord(self.read_escape()) & 0x80)
+            elif c == self.EOF:
+                self.error()
+            else:
+                return chr(ord(c) & 0xff | 0x80)
+        elif c == "C" or c == "c":
+            if c == "C" and self.read() != "-":
+                self.error()
+            c = self.read()
+            if c == "?":
+                return '\177'
+            elif c == self.EOF:
+                self.error()
+            else:
+                if c == "\\":
+                    c = self.read_escape()
+                return chr(ord(c) & 0x9f)
+        else:
+            return c
 
     def colon(self, ch):
         ch2 = self.read()
@@ -600,14 +676,84 @@ class Lexer(BaseLexer):
             self.emit("LSUBSCRIPT")
         self.state = self.EXPR_BEG
 
+    def backtick(self, ch):
+        if self.state == self.EXPR_FNAME:
+            self.add(ch)
+            self.emit_identifier()
+        elif self.state == self.EXPR_DOT:
+            raise NotImplementedError("`")
+        else:
+            self.shellout("`", "`")
+
+    def shellout(self, begin, end):
+        self.emit("SHELL_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("SHELL_END")
+        self.state = self.EXPR_END
+
+    def percent(self, ch, space_seen):
+        c = self.read()
+        if self.is_beg() or (self.is_arg() and space_seen and c.isspace()):
+            return self.quote(c)
+        elif c == "=":
+            self.add(ch)
+            self.emit("MODULO_EQUAL")
+        else:
+            self.unread()
+            self.add(ch)
+            self.set_expression_state()
+            self.emit("MODULO")
+
+    def quote(self, ch):
+        if not ch.isalnum():
+            begin = ch
+            ch = "Q"
+        else:
+            begin = self.read()
+            if begin.isalnum():
+                self.error()
+
+        if begin == "(":
+            end = ")"
+        elif begin == "[":
+            end = "]"
+        elif begin == "{":
+            end = "}"
+        elif begin == "<":
+            end = ">"
+        else:
+            end = begin
+
+        if ch == "Q":
+            tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
+            self.tokens.extend(tokens)
+        elif ch == "q":
+            tokens = StringLexer(self, begin, end, interpolate=False).tokenize()
+            self.tokens.extend(tokens)
+        elif ch == "x":
+            self.shellout(begin, end)
+        elif ch == "r":
+            self.regexp(begin, end)
+        else:
+            raise NotImplementedError('%' + ch)
+        self.state = self.EXPR_END
+
 
 class StringLexer(BaseLexer):
     CODE = 0
     STRING = 1
 
-    def __init__(self, lexer):
+    def __init__(self, lexer, begin, end, interpolate=True):
         BaseLexer.__init__(self)
         self.lexer = lexer
+
+        self.interpolate = interpolate
+
+        self.begin = begin
+        self.end = end
+
+        self.nesting = 0
 
     def get_idx(self):
         return self.lexer.get_idx()
@@ -635,10 +781,19 @@ class StringLexer(BaseLexer):
             if ch == self.lexer.EOF:
                 self.unread()
                 return self.tokens
-            elif ch == '"':
-                self.emit_str()
-                break
-            elif ch == "#" and self.peek() == "{":
+            elif ch == "\\" and self.peek() in [self.begin, self.end]:
+                self.add(self.read())
+            elif ch == self.begin and (self.begin != self.end):
+                self.nesting += 1
+                self.add(ch)
+            elif ch == self.end:
+                if self.nesting == 0:
+                    self.emit_str()
+                    break
+                else:
+                    self.nesting -= 1
+                    self.add(ch)
+            elif ch == "#" and self.peek() == "{" and self.interpolate:
                 self.emit_str()
                 self.read()
                 self.tokenize_interpolation()

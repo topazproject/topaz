@@ -516,6 +516,12 @@ class OrEqual(Node):
         self.target.compile_store(ctx)
 
 
+class AndEqual(Node):
+    def __init__(self, target, value):
+        self.target = target
+        self.value = value
+
+
 class MultiAssignment(Node):
     def __init__(self, targets, value):
         self.targets = targets
@@ -592,7 +598,10 @@ class UnaryOp(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.value, self.op + "@", [], None, self.lineno).compile(ctx)
+        op = self.op
+        if op in "-":
+            op += "@"
+        Send(self.value, op, [], None, self.lineno).compile(ctx)
 
 
 class Or(Node):
@@ -1123,6 +1132,26 @@ class DynamicString(Node):
         if len(self.strvalues) != 1:
             ctx.emit(consts.BUILD_STRING, len(self.strvalues))
 
+
+class DynamicRegexp(Node):
+    def __init__(self, dstring):
+        self.dstring = dstring
+
+    def locate_symbols(self, symtable):
+        self.dstring.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.dstring.compile(ctx)
+        ctx.emit(consts.BUILD_REGEXP)
+
+
 class Symbol(Node):
-    def __init__(self, value):
+    def __init__(self, value, lineno):
+        Node.__init__(self, lineno)
         self.value = value
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        Send(self.value, "to_sym", [], None, self.lineno).compile(ctx)

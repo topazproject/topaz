@@ -7,3 +7,7 @@ class W_RegexpObject(W_BaseObject):
 
     def __init__(self, regexp):
         self.regexp = regexp
+
+    @classdef.method("source")
+    def method_source(self, space):
+        return space.newstr_fromstr(self.regexp)

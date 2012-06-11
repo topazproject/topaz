@@ -518,6 +518,13 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert ec.space.str_w(w_res) == "abc, 123, easy"
 
+    def test_dynamic_regexp(self, ec):
+        w_res = ec.space.execute(ec, """
+        x = 123
+        return /#{x}/.source
+        """)
+        assert ec.space.str_w(w_res) == "123"
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, ec):

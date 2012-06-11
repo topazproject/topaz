@@ -419,6 +419,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "r[]") == ast.Main(ast.Block([
             ast.Statement(ast.Subscript(ast.Variable("r", 1), [], 1))
         ]))
+        assert ec.space.parse(ec, "f()[]") == ast.Main(ast.Block([
+            ast.Statement(ast.Subscript(ast.Send(ast.Self(1), "f", [], None, 1), [], 1))
+        ]))
 
     def test_subscript_assginment(self, ec):
         assert ec.space.parse(ec, "x[0] = 5") == ast.Main(ast.Block([
@@ -507,6 +510,7 @@ class TestParser(BaseRuPyPyTest):
         test_name(">=")
         test_name("<=")
         test_name("==")
+        test_name("=~")
 
     def test_string(self, ec):
         assert ec.space.parse(ec, '"abc"') == ast.Main(ast.Block([
@@ -528,6 +532,33 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.ConstantString(""))
         ]))
 
+    def test_escape_character(self, ec):
+        string = lambda content: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(content))
+        ]))
+
+        assert ec.space.parse(ec, '?\\\\') == string("\\")
+        assert ec.space.parse(ec, '?\\n') == string("\n")
+        assert ec.space.parse(ec, '?\\t') == string("\t")
+        assert ec.space.parse(ec, '?\\r') == string("\r")
+        assert ec.space.parse(ec, '?\\f') == string("\f")
+        assert ec.space.parse(ec, '?\\v') == string("\v")
+        assert ec.space.parse(ec, '?\\a') == string("\a")
+        assert ec.space.parse(ec, '?\\b') == string("\b")
+        assert ec.space.parse(ec, '?\\e') == string("\x1b")
+        assert ec.space.parse(ec, '?\\s') == string(" ")
+        assert ec.space.parse(ec, "?\\xa") == string("\x0a")
+        assert ec.space.parse(ec, '?\\xab') == string("\xab")
+        assert ec.space.parse(ec, '?\\01') == string("\01")
+        assert ec.space.parse(ec, '?\\012') == string("\012")
+        assert ec.space.parse(ec, '?\\M-\a') == string("\x87")
+        assert ec.space.parse(ec, '?\\M-a') == string("\xe1")
+        assert ec.space.parse(ec, '?\\C-?') == string("\x7f")
+        assert ec.space.parse(ec, '?\\c?') == string("\x7f")
+        assert ec.space.parse(ec, '?\\C-\y') == string("\x19")
+        assert ec.space.parse(ec, '?\\c\y') == string("\x19")
+        assert ec.space.parse(ec, '?\\l') == string("l")
+
     def test_dynamic_string(self, ec):
         dyn_string = lambda *components: ast.Main(ast.Block([
             ast.Statement(ast.DynamicString(list(components)))
@@ -538,6 +569,31 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"#{f { 2 }}"') == dyn_string(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))
         assert ec.space.parse(ec, '"#{p("")}"') == dyn_string(ast.Send(ast.Self(1), "p", [ast.ConstantString("")], None, 1))
         assert ec.space.parse(ec, '"#{"#{2}"}"') == dyn_string(ast.DynamicString([ast.ConstantInt(2)]))
+        assert ec.space.parse(ec, '"#{nil if 2}"') == dyn_string(ast.If(
+            ast.ConstantInt(2),
+            ast.Block([ast.Statement(ast.Variable("nil", 1))]),
+            ast.Block([]),
+        ))
+        assert ec.space.parse(ec, '"\\""') == dyn_string(ast.ConstantString('"'))
+
+    def test_percent_terms(self, ec):
+        dyn_string = lambda *components: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString(list(components)))
+        ]))
+        assert ec.space.parse(ec, '%{1}') == dyn_string(ast.ConstantString("1"))
+        assert ec.space.parse(ec, '%Q{1}') == dyn_string(ast.ConstantString("1"))
+        assert ec.space.parse(ec, '%Q{#{2}}') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q(#{2})') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q<#{2}>') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q[#{2}]') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%Q^#{2}^') == dyn_string(ast.ConstantInt(2))
+        assert ec.space.parse(ec, '%{{}}') == dyn_string(ast.ConstantString("{}"))
+        assert ec.space.parse(ec, '%[[]]') == dyn_string(ast.ConstantString("[]"))
+        assert ec.space.parse(ec, '%<<>>') == dyn_string(ast.ConstantString("<>"))
+        assert ec.space.parse(ec, '%(())') == dyn_string(ast.ConstantString("()"))
+        assert ec.space.parse(ec, '%q{#{2}}') == dyn_string(ast.ConstantString("#{2}"))
+        assert ec.space.parse(ec, '%{\\{}') == dyn_string(ast.ConstantString('{'))
+        assert ec.space.parse(ec, '%{\\}}') == dyn_string(ast.ConstantString('}'))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
@@ -678,7 +734,7 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, ":@@abc") == sym("@@abc")
         assert ec.space.parse(ec, ":$abc") == sym("$abc")
         assert ec.space.parse(ec, ':"@abc"') == ast.Main(ast.Block([
-            ast.Statement(ast.Symbol(ast.DynamicString([ast.ConstantString("@abc")])))
+            ast.Statement(ast.Symbol(ast.DynamicString([ast.ConstantString("@abc")]), 1))
         ]))
 
     def test_range(self, ec):
@@ -727,6 +783,10 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.AugmentedAssignment("/", ast.Variable("x", 1), ast.ConstantInt(2)))
         ]))
 
+        assert ec.space.parse(ec, "x %= 2") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("%", ast.Variable("x", 1), ast.ConstantInt(2)))
+        ]))
+
     def test_block_result(self, ec):
         r = ec.space.parse(ec, """
         [].inject(0) do |s, x|
@@ -745,6 +805,11 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert ec.space.parse(ec, "Math.exp(-a)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.UnaryOp("-", ast.Variable("a", 1), 1)], None, 1))
+        ]))
+
+    def test_unary_ops(self, ec):
+        assert ec.space.parse(ec, "~3") == ast.Main(ast.Block([
+            ast.Statement(ast.UnaryOp("~", ast.ConstantInt(3), 1))
         ]))
 
     def test_unless(self, ec):
@@ -1077,6 +1142,9 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert ec.space.parse(ec, "$>") == simple_global("$>")
         assert ec.space.parse(ec, "$:") == simple_global("$:")
+        assert ec.space.parse(ec, "$$") == simple_global("$$")
+        assert ec.space.parse(ec, "$?") == simple_global("$?")
+        assert ec.space.parse(ec, "$\\") == simple_global("$\\")
 
     def test_comments(self, ec):
         r = ec.space.parse(ec, """
@@ -1135,9 +1203,14 @@ class TestParser(BaseRuPyPyTest):
         re = lambda re: ast.Main(ast.Block([
             ast.Statement(ast.ConstantRegexp(re))
         ]))
-
+        dyn_re = lambda re: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicRegexp(re))
+        ]))
         assert ec.space.parse(ec, r"/a/") == re("a")
         assert ec.space.parse(ec, r"/\w/") == re(r"\w")
+        assert ec.space.parse(ec, '%r{2}') == re("2")
+        assert ec.space.parse(ec, '%r{#{2}}') == dyn_re(ast.DynamicString([ast.ConstantInt(2)]))
+        assert ec.space.parse(ec, '/#{2}/') == dyn_re(ast.DynamicString([ast.ConstantInt(2)]))
 
     def test_or(self, ec):
         assert ec.space.parse(ec, "3 || 4") == ast.Main(ast.Block([
@@ -1397,6 +1470,12 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.OrEqual(ast.InstanceVariable("@a"), ast.ConstantInt(5)))
         ]))
 
+    def test_and_equal(self, ec):
+        r = ec.space.parse(ec, "x &&= 10")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.AndEqual(ast.Variable("x", 1), ast.ConstantInt(10)))
+        ]))
+
     def test_class_variables(self, ec):
         r = ec.space.parse(ec, """
         @@a = @@b
@@ -1404,3 +1483,12 @@ class TestParser(BaseRuPyPyTest):
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.ClassVariable("@@a"), ast.ClassVariable("@@b")))
         ]))
+
+    def test_shellout(self, ec):
+        shellout = lambda *components: ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "`", [ast.DynamicString(list(components))], None, 1))
+        ]))
+        assert ec.space.parse(ec, "`ls`") == shellout(ast.ConstantString("ls"))
+        assert ec.space.parse(ec, '%x(ls)') == shellout(ast.ConstantString("ls"))
+        assert ec.space.parse(ec, "`#{2}`") == shellout(ast.ConstantInt(2))
+        assert ec.space.parse(ec, "%x(#{2})") == shellout(ast.ConstantInt(2))

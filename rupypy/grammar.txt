@@ -65,7 +65,7 @@ contained_expr: literal_not | assignment | yield | arg;
 literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
-                 <DIV_EQUAL> | <OR_EQUAL>;
+                 <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL>;
 assignment: assign_target assignment_oper exprs;
 assign_target: send [COMMA] >assign_target< | send;
 
@@ -83,7 +83,7 @@ cmp_oper: <EQEQ> | <EQEQEQ> | <NE> | <LT> | <LE> | <GT> | <GE> | <LEGT>;
 shift_oper: <LSHIFT> | <RSHIFT>;
 add_oper: <PLUS> | <MINUS>;
 mul_oper: <DIV> | <MODULO> | <MUL>;
-unary_oper: <UNARY_MINUS> | <EXCLAMATION>;
+unary_oper: <UNARY_MINUS> | <TILDE> | <EXCLAMATION>;
 
 range: match range_oper range | <match>;
 match: bool match_oper match | <bool>;
@@ -107,12 +107,15 @@ block_args: [PIPE] arglist? [PIPE] |
             [OR];
 
 real_send: primary trailers |
-           global_block |
+           global_paren_send trailers |
            ambigious_binop |
-           IDENTIFIER send_args block? |
-           IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
+           global_send;
 
-global_block: IDENTIFIER block;
+global_send: IDENTIFIER block |
+             global_paren_send |
+             IDENTIFIER send_args;
+
+global_paren_send: IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
 
 block: [LBRACE] block_args? line* statement? [LINE_END]? [RBRACE];
 
@@ -176,7 +179,8 @@ when: WHEN exprs then line* statement? [LINE_END]?;
 function_name: varname [DOT] method_name |
                method_name;
 
-method_name: <IDENTIFIER> | <LEGT> | <EQEQEQ> | <LT> | <GT> | <GE> | <LE> | <EQEQ>;
+method_name: <IDENTIFIER> | <LEGT> | <EQEQEQ> | <LT> | <GT> | <GE> | <LE> |
+             <EQEQ> | <EQUAL_TILDE>;
 
 argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];
@@ -207,14 +211,18 @@ assoc: contained_expr ARROW contained_expr;
 
 varname: IDENTIFIER | CLASS_VAR | INSTANCE_VAR | GLOBAL;
 
-literal: NUMBER | symbol | SSTRING | REGEXP | string;
+literal: NUMBER | symbol | SSTRING | regexp | shellout | string;
 
 symbol: [SYMBOL_BEGIN] symbol_contents;
 
 symbol_contents: <varname> | <string>;
 
+regexp: [REGEXP_BEGIN] string [REGEXP_END];
+
+shellout: [SHELL_BEGIN] string [SHELL_END];
+
 string: [STRING_BEGIN] string_contents* [STRING_END];
 
 string_contents: <STRING_VALUE> |
-                 [DSTRING_START] <arg> [DSTRING_END];
+                 [DSTRING_START] <statement> [DSTRING_END];
 

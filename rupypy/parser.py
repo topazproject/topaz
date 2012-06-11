@@ -114,6 +114,8 @@ class Transformer(object):
             return self.visit_arg(node.children[0])
         elif node.symbol == "literal_bool":
             return self.visit_literal_bool(node)
+        else:
+            raise NotImplementedError(node.symbol)
 
     def visit_literal_bool(self, node):
         op = node.children[1].additional_info
@@ -139,6 +141,8 @@ class Transformer(object):
                 return ast.Assignment(target, value)
             elif oper == "||=":
                 return ast.OrEqual(target, value)
+            elif oper == "&&=":
+                return ast.AndEqual(target, value)
             else:
                 return ast.AugmentedAssignment(oper[0], target, value)
         else:
@@ -179,8 +183,6 @@ class Transformer(object):
         op = node.children[1].additional_info
         lhs = self.visit_arg(node.children[0])
         rhs = self.visit_arg(node.children[2])
-        if op == "or":
-            op = "||"
 
         if op == "||":
             return ast.Or(lhs, rhs)
@@ -224,32 +226,36 @@ class Transformer(object):
             lhs = ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
             rhs = self.visit_arg(node.children[2])
             return ast.MaybeBinop(node.children[1].additional_info, lhs, rhs, node.getsourcepos().lineno)
-        if node.children[0].symbol != "primary":
-            if node.children[0].symbol == "global_block":
+        elif node.children[0].symbol in "global_send" or node.symbol == "global_paren_send":
+            if node.symbol != "global_paren_send":
                 node = node.children[0]
-                block_args, splat_arg, block = self.visit_braces_block(node.children[1])
-                return ast.Send(
-                    ast.Self(node.getsourcepos().lineno),
-                    node.children[0].additional_info,
-                    [],
-                    ast.SendBlock(block_args, splat_arg, block),
-                    node.getsourcepos().lineno
-                )
-            target = ast.Self(node.getsourcepos().lineno)
-            name = node.children[0].additional_info
-            if len(node.children) >= 2:
-                args, block_argument = self.visit_send_args(node.children[1])
-            else:
-                args = []
-                block_argument = None
-            if len(node.children) == 3:
-                if block_argument is not None:
+            if node.children[0].symbol == "global_paren_send":
+                node = node.children[0]
+            idx = 1
+            args = []
+            block_argument = None
+            if idx < len(node.children) and node.children[idx].symbol == "send_args":
+                args, block_argument = self.visit_send_args(node.children[idx])
+                idx += 1
+            if idx < len(node.children) and node.children[idx].symbol == "block":
+                if block_argument:
                     self.error(node)
-                block_args, splat_arg, block = self.visit_braces_block(node.children[2])
+                block_args, splat_arg, block = self.visit_braces_block(node.children[idx])
                 block_argument = ast.SendBlock(block_args, splat_arg, block)
-            return ast.Send(target, name, args, block_argument, node.getsourcepos().lineno)
 
-        target = self.visit_primary(node.children[0])
+            return ast.Send(
+                ast.Self(node.getsourcepos().lineno),
+                node.children[0].additional_info,
+                args,
+                block_argument,
+                node.getsourcepos().lineno
+            )
+
+        if node.children[0].symbol == "global_paren_send":
+            target = self.visit_real_send(node.children[0])
+        else:
+            target = self.visit_primary(node.children[0])
+
         for trailer in node.children[1].children:
             node = trailer.children[0]
             if node.symbol in ["attribute", "subscript"]:
@@ -380,8 +386,10 @@ class Transformer(object):
             return self.visit_sstring(node.children[0])
         elif symname == "string":
             return self.visit_dstring(node.children[0])
-        elif symname == "REGEXP":
+        elif symname == "regexp":
             return self.visit_regexp(node.children[0])
+        elif symname == "shellout":
+            return self.visit_shellout(node.children[0])
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
@@ -621,7 +629,7 @@ class Transformer(object):
         if node.symbol == "varname":
             return ast.ConstantSymbol(node.children[0].additional_info)
         else:
-            return ast.Symbol(self.visit_dstring(node))
+            return ast.Symbol(self.visit_dstring(node), node.getsourcepos().lineno)
 
     def visit_sstring(self, node):
         return ast.ConstantString(node.additional_info)
@@ -632,11 +640,25 @@ class Transformer(object):
             if n.symbol == "STRING_VALUE":
                 components.append(ast.ConstantString(n.additional_info))
             else:
-                components.append(self.visit_arg(n))
+                stmt = self.visit_stmt(n)
+                assert isinstance(stmt, ast.Statement)
+                components.append(stmt.expr)
         if components:
             return ast.DynamicString(components)
         else:
             return ast.ConstantString("")
 
     def visit_regexp(self, node):
-        return ast.ConstantRegexp(node.additional_info)
+        if node.children[0].children[0].symbol == "STRING_VALUE":
+            return ast.ConstantRegexp(node.children[0].children[0].additional_info)
+        else:
+            return ast.DynamicRegexp(self.visit_dstring(node.children[0]))
+
+    def visit_shellout(self, node):
+        return ast.Send(
+            ast.Self(node.getsourcepos().lineno),
+            "`",
+            [self.visit_dstring(node.children[0])],
+            None,
+            node.getsourcepos().lineno
+        )

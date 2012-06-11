@@ -34,6 +34,7 @@ class Kernel(Module):
         from rupypy.objects.exceptionobject import W_LoadError
 
         assert path is not None
+        orig_path = path
         if not path.endswith(".rb"):
             path += ".rb"
 
@@ -47,7 +48,7 @@ class Kernel(Module):
                     break
 
         if not os.path.exists(assert_str0(path)):
-            ec.space.raise_(ec, ec.space.getclassfor(W_LoadError))
+            ec.space.raise_(ec, ec.space.getclassfor(W_LoadError), orig_path)
 
         f = open_file_as_stream(path)
         try:

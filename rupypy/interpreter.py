@@ -255,6 +255,10 @@ class Interpreter(object):
 
         frame.push(ec.space.w_nil)
 
+    def BUILD_REGEXP(self, ec, bytecode, frame, pc):
+        w_string = frame.pop()
+        frame.push(ec.space.newregexp(ec.space.str_w(w_string)))
+
     def COPY_STRING(self, space, bytecode, frame, pc):
         from rupypy.objects.stringobject import W_StringObject
 
