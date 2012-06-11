@@ -224,32 +224,36 @@ class Transformer(object):
             lhs = ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
             rhs = self.visit_arg(node.children[2])
             return ast.MaybeBinop(node.children[1].additional_info, lhs, rhs, node.getsourcepos().lineno)
-        if node.children[0].symbol != "primary":
-            if node.children[0].symbol == "global_block":
+        elif node.children[0].symbol in "global_send" or node.symbol == "global_paren_send":
+            if node.symbol != "global_paren_send":
                 node = node.children[0]
-                block_args, splat_arg, block = self.visit_braces_block(node.children[1])
-                return ast.Send(
-                    ast.Self(node.getsourcepos().lineno),
-                    node.children[0].additional_info,
-                    [],
-                    ast.SendBlock(block_args, splat_arg, block),
-                    node.getsourcepos().lineno
-                )
-            target = ast.Self(node.getsourcepos().lineno)
-            name = node.children[0].additional_info
-            if len(node.children) >= 2:
-                args, block_argument = self.visit_send_args(node.children[1])
-            else:
-                args = []
-                block_argument = None
-            if len(node.children) == 3:
-                if block_argument is not None:
+            if node.children[0].symbol == "global_paren_send":
+                node = node.children[0]
+            idx = 1
+            args = []
+            block_argument = None
+            if idx < len(node.children) and node.children[idx].symbol == "send_args":
+                args, block_argument = self.visit_send_args(node.children[idx])
+                idx += 1
+            if idx < len(node.children) and node.children[idx].symbol == "block":
+                if block_argument:
                     self.error(node)
-                block_args, splat_arg, block = self.visit_braces_block(node.children[2])
+                block_args, splat_arg, block = self.visit_braces_block(node.children[idx])
                 block_argument = ast.SendBlock(block_args, splat_arg, block)
-            return ast.Send(target, name, args, block_argument, node.getsourcepos().lineno)
 
-        target = self.visit_primary(node.children[0])
+            return ast.Send(
+                ast.Self(node.getsourcepos().lineno),
+                node.children[0].additional_info,
+                args,
+                block_argument,
+                node.getsourcepos().lineno
+            )
+
+        if node.children[0].symbol == "global_paren_send":
+            target = self.visit_real_send(node.children[0])
+        else:
+            target = self.visit_primary(node.children[0])
+
         for trailer in node.children[1].children:
             node = trailer.children[0]
             if node.symbol in ["attribute", "subscript"]:

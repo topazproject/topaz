@@ -107,12 +107,15 @@ block_args: [PIPE] arglist? [PIPE] |
             [OR];
 
 real_send: primary trailers |
-           global_block |
+           global_paren_send trailers |
            ambigious_binop |
-           IDENTIFIER send_args block? |
-           IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
+           global_send;
 
-global_block: IDENTIFIER block;
+global_send: IDENTIFIER block |
+             global_paren_send |
+             IDENTIFIER send_args;
+
+global_paren_send: IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
 
 block: [LBRACE] block_args? line* statement? [LINE_END]? [RBRACE];
 
