@@ -223,5 +223,5 @@ shellout: [SHELL_BEGIN] string [SHELL_END];
 string: [STRING_BEGIN] string_contents* [STRING_END];
 
 string_contents: <STRING_VALUE> |
-                 [DSTRING_START] <arg> [DSTRING_END];
+                 [DSTRING_START] <statement> [DSTRING_END];
 

@@ -114,6 +114,8 @@ class Transformer(object):
             return self.visit_arg(node.children[0])
         elif node.symbol == "literal_bool":
             return self.visit_literal_bool(node)
+        else:
+            raise NotImplementedError(node.symbol)
 
     def visit_literal_bool(self, node):
         op = node.children[1].additional_info
@@ -638,7 +640,9 @@ class Transformer(object):
             if n.symbol == "STRING_VALUE":
                 components.append(ast.ConstantString(n.additional_info))
             else:
-                components.append(self.visit_arg(n))
+                stmt = self.visit_stmt(n)
+                assert isinstance(stmt, ast.Statement)
+                components.append(stmt.expr)
         if components:
             return ast.DynamicString(components)
         else:

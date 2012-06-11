@@ -541,6 +541,11 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '"#{f { 2 }}"') == dyn_string(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))
         assert ec.space.parse(ec, '"#{p("")}"') == dyn_string(ast.Send(ast.Self(1), "p", [ast.ConstantString("")], None, 1))
         assert ec.space.parse(ec, '"#{"#{2}"}"') == dyn_string(ast.DynamicString([ast.ConstantInt(2)]))
+        assert ec.space.parse(ec, '"#{nil if 2}"') == dyn_string(ast.If(
+            ast.ConstantInt(2),
+            ast.Block([ast.Statement(ast.Variable("nil", 1))]),
+            ast.Block([]),
+        ))
 
     def test_percent_terms(self, ec):
         dyn_string = lambda *components: ast.Main(ast.Block([
