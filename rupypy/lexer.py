@@ -596,9 +596,10 @@ class Lexer(BaseLexer):
 
     def backtick(self, ch):
         if self.state == self.EXPR_FNAME:
-            raise NotImplementedError("` in method name")
+            self.add(ch)
+            self.emit_identifier()
         elif self.state == self.EXPR_DOT:
-            raise NotImplementedError("` in $`, :` and the like")
+            raise NotImplementedError("`")
         else:
             self.shellout("`", "`")
 
