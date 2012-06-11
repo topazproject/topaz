@@ -32,3 +32,7 @@ class W_SymbolObject(W_BaseObject):
     @classdef.method("length")
     def method_length(self, space):
         return self.method_to_s(space).method_length(space)
+
+    @classdef.singleton_method("all_symbols")
+    def method_all_symbols(self, space):
+        return space.newint(len(space.symbol_cache))

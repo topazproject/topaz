@@ -34,3 +34,7 @@ class TestSymbolObject(BaseRuPyPyTest):
     def test_length(self, ec):
         w_res = ec.space.execute(ec, "return :abc.length")
         assert ec.space.int_w(w_res) == 3
+
+    def test_class_function(self, ec):
+        w_res = ec.space.execute(ec, "return Symbol.all_symbols")
+        assert ec.space.int_w(w_res) > 0
