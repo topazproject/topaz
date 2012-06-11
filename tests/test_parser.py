@@ -530,9 +530,32 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '""') == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString(""))
         ]))
-        assert ec.space.parse(ec, '?\001') == ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString("\001"))
-        ]))
+
+    def test_escape_character(self, ec):
+        string = lambda content: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(content))
+         ]))
+        assert ec.space.parse(ec, '?\\\\') == string("\\")
+        assert ec.space.parse(ec, '?\\n') == string("\n")
+        assert ec.space.parse(ec, '?\\t') == string("\t")
+        assert ec.space.parse(ec, '?\\r') == string("\r")
+        assert ec.space.parse(ec, '?\\f') == string("\f")
+        assert ec.space.parse(ec, '?\\v') == string("\v")
+        assert ec.space.parse(ec, '?\\a') == string("\a")
+        assert ec.space.parse(ec, '?\\b') == string("\b")
+        assert ec.space.parse(ec, '?\\e') == string("\x1b")
+        assert ec.space.parse(ec, '?\\s') == string(" ")
+        assert ec.space.parse(ec, "?\\xa") == string("\x0a")
+        assert ec.space.parse(ec, '?\\xab') == string("\xab")
+        assert ec.space.parse(ec, '?\\01') == string("\01")
+        assert ec.space.parse(ec, '?\\012') == string("\012")
+        assert ec.space.parse(ec, '?\\M-\a') == string("\x87")
+        assert ec.space.parse(ec, '?\\M-a') == string("\xe1")
+        assert ec.space.parse(ec, '?\\C-?') == string("\x7f")
+        assert ec.space.parse(ec, '?\\c?') == string("\x7f")
+        assert ec.space.parse(ec, '?\\C-\y') == string("\x19")
+        assert ec.space.parse(ec, '?\\c\y') == string("\x19")
+        assert ec.space.parse(ec, '?\\l') == string("l")
 
     def test_dynamic_string(self, ec):
         dyn_string = lambda *components: ast.Main(ast.Block([

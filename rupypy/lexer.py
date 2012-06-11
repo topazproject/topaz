@@ -1,5 +1,5 @@
 from pypy.rlib.parsing.lexer import Token, SourcePos
-
+import string
 
 class LexerError(Exception):
     def __init__(self, pos):
@@ -566,12 +566,79 @@ class Lexer(BaseLexer):
                 self.state = self.EXPR_VALUE
                 self.emit("QUESTION")
             else:
-                self.add(ch2)
                 if ch2 == "\\":
-                    while not self.peek().isspace():
-                        self.add(self.read())
+                    self.add(self.read_escape())
+                else:
+                    self.add(ch2)
                 self.emit("SSTRING")
                 self.state = self.EXPR_END
+
+    def read_escape(self):
+        c = self.read()
+        if c == self.EOF:
+            self.error()
+        elif c == "\\":
+            return "\\"
+        elif c == "n":
+            return "\n"
+        elif c == "t":
+            return "\t"
+        elif c == "r":
+            return "\r"
+        elif c == "f":
+            return "\f"
+        elif c == "v":
+            return "\v"
+        elif c == "a":
+            return "\a"
+        elif c == "b":
+            return "\b"
+        elif c == "e":
+            return "\x1b"
+        elif c == "s":
+            return " "
+        elif c == "u":
+            raise NotImplementedError("UTF-8 escape not implemented")
+        elif c in "x0":
+            buf = ""
+            for i in (1, 2):
+                ch2 = self.read()
+                if ch2.isalnum():
+                    if c == "x" and not ch2 in string.hexdigits:
+                        self.error()
+                    if c == "0" and not ch2 in string.octdigits:
+                        self.error()
+                    buf += ch2
+                else:
+                    break
+            if c == "x":
+                return chr(int(buf, 16))
+            elif c == "0":
+                return chr(int(buf, 8))
+        elif c == "M":
+            if self.read() != "-":
+                self.error()
+            c = self.read()
+            if c == "\\":
+                return chr(ord(self.read_escape()) & 0x80)
+            elif c == self.EOF:
+                self.error()
+            else:
+                return chr(ord(c) & 0xff | 0x80)
+        elif c == "C" or c == "c":
+            if c == "C" and self.read() != "-":
+                self.error()
+            c = self.read()
+            if c == "?":
+                return '\177'
+            elif c == self.EOF:
+                self.error()
+            else:
+                if c == "\\":
+                    c = self.read_escape()
+                return chr(ord(c) & 0x9f)
+        else:
+            return c
 
     def colon(self, ch):
         ch2 = self.read()
