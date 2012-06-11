@@ -181,8 +181,6 @@ class Transformer(object):
         op = node.children[1].additional_info
         lhs = self.visit_arg(node.children[0])
         rhs = self.visit_arg(node.children[2])
-        if op == "or":
-            op = "||"
 
         if op == "||":
             return ast.Or(lhs, rhs)
