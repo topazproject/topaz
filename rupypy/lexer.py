@@ -117,7 +117,7 @@ class Lexer(BaseLexer):
             elif ch == ">":
                 self.greater_than(ch)
             elif ch == '"':
-                tokens = StringLexer(self).tokenize()
+                tokens = StringLexer(self, '"', '"').tokenize()
                 self.tokens.extend(tokens)
                 self.state = self.EXPR_END
             elif ch == "'":
@@ -324,9 +324,9 @@ class Lexer(BaseLexer):
             else:
                 self.add(ch)
 
-    def regexp(self, begin_end = ("/", "/")):
+    def regexp(self, begin, end):
         self.emit("REGEXP_BEGIN")
-        tokens = StringLexer(self, begin_end, True).tokenize()
+        tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
         self.tokens.extend(tokens)
         self.emit("REGEXP_END")
         self.state = self.EXPR_END
@@ -413,7 +413,7 @@ class Lexer(BaseLexer):
 
     def slash(self, ch, space_seen):
         if self.is_beg():
-            self.regexp()
+            self.regexp("/", "/")
         else:
             ch2 = self.read()
             if ch2 == "=":
@@ -605,13 +605,12 @@ class Lexer(BaseLexer):
     def quote(self, ch):
         if not ch.isalnum():
             begin = ch
-            ch = 'Q'
-            short_hand = True
+            ch = "Q"
         else:
-            short_hand = False
             begin = self.read()
-            if (begin.isalnum()):
+            if begin.isalnum():
                 self.error()
+
         if begin == "(":
             end = ")"
         elif begin == "[":
@@ -624,32 +623,31 @@ class Lexer(BaseLexer):
             end = begin
 
         if ch == "Q":
-            tokens = StringLexer(self, (begin, end), True).tokenize()
+            tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
             self.tokens.extend(tokens)
         elif ch == "q":
-            tokens = StringLexer(self, (begin, end), False).tokenize()
+            tokens = StringLexer(self, begin, end, interpolate=False).tokenize()
             self.tokens.extend(tokens)
         elif ch == "r":
-            self.regexp((begin, end))
+            self.regexp(begin, end)
         else:
             raise NotImplementedError('%' + ch)
         self.state = self.EXPR_END
+
 
 class StringLexer(BaseLexer):
     CODE = 0
     STRING = 1
 
-    def __init__(self, lexer, begin_end = ('"', '"'), is_interpolating = True):
+    def __init__(self, lexer, begin, end, interpolate=True):
         BaseLexer.__init__(self)
         self.lexer = lexer
 
-        self.is_interpolating = is_interpolating
+        self.interpolate = interpolate
 
-        self.begin = begin_end[0]
-        self.end = begin_end[1]
+        self.begin = begin
+        self.end = end
 
-        if self.begin == self.end:
-            self.begin = None
         self.nesting = 0
 
     def get_idx(self):
@@ -678,7 +676,7 @@ class StringLexer(BaseLexer):
             if ch == self.lexer.EOF:
                 self.unread()
                 return self.tokens
-            elif ch == self.begin:
+            elif ch == self.begin and (self.begin != self.end):
                 self.nesting += 1
                 self.add(ch)
             elif ch == self.end:
@@ -688,7 +686,7 @@ class StringLexer(BaseLexer):
                 else:
                     self.nesting -= 1
                     self.add(ch)
-            elif ch == "#" and self.peek() == "{" and self.is_interpolating:
+            elif ch == "#" and self.peek() == "{" and self.interpolate:
                 self.emit_str()
                 self.read()
                 self.tokenize_interpolation()
