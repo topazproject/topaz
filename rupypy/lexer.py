@@ -424,7 +424,7 @@ class Lexer(BaseLexer):
             else:
                 self.unread()
                 if self.is_arg() and space_seen and not ch2.isspace():
-                    self.regexp()
+                    self.regexp("/", "/")
                 else:
                     self.add(ch)
                     self.set_expression_state()
