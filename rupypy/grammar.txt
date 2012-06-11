@@ -207,13 +207,15 @@ assoc: contained_expr ARROW contained_expr;
 
 varname: IDENTIFIER | CLASS_VAR | INSTANCE_VAR | GLOBAL;
 
-literal: NUMBER | symbol | SSTRING | regexp | string;
+literal: NUMBER | symbol | SSTRING | regexp | shellout | string;
 
 symbol: [SYMBOL_BEGIN] symbol_contents;
 
 symbol_contents: <varname> | <string>;
 
 regexp: [REGEXP_BEGIN] string [REGEXP_END];
+
+shellout: [SHELL_BEGIN] string [SHELL_END];
 
 string: [STRING_BEGIN] string_contents* [STRING_END];
 
