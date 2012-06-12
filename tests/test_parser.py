@@ -380,6 +380,13 @@ class TestParser(BaseRuPyPyTest):
                 ast.Send(ast.Self(3), "f", [], None, 3),
             ])),
         ]))
+        assert ec.space.parse(ec, "[1, *2, *3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([
+                ast.ConstantInt(1),
+                ast.Splat(ast.ConstantInt(2)),
+                ast.Splat(ast.ConstantInt(3)),
+            ]))
+        ]))
 
     def test_subscript(self, ec):
         assert ec.space.parse(ec, "[1][0]") == ast.Main(ast.Block([
