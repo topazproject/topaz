@@ -206,6 +206,49 @@ class TestParser(BaseRuPyPyTest):
         with self.raises("SyntaxError"):
             ec.space.parse(ec, "a, b += 3")
 
+    def test_splat_assignment(self, ec):
+        assert ec.space.parse(ec, "a,b,c = *[1,2,3]") == ast.Main(ast.Block([
+            ast.Statement(ast.MultiAssignment(
+                [
+                    ast.Variable("a", 1),
+                    ast.Variable("b", 1),
+                    ast.Variable("c", 1),
+                ],
+                ast.Splat(ast.Array(
+                    [
+                        ast.ConstantInt(1),
+                        ast.ConstantInt(2),
+                        ast.ConstantInt(3),
+                    ]
+                ))
+            ))
+        ]))
+        assert ec.space.parse(ec, "a = *[1,2,3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(
+                ast.Variable("a", 1),
+                ast.Splat(ast.Array(
+                    [
+                        ast.ConstantInt(1),
+                        ast.ConstantInt(2),
+                        ast.ConstantInt(3),
+                    ]
+                ))
+            ))
+        ]))
+        assert ec.space.parse(ec, "a = 0, *[1,2,3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(
+                ast.Variable("a", 1),
+                ast.Array([
+                    ast.ConstantInt(0),
+                    ast.Splat(ast.Array([
+                        ast.ConstantInt(1),
+                        ast.ConstantInt(2),
+                        ast.ConstantInt(3),
+                    ])),
+                ]
+            )))
+        ]))
+
     def test_load_variable(self, ec):
         assert ec.space.parse(ec, "a") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("a", 1))
