@@ -324,6 +324,20 @@ class TestCompiler(object):
         """)
         assert bc.max_stackdepth == 3
 
+        bc = self.assert_compiles(ec, "[1, *[2, 3]]", """
+        LOAD_CONST 0
+        BUILD_ARRAY 1
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_ARRAY 2
+        COERCE_ARRAY
+        SEND 3 1
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+
     def test_subscript(self, ec):
         self.assert_compiles(ec, "[1][0]", """
         LOAD_CONST 0
