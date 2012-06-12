@@ -195,7 +195,7 @@ class Transformer(object):
 
     def visit_unaryop(self, node):
         op = node.children[0].additional_info
-        value = self.visit_arg(node.children[1])
+        value = self.visit_expr(node.children[1])
         if op == "!":
             return ast.Not(value)
         return ast.UnaryOp(op, value, node.getsourcepos().lineno)

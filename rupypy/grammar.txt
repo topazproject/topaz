@@ -95,7 +95,7 @@ shiftive: additive shift_oper shiftive | <additive>;
 additive: multitive add_oper additive | <multitive>;
 multitive: unary_op mul_oper multitive | <unary_op>;
 
-unary_op: unary_oper arg | <send>;
+unary_op: unary_oper expr | <send>;
 
 send: <do_block> |
       real_send |

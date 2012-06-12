@@ -809,6 +809,9 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_unary_ops(self, ec):
+        assert ec.space.parse(ec, "-yield") == ast.Main(ast.Block([
+            ast.Statement(ast.UnaryOp("-", ast.Yield([], 1), 1))
+        ]))
         assert ec.space.parse(ec, "~3") == ast.Main(ast.Block([
             ast.Statement(ast.UnaryOp("~", ast.ConstantInt(3), 1))
         ]))
