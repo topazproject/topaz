@@ -605,12 +605,12 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '%q{#{2}}') == dyn_string(ast.ConstantString("#{2}"))
         assert ec.space.parse(ec, '%{\\{}') == dyn_string(ast.ConstantString('{'))
         assert ec.space.parse(ec, '%{\\}}') == dyn_string(ast.ConstantString('}'))
-        assert ec.space.parse(ec, '%w{hello world}') == ast.Main(ast.Block([
+        assert ec.space.parse(ec, '%w{  hello world  }') == ast.Main(ast.Block([
             ast.Statement(ast.Array([ast.DynamicString([ast.ConstantString("hello")]),
                 ast.DynamicString([ast.ConstantString("world")])
             ]))
         ]))
-        assert ec.space.parse(ec, '%W{hello world}') == ast.Main(ast.Block([
+        assert ec.space.parse(ec, '%W{hello world  }') == ast.Main(ast.Block([
             ast.Statement(ast.Array([ast.DynamicString([ast.ConstantString("hello")]),
                 ast.DynamicString([ast.ConstantString("world")])
             ]))

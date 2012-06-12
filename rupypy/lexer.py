@@ -699,6 +699,8 @@ class Lexer(BaseLexer):
     def qwords(self, begin, end, interpolate=True):
         self.emit("QWORDS_BEGIN")
         tokens = StringLexer(self, begin, end, interpolate=interpolate).tokenize(qwords=True)
+        if tokens[-2].name == "STRING_BEGIN": # drop empty last string
+            tokens = tokens[:-2]
         self.tokens.extend(tokens)
         self.emit("QWORDS_END")
         self.state = self.EXPR_END
@@ -790,6 +792,9 @@ class StringLexer(BaseLexer):
             self.emit("STRING_VALUE")
 
     def tokenize(self, qwords=False):
+        if qwords:
+            while self.peek().isspace():
+                self.read()
         self.emit("STRING_BEGIN")
         while True:
             ch = self.read()
@@ -814,8 +819,6 @@ class StringLexer(BaseLexer):
                 self.tokenize_interpolation()
             elif qwords and ch.isspace():
                 self.emit_str()
-                while self.peek().isspace():
-                    self.read()
                 break
             else:
                 self.add(ch)
