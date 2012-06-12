@@ -154,7 +154,7 @@ class Transformer(object):
     def visit_yield(self, node):
         args = []
         if len(node.children) == 2:
-            args = [self.visit_arg(n) for n in node.children[1].children]
+            args = self.visit_args(node.children[1])
         return ast.Yield(args, node.children[0].getsourcepos().lineno)
 
     def visit_arg(self, node):
@@ -309,11 +309,25 @@ class Transformer(object):
         args = []
         idx = 0
         if node.children[idx].symbol == "args":
-            args = [self.visit_arg(n) for n in node.children[idx].children]
+            args = self.visit_args(node.children[idx])
             idx += 1
         if idx < len(node.children) and node.children[idx].symbol == "block_arg":
             block_argument = ast.BlockArgument(self.visit_arg(node.children[idx].children[0]))
-        return args,  block_argument
+        return args, block_argument
+
+    def visit_args(self, node):
+        args = []
+        assocs = []
+        for n in node.children:
+            if n.symbol == "assoc":
+                assocs.append(self.visit_assoc(n))
+            elif assocs:
+                self.error(node)
+            else:
+                args.append(self.visit_arg(n))
+        if assocs:
+            args.append(ast.Hash(assocs))
+        return args
 
     def visit_braces_block(self, node):
         block_args = []
@@ -359,9 +373,7 @@ class Transformer(object):
     def visit_array(self, node):
         contents = node.children[1]
         if contents.children:
-            items = [
-                self.visit_arg(n) for n in contents.children[0].children
-            ]
+            items = self.visit_args(contents.children[0])
         else:
             items = []
         return ast.Array(items)
@@ -370,12 +382,15 @@ class Transformer(object):
         contents = node.children[1]
         if contents.children:
             items = [
-                (self.visit_expr(n.children[0]), self.visit_expr(n.children[2]))
+                self.visit_assoc(n)
                 for n in contents.children[0].children
             ]
         else:
             items = []
         return ast.Hash(items)
+
+    def visit_assoc(self, node):
+        return self.visit_expr(node.children[0]), self.visit_expr(node.children[2])
 
     def visit_literal(self, node):
         symname = node.children[0].symbol

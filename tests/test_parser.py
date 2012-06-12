@@ -173,6 +173,12 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "2.to_s(10, *x)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Splat(ast.Variable("x", 1))], None, 1))
         ]))
+        assert ec.space.parse(ec, "2.to_s(10, :base => 5)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(5))])], None, 1))
+        ]))
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "2.to_s(:base => 5, 3)")
 
     def test_assignment(self, ec):
         assert ec.space.parse(ec, "a = 3") == ast.Main(ast.Block([
