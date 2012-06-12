@@ -698,8 +698,9 @@ class Lexer(BaseLexer):
 
     def qwords(self, begin, end, interpolate=True):
         self.emit("QWORDS_BEGIN")
-        tokens = StringLexer(self, begin, end, interpolate=interpolate).tokenize(qwords=True)
-        if tokens[-2].name == "STRING_BEGIN": # drop empty last string
+        tokens = StringLexer(self, begin, end, interpolate=interpolate, qwords=True).tokenize()
+        # drop empty last string
+        if tokens[-2].name == "STRING_BEGIN":
             tokens = tokens[:-2]
         self.tokens.extend(tokens)
         self.emit("QWORDS_END")
@@ -761,11 +762,12 @@ class StringLexer(BaseLexer):
     CODE = 0
     STRING = 1
 
-    def __init__(self, lexer, begin, end, interpolate=True):
+    def __init__(self, lexer, begin, end, interpolate=True, qwords=False):
         BaseLexer.__init__(self)
         self.lexer = lexer
 
         self.interpolate = interpolate
+        self.qwords = qwords
 
         self.begin = begin
         self.end = end
@@ -791,8 +793,8 @@ class StringLexer(BaseLexer):
         if self.current_value:
             self.emit("STRING_VALUE")
 
-    def tokenize(self, qwords=False):
-        if qwords:
+    def tokenize(self):
+        if self.qwords:
             while self.peek().isspace():
                 self.read()
         self.emit("STRING_BEGIN")
@@ -817,10 +819,10 @@ class StringLexer(BaseLexer):
                 self.emit_str()
                 self.read()
                 self.tokenize_interpolation()
-            elif qwords and ch.isspace():
+            elif self.qwords and ch.isspace():
                 self.emit_str()
                 break
-            elif qwords and ch == "\\" and self.peek().isspace():
+            elif self.qwords and ch == "\\" and self.peek().isspace():
                 self.add(self.read())
             else:
                 self.add(ch)
