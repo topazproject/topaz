@@ -115,7 +115,7 @@ class Lexer(BaseLexer):
             elif ch == "=":
                 self.equal(ch)
             elif ch == "<":
-                self.less_than(ch)
+                self.less_than(ch, space_seen)
             elif ch == ">":
                 self.greater_than(ch)
             elif ch == '"':
@@ -500,10 +500,17 @@ class Lexer(BaseLexer):
             self.unread()
             self.emit("EQ")
 
-    def less_than(self, ch):
+    def less_than(self, ch, space_seen):
+        ch2 = self.read()
+
+        if (ch2 == "<" and self.state not in [self.EXPR_DOT, self.EXPR_CLASS] and
+            not self.is_end() and (not self.is_arg() or space_seen)):
+            matched = self.here_doc()
+            if matched:
+                return
+
         self.add(ch)
         self.set_expression_state()
-        ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
             ch3 = self.read()

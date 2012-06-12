@@ -701,6 +701,17 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.DynamicString([ast.ConstantString("/")])], None, 1)),
         ]))
 
+    def test_heredoc(self, ec):
+        r = ec.space.parse(ec, """
+        <<eos
+        abc
+        123
+eos
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.ConstantString("abc\n123\n")
+        ]))
+
     def test_class(self, ec):
         r = ec.space.parse(ec, """
         class X
