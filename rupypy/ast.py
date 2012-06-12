@@ -153,9 +153,10 @@ class Until(Node):
 
 
 class TryExcept(Node):
-    def __init__(self, body, except_handlers):
+    def __init__(self, body, except_handlers, else_body):
         self.body = body
         self.except_handlers = except_handlers
+        self.else_body = else_body
 
     def locate_symbols(self, symtable):
         self.body.locate_symbols(symtable)
@@ -164,12 +165,15 @@ class TryExcept(Node):
 
     def compile(self, ctx):
         exc = ctx.new_block()
+        else_block = ctx.new_block()
         end = ctx.new_block()
-        ctx.emit_jump(consts.SETUP_EXCEPT, exc)
+        if self.except_handlers:
+            ctx.emit_jump(consts.SETUP_EXCEPT, exc)
         ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
-        ctx.emit(consts.POP_BLOCK)
-        ctx.emit_jump(consts.JUMP, end)
+        if self.except_handlers:
+            ctx.emit(consts.POP_BLOCK)
+        ctx.emit_jump(consts.JUMP, else_block)
         ctx.use_next_block(exc)
         for handler in self.except_handlers:
             next_except = ctx.new_block()
@@ -190,7 +194,11 @@ class TryExcept(Node):
             handler.body.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)
             ctx.use_next_block(next_except)
-        ctx.emit(consts.END_FINALLY)
+        if self.except_handlers:
+            ctx.emit(consts.END_FINALLY)
+        ctx.use_next_block(else_block)
+        self.else_body.compile(ctx)
+        ctx.emit(consts.DISCARD_TOP)
         ctx.use_next_block(end)
 
 

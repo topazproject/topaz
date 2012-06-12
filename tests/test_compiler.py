@@ -1121,11 +1121,13 @@ class TestCompiler(object):
         LOAD_CONST 4
         COPY_STRING
         SEND 5 1
-        JUMP 42
+        JUMP 46
         END_FINALLY
+        LOAD_CONST 6
+        DISCARD_TOP
         DISCARD_TOP
 
-        LOAD_CONST 6
+        LOAD_CONST 7
         RETURN
         """)
         self.assert_compiles(ec, """
@@ -1151,11 +1153,13 @@ class TestCompiler(object):
         LOAD_SELF
         LOAD_LOCAL 0
         SEND 4 1
-        JUMP 44
+        JUMP 48
         END_FINALLY
+        LOAD_CONST 5
+        DISCARD_TOP
         DISCARD_TOP
 
-        LOAD_CONST 5
+        LOAD_CONST 6
         RETURN
         """)
 
@@ -1175,11 +1179,12 @@ class TestCompiler(object):
         DISCARD_TOP
         DISCARD_TOP
         LOAD_CONST 3
-        JUMP 27
+        JUMP 31
         END_FINALLY
-        DISCARD_TOP
-
         LOAD_CONST 4
+        DISCARD_TOP
+        DISCARD_TOP
+        LOAD_CONST 5
         RETURN
         """)
         self.assert_compiles(ec, """
@@ -1204,6 +1209,25 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 6
+        RETURN
+        """)
+
+        self.assert_compiles(ec, """
+        begin
+            1 / 0
+        else
+            10
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 1
+        JUMP 14
+        LOAD_CONST 3
+        DISCARD_TOP
+        DISCARD_TOP
+
+        LOAD_CONST 4
         RETURN
         """)
 

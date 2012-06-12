@@ -102,7 +102,8 @@ class Transformer(object):
                         None,
                         ast.Block([ast.Statement(self.visit_expr(node.children[2]))])
                     )
-                ]
+                ],
+                ast.Block([]),
             )
         elif node.symbol == "contained_expr":
             if node.children[0].symbol == "assignment":
@@ -481,7 +482,7 @@ class Transformer(object):
             handlers.append(self.visit_rescue(node.children[idx]))
             idx += 1
         if handlers:
-            body = ast.TryExcept(body, handlers)
+            body = ast.TryExcept(body, handlers, ast.Block([]))
         if idx < len(node.children) and  node.children[idx].symbol == "ensure":
             ensure_node = node.children[idx]
             block = self.visit_block(ensure_node, start_idx=1)
@@ -524,7 +525,7 @@ class Transformer(object):
     def visit_begin(self, node):
         idx = 0
         while idx < len(node.children):
-            if node.children[idx].symbol in ["rescue", "ensure"]:
+            if node.children[idx].symbol in ["rescue", "ensure", "else"]:
                 break
             idx += 1
         body_block = self.visit_block(node, start_idx=1, end_idx=idx)
@@ -532,8 +533,18 @@ class Transformer(object):
         while node.children[idx].symbol == "rescue":
             handlers.append(self.visit_rescue(node.children[idx]))
             idx += 1
-        if handlers:
-            body_block = ast.TryExcept(body_block, handlers)
+
+        if node.children[idx].symbol == "else":
+            else_node = node.children[idx]
+            else_block = self.visit_block(else_node, start_idx=1)
+            has_else_block = True
+        else:
+            else_block = ast.Block([])
+            has_else_block = False
+
+        if handlers or has_else_block:
+            body_block = ast.TryExcept(body_block, handlers, else_block)
+
         if node.children[idx].symbol == "ensure":
             ensure_node = node.children[idx]
             block = self.visit_block(ensure_node, start_idx=1)
