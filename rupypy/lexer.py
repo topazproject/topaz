@@ -1,5 +1,7 @@
-from pypy.rlib.parsing.lexer import Token, SourcePos
 import string
+
+from pypy.rlib.parsing.lexer import Token, SourcePos
+
 
 class LexerError(Exception):
     def __init__(self, pos):
@@ -338,18 +340,20 @@ class Lexer(BaseLexer):
     def dollar(self, ch):
         self.add(ch)
         self.state = self.EXPR_END
-        while True:
-            ch = self.read()
-            if ch in ">:":
-                self.add(ch)
-                self.emit("GLOBAL")
-                break
-            elif ch.isalnum() or ch == "_":
-                self.add(ch)
-            else:
-                self.unread()
-                self.emit("GLOBAL")
-                break
+        ch = self.read()
+        if ch in "$>:?\\":
+            self.add(ch)
+            self.emit("GLOBAL")
+        else:
+            self.unread()
+            while True:
+                ch = self.read()
+                if ch.isalnum() or ch == "_":
+                    self.add(ch)
+                else:
+                    self.unread()
+                    self.emit("GLOBAL")
+                    break
 
     def at(self, ch):
         self.add(ch)
@@ -407,6 +411,10 @@ class Lexer(BaseLexer):
             self.add(ch2)
             self.state = self.EXPR_BEG
             self.emit("MUL_EQUAL")
+        elif ch2 == "*":
+            self.add(ch2)
+            self.set_expression_state()
+            self.emit("POW")
         else:
             self.unread()
             if self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
@@ -458,7 +466,13 @@ class Lexer(BaseLexer):
         self.set_expression_state()
         if ch2 == "&":
             self.add(ch2)
-            self.emit("AND")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.emit("AND_EQUAL")
+            else:
+                self.unread()
+                self.emit("AND")
         else:
             self.unread()
             self.emit("AMP")
@@ -601,7 +615,7 @@ class Lexer(BaseLexer):
             raise NotImplementedError("UTF-8 escape not implemented")
         elif c in "x0":
             buf = ""
-            for i in (1, 2):
+            for i in xrange(2):
                 ch2 = self.read()
                 if ch2.isalnum():
                     if c == "x" and not ch2 in string.hexdigits:

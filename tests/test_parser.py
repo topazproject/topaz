@@ -96,6 +96,9 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, "1 ^ 2") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("^", ast.ConstantInt(1), ast.ConstantInt(2), 1))
         ]))
+        assert ec.space.parse(ec, "1 ** 2") == ast.Main(ast.Block([
+            ast.Statement(ast.BinOp("**", ast.ConstantInt(1), ast.ConstantInt(2), 1))
+        ]))
 
     def test_multi_term_expr(self, ec):
         assert ec.space.parse(ec, "1 + 2 * 3") == ast.Main(ast.Block([
@@ -377,6 +380,13 @@ class TestParser(BaseRuPyPyTest):
                 ast.Send(ast.Self(3), "f", [], None, 3),
             ])),
         ]))
+        assert ec.space.parse(ec, "[1, *2, *3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([
+                ast.ConstantInt(1),
+                ast.Splat(ast.ConstantInt(2)),
+                ast.Splat(ast.ConstantInt(3)),
+            ]))
+        ]))
 
     def test_subscript(self, ec):
         assert ec.space.parse(ec, "[1][0]") == ast.Main(ast.Block([
@@ -510,6 +520,8 @@ class TestParser(BaseRuPyPyTest):
         test_name(">=")
         test_name("<=")
         test_name("==")
+        test_name("=~")
+        test_name("<<")
 
     def test_string(self, ec):
         assert ec.space.parse(ec, '"abc"') == ast.Main(ast.Block([
@@ -534,7 +546,8 @@ class TestParser(BaseRuPyPyTest):
     def test_escape_character(self, ec):
         string = lambda content: ast.Main(ast.Block([
             ast.Statement(ast.ConstantString(content))
-         ]))
+        ]))
+
         assert ec.space.parse(ec, '?\\\\') == string("\\")
         assert ec.space.parse(ec, '?\\n') == string("\n")
         assert ec.space.parse(ec, '?\\t') == string("\t")
@@ -806,6 +819,9 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_unary_ops(self, ec):
+        assert ec.space.parse(ec, "-yield") == ast.Main(ast.Block([
+            ast.Statement(ast.UnaryOp("-", ast.Yield([], 1), 1))
+        ]))
         assert ec.space.parse(ec, "~3") == ast.Main(ast.Block([
             ast.Statement(ast.UnaryOp("~", ast.ConstantInt(3), 1))
         ]))
@@ -920,7 +936,7 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 3))
                 ]),
                 [
-                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), "e", ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), ast.Variable("e", 4), ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], None, 5))
                     ]))
                 ]
@@ -942,7 +958,7 @@ class TestParser(BaseRuPyPyTest):
                     ast.Statement(ast.BinOp("/", ast.ConstantInt(1), ast.ConstantInt(0), 3))
                 ]),
                 [
-                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), "e", ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4), ast.Variable("e", 4), ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], None, 5))
                     ])),
                     ast.ExceptHandler(ast.LookupConstant(ast.Scope(6), "NoMethodError", 6), None, ast.Block([
@@ -1047,7 +1063,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Function(None, "f", [], None, None, ast.TryExcept(
                 ast.Block([ast.Statement(ast.ConstantInt(3))]),
                 [
-                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "Exception", 4), "e", ast.Block([
+                    ast.ExceptHandler(ast.LookupConstant(ast.Scope(4), "Exception", 4), ast.Variable("e", 4), ast.Block([
                         ast.Statement(ast.ConstantInt(5))
                     ]))
                 ]
@@ -1140,6 +1156,9 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert ec.space.parse(ec, "$>") == simple_global("$>")
         assert ec.space.parse(ec, "$:") == simple_global("$:")
+        assert ec.space.parse(ec, "$$") == simple_global("$$")
+        assert ec.space.parse(ec, "$?") == simple_global("$?")
+        assert ec.space.parse(ec, "$\\") == simple_global("$\\")
 
     def test_comments(self, ec):
         r = ec.space.parse(ec, """
@@ -1463,6 +1482,12 @@ class TestParser(BaseRuPyPyTest):
         r = ec.space.parse(ec, "@a ||= 5")
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.InstanceVariable("@a"), ast.ConstantInt(5)))
+        ]))
+
+    def test_and_equal(self, ec):
+        r = ec.space.parse(ec, "x &&= 10")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.AndEqual(ast.Variable("x", 1), ast.ConstantInt(10)))
         ]))
 
     def test_class_variables(self, ec):

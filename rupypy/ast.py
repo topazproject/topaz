@@ -177,8 +177,14 @@ class TryExcept(Node):
                 handler.exception.compile(ctx)
                 ctx.emit(consts.COMPARE_EXC)
                 ctx.emit_jump(consts.JUMP_IF_FALSE, next_except)
-            if handler.name:
-                ctx.emit(consts.STORE_LOCAL, ctx.symtable.get_local_num(handler.name))
+            if handler.target:
+                elems = handler.target.compile_receiver(ctx)
+                if elems == 1:
+                    ctx.emit(consts.ROT_TWO)
+                elif elems == 2:
+                    ctx.emit(consts.ROT_THREE)
+                    ctx.emit(consts.ROT_THREE)
+                handler.target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
             ctx.emit(consts.DISCARD_TOP)
             handler.body.compile(ctx)
@@ -189,16 +195,16 @@ class TryExcept(Node):
 
 
 class ExceptHandler(Node):
-    def __init__(self, exception, name, body):
+    def __init__(self, exception, target, body):
         self.exception = exception
-        self.name = name
+        self.target = target
         self.body = body
 
     def locate_symbols(self, symtable):
         if self.exception is not None:
             self.exception.locate_symbols(symtable)
-        if self.name is not None:
-            symtable.declare_local(self.name)
+        if self.target is not None:
+            self.target.locate_symbols_assignment(symtable)
         self.body.locate_symbols(symtable)
 
 
@@ -514,6 +520,12 @@ class OrEqual(Node):
         self.value.compile(ctx)
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
+
+
+class AndEqual(Node):
+    def __init__(self, target, value):
+        self.target = target
+        self.value = value
 
 
 class MultiAssignment(Node):
