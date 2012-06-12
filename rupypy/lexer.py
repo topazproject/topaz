@@ -801,7 +801,7 @@ class StringLexer(BaseLexer):
             if ch == self.lexer.EOF:
                 self.unread()
                 return self.tokens
-            elif ch == "\\" and self.peek() in [self.begin, self.end]:
+            elif ch == "\\" and self.peek() in [self.begin, self.end, "\\"]:
                 self.add(self.read())
             elif ch == self.begin and (self.begin != self.end):
                 self.nesting += 1
