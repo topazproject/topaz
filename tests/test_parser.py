@@ -639,6 +639,10 @@ class TestParser(BaseRuPyPyTest):
             ])]))
         ]))
 
+        assert ec.space.parse(ec, "f %q[/]") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.DynamicString([ast.ConstantString("/")])], None, 1)),
+        ]))
+
     def test_class(self, ec):
         r = ec.space.parse(ec, """
         class X

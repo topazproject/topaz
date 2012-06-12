@@ -708,11 +708,14 @@ class Lexer(BaseLexer):
 
     def percent(self, ch, space_seen):
         c = self.read()
-        if self.is_beg() or (self.is_arg() and space_seen and c.isspace()):
-            return self.quote(c)
+        if self.is_beg():
+            self.quote(c)
         elif c == "=":
             self.add(ch)
+            self.add(c)
             self.emit("MODULO_EQUAL")
+        elif self.is_arg() and space_seen and not c.isspace():
+            self.quote(c)
         else:
             self.unread()
             self.add(ch)
