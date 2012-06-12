@@ -700,9 +700,7 @@ class Send(Node):
         if self.is_splat():
             for arg in self.args:
                 arg.compile(ctx)
-                if isinstance(arg, Splat):
-                    ctx.emit(consts.COERCE_ARRAY)
-                else:
+                if not isinstance(arg, Splat):
                     ctx.emit(consts.BUILD_ARRAY, 1)
             for i in range(len(self.args) - 1):
                 ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
@@ -749,6 +747,7 @@ class Splat(Node):
 
     def compile(self, ctx):
         self.value.compile(ctx)
+        ctx.emit(consts.COERCE_ARRAY)
 
 
 class SendBlock(Node):
@@ -1035,9 +1034,22 @@ class Array(Node):
             item.locate_symbols(symtable)
 
     def compile(self, ctx):
+        n_items = 0
+        n_components = 0
         for item in self.items:
-            item.compile(ctx)
-        ctx.emit(consts.BUILD_ARRAY, len(self.items))
+            if isinstance(item, Splat):
+                ctx.emit(consts.BUILD_ARRAY, n_items)
+                item.compile(ctx)
+                n_items = 0
+                n_components += 2
+            else:
+                item.compile(ctx)
+                n_items += 1
+        if n_items or not n_components:
+            ctx.emit(consts.BUILD_ARRAY, n_items)
+            n_components += 1
+        for i in xrange(n_components - 1):
+            ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
 
 
 class Hash(Node):
