@@ -696,6 +696,13 @@ class Lexer(BaseLexer):
         self.emit("SHELL_END")
         self.state = self.EXPR_END
 
+    def qwords(self, begin, end, interpolate=True):
+        self.emit("QWORDS_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=interpolate).tokenize(qwords=True)
+        self.tokens.extend(tokens)
+        self.emit("QWORDS_END")
+        self.state = self.EXPR_END
+
     def percent(self, ch, space_seen):
         c = self.read()
         if self.is_beg() or (self.is_arg() and space_seen and c.isspace()):
@@ -737,6 +744,10 @@ class Lexer(BaseLexer):
             self.tokens.extend(tokens)
         elif ch == "x":
             self.shellout(begin, end)
+        elif ch == "w":
+            self.qwords(begin, end, interpolate=False)
+        elif ch == "W":
+            self.qwords(begin, end, interpolate=True)
         elif ch == "r":
             self.regexp(begin, end)
         else:
@@ -778,7 +789,7 @@ class StringLexer(BaseLexer):
         if self.current_value:
             self.emit("STRING_VALUE")
 
-    def tokenize(self):
+    def tokenize(self, qwords=False):
         self.emit("STRING_BEGIN")
         while True:
             ch = self.read()
@@ -801,9 +812,16 @@ class StringLexer(BaseLexer):
                 self.emit_str()
                 self.read()
                 self.tokenize_interpolation()
+            elif qwords and ch.isspace():
+                self.emit_str()
+                while self.peek().isspace():
+                    self.read()
+                break
             else:
                 self.add(ch)
         self.emit("STRING_END")
+        if qwords and ch.isspace():
+            self.tokenize(qwords=True)
         return self.tokens
 
     def tokenize_interpolation(self):
