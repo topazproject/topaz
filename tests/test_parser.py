@@ -229,7 +229,19 @@ class TestParser(BaseRuPyPyTest):
                 ))
             ))
         ]))
-
+        assert ec.space.parse(ec, "a = 0, *[1,2,3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(
+                ast.Variable("a", 1),
+                ast.Array([
+                    ast.ConstantInt(0),
+                    ast.Splat(ast.Array([
+                        ast.ConstantInt(1),
+                        ast.ConstantInt(2),
+                        ast.ConstantInt(3),
+                    ])),
+                ]
+            )))
+        ]))
 
     def test_load_variable(self, ec):
         assert ec.space.parse(ec, "a") == ast.Main(ast.Block([

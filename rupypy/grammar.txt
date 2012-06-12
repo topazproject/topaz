@@ -66,8 +66,9 @@ literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
                  <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL>;
-assignment: assign_target assignment_oper exprs;
-assign_target: send [COMMA] >assign_target< | send;
+assignment: assign_target assignment_oper assign_rhs;
+assign_target: send [COMMA] >assign_target< | send | splat;
+assign_rhs: expr [COMMA] >assign_rhs< | expr | splat;
 
 yield: YIELD [LPAREN] args? [RPAREN] |
        YIELD args?;
@@ -145,7 +146,6 @@ primary: LPAREN expr RPAREN |
          MODULE IDENTIFIER line* statement? [LINE_END]? END |
          BEGIN line* statement? [LINE_END]? rescue* else? ensure? END |
          CASE expr [LINE_END] whens else? END |
-         splat |
          varname |
          literal;
 
