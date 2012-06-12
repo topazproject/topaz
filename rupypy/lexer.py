@@ -820,6 +820,8 @@ class StringLexer(BaseLexer):
             elif qwords and ch.isspace():
                 self.emit_str()
                 break
+            elif qwords and ch == "\\" and self.peek().isspace():
+                self.add(self.read())
             else:
                 self.add(ch)
         self.emit("STRING_END")
