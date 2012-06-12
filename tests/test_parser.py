@@ -605,6 +605,35 @@ class TestParser(BaseRuPyPyTest):
         assert ec.space.parse(ec, '%q{#{2}}') == dyn_string(ast.ConstantString("#{2}"))
         assert ec.space.parse(ec, '%{\\{}') == dyn_string(ast.ConstantString('{'))
         assert ec.space.parse(ec, '%{\\}}') == dyn_string(ast.ConstantString('}'))
+        assert ec.space.parse(ec, '%w{\ -}') == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.DynamicString([ast.ConstantString(" -")])]))
+        ]))
+        assert ec.space.parse(ec, '%w{  hello world  }') == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.DynamicString([ast.ConstantString("hello")]),
+                ast.DynamicString([ast.ConstantString("world")])
+            ]))
+        ]))
+        assert ec.space.parse(ec, '%W{hello world  }') == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.DynamicString([ast.ConstantString("hello")]),
+                ast.DynamicString([ast.ConstantString("world")])
+            ]))
+        ]))
+        assert ec.space.parse(ec, '%w{#{"a b" + "#{\'c d\'}"}}') == ast.Main(ast.Block([
+            ast.Statement(ast.Array([
+                ast.DynamicString([ast.ConstantString('#{"a')]),
+                ast.DynamicString([ast.ConstantString('b"')]),
+                ast.DynamicString([ast.ConstantString('+')]),
+                ast.DynamicString([ast.ConstantString('"#{\'c')]),
+                ast.DynamicString([ast.ConstantString('d\'}"}')])
+            ]))
+        ]))
+        assert ec.space.parse(ec, '%W{#{"a b" + "#{\'c d\'}"}}') == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.DynamicString([
+                ast.BinOp("+", ast.DynamicString([ast.ConstantString("a b")]),
+                    ast.DynamicString([ast.ConstantString("c d")]), 1
+                )
+            ])]))
+        ]))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """

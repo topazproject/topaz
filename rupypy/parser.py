@@ -390,6 +390,8 @@ class Transformer(object):
             return self.visit_regexp(node.children[0])
         elif symname == "shellout":
             return self.visit_shellout(node.children[0])
+        elif symname == "qwords":
+            return self.visit_qwords(node.children[0])
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
@@ -662,3 +664,11 @@ class Transformer(object):
             None,
             node.getsourcepos().lineno
         )
+
+    def visit_qwords(self, node):
+        contents = node.children[0]
+        if contents.children:
+            items = [self.visit_dstring(n) for n in contents.children]
+        else:
+            items = []
+        return ast.Array(items)
