@@ -411,6 +411,10 @@ class Lexer(BaseLexer):
             self.add(ch2)
             self.state = self.EXPR_BEG
             self.emit("MUL_EQUAL")
+        elif ch2 == "*":
+            self.add(ch2)
+            self.set_expression_state()
+            self.emit("POW")
         else:
             self.unread()
             if self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
@@ -781,7 +785,7 @@ class StringLexer(BaseLexer):
             if ch == self.lexer.EOF:
                 self.unread()
                 return self.tokens
-            elif ch == "\\" and self.peek() in [self.begin, self.end]:
+            elif ch == "\\" and self.peek() in [self.begin, self.end, "\\"]:
                 self.add(self.read())
             elif ch == self.begin and (self.begin != self.end):
                 self.nesting += 1

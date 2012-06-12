@@ -161,7 +161,7 @@ class Transformer(object):
             node = node.children[0]
 
         symname = node.symbol
-        if symname in ["comparison", "shiftive", "additive", "multitive", "bool", "match", "or", "and", "literal_bool"]:
+        if symname in ["comparison", "shiftive", "additive", "multitive", "bool", "match", "or", "and", "literal_bool", "pow"]:
             return self.visit_subexpr(node)
         elif symname == "range":
             return self.visit_range(node)
@@ -195,7 +195,7 @@ class Transformer(object):
 
     def visit_unaryop(self, node):
         op = node.children[0].additional_info
-        value = self.visit_arg(node.children[1])
+        value = self.visit_expr(node.children[1])
         if op == "!":
             return ast.Not(value)
         return ast.UnaryOp(op, value, node.getsourcepos().lineno)
@@ -544,12 +544,12 @@ class Transformer(object):
         if node.children[1].symbol == "varname":
             exception = self.visit_varname(node.children[1])
             idx += 1
-        name = None
+        target = None
         if node.children[idx].symbol == "ARROW":
-            name = node.children[idx + 1].additional_info
+            target = self.visit_varname(node.children[idx + 1])
             idx += 2
         block = self.visit_block(node, start_idx=idx)
-        return ast.ExceptHandler(exception, name, block)
+        return ast.ExceptHandler(exception, target, block)
 
     def visit_case(self, node):
         cond = self.visit_expr(node.children[1])
