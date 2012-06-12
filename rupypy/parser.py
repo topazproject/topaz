@@ -330,6 +330,8 @@ class Transformer(object):
             return self.visit_literal(node.children[0])
         elif node.children[0].symbol == "varname":
             return self.visit_varname(node.children[0])
+        elif node.children[0].symbol == "splat":
+            return self.visit_arg(node.children[0])
         elif node.children[0].additional_info == "(":
             return self.visit_expr(node.children[1])
         elif node.children[0].additional_info == "[":

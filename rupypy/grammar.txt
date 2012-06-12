@@ -145,6 +145,7 @@ primary: LPAREN expr RPAREN |
          MODULE IDENTIFIER line* statement? [LINE_END]? END |
          BEGIN line* statement? [LINE_END]? rescue* else? ensure? END |
          CASE expr [LINE_END] whens else? END |
+         splat |
          varname |
          literal;
 
