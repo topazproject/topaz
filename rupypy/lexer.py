@@ -827,8 +827,8 @@ class StringLexer(BaseLexer):
             else:
                 self.add(ch)
         self.emit("STRING_END")
-        if qwords and ch.isspace():
-            self.tokenize(qwords=True)
+        if self.qwords and ch.isspace():
+            self.tokenize()
         return self.tokens
 
     def tokenize_interpolation(self):
