@@ -122,11 +122,13 @@ real_send: primary trailers |
            ambigious_binop |
            global_send;
 
-global_send: IDENTIFIER block |
-             global_paren_send |
-             IDENTIFIER send_args;
+global_method_name: <IDENTIFIER> | <CONSTANT>;
 
-global_paren_send: IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
+global_send: global_method_name block |
+             global_paren_send |
+             global_method_name send_args;
+
+global_paren_send: global_method_name [LPAREN] send_args? [RPAREN] block?;
 
 block: [LBRACE] block_args? line* statement? [LINE_END]? [RBRACE];
 
