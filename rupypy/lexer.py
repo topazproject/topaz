@@ -343,25 +343,44 @@ class Lexer(BaseLexer):
 
         indent = ch == "-"
         interpolate = True
+        shellout = True
         if indent:
             ch = self.read()
 
-        if not (ch.isalnum() or ch == "_"):
-            self.unread()
-            if indent:
-                self.unread()
-            return False
+        if ch in "'\"`":
+            term = ch
+            if term == "'":
+                interpolate = False
+            elif term == "`":
+                shellout = True
 
-        marker = StringBuilder()
-        marker.append(ch)
-        while True:
-            ch = self.read()
-            if ch == self.EOF or not (ch.isalnum() or ch == "_"):
+            marker = StringBuilder()
+            while True:
+                ch = self.read()
+                if ch == self.EOF:
+                    self.unread()
+                    break
+                elif ch == term:
+                    break
+                else:
+                    marker.append(ch)
+        else:
+            if not (ch.isalnum() or ch == "_"):
                 self.unread()
-                break
+                if indent:
+                    self.unread()
+                return False
+
+            marker = StringBuilder()
             marker.append(ch)
+            while True:
+                ch = self.read()
+                if ch == self.EOF or not (ch.isalnum() or ch == "_"):
+                    self.unread()
+                    break
+                marker.append(ch)
 
-        tokens = HeredocLexer(self, marker.build(), interpolate=True).tokenize()
+        tokens = HeredocLexer(self, marker.build(), indent, interpolate=True).tokenize()
         self.tokens.extend(tokens)
         self.state = self.EXPR_END
         return True
@@ -918,9 +937,10 @@ class StringLexer(ChildLexer):
 
 
 class HeredocLexer(ChildLexer):
-    def __init__(self, lexer, marker, interpolate):
+    def __init__(self, lexer, marker, indent, interpolate):
         ChildLexer.__init__(self, lexer)
         self.marker = marker
+        self.indent = indent
         self.interpolate = interpolate
 
     def tokenize(self):
@@ -943,6 +963,14 @@ class HeredocLexer(ChildLexer):
             if ch == "\n":
                 self.add(ch)
                 chars = StringBuilder(len(self.marker))
+                if self.indent:
+                    while True:
+                        ch = self.read()
+                        if ch.isspace():
+                            chars.append(ch)
+                        else:
+                            self.unread()
+                            break
                 for c in self.marker:
                     ch = self.read()
                     chars.append(ch)

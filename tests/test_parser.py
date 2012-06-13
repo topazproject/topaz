@@ -732,7 +732,7 @@ HERE
         abc
         HERE
         """)
-        assert r == heredoc(ast.ConstantString("abc\n"))
+        assert r == heredoc(ast.ConstantString("        abc\n"))
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """
