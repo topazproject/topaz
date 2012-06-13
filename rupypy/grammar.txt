@@ -66,7 +66,13 @@ literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
                  <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL>;
-assignment: assign_target assignment_oper assign_rhs;
+
+
+assignment: assign_lhs assignment_oper assign_rhs;
+assign_lhs: <assign_target_splat> | <assign_target>;
+assign_target_splat: send [COMMA] >assign_target_splat< |
+                     splat [COMMA] >assign_target< |
+		     splat;
 assign_target: send [COMMA] >assign_target< | send;
 assign_rhs: assign_value [COMMA] >assign_rhs< | assign_value;
 assign_value: <expr> | <splat>;

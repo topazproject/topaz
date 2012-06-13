@@ -561,6 +561,56 @@ class MultiAssignment(Node):
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
 
+class SplatAssignment(Node):
+    def __init__(self, pre, splat, post, value):
+        self.pre = pre
+        self.splat = splat
+        self.post = post
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        for target in self.pre:
+            target.locate_symbols_assignment(symtable)
+        for target in self.post:
+            target.locate_symbols_assignment(symtable)
+        self.splat.locate_symbols(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.UNPACK_SEQUENCE_FOR_SPLAT, len(self.pre), len(self.post))
+
+        for target in self.pre:
+            elems = target.compile_receiver(ctx)
+            if elems == 1:
+                ctx.emit(consts.ROT_TWO)
+            elif elems == 2:
+                ctx.emit(consts.ROT_THREE)
+                ctx.emit(consts.ROT_THREE)
+            target.compile_store(ctx)
+            ctx.emit(consts.DISCARD_TOP)
+
+        elems = self.splat.compile_receiver(ctx)
+        if elems == 1:
+            ctx.emit(consts.ROT_TWO)
+        elif elems == 2:
+            ctx.emit(consts.ROT_THREE)
+            ctx.emit(consts.ROT_THREE)
+        self.splat.compile_store(ctx)
+        ctx.emit(consts.DISCARD_TOP)
+
+        for target in self.post:
+            elems = target.compile_receiver(ctx)
+            if elems == 1:
+                ctx.emit(consts.ROT_TWO)
+            elif elems == 2:
+                ctx.emit(consts.ROT_THREE)
+                ctx.emit(consts.ROT_THREE)
+            target.compile_store(ctx)
+            ctx.emit(consts.DISCARD_TOP)
+
 
 class BinOp(Node):
     def __init__(self, op, left, right, lineno):
@@ -744,6 +794,12 @@ class Splat(Node):
 
     def locate_symbols(self, symtable):
         self.value.locate_symbols(symtable)
+
+    def compile_receiver(self, ctx):
+        return self.value.compile_receiver(ctx)
+
+    def compile_store(self, ctx):
+        return self.value.compile_store(ctx)
 
     def compile(self, ctx):
         self.value.compile(ctx)
