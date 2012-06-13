@@ -72,7 +72,7 @@ assignment: assign_lhs assignment_oper assign_rhs;
 assign_lhs: <assign_target_splat> | <assign_target>;
 assign_target_splat: send [COMMA] >assign_target_splat< |
                      splat [COMMA] >assign_target< |
-		     splat;
+                     splat;
 assign_target: send [COMMA] >assign_target< | send;
 assign_rhs: assign_value [COMMA] >assign_rhs< | assign_value;
 assign_value: <expr> | <splat>;
