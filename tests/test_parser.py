@@ -315,6 +315,8 @@ class TestParser(BaseRuPyPyTest):
                 0
             ))
         ]))
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "*b, *c = 1")
 
     def test_load_variable(self, ec):
         assert ec.space.parse(ec, "a") == ast.Main(ast.Block([
