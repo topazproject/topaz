@@ -206,7 +206,7 @@ class TestParser(BaseRuPyPyTest):
         with self.raises("SyntaxError"):
             ec.space.parse(ec, "a, b += 3")
 
-    def test_splat_assignment(self, ec):
+    def test_splat_rhs_assignment(self, ec):
         assert ec.space.parse(ec, "a,b,c = *[1,2,3]") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
                 [
@@ -255,6 +255,64 @@ class TestParser(BaseRuPyPyTest):
                     ast.Splat(ast.ConstantInt(2)),
                     ast.ConstantInt(0)
                 ])
+            ))
+        ]))
+
+    def test_splat_lhs_assignment(self, ec):
+        assert ec.space.parse(ec, "a,*b,c = *[1,2]") == ast.Main(ast.Block([
+            ast.Statement(ast.SplatAssignment(
+                [
+                    ast.Variable("a", 1),
+                    ast.Splat(ast.Variable("b", 1)),
+                    ast.Variable("c", 1),
+                ],
+                ast.Splat(ast.Array(
+                    [
+                        ast.ConstantInt(1),
+                        ast.ConstantInt(2)
+                    ]
+                )),
+                1
+            ))
+        ]))
+        assert ec.space.parse(ec, "a, *b, c = 1") == ast.Main(ast.Block([
+            ast.Statement(ast.SplatAssignment(
+                [
+                    ast.Variable("a", 1),
+                    ast.Splat(ast.Variable("b", 1)),
+                    ast.Variable("c", 1),
+                ],
+                ast.ConstantInt(1),
+                1
+            ))
+        ]))
+        assert ec.space.parse(ec, "*b,c = 1") == ast.Main(ast.Block([
+            ast.Statement(ast.SplatAssignment(
+                [
+                    ast.Splat(ast.Variable("b", 1)),
+                    ast.Variable("c", 1),
+                ],
+                ast.ConstantInt(1),
+                0
+            ))
+        ]))
+        assert ec.space.parse(ec, "b,*c = 1") == ast.Main(ast.Block([
+            ast.Statement(ast.SplatAssignment(
+                [
+                    ast.Variable("b", 1),
+                    ast.Splat(ast.Variable("c", 1)),
+                ],
+                ast.ConstantInt(1),
+                1
+            ))
+        ]))
+        assert ec.space.parse(ec, "*c = 1") == ast.Main(ast.Block([
+            ast.Statement(ast.SplatAssignment(
+                [
+                    ast.Splat(ast.Variable("c", 1)),
+                ],
+                ast.ConstantInt(1),
+                0
             ))
         ]))
 
