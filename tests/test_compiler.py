@@ -1736,7 +1736,7 @@ class TestCompiler(object):
         BUILD_ARRAY 3
         DUP_TOP
         COERCE_ARRAY
-        UNPACK_SEQUENCE_FOR_SPLAT 3 1
+        UNPACK_SEQUENCE_SPLAT 3 1
 
         STORE_LOCAL 0
         DISCARD_TOP

@@ -576,7 +576,7 @@ class SplatAssignment(Node):
         self.value.compile(ctx)
         ctx.emit(consts.DUP_TOP)
         ctx.emit(consts.COERCE_ARRAY)
-        ctx.emit(consts.UNPACK_SEQUENCE_FOR_SPLAT, len(self.targets), self.n_pre)
+        ctx.emit(consts.UNPACK_SEQUENCE_SPLAT, len(self.targets), self.n_pre)
         for target in self.targets:
             elems = target.compile_receiver(ctx)
             if elems == 1:

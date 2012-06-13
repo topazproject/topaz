@@ -306,7 +306,7 @@ class Interpreter(object):
             frame.push(w_obj)
 
     @jit.unroll_safe
-    def UNPACK_SEQUENCE_FOR_SPLAT(self, ec, bytecode, frame, pc, n_targets, n_pre):
+    def UNPACK_SEQUENCE_SPLAT(self, ec, bytecode, frame, pc, n_targets, n_pre):
         w_obj = frame.pop()
         items_w = ec.space.listview(w_obj)
         n_items = len(items_w)
