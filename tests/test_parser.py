@@ -1064,6 +1064,9 @@ HERE
         assert ec.space.parse(ec, "X::m nil") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "X", 1), "m", [ast.Variable("nil", 1)], None, 1))
         ]))
+        assert ec.space.parse(ec, "::Const") == ast.Main(ast.Block([
+            ast.Statement(ast.LookupConstant(None, "Const", 1))
+        ]))
 
     def test___FILE__(self, ec):
         assert ec.space.parse(ec, "__FILE__") == ast.Main(ast.Block([

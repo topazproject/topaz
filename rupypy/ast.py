@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
+from rupypy.objects.objectobject import W_BaseObject
 
 
 class Node(object):
@@ -896,18 +897,19 @@ class LookupConstant(Node):
         pass
 
     def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
+        if self.value is not None:
+            self.value.locate_symbols(symtable)
 
     def locate_symbols_assignment(self, symtable):
         self.locate_symbols(symtable)
 
     def compile(self, ctx):
-        if self.name[0].isupper():
+        if self.value is not None:
             self.value.compile(ctx)
-            ctx.current_lineno = self.lineno
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
-            Send(self.value, self.name, [], None, self.lineno).compile(ctx)
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_BaseObject)))
+        ctx.current_lineno = self.lineno
+        ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
         self.value.compile(ctx)

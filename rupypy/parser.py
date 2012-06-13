@@ -387,6 +387,8 @@ class Transformer(object):
             return self.visit_begin(node)
         elif node.children[0].additional_info == "case":
             return self.visit_case(node)
+        elif node.children[0].symbol == "UNBOUND_COLONCOLON":
+            return ast.LookupConstant(None, node.children[1].additional_info, node.getsourcepos().lineno)
         raise NotImplementedError(node.symbol)
 
     def visit_array(self, node):

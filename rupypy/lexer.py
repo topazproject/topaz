@@ -152,7 +152,7 @@ class Lexer(BaseLexer):
                 self.emit("RBRACE")
                 self.state = self.EXPR_ENDFN
             elif ch == ":":
-                self.colon(ch)
+                self.colon(ch, space_seen)
             elif ch == "/":
                 self.slash(ch, space_seen)
             elif ch == "^":
@@ -720,14 +720,20 @@ class Lexer(BaseLexer):
         else:
             return c
 
-    def colon(self, ch):
+    def colon(self, ch, space_seen):
         ch2 = self.read()
 
         if ch2 == ":":
             self.add(ch)
             self.add(ch2)
-            self.state = self.EXPR_DOT
-            self.emit("COLONCOLON")
+            if (self.is_beg() or self.state == self.EXPR_CLASS or
+                (self.is_arg() and space_seen)):
+                self.state = self.EXPR_BEG
+                self.emit("UNBOUND_COLONCOLON")
+            else:
+                self.state = self.EXPR_DOT
+                self.emit("COLONCOLON")
+
         elif self.is_end() or ch2.isspace():
             self.unread()
             self.add(ch)

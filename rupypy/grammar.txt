@@ -156,6 +156,7 @@ primary: LPAREN expr RPAREN |
          MODULE CONSTANT line* statement? [LINE_END]? END |
          BEGIN line* statement? [LINE_END]? rescue* else? ensure? END |
          CASE expr [LINE_END] whens else? END |
+         UNBOUND_COLONCOLON CONSTANT |
          varname |
          literal;
 
