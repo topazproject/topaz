@@ -503,6 +503,10 @@ class Lexer(BaseLexer):
             else:
                 self.unread()
                 self.emit("OR")
+        elif ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            self.emit("PIPE_EQUAL")
         else:
             self.unread()
             self.set_expression_state()

@@ -67,7 +67,8 @@ contained_expr: literal_not | assignment | yield | arg;
 literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
-                 <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL>;
+                 <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL> |
+                 <PIPE_EQUAL>;
 
 
 assignment: assign_lhs assignment_oper expr_splats;
