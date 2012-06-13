@@ -761,6 +761,39 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.DynamicString([ast.ConstantString("/")])], None, 1)),
         ]))
 
+    def test_heredoc(self, ec):
+        heredoc = lambda *contents: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString(list(contents)))
+        ]))
+
+        r = ec.space.parse(ec, """
+        <<HERE
+abc
+HERE
+        """)
+
+        assert r == heredoc(ast.ConstantString("abc\n"))
+        r = ec.space.parse(ec, """
+        <<"HERE"
+abc
+HERE
+        """)
+        assert r == heredoc(ast.ConstantString("abc\n"))
+
+        r = ec.space.parse(ec, """
+        <<'HERE'
+abc
+HERE
+        """)
+        assert r == heredoc(ast.ConstantString("abc\n"))
+
+        r = ec.space.parse(ec, """
+        <<-HERE
+        abc
+        HERE
+        """)
+        assert r == heredoc(ast.ConstantString("        abc\n"))
+
     def test_class(self, ec):
         r = ec.space.parse(ec, """
         class X

@@ -1,6 +1,7 @@
 import string
 
 from pypy.rlib.parsing.lexer import Token, SourcePos
+from pypy.rlib.rstring import StringBuilder
 
 
 class LexerError(Exception):
@@ -115,7 +116,7 @@ class Lexer(BaseLexer):
             elif ch == "=":
                 self.equal(ch)
             elif ch == "<":
-                self.less_than(ch)
+                self.less_than(ch, space_seen)
             elif ch == ">":
                 self.greater_than(ch)
             elif ch == '"':
@@ -337,6 +338,53 @@ class Lexer(BaseLexer):
         self.emit("REGEXP_END")
         self.state = self.EXPR_END
 
+    def here_doc(self):
+        ch = self.read()
+
+        indent = ch == "-"
+        interpolate = True
+        shellout = True
+        if indent:
+            ch = self.read()
+
+        if ch in "'\"`":
+            term = ch
+            if term == "'":
+                interpolate = False
+            elif term == "`":
+                shellout = True
+
+            marker = StringBuilder()
+            while True:
+                ch = self.read()
+                if ch == self.EOF:
+                    self.unread()
+                    break
+                elif ch == term:
+                    break
+                else:
+                    marker.append(ch)
+        else:
+            if not (ch.isalnum() or ch == "_"):
+                self.unread()
+                if indent:
+                    self.unread()
+                return False
+
+            marker = StringBuilder()
+            marker.append(ch)
+            while True:
+                ch = self.read()
+                if ch == self.EOF or not (ch.isalnum() or ch == "_"):
+                    self.unread()
+                    break
+                marker.append(ch)
+
+        tokens = HeredocLexer(self, marker.build(), indent, interpolate=True).tokenize()
+        self.tokens.extend(tokens)
+        self.state = self.EXPR_END
+        return True
+
     def dollar(self, ch):
         self.add(ch)
         self.state = self.EXPR_END
@@ -500,10 +548,17 @@ class Lexer(BaseLexer):
             self.unread()
             self.emit("EQ")
 
-    def less_than(self, ch):
+    def less_than(self, ch, space_seen):
+        ch2 = self.read()
+
+        if (ch2 == "<" and self.state not in [self.EXPR_DOT, self.EXPR_CLASS] and
+            not self.is_end() and (not self.is_arg() or space_seen)):
+            matched = self.here_doc()
+            if matched:
+                return
+
         self.add(ch)
         self.set_expression_state()
-        ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
             ch3 = self.read()
@@ -761,21 +816,10 @@ class Lexer(BaseLexer):
         self.state = self.EXPR_END
 
 
-class StringLexer(BaseLexer):
-    CODE = 0
-    STRING = 1
-
-    def __init__(self, lexer, begin, end, interpolate=True, qwords=False):
+class ChildLexer(BaseLexer):
+    def __init__(self, lexer):
         BaseLexer.__init__(self)
         self.lexer = lexer
-
-        self.interpolate = interpolate
-        self.qwords = qwords
-
-        self.begin = begin
-        self.end = end
-
-        self.nesting = 0
 
     def get_idx(self):
         return self.lexer.get_idx()
@@ -791,6 +835,22 @@ class StringLexer(BaseLexer):
 
     def unread(self):
         return self.lexer.unread()
+
+
+class StringLexer(ChildLexer):
+    CODE = 0
+    STRING = 1
+
+    def __init__(self, lexer, begin, end, interpolate=True, qwords=False):
+        ChildLexer.__init__(self, lexer)
+
+        self.interpolate = interpolate
+        self.qwords = qwords
+
+        self.begin = begin
+        self.end = end
+
+        self.nesting = 0
 
     def emit_str(self):
         if self.current_value:
@@ -836,7 +896,7 @@ class StringLexer(BaseLexer):
 
     def tokenize_interpolation(self):
         self.emit("DSTRING_START")
-        chars = []
+        chars = StringBuilder()
         context = [self.CODE]
         braces_count = [1]
         while True:
@@ -869,8 +929,61 @@ class StringLexer(BaseLexer):
                 context.append(self.CODE)
             else:
                 chars.append(ch)
-        lexer_tokens = Lexer("".join(chars)).tokenize()
+        lexer_tokens = Lexer(chars.build()).tokenize()
         # Remove the EOF
         lexer_tokens.pop()
         self.tokens.extend(lexer_tokens)
         self.emit("DSTRING_END")
+
+
+class HeredocLexer(ChildLexer):
+    def __init__(self, lexer, marker, indent, interpolate):
+        ChildLexer.__init__(self, lexer)
+        self.marker = marker
+        self.indent = indent
+        self.interpolate = interpolate
+
+    def tokenize(self):
+        chars = StringBuilder()
+        while True:
+            ch = self.read()
+            if ch == "\n":
+                break
+            elif ch == self.EOF:
+                return self.tokens
+            chars.append(ch)
+        if chars.getlength():
+            lexer_tokens = Lexer(chars.build()).tokenize()
+            lexer_tokens.pop()
+            self.tokens.extend(lexer_tokens)
+
+        self.emit("STRING_BEGIN")
+        while True:
+            ch = self.read()
+            if ch == "\n":
+                self.add(ch)
+                chars = StringBuilder(len(self.marker))
+                if self.indent:
+                    while True:
+                        ch = self.read()
+                        if ch.isspace():
+                            chars.append(ch)
+                        else:
+                            self.unread()
+                            break
+                for c in self.marker:
+                    ch = self.read()
+                    chars.append(ch)
+                    if ch != c:
+                        for c in chars.build():
+                            self.add(c)
+                        break
+                else:
+                    self.emit("STRING_VALUE")
+                    break
+            elif ch == self.EOF:
+                return self.tokens
+            else:
+                self.add(ch)
+        self.emit("STRING_END")
+        return self.tokens
