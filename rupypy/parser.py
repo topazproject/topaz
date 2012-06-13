@@ -430,16 +430,17 @@ class Transformer(object):
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
-        if node.children[0].symbol == "INSTANCE_VAR":
-            return ast.InstanceVariable(node.children[0].additional_info)
-        elif node.children[0].symbol == "CLASS_VAR":
-            return ast.ClassVariable(node.children[0].additional_info)
-        elif node.children[0].symbol == "GLOBAL":
-            return ast.Global(node.children[0].additional_info)
-        elif node.children[0].additional_info[0].isupper():
-            return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.children[0].additional_info, node.getsourcepos().lineno)
-        else:
-            return ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
+        node = node.children[0]
+        if node.symbol == "INSTANCE_VAR":
+            return ast.InstanceVariable(node.additional_info)
+        elif node.symbol == "CLASS_VAR":
+            return ast.ClassVariable(node.additional_info)
+        elif node.symbol == "GLOBAL":
+            return ast.Global(node.additional_info)
+        elif node.symbol == "IDENTIFIER":
+            return ast.Variable(node.additional_info, node.getsourcepos().lineno)
+        elif node.symbol == "CONSTANT":
+            return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.additional_info, node.getsourcepos().lineno)
 
     def visit_if(self, node):
         if_node = node.children[1]
