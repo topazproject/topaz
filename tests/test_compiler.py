@@ -1124,18 +1124,19 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 42
+        JUMP 45
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 41
+        JUMP_IF_TRUE 29
+        JUMP 44
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_CONST 4
         COPY_STRING
         SEND 5 1
-        JUMP 46
+        JUMP 49
         END_FINALLY
         LOAD_CONST 6
         DISCARD_TOP
@@ -1156,18 +1157,19 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 44
+        JUMP 47
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 43
+        JUMP_IF_TRUE 29
+        JUMP 46
         STORE_LOCAL 0
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_LOCAL 0
         SEND 4 1
-        JUMP 48
+        JUMP 51
         END_FINALLY
         LOAD_CONST 5
         DISCARD_TOP

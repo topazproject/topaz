@@ -175,12 +175,22 @@ class TryExcept(Node):
             ctx.emit(consts.POP_BLOCK)
         ctx.emit_jump(consts.JUMP, else_block)
         ctx.use_next_block(exc)
+
         for handler in self.except_handlers:
             next_except = ctx.new_block()
-            if handler.exception is not None:
-                handler.exception.compile(ctx)
-                ctx.emit(consts.COMPARE_EXC)
-                ctx.emit_jump(consts.JUMP_IF_FALSE, next_except)
+            handle_block = ctx.new_block()
+
+            if handler.exceptions:
+                for exception in handler.exceptions:
+                    next_handle = ctx.new_block()
+                    exception.compile(ctx)
+                    ctx.emit(consts.COMPARE_EXC)
+                    ctx.emit_jump(consts.JUMP_IF_TRUE, handle_block)
+                    ctx.use_next_block(next_handle)
+                ctx.emit_jump(consts.JUMP, next_except)
+                ctx.use_next_block(handle_block)
+            else:
+                ctx.use_next_block(handle_block)
             if handler.target:
                 elems = handler.target.compile_receiver(ctx)
                 if elems == 1:
@@ -194,6 +204,7 @@ class TryExcept(Node):
             handler.body.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)
             ctx.use_next_block(next_except)
+
         if self.except_handlers:
             ctx.emit(consts.END_FINALLY)
         ctx.use_next_block(else_block)
@@ -203,14 +214,14 @@ class TryExcept(Node):
 
 
 class ExceptHandler(Node):
-    def __init__(self, exception, target, body):
-        self.exception = exception
+    def __init__(self, exceptions, target, body):
+        self.exceptions = exceptions
         self.target = target
         self.body = body
 
     def locate_symbols(self, symtable):
-        if self.exception is not None:
-            self.exception.locate_symbols(symtable)
+        for exception in self.exceptions:
+            exception.locate_symbols(symtable)
         if self.target is not None:
             self.target.locate_symbols_assignment(symtable)
         self.body.locate_symbols(symtable)

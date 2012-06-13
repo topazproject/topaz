@@ -178,7 +178,9 @@ elsif: ELSIF expr then line* statement? [LINE_END]?;
 
 else: ELSE line* statement? [LINE_END]?;
 
-rescue: RESCUE varname? (ARROW varname)? line* statement? [LINE_END]?;
+rescue: RESCUE varnames? (ARROW varname)? line* statement? [LINE_END]?;
+
+varnames: varname [COMMA] >varnames< | varname;
 
 ensure: ENSURE line* statement? [LINE_END]?;
 

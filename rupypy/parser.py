@@ -98,7 +98,7 @@ class Transformer(object):
                 ast.Block([self.visit_stmt(node.children[0])]),
                 [
                     ast.ExceptHandler(
-                        ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), "StandardError", node.getsourcepos().lineno),
+                        [ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), "StandardError", node.getsourcepos().lineno)],
                         None,
                         ast.Block([ast.Statement(self.visit_expr(node.children[2]))])
                     )
@@ -586,17 +586,20 @@ class Transformer(object):
         return body_block
 
     def visit_rescue(self, node):
-        exception = None
+        exceptions = []
         idx = 1
-        if node.children[1].symbol == "varname":
-            exception = self.visit_varname(node.children[1])
+        if node.children[1].symbol == "varnames":
+            exceptions = [
+                self.visit_varname(n)
+                for n in node.children[1].children
+            ]
             idx += 1
         target = None
         if node.children[idx].symbol == "ARROW":
             target = self.visit_varname(node.children[idx + 1])
             idx += 2
         block = self.visit_block(node, start_idx=idx)
-        return ast.ExceptHandler(exception, target, block)
+        return ast.ExceptHandler(exceptions, target, block)
 
     def visit_case(self, node):
         cond = self.visit_expr(node.children[1])
