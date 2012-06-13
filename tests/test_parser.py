@@ -996,6 +996,10 @@ HERE
             ast.Statement(ast.AugmentedAssignment("|", ast.Variable("x", 1), ast.ConstantInt(2)))
         ]))
 
+        assert ec.space.parse(ec, "x &= 2") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("&", ast.Variable("x", 1), ast.ConstantInt(2)))
+        ]))
+
     def test_block_result(self, ec):
         r = ec.space.parse(ec, """
         [].inject(0) do |s, x|

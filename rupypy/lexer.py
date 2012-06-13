@@ -528,6 +528,10 @@ class Lexer(BaseLexer):
             else:
                 self.unread()
                 self.emit("AND")
+        elif ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            self.emit("AMP_EQUAL")
         else:
             self.unread()
             self.emit("AMP")
