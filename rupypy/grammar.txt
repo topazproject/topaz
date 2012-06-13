@@ -53,8 +53,10 @@ inline_rescue: real_statement RESCUE_INLINE expr;
 
 real_statement: return_expr | expr;
 
-return_expr: RETURN exprs?;
-exprs: expr [COMMA] >exprs< | expr;
+return_expr: RETURN expr_splats?;
+
+expr_splats: expr_splat [COMMA] >expr_splats< | expr_splat;
+expr_splat: <expr> | <splat>;
 
 expr: <literal_bool>;
 
@@ -68,14 +70,12 @@ assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
                  <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL>;
 
 
-assignment: assign_lhs assignment_oper assign_rhs;
+assignment: assign_lhs assignment_oper expr_splats;
 assign_lhs: <assign_target_splat> | <assign_target>;
 assign_target_splat: send [COMMA] >assign_target_splat< |
                      splat [COMMA] >assign_target< |
                      splat;
 assign_target: send [COMMA] >assign_target< | send;
-assign_rhs: assign_value [COMMA] >assign_rhs< | assign_value;
-assign_value: <expr> | <splat>;
 
 yield: YIELD [LPAREN] args? [RPAREN] |
        YIELD args?;
@@ -185,6 +185,8 @@ ensure: ENSURE line* statement? [LINE_END]?;
 whens: when >whens< | when;
 
 when: WHEN exprs then line* statement? [LINE_END]?;
+
+exprs: expr [COMMA] >exprs< | expr;
 
 function_name: varname [DOT] method_name |
                method_name;

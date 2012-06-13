@@ -41,7 +41,7 @@ class Transformer(object):
 
     def visit_return(self, node):
         if len(node.children) == 2:
-            objs = [self.visit_expr(n) for n in node.children[1].children]
+            objs = self.visit_expr_splats(node.children[1])
             if len(objs) == 1:
                 [obj] = objs
             else:
@@ -130,7 +130,7 @@ class Transformer(object):
     def visit_assignment(self, node):
         targets = [self.visit_arg(n) for n in node.children[0].children]
         oper = node.children[1].additional_info
-        values = [self.visit_assignment_rhs(n) for n in node.children[2].children]
+        values = self.visit_expr_splats(node.children[2])
         if len(values) == 1:
             [value] = values
         else:
@@ -161,11 +161,11 @@ class Transformer(object):
                 self.error(node.children[1])
             return ast.MultiAssignment(targets, value)
 
-    def visit_assignment_rhs(self, node):
-        if node.symbol == "splat":
-            return self.visit_splat(node)
-        else:
-            return self.visit_expr(node)
+    def visit_expr_splats(self, node):
+        return [
+            self.visit_splat(n) if n.symbol == "splat" else self.visit_expr(n)
+            for n in node.children
+        ]
 
     def visit_splat(self, node):
         return ast.Splat(self.visit_arg(node.children[0]))
