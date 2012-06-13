@@ -788,6 +788,12 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], None, 3))
             ])), 2))
         ]))
+        r = ec.space.parse(ec, """
+        x.meth Mod::Const do end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Variable("x", 2), "meth", [ast.LookupConstant(ast.LookupConstant(ast.Scope(2), "Mod"), "Const")], ast.SendBlock([], None, ast.Block([])), 2))
+        ]))
 
     def test_block(self, ec):
         assert ec.space.parse(ec, "[].map { |x| x }") == ast.Main(ast.Block([
