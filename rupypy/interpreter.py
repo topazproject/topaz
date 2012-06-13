@@ -306,19 +306,18 @@ class Interpreter(object):
             frame.push(w_obj)
 
     @jit.unroll_safe
-    def UNPACK_SEQUENCE_FOR_SPLAT(self, ec, bytecode, frame, pc, n_pre, n_post):
+    def UNPACK_SEQUENCE_FOR_SPLAT(self, ec, bytecode, frame, pc, n_targets, n_pre):
         w_obj = frame.pop()
         items_w = ec.space.listview(w_obj)
         n_items = len(items_w)
+        n_post = n_targets - n_pre - 1
         n_splat = max(n_items - n_pre - n_post, 0)
         for i in xrange(n_items, n_pre + n_splat + n_post, 1):
             items_w.append(ec.space.w_nil)
 
         for i in xrange(n_pre + n_splat + n_post - 1, n_pre + n_splat - 1, -1):
             frame.push(items_w[i])
-        splat_array = []
-        for i in xrange(n_pre, n_pre + n_splat, 1):
-            splat_array.append(items_w[i])
+        splat_array = [items_w[i] for i in xrange(n_pre, n_pre + n_splat, 1)]
         frame.push(ec.space.newarray(splat_array))
         for i in xrange(n_pre - 1, -1, -1):
             frame.push(items_w[i])

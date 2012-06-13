@@ -138,15 +138,13 @@ class Transformer(object):
         if node.children[0].symbol == "assign_target_splat":
             if oper != "=":
                 self.error(node.children[1])
-            pre = []
+            n_targets_pre_splat = 0
             for t in targets:
                 if isinstance(t, ast.Splat):
                     break
                 else:
-                    pre.append(t)
-            splat = targets[len(pre)]
-            post = targets[len(pre) + 1:]
-            return ast.SplatAssignment(pre, splat, post, value)
+                    n_targets_pre_splat += 1
+            return ast.SplatAssignment(targets, value, n_targets_pre_splat)
         elif len(targets) == 1:
             [target] = targets
             target.validate_assignment(self, node)

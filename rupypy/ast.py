@@ -562,27 +562,22 @@ class MultiAssignment(Node):
             ctx.emit(consts.DISCARD_TOP)
 
 class SplatAssignment(Node):
-    def __init__(self, pre, splat, post, value):
-        self.pre = pre
-        self.splat = splat
-        self.post = post
+    def __init__(self, targets, value, n_pre):
+        self.targets = targets
         self.value = value
+        self.n_pre = n_pre
 
     def locate_symbols(self, symtable):
-        for target in self.pre:
+        for target in self.targets:
             target.locate_symbols_assignment(symtable)
-        for target in self.post:
-            target.locate_symbols_assignment(symtable)
-        self.splat.locate_symbols(symtable)
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.DUP_TOP)
         ctx.emit(consts.COERCE_ARRAY)
-        ctx.emit(consts.UNPACK_SEQUENCE_FOR_SPLAT, len(self.pre), len(self.post))
-
-        for target in self.pre:
+        ctx.emit(consts.UNPACK_SEQUENCE_FOR_SPLAT, len(self.targets), self.n_pre)
+        for target in self.targets:
             elems = target.compile_receiver(ctx)
             if elems == 1:
                 ctx.emit(consts.ROT_TWO)
@@ -591,26 +586,6 @@ class SplatAssignment(Node):
                 ctx.emit(consts.ROT_THREE)
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
-
-        elems = self.splat.compile_receiver(ctx)
-        if elems == 1:
-            ctx.emit(consts.ROT_TWO)
-        elif elems == 2:
-            ctx.emit(consts.ROT_THREE)
-            ctx.emit(consts.ROT_THREE)
-        self.splat.compile_store(ctx)
-        ctx.emit(consts.DISCARD_TOP)
-
-        for target in self.post:
-            elems = target.compile_receiver(ctx)
-            if elems == 1:
-                ctx.emit(consts.ROT_TWO)
-            elif elems == 2:
-                ctx.emit(consts.ROT_THREE)
-                ctx.emit(consts.ROT_THREE)
-            target.compile_store(ctx)
-            ctx.emit(consts.DISCARD_TOP)
-
 
 class BinOp(Node):
     def __init__(self, op, left, right, lineno):
@@ -794,6 +769,9 @@ class Splat(Node):
 
     def locate_symbols(self, symtable):
         self.value.locate_symbols(symtable)
+
+    def locate_symbols_assignment(self, symtable):
+        self.value.locate_symbols_assignment(symtable)
 
     def compile_receiver(self, ctx):
         return self.value.compile_receiver(ctx)
