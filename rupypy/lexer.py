@@ -244,7 +244,10 @@ class Lexer(BaseLexer):
                 if keyword.inline_token != keyword.normal_token:
                     self.state = self.EXPR_BEG
         else:
-            self.emit("IDENTIFIER")
+            if value[0].isupper():
+                self.emit("CONSTANT")
+            else:
+                self.emit("IDENTIFIER")
             if self.is_beg() or self.state == self.EXPR_DOT or self.is_arg():
                 self.state = self.EXPR_ARG
             elif self.state == self.EXPR_ENDFN:

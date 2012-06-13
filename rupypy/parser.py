@@ -281,7 +281,7 @@ class Transformer(object):
             if node.symbol in ["attribute", "subscript"]:
                 block_argument = None
                 if node.symbol == "attribute":
-                    method = node.children[0].children[0].additional_info
+                    method = node.children[0].additional_info
                     if len(node.children) == 1:
                         args = []
                     elif node.children[1].symbol == "block":
