@@ -483,6 +483,23 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(ec.space, w_res) == [[5], 4, None]
 
+    def test_splat_lhs_assignment(self, ec):
+        w_res = ec.space.execute(ec, """
+        a, *b, c = *[1,2]
+        return [a, b, c]
+        """)
+        assert self.unwrap(ec.space, w_res) == [1, [], 2]
+        w_res = ec.space.execute(ec, """
+        a, *b, c = 1,2,3,4
+        return [a, b, c]
+        """)
+        assert self.unwrap(ec.space, w_res) == [1, [2,3], 4]
+        w_res = ec.space.execute(ec, """
+        a, *b, c = 1
+        return [a, b, c]
+        """)
+        assert self.unwrap(ec.space, w_res) == [1, [], None]
+
     def test_minus(self, ec):
         w_res = ec.space.execute(ec, """
         def a(x)

@@ -1725,3 +1725,27 @@ class TestCompiler(object):
         LOAD_CONST 7
         RETURN
         """)
+
+    def test_splat_assignment(self, ec):
+        self.assert_compiles(ec, """
+        a, *b, c = 1, 2, 3
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_ARRAY 3
+        DUP_TOP
+        COERCE_ARRAY
+        UNPACK_SEQUENCE_SPLAT 3 1
+
+        STORE_LOCAL 0
+        DISCARD_TOP
+        STORE_LOCAL 1
+        DISCARD_TOP
+        STORE_LOCAL 2
+        DISCARD_TOP
+
+        DISCARD_TOP
+        LOAD_CONST 3
+        RETURN
+        """)
