@@ -702,15 +702,37 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_heredoc(self, ec):
-        r = ec.space.parse(ec, """
-        <<eos
-        abc
-        123
-eos
-        """)
-        assert r == ast.Main(ast.Block([
-            ast.ConstantString("abc\n123\n")
+        heredoc = lambda contents: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(contents))
         ]))
+
+        r = ec.space.parse(ec, """
+        <<HERE
+abc
+HERE
+        """)
+        assert r == heredoc("abc\n")
+
+        r = ec.space.parse(ec, """
+        <<"HERE"
+abc
+HERE
+        """)
+        assert r == heredoc("abc\n")
+
+        r = ec.space.parse(ec, """
+        <<'HERE'
+abc
+HERE
+        """)
+        assert r == heredoc("abc\n")
+
+        r = ec.space.parse(ec, """
+        <<-HERE
+        abc
+        HERE
+        """)
+        assert r == heredoc("        abc\n")
 
     def test_class(self, ec):
         r = ec.space.parse(ec, """

@@ -1,6 +1,7 @@
 import string
 
 from pypy.rlib.parsing.lexer import Token, SourcePos
+from pypy.rlib.rstring import StringBuilder
 
 
 class LexerError(Exception):
@@ -336,6 +337,33 @@ class Lexer(BaseLexer):
         self.tokens.extend(tokens)
         self.emit("REGEXP_END")
         self.state = self.EXPR_END
+
+    def here_doc(self):
+        ch = self.read()
+
+        indent = ch == "-"
+        interpolate = True
+        if indent:
+            ch = self.read()
+
+        if not (ch.isalnum() or ch == "_"):
+            self.unread()
+            if indent:
+                self.unread()
+            return False
+
+        marker = StringBuilder()
+        while True:
+            ch = self.read()
+            if ch == self.EOF or not (ch.isalnum() or ch == "_"):
+                self.unread()
+                break
+            marker.append(ch)
+
+        tokens = HeredocLexer(self, marker.build(), interpolate=True).tokenize()
+        self.tokens.extend(tokens)
+        self.state = self.EXPR_END
+        return True
 
     def dollar(self, ch):
         self.add(ch)
@@ -768,21 +796,10 @@ class Lexer(BaseLexer):
         self.state = self.EXPR_END
 
 
-class StringLexer(BaseLexer):
-    CODE = 0
-    STRING = 1
-
-    def __init__(self, lexer, begin, end, interpolate=True, qwords=False):
+class ChildLexer(BaseLexer):
+    def __init__(self, lexer):
         BaseLexer.__init__(self)
         self.lexer = lexer
-
-        self.interpolate = interpolate
-        self.qwords = qwords
-
-        self.begin = begin
-        self.end = end
-
-        self.nesting = 0
 
     def get_idx(self):
         return self.lexer.get_idx()
@@ -798,6 +815,22 @@ class StringLexer(BaseLexer):
 
     def unread(self):
         return self.lexer.unread()
+
+
+class StringLexer(ChildLexer):
+    CODE = 0
+    STRING = 1
+
+    def __init__(self, lexer, begin, end, interpolate=True, qwords=False):
+        ChildLexer.__init__(self, lexer)
+
+        self.interpolate = interpolate
+        self.qwords = qwords
+
+        self.begin = begin
+        self.end = end
+
+        self.nesting = 0
 
     def emit_str(self):
         if self.current_value:
@@ -881,3 +914,10 @@ class StringLexer(BaseLexer):
         lexer_tokens.pop()
         self.tokens.extend(lexer_tokens)
         self.emit("DSTRING_END")
+
+
+class HeredocLexer(ChildLexer):
+    def __init__(self, lexer, marker, interpolate):
+        ChildLexer.__init__(self, lexer)
+        self.marker = marker
+        self.interpolate = interpolate
