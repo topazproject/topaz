@@ -178,17 +178,15 @@ elsif: ELSIF expr then line* statement? [LINE_END]?;
 
 else: ELSE line* statement? [LINE_END]?;
 
-rescue: RESCUE varnames? (ARROW varname)? line* statement? [LINE_END]?;
+rescue: RESCUE exprs? (ARROW varname)? line* statement? [LINE_END]?;
 
-varnames: varname [COMMA] >varnames< | varname;
+exprs: expr [COMMA] >exprs< | expr;
 
 ensure: ENSURE line* statement? [LINE_END]?;
 
 whens: when >whens< | when;
 
 when: WHEN exprs then line* statement? [LINE_END]?;
-
-exprs: expr [COMMA] >exprs< | expr;
 
 function_name: varname [DOT] method_name |
                method_name;

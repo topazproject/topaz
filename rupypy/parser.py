@@ -588,11 +588,8 @@ class Transformer(object):
     def visit_rescue(self, node):
         exceptions = []
         idx = 1
-        if node.children[1].symbol == "varnames":
-            exceptions = [
-                self.visit_varname(n)
-                for n in node.children[1].children
-            ]
+        if node.children[1].symbol == "exprs":
+            exceptions = [self.visit_expr(n) for n in node.children[1].children]
             idx += 1
         target = None
         if node.children[idx].symbol == "ARROW":

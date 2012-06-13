@@ -1275,7 +1275,26 @@ HERE
             ast.Statement(ast.TryExcept(
                 ast.Block([ast.Statement(ast.ConstantInt(2))]),
                 [
-                    (ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "E1", 4), ast.LookupConstant(ast.Scope(4), "E2", 4)], None, ast.Block([]))),
+                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "E1", 4), ast.LookupConstant(ast.Scope(4), "E2", 4)], None, ast.Block([])),
+                ],
+                ast.Block([]),
+            ))
+        ]))
+
+        r = ec.space.parse(ec, """
+        begin
+        rescue Mod::Exc
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.TryExcept(
+                ast.Block([]),
+                [
+                    ast.ExceptHandler(
+                        [ast.LookupConstant(ast.LookupConstant(ast.Scope(3), "Mod", 3), "Exc", 3)],
+                        None,
+                        ast.Block([]),
+                    )
                 ],
                 ast.Block([]),
             ))
