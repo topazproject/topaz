@@ -135,7 +135,17 @@ class Transformer(object):
             [value] = values
         else:
             value = ast.Array(values)
-        if len(targets) == 1:
+        if node.children[0].symbol == "assign_target_splat":
+            if oper != "=":
+                self.error(node.children[1])
+            n_targets_pre_splat = 0
+            for t in targets:
+                if isinstance(t, ast.Splat):
+                    break
+                else:
+                    n_targets_pre_splat += 1
+            return ast.SplatAssignment(targets, value, n_targets_pre_splat)
+        elif len(targets) == 1:
             [target] = targets
             target.validate_assignment(self, node)
             if oper == "=":
