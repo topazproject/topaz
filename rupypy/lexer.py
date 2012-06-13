@@ -353,6 +353,7 @@ class Lexer(BaseLexer):
             return False
 
         marker = StringBuilder()
+        marker.append(ch)
         while True:
             ch = self.read()
             if ch == self.EOF or not (ch.isalnum() or ch == "_"):
@@ -876,7 +877,7 @@ class StringLexer(ChildLexer):
 
     def tokenize_interpolation(self):
         self.emit("DSTRING_START")
-        chars = []
+        chars = StringBuilder()
         context = [self.CODE]
         braces_count = [1]
         while True:
@@ -909,7 +910,7 @@ class StringLexer(ChildLexer):
                 context.append(self.CODE)
             else:
                 chars.append(ch)
-        lexer_tokens = Lexer("".join(chars)).tokenize()
+        lexer_tokens = Lexer(chars.build()).tokenize()
         # Remove the EOF
         lexer_tokens.pop()
         self.tokens.extend(lexer_tokens)
@@ -921,3 +922,40 @@ class HeredocLexer(ChildLexer):
         ChildLexer.__init__(self, lexer)
         self.marker = marker
         self.interpolate = interpolate
+
+    def tokenize(self):
+        chars = StringBuilder()
+        while True:
+            ch = self.read()
+            if ch == "\n":
+                break
+            elif ch == self.EOF:
+                return self.tokens
+            chars.append(ch)
+        if chars.getlength():
+            lexer_tokens = Lexer(chars.build()).tokenize()
+            lexer_tokens.pop()
+            self.tokens.extend(lexer_tokens)
+
+        self.emit("STRING_BEGIN")
+        while True:
+            ch = self.read()
+            if ch == "\n":
+                self.add(ch)
+                chars = StringBuilder(len(self.marker))
+                for c in self.marker:
+                    ch = self.read()
+                    chars.append(ch)
+                    if ch != c:
+                        for c in chars.build():
+                            self.add(c)
+                        break
+                else:
+                    self.emit("STRING_VALUE")
+                    break
+            elif ch == self.EOF:
+                return self.tokens
+            else:
+                self.add(ch)
+        self.emit("STRING_END")
+        return self.tokens
