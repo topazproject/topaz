@@ -934,6 +934,7 @@ HERE
             ast.Statement(ast.ConstantSymbol(s))
         ]))
         assert ec.space.parse(ec, ":abc") == sym("abc")
+        assert ec.space.parse(ec, ":'abc'") == sym("abc")
         assert ec.space.parse(ec, ":abc_abc") == sym("abc_abc")
         assert ec.space.parse(ec, ":@abc") == sym("@abc")
         assert ec.space.parse(ec, ":@@abc") == sym("@@abc")

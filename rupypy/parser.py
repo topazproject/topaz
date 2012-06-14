@@ -678,6 +678,8 @@ class Transformer(object):
         node = node.children[0]
         if node.symbol == "varname":
             return ast.ConstantSymbol(node.children[0].additional_info)
+        elif node.symbol == "SSTRING":
+            return ast.ConstantSymbol(node.additional_info)
         else:
             return ast.Symbol(self.visit_dstring(node), node.getsourcepos().lineno)
 

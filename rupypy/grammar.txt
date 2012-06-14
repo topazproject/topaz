@@ -229,7 +229,7 @@ literal: NUMBER | symbol | SSTRING | qwords | regexp | shellout | string;
 
 symbol: [SYMBOL_BEGIN] symbol_contents;
 
-symbol_contents: <varname> | <string>;
+symbol_contents: <varname> | <SSTRING> | <string>;
 
 qwords: [QWORDS_BEGIN] strings [QWORDS_END];
 
