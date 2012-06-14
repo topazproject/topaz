@@ -1723,6 +1723,17 @@ HERE
             ]), ast.Block([ast.Statement(ast.Variable("nil", -1))])
             ))
         ]))
+        r = ec.space.parse(ec, """
+        case
+        when 4
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(4), ast.Block([
+                ast.Statement(ast.Variable("nil", -1))
+            ]), ast.Block([ast.Statement(ast.Variable("nil", -1))])
+            ))
+        ]))
 
     def test_and_regexp(self, ec):
         assert ec.space.parse(ec, "3 && /a/") == ast.Main(ast.Block([

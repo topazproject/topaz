@@ -628,7 +628,10 @@ class Transformer(object):
             cond = self.visit_expr(exprs.children[0])
             for expr in exprs.children[1:]:
                 cond = ast.Or(cond, self.visit_expr(expr))
-            body = self.visit_block(when.children[3])
+            if len(when.children) == 4:
+                body = self.visit_block(when.children[3])
+            else:
+                body = ast.Block([])
             conditions.append((cond, body))
 
         if node.children[2].symbol == "else":
