@@ -803,6 +803,12 @@ class Lexer(BaseLexer):
             self.set_expression_state()
             self.emit("MODULO")
 
+    def quote_string(self, begin, end, interpolate):
+        self.emit("QUOTE_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=interpolate).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("QUOTE_END")
+
     def quote(self, ch):
         if not ch.isalnum():
             begin = ch
@@ -824,11 +830,9 @@ class Lexer(BaseLexer):
             end = begin
 
         if ch == "Q":
-            tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
-            self.tokens.extend(tokens)
+            self.quote_string(begin, end, True)
         elif ch == "q":
-            tokens = StringLexer(self, begin, end, interpolate=False).tokenize()
-            self.tokens.extend(tokens)
+            self.quote_string(begin, end, False)
         elif ch == "x":
             self.shellout(begin, end)
         elif ch == "w":

@@ -1783,3 +1783,23 @@ HERE
         assert ec.space.parse(ec, '%x(ls)') == shellout(ast.ConstantString("ls"))
         assert ec.space.parse(ec, "`#{2}`") == shellout(ast.ConstantInt(2))
         assert ec.space.parse(ec, "%x(#{2})") == shellout(ast.ConstantInt(2))
+
+    def test_strings(self, ec):
+        cstr = lambda c: ast.ConstantString(c)
+        dstr = lambda *c: ast.DynamicString(list(c))
+        strs = lambda *components: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString(list(components)))
+        ]))
+        assert ec.space.parse(ec, "'a' 'b' 'c'") == strs(cstr('a'), cstr('b'), cstr('c'))
+        assert ec.space.parse(ec, "'a' \"b\"") == strs(cstr('a'), dstr(cstr('b')))
+        assert ec.space.parse(ec, '"a" "b"') == strs(dstr(cstr('a')), dstr(cstr('b')))
+        assert ec.space.parse(ec, '"a" \'b\'') == strs(dstr(cstr('a')), cstr('b'))
+        assert ec.space.parse(ec, """
+        'a' \\
+        'b'
+        """) == strs(cstr('a'), cstr('b'))
+        assert ec.space.parse(ec, "%{a} 'b'") == strs(dstr(cstr('a')), cstr('b'))
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, "%{a} %{b}")
+            ec.space.parse(ec, "%{a} 'b' %{b}")
+            ec.space.parse(ec, "'b' %{b}")

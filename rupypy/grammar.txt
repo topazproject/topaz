@@ -225,7 +225,7 @@ assoc: contained_expr ARROW contained_expr;
 
 varname: IDENTIFIER | CONSTANT | CLASS_VAR | INSTANCE_VAR | GLOBAL;
 
-literal: NUMBER | symbol | SSTRING | qwords | regexp | shellout | string;
+literal: NUMBER | symbol | qwords | regexp | shellout | strings | quote;
 
 symbol: [SYMBOL_BEGIN] symbol_contents;
 
@@ -237,7 +237,10 @@ regexp: [REGEXP_BEGIN] string [REGEXP_END];
 
 shellout: [SHELL_BEGIN] string [SHELL_END];
 
-strings: string >strings< | string;
+quote: [QUOTE_BEGIN] string [QUOTE_END];
+
+strings: quote >real_strings< | <real_strings>;
+real_strings: string >real_strings< | SSTRING >real_strings< | string | SSTRING;
 
 string: [STRING_BEGIN] string_contents* [STRING_END];
 
