@@ -1,5 +1,6 @@
 from rupypy import consts
 from rupypy.objects.boolobject import W_TrueObject
+from rupypy.objects.objectobject import W_BaseObject
 
 
 class TestCompiler(object):
@@ -1044,6 +1045,15 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+        bc = self.assert_compiles(ec, "::Constant", """
+        LOAD_CONST 0
+        LOAD_CONSTANT 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        assert bc.consts_w[0] is ec.space.getclassfor(W_BaseObject)
 
     def test_assign_constant(self, ec):
         self.assert_compiles(ec, "abc::Constant = 5; abc::Constant += 1", """
@@ -1124,18 +1134,19 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 42
+        JUMP 45
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 41
+        JUMP_IF_TRUE 29
+        JUMP 44
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_CONST 4
         COPY_STRING
         SEND 5 1
-        JUMP 46
+        JUMP 49
         END_FINALLY
         LOAD_CONST 6
         DISCARD_TOP
@@ -1156,18 +1167,19 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 44
+        JUMP 47
         LOAD_SCOPE
         LOAD_CONSTANT 3
         COMPARE_EXC
-        JUMP_IF_FALSE 43
+        JUMP_IF_TRUE 29
+        JUMP 46
         STORE_LOCAL 0
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_LOCAL 0
         SEND 4 1
-        JUMP 48
+        JUMP 51
         END_FINALLY
         LOAD_CONST 5
         DISCARD_TOP
@@ -1723,5 +1735,29 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 7
+        RETURN
+        """)
+
+    def test_splat_assignment(self, ec):
+        self.assert_compiles(ec, """
+        a, *b, c = 1, 2, 3
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_ARRAY 3
+        DUP_TOP
+        COERCE_ARRAY
+        UNPACK_SEQUENCE_SPLAT 3 1
+
+        STORE_LOCAL 0
+        DISCARD_TOP
+        STORE_LOCAL 1
+        DISCARD_TOP
+        STORE_LOCAL 2
+        DISCARD_TOP
+
+        DISCARD_TOP
+        LOAD_CONST 3
         RETURN
         """)

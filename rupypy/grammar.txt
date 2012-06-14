@@ -53,8 +53,10 @@ inline_rescue: real_statement RESCUE_INLINE expr;
 
 real_statement: return_expr | expr;
 
-return_expr: RETURN exprs?;
-exprs: expr [COMMA] >exprs< | expr;
+return_expr: RETURN expr_splats?;
+
+expr_splats: expr_splat [COMMA] >expr_splats< | expr_splat;
+expr_splat: <expr> | <splat>;
 
 expr: <literal_bool>;
 
@@ -65,11 +67,15 @@ contained_expr: literal_not | assignment | yield | arg;
 literal_not: NOT_LITERAL contained_expr;
 
 assignment_oper: <EQ> | <PLUS_EQUAL> | <MINUS_EQUAL> | <MUL_EQUAL> |
-                 <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL>;
-assignment: assign_target assignment_oper assign_rhs;
+                 <DIV_EQUAL> | <MODULO_EQUAL> | <OR_EQUAL> | <AND_EQUAL> |
+                 <PIPE_EQUAL> | <AMP_EQUAL>;
+
+assignment: assign_lhs assignment_oper expr_splats;
+assign_lhs: <assign_target_splat> | <assign_target>;
+assign_target_splat: send [COMMA] >assign_target_splat< |
+                     splat [COMMA] >assign_target< |
+                     splat;
 assign_target: send [COMMA] >assign_target< | send;
-assign_rhs: assign_value [COMMA] >assign_rhs< | assign_value;
-assign_value: <expr> | <splat>;
 
 yield: YIELD [LPAREN] args? [RPAREN] |
        YIELD args?;
@@ -115,22 +121,25 @@ real_send: primary trailers |
            ambigious_binop |
            global_send;
 
-global_send: IDENTIFIER block |
-             global_paren_send |
-             IDENTIFIER send_args;
+global_method_name: <IDENTIFIER> | <CONSTANT>;
 
-global_paren_send: IDENTIFIER [LPAREN] send_args? [RPAREN] block?;
+global_send: global_method_name block |
+             global_paren_send |
+             global_method_name send_args;
+
+global_paren_send: global_method_name [LPAREN] send_args? [RPAREN] block?;
 
 block: [LBRACE] block_args? line* statement? [LINE_END]? [RBRACE];
 
 trailers: trailer >trailers< | trailer;
 
 trailer: subscript | attribute | constant;
-attribute: [DOT] operation [LPAREN] send_args? [RPAREN] block? |
-           [DOT] operation block |
-           [DOT] operation send_args?;
+attribute_lookup: DOT | COLONCOLON;
+attribute: [attribute_lookup] IDENTIFIER [LPAREN] send_args? [RPAREN] block? |
+           [attribute_lookup] IDENTIFIER block |
+           [attribute_lookup] IDENTIFIER send_args?;
 subscript: LSUBSCRIPT args? [RBRACKET];
-constant: COLONCOLON IDENTIFIER;
+constant: COLONCOLON CONSTANT;
 
 ambigious_binop: IDENTIFIER UNARY_MINUS arg;
 
@@ -143,10 +152,11 @@ primary: LPAREN expr RPAREN |
          UNTIL expr do line* statement? [LINE_END]? END |
          DEF function_name argdecl line* statement? [LINE_END]? rescue* ensure? [END] |
          CLASS LSHIFT arg [LINE_END] line* statement? [LINE_END]? END |
-         CLASS IDENTIFIER (LT arg)? [LINE_END] line* statement? [LINE_END]? END |
-         MODULE IDENTIFIER line* statement? [LINE_END]? END |
+         CLASS CONSTANT (LT arg)? [LINE_END] line* statement? [LINE_END]? END |
+         MODULE CONSTANT line* statement? [LINE_END]? END |
          BEGIN line* statement? [LINE_END]? rescue* else? ensure? END |
          CASE expr [LINE_END] whens else? END |
+         UNBOUND_COLONCOLON CONSTANT |
          varname |
          literal;
 
@@ -172,7 +182,9 @@ elsif: ELSIF expr then line* statement? [LINE_END]?;
 
 else: ELSE line* statement? [LINE_END]?;
 
-rescue: RESCUE varname? (ARROW varname)? line* statement? [LINE_END]?;
+rescue: RESCUE exprs? (ARROW varname)? line* statement? [LINE_END]?;
+
+exprs: expr [COMMA] >exprs< | expr;
 
 ensure: ENSURE line* statement? [LINE_END]?;
 
@@ -196,8 +208,6 @@ argdef: IDENTIFIER [EQ] arg |
         AMP IDENTIFIER |
         IDENTIFIER;
 
-operation: IDENTIFIER;
-
 send_args: args ([COMMA] block_arg)? |
            block_arg;
 
@@ -213,13 +223,13 @@ assocs: assoc [COMMA] >assocs< | assoc;
 
 assoc: contained_expr ARROW contained_expr;
 
-varname: IDENTIFIER | CLASS_VAR | INSTANCE_VAR | GLOBAL;
+varname: IDENTIFIER | CONSTANT | CLASS_VAR | INSTANCE_VAR | GLOBAL;
 
-literal: NUMBER | symbol | SSTRING | qwords | regexp | shellout | string;
+literal: NUMBER | symbol | qwords | regexp | shellout | strings | quote;
 
 symbol: [SYMBOL_BEGIN] symbol_contents;
 
-symbol_contents: <varname> | <string>;
+symbol_contents: <varname> | <SSTRING> | <string>;
 
 qwords: [QWORDS_BEGIN] strings [QWORDS_END];
 
@@ -227,7 +237,10 @@ regexp: [REGEXP_BEGIN] string [REGEXP_END];
 
 shellout: [SHELL_BEGIN] string [SHELL_END];
 
-strings: string >strings< | string;
+quote: [QUOTE_BEGIN] string [QUOTE_END];
+
+strings: quote >real_strings< | <real_strings>;
+real_strings: string >real_strings< | SSTRING >real_strings< | string | SSTRING;
 
 string: [STRING_BEGIN] string_contents* [STRING_END];
 
