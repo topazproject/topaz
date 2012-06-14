@@ -888,10 +888,10 @@ HERE
             ])), 2))
         ]))
         r = ec.space.parse(ec, """
-        x.meth Mod::Const do end
+        x.meth y.meth do end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "meth", [ast.LookupConstant(ast.LookupConstant(ast.Scope(2), "Mod"), "Const")], ast.SendBlock([], None, ast.Block([])), 2))
+            ast.Statement(ast.Send(ast.Variable("x", 2), "meth", [ast.Send(ast.Variable("y", 2), "method", [], None, 2)], ast.SendBlock([], None, ast.Block([])), 2))
         ]))
 
     def test_block(self, ec):
