@@ -1802,3 +1802,4 @@ HERE
         with self.raises("SyntaxError"):
             ec.space.parse(ec, "%{a} %{b}")
             ec.space.parse(ec, "%{a} 'b' %{b}")
+            ec.space.parse(ec, "'b' %{b}")

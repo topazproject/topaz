@@ -239,7 +239,7 @@ shellout: [SHELL_BEGIN] string [SHELL_END];
 
 quote: [QUOTE_BEGIN] string [QUOTE_END];
 
-strings: string >strings< | SSTRING >strings< | quote >real_strings< | <real_strings>;
+strings: quote >real_strings< | <real_strings>;
 real_strings: string >real_strings< | SSTRING >real_strings< | string | SSTRING;
 
 string: [STRING_BEGIN] string_contents* [STRING_END];
