@@ -419,16 +419,16 @@ class Transformer(object):
             return self.visit_number(node.children[0])
         elif symname == "symbol":
             return self.visit_symbol(node.children[0])
-        elif symname == "SSTRING":
-            return self.visit_sstring(node.children[0])
-        elif symname == "string":
-            return self.visit_dstring(node.children[0])
+        elif symname == "strings" or symname == "real_strings":
+            return self.visit_strings(node.children[0])
         elif symname == "regexp":
             return self.visit_regexp(node.children[0])
         elif symname == "shellout":
             return self.visit_shellout(node.children[0])
         elif symname == "qwords":
             return self.visit_qwords(node.children[0])
+        elif symname == "quote":
+            return self.visit_quote(node.children[0])
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
@@ -683,6 +683,25 @@ class Transformer(object):
         else:
             return ast.Symbol(self.visit_dstring(node), node.getsourcepos().lineno)
 
+    def visit_strings(self, node):
+        if len(node.children) == 1:
+            if node.children[0].symbol == "SSTRING":
+                return self.visit_sstring(node.children[0])
+            elif node.children[0].symbol == "string":
+                return self.visit_dstring(node.children[0])
+            else:
+                self.error(node.children[0])
+        else:
+            components = []
+            for n in node.children:
+                if n.symbol == "SSTRING":
+                    components.append(self.visit_sstring(n))
+                elif n.symbol == "string":
+                    components.append(self.visit_dstring(n))
+                elif n.symbol == "quote":
+                    components.append(self.visit_quote(n))
+            return ast.DynamicString(components)
+
     def visit_sstring(self, node):
         return ast.ConstantString(node.additional_info)
 
@@ -699,6 +718,9 @@ class Transformer(object):
             return ast.DynamicString(components)
         else:
             return ast.ConstantString("")
+
+    def visit_quote(self, node):
+        return self.visit_dstring(node.children[0])
 
     def visit_regexp(self, node):
         if node.children[0].children[0].symbol == "STRING_VALUE":
