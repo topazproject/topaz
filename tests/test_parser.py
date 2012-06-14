@@ -1494,6 +1494,7 @@ HERE
         dyn_re = lambda re: ast.Main(ast.Block([
             ast.Statement(ast.DynamicRegexp(re))
         ]))
+        assert ec.space.parse(ec, "//") == re("")
         assert ec.space.parse(ec, r"/a/") == re("a")
         assert ec.space.parse(ec, r"/\w/") == re(r"\w")
         assert ec.space.parse(ec, '%r{2}') == re("2")

@@ -723,7 +723,9 @@ class Transformer(object):
         return self.visit_dstring(node.children[0])
 
     def visit_regexp(self, node):
-        if node.children[0].children[0].symbol == "STRING_VALUE":
+        if len(node.children[0].children) == 0:
+            return ast.ConstantRegexp("")
+        elif node.children[0].children[0].symbol == "STRING_VALUE":
             return ast.ConstantRegexp(node.children[0].children[0].additional_info)
         else:
             return ast.DynamicRegexp(self.visit_dstring(node.children[0]))
