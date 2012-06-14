@@ -109,6 +109,7 @@ class Lexer(BaseLexer):
                 self.lineno += 1
                 self.columno = 1
                 self.state = self.EXPR_BEG
+                continue
             elif ch == "*":
                 self.star(ch, space_seen)
             elif ch == "!":
@@ -181,6 +182,14 @@ class Lexer(BaseLexer):
                 self.add(ch)
                 self.emit("LBRACE")
                 self.state = self.EXPR_BEG
+            elif ch == "\\":
+                ch2 = self.read()
+                if ch2 == "\n":
+                    self.lineno += 1
+                    self.columno = 1
+                    space_seen = True
+                    continue
+                raise NotImplementedError
             elif ch == "%":
                 self.percent(ch, space_seen)
             elif ch == "$":

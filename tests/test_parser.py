@@ -1746,6 +1746,14 @@ HERE
             ast.Statement(ast.ConstantInt(1))
         ]))
 
+        r = ec.space.parse(ec, """
+        f()\\
+            .m()
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "f", [], None, 2), "m", [], None, 3))
+        ]))
+
     def test_or_equal(self, ec):
         r = ec.space.parse(ec, "@a ||= 5")
         assert r == ast.Main(ast.Block([
