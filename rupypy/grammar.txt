@@ -51,9 +51,11 @@ inline_while: real_statement WHILE_INLINE expr;
 
 inline_rescue: real_statement RESCUE_INLINE expr;
 
-real_statement: return_expr | expr;
+real_statement: return_expr | alias | expr;
 
 return_expr: RETURN expr_splats?;
+
+alias: ALIAS IDENTIFIER IDENTIFIER;
 
 expr_splats: expr_splat [COMMA] >expr_splats< | expr_splat;
 expr_splat: <expr> | <splat>;

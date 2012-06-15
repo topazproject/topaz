@@ -6,11 +6,10 @@ import sys
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.streamio import open_file_as_stream
 
-from rupypy.error import RubyError
+from rupypy.error import RubyError, format_traceback
 from rupypy.executioncontext import ExecutionContext
 from rupypy.objects.objectobject import W_Object
 from rupypy.objspace import ObjectSpace
-from rupypy.utils import format_traceback
 
 
 @specialize.memo()

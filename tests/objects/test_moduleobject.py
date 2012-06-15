@@ -19,3 +19,16 @@ class TestModuleObject(BaseRuPyPyTest):
         return [Mod.f, X.new.meth]
         """)
         assert self.unwrap(ec.space, w_res) == [3, 5]
+
+    def test_alias_method(self, ec):
+        w_res = ec.space.execute(ec, """
+        class X
+            def f
+                3
+            end
+            alias_method :g, :f
+        end
+
+        return X.new.g
+        """)
+        assert self.unwrap(ec.space, w_res) == 3

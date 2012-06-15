@@ -64,13 +64,12 @@ class Block(Node):
 
 
 class BaseStatement(Node):
-    pass
+    dont_pop = False
 
 
 class Statement(BaseStatement):
     def __init__(self, expr):
         self.expr = expr
-        self.dont_pop = False
 
     def locate_symbols(self, symtable):
         self.expr.locate_symbols(symtable)
@@ -475,6 +474,28 @@ class Yield(Node):
             arg.compile(ctx)
         ctx.current_lineno = self.lineno
         ctx.emit(consts.YIELD, len(self.args))
+
+
+class Alias(BaseStatement):
+    def __init__(self, new_name, old_name, lineno):
+        BaseStatement.__init__(self, lineno)
+        self.new_name = new_name
+        self.old_name = old_name
+
+    def locate_symbols(self, symtable):
+        self.new_name.locate_symbols(symtable)
+        self.old_name.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        Send(
+            Scope(self.lineno),
+            "alias_method",
+            [self.new_name, self.old_name],
+            None,
+            self.lineno,
+        ).compile(ctx)
+        if not self.dont_pop:
+            ctx.emit(consts.DISCARD_TOP)
 
 
 class Assignment(Node):
