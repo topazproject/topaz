@@ -401,7 +401,7 @@ class Lexer(BaseLexer):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\":
+        if ch in "$>:?\\!\"":
             self.add(ch)
             self.emit("GLOBAL")
         else:
