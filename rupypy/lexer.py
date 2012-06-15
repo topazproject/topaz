@@ -80,6 +80,8 @@ class BaseLexer(object):
         self.clear()
         self.tokens.append(Token(token, value, self.current_pos()))
 
+    def error(self):
+        raise LexerError(self.current_pos())
 
 class Lexer(BaseLexer):
     def __init__(self, source):
