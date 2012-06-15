@@ -4,7 +4,7 @@ from pypy.rlib.parsing.parsing import ParseError
 
 from rupypy import ast
 from rupypy.lexer import Lexer
-from rupypy.utils import make_parse_function
+from rupypy.utils.parsing import make_parse_function
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:

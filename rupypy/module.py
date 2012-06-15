@@ -1,6 +1,6 @@
 from rupypy.executioncontext import ExecutionContext
 from rupypy.gateway import WrapperGenerator
-from rupypy.utils import Cache
+from rupypy.utils.cache import Cache
 
 
 class ClassDef(object):
