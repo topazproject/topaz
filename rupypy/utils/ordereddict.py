@@ -95,11 +95,15 @@ class OrderedDictRepr(Repr):
             ("next", lltype.Signed),
         )
 
+        dict_methods = {
+            "hashkey": lltype.staticAdtMethod(self.key_repr.get_ll_hash_function())
+        }
         DICT = lltype.GcStruct("ORDEREDDICT",
             ("num_items", lltype.Signed),
             ("resize_counter", lltype.Signed),
             ("first_entry", lltype.Signed),
-            ("entries", lltype.Ptr(lltype.GcArray(DICTENTRY)))
+            ("entries", lltype.Ptr(lltype.GcArray(DICTENTRY))),
+            adtmeths=dict_methods
         )
         return lltype.Ptr(DICT)
 
@@ -107,6 +111,14 @@ class OrderedDictRepr(Repr):
         hop.exception_cannot_occur()
         c_TP = hop.inputconst(lltype.Void, self.lowleveltype.TO)
         return hop.gendirectcall(LLOrderedDict.ll_newdict, c_TP)
+
+
+class __extend__(pairtype(OrderedDictRepr, Repr)):
+    def rtype_setitem((self, r_key), hop):
+        v_dict, v_key, v_value = hop.inputargs(
+            self, self.key_repr, self.value_repr
+        )
+        hop.gendirectcall(LLOrderedDict.ll_setitem, v_dict, v_key, v_value)
 
 
 class LLOrderedDict(object):
@@ -120,3 +132,9 @@ class LLOrderedDict(object):
         d.first_entry = -1
         d.resize_counter = cls.INIT_SIZE * 2
         return d
+
+    @classmethod
+    def ll_setitem(cls, d, key, value):
+        hash = d.hashkey(key)
+        i = cls.ll_lookup(d, key, hash)
+        cls.ll_setitem_lookup_done(d, key, value, hash, i)
