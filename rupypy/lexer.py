@@ -727,8 +727,7 @@ class Lexer(BaseLexer):
                 if c == "\\":
                     c = self.read_escape()
                 return chr(ord(c) & 0x9f)
-        else:
-            return c
+        return c
 
     def colon(self, ch, space_seen):
         ch2 = self.read()
@@ -782,8 +781,13 @@ class Lexer(BaseLexer):
         self.emit("QWORDS_BEGIN")
         tokens = StringLexer(self, begin, end, interpolate=interpolate, qwords=True).tokenize()
         # drop empty last string
-        if tokens[-2].name == "STRING_BEGIN":
-            tokens = tokens[:-2]
+        n_tokens = len(tokens)
+        if n_tokens > 2:
+            if tokens[n_tokens - 2].name == "STRING_BEGIN":
+                tokens.pop()
+                tokens.pop()
+        else:
+            tokens = []
         self.tokens.extend(tokens)
         self.emit("QWORDS_END")
         self.state = self.EXPR_END
