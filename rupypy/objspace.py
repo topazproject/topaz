@@ -13,6 +13,7 @@ from rupypy.frame import Frame
 from rupypy.globals import Globals
 from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError
+from rupypy.lib.dir import W_Dir
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, ModuleCache
 from rupypy.modules.comparable import Comparable
@@ -62,6 +63,7 @@ class ObjectSpace(object):
         for cls in [
             W_Object, W_ArrayObject, W_FileObject, W_ExceptionObject,
             W_NoMethodError, W_ZeroDivisionError, W_SyntaxError, W_Random,
+            W_Dir
         ]:
             self.add_class(cls)
 
