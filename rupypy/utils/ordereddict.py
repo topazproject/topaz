@@ -2,6 +2,7 @@ from collections import OrderedDict as PyOrderedDict
 
 from pypy.annotation import model
 from pypy.annotation.bookkeeper import getbookkeeper
+from pypy.rlib.rarithmetic import r_uint, intmask, LONG_BIT
 from pypy.rpython.extregistry import ExtRegistryEntry
 from pypy.rpython.lltypesystem import lltype
 from pypy.rpython.rmodel import Repr
@@ -67,7 +68,7 @@ class SomeOrderedDict(model.SomeObject):
     def read_value(self):
         position_key = self.bookkeeper.position_key
         self.read_locations.add(position_key)
-        return self.key_type
+        return self.value_type
 
 
 class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
@@ -89,23 +90,35 @@ class OrderedDictRepr(Repr):
         self.lowleveltype = self.create_lowlevel_type()
 
     def create_lowlevel_type(self):
+        entry_methods = {
+            "valid": LLOrderedDict.ll_valid_from_flag,
+            "everused": LLOrderedDict.ll_everused_from_flag,
+        }
         DICTENTRY = lltype.Struct("ORDEREDDICTENTRY",
             ("key", self.key_repr.lowleveltype),
             ("value", self.value_repr.lowleveltype),
             ("next", lltype.Signed),
+            ("everused", lltype.Bool),
+            ("valid", lltype.Bool),
         )
 
+        ll_keyeq = self.key_repr.get_ll_eq_function()
+        if ll_keyeq is not None:
+            ll_keyeq = lltype.staticAdtMethod(ll_keyeq)
         dict_methods = {
-            "hashkey": lltype.staticAdtMethod(self.key_repr.get_ll_hash_function())
+            "hashkey": lltype.staticAdtMethod(self.key_repr.get_ll_hash_function()),
+            "keyeq": ll_keyeq,
         }
         DICT = lltype.GcStruct("ORDEREDDICT",
             ("num_items", lltype.Signed),
             ("resize_counter", lltype.Signed),
             ("first_entry", lltype.Signed),
-            ("entries", lltype.Ptr(lltype.GcArray(DICTENTRY))),
+            ("last_entry", lltype.Signed),
+            ("entries", lltype.Ptr(lltype.GcArray(DICTENTRY, adtmeths=entry_methods))),
             adtmeths=dict_methods
         )
         return lltype.Ptr(DICT)
+
 
     def rtyper_new(self, hop):
         hop.exception_cannot_occur()
@@ -120,21 +133,121 @@ class __extend__(pairtype(OrderedDictRepr, Repr)):
         )
         hop.gendirectcall(LLOrderedDict.ll_setitem, v_dict, v_key, v_value)
 
+    def rtype_getitem((self, r_key), hop):
+        v_dict, v_key = hop.inputargs(self, self.key_repr)
+        hop.exception_is_here()
+        return hop.gendirectcall(LLOrderedDict.ll_getitem, v_dict, v_key)
+
 
 class LLOrderedDict(object):
     INIT_SIZE = 8
+    HIGHEST_BIT = intmask(1 << (LONG_BIT - 1))
+    MASK = intmask(HIGHEST_BIT - 1)
+    PERTURB_SHIFT = 5
 
-    @classmethod
-    def ll_newdict(cls, DICT):
+    @staticmethod
+    def ll_valid_from_flag(entries, i):
+        return entries[i].valid
+
+    @staticmethod
+    def ll_everused_from_flag(entries, i):
+        return entries[i].everused
+
+    @staticmethod
+    def ll_newdict(DICT):
         d = lltype.malloc(DICT)
-        d.entries = lltype.malloc(DICT.entries.TO, cls.INIT_SIZE, zero=True)
+        d.entries = lltype.malloc(DICT.entries.TO, LLOrderedDict.INIT_SIZE, zero=True)
         d.num_items = 0
         d.first_entry = -1
-        d.resize_counter = cls.INIT_SIZE * 2
+        d.last_entry = -1
+        d.resize_counter = LLOrderedDict.INIT_SIZE * 2
         return d
 
-    @classmethod
-    def ll_setitem(cls, d, key, value):
+    @staticmethod
+    def ll_lookup(d, key, hash):
+        entries = d.entries
+        ENTRIES = lltype.typeOf(entries).TO
+        mask = len(entries) - 1
+        i = hash & mask
+        if entries.valid(i):
+            checkingkey = entries[i].key
+            if checkingkey == key:
+                return i
+            if d.keyeq is not None and entries.hash(i) == hash:
+                found = d.keyeq(checkingkey, key)
+                if d.paranoia:
+                    if (entries != d.entries or
+                        not entries.valid(i) or entries[i] != checkingkey):
+                        return LLOrderedDict.ll_lookup(d, key, hash)
+                if found:
+                    return i
+            freeslot = -1
+        elif entries.everused(i):
+            freeslot = i
+        else:
+            return i | LLOrderedDict.HIGHEST_BIT
+
+        perturb = r_uint(hash)
+        while True:
+            i = r_uint(i)
+            i = (i << 2) + i + perturb + 1
+            i = intmask(i) & mask
+            if not entries.everused(i):
+                if freeslot == -1:
+                    freeslot = i
+                return freeslot | LLOrderedDict.HIGHEST_BIT
+            elif entries.valid(i):
+                checkingkey = entries[i].key
+                if checkingkey == key:
+                    return i
+                if d.keyeq is not None and entries.hash(i) == hash:
+                    found = d.keyeq(checkingkey, key)
+                    if d.paranoia:
+                        if (entries != d.entries or
+                            not entries.valid(i) or entries[i].key != checkingkey):
+                            return LLOrderedDict.ll_lookup(d, key, hash)
+                    if found:
+                        return i
+            elif freeslot == -1:
+                freeslot = i
+            perturb >>= LLOrderedDict.PERTURB_SHIFT
+
+    @staticmethod
+    def ll_setitem(d, key, value):
         hash = d.hashkey(key)
-        i = cls.ll_lookup(d, key, hash)
-        cls.ll_setitem_lookup_done(d, key, value, hash, i)
+        i = LLOrderedDict.ll_lookup(d, key, hash)
+        LLOrderedDict.ll_setitem_lookup_done(d, key, value, hash, i)
+
+    @staticmethod
+    def ll_setitem_lookup_done(d, key, value, hash, i):
+        valid = (i & LLOrderedDict.HIGHEST_BIT) == 0
+        i &= LLOrderedDict.MASK
+        everused = d.entries.everused(i)
+        ENTRY = lltype.typeOf(d.entries).TO.OF
+        entry = d.entries[i]
+        entry.value = value
+        if valid:
+            return
+        entry.key = key
+        if hasattr(ENTRY, "valid"):
+            entry.valid = True
+        d.num_items += 1
+        if not everused:
+            if hasattr(ENTRY, "everused"):
+                entry.everused = True
+            if d.first_entry == -1:
+                d.first_entry = i
+            else:
+                d.entries[d.last_entry].next = i
+            d.last_entry = i
+            d.resize_counter -= 3
+            if d.resize_counter <= 0:
+                raise NotImplementedError("shrink")
+
+    @staticmethod
+    def ll_getitem(d, key):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        if not i & LLOrderedDict.HIGHEST_BIT:
+            return d.entries[i].value
+        else:
+            raise KeyError
