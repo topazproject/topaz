@@ -37,4 +37,15 @@ class TestSymbolObject(BaseRuPyPyTest):
 
     def test_class_function(self, ec):
         w_res = ec.space.execute(ec, "return Symbol.all_symbols")
+        symbols = self.unwrap(ec.space, w_res)
+        length = len(symbols)
+        assert length > 0
+        
+        w_res = ec.space.execute(ec, "return :abc.class.all_symbols")
+        symbols = self.unwrap(ec.space, w_res)
+        assert length < len(symbols)
+        assert symbols.count('abc') == 1
+
+    def test_object_id(self, ec):
+        w_res = ec.space.execute(ec, "return :abc.object_id")
         assert ec.space.int_w(w_res) > 0
