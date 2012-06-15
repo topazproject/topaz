@@ -2,7 +2,7 @@
 # unfortunately you need to inline this anywhere you want it because ebnf parse
 # doesn't support epsilon productions.
 
-main: line* statement? [LINE_END]? [EOF];
+main: RAW_DATA? line* statement? [LINE_END]? [EOF];
 
 # XXX: LINE_END includes ';' which isn't valid for here, split LINE_END into
 # two tokens and then have a non-terminal here for their union.

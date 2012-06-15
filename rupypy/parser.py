@@ -63,6 +63,10 @@ class Transformer(object):
         stmts = []
 
         assert end_idx >= 0
+        if len(node.children) > 0 and node.children[0].symbol == "RAW_DATA":
+            assert start_idx == 0
+            stmts.append(self.visit_raw_data(node.children[0]))
+            start_idx = 1
         for node in node.children[start_idx:end_idx]:
             if node.symbol == "line":
                 if not node.children:
@@ -838,3 +842,29 @@ class Transformer(object):
         else:
             items = []
         return ast.Array(items)
+
+    def visit_raw_data(self, node):
+        data_const = ast.LookupConstant(ast.Scope(-1), "DATA", -1)
+        file_const = ast.LookupConstant(ast.Scope(-1), "File", -1)
+        return ast.Statement(ast.If(
+            ast.Send(
+                ast.Global("$LOADED_FEATURES"),
+                "include?",
+                [ast.Variable("__FILE__", -1)],
+                None,
+                -1),
+            ast.Block([]),
+            ast.Block([
+                ast.Assignment(
+                    data_const,
+                    ast.Send(file_const, "new", [ast.Variable("__FILE__", -1)], None, -1)
+                ),
+                ast.Send(
+                    data_const,
+                    "read",
+                    [ast.ConstantInt(node.additional_info)],
+                    None,
+                    -1
+                )
+            ])
+        ))
