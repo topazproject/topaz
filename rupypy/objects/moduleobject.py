@@ -108,6 +108,7 @@ class W_ModuleObject(W_BaseObject):
 
     def getsingletonclass(self, space):
         if self.klass is None:
+            self.mutated()
             self.klass = space.newclass(
                 self.name, space.getclassfor(W_ModuleObject), is_singleton=True
             )
@@ -129,3 +130,7 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("attr_reader", varname="symbol")
     def method_attr_reader(self, space, varname):
         self.define_method(space, varname, AttributeReader("@" + varname))
+
+    @classdef.method("module_function", name="symbol")
+    def method_module_function(self, space, name):
+        self.attach_method(space, name, self.find_method(space, name))

@@ -22,7 +22,9 @@ class ClassDef(object):
     def include_module(self, mod):
         self.includes.append(mod)
 
-    def method(self, name, **argspec):
+    def method(self, __name, **argspec):
+        name = __name
+
         def adder(func):
             self.methods[name] = (func, argspec)
             return func
