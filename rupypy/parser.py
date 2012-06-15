@@ -107,14 +107,16 @@ class Transformer(object):
         elif self.stack[-1].send_depth != 1:
             self.stack[-1].do_block = send_block
             return send
-
-        return ast.Send(
-            send.receiver,
-            send.method,
-            send.args,
-            send_block,
-            node.getsourcepos().lineno
-        )
+        elif isinstance(send, ast.Send):
+            return ast.Send(
+                send.receiver,
+                send.method,
+                send.args,
+                send_block,
+                node.getsourcepos().lineno
+                )
+        else:
+            self.error(node)
 
     def visit_expr(self, node):
         if node.symbol == "inline_if":
