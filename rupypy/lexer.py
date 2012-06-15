@@ -726,8 +726,7 @@ class Lexer(BaseLexer):
                 if c == "\\":
                     c = self.read_escape()
                 return chr(ord(c) & 0x9f)
-        else:
-            return c
+        return c
 
     def colon(self, ch, space_seen):
         ch2 = self.read()
