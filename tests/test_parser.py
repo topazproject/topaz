@@ -1701,6 +1701,52 @@ HERE
             ], ast.Block([])))
         ]))
 
+    def test_case_without_expr(self, ec):
+        r = ec.space.parse(ec, """
+        case
+        when 3 then
+            5
+        when 4 == 2
+            3
+        else
+            9
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
+                ast.Statement(ast.ConstantInt(5))
+            ]), ast.Block([
+                ast.Statement(ast.If(ast.BinOp("==", ast.ConstantInt(4), ast.ConstantInt(2), 5), ast.Block([
+                    ast.Statement(ast.ConstantInt(3))
+                ]), ast.Block([
+                    ast.Statement(ast.ConstantInt(9))
+                ])))
+            ])))
+        ]))
+        r = ec.space.parse(ec, """
+        case
+        when 4,5 then
+            6
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.Or(ast.ConstantInt(4), ast.ConstantInt(5)), ast.Block([
+                ast.Statement(ast.ConstantInt(6))
+            ]), ast.Block([ast.Statement(ast.Variable("nil", -1))])
+            ))
+        ]))
+        r = ec.space.parse(ec, """
+        case
+        when 4
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(4), ast.Block([
+                ast.Statement(ast.Variable("nil", -1))
+            ]), ast.Block([ast.Statement(ast.Variable("nil", -1))])
+            ))
+        ]))
+
     def test_and_regexp(self, ec):
         assert ec.space.parse(ec, "3 && /a/") == ast.Main(ast.Block([
             ast.Statement(ast.And(ast.ConstantInt(3), ast.ConstantRegexp("a")))

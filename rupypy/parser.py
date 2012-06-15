@@ -653,6 +653,8 @@ class Transformer(object):
         return ast.ExceptHandler(exceptions, target, block)
 
     def visit_case(self, node):
+        if node.children[1].symbol == "whens":
+            return self.visit_case_without_expr(node)
         cond = self.visit_expr(node.children[1])
         whens = []
         for n in node.children[2].children:
@@ -668,6 +670,32 @@ class Transformer(object):
             whens,
             elsebody,
         )
+
+    def visit_case_without_expr(self, node):
+        whens = node.children[1].children
+        conditions = []
+        for when in whens:
+            exprs = when.children[1]
+            cond = self.visit_expr(exprs.children[0])
+            for expr in exprs.children[1:]:
+                cond = ast.Or(cond, self.visit_expr(expr))
+            if len(when.children) == 4:
+                body = self.visit_block(when.children[3])
+            else:
+                body = ast.Block([])
+            conditions.append((cond, body))
+
+        if node.children[2].symbol == "else":
+            else_block = self.visit_block(node.children[2], start_idx=1)
+        else:
+            else_block = ast.Block([])
+
+        for idx in range(len(conditions) - 1, 0, -1):
+            cond, block = conditions[idx]
+            else_block = ast.Block([
+                ast.Statement(ast.If(cond, block, else_block))
+            ])
+        return ast.If(conditions[0][0], conditions[0][1], else_block)
 
     def visit_argdecl(self, node):
         if not node.children:
