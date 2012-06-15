@@ -985,7 +985,8 @@ class HeredocLexer(ChildLexer):
         if chars.getlength():
             lexer_tokens = Lexer(chars.build()).tokenize()
             lexer_tokens.pop()
-            self.tokens.extend(lexer_tokens)
+        else:
+            lexer_tokens = []
 
         self.emit("STRING_BEGIN")
         while True:
@@ -1016,4 +1017,5 @@ class HeredocLexer(ChildLexer):
             else:
                 self.add(ch)
         self.emit("STRING_END")
+        self.tokens.extend(lexer_tokens)
         return self.tokens
