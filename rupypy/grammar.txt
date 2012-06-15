@@ -166,7 +166,7 @@ array: [RBRACKET] |
 hash: [RBRACE] |
       assocs [array_trailer]? [RBRACE];
 
-if: expr then line* statement? [LINE_END]?;
+if: expr [LINE_END]? then line* statement? [LINE_END]?;
 
 then: [LINE_END] |
       THEN |

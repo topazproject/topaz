@@ -338,6 +338,12 @@ class TestParser(BaseRuPyPyTest):
             puts 2
         end
         """) == res(3)
+        assert ec.space.parse(ec, """
+        if 3
+        then
+            puts 2
+        end
+        """) == res(4)
         assert ec.space.parse(ec, "if 3; puts 2 end") == res(1)
         assert ec.space.parse(ec, "if 3; end") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([]), ast.Block([])))
