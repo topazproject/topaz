@@ -1881,3 +1881,8 @@ HERE
             ec.space.parse(ec, "%{a} %{b}")
             ec.space.parse(ec, "%{a} 'b' %{b}")
             ec.space.parse(ec, "'b' %{b}")
+
+    def test_alias(self, ec):
+        assert ec.space.parse(ec, "alias a b") == ast.Main(ast.Block([
+            ast.Alias(ast.ConstantSymbol("a"), ast.ConstantSymbol("b"), 1)
+        ]))

@@ -75,6 +75,8 @@ class Transformer(object):
         with self.new_context():
             if node.children[0].symbol == "return_expr":
                 return ast.Return(self.visit_return(node.children[0]))
+            elif node.children[0].symbol == "alias":
+                return self.visit_alias(node.children[0])
             return ast.Statement(self.visit_expr(node.children[0]))
 
     def visit_return(self, node):
@@ -87,6 +89,13 @@ class Transformer(object):
         else:
             obj = ast.Variable("nil", node.getsourcepos().lineno)
         return obj
+
+    def visit_alias(self, node):
+        return ast.Alias(
+            ast.ConstantSymbol(node.children[1].additional_info),
+            ast.ConstantSymbol(node.children[2].additional_info),
+            node.getsourcepos().lineno
+        )
 
     def visit_send_block(self, node):
         send = self.visit_real_send(node.children[0])

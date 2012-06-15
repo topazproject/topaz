@@ -1761,3 +1761,25 @@ class TestCompiler(object):
         LOAD_CONST 3
         RETURN
         """)
+
+    def test_alias(self, ec):
+        bc = self.assert_compiles(ec, """
+        alias a b
+        10
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 1
+        SEND 2 2
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+        [w_a, w_b, w_alias_method, _, _] = bc.consts_w
+        assert ec.space.symbol_w(w_a) == "a"
+        assert ec.space.symbol_w(w_b) == "b"
+        assert ec.space.symbol_w(w_alias_method) == "alias_method"

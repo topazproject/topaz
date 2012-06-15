@@ -54,6 +54,7 @@ class BaseLexer(object):
         "and": Keyword("AND_LITERAL", "AND_LITERAL", EXPR_BEG),
         "or": Keyword("OR_LITERAL", "OR_LITERAL", EXPR_BEG),
         "not": Keyword("NOT_LITERAL", "NOT_LITERAL", EXPR_BEG),
+        "alias": Keyword("ALIAS", "ALIAS", EXPR_FNAME),
     }
 
     def __init__(self):
