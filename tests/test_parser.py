@@ -891,8 +891,13 @@ HERE
         x.meth y.meth do end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "meth", [ast.Send(ast.Variable("y", 2), "method", [], None, 2)], ast.SendBlock([], None, ast.Block([])), 2))
+            ast.Statement(ast.Send(ast.Variable("x", 2), "meth", [ast.Send(ast.Variable("y", 2), "meth", [], None, 2)], ast.SendBlock([], None, ast.Block([])), 2))
         ]))
+
+        with self.raises("SyntaxError"):
+            ec.space.parse(ec, """
+            Mod::Const do end
+            """)
 
     def test_block(self, ec):
         assert ec.space.parse(ec, "[].map { |x| x }") == ast.Main(ast.Block([

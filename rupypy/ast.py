@@ -599,6 +599,7 @@ class SplatAssignment(Node):
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
 
+
 class BinOp(Node):
     def __init__(self, op, left, right, lineno):
         Node.__init__(self, lineno)

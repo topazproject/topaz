@@ -50,7 +50,6 @@ class SpaceCache(Cache):
 
 class ObjectSpace(object):
     def __init__(self):
-        self.transformer = Transformer()
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
         self.globals = Globals()
@@ -101,7 +100,7 @@ class ObjectSpace(object):
     def parse(self, ec, source):
         try:
             st = ToASTVisitor().transform(_parse(source))
-            return self.transformer.visit_main(st)
+            return Transformer().visit_main(st)
         except ParseError as e:
             self.raise_(ec, self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:
