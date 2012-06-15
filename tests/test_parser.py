@@ -800,6 +800,18 @@ HERE
         """)
         assert r == heredoc(ast.ConstantString("        abc\n"))
 
+        r = ec.space.parse(ec, """
+        f(<<-HERE, 3)
+        abc
+        HERE
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(2), "f", [
+                ast.DynamicString([ast.ConstantString("        abc\n")]),
+                ast.ConstantInt(3),
+            ], None, 2))
+        ]))
+
     def test_class(self, ec):
         r = ec.space.parse(ec, """
         class X
