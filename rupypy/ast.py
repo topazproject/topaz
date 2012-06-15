@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
+from rupypy.objects.objectobject import W_BaseObject
 
 
 class Node(object):
@@ -153,9 +154,10 @@ class Until(Node):
 
 
 class TryExcept(Node):
-    def __init__(self, body, except_handlers):
+    def __init__(self, body, except_handlers, else_body):
         self.body = body
         self.except_handlers = except_handlers
+        self.else_body = else_body
 
     def locate_symbols(self, symtable):
         self.body.locate_symbols(symtable)
@@ -164,19 +166,32 @@ class TryExcept(Node):
 
     def compile(self, ctx):
         exc = ctx.new_block()
+        else_block = ctx.new_block()
         end = ctx.new_block()
-        ctx.emit_jump(consts.SETUP_EXCEPT, exc)
+        if self.except_handlers:
+            ctx.emit_jump(consts.SETUP_EXCEPT, exc)
         ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
-        ctx.emit(consts.POP_BLOCK)
-        ctx.emit_jump(consts.JUMP, end)
+        if self.except_handlers:
+            ctx.emit(consts.POP_BLOCK)
+        ctx.emit_jump(consts.JUMP, else_block)
         ctx.use_next_block(exc)
+
         for handler in self.except_handlers:
             next_except = ctx.new_block()
-            if handler.exception is not None:
-                handler.exception.compile(ctx)
-                ctx.emit(consts.COMPARE_EXC)
-                ctx.emit_jump(consts.JUMP_IF_FALSE, next_except)
+            handle_block = ctx.new_block()
+
+            if handler.exceptions:
+                for exception in handler.exceptions:
+                    next_handle = ctx.new_block()
+                    exception.compile(ctx)
+                    ctx.emit(consts.COMPARE_EXC)
+                    ctx.emit_jump(consts.JUMP_IF_TRUE, handle_block)
+                    ctx.use_next_block(next_handle)
+                ctx.emit_jump(consts.JUMP, next_except)
+                ctx.use_next_block(handle_block)
+            else:
+                ctx.use_next_block(handle_block)
             if handler.target:
                 elems = handler.target.compile_receiver(ctx)
                 if elems == 1:
@@ -190,19 +205,24 @@ class TryExcept(Node):
             handler.body.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)
             ctx.use_next_block(next_except)
-        ctx.emit(consts.END_FINALLY)
+
+        if self.except_handlers:
+            ctx.emit(consts.END_FINALLY)
+        ctx.use_next_block(else_block)
+        self.else_body.compile(ctx)
+        ctx.emit(consts.DISCARD_TOP)
         ctx.use_next_block(end)
 
 
 class ExceptHandler(Node):
-    def __init__(self, exception, target, body):
-        self.exception = exception
+    def __init__(self, exceptions, target, body):
+        self.exceptions = exceptions
         self.target = target
         self.body = body
 
     def locate_symbols(self, symtable):
-        if self.exception is not None:
-            self.exception.locate_symbols(symtable)
+        for exception in self.exceptions:
+            exception.locate_symbols(symtable)
         if self.target is not None:
             self.target.locate_symbols_assignment(symtable)
         self.body.locate_symbols(symtable)
@@ -553,6 +573,31 @@ class MultiAssignment(Node):
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
 
+class SplatAssignment(Node):
+    def __init__(self, targets, value, n_pre):
+        self.targets = targets
+        self.value = value
+        self.n_pre = n_pre
+
+    def locate_symbols(self, symtable):
+        for target in self.targets:
+            target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.UNPACK_SEQUENCE_SPLAT, len(self.targets), self.n_pre)
+        for target in self.targets:
+            elems = target.compile_receiver(ctx)
+            if elems == 1:
+                ctx.emit(consts.ROT_TWO)
+            elif elems == 2:
+                ctx.emit(consts.ROT_THREE)
+                ctx.emit(consts.ROT_THREE)
+            target.compile_store(ctx)
+            ctx.emit(consts.DISCARD_TOP)
 
 class BinOp(Node):
     def __init__(self, op, left, right, lineno):
@@ -692,9 +737,7 @@ class Send(Node):
         if self.is_splat():
             for arg in self.args:
                 arg.compile(ctx)
-                if isinstance(arg, Splat):
-                    ctx.emit(consts.COERCE_ARRAY)
-                else:
+                if not isinstance(arg, Splat):
                     ctx.emit(consts.BUILD_ARRAY, 1)
             for i in range(len(self.args) - 1):
                 ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
@@ -739,8 +782,18 @@ class Splat(Node):
     def locate_symbols(self, symtable):
         self.value.locate_symbols(symtable)
 
+    def locate_symbols_assignment(self, symtable):
+        self.value.locate_symbols_assignment(symtable)
+
+    def compile_receiver(self, ctx):
+        return self.value.compile_receiver(ctx)
+
+    def compile_store(self, ctx):
+        return self.value.compile_store(ctx)
+
     def compile(self, ctx):
         self.value.compile(ctx)
+        ctx.emit(consts.COERCE_ARRAY)
 
 
 class SendBlock(Node):
@@ -844,18 +897,19 @@ class LookupConstant(Node):
         pass
 
     def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
+        if self.value is not None:
+            self.value.locate_symbols(symtable)
 
     def locate_symbols_assignment(self, symtable):
         self.locate_symbols(symtable)
 
     def compile(self, ctx):
-        if self.name[0].isupper():
+        if self.value is not None:
             self.value.compile(ctx)
-            ctx.current_lineno = self.lineno
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
-            Send(self.value, self.name, [], None, self.lineno).compile(ctx)
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_BaseObject)))
+        ctx.current_lineno = self.lineno
+        ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
         self.value.compile(ctx)
@@ -1027,9 +1081,22 @@ class Array(Node):
             item.locate_symbols(symtable)
 
     def compile(self, ctx):
+        n_items = 0
+        n_components = 0
         for item in self.items:
-            item.compile(ctx)
-        ctx.emit(consts.BUILD_ARRAY, len(self.items))
+            if isinstance(item, Splat):
+                ctx.emit(consts.BUILD_ARRAY, n_items)
+                item.compile(ctx)
+                n_items = 0
+                n_components += 2
+            else:
+                item.compile(ctx)
+                n_items += 1
+        if n_items or not n_components:
+            ctx.emit(consts.BUILD_ARRAY, n_items)
+            n_components += 1
+        for i in xrange(n_components - 1):
+            ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
 
 
 class Hash(Node):

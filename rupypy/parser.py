@@ -41,7 +41,7 @@ class Transformer(object):
 
     def visit_return(self, node):
         if len(node.children) == 2:
-            objs = [self.visit_expr(n) for n in node.children[1].children]
+            objs = self.visit_expr_splats(node.children[1])
             if len(objs) == 1:
                 [obj] = objs
             else:
@@ -98,11 +98,12 @@ class Transformer(object):
                 ast.Block([self.visit_stmt(node.children[0])]),
                 [
                     ast.ExceptHandler(
-                        ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), "StandardError", node.getsourcepos().lineno),
+                        [ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), "StandardError", node.getsourcepos().lineno)],
                         None,
                         ast.Block([ast.Statement(self.visit_expr(node.children[2]))])
                     )
-                ]
+                ],
+                ast.Block([]),
             )
         elif node.symbol == "contained_expr":
             if node.children[0].symbol == "assignment":
@@ -129,12 +130,22 @@ class Transformer(object):
     def visit_assignment(self, node):
         targets = [self.visit_arg(n) for n in node.children[0].children]
         oper = node.children[1].additional_info
-        values = [self.visit_expr(n) for n in node.children[2].children]
+        values = self.visit_expr_splats(node.children[2])
         if len(values) == 1:
             [value] = values
         else:
             value = ast.Array(values)
-        if len(targets) == 1:
+        if node.children[0].symbol == "assign_target_splat":
+            if oper != "=":
+                self.error(node.children[1])
+            n_targets_pre_splat = 0
+            for t in targets:
+                if isinstance(t, ast.Splat):
+                    break
+                else:
+                    n_targets_pre_splat += 1
+            return ast.SplatAssignment(targets, value, n_targets_pre_splat)
+        elif len(targets) == 1:
             [target] = targets
             target.validate_assignment(self, node)
             if oper == "=":
@@ -150,10 +161,19 @@ class Transformer(object):
                 self.error(node.children[1])
             return ast.MultiAssignment(targets, value)
 
+    def visit_expr_splats(self, node):
+        return [
+            self.visit_splat(n) if n.symbol == "splat" else self.visit_expr(n)
+            for n in node.children
+        ]
+
+    def visit_splat(self, node):
+        return ast.Splat(self.visit_arg(node.children[0]))
+
     def visit_yield(self, node):
         args = []
         if len(node.children) == 2:
-            args = [self.visit_arg(n) for n in node.children[1].children]
+            args = self.visit_args(node.children[1])
         return ast.Yield(args, node.children[0].getsourcepos().lineno)
 
     def visit_arg(self, node):
@@ -168,7 +188,7 @@ class Transformer(object):
         elif symname == "unary_op":
             return self.visit_unaryop(node)
         elif symname == "splat":
-            return ast.Splat(self.visit_arg(node.children[0]))
+            return self.visit_splat(node)
         elif symname == "ternary":
             return self.visit_ternary(node)
         elif symname == "send":
@@ -261,7 +281,7 @@ class Transformer(object):
             if node.symbol in ["attribute", "subscript"]:
                 block_argument = None
                 if node.symbol == "attribute":
-                    method = node.children[0].children[0].additional_info
+                    method = node.children[0].additional_info
                     if len(node.children) == 1:
                         args = []
                     elif node.children[1].symbol == "block":
@@ -308,11 +328,25 @@ class Transformer(object):
         args = []
         idx = 0
         if node.children[idx].symbol == "args":
-            args = [self.visit_arg(n) for n in node.children[idx].children]
+            args = self.visit_args(node.children[idx])
             idx += 1
         if idx < len(node.children) and node.children[idx].symbol == "block_arg":
             block_argument = ast.BlockArgument(self.visit_arg(node.children[idx].children[0]))
-        return args,  block_argument
+        return args, block_argument
+
+    def visit_args(self, node):
+        args = []
+        assocs = []
+        for n in node.children:
+            if n.symbol == "assoc":
+                assocs.append(self.visit_assoc(n))
+            elif assocs:
+                self.error(node)
+            else:
+                args.append(self.visit_arg(n))
+        if assocs:
+            args.append(ast.Hash(assocs))
+        return args
 
     def visit_braces_block(self, node):
         block_args = []
@@ -353,14 +387,14 @@ class Transformer(object):
             return self.visit_begin(node)
         elif node.children[0].additional_info == "case":
             return self.visit_case(node)
+        elif node.children[0].symbol == "UNBOUND_COLONCOLON":
+            return ast.LookupConstant(None, node.children[1].additional_info, node.getsourcepos().lineno)
         raise NotImplementedError(node.symbol)
 
     def visit_array(self, node):
         contents = node.children[1]
         if contents.children:
-            items = [
-                self.visit_arg(n) for n in contents.children[0].children
-            ]
+            items = self.visit_args(contents.children[0])
         else:
             items = []
         return ast.Array(items)
@@ -369,12 +403,15 @@ class Transformer(object):
         contents = node.children[1]
         if contents.children:
             items = [
-                (self.visit_expr(n.children[0]), self.visit_expr(n.children[2]))
+                self.visit_assoc(n)
                 for n in contents.children[0].children
             ]
         else:
             items = []
         return ast.Hash(items)
+
+    def visit_assoc(self, node):
+        return self.visit_expr(node.children[0]), self.visit_expr(node.children[2])
 
     def visit_literal(self, node):
         symname = node.children[0].symbol
@@ -382,27 +419,30 @@ class Transformer(object):
             return self.visit_number(node.children[0])
         elif symname == "symbol":
             return self.visit_symbol(node.children[0])
-        elif symname == "SSTRING":
-            return self.visit_sstring(node.children[0])
-        elif symname == "string":
-            return self.visit_dstring(node.children[0])
+        elif symname == "strings" or symname == "real_strings":
+            return self.visit_strings(node.children[0])
         elif symname == "regexp":
             return self.visit_regexp(node.children[0])
         elif symname == "shellout":
             return self.visit_shellout(node.children[0])
+        elif symname == "qwords":
+            return self.visit_qwords(node.children[0])
+        elif symname == "quote":
+            return self.visit_quote(node.children[0])
         raise NotImplementedError(symname)
 
     def visit_varname(self, node):
-        if node.children[0].symbol == "INSTANCE_VAR":
-            return ast.InstanceVariable(node.children[0].additional_info)
-        elif node.children[0].symbol == "CLASS_VAR":
-            return ast.ClassVariable(node.children[0].additional_info)
-        elif node.children[0].symbol == "GLOBAL":
-            return ast.Global(node.children[0].additional_info)
-        elif node.children[0].additional_info[0].isupper():
-            return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.children[0].additional_info, node.getsourcepos().lineno)
-        else:
-            return ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
+        node = node.children[0]
+        if node.symbol == "INSTANCE_VAR":
+            return ast.InstanceVariable(node.additional_info)
+        elif node.symbol == "CLASS_VAR":
+            return ast.ClassVariable(node.additional_info)
+        elif node.symbol == "GLOBAL":
+            return ast.Global(node.additional_info)
+        elif node.symbol == "IDENTIFIER":
+            return ast.Variable(node.additional_info, node.getsourcepos().lineno)
+        elif node.symbol == "CONSTANT":
+            return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.additional_info, node.getsourcepos().lineno)
 
     def visit_if(self, node):
         if_node = node.children[1]
@@ -479,7 +519,7 @@ class Transformer(object):
             handlers.append(self.visit_rescue(node.children[idx]))
             idx += 1
         if handlers:
-            body = ast.TryExcept(body, handlers)
+            body = ast.TryExcept(body, handlers, ast.Block([]))
         if idx < len(node.children) and  node.children[idx].symbol == "ensure":
             ensure_node = node.children[idx]
             block = self.visit_block(ensure_node, start_idx=1)
@@ -522,7 +562,7 @@ class Transformer(object):
     def visit_begin(self, node):
         idx = 0
         while idx < len(node.children):
-            if node.children[idx].symbol in ["rescue", "ensure"]:
+            if node.children[idx].symbol in ["rescue", "ensure", "else"]:
                 break
             idx += 1
         body_block = self.visit_block(node, start_idx=1, end_idx=idx)
@@ -530,8 +570,18 @@ class Transformer(object):
         while node.children[idx].symbol == "rescue":
             handlers.append(self.visit_rescue(node.children[idx]))
             idx += 1
-        if handlers:
-            body_block = ast.TryExcept(body_block, handlers)
+
+        if node.children[idx].symbol == "else":
+            else_node = node.children[idx]
+            else_block = self.visit_block(else_node, start_idx=1)
+            has_else_block = True
+        else:
+            else_block = ast.Block([])
+            has_else_block = False
+
+        if handlers or has_else_block:
+            body_block = ast.TryExcept(body_block, handlers, else_block)
+
         if node.children[idx].symbol == "ensure":
             ensure_node = node.children[idx]
             block = self.visit_block(ensure_node, start_idx=1)
@@ -539,17 +589,17 @@ class Transformer(object):
         return body_block
 
     def visit_rescue(self, node):
-        exception = None
+        exceptions = []
         idx = 1
-        if node.children[1].symbol == "varname":
-            exception = self.visit_varname(node.children[1])
+        if node.children[1].symbol == "exprs":
+            exceptions = [self.visit_expr(n) for n in node.children[1].children]
             idx += 1
         target = None
         if node.children[idx].symbol == "ARROW":
             target = self.visit_varname(node.children[idx + 1])
             idx += 2
         block = self.visit_block(node, start_idx=idx)
-        return ast.ExceptHandler(exception, target, block)
+        return ast.ExceptHandler(exceptions, target, block)
 
     def visit_case(self, node):
         cond = self.visit_expr(node.children[1])
@@ -628,8 +678,29 @@ class Transformer(object):
         node = node.children[0]
         if node.symbol == "varname":
             return ast.ConstantSymbol(node.children[0].additional_info)
+        elif node.symbol == "SSTRING":
+            return ast.ConstantSymbol(node.additional_info)
         else:
             return ast.Symbol(self.visit_dstring(node), node.getsourcepos().lineno)
+
+    def visit_strings(self, node):
+        if len(node.children) == 1:
+            if node.children[0].symbol == "SSTRING":
+                return self.visit_sstring(node.children[0])
+            elif node.children[0].symbol == "string":
+                return self.visit_dstring(node.children[0])
+            else:
+                self.error(node.children[0])
+        else:
+            components = []
+            for n in node.children:
+                if n.symbol == "SSTRING":
+                    components.append(self.visit_sstring(n))
+                elif n.symbol == "string":
+                    components.append(self.visit_dstring(n))
+                elif n.symbol == "quote":
+                    components.append(self.visit_quote(n))
+            return ast.DynamicString(components)
 
     def visit_sstring(self, node):
         return ast.ConstantString(node.additional_info)
@@ -648,8 +719,13 @@ class Transformer(object):
         else:
             return ast.ConstantString("")
 
+    def visit_quote(self, node):
+        return self.visit_dstring(node.children[0])
+
     def visit_regexp(self, node):
-        if node.children[0].children[0].symbol == "STRING_VALUE":
+        if len(node.children[0].children) == 0:
+            return ast.ConstantRegexp("")
+        elif node.children[0].children[0].symbol == "STRING_VALUE":
             return ast.ConstantRegexp(node.children[0].children[0].additional_info)
         else:
             return ast.DynamicRegexp(self.visit_dstring(node.children[0]))
@@ -662,3 +738,11 @@ class Transformer(object):
             None,
             node.getsourcepos().lineno
         )
+
+    def visit_qwords(self, node):
+        contents = node.children[0]
+        if contents.children:
+            items = [self.visit_dstring(n) for n in contents.children]
+        else:
+            items = []
+        return ast.Array(items)
