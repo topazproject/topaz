@@ -10,37 +10,68 @@ from pypy.tool.pairtype import pairtype
 
 
 class OrderedDict(object):
-    def __init__(self):
+    def __init__(self, eq_func=None, hash_func=None):
         self.contents = PyOrderedDict()
+        self.eq_func = eq_func
+        self.hash_func = hash_func
 
     def __getitem__(self, key):
-        return self.contents[key]
+        return self.contents[self._key(key)]
 
     def __setitem__(self, key, value):
         self.contents[self._key(key)] = value
 
     def _key(self, key):
-        return key
+        if self.eq_func and self.hash_func:
+            return DictKey(self, key)
+        else:
+            return key
+
+
+class DictKey(object):
+    def __init__(self, d, key):
+        self.d = d
+        self.key = key
+
+    def __eq__(self, other):
+        return self.d.eq_func(self.key, other.key)
+
+    def __hash__(self):
+        return self.d.hash_func(self.key)
 
 
 class OrderedDictEntry(ExtRegistryEntry):
     _about_ = OrderedDict
 
-    def compute_result_annotation(self):
-        return SomeOrderedDict(getbookkeeper())
+    def compute_result_annotation(self, eq_func=None, hash_func=None):
+        assert eq_func is None or eq_func.is_constant()
+        assert hash_func is None or hash_func.is_constant()
+        return SomeOrderedDict(getbookkeeper(), eq_func, hash_func)
 
     def specialize_call(self, hop):
         return hop.r_result.rtyper_new(hop)
 
 
 class SomeOrderedDict(model.SomeObject):
-    def __init__(self, bookkeeper):
+    def __init__(self, bookkeeper, eq_func, hash_func):
         self.bookkeeper = bookkeeper
+
+        self.eq_func = eq_func
+        self.hash_func = hash_func
 
         self.key_type = model.s_ImpossibleValue
         self.value_type = model.s_ImpossibleValue
 
         self.read_locations = set()
+
+    def __eq__(self, other):
+        if not isinstance(other, SomeOrderedDict):
+            return NotImplemented
+        return (self.eq_func == other.eq_func and
+            self.hash_func == other.hash_func and
+            self.key_type == other.key_type and
+            self.value_type == other.value_repr
+        )
 
     def rtyper_makerepr(self, rtyper):
         key_repr = rtyper.makerepr(self.key_type)
@@ -69,6 +100,16 @@ class SomeOrderedDict(model.SomeObject):
         position_key = self.bookkeeper.position_key
         self.read_locations.add(position_key)
         return self.value_type
+
+
+class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
+    def union((d1, d2)):
+        assert d1.eq_func.const is d2.eq_func.const
+        assert d1.hash_func.const is d2.hash_func.const
+        s_new = SomeOrderedDict(d1.bookkeeper, d1.eq_func, d1.hash_func)
+        s_new.key_type = model.unionof(d1.key_type, d2.key_type)
+        s_new.value_type = model.unionof(d1.value_type, d2.value_type)
+        return s_new
 
 
 class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
