@@ -48,7 +48,7 @@ class BaseLexer(object):
         "def": Keyword("DEF", "DEF", EXPR_FNAME),
         "class": Keyword("CLASS", "CLASS", EXPR_CLASS),
         "module": Keyword("MODULE", "MODULE", EXPR_BEG),
-        "case": Keyword("CASE", "CASE", EXPR_END),
+        "case": Keyword("CASE", "CASE", EXPR_BEG),
         "when": Keyword("WHEN", "WHEN", EXPR_BEG),
         "end": Keyword("END", "END", EXPR_END),
         "and": Keyword("AND_LITERAL", "AND_LITERAL", EXPR_BEG),
