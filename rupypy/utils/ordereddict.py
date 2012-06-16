@@ -93,10 +93,12 @@ class SomeOrderedDict(model.SomeObject):
         new_key_type = model.unionof(self.key_type, s_key)
         if model.isdegenerated(new_key_type):
             self.bookkeeper.ondegenerated(self, new_key_type)
-        if new_key_type != self.key_type:
+        updated = new_key_type != self.key_type
+        if updated:
             self.key_type = new_key_type
             for position_key in self.read_locations:
                 self.bookkeeper.annotator.reflowfromposition(position_key)
+            self.emulate_rdict_calls()
 
     def generalize_value(self, s_value):
         new_value_type = model.unionof(self.value_type, s_value)
@@ -111,6 +113,26 @@ class SomeOrderedDict(model.SomeObject):
         position_key = self.bookkeeper.position_key
         self.read_locations.add(position_key)
         return self.value_type
+
+    def emulate_rdict_calls(self):
+        if self.eq_func and self.hash_func:
+            def check_eq_func(annotator, graph):
+                s = annotator.binding(graph.getreturnvar())
+                assert model.s_Bool.contains(s)
+
+            self.bookkeeper.emulate_pbc_call(
+                (self, "eq"), self.eq_func, [self.key_type, self.key_type],
+                replace=(), callback=check_eq_func
+            )
+
+            def check_hash_func(annotator, graph):
+                s = annotator.binding(graph.getreturnvar())
+                assert model.SomeInteger().contains(s)
+
+            self.bookkeeper.emulate_pbc_call(
+                (self, "hash"), self.hash_func, [self.key_type],
+                replace=(), callback=check_hash_func
+            )
 
 
 class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
@@ -178,7 +200,6 @@ class OrderedDictRepr(Repr):
             adtmeths=dict_methods
         )
         return lltype.Ptr(DICT)
-
 
     def rtyper_new(self, hop):
         hop.exception_cannot_occur()
