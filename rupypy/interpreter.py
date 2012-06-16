@@ -9,6 +9,7 @@ from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
+from rupypy.objects.moduleobject import W_ModuleObject
 
 
 def get_printable_location(pc, bytecode):
@@ -158,6 +159,7 @@ class Interpreter(object):
     def LOAD_CLASS_VAR(self, ec, bytecode, frame, pc, idx):
         name = ec.space.symbol_w(bytecode.consts_w[idx])
         w_module = frame.pop()
+        assert isinstance(w_module, W_ModuleObject)
         w_value = ec.space.cvars.get(ec.space, w_module, name)
         if w_value is None:
             ec.space.raise_(ec, ec.space.getclassfor(W_NameError),
@@ -169,6 +171,7 @@ class Interpreter(object):
         name = ec.space.symbol_w(bytecode.consts_w[idx])
         w_value = frame.pop()
         w_module = frame.pop()
+        assert isinstance(w_module, W_ModuleObject)
         ec.space.cvars.set(ec.space, w_module, name, w_value)
         frame.push(w_value)
 
