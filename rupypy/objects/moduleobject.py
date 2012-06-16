@@ -114,6 +114,12 @@ class W_ModuleObject(W_BaseObject):
             )
         return self.klass
 
+    def ancestors(self):
+        if self.superclass is not None:
+            return [self.name] + self.superclass.ancestors()
+        else:
+            return [self.name]
+
     @classdef.method("include")
     def method_include(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)
@@ -138,3 +144,7 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
         self.define_method(space, new_name, self.find_method(space, old_name))
+
+    @classdef.method("ancestors")
+    def method_ancestors(self, space):
+        return space.newarray([space.newstr_fromstr(c) for c in self.ancestors()])
