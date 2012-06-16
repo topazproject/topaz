@@ -165,7 +165,7 @@ class ObjectSpace(object):
         return W_ArrayObject(items_w)
 
     def newhash(self):
-        return W_HashObject()
+        return W_HashObject(self)
 
     def newrange(self, w_start, w_end, inclusive):
         return W_RangeObject(w_start, w_end, inclusive)
