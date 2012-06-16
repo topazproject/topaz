@@ -1,4 +1,5 @@
-from pypy.rlib.objectmodel import newlist_hint
+from pypy.rlib.objectmodel import newlist_hint, compute_hash
+from pypy.rlib.rarithmetic import intmask
 from pypy.rlib.rerased import new_static_erasing_pair
 
 from rupypy.module import ClassDef
@@ -24,6 +25,9 @@ class ConstantStringStrategy(StringStrategy):
     def length(self, storage):
         return len(self.unerase(storage))
 
+    def hash(self, storage):
+        return compute_hash(self.unerase(storage))
+
     def copy(self, storage):
         return W_StringObject(storage, self)
 
@@ -46,6 +50,19 @@ class MutableStringStrategy(StringStrategy):
 
     def length(self, storage):
         return len(self.unerase(storage))
+
+    def hash(self, storage):
+        storage = self.unerase(storage)
+        length = len(storage)
+        if length == 0:
+            return -1
+        x = ord(storage[0]) << 7
+        i = 0
+        while i < length:
+            x = intmask((1000003 * x) ^ ord(storage[i]))
+            i += 1
+        x ^= length
+        return intmask(x)
 
     def to_mutable(self, space, s):
         pass
@@ -115,6 +132,10 @@ class W_StringObject(W_BaseObject):
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(self.length())
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return space.newint(self.strategy.hash(self.storage))
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):

@@ -1,4 +1,7 @@
-class TestStringObject(object):
+from ..base import BaseRuPyPyTest
+
+
+class TestStringObject(BaseRuPyPyTest):
     def test_lshift(self, space):
         w_res = space.execute('return "abc" << "def" << "ghi"')
         assert space.str_w(w_res) == "abcdefghi"
@@ -26,3 +29,10 @@ class TestStringObject(object):
     def test_comparator_gt(self, space):
         w_res = space.execute("return 'b' <=> 'a'")
         assert space.int_w(w_res) == 1
+
+    def test_hash(self, space):
+        w_res = space.execute("""
+        return ['abc'.hash, ('a' << 'b' << 'c').hash]
+        """)
+        h1, h2 = self.unwrap(space, w_res)
+        assert h1 == h2
