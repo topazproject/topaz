@@ -7,7 +7,7 @@ class W_HashObject(W_BaseObject):
     classdef = ClassDef("Hash", W_BaseObject.classdef)
 
     def __init__(self, space):
-        self.contents = OrderedDict()
+        self.contents = OrderedDict(space.eq_w, space.hash_w)
 
     @classdef.method("[]")
     def method_subscript(self, w_key):

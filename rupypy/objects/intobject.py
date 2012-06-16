@@ -74,6 +74,19 @@ class W_IntObject(W_BaseObject):
     def method_neg(self, space):
         return space.newint(-self.intvalue)
 
+    @classdef.method("<=>", other="int")
+    def method_comparator(self, space, other):
+        if self.intvalue < other:
+            return space.newint(-1)
+        elif self.intvalue == other:
+            return space.newint(0)
+        elif self.intvalue > other:
+            return space.newint(1)
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return self
+
     classdef.app_method("""
     def times
         i = 0
@@ -83,12 +96,3 @@ class W_IntObject(W_BaseObject):
         end
     end
     """)
-
-    @classdef.method("<=>", other="int")
-    def method_comparator(self, space, other):
-        if self.intvalue < other:
-            return space.newint(-1)
-        elif self.intvalue == other:
-            return space.newint(0)
-        elif self.intvalue > other:
-            return space.newint(1)

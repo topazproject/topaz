@@ -1,4 +1,7 @@
-class TestHashObject(object):
+from ..base import BaseRuPyPyTest
+
+
+class TestHashObject(BaseRuPyPyTest):
     def test_create(self, space):
         space.execute("{2 => 3, 4 => 5}")
 
