@@ -359,13 +359,13 @@ class LLOrderedDict(object):
         if hasattr(ENTRY, "valid"):
             entry.valid = True
         d.num_items += 1
+        if d.first_entry == -1:
+            d.first_entry = i
+        else:
+            d.entries[d.last_entry].next = i
         if not everused:
             if hasattr(ENTRY, "everused"):
                 entry.everused = True
-            if d.first_entry == -1:
-                d.first_entry = i
-            else:
-                d.entries[d.last_entry].next = i
             d.last_entry = i
             d.resize_counter -= 3
             if d.resize_counter <= 0:
