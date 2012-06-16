@@ -35,6 +35,16 @@ class BaseTestOrderedDict(object):
             return o[X(n)]
         assert self.run(f, [15]) == 23
 
+    def test_merge_dicts(self):
+        def f(n):
+            if n:
+                o = OrderedDict()
+            else:
+                o = OrderedDict()
+                o[2] = "hello"
+            o[3] = "goodbye"
+            return o[3]
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def run(self, func, args=[]):
