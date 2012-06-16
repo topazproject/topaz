@@ -798,3 +798,68 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert ec.space.int_w(w_res) == 3
+
+    def test_class_variables(self, ec):
+        w_res = ec.space.execute(ec, """
+        class A
+          def get
+            @@foo
+          end
+        end
+        class B < A;
+          @@foo = "b"
+        end
+        class C < A;
+          @@foo = "c"
+        end
+        bb = B.new.get
+        bc = C.new.get
+        class A
+          @@foo = "a"
+        end
+        ab = B.new.get
+        ac = C.new.get
+        return [bb, bc, ab, ac]
+        """)
+        assert [ec.space.str_w(w_str) for w_str in ec.space.listview(w_res)] == ['b', 'c', 'a', 'a']
+        w_res = ec.space.execute(ec, """
+        module A
+          @@foo = 'a'
+        end
+
+        class B
+          include A
+          def self.get
+            @@foo
+          end
+          def get
+            @@foo
+          end
+        end
+        return [B.get, B.new.get]
+        """)
+        assert [ec.space.str_w(s) for s in ec.space.listview(w_res)] == ['a', 'a']
+        w_res = ec.space.execute(ec, """
+        class A
+          def self.get
+            @@foo
+          end
+          def get
+            @@foo
+          end
+          @@foo = 'a'
+        end
+
+        class B < A
+          def self.get
+            @@foo
+          end
+          def get
+            @@foo
+          end
+        end
+        return [A.get, A.new.get, B.get, B.new.get]
+        """)
+        for w_str in ec.space.listview(w_res):
+            for w_other_str in ec.space.listview(w_res):
+                assert w_other_str == w_str
