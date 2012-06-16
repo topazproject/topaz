@@ -138,8 +138,8 @@ class SomeOrderedDict(model.SomeObject):
 
 class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
     def union((d1, d2)):
-        assert d1.eq_func.const is d2.eq_func.const
-        assert d1.hash_func.const is d2.hash_func.const
+        assert (d1.eq_func is d2.eq_func is None) or (d1.eq_func.const is d2.eq_func.const)
+        assert (d1.hash_func is d2.hash_func is None) or (d1.hash_func.const is d2.hash_func.const)
         s_new = SomeOrderedDict(d1.bookkeeper, d1.eq_func, d1.hash_func)
         s_new.key_type = d1.key_type = model.unionof(d1.key_type, d2.key_type)
         s_new.value_type = d1.value_type = model.unionof(d1.value_type, d2.value_type)
@@ -243,6 +243,16 @@ class __extend__(pairtype(OrderedDictRepr, Repr)):
         v_dict, v_key = hop.inputargs(self, self.key_repr)
         hop.exception_is_here()
         return hop.gendirectcall(LLOrderedDict.ll_getitem, v_dict, v_key)
+
+
+class __extend__(pairtype(OrderedDictRepr, OrderedDictRepr)):
+    def convert_from_to((d1, d2), v, llops):
+        if (d1.key_repr is not d2.key_repr or
+            d1.value_repr is not d2.value_repr or
+            d1.eq_func_repr is not d2.eq_func_repr or
+            d1.hash_func_repr is not d2.hash_func_repr):
+            return NotImplemented
+        return v
 
 
 class LLOrderedDict(object):

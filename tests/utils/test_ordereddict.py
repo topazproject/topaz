@@ -39,11 +39,13 @@ class BaseTestOrderedDict(object):
         def f(n):
             if n:
                 o = OrderedDict()
+                o[5] = 10
             else:
                 o = OrderedDict()
-                o[2] = "hello"
-            o[3] = "goodbye"
+                o[2] = 20
+            o[3] = 30
             return o[3]
+        assert self.run(f, [True]) == 30
 
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
