@@ -45,11 +45,11 @@ class W_IntObject(W_BaseObject):
         return space.newint(self.intvalue * other)
 
     @classdef.method("/", other="int")
-    def method_div(self, ec, other):
+    def method_div(self, space, other):
         try:
-            return ec.space.newint(self.intvalue / 0)
+            return space.newint(self.intvalue / 0)
         except ZeroDivisionError:
-            raise ec.space.raise_(ec, ec.space.getclassfor(W_ZeroDivisionError),
+            raise space.raise_(space.getclassfor(W_ZeroDivisionError),
                 "divided by 0"
             )
 

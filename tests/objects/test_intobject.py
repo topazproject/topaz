@@ -1,56 +1,56 @@
 class TestIntObject(object):
-    def test_addition(self, ec):
-        w_res = ec.space.execute(ec, "return 1 + 2")
-        assert ec.space.int_w(w_res) == 3
-        
-        w_res = ec.space.execute(ec, "return 1 + 2.5")
-        assert ec.space.float_w(w_res) == 3.5
-    
-    def test_multiplication(self, ec):
-        w_res = ec.space.execute(ec, "return 2 * 3")
-        assert ec.space.int_w(w_res) == 6
+    def test_addition(self, space):
+        w_res = space.execute("return 1 + 2")
+        assert space.int_w(w_res) == 3
 
-    def test_subtraction(self, ec):
-        w_res = ec.space.execute(ec, "return 2 - 3")
-        assert ec.space.int_w(w_res) == -1
+        w_res = space.execute("return 1 + 2.5")
+        assert space.float_w(w_res) == 3.5
 
-        w_res = ec.space.execute(ec, "return 2 - 3.5")
-        assert ec.space.float_w(w_res) == -1.5
+    def test_multiplication(self, space):
+        w_res = space.execute("return 2 * 3")
+        assert space.int_w(w_res) == 6
 
-    def test_equal(self, ec):
-        w_res = ec.space.execute(ec, "return 1 == 1")
-        assert w_res is ec.space.w_true
+    def test_subtraction(self, space):
+        w_res = space.execute("return 2 - 3")
+        assert space.int_w(w_res) == -1
 
-    def test_not_equal(self, ec):
-        w_res = ec.space.execute(ec, "return 1 != 1")
-        assert w_res is ec.space.w_false
+        w_res = space.execute("return 2 - 3.5")
+        assert space.float_w(w_res) == -1.5
 
-    def test_less(self, ec):
-        w_res = ec.space.execute(ec, "return 1 < 2")
-        assert w_res is ec.space.w_true
+    def test_equal(self, space):
+        w_res = space.execute("return 1 == 1")
+        assert w_res is space.w_true
 
-    def test_greater(self, ec):
-        w_res = ec.space.execute(ec, "return 1 > 2")
-        assert w_res is ec.space.w_false
+    def test_not_equal(self, space):
+        w_res = space.execute("return 1 != 1")
+        assert w_res is space.w_false
 
-    def test_times(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_less(self, space):
+        w_res = space.execute("return 1 < 2")
+        assert w_res is space.w_true
+
+    def test_greater(self, space):
+        w_res = space.execute("return 1 > 2")
+        assert w_res is space.w_false
+
+    def test_times(self, space):
+        w_res = space.execute("""
         res = []
         3.times do |x|
             res << x
         end
         return res
         """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [0, 1, 2]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [0, 1, 2]
 
-    def test_comparator_lt(self, ec):
-        w_res = ec.space.execute(ec, "return 1 <=> 2")
-        assert ec.space.int_w(w_res) == -1
+    def test_comparator_lt(self, space):
+        w_res = space.execute("return 1 <=> 2")
+        assert space.int_w(w_res) == -1
 
-    def test_comparator_eq(self, ec):
-        w_res = ec.space.execute(ec, "return 1 <=> 1")
-        assert ec.space.int_w(w_res) == 0
+    def test_comparator_eq(self, space):
+        w_res = space.execute("return 1 <=> 1")
+        assert space.int_w(w_res) == 0
 
-    def test_comparator_gt(self, ec):
-        w_res = ec.space.execute(ec, "return 2 <=> 1")
-        assert ec.space.int_w(w_res) == 1
+    def test_comparator_gt(self, space):
+        w_res = space.execute("return 2 <=> 1")
+        assert space.int_w(w_res) == 1

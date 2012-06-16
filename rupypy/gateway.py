@@ -12,7 +12,7 @@ class WrapperGenerator(object):
         code = self.func.__code__
 
         lines = []
-        lines.append("def %s(self, ec, args_w, block):" % self.func.__name__)
+        lines.append("def %s(self, space, args_w, block):" % self.func.__name__)
         lines.append("    args = ()")
         if self.func.__defaults__ is not None:
             default_start = code.co_argcount - len(self.func.__defaults__)
@@ -27,7 +27,7 @@ class WrapperGenerator(object):
                     coerce_code = "args_w[{:d}]".format(self.arg_count)
                 else:
                     spec = self.argspec[argname]
-                    coerce_code = "Coerce.{}(ec, args_w[{:d}])".format(spec, self.arg_count)
+                    coerce_code = "Coerce.{}(space, args_w[{:d}])".format(spec, self.arg_count)
                 lines.append("    if len(args_w) > {}:".format(self.arg_count))
                 lines.append("        args += ({},)".format(coerce_code))
                 lines.append("    else:")
@@ -44,11 +44,9 @@ class WrapperGenerator(object):
             elif argname == "block":
                 lines.append("    args += (block,)")
             elif argname == "space":
-                lines.append("    args += (ec.space,)")
-            elif argname == "ec":
-                lines.append("    args += (ec,)")
+                lines.append("    args += (space,)")
             else:
-                raise NotImplementedError(argname)
+                raise NotImplementedError(argname, self.func.__name__)
 
         lines.append("    return func(*args)")
 

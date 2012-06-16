@@ -2,8 +2,8 @@ from ..base import BaseRuPyPyTest
 
 
 class TestModuleObject(BaseRuPyPyTest):
-    def test_module_function(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_module_function(self, space):
+        w_res = space.execute("""
         module Mod
             def f
                 3
@@ -18,10 +18,10 @@ class TestModuleObject(BaseRuPyPyTest):
         end
         return [Mod.f, X.new.meth]
         """)
-        assert self.unwrap(ec.space, w_res) == [3, 5]
+        assert self.unwrap(space, w_res) == [3, 5]
 
-    def test_alias_method(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_alias_method(self, space):
+        w_res = space.execute("""
         class X
             def f
                 3
@@ -31,4 +31,4 @@ class TestModuleObject(BaseRuPyPyTest):
 
         return X.new.g
         """)
-        assert self.unwrap(ec.space, w_res) == 3
+        assert self.unwrap(space, w_res) == 3

@@ -10,8 +10,8 @@ class W_ProcObject(W_BaseObject):
         self.is_lambda = is_lambda
 
     @classdef.method("call")
-    def method_call(self, ec, args_w):
-        return ec.space.invoke_block(ec, self.block, args_w)
+    def method_call(self, space, args_w):
+        return space.invoke_block(self.block, args_w)
 
     @classdef.method("lambda?")
     def method_lambda(self, space):

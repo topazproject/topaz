@@ -9,6 +9,7 @@ from pypy.tool.cache import Cache
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
 from rupypy.error import RubyError
+from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
 from rupypy.globals import Globals
 from rupypy.interpreter import Interpreter
@@ -53,6 +54,7 @@ class ObjectSpace(object):
     def __init__(self):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
+        self._executioncontext = None
         self.globals = Globals()
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
@@ -99,28 +101,35 @@ class ObjectSpace(object):
 
     # Methods for dealing with source code.
 
-    def parse(self, ec, source):
+    def parse(self, source):
         try:
             st = ToASTVisitor().transform(_parse(source))
             return Transformer().visit_main(st)
         except ParseError as e:
-            self.raise_(ec, self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
+            self.raise_(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:
-            self.raise_(ec, self.getclassfor(W_SyntaxError))
+            self.raise_(self.getclassfor(W_SyntaxError))
 
-    def compile(self, ec, source, filepath):
-        astnode = self.parse(ec, source)
+    def compile(self, source, filepath):
+        astnode = self.parse(source)
         symtable = SymbolTable()
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, "<main>", symtable, filepath)
         astnode.compile(c)
         return c.create_bytecode([], [], None, None)
 
-    def execute(self, ec, source, w_self=None, w_scope=None, filepath="-e"):
-        bc = self.compile(ec, source, filepath)
+    def execute(self, source, w_self=None, w_scope=None, filepath="-e"):
+        bc = self.compile(source, filepath)
         frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
-        with ec.visit_frame(frame):
-            return self.execute_frame(ec, frame, bc)
+        with self.getexecutioncontext().visit_frame(frame):
+            return self.execute_frame(frame, bc)
+
+    @jit.loop_invariant
+    def getexecutioncontext(self):
+        # When we have threads this should become a thread local.
+        if self._executioncontext is None:
+            self._executioncontext = ExecutionContext(self)
+        return self._executioncontext
 
     def create_frame(self, bc, w_self=None, w_scope=None, block=None,
         parent_interp=None):
@@ -131,8 +140,8 @@ class ObjectSpace(object):
             w_scope = self.getclassfor(W_Object)
         return Frame(jit.promote(bc), w_self, w_scope, block, parent_interp)
 
-    def execute_frame(self, ec, frame, bc):
-        return Interpreter().interpret(ec, frame, bc)
+    def execute_frame(self, frame, bc):
+        return Interpreter().interpret(self, frame, bc)
 
     # Methods for allocating new objects.
 
@@ -235,7 +244,7 @@ class ObjectSpace(object):
     def set_instance_var(self, w_obj, name, w_value):
         w_obj.set_instance_var(self, name, w_value)
 
-    def send(self, ec, w_receiver, w_method, args_w=None, block=None):
+    def send(self, w_receiver, w_method, args_w=None, block=None):
         if args_w is None:
             args_w = []
         name = self.symbol_w(w_method)
@@ -243,8 +252,8 @@ class ObjectSpace(object):
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
         if raw_method is None:
-            self.raise_(ec, self.getclassfor(W_NoMethodError), "undefined method `%s`" % name)
-        return raw_method.call(ec, w_receiver, args_w, block)
+            self.raise_(self.getclassfor(W_NoMethodError), "undefined method `%s`" % name)
+        return raw_method.call(self, w_receiver, args_w, block)
 
     def respond_to(self, w_receiver, w_method):
         name = self.symbol_w(w_method)
@@ -253,7 +262,7 @@ class ObjectSpace(object):
         return raw_method is not None
 
     @jit.unroll_safe
-    def invoke_block(self, ec, block, args_w):
+    def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(
             bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block,
@@ -265,16 +274,16 @@ class ObjectSpace(object):
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
         if len(bc.arg_locs) != 0:
-            frame.handle_args(ec, bc, args_w, None)
+            frame.handle_args(self, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell
 
-        with ec.visit_frame(frame):
-            return ec.space.execute_frame(ec, frame, bc)
+        with self.getexecutioncontext().visit_frame(frame):
+            return self.execute_frame(frame, bc)
 
-    def raise_(self, ec, w_type, msg=""):
+    def raise_(self, w_type, msg=""):
         w_new_sym = self.newsymbol("new")
-        w_exc = self.send(ec, w_type, w_new_sym, [self.newstr_fromstr(msg)])
+        w_exc = self.send(w_type, w_new_sym, [self.newstr_fromstr(msg)])
         assert isinstance(w_exc, W_ExceptionObject)
         raise RubyError(w_exc)

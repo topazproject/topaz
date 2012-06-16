@@ -43,11 +43,13 @@ class Frame(BaseFrame):
             self.cells[pos].set(w_value)
 
     @jit.unroll_safe
-    def handle_args(self, ec, bytecode, args_w, block):
+    def handle_args(self, space, bytecode, args_w, block):
         from rupypy.interpreter import Interpreter
 
         assert len(args_w) >= (len(bytecode.arg_locs) - len(bytecode.defaults))
         assert bytecode.splat_arg_pos != -1 or 0 <= len(bytecode.arg_locs) - len(args_w)
+
+        ec = space.getexecutioncontext()
 
         for i in xrange(min(len(args_w), len(bytecode.arg_locs))):
             self._set_normal_arg(bytecode, i, args_w[i])
