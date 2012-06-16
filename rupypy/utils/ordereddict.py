@@ -2,6 +2,7 @@ from collections import OrderedDict as PyOrderedDict
 
 from pypy.annotation import model
 from pypy.annotation.bookkeeper import getbookkeeper
+from pypy.rlib.objectmodel import hlinvoke
 from pypy.rlib.rarithmetic import r_uint, intmask, LONG_BIT
 from pypy.rpython.extregistry import ExtRegistryEntry
 from pypy.rpython.lltypesystem import lltype
@@ -170,19 +171,42 @@ class OrderedDictRepr(Repr):
             "valid": LLOrderedDict.ll_valid_from_flag,
             "everused": LLOrderedDict.ll_everused_from_flag,
         }
-        DICTENTRY = lltype.Struct("ORDEREDDICTENTRY",
+        fields = [
             ("key", self.key_repr.lowleveltype),
             ("value", self.value_repr.lowleveltype),
             ("next", lltype.Signed),
             ("everused", lltype.Bool),
             ("valid", lltype.Bool),
-        )
+        ]
+        fast_hash_func = None
+        if not self.hash_func_repr:
+            fast_hash_func = self.key_repr.get_ll_hash_function()
+        if fast_hash_func is None:
+            fields.append(("hash", lltype.Signed))
+            entry_methods["hash"] = LLOrderedDict.ll_hash_from_cache
+        else:
+            entry_methods["hash"] = LLOrderedDict.ll_hash_recompute
+            entry_methods["fast_hash_func"] = fast_hash_func
+        DICTENTRY = lltype.Struct("ORDEREDDICTENTRY", *fields)
 
+        fields = [
+            ("num_items", lltype.Signed),
+            ("resize_counter", lltype.Signed),
+            ("first_entry", lltype.Signed),
+            ("last_entry", lltype.Signed),
+            ("entries", lltype.Ptr(lltype.GcArray(DICTENTRY, adtmeths=entry_methods))),
+        ]
         dict_methods = {}
         if self.eq_func_repr and self.hash_func_repr:
             dict_methods["paranoia"] = True
-            dict_methods["hashkey"] = lltype.staticAdtMethod(self.hash_func_repr)
-            dict_methods["keyeq"] = lltype.staticAdtMethod(self.eq_func_repr)
+            dict_methods["hashkey"] = LLOrderedDict.ll_hashkey_custom
+            dict_methods["keyeq"] = LLOrderedDict.ll_keyeq_custom
+
+            dict_methods["r_hashkey"] = self.hash_func_repr
+            dict_methods["r_keyeq"] = self.eq_func_repr
+
+            fields.append(("hashkey_func", self.hash_func_repr.lowleveltype))
+            fields.append(("keyeq_func", self.eq_func_repr.lowleveltype))
         else:
             dict_methods["paranoia"] = False
             dict_methods["hashkey"] = lltype.staticAdtMethod(self.key_repr.get_ll_hash_function())
@@ -191,20 +215,21 @@ class OrderedDictRepr(Repr):
                 ll_keyeq = lltype.staticAdtMethod(ll_keyeq)
             dict_methods["keyeq"] = ll_keyeq
 
-        DICT = lltype.GcStruct("ORDEREDDICT",
-            ("num_items", lltype.Signed),
-            ("resize_counter", lltype.Signed),
-            ("first_entry", lltype.Signed),
-            ("last_entry", lltype.Signed),
-            ("entries", lltype.Ptr(lltype.GcArray(DICTENTRY, adtmeths=entry_methods))),
-            adtmeths=dict_methods
-        )
+        DICT = lltype.GcStruct("ORDEREDDICT", *fields, adtmeths=dict_methods)
         return lltype.Ptr(DICT)
 
     def rtyper_new(self, hop):
         hop.exception_cannot_occur()
         c_TP = hop.inputconst(lltype.Void, self.lowleveltype.TO)
-        return hop.gendirectcall(LLOrderedDict.ll_newdict, c_TP)
+        v_res = hop.gendirectcall(LLOrderedDict.ll_newdict, c_TP)
+        if self.eq_func_repr and self.hash_func_repr:
+            v_eq = hop.inputarg(self.eq_func_repr, arg=0)
+            v_hash = hop.inputarg(self.hash_func_repr, arg=1)
+            cname = hop.inputconst(lltype.Void, "keyeq_func")
+            hop.genop("setfield", [v_res, cname, v_eq])
+            cname = hop.inputconst(lltype.Void, "hashkey_func")
+            hop.genop("setfield", [v_res, cname, v_hash])
+        return v_res
 
 
 class __extend__(pairtype(OrderedDictRepr, Repr)):
@@ -235,6 +260,25 @@ class LLOrderedDict(object):
         return entries[i].everused
 
     @staticmethod
+    def ll_hashkey_custom(d, key):
+        DICT = lltype.typeOf(d).TO
+        return hlinvoke(DICT.r_hashkey, d.hashkey_func, key)
+
+    @staticmethod
+    def ll_keyeq_custom(d, key1, key2):
+        DICT = lltype.typeOf(d).TO
+        return hlinvoke(DICT.r_keyeq, d.keyeq_func, key1, key2)
+
+    @staticmethod
+    def ll_hash_recompute(entries, i):
+        ENTRIES = lltype.typeOf(entries).TO
+        return ENTRIES.fast_hash_func(entries[i].key)
+
+    @staticmethod
+    def ll_hash_from_cache(entries, i):
+        return entries[i].hash
+
+    @staticmethod
     def ll_newdict(DICT):
         d = lltype.malloc(DICT)
         d.entries = lltype.malloc(DICT.entries.TO, LLOrderedDict.INIT_SIZE, zero=True)
@@ -258,7 +302,7 @@ class LLOrderedDict(object):
                 found = d.keyeq(checkingkey, key)
                 if d.paranoia:
                     if (entries != d.entries or
-                        not entries.valid(i) or entries[i] != checkingkey):
+                        not entries.valid(i) or entries[i].key != checkingkey):
                         return LLOrderedDict.ll_lookup(d, key, hash)
                 if found:
                     return i
