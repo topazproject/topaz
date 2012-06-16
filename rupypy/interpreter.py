@@ -155,6 +155,23 @@ class Interpreter(object):
         ec.space.set_instance_var(w_obj, ec.space.symbol_w(w_name), w_value)
         frame.push(w_value)
 
+    def LOAD_CLASS_VAR(self, ec, bytecode, frame, pc, idx):
+        name = ec.space.symbol_w(bytecode.consts_w[idx])
+        w_module = frame.pop()
+        w_value = ec.space.cvars.get(ec.space, w_module, name)
+        if w_value is None:
+            ec.space.raise_(ec, ec.space.getclassfor(W_NameError),
+                "uninitialized class variable %s in %s" % (name, w_module.name)
+            )
+        frame.push(w_value)
+
+    def STORE_CLASS_VAR(self, ec, bytecode, frame, pc, idx):
+        name = ec.space.symbol_w(bytecode.consts_w[idx])
+        w_value = frame.pop()
+        w_module = frame.pop()
+        ec.space.cvars.set(ec.space, w_module, name, w_value)
+        frame.push(w_value)
+
     def LOAD_GLOBAL(self, ec, bytecode, frame, pc, idx):
         name = ec.space.symbol_w(bytecode.consts_w[idx])
         w_value = ec.space.globals.get(ec.space, name)
