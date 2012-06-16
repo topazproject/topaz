@@ -252,7 +252,10 @@ class ObjectSpace(object):
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
         if raw_method is None:
-            self.raise_(self.getclassfor(W_NoMethodError), "undefined method `%s`" % name)
+            class_name = self.str_w(self.send(w_cls, self.newsymbol("name")))
+            self.raise_(self.getclassfor(W_NoMethodError),
+                "undefined method `%s` for %s" % (name, class_name)
+            )
         return raw_method.call(self, w_receiver, args_w, block)
 
     def respond_to(self, w_receiver, w_method):

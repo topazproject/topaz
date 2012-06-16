@@ -138,3 +138,7 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
         self.define_method(space, new_name, self.find_method(space, old_name))
+
+    @classdef.method("name")
+    def method_name(self, space):
+        return space.newstr_fromstr(self.name)
