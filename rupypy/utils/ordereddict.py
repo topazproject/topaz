@@ -155,9 +155,11 @@ class OrderedDictRepr(Repr):
 
         dict_methods = {}
         if self.eq_func_repr and self.hash_func_repr:
+            dict_methods["paranoia"] = True
             dict_methods["hashkey"] = lltype.staticAdtMethod(self.hash_func_repr)
             dict_methods["keyeq"] = lltype.staticAdtMethod(self.eq_func_repr)
         else:
+            dict_methods["paranoia"] = False
             dict_methods["hashkey"] = lltype.staticAdtMethod(self.key_repr.get_ll_hash_function())
             ll_keyeq = self.key_repr.get_ll_eq_function()
             if ll_keyeq is not None:
