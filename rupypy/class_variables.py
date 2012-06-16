@@ -8,50 +8,54 @@ class ClassVariable(object):
 
     def append(self, w_module, w_value):
         self.modules.append(w_module)
-        self.values.append(w_value)
+        self.values.append(ClassVariableValue(w_value))
 
     def remove(self, w_module):
         idx = self.modules.index(w_module)
         self.modules.pop(idx)
         self.values.pop(idx)
 
+    @jit.elidable
+    def get_value(self, space, w_module):
+        ancestors = w_module.ancestors()
+        ancestors.reverse()
+        module_names = [m.name for m in self.modules]
+        for module_name in ancestors:
+            if module_name in module_names:
+                idx = module_names.index(module_name)
+                return self.values[idx]
+        return None
+
+class ClassVariableValue(object):
+    def __init__(self, w_value):
+        self.w_value = w_value
+
 class ClassVariables(object):
     def __init__(self):
-        self.values = {}
+        self.cvars = {}
 
     def get(self, space, w_module, name):
-        cvar_with_idx = self._access_variable(space, w_module, name)
-        if cvar_with_idx == None or len(cvar_with_idx) == 1:
-            return None
-        else:
-            return cvar_with_idx[0].values[cvar_with_idx[1]]
+        cvar = self.cvars.get(name, None)
+        if cvar is not None:
+            value = cvar.get_value(space, w_module)
+            if value is not None:
+                return value.w_value
+        return None
 
     def set(self, space, w_module, name, w_value):
-        cvar_with_idx = self._access_variable(space, w_module, name)
-        if cvar_with_idx == None:
+        cvar = self.cvars.get(name, None)
+        if cvar is None:
             cvar = ClassVariable(name)
-            self.values[name] = cvar
-            cvar.append(w_module, w_value)
-        elif len(cvar_with_idx) == 1:
-            cvar = cvar_with_idx[0]
-            cvar_modules = cvar.modules + []
-            # remove any subclasses' own version of the cvar
-            for m in cvar_modules:
-                if w_module.name in m.ancestors():
-                    cvar.remove(m)
+            self.cvars[name] = cvar
             cvar.append(w_module, w_value)
         else:
-            cvar_with_idx[0].values[cvar_with_idx[1]] = w_value
-
-    def _access_variable(self, space, w_module, name):
-        variable = self.values.get(name, None)
-        if variable == None:
-            return None
-        else:
-            ancestors = w_module.ancestors()
-            ancestors.reverse()
-            module_names = [m.name for m in variable.modules]
-            for m in ancestors:
-                if m in module_names:
-                    return [variable, module_names.index(m)]
-            return [variable]
+            value = cvar.get_value(space, w_module)
+            if value is None:
+                cvar_modules = cvar.modules + []
+                # remove any subclasses' own version of the cvar
+                for w_m in cvar_modules:
+                    if w_module.name in w_m.ancestors():
+                        cvar.remove(w_m)
+                cvar.append(w_module, w_value)
+            else:
+                value.w_value = w_value
