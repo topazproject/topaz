@@ -74,17 +74,20 @@ class SomeOrderedDict(model.SomeObject):
         )
 
     def rtyper_makerepr(self, rtyper):
-        key_repr = rtyper.makerepr(self.key_type)
-        value_repr = rtyper.makerepr(self.value_type)
+        key_repr = rtyper.getrepr(self.key_type)
+        value_repr = rtyper.getrepr(self.value_type)
         if self.eq_func is not None:
-            eq_func_repr = rtyper.makerepr(self.eq_func)
+            eq_func_repr = rtyper.getrepr(self.eq_func)
         else:
             eq_func_repr = None
         if self.hash_func is not None:
-            hash_func_repr = rtyper.makerepr(self.hash_func)
+            hash_func_repr = rtyper.getrepr(self.hash_func)
         else:
             hash_func_repr = None
         return OrderedDictRepr(rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr)
+
+    def rtyper_makekey(self):
+        return (type(self), self.key_type, self.value_type, self.eq_func, self.hash_func)
 
     def generalize_key(self, s_key):
         new_key_type = model.unionof(self.key_type, s_key)
