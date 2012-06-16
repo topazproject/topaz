@@ -354,6 +354,8 @@ class LLOrderedDict(object):
         if valid:
             return
         entry.key = key
+        if hasattr(ENTRY, "hash"):
+            entry.hash = hash
         if hasattr(ENTRY, "valid"):
             entry.valid = True
         d.num_items += 1
