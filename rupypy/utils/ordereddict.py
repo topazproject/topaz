@@ -76,7 +76,15 @@ class SomeOrderedDict(model.SomeObject):
     def rtyper_makerepr(self, rtyper):
         key_repr = rtyper.makerepr(self.key_type)
         value_repr = rtyper.makerepr(self.value_type)
-        return OrderedDictRepr(rtyper, key_repr, value_repr)
+        if self.eq_func is not None:
+            eq_func_repr = rtyper.makerepr(self.eq_func)
+        else:
+            eq_func_repr = None
+        if self.hash_func is not None:
+            hash_func_repr = rtyper.makerepr(self.hash_func)
+        else:
+            hash_func_repr = None
+        return OrderedDictRepr(rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr)
 
     def generalize_key(self, s_key):
         new_key_type = model.unionof(self.key_type, s_key)
@@ -123,10 +131,12 @@ class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
 
 
 class OrderedDictRepr(Repr):
-    def __init__(self, rtyper, key_repr, value_repr):
+    def __init__(self, rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr):
         self.rtyper = rtyper
         self.key_repr = key_repr
         self.value_repr = value_repr
+        self.eq_func_repr = eq_func_repr
+        self.hash_func_repr = hash_func_repr
 
         self.lowleveltype = self.create_lowlevel_type()
 
@@ -143,13 +153,17 @@ class OrderedDictRepr(Repr):
             ("valid", lltype.Bool),
         )
 
-        ll_keyeq = self.key_repr.get_ll_eq_function()
-        if ll_keyeq is not None:
-            ll_keyeq = lltype.staticAdtMethod(ll_keyeq)
-        dict_methods = {
-            "hashkey": lltype.staticAdtMethod(self.key_repr.get_ll_hash_function()),
-            "keyeq": ll_keyeq,
-        }
+        dict_methods = {}
+        if self.eq_func_repr and self.hash_func_repr:
+            dict_methods["hashkey"] = lltype.staticAdtMethod(self.hash_func_repr)
+            dict_methods["keyeq"] = lltype.staticAdtMethod(self.eq_func_repr)
+        else:
+            dict_methods["hashkey"] = lltype.staticAdtMethod(self.key_repr.get_ll_hash_function())
+            ll_keyeq = self.key_repr.get_ll_eq_function()
+            if ll_keyeq is not None:
+                ll_keyeq = lltype.staticAdtMethod(ll_keyeq)
+            dict_methods["keyeq"] = ll_keyeq
+
         DICT = lltype.GcStruct("ORDEREDDICT",
             ("num_items", lltype.Signed),
             ("resize_counter", lltype.Signed),
