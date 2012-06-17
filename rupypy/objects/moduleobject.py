@@ -11,8 +11,8 @@ class AttributeReader(W_FunctionObject):
     def __init__(self, varname):
         self.varname = varname
 
-    def call(self, ec, w_obj, args_w, block):
-        return ec.space.find_instance_var(w_obj, self.varname)
+    def call(self, space, w_obj, args_w, block):
+        return space.find_instance_var(w_obj, self.varname)
 
 
 class AttributeWriter(W_FunctionObject):
@@ -21,9 +21,9 @@ class AttributeWriter(W_FunctionObject):
     def __init__(self, varname):
         self.varname = varname
 
-    def call(self, ec, w_obj, args_w, block):
+    def call(self, space, w_obj, args_w, block):
         [w_value] = args_w
-        ec.space.set_instance_var(w_obj, self.varname, w_value)
+        space.set_instance_var(w_obj, self.varname, w_value)
         return w_value
 
 
@@ -148,3 +148,7 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("ancestors")
     def method_ancestors(self, space):
         return space.newarray([space.newstr_fromstr(c) for c in self.ancestors()])
+
+    @classdef.method("name")
+    def method_name(self, space):
+        return space.newstr_fromstr(self.name)

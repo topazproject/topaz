@@ -5,7 +5,8 @@ from rupypy.objects.objectobject import W_BaseObject
 class W_CodeObject(W_BaseObject):
     _immutable_fields_ = [
         "code", "consts_w[*]", "max_stackdepth", "locals[*]", "cellvars[*]",
-        "freevars[*]", "arg_locs[*]", "arg_pos[*]", "defaults[*]"
+        "freevars[*]", "arg_locs[*]", "arg_pos[*]", "defaults[*]",
+        "block_arg_loc", "block_arg_pos", "splat_arg_loc", "splat_arg_pos",
     ]
 
     classdef = ClassDef("Code", W_BaseObject.classdef)
