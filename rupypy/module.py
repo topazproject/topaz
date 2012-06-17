@@ -1,6 +1,6 @@
 from rupypy.executioncontext import ExecutionContext
 from rupypy.gateway import WrapperGenerator
-from rupypy.utils import Cache
+from rupypy.utils.cache import Cache
 
 
 class ClassDef(object):
@@ -22,7 +22,9 @@ class ClassDef(object):
     def include_module(self, mod):
         self.includes.append(mod)
 
-    def method(self, name, **argspec):
+    def method(self, __name, **argspec):
+        name = __name
+
         def adder(func):
             self.methods[name] = (func, argspec)
             return func
@@ -85,9 +87,7 @@ class ClassCache(Cache):
             w_class.define_method(self.space, name, W_BuiltinFunction(name, func))
 
         for source in classdef.app_methods:
-            self.space.execute(ExecutionContext(self.space), source,
-                w_self=w_class, w_scope=w_class
-            )
+            self.space.execute(source, w_self=w_class, w_scope=w_class)
 
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ClassObject).generate_wrapper()
@@ -95,8 +95,7 @@ class ClassCache(Cache):
 
         for mod in reversed(classdef.includes):
             w_mod = self.space.getmoduleobject(mod.moduledef)
-            self.space.send(ExecutionContext(self.space), w_class,
-                self.space.newsymbol("include"), [w_mod])
+            self.space.send(w_class, self.space.newsymbol("include"), [w_mod])
 
 
 class ModuleCache(Cache):
@@ -110,9 +109,7 @@ class ModuleCache(Cache):
             func = WrapperGenerator(name, method, argspec, W_BaseObject).generate_wrapper()
             w_mod.define_method(self.space, name, W_BuiltinFunction(name, func))
         for source in moduledef.app_methods:
-            self.space.execute(ExecutionContext(self.space), source,
-                w_self=w_mod, w_scope=w_mod
-            )
+            self.space.execute(source, w_self=w_mod, w_scope=w_mod)
         for name, (method, argspec) in moduledef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
             w_mod.attach_method(self.space, name, W_BuiltinFunction(name, func))

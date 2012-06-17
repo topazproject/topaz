@@ -54,6 +54,7 @@ class BaseLexer(object):
         "and": Keyword("AND_LITERAL", "AND_LITERAL", EXPR_BEG),
         "or": Keyword("OR_LITERAL", "OR_LITERAL", EXPR_BEG),
         "not": Keyword("NOT_LITERAL", "NOT_LITERAL", EXPR_BEG),
+        "alias": Keyword("ALIAS", "ALIAS", EXPR_FNAME),
     }
 
     def __init__(self):
@@ -79,6 +80,8 @@ class BaseLexer(object):
         self.clear()
         self.tokens.append(Token(token, value, self.current_pos()))
 
+    def error(self):
+        raise LexerError(self.current_pos())
 
 class Lexer(BaseLexer):
     def __init__(self, source):
@@ -401,7 +404,7 @@ class Lexer(BaseLexer):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\":
+        if ch in "$>:?\\!\"":
             self.add(ch)
             self.emit("GLOBAL")
         else:
@@ -726,8 +729,7 @@ class Lexer(BaseLexer):
                 if c == "\\":
                     c = self.read_escape()
                 return chr(ord(c) & 0x9f)
-        else:
-            return c
+        return c
 
     def colon(self, ch, space_seen):
         ch2 = self.read()
@@ -781,8 +783,13 @@ class Lexer(BaseLexer):
         self.emit("QWORDS_BEGIN")
         tokens = StringLexer(self, begin, end, interpolate=interpolate, qwords=True).tokenize()
         # drop empty last string
-        if tokens[-2].name == "STRING_BEGIN":
-            tokens = tokens[:-2]
+        n_tokens = len(tokens)
+        if n_tokens > 2:
+            if tokens[n_tokens - 2].name == "STRING_BEGIN":
+                tokens.pop()
+                tokens.pop()
+        else:
+            tokens = []
         self.tokens.extend(tokens)
         self.emit("QWORDS_END")
         self.state = self.EXPR_END
@@ -985,7 +992,8 @@ class HeredocLexer(ChildLexer):
         if chars.getlength():
             lexer_tokens = Lexer(chars.build()).tokenize()
             lexer_tokens.pop()
-            self.tokens.extend(lexer_tokens)
+        else:
+            lexer_tokens = []
 
         self.emit("STRING_BEGIN")
         while True:
@@ -1016,4 +1024,5 @@ class HeredocLexer(ChildLexer):
             else:
                 self.add(ch)
         self.emit("STRING_END")
+        self.tokens.extend(lexer_tokens)
         return self.tokens

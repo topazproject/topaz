@@ -18,22 +18,22 @@ def get_printable_location(pc, bytecode):
 class Interpreter(object):
     jitdriver = jit.JitDriver(
         greens=["pc", "bytecode"],
-        reds=["self", "ec", "frame"],
+        reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
     )
 
-    def interpret(self, ec, frame, bytecode):
+    def interpret(self, space, frame, bytecode):
         pc = 0
         try:
             while True:
                 self.jitdriver.jit_merge_point(
-                    self=self, ec=ec, bytecode=bytecode, frame=frame, pc=pc
+                    self=self, bytecode=bytecode, frame=frame, pc=pc
                 )
                 try:
-                    pc = self.handle_bytecode(ec, pc, frame, bytecode)
+                    pc = self.handle_bytecode(space, pc, frame, bytecode)
                 except RubyError as e:
-                    pc = self.handle_ruby_error(ec, pc, frame, bytecode, e)
+                    pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
         except RaiseReturn as e:
             if e.parent_interp is self:
                 return e.w_value
@@ -41,22 +41,22 @@ class Interpreter(object):
         except Return as e:
             return e.w_value
 
-    def handle_bytecode(self, ec, pc, frame, bytecode):
+    def handle_bytecode(self, space, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])
         pc += 1
         if we_are_translated():
             for i, name in consts.UNROLLING_BYTECODES:
                 if i == instr:
-                    pc = self.run_instr(ec, name, consts.BYTECODE_NUM_ARGS[i], bytecode, frame, pc)
+                    pc = self.run_instr(space, name, consts.BYTECODE_NUM_ARGS[i], bytecode, frame, pc)
                     break
             else:
                 raise NotImplementedError
         else:
-            pc = self.run_instr(ec, consts.BYTECODE_NAMES[instr], consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
+            pc = self.run_instr(space, consts.BYTECODE_NAMES[instr], consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
         return pc
 
     @specialize.arg(2, 3)
-    def run_instr(self, ec, name, num_args, bytecode, frame, pc):
+    def run_instr(self, space, name, num_args, bytecode, frame, pc):
         args = ()
         # Do not change these from * 256 to << 8, lshift has defined overflow
         # semantics which cause it to not propogate the nonnegative-ness.
@@ -74,29 +74,29 @@ class Interpreter(object):
             raise NotImplementedError
 
         method = getattr(self, name)
-        res = method(ec, bytecode, frame, pc, *args)
+        res = method(space, bytecode, frame, pc, *args)
         if res is not None:
             pc = res
         return pc
 
-    def handle_ruby_error(self, ec, pc, frame, bytecode, e):
+    def handle_ruby_error(self, space, pc, frame, bytecode, e):
         e.w_value.last_instructions.append(pc)
         block = frame.unrollstack(ApplicationException.kind)
         if block is None:
-            raise
+            raise e
         unroller = ApplicationException(e)
-        return block.handle(ec.space, frame, unroller)
+        return block.handle(space, frame, unroller)
 
-    def jump(self, ec, bytecode, frame, cur_pc, target_pc):
+    def jump(self, space, bytecode, frame, cur_pc, target_pc):
         if target_pc < cur_pc:
             self.jitdriver.can_enter_jit(
-                self=self, ec=ec, bytecode=bytecode, frame=frame, pc=target_pc,
+                self=self, bytecode=bytecode, frame=frame, pc=target_pc,
             )
         return target_pc
 
-    def LOAD_SELF(self, ec, bytecode, frame, pc):
+    def LOAD_SELF(self, space, bytecode, frame, pc):
         w_self = frame.w_self
-        jit.promote(ec.space.getclass(w_self))
+        jit.promote(space.getclass(w_self))
         frame.push(w_self)
 
     def LOAD_SCOPE(self, space, bytecode, frame, pc):
@@ -123,55 +123,61 @@ class Interpreter(object):
     def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
         frame.push(frame.cells[idx])
 
-    def LOAD_CONSTANT(self, ec, bytecode, frame, pc, idx):
+    def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_scope = frame.pop()
         w_name = bytecode.consts_w[idx]
-        name = ec.space.symbol_w(w_name)
-        w_obj = ec.space.find_const(w_scope, name)
+        name = space.symbol_w(w_name)
+        w_obj = space.find_const(w_scope, name)
         if w_obj is None:
-            ec.space.raise_(ec, ec.space.getclassfor(W_NameError),
+            space.raise_(space.getclassfor(W_NameError),
                 "uninitialized constant %s" % name
             )
         frame.push(w_obj)
 
-    def STORE_CONSTANT(self, ec, bytecode, frame, pc, idx):
+    def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
-        name = ec.space.symbol_w(w_name)
+        name = space.symbol_w(w_name)
         w_value = frame.pop()
         w_scope = frame.pop()
-        ec.space.set_const(w_scope, name, w_value)
+        space.set_const(w_scope, name, w_value)
         frame.push(w_value)
 
-    def LOAD_INSTANCE_VAR(self, ec, bytecode, frame, pc, idx):
+    def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
-        w_res = ec.space.find_instance_var(w_obj, ec.space.symbol_w(w_name))
+        w_res = space.find_instance_var(w_obj, space.symbol_w(w_name))
         frame.push(w_res)
 
-    def STORE_INSTANCE_VAR(self, ec, bytecode, frame, pc, idx):
+    def STORE_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         w_value = frame.pop()
         w_obj = frame.pop()
-        ec.space.set_instance_var(w_obj, ec.space.symbol_w(w_name), w_value)
+        space.set_instance_var(w_obj, space.symbol_w(w_name), w_value)
         frame.push(w_value)
 
-    def LOAD_GLOBAL(self, ec, bytecode, frame, pc, idx):
-        name = ec.space.symbol_w(bytecode.consts_w[idx])
-        w_value = ec.space.globals.get(ec.space, name)
+    def LOAD_CLASS_VAR(self, space, bytecode, frame, pc, idx):
+        raise NotImplementedError
+
+    def STORE_CLASS_VAR(self, space, bytecode, frame, pc, idx):
+        raise NotImplementedError
+
+    def LOAD_GLOBAL(self, space, bytecode, frame, pc, idx):
+        name = space.symbol_w(bytecode.consts_w[idx])
+        w_value = space.globals.get(space, name)
         frame.push(w_value)
 
-    def STORE_GLOBAL(self, ec, bytecode, frame, pc, idx):
-        name = ec.space.symbol_w(bytecode.consts_w[idx])
+    def STORE_GLOBAL(self, space, bytecode, frame, pc, idx):
+        name = space.symbol_w(bytecode.consts_w[idx])
         w_value = frame.peek()
-        ec.space.globals.set(ec.space, name, w_value)
+        space.globals.set(space, name, w_value)
 
     @jit.unroll_safe
-    def BUILD_ARRAY(self, ec, bytecode, frame, pc, n_items):
+    def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)
-        frame.push(ec.space.newarray(items_w))
+        frame.push(space.newarray(items_w))
 
     @jit.unroll_safe
-    def BUILD_STRING(self, ec, bytecode, frame, pc, n_items):
+    def BUILD_STRING(self, space, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)
         total_length = 0
         for w_item in items_w:
@@ -182,27 +188,27 @@ class Interpreter(object):
         for w_item in items_w:
             assert isinstance(w_item, W_StringObject)
             w_item.strategy.extend_into(w_item.storage, storage)
-        frame.push(ec.space.newstr_fromchars(storage))
+        frame.push(space.newstr_fromchars(storage))
 
-    def BUILD_HASH(self, ec, bytecode, frame, pc):
-        frame.push(ec.space.newhash())
+    def BUILD_HASH(self, space, bytecode, frame, pc):
+        frame.push(space.newhash())
 
-    def BUILD_RANGE(self, ec, bytecode, frame, pc):
+    def BUILD_RANGE(self, space, bytecode, frame, pc):
         w_end = frame.pop()
         w_start = frame.pop()
-        w_range = ec.space.newrange(w_start, w_end, False)
+        w_range = space.newrange(w_start, w_end, False)
         frame.push(w_range)
 
-    def BUILD_RANGE_INCLUSIVE(self, ec, bytecode, frame, pc):
+    def BUILD_RANGE_INCLUSIVE(self, space, bytecode, frame, pc):
         w_end = frame.pop()
         w_start = frame.pop()
-        w_range = ec.space.newrange(w_start, w_end, True)
+        w_range = space.newrange(w_start, w_end, True)
         frame.push(w_range)
 
-    def BUILD_FUNCTION(self, ec, bytecode, frame, pc):
+    def BUILD_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()
-        w_func = ec.space.newfunction(w_name, w_code)
+        w_func = space.newfunction(w_name, w_code)
         frame.push(w_func)
 
     @jit.unroll_safe
@@ -218,46 +224,46 @@ class Interpreter(object):
         )
         frame.push(block)
 
-    def BUILD_CLASS(self, ec, bytecode, frame, pc):
+    def BUILD_CLASS(self, space, bytecode, frame, pc):
         from rupypy.objects.objectobject import W_Object
 
         superclass = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
 
-        name = ec.space.symbol_w(w_name)
-        w_cls = ec.space.find_const(w_scope, name)
+        name = space.symbol_w(w_name)
+        w_cls = space.find_const(w_scope, name)
         if w_cls is None:
-            if superclass is ec.space.w_nil:
-                superclass = ec.space.getclassfor(W_Object)
-            w_cls = ec.space.newclass(name, superclass)
-            ec.space.set_const(w_scope, name, w_cls)
+            if superclass is space.w_nil:
+                superclass = space.getclassfor(W_Object)
+            w_cls = space.newclass(name, superclass)
+            space.set_const(w_scope, name, w_cls)
 
         frame.push(w_cls)
 
-    def BUILD_MODULE(self, ec, bytecode, frame, pc):
+    def BUILD_MODULE(self, space, bytecode, frame, pc):
         from rupypy.objects.codeobject import W_CodeObject
 
         w_bytecode = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
 
-        name = ec.space.symbol_w(w_name)
-        w_mod = ec.space.find_const(w_scope, name)
+        name = space.symbol_w(w_name)
+        w_mod = space.find_const(w_scope, name)
         if w_mod is None:
-            w_mod = ec.space.newmodule(name)
-            ec.space.set_const(w_scope, name, w_mod)
+            w_mod = space.newmodule(name)
+            space.set_const(w_scope, name, w_mod)
 
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = ec.space.create_frame(w_bytecode, w_mod, w_mod)
-        with ec.visit_frame(sub_frame):
-            ec.space.execute_frame(ec, sub_frame, w_bytecode)
+        sub_frame = space.create_frame(w_bytecode, w_mod, w_mod)
+        with space.getexecutioncontext().visit_frame(sub_frame):
+            space.execute_frame(sub_frame, w_bytecode)
 
-        frame.push(ec.space.w_nil)
+        frame.push(space.w_nil)
 
-    def BUILD_REGEXP(self, ec, bytecode, frame, pc):
+    def BUILD_REGEXP(self, space, bytecode, frame, pc):
         w_string = frame.pop()
-        frame.push(ec.space.newregexp(ec.space.str_w(w_string)))
+        frame.push(space.newregexp(space.str_w(w_string)))
 
     def COPY_STRING(self, space, bytecode, frame, pc):
         from rupypy.objects.stringobject import W_StringObject
@@ -266,125 +272,125 @@ class Interpreter(object):
         assert isinstance(w_s, W_StringObject)
         frame.push(w_s.copy())
 
-    def COERCE_ARRAY(self, ec, bytecode, frame, pc):
+    def COERCE_ARRAY(self, space, bytecode, frame, pc):
         from rupypy.objects.arrayobject import W_ArrayObject
 
         w_obj = frame.pop()
-        if w_obj is ec.space.w_nil:
-            frame.push(ec.space.newarray([]))
+        if w_obj is space.w_nil:
+            frame.push(space.newarray([]))
         elif isinstance(w_obj, W_ArrayObject):
             frame.push(w_obj)
         else:
-            if ec.space.respond_to(w_obj, ec.space.newsymbol("to_a")):
-                w_obj = ec.space.send(ec, w_obj, ec.space.newsymbol("to_a"))
-            elif ec.space.respond_to(w_obj, ec.space.newsymbol("to_ary")):
-                w_obj = ec.space.send(ec, w_obj, ec.space.newsymbol("to_ary"))
+            if space.respond_to(w_obj, space.newsymbol("to_a")):
+                w_obj = space.send(w_obj, space.newsymbol("to_a"))
+            elif space.respond_to(w_obj, space.newsymbol("to_ary")):
+                w_obj = space.send(w_obj, space.newsymbol("to_ary"))
             if not isinstance(w_obj, W_ArrayObject):
-                w_obj = ec.space.newarray([w_obj])
+                w_obj = space.newarray([w_obj])
             frame.push(w_obj)
 
-    def COERCE_BLOCK(self, ec, bytecode, frame, pc):
+    def COERCE_BLOCK(self, space, bytecode, frame, pc):
         w_block = frame.pop()
-        if w_block is ec.space.w_nil:
+        if w_block is space.w_nil:
             frame.push(w_block)
         elif isinstance(w_block, W_ProcObject):
             frame.push(w_block.block)
         else:
-            ec.space.raise_(ec, ec.space.getclassfor(W_TypeError),
+            space.raise_(space.getclassfor(W_TypeError),
                 "wrong argument type"
             )
 
     @jit.unroll_safe
-    def UNPACK_SEQUENCE(self, ec, bytecode, frame, pc, n_items):
+    def UNPACK_SEQUENCE(self, space, bytecode, frame, pc, n_items):
         w_obj = frame.pop()
-        items_w = ec.space.listview(w_obj)
+        items_w = space.listview(w_obj)
         for i in xrange(n_items - 1, -1, -1):
             try:
                 w_obj = items_w[i]
             except IndexError:
-                w_obj = ec.space.w_nil
+                w_obj = space.w_nil
             frame.push(w_obj)
 
     @jit.unroll_safe
-    def UNPACK_SEQUENCE_SPLAT(self, ec, bytecode, frame, pc, n_targets, n_pre):
+    def UNPACK_SEQUENCE_SPLAT(self, space, bytecode, frame, pc, n_targets, n_pre):
         w_obj = frame.pop()
-        items_w = ec.space.listview(w_obj)
+        items_w = space.listview(w_obj)
         n_items = len(items_w)
         n_post = n_targets - n_pre - 1
         n_splat = max(n_items - n_pre - n_post, 0)
         for i in xrange(n_items, n_pre + n_splat + n_post, 1):
-            items_w.append(ec.space.w_nil)
+            items_w.append(space.w_nil)
 
         for i in xrange(n_pre + n_splat + n_post - 1, n_pre + n_splat - 1, -1):
             frame.push(items_w[i])
         splat_array = [items_w[i] for i in xrange(n_pre, n_pre + n_splat, 1)]
-        frame.push(ec.space.newarray(splat_array))
+        frame.push(space.newarray(splat_array))
         for i in xrange(n_pre - 1, -1, -1):
             frame.push(items_w[i])
 
-    def DEFINE_FUNCTION(self, ec, bytecode, frame, pc):
+    def DEFINE_FUNCTION(self, space, bytecode, frame, pc):
         w_func = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
         assert isinstance(w_func, W_FunctionObject)
-        w_scope.define_method(ec.space, ec.space.symbol_w(w_name), w_func)
-        frame.push(ec.space.w_nil)
+        w_scope.define_method(space, space.symbol_w(w_name), w_func)
+        frame.push(space.w_nil)
 
-    def ATTACH_FUNCTION(self, ec, bytecode, frame, pc):
+    def ATTACH_FUNCTION(self, space, bytecode, frame, pc):
         w_func = frame.pop()
         w_name = frame.pop()
         w_obj = frame.pop()
         assert isinstance(w_func, W_FunctionObject)
-        w_obj.attach_method(ec.space, ec.space.symbol_w(w_name), w_func)
-        frame.push(ec.space.w_nil)
+        w_obj.attach_method(space, space.symbol_w(w_name), w_func)
+        frame.push(space.w_nil)
 
-    def EVALUATE_CLASS(self, ec, bytecode, frame, pc):
+    def EVALUATE_CLASS(self, space, bytecode, frame, pc):
         from rupypy.objects.codeobject import W_CodeObject
 
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = ec.space.create_frame(w_bytecode, w_cls, w_cls)
-        with ec.visit_frame(sub_frame):
-            ec.space.execute_frame(ec, sub_frame, w_bytecode)
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls)
+        with space.getexecutioncontext().visit_frame(sub_frame):
+            space.execute_frame(sub_frame, w_bytecode)
 
-        frame.push(ec.space.w_nil)
+        frame.push(space.w_nil)
 
     @jit.unroll_safe
-    def SEND(self, ec, bytecode, frame, pc, meth_idx, num_args):
+    def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()
-        w_res = ec.space.send(ec, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
     @jit.unroll_safe
-    def SEND_BLOCK(self, ec, bytecode, frame, pc, meth_idx, num_args):
+    def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
         from rupypy.objects.blockobject import W_BlockObject
 
         w_block = frame.pop()
         args_w = frame.popitemsreverse(num_args - 1)
         w_receiver = frame.pop()
-        if w_block is ec.space.w_nil:
+        if w_block is space.w_nil:
             w_block = None
         else:
             assert isinstance(w_block, W_BlockObject)
-        w_res = ec.space.send(ec, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
-    def SEND_SPLAT(self, ec, bytecode, frame, pc, meth_idx):
-        args_w = ec.space.listview(frame.pop())
+    def SEND_SPLAT(self, space, bytecode, frame, pc, meth_idx):
+        args_w = space.listview(frame.pop())
         w_receiver = frame.pop()
-        w_res = ec.space.send(ec, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
-    def SEND_BLOCK_SPLAT(self, ec, bytecode, frame, pc, meth_idx):
+    def SEND_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx):
         from rupypy.objects.blockobject import W_BlockObject
 
         w_block = frame.pop()
-        args_w = ec.space.listview(frame.pop())
+        args_w = space.listview(frame.pop())
         w_receiver = frame.pop()
         assert isinstance(w_block, W_BlockObject)
-        w_res = ec.space.send(ec, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
@@ -393,7 +399,7 @@ class Interpreter(object):
     def SETUP_FINALLY(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = FinallyBlock(target_pc, frame.lastblock, frame.stackpos)
 
-    def END_FINALLY(self, ec, bytecode, frame, pc):
+    def END_FINALLY(self, space, bytecode, frame, pc):
         frame.pop()
         unroller = frame.pop()
         if isinstance(unroller, SuspendedUnroller):
@@ -401,36 +407,36 @@ class Interpreter(object):
             if block is None:
                 unroller.nomoreblocks()
             else:
-                return block.handle(ec.space, frame, unroller)
+                return block.handle(space, frame, unroller)
         return pc
 
-    def COMPARE_EXC(self, ec, bytecode, frame, pc):
+    def COMPARE_EXC(self, space, bytecode, frame, pc):
         w_expected = frame.pop()
         w_actual = frame.peek()
-        frame.push(ec.space.newbool(w_expected is ec.space.getclass(w_actual)))
+        frame.push(space.newbool(w_expected is space.getclass(w_actual)))
 
-    def POP_BLOCK(self, ec, bytecode, frame, pc):
+    def POP_BLOCK(self, space, bytecode, frame, pc):
         block = frame.popblock()
-        block.cleanup(ec.space, frame)
+        block.cleanup(space, frame)
 
-    def JUMP(self, ec, bytecode, frame, pc, target_pc):
-        return self.jump(ec, bytecode, frame, pc, target_pc)
+    def JUMP(self, space, bytecode, frame, pc, target_pc):
+        return self.jump(space, bytecode, frame, pc, target_pc)
 
-    def JUMP_IF_TRUE(self, ec, bytecode, frame, pc, target_pc):
-        if ec.space.is_true(frame.pop()):
-            return self.jump(ec, bytecode, frame, pc, target_pc)
+    def JUMP_IF_TRUE(self, space, bytecode, frame, pc, target_pc):
+        if space.is_true(frame.pop()):
+            return self.jump(space, bytecode, frame, pc, target_pc)
         else:
             return pc
 
-    def JUMP_IF_FALSE(self, ec, bytecode, frame, pc, target_pc):
-        if ec.space.is_true(frame.pop()):
+    def JUMP_IF_FALSE(self, space, bytecode, frame, pc, target_pc):
+        if space.is_true(frame.pop()):
             return pc
         else:
-            return self.jump(ec, bytecode, frame, pc, target_pc)
+            return self.jump(space, bytecode, frame, pc, target_pc)
 
-    def UNARY_NOT(self, ec, bytecode, frame, pc):
+    def UNARY_NOT(self, space, bytecode, frame, pc):
         w_obj = frame.pop()
-        frame.push(ec.space.newbool(not ec.space.is_true(w_obj)))
+        frame.push(space.newbool(not space.is_true(w_obj)))
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()
@@ -460,28 +466,28 @@ class Interpreter(object):
         frame.push(w_3)
         frame.push(w_2)
 
-    def RETURN(self, ec, bytecode, frame, pc):
+    def RETURN(self, space, bytecode, frame, pc):
         w_returnvalue = frame.pop()
         block = frame.unrollstack(ReturnValue.kind)
         if block is None:
             raise Return(w_returnvalue)
         unroller = ReturnValue(w_returnvalue)
-        return block.handle(ec.space, frame, unroller)
+        return block.handle(space, frame, unroller)
 
-    def RAISE_RETURN(self, ec, bytecode, frame, pc):
+    def RAISE_RETURN(self, space, bytecode, frame, pc):
         w_returnvalue = frame.pop()
         block = frame.unrollstack(RaiseReturnValue.kind)
         if block is None:
             raise RaiseReturn(frame.parent_interp, w_returnvalue)
         unroller = RaiseReturnValue(frame.parent_interp, w_returnvalue)
-        return block.handle(ec.space, frame, unroller)
+        return block.handle(space, frame, unroller)
 
     @jit.unroll_safe
-    def YIELD(self, ec, bytecode, frame, pc, n_args):
+    def YIELD(self, space, bytecode, frame, pc, n_args):
         args_w = [None] * n_args
         for i in xrange(n_args - 1, -1, -1):
             args_w[i] = frame.pop()
-        w_res = ec.space.invoke_block(ec, frame.block, args_w)
+        w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
     def UNREACHABLE(self, space, bytecode, frame, pc):

@@ -1,40 +1,40 @@
 class TestComparable(object):
-    def test_gt(self, ec):
-        w_res = ec.space.execute(ec, "return 'a' > 'b'")
-        assert w_res is ec.space.w_false
+    def test_gt(self, space):
+        w_res = space.execute("return 'a' > 'b'")
+        assert w_res is space.w_false
 
-    def test_lt(self, ec):
-        w_res = ec.space.execute(ec, "return 'a' < 'b'")
-        assert w_res is ec.space.w_true
+    def test_lt(self, space):
+        w_res = space.execute("return 'a' < 'b'")
+        assert w_res is space.w_true
 
-    def test_le(self, ec):
-        w_res = ec.space.execute(ec, "return 'b' <= 'b'")
-        assert w_res is ec.space.w_true
-        w_res = ec.space.execute(ec, "return 'a' <= 'b'")
-        assert w_res is ec.space.w_true
-        w_res = ec.space.execute(ec, "return 'c' <= 'b'")
-        assert w_res is ec.space.w_false
+    def test_le(self, space):
+        w_res = space.execute("return 'b' <= 'b'")
+        assert w_res is space.w_true
+        w_res = space.execute("return 'a' <= 'b'")
+        assert w_res is space.w_true
+        w_res = space.execute("return 'c' <= 'b'")
+        assert w_res is space.w_false
 
-    def test_ge(self, ec):
-        w_res = ec.space.execute(ec, "return 'c' >= 'b'")
-        assert w_res is ec.space.w_true
+    def test_ge(self, space):
+        w_res = space.execute("return 'c' >= 'b'")
+        assert w_res is space.w_true
 
-    def test_eqeq(self, ec):
-        w_res = ec.space.execute(ec, "return 'a' == 'a'")
-        assert w_res is ec.space.w_true
+    def test_eqeq(self, space):
+        w_res = space.execute("return 'a' == 'a'")
+        assert w_res is space.w_true
 
-    def test_not_eqeq(self, ec):
-        w_res = ec.space.execute(ec, "return 'a' == 'b'")
-        assert w_res is ec.space.w_false
+    def test_not_eqeq(self, space):
+        w_res = space.execute("return 'a' == 'b'")
+        assert w_res is space.w_false
 
-    def test_between_true(self, ec):
-        w_res = ec.space.execute(ec, "return 'c'.between?('b', 'd')")
-        assert w_res is ec.space.w_true
+    def test_between_true(self, space):
+        w_res = space.execute("return 'c'.between?('b', 'd')")
+        assert w_res is space.w_true
 
-    def test_between_false_low(self, ec):
-        w_res = ec.space.execute(ec, "return 'a'.between?('b', 'd')")
-        assert w_res is ec.space.w_false
+    def test_between_false_low(self, space):
+        w_res = space.execute("return 'a'.between?('b', 'd')")
+        assert w_res is space.w_false
 
-    def test_between_false_high(self, ec):
-        w_res = ec.space.execute(ec, "return 'e'.between?('b', 'd')")
-        assert w_res is ec.space.w_false
+    def test_between_false_high(self, space):
+        w_res = space.execute("return 'e'.between?('b', 'd')")
+        assert w_res is space.w_false

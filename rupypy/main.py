@@ -6,11 +6,9 @@ import sys
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.streamio import open_file_as_stream
 
-from rupypy.error import RubyError
-from rupypy.executioncontext import ExecutionContext
+from rupypy.error import RubyError, format_traceback
 from rupypy.objects.objectobject import W_Object
 from rupypy.objspace import ObjectSpace
-from rupypy.utils import format_traceback
 
 
 @specialize.memo()
@@ -48,9 +46,8 @@ def entry_point(argv):
         finally:
             f.close()
 
-        ec = ExecutionContext(space)
         try:
-            space.execute(ec, source, filepath=path)
+            space.execute(source, filepath=path)
         except RubyError as e:
             lines = format_traceback(space, e.w_value)
             for line in lines:

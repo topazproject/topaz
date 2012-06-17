@@ -45,11 +45,11 @@ class W_IntObject(W_BaseObject):
         return space.newint(self.intvalue * other)
 
     @classdef.method("/", other="int")
-    def method_div(self, ec, other):
+    def method_div(self, space, other):
         try:
-            return ec.space.newint(self.intvalue / 0)
+            return space.newint(self.intvalue / 0)
         except ZeroDivisionError:
-            raise ec.space.raise_(ec, ec.space.getclassfor(W_ZeroDivisionError),
+            raise space.raise_(space.getclassfor(W_ZeroDivisionError),
                 "divided by 0"
             )
 
@@ -74,6 +74,19 @@ class W_IntObject(W_BaseObject):
     def method_neg(self, space):
         return space.newint(-self.intvalue)
 
+    @classdef.method("<=>", other="int")
+    def method_comparator(self, space, other):
+        if self.intvalue < other:
+            return space.newint(-1)
+        elif self.intvalue == other:
+            return space.newint(0)
+        elif self.intvalue > other:
+            return space.newint(1)
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return self
+
     classdef.app_method("""
     def times
         i = 0
@@ -83,12 +96,3 @@ class W_IntObject(W_BaseObject):
         end
     end
     """)
-
-    @classdef.method("<=>", other="int")
-    def method_comparator(self, space, other):
-        if self.intvalue < other:
-            return space.newint(-1)
-        elif self.intvalue == other:
-            return space.newint(0)
-        elif self.intvalue > other:
-            return space.newint(1)

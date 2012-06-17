@@ -11,8 +11,8 @@ class AttributeReader(W_FunctionObject):
     def __init__(self, varname):
         self.varname = varname
 
-    def call(self, ec, w_obj, args_w, block):
-        return ec.space.find_instance_var(w_obj, self.varname)
+    def call(self, space, w_obj, args_w, block):
+        return space.find_instance_var(w_obj, self.varname)
 
 
 class AttributeWriter(W_FunctionObject):
@@ -21,9 +21,9 @@ class AttributeWriter(W_FunctionObject):
     def __init__(self, varname):
         self.varname = varname
 
-    def call(self, ec, w_obj, args_w, block):
+    def call(self, space, w_obj, args_w, block):
         [w_value] = args_w
-        ec.space.set_instance_var(w_obj, self.varname, w_value)
+        space.set_instance_var(w_obj, self.varname, w_value)
         return w_value
 
 
@@ -108,6 +108,7 @@ class W_ModuleObject(W_BaseObject):
 
     def getsingletonclass(self, space):
         if self.klass is None:
+            self.mutated()
             self.klass = space.newclass(
                 self.name, space.getclassfor(W_ModuleObject), is_singleton=True
             )
@@ -129,3 +130,15 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("attr_reader", varname="symbol")
     def method_attr_reader(self, space, varname):
         self.define_method(space, varname, AttributeReader("@" + varname))
+
+    @classdef.method("module_function", name="symbol")
+    def method_module_function(self, space, name):
+        self.attach_method(space, name, self.find_method(space, name))
+
+    @classdef.method("alias_method", new_name="symbol", old_name="symbol")
+    def method_alias_method(self, space, new_name, old_name):
+        self.define_method(space, new_name, self.find_method(space, old_name))
+
+    @classdef.method("name")
+    def method_name(self, space):
+        return space.newstr_fromstr(self.name)

@@ -4,7 +4,7 @@ from pypy.rlib.parsing.parsing import ParseError
 
 from rupypy import ast
 from rupypy.lexer import Lexer
-from rupypy.utils import make_parse_function
+from rupypy.utils.parsing import make_parse_function
 
 
 with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
@@ -13,7 +13,44 @@ with open(os.path.join(os.path.dirname(__file__), "grammar.txt")) as f:
 _parse, ToASTVisitor = make_parse_function(grammar, Lexer)
 
 
+class NewContextContextManager(object):
+    def __init__(self, transformer):
+        self.transformer = transformer
+
+    def __enter__(self):
+        self.transformer.stack.append(ExpressionContext())
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.transformer.stack.pop()
+
+
+class SendContextManager(object):
+    def __init__(self, transformer):
+        self.transformer = transformer
+
+    def __enter__(self):
+        self.transformer.stack[-1].send_depth += 1
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.transformer.stack[-1].send_depth -= 1
+
+
+class ExpressionContext(object):
+    def __init__(self):
+        self.send_depth = 0
+        self.do_block = None
+
+
 class Transformer(object):
+    def __init__(self):
+        self.stack = []
+
+    def new_context(self):
+        return NewContextContextManager(self)
+
+    def send(self):
+        return SendContextManager(self)
+
     def error(self, node):
         raise ParseError(node.getsourcepos(), None)
 
@@ -35,9 +72,12 @@ class Transformer(object):
         return ast.Block(stmts)
 
     def visit_stmt(self, node):
-        if node.children[0].symbol == "return_expr":
-            return ast.Return(self.visit_return(node.children[0]))
-        return ast.Statement(self.visit_expr(node.children[0]))
+        with self.new_context():
+            if node.children[0].symbol == "return_expr":
+                return ast.Return(self.visit_return(node.children[0]))
+            elif node.children[0].symbol == "alias":
+                return self.visit_alias(node.children[0])
+            return ast.Statement(self.visit_expr(node.children[0]))
 
     def visit_return(self, node):
         if len(node.children) == 2:
@@ -50,11 +90,16 @@ class Transformer(object):
             obj = ast.Variable("nil", node.getsourcepos().lineno)
         return obj
 
+    def visit_alias(self, node):
+        return ast.Alias(
+            ast.ConstantSymbol(node.children[1].additional_info),
+            ast.ConstantSymbol(node.children[2].additional_info),
+            node.getsourcepos().lineno
+        )
+
     def visit_send_block(self, node):
         send = self.visit_real_send(node.children[0])
-        assert isinstance(send, ast.Send)
-        if send.block_arg is not None:
-            self.error(node)
+
         block_args = []
         splat_arg = None
         start_idx = 2
@@ -62,13 +107,25 @@ class Transformer(object):
             block_args, splat_arg = self.visit_block_args(node.children[2])
             start_idx += 1
         block = self.visit_block(node, start_idx=start_idx, end_idx=len(node.children) - 1)
-        return ast.Send(
-            send.receiver,
-            send.method,
-            send.args,
-            ast.SendBlock(block_args, splat_arg, block),
-            node.getsourcepos().lineno
-        )
+
+        send_block = ast.SendBlock(block_args, splat_arg, block)
+
+        if ((not isinstance(send, ast.Send) and self.stack[-1].send_depth == 1) or
+            (isinstance(send, ast.Send) and send.block_arg is not None)):
+            self.error(node)
+        elif self.stack[-1].send_depth != 1:
+            self.stack[-1].do_block = send_block
+            return send
+        elif isinstance(send, ast.Send):
+            return ast.Send(
+                send.receiver,
+                send.method,
+                send.args,
+                send_block,
+                node.getsourcepos().lineno
+                )
+        else:
+            self.error(node)
 
     def visit_expr(self, node):
         if node.symbol == "inline_if":
@@ -196,7 +253,8 @@ class Transformer(object):
         elif symname == "primary":
             return self.visit_primary(node)
         elif symname == "do_block":
-            return self.visit_send_block(node)
+            with self.send():
+                return self.visit_send_block(node)
         raise NotImplementedError(symname)
 
     def visit_subexpr(self, node):
@@ -237,7 +295,8 @@ class Transformer(object):
 
     def visit_send(self, node):
         if node.children[0].symbol == "real_send":
-            return self.visit_real_send(node.children[0])
+            with self.send():
+                return self.visit_real_send(node.children[0])
         raise NotImplementedError
 
     def visit_real_send(self, node):
@@ -276,7 +335,8 @@ class Transformer(object):
         else:
             target = self.visit_primary(node.children[0])
 
-        for trailer in node.children[1].children:
+        n_trailers = len(node.children[1].children)
+        for idx, trailer in enumerate(node.children[1].children):
             node = trailer.children[0]
             if node.symbol in ["attribute", "subscript"]:
                 block_argument = None
@@ -310,6 +370,8 @@ class Transformer(object):
                         self.error(node)
                     block_args, splat_arg, block = self.visit_braces_block(node.children[2])
                     block_argument = ast.SendBlock(block_args, splat_arg, block)
+                if idx == n_trailers - 1 and self.stack[-1].send_depth == 1 and self.stack[-1].do_block:
+                    block_argument = self.stack[-1].do_block
                 target = ast.Send(
                     target,
                     method,
@@ -602,6 +664,8 @@ class Transformer(object):
         return ast.ExceptHandler(exceptions, target, block)
 
     def visit_case(self, node):
+        if node.children[1].symbol == "whens":
+            return self.visit_case_without_expr(node)
         cond = self.visit_expr(node.children[1])
         whens = []
         for n in node.children[2].children:
@@ -617,6 +681,32 @@ class Transformer(object):
             whens,
             elsebody,
         )
+
+    def visit_case_without_expr(self, node):
+        whens = node.children[1].children
+        conditions = []
+        for when in whens:
+            exprs = when.children[1]
+            cond = self.visit_expr(exprs.children[0])
+            for expr in exprs.children[1:]:
+                cond = ast.Or(cond, self.visit_expr(expr))
+            if len(when.children) == 4:
+                body = self.visit_block(when.children[3])
+            else:
+                body = ast.Block([])
+            conditions.append((cond, body))
+
+        if node.children[2].symbol == "else":
+            else_block = self.visit_block(node.children[2], start_idx=1)
+        else:
+            else_block = ast.Block([])
+
+        for idx in range(len(conditions) - 1, 0, -1):
+            cond, block = conditions[idx]
+            else_block = ast.Block([
+                ast.Statement(ast.If(cond, block, else_block))
+            ])
+        return ast.If(conditions[0][0], conditions[0][1], else_block)
 
     def visit_argdecl(self, node):
         if not node.children:
