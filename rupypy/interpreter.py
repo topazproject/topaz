@@ -18,7 +18,7 @@ def get_printable_location(pc, bytecode):
 class Interpreter(object):
     jitdriver = jit.JitDriver(
         greens=["pc", "bytecode"],
-        reds=["self", "space", "frame"],
+        reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
     )
@@ -28,7 +28,7 @@ class Interpreter(object):
         try:
             while True:
                 self.jitdriver.jit_merge_point(
-                    self=self, space=space, bytecode=bytecode, frame=frame, pc=pc
+                    self=self, bytecode=bytecode, frame=frame, pc=pc
                 )
                 try:
                     pc = self.handle_bytecode(space, pc, frame, bytecode)
@@ -90,7 +90,7 @@ class Interpreter(object):
     def jump(self, space, bytecode, frame, cur_pc, target_pc):
         if target_pc < cur_pc:
             self.jitdriver.can_enter_jit(
-                self=self, space=space, bytecode=bytecode, frame=frame, pc=target_pc,
+                self=self, bytecode=bytecode, frame=frame, pc=target_pc,
             )
         return target_pc
 
