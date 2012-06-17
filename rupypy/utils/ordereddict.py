@@ -373,13 +373,14 @@ class LLOrderedDict(object):
             d.first_entry = i
         else:
             d.entries[d.last_entry].next = i
+        d.last_entry = i
+        entry.next = -1
         if not everused:
             if hasattr(ENTRY, "everused"):
                 entry.everused = True
-            d.last_entry = i
             d.resize_counter -= 3
             if d.resize_counter <= 0:
-                raise NotImplementedError("shrink")
+                LLOrderedDict.ll_resize(d)
 
     @staticmethod
     def ll_getitem(d, key):
@@ -388,3 +389,64 @@ class LLOrderedDict(object):
             return d.entries[i].value
         else:
             raise KeyError
+
+    @staticmethod
+    def ll_resize(d):
+        old_entries = d.entries
+        if d.num_items > 50000:
+            new_estimate = d.num_items * 2
+        else:
+            new_estimate = d.num_items * 4
+
+        new_size = LLOrderedDict.INIT_SIZE
+        while new_size <= new_estimate:
+            new_size *= 2
+
+        d.entries = lltype.malloc(lltype.typeOf(old_entries).TO, new_size, zero=True)
+        d.num_items = 0
+        d.resize_counter = new_size * 2
+
+        i = d.first_entry
+        d.first_entry = -1
+        d.last_entry = -1
+
+        while i != -1:
+            hash = old_entries.hash(i)
+            entry = old_entries[i]
+            LLOrderedDict.ll_insert_clean(d, entry.key, entry.value, hash)
+            i = entry.next
+
+    @staticmethod
+    def ll_insert_clean(d, key, value, hash):
+        i = LLOrderedDict.ll_lookup_clean(d, hash)
+        ENTRY = lltype.typeOf(d.entries).TO.OF
+        entry = d.entries[i]
+        entry.value = value
+        entry.key = key
+        if hasattr(ENTRY, "hash"):
+            entry.hash = hash
+        if hasattr(ENTRY, "valid"):
+            entry.valid = True
+        if hasattr(ENTRY, "everused"):
+            entry.everused = True
+        d.num_items += 1
+        if d.first_entry == -1:
+            d.first_entry = i
+        else:
+            d.entries[d.last_entry].next = i
+        d.last_entry = i
+        entry.next = -1
+        d.resize_counter -= 3
+
+    @staticmethod
+    def ll_lookup_clean(d, hash):
+        entries = d.entries
+        mask = len(entries) - 1
+        i = hash & mask
+        perturb = r_uint(hash)
+        while entries.everused(i):
+            i = r_uint(i)
+            i = (i << 2) + i + perturb + 1
+            i = intmask(i) & mask
+            perturb >>= LLOrderedDict.PERTURB_SHIFT
+        return i

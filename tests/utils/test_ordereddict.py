@@ -47,6 +47,15 @@ class BaseTestOrderedDict(object):
             return o[3]
         assert self.run(f, [True]) == 30
 
+    def test_grow(self):
+        def f(n):
+            o = OrderedDict()
+            for i in xrange(n):
+                o[i] = None
+            return o[3]
+
+        assert self.run(f, [10]) == None
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def run(self, func, args=[]):
