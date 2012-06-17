@@ -56,7 +56,7 @@ class Frame(BaseFrame):
         defl_start = len(args_w) - (len(bytecode.arg_locs) - len(bytecode.defaults))
         for i in xrange(len(bytecode.arg_locs) - len(args_w)):
             bc = bytecode.defaults[i + defl_start]
-            w_value = Interpreter().interpret(ec, self, bc)
+            w_value = Interpreter().interpret(space, self, bc)
             self._set_normal_arg(bytecode, i + len(args_w), w_value)
 
         if bytecode.splat_arg_pos != -1:
