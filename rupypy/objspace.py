@@ -157,6 +157,7 @@ class ObjectSpace(object):
     def newfloat(self, floatvalue):
         return W_FloatObject(floatvalue)
 
+    @jit.elidable
     def newsymbol(self, symbol):
         try:
             w_sym = self.symbol_cache[symbol]
