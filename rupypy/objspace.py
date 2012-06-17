@@ -12,6 +12,7 @@ from rupypy.error import RubyError
 from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
 from rupypy.globals import Globals
+from rupypy.class_variables import ClassVariables
 from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError
 from rupypy.lib.dir import W_Dir
@@ -56,6 +57,7 @@ class ObjectSpace(object):
         self.symbol_cache = {}
         self._executioncontext = None
         self.globals = Globals()
+        self.cvars = ClassVariables()
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
         self.w_true = W_TrueObject()
