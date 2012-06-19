@@ -114,6 +114,19 @@ class W_ModuleObject(W_BaseObject):
             )
         return self.klass
 
+    def set_default_visibility(self, space, visibility):
+        pass
+
+    def set_method_visibility(self, space, name, visibility):
+        pass
+
+    def set_visbility(self, space, names, visbility):
+        if len(symbols) > 0:
+            for symbol in symbols:
+                self.set_method_visibility(space, symbol, visbility)
+        else:
+            self.set_default_visibility(space, visbility)
+
     @classdef.method("include")
     def method_include(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)
@@ -135,6 +148,14 @@ class W_ModuleObject(W_BaseObject):
     def method_module_function(self, space, name):
         self.attach_method(space, name, self.find_method(space, name))
 
+    @classdef.method("private_class_method", name="symbol")
+    def method_private_class_method(self, space, name):
+        self.getsingletonclass(space).method_private(space, name)
+
+    @classdef.method("public_class_method", name="symbol")
+    def method_public_class_method(self, space, name):
+        self.getsingletonclass(space).method_public(space, name)
+
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
         self.define_method(space, new_name, self.find_method(space, old_name))
@@ -142,3 +163,15 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("name")
     def method_name(self, space):
         return space.newstr_fromstr(self.name)
+
+    @classdef.method("private")
+    def method_private(self, space, *symbols):
+        self.set_visbility(space, symbols, "private")
+
+    @classdef.method("public")
+    def method_private(self, space, *symbols):
+        self.set_visbility(space, symbols, "public")
+
+    @classdef.method("protected")
+    def method_protected(self, space, *symbols):
+        self.set_visbility(space, symbols, "protected")
