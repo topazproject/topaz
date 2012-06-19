@@ -120,13 +120,6 @@ class W_ModuleObject(W_BaseObject):
     def set_method_visibility(self, space, name, visibility):
         pass
 
-    def set_visbility(self, space, names, visbility):
-        if len(names) > 0:
-            for name in names:
-                self.set_method_visibility(space, name, visbility)
-        else:
-            self.set_default_visibility(space, visbility)
-
     @classdef.method("include")
     def method_include(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)
@@ -165,13 +158,28 @@ class W_ModuleObject(W_BaseObject):
         return space.newstr_fromstr(self.name)
 
     @classdef.method("private")
-    def method_private(self, space, *symbols):
-        self.set_visbility(space, symbols, "private")
+    def method_private(self, space, *names):
+        visibility = "private"
+        if len(names) > 0:
+            for name in names:
+                self.set_method_visibility(space, name, visibility)
+        else:
+            self.set_default_visibility(space, visibility)
 
     @classdef.method("public")
-    def method_private(self, space, *symbols):
-        self.set_visbility(space, symbols, "public")
+    def method_public(self, space, *names):
+        visibility = "public"
+        if len(names) > 0:
+            for name in names:
+                self.set_method_visibility(space, name, visibility)
+        else:
+            self.set_default_visibility(space, visibility)
 
     @classdef.method("protected")
-    def method_protected(self, space, *symbols):
-        self.set_visbility(space, symbols, "protected")
+    def method_protected(self, space, *names):
+        visibility = "protected"
+        if len(names) > 0:
+            for name in names:
+                self.set_method_visibility(space, name, visibility)
+        else:
+            self.set_default_visibility(space, visibility)
