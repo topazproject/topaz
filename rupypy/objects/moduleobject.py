@@ -121,9 +121,9 @@ class W_ModuleObject(W_BaseObject):
         pass
 
     def set_visbility(self, space, names, visbility):
-        if len(symbols) > 0:
-            for symbol in symbols:
-                self.set_method_visibility(space, symbol, visbility)
+        if len(names) > 0:
+            for name in names:
+                self.set_method_visibility(space, name, visbility)
         else:
             self.set_default_visibility(space, visbility)
 
