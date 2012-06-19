@@ -114,6 +114,14 @@ class W_ModuleObject(W_BaseObject):
             )
         return self.klass
 
+    def set_visibility(self, space, names_w, visibility):
+        names = [space.symbol_w(w_name) for w_name in names_w]
+        if names:
+            for name in names:
+                self.set_method_visibility(space, name, visibility)
+        else:
+            self.set_default_visibility(space, visibility)
+
     def set_default_visibility(self, space, visibility):
         pass
 
@@ -141,13 +149,15 @@ class W_ModuleObject(W_BaseObject):
     def method_module_function(self, space, name):
         self.attach_method(space, name, self.find_method(space, name))
 
-    @classdef.method("private_class_method", name="symbol")
-    def method_private_class_method(self, space, name):
-        self.getsingletonclass(space).method_private(space, name)
+    @classdef.method("private_class_method")
+    def method_private_class_method(self, space, w_name):
+        w_cls = self.getsingletonclass(space)
+        return space.send(w_cls, space.newsymbol("private"), [w_name])
 
-    @classdef.method("public_class_method", name="symbol")
-    def method_public_class_method(self, space, name):
-        self.getsingletonclass(space).method_public(space, name)
+    @classdef.method("public_class_method")
+    def method_public_class_method(self, space, w_name):
+        w_cls = self.getsingletonclass(space)
+        return space.send(w_cls, space.newsymbol("public"), [w_name])
 
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
@@ -158,28 +168,13 @@ class W_ModuleObject(W_BaseObject):
         return space.newstr_fromstr(self.name)
 
     @classdef.method("private")
-    def method_private(self, space, *names):
-        visibility = "private"
-        if len(names) > 0:
-            for name in names:
-                self.set_method_visibility(space, name, visibility)
-        else:
-            self.set_default_visibility(space, visibility)
+    def method_private(self, space, args_w):
+        self.set_visibility(space, args_w, "private")
 
     @classdef.method("public")
-    def method_public(self, space, *names):
-        visibility = "public"
-        if len(names) > 0:
-            for name in names:
-                self.set_method_visibility(space, name, visibility)
-        else:
-            self.set_default_visibility(space, visibility)
+    def method_public(self, space, args_w):
+        self.set_visibility(space, args_w, "public")
 
     @classdef.method("protected")
-    def method_protected(self, space, *names):
-        visibility = "protected"
-        if len(names) > 0:
-            for name in names:
-                self.set_method_visibility(space, name, visibility)
-        else:
-            self.set_default_visibility(space, visibility)
+    def method_protected(self, space, args_w):
+        self.set_visibility(space, args_w, "protected")

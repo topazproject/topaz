@@ -32,3 +32,48 @@ class TestModuleObject(BaseRuPyPyTest):
         return X.new.g
         """)
         assert self.unwrap(space, w_res) == 3
+
+
+class TestMethodVisibility(object):
+    def test_private(self, space):
+        space.execute("""
+        class X
+            def m
+            end
+            private :m
+        end
+        """)
+
+    def test_public(self, space):
+        space.execute("""
+        class X
+            def m
+            end
+            public :m
+        end
+        """)
+
+    def test_protected(self, space):
+        space.execute("""
+        class X
+            protected
+        end
+        """)
+
+    def test_private_class_method(self, space):
+        space.execute("""
+        class X
+            def m
+            end
+            private_class_method :m
+        end
+        """)
+
+    def test_public_class_method(self, space):
+        space.execute("""
+        class X
+            def m
+            end
+            public_class_method :m
+        end
+        """)
