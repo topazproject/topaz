@@ -42,6 +42,9 @@ class W_BaseObject(object):
     def method_singleton_class(self, space):
         return space.getsingletonclass(self)
 
+    @classdef.method("extend")
+    def method_extend(self, space, w_mod):
+        self.getsingletonclass(space).method_include(space, w_mod)
 
 class MapTransitionCache(object):
     def __init__(self, space):
