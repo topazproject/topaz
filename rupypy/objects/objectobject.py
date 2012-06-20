@@ -28,21 +28,9 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
-    @classdef.method("initialize")
-    def method_initialize(self):
-        return self
-
-    @classdef.method("object_id")
-    def method_object_id(self, space):
+    @classdef.method("__id__")
+    def method___id__(self, space):
         return space.newint(compute_unique_id(self))
-
-    @classdef.method("singleton_class")
-    def method_singleton_class(self, space):
-        return space.getsingletonclass(self)
-
-    @classdef.method("extend")
-    def method_extend(self, space, w_mod):
-        self.getsingletonclass(space).method_include(space, w_mod)
 
 class MapTransitionCache(object):
     def __init__(self, space):
@@ -151,3 +139,19 @@ class W_Object(W_BaseObject):
         if idx == -1:
             idx = self.map.add_attr(space, self, name)
         self.storage[idx] = w_value
+
+    @classdef.method("initialize")
+    def method_initialize(self):
+        return self
+
+    @classdef.method("object_id")
+    def method_object_id(self, space):
+        return W_BaseObject.method___id__(self, space)
+
+    @classdef.method("singleton_class")
+    def method_singleton_class(self, space):
+        return space.getsingletonclass(self)
+
+    @classdef.method("extend")
+    def method_extend(self, space, w_mod):
+        self.getsingletonclass(space).method_include(space, w_mod)
