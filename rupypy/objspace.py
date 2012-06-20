@@ -28,7 +28,7 @@ from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
-    W_ZeroDivisionError, W_SyntaxError, W_LoadError)
+    W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError)
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -57,7 +57,6 @@ class ObjectSpace(object):
     def __init__(self):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        self.fixnum_cache = {}
         self._executioncontext = None
         self.globals = Globals()
         self.bootstrap = True
@@ -80,6 +79,7 @@ class ObjectSpace(object):
             W_ArrayObject, W_HashObject,
             W_IOObject, W_FileObject,
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
+            W_TypeError,
             W_Random, W_Dir
         ]:
             self.add_class(cls)
@@ -166,13 +166,8 @@ class ObjectSpace(object):
         else:
             return self.w_false
 
-    @jit.elidable
     def newint(self, intvalue):
-        try:
-            w_int = self.fixnum_cache[intvalue]
-        except KeyError:
-            w_int = self.fixnum_cache[intvalue] = W_FixnumObject(self, intvalue)
-        return w_int
+        return W_FixnumObject(self, intvalue)
 
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
