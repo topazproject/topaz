@@ -830,6 +830,7 @@ class TestExceptions(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["B", "A overrides all"]
 
+    @py.test.mark.xfail
     def test_class_variables_accessed_from_class_side(self, space):
         w_res = space.execute("""
         class A; @@foo = 'A'; end
