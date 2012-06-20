@@ -44,6 +44,8 @@ class W_ModuleObject(W_Object):
         self.methods_w = {}
         self.constants_w = {}
         self._lazy_constants_w = None
+        self.included_modules = []
+        self.descendants = []
 
     def _freeze_(self):
         "NOT_RPYTHON"
@@ -114,6 +116,18 @@ class W_ModuleObject(W_Object):
             )
         return self.klass
 
+    def ancestors(self):
+        return [self] + self.included_modules
+
+    def include_module(self, space, w_mod):
+        if w_mod not in self.ancestors():
+            self.included_modules.insert(0, w_mod)
+            w_mod.included(space, self)
+
+    def included(self, space, w_mod):
+        self.descendants.append(w_mod)
+        space.send(self, space.newsymbol("included"), [w_mod])
+
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
         if names:
@@ -131,8 +145,13 @@ class W_ModuleObject(W_Object):
     @classdef.method("include")
     def method_include(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)
-        self.mutated()
-        self.methods_w.update(w_mod.methods_w)
+        space.send(w_mod, space.newsymbol("append_features"), [self])
+
+    @classdef.method("append_features")
+    def method_append_features(self, space, w_mod):
+        ancestors = self.ancestors()
+        for idx in xrange(len(ancestors) - 1, -1, -1):
+            w_mod.include_module(space, ancestors[idx])
 
     @classdef.method("attr_accessor")
     def method_attr_accessor(self, space, args_w):
@@ -162,6 +181,14 @@ class W_ModuleObject(W_Object):
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
         self.define_method(space, new_name, self.find_method(space, old_name))
+
+    @classdef.method("ancestors")
+    def method_ancestors(self, space):
+        return space.newarray(self.ancestors())
+
+    @classdef.method("included")
+    def method_included(self, space, w_mod):
+        pass
 
     @classdef.method("name")
     def method_name(self, space):

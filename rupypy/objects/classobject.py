@@ -28,6 +28,11 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.name)
+    def ancestors(self):
+        ary = W_ModuleObject.ancestors(self)
+        if self.superclass is not None:
+            ary += self.superclass.ancestors()
+        return ary
 
     @classdef.method("new")
     def method_new(self, space, args_w):
