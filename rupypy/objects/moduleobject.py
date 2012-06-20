@@ -184,7 +184,7 @@ class W_ModuleObject(W_Object):
 
     @classdef.method("module_function", name="symbol")
     def method_module_function(self, space, name):
-        self.attach_method(space, name, self.find_method(space, name))
+        self.attach_method(space, name, self._find_method_pure(space, name, self.version))
 
     @classdef.method("private_class_method")
     def method_private_class_method(self, space, w_name):
