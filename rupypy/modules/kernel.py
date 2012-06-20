@@ -10,7 +10,7 @@ class Kernel(Module):
 
     @moduledef.method("class")
     def function_class(self, space):
-        return space.getclass(self)
+        return space.getnonsingletonclass(self)
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):

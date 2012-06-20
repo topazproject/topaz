@@ -21,6 +21,9 @@ class W_BaseObject(object):
     def getclass(self, space):
         return space.getclassobject(self.classdef)
 
+    def getnonsingletonclass(self, space):
+        return self.getclass(space)
+
     def attach_method(self, space, name, func):
         w_cls = space.getsingletonclass(self)
         w_cls.define_method(space, name, func)
@@ -128,6 +131,11 @@ class W_Object(W_BaseObject):
         self.map = self.map.change_class(space, w_cls)
         return w_cls
 
+    def getnonsingletonclass(self, space):
+        w_cls = self.getclass(space)
+        if w_cls.is_singleton:
+            return w_cls.superclass
+
     def find_instance_var(self, space, name):
         idx = jit.promote(self.map).find_attr(space, name)
         if idx == -1:
@@ -180,6 +188,9 @@ class W_BuiltinObject(W_Object):
             self.ensure_map(space)
             self.klass = W_Object.getsingletonclass(self, space)
         return self.klass
+
+    def getnonsingletonclass(self, space):
+        return W_BaseObject.getclass(self, space)
 
     def find_instance_var(self, space, name):
         self.ensure_map(space)

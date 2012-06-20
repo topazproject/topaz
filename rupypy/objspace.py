@@ -239,6 +239,9 @@ class ObjectSpace(object):
     def getsingletonclass(self, w_receiver):
         return w_receiver.getsingletonclass(self)
 
+    def getnonsingletonclass(self, w_receiver):
+        return w_receiver.getnonsingletonclass(self)
+
     def getclassfor(self, cls):
         return self.getclassobject(cls.classdef)
 
