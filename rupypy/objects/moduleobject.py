@@ -149,7 +149,6 @@ class W_ModuleObject(W_Object):
 
     def getsingletonclass(self, space):
         if self.klass is None:
-            self.mutated()
             self.klass = space.newclass(
                 "#<Class:" + self.name + ">", space.getclassfor(W_ModuleObject), is_singleton=True
             )
