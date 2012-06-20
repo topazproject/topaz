@@ -57,6 +57,7 @@ class ObjectSpace(object):
     def __init__(self):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
+        self.fixnum_cache = {}
         self._executioncontext = None
         self.globals = Globals()
         self.bootstrap = True
@@ -165,8 +166,13 @@ class ObjectSpace(object):
         else:
             return self.w_false
 
+    @jit.elidable
     def newint(self, intvalue):
-        return W_FixnumObject(self, intvalue)
+        try:
+            w_int = self.fixnum_cache[intvalue]
+        except KeyError:
+            w_int = self.fixnum_cache[intvalue] = W_FixnumObject(self, intvalue)
+        return w_int
 
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
