@@ -154,7 +154,7 @@ class W_ModuleObject(W_BuiltinObject):
             )
         return self.klass
 
-    def ancestors(self):
+    def ancestors(self, with_singleton = True):
         return [self] + self.included_modules
 
     def include_module(self, space, w_mod):
@@ -231,7 +231,7 @@ class W_ModuleObject(W_BuiltinObject):
 
     @classdef.method("ancestors")
     def method_ancestors(self, space):
-        return space.newarray(self.ancestors())
+        return space.newarray(self.ancestors(with_singleton = False))
 
     @classdef.method("inherited")
     def method_inherited(self, space, w_mod):

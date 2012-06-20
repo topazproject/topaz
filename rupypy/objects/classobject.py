@@ -36,10 +36,12 @@ class W_ClassObject(W_ModuleObject):
         else:
             return method
 
-    def ancestors(self):
-        ary = W_ModuleObject.ancestors(self)
+    def ancestors(self, with_singleton = True):
+        ary = W_ModuleObject.ancestors(self, with_singleton)
+        if self.is_singleton and not with_singleton:
+            ary.pop(0)
         if self.superclass is not None:
-            ary += self.superclass.ancestors()
+            ary += self.superclass.ancestors(with_singleton)
         return ary
 
     @classdef.method("new")
