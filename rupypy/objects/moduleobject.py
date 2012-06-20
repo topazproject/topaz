@@ -156,6 +156,10 @@ class W_ModuleObject(W_Object):
     def set_method_visibility(self, space, name, visibility):
         pass
 
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        return space.newstr_fromstr(self.name)
+
     @classdef.method("include")
     def method_include(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)

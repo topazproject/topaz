@@ -36,9 +36,6 @@ class W_ClassObject(W_ModuleObject):
         else:
             return method
 
-    @classdef.method("to_s")
-    def method_to_s(self, space):
-        return space.newstr_fromstr(self.name)
     def ancestors(self):
         ary = W_ModuleObject.ancestors(self)
         if self.superclass is not None:
