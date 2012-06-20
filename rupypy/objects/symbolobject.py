@@ -35,7 +35,4 @@ class W_SymbolObject(W_BaseObject):
 
     @classdef.singleton_method("all_symbols")
     def method_all_symbols(self, space):
-        keys = list()
-        for string in space.symbol_cache.keys():
-            keys.append(space.newstr_fromstr(string))
-        return space.newarray(keys)
+        return space.newarray(space.symbol_cache.values())
