@@ -892,3 +892,26 @@ class TestExceptions(BaseRuPyPyTest):
             [d, c],
             [b, d, c, a, objct, kernel, basic]
         ]
+
+    def test_lookup_for_includes(self, space):
+        w_res = space.execute("""
+        class A
+          def self.get; "A.get"; end
+          def get; "A#get"; end
+          def override; "A#override"; end
+        end
+        module M
+          def get; "M#get"; end
+          def override; "M#override"; end
+        end
+        class B < A
+          def override; "B#override"; end
+          include M
+        end
+        res = [B.get, B.new.get, B.new.override]
+        module M
+          def get; "M#get (2nd ed)"; end
+        end
+        return res << B.new.get
+        """)
+        assert self.unwrap(space, w_res) == ["A.get", "M#get", "B#override", "M#get (2nd ed)"]
