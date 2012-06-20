@@ -121,7 +121,7 @@ class W_ModuleObject(W_Object):
         if self.klass is None:
             self.mutated()
             self.klass = space.newclass(
-                self.name, space.getclassfor(W_ModuleObject), is_singleton=True
+                "#<Class:" + self.name + ">", space.getclassfor(W_ModuleObject), is_singleton=True
             )
         return self.klass
 

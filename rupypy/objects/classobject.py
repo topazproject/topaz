@@ -25,7 +25,7 @@ class W_ClassObject(W_ModuleObject):
             else:
                 singleton_superclass = self.superclass.getsingletonclass(space)
             self.klass = space.newclass(
-                self.name, space.getclassfor(W_ClassObject), is_singleton=True
+                "#<Class:" + self.name + ">", singleton_superclass, is_singleton=True
             )
         return self.klass
 
