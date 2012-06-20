@@ -1,13 +1,14 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 
 
-class W_RangeObject(W_BaseObject):
-    classdef = ClassDef("Range", W_BaseObject.classdef)
+class W_RangeObject(W_Object):
+    classdef = ClassDef("Range", W_Object.classdef)
     classdef.include_module(Enumerable)
 
-    def __init__(self, w_start, w_end, inclusive):
+    def __init__(self, space, w_start, w_end, inclusive):
+        W_Object.__init__(self, space)
         self.w_start = w_start
         self.w_end = w_end
         self.inclusive = inclusive

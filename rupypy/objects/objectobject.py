@@ -2,7 +2,6 @@ from pypy.rlib import jit
 from pypy.rlib.objectmodel import compute_unique_id
 
 from rupypy.module import ClassDef
-from rupypy.modules.kernel import Kernel
 
 
 class ObjectMetaclass(type):
@@ -17,8 +16,7 @@ class W_BaseObject(object):
     __metaclass__ = ObjectMetaclass
     _attrs_ = ()
 
-    classdef = ClassDef("Object")
-    classdef.include_module(Kernel)
+    classdef = ClassDef("BasicObject")
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)
@@ -123,7 +121,11 @@ class AttributeNode(BaseNode):
 
 
 class W_Object(W_BaseObject):
-    def __init__(self, space, klass):
+    classdef = ClassDef("Object", W_BaseObject.classdef)
+
+    def __init__(self, space, klass = None):
+        if klass is None:
+            klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
         self.storage = []
 

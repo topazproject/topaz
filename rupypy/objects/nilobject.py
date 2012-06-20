@@ -1,9 +1,8 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 
-
-class W_NilObject(W_BaseObject):
-    classdef = ClassDef("NilClass", W_BaseObject.classdef)
+class W_NilObject(W_Object):
+    classdef = ClassDef("NilClass", W_Object.classdef)
 
     def is_true(self, space):
         return False

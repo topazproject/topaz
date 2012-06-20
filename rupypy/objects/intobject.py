@@ -1,15 +1,16 @@
 from rupypy.module import ClassDef
 from rupypy.objects.exceptionobject import W_ZeroDivisionError
 from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.integerobject import W_IntegerObject
+from rupypy.objects.objectobject import W_Object
 
-
-class W_IntObject(W_BaseObject):
+class W_FixnumObject(W_IntegerObject):
     _immutable_fields_ = ["intvalue"]
 
-    classdef = ClassDef("Fixnum", W_BaseObject.classdef)
+    classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
-    def __init__(self, intvalue):
+    def __init__(self, space, intvalue):
+        W_IntegerObject.__init__(self, space)
         self.intvalue = intvalue
 
     def int_w(self, space):

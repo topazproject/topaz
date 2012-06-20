@@ -184,11 +184,11 @@ class Interpreter(object):
             assert isinstance(w_item, W_StringObject)
             total_length += w_item.length()
 
-        storage = newlist_hint(total_length)
+        str_storage = newlist_hint(total_length)
         for w_item in items_w:
             assert isinstance(w_item, W_StringObject)
-            w_item.strategy.extend_into(w_item.storage, storage)
-        frame.push(space.newstr_fromchars(storage))
+            w_item.strategy.extend_into(w_item.str_storage, str_storage)
+        frame.push(space.newstr_fromchars(str_storage))
 
     def BUILD_HASH(self, space, bytecode, frame, pc):
         frame.push(space.newhash())
@@ -270,7 +270,7 @@ class Interpreter(object):
 
         w_s = frame.pop()
         assert isinstance(w_s, W_StringObject)
-        frame.push(w_s.copy())
+        frame.push(w_s.copy(space))
 
     def COERCE_ARRAY(self, space, bytecode, frame, pc):
         from rupypy.objects.arrayobject import W_ArrayObject

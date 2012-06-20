@@ -4,7 +4,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 
 
 class StringStrategy(object):
@@ -28,12 +28,12 @@ class ConstantStringStrategy(StringStrategy):
     def hash(self, storage):
         return compute_hash(self.unerase(storage))
 
-    def copy(self, storage):
-        return W_StringObject(storage, self)
+    def copy(self, space, storage):
+        return W_StringObject(space, storage, self)
 
     def to_mutable(self, space, s):
         s.strategy = strategy = space.fromcache(MutableStringStrategy)
-        s.storage = strategy.erase(self.liststr_w(s.storage))
+        s.str_storage = strategy.erase(self.liststr_w(s.str_storage))
 
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
@@ -71,44 +71,45 @@ class MutableStringStrategy(StringStrategy):
         dst_storage += self.unerase(src_storage)
 
 
-class W_StringObject(W_BaseObject):
-    classdef = ClassDef("String")
+class W_StringObject(W_Object):
+    classdef = ClassDef("String", W_Object.classdef)
     classdef.include_module(Comparable)
 
-    def __init__(self, storage, strategy):
-        self.storage = storage
+    def __init__(self, space, storage, strategy):
+        W_Object.__init__(self, space)
+        self.str_storage = storage
         self.strategy = strategy
 
     @staticmethod
     def newstr_fromstr(space, strvalue):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase(strvalue)
-        return W_StringObject(storage, strategy)
+        return W_StringObject(space, storage, strategy)
 
     @staticmethod
     def newstr_fromchars(space, chars):
         strategy = space.fromcache(MutableStringStrategy)
         storage = strategy.erase(chars)
-        return W_StringObject(storage, strategy)
+        return W_StringObject(space, storage, strategy)
 
     def str_w(self, space):
-        return self.strategy.str_w(self.storage)
+        return self.strategy.str_w(self.str_storage)
 
     def liststr_w(self, space):
-        return self.strategy.liststr_w(self.storage)
+        return self.strategy.liststr_w(self.str_storage)
 
     def length(self):
-        return self.strategy.length(self.storage)
+        return self.strategy.length(self.str_storage)
 
-    def copy(self):
-        return self.strategy.copy(self.storage)
+    def copy(self, space):
+        return self.strategy.copy(space, self.str_storage)
 
     def extend(self, space, w_other):
         self.strategy.to_mutable(space, self)
         strategy = self.strategy
         assert isinstance(strategy, MutableStringStrategy)
-        storage = strategy.unerase(self.storage)
-        w_other.strategy.extend_into(w_other.storage, storage)
+        storage = strategy.unerase(self.str_storage)
+        w_other.strategy.extend_into(w_other.str_storage, storage)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -135,7 +136,7 @@ class W_StringObject(W_BaseObject):
 
     @classdef.method("hash")
     def method_hash(self, space):
-        return space.newint(self.strategy.hash(self.storage))
+        return space.newint(self.strategy.hash(self.str_storage))
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):

@@ -1,4 +1,4 @@
-class TestIntObject(object):
+class TestFixnumObject(object):
     def test_addition(self, space):
         w_res = space.execute("return 1 + 2")
         assert space.int_w(w_res) == 3
