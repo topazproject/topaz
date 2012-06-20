@@ -139,6 +139,9 @@ class W_ModuleObject(W_Object):
 
     def inherited(self, space, w_mod):
         self.descendants.append(w_mod)
+        if not space.bootstrap:
+            space.send(self, space.newsymbol("inherited"), [w_mod])
+
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
         if names:
@@ -196,6 +199,10 @@ class W_ModuleObject(W_Object):
     @classdef.method("ancestors")
     def method_ancestors(self, space):
         return space.newarray(self.ancestors())
+
+    @classdef.method("inherited")
+    def method_inherited(self, space, w_mod):
+        pass
 
     @classdef.method("included")
     def method_included(self, space, w_mod):
