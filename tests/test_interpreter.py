@@ -2,7 +2,8 @@ import math
 
 from rupypy.objects.boolobject import W_TrueObject
 from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_Object, W_BaseObject
+from rupypy.modules.kernel import Kernel
 
 from .base import BaseRuPyPyTest
 
@@ -797,3 +798,39 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert space.int_w(w_res) == 3
+
+    def test_ancestors(self, space):
+        w_res = space.execute("""
+        class A
+        end
+
+        class B < A
+        end
+
+        module C
+        end
+
+        module D
+          include C
+        end
+
+        ary = [A.ancestors, B.ancestors, C.ancestors, D.ancestors]
+
+        B.include D
+        ary << B.ancestors
+        return ary
+        """)
+        a = self.find_const(space, 'A')
+        b = self.find_const(space, 'B')
+        c = self.find_const(space, 'C')
+        d = self.find_const(space, 'D')
+        objct = self.find_const(space, 'Object')
+        basic = space.getclassobject(W_BaseObject.classdef)
+        kernel = space.getmoduleobject(Kernel.moduledef)
+        assert self.unwrap(space, w_res) == [
+            [a, objct, kernel, basic],
+            [b, a, objct, kernel, basic],
+            [c],
+            [d, c],
+            [b, d, c, a, objct, kernel, basic]
+        ]
