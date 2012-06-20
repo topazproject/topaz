@@ -3,6 +3,7 @@ from pypy.rlib import jit
 from rupypy.module import ClassDef
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.exceptionobject import W_NameError
 
 
 class AttributeReader(W_FunctionObject):
@@ -204,3 +205,9 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("constants")
     def method_constants(self, space):
         return space.newarray([space.newsymbol(n) for n in self.constants_w.keys()])
+
+    @classdef.method("const_missing", w_name="symbol")
+    def method_const_missing(self, space, w_name):
+        space.raise_(space.getclassfor(W_NameError),
+                "uninitialized constant %s" % space.symbol_w(w_name)
+        )

@@ -129,9 +129,7 @@ class Interpreter(object):
         name = space.symbol_w(w_name)
         w_obj = space.find_const(w_scope, name)
         if w_obj is None:
-            space.raise_(space.getclassfor(W_NameError),
-                "uninitialized constant %s" % name
-            )
+            space.send(w_scope, space.newsymbol("const_missing"), [w_name])
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
