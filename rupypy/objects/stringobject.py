@@ -4,7 +4,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_Object, W_BuiltinObject
 
 
 class StringStrategy(object):
@@ -71,12 +71,12 @@ class MutableStringStrategy(StringStrategy):
         dst_storage += self.unerase(src_storage)
 
 
-class W_StringObject(W_Object):
+class W_StringObject(W_BuiltinObject):
     classdef = ClassDef("String", W_Object.classdef)
     classdef.include_module(Comparable)
 
     def __init__(self, space, storage, strategy):
-        W_Object.__init__(self, space)
+        W_BuiltinObject.__init__(self, space)
         self.str_storage = storage
         self.strategy = strategy
 

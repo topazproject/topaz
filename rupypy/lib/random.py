@@ -1,13 +1,13 @@
 from pypy.rlib.rrandom import Random
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_Object, W_BuiltinObject
 
-class W_Random(W_Object):
+class W_Random(W_BuiltinObject):
     classdef = ClassDef("Random", W_Object.classdef)
 
     def __init__(self, space):
-        W_Object.__init__(self, space)
+        W_BuiltinObject.__init__(self, space)
         self.random = Random()
 
     @classdef.singleton_method("allocate")

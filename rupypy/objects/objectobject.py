@@ -155,3 +155,42 @@ class W_Object(W_BaseObject):
     @classdef.method("extend")
     def method_extend(self, space, w_mod):
         self.getsingletonclass(space).method_include(space, w_mod)
+
+# Optimization for some classes defined in RPython with a classdef
+# Avoids initializing a map and storage for objects without custom ivars
+# Keeps singleton class in a local field and otherwise uses the BaseObject implementation
+class W_BuiltinObject(W_Object):
+    def __init__(self, space):
+        self.map = None
+        self.storage = None
+        self.klass = None
+
+    def ensure_map(self, space):
+        if self.map is None:
+            W_Object.__init__(self, space, space.getclassobject(self.classdef))
+
+    def getclass(self, space):
+        if self.klass is not None:
+            return self.klass
+        else:
+            return W_BaseObject.getclass(self, space)
+
+    def getsingletonclass(self, space):
+        if self.klass is None:
+            self.ensure_map(space)
+            self.klass = W_Object.getsingletonclass(self, space)
+        return self.klass
+
+    def find_instance_var(self, space, name):
+        self.ensure_map(space)
+        idx = jit.promote(self.map).find_attr(space, name)
+        if idx == -1:
+            return space.w_nil
+        return self.storage[idx]
+
+    def set_instance_var(self, space, name, w_value):
+        self.ensure_map(space)
+        idx = jit.promote(self.map).find_set_attr(space, name)
+        if idx == -1:
+            idx = self.map.add_attr(space, self, name)
+        self.storage[idx] = w_value

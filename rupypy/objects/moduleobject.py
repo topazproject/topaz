@@ -2,7 +2,7 @@ from pypy.rlib import jit
 
 from rupypy.module import ClassDef
 from rupypy.objects.functionobject import W_FunctionObject
-from rupypy.objects.objectobject import W_BaseObject, W_Object
+from rupypy.objects.objectobject import W_BaseObject, W_Object, W_BuiltinObject
 
 class AttributeReader(W_FunctionObject):
     _immutable_fields_ = ["varname"]
@@ -30,13 +30,13 @@ class VersionTag(object):
     pass
 
 
-class W_ModuleObject(W_Object):
+class W_ModuleObject(W_BuiltinObject):
     _immutable_fields_ = ["version?"]
 
     classdef = ClassDef("Module", W_Object.classdef)
 
     def __init__(self, space, name, superclass):
-        W_Object.__init__(self, space, self)
+        W_BuiltinObject.__init__(self, space)
         self.name = name
         self.superclass = superclass
         self.klass = None

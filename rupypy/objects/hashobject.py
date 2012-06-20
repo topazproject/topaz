@@ -1,13 +1,13 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_Object, W_BuiltinObject
 from rupypy.utils.ordereddict import OrderedDict
 
 
-class W_HashObject(W_Object):
+class W_HashObject(W_BuiltinObject):
     classdef = ClassDef("Hash", W_Object.classdef)
 
     def __init__(self, space):
-        W_Object.__init__(self, space)
+        W_BuiltinObject.__init__(self, space)
         self.contents = OrderedDict(space.eq_w, space.hash_w)
 
     @classdef.method("[]")
