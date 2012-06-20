@@ -59,6 +59,7 @@ class ObjectSpace(object):
         self.symbol_cache = {}
         self._executioncontext = None
         self.globals = Globals()
+        self.bootstrap = True
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
         self.w_true = W_TrueObject(self)
@@ -68,6 +69,7 @@ class ObjectSpace(object):
         # This is bootstrap. We have to delay sending until true, false and nil are defined
         w_mod = self.getmoduleobject(Kernel.moduledef)
         self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
+        self.bootstrap = False
 
         for cls in [
             W_NilObject, W_TrueObject, W_FalseObject,

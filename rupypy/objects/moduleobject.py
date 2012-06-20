@@ -137,6 +137,8 @@ class W_ModuleObject(W_Object):
         self.descendants.append(w_mod)
         space.send(self, space.newsymbol("included"), [w_mod])
 
+    def inherited(self, space, w_mod):
+        self.descendants.append(w_mod)
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
         if names:

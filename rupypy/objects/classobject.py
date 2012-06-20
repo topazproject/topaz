@@ -12,8 +12,18 @@ class W_ClassObject(W_ModuleObject):
         W_ModuleObject.__init__(self, space, name, superclass)
         self.is_singleton = is_singleton
 
+        if self.superclass is not None:
+            self.superclass.inherited(space, self)
+            # During bootstrap, we cannot create singleton classes, yet
+            if not self.is_singleton and not space.bootstrap:
+                self.getsingletonclass(space)
+
     def getsingletonclass(self, space):
         if self.klass is None:
+            if self.superclass is None:
+                singleton_superclass = space.getclassfor(W_ClassObject)
+            else:
+                singleton_superclass = self.superclass.getsingletonclass(space)
             self.klass = space.newclass(
                 self.name, space.getclassfor(W_ClassObject), is_singleton=True
             )
