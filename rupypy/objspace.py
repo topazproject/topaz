@@ -204,7 +204,7 @@ class ObjectSpace(object):
         return w_obj.float_w(self)
 
     def bool_w(self, w_obj):
-        return w_obj.bool_w(self)
+        return w_obj.is_true(self)
 
     def symbol_w(self, w_obj):
         return w_obj.symbol_w(self)

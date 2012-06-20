@@ -8,9 +8,7 @@ class W_TrueObject(W_BaseObject):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("true")
-        
-    def bool_w(self, space):
-        return True
+
 
 class W_FalseObject(W_BaseObject):
     classdef = ClassDef("FalseClass")
@@ -21,6 +19,3 @@ class W_FalseObject(W_BaseObject):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("false")
-
-    def bool_w(self, space):
-        return False

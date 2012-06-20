@@ -8,6 +8,7 @@ class TestNilObject(BaseRuPyPyTest):
 
     def test_nil(self, space):
         w_res = space.execute("return nil.nil?")
+        print "w_res", w_res
         assert space.bool_w(w_res) == True
 
     def test_to_s(self, space):
