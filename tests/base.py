@@ -8,7 +8,7 @@ from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
-
+from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 
 class BaseRuPyPyTest(object):
     @contextmanager
@@ -28,6 +28,8 @@ class BaseRuPyPyTest(object):
             return [self.unwrap(space, w_x) for w_x in space.listview(w_obj)]
         elif isinstance(w_obj, W_SymbolObject):
             return space.symbol_w(w_obj)
+        elif isinstance(w_obj, W_TrueObject) or isinstance(w_obj, W_FalseObject):
+            return space.bool_w(w_obj)
         elif w_obj is space.w_nil:
             return None
         raise NotImplementedError(type(w_obj))
