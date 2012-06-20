@@ -59,3 +59,7 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_unshift(self, space):
         w_res = space.execute("return [1, 2].unshift(3, 4)")
         assert self.unwrap(space, w_res) == [3, 4, 1, 2]
+
+    def test_negative_indices(self, space):
+        w_res = space.execute("return [1, 2, 3][-2..2]")
+        assert self.unwrap(space, w_res) == [2, 3]
