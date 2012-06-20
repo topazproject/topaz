@@ -80,8 +80,17 @@ class W_ModuleObject(W_Object):
         self.mutated()
         self.methods_w[name] = method
 
-    def find_method(self, space, method):
-        return self._find_method_pure(space, method, self.version)
+    def find_method(self, space, name):
+        method = self._find_method_pure(space, name, self.version)
+        if method is None:
+            if len(self.included_modules) > 0:
+                for module in self.included_modules:
+                    method = module.find_method(space, name)
+                    if method is not None:
+                        return method
+            return None
+        else:
+            return method
 
     @jit.elidable
     def _find_method_pure(self, space, method, version):

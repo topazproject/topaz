@@ -19,11 +19,12 @@ class W_ClassObject(W_ModuleObject):
             )
         return self.klass
 
-    def find_method(self, space, method):
-        res = W_ModuleObject.find_method(self, space, method)
-        if res is None and self.superclass is not None:
-            res = self.superclass.find_method(space, method)
-        return res
+    def find_method(self, space, name):
+        method = W_ModuleObject.find_method(self, space, name)
+        if method is None and self.superclass is not None:
+            return self.superclass.find_method(space, name)
+        else:
+            return method
 
     @classdef.method("to_s")
     def method_to_s(self, space):
