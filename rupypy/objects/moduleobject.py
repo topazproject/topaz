@@ -43,6 +43,7 @@ class W_ModuleObject(W_Object):
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
+        self.class_variables_w = {}
         self._lazy_constants_w = None
         self.included_modules = []
         self.descendants = []
@@ -111,6 +112,35 @@ class W_ModuleObject(W_Object):
         if self._lazy_constants_w is not None:
             self._load_lazy(name)
         return self.constants_w.get(name, None)
+
+    def set_class_var(self, space, name, w_obj):
+        for module in self.ancestors():
+            if module._set_class_var(space, name, w_obj):
+                return
+        self.class_variables_w[name] = w_obj
+        for mod in self.descendants:
+            mod.remove_class_var(name)
+
+    def _set_class_var(self, space, name, w_obj):
+        if name in self.class_variables_w:
+            self.class_variables_w[name] = w_obj
+            return True
+        return False
+
+    def find_class_var(self, space, name):
+        res = self.class_variables_w.get(name, None)
+        if res is None:
+            ancestors = self.ancestors()
+            for idx in xrange(1, len(ancestors), 1):
+                res = ancestors[idx].find_class_var(space, name)
+                if res is not None:
+                    return res
+            return None
+        else:
+            return res
+
+    def remove_class_var(self, name):
+        self.class_variables_w.pop(name, None)
 
     def getclass(self, space):
         if self.klass is not None:

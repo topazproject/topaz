@@ -259,6 +259,12 @@ class ObjectSpace(object):
     def set_instance_var(self, w_obj, name, w_value):
         w_obj.set_instance_var(self, name, w_value)
 
+    def find_class_var(self, w_module, name):
+        return w_module.find_class_var(self, name)
+
+    def set_class_var(self, w_module, name, w_value):
+        w_module.set_class_var(self, name, w_value)
+
     def send(self, w_receiver, w_method, args_w=None, block=None):
         if args_w is None:
             args_w = []
