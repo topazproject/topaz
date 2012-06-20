@@ -197,11 +197,11 @@ class Interpreter(object):
             assert isinstance(w_item, W_StringObject)
             total_length += w_item.length()
 
-        str_storage = newlist_hint(total_length)
+        storage = newlist_hint(total_length)
         for w_item in items_w:
             assert isinstance(w_item, W_StringObject)
-            w_item.strategy.extend_into(w_item.str_storage, str_storage)
-        frame.push(space.newstr_fromchars(str_storage))
+            w_item.strategy.extend_into(w_item.str_storage, storage)
+        frame.push(space.newstr_fromchars(storage))
 
     def BUILD_HASH(self, space, bytecode, frame, pc):
         frame.push(space.newhash())
