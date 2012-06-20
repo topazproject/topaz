@@ -797,3 +797,33 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert space.int_w(w_res) == 3
+
+    def test_find_const(self, space):
+        with self.raises("NameError"):
+            w_res = space.execute("""
+            class A
+              Const = "A"
+              class InnerA
+                InnerConst = Const
+              end
+            end
+
+            class B < A::InnerA
+              BConst = Const
+            end
+            """)
+
+        w_res = space.execute("""
+        class A
+          Const = "A"
+          class InnerA
+            InnerConst = Const
+          end
+        end
+
+        class B < A::InnerA
+          BConst = InnerConst
+        end
+        return B::BConst
+        """)
+        assert self.unwrap(space, w_res) == "A"
