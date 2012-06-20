@@ -35,6 +35,15 @@ class W_BaseObject(object):
     def method___id__(self, space):
         return space.newint(compute_unique_id(self))
 
+    @classdef.method("method_missing")
+    def method_method_missing(self, space, w_name):
+        name = space.symbol_w(w_name)
+        class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
+        space.raise_(space.find_const(space.getclassfor(W_Object), "NoMethodError"),
+            "undefined method `%s` for %s" % (name, class_name)
+        )
+
+
 class MapTransitionCache(object):
     def __init__(self, space):
         # Mappings of classes -> their terminator nodes.

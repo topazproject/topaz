@@ -39,6 +39,16 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [2, 3]
 
+    def test_method_missing(self, space):
+        w_res = space.execute("""
+        class A
+          def method_missing(name, *args, &block)
+            return name, args, block
+          end
+        end
+        return A.new.foo('bar', 42)
+        """)
+        assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
 
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
