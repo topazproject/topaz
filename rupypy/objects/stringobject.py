@@ -152,14 +152,28 @@ class W_StringObject(W_BaseObject):
 
     @classdef.method("[]")
     def method_subscript(self, space, w_idx):
+        length = self.length()
         if isinstance(w_idx, W_RangeObject):
             start = space.int_w(w_idx.w_start)
-            if w_idx.inclusive:
+            
+            if start > length or start < -length:
+                return space.w_nil
+            
+            if w_idx.exclusive:
                 end = space.int_w(w_idx.w_end)
             else:
                 end = space.int_w(w_idx.w_end) + 1
-            assert start >= 0
-            assert end >= 0
+            
+            if start < 0:
+                if end > 0:
+                    return space.newstr_fromstr("")
+                start = length + start
+            if end <= 0:
+                end = length + end
+            
             return space.newstr_fromstr(space.str_w(self)[start:end])
         else:
-            return space.newstr_fromstr(space.str_w(self)[space.int_w(w_idx)])
+            index = space.int_w(w_idx)
+            if index >= length or index < -length:
+                return space.w_nil
+            return space.newstr_fromstr(space.str_w(self)[index])
