@@ -148,3 +148,12 @@ class W_StringObject(W_BaseObject):
             return space.newint(0)
         elif s1 > s2:
             return space.newint(1)
+
+    @classdef.method("freeze")
+    def method_freeze(self, space):
+        pass
+
+    @classdef.method("to_sym")
+    @classdef.method("intern")
+    def method_to_sym(self, space):
+        return space.newsymbol(space.str_w(self))
