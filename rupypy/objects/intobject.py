@@ -96,3 +96,8 @@ class W_IntObject(W_BaseObject):
         end
     end
     """)
+
+    @classdef.method("next")
+    @classdef.method("succ")
+    def method_succ(self, space):
+        return space.newint(self.intvalue + 1)

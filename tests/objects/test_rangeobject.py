@@ -1,4 +1,5 @@
 from ..base import BaseRuPyPyTest
+import py
 
 
 class TestRangeObject(BaseRuPyPyTest):
@@ -19,9 +20,12 @@ class TestRangeObject(BaseRuPyPyTest):
         
         w_res = space.execute("return (1...3).to_a")
         assert self.unwrap(space, w_res) == [1, 2]
+        
+        w_res = space.execute("return (3..2).to_a")
+        assert self.unwrap(space, w_res) == []
 
-    #@py.test.mark.xfail
-    def no_test_alphanumeric_values(self, space):
+    @py.test.mark.xfail
+    def test_alphanumeric_values(self, space):
         w_res = space.execute("return ('a'..'e').to_a")
         assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
 

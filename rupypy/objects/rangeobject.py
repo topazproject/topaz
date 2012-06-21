@@ -51,7 +51,7 @@ class W_RangeObject(W_BaseObject):
         end
         while i < lim
             yield i
-            i += 1
+            i = i.succ
         end
     end
     """)
