@@ -3,6 +3,7 @@ from pypy.rlib import jit
 from rupypy.module import ClassDef
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.exceptionobject import W_NameError
 
 
 class AttributeReader(W_FunctionObject):
@@ -44,6 +45,7 @@ class W_ModuleObject(W_BaseObject):
         self.methods_w = {}
         self.constants_w = {}
         self._lazy_constants_w = None
+        self.lexical_scope = None
 
     def _freeze_(self):
         "NOT_RPYTHON"
@@ -65,9 +67,13 @@ class W_ModuleObject(W_BaseObject):
         if obj is not None:
             space, obj = obj
             if hasattr(obj, "classdef"):
-                self.set_const(self, obj.classdef.name, space.getclassfor(obj))
+                w_cls = space.getclassfor(obj)
+                self.set_const(self, obj.classdef.name, w_cls)
+                w_cls.set_lexical_scope(space, self.getclass(space))
             elif hasattr(obj, "moduledef"):
-                self.set_const(self, obj.moduledef.name, space.getmoduleobject(obj.moduledef))
+                w_mod = space.getmoduleobject(obj.moduledef)
+                self.set_const(self, obj.moduledef.name, w_mod)
+                w_mod.set_lexical_scope(space, self.getclass(space))
             else:
                 assert False
 
@@ -85,14 +91,31 @@ class W_ModuleObject(W_BaseObject):
     def _find_method_pure(self, space, method, version):
         return self.methods_w.get(method, None)
 
+    def set_lexical_scope(self, space, w_mod):
+        self.lexical_scope = w_mod
+
     def set_const(self, space, name, w_obj):
         self.mutated()
         self.constants_w[name] = w_obj
 
     def find_const(self, space, name):
         res = self._find_const_pure(name, self.version)
+        if res is None and self.lexical_scope is not None:
+            res = self.lexical_scope.find_lexical_const(space, name)
         if res is None and self.superclass is not None:
-            res = self.superclass.find_const(space, name)
+            res = self.superclass.find_inherited_const(space, name)
+        return res
+
+    def find_lexical_const(self, space, name):
+        res = self._find_const_pure(name, self.version)
+        if res is None and self.lexical_scope is not None:
+            return self.lexical_scope.find_lexical_const(space, name)
+        return res
+
+    def find_inherited_const(self, space, name):
+        res = self._find_const_pure(name, self.version)
+        if res is None and self.superclass is not None:
+            return self.superclass.find_inherited_const(space, name)
         return res
 
     @jit.elidable
@@ -178,3 +201,13 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("protected")
     def method_protected(self, space, args_w):
         self.set_visibility(space, args_w, "protected")
+
+    @classdef.method("constants")
+    def method_constants(self, space):
+        return space.newarray([space.newsymbol(n) for n in self.constants_w])
+
+    @classdef.method("const_missing", name="symbol")
+    def method_const_missing(self, space, name):
+        space.raise_(space.getclassfor(W_NameError),
+             "uninitialized constant %s" % name
+        )
