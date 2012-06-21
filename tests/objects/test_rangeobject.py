@@ -77,3 +77,13 @@ class TestRangeObject(BaseRuPyPyTest):
         
         w_res = space.execute("return (1..2) == (1...2)")
         assert self.unwrap(space, w_res) == False
+
+    def test_include(self, space):
+        w_res = space.execute("return (1..5).include?(4)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return (1..5).include?(6)")
+        assert self.unwrap(space, w_res) == False
+        
+        w_res = space.execute("return ('a'..'f').include?('c')")
+        assert self.unwrap(space, w_res) == True

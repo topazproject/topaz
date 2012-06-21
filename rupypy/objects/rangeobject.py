@@ -29,6 +29,25 @@ class W_RangeObject(W_BaseObject):
                         return space.newbool(True)
         return space.newbool(False)
 
+    @classdef.method("===")
+    def method_eqleql(self, space, w_other):
+        return self.include(w_other)
+
+    classdef.app_method("""
+    def member?(elem)
+        include?
+    end
+    """)
+
+    classdef.app_method("""
+    def include?(elem)
+        self.each do |i|
+            return true if i == elem
+        end
+        false
+    end
+    """)
+
     @classdef.method("begin")
     def method_begin(self, space):
         return self.w_start
