@@ -10,6 +10,7 @@ from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 
+
 class BaseRuPyPyTest(object):
     @contextmanager
     def raises(self, exc_name):

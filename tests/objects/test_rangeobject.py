@@ -3,6 +3,12 @@ import py
 
 
 class TestRangeObject(BaseRuPyPyTest):
+    def test_new(self, space):
+        w_res = space.execute("return Range.new(1, 2)")
+        assert space.int_w(w_res.w_start) == 1
+        assert space.int_w(w_res.w_end) == 2
+        assert w_res.exclusive == False
+    
     def test_map(self, space):
         w_res = space.execute("return (1..3).map {|x| x * 5}")
         assert self.unwrap(space, w_res) == [5, 10, 15]
@@ -51,4 +57,23 @@ class TestRangeObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == True
         
         w_res = space.execute("return (1...5).cover?(5)")
+        assert self.unwrap(space, w_res) == False
+
+    def test_eql(self, space):
+        w_res = space.execute("return (1..2) == (1..2)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return (1...2) == (1...2)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return (1..2) == Range.new(1, 2)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return (1..2) == Range.new(1, 2, false)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return (1...2) == Range.new(1, 2, true)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return (1..2) == (1...2)")
         assert self.unwrap(space, w_res) == False

@@ -65,7 +65,7 @@ class ObjectSpace(object):
         for cls in [
             W_Object, W_ArrayObject, W_FileObject, W_ExceptionObject,
             W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
-            W_Random, W_SymbolObject, W_Dir
+            W_Random, W_SymbolObject, W_Dir, W_RangeObject
         ]:
             self.add_class(cls)
 

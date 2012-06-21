@@ -13,6 +13,22 @@ class W_RangeObject(W_BaseObject):
         self.w_end = w_end
         self.exclusive = exclusive
 
+    @classdef.singleton_method("new")
+    def method_new(self, space, args_w):
+        if len(args_w) < 3:
+            return W_RangeObject(args_w[0], args_w[1], False)
+        else:
+            return W_RangeObject(args_w[0], args_w[1], space.bool_w(args_w[2]))
+
+    @classdef.method("==")
+    def method_eql(self, space, w_other):
+        if isinstance(w_other, W_RangeObject):
+            if space.int_w(self.w_start) == space.int_w(w_other.w_start):
+                if space.int_w(self.w_end) == space.int_w(w_other.w_end):
+                    if self.exclusive == w_other.exclusive:
+                        return space.newbool(True)
+        return space.newbool(False)
+
     @classdef.method("begin")
     def method_begin(self, space):
         return self.w_start
