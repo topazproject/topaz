@@ -27,7 +27,7 @@ from rupypy.objects.fileobject import W_FileObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
-    W_ZeroDivisionError, W_SyntaxError)
+    W_ZeroDivisionError, W_SyntaxError, W_LoadError)
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.moduleobject import W_ModuleObject
@@ -64,8 +64,8 @@ class ObjectSpace(object):
 
         for cls in [
             W_Object, W_ArrayObject, W_FileObject, W_ExceptionObject,
-            W_NoMethodError, W_ZeroDivisionError, W_SyntaxError, W_Random,
-            W_SymbolObject, W_Dir
+            W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
+            W_Random, W_SymbolObject, W_Dir
         ]:
             self.add_class(cls)
 
@@ -242,6 +242,9 @@ class ObjectSpace(object):
     def set_const(self, module, name, w_value):
         module.set_const(self, name, w_value)
 
+    def set_lexical_scope(self, module, scope):
+        module.set_lexical_scope(self, scope)
+
     def find_instance_var(self, w_obj, name):
         return w_obj.find_instance_var(self, name)
 
@@ -256,10 +259,10 @@ class ObjectSpace(object):
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
         if raw_method is None:
-            class_name = self.str_w(self.send(w_cls, self.newsymbol("name")))
-            self.raise_(self.getclassfor(W_NoMethodError),
-                "undefined method `%s` for %s" % (name, class_name)
-            )
+            method_missing = w_cls.find_method(self, "method_missing")
+            assert method_missing is not None
+            args_w.insert(0, w_method)
+            return method_missing.call(self, w_receiver, args_w, block)
         return raw_method.call(self, w_receiver, args_w, block)
 
     def respond_to(self, w_receiver, w_method):
