@@ -129,9 +129,7 @@ class Interpreter(object):
         name = space.symbol_w(w_name)
         w_obj = space.find_const(w_scope, name)
         if w_obj is None:
-            space.raise_(space.getclassfor(W_NameError),
-                "uninitialized constant %s" % name
-            )
+            space.send(w_scope, space.newsymbol("const_missing"), [w_name])
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
@@ -251,6 +249,7 @@ class Interpreter(object):
                 superclass = space.getclassfor(W_Object)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
+            space.set_lexical_scope(w_cls, w_scope)
 
         frame.push(w_cls)
 
@@ -266,6 +265,7 @@ class Interpreter(object):
         if w_mod is None:
             w_mod = space.newmodule(name)
             space.set_const(w_scope, name, w_mod)
+            space.set_lexical_scope(w_mod, w_scope)
 
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = space.create_frame(w_bytecode, w_mod, w_mod)

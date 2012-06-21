@@ -257,6 +257,9 @@ class ObjectSpace(object):
     def set_const(self, module, name, w_value):
         module.set_const(self, name, w_value)
 
+    def set_lexical_scope(self, module, scope):
+        module.set_lexical_scope(self, scope)
+
     def find_instance_var(self, w_obj, name):
         return w_obj.find_instance_var(self, name)
 

@@ -915,3 +915,35 @@ class TestExceptions(BaseRuPyPyTest):
         return res << B.new.get
         """)
         assert self.unwrap(space, w_res) == ["A.get", "M#get", "B#override", "M#get (2nd ed)"]
+
+    def test_find_const(self, space):
+        with self.raises("NameError"):
+            space.execute("""
+            class A
+              Const = "A"
+              class InnerA; end
+            end
+
+            class B < A::InnerA
+              # Const lookup in superclass does not
+              # traverse lexical scope of superclass,
+              # and A::InnerA syntax doesn't put B in
+              # the lexical scope of A
+              Const
+            end
+            """)
+
+        w_res = space.execute("""
+        class A
+          Const = "A"
+          class InnerA
+            InnerConst = Const
+          end
+        end
+
+        class B < A::InnerA
+          BConst = InnerConst
+        end
+        return B::BConst
+        """)
+        assert self.unwrap(space, w_res) == "A"
