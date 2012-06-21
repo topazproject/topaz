@@ -40,11 +40,10 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return [1, 2].size")
         assert space.int_w(w_res) == 2
 
-    def test_range_inclusive(self, space):
+    def test_range(self, space):
         w_res = space.execute("return [1, 2, 3, 4, 5][1..2]")
         assert self.unwrap(space, w_res) == [2, 3]
 
-    def test_range_exclusive(self, space):
         w_res = space.execute("return [1, 2, 3, 4, 5][1...3]")
         assert self.unwrap(space, w_res) == [2, 3]
 

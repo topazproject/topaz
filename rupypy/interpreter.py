@@ -199,7 +199,7 @@ class Interpreter(object):
         w_range = space.newrange(w_start, w_end, False)
         frame.push(w_range)
 
-    def BUILD_RANGE_INCLUSIVE(self, space, bytecode, frame, pc):
+    def BUILD_RANGE_EXCLUSIVE(self, space, bytecode, frame, pc):
         w_end = frame.pop()
         w_start = frame.pop()
         w_range = space.newrange(w_start, w_end, True)

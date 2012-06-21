@@ -218,7 +218,7 @@ class TestInterpreter(BaseRuPyPyTest):
         end
         return X.new.f
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 5]
+        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [5, 5, 5]
 
     def test_instance_var(self, space):
         w_res = space.execute("""

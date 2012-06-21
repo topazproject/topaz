@@ -177,8 +177,8 @@ class ObjectSpace(object):
     def newhash(self):
         return W_HashObject(self)
 
-    def newrange(self, w_start, w_end, inclusive):
-        return W_RangeObject(w_start, w_end, inclusive)
+    def newrange(self, w_start, w_end, exclusive):
+        return W_RangeObject(w_start, w_end, exclusive)
 
     def newregexp(self, regexp):
         return W_RegexpObject(regexp)
