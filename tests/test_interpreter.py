@@ -800,16 +800,18 @@ class TestExceptions(BaseRuPyPyTest):
 
     def test_find_const(self, space):
         with self.raises("NameError"):
-            w_res = space.execute("""
+            space.execute("""
             class A
               Const = "A"
-              class InnerA
-                InnerConst = Const
-              end
+              class InnerA; end
             end
 
             class B < A::InnerA
-              BConst = Const
+              # Const lookup in superclass does not
+              # traverse lexical scope of superclass,
+              # and A::InnerA syntax doesn't put B in
+              # the lexical scope of A
+              Const
             end
             """)
 

@@ -204,10 +204,10 @@ class W_ModuleObject(W_BaseObject):
 
     @classdef.method("constants")
     def method_constants(self, space):
-        return space.newarray([space.newsymbol(n) for n in self.constants_w.keys()])
+        return space.newarray([space.newsymbol(n) for n in self.constants_w])
 
-    @classdef.method("const_missing", w_name="symbol")
-    def method_const_missing(self, space, w_name):
+    @classdef.method("const_missing", name="symbol")
+    def method_const_missing(self, space, name):
         space.raise_(space.getclassfor(W_NameError),
-                "uninitialized constant %s" % space.symbol_w(w_name)
+             "uninitialized constant %s" % name
         )
