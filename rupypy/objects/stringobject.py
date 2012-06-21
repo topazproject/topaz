@@ -177,3 +177,12 @@ class W_StringObject(W_BaseObject):
             if index >= length or index < -length:
                 return space.w_nil
             return space.newstr_fromstr(space.str_w(self)[index])
+
+    @classdef.method("next")
+    @classdef.method("succ")
+    def method_succ(self, space):
+        # NOT COMPLETE
+        s1 = space.str_w(self)[-1]
+        s2 = chr(ord(s1) + 1)
+        return space.newstr_fromstr(s2)
+        

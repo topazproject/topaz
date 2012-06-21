@@ -9,9 +9,6 @@ class W_RangeObject(W_BaseObject):
     classdef.include_module(Enumerable)
 
     def __init__(self, w_start, w_end, exclusive):
-        if not isinstance(w_start, W_IntObject) or not isinstance(w_end, W_IntObject):
-            raise NotImplementedError(type(w_start))
-        
         self.w_start = w_start
         self.w_end = w_end
         self.exclusive = exclusive
@@ -47,7 +44,7 @@ class W_RangeObject(W_BaseObject):
         i = self.begin
         lim = self.end
         if !self.exclude_end?
-            lim += 1
+            lim = lim.succ
         end
         while i < lim
             yield i

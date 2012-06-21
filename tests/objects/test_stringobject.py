@@ -88,3 +88,7 @@ class TestStringObject(BaseRuPyPyTest):
         
         w_res = space.execute("return 'hello'[-2...1]")
         assert self.unwrap(space, w_res) == ""
+
+    def test_succ(self, space):
+        w_res = space.execute("return 'a'.succ")
+        assert self.unwrap(space, w_res) == "b"
