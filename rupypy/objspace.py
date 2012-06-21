@@ -19,20 +19,23 @@ from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, ModuleCache
 from rupypy.modules.comparable import Comparable
 from rupypy.modules.math import Math
+from rupypy.modules.kernel import Kernel
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
-from rupypy.objects.fileobject import W_FileObject
+from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
-    W_ZeroDivisionError, W_SyntaxError, W_LoadError)
+    W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError)
 from rupypy.objects.hashobject import W_HashObject
-from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.integerobject import W_IntegerObject
+from rupypy.objects.numericobject import W_NumericObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_Object, W_BaseObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.regexpobject import W_RegexpObject
@@ -56,15 +59,27 @@ class ObjectSpace(object):
         self.symbol_cache = {}
         self._executioncontext = None
         self.globals = Globals()
+        self.bootstrap = True
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
-        self.w_true = W_TrueObject()
-        self.w_false = W_FalseObject()
-        self.w_nil = W_NilObject()
+        self.w_true = W_TrueObject(self)
+        self.w_false = W_FalseObject(self)
+        self.w_nil = W_NilObject(self)
+
+        # This is bootstrap. We have to delay sending until true, false and nil are defined
+        w_mod = self.getmoduleobject(Kernel.moduledef)
+        self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
+        self.bootstrap = False
 
         for cls in [
-            W_Object, W_ArrayObject, W_FileObject, W_ExceptionObject,
-            W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
+            W_NilObject, W_TrueObject, W_FalseObject,
+            W_BaseObject, W_Object,
+            W_StringObject, W_SymbolObject,
+            W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
+            W_ArrayObject, W_HashObject,
+            W_IOObject, W_FileObject,
+            W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
+            W_TypeError,
             W_Random, W_Dir
         ]:
             self.add_class(cls)
@@ -156,17 +171,17 @@ class ObjectSpace(object):
             return self.w_false
 
     def newint(self, intvalue):
-        return W_IntObject(intvalue)
+        return W_FixnumObject(self, intvalue)
 
     def newfloat(self, floatvalue):
-        return W_FloatObject(floatvalue)
+        return W_FloatObject(self, floatvalue)
 
     @jit.elidable
     def newsymbol(self, symbol):
         try:
             w_sym = self.symbol_cache[symbol]
         except KeyError:
-            w_sym = self.symbol_cache[symbol] = W_SymbolObject(symbol)
+            w_sym = self.symbol_cache[symbol] = W_SymbolObject(self, symbol)
         return w_sym
 
     def newstr_fromchars(self, chars):
@@ -176,16 +191,16 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromstr(self, strvalue)
 
     def newarray(self, items_w):
-        return W_ArrayObject(items_w)
+        return W_ArrayObject(self, items_w)
 
     def newhash(self):
         return W_HashObject(self)
 
     def newrange(self, w_start, w_end, inclusive):
-        return W_RangeObject(w_start, w_end, inclusive)
+        return W_RangeObject(self, w_start, w_end, inclusive)
 
     def newregexp(self, regexp):
-        return W_RegexpObject(regexp)
+        return W_RegexpObject(self, regexp)
 
     def newmodule(self, name):
         return W_ModuleObject(self, name, self.getclassfor(W_Object))
@@ -199,7 +214,7 @@ class ObjectSpace(object):
         return W_UserFunction(name, w_code)
 
     def newproc(self, block, is_lambda=False):
-        return W_ProcObject(block, is_lambda)
+        return W_ProcObject(self, block, is_lambda)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
@@ -228,6 +243,9 @@ class ObjectSpace(object):
     def getsingletonclass(self, w_receiver):
         return w_receiver.getsingletonclass(self)
 
+    def getnonsingletonclass(self, w_receiver):
+        return w_receiver.getnonsingletonclass(self)
+
     def getclassfor(self, cls):
         return self.getclassobject(cls.classdef)
 
@@ -251,6 +269,12 @@ class ObjectSpace(object):
 
     def set_instance_var(self, w_obj, name, w_value):
         w_obj.set_instance_var(self, name, w_value)
+
+    def find_class_var(self, w_module, name):
+        return w_module.find_class_var(self, name)
+
+    def set_class_var(self, w_module, name, w_value):
+        w_module.set_class_var(self, name, w_value)
 
     def send(self, w_receiver, w_method, args_w=None, block=None):
         if args_w is None:

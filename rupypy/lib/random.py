@@ -1,18 +1,18 @@
 from pypy.rlib.rrandom import Random
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object, W_BuiltinObject
 
+class W_Random(W_BuiltinObject):
+    classdef = ClassDef("Random", W_Object.classdef)
 
-class W_Random(W_BaseObject):
-    classdef = ClassDef("Random", W_BaseObject.classdef)
-
-    def __init__(self):
+    def __init__(self, space):
+        W_BuiltinObject.__init__(self, space)
         self.random = Random()
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        return W_Random()
+        return W_Random(space)
 
     @classdef.method("rand")
     def method_rand(self, space):

@@ -9,7 +9,7 @@ from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
-
+from rupypy.objects.moduleobject import W_ModuleObject
 
 def get_printable_location(pc, bytecode):
     return consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
@@ -154,10 +154,23 @@ class Interpreter(object):
         frame.push(w_value)
 
     def LOAD_CLASS_VAR(self, space, bytecode, frame, pc, idx):
-        raise NotImplementedError
+        name = space.symbol_w(bytecode.consts_w[idx])
+        w_module = frame.pop()
+        assert isinstance(w_module, W_ModuleObject)
+        w_value = space.find_class_var(w_module, name)
+        if w_value is None:
+            space.raise_(space.getclassfor(W_NameError),
+                "uninitialized class variable %s in %s" % (name, w_module.name)
+            )
+        frame.push(w_value)
 
     def STORE_CLASS_VAR(self, space, bytecode, frame, pc, idx):
-        raise NotImplementedError
+        name = space.symbol_w(bytecode.consts_w[idx])
+        w_value = frame.pop()
+        w_module = frame.pop()
+        assert isinstance(w_module, W_ModuleObject)
+        space.set_class_var(w_module, name, w_value)
+        frame.push(w_value)
 
     def LOAD_GLOBAL(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
@@ -185,7 +198,7 @@ class Interpreter(object):
         storage = newlist_hint(total_length)
         for w_item in items_w:
             assert isinstance(w_item, W_StringObject)
-            w_item.strategy.extend_into(w_item.storage, storage)
+            w_item.strategy.extend_into(w_item.str_storage, storage)
         frame.push(space.newstr_fromchars(storage))
 
     def BUILD_HASH(self, space, bytecode, frame, pc):
@@ -270,7 +283,7 @@ class Interpreter(object):
 
         w_s = frame.pop()
         assert isinstance(w_s, W_StringObject)
-        frame.push(w_s.copy())
+        frame.push(w_s.copy(space))
 
     def COERCE_ARRAY(self, space, bytecode, frame, pc):
         from rupypy.objects.arrayobject import W_ArrayObject

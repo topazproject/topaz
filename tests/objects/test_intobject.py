@@ -1,4 +1,4 @@
-class TestIntObject(object):
+class TestFixnumObject(object):
     def test_addition(self, space):
         w_res = space.execute("return 1 + 2")
         assert space.int_w(w_res) == 3
@@ -54,3 +54,23 @@ class TestIntObject(object):
     def test_comparator_gt(self, space):
         w_res = space.execute("return 2 <=> 1")
         assert space.int_w(w_res) == 1
+
+    def test_object_id(self, space):
+        w_res = space.listview(space.execute("return 2.object_id, 2.object_id"))
+        assert w_res[0].intvalue == w_res[1].intvalue
+
+    def test___id__(self, space):
+        res = space.listview(space.execute("return 2.__id__, 2.__id__"))
+        assert res[0].intvalue == res[1].intvalue
+
+    def test_ivar(self, space):
+        res = space.listview(space.execute("""
+        class Fixnum
+          def set; @foo = -1; end
+          def get; @foo; end
+        end
+        2.set
+        return 2.get, 2.get, 3.get
+        """))
+        assert res[0].intvalue == res[1].intvalue == -1
+        assert res[2] == space.w_nil

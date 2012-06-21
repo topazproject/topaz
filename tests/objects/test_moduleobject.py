@@ -77,3 +77,18 @@ class TestMethodVisibility(object):
             public_class_method :m
         end
         """)
+
+    def test_singleton_class(self, space):
+        res = space.listview(space.execute("""
+        class X; end
+        return X.singleton_class, X.singleton_class.ancestors, X.singleton_class.class
+        """))
+        assert res[0] != space.listview(res[1])[0]
+        assert space.listview(res[1])[0] == res[2]
+
+        res = space.listview(space.execute("""
+        class X; end
+        return X.singleton_class, X.singleton_class.singleton_class
+        """))
+        assert res[0].name == "#<Class:X>"
+        assert res[1].name == "#<Class:#<Class:X>>"

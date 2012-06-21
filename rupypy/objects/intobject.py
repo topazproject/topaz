@@ -1,15 +1,21 @@
+from pypy.rlib import jit
+
 from rupypy.module import ClassDef
-from rupypy.objects.exceptionobject import W_ZeroDivisionError
+from rupypy.objects.exceptionobject import W_ZeroDivisionError, W_TypeError
 from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.integerobject import W_IntegerObject
+from rupypy.objects.objectobject import W_BaseObject, MapTransitionCache
+from rupypy.externalobjectstorage import ExternalObjectStorage
 
-
-class W_IntObject(W_BaseObject):
+# This inherits from BaseObject instead of IntegerObject, because
+# equal Fixnums share ivars and cannot define singleton classes
+class W_FixnumObject(W_BaseObject):
     _immutable_fields_ = ["intvalue"]
 
-    classdef = ClassDef("Fixnum", W_BaseObject.classdef)
+    ivar_storage = ExternalObjectStorage()
+    classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
-    def __init__(self, intvalue):
+    def __init__(self, space, intvalue):
         self.intvalue = intvalue
 
     def int_w(self, space):
@@ -17,6 +23,20 @@ class W_IntObject(W_BaseObject):
 
     def float_w(self, space):
         return float(self.intvalue)
+
+    def getsingletonclass(self, space):
+        space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
+
+    def find_instance_var(self, space, name):
+        return self.ivar_storage.get(space, name, self.intvalue, space.w_nil)
+
+    def set_instance_var(self, space, name, w_value):
+        self.ivar_storage.set(space, name, self.intvalue, w_value)
+
+    @classdef.method("__id__")
+    @classdef.method("object_id")
+    def method___id__(self, space):
+        return self
 
     @classdef.method("to_s")
     def method_to_s(self, space):

@@ -2,7 +2,6 @@ from pypy.rlib import jit
 from pypy.rlib.objectmodel import compute_unique_id
 
 from rupypy.module import ClassDef
-from rupypy.modules.kernel import Kernel
 
 
 class ObjectMetaclass(type):
@@ -17,11 +16,13 @@ class W_BaseObject(object):
     __metaclass__ = ObjectMetaclass
     _attrs_ = ()
 
-    classdef = ClassDef("Object")
-    classdef.include_module(Kernel)
+    classdef = ClassDef("BasicObject")
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)
+
+    def getnonsingletonclass(self, space):
+        return self.getclass(space)
 
     def attach_method(self, space, name, func):
         w_cls = space.getsingletonclass(self)
@@ -29,6 +30,13 @@ class W_BaseObject(object):
 
     def is_true(self, space):
         return True
+
+    def object_id(self):
+        return compute_unique_id(self)
+
+    @classdef.method("__id__")
+    def method___id__(self, space):
+        return space.newint(self.object_id())
 
     @classdef.method("method_missing")
     def method_method_missing(self, space, w_name):
@@ -38,21 +46,6 @@ class W_BaseObject(object):
             "undefined method `%s` for %s" % (name, class_name)
         )
 
-    @classdef.method("initialize")
-    def method_initialize(self):
-        return self
-
-    @classdef.method("object_id")
-    def method_object_id(self, space):
-        return space.newint(compute_unique_id(self))
-
-    @classdef.method("singleton_class")
-    def method_singleton_class(self, space):
-        return space.getsingletonclass(self)
-
-    @classdef.method("extend")
-    def method_extend(self, space, w_mod):
-        self.getsingletonclass(space).method_include(space, w_mod)
 
 class MapTransitionCache(object):
     def __init__(self, space):
@@ -131,7 +124,11 @@ class AttributeNode(BaseNode):
 
 
 class W_Object(W_BaseObject):
-    def __init__(self, space, klass):
+    classdef = ClassDef("Object", W_BaseObject.classdef)
+
+    def __init__(self, space, klass = None):
+        if klass is None:
+            klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
         self.storage = []
 
@@ -146,6 +143,11 @@ class W_Object(W_BaseObject):
         self.map = self.map.change_class(space, w_cls)
         return w_cls
 
+    def getnonsingletonclass(self, space):
+        w_cls = self.getclass(space)
+        if w_cls.is_singleton:
+            return w_cls.superclass
+
     def find_instance_var(self, space, name):
         idx = jit.promote(self.map).find_attr(space, name)
         if idx == -1:
@@ -153,6 +155,64 @@ class W_Object(W_BaseObject):
         return self.storage[idx]
 
     def set_instance_var(self, space, name, w_value):
+        idx = jit.promote(self.map).find_set_attr(space, name)
+        if idx == -1:
+            idx = self.map.add_attr(space, self, name)
+        self.storage[idx] = w_value
+
+    @classdef.method("initialize")
+    def method_initialize(self):
+        return self
+
+    @classdef.method("object_id")
+    def method_object_id(self, space):
+        return W_BaseObject.method___id__(self, space)
+
+    @classdef.method("singleton_class")
+    def method_singleton_class(self, space):
+        return space.getsingletonclass(self)
+
+    @classdef.method("extend")
+    def method_extend(self, space, w_mod):
+        self.getsingletonclass(space).method_include(space, w_mod)
+
+# Optimization for some classes defined in RPython with a classdef
+# Avoids initializing a map and storage for objects without custom ivars
+# Keeps singleton class in a local field and otherwise uses the BaseObject implementation
+class W_BuiltinObject(W_Object):
+    def __init__(self, space):
+        self.map = None
+        self.storage = None
+        self.klass = None
+
+    def ensure_map(self, space):
+        if self.map is None:
+            W_Object.__init__(self, space, space.getclassobject(self.classdef))
+
+    def getclass(self, space):
+        if self.klass is not None:
+            return self.klass
+        else:
+            return W_BaseObject.getclass(self, space)
+
+    def getsingletonclass(self, space):
+        if self.klass is None:
+            self.ensure_map(space)
+            self.klass = W_Object.getsingletonclass(self, space)
+        return self.klass
+
+    def getnonsingletonclass(self, space):
+        return W_BaseObject.getclass(self, space)
+
+    def find_instance_var(self, space, name):
+        self.ensure_map(space)
+        idx = jit.promote(self.map).find_attr(space, name)
+        if idx == -1:
+            return space.w_nil
+        return self.storage[idx]
+
+    def set_instance_var(self, space, name, w_value):
+        self.ensure_map(space)
         idx = jit.promote(self.map).find_set_attr(space, name)
         if idx == -1:
             idx = self.map.add_attr(space, self, name)
