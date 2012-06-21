@@ -4,6 +4,7 @@ from rupypy.module import ClassDef
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_BaseObject, W_Object, W_BuiltinObject
 from rupypy.objects.exceptionobject import W_NameError
+from rupypy.externalobjectstorage import ExternalObjectStorage
 
 
 class AttributeReader(W_FunctionObject):
@@ -35,6 +36,7 @@ class VersionTag(object):
 class W_ModuleObject(W_BuiltinObject):
     _immutable_fields_ = ["version?"]
 
+    cvar_storage = ExternalObjectStorage()
     classdef = ClassDef("Module", W_Object.classdef)
 
     def __init__(self, space, name, superclass):
@@ -45,7 +47,6 @@ class W_ModuleObject(W_BuiltinObject):
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
-        self.class_variables_w = {}
         self._lazy_constants_w = None
         self.lexical_scope = None
         self.included_modules = []
@@ -138,33 +139,34 @@ class W_ModuleObject(W_BuiltinObject):
         return self.constants_w.get(name, None)
 
     def set_class_var(self, space, name, w_obj):
-        for module in self.ancestors():
-            if module._set_class_var(space, name, w_obj):
-                return
-        self.class_variables_w[name] = w_obj
-        for mod in self.descendants:
-            mod.remove_class_var(name)
-
-    def _set_class_var(self, space, name, w_obj):
-        if name in self.class_variables_w:
-            self.class_variables_w[name] = w_obj
-            return True
-        return False
+        ancestors = self.ancestors()
+        for idx in xrange(len(ancestors) - 1, -1, -1):
+            module = ancestors[idx]
+            oid = module.object_id()
+            result = self.cvar_storage.get(space, name, oid, None)
+            if result is not None or module == self:
+                self.cvar_storage.set(space, name, oid, w_obj)
+                if module == self:
+                    for descendant in self.descendants:
+                        descendant.remove_class_var(space, name)
 
     def find_class_var(self, space, name):
-        res = self.class_variables_w.get(name, None)
-        if res is None:
+        result = self.cvar_storage.get(space, name, self.object_id(), None)
+        if result is not None:
+            return result
+        else:
             ancestors = self.ancestors()
             for idx in xrange(1, len(ancestors), 1):
-                res = ancestors[idx].find_class_var(space, name)
-                if res is not None:
-                    return res
-            return None
-        else:
-            return res
+                oid = ancestors[idx].object_id()
+                result = self.cvar_storage.get(space, name, oid, None)
+                if result is not None:
+                    return result
+        return None
 
-    def remove_class_var(self, name):
-        self.class_variables_w.pop(name, None)
+    def remove_class_var(self, space, name):
+        self.cvar_storage.set(space, name, self.object_id(), None)
+        for descendant in self.descendants:
+            descendant.remove_class_var(space, name)
 
     def getclass(self, space):
         if self.klass is not None:

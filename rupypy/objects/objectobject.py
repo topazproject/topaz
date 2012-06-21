@@ -31,9 +31,12 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
+    def object_id(self):
+        return compute_unique_id(self)
+
     @classdef.method("__id__")
     def method___id__(self, space):
-        return space.newint(compute_unique_id(self))
+        return space.newint(self.object_id())
 
     @classdef.method("method_missing")
     def method_method_missing(self, space, w_name):

@@ -5,15 +5,14 @@ from rupypy.objects.exceptionobject import W_ZeroDivisionError, W_TypeError
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.objectobject import W_BaseObject, MapTransitionCache
+from rupypy.externalobjectstorage import ExternalObjectStorage
 
 # This inherits from BaseObject instead of IntegerObject, because
 # equal Fixnums share ivars and cannot define singleton classes
 class W_FixnumObject(W_BaseObject):
-    ivar_storage = {}
-    ivar_list = []
-
     _immutable_fields_ = ["intvalue"]
 
+    ivar_storage = ExternalObjectStorage()
     classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
     def __init__(self, space, intvalue):
@@ -29,22 +28,10 @@ class W_FixnumObject(W_BaseObject):
         space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
 
     def find_instance_var(self, space, name):
-        if name not in W_FixnumObject.ivar_list:
-            return space.w_nil
-        ary = W_FixnumObject.ivar_storage.get(self.intvalue, None)
-        if ary is not None:
-            return ary[W_FixnumObject.ivar_list.index(name)]
-        else:
-            return space.w_nil
+        return self.ivar_storage.get(space, name, self.intvalue, space.w_nil)
 
     def set_instance_var(self, space, name, w_value):
-        if name not in W_FixnumObject.ivar_list:
-            idx = len(W_FixnumObject.ivar_list)
-            W_FixnumObject.ivar_list.append(name)
-        else:
-            idx = W_FixnumObject.ivar_list.index(name)
-        ary = W_FixnumObject.ivar_storage.setdefault(self.intvalue, {})
-        ary[idx] = w_value
+        self.ivar_storage.set(space, name, self.intvalue, w_value)
 
     @classdef.method("__id__")
     @classdef.method("object_id")
