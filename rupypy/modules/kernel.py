@@ -47,6 +47,11 @@ class Kernel(Module):
                     path = os.path.join(base, path)
                     break
 
+        w_loaded_features = space.globals.get(space, '$"')
+        for w_str in space.listview(w_loaded_features):
+            if space.string_w(w_str) == path:
+                return space.w_false
+
         if not os.path.exists(assert_str0(path)):
             space.raise_(space.getclassfor(W_LoadError), orig_path)
 
@@ -56,5 +61,6 @@ class Kernel(Module):
         finally:
             f.close()
 
+        w_loaded_features.method_lshift(space, space.newstr_fromstr(path))
         space.execute(contents, filepath=path)
         return space.w_true

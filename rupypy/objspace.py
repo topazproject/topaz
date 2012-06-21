@@ -80,6 +80,10 @@ class ObjectSpace(object):
         self.globals.set(self, "$LOAD_PATH", w_load_path)
         self.globals.set(self, "$:", w_load_path)
 
+        w_loaded_features = self.newarray([])
+        self.globals.set(self, "$LOADED_FEATURES", w_loaded_features)
+        self.globals.set(self, '$"', w_loaded_features)
+
     def _freeze_(self):
         return True
 
