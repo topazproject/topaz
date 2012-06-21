@@ -96,3 +96,7 @@ class W_IntObject(W_BaseObject):
         end
     end
     """)
+
+    @classdef.method("nonzero?")
+    def method_nonzerop(self, space):
+        return space.newbool(self.intvalue != 0)
