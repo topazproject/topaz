@@ -26,3 +26,20 @@ class TestEnumberable(BaseRuPyPyTest):
         return result
         """)
         assert self.unwrap(space, w_res) == [[5, 0], [6, 1], [7, 2], [8, 3], [9, 4]]
+
+    def test_select(self, space):
+        w_res = space.execute("""
+        return (2..4).select { |x| x == 2 }
+        """)
+        assert self.unwrap(space, w_res) == [2]
+
+    def test_include(self, space):
+        w_res = space.execute("""
+        return (2..5).include? 12
+        """)
+        assert w_res is space.w_false
+
+        w_res = space.execute("""
+        return (2..3).include? 2
+        """)
+        assert w_res is space.w_true
