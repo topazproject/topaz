@@ -92,3 +92,7 @@ class TestStringObject(BaseRuPyPyTest):
     def test_succ(self, space):
         w_res = space.execute("return 'a'.succ")
         assert self.unwrap(space, w_res) == "b"
+
+    def test_object_id(self, space):
+        w_res = space.execute("return 'asd'.object_id")
+        assert self.unwrap(space, w_res) >= 0

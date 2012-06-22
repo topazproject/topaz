@@ -73,7 +73,7 @@ class MutableStringStrategy(StringStrategy):
 
 
 class W_StringObject(W_BaseObject):
-    classdef = ClassDef("String")
+    classdef = ClassDef("String",  W_BaseObject.classdef)
     classdef.include_module(Comparable)
 
     def __init__(self, storage, strategy):
