@@ -48,9 +48,11 @@ class Kernel(Module):
                     break
 
         w_loaded_features = space.globals.get(space, '$"')
-        for w_str in space.listview(w_loaded_features):
-            if space.string_w(w_str) == path:
-                return space.w_false
+        w_already_loaded = space.send(
+            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
+        )
+        if space.is_true(w_already_loaded):
+            return space.w_false
 
         if not os.path.exists(assert_str0(path)):
             space.raise_(space.getclassfor(W_LoadError), orig_path)
