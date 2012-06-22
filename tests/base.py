@@ -4,6 +4,7 @@ import py
 
 from rupypy.error import RubyError
 from rupypy.objects.arrayobject import W_ArrayObject
+from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.intobject import W_IntObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.stringobject import W_StringObject
@@ -22,6 +23,10 @@ class BaseRuPyPyTest(object):
             return space.int_w(w_obj)
         elif isinstance(w_obj, W_FloatObject):
             return space.float_w(w_obj)
+        elif isinstance(w_obj, W_TrueObject):
+            return True
+        elif isinstance(w_obj, W_FalseObject):
+            return False
         elif isinstance(w_obj, W_StringObject):
             return space.str_w(w_obj)
         elif isinstance(w_obj, W_SymbolObject):

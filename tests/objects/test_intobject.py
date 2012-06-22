@@ -1,4 +1,7 @@
-class TestIntObject(object):
+from ..base import BaseRuPyPyTest
+
+
+class TestIntObject(BaseRuPyPyTest):
     def test_addition(self, space):
         w_res = space.execute("return 1 + 2")
         assert space.int_w(w_res) == 3
@@ -54,3 +57,7 @@ class TestIntObject(object):
     def test_comparator_gt(self, space):
         w_res = space.execute("return 2 <=> 1")
         assert space.int_w(w_res) == 1
+
+    def test_nonzero(self, space):
+        w_res = space.execute("return [2.nonzero?, 0.nonzero?]")
+        assert self.unwrap(space, w_res) == [True, False]
