@@ -36,3 +36,7 @@ class TestStringObject(BaseRuPyPyTest):
         """)
         h1, h2 = self.unwrap(space, w_res)
         assert h1 == h2
+
+    def test_to_sym(self, space):
+        w_res = space.execute("return 'abc'.to_sym")
+        assert space.symbol_w(w_res) == "abc"
