@@ -1,5 +1,14 @@
 from rupypy.objects.intobject import W_IntObject
 from ..base import BaseRuPyPyTest
+import py
+
+
+class TestBaseObjectObject(BaseRuPyPyTest):
+    @py.test.mark.xfail
+    def test_object_id(self, space):
+        w_res = space.execute("return BasicObject.new")
+        assert self.unwrap(space, w_res) != None
+        py.test.raises(Exception, space.execute, "return BasicObject.new.object_id")
 
 
 class TestObjectObject(BaseRuPyPyTest):
