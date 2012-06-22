@@ -1,9 +1,19 @@
 from rupypy.objects.intobject import W_IntObject
-
 from ..base import BaseRuPyPyTest
 
 
 class TestObjectObject(BaseRuPyPyTest):
+    def test_object_id(self, space):
+        w_res = space.execute("return Object.new.object_id")
+        assert self.unwrap(space, w_res) > 0
+
+    def test_is_a(self, space):
+        w_res = space.execute("return Object.new.is_a?(Object)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return Object.new.is_a?(String)")
+        assert self.unwrap(space, w_res) == False
+
     def test_class(self, space):
         w_res = space.execute("return 1.class")
         assert w_res is space.getclassfor(W_IntObject)

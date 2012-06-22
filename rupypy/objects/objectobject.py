@@ -46,6 +46,15 @@ class W_BaseObject(object):
     def method_object_id(self, space):
         return space.newint(compute_unique_id(self))
 
+    @classdef.method("is_a?")
+    def method_is_a(self, space, w_other):
+        klass = self.getclass(space)
+        while klass is not w_other:
+            klass = klass.superclass
+            if klass == None:
+                return space.newbool(False)
+        return space.newbool(True)
+
     @classdef.method("singleton_class")
     def method_singleton_class(self, space):
         return space.getsingletonclass(self)

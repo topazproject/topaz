@@ -96,3 +96,13 @@ class TestStringObject(BaseRuPyPyTest):
     def test_object_id(self, space):
         w_res = space.execute("return 'asd'.object_id")
         assert self.unwrap(space, w_res) >= 0
+
+    def test_is_a(self, space):
+        w_res = space.execute("return 'asd'.is_a?(String)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return 'asd'.is_a?(Object)")
+        assert self.unwrap(space, w_res) == True
+        
+        w_res = space.execute("return 'asd'.is_a?(Symbol)")
+        assert self.unwrap(space, w_res) == False
