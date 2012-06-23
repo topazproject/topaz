@@ -48,41 +48,10 @@ class W_ModuleObject(W_RootObject):
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
-        self._lazy_constants_w = None
         self.class_variables = CellDict()
         self.lexical_scope = None
         self.included_modules = []
         self.descendants = []
-
-    def _freeze_(self):
-        "NOT_RPYTHON"
-        if self._lazy_constants_w is not None:
-            for name in self._lazy_constants_w.keys():
-                self._load_lazy(name)
-            self._lazy_constants_w = None
-        return False
-
-    def _lazy_set_const(self, space, name, obj):
-        "NOT_RPYTHON"
-        if self._lazy_constants_w is None:
-            self._lazy_constants_w = {}
-        self._lazy_constants_w[name] = (space, obj)
-
-    def _load_lazy(self, name):
-        "NOT_RPYTHON"
-        obj = self._lazy_constants_w.pop(name, None)
-        if obj is not None:
-            space, obj = obj
-            if hasattr(obj, "classdef"):
-                w_cls = space.getclassfor(obj)
-                self.set_const(self, obj.classdef.name, w_cls)
-                w_cls.set_lexical_scope(space, self.getclass(space))
-            elif hasattr(obj, "moduledef"):
-                w_mod = space.getmoduleobject(obj.moduledef)
-                self.set_const(self, obj.moduledef.name, w_mod)
-                w_mod.set_lexical_scope(space, self.getclass(space))
-            else:
-                assert False
 
     def getclass(self, space):
         if self.klass is not None:
@@ -146,8 +115,6 @@ class W_ModuleObject(W_RootObject):
 
     @jit.elidable
     def _find_const_pure(self, name, version):
-        if self._lazy_constants_w is not None:
-            self._load_lazy(name)
         return self.constants_w.get(name, None)
 
     @jit.unroll_safe

@@ -112,12 +112,14 @@ class ObjectSpace(object):
     def add_module(self, module):
         "NOT_RPYTHON"
         w_cls = self.getclassfor(W_Object)
-        w_cls._lazy_set_const(self, module.moduledef.name, module)
+        self.set_const(w_cls,
+            module.moduledef.name, self.getmoduleobject(module.moduledef)
+        )
 
     def add_class(self, cls):
         "NOT_RPYTHON"
         w_cls = self.getclassfor(W_Object)
-        w_cls._lazy_set_const(self, cls.classdef.name, cls)
+        self.set_const(w_cls, cls.classdef.name, self.getclassfor(cls))
 
     # Methods for dealing with source code.
 

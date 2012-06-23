@@ -1,4 +1,3 @@
-from rupypy.executioncontext import ExecutionContext
 from rupypy.gateway import WrapperGenerator
 from rupypy.utils.cache import Cache
 
@@ -15,6 +14,9 @@ class ClassDef(object):
 
     def __repr__(self):
         return "<ClassDef: {}>".format(self.name)
+
+    def __deepcopy__(self, memo):
+        return self
 
     def _freeze_(self):
         return True
@@ -51,6 +53,9 @@ class ModuleDef(object):
         self.app_methods = []
 
         self.singleton_methods = {}
+
+    def __deepcopy__(self, memo):
+        return self
 
     def method(self, name, **argspec):
         def adder(func):
