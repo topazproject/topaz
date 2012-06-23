@@ -33,7 +33,8 @@ class W_ClassObject(W_ModuleObject):
             method = self.superclass.find_method(space, name)
         return method
 
-    def ancestors(self, include_singleton=True):
+    def ancestors(self, include_singleton=True, include_self=True):
+        assert include_self
         ary = W_ModuleObject.ancestors(self,
             include_singleton, not (self.is_singleton and not include_singleton)
         )

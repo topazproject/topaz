@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated, specialize, newlist_hint
 
 from rupypy import consts
 from rupypy.error import RubyError
+from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
@@ -13,7 +14,7 @@ from rupypy.objects.stringobject import W_StringObject
 
 
 def get_printable_location(pc, bytecode):
-    return consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
+    return "%s at %s" % (bytecode.name, consts.BYTECODE_NAMES[ord(bytecode.code[pc])])
 
 
 class Interpreter(object):
@@ -84,7 +85,7 @@ class Interpreter(object):
         e.w_value.last_instructions.append(pc)
         block = frame.unrollstack(ApplicationException.kind)
         if block is None:
-            raise
+            raise e
         unroller = ApplicationException(e)
         return block.handle(space, frame, unroller)
 
@@ -248,6 +249,7 @@ class Interpreter(object):
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.getclassfor(W_Object)
+            assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
             space.set_lexical_scope(w_cls, w_scope)

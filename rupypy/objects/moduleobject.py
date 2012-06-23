@@ -40,7 +40,6 @@ class W_ModuleObject(W_RootObject):
     def __init__(self, space, name, superclass):
         from rupypy.celldict import CellDict
 
-        W_RootObject.__init__(self)
         self.name = name
         self.klass = None
         self.superclass = superclass
@@ -154,6 +153,7 @@ class W_ModuleObject(W_RootObject):
         ancestors = self.ancestors()
         for idx in xrange(len(ancestors) - 1, -1, -1):
             module = ancestors[idx]
+            assert isinstance(module, W_ModuleObject)
             w_res = module.class_variables.get(name)
             if w_res is not None or module is self:
                 module.class_variables.set(name, w_obj)
@@ -168,6 +168,7 @@ class W_ModuleObject(W_RootObject):
             ancestors = self.ancestors()
             for idx in xrange(1, len(ancestors)):
                 module = ancestors[idx]
+                assert isinstance(module, W_ModuleObject)
                 w_res = module.class_variables.get(name)
                 if w_res is not None:
                     break
