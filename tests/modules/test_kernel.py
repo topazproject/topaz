@@ -72,3 +72,19 @@ class TestRequire(BaseRuPyPyTest):
     def test_nonexistance(self, space):
         with self.raises("LoadError"):
             space.execute("require 'xxxxxxx'")
+
+    def test_already_loaded(self, space, tmpdir):
+        f = tmpdir.join("f.rb")
+        f.write("""
+        @a += 1
+        """)
+
+        w_res = space.execute("""
+        @a = 0
+        require '%s'
+        require '%s'
+        require '%s'
+
+        return @a
+        """ % (str(f), str(f), str(f)))
+        assert space.int_w(w_res) == 1

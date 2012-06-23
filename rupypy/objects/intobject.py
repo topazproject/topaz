@@ -111,6 +111,10 @@ class W_FixnumObject(W_RootObject):
     def method_hash(self, space):
         return self
 
+    @classdef.method("nonzero?")
+    def method_nonzerop(self, space):
+        return space.newbool(self.intvalue != 0)
+
     classdef.app_method("""
     def times
         i = 0

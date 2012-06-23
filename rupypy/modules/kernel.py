@@ -47,6 +47,13 @@ class Kernel(Module):
                     path = os.path.join(base, path)
                     break
 
+        w_loaded_features = space.globals.get(space, '$"')
+        w_already_loaded = space.send(
+            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
+        )
+        if space.is_true(w_already_loaded):
+            return space.w_false
+
         if not os.path.exists(assert_str0(path)):
             space.raise_(space.getclassfor(W_LoadError), orig_path)
 
@@ -56,5 +63,6 @@ class Kernel(Module):
         finally:
             f.close()
 
+        w_loaded_features.method_lshift(space, space.newstr_fromstr(path))
         space.execute(contents, filepath=path)
         return space.w_true

@@ -58,6 +58,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 2 <=> 1")
         assert space.int_w(w_res) == 1
 
+    def test_nonzero(self, space):
+        w_res = space.execute("return [2.nonzero?, 0.nonzero?]")
+        assert self.unwrap(space, w_res) == [True, False]
+
     def test_object_id(self, space):
         w_res = space.execute("return 2.object_id, 2.object_id")
         id_1, id_2 = self.unwrap(space, w_res)
