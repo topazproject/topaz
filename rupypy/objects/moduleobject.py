@@ -183,9 +183,10 @@ class W_ModuleObject(W_RootObject):
         if include_self:
             return [self] + self.included_modules
         else:
-            return self.included_modules
+            return self.included_modules[:]
 
     def include_module(self, space, w_mod):
+        assert isinstance(w_mod, W_ModuleObject)
         if w_mod not in self.ancestors():
             self.included_modules = [w_mod] + self.included_modules
             w_mod.included(space, self)
@@ -219,7 +220,6 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("include")
     def method_include(self, space, w_mod):
-        assert isinstance(w_mod, W_ModuleObject)
         space.send(w_mod, space.newsymbol("append_features"), [self])
 
     @classdef.method("append_features")

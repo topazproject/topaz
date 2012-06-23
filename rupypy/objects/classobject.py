@@ -33,9 +33,9 @@ class W_ClassObject(W_ModuleObject):
             method = self.superclass.find_method(space, name)
         return method
 
-    def ancestors(self, include_singleton=True, include_self=True):
+    def ancestors(self, include_singleton=True):
         ary = W_ModuleObject.ancestors(self,
-            include_singleton, include_self and not (self.is_singleton and not include_singleton)
+            include_singleton, not (self.is_singleton and not include_singleton)
         )
         if self.superclass is not None:
             ary += self.superclass.ancestors(include_singleton)
