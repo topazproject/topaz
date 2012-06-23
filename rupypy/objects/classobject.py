@@ -23,7 +23,7 @@ class W_ClassObject(W_ModuleObject):
             else:
                 singleton_superclass = self.superclass.getsingletonclass(space)
             self.klass = space.newclass(
-                "#<Class:" + self.name + ">", singleton_superclass, is_singleton=True
+                "#<Class:%s>" % self.name, singleton_superclass, is_singleton=True
             )
         return self.klass
 
@@ -33,10 +33,10 @@ class W_ClassObject(W_ModuleObject):
             method = self.superclass.find_method(space, name)
         return method
 
-    def ancestors(self, include_singleton=True):
-        ary = W_ModuleObject.ancestors(self, include_singleton)
-        if self.is_singleton and not include_singleton:
-            ary.pop(0)
+    def ancestors(self, include_singleton=True, include_self=True):
+        ary = W_ModuleObject.ancestors(self,
+            include_singleton, include_self and not (self.is_singleton and not include_singleton)
+        )
         if self.superclass is not None:
             ary += self.superclass.ancestors(include_singleton)
         return ary

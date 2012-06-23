@@ -66,7 +66,8 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject(self)
         self.w_nil = W_NilObject(self)
 
-        # This is bootstrap. We have to delay sending until true, false and nil are defined
+        # This is bootstrap. We have to delay sending until true, false and nil
+        # are defined
         w_mod = self.getmoduleobject(Kernel.moduledef)
         self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
         self.bootstrap = False
@@ -96,8 +97,8 @@ class ObjectSpace(object):
         self.globals.set("$:", w_load_path)
 
         w_loaded_features = self.newarray([])
-        self.globals.set(self, "$LOADED_FEATURES", w_loaded_features)
-        self.globals.set(self, '$"', w_loaded_features)
+        self.globals.set("$LOADED_FEATURES", w_loaded_features)
+        self.globals.set('$"', w_loaded_features)
 
     def _freeze_(self):
         return True

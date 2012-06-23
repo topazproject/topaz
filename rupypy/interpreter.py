@@ -84,7 +84,7 @@ class Interpreter(object):
         e.w_value.last_instructions.append(pc)
         block = frame.unrollstack(ApplicationException.kind)
         if block is None:
-            raise e
+            raise
         unroller = ApplicationException(e)
         return block.handle(space, frame, unroller)
 

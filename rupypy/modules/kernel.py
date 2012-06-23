@@ -47,7 +47,7 @@ class Kernel(Module):
                     path = os.path.join(base, path)
                     break
 
-        w_loaded_features = space.globals.get(space, '$"')
+        w_loaded_features = space.globals.get('$"')
         w_already_loaded = space.send(
             w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
         )

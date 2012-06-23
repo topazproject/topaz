@@ -157,7 +157,7 @@ class W_ModuleObject(W_RootObject):
             w_res = module.class_variables.get(name)
             if w_res is not None or module is self:
                 module.class_variables.set(name, w_obj)
-                if module == self:
+                if module is self:
                     for descendant in self.descendants:
                         descendant.remove_class_var(space, name)
 
@@ -179,8 +179,11 @@ class W_ModuleObject(W_RootObject):
         for descendant in self.descendants:
             descendant.remove_class_var(space, name)
 
-    def ancestors(self, include_singleton=True):
-        return [self] + self.included_modules
+    def ancestors(self, include_singleton=True, include_self=True):
+        if include_self:
+            return [self] + self.included_modules
+        else:
+            return self.included_modules
 
     def include_module(self, space, w_mod):
         if w_mod not in self.ancestors():
