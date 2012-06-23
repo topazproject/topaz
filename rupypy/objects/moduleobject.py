@@ -33,7 +33,9 @@ class VersionTag(object):
 
 
 class W_ModuleObject(W_RootObject):
-    _immutable_fields_ = ["version?", "included_modules?[*]"]
+    _immutable_fields_ = [
+        "version?", "included_modules?[*]", "lexical_scope?", "klass?"
+    ]
 
     classdef = ClassDef("Module", W_RootObject.classdef)
 
