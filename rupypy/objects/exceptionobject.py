@@ -1,5 +1,5 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object, W_BuiltinObject
+from rupypy.objects.objectobject import W_Object
 
 
 def new_exception_allocate(classdef):
@@ -7,11 +7,12 @@ def new_exception_allocate(classdef):
     def method_allocate(self, space, msg):
         return classdef.cls(space, msg)
 
-class W_ExceptionObject(W_BuiltinObject):
+
+class W_ExceptionObject(W_Object):
     classdef = ClassDef("Exception", W_Object.classdef)
 
     def __init__(self, space, msg):
-        W_BuiltinObject.__init__(self, space)
+        W_Object.__init__(self, space)
         self.msg = msg
         self.frame = None
         self.last_instructions = []

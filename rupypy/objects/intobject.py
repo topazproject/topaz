@@ -1,18 +1,25 @@
-from pypy.rlib import jit
-
 from rupypy.module import ClassDef
 from rupypy.objects.exceptionobject import W_ZeroDivisionError, W_TypeError
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
-from rupypy.objects.objectobject import W_BaseObject, MapTransitionCache
-from rupypy.externalobjectstorage import ExternalObjectStorage
+from rupypy.objects.objectobject import W_RootObject, W_Object
 
-# This inherits from BaseObject instead of IntegerObject, because
-# equal Fixnums share ivars and cannot define singleton classes
-class W_FixnumObject(W_BaseObject):
+
+class FixnumStorage(object):
+    def __init__(self, space):
+        self.storages = {}
+
+    def get_or_create(self, space, intvalue):
+        try:
+            storage = self.storages[intvalue]
+        except KeyError:
+            self.storages[intvalue] = storage = space.send(space.getclassfor(W_Object), space.newsymbol("new"))
+        return storage
+
+
+class W_FixnumObject(W_RootObject):
     _immutable_fields_ = ["intvalue"]
 
-    ivar_storage = ExternalObjectStorage()
     classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
     def __init__(self, space, intvalue):
@@ -28,15 +35,12 @@ class W_FixnumObject(W_BaseObject):
         space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
 
     def find_instance_var(self, space, name):
-        return self.ivar_storage.get(space, name, self.intvalue, space.w_nil)
+        storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
+        return storage.find_instance_var(space, name)
 
     def set_instance_var(self, space, name, w_value):
-        self.ivar_storage.set(space, name, self.intvalue, w_value)
-
-    @classdef.method("__id__")
-    @classdef.method("object_id")
-    def method___id__(self, space):
-        return self
+        storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
+        storage.set_instance_var(space, name, w_value)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -114,5 +118,11 @@ class W_FixnumObject(W_BaseObject):
             yield i
             i += 1
         end
+    end
+    """)
+
+    classdef.app_method("""
+    def __id__
+        self * 2 + 1
     end
     """)

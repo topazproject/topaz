@@ -1,10 +1,12 @@
 import os
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object, W_BuiltinObject
+from rupypy.objects.objectobject import W_Object
 
-class W_IOObject(W_BuiltinObject):
+
+class W_IOObject(W_Object):
     classdef = ClassDef("IO", W_Object.classdef)
+
 
 class W_FileObject(W_IOObject):
     classdef = ClassDef("File", W_IOObject.classdef)

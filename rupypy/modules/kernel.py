@@ -39,7 +39,7 @@ class Kernel(Module):
             path += ".rb"
 
         if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
-            w_load_path = space.globals.get(space, "$LOAD_PATH")
+            w_load_path = space.globals.get("$LOAD_PATH")
             for w_base in space.listview(w_load_path):
                 base = space.str_w(w_base)
                 full = os.path.join(base, path)

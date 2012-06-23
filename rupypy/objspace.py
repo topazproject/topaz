@@ -8,10 +8,10 @@ from pypy.rlib.parsing.parsing import ParseError
 from pypy.tool.cache import Cache
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
+from rupypy.celldict import CellDict
 from rupypy.error import RubyError
 from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
-from rupypy.globals import Globals
 from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError
 from rupypy.lib.dir import W_Dir
@@ -58,7 +58,7 @@ class ObjectSpace(object):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
         self._executioncontext = None
-        self.globals = Globals()
+        self.globals = CellDict()
         self.bootstrap = True
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
@@ -92,8 +92,8 @@ class ObjectSpace(object):
                 os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
             )
         ])
-        self.globals.set(self, "$LOAD_PATH", w_load_path)
-        self.globals.set(self, "$:", w_load_path)
+        self.globals.set("$LOAD_PATH", w_load_path)
+        self.globals.set("$:", w_load_path)
 
     def _freeze_(self):
         return True
@@ -239,8 +239,12 @@ class ObjectSpace(object):
     def getsingletonclass(self, w_receiver):
         return w_receiver.getsingletonclass(self)
 
+    @jit.unroll_safe
     def getnonsingletonclass(self, w_receiver):
-        return w_receiver.getnonsingletonclass(self)
+        cls = self.getclass(w_receiver)
+        while cls.is_singleton:
+            cls = cls.superclass
+        return cls
 
     def getclassfor(self, cls):
         return self.getclassobject(cls.classdef)

@@ -1,5 +1,3 @@
-from pypy.rlib import jit
-
 from rupypy.module import ClassDef
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.objectobject import W_Object
@@ -32,16 +30,15 @@ class W_ClassObject(W_ModuleObject):
     def find_method(self, space, name):
         method = W_ModuleObject.find_method(self, space, name)
         if method is None and self.superclass is not None:
-            return self.superclass.find_method(space, name)
-        else:
-            return method
+            method = self.superclass.find_method(space, name)
+        return method
 
-    def ancestors(self, with_singleton = True):
-        ary = W_ModuleObject.ancestors(self, with_singleton)
-        if self.is_singleton and not with_singleton:
+    def ancestors(self, include_singleton=True):
+        ary = W_ModuleObject.ancestors(self, include_singleton)
+        if self.is_singleton and not include_singleton:
             ary.pop(0)
         if self.superclass is not None:
-            ary += self.superclass.ancestors(with_singleton)
+            ary += self.superclass.ancestors(include_singleton)
         return ary
 
     @classdef.method("new")

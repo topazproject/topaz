@@ -1,12 +1,12 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object, W_BuiltinObject
+from rupypy.objects.objectobject import W_Object
 
 
-class W_ProcObject(W_BuiltinObject):
+class W_ProcObject(W_Object):
     classdef = ClassDef("Proc", W_Object.classdef)
 
     def __init__(self, space, block, is_lambda):
-        W_BuiltinObject.__init__(self, space)
+        W_Object.__init__(self, space)
         self.block = block
         self.is_lambda = is_lambda
 

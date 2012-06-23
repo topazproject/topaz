@@ -2,9 +2,8 @@ from pypy.rlib import jit
 
 from rupypy.module import ClassDef
 from rupypy.objects.functionobject import W_FunctionObject
-from rupypy.objects.objectobject import W_BaseObject, W_Object, W_BuiltinObject
+from rupypy.objects.objectobject import W_RootObject
 from rupypy.objects.exceptionobject import W_NameError
-from rupypy.externalobjectstorage import ExternalObjectStorage
 
 
 class AttributeReader(W_FunctionObject):
@@ -33,21 +32,23 @@ class VersionTag(object):
     pass
 
 
-class W_ModuleObject(W_BuiltinObject):
-    _immutable_fields_ = ["version?"]
+class W_ModuleObject(W_RootObject):
+    _immutable_fields_ = ["version?", "included_modules?[*]"]
 
-    cvar_storage = ExternalObjectStorage()
-    classdef = ClassDef("Module", W_Object.classdef)
+    classdef = ClassDef("Module", W_RootObject.classdef)
 
     def __init__(self, space, name, superclass):
-        W_BuiltinObject.__init__(self, space)
+        from rupypy.celldict import CellDict
+
+        W_RootObject.__init__(self)
         self.name = name
-        self.superclass = superclass
         self.klass = None
+        self.superclass = superclass
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
         self._lazy_constants_w = None
+        self.class_variables = CellDict()
         self.lexical_scope = None
         self.included_modules = []
         self.descendants = []
@@ -82,6 +83,18 @@ class W_ModuleObject(W_BuiltinObject):
             else:
                 assert False
 
+    def getclass(self, space):
+        if self.klass is not None:
+            return self.klass
+        return W_RootObject.getclass(self, space)
+
+    def getsingletonclass(self, space):
+        if self.klass is None:
+            self.klass = space.newclass(
+                "#<Class:%s>" % self.name, space.getclassfor(W_ModuleObject), is_singleton=True
+            )
+        return self.klass
+
     def mutated(self):
         self.version = VersionTag()
 
@@ -89,17 +102,15 @@ class W_ModuleObject(W_BuiltinObject):
         self.mutated()
         self.methods_w[name] = method
 
+    @jit.unroll_safe
     def find_method(self, space, name):
         method = self._find_method_pure(space, name, self.version)
         if method is None:
-            if len(self.included_modules) > 0:
-                for module in self.included_modules:
-                    method = module.find_method(space, name)
-                    if method is not None:
-                        return method
-            return None
-        else:
-            return method
+            for module in self.included_modules:
+                method = module.find_method(space, name)
+                if method is not None:
+                    return method
+        return method
 
     @jit.elidable
     def _find_method_pure(self, space, method, version):
@@ -138,54 +149,42 @@ class W_ModuleObject(W_BuiltinObject):
             self._load_lazy(name)
         return self.constants_w.get(name, None)
 
+    @jit.unroll_safe
     def set_class_var(self, space, name, w_obj):
         ancestors = self.ancestors()
         for idx in xrange(len(ancestors) - 1, -1, -1):
             module = ancestors[idx]
-            oid = module.object_id()
-            result = self.cvar_storage.get(space, name, oid, None)
-            if result is not None or module == self:
-                self.cvar_storage.set(space, name, oid, w_obj)
+            w_res = module.class_variables.get(name)
+            if w_res is not None or module is self:
+                module.class_variables.set(name, w_obj)
                 if module == self:
                     for descendant in self.descendants:
                         descendant.remove_class_var(space, name)
 
+    @jit.unroll_safe
     def find_class_var(self, space, name):
-        result = self.cvar_storage.get(space, name, self.object_id(), None)
-        if result is not None:
-            return result
-        else:
+        w_res = self.class_variables.get(name)
+        if w_res is None:
             ancestors = self.ancestors()
-            for idx in xrange(1, len(ancestors), 1):
-                oid = ancestors[idx].object_id()
-                result = self.cvar_storage.get(space, name, oid, None)
-                if result is not None:
-                    return result
-        return None
+            for idx in xrange(1, len(ancestors)):
+                module = ancestors[idx]
+                w_res = module.class_variables.get(name)
+                if w_res is not None:
+                    break
+        return w_res
 
+    @jit.unroll_safe
     def remove_class_var(self, space, name):
-        self.cvar_storage.set(space, name, self.object_id(), None)
+        self.class_variables.delete(name)
         for descendant in self.descendants:
             descendant.remove_class_var(space, name)
 
-    def getclass(self, space):
-        if self.klass is not None:
-            return self.klass
-        return W_BaseObject.getclass(self, space)
-
-    def getsingletonclass(self, space):
-        if self.klass is None:
-            self.klass = space.newclass(
-                "#<Class:" + self.name + ">", space.getclassfor(W_ModuleObject), is_singleton=True
-            )
-        return self.klass
-
-    def ancestors(self, with_singleton = True):
+    def ancestors(self, include_singleton=True):
         return [self] + self.included_modules
 
     def include_module(self, space, w_mod):
         if w_mod not in self.ancestors():
-            self.included_modules.insert(0, w_mod)
+            self.included_modules = [w_mod] + self.included_modules
             w_mod.included(space, self)
 
     def included(self, space, w_mod):
@@ -257,7 +256,7 @@ class W_ModuleObject(W_BuiltinObject):
 
     @classdef.method("ancestors")
     def method_ancestors(self, space):
-        return space.newarray(self.ancestors(with_singleton = False))
+        return space.newarray(self.ancestors(include_singleton=False))
 
     @classdef.method("inherited")
     def method_inherited(self, space, w_mod):

@@ -7,9 +7,10 @@ from rupypy.error import RubyError
 from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
+from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
-from rupypy.objects.moduleobject import W_ModuleObject
+
 
 def get_printable_location(pc, bytecode):
     return consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
@@ -174,13 +175,13 @@ class Interpreter(object):
 
     def LOAD_GLOBAL(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
-        w_value = space.globals.get(space, name)
+        w_value = space.globals.get(name) or space.w_nil
         frame.push(w_value)
 
     def STORE_GLOBAL(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
         w_value = frame.peek()
-        space.globals.set(space, name, w_value)
+        space.globals.set(name, w_value)
 
     @jit.unroll_safe
     def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
