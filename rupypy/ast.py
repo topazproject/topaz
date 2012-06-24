@@ -1141,10 +1141,10 @@ class Hash(Node):
 
 
 class Range(Node):
-    def __init__(self, start, stop, inclusive):
+    def __init__(self, start, stop, exclusive):
         self.start = start
         self.stop = stop
-        self.inclusive = inclusive
+        self.exclusive = exclusive
 
     def locate_symbols(self, symtable):
         self.start.locate_symbols(symtable)
@@ -1153,8 +1153,8 @@ class Range(Node):
     def compile(self, ctx):
         self.start.compile(ctx)
         self.stop.compile(ctx)
-        if self.inclusive:
-            ctx.emit(consts.BUILD_RANGE_INCLUSIVE)
+        if self.exclusive:
+            ctx.emit(consts.BUILD_RANGE_EXCLUSIVE)
         else:
             ctx.emit(consts.BUILD_RANGE)
 

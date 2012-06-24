@@ -279,11 +279,11 @@ class Transformer(object):
         return ast.UnaryOp(op, value, node.getsourcepos().lineno)
 
     def visit_range(self, node):
-        inclusive = node.children[1].additional_info == "..."
+        exclusive = node.children[1].additional_info == "..."
         return ast.Range(
             self.visit_arg(node.children[0]),
             self.visit_arg(node.children[2]),
-            inclusive=inclusive,
+            exclusive=exclusive,
         )
 
     def visit_ternary(self, node):
