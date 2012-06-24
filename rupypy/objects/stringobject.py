@@ -6,6 +6,7 @@ from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.rangeobject import W_RangeObject
+from rupypy.objects.intobject import W_FixnumObject
 
 
 class StringStrategy(object):
@@ -174,6 +175,7 @@ class W_StringObject(W_Object):
             
             return space.newstr_fromstr(space.str_w(self)[start:end])
         else:
+            assert isinstance(w_idx, W_FixnumObject)
             index = space.int_w(w_idx)
             if index >= length or index < -length:
                 return space.w_nil
