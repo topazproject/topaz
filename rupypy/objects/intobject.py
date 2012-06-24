@@ -1,15 +1,28 @@
 from rupypy.module import ClassDef
-from rupypy.objects.exceptionobject import W_ZeroDivisionError
+from rupypy.objects.exceptionobject import W_ZeroDivisionError, W_TypeError
 from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.integerobject import W_IntegerObject
+from rupypy.objects.objectobject import W_RootObject, W_Object
 
 
-class W_IntObject(W_BaseObject):
+class FixnumStorage(object):
+    def __init__(self, space):
+        self.storages = {}
+
+    def get_or_create(self, space, intvalue):
+        try:
+            storage = self.storages[intvalue]
+        except KeyError:
+            self.storages[intvalue] = storage = space.send(space.getclassfor(W_Object), space.newsymbol("new"))
+        return storage
+
+
+class W_FixnumObject(W_RootObject):
     _immutable_fields_ = ["intvalue"]
 
-    classdef = ClassDef("Fixnum", W_BaseObject.classdef)
+    classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
-    def __init__(self, intvalue):
+    def __init__(self, space, intvalue):
         self.intvalue = intvalue
 
     def int_w(self, space):
@@ -17,6 +30,17 @@ class W_IntObject(W_BaseObject):
 
     def float_w(self, space):
         return float(self.intvalue)
+
+    def getsingletonclass(self, space):
+        space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
+
+    def find_instance_var(self, space, name):
+        storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
+        return storage.find_instance_var(space, name)
+
+    def set_instance_var(self, space, name, w_value):
+        storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
+        storage.set_instance_var(space, name, w_value)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -87,6 +111,10 @@ class W_IntObject(W_BaseObject):
     def method_hash(self, space):
         return self
 
+    @classdef.method("nonzero?")
+    def method_nonzerop(self, space):
+        return space.newbool(self.intvalue != 0)
+
     classdef.app_method("""
     def times
         i = 0
@@ -101,3 +129,9 @@ class W_IntObject(W_BaseObject):
     @classdef.method("succ")
     def method_succ(self, space):
         return space.newint(self.intvalue + 1)
+
+    classdef.app_method("""
+    def __id__
+        self * 2 + 1
+    end
+    """)

@@ -2,7 +2,7 @@ from pypy.rlib import jit
 
 from rupypy.module import ClassDef
 from rupypy.objects.functionobject import W_FunctionObject
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_RootObject
 from rupypy.objects.exceptionobject import W_NameError
 
 
@@ -32,50 +32,38 @@ class VersionTag(object):
     pass
 
 
-class W_ModuleObject(W_BaseObject):
-    _immutable_fields_ = ["version?"]
+class W_ModuleObject(W_RootObject):
+    _immutable_fields_ = [
+        "version?", "included_modules?[*]", "lexical_scope?", "klass?"
+    ]
 
-    classdef = ClassDef("Module", W_BaseObject.classdef)
+    classdef = ClassDef("Module", W_RootObject.classdef)
 
     def __init__(self, space, name, superclass):
+        from rupypy.celldict import CellDict
+
         self.name = name
-        self.superclass = superclass
         self.klass = None
+        self.superclass = superclass
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
-        self._lazy_constants_w = None
+        self.class_variables = CellDict()
         self.lexical_scope = None
+        self.included_modules = []
+        self.descendants = []
 
-    def _freeze_(self):
-        "NOT_RPYTHON"
-        if self._lazy_constants_w is not None:
-            for name in self._lazy_constants_w.keys():
-                self._load_lazy(name)
-            self._lazy_constants_w = None
-        return False
+    def getclass(self, space):
+        if self.klass is not None:
+            return self.klass
+        return W_RootObject.getclass(self, space)
 
-    def _lazy_set_const(self, space, name, obj):
-        "NOT_RPYTHON"
-        if self._lazy_constants_w is None:
-            self._lazy_constants_w = {}
-        self._lazy_constants_w[name] = (space, obj)
-
-    def _load_lazy(self, name):
-        "NOT_RPYTHON"
-        obj = self._lazy_constants_w.pop(name, None)
-        if obj is not None:
-            space, obj = obj
-            if hasattr(obj, "classdef"):
-                w_cls = space.getclassfor(obj)
-                self.set_const(self, obj.classdef.name, w_cls)
-                w_cls.set_lexical_scope(space, self.getclass(space))
-            elif hasattr(obj, "moduledef"):
-                w_mod = space.getmoduleobject(obj.moduledef)
-                self.set_const(self, obj.moduledef.name, w_mod)
-                w_mod.set_lexical_scope(space, self.getclass(space))
-            else:
-                assert False
+    def getsingletonclass(self, space):
+        if self.klass is None:
+            self.klass = space.newclass(
+                "#<Class:%s>" % self.name, space.getclassfor(W_ModuleObject), is_singleton=True
+            )
+        return self.klass
 
     def mutated(self):
         self.version = VersionTag()
@@ -84,8 +72,15 @@ class W_ModuleObject(W_BaseObject):
         self.mutated()
         self.methods_w[name] = method
 
-    def find_method(self, space, method):
-        return self._find_method_pure(space, method, self.version)
+    @jit.unroll_safe
+    def find_method(self, space, name):
+        method = self._find_method_pure(space, name, self.version)
+        if method is None:
+            for module in self.included_modules:
+                method = module.find_method(space, name)
+                if method is not None:
+                    return method
+        return method
 
     @jit.elidable
     def _find_method_pure(self, space, method, version):
@@ -120,22 +115,60 @@ class W_ModuleObject(W_BaseObject):
 
     @jit.elidable
     def _find_const_pure(self, name, version):
-        if self._lazy_constants_w is not None:
-            self._load_lazy(name)
         return self.constants_w.get(name, None)
 
-    def getclass(self, space):
-        if self.klass is not None:
-            return self.klass
-        return W_BaseObject.getclass(self, space)
+    @jit.unroll_safe
+    def set_class_var(self, space, name, w_obj):
+        ancestors = self.ancestors()
+        for idx in xrange(len(ancestors) - 1, -1, -1):
+            module = ancestors[idx]
+            assert isinstance(module, W_ModuleObject)
+            w_res = module.class_variables.get(name)
+            if w_res is not None or module is self:
+                module.class_variables.set(name, w_obj)
+                if module is self:
+                    for descendant in self.descendants:
+                        descendant.remove_class_var(space, name)
 
-    def getsingletonclass(self, space):
-        if self.klass is None:
-            self.mutated()
-            self.klass = space.newclass(
-                self.name, space.getclassfor(W_ModuleObject), is_singleton=True
-            )
-        return self.klass
+    @jit.unroll_safe
+    def find_class_var(self, space, name):
+        w_res = self.class_variables.get(name)
+        if w_res is None:
+            ancestors = self.ancestors()
+            for idx in xrange(1, len(ancestors)):
+                module = ancestors[idx]
+                assert isinstance(module, W_ModuleObject)
+                w_res = module.class_variables.get(name)
+                if w_res is not None:
+                    break
+        return w_res
+
+    @jit.unroll_safe
+    def remove_class_var(self, space, name):
+        self.class_variables.delete(name)
+        for descendant in self.descendants:
+            descendant.remove_class_var(space, name)
+
+    def ancestors(self, include_singleton=True, include_self=True):
+        if include_self:
+            return [self] + self.included_modules
+        else:
+            return self.included_modules[:]
+
+    def include_module(self, space, w_mod):
+        assert isinstance(w_mod, W_ModuleObject)
+        if w_mod not in self.ancestors():
+            self.included_modules = [w_mod] + self.included_modules
+            w_mod.included(space, self)
+
+    def included(self, space, w_mod):
+        self.descendants.append(w_mod)
+        space.send(self, space.newsymbol("included"), [w_mod])
+
+    def inherited(self, space, w_mod):
+        self.descendants.append(w_mod)
+        if not space.bootstrap:
+            space.send(self, space.newsymbol("inherited"), [w_mod])
 
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
@@ -151,11 +184,19 @@ class W_ModuleObject(W_BaseObject):
     def set_method_visibility(self, space, name, visibility):
         pass
 
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        return space.newstr_fromstr(self.name)
+
     @classdef.method("include")
     def method_include(self, space, w_mod):
-        assert isinstance(w_mod, W_ModuleObject)
-        self.mutated()
-        self.methods_w.update(w_mod.methods_w)
+        space.send(w_mod, space.newsymbol("append_features"), [self])
+
+    @classdef.method("append_features")
+    def method_append_features(self, space, w_mod):
+        ancestors = self.ancestors()
+        for idx in xrange(len(ancestors) - 1, -1, -1):
+            w_mod.include_module(space, ancestors[idx])
 
     @classdef.method("attr_accessor")
     def method_attr_accessor(self, space, args_w):
@@ -170,7 +211,7 @@ class W_ModuleObject(W_BaseObject):
 
     @classdef.method("module_function", name="symbol")
     def method_module_function(self, space, name):
-        self.attach_method(space, name, self.find_method(space, name))
+        self.attach_method(space, name, self._find_method_pure(space, name, self.version))
 
     @classdef.method("private_class_method")
     def method_private_class_method(self, space, w_name):
@@ -185,6 +226,18 @@ class W_ModuleObject(W_BaseObject):
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
         self.define_method(space, new_name, self.find_method(space, old_name))
+
+    @classdef.method("ancestors")
+    def method_ancestors(self, space):
+        return space.newarray(self.ancestors(include_singleton=False))
+
+    @classdef.method("inherited")
+    def method_inherited(self, space, w_mod):
+        pass
+
+    @classdef.method("included")
+    def method_included(self, space, w_mod):
+        pass
 
     @classdef.method("name")
     def method_name(self, space):

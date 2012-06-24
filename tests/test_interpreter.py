@@ -1,8 +1,11 @@
 import math
 
+import py
+
 from rupypy.objects.boolobject import W_TrueObject
 from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_Object, W_BaseObject
+from rupypy.modules.kernel import Kernel
 
 from .base import BaseRuPyPyTest
 
@@ -797,6 +800,121 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert space.int_w(w_res) == 3
+
+    def test_class_variable_accessed_from_instance_side(self, space):
+        w_res = space.execute("""
+        module A
+          @@foo = 'a'
+        end
+
+        class B
+          include A
+
+          def get
+            @@foo
+          end
+        end
+
+        return B.new.get
+        """)
+        assert space.str_w(w_res) == 'a'
+        w_res = space.execute("""
+        class A; end
+        class B < A
+          @@foo = "B"
+          def get; @@foo; end
+        end
+        in_subclass = [B.new.get]
+        class A; @@foo = "A overrides all"; end
+        return in_subclass + [B.new.get]
+        """)
+        assert self.unwrap(space, w_res) == ["B", "A overrides all"]
+
+    @py.test.mark.xfail
+    def test_class_variables_accessed_from_class_side(self, space):
+        w_res = space.execute("""
+        class A; @@foo = 'A'; end
+        class B < A
+          def get; @@foo; end
+          def self.get; @@foo; end
+        end
+        return [B.get, B.new.get]
+        """)
+        assert self.unwrap(space, w_res) == ['A', 'A']
+
+    @py.test.mark.xfail
+    def test_class_variable_access_has_static_scope(self, space):
+        with self.raises("NameError"):
+            w_res = space.execute("""
+            class A
+              def get
+                @@foo
+              end
+            end
+            class B < A;
+              @@foo = "b"
+            end
+            bb = B.new.get
+            """)
+
+    def test_ancestors(self, space):
+        w_res = space.execute("""
+        class A
+        end
+
+        class B < A
+        end
+
+        module C
+        end
+
+        module D
+          include C
+        end
+
+        ary = [A.ancestors, B.ancestors, C.ancestors, D.ancestors]
+
+        B.include D
+        ary << B.ancestors
+        return ary
+        """)
+        a = self.find_const(space, 'A')
+        b = self.find_const(space, 'B')
+        c = self.find_const(space, 'C')
+        d = self.find_const(space, 'D')
+        objct = self.find_const(space, 'Object')
+        basic = space.getclassobject(W_BaseObject.classdef)
+        kernel = space.getmoduleobject(Kernel.moduledef)
+        assert self.unwrap(space, w_res) == [
+            [a, objct, kernel, basic],
+            [b, a, objct, kernel, basic],
+            [c],
+            [d, c],
+            [b, d, c, a, objct, kernel, basic]
+        ]
+
+    def test_lookup_for_includes(self, space):
+        w_res = space.execute("""
+        class A
+          def self.get; "A.get"; end
+          def get; "A#get"; end
+          def override; "A#override"; end
+        end
+        module M
+          def get; "M#get"; end
+          def override; "M#override"; end
+        end
+        class B < A
+          def override; "B#override"; end
+          include M
+        end
+        res = [B.get, B.new.get, B.new.override]
+        module M
+          def get; "M#get (2nd ed)"; end
+        end
+        return res << B.new.get
+        """)
+        assert self.unwrap(space, w_res) == ["A.get", "M#get", "B#override", "M#get (2nd ed)"]
 
     def test_find_const(self, space):
         with self.raises("NameError"):

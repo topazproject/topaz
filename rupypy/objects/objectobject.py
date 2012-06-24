@@ -2,7 +2,6 @@ from pypy.rlib import jit
 from pypy.rlib.objectmodel import compute_unique_id
 
 from rupypy.module import ClassDef
-from rupypy.modules.kernel import Kernel
 
 
 class ObjectMetaclass(type):
@@ -17,8 +16,7 @@ class W_BaseObject(object):
     __metaclass__ = ObjectMetaclass
     _attrs_ = ()
 
-    classdef = ClassDef("Object")
-    classdef.include_module(Kernel)
+    classdef = ClassDef("BasicObject")
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)
@@ -30,6 +28,10 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
+    @classdef.method("__id__")
+    def method___id__(self, space):
+        return space.newint(compute_unique_id(self))
+
     @classdef.method("method_missing")
     def method_method_missing(self, space, w_name):
         name = space.symbol_w(w_name)
@@ -38,30 +40,6 @@ class W_BaseObject(object):
             "undefined method `%s` for %s" % (name, class_name)
         )
 
-    @classdef.method("initialize")
-    def method_initialize(self):
-        return self
-
-    @classdef.method("object_id")
-    def method_object_id(self, space):
-        return space.newint(compute_unique_id(self))
-
-    @classdef.method("is_a?")
-    def method_is_a(self, space, w_other):
-        klass = self.getclass(space)
-        while klass is not w_other:
-            klass = klass.superclass
-            if klass == None:
-                return space.newbool(False)
-        return space.newbool(True)
-
-    @classdef.method("singleton_class")
-    def method_singleton_class(self, space):
-        return space.getsingletonclass(self)
-
-    @classdef.method("extend")
-    def method_extend(self, space, w_mod):
-        self.getsingletonclass(space).method_include(space, w_mod)
 
 class MapTransitionCache(object):
     def __init__(self, space):
@@ -139,8 +117,39 @@ class AttributeNode(BaseNode):
         return space.fromcache(MapTransitionCache).transition_add_attr(prev, self.name, self.pos)
 
 
-class W_Object(W_BaseObject):
-    def __init__(self, space, klass):
+class W_RootObject(W_BaseObject):
+    classdef = ClassDef("Object", W_BaseObject.classdef)
+
+    @classdef.method("initialize")
+    def method_initialize(self):
+        return self
+
+    @classdef.method("object_id")
+    def method_object_id(self, space):
+        return space.send(self, space.newsymbol("__id__"))
+
+    @classdef.method("singleton_class")
+    def method_singleton_class(self, space):
+        return space.getsingletonclass(self)
+
+    @classdef.method("extend")
+    def method_extend(self, space, w_mod):
+        self.getsingletonclass(space).method_include(space, w_mod)
+
+    @classdef.method("is_a?")
+    def method_is_a(self, space, w_other):
+        klass = self.getclass(space)
+        while klass is not w_other:
+            klass = klass.superclass
+            if klass == None:
+                return space.newbool(False)
+        return space.newbool(True)
+
+
+class W_Object(W_RootObject):
+    def __init__(self, space, klass=None):
+        if klass is None:
+            klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
         self.storage = []
 

@@ -1,7 +1,7 @@
 from ..base import BaseRuPyPyTest
 
 
-class TestIntObject(BaseRuPyPyTest):
+class TestFixnumObject(BaseRuPyPyTest):
     def test_addition(self, space):
         w_res = space.execute("return 1 + 2")
         assert space.int_w(w_res) == 3
@@ -61,3 +61,30 @@ class TestIntObject(BaseRuPyPyTest):
     def test_succ(self, space):
         w_res = space.execute("return 7.succ")
         assert self.unwrap(space, w_res) == 8
+
+    def test_nonzero(self, space):
+        w_res = space.execute("return [2.nonzero?, 0.nonzero?]")
+        assert self.unwrap(space, w_res) == [True, False]
+
+    def test_object_id(self, space):
+        w_res = space.execute("return 2.object_id, 2.object_id")
+        id_1, id_2 = self.unwrap(space, w_res)
+        assert id_1 == id_2
+
+    def test___id__(self, space):
+        w_res = space.execute("return 2.__id__, 2.__id__")
+        id_1, id_2 = self.unwrap(space, w_res)
+        assert id_1 == id_2
+
+    def test_ivar(self, space):
+        w_res = space.execute("""
+        class Fixnum
+          def set; @foo = -1; end
+          def get; @foo; end
+        end
+        2.set
+        return 2.get, 2.get, 3.get
+        """)
+        [x, y, z] = self.unwrap(space, w_res)
+        assert x == y == -1
+        assert z is None

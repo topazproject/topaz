@@ -1,11 +1,15 @@
 import os
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 
 
-class W_FileObject(W_BaseObject):
-    classdef = ClassDef("File", W_BaseObject.classdef)
+class W_IOObject(W_Object):
+    classdef = ClassDef("IO", W_Object.classdef)
+
+
+class W_FileObject(W_IOObject):
+    classdef = ClassDef("File", W_IOObject.classdef)
 
     @classdef.singleton_method("dirname", path="path")
     def method_dirname(self, space, path):

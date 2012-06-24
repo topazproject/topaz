@@ -1,17 +1,23 @@
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
+from rupypy.objects.exceptionobject import W_TypeError
 
-class W_SymbolObject(W_BaseObject):
+
+class W_SymbolObject(W_Object):
     _immutable_fields_ = ["symbol"]
-    classdef = ClassDef("Symbol", W_BaseObject.classdef)
+    classdef = ClassDef("Symbol", W_Object.classdef)
     classdef.include_module(Comparable)
 
-    def __init__(self, symbol):
+    def __init__(self, space, symbol):
+        W_Object.__init__(self, space)
         self.symbol = symbol
 
     def symbol_w(self, space):
         return self.symbol
+
+    def getsingletonclass(self, space):
+        space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
 
     @classdef.method("to_s")
     @classdef.method("id2name")

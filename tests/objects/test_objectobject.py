@@ -1,4 +1,4 @@
-from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.intobject import W_FixnumObject
 from ..base import BaseRuPyPyTest
 import py
 
@@ -25,7 +25,7 @@ class TestObjectObject(BaseRuPyPyTest):
 
     def test_class(self, space):
         w_res = space.execute("return 1.class")
-        assert w_res is space.getclassfor(W_IntObject)
+        assert w_res is space.getclassfor(W_FixnumObject)
 
     def test_initialize(self, space):
         w_res = space.execute("""

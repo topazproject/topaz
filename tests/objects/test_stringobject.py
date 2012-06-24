@@ -106,3 +106,7 @@ class TestStringObject(BaseRuPyPyTest):
         
         w_res = space.execute("return 'asd'.is_a?(Symbol)")
         assert self.unwrap(space, w_res) == False
+
+    def test_to_sym(self, space):
+        w_res = space.execute("return 'abc'.to_sym")
+        assert space.symbol_w(w_res) == "abc"

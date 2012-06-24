@@ -1,14 +1,14 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
-from rupypy.objects.objectobject import W_BaseObject
-from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.objectobject import W_Object
 
 
-class W_RangeObject(W_BaseObject):
-    classdef = ClassDef("Range", W_BaseObject.classdef)
+class W_RangeObject(W_Object):
+    classdef = ClassDef("Range", W_Object.classdef)
     classdef.include_module(Enumerable)
 
-    def __init__(self, w_start, w_end, exclusive):
+    def __init__(self, space, w_start, w_end, exclusive):
+        W_Object.__init__(self, space)
         self.w_start = w_start
         self.w_end = w_end
         self.exclusive = exclusive
@@ -16,9 +16,9 @@ class W_RangeObject(W_BaseObject):
     @classdef.singleton_method("new")
     def method_new(self, space, args_w):
         if len(args_w) < 3:
-            return W_RangeObject(args_w[0], args_w[1], False)
+            return W_RangeObject(space, args_w[0], args_w[1], False)
         else:
-            return W_RangeObject(args_w[0], args_w[1], space.bool_w(args_w[2]))
+            return W_RangeObject(space, args_w[0], args_w[1], space.bool_w(args_w[2]))
 
     @classdef.method("==")
     def method_eql(self, space, w_other):

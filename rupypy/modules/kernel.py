@@ -10,7 +10,7 @@ class Kernel(Module):
 
     @moduledef.method("class")
     def function_class(self, space):
-        return space.getclass(self)
+        return space.getnonsingletonclass(self)
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
@@ -39,13 +39,20 @@ class Kernel(Module):
             path += ".rb"
 
         if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
-            w_load_path = space.globals.get(space, "$LOAD_PATH")
+            w_load_path = space.globals.get("$LOAD_PATH")
             for w_base in space.listview(w_load_path):
                 base = space.str_w(w_base)
                 full = os.path.join(base, path)
                 if os.path.exists(assert_str0(full)):
                     path = os.path.join(base, path)
                     break
+
+        w_loaded_features = space.globals.get('$"')
+        w_already_loaded = space.send(
+            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
+        )
+        if space.is_true(w_already_loaded):
+            return space.w_false
 
         if not os.path.exists(assert_str0(path)):
             space.raise_(space.getclassfor(W_LoadError), orig_path)
@@ -56,5 +63,6 @@ class Kernel(Module):
         finally:
             f.close()
 
+        w_loaded_features.method_lshift(space, space.newstr_fromstr(path))
         space.execute(contents, filepath=path)
         return space.w_true

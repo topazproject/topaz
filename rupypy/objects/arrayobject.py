@@ -1,14 +1,15 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 from rupypy.objects.rangeobject import W_RangeObject
 
 
-class W_ArrayObject(W_BaseObject):
-    classdef = ClassDef("Array", W_BaseObject.classdef)
+class W_ArrayObject(W_Object):
+    classdef = ClassDef("Array", W_Object.classdef)
     classdef.include_module(Enumerable)
 
-    def __init__(self, items_w):
+    def __init__(self, space, items_w):
+        W_Object.__init__(self, space)
         self.items_w = items_w
 
     def listview(self, space):

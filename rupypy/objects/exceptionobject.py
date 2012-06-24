@@ -1,17 +1,18 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 
 
 def new_exception_allocate(classdef):
     @classdef.singleton_method("allocate", msg="str")
     def method_allocate(self, space, msg):
-        return classdef.cls(msg)
+        return classdef.cls(space, msg)
 
 
-class W_ExceptionObject(W_BaseObject):
-    classdef = ClassDef("Exception", W_BaseObject.classdef)
+class W_ExceptionObject(W_Object):
+    classdef = ClassDef("Exception", W_Object.classdef)
 
-    def __init__(self, msg):
+    def __init__(self, space, msg):
+        W_Object.__init__(self, space)
         self.msg = msg
         self.frame = None
         self.last_instructions = []
@@ -55,11 +56,6 @@ class W_NoMethodError(W_NameError):
 
 class W_ZeroDivisionError(W_StandardError):
     classdef = ClassDef("ZeroDivisionError", W_StandardError.classdef)
-    method_allocate = new_exception_allocate(classdef)
-
-
-class W_ScriptError(W_ExceptionObject):
-    classdef = ClassDef("ScriptError", W_ExceptionObject.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 

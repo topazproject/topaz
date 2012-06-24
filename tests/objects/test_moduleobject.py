@@ -33,6 +33,23 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_singleton_class(self, space):
+        w_res = space.execute("""
+        class X; end
+        return X.singleton_class, X.singleton_class.ancestors, X.singleton_class.class
+        """)
+        s, s_ancs, s_class = self.unwrap(space, w_res)
+        assert s not in s_ancs
+        assert s_class == s_ancs[0]
+
+        w_res = space.execute("""
+        class X; end
+        return X.singleton_class, X.singleton_class.singleton_class
+        """)
+        s, s_s = self.unwrap(space, w_res)
+        assert s.name == "#<Class:X>"
+        assert s_s.name == "#<Class:#<Class:X>>"
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):
