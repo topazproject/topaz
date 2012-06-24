@@ -18,6 +18,10 @@ class W_BaseObject(object):
 
     classdef = ClassDef("BasicObject")
 
+    @classmethod
+    def setup_class(cls, space, w_cls):
+        pass
+
     def getclass(self, space):
         return space.getclassobject(self.classdef)
 

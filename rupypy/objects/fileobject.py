@@ -1,4 +1,5 @@
 import os
+import sys
 
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
@@ -10,6 +11,15 @@ class W_IOObject(W_Object):
 
 class W_FileObject(W_IOObject):
     classdef = ClassDef("File", W_IOObject.classdef)
+
+    @classmethod
+    def setup_class(cls, space, w_cls):
+        super(W_FileObject, cls).setup_class(space, w_cls)
+        if sys.platform == "win32":
+            w_alt_seperator = space.newstr_fromstr("\\")
+        else:
+            w_alt_seperator = space.w_nil
+        space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
 
     @classdef.singleton_method("dirname", path="path")
     def method_dirname(self, space, path):

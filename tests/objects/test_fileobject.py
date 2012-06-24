@@ -3,6 +3,11 @@ import os
 from ..base import BaseRuPyPyTest
 
 
+class TestFile(object):
+    def test_alt_separator(self, space):
+        space.execute("File::ALT_SEPARATOR")
+
+
 class TestExpandPath(BaseRuPyPyTest):
     def test_expand_to_absolute(self, space):
         w_res = space.execute("""

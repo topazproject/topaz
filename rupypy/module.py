@@ -102,6 +102,8 @@ class ClassCache(Cache):
             w_mod = self.space.getmoduleobject(mod.moduledef)
             self.space.send(w_class, self.space.newsymbol("include"), [w_mod])
 
+        classdef.cls.setup_class(self.space, w_class)
+
 
 class ModuleCache(Cache):
     def _build(self, moduledef):
