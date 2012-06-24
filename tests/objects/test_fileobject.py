@@ -7,6 +7,9 @@ class TestFile(object):
     def test_alt_separator(self, space):
         space.execute("File::ALT_SEPARATOR")
 
+    def test_fnm_syscase(self, space):
+        space.execute("File::FNM_SYSCASE")
+
 
 class TestExpandPath(BaseRuPyPyTest):
     def test_expand_to_absolute(self, space):

@@ -17,9 +17,12 @@ class W_FileObject(W_IOObject):
         super(W_FileObject, cls).setup_class(space, w_cls)
         if sys.platform == "win32":
             w_alt_seperator = space.newstr_fromstr("\\")
+            w_fnm_syscase = space.newint(0x08)
         else:
             w_alt_seperator = space.w_nil
+            w_fnm_syscase = space.newint(0)
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
+        space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
 
     @classdef.singleton_method("dirname", path="path")
     def method_dirname(self, space, path):
