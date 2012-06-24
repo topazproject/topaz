@@ -65,6 +65,15 @@ class W_RootObject(W_BaseObject):
     def method_extend(self, space, w_mod):
         self.getsingletonclass(space).method_include(space, w_mod)
 
+    @classdef.method("is_a?")
+    def method_is_a(self, space, w_other):
+        klass = self.getclass(space)
+        while klass is not w_other:
+            klass = klass.superclass
+            if klass == None:
+                return space.newbool(False)
+        return space.newbool(True)
+
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):

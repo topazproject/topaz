@@ -38,7 +38,7 @@ BYTECODES = [
     ("BUILD_STRING", 1, ARRAY_EFFECT),
     ("BUILD_HASH", 0, +1),
     ("BUILD_RANGE", 0, -1),
-    ("BUILD_RANGE_INCLUSIVE", 0, -1),
+    ("BUILD_RANGE_EXCLUSIVE", 0, -1),
     ("BUILD_FUNCTION", 0, -1),
     ("BUILD_BLOCK", 1, BLOCK_EFFECT),
     ("BUILD_CLASS", 0, -2),

@@ -125,6 +125,11 @@ class W_FixnumObject(W_RootObject):
     end
     """)
 
+    @classdef.method("next")
+    @classdef.method("succ")
+    def method_succ(self, space):
+        return space.newint(self.intvalue + 1)
+
     classdef.app_method("""
     def __id__
         self * 2 + 1

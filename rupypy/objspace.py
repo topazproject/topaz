@@ -77,6 +77,7 @@ class ObjectSpace(object):
             W_BaseObject, W_Object,
             W_StringObject, W_SymbolObject,
             W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
+            W_RangeObject,
             W_ArrayObject, W_HashObject,
             W_IOObject, W_FileObject,
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
@@ -199,8 +200,8 @@ class ObjectSpace(object):
     def newhash(self):
         return W_HashObject(self)
 
-    def newrange(self, w_start, w_end, inclusive):
-        return W_RangeObject(self, w_start, w_end, inclusive)
+    def newrange(self, w_start, w_end, exclusive):
+        return W_RangeObject(self, w_start, w_end, exclusive)
 
     def newregexp(self, regexp):
         return W_RegexpObject(self, regexp)
@@ -224,6 +225,9 @@ class ObjectSpace(object):
 
     def float_w(self, w_obj):
         return w_obj.float_w(self)
+
+    def bool_w(self, w_obj):
+        return w_obj.is_true(self)
 
     def symbol_w(self, w_obj):
         return w_obj.symbol_w(self)

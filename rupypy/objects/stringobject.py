@@ -5,6 +5,8 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.rangeobject import W_RangeObject
+from rupypy.objects.intobject import W_FixnumObject
 
 
 class StringStrategy(object):
@@ -149,6 +151,43 @@ class W_StringObject(W_Object):
             return space.newint(0)
         elif s1 > s2:
             return space.newint(1)
+
+    @classdef.method("[]")
+    def method_subscript(self, space, w_idx):
+        length = self.length()
+        if isinstance(w_idx, W_RangeObject):
+            start = space.int_w(w_idx.w_start)
+            
+            if start > length or start < -length:
+                return space.w_nil
+            
+            if w_idx.exclusive:
+                end = space.int_w(w_idx.w_end)
+            else:
+                end = space.int_w(w_idx.w_end) + 1
+            
+            if start < 0:
+                if end > 0:
+                    return space.newstr_fromstr("")
+                start = length + start
+            if end <= 0:
+                end = length + end
+            
+            return space.newstr_fromstr(space.str_w(self)[start:end])
+        else:
+            assert isinstance(w_idx, W_FixnumObject)
+            index = space.int_w(w_idx)
+            if index >= length or index < -length:
+                return space.w_nil
+            return space.newstr_fromstr(space.str_w(self)[index])
+
+    @classdef.method("next")
+    @classdef.method("succ")
+    def method_succ(self, space):
+        # NOT COMPLETE
+        s1 = space.str_w(self)[-1]
+        s2 = chr(ord(s1) + 1)
+        return space.newstr_fromstr(s2)
 
     @classdef.method("freeze")
     def method_freeze(self, space):

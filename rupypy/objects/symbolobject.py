@@ -20,16 +20,25 @@ class W_SymbolObject(W_Object):
         space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
 
     @classdef.method("to_s")
+    @classdef.method("id2name")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.symbol)
 
-    @classdef.method("<=>", other="symbol")
-    def method_comparator(self, space, other):
-        s1 = self.symbol
-        s2 = other
-        if s1 < s2:
-            return space.newint(-1)
-        elif s1 == s2:
-            return space.newint(0)
-        elif s1 > s2:
-            return space.newint(1)
+    @classdef.method("<=>")
+    def method_comparator(self, space, w_other):
+        assert isinstance(w_other, W_SymbolObject)
+        s1 = self.method_to_s(space)
+        s2 = w_other.method_to_s(space)
+        return s1.method_comparator(space, s2)
+
+    @classdef.method("[]")
+    def method_subscript(self, space, w_idx):
+        return self.method_to_s(space).method_subscript(space, w_idx)
+
+    @classdef.method("length")
+    def method_length(self, space):
+        return self.method_to_s(space).method_length(space)
+
+    @classdef.singleton_method("all_symbols")
+    def method_all_symbols(self, space):
+        return space.newarray(space.symbol_cache.values())
