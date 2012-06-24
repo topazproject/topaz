@@ -8,14 +8,14 @@ class TestEnumberable(BaseRuPyPyTest):
             prod * n
         end
         """)
-        assert space.int_w(w_res) == 15120
+        assert space.int_w(w_res) == 151200
 
         w_res = space.execute("""
         return (1..10).inject 0 do |sum, n|
             sum + n
         end
         """)
-        assert space.int_w(w_res) == 45
+        assert space.int_w(w_res) == 55
 
     def test_each_with_index(self, space):
         w_res = space.execute("""
@@ -25,7 +25,7 @@ class TestEnumberable(BaseRuPyPyTest):
         end
         return result
         """)
-        assert self.unwrap(space, w_res) == [[5, 0], [6, 1], [7, 2], [8, 3], [9, 4]]
+        assert self.unwrap(space, w_res) == [[5, 0], [6, 1], [7, 2], [8, 3], [9, 4], [10, 5]]
 
     def test_select(self, space):
         w_res = space.execute("""

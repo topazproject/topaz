@@ -675,7 +675,7 @@ class TestCompiler(object):
         self.assert_compiles(space, "1...10", """
         LOAD_CONST 0
         LOAD_CONST 1
-        BUILD_RANGE_INCLUSIVE
+        BUILD_RANGE_EXCLUSIVE
         DISCARD_TOP
 
         LOAD_CONST 2

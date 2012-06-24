@@ -8,7 +8,7 @@ class TestRangeObject(BaseRuPyPyTest):
             x * 5
         end
         """)
-        assert self.unwrap(space, w_res) == [5, 10]
+        assert self.unwrap(space, w_res) == [5, 10, 15]
 
     def test_starting_point_always_returned(self, space):
         w_res = space.execute("""
@@ -17,3 +17,10 @@ class TestRangeObject(BaseRuPyPyTest):
         end
         """)
         assert self.unwrap(space, w_res) == [1]
+
+    def test_exclude_end(self, space):
+        w_res = space.execute("return (1..5).exclude_end?")
+        assert self.unwrap(space, w_res) == False
+        
+        w_res = space.execute("return (1...5).exclude_end?")
+        assert self.unwrap(space, w_res) == True

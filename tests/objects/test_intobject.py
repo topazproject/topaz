@@ -84,3 +84,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         [x, y, z] = self.unwrap(space, w_res)
         assert x == y == -1
         assert z is None
+
+    def test_succ(self, space):
+        w_res = space.execute("return -1.succ")
+        assert self.unwrap(space, w_res) == 0
+        
+        w_res = space.execute("return 7.succ")
+        assert self.unwrap(space, w_res) == 8
