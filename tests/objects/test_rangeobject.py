@@ -20,7 +20,7 @@ class TestRangeObject(BaseRuPyPyTest):
 
     def test_exclude_end(self, space):
         w_res = space.execute("return (1..5).exclude_end?")
-        assert self.unwrap(space, w_res) == False
-        
+        assert self.unwrap(space, w_res) is False
+
         w_res = space.execute("return (1...5).exclude_end?")
-        assert self.unwrap(space, w_res) == True
+        assert self.unwrap(space, w_res) is True

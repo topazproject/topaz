@@ -54,7 +54,7 @@ class BaseTestOrderedDict(object):
                 o[i] = None
             return o[3]
 
-        assert self.run(f, [10]) == None
+        assert self.run(f, [10]) is None
 
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
