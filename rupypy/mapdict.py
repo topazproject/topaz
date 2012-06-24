@@ -7,7 +7,6 @@ class MapTransitionCache(object):
         self.class_nodes = {}
         # Mapping of (current_node, name) -> new node
         self.add_transitions = {}
-        self.terminal_node = TerminalNode()
 
     @jit.elidable
     def get_class_node(self, klass):
@@ -45,10 +44,6 @@ class ClassNode(BaseNode):
 
     def change_class(self, space, w_cls):
         return space.fromcache(MapTransitionCache).get_class_node(w_cls)
-
-
-class TerminalNode(BaseNode):
-    pass
 
 
 class AttributeNode(BaseNode):
