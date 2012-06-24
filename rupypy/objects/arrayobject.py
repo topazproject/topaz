@@ -33,7 +33,7 @@ class W_ArrayObject(W_Object):
     def method_subscript(self, space, w_idx):
         if isinstance(w_idx, W_RangeObject):
             start = space.int_w(w_idx.w_start)
-            if w_idx.inclusive:
+            if w_idx.exclusive:
                 end = space.int_w(w_idx.w_end)
             else:
                 end = space.int_w(w_idx.w_end) + 1
@@ -47,7 +47,7 @@ class W_ArrayObject(W_Object):
     def method_subscript_assign(self, space, w_idx, w_obj):
         if isinstance(w_idx, W_RangeObject):
             start = space.int_w(w_idx.w_start)
-            if w_idx.inclusive:
+            if w_idx.exclusive:
                 end = space.int_w(w_idx.w_end)
             else:
                 end = space.int_w(w_idx.w_end) + 1

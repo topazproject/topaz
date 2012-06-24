@@ -116,6 +116,16 @@ class W_FixnumObject(W_RootObject):
         return space.newbool(self.intvalue != 0)
 
     classdef.app_method("""
+    def next
+        succ
+    end
+    
+    def succ
+        self + 1
+    end
+    """)
+
+    classdef.app_method("""
     def times
         i = 0
         while i < self
