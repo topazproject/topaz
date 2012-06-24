@@ -1,5 +1,9 @@
 class Coerce(object):
     @staticmethod
+    def bool(space, w_obj):
+        return space.is_true(w_obj)
+
+    @staticmethod
     def symbol(space, w_obj):
         return space.symbol_w(w_obj)
 

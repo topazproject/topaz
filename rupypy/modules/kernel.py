@@ -12,6 +12,19 @@ class Kernel(Module):
     def function_class(self, space):
         return space.getnonsingletonclass(self)
 
+    @moduledef.method("singleton_methods", all="bool")
+    def method_singleton_methods(self, space, all=True):
+        methods = []
+        w_cls = space.getclass(self)
+        if w_cls.is_singleton:
+            methods.extend(w_cls.methods_w.keys())
+            w_cls = w_cls.superclass
+        if all:
+            while w_cls and w_cls.is_singleton:
+                methods.extend(w_cls.methods_w.keys())
+                w_cls = w_cls.superclass
+        return space.newarray([space.newsymbol(m) for m in methods])
+
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
         return space.newproc(block, True)
