@@ -49,6 +49,7 @@ class W_ModuleObject(W_RootObject):
         self.methods_w = {}
         self.constants_w = {}
         self.class_variables = CellDict()
+        self.instance_variables = CellDict()
         self.lexical_scope = None
         self.included_modules = []
         self.descendants = []
@@ -148,6 +149,12 @@ class W_ModuleObject(W_RootObject):
         self.class_variables.delete(name)
         for descendant in self.descendants:
             descendant.remove_class_var(space, name)
+
+    def set_instance_var(self, space, name, w_value):
+        return self.instance_variables.set(name, w_value)
+
+    def find_instance_var(self, space, name):
+        return self.instance_variables.get(name)
 
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:

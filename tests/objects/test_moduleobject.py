@@ -50,6 +50,19 @@ class TestModuleObject(BaseRuPyPyTest):
         assert s.name == "#<Class:X>"
         assert s_s.name == "#<Class:#<Class:X>>"
 
+    def test_instance_variable(self, space):
+        w_res = space.execute("""
+        class X
+            @abc = 3
+            def self.m
+                @abc
+            end
+        end
+
+        return X.m
+        """)
+        assert self.unwrap(space, w_res) == 3
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):
