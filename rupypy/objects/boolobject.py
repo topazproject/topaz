@@ -9,6 +9,9 @@ class W_TrueObject(W_Object):
     def method_to_s(self, space):
         return space.newstr_fromstr("true")
 
+    @classdef.method("==")
+    def method_eql(self, space, w_other):
+        return space.newbool(self == w_other)
 
 class W_FalseObject(W_Object):
     classdef = ClassDef("FalseClass", W_Object.classdef)
@@ -19,3 +22,7 @@ class W_FalseObject(W_Object):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("false")
+
+    @classdef.method("==")
+    def method_eql(self, space, w_other):
+        return space.newbool(self == w_other)
