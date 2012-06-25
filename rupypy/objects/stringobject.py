@@ -158,3 +158,8 @@ class W_StringObject(W_Object):
     @classdef.method("intern")
     def method_to_sym(self, space):
         return space.newsymbol(space.str_w(self))
+
+    @classdef.method("clear")
+    def method_clear(self, space):
+        self.str_storage = self.strategy.erase("")
+        return self

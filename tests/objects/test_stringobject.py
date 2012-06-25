@@ -40,3 +40,12 @@ class TestStringObject(BaseRuPyPyTest):
     def test_to_sym(self, space):
         w_res = space.execute("return 'abc'.to_sym")
         assert space.symbol_w(w_res) == "abc"
+
+    def test_clear(self, space):
+        w_res = space.execute("""
+        a = 'hi'
+        b = a
+        a.clear
+        return [a, b]
+        """)
+        assert self.unwrap(space, w_res) == ["", ""]
