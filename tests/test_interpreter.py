@@ -341,13 +341,11 @@ class TestInterpreter(BaseRuPyPyTest):
 
     def test___LINE__(self, space):
         w_res = space.execute("""
-        return \
+        return \\
            [__LINE__,
            __LINE__]
         """)
-        assert self.unwrap(space, w_res) == [2, 3]
-        with self.raises("SyntaxError"):
-            space.execute("__LINE__ = 2")
+        assert self.unwrap(space, w_res) == [3, 4]
 
     def test_default_arguments(self, space):
         w_res = space.execute("""

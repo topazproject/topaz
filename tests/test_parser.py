@@ -1105,6 +1105,10 @@ HERE
         with self.raises("SyntaxError"):
             space.parse("__FILE__ = 5")
 
+    def test___LINE__(self, space):
+        with self.raises("SyntaxError"):
+            space.parse("__LINE__ = 2")
+
     def test_function_default_arguments(self, space):
         function = lambda name, args: ast.Main(ast.Block([
             ast.Statement(ast.Function(None, name, args, None, None, ast.Block([])))
