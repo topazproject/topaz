@@ -339,6 +339,14 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("return __FILE__")
         assert space.str_w(w_res) == "-e"
 
+    def test___LINE__(self, space):
+        w_res = space.execute("""
+        return \
+           [__LINE__,
+           __LINE__]
+        """)
+        assert self.unwrap(space, w_res) == [2, 3]
+
     def test_default_arguments(self, space):
         w_res = space.execute("""
         def f(a, b=3, c=b)

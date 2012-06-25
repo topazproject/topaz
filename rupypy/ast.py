@@ -990,6 +990,8 @@ class Variable(Node):
         elif self.name == "__FILE__":
             ctx.emit(consts.LOAD_CODE)
             ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)
+        elif self.name == "__LINE__":
+            ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.lineno))
         elif ctx.symtable.is_local(self.name):
             ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(self.name))
         elif ctx.symtable.is_cell(self.name):
