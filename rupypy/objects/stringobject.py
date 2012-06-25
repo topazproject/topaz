@@ -70,6 +70,9 @@ class MutableStringStrategy(StringStrategy):
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
 
+    def clear(self, s):
+        self.unerase(s.str_storage)[:] = []
+
 
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef)
@@ -161,5 +164,6 @@ class W_StringObject(W_Object):
 
     @classdef.method("clear")
     def method_clear(self, space):
-        self.str_storage = self.strategy.erase("")
+        self.strategy.to_mutable(space, self)
+        self.strategy.clear(self)
         return self

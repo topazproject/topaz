@@ -49,3 +49,6 @@ class TestStringObject(BaseRuPyPyTest):
         return [a, b]
         """)
         assert self.unwrap(space, w_res) == ["", ""]
+
+        w_res = space.execute("return ('a' << 'b').clear")
+        assert self.unwrap(space, w_res) == ""
