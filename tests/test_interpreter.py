@@ -346,6 +346,8 @@ class TestInterpreter(BaseRuPyPyTest):
            __LINE__]
         """)
         assert self.unwrap(space, w_res) == [2, 3]
+        with self.raises("SyntaxError"):
+            space.execute("__LINE__ = 2")
 
     def test_default_arguments(self, space):
         w_res = space.execute("""

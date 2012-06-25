@@ -966,7 +966,7 @@ class Variable(Node):
         self.name = name
 
     def validate_assignment(self, transformer, node):
-        if self.name == "__FILE__" or "?" in self.name or "!" in self.name:
+        if self.name == "__FILE__" or self.name == "__LINE__" or "?" in self.name or "!" in self.name:
             transformer.error(node)
 
     def locate_symbols(self, symtable):
