@@ -3,7 +3,7 @@ from rupypy.objects.procobject import W_ProcObject
 from ..base import BaseRuPyPyTest
 
 
-class TestKernel(object):
+class TestKernel(BaseRuPyPyTest):
     def test_puts_nil(self, space, capfd):
         space.execute("puts nil")
         out, err = capfd.readouterr()
@@ -17,6 +17,30 @@ class TestKernel(object):
         w_cls, w_lambda = space.listview(w_res)
         assert w_cls is space.getclassfor(W_ProcObject)
         assert w_lambda is space.w_true
+
+    def test_singleton_methods(self, space):
+        w_res = space.execute("""
+        class X
+        end
+
+        return X.new.singleton_methods
+        """)
+        assert self.unwrap(space, w_res) == []
+
+        w_res = space.execute("""
+        def X.foo
+        end
+
+        return X.singleton_methods
+        """)
+        assert self.unwrap(space, w_res) == ["foo"]
+
+        w_res = space.execute("""
+        class Y < X
+        end
+        return [Y.singleton_methods, Y.singleton_methods(false)]
+        """)
+        assert self.unwrap(space, w_res) == [["foo"], []]
 
 
 class TestRequire(BaseRuPyPyTest):
