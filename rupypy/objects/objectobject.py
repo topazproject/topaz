@@ -45,6 +45,20 @@ class W_BaseObject(object):
             "undefined method `%s` for %s" % (name, class_name)
         )
 
+    @classdef.method("is_a?")
+    def method_is_a(self, space, w_other):
+        klass = self.getclass(space)
+        while klass is not w_other:
+            if w_other in klass.classdef.includes:
+                return space.newbool(True)
+            klass = klass.superclass
+            if klass == None:
+                return space.newbool(False)
+        return space.newbool(True)
+
+    @classdef.method("instance_of?")
+    def method_instance_of(self, space, w_other):
+        return space.newbool(self.getclass(space) is w_other)
 
 class W_RootObject(W_BaseObject):
     classdef = ClassDef("Object", W_BaseObject.classdef)
