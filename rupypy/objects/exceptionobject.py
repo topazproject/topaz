@@ -77,3 +77,7 @@ class W_SyntaxError(W_ScriptError):
 class W_ArgumentError(W_StandardError):
     classdef = ClassDef("ArgumentError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
+
+class W_RuntimeError(W_StandardError):
+    classdef = ClassDef("RuntimeError", W_StandardError.classdef)
+    method_allocate = new_exception_allocate(classdef)
