@@ -3,6 +3,9 @@ import os
 from pypy.rlib.rstring import assert_str0
 
 from rupypy.module import Module, ModuleDef
+from rupypy.objects.stringobject import W_StringObject
+from rupypy.objects.exceptionobject import W_ExceptionObject, W_TypeError, W_RuntimeError
+from rupypy.error import RubyError
 
 
 class Kernel(Module):
@@ -79,3 +82,28 @@ class Kernel(Module):
         w_loaded_features.method_lshift(space, space.newstr_fromstr(path))
         space.execute(contents, filepath=path)
         return space.w_true
+
+    moduledef.app_method("alias fail raise")
+
+    @moduledef.method("raise")
+    def method_raise(self, space, w_str_or_exception=None, w_string=None, w_array=None):
+        w_exception = None
+        if w_str_or_exception is None:
+            w_exception = space.globals.get("$!")
+
+        if w_exception is space.w_nil or isinstance(w_str_or_exception, W_StringObject):
+            w_exception = space.getclassfor(W_RuntimeError)
+            w_string = w_str_or_exception
+
+        if w_exception is None or not space.respond_to(w_exception, space.newsymbol("exception")):
+            space.raise_(space.getclassfor(W_TypeError), "exception class/object expected")
+
+        if w_string is not None:
+            w_exc = space.send(w_exception, space.newsymbol("exception"), [w_string])
+        else:
+            w_exc = space.send(w_exception, space.newsymbol("exception"))
+
+        if w_array is not None:
+            raise NotImplementedError("custom backtrace for Kernel#raise")
+
+        raise RubyError(w_exc)

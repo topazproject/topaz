@@ -42,6 +42,23 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [["foo"], []]
 
+    def test_raise(self, space):
+        with self.raises("RuntimeError"):
+            space.execute("raise 'foo'")
+        with self.raises("TypeError"):
+            space.execute("raise TypeError, 'foo'")
+        with self.raises("TypeError"):
+            space.execute("fail TypeError, 'foo'")
+
+    def test_overriding_raise(self, space):
+        w_res = space.execute("""
+        class A
+          def raise(*args); args; end
+          def do_raise; raise 'foo'; end
+        end
+        return A.new.do_raise
+        """)
+        assert self.unwrap(space, w_res) == ['foo']
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
