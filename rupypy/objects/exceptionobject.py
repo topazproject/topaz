@@ -4,7 +4,7 @@ from rupypy.objects.objectobject import W_Object
 
 def new_exception_allocate(classdef):
     @classdef.singleton_method("allocate", msg="str")
-    def method_allocate(self, space, msg):
+    def method_allocate(self, space, msg="str"):
         return classdef.cls(space, msg)
 
 
