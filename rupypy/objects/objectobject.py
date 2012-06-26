@@ -59,7 +59,7 @@ class W_BaseObject(object):
 
     @classdef.method("instance_of?")
     def method_instance_of(self, space, w_other):
-        return space.newbool(self.getclass(space) is w_other)
+        return space.newbool(space.getnonsingletonclass(self) is w_other)
 
 class W_RootObject(W_BaseObject):
     classdef = ClassDef("Object", W_BaseObject.classdef)
