@@ -49,10 +49,9 @@ class W_BaseObject(object):
     def method_is_a(self, space, w_other):
         klass = self.getclass(space)
         while klass is not w_other:
-            for module in self.classdef.includes:
-                if self.getclass(module) is self.getclass(w_other):
-                    return space.newbool(True)
-            
+            if w_other in klass.included_modules:
+                return space.newbool(True)
+
             klass = klass.superclass
             if klass is None:
                 return space.newbool(False)
