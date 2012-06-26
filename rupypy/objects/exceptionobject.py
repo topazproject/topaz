@@ -23,6 +23,16 @@ class W_ExceptionObject(W_Object):
     def method_to_s(self, space):
         return space.newstr_fromstr(self.msg)
 
+    @classdef.singleton_method("exception")
+    def singleton_method_exception(self, space, args_w):
+        return space.send(self, space.newsymbol("new"), args_w)
+
+    @classdef.method("exception")
+    def method_exception(self, space, w_string=None):
+        if w_string is None:
+            return self
+        else:
+            return space.send(space.getclassfor(self.__class__), space.newsymbol("new"), [w_string])
 
 class W_ScriptError(W_ExceptionObject):
     classdef = ClassDef("ScriptError", W_ExceptionObject.classdef)
