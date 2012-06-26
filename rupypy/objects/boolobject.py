@@ -10,8 +10,8 @@ class W_TrueObject(W_Object):
         return space.newstr_fromstr("true")
 
     @classdef.method("==")
-    def method_eql(self, space, w_other):
-        return space.newbool(self == w_other)
+    def method_eq(self, space, w_other):
+        return space.newbool(self is w_other)
 
 class W_FalseObject(W_Object):
     classdef = ClassDef("FalseClass", W_Object.classdef)
@@ -24,5 +24,5 @@ class W_FalseObject(W_Object):
         return space.newstr_fromstr("false")
 
     @classdef.method("==")
-    def method_eql(self, space, w_other):
-        return space.newbool(self == w_other)
+    def method_eq(self, space, w_other):
+        return space.newbool(self is w_other)
