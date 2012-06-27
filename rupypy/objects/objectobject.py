@@ -65,6 +65,13 @@ class W_RootObject(W_BaseObject):
     def method_extend(self, space, w_mod):
         self.getsingletonclass(space).method_include(space, w_mod)
 
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        return space.newstr_fromstr("#<%s:0x%x>" % (
+            space.str_w(space.send(space.getclass(self), space.newsymbol("name"))),
+            space.int_w(space.send(self, space.newsymbol("__id__")))
+        ))
+
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):

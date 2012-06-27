@@ -50,6 +50,14 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
 
+    def test_to_s(self, space):
+        w_res = space.execute("""
+        obj = Object.new
+        return obj.to_s, obj.object_id
+        """)
+        oid = self.unwrap(space, w_res)[1]
+        assert self.unwrap(space, w_res)[0] == "#<Object:0x%x>" % oid
+
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""
