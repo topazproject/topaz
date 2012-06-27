@@ -71,7 +71,8 @@ class MutableStringStrategy(StringStrategy):
         dst_storage += self.unerase(src_storage)
 
     def clear(self, s):
-        self.unerase(s.str_storage)[:] = []
+        storage = self.unerase(s.str_storage)
+        storage[0:len(storage)] = []
 
 
 class W_StringObject(W_Object):
