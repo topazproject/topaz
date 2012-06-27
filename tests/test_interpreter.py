@@ -159,7 +159,7 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 6
 
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("X.new.m")
 
     def test_constant(self, space):
@@ -372,7 +372,7 @@ class TestInterpreter(BaseRuPyPyTest):
         assert isinstance(w_res, W_ModuleObject)
         assert w_res.name == "M"
 
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("M.method")
 
     def test_singleton_method(self, space):
@@ -385,7 +385,7 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert space.str_w(w_res) == "hello world"
 
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("[].hello")
 
     def test_splat(self, space):
@@ -445,7 +445,7 @@ class TestInterpreter(BaseRuPyPyTest):
         return X::Constant
         """)
         assert space.int_w(w_res) == 5
-        with self.raises("NameError"):
+        with self.raises(space, "NameError"):
             space.execute("Constant")
 
     def test_receive_splat_argument(self, space):
@@ -597,7 +597,7 @@ class TestInterpreter(BaseRuPyPyTest):
 
     @py.test.mark.xfail
     def test_class_variable_access_has_static_scope(self, space):
-        with self.raises("NameError"):
+        with self.raises(space, "NameError"):
             w_res = space.execute("""
             class A
               def get
@@ -670,7 +670,7 @@ class TestInterpreter(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == ["A.get", "M#get", "B#override", "M#get (2nd ed)"]
 
     def test_find_const(self, space):
-        with self.raises("NameError"):
+        with self.raises(space, "NameError"):
             space.execute("""
             class A
               Const = "A"
@@ -809,7 +809,7 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
-        with self.raises("TypeError"):
+        with self.raises(space, "TypeError"):
             space.execute("f(&3)")
 
     def test_block_return(self, space):
@@ -859,7 +859,7 @@ class TestExceptions(BaseRuPyPyTest):
         assert space.int_w(w_res) == 2
 
     def test_uncaught_exception(self, space):
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("""
             begin
                 [].dsafdsafsa
