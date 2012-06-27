@@ -57,10 +57,17 @@ class Enumerable(Module):
     moduledef.app_method("""
     def drop n
         raise ArgumentError, 'attempt to drop negative size' if n < 0
-        return [] unless n < self.length
+        ary = self.to_a
+        return [] if n > ary.size
+        ary[n...ary.size]
+    end
+    """)
+
+    moduledef.app_method("""
+    def to_a
         result = []
-        self.each_with_index do |item, index|
-            result << item unless index < n
+        self.each do |i|
+            result << i
         end
         result
     end
