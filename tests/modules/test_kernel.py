@@ -77,6 +77,13 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ['foo']
 
+    def test_raise_error_subclass(self, space):
+        with self.raises(space, "CustomError", 'foo'):
+            space.execute("""
+            class CustomError < StandardError; end
+            raise CustomError, 'foo'
+            """)
+
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
         f = tmpdir.join("t.rb")

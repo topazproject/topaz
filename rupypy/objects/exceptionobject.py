@@ -9,14 +9,14 @@ def new_exception_allocate(classdef):
             msg = classdef.name
         else:
             msg = space.str_w(w_msg)
-        return classdef.cls(space, msg)
+        return classdef.cls(space, msg, self)
 
 
 class W_ExceptionObject(W_Object):
     classdef = ClassDef("Exception", W_Object.classdef)
 
-    def __init__(self, space, msg):
-        W_Object.__init__(self, space)
+    def __init__(self, space, msg, klass=None):
+        W_Object.__init__(self, space, klass)
         self.msg = msg
         self.frame = None
         self.last_instructions = []
