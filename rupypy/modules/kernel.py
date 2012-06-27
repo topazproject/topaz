@@ -106,4 +106,7 @@ class Kernel(Module):
         if w_array is not None:
             raise NotImplementedError("custom backtrace for Kernel#raise")
 
+        if not isinstance(w_exc, W_ExceptionObject):
+            space.raise_(space.getclassfor(W_TypeError), "exception class/object expected")
+
         raise RubyError(w_exc)
