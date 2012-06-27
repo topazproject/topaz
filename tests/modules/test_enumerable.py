@@ -54,7 +54,7 @@ class TestEnumberable(BaseRuPyPyTest):
         w_res = space.execute("""return [1, 2, 3].drop 3""")
         assert self.unwrap(space, w_res) == []
 
-        with self.raises("ArgumentError", 'attempt to drop negative size'):
+        with self.raises(space, "ArgumentError", 'attempt to drop negative size'):
             space.execute("""return [0,1,2,3,4,5,6,7].drop -3""")
 
     def test_to_a(self, space):

@@ -43,15 +43,15 @@ class TestKernel(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [["foo"], []]
 
     def test_raise(self, space):
-        with self.raises("RuntimeError", "foo"):
+        with self.raises(space, "RuntimeError", "foo"):
             space.execute("raise 'foo'")
-        with self.raises("TypeError", "foo"):
+        with self.raises(space, "TypeError", "foo"):
             space.execute("raise TypeError, 'foo'")
-        with self.raises("TypeError", "foo"):
+        with self.raises(space, "TypeError", "foo"):
             space.execute("fail TypeError, 'foo'")
-        with self.raises("TypeError", "exception class/object expected"):
+        with self.raises(space, "TypeError", "exception class/object expected"):
             space.execute("fail nil")
-        with self.raises("TypeError", "exception object expected"):
+        with self.raises(space, "TypeError", "exception object expected"):
             space.execute("""
             class A
               def exception(msg=nil)
@@ -59,7 +59,7 @@ class TestKernel(BaseRuPyPyTest):
             end
             raise A.new
             """)
-        with self.raises("RuntimeError"):
+        with self.raises(space, "RuntimeError"):
             space.execute("""
             class A
               def exception(msg=nil); RuntimeError.new(msg); end
@@ -128,7 +128,7 @@ class TestRequire(BaseRuPyPyTest):
         assert w_res is space.w_true
 
     def test_nonexistance(self, space):
-        with self.raises("LoadError"):
+        with self.raises(space, "LoadError"):
             space.execute("require 'xxxxxxx'")
 
     def test_already_loaded(self, space, tmpdir):
