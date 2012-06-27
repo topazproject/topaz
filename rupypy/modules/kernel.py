@@ -90,12 +90,15 @@ class Kernel(Module):
         w_exception = None
         if w_str_or_exception is None:
             w_exception = space.globals.get("$!")
-
-        if w_exception is space.w_nil or isinstance(w_str_or_exception, W_StringObject):
+            if w_exception is space.w_nil:
+                w_exception = space.getclassfor(W_RuntimeError)
+        elif isinstance(w_str_or_exception, W_StringObject):
             w_exception = space.getclassfor(W_RuntimeError)
             w_string = w_str_or_exception
+        else:
+            w_exception = w_str_or_exception
 
-        if w_exception is None or not space.respond_to(w_exception, space.newsymbol("exception")):
+        if not space.respond_to(w_exception, space.newsymbol("exception")):
             space.raise_(space.getclassfor(W_TypeError), "exception class/object expected")
 
         if w_string is not None:
@@ -107,6 +110,6 @@ class Kernel(Module):
             raise NotImplementedError("custom backtrace for Kernel#raise")
 
         if not isinstance(w_exc, W_ExceptionObject):
-            space.raise_(space.getclassfor(W_TypeError), "exception class/object expected")
+            space.raise_(space.getclassfor(W_TypeError), "exception object expected")
 
         raise RubyError(w_exc)
