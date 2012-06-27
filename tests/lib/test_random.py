@@ -1,7 +1,9 @@
 from rupypy.lib.random import W_Random
 
+from ..base import BaseRuPyPyTest
 
-class TestRandom(object):
+
+class TestRandom(BaseRuPyPyTest):
     def test_new(self, space):
         w_res = space.execute("return Random.new")
         assert isinstance(w_res, W_Random)
@@ -20,6 +22,6 @@ class TestRandom(object):
         c = SubRandom.new
         return [c.rand, c.better_rand]
         """)
-        res = space.listview(w_res)
-        assert 0 < space.float_w(res[0]) < 1
-        assert space.int_w(res[1]) == 4
+        res = self.unwrap(space, w_res)
+        assert 0 < res[0] < 1
+        assert res[1] == 4
