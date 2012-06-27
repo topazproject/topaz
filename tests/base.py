@@ -15,10 +15,12 @@ from rupypy.objects.symbolobject import W_SymbolObject
 
 class BaseRuPyPyTest(object):
     @contextmanager
-    def raises(self, exc_name):
+    def raises(self, exc_name, msg=None):
         with py.test.raises(RubyError) as exc:
             yield
         assert exc.value.w_value.classdef.name == exc_name
+        if msg is not None:
+            assert exc.value.w_value.msg == msg
 
     def find_const(self, space, name):
         return space.find_const(space.getclassfor(W_Object), name)

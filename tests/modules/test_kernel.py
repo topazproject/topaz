@@ -43,12 +43,29 @@ class TestKernel(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [["foo"], []]
 
     def test_raise(self, space):
-        with self.raises("RuntimeError"):
+        with self.raises("RuntimeError", "foo"):
             space.execute("raise 'foo'")
-        with self.raises("TypeError"):
+        with self.raises("TypeError", "foo"):
             space.execute("raise TypeError, 'foo'")
-        with self.raises("TypeError"):
+        with self.raises("TypeError", "foo"):
             space.execute("fail TypeError, 'foo'")
+        with self.raises("TypeError", "exception class/object expected"):
+            space.execute("fail nil")
+        with self.raises("TypeError", "exception object expected"):
+            space.execute("""
+            class A
+              def exception(msg=nil)
+              end
+            end
+            raise A.new
+            """)
+        with self.raises("RuntimeError"):
+            space.execute("""
+            class A
+              def exception(msg=nil); RuntimeError.new(msg); end
+            end
+            raise A.new
+            """)
 
     def test_overriding_raise(self, space):
         w_res = space.execute("""

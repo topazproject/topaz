@@ -3,8 +3,12 @@ from rupypy.objects.objectobject import W_Object
 
 
 def new_exception_allocate(classdef):
-    @classdef.singleton_method("allocate", msg="str")
-    def method_allocate(self, space, msg="str"):
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, w_msg=None):
+        if w_msg is space.w_nil or w_msg is None:
+            msg = classdef.name
+        else:
+            msg = space.str_w(w_msg)
         return classdef.cls(space, msg)
 
 

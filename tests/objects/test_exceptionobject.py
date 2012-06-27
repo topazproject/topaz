@@ -7,8 +7,13 @@ class TestExceptionObject(BaseRuPyPyTest):
     def test_new(self, space):
         w_res = space.execute("return TypeError.new")
         assert isinstance(w_res, W_TypeError)
+        assert w_res.msg == "TypeError"
         w_res = space.execute("return TypeError.new('msg')")
         assert isinstance(w_res, W_TypeError)
+        assert w_res.msg == "msg"
+        w_res = space.execute("return TypeError.new(nil)")
+        assert isinstance(w_res, W_TypeError)
+        assert w_res.msg == "TypeError"
 
     def test_to_s(self, space):
         w_res = space.execute("return TypeError.new('msg').to_s")
