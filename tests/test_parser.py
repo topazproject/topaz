@@ -117,7 +117,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_multiple_statements_no_sep(self, space):
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("3 3")
 
     def test_multiple_statements(self, space):
@@ -180,7 +180,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Variable("other", 1)], None, 1))
         ]))
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("2.to_s(:base => 5, 3)")
 
     def test_assignment(self, space):
@@ -206,7 +206,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("a = 2, 3") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.Array([ast.ConstantInt(2), ast.ConstantInt(3)])))
         ]))
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("a, b += 3")
 
     def test_splat_rhs_assignment(self, space):
@@ -318,7 +318,7 @@ class TestParser(BaseRuPyPyTest):
                 0
             ))
         ]))
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("*b, *c = 1")
 
     def test_load_variable(self, space):
@@ -619,13 +619,13 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.Variable("b", 3))
             ])))
         ]))
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("""
             def f(&b, a)
                 b
             end
             """)
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("""
             def f(&b, &c)
                 b
@@ -912,7 +912,7 @@ HERE
             ast.Statement(ast.Send(ast.Variable("x", 2), "meth", [ast.Send(ast.Variable("y", 2), "meth", [], None, 2)], ast.SendBlock([], None, ast.Block([])), 2))
         ]))
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("""
             Mod::Const do end
             """)
@@ -1102,11 +1102,11 @@ HERE
         assert space.parse("__FILE__") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("__FILE__", 1))
         ]))
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("__FILE__ = 5")
 
     def test___LINE__(self, space):
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("__LINE__ = 2")
 
     def test_function_default_arguments(self, space):
@@ -1138,7 +1138,7 @@ HERE
         """)
         assert r == function("f", [ast.Argument("a"), ast.Argument("b", ast.ConstantInt(3)), ast.Argument("c")])
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("""
             def f(a, b=3, c, d=5)
             end
@@ -1408,7 +1408,7 @@ HERE
         assert space.parse("method?") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("method?", 1))
         ]))
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("method? = 4")
 
     def test_exclamation_point(self, space):
@@ -1421,7 +1421,7 @@ HERE
         assert space.parse("method!") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("method!", 1))
         ]))
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("method! = 4")
 
     def test_singleton_method(self, space):
@@ -1484,16 +1484,16 @@ HERE
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantInt(3), ast.ConstantInt(4)], ast.BlockArgument(ast.Variable("a", 1)), 1))
         ]))
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("f(&b, &b)")
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("f(&b, a)")
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("f(&b) {}")
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("""
             f(&b) do ||
             end
@@ -1510,10 +1510,10 @@ HERE
             ast.Statement(ast.Function(None, "f", [], "args", "g", ast.Block([])))
         ]))
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("def f(*args, g)")
 
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("def f(*args, g=5)")
 
     def test_regexp(self, space):
@@ -1881,7 +1881,7 @@ HERE
         'b'
         """) == strs(cstr('a'), cstr('b'))
         assert space.parse("%{a} 'b'") == strs(dstr(cstr('a')), cstr('b'))
-        with self.raises("SyntaxError"):
+        with self.raises(space, "SyntaxError"):
             space.parse("%{a} %{b}")
             space.parse("%{a} 'b' %{b}")
             space.parse("'b' %{b}")
