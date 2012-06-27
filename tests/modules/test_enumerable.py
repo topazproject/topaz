@@ -43,3 +43,38 @@ class TestEnumberable(BaseRuPyPyTest):
         return (2..3).include? 2
         """)
         assert w_res is space.w_true
+
+    def test_drop(self, space):
+        w_res = space.execute("""return [0,1,2,3,4,5,6,7].drop 3""")
+        assert self.unwrap(space, w_res) == [3,4,5,6,7]
+
+        w_res = space.execute("""return [].drop 3""")
+        assert self.unwrap(space, w_res) == []
+
+        w_res = space.execute("""return [1, 2, 3].drop 3""")
+        assert self.unwrap(space, w_res) == []
+
+        with self.raises("ArgumentError", 'attempt to drop negative size'):
+            space.execute("""return [0,1,2,3,4,5,6,7].drop -3""")
+
+    def test_to_a(self, space):
+        w_res = space.execute("""return (5..10).to_a""")
+        assert self.unwrap(space, w_res) == [x for x in range(5, 11)]
+
+        w_res = space.execute("""return [1,2,3,4].to_a""")
+        assert self.unwrap(space, w_res) == [1,2,3,4]
+
+        w_res = space.execute("""
+        class A
+            include Enumerable
+
+            def each
+                i = 0
+                while i < 5
+                    yield i
+                    i += 1
+                end
+            end
+        end
+        return A.new.to_a""")
+        assert self.unwrap(space, w_res) == [1,2,3,4]
