@@ -77,4 +77,4 @@ class TestEnumberable(BaseRuPyPyTest):
             end
         end
         return A.new.to_a""")
-        assert self.unwrap(space, w_res) == [1,2,3,4]
+        assert self.unwrap(space, w_res) == [0,1,2,3,4]
