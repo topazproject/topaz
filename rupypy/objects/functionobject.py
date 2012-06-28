@@ -20,7 +20,7 @@ class W_UserFunction(W_FunctionObject):
         frame = space.create_frame(
             self.bytecode,
             w_self=w_receiver,
-            w_scope=space.getclass(w_receiver),
+            w_scope=space.getscope(w_receiver),
             block=block,
         )
         with space.getexecutioncontext().visit_frame(frame):
