@@ -249,6 +249,12 @@ class ObjectSpace(object):
     def getsingletonclass(self, w_receiver):
         return w_receiver.getsingletonclass(self)
 
+    def getscope(self, w_receiver):
+        if isinstance(w_receiver, W_ModuleObject):
+            return w_receiver
+        else:
+            return self.getclass(w_receiver)
+
     @jit.unroll_safe
     def getnonsingletonclass(self, w_receiver):
         cls = self.getclass(w_receiver)

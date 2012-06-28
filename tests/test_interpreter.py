@@ -334,6 +334,16 @@ class TestInterpreter(BaseRuPyPyTest):
         return X::Constant
         """)
         assert space.int_w(w_res) == 3
+        w_res = space.execute("""
+        class X
+            Constant = 3
+            def self.constant
+               Constant
+            end
+        end
+        return X.constant
+        """)
+        assert space.int_w(w_res) == 3
 
     def test___FILE__(self, space):
         w_res = space.execute("return __FILE__")
@@ -583,7 +593,6 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["B", "A overrides all"]
 
-    @py.test.mark.xfail
     def test_class_variables_accessed_from_class_side(self, space):
         w_res = space.execute("""
         class A; @@foo = 'A'; end
