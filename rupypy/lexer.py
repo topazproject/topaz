@@ -984,7 +984,7 @@ class StringLexer(ChildLexer):
         self.emit("DSTRING_END")
 
 
-class HeredocLexer(ChildLexer):
+class HeredocLexer(StringLexer):
     def __init__(self, lexer, marker, indent, interpolate):
         ChildLexer.__init__(self, lexer)
         self.marker = marker
@@ -1030,6 +1030,10 @@ class HeredocLexer(ChildLexer):
                 else:
                     self.emit("STRING_VALUE")
                     break
+            elif ch == "#" and self.peek() == "{":
+                self.emit_str()
+                self.read()
+                self.tokenize_interpolation()
             elif ch == self.EOF:
                 return self.tokens
             else:
