@@ -32,6 +32,10 @@ class Kernel(Module):
     def function_lambda(self, space, block):
         return space.newproc(block, True)
 
+    @moduledef.method("proc")
+    def function_lambda(self, space, block):
+        return space.newproc(block, False)
+
     @moduledef.function("puts")
     def function_puts(self, space, w_obj):
         if w_obj is space.w_nil:

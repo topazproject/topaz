@@ -18,6 +18,15 @@ class TestKernel(BaseRuPyPyTest):
         assert w_cls is space.getclassfor(W_ProcObject)
         assert w_lambda is space.w_true
 
+    def test_proc(self, space):
+        w_res = space.execute("""
+        l = proc { |x| 3 }
+        return [l.class, l.lambda?]
+        """)
+        w_cls, w_lambda = space.listview(w_res)
+        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_lambda is space.w_false
+
     def test_singleton_methods(self, space):
         w_res = space.execute("""
         class X
