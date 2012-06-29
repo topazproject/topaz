@@ -67,6 +67,14 @@ class W_ArrayObject(W_Object):
         assert isinstance(w_other, W_ArrayObject)
         return space.newarray(self.items_w + w_other.items_w)
 
+    @classdef.method("-")
+    def method_minus(self, space, w_other):
+        assert isinstance(w_other, W_ArrayObject)
+        return space.newarray([i for i
+            in self.items_w
+            if space.send(w_other, space.newsymbol("include?"), [i]) is space.w_false
+        ])
+
     @classdef.method("<<")
     def method_lshift(self, space, w_obj):
         self.items_w.append(w_obj)

@@ -24,6 +24,10 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return [1, 2] + [3]")
         assert self.unwrap(space, w_res) == [1, 2, 3]
 
+    def test_minus(self, space):
+        w_res = space.execute("return [1, 1, 2, '3'] - [1, '3']")
+        assert self.unwrap(space, w_res) == [2]
+
     def test_lshift(self, space):
         w_res = space.execute("return [] << 1")
         assert self.unwrap(space, w_res) == [1]
