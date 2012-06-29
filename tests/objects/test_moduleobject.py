@@ -63,6 +63,26 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_module_eval(self, space, capfd):
+        w_res = space.execute("""
+        class X; end
+        X.module_eval('def foo; 1; end')
+        return X.new.foo
+        """)
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("""
+        class X; end
+        X.module_eval { def foo; 1; end }
+        return X.new.foo
+        """)
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("""
+        class X; end
+        X.module_eval('def foo; [__FILE__, __LINE__]; end', 'dummy', 123)
+        return X.new.foo
+        """)
+        assert self.unwrap(space, w_res) == ["dummy", 123]
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):

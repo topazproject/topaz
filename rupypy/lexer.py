@@ -84,11 +84,11 @@ class BaseLexer(object):
         raise LexerError(self.current_pos())
 
 class Lexer(BaseLexer):
-    def __init__(self, source):
+    def __init__(self, source, initial_lineno=1):
         BaseLexer.__init__(self)
         self.source = source
         self.idx = 0
-        self.lineno = 1
+        self.lineno = initial_lineno
         self.columno = 1
         self.state = self.EXPR_BEG
 

@@ -126,25 +126,25 @@ class ObjectSpace(object):
 
     # Methods for dealing with source code.
 
-    def parse(self, source):
+    def parse(self, source, initial_lineno=1):
         try:
-            st = ToASTVisitor().transform(_parse(source))
+            st = ToASTVisitor().transform(_parse(source, initial_lineno=initial_lineno))
             return Transformer().visit_main(st)
         except ParseError as e:
             self.raise_(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:
             self.raise_(self.getclassfor(W_SyntaxError))
 
-    def compile(self, source, filepath):
-        astnode = self.parse(source)
+    def compile(self, source, filepath, initial_lineno=1):
+        astnode = self.parse(source, initial_lineno=initial_lineno)
         symtable = SymbolTable()
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, "<main>", symtable, filepath)
         astnode.compile(c)
         return c.create_bytecode([], [], None, None)
 
-    def execute(self, source, w_self=None, w_scope=None, filepath="-e"):
-        bc = self.compile(source, filepath)
+    def execute(self, source, w_self=None, w_scope=None, filepath="-e", initial_lineno=1):
+        bc = self.compile(source, filepath, initial_lineno=initial_lineno)
         frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
