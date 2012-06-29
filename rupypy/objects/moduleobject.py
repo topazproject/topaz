@@ -271,3 +271,19 @@ class W_ModuleObject(W_RootObject):
         space.raise_(space.getclassfor(W_NameError),
              "uninitialized constant %s" % name
         )
+
+    @classdef.method("class_eval", string="str", filename="str")
+    @classdef.method("module_eval", string="str", filename="str")
+    def method_module_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
+        if string is not None:
+            if filename is None:
+                filename = "module_eval"
+            if w_lineno is not None:
+                lineno = space.int_w(w_lineno)
+            else:
+                lineno = 1
+            return space.execute(string, self, self, filename, lineno)
+        else:
+            block.w_self = self
+            block.w_scope = self
+            space.invoke_block(block, [])
