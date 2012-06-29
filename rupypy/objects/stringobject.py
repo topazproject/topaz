@@ -144,15 +144,21 @@ class W_StringObject(W_Object):
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
-        assert isinstance(w_other, W_StringObject)
-        s1 = space.str_w(self)
-        s2 = space.str_w(w_other)
-        if s1 < s2:
-            return space.newint(-1)
-        elif s1 == s2:
-            return space.newint(0)
-        elif s1 > s2:
-            return space.newint(1)
+        if isinstance(w_other, W_StringObject):
+            s1 = space.str_w(self)
+            s2 = space.str_w(w_other)
+            if s1 < s2:
+                return space.newint(-1)
+            elif s1 == s2:
+                return space.newint(0)
+            elif s1 > s2:
+                return space.newint(1)
+        else:
+            if space.respond_to(w_other, space.newsymbol("to_str")) and space.respond_to(w_other, space.newsymbol("<=>")):
+                tmp = space.send(w_other, space.newsymbol("<=>"), [self])
+                if tmp is not space.w_nil:
+                    return space.newint(-space.int_w(tmp))
+            return space.w_nil
 
     @classdef.method("freeze")
     def method_freeze(self, space):

@@ -30,6 +30,20 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'b' <=> 'a'")
         assert space.int_w(w_res) == 1
 
+    def test_comparator_to_type_without_to_str(self, space):
+        w_res = space.execute("return 'b' <=> 1")
+        assert w_res is space.w_nil
+
+    def test_comparator_to_type_with_to_str(self, space):
+        w_res = space.execute("""
+        class A
+          def to_str; 'A'; end
+          def <=>(other); other <=> self.to_str; end
+        end
+        return 'A' <=> A.new
+        """)
+        assert space.int_w(w_res) == 0
+
     def test_hash(self, space):
         w_res = space.execute("""
         return ['abc'.hash, ('a' << 'b' << 'c').hash]
