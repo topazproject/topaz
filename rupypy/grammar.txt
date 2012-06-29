@@ -198,7 +198,7 @@ function_name: varname [DOT] method_name |
                method_name;
 
 method_name: <IDENTIFIER> | <LEGT> | <EQEQEQ> | <LT> | <GT> | <GE> | <LE> |
-             <EQEQ> | <LSHIFT> | <EQUAL_TILDE>;
+             <EQEQ> | <LSHIFT> | <EQUAL_TILDE> | <MINUS>;
 
 argdecl: [LPAREN] arglist? [RPAREN] |
          arglist? [LINE_END];

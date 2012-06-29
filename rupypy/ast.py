@@ -4,7 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
-from rupypy.objects.objectobject import W_BaseObject, W_RootObject
+from rupypy.objects.objectobject import W_RootObject
 
 
 class Node(object):
