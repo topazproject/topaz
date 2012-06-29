@@ -18,3 +18,7 @@ class W_HashObject(W_Object):
     def method_subscript_assign(self, w_key, w_value):
         self.contents[w_key] = w_value
         return w_value
+
+    @classdef.method("keys")
+    def method_keys(self, space):
+        return space.newarray(self.contents.keys())

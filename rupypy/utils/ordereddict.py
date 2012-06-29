@@ -28,6 +28,11 @@ class OrderedDict(object):
         else:
             return key
 
+    def keys(self):
+        if self.eq_func and self.hash_func:
+            return [k.key for k in self.contents.keys()]
+        else:
+            return self.contents.keys()
 
 class DictKey(object):
     def __init__(self, d, key):
