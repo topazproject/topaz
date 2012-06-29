@@ -77,14 +77,19 @@ class W_FixnumObject(W_RootObject):
                 "divided by 0"
             )
 
-    @classdef.method("===", other="int")
-    @classdef.method("==", other="int")
-    def method_eq(self, space, other):
-        return space.newbool(self.intvalue == other)
+    @classdef.method("===")
+    @classdef.method("==")
+    def method_eq(self, space, w_other):
+        if isinstance(w_other, W_FixnumObject):
+            return space.newbool(self.comparator(space, space.int_w(w_other)) == 0)
+        elif isinstance(w_other, W_FloatObject):
+            return space.newbool(self.comparator(space, space.float_w(w_other)) == 0)
+        else:
+            return space.send(w_other, space.newsymbol("=="), [self])
 
-    @classdef.method("!=", other="int")
-    def method_ne(self, space, other):
-        return space.newbool(self.intvalue != other)
+    @classdef.method("!=")
+    def method_ne(self, space, w_other):
+        return space.newbool(space.send(self, space.newsymbol("=="), [w_other]) is space.w_false)
 
     @classdef.method("<", other="int")
     def method_lt(self, space, other):
@@ -98,14 +103,22 @@ class W_FixnumObject(W_RootObject):
     def method_neg(self, space):
         return space.newint(-self.intvalue)
 
-    @classdef.method("<=>", other="int")
-    def method_comparator(self, space, other):
+    @classdef.method("<=>")
+    def method_comparator(self, space, w_other):
+        if isinstance(w_other, W_FixnumObject):
+            return space.newint(self.comparator(space, space.int_w(w_other)))
+        elif isinstance(w_other, W_FloatObject):
+            return space.newint(self.comparator(space, space.float_w(w_other)))
+        else:
+            return space.w_nil
+
+    def comparator(self, space, other):
         if self.intvalue < other:
-            return space.newint(-1)
+            return -1
         elif self.intvalue == other:
-            return space.newint(0)
+            return 0
         elif self.intvalue > other:
-            return space.newint(1)
+            return 1
 
     @classdef.method("hash")
     def method_hash(self, space):

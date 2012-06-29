@@ -1,4 +1,7 @@
-class TestFloatObject(object):
+from ..base import BaseRuPyPyTest
+
+
+class TestFloatObject(BaseRuPyPyTest):
     def test_add(self, space):
         w_res = space.execute("return 1.0 + 2.9")
         assert space.float_w(w_res) == 3.9
@@ -28,3 +31,7 @@ class TestFloatObject(object):
     def test_to_s(self, space):
         w_res = space.execute("return 1.5.to_s")
         assert space.str_w(w_res) == "1.5"
+
+    def test_to_i(self, space):
+        w_res = space.execute("return [1.1.to_i, 1.1.to_int]")
+        assert self.unwrap(space, w_res) == [1, 1]
