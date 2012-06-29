@@ -62,6 +62,13 @@ class TestObjectObject(BaseRuPyPyTest):
         w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
         assert self.unwrap(space, w_res) == ['1', 3]
 
+    def test_eq(self, space):
+        w_res = space.execute("""
+        a = Object.new
+        return [a == a, a == Object.new]
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""
