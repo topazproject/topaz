@@ -344,6 +344,11 @@ class TestInterpreter(BaseRuPyPyTest):
         return X.constant
         """)
         assert space.int_w(w_res) == 3
+        w_res = space.execute("""
+        X = 3
+        return ::X
+        """)
+        assert space.int_w(w_res) == 3
 
     def test___FILE__(self, space):
         w_res = space.execute("return __FILE__")
