@@ -821,6 +821,17 @@ HERE
             ], None, 2))
         ]))
 
+        r = space.parse("""
+        <<-HERE
+        #{foo}
+        HERE
+        """)
+        assert r == heredoc(
+            ast.ConstantString("        "),
+            ast.Variable("foo", 1),
+            ast.ConstantString("\n")
+        )
+
     def test_class(self, space):
         r = space.parse("""
         class X
