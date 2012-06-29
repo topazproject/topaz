@@ -21,6 +21,7 @@ from rupypy.modules.comparable import Comparable
 from rupypy.modules.enumerable import Enumerable
 from rupypy.modules.math import Math
 from rupypy.modules.kernel import Kernel
+from rupypy.modules.process import Process
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
@@ -88,7 +89,7 @@ class ObjectSpace(object):
         ]:
             self.add_class(cls)
 
-        for module in [Math, Comparable, Enumerable, Kernel]:
+        for module in [Math, Comparable, Enumerable, Kernel, Process]:
             self.add_module(module)
 
         w_load_path = self.newarray([
