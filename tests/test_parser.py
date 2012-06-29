@@ -1893,3 +1893,9 @@ HERE
         assert space.parse("alias a b") == ast.Main(ast.Block([
             ast.Alias(ast.ConstantSymbol("a"), ast.ConstantSymbol("b"), 1)
         ]))
+
+    def test_custom_lineno(self, space):
+        with self.raises(space, "SyntaxError", "line 1"):
+            assert space.parse("[]{}[]")
+        with self.raises(space, "SyntaxError", "line 10"):
+            assert space.parse("[]{}[]", 10)

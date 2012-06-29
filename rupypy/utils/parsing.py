@@ -16,7 +16,7 @@ def make_parse_function(grammar, lexer_cls):
 
     parser = PackratParser(rules, rules[0].nonterminal)
 
-    def parse(s):
-        lexer = lexer_cls(s)
+    def parse(s, initial_lineno=1):
+        lexer = lexer_cls(s, initial_lineno=initial_lineno)
         return parser.parse(lexer.tokenize())
     return parse, ToASTVisitor
