@@ -84,7 +84,7 @@ class ObjectSpace(object):
             W_IOObject, W_FileObject,
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
             W_TypeError, W_ArgumentError, W_RuntimeError, W_StandardError,
-            W_Random, W_Dir
+            W_Random, W_Dir, W_ProcObject
         ]:
             self.add_class(cls)
 

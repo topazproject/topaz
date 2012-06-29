@@ -17,3 +17,7 @@ class W_ProcObject(W_Object):
     @classdef.method("lambda?")
     def method_lambda(self, space):
         return space.newbool(self.is_lambda)
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, args_w, block):
+        return W_ProcObject(space, block, False)

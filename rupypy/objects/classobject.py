@@ -43,9 +43,9 @@ class W_ClassObject(W_ModuleObject):
         return ary
 
     @classdef.method("new")
-    def method_new(self, space, args_w):
-        w_obj = space.send(self, space.newsymbol("allocate"), args_w)
-        space.send(w_obj, space.newsymbol("initialize"), args_w)
+    def method_new(self, space, args_w, block):
+        w_obj = space.send(self, space.newsymbol("allocate"), args_w, block)
+        space.send(w_obj, space.newsymbol("initialize"), args_w, block)
         return w_obj
 
     @classdef.method("allocate")
