@@ -36,3 +36,9 @@ class W_SymbolObject(W_Object):
             return space.newint(0)
         elif s1 > s2:
             return space.newint(1)
+
+    classdef.app_method("""
+    def to_proc
+        Proc.new { |arg| arg.send(self) }
+    end
+    """)

@@ -311,6 +311,21 @@ class Interpreter(object):
             frame.push(w_block)
         elif isinstance(w_block, W_ProcObject):
             frame.push(w_block.block)
+        elif space.respond_to(w_block, space.newsymbol("to_proc")):
+            # Proc implements to_proc, too, but MRI doesn't call it
+            w_res = space.send(w_block, space.newsymbol("to_proc"))
+            if isinstance(w_res, W_ProcObject):
+                frame.push(w_res.block)
+            else:
+                block_class_name = space.getclass(w_block).name
+                result_class_name = space.getclass(w_res).name
+                space.raise_(space.getclassfor(W_TypeError),
+                    "can't convert %s to Proc (%s#to_proc gives %s)" % (
+                        block_class_name,
+                        block_class_name,
+                        result_class_name
+                    )
+                )
         else:
             space.raise_(space.getclassfor(W_TypeError),
                 "wrong argument type"

@@ -818,8 +818,19 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
-        with self.raises(space, "TypeError"):
+        with self.raises(space, "TypeError", "wrong argument type"):
             space.execute("f(&3)")
+
+        w_res = space.execute("""
+        return [1, 2, 3].map(&:to_s)
+        """)
+        assert self.unwrap(space, w_res) == ["1", "2", "3"]
+
+        with self.raises(space, "TypeError", "can't convert String to Proc (String#to_proc gives String)"):
+            space.execute("""
+            class String; def to_proc; self; end; end
+            [1, 2, 3].map(&"to_s")
+            """)
 
     def test_block_return(self, space):
         w_res = space.execute("""
