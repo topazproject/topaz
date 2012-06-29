@@ -348,7 +348,7 @@ class Lexer(BaseLexer):
 
     def regexp(self, begin, end):
         self.emit("REGEXP_BEGIN")
-        tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
+        tokens = StringLexer(self, begin, end, interpolate=True, regexp=True).tokenize()
         self.tokens.extend(tokens)
         self.emit("REGEXP_END")
         self.state = self.EXPR_END
@@ -873,16 +873,19 @@ class ChildLexer(BaseLexer):
     def unread(self):
         return self.lexer.unread()
 
+    def read_escape(self):
+        return self.lexer.read_escape()
 
 class StringLexer(ChildLexer):
     CODE = 0
     STRING = 1
 
-    def __init__(self, lexer, begin, end, interpolate=True, qwords=False):
+    def __init__(self, lexer, begin, end, interpolate=True, qwords=False, regexp=False):
         ChildLexer.__init__(self, lexer)
 
         self.interpolate = interpolate
         self.qwords = qwords
+        self.regexp = regexp
 
         self.begin = begin
         self.end = end
@@ -903,8 +906,16 @@ class StringLexer(ChildLexer):
             if ch == self.lexer.EOF:
                 self.unread()
                 return self.tokens
-            elif ch == "\\" and self.peek() in [self.begin, self.end, "\\"]:
-                self.add(self.read())
+            elif ch == "\\":
+                if self.peek() in [self.begin, self.end, "\\"]:
+                    self.add(self.read())
+                else:
+                    escaped_char = self.read_escape()
+                    if self.regexp and escaped_char in string.printable:
+                        self.add(ch)
+                        self.add(escaped_char)
+                    else:
+                        self.add(escaped_char)
             elif ch == self.begin and (self.begin != self.end):
                 self.nesting += 1
                 self.add(ch)

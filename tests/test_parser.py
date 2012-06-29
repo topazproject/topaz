@@ -716,6 +716,9 @@ class TestParser(BaseRuPyPyTest):
             ast.Block([]),
         ))
         assert space.parse('"\\""') == dyn_string(ast.ConstantString('"'))
+        assert space.parse('"\n"') == dyn_string(ast.ConstantString("\n"))
+        assert space.parse('"\w"') == dyn_string(ast.ConstantString("w"))
+        assert space.parse('"\M-a"') == dyn_string(ast.ConstantString("\xe1"))
 
     def test_percent_terms(self, space):
         dyn_string = lambda *components: ast.Main(ast.Block([
