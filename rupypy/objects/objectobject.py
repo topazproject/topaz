@@ -73,12 +73,13 @@ class W_RootObject(W_BaseObject):
         ))
 
     @classdef.method("send", method="str")
-    def method_to_s(self, space, method, args_w, block):
-        return space.send(self, space.newsymbol(method), args_w[1:len(args_w)], block)
+    def method_send(self, space, method, args_w, block):
+        return space.send(self, space.newsymbol(method), args_w[1:], block)
 
     @classdef.method("==")
     def method_equal(self, space, w_other):
-        return space.newbool(self == w_other)
+        return space.newbool(self is w_other)
+
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):

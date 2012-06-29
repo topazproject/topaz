@@ -16,12 +16,13 @@ class TestRandom(BaseRuPyPyTest):
         w_res = space.execute("""
         class SubRandom < Random
             def better_rand
-                4 # http://xkcd.com/221/
+                # http://xkcd.com/221/
+                4
             end
         end
         c = SubRandom.new
         return [c.rand, c.better_rand]
         """)
-        res = self.unwrap(space, w_res)
-        assert 0 < res[0] < 1
-        assert res[1] == 4
+        rand, better_rand = self.unwrap(space, w_res)
+        assert 0 < rand < 1
+        assert better_rand == 4

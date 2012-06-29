@@ -68,13 +68,17 @@ class W_ArrayObject(W_Object):
         assert isinstance(w_other, W_ArrayObject)
         return space.newarray(self.items_w + w_other.items_w)
 
-    @classdef.method("-")
-    def method_minus(self, space, w_other):
-        assert isinstance(w_other, W_ArrayObject)
-        return space.newarray([i for i
-            in self.items_w
-            if space.send(w_other, space.newsymbol("include?"), [i]) is space.w_false
-        ])
+    classdef.app_method("""
+    def -(other)
+        res = []
+        self.each do |x|
+            if !other.include?(x)
+                res << x
+            end
+        end
+        res
+    end
+    """)
 
     @classdef.method("<<")
     def method_lshift(self, space, w_obj):
@@ -90,7 +94,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("join")
     def method_join(self, space, w_sep=None):
-        if len(self.items_w) == 0:
+        if not self.items_w:
             return space.newstr_fromstr("")
         if w_sep is None:
             separator = ""
@@ -101,8 +105,8 @@ class W_ArrayObject(W_Object):
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([
-            space.str_w(space.send(i, space.newsymbol("to_s")))
-            for i in self.items_w
+            space.str_w(space.send(w_o, space.newsymbol("to_s")))
+            for w_o in self.items_w
         ]))
 
     classdef.app_method("""
