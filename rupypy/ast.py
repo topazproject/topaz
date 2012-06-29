@@ -372,6 +372,11 @@ class Function(Node):
                 arg_ctx.emit(consts.RETURN)
                 bc = arg_ctx.create_bytecode([], [], None, None)
                 defaults.append(bc)
+        if self.splat_arg is not None:
+            if function_ctx.symtable.is_local(self.splat_arg):
+                function_ctx.symtable.get_local_num(self.splat_arg)
+            elif function_ctx.symtable.is_cell(self.splat_arg):
+                function_ctx.symtable.get_cell_num(self.splat_arg)
         if self.block_arg is not None:
             if function_ctx.symtable.is_local(self.block_arg):
                 function_ctx.symtable.get_local_num(self.block_arg)
