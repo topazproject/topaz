@@ -58,6 +58,10 @@ class TestObjectObject(BaseRuPyPyTest):
         oid = self.unwrap(space, w_res)[1]
         assert self.unwrap(space, w_res)[0] == "#<Object:0x%x>" % oid
 
+    def test_send(self, space):
+        w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
+        assert self.unwrap(space, w_res) == ['1', 3]
+
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""

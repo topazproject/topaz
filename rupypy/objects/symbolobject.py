@@ -16,6 +16,9 @@ class W_SymbolObject(W_Object):
     def symbol_w(self, space):
         return self.symbol
 
+    def str_w(self, space):
+        return self.symbol
+
     def getsingletonclass(self, space):
         space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
 

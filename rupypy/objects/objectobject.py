@@ -72,6 +72,9 @@ class W_RootObject(W_BaseObject):
             space.int_w(space.send(self, space.newsymbol("__id__")))
         ))
 
+    @classdef.method("send", method="str")
+    def method_to_s(self, space, method, args_w, block):
+        return space.send(self, space.newsymbol(method), args_w[1:len(args_w)], block)
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):
