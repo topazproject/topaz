@@ -115,6 +115,7 @@ class W_StringObject(W_Object):
         storage = strategy.unerase(self.str_storage)
         w_other.strategy.extend_into(w_other.str_storage, storage)
 
+    @classdef.method("to_str")
     @classdef.method("to_s")
     def method_to_s(self, space):
         return self

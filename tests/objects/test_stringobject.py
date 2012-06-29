@@ -14,6 +14,10 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute('return "ABC".to_s')
         assert space.str_w(w_res) == "ABC"
 
+    def test_to_str(self, space):
+        w_res = space.execute('return "ABC".to_str')
+        assert space.str_w(w_res) == "ABC"
+
     def test_length(self, space):
         w_res = space.execute("return 'ABC'.length")
         assert space.int_w(w_res) == 3
