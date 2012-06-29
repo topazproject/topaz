@@ -37,6 +37,7 @@ class WrapperGenerator(object):
                     lines.append("        raise Exception({}, '{}')".format(i, argname))
                 self.arg_count += 1
             elif argname == "self":
+                lines.append("    assert isinstance(self, self_cls)")
                 lines.append("    args += (self,)")
             elif argname == "args_w":
                 lines.append("    args += (args_w,)")
