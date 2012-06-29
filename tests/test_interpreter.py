@@ -482,6 +482,15 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == 'hi'
 
+        w_res = space.execute("""
+        def f(h, *)
+            h
+        end
+
+        return f(1, 2, *[3, 4])
+        """)
+        assert self.unwrap(space, w_res) == 1
+
     def test_or(self, space):
         w_res = space.execute("return 3 + 4 || 5")
         assert space.int_w(w_res) == 7

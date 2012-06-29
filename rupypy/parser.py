@@ -737,7 +737,9 @@ class Transformer(object):
             else:
                 if splat_arg:
                     self.error(n)
-                if len(n.children) == 2 and n.children[0].symbol == "UNARY_STAR":
+                if len(n.children) == 1 and n.children[0].symbol == "UNARY_STAR":
+                    splat_arg = ""
+                elif len(n.children) == 2 and n.children[0].symbol == "UNARY_STAR":
                     splat_arg = n.children[1].additional_info
                 elif len(n.children) == 2:
                     name = n.children[0].additional_info

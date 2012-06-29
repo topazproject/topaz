@@ -206,7 +206,7 @@ argdecl: [LPAREN] arglist? [RPAREN] |
 arglist: argdef [COMMA] >arglist< | argdef;
 
 argdef: IDENTIFIER [EQ] arg |
-        UNARY_STAR IDENTIFIER |
+        UNARY_STAR IDENTIFIER? |
         AMP IDENTIFIER |
         IDENTIFIER;
 
