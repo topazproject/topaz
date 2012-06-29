@@ -63,3 +63,20 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_unshift(self, space):
         w_res = space.execute("return [1, 2].unshift(3, 4)")
         assert self.unwrap(space, w_res) == [3, 4, 1, 2]
+
+    def test_join(self, space):
+        w_res = space.execute("return [1, 'a', :b].join")
+        assert space.str_w(w_res) == "1ab"
+        w_res = space.execute("return [1, 'a', :b].join('--')")
+        assert space.str_w(w_res) == "1--a--b"
+        w_res = space.execute("return [1, 'a', :b].join(?-)")
+        assert space.str_w(w_res) == "1-a-b"
+        with self.raises(space, "TypeError", "can't convert Symbol into String"):
+            space.execute("return [1].join(:foo)")
+        w_res = space.execute("return [].join(:foo)")
+        assert space.str_w(w_res) == ""
+        w_res = space.execute("""
+        class A; def to_str; 'A'; end; end
+        return [1, 2].join(A.new)
+        """)
+        assert space.str_w(w_res) == "1A2"
