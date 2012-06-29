@@ -72,7 +72,7 @@ class MutableStringStrategy(StringStrategy):
 
     def clear(self, s):
         storage = self.unerase(s.str_storage)
-        storage[0:len(storage)] = []
+        del storage[:]
 
 
 class W_StringObject(W_Object):
