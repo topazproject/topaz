@@ -50,6 +50,11 @@ class W_FixnumObject(W_RootObject):
     def method_to_f(self, space):
         return space.newfloat(float(self.intvalue))
 
+    @classdef.method("to_i")
+    @classdef.method("to_int")
+    def method_to_i(self, space):
+        return self
+
     @classdef.method("+")
     def method_add(self, space, w_other):
         if isinstance(w_other, W_FloatObject):
@@ -119,6 +124,7 @@ class W_FixnumObject(W_RootObject):
             return 0
         elif self.intvalue > other:
             return 1
+        return 1
 
     @classdef.method("hash")
     def method_hash(self, space):

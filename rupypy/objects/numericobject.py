@@ -15,3 +15,7 @@ class W_NumericObject(W_Object):
     @classdef.method("to_int")
     def method_to_int(self, space):
         return space.send(self, space.newsymbol("to_i"))
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, args_w):
+        return W_NumericObject(space, self)

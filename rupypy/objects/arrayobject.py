@@ -97,7 +97,7 @@ class W_ArrayObject(W_Object):
         elif space.respond_to(w_sep, space.newsymbol("to_str")):
             separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
         else:
-            space.raise_(space.getclassfor(W_TypeError),
+            return space.raise_(space.getclassfor(W_TypeError),
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([
