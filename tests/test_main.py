@@ -104,3 +104,8 @@ class TestMain(object):
             "\tfrom {}:2:in `f'",
             "\tfrom {}:4:in `<main>'",
         ])
+
+    def test_ruby_engine(self, tmpdir, capfd):
+        self.run(tmpdir, "puts RUBY_ENGINE")
+        out, err = capfd.readouterr()
+        assert out == "topaz\n"
