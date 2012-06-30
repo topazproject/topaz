@@ -85,6 +85,20 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["dummy", 123]
 
+    def test_const_definedp(self, space):
+        w_res = space.execute("""
+        class X; Const = 1; end
+        return X.const_defined?("Const"), X.const_defined?("NoConst")
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
+    def test_method_definedp(self, space):
+        w_res = space.execute("""
+        class X; def foo; end; end
+        return X.method_defined?("foo"), X.method_defined?("no_method")
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):
