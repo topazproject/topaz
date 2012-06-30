@@ -135,6 +135,7 @@ class W_StringObject(W_Object):
         self.extend(space, w_other)
         return self
 
+    @classdef.method("size")
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(self.length())
