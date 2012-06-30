@@ -94,9 +94,9 @@ class W_RootObject(W_BaseObject):
             space.int_w(space.send(self, space.newsymbol("__id__")))
         ))
 
-    @classdef.method("==")
-    def method_equal(self, space, w_other):
-        return space.newbool(self is w_other)
+    @classdef.method("===")
+    def method_eqeqeq(self, space, w_other):
+        return space.send(self, space.newsymbol("=="), [w_other])
 
 
     @classdef.method("send")

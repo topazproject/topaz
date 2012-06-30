@@ -99,6 +99,17 @@ class TestObjectObject(BaseRuPyPyTest):
         s, oid = self.unwrap(space, w_res)
         assert s == "#<Object:0x%x>" % oid
 
+    def test_eqeqeq(self, space):
+        w_res = space.execute("""
+        class A; end
+        a = A.new
+        res = [a === A.new]
+        class A; def ==(o); true; end; end
+        res << (a === A.new)
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
+
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""
