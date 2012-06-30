@@ -11,8 +11,11 @@ class W_HashObject(W_Object):
         self.contents = OrderedDict(space.eq_w, space.hash_w)
 
     @classdef.method("[]")
-    def method_subscript(self, w_key):
-        return self.contents[w_key]
+    def method_subscript(self, space, w_key):
+        try:
+            return self.contents[w_key]
+        except KeyError:
+            return space.w_nil
 
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
