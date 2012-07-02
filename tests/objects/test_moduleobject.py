@@ -88,9 +88,11 @@ class TestModuleObject(BaseRuPyPyTest):
     def test_const_definedp(self, space):
         w_res = space.execute("""
         class X; Const = 1; end
-        return X.const_defined?("Const"), X.const_defined?("NoConst")
+        class Y < X; end
+        return X.const_defined?("Const"), X.const_defined?("NoConst"),
+          X.const_defined?("X"), Y.const_defined?("Const"), Y.const_defined?("Const", false)
         """)
-        assert self.unwrap(space, w_res) == [True, False]
+        assert self.unwrap(space, w_res) == [True, False, True, True, False]
 
     def test_method_definedp(self, space):
         w_res = space.execute("""
