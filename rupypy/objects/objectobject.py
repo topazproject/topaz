@@ -80,6 +80,10 @@ class W_RootObject(W_BaseObject):
     def method_equal(self, space, w_other):
         return space.newbool(self is w_other)
 
+    @classdef.method("=~")
+    def method_match(self, space):
+        return space.w_nil
+
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):

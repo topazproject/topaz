@@ -161,6 +161,10 @@ class W_StringObject(W_Object):
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
 
+    @classdef.method("=~")
+    def method_comparator(self, space, w_other):
+        return space.send(w_other, space.newsymbol("=~"), [self])
+
     @classdef.method("freeze")
     def method_freeze(self, space):
         pass
