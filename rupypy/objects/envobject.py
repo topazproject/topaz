@@ -27,6 +27,6 @@ class W_EnvObject(W_Object):
         os.environ[key] = space.str_w(w_value)
         return w_value
 
-    @classdef.singleton_method("class")
+    @classdef.method("class")
     def method_class(self, space):
         return space.getclassfor(W_Object)
