@@ -287,3 +287,14 @@ class W_ModuleObject(W_RootObject):
             block.w_self = self
             block.w_scope = self
             space.invoke_block(block, [])
+
+    @classdef.method("const_defined?", const="str")
+    def method_const_definedp(self, space, const, w_inherit=None):
+        if w_inherit is None or space.is_true(w_inherit):
+            return space.newbool(self.find_inherited_const(space, const) is not None)
+        else:
+            return space.newbool(self._find_const_pure(const, self.version) is not None)
+
+    @classdef.method("method_defined?", name="str")
+    def method_method_definedp(self, space, name):
+        return space.newbool(self.find_method(space, name) is not None)
