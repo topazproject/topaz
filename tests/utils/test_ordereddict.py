@@ -56,6 +56,17 @@ class BaseTestOrderedDict(object):
 
         assert self.run(f, [10]) is None
 
+    def test_keys(self):
+        def f(n):
+            o = OrderedDict()
+            o[4] = 1
+            o[5] = 2
+            o[4] = 2
+            return o.keys()[n]
+
+        assert self.run(f, [0]) == 4
+        assert self.run(f, [1]) == 5
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def run(self, func, args=[]):

@@ -1,3 +1,4 @@
+import operator
 from collections import OrderedDict as PyOrderedDict
 
 from pypy.annotation import model
@@ -13,8 +14,8 @@ from pypy.tool.pairtype import pairtype
 class OrderedDict(object):
     def __init__(self, eq_func=None, hash_func=None):
         self.contents = PyOrderedDict()
-        self.eq_func = eq_func
-        self.hash_func = hash_func
+        self.eq_func = eq_func or operator.eq
+        self.hash_func = hash_func or hash
 
     def __getitem__(self, key):
         return self.contents[self._key(key)]
@@ -23,16 +24,11 @@ class OrderedDict(object):
         self.contents[self._key(key)] = value
 
     def _key(self, key):
-        if self.eq_func and self.hash_func:
-            return DictKey(self, key)
-        else:
-            return key
+        return DictKey(self, key)
 
     def keys(self):
-        if self.eq_func and self.hash_func:
-            return [k.key for k in self.contents.keys()]
-        else:
-            return self.contents.keys()
+        return [k.key for k in self.contents.keys()]
+
 
 class DictKey(object):
     def __init__(self, d, key):
@@ -68,7 +64,8 @@ class SomeOrderedDict(model.SomeObject):
         self.key_type = model.s_ImpossibleValue
         self.value_type = model.s_ImpossibleValue
 
-        self.read_locations = set()
+        self.key_read_locations = set()
+        self.value_read_locations = set()
 
     def __eq__(self, other):
         if not isinstance(other, SomeOrderedDict):
@@ -102,7 +99,7 @@ class SomeOrderedDict(model.SomeObject):
         updated = new_key_type != self.key_type
         if updated:
             self.key_type = new_key_type
-            for position_key in self.read_locations:
+            for position_key in self.key_read_locations:
                 self.bookkeeper.annotator.reflowfromposition(position_key)
             self.emulate_rdict_calls()
 
@@ -112,12 +109,17 @@ class SomeOrderedDict(model.SomeObject):
             self.bookkeeper.ondegenerated(self, new_value_type)
         if new_value_type != self.value_type:
             self.value_type = new_value_type
-            for position_key in self.read_locations:
+            for position_key in self.value_read_locations:
                 self.bookkeeper.annotator.reflowfromposition(position_key)
+
+    def read_key(self):
+        position_key = self.bookkeeper.position_key
+        self.key_read_locations.add(position_key)
+        return self.key_type
 
     def read_value(self):
         position_key = self.bookkeeper.position_key
-        self.read_locations.add(position_key)
+        self.value_read_locations.add(position_key)
         return self.value_type
 
     def emulate_rdict_calls(self):
@@ -139,6 +141,9 @@ class SomeOrderedDict(model.SomeObject):
                 (self, "hash"), self.hash_func, [self.key_type],
                 replace=(), callback=check_hash_func
             )
+
+    def method_keys(self):
+        return self.bookkeeper.newlist(self.read_key())
 
 
 class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
@@ -235,6 +240,12 @@ class OrderedDictRepr(Repr):
             cname = hop.inputconst(lltype.Void, "hashkey_func")
             hop.genop("setfield", [v_res, cname, v_hash])
         return v_res
+
+    def rtype_method_keys(self, hop):
+        [v_dict] = hop.inputargs(self)
+        r_list = hop.r_result
+        c_LIST = hop.inputconst(lltype.Void, r_list.lowleveltype.TO)
+        return hop.gendirectcall(LLOrderedDict.ll_keys, c_LIST, v_dict)
 
 
 class __extend__(pairtype(OrderedDictRepr, Repr)):
@@ -455,3 +466,14 @@ class LLOrderedDict(object):
             i = intmask(i) & mask
             perturb >>= LLOrderedDict.PERTURB_SHIFT
         return i
+
+    @staticmethod
+    def ll_keys(LIST, d):
+        res = LIST.ll_newlist(d.num_items)
+        i = 0
+        idx = d.first_entry
+        while idx != -1:
+            res.ll_items()[i] = d.entries[idx].key
+            idx = d.entries[idx].next
+            i += 1
+        return res
