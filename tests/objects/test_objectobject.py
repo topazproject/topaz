@@ -3,6 +3,58 @@ from rupypy.objects.intobject import W_FixnumObject
 from ..base import BaseRuPyPyTest
 
 
+class TestBasicObject(BaseRuPyPyTest):
+    def test___id__(self, space):
+        w_res = space.execute("return BasicObject.new.__id__")
+        assert isinstance(w_res, W_FixnumObject)
+
+    def test_method_missing(self, space):
+        w_res = space.execute("""
+        class BasicObject
+          def method_missing(name, *args, &block)
+            return name, args, block
+          end
+        end
+        return BasicObject.new.foo('bar', 42)
+        """)
+        assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
+
+    def test_eq(self, space):
+        w_res = space.execute("""
+        a = BasicObject.new
+        return [a == a, a == BasicObject.new]
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+        w_res = space.execute("""
+        a = BasicObject.new
+        return [a.equal?(a), a.equal?(BasicObject.new)]
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
+    def test_neq(self, space):
+        w_res = space.execute("""
+        a = BasicObject.new
+        return [a != a, a != BasicObject.new]
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
+
+    def test_not(self, space):
+        w_res = space.execute("return !BasicObject.new")
+        assert w_res is space.w_false
+        w_res = space.execute("return !true")
+        assert w_res is space.w_false
+        w_res = space.execute("return !false")
+        assert w_res is space.w_true
+        w_res = space.execute("return !nil")
+        assert w_res is space.w_true
+
+    def test___send__(self, space):
+        w_res = space.execute("""
+        return [BasicObject.new.__send__("!"), BasicObject.new.__send__(:"==", BasicObject.new)]
+        """)
+        assert self.unwrap(space, w_res) == [False, False]
+
+
 class TestObjectObject(BaseRuPyPyTest):
     def test_class(self, space):
         w_res = space.execute("return 1.class")
@@ -39,17 +91,6 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [2, 3]
 
-    def test_method_missing(self, space):
-        w_res = space.execute("""
-        class A
-          def method_missing(name, *args, &block)
-            return name, args, block
-          end
-        end
-        return A.new.foo('bar', 42)
-        """)
-        assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
-
     def test_to_s(self, space):
         w_res = space.execute("""
         obj = Object.new
@@ -57,17 +98,6 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         s, oid = self.unwrap(space, w_res)
         assert s == "#<Object:0x%x>" % oid
-
-    def test_send(self, space):
-        w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
-        assert self.unwrap(space, w_res) == ['1', 3]
-
-    def test_eq(self, space):
-        w_res = space.execute("""
-        a = Object.new
-        return [a == a, a == Object.new]
-        """)
-        assert self.unwrap(space, w_res) == [True, False]
 
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):

@@ -33,6 +33,10 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
+    @classdef.method("initialize")
+    def method_initialize(self):
+        return self
+
     @classdef.method("__id__")
     def method___id__(self, space):
         return space.newint(compute_unique_id(self))
@@ -45,13 +49,31 @@ class W_BaseObject(object):
             "undefined method `%s` for %s" % (name, class_name)
         )
 
+    @classdef.method("==")
+    @classdef.method("equal?")
+    def method_eq(self, space, w_other):
+        return space.newbool(self is w_other)
+
+    @classdef.method("!")
+    def method_not(self, space):
+        equal = space.newsymbol("equal?")
+        return space.newbool(
+            space.is_true(space.send(self, equal, [space.w_false])) or
+            space.is_true(space.send(self, equal, [space.w_nil]))
+        )
+
+    @classdef.method("!=")
+    def method_ne(self, space, w_other):
+        return space.newbool(
+            not space.is_true(space.send(self, space.newsymbol("=="), [w_other]))
+        )
+
+    @classdef.method("__send__", method="str")
+    def method_send(self, space, method, args_w, block):
+        return space.send(self, space.newsymbol(method), args_w[1:], block)
 
 class W_RootObject(W_BaseObject):
     classdef = ClassDef("Object", W_BaseObject.classdef)
-
-    @classdef.method("initialize")
-    def method_initialize(self):
-        return self
 
     @classdef.method("object_id")
     def method_object_id(self, space):
@@ -72,14 +94,14 @@ class W_RootObject(W_BaseObject):
             space.int_w(space.send(self, space.newsymbol("__id__")))
         ))
 
-    @classdef.method("send", method="str")
-    def method_send(self, space, method, args_w, block):
-        return space.send(self, space.newsymbol(method), args_w[1:], block)
-
     @classdef.method("==")
     def method_equal(self, space, w_other):
         return space.newbool(self is w_other)
 
+
+    @classdef.method("send")
+    def method_send(self, space, args_w, block):
+        return space.send(self, space.newsymbol("__send__"), args_w, block)
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):
