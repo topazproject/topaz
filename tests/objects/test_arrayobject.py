@@ -47,10 +47,18 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_range_inclusive(self, space):
         w_res = space.execute("return [1, 2, 3, 4, 5][1..2]")
         assert self.unwrap(space, w_res) == [2, 3]
+        w_res = space.execute("return [1, 2, 3, 4, 5][1..-1]")
+        assert self.unwrap(space, w_res) == [2, 3, 4, 5]
+        w_res = space.execute("return [1, 2, 3, 4, 5][-2..-1]")
+        assert self.unwrap(space, w_res) == [4, 5]
 
     def test_range_exclusive(self, space):
         w_res = space.execute("return [1, 2, 3, 4, 5][1...3]")
         assert self.unwrap(space, w_res) == [2, 3]
+        w_res = space.execute("return [1, 2, 3, 4, 5][1...-1]")
+        assert self.unwrap(space, w_res) == [2, 3, 4]
+        w_res = space.execute("return [1, 2, 3, 4, 5][-2...-1]")
+        assert self.unwrap(space, w_res) == [4]
 
     def test_range_assignment(self, space):
         w_res = space.execute("x = [1, 2, 3]; x[1..2] = 4; return x")
