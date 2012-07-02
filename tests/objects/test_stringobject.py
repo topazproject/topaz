@@ -72,3 +72,11 @@ class TestStringObject(BaseRuPyPyTest):
 
         w_res = space.execute("return ('a' << 'b').clear")
         assert self.unwrap(space, w_res) == ""
+
+    def test_split(self, space):
+        w_res = space.execute("return 'a b c'.split")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+        w_res = space.execute("return 'a-b-c'.split('-')")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+        w_res = space.execute("return 'a-b-c'.split('-', 2)")
+        assert self.unwrap(space, w_res) == ["a", "b-c"]
