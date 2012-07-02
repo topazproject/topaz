@@ -828,7 +828,7 @@ HERE
         """)
         assert r == heredoc(
             ast.ConstantString("        "),
-            ast.Variable("foo", 1),
+            ast.Variable("foo", 2),
             ast.ConstantString("\n")
         )
 

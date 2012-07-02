@@ -83,8 +83,9 @@ class BaseLexer(object):
     def error(self):
         raise LexerError(self.current_pos())
 
+
 class Lexer(BaseLexer):
-    def __init__(self, source, initial_lineno=1):
+    def __init__(self, source, initial_lineno):
         BaseLexer.__init__(self)
         self.source = source
         self.idx = 0
@@ -977,7 +978,7 @@ class StringLexer(ChildLexer):
                 context.append(self.CODE)
             else:
                 chars.append(ch)
-        lexer_tokens = Lexer(chars.build()).tokenize()
+        lexer_tokens = Lexer(chars.build(), self.get_lineno()).tokenize()
         # Remove the EOF
         lexer_tokens.pop()
         self.tokens.extend(lexer_tokens)
@@ -1001,7 +1002,7 @@ class HeredocLexer(StringLexer):
                 return self.tokens
             chars.append(ch)
         if chars.getlength():
-            lexer_tokens = Lexer(chars.build()).tokenize()
+            lexer_tokens = Lexer(chars.build(), self.get_lineno()).tokenize()
             lexer_tokens.pop()
         else:
             lexer_tokens = []

@@ -70,12 +70,14 @@ class TestModuleObject(BaseRuPyPyTest):
         return X.new.foo
         """)
         assert space.int_w(w_res) == 1
+
         w_res = space.execute("""
         class X; end
         X.module_eval { def foo; 1; end }
         return X.new.foo
         """)
         assert space.int_w(w_res) == 1
+
         w_res = space.execute("""
         class X; end
         X.module_eval('def foo; [__FILE__, __LINE__]; end', 'dummy', 123)
