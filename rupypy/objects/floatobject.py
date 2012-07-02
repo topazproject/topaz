@@ -1,13 +1,14 @@
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.numericobject import W_NumericObject
 
 
-class W_FloatObject(W_BaseObject):
+class W_FloatObject(W_NumericObject):
     _immutable_fields_ = ["floatvalue"]
 
-    classdef = ClassDef("Float", W_BaseObject.classdef)
+    classdef = ClassDef("Float", W_NumericObject.classdef)
 
-    def __init__(self, floatvalue):
+    def __init__(self, space, floatvalue):
+        W_NumericObject.__init__(self, space)
         self.floatvalue = floatvalue
 
     def float_w(self, space):
@@ -20,6 +21,10 @@ class W_FloatObject(W_BaseObject):
     @classdef.method("to_f")
     def method_to_f(self, space):
         return self
+
+    @classdef.method("to_i")
+    def method_to_i(self, space):
+        return space.newint(int(self.floatvalue))
 
     @classdef.method("-@")
     def method_neg(self, space):

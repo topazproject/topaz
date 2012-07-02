@@ -6,7 +6,7 @@ from pypy.rlib.unroll import unrolling_iterable
 SEND_EFFECT = 0xFF
 ARRAY_EFFECT = 0xFE
 BLOCK_EFFECT = 0xFD
-DUP_TOPX_EFFECT = 0xFC
+UNPACK_EFFECT = 0xFC
 
 # Name, number of arguments, stack effect
 BYTECODES = [
@@ -25,24 +25,31 @@ BYTECODES = [
     ("LOAD_CONSTANT", 1, 0),
     ("STORE_CONSTANT", 1, 0),
 
-    ("LOAD_INSTANCE_VAR", 1, +1),
-    ("STORE_INSTANCE_VAR", 1, 0),
+    ("LOAD_INSTANCE_VAR", 1, 0),
+    ("STORE_INSTANCE_VAR", 1, -1),
+
+    ("LOAD_CLASS_VAR", 1, 0),
+    ("STORE_CLASS_VAR", 1, -1),
 
     ("LOAD_GLOBAL", 1, +1),
     ("STORE_GLOBAL", 1, 0),
 
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
+    ("BUILD_STRING", 1, ARRAY_EFFECT),
     ("BUILD_HASH", 0, +1),
     ("BUILD_RANGE", 0, -1),
-    ("BUILD_RANGE_INCLUSIVE", 0, -1),
+    ("BUILD_RANGE_EXCLUSIVE", 0, -1),
     ("BUILD_FUNCTION", 0, -1),
     ("BUILD_BLOCK", 1, BLOCK_EFFECT),
     ("BUILD_CLASS", 0, -2),
     ("BUILD_MODULE", 0, -2),
+    ("BUILD_REGEXP", 0, 0),
 
     ("COPY_STRING", 0, 0),
     ("COERCE_ARRAY", 0, 0),
     ("COERCE_BLOCK", 0, 0),
+    ("UNPACK_SEQUENCE", 1, UNPACK_EFFECT),
+    ("UNPACK_SEQUENCE_SPLAT", 2, UNPACK_EFFECT),
 
     ("DEFINE_FUNCTION", 0, -2),
     ("ATTACH_FUNCTION", 0, -2),
@@ -66,7 +73,9 @@ BYTECODES = [
 
     ("DISCARD_TOP", 0, -1),
     ("DUP_TOP", 0, +1),
-    ("DUP_TOPX", 1, DUP_TOPX_EFFECT),
+    ("DUP_TWO", 0, +2),
+    ("ROT_TWO", 0, 0),
+    ("ROT_THREE", 0, 0),
 
     ("RETURN", 0, -1),
     ("RAISE_RETURN", 0, -1),

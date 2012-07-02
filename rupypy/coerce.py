@@ -1,23 +1,27 @@
 class Coerce(object):
     @staticmethod
-    def symbol(ec, w_obj):
-        return ec.space.symbol_w(w_obj)
+    def bool(space, w_obj):
+        return space.is_true(w_obj)
 
     @staticmethod
-    def int(ec, w_obj):
-        return ec.space.int_w(w_obj)
+    def symbol(space, w_obj):
+        return space.symbol_w(w_obj)
 
     @staticmethod
-    def float(ec, w_obj):
-        w_float_obj = ec.space.send(ec, w_obj, ec.space.newsymbol("to_f"))
-        return ec.space.float_w(w_float_obj)
+    def int(space, w_obj):
+        return space.int_w(w_obj)
 
     @staticmethod
-    def str(ec, w_obj):
-        return ec.space.str_w(w_obj)
+    def float(space, w_obj):
+        w_float_obj = space.send(w_obj, space.newsymbol("to_f"))
+        return space.float_w(w_float_obj)
 
     @staticmethod
-    def path(ec, w_obj):
-        if w_obj is ec.space.w_nil:
+    def str(space, w_obj):
+        return space.str_w(w_obj)
+
+    @staticmethod
+    def path(space, w_obj):
+        if w_obj is space.w_nil:
             return None
-        return ec.space.str_w(w_obj)
+        return space.str_w(w_obj)

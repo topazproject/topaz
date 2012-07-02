@@ -1,5 +1,3 @@
-from pypy.rlib import jit
-
 from rupypy.module import ClassDef
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.objectobject import W_Object
@@ -9,76 +7,45 @@ class W_ClassObject(W_ModuleObject):
     classdef = ClassDef("Class", W_ModuleObject.classdef)
 
     def __init__(self, space, name, superclass, is_singleton=False):
-        W_ModuleObject.__init__(self, space, name)
-        self.superclass = superclass
+        W_ModuleObject.__init__(self, space, name, superclass)
         self.is_singleton = is_singleton
-        self.constants_w = {}
-        self._lazy_constants_w = None
 
-    def _freeze_(self):
-        "NOT_RPYTHON"
-        if self._lazy_constants_w is not None:
-            for name in self._lazy_constants_w.keys():
-                self._load_lazy(name)
-            self._lazy_constants_w = None
-        return False
-
-    def _lazy_set_const(self, space, name, obj):
-        "NOT_RPYTHON"
-        if self._lazy_constants_w is None:
-            self._lazy_constants_w = {}
-        self._lazy_constants_w[name] = (space, obj)
-
-    def _load_lazy(self, name):
-        "NOT_RPYTHON"
-        obj = self._lazy_constants_w.pop(name, None)
-        if obj is not None:
-            space, obj = obj
-            if hasattr(obj, "classdef"):
-                self.set_const(self, obj.classdef.name, space.getclassfor(obj))
-            elif hasattr(obj, "moduledef"):
-                w_module = obj.build_object(space)
-                self.set_const(self, obj.moduledef.name, w_module)
-            else:
-                assert False
+        if self.superclass is not None:
+            self.superclass.inherited(space, self)
+            # During bootstrap, we cannot create singleton classes, yet
+            if not self.is_singleton and not space.bootstrap:
+                self.getsingletonclass(space)
 
     def getsingletonclass(self, space):
         if self.klass is None:
+            if self.superclass is None:
+                singleton_superclass = space.getclassfor(W_ClassObject)
+            else:
+                singleton_superclass = self.superclass.getsingletonclass(space)
             self.klass = space.newclass(
-                self.name, space.getclassfor(W_ClassObject), is_singleton=True
+                "#<Class:%s>" % self.name, singleton_superclass, is_singleton=True
             )
         return self.klass
 
-    def find_method(self, space, method):
-        res = W_ModuleObject.find_method(self, space, method)
-        if res is None and self.superclass is not None:
-            res = self.superclass.find_method(space, method)
-        return res
+    def find_method(self, space, name):
+        method = W_ModuleObject.find_method(self, space, name)
+        if method is None and self.superclass is not None:
+            method = self.superclass.find_method(space, name)
+        return method
 
-    def set_const(self, space, name, w_obj):
-        self.mutated()
-        self.constants_w[name] = w_obj
-
-    def find_const(self, space, name):
-        res = self._find_const_pure(name, self.version)
-        if res is None and self.superclass is not None:
-            res = self.superclass.find_const(space, name)
-        return res
-
-    @jit.elidable
-    def _find_const_pure(self, name, version):
-        if self._lazy_constants_w is not None:
-            self._load_lazy(name)
-        return self.constants_w.get(name, None)
-
-    @classdef.method("to_s")
-    def method_to_s(self, space):
-        return space.newstr_fromstr(self.name)
+    def ancestors(self, include_singleton=True, include_self=True):
+        assert include_self
+        ary = W_ModuleObject.ancestors(self,
+            include_singleton, not (self.is_singleton and not include_singleton)
+        )
+        if self.superclass is not None:
+            ary += self.superclass.ancestors(include_singleton)
+        return ary
 
     @classdef.method("new")
-    def method_new(self, ec, args_w):
-        w_obj = ec.space.send(ec, self, ec.space.newsymbol("allocate"), args_w)
-        ec.space.send(ec, w_obj, ec.space.newsymbol("initialize"), args_w)
+    def method_new(self, space, args_w, block):
+        w_obj = space.send(self, space.newsymbol("allocate"), args_w, block)
+        space.send(w_obj, space.newsymbol("initialize"), args_w, block)
         return w_obj
 
     @classdef.method("allocate")

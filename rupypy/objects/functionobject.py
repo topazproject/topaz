@@ -16,16 +16,16 @@ class W_UserFunction(W_FunctionObject):
         self.bytecode = bytecode
 
     @jit.unroll_safe
-    def call(self, ec, w_receiver, args_w, block):
-        frame = ec.space.create_frame(
+    def call(self, space, w_receiver, args_w, block):
+        frame = space.create_frame(
             self.bytecode,
             w_self=w_receiver,
-            w_scope=ec.space.getclass(w_receiver),
+            w_scope=space.getscope(w_receiver),
             block=block,
         )
-        with ec.visit_frame(frame):
-            frame.handle_args(ec, self.bytecode, args_w, block)
-            return ec.space.execute_frame(ec, frame, self.bytecode)
+        with space.getexecutioncontext().visit_frame(frame):
+            frame.handle_args(space, self.bytecode, args_w, block)
+            return space.execute_frame(frame, self.bytecode)
 
 
 class W_BuiltinFunction(W_FunctionObject):
@@ -35,7 +35,7 @@ class W_BuiltinFunction(W_FunctionObject):
         self.name = name
         self.func = func
 
-    def call(self, ec, w_receiver, args_w, block):
+    def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
-        with ec.visit_frame(frame, append_instr=True):
-            return self.func(w_receiver, ec, args_w, block)
+        with space.getexecutioncontext().visit_frame(frame, append_instr=True):
+            return self.func(w_receiver, space, args_w, block)

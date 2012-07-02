@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
+from rupypy.objects.objectobject import W_RootObject
 
 
 class Node(object):
@@ -63,13 +64,12 @@ class Block(Node):
 
 
 class BaseStatement(Node):
-    pass
+    dont_pop = False
 
 
 class Statement(BaseStatement):
     def __init__(self, expr):
         self.expr = expr
-        self.dont_pop = False
 
     def locate_symbols(self, symtable):
         self.expr.locate_symbols(symtable)
@@ -89,6 +89,7 @@ class If(Node):
     def locate_symbols(self, symtable):
         self.cond.locate_symbols(symtable)
         self.body.locate_symbols(symtable)
+        self.elsebody.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()
@@ -152,9 +153,10 @@ class Until(Node):
 
 
 class TryExcept(Node):
-    def __init__(self, body, except_handlers):
+    def __init__(self, body, except_handlers, else_body):
         self.body = body
         self.except_handlers = except_handlers
+        self.else_body = else_body
 
     def locate_symbols(self, symtable):
         self.body.locate_symbols(symtable)
@@ -163,41 +165,65 @@ class TryExcept(Node):
 
     def compile(self, ctx):
         exc = ctx.new_block()
+        else_block = ctx.new_block()
         end = ctx.new_block()
-        ctx.emit_jump(consts.SETUP_EXCEPT, exc)
+        if self.except_handlers:
+            ctx.emit_jump(consts.SETUP_EXCEPT, exc)
         ctx.use_next_block(ctx.new_block())
         self.body.compile(ctx)
-        ctx.emit(consts.POP_BLOCK)
-        ctx.emit_jump(consts.JUMP, end)
+        if self.except_handlers:
+            ctx.emit(consts.POP_BLOCK)
+        ctx.emit_jump(consts.JUMP, else_block)
         ctx.use_next_block(exc)
+
         for handler in self.except_handlers:
             next_except = ctx.new_block()
-            if handler.exception is not None:
-                handler.exception.compile(ctx)
-                ctx.emit(consts.COMPARE_EXC)
-                ctx.emit_jump(consts.JUMP_IF_FALSE, next_except)
-            if handler.name:
-                ctx.emit(consts.STORE_LOCAL, ctx.symtable.get_local_num(handler.name))
+            handle_block = ctx.new_block()
+
+            if handler.exceptions:
+                for exception in handler.exceptions:
+                    next_handle = ctx.new_block()
+                    exception.compile(ctx)
+                    ctx.emit(consts.COMPARE_EXC)
+                    ctx.emit_jump(consts.JUMP_IF_TRUE, handle_block)
+                    ctx.use_next_block(next_handle)
+                ctx.emit_jump(consts.JUMP, next_except)
+                ctx.use_next_block(handle_block)
+            else:
+                ctx.use_next_block(handle_block)
+            if handler.target:
+                elems = handler.target.compile_receiver(ctx)
+                if elems == 1:
+                    ctx.emit(consts.ROT_TWO)
+                elif elems == 2:
+                    ctx.emit(consts.ROT_THREE)
+                    ctx.emit(consts.ROT_THREE)
+                handler.target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
             ctx.emit(consts.DISCARD_TOP)
             handler.body.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)
             ctx.use_next_block(next_except)
-        ctx.emit(consts.END_FINALLY)
+
+        if self.except_handlers:
+            ctx.emit(consts.END_FINALLY)
+        ctx.use_next_block(else_block)
+        self.else_body.compile(ctx)
+        ctx.emit(consts.DISCARD_TOP)
         ctx.use_next_block(end)
 
 
 class ExceptHandler(Node):
-    def __init__(self, exception, name, body):
-        self.exception = exception
-        self.name = name
+    def __init__(self, exceptions, target, body):
+        self.exceptions = exceptions
+        self.target = target
         self.body = body
 
     def locate_symbols(self, symtable):
-        if self.exception is not None:
-            self.exception.locate_symbols(symtable)
-        if self.name is not None:
-            symtable.declare_local(self.name)
+        for exception in self.exceptions:
+            exception.locate_symbols(symtable)
+        if self.target is not None:
+            self.target.locate_symbols_assignment(symtable)
         self.body.locate_symbols(symtable)
 
 
@@ -346,6 +372,11 @@ class Function(Node):
                 arg_ctx.emit(consts.RETURN)
                 bc = arg_ctx.create_bytecode([], [], None, None)
                 defaults.append(bc)
+        if self.splat_arg is not None:
+            if function_ctx.symtable.is_local(self.splat_arg):
+                function_ctx.symtable.get_local_num(self.splat_arg)
+            elif function_ctx.symtable.is_cell(self.splat_arg):
+                function_ctx.symtable.get_cell_num(self.splat_arg)
         if self.block_arg is not None:
             if function_ctx.symtable.is_local(self.block_arg):
                 function_ctx.symtable.get_local_num(self.block_arg)
@@ -388,7 +419,8 @@ class Case(Node):
     def locate_symbols(self, symtable):
         self.cond.locate_symbols(symtable)
         for when, block in self.whens:
-            when.locate_symbols(symtable)
+            for expr in when:
+                expr.locate_symbols(symtable)
             block.locate_symbols(symtable)
         self.elsebody.locate_symbols(symtable)
 
@@ -398,10 +430,17 @@ class Case(Node):
         self.cond.compile(ctx)
         for when, block in self.whens:
             next_when = ctx.new_block()
-            ctx.emit(consts.DUP_TOP)
-            when.compile(ctx)
-            ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
-            ctx.emit_jump(consts.JUMP_IF_FALSE, next_when)
+            when_block = ctx.new_block()
+
+            for expr in when:
+                next_expr = ctx.new_block()
+                ctx.emit(consts.DUP_TOP)
+                expr.compile(ctx)
+                ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
+                ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
+                ctx.use_next_block(next_expr)
+            ctx.emit_jump(consts.JUMP, next_when)
+            ctx.use_next_block(when_block)
             ctx.emit(consts.DISCARD_TOP)
             block.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)
@@ -442,6 +481,28 @@ class Yield(Node):
         ctx.emit(consts.YIELD, len(self.args))
 
 
+class Alias(BaseStatement):
+    def __init__(self, new_name, old_name, lineno):
+        BaseStatement.__init__(self, lineno)
+        self.new_name = new_name
+        self.old_name = old_name
+
+    def locate_symbols(self, symtable):
+        self.new_name.locate_symbols(symtable)
+        self.old_name.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        Send(
+            Scope(self.lineno),
+            "alias_method",
+            [self.new_name, self.old_name],
+            None,
+            self.lineno,
+        ).compile(ctx)
+        if not self.dont_pop:
+            ctx.emit(consts.DISCARD_TOP)
+
+
 class Assignment(Node):
     def __init__(self, target, value):
         self.target = target
@@ -471,8 +532,8 @@ class AugmentedAssignment(Node):
         dup_needed = self.target.compile_receiver(ctx)
         if dup_needed == 1:
             ctx.emit(consts.DUP_TOP)
-        elif dup_needed > 0:
-            ctx.emit(consts.DUP_TOPX, dup_needed)
+        elif dup_needed == 2:
+            ctx.emit(consts.DUP_TWO)
         self.target.compile_load(ctx)
         self.value.compile(ctx)
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper), 1)
@@ -495,8 +556,8 @@ class OrEqual(Node):
         dup_needed = self.target.compile_receiver(ctx)
         if dup_needed == 1:
             ctx.emit(consts.DUP_TOP)
-        elif dup_needed > 0:
-            ctx.emit(consts.DUP_TOPX, dup_needed)
+        elif dup_needed == 2:
+            ctx.emit(consts.DUP_TWO)
         self.target.compile_load(ctx)
         ctx.emit(consts.DUP_TOP)
         ctx.emit_jump(consts.JUMP_IF_TRUE, end)
@@ -505,6 +566,64 @@ class OrEqual(Node):
         self.value.compile(ctx)
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
+
+
+class AndEqual(Node):
+    def __init__(self, target, value):
+        self.target = target
+        self.value = value
+
+
+class MultiAssignment(Node):
+    def __init__(self, targets, value):
+        self.targets = targets
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        for target in self.targets:
+            target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.UNPACK_SEQUENCE, len(self.targets))
+        for target in self.targets:
+            elems = target.compile_receiver(ctx)
+            if elems == 1:
+                ctx.emit(consts.ROT_TWO)
+            elif elems == 2:
+                ctx.emit(consts.ROT_THREE)
+                ctx.emit(consts.ROT_THREE)
+            target.compile_store(ctx)
+            ctx.emit(consts.DISCARD_TOP)
+
+class SplatAssignment(Node):
+    def __init__(self, targets, value, n_pre):
+        self.targets = targets
+        self.value = value
+        self.n_pre = n_pre
+
+    def locate_symbols(self, symtable):
+        for target in self.targets:
+            target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.UNPACK_SEQUENCE_SPLAT, len(self.targets), self.n_pre)
+        for target in self.targets:
+            elems = target.compile_receiver(ctx)
+            if elems == 1:
+                ctx.emit(consts.ROT_TWO)
+            elif elems == 2:
+                ctx.emit(consts.ROT_THREE)
+                ctx.emit(consts.ROT_THREE)
+            target.compile_store(ctx)
+            ctx.emit(consts.DISCARD_TOP)
 
 
 class BinOp(Node):
@@ -522,6 +641,31 @@ class BinOp(Node):
         Send(self.left, self.op, [self.right], None, self.lineno).compile(ctx)
 
 
+class MaybeBinop(Node):
+    def __init__(self, op, left, right, lineno):
+        Node.__init__(self, lineno)
+        self.op = op
+        self.left = left
+        self.right = right
+
+    def locate_symbols(self, symtable):
+        if symtable.is_defined(self.left.name):
+            self.left.locate_symbols(symtable)
+        self.right.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        if ctx.symtable.is_defined(self.left.name):
+            Send(self.left, self.op, [self.right], None, self.lineno).compile(ctx)
+        else:
+            Send(
+                Self(self.lineno),
+                self.left.name,
+                [UnaryOp(self.op, self.right, self.lineno)],
+                None,
+                self.lineno
+            ).compile(ctx)
+
+
 class UnaryOp(Node):
     def __init__(self, op, value, lineno):
         Node.__init__(self, lineno)
@@ -532,7 +676,10 @@ class UnaryOp(Node):
         self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
-        Send(self.value, self.op + "@", [], None, self.lineno).compile(ctx)
+        op = self.op
+        if op in "-":
+            op += "@"
+        Send(self.value, op, [], None, self.lineno).compile(ctx)
 
 
 class Or(Node):
@@ -578,7 +725,6 @@ class And(Node):
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
 
-
 class Not(Node):
     def __init__(self, value):
         self.value = value
@@ -589,7 +735,6 @@ class Not(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.UNARY_NOT)
-
 
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):
@@ -619,9 +764,7 @@ class Send(Node):
         if self.is_splat():
             for arg in self.args:
                 arg.compile(ctx)
-                if isinstance(arg, Splat):
-                    ctx.emit(consts.COERCE_ARRAY)
-                else:
+                if not isinstance(arg, Splat):
                     ctx.emit(consts.BUILD_ARRAY, 1)
             for i in range(len(self.args) - 1):
                 ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
@@ -666,8 +809,18 @@ class Splat(Node):
     def locate_symbols(self, symtable):
         self.value.locate_symbols(symtable)
 
+    def locate_symbols_assignment(self, symtable):
+        self.value.locate_symbols_assignment(symtable)
+
+    def compile_receiver(self, ctx):
+        return self.value.compile_receiver(ctx)
+
+    def compile_store(self, ctx):
+        return self.value.compile_store(ctx)
+
     def compile(self, ctx):
         self.value.compile(ctx)
+        ctx.emit(consts.COERCE_ARRAY)
 
 
 class SendBlock(Node):
@@ -749,13 +902,16 @@ class Subscript(Node):
         self.target.compile(ctx)
         for arg in self.args:
             arg.compile(ctx)
-        return len(self.args) + 1
+        ctx.emit(consts.BUILD_ARRAY, len(self.args))
+        return 2
 
     def compile_load(self, ctx):
-        ctx.emit(consts.SEND, ctx.create_symbol_const("[]"), len(self.args))
+        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]"))
 
     def compile_store(self, ctx):
-        ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), len(self.args) + 1)
+        ctx.emit(consts.BUILD_ARRAY, 1)
+        ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
 
 
 class LookupConstant(Node):
@@ -768,17 +924,19 @@ class LookupConstant(Node):
         pass
 
     def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
+        if self.value is not None:
+            self.value.locate_symbols(symtable)
 
     def locate_symbols_assignment(self, symtable):
         self.locate_symbols(symtable)
 
     def compile(self, ctx):
-        if self.name[0].isupper():
+        if self.value is not None:
             self.value.compile(ctx)
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
         else:
-            Send(self.value, self.name, [], None, self.lineno).compile(ctx)
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_RootObject)))
+        ctx.current_lineno = self.lineno
+        ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
         self.value.compile(ctx)
@@ -813,7 +971,7 @@ class Variable(Node):
         self.name = name
 
     def validate_assignment(self, transformer, node):
-        if self.name == "__FILE__" or "?" in self.name or "!" in self.name:
+        if self.name == "__FILE__" or self.name == "__LINE__" or "?" in self.name or "!" in self.name:
             transformer.error(node)
 
     def locate_symbols(self, symtable):
@@ -837,6 +995,8 @@ class Variable(Node):
         elif self.name == "__FILE__":
             ctx.emit(consts.LOAD_CODE)
             ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)
+        elif self.name == "__LINE__":
+            ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.lineno))
         elif ctx.symtable.is_local(self.name):
             ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(self.name))
         elif ctx.symtable.is_cell(self.name):
@@ -899,8 +1059,8 @@ class InstanceVariable(Node):
         pass
 
     def compile(self, ctx):
-        ctx.emit(consts.LOAD_SELF)
-        ctx.emit(consts.LOAD_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+        self.compile_receiver(ctx)
+        self.compile_load(ctx)
 
     def compile_receiver(self, ctx):
         ctx.emit(consts.LOAD_SELF)
@@ -913,6 +1073,34 @@ class InstanceVariable(Node):
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 
+class ClassVariable(Node):
+    def __init__(self, name):
+        self.name = name
+
+    def validate_assignment(self, transformer, node):
+        pass
+
+    def locate_symbols(self, symtable):
+        pass
+
+    def locate_symbols_assignment(self, symtable):
+        pass
+
+    def compile(self, ctx):
+        self.compile_receiver(ctx)
+        self.compile_load(ctx)
+
+    def compile_receiver(self, ctx):
+        ctx.emit(consts.LOAD_SCOPE)
+        return 1
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.LOAD_CLASS_VAR, ctx.create_symbol_const(self.name))
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_CLASS_VAR, ctx.create_symbol_const(self.name))
+
+
 class Array(Node):
     def __init__(self, items):
         self.items = items
@@ -922,9 +1110,22 @@ class Array(Node):
             item.locate_symbols(symtable)
 
     def compile(self, ctx):
+        n_items = 0
+        n_components = 0
         for item in self.items:
-            item.compile(ctx)
-        ctx.emit(consts.BUILD_ARRAY, len(self.items))
+            if isinstance(item, Splat):
+                ctx.emit(consts.BUILD_ARRAY, n_items)
+                item.compile(ctx)
+                n_items = 0
+                n_components += 2
+            else:
+                item.compile(ctx)
+                n_items += 1
+        if n_items or not n_components:
+            ctx.emit(consts.BUILD_ARRAY, n_items)
+            n_components += 1
+        for i in xrange(n_components - 1):
+            ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
 
 
 class Hash(Node):
@@ -947,10 +1148,10 @@ class Hash(Node):
 
 
 class Range(Node):
-    def __init__(self, start, stop, inclusive):
+    def __init__(self, start, stop, exclusive):
         self.start = start
         self.stop = stop
-        self.inclusive = inclusive
+        self.exclusive = exclusive
 
     def locate_symbols(self, symtable):
         self.start.locate_symbols(symtable)
@@ -959,8 +1160,8 @@ class Range(Node):
     def compile(self, ctx):
         self.start.compile(ctx)
         self.stop.compile(ctx)
-        if self.inclusive:
-            ctx.emit(consts.BUILD_RANGE_INCLUSIVE)
+        if self.exclusive:
+            ctx.emit(consts.BUILD_RANGE_EXCLUSIVE)
         else:
             ctx.emit(consts.BUILD_RANGE)
 
@@ -1015,3 +1216,44 @@ class ConstantRegexp(ConstantNode):
 
     def create_const(self, ctx):
         return ctx.create_const(ctx.space.newregexp(self.regexp))
+
+
+class DynamicString(Node):
+    def __init__(self, strvalues):
+        self.strvalues = strvalues
+
+    def locate_symbols(self, symtable):
+        for strvalue in self.strvalues:
+            strvalue.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        for strvalue in self.strvalues:
+            strvalue.compile(ctx)
+            if not isinstance(strvalue, ConstantString):
+                ctx.emit(consts.SEND, ctx.create_symbol_const("to_s"), 0)
+        if len(self.strvalues) != 1:
+            ctx.emit(consts.BUILD_STRING, len(self.strvalues))
+
+
+class DynamicRegexp(Node):
+    def __init__(self, dstring):
+        self.dstring = dstring
+
+    def locate_symbols(self, symtable):
+        self.dstring.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        self.dstring.compile(ctx)
+        ctx.emit(consts.BUILD_REGEXP)
+
+
+class Symbol(Node):
+    def __init__(self, value, lineno):
+        Node.__init__(self, lineno)
+        self.value = value
+
+    def locate_symbols(self, symtable):
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        Send(self.value, "to_sym", [], None, self.lineno).compile(ctx)

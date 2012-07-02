@@ -8,28 +8,37 @@ from pypy.rlib.parsing.parsing import ParseError
 from pypy.tool.cache import Cache
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
+from rupypy.celldict import CellDict
 from rupypy.error import RubyError
+from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
-from rupypy.globals import Globals
 from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError
+from rupypy.lib.dir import W_Dir
 from rupypy.lib.random import W_Random
-from rupypy.module import ClassCache
+from rupypy.module import ClassCache, ModuleCache
+from rupypy.modules.comparable import Comparable
+from rupypy.modules.enumerable import Enumerable
 from rupypy.modules.math import Math
+from rupypy.modules.kernel import Kernel
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
-from rupypy.objects.fileobject import W_FileObject
+from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
-    W_ZeroDivisionError, W_SyntaxError)
+                    W_ZeroDivisionError, W_SyntaxError, W_LoadError,
+                    W_TypeError, W_ArgumentError, W_RuntimeError,
+                    W_StandardError)
 from rupypy.objects.hashobject import W_HashObject
-from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.integerobject import W_IntegerObject
+from rupypy.objects.numericobject import W_NumericObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.objectobject import W_Object, W_BaseObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.regexpobject import W_RegexpObject
@@ -49,22 +58,37 @@ class SpaceCache(Cache):
 
 class ObjectSpace(object):
     def __init__(self):
-        self.transformer = Transformer()
         self.cache = SpaceCache(self)
-        self.globals = Globals()
+        self.symbol_cache = {}
+        self._executioncontext = None
+        self.globals = CellDict()
+        self.bootstrap = True
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
-        self.w_true = W_TrueObject()
-        self.w_false = W_FalseObject()
-        self.w_nil = W_NilObject()
+        self.w_true = W_TrueObject(self)
+        self.w_false = W_FalseObject(self)
+        self.w_nil = W_NilObject(self)
+
+        # This is bootstrap. We have to delay sending until true, false and nil
+        # are defined
+        w_mod = self.getmoduleobject(Kernel.moduledef)
+        self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
+        self.bootstrap = False
 
         for cls in [
-            W_Object, W_ArrayObject, W_FileObject, W_NoMethodError,
-            W_ZeroDivisionError, W_SyntaxError, W_Random,
+            W_NilObject, W_TrueObject, W_FalseObject,
+            W_BaseObject, W_Object,
+            W_StringObject, W_SymbolObject,
+            W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
+            W_ArrayObject, W_HashObject,
+            W_IOObject, W_FileObject,
+            W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
+            W_TypeError, W_ArgumentError, W_RuntimeError, W_StandardError,
+            W_Random, W_Dir, W_ProcObject
         ]:
             self.add_class(cls)
 
-        for module in [Math]:
+        for module in [Math, Comparable, Enumerable, Kernel]:
             self.add_module(module)
 
         w_load_path = self.newarray([
@@ -72,7 +96,12 @@ class ObjectSpace(object):
                 os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
             )
         ])
-        self.globals.set(self, "$LOAD_PATH", w_load_path)
+        self.globals.set("$LOAD_PATH", w_load_path)
+        self.globals.set("$:", w_load_path)
+
+        w_loaded_features = self.newarray([])
+        self.globals.set("$LOADED_FEATURES", w_loaded_features)
+        self.globals.set('$"', w_loaded_features)
 
     def _freeze_(self):
         return True
@@ -86,37 +115,46 @@ class ObjectSpace(object):
     def add_module(self, module):
         "NOT_RPYTHON"
         w_cls = self.getclassfor(W_Object)
-        w_cls._lazy_set_const(self, module.moduledef.name, module)
+        self.set_const(w_cls,
+            module.moduledef.name, self.getmoduleobject(module.moduledef)
+        )
 
     def add_class(self, cls):
         "NOT_RPYTHON"
         w_cls = self.getclassfor(W_Object)
-        w_cls._lazy_set_const(self, cls.classdef.name, cls)
+        self.set_const(w_cls, cls.classdef.name, self.getclassfor(cls))
 
     # Methods for dealing with source code.
 
-    def parse(self, ec, source):
+    def parse(self, source, initial_lineno=1):
         try:
-            st = ToASTVisitor().transform(_parse(source))
-            return self.transformer.visit_main(st)
+            st = ToASTVisitor().transform(_parse(source, initial_lineno=initial_lineno))
+            return Transformer().visit_main(st)
         except ParseError as e:
-            self.raise_(ec, self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
+            self.raise_(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:
-            self.raise_(ec, self.getclassfor(W_SyntaxError))
+            self.raise_(self.getclassfor(W_SyntaxError))
 
-    def compile(self, ec, source, filepath):
-        astnode = self.parse(ec, source)
+    def compile(self, source, filepath, initial_lineno=1):
+        astnode = self.parse(source, initial_lineno=initial_lineno)
         symtable = SymbolTable()
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, "<main>", symtable, filepath)
         astnode.compile(c)
         return c.create_bytecode([], [], None, None)
 
-    def execute(self, ec, source, w_self=None, w_scope=None, filepath="-e"):
-        bc = self.compile(ec, source, filepath)
+    def execute(self, source, w_self=None, w_scope=None, filepath="-e", initial_lineno=1):
+        bc = self.compile(source, filepath, initial_lineno=initial_lineno)
         frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
-        with ec.visit_frame(frame):
-            return self.execute_frame(ec, frame, bc)
+        with self.getexecutioncontext().visit_frame(frame):
+            return self.execute_frame(frame, bc)
+
+    @jit.loop_invariant
+    def getexecutioncontext(self):
+        # When we have threads this should become a thread local.
+        if self._executioncontext is None:
+            self._executioncontext = ExecutionContext(self)
+        return self._executioncontext
 
     def create_frame(self, bc, w_self=None, w_scope=None, block=None,
         parent_interp=None):
@@ -127,8 +165,8 @@ class ObjectSpace(object):
             w_scope = self.getclassfor(W_Object)
         return Frame(jit.promote(bc), w_self, w_scope, block, parent_interp)
 
-    def execute_frame(self, ec, frame, bc):
-        return Interpreter().interpret(ec, frame, bc)
+    def execute_frame(self, frame, bc):
+        return Interpreter().interpret(self, frame, bc)
 
     # Methods for allocating new objects.
 
@@ -139,13 +177,18 @@ class ObjectSpace(object):
             return self.w_false
 
     def newint(self, intvalue):
-        return W_IntObject(intvalue)
+        return W_FixnumObject(self, intvalue)
 
     def newfloat(self, floatvalue):
-        return W_FloatObject(floatvalue)
+        return W_FloatObject(self, floatvalue)
 
+    @jit.elidable
     def newsymbol(self, symbol):
-        return W_SymbolObject(symbol)
+        try:
+            w_sym = self.symbol_cache[symbol]
+        except KeyError:
+            w_sym = self.symbol_cache[symbol] = W_SymbolObject(self, symbol)
+        return w_sym
 
     def newstr_fromchars(self, chars):
         return W_StringObject.newstr_fromchars(self, chars)
@@ -154,19 +197,19 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromstr(self, strvalue)
 
     def newarray(self, items_w):
-        return W_ArrayObject(items_w)
+        return W_ArrayObject(self, items_w)
 
     def newhash(self):
-        return W_HashObject()
+        return W_HashObject(self)
 
-    def newrange(self, w_start, w_end, inclusive):
-        return W_RangeObject(w_start, w_end, inclusive)
+    def newrange(self, w_start, w_end, exclusive):
+        return W_RangeObject(self, w_start, w_end, exclusive)
 
     def newregexp(self, regexp):
-        return W_RegexpObject(regexp)
+        return W_RegexpObject(self, regexp)
 
     def newmodule(self, name):
-        return W_ModuleObject(self, name)
+        return W_ModuleObject(self, name, self.getclassfor(W_Object))
 
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
@@ -177,7 +220,7 @@ class ObjectSpace(object):
         return W_UserFunction(name, w_code)
 
     def newproc(self, block, is_lambda=False):
-        return W_ProcObject(block, is_lambda)
+        return W_ProcObject(self, block, is_lambda)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
@@ -206,11 +249,27 @@ class ObjectSpace(object):
     def getsingletonclass(self, w_receiver):
         return w_receiver.getsingletonclass(self)
 
+    def getscope(self, w_receiver):
+        if isinstance(w_receiver, W_ModuleObject):
+            return w_receiver
+        else:
+            return self.getclass(w_receiver)
+
+    @jit.unroll_safe
+    def getnonsingletonclass(self, w_receiver):
+        cls = self.getclass(w_receiver)
+        while cls.is_singleton:
+            cls = cls.superclass
+        return cls
+
     def getclassfor(self, cls):
         return self.getclassobject(cls.classdef)
 
     def getclassobject(self, classdef):
         return self.fromcache(ClassCache).getorbuild(classdef)
+
+    def getmoduleobject(self, moduledef):
+        return self.fromcache(ModuleCache).getorbuild(moduledef)
 
     def find_const(self, module, name):
         return module.find_const(self, name)
@@ -218,13 +277,22 @@ class ObjectSpace(object):
     def set_const(self, module, name, w_value):
         module.set_const(self, name, w_value)
 
+    def set_lexical_scope(self, module, scope):
+        module.set_lexical_scope(self, scope)
+
     def find_instance_var(self, w_obj, name):
         return w_obj.find_instance_var(self, name)
 
     def set_instance_var(self, w_obj, name, w_value):
         w_obj.set_instance_var(self, name, w_value)
 
-    def send(self, ec, w_receiver, w_method, args_w=None, block=None):
+    def find_class_var(self, w_module, name):
+        return w_module.find_class_var(self, name)
+
+    def set_class_var(self, w_module, name, w_value):
+        w_module.set_class_var(self, name, w_value)
+
+    def send(self, w_receiver, w_method, args_w=None, block=None):
         if args_w is None:
             args_w = []
         name = self.symbol_w(w_method)
@@ -232,8 +300,11 @@ class ObjectSpace(object):
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
         if raw_method is None:
-            self.raise_(ec, self.getclassfor(W_NoMethodError), "undefined method `%s`" % name)
-        return raw_method.call(ec, w_receiver, args_w, block)
+            method_missing = w_cls.find_method(self, "method_missing")
+            assert method_missing is not None
+            args_w.insert(0, w_method)
+            return method_missing.call(self, w_receiver, args_w, block)
+        return raw_method.call(self, w_receiver, args_w, block)
 
     def respond_to(self, w_receiver, w_method):
         name = self.symbol_w(w_method)
@@ -242,7 +313,7 @@ class ObjectSpace(object):
         return raw_method is not None
 
     @jit.unroll_safe
-    def invoke_block(self, ec, block, args_w):
+    def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(
             bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block,
@@ -254,16 +325,22 @@ class ObjectSpace(object):
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
         if len(bc.arg_locs) != 0:
-            frame.handle_args(ec, bc, args_w, None)
+            frame.handle_args(self, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell
 
-        with ec.visit_frame(frame):
-            return ec.space.execute_frame(ec, frame, bc)
+        with self.getexecutioncontext().visit_frame(frame):
+            return self.execute_frame(frame, bc)
 
-    def raise_(self, ec, w_type, msg=""):
+    def raise_(self, w_type, msg=""):
         w_new_sym = self.newsymbol("new")
-        w_exc = self.send(ec, w_type, w_new_sym, [self.newstr_fromstr(msg)])
+        w_exc = self.send(w_type, w_new_sym, [self.newstr_fromstr(msg)])
         assert isinstance(w_exc, W_ExceptionObject)
         raise RubyError(w_exc)
+
+    def hash_w(self, w_obj):
+        return self.int_w(self.send(w_obj, self.newsymbol("hash")))
+
+    def eq_w(self, w_obj1, w_obj2):
+        return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))

@@ -43,10 +43,50 @@ class Enumerable(Module):
     """)
 
     moduledef.app_method("""
-    def any?
+    def any?(&block)
         self.each do |obj|
-            return true if (yield obj)
+            return true if (block ? block.call(obj) : obj)
         end
         false
+    end
+    """)
+
+    moduledef.app_method("""
+    def select(&block)
+      ary = []
+      self.each do |o|
+        if block.call(o)
+          ary << o
+        end
+      end
+      ary
+    end
+    """)
+
+    moduledef.app_method("""
+    def include?(obj)
+      self.each do |o|
+        return true if o == obj
+      end
+      false
+    end
+    """)
+
+    moduledef.app_method("""
+    def drop n
+        raise ArgumentError, 'attempt to drop negative size' if n < 0
+        ary = self.to_a
+        return [] if n > ary.size
+        ary[n...ary.size]
+    end
+    """)
+
+    moduledef.app_method("""
+    def to_a
+        result = []
+        self.each do |i|
+            result << i
+        end
+        result
     end
     """)

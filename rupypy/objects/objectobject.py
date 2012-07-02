@@ -1,7 +1,8 @@
 from pypy.rlib import jit
+from pypy.rlib.objectmodel import compute_unique_id
 
+from rupypy.mapdict import MapTransitionCache
 from rupypy.module import ClassDef
-from rupypy.modules.kernel import Kernel
 
 
 class ObjectMetaclass(type):
@@ -16,8 +17,11 @@ class W_BaseObject(object):
     __metaclass__ = ObjectMetaclass
     _attrs_ = ()
 
-    classdef = ClassDef("Object")
-    classdef.include_module(Kernel)
+    classdef = ClassDef("BasicObject")
+
+    @classmethod
+    def setup_class(cls, space, w_cls):
+        pass
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)
@@ -29,93 +33,58 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
+    @classdef.method("__id__")
+    def method___id__(self, space):
+        return space.newint(compute_unique_id(self))
+
+    @classdef.method("method_missing")
+    def method_method_missing(self, space, w_name):
+        name = space.symbol_w(w_name)
+        class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
+        space.raise_(space.find_const(space.getclassfor(W_Object), "NoMethodError"),
+            "undefined method `%s` for %s" % (name, class_name)
+        )
+
+
+class W_RootObject(W_BaseObject):
+    classdef = ClassDef("Object", W_BaseObject.classdef)
+
     @classdef.method("initialize")
-    def method_initialize(self, space):
+    def method_initialize(self):
         return self
+
+    @classdef.method("object_id")
+    def method_object_id(self, space):
+        return space.send(self, space.newsymbol("__id__"))
 
     @classdef.method("singleton_class")
     def method_singleton_class(self, space):
         return space.getsingletonclass(self)
 
+    @classdef.method("extend")
+    def method_extend(self, space, w_mod):
+        self.getsingletonclass(space).method_include(space, w_mod)
 
-class MapTransitionCache(object):
-    def __init__(self, space):
-        # Mappings of classes -> their terminator nodes.
-        self.class_nodes = {}
-        # Mapping of (current_node, name) -> new node
-        self.add_transitions = {}
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        return space.newstr_fromstr("#<%s:0x%x>" % (
+            space.str_w(space.send(space.getclass(self), space.newsymbol("name"))),
+            space.int_w(space.send(self, space.newsymbol("__id__")))
+        ))
 
-    @jit.elidable
-    def get_class_node(self, klass):
-        return self.class_nodes.setdefault(klass, ClassNode(klass))
+    @classdef.method("send", method="str")
+    def method_send(self, space, method, args_w, block):
+        return space.send(self, space.newsymbol(method), args_w[1:], block)
 
-    @jit.elidable
-    def transition_add_attr(self, node, name, pos):
-        return self.add_transitions.setdefault((node, name), AttributeNode(node, name, pos))
-
-
-class BaseNode(object):
-    _attrs_ = ()
-
-    def add_attr(self, space, w_obj, name):
-        attr_node = space.fromcache(MapTransitionCache).transition_add_attr(w_obj.map, name, len(w_obj.storage))
-        w_obj.map = attr_node
-        w_obj.storage.append(None)
-        return attr_node.pos
+    @classdef.method("==")
+    def method_equal(self, space, w_other):
+        return space.newbool(self is w_other)
 
 
-class ClassNode(BaseNode):
-    _immutable_fields_ = ["klass"]
-
-    def __init__(self, klass):
-        self.klass = klass
-
-    def get_class(self):
-        return self.klass
-
-    def find_attr(self, space, name):
-        return -1
-
-    def find_set_attr(self, space, name):
-        return -1
-
-    def change_class(self, space, w_cls):
-        return space.fromcache(MapTransitionCache).get_class_node(w_cls)
-
-
-class AttributeNode(BaseNode):
-    _immutable_fields_ = ["prev", "name", "pos"]
-
-    def __init__(self, prev, name, pos):
-        self.prev = prev
-        self.name = name
-        self.pos = pos
-
-    @jit.elidable
-    def get_class(self):
-        return self.prev.get_class()
-
-    @jit.elidable
-    def find_attr(self, space, name):
-        if name == self.name:
-            return self.pos
-        else:
-            return self.prev.find_attr(space, name)
-
-    @jit.elidable
-    def find_set_attr(self, space, name):
-        if name == self.name:
-            return self.pos
-        else:
-            return self.prev.find_set_attr(space, name)
-
-    def change_class(self, space, w_cls):
-        prev = self.prev.change_class(space, w_cls)
-        return space.fromcache(MapTransitionCache).transition_add_attr(prev, self.name, self.pos)
-
-
-class W_Object(W_BaseObject):
-    def __init__(self, space, klass):
+class W_Object(W_RootObject):
+    def __init__(self, space, klass=None):
+        if klass is None:
+            klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
         self.storage = []
 

@@ -1,14 +1,7 @@
-from pypy.rlib.objectmodel import we_are_translated
+import string
+
 from pypy.rlib.parsing.lexer import Token, SourcePos
-from pypy.rlib.unroll import unrolling_iterable
-
-
-STATES = unrolling_iterable([
-    "NUMBER", "IDENTIFIER", "DOT", "DOTDOT", "PLUS", "MINUS", "STAR", "SLASH",
-    "EQ", "EQEQ", "LT", "GT", "PIPE", "OR", "AMP", "COLON", "EXCLAMATION",
-    "QUESTION", "GLOBAL", "SINGLESTRING", "DOUBLESTRING", "SYMBOL", "REGEXP",
-    "COMMENT",
-])
+from pypy.rlib.rstring import StringBuilder
 
 
 class LexerError(Exception):
@@ -17,22 +10,26 @@ class LexerError(Exception):
 
 
 class Keyword(object):
-    def __init__(self, normal_token, inline_token, context):
+    def __init__(self, normal_token, inline_token, state):
         self.normal_token = normal_token
         self.inline_token = inline_token
-        self.context = context
+        self.state = state
 
 
-class Lexer(object):
+class BaseLexer(object):
+    EOF = chr(0)
+
     EXPR_BEG = 0
-    EXPR_VALUE = 1
-    EXPR_NAME = 2
-    EXPR_MID = 3
-    EXPR_END = 4
-    EXPR_ARG = 5
-    EXPR_CLASS = 6
+    EXPR_END = 1
+    EXPR_ARG = 2
+    EXPR_CMDARG = 3
+    EXPR_ENDARG = 4
+    EXPR_MID = 5
+    EXPR_FNAME = 6
     EXPR_DOT = 7
-    EXPR_ENDFN = 8
+    EXPR_CLASS = 8
+    EXPR_VALUE = 9
+    EXPR_ENDFN = 10
 
     keywords = {
         "return": Keyword("RETURN", "RETURN", EXPR_MID),
@@ -42,474 +39,1006 @@ class Lexer(object):
         "then": Keyword("THEN", "THEN", EXPR_BEG),
         "elsif": Keyword("ELSIF", "ELSIF", EXPR_BEG),
         "else": Keyword("ELSE", "ELSE", EXPR_BEG),
-        "while": Keyword("WHILE", "WHILE", EXPR_BEG),
+        "while": Keyword("WHILE", "WHILE_INLINE", EXPR_BEG),
         "until": Keyword("UNTIL", "UNTIL_INLINE", EXPR_BEG),
         "do": Keyword("DO", "DO", EXPR_BEG),
         "begin": Keyword("BEGIN", "BEGIN", EXPR_BEG),
-        "rescue": Keyword("RESCUE", "RESCUE", EXPR_MID),
+        "rescue": Keyword("RESCUE", "RESCUE_INLINE", EXPR_MID),
         "ensure": Keyword("ENSURE", "ENSURE", EXPR_BEG),
-        "def": Keyword("DEF", "DEF", EXPR_NAME),
+        "def": Keyword("DEF", "DEF", EXPR_FNAME),
         "class": Keyword("CLASS", "CLASS", EXPR_CLASS),
         "module": Keyword("MODULE", "MODULE", EXPR_BEG),
         "case": Keyword("CASE", "CASE", EXPR_BEG),
         "when": Keyword("WHEN", "WHEN", EXPR_BEG),
         "end": Keyword("END", "END", EXPR_END),
+        "and": Keyword("AND_LITERAL", "AND_LITERAL", EXPR_BEG),
+        "or": Keyword("OR_LITERAL", "OR_LITERAL", EXPR_BEG),
+        "not": Keyword("NOT_LITERAL", "NOT_LITERAL", EXPR_BEG),
+        "alias": Keyword("ALIAS", "ALIAS", EXPR_FNAME),
     }
 
-    def __init__(self, text):
-        self.text = text
-        self.current_value = []
+    def __init__(self):
         self.tokens = []
-        self.context = self.EXPR_BEG
-        self.idx = 0
-        self.lineno = 1
-        self.columno = 1
-
-    def current_pos(self):
-        return SourcePos(self.idx, self.lineno, self.columno)
+        self.current_value = []
 
     def peek(self):
-        return self.text[self.idx + 1]
-
-    def prev(self, back):
-        if self.idx - back < 0:
-            return None
-        return self.text[self.idx - back]
+        ch = self.read()
+        self.unread()
+        return ch
 
     def add(self, ch):
         self.current_value.append(ch)
 
     def clear(self):
-        self.current_value = []
+        del self.current_value[:]
 
-    def emit(self, token, value=None):
-        if value is None:
-            value = "".join(self.current_value)
+    def current_pos(self):
+        return SourcePos(self.get_idx(), self.get_lineno(), self.get_columno())
+
+    def emit(self, token):
+        value = "".join(self.current_value)
         self.clear()
         self.tokens.append(Token(token, value, self.current_pos()))
 
+    def error(self):
+        raise LexerError(self.current_pos())
+
+
+class Lexer(BaseLexer):
+    def __init__(self, source, initial_lineno):
+        BaseLexer.__init__(self)
+        self.source = source
+        self.idx = 0
+        self.lineno = initial_lineno
+        self.columno = 1
+        self.state = self.EXPR_BEG
+
     def tokenize(self):
-        state = None
-
-        while self.idx < len(self.text):
-            ch = self.text[self.idx]
-
-            if state is None:
-                state = self.handle_generic(ch)
+        space_seen = False
+        while True:
+            ch = self.read()
+            if ch == self.EOF:
+                self.emit("EOF")
+                return self.tokens
+            if ch == " ":
+                space_seen = True
+                continue
+            elif ch == "#":
+                self.comment(ch)
+            elif ch == "\n":
+                space_seen = True
+                if self.state != self.EXPR_BEG:
+                    self.add(ch)
+                    self.emit("LINE_END")
+                self.lineno += 1
+                self.columno = 1
+                self.state = self.EXPR_BEG
+                continue
+            elif ch == "*":
+                self.star(ch, space_seen)
+            elif ch == "!":
+                self.exclamation(ch)
+            elif ch == "=":
+                self.equal(ch)
+            elif ch == "<":
+                self.less_than(ch, space_seen)
+            elif ch == ">":
+                self.greater_than(ch)
+            elif ch == '"':
+                tokens = StringLexer(self, '"', '"').tokenize()
+                self.tokens.extend(tokens)
+                self.state = self.EXPR_END
+            elif ch == "'":
+                self.single_quote(ch)
+            elif ch == "?":
+                self.question_mark(ch)
+            elif ch == "&":
+                self.ampersand(ch)
+            elif ch == "|":
+                self.pipe(ch)
+            elif ch == "+":
+                self.plus(ch)
+            elif ch == "-":
+                self.minus(ch, space_seen)
+            elif ch == ".":
+                self.dot(ch)
+            elif ch.isdigit():
+                self.number(ch)
+            elif ch == ")":
+                self.add(ch)
+                self.state = self.EXPR_ENDFN
+                self.emit("RPAREN")
+            elif ch == "]":
+                self.add(ch)
+                self.state = self.EXPR_ENDARG
+                self.emit("RBRACKET")
+            elif ch == "}":
+                self.add(ch)
+                self.emit("RBRACE")
+                self.state = self.EXPR_ENDFN
+            elif ch == ":":
+                self.colon(ch, space_seen)
+            elif ch == "/":
+                self.slash(ch, space_seen)
+            elif ch == "^":
+                self.add(ch)
+                self.set_expression_state()
+                self.emit("CARET")
+            elif ch == ";":
+                self.add(ch)
+                self.state = self.EXPR_BEG
+                self.emit("LINE_END")
+            elif ch == ",":
+                self.add(ch)
+                self.state = self.EXPR_BEG
+                self.emit("COMMA")
+            elif ch == "~":
+                self.add(ch)
+                self.state = self.EXPR_BEG
+                self.emit("TILDE")
+            elif ch == "(":
+                self.add(ch)
+                self.state = self.EXPR_BEG
+                self.emit("LPAREN")
+            elif ch == "[":
+                self.left_bracket(ch, space_seen)
+            elif ch == "{":
+                self.add(ch)
+                self.emit("LBRACE")
+                self.state = self.EXPR_BEG
+            elif ch == "\\":
+                ch2 = self.read()
+                if ch2 == "\n":
+                    self.lineno += 1
+                    self.columno = 1
+                    space_seen = True
+                    continue
+                raise NotImplementedError
+            elif ch == "%":
+                self.percent(ch, space_seen)
+            elif ch == "$":
+                self.dollar(ch)
+            elif ch == "@":
+                self.at(ch)
+            elif ch == "`":
+                self.backtick(ch)
             else:
-                if we_are_translated():
-                    for expected_state in STATES:
-                        if state == expected_state:
-                            state = getattr(self, "handle_" + expected_state)(ch)
-                            break
-                    else:
-                        raise NotImplementedError
-                else:
-                    assert state in STATES
-                    state = getattr(self, "handle_" + state)(ch)
-            self.idx += 1
-            self.columno += 1
-        self.finish_token(state)
-        self.emit("EOF")
-        return self.tokens
+                self.identifier(ch)
+            space_seen = False
 
-    def finish_token(self, state):
-        if state == "NUMBER":
-            self.emit("NUMBER")
-        elif state == "IDENTIFIER":
-            self.emit_identifier()
-        elif state == "SYMBOL":
-            self.emit("SYMBOL")
-        elif state == "GLOBAL":
-            self.emit("GLOBAL")
-        elif state is not None:
-            assert False
+    def read(self):
+        try:
+            ch = self.source[self.idx]
+        except IndexError:
+            ch = self.EOF
+        self.idx += 1
+        self.columno += 1
+        return ch
+
+    def unread(self):
+        self.idx -= 1
+        self.columno -= 1
+
+    def get_idx(self):
+        return self.idx
+
+    def get_lineno(self):
+        return self.lineno
+
+    def get_columno(self):
+        return self.columno
+
+    def is_beg(self):
+        return self.state in [self.EXPR_BEG, self.EXPR_MID, self.EXPR_CLASS, self.EXPR_VALUE]
+
+    def is_arg(self):
+        return self.state in [self.EXPR_ARG, self.EXPR_CMDARG]
+
+    def is_end(self):
+        return self.state in [self.EXPR_END, self.EXPR_ENDARG, self.EXPR_ENDFN]
+
+    def set_expression_state(self):
+        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]:
+            self.state = self.EXPR_ARG
+        else:
+            self.state = self.EXPR_BEG
 
     def emit_identifier(self):
         value = "".join(self.current_value)
-        context = self.context
-        if value in self.keywords and self.context != self.EXPR_DOT:
+        state = self.state
+        if value in self.keywords and self.state not in [self.EXPR_DOT, self.EXPR_FNAME]:
             keyword = self.keywords[value]
-            self.context = keyword.context
+            self.state = keyword.state
 
-            if context in [self.EXPR_BEG, self.EXPR_VALUE]:
+            if state in [self.EXPR_BEG, self.EXPR_VALUE]:
                 self.emit(keyword.normal_token)
             else:
                 self.emit(keyword.inline_token)
-                self.context = self.EXPR_BEG
+                if keyword.inline_token != keyword.normal_token:
+                    self.state = self.EXPR_BEG
         else:
-            self.emit("IDENTIFIER")
-            if self.context in [
-                self.EXPR_BEG, self.EXPR_MID, self.EXPR_VALUE, self.EXPR_CLASS,
-                self.EXPR_ARG, self.EXPR_DOT
-            ]:
-                self.context = self.EXPR_ARG
-            elif self.context == self.EXPR_NAME:
-                self.context = self.EXPR_ENDFN
+            if value[0].isupper():
+                self.emit("CONSTANT")
             else:
-                self.context = self.EXPR_END
+                self.emit("IDENTIFIER")
+            if self.is_beg() or self.state == self.EXPR_DOT or self.is_arg():
+                self.state = self.EXPR_ARG
+            elif self.state == self.EXPR_ENDFN:
+                self.state = self.EXPR_ENDFN
+            else:
+                self.state = self.EXPR_END
 
-    def handle_generic(self, ch):
-        if ch.isdigit():
-            self.add(ch)
-            return "NUMBER"
-        elif ch.isalpha() or ch == "_":
-            self.add(ch)
-            return "IDENTIFIER"
-        elif ch == "+":
-            self.add(ch)
-            return "PLUS"
-        elif ch == "-":
-            self.add(ch)
-            return "MINUS"
-        elif ch == "*":
-            self.add(ch)
-            return "STAR"
-        elif ch == "/":
-            self.add(ch)
-            return "SLASH"
-        elif ch == "<":
-            self.add(ch)
-            return "LT"
-        elif ch == ">":
-            self.add(ch)
-            return "GT"
-        elif ch == "!":
-            self.add(ch)
-            return "EXCLAMATION"
-        elif ch == "(":
-            self.add(ch)
-            self.emit("LPAREN")
-            self.context = self.EXPR_BEG
-            return None
-        elif ch == ")":
-            self.add(ch)
-            self.emit("RPAREN")
-            self.context = self.EXPR_ENDFN
-            return None
-        elif ch == "[":
-            self.add(ch)
-            if (self.context not in [self.EXPR_END, self.EXPR_ENDFN] and
-                (self.prev(1) is None or not self.prev(1)[0].isalnum())):
-                self.emit("LBRACKET")
-                self.context = self.EXPR_ARG
-            else:
-                self.emit("LSUBSCRIPT")
-                self.context = self.EXPR_BEG
-            return None
-        elif ch == "]":
-            self.add(ch)
-            self.emit("RBRACKET")
-            self.context = self.EXPR_END
-            return None
-        elif ch == "{":
-            self.add(ch)
-            self.emit("LBRACE")
-            return None
-        elif ch == "}":
-            self.add(ch)
-            self.emit("RBRACE")
-            self.context = self.EXPR_ENDFN
-            return None
-        elif ch == '"':
-            return "DOUBLESTRING"
-        elif ch == "'":
-            return "SINGLESTRING"
-        elif ch == " ":
-            return None
-        elif ch == "=":
-            self.add(ch)
-            return "EQ"
-        elif ch == ".":
-            self.add(ch)
-            return "DOT"
-        elif ch == ":":
-            self.add(ch)
-            return "COLON"
-        elif ch == "?":
-            self.add(ch)
-            if self.context in [self.EXPR_END, self.EXPR_ENDFN]:
-                self.emit("QUESTION")
-                self.context = self.EXPR_VALUE
-                return None
-            else:
-                return "QUESTION"
-        elif ch == ",":
-            self.add(ch)
-            self.emit("COMMA")
-            self.context = self.EXPR_BEG
-            return None
-        elif ch == "&":
-            self.add(ch)
-            return "AMP"
-        elif ch == "@":
-            self.add(ch)
-            self.emit("AT_SIGN")
-            return None
-        elif ch == "$":
-            self.add(ch)
-            return "GLOBAL"
-        elif ch == "|":
-            self.add(ch)
-            return "PIPE"
-        elif ch == "%":
-            self.add(ch)
-            self.emit("MODULO")
-            return None
-        elif ch == "\n":
-            if self.context != self.EXPR_BEG:
+    def comment(self, ch):
+        while True:
+            ch = self.read()
+            if ch == self.EOF or ch == "\n":
+                self.unread()
+                break
+
+    def identifier(self, ch):
+        self.add(ch)
+        while True:
+            ch = self.read()
+            if ch == self.EOF:
+                self.emit_identifier()
+                self.unread()
+                break
+            if ch in "!?" or (ch == "=" and self.state == self.EXPR_FNAME):
                 self.add(ch)
-                self.emit("LINE_END")
-            self.lineno += 1
-            self.columno = 0
-            self.context = self.EXPR_BEG
-            return None
-        elif ch == ";":
-            self.add(ch)
-            self.emit("LINE_END")
-            return None
-        elif ch == "#":
-            return "COMMENT"
-        assert False, ch
+                self.emit_identifier()
+                break
+            elif ch.isalnum() or ch == "_":
+                self.add(ch)
+            else:
+                state = self.state
+                self.emit_identifier()
+                if state == self.EXPR_FNAME and ch == ".":
+                    self.add(ch)
+                    self.emit("DOT")
+                    self.state = self.EXPR_FNAME
+                else:
+                    self.unread()
+                break
 
-    def handle_NUMBER(self, ch):
-        self.context = self.EXPR_END
-        if ch == ".":
-            if not self.peek().isdigit():
+    def number(self, ch):
+        self.state = self.EXPR_END
+        self.add(ch)
+        first_zero = ch == "0"
+        is_hex = False
+        while True:
+            ch = self.read()
+            if ch == self.EOF:
                 self.emit("NUMBER")
-                return self.handle_generic(ch)
-            self.add(ch)
-            return "NUMBER"
-        elif ch.isdigit():
-            self.add(ch)
-            return "NUMBER"
+                self.unread()
+                break
+            if first_zero and ch.upper() in "XBDO":
+                if ch.upper() != "D":
+                    self.add(ch.upper())
+                is_hex = ch.upper() == "X"
+            elif ch == ".":
+                if not self.peek().isdigit():
+                    self.emit("NUMBER")
+                    self.unread()
+                    break
+                self.add(ch)
+            elif ch.isdigit() or (is_hex and ch.upper() in "ABCDEF"):
+                self.add(ch)
+            elif ch == "_":
+                if not self.peek().isdigit():
+                    self.error()
+            elif ch.upper() == "E":
+                self.add(ch.upper())
+            else:
+                self.emit("NUMBER")
+                self.unread()
+                break
+            first_zero = False
+
+    def single_quote(self, ch):
+        self.state = self.EXPR_END
+        while True:
+            ch = self.read()
+            if ch == self.EOF:
+                self.unread()
+                break
+            elif ch == "'":
+                self.emit("SSTRING")
+                break
+            else:
+                self.add(ch)
+
+    def regexp(self, begin, end):
+        self.emit("REGEXP_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=True, regexp=True).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("REGEXP_END")
+        self.state = self.EXPR_END
+
+    def here_doc(self):
+        ch = self.read()
+
+        indent = ch == "-"
+        interpolate = True
+        shellout = True
+        if indent:
+            ch = self.read()
+
+        if ch in "'\"`":
+            term = ch
+            if term == "'":
+                interpolate = False
+            elif term == "`":
+                shellout = True
+
+            marker = StringBuilder()
+            while True:
+                ch = self.read()
+                if ch == self.EOF:
+                    self.unread()
+                    break
+                elif ch == term:
+                    break
+                else:
+                    marker.append(ch)
         else:
-            self.emit("NUMBER")
-            return self.handle_generic(ch)
+            if not (ch.isalnum() or ch == "_"):
+                self.unread()
+                if indent:
+                    self.unread()
+                return False
 
-    def handle_DOUBLESTRING(self, ch):
-        self.context = self.EXPR_END
-        if ch == '"':
-            self.emit("STRING")
-            return None
+            marker = StringBuilder()
+            marker.append(ch)
+            while True:
+                ch = self.read()
+                if ch == self.EOF or not (ch.isalnum() or ch == "_"):
+                    self.unread()
+                    break
+                marker.append(ch)
+
+        tokens = HeredocLexer(self, marker.build(), indent, interpolate=True).tokenize()
+        self.tokens.extend(tokens)
+        self.state = self.EXPR_END
+        return True
+
+    def dollar(self, ch):
         self.add(ch)
-        return "DOUBLESTRING"
-
-    def handle_SINGLESTRING(self, ch):
-        self.context = self.EXPR_END
-        if ch == "'":
-            self.emit("STRING")
-            return None
-        self.add(ch)
-        return "SINGLESTRING"
-
-    def handle_IDENTIFIER(self, ch):
-        if ch in "!?":
+        self.state = self.EXPR_END
+        ch = self.read()
+        if ch in "$>:?\\!\"":
             self.add(ch)
-            self.emit_identifier()
-            return None
-        elif ch.isalnum() or ch == "_":
-            self.add(ch)
-            return "IDENTIFIER"
+            self.emit("GLOBAL")
         else:
-            self.emit_identifier()
-            return self.handle_generic(ch)
+            self.unread()
+            while True:
+                ch = self.read()
+                if ch.isalnum() or ch == "_":
+                    self.add(ch)
+                else:
+                    self.unread()
+                    self.emit("GLOBAL")
+                    break
 
-    def handle_SYMBOL(self, ch):
-        self.context = self.EXPR_END
-        if not (ch.isalnum() or ch == "_"):
-            self.emit("SYMBOL")
-            return self.handle_generic(ch)
+    def at(self, ch):
         self.add(ch)
-        return "SYMBOL"
-
-    def handle_PLUS(self, ch):
-        if ch == "=":
+        ch = self.read()
+        if ch == "@":
             self.add(ch)
+            token = "CLASS_VAR"
+        else:
+            self.unread()
+            token = "INSTANCE_VAR"
+        self.state = self.EXPR_END
+        while True:
+            ch = self.read()
+            if ch.isalnum() or ch == "_":
+                self.add(ch)
+            else:
+                self.unread()
+                self.emit(token)
+                break
+
+    def plus(self, ch):
+        self.add(ch)
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
             self.emit("PLUS_EQUAL")
-            return None
-        self.emit("PLUS")
-        self.context = self.EXPR_BEG
-        return self.handle_generic(ch)
+        else:
+            self.unread()
+            self.state = self.EXPR_BEG
+            self.emit("PLUS")
 
-    def handle_MINUS(self, ch):
-        if ch.isdigit():
-            self.add(ch)
-            return "NUMBER"
-        elif ch == "=":
-            self.add(ch)
+    def minus(self, ch, space_seen):
+        self.add(ch)
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
             self.emit("MINUS_EQUAL")
-            return None
-        elif ch == " " or self.prev(2) not in ["(", " ", None]:
+        elif self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
+            self.state = self.EXPR_BEG
+            if ch2.isdigit():
+                self.number(ch2)
+            else:
+                self.unread()
+                self.emit("UNARY_MINUS")
+        else:
+            self.unread()
+            self.state = self.EXPR_BEG
             self.emit("MINUS")
+
+    def star(self, ch, space_seen):
+        self.add(ch)
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            self.emit("MUL_EQUAL")
+        elif ch2 == "*":
+            self.add(ch2)
+            self.set_expression_state()
+            self.emit("POW")
         else:
-            self.emit("UNARY_MINUS")
-        return self.handle_generic(ch)
+            self.unread()
+            if self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
+                self.emit("UNARY_STAR")
+            else:
+                self.emit("MUL")
+            self.set_expression_state()
 
-    def handle_STAR(self, ch):
-        if ch == " " or self.prev(2) not in ["(", "|", " "]:
-            self.emit("MUL")
+    def slash(self, ch, space_seen):
+        if self.is_beg():
+            self.regexp("/", "/")
         else:
-            self.emit("UNARY_STAR")
-        return self.handle_generic(ch)
+            ch2 = self.read()
+            if ch2 == "=":
+                self.add(ch)
+                self.add(ch2)
+                self.emit("DIV_EQUAL")
+                self.state = self.EXPR_BEG
+            else:
+                self.unread()
+                if self.is_arg() and space_seen and not ch2.isspace():
+                    self.regexp("/", "/")
+                else:
+                    self.add(ch)
+                    self.set_expression_state()
+                    self.emit("DIV")
 
-    def handle_SLASH(self, ch):
-        if self.context in [self.EXPR_BEG, self.EXPR_VALUE]:
-            self.clear()
-            self.add(ch)
-            return "REGEXP"
-        elif ch == "=":
-            self.emit("DIV_EQUAL")
-            return None
-        self.emit("DIV")
-        return self.handle_generic(ch)
+    def pipe(self, ch):
+        self.add(ch)
+        ch2 = self.read()
+        if ch2 == "|":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.emit("OR_EQUAL")
+            else:
+                self.unread()
+                self.emit("OR")
+        elif ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            self.emit("PIPE_EQUAL")
+        else:
+            self.unread()
+            self.set_expression_state()
+            self.emit("PIPE")
 
-    def handle_EQ(self, ch):
-        if ch == "=":
-            self.add(ch)
-            return "EQEQ"
-        elif ch == ">":
-            self.add(ch)
-            self.emit("ARROW")
-            return None
-        elif ch == "~":
-            self.add(ch)
+    def ampersand(self, ch):
+        self.add(ch)
+        ch2 = self.read()
+        self.set_expression_state()
+        if ch2 == "&":
+            self.add(ch2)
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.emit("AND_EQUAL")
+            else:
+                self.unread()
+                self.emit("AND")
+        elif ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            self.emit("AMP_EQUAL")
+        else:
+            self.unread()
+            self.emit("AMP")
+
+    def equal(self, ch):
+        self.add(ch)
+        self.set_expression_state()
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.emit("EQEQEQ")
+            else:
+                self.unread()
+                self.emit("EQEQ")
+        elif ch2 == "~":
+            self.add(ch2)
             self.emit("EQUAL_TILDE")
-            return None
-        self.context = self.EXPR_BEG
-        self.emit("EQ")
-        return self.handle_generic(ch)
+        elif ch2 == ">":
+            self.add(ch2)
+            self.emit("ARROW")
+        else:
+            self.unread()
+            self.emit("EQ")
 
-    def handle_EQEQ(self, ch):
-        if ch == "=":
-            self.add(ch)
-            self.emit("EQEQEQ")
-            return None
-        self.emit("EQEQ")
-        return self.handle_generic(ch)
+    def less_than(self, ch, space_seen):
+        ch2 = self.read()
 
-    def handle_LT(self, ch):
-        if ch == "<":
-            self.add(ch)
+        if (ch2 == "<" and self.state not in [self.EXPR_DOT, self.EXPR_CLASS] and
+            not self.is_end() and (not self.is_arg() or space_seen)):
+            matched = self.here_doc()
+            if matched:
+                return
+
+        self.add(ch)
+        self.set_expression_state()
+        if ch2 == "=":
+            self.add(ch2)
+            ch3 = self.read()
+            if ch3 == ">":
+                self.add(ch3)
+                self.emit("LEGT")
+            else:
+                self.unread()
+                self.emit("LE")
+        elif ch2 == "<":
+            self.add(ch2)
             self.emit("LSHIFT")
-            return None
-        elif ch == "=":
-            self.add(ch)
-            self.emit("LE")
-            return None
-        self.emit("LT")
-        return self.handle_generic(ch)
+        else:
+            self.unread()
+            self.emit("LT")
 
-    def handle_GT(self, ch):
-        if ch == "=":
-            self.add(ch)
+    def greater_than(self, ch):
+        self.add(ch)
+        self.set_expression_state()
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
             self.emit("GE")
-            return None
-        self.emit("GT")
-        return self.handle_generic(ch)
+        elif ch2 == ">":
+            self.add(ch2)
+            self.emit("RSHIFT")
+        else:
+            self.unread()
+            self.emit("GT")
 
-    def handle_EXCLAMATION(self, ch):
-        if ch == "=":
-            self.add(ch)
+    def dot(self, ch):
+        self.add(ch)
+        self.state = self.EXPR_BEG
+        ch2 = self.read()
+        if ch2 == ".":
+            self.add(ch2)
+            ch3 = self.read()
+            if ch3 == ".":
+                self.add(ch3)
+                self.emit("DOTDOTDOT")
+            else:
+                self.unread()
+                self.emit("DOTDOT")
+        else:
+            self.unread()
+            self.state = self.EXPR_DOT
+            self.emit("DOT")
+
+    def exclamation(self, ch):
+        self.add(ch)
+        self.state = self.EXPR_BEG
+
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
             self.emit("NE")
-            return None
-        elif ch == "~":
-            self.add(ch)
+        elif ch2 == "~":
+            self.add(ch2)
             self.emit("EXCLAMATION_TILDE")
-            return None
-        self.emit("EXCLAMATION")
-        return self.handle_generic(ch)
-
-    def handle_DOT(self, ch):
-        if ch == ".":
-            self.add(ch)
-            return "DOTDOT"
-        self.context = self.EXPR_DOT
-        self.emit("DOT")
-        return self.handle_generic(ch)
-
-    def handle_DOTDOT(self, ch):
-        if ch == ".":
-            self.add(ch)
-            self.emit("DOTDOTDOT")
-            return None
-        self.emit("DOTDOT")
-        return self.handle_generic(ch)
-
-    def handle_COLON(self, ch):
-        if ch == ":":
-            self.add(ch)
-            self.emit("COLONCOLON")
-            return None
-        elif self.context == self.EXPR_END or ch == " " or not (ch.isalnum() or ch == "_"):
-            self.emit("COLON")
-            self.context = self.EXPR_BEG
-            return self.handle_generic(ch)
         else:
-            self.clear()
+            self.unread()
+            self.emit("EXCLAMATION")
+
+    def question_mark(self, ch):
+        if self.is_end():
             self.add(ch)
-            return "SYMBOL"
-
-    def handle_AMP(self, ch):
-        if ch == "&":
-            self.add(ch)
-            self.emit("AND")
-            self.context = self.EXPR_BEG
-            return None
-        self.emit("AMP")
-        return self.handle_generic(ch)
-
-    def handle_COMMENT(self, ch):
-        if ch == "\n":
-            return self.handle_generic(ch)
-        return "COMMENT"
-
-    def handle_PIPE(self, ch):
-        if ch == "|":
-            self.add(ch)
-            return "OR"
-        self.emit("PIPE")
-        if self.context == self.EXPR_NAME:
-            self.context = self.EXPR_ARG
-        else:
-            self.context = self.EXPR_BEG
-        return self.handle_generic(ch)
-
-    def handle_OR(self, ch):
-        if ch == "=":
-            self.add(ch)
-            self.emit("OR_EQUAL")
-            return None
-        self.emit("OR")
-        return self.handle_generic(ch)
-
-    def handle_GLOBAL(self, ch):
-        self.context = self.EXPR_END
-        if ch == ">":
-            self.add(ch)
-            self.emit("GLOBAL")
-            return None
-        elif not (ch.isalnum() or ch == "_"):
-            self.emit("GLOBAL")
-            return self.handle_generic(ch)
-        self.add(ch)
-        return "GLOBAL"
-
-    def handle_QUESTION(self, ch):
-        if ch == " ":
+            self.state = self.EXPR_VALUE
             self.emit("QUESTION")
-            self.context = self.EXPR_VALUE
-            return self.handle_generic(ch)
-        self.clear()
-        self.add(ch)
-        self.emit("STRING")
-        self.context = self.EXPR_END
-        return None
+        else:
+            ch2 = self.read()
+            if ch2.isspace():
+                self.unread()
+                self.add(ch)
+                self.state = self.EXPR_VALUE
+                self.emit("QUESTION")
+            else:
+                if ch2 == "\\":
+                    self.add(self.read_escape())
+                else:
+                    self.add(ch2)
+                self.emit("SSTRING")
+                self.state = self.EXPR_END
 
-    def handle_REGEXP(self, ch):
-        self.context = self.EXPR_END
-        if ch == "/":
-            self.emit("REGEXP")
-            return None
+    def read_escape(self):
+        c = self.read()
+        if c == self.EOF:
+            self.error()
+        elif c == "\\":
+            return "\\"
+        elif c == "n":
+            return "\n"
+        elif c == "t":
+            return "\t"
+        elif c == "r":
+            return "\r"
+        elif c == "f":
+            return "\f"
+        elif c == "v":
+            return "\v"
+        elif c == "a":
+            return "\a"
+        elif c == "b":
+            return "\b"
+        elif c == "e":
+            return "\x1b"
+        elif c == "s":
+            return " "
+        elif c == "u":
+            raise NotImplementedError("UTF-8 escape not implemented")
+        elif c in "x0":
+            buf = ""
+            for i in xrange(2):
+                ch2 = self.read()
+                if ch2.isalnum():
+                    if c == "x" and not ch2 in string.hexdigits:
+                        self.error()
+                    if c == "0" and not ch2 in string.octdigits:
+                        self.error()
+                    buf += ch2
+                else:
+                    break
+            if c == "x":
+                return chr(int(buf, 16))
+            elif c == "0":
+                return chr(int(buf, 8))
+        elif c == "M":
+            if self.read() != "-":
+                self.error()
+            c = self.read()
+            if c == "\\":
+                return chr(ord(self.read_escape()) & 0x80)
+            elif c == self.EOF:
+                self.error()
+            else:
+                return chr(ord(c) & 0xff | 0x80)
+        elif c == "C" or c == "c":
+            if c == "C" and self.read() != "-":
+                self.error()
+            c = self.read()
+            if c == "?":
+                return '\177'
+            elif c == self.EOF:
+                self.error()
+            else:
+                if c == "\\":
+                    c = self.read_escape()
+                return chr(ord(c) & 0x9f)
+        return c
+
+    def colon(self, ch, space_seen):
+        ch2 = self.read()
+
+        if ch2 == ":":
+            self.add(ch)
+            self.add(ch2)
+            if (self.is_beg() or self.state == self.EXPR_CLASS or
+                (self.is_arg() and space_seen)):
+                self.state = self.EXPR_BEG
+                self.emit("UNBOUND_COLONCOLON")
+            else:
+                self.state = self.EXPR_DOT
+                self.emit("COLONCOLON")
+
+        elif self.is_end() or ch2.isspace():
+            self.unread()
+            self.add(ch)
+            self.state = self.EXPR_BEG
+            self.emit("COLON")
+        else:
+            self.unread()
+            self.state = self.EXPR_FNAME
+            self.emit("SYMBOL_BEGIN")
+
+    def left_bracket(self, ch, space_seen):
         self.add(ch)
-        return "REGEXP"
+        if self.is_beg() or (self.is_arg() and space_seen):
+            self.emit("LBRACKET")
+        else:
+            self.emit("LSUBSCRIPT")
+        self.state = self.EXPR_BEG
+
+    def backtick(self, ch):
+        if self.state == self.EXPR_FNAME:
+            self.add(ch)
+            self.emit_identifier()
+        elif self.state == self.EXPR_DOT:
+            raise NotImplementedError("`")
+        else:
+            self.shellout("`", "`")
+
+    def shellout(self, begin, end):
+        self.emit("SHELL_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("SHELL_END")
+        self.state = self.EXPR_END
+
+    def qwords(self, begin, end, interpolate=True):
+        self.emit("QWORDS_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=interpolate, qwords=True).tokenize()
+        # drop empty last string
+        n_tokens = len(tokens)
+        if n_tokens > 2:
+            if tokens[n_tokens - 2].name == "STRING_BEGIN":
+                tokens.pop()
+                tokens.pop()
+        else:
+            tokens = []
+        self.tokens.extend(tokens)
+        self.emit("QWORDS_END")
+        self.state = self.EXPR_END
+
+    def percent(self, ch, space_seen):
+        c = self.read()
+        if self.is_beg():
+            self.quote(c)
+        elif c == "=":
+            self.add(ch)
+            self.add(c)
+            self.emit("MODULO_EQUAL")
+        elif self.is_arg() and space_seen and not c.isspace():
+            self.quote(c)
+        else:
+            self.unread()
+            self.add(ch)
+            self.set_expression_state()
+            self.emit("MODULO")
+
+    def quote_string(self, begin, end, interpolate):
+        self.emit("QUOTE_BEGIN")
+        tokens = StringLexer(self, begin, end, interpolate=interpolate).tokenize()
+        self.tokens.extend(tokens)
+        self.emit("QUOTE_END")
+
+    def quote(self, ch):
+        if not ch.isalnum():
+            begin = ch
+            ch = "Q"
+        else:
+            begin = self.read()
+            if begin.isalnum():
+                self.error()
+
+        if begin == "(":
+            end = ")"
+        elif begin == "[":
+            end = "]"
+        elif begin == "{":
+            end = "}"
+        elif begin == "<":
+            end = ">"
+        else:
+            end = begin
+
+        if ch == "Q":
+            self.quote_string(begin, end, True)
+        elif ch == "q":
+            self.quote_string(begin, end, False)
+        elif ch == "x":
+            self.shellout(begin, end)
+        elif ch == "w":
+            self.qwords(begin, end, interpolate=False)
+        elif ch == "W":
+            self.qwords(begin, end, interpolate=True)
+        elif ch == "r":
+            self.regexp(begin, end)
+        else:
+            raise NotImplementedError('%' + ch)
+        self.state = self.EXPR_END
+
+
+class ChildLexer(BaseLexer):
+    def __init__(self, lexer):
+        BaseLexer.__init__(self)
+        self.lexer = lexer
+
+    def get_idx(self):
+        return self.lexer.get_idx()
+
+    def get_lineno(self):
+        return self.lexer.get_lineno()
+
+    def get_columno(self):
+        return self.lexer.get_columno()
+
+    def read(self):
+        return self.lexer.read()
+
+    def unread(self):
+        return self.lexer.unread()
+
+    def read_escape(self):
+        return self.lexer.read_escape()
+
+class StringLexer(ChildLexer):
+    CODE = 0
+    STRING = 1
+
+    def __init__(self, lexer, begin, end, interpolate=True, qwords=False, regexp=False):
+        ChildLexer.__init__(self, lexer)
+
+        self.interpolate = interpolate
+        self.qwords = qwords
+        self.regexp = regexp
+
+        self.begin = begin
+        self.end = end
+
+        self.nesting = 0
+
+    def emit_str(self):
+        if self.current_value:
+            self.emit("STRING_VALUE")
+
+    def tokenize(self):
+        if self.qwords:
+            while self.peek().isspace():
+                self.read()
+        self.emit("STRING_BEGIN")
+        while True:
+            ch = self.read()
+            if ch == self.lexer.EOF:
+                self.unread()
+                return self.tokens
+            elif ch == "\\":
+                if self.peek() in [self.begin, self.end, "\\"]:
+                    self.add(self.read())
+                else:
+                    escaped_char = self.read_escape()
+                    if self.regexp and escaped_char in string.printable:
+                        self.add(ch)
+                        self.add(escaped_char)
+                    else:
+                        self.add(escaped_char)
+            elif ch == self.begin and (self.begin != self.end):
+                self.nesting += 1
+                self.add(ch)
+            elif ch == self.end:
+                if self.nesting == 0:
+                    self.emit_str()
+                    break
+                else:
+                    self.nesting -= 1
+                    self.add(ch)
+            elif ch == "#" and self.peek() == "{" and self.interpolate:
+                self.emit_str()
+                self.read()
+                self.tokenize_interpolation()
+            elif self.qwords and ch.isspace():
+                self.emit_str()
+                break
+            elif self.qwords and ch == "\\" and self.peek().isspace():
+                self.add(self.read())
+            else:
+                self.add(ch)
+        self.emit("STRING_END")
+        if self.qwords and ch.isspace():
+            self.tokenize()
+        return self.tokens
+
+    def tokenize_interpolation(self):
+        self.emit("DSTRING_START")
+        chars = StringBuilder()
+        context = [self.CODE]
+        braces_count = [1]
+        while True:
+            ch = self.read()
+            if ch == self.lexer.EOF:
+                self.unread()
+                return
+            elif ch == "{" and context[-1] == self.CODE:
+                chars.append(ch)
+                braces_count[-1] += 1
+            elif ch == "}" and context[-1] == self.CODE:
+                braces_count[-1] -= 1
+                if braces_count[-1] == 0:
+                    braces_count.pop()
+                    context.pop()
+                    if not braces_count:
+                        break
+                chars.append(ch)
+            elif ch == '"' and context[-1] == self.STRING:
+                chars.append(ch)
+                context.pop()
+            elif ch == '"' and context[-1] == self.CODE:
+                chars.append(ch)
+                context.append(self.STRING)
+            elif ch == "#" and self.peek() == "{":
+                chars.append(ch)
+                ch = self.read()
+                chars.append(ch)
+                braces_count.append(1)
+                context.append(self.CODE)
+            else:
+                chars.append(ch)
+        lexer_tokens = Lexer(chars.build(), self.get_lineno()).tokenize()
+        # Remove the EOF
+        lexer_tokens.pop()
+        self.tokens.extend(lexer_tokens)
+        self.emit("DSTRING_END")
+
+
+class HeredocLexer(StringLexer):
+    def __init__(self, lexer, marker, indent, interpolate):
+        ChildLexer.__init__(self, lexer)
+        self.marker = marker
+        self.indent = indent
+        self.interpolate = interpolate
+
+    def tokenize(self):
+        chars = StringBuilder()
+        while True:
+            ch = self.read()
+            if ch == "\n":
+                break
+            elif ch == self.EOF:
+                return self.tokens
+            chars.append(ch)
+        if chars.getlength():
+            lexer_tokens = Lexer(chars.build(), self.get_lineno()).tokenize()
+            lexer_tokens.pop()
+        else:
+            lexer_tokens = []
+
+        self.emit("STRING_BEGIN")
+        while True:
+            ch = self.read()
+            if ch == "\n":
+                self.add(ch)
+                chars = StringBuilder(len(self.marker))
+                if self.indent:
+                    while True:
+                        ch = self.read()
+                        if ch.isspace():
+                            chars.append(ch)
+                        else:
+                            self.unread()
+                            break
+                for c in self.marker:
+                    ch = self.read()
+                    chars.append(ch)
+                    if ch != c:
+                        for c in chars.build():
+                            self.add(c)
+                        break
+                else:
+                    self.emit("STRING_VALUE")
+                    break
+            elif ch == "#" and self.peek() == "{":
+                self.emit_str()
+                self.read()
+                self.tokenize_interpolation()
+            elif ch == self.EOF:
+                return self.tokens
+            else:
+                self.add(ch)
+        self.emit("STRING_END")
+        self.tokens.extend(lexer_tokens)
+        return self.tokens

@@ -1,13 +1,23 @@
+import os
+import platform
+
 import py
 
 from rupypy.main import entry_point
 
 
 class TestMain(object):
-    def run(self, tmpdir, source, status=0):
-        f = tmpdir.join("test.rb")
-        f.write(source)
-        res = entry_point(["rupypy", str(f)])
+    def run(self, tmpdir, source=None, status=0, ruby_args=[], argv=[]):
+        args = ["rupypy"]
+        args += ruby_args
+        if source is not None:
+            f = tmpdir.join("test.rb")
+            f.write(source)
+            args.append(str(f))
+        else:
+            f = None
+        args += argv
+        res = entry_point(args)
         assert res == status
         return f
 
@@ -32,6 +42,35 @@ class TestMain(object):
         out, err = capfd.readouterr()
         assert out == "{}\n".format(f)
 
+    def test_verbose(self, tmpdir, capfd):
+        self.run(tmpdir, "puts 5", ruby_args=["-v"])
+        out, err = capfd.readouterr()
+        [version, out] = out.splitlines()
+        assert version.startswith("rupypy")
+        assert "1.9.3" in version
+        assert os.uname()[4] in version
+        assert platform.system().lower() in version
+        assert out == "5"
+
+        self.run(tmpdir, ruby_args=["-v"])
+        out, err = capfd.readouterr()
+        [version] = out.splitlines()
+        assert version.startswith("rupypy")
+
+    def test_arguments(self, tmpdir, capfd):
+        self.run(tmpdir, """
+        ARGV.each_with_index do |arg, i|
+            puts i.to_s + ": " + arg
+        end
+        """, argv=["abc", "123", "easy"])
+        out, err = capfd.readouterr()
+        lines = out.splitlines()
+        assert lines == [
+            "0: abc",
+            "1: 123",
+            "2: easy",
+        ]
+
     def test_traceback_printed(self, tmpdir, capfd):
         self.assert_traceback(tmpdir, capfd, """
         def f
@@ -44,6 +83,14 @@ class TestMain(object):
             "\tfrom {}:6:in `block in <main>'",
             "\tfrom {}:3:in `f'",
             "\tfrom {}:6:in `<main>'",
+        ])
+
+    def test_traceback_load_const(self, tmpdir, capfd):
+        self.assert_traceback(tmpdir, capfd, """
+        UnknownConst
+        """, [
+            "{}:2:in `const_missing': uninitialized constant UnknownConst (NameError)",
+            "\tfrom {}:2:in `<main>'",
         ])
 
     @py.test.mark.xfail

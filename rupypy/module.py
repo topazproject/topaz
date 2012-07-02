@@ -1,7 +1,5 @@
-from pypy.tool.cache import Cache
-
-from rupypy.executioncontext import ExecutionContext
 from rupypy.gateway import WrapperGenerator
+from rupypy.utils.cache import Cache
 
 
 class ClassDef(object):
@@ -10,17 +8,25 @@ class ClassDef(object):
         self.methods = {}
         self.app_methods = []
         self.singleton_methods = {}
+        self.includes = []
         self.superclassdef = superclassdef
         self.cls = None
+
+    def __repr__(self):
+        return "<ClassDef: {}>".format(self.name)
+
+    def __deepcopy__(self, memo):
+        return self
 
     def _freeze_(self):
         return True
 
     def include_module(self, mod):
-        self.methods.update(mod.moduledef.methods)
-        self.app_methods.extend(mod.moduledef.app_methods)
+        self.includes.append(mod)
 
-    def method(self, name, **argspec):
+    def method(self, __name, **argspec):
+        name = __name
+
         def adder(func):
             self.methods[name] = (func, argspec)
             return func
@@ -37,16 +43,7 @@ class ClassDef(object):
 
 
 class Module(object):
-    @classmethod
-    def build_object(cls, space):
-        from rupypy.objects.functionobject import W_BuiltinFunction
-        from rupypy.objects.moduleobject import W_ModuleObject
-
-        w_mod = space.newmodule(cls.moduledef.name)
-        for name, (method, argspec) in cls.moduledef.singleton_methods.iteritems():
-            func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
-            w_mod.attach_method(space, name, W_BuiltinFunction(name, func))
-        return w_mod
+    pass
 
 
 class ModuleDef(object):
@@ -56,7 +53,9 @@ class ModuleDef(object):
         self.app_methods = []
 
         self.singleton_methods = {}
-        self.singleton_add_methods = []
+
+    def __deepcopy__(self, memo):
+        return self
 
     def method(self, name, **argspec):
         def adder(func):
@@ -75,10 +74,6 @@ class ModuleDef(object):
 
 
 class ClassCache(Cache):
-    def __init__(self, space):
-        super(ClassCache, self).__init__()
-        self.space = space
-
     def _build(self, classdef):
         from rupypy.objects.classobject import W_ClassObject
         from rupypy.objects.functionobject import W_BuiltinFunction
@@ -91,16 +86,38 @@ class ClassCache(Cache):
             superclass = self.space.getclassobject(classdef.superclassdef)
 
         w_class = self.space.newclass(classdef.name, superclass)
+        yield w_class
         for name, (method, argspec) in classdef.methods.iteritems():
             func = WrapperGenerator(name, method, argspec, classdef.cls).generate_wrapper()
             w_class.define_method(self.space, name, W_BuiltinFunction(name, func))
 
         for source in classdef.app_methods:
-            self.space.execute(ExecutionContext(self.space), source,
-                w_self=w_class, w_scope=w_class
-            )
+            self.space.execute(source, w_self=w_class, w_scope=w_class)
 
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ClassObject).generate_wrapper()
             w_class.attach_method(self.space, name, W_BuiltinFunction(name, func))
-        return w_class
+
+        for mod in reversed(classdef.includes):
+            w_mod = self.space.getmoduleobject(mod.moduledef)
+            self.space.send(w_class, self.space.newsymbol("include"), [w_mod])
+
+        classdef.cls.setup_class(self.space, w_class)
+
+
+class ModuleCache(Cache):
+    def _build(self, moduledef):
+        from rupypy.objects.functionobject import W_BuiltinFunction
+        from rupypy.objects.moduleobject import W_ModuleObject
+        from rupypy.objects.objectobject import W_BaseObject
+
+        w_mod = self.space.newmodule(moduledef.name)
+        for name, (method, argspec) in moduledef.methods.iteritems():
+            func = WrapperGenerator(name, method, argspec, W_BaseObject).generate_wrapper()
+            w_mod.define_method(self.space, name, W_BuiltinFunction(name, func))
+        for source in moduledef.app_methods:
+            self.space.execute(source, w_self=w_mod, w_scope=w_mod)
+        for name, (method, argspec) in moduledef.singleton_methods.iteritems():
+            func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
+            w_mod.attach_method(self.space, name, W_BuiltinFunction(name, func))
+        yield w_mod

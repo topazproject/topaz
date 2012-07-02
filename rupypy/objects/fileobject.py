@@ -1,11 +1,40 @@
 import os
+import sys
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 
 
-class W_FileObject(W_BaseObject):
-    classdef = ClassDef("File", W_BaseObject.classdef)
+class W_IOObject(W_Object):
+    classdef = ClassDef("IO", W_Object.classdef)
+
+
+class W_FileObject(W_IOObject):
+    classdef = ClassDef("File", W_IOObject.classdef)
+
+    @classmethod
+    def setup_class(cls, space, w_cls):
+        super(W_FileObject, cls).setup_class(space, w_cls)
+        if sys.platform == "win32":
+            w_alt_seperator = space.newstr_fromstr("\\")
+            w_fnm_syscase = space.newint(0x08)
+        else:
+            w_alt_seperator = space.w_nil
+            w_fnm_syscase = space.newint(0)
+        space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
+        space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
+
+    @classdef.singleton_method("dirname", path="path")
+    def method_dirname(self, space, path):
+        if "/" not in path:
+            return space.newstr_fromstr(".")
+        idx = path.rfind("/")
+        while idx > 0 and path[idx - 1] == "/":
+            idx -= 1
+        if idx == 0:
+            return space.newstr_fromstr("/")
+        assert idx >= 0
+        return space.newstr_fromstr(path[:idx])
 
     @classdef.singleton_method("expand_path", path="path", dir="path")
     def method_expand_path(self, space, path, dir=None):

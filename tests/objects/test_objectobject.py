@@ -1,13 +1,15 @@
-from rupypy.objects.intobject import W_IntObject
+from rupypy.objects.intobject import W_FixnumObject
+
+from ..base import BaseRuPyPyTest
 
 
-class TestObjectObject(object):
-    def test_class(self, ec):
-        w_res = ec.space.execute(ec, "return 1.class")
-        assert w_res is ec.space.getclassfor(W_IntObject)
+class TestObjectObject(BaseRuPyPyTest):
+    def test_class(self, space):
+        w_res = space.execute("return 1.class")
+        assert w_res is space.getclassfor(W_FixnumObject)
 
-    def test_initialize(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_initialize(self, space):
+        w_res = space.execute("""
         class X
             def initialize
                 @a = 3
@@ -19,10 +21,10 @@ class TestObjectObject(object):
         end
         return X.new.foo
         """)
-        assert ec.space.int_w(w_res) == 3
+        assert space.int_w(w_res) == 3
 
-    def test_initialize_args(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_initialize_args(self, space):
+        w_res = space.execute("""
         class X
             def initialize a, b
                 @a = a
@@ -35,12 +37,41 @@ class TestObjectObject(object):
         x = X.new 2, 3
         return x.attrs
         """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [2, 3]
+        assert self.unwrap(space, w_res) == [2, 3]
 
+    def test_method_missing(self, space):
+        w_res = space.execute("""
+        class A
+          def method_missing(name, *args, &block)
+            return name, args, block
+          end
+        end
+        return A.new.foo('bar', 42)
+        """)
+        assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
 
-class TestMapDict(object):
-    def test_simple_attr(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_to_s(self, space):
+        w_res = space.execute("""
+        obj = Object.new
+        return obj.to_s, obj.object_id
+        """)
+        s, oid = self.unwrap(space, w_res)
+        assert s == "#<Object:0x%x>" % oid
+
+    def test_send(self, space):
+        w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
+        assert self.unwrap(space, w_res) == ['1', 3]
+
+    def test_eq(self, space):
+        w_res = space.execute("""
+        a = Object.new
+        return [a == a, a == Object.new]
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
+class TestMapDict(BaseRuPyPyTest):
+    def test_simple_attr(self, space):
+        w_res = space.execute("""
         class X
             def initialize
                 @a = 3
@@ -53,10 +84,10 @@ class TestMapDict(object):
         end
         return X.new.attrs
         """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [3, 4, 5]
+        assert self.unwrap(space, w_res) == [3, 4, 5]
 
-    def test_unitialized_att(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_unitialized_att(self, space):
+        w_res = space.execute("""
         class X
             attr_accessor :a
             def attrs
@@ -65,4 +96,4 @@ class TestMapDict(object):
         end
         return X.new.attrs
         """)
-        assert ec.space.listview(w_res) == [ec.space.w_nil, ec.space.w_nil]
+        assert space.listview(w_res) == [space.w_nil, space.w_nil]

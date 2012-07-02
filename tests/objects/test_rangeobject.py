@@ -1,16 +1,26 @@
-class TestRangeObject(object):
-    def test_map(self, ec):
-        w_res = ec.space.execute(ec, """
+from ..base import BaseRuPyPyTest
+
+
+class TestRangeObject(BaseRuPyPyTest):
+    def test_map(self, space):
+        w_res = space.execute("""
         return (1..3).map do |x|
             x * 5
         end
         """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [5, 10]
+        assert self.unwrap(space, w_res) == [5, 10, 15]
 
-    def test_starting_point_always_returned(self, ec):
-        w_res = ec.space.execute(ec, """
+    def test_starting_point_always_returned(self, space):
+        w_res = space.execute("""
         return (1..1).map do |x|
             x
         end
         """)
-        assert [ec.space.int_w(w_x) for w_x in ec.space.listview(w_res)] == [1]
+        assert self.unwrap(space, w_res) == [1]
+
+    def test_exclude_end(self, space):
+        w_res = space.execute("return (1..5).exclude_end?")
+        assert self.unwrap(space, w_res) is False
+
+        w_res = space.execute("return (1...5).exclude_end?")
+        assert self.unwrap(space, w_res) is True

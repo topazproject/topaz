@@ -1,16 +1,17 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Object
 
 
-class W_RangeObject(W_BaseObject):
-    classdef = ClassDef("Range", W_BaseObject.classdef)
+class W_RangeObject(W_Object):
+    classdef = ClassDef("Range", W_Object.classdef)
     classdef.include_module(Enumerable)
 
-    def __init__(self, w_start, w_end, inclusive):
+    def __init__(self, space, w_start, w_end, exclusive):
+        W_Object.__init__(self, space)
         self.w_start = w_start
         self.w_end = w_end
-        self.inclusive = inclusive
+        self.exclusive = exclusive
 
     @classdef.method("begin")
     def method_begin(self, space):
@@ -20,14 +21,20 @@ class W_RangeObject(W_BaseObject):
     def method_end(self, space):
         return self.w_end
 
+    @classdef.method("exclude_end?")
+    def method_exclude_end(self, space):
+        return space.newbool(self.exclusive)
+
     classdef.app_method("""
     def each
         i = self.begin
-        yield i
-        i += 1
-        while i < self.end
+        lim = self.end
+        if !self.exclude_end?
+            lim = lim.succ
+        end
+        while i < lim
             yield i
-            i += 1
+            i = i.succ
         end
     end
     """)

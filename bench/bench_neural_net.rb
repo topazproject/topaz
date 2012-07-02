@@ -1,3 +1,7 @@
+class Random
+  public :rand
+end
+
 class Synapse
   attr_accessor :weight, :prev_weight
   attr_accessor :source_neuron, :dest_neuron
@@ -5,7 +9,7 @@ class Synapse
   def initialize(source_neuron, dest_neuron, prng)
     self.source_neuron = source_neuron
     self.dest_neuron = dest_neuron
-    self.prev_weight = self.weight = prng.rand(-1.0..1.0)
+    self.prev_weight = self.weight = prng.rand * 2 - 1
   end
 end
 
@@ -19,14 +23,14 @@ class Neuron
   attr_accessor :output
 
   def initialize(prng)
-    self.prev_threshold = self.threshold = prng.rand(-1.0..1.0)
+    self.prev_threshold = self.threshold = prng.rand * 2 - 1
     self.synapses_in = []
     self.synapses_out = []
   end
 
   def calculate_output
-    activation = synapses_in.inject(0.0) do |sum, synapse| 
-      sum + synapse.weight * synapse.source_neuron.output 
+    activation = synapses_in.inject(0.0) do |sum, synapse|
+      sum + synapse.weight * synapse.source_neuron.output
     end
     activation -= threshold
 
@@ -43,7 +47,7 @@ class Neuron
   end
 
   def hidden_train(rate)
-    self.error = synapses_out.inject(0.0) do |sum, synapse| 
+    self.error = synapses_out.inject(0.0) do |sum, synapse|
       sum + synapse.prev_weight * synapse.dest_neuron.error
     end * derivative
     update_weights(rate)
