@@ -21,6 +21,8 @@ class TestStringObject(BaseRuPyPyTest):
     def test_length(self, space):
         w_res = space.execute("return 'ABC'.length")
         assert space.int_w(w_res) == 3
+        w_res = space.execute("return 'ABC'.size")
+        assert space.int_w(w_res) == 3
 
     def test_comparator_lt(self, space):
         w_res = space.execute("return 'a' <=> 'b'")

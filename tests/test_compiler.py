@@ -1674,6 +1674,22 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_and_equal(self, space):
+        self.assert_compiles(space, "@a &&= 4", """
+        LOAD_SELF
+        DUP_TOP
+        LOAD_INSTANCE_VAR 0
+        DUP_TOP
+        JUMP_IF_FALSE 13
+        DISCARD_TOP
+        LOAD_CONST 1
+        STORE_INSTANCE_VAR 0
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_block_return(self, space):
         bc = self.assert_compiles(space, "f { return 5 }", """
         LOAD_SELF
