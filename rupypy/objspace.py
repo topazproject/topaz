@@ -281,7 +281,11 @@ class ObjectSpace(object):
         module.set_lexical_scope(self, scope)
 
     def find_instance_var(self, w_obj, name):
-        return w_obj.find_instance_var(self, name)
+        w_value = w_obj.find_instance_var(self, name)
+        if w_value is None:
+            return self.w_nil
+        else:
+            return w_value
 
     def set_instance_var(self, w_obj, name, w_value):
         w_obj.set_instance_var(self, name, w_value)
