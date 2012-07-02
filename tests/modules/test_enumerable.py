@@ -49,6 +49,12 @@ class TestEnumberable(BaseRuPyPyTest):
         """)
         assert w_res is space.w_true
 
+    def test_all_no_block(self, space):
+        w_res = space.execute("""
+        return [1, 2, 3].all?
+        """)
+        assert w_res is space.w_true
+
     def test_any(self, space):
         w_res = space.execute("""
         return ["ant", "bear", "cat"].any? do |word|

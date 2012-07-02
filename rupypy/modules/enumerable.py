@@ -34,9 +34,9 @@ class Enumerable(Module):
     """)
 
     moduledef.app_method("""
-    def all?
+    def all?(&block)
         self.each do |obj|
-            return false unless (yield obj)
+            return false unless (block ? block.call(obj) : obj)
         end
         true
     end
