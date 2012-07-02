@@ -677,6 +677,9 @@ class TestParser(BaseRuPyPyTest):
         string = lambda content: ast.Main(ast.Block([
             ast.Statement(ast.ConstantString(content))
         ]))
+        dyn_string = lambda content: ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString([ast.ConstantString(content)]))
+        ]))
 
         assert space.parse('?\\\\') == string("\\")
         assert space.parse('?\\n') == string("\n")
@@ -699,6 +702,23 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('?\\C-\y') == string("\x19")
         assert space.parse('?\\c\y') == string("\x19")
         assert space.parse('?\\l') == string("l")
+        assert space.parse('?\\0') == string("\0")
+        assert space.parse('?\\01') == string("\x01")
+        assert space.parse('?\\001') == string("\x01")
+        assert space.parse('"\\0"') == dyn_string("\x00")
+        assert space.parse('"\\01"') == dyn_string("\x01")
+        assert space.parse('"\\012"') == dyn_string("\n")
+        assert space.parse('"\\0\\1\\2"') == dyn_string("\x00\x01\x02")
+        assert space.parse('"\\09"') == dyn_string("\x009")
+        assert space.parse('"\\019"') == dyn_string("\x019")
+        with self.raises(space, "SyntaxError"):
+            space.parse("?\\09")
+        with self.raises(space, "SyntaxError"):
+            space.parse("?\\019")
+        assert space.parse('?\\12') == string("\n")
+        assert space.parse('"\\12"') == dyn_string("\n")
+        assert space.parse('?\\012') == string("\n")
+        assert space.parse('"\\342\\234\\224"') == dyn_string("✔")
 
     def test_dynamic_string(self, space):
         dyn_string = lambda *components: ast.Main(ast.Block([
