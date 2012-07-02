@@ -12,10 +12,7 @@ class W_HashObject(W_Object):
 
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
-        try:
-            return self.contents[w_key]
-        except KeyError:
-            return space.w_nil
+        return self.contents.get(w_key, space.w_nil)
 
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
