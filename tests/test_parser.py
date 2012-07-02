@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from rupypy import ast
 
 from .base import BaseRuPyPyTest
