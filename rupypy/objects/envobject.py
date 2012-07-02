@@ -5,11 +5,10 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_EnvObject(W_Object):
-    classdef = ClassDef("EnvironmentVariables", W_Object.classdef)
+    classdef = ClassDef("Topaz::EnvironmentVariables", W_Object.classdef)
 
     def __init__(self, space):
         W_Object.__init__(self, space)
-        self.environ = os.environ
 
     @classmethod
     def setup_class(cls, space, w_cls):
@@ -17,7 +16,7 @@ class W_EnvObject(W_Object):
 
     @classdef.method("[]", key="str")
     def method_subscript(self, space, key):
-        value = self.environ.get(key, None)
+        value = os.environ.get(key, None)
         if value is None:
             return space.w_nil
         else:
@@ -25,7 +24,7 @@ class W_EnvObject(W_Object):
 
     @classdef.method("[]=", key="str")
     def method_subscript_assign(self, space, key, w_value):
-        self.environ[key] = space.str_w(w_value)
+        os.environ[key] = space.str_w(w_value)
         return w_value
 
     @classdef.singleton_method("class")
