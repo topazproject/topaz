@@ -80,3 +80,5 @@ class TestStringObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == ["a", "b", "c"]
         w_res = space.execute("return 'a-b-c'.split('-', 2)")
         assert self.unwrap(space, w_res) == ["a", "b-c"]
+        w_res = space.execute("return 'a b c'.split(' ', -1)")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
