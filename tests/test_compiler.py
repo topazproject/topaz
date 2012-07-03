@@ -768,6 +768,51 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_multiple_blocks_in_block(self, space):
+        bc = self.assert_compiles(space, """
+        f {
+            xzz = 2
+            g { xzz }
+            g { xzz }
+        }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        STORE_DEREF 0
+        DISCARD_TOP
+
+        LOAD_SELF
+        LOAD_CONST 1
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 2 1
+        DISCARD_TOP
+
+        LOAD_SELF
+        LOAD_CONST 3
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 2 1
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0].consts_w[1], """
+        LOAD_DEREF 0
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0].consts_w[3], """
+        LOAD_DEREF 0
+        RETURN
+        """)
+
     def test_method_assignment(self, space):
         bc = self.assert_compiles(space, "self.abc = 3", """
         LOAD_SELF
