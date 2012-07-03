@@ -771,9 +771,9 @@ class TestCompiler(object):
     def test_multiple_blocks_in_block(self, space):
         bc = self.assert_compiles(space, """
         f {
-            xzz = 2
-            g { xzz }
-            g { xzz }
+            x = 2
+            g { x }
+            g { x }
         }
         """, """
         LOAD_SELF
