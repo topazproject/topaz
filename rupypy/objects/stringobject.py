@@ -176,3 +176,14 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         self.strategy.clear(self)
         return self
+
+    @classdef.method("split", limit="int")
+    def method_split(self, space, w_sep=None, limit=-1):
+        if w_sep is None:
+            sep = None
+        elif isinstance(w_sep, W_StringObject):
+            sep = space.str_w(w_sep)
+        else:
+            raise NotImplementedError("Regexp separators for String#split")
+        results = space.str_w(self).split(sep, limit - 1)
+        return space.newarray([space.newstr_fromstr(s) for s in results])
