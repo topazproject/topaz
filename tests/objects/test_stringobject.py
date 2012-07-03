@@ -72,3 +72,23 @@ class TestStringObject(BaseRuPyPyTest):
 
         w_res = space.execute("return ('a' << 'b').clear")
         assert self.unwrap(space, w_res) == ""
+
+    def test_ljust(self, space):
+        w_res = space.execute("""
+        a = 'hi'
+        return a, a.ljust(1)
+        """)
+        w_original, w_adjusted = space.listview(w_res)
+        assert w_original is w_adjusted
+
+        w_res = space.execute("return 'a'.ljust(3)")
+        assert space.str_w(w_res) == "a  "
+
+        w_res = space.execute("return 'a'.ljust(3, 'l')")
+        assert space.str_w(w_res) == "all"
+
+        w_res = space.execute("return 'a'.ljust(5, '-_*')")
+        assert space.str_w(w_res) == "a-_*-"
+
+        with self.raises(space, "ArgumentError", "zero width padding"):
+            space.execute("'hi'.ljust(10, '')")

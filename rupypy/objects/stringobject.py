@@ -5,6 +5,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.exceptionobject import W_ArgumentError
 
 
 class StringStrategy(object):
@@ -176,3 +177,16 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         self.strategy.clear(self)
         return self
+
+    @classdef.method("ljust", integer="int", padstr="str")
+    def method_ljust(self, space, integer, padstr=" "):
+        if integer <= self.length():
+            return self
+        if len(padstr) is 0:
+            space.raise_(space.getclassfor(W_ArgumentError), "zero width padding")
+        elif len(padstr) is 1:
+            res = space.str_w(self).ljust(integer, padstr)
+        else:
+            required_padding = 1 + ((integer - self.length() - 1) / len(padstr))
+            res = space.str_w(self) + (padstr * required_padding)[0:integer - 1]
+        return space.newstr_fromstr(res)
