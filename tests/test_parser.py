@@ -399,6 +399,28 @@ class TestParser(BaseRuPyPyTest):
             ])))
         ]))
 
+    def test_elsif_else(self, space):
+        r = space.parse("""
+        if nil
+            5
+        elsif nil
+            10
+        else
+            200
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.Variable("nil", 2), ast.Block([
+                ast.Statement(ast.ConstantInt(5))
+            ]), ast.Block([
+                ast.Statement(ast.If(ast.Variable("nil", 4), ast.Block([
+                    ast.Statement(ast.ConstantInt(10)),
+                ]), ast.Block([
+                    ast.Statement(ast.ConstantInt(200))
+                ])))
+            ])))
+        ]))
+
     def test_comparison_ops(self, space):
         assert space.parse("1 == 2; 1 < 2; 1 > 2; 1 != 2; 1 <= 2; 1 >= 2; 1 <=> 2") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("==", ast.ConstantInt(1), ast.ConstantInt(2), 1)),
