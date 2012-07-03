@@ -63,6 +63,17 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_missing_instance_variable(self, space):
+        w_res = space.execute("""
+        class X
+            def self.m
+                @a
+            end
+        end
+        return X.m
+        """)
+        assert self.unwrap(space, w_res) is None
+
     def test_module_eval(self, space, capfd):
         w_res = space.execute("""
         class X; end

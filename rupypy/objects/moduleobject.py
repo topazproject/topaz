@@ -154,7 +154,7 @@ class W_ModuleObject(W_RootObject):
         return self.instance_variables.set(name, w_value)
 
     def find_instance_var(self, space, name):
-        return self.instance_variables.get(name)
+        return self.instance_variables.get(name) or space.w_nil
 
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
