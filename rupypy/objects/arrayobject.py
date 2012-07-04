@@ -32,7 +32,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("[]")
     def method_subscript(self, space, w_idx, w_count=None):
-        start, end, as_range = self.subscript_access(space, w_idx, w_count=w_count)
+        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
         if (as_range and end < start or
             start < 0 or end < 0 or
             not as_range and start >= len(self.items_w)):
@@ -49,7 +49,7 @@ class W_ArrayObject(W_Object):
             w_count = w_count_or_obj
         else:
             w_obj = w_count_or_obj
-        start, end, as_range = self.subscript_access(space, w_idx, w_count=w_count)
+        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
         if w_count and end < start:
             space.raise_(
@@ -72,39 +72,6 @@ class W_ArrayObject(W_Object):
         else:
             self.items_w[start] = w_obj
         return w_obj
-
-    def subscript_access(self, space, w_idx, w_count=None):
-        inclusive = False
-        as_range = False
-        end = 0
-        if isinstance(w_idx, W_RangeObject):
-            start = space.int_w(w_idx.w_start)
-            end = space.int_w(w_idx.w_end)
-            inclusive = not w_idx.exclusive
-            as_range = True
-        else:
-            start = space.int_w(w_idx)
-            if w_count:
-                end = space.int_w(w_count)
-                if end < 0:
-                    end = -1
-                else:
-                    as_range = True
-
-        if start < 0:
-            start += len(self.items_w)
-        if as_range:
-            if w_count:
-                end += start
-            if end < 0:
-                end += len(self.items_w)
-            if inclusive:
-                end += 1
-            if end < start:
-                end = start
-            elif end > len(self.items_w):
-                end = len(self.items_w)
-        return (start, end, as_range)
 
     @classdef.method("size")
     @classdef.method("length")

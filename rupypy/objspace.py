@@ -345,3 +345,36 @@ class ObjectSpace(object):
 
     def eq_w(self, w_obj1, w_obj2):
         return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
+
+    def subscript_access(self, length, w_idx, w_count):
+        inclusive = False
+        as_range = False
+        end = 0
+        if isinstance(w_idx, W_RangeObject):
+            start = self.int_w(w_idx.w_start)
+            end = self.int_w(w_idx.w_end)
+            inclusive = not w_idx.exclusive
+            as_range = True
+        else:
+            start = self.int_w(w_idx)
+            if w_count:
+                end = self.int_w(w_count)
+                if end < 0:
+                    end = -1
+                else:
+                    as_range = True
+
+        if start < 0:
+            start += length
+        if as_range:
+            if w_count:
+                end += start
+            if end < 0:
+                end += length
+            if inclusive:
+                end += 1
+            if end < start:
+                end = start
+            elif end > length:
+                end = length
+        return (start, end, as_range)
