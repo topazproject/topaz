@@ -16,6 +16,16 @@ class TestFile(object):
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
         assert space.str_w(w_res) == "/abc/bin"
+        w_res = space.execute("return File.join")
+        assert space.str_w(w_res) == ""
+        w_res = space.execute("return File.join('abc')")
+        assert space.str_w(w_res) == "abc"
+        w_res = space.execute("return File.join('abc', 'def', 'ghi')")
+        assert space.str_w(w_res) == "abc/def/ghi"
+        w_res = space.execute("return File.join(['abc', ['def'], []], 'ghi')")
+        assert space.str_w(w_res) == "abc/def/ghi"
+        w_res = space.execute("return File.join('a', '//', 'b', '/', 'd', '/')")
+        assert space.str_w(w_res) == "a//b/d/"
 
 
 class TestExpandPath(BaseRuPyPyTest):
