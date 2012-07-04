@@ -2,7 +2,7 @@ from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.rangeobject import W_RangeObject
-from rupypy.objects.exceptionobject import W_TypeError
+from rupypy.objects.exceptionobject import W_TypeError, W_IndexError
 
 
 class W_ArrayObject(W_Object):
@@ -31,33 +31,80 @@ class W_ArrayObject(W_Object):
     """)
 
     @classdef.method("[]")
-    def method_subscript(self, space, w_idx):
+    def method_subscript(self, space, w_idx, w_count=None):
+        start, end, as_range = self.subscript_access(space, w_idx, w_count=w_count)
+        if (as_range and end < start or
+            start < 0 or end < 0 or
+            not as_range and start >= len(self.items_w)):
+            return space.w_nil
+        elif as_range:
+            return space.newarray(self.items_w[start:end])
+        else:
+            return self.items_w[start]
+
+    @classdef.method("[]=")
+    def method_subscript_assign(self, space, w_idx, w_count_or_obj, w_obj=None):
+        w_count = None
+        if w_obj:
+            w_count = w_count_or_obj
+        else:
+            w_obj = w_count_or_obj
+        start, end, as_range = self.subscript_access(space, w_idx, w_count=w_count)
+
+        if w_count and end < start:
+            space.raise_(
+                space.getclassfor(W_IndexError),
+                "negative length (%d)" % (end - start)
+            )
+        elif start < 0:
+            space.raise_(
+                space.getclassfor(W_IndexError),
+                "index %d too small for array; minimum: %d" % (
+                    start - len(self.items_w),
+                    -len(self.items_w)
+                )
+            )
+        elif start >= len(self.items_w):
+            self.items_w += [space.w_nil] * (start - len(self.items_w) + 1)
+            self.items_w[start] = w_obj
+        elif as_range:
+            self.items_w[start:end] = [w_obj]
+        else:
+            self.items_w[start] = w_obj
+        return w_obj
+
+    def subscript_access(self, space, w_idx, w_count=None):
+        inclusive = False
+        as_range = False
+        end = 0
         if isinstance(w_idx, W_RangeObject):
             start = space.int_w(w_idx.w_start)
             end = space.int_w(w_idx.w_end)
-            if end < 0:
-                end = end % len(self.items_w)
-            if start < 0:
-                start = start % len(self.items_w)
-            if not w_idx.exclusive:
-                end += 1
-            return space.newarray(self.items_w[start:end])
+            inclusive = not w_idx.exclusive
+            as_range = True
         else:
-            return self.items_w[space.int_w(w_idx)]
+            start = space.int_w(w_idx)
+            if w_count:
+                end = space.int_w(w_count)
+                if end < 0:
+                    end = -1
+                else:
+                    as_range = True
 
-    @classdef.method("[]=")
-    def method_subscript_assign(self, space, w_idx, w_obj):
-        if isinstance(w_idx, W_RangeObject):
-            start = space.int_w(w_idx.w_start)
-            if w_idx.exclusive:
-                end = space.int_w(w_idx.w_end)
-            else:
-                end = space.int_w(w_idx.w_end) + 1
-            assert start >= 0
-            assert end >= 0
-            self.items_w[start:end] = [w_obj]
-        else:
-            self.items_w[space.int_w(w_idx)] = w_obj
+        if start < 0:
+            start += len(self.items_w)
+        if as_range:
+            if w_count:
+                end += start
+            if end < 0:
+                end += len(self.items_w)
+            if inclusive:
+                end += 1
+            if end < start:
+                end = start
+            elif end > len(self.items_w):
+                end = len(self.items_w)
+        return (start, end, as_range)
 
     @classdef.method("size")
     @classdef.method("length")
