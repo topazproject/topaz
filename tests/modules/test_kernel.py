@@ -18,6 +18,15 @@ class TestKernel(BaseRuPyPyTest):
         assert w_cls is space.getclassfor(W_ProcObject)
         assert w_lambda is space.w_true
 
+    def test_proc(self, space):
+        w_res = space.execute("""
+        l = proc { |x| 3 }
+        return [l.class, l.lambda?]
+        """)
+        w_cls, w_lambda = space.listview(w_res)
+        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_lambda is space.w_false
+
     def test_singleton_methods(self, space):
         w_res = space.execute("""
         class X
@@ -43,15 +52,15 @@ class TestKernel(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [["foo"], []]
 
     def test_raise(self, space):
-        with self.raises("RuntimeError", "foo"):
+        with self.raises(space, "RuntimeError", "foo"):
             space.execute("raise 'foo'")
-        with self.raises("TypeError", "foo"):
+        with self.raises(space, "TypeError", "foo"):
             space.execute("raise TypeError, 'foo'")
-        with self.raises("TypeError", "foo"):
+        with self.raises(space, "TypeError", "foo"):
             space.execute("fail TypeError, 'foo'")
-        with self.raises("TypeError", "exception class/object expected"):
+        with self.raises(space, "TypeError", "exception class/object expected"):
             space.execute("fail nil")
-        with self.raises("TypeError", "exception object expected"):
+        with self.raises(space, "TypeError", "exception object expected"):
             space.execute("""
             class A
               def exception(msg=nil)
@@ -59,7 +68,7 @@ class TestKernel(BaseRuPyPyTest):
             end
             raise A.new
             """)
-        with self.raises("RuntimeError"):
+        with self.raises(space, "RuntimeError"):
             space.execute("""
             class A
               def exception(msg=nil); RuntimeError.new(msg); end
@@ -76,6 +85,26 @@ class TestKernel(BaseRuPyPyTest):
         return A.new.do_raise
         """)
         assert self.unwrap(space, w_res) == ['foo']
+
+    def test_raise_error_subclass(self, space):
+        with self.raises(space, "CustomError", 'foo'):
+            space.execute("""
+            class CustomError < StandardError; end
+            raise CustomError, 'foo'
+            """)
+
+    def test_Array(self, space):
+        w_res = space.execute("""
+        class A
+          def to_ary; ["to_ary"]; end
+          def to_a; ["to_a"]; end
+        end
+        class B
+          def to_a; ["to_a"]; end
+        end
+        return Array(A.new), Array(B.new)
+        """)
+        assert self.unwrap(space, w_res) == [["to_ary"], ["to_a"]]
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
@@ -128,7 +157,7 @@ class TestRequire(BaseRuPyPyTest):
         assert w_res is space.w_true
 
     def test_nonexistance(self, space):
-        with self.raises("LoadError"):
+        with self.raises(space, "LoadError"):
             space.execute("require 'xxxxxxx'")
 
     def test_already_loaded(self, space, tmpdir):

@@ -4,7 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_RootObject
 
 
 class Node(object):
@@ -372,6 +372,11 @@ class Function(Node):
                 arg_ctx.emit(consts.RETURN)
                 bc = arg_ctx.create_bytecode([], [], None, None)
                 defaults.append(bc)
+        if self.splat_arg is not None:
+            if function_ctx.symtable.is_local(self.splat_arg):
+                function_ctx.symtable.get_local_num(self.splat_arg)
+            elif function_ctx.symtable.is_cell(self.splat_arg):
+                function_ctx.symtable.get_cell_num(self.splat_arg)
         if self.block_arg is not None:
             if function_ctx.symtable.is_local(self.block_arg):
                 function_ctx.symtable.get_local_num(self.block_arg)
@@ -567,6 +572,28 @@ class AndEqual(Node):
     def __init__(self, target, value):
         self.target = target
         self.value = value
+
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        otherwise = ctx.new_block()
+        end = ctx.new_block()
+
+        dup_needed = self.target.compile_receiver(ctx)
+        if dup_needed == 1:
+            ctx.emit(consts.DUP_TOP)
+        elif dup_needed == 2:
+            ctx.emit(consts.DUP_TWO)
+        self.target.compile_load(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit_jump(consts.JUMP_IF_FALSE, end)
+        ctx.use_next_block(otherwise)
+        ctx.emit(consts.DISCARD_TOP)
+        self.value.compile(ctx)
+        ctx.use_next_block(end)
+        self.target.compile_store(ctx)
 
 
 class MultiAssignment(Node):
@@ -929,7 +956,7 @@ class LookupConstant(Node):
         if self.value is not None:
             self.value.compile(ctx)
         else:
-            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_BaseObject)))
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_RootObject)))
         ctx.current_lineno = self.lineno
         ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
 
@@ -970,7 +997,7 @@ class Variable(Node):
             transformer.error(node)
 
     def locate_symbols(self, symtable):
-        if (self.name not in ["true", "false", "nil", "self"] and
+        if (self.name not in ["true", "false", "nil"] and
             not self.name[0].isupper()):
             symtable.declare_read(self.name)
 
@@ -985,8 +1012,6 @@ class Variable(Node):
         }
         if self.name in named_consts:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
-        elif self.name == "self":
-            ctx.emit(consts.LOAD_SELF)
         elif self.name == "__FILE__":
             ctx.emit(consts.LOAD_CODE)
             ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)

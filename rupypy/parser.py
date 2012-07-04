@@ -302,7 +302,7 @@ class Transformer(object):
     def visit_real_send(self, node):
         if node.children[0].symbol == "ambigious_binop":
             node = node.children[0]
-            lhs = ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
+            lhs = self.visit_identifier(node.children[0])
             rhs = self.visit_arg(node.children[2])
             return ast.MaybeBinop(node.children[1].additional_info, lhs, rhs, node.getsourcepos().lineno)
         elif node.children[0].symbol in "global_send" or node.symbol == "global_paren_send":
@@ -502,9 +502,17 @@ class Transformer(object):
         elif node.symbol == "GLOBAL":
             return ast.Global(node.additional_info)
         elif node.symbol == "IDENTIFIER":
-            return ast.Variable(node.additional_info, node.getsourcepos().lineno)
+            return self.visit_identifier(node)
         elif node.symbol == "CONSTANT":
             return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.additional_info, node.getsourcepos().lineno)
+
+    def visit_identifier(self, node):
+        name = node.additional_info
+        lineno = node.getsourcepos().lineno
+        if name == "self":
+            return ast.Self(lineno)
+        else:
+            return ast.Variable(name, lineno)
 
     def visit_if(self, node):
         if_node = node.children[1]
@@ -514,13 +522,13 @@ class Transformer(object):
         idx = 2
         conditions = []
         if len(node.children) > idx and node.children[idx].symbol == "elsifs":
-            for node in node.children[idx].children:
-                cond = self.visit_expr(node.children[1])
-                body = self.visit_block(node, start_idx=3)
+            for n in node.children[idx].children:
+                cond = self.visit_expr(n.children[1])
+                body = self.visit_block(n, start_idx=3)
                 conditions.append((cond, body))
             idx += 1
         if len(node.children) > idx and node.children[idx].symbol == "else":
-            else_node = node.children[2]
+            else_node = node.children[idx]
             else_block = self.visit_block(else_node, start_idx=1)
         else:
             else_block = ast.Block([])
@@ -737,7 +745,9 @@ class Transformer(object):
             else:
                 if splat_arg:
                     self.error(n)
-                if len(n.children) == 2 and n.children[0].symbol == "UNARY_STAR":
+                if len(n.children) == 1 and n.children[0].symbol == "UNARY_STAR":
+                    splat_arg = ""
+                elif len(n.children) == 2 and n.children[0].symbol == "UNARY_STAR":
                     splat_arg = n.children[1].additional_info
                 elif len(n.children) == 2:
                     name = n.children[0].additional_info

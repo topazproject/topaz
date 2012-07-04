@@ -22,6 +22,10 @@ class W_FloatObject(W_NumericObject):
     def method_to_f(self, space):
         return self
 
+    @classdef.method("to_i")
+    def method_to_i(self, space):
+        return space.newint(int(self.floatvalue))
+
     @classdef.method("-@")
     def method_neg(self, space):
         return space.newfloat(-self.floatvalue)

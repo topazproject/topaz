@@ -2,6 +2,7 @@ from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.rangeobject import W_RangeObject
+from rupypy.objects.exceptionobject import W_TypeError
 
 
 class W_ArrayObject(W_Object):
@@ -67,6 +68,18 @@ class W_ArrayObject(W_Object):
         assert isinstance(w_other, W_ArrayObject)
         return space.newarray(self.items_w + w_other.items_w)
 
+    classdef.app_method("""
+    def -(other)
+        res = []
+        self.each do |x|
+            if !other.include?(x)
+                res << x
+            end
+        end
+        res
+    end
+    """)
+
     @classdef.method("<<")
     def method_lshift(self, space, w_obj):
         self.items_w.append(w_obj)
@@ -78,6 +91,23 @@ class W_ArrayObject(W_Object):
             w_obj = args_w[i]
             self.items_w.insert(0, w_obj)
         return self
+
+    @classdef.method("join")
+    def method_join(self, space, w_sep=None):
+        if not self.items_w:
+            return space.newstr_fromstr("")
+        if w_sep is None:
+            separator = ""
+        elif space.respond_to(w_sep, space.newsymbol("to_str")):
+            separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
+        else:
+            return space.raise_(space.getclassfor(W_TypeError),
+                "can't convert %s into String" % space.getclass(w_sep).name
+            )
+        return space.newstr_fromstr(separator.join([
+            space.str_w(space.send(w_o, space.newsymbol("to_s")))
+            for w_o in self.items_w
+        ]))
 
     classdef.app_method("""
     def at idx

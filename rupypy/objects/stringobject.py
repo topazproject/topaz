@@ -72,7 +72,7 @@ class MutableStringStrategy(StringStrategy):
 
     def clear(self, s):
         storage = self.unerase(s.str_storage)
-        storage[0:len(storage)] = []
+        del storage[:]
 
 
 class W_StringObject(W_Object):
@@ -115,6 +115,7 @@ class W_StringObject(W_Object):
         storage = strategy.unerase(self.str_storage)
         w_other.strategy.extend_into(w_other.str_storage, storage)
 
+    @classdef.method("to_str")
     @classdef.method("to_s")
     def method_to_s(self, space):
         return self
@@ -134,6 +135,7 @@ class W_StringObject(W_Object):
         self.extend(space, w_other)
         return self
 
+    @classdef.method("size")
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(self.length())
@@ -144,19 +146,29 @@ class W_StringObject(W_Object):
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
-        assert isinstance(w_other, W_StringObject)
-        s1 = space.str_w(self)
-        s2 = space.str_w(w_other)
-        if s1 < s2:
-            return space.newint(-1)
-        elif s1 == s2:
-            return space.newint(0)
-        elif s1 > s2:
-            return space.newint(1)
+        if isinstance(w_other, W_StringObject):
+            s1 = space.str_w(self)
+            s2 = space.str_w(w_other)
+            if s1 < s2:
+                return space.newint(-1)
+            elif s1 == s2:
+                return space.newint(0)
+            elif s1 > s2:
+                return space.newint(1)
+        else:
+            if space.respond_to(w_other, space.newsymbol("to_str")) and space.respond_to(w_other, space.newsymbol("<=>")):
+                tmp = space.send(w_other, space.newsymbol("<=>"), [self])
+                if tmp is not space.w_nil:
+                    return space.newint(-space.int_w(tmp))
+            return space.w_nil
 
     @classdef.method("freeze")
     def method_freeze(self, space):
         pass
+
+    @classdef.method("dup")
+    def method_dup(self, space):
+        return self.copy(space)
 
     @classdef.method("to_sym")
     @classdef.method("intern")
@@ -168,3 +180,14 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         self.strategy.clear(self)
         return self
+
+    @classdef.method("split", limit="int")
+    def method_split(self, space, w_sep=None, limit=-1):
+        if w_sep is None:
+            sep = None
+        elif isinstance(w_sep, W_StringObject):
+            sep = space.str_w(w_sep)
+        else:
+            raise NotImplementedError("Regexp separators for String#split")
+        results = space.str_w(self).split(sep, limit - 1)
+        return space.newarray([space.newstr_fromstr(s) for s in results])

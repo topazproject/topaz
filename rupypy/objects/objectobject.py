@@ -72,6 +72,14 @@ class W_RootObject(W_BaseObject):
             space.int_w(space.send(self, space.newsymbol("__id__")))
         ))
 
+    @classdef.method("send", method="str")
+    def method_send(self, space, method, args_w, block):
+        return space.send(self, space.newsymbol(method), args_w[1:], block)
+
+    @classdef.method("==")
+    def method_equal(self, space, w_other):
+        return space.newbool(self is w_other)
+
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):

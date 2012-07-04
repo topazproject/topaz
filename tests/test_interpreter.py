@@ -159,7 +159,7 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 6
 
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("X.new.m")
 
     def test_constant(self, space):
@@ -334,6 +334,21 @@ class TestInterpreter(BaseRuPyPyTest):
         return X::Constant
         """)
         assert space.int_w(w_res) == 3
+        w_res = space.execute("""
+        class X
+            Constant = 3
+            def self.constant
+               Constant
+            end
+        end
+        return X.constant
+        """)
+        assert space.int_w(w_res) == 3
+        w_res = space.execute("""
+        X = 3
+        return ::X
+        """)
+        assert space.int_w(w_res) == 3
 
     def test___FILE__(self, space):
         w_res = space.execute("return __FILE__")
@@ -372,7 +387,7 @@ class TestInterpreter(BaseRuPyPyTest):
         assert isinstance(w_res, W_ModuleObject)
         assert w_res.name == "M"
 
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("M.method")
 
     def test_singleton_method(self, space):
@@ -385,7 +400,7 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert space.str_w(w_res) == "hello world"
 
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("[].hello")
 
     def test_splat(self, space):
@@ -445,7 +460,7 @@ class TestInterpreter(BaseRuPyPyTest):
         return X::Constant
         """)
         assert space.int_w(w_res) == 5
-        with self.raises("NameError"):
+        with self.raises(space, "NameError"):
             space.execute("Constant")
 
     def test_receive_splat_argument(self, space):
@@ -457,6 +472,24 @@ class TestInterpreter(BaseRuPyPyTest):
         return f(1, 2, *[3, 4])
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3, 4]
+
+        w_res = space.execute("""
+        def f(*args)
+            'hi'
+        end
+
+        return f(1, 2, *[3, 4])
+        """)
+        assert self.unwrap(space, w_res) == 'hi'
+
+        w_res = space.execute("""
+        def f(h, *)
+            h
+        end
+
+        return f(1, 2, *[3, 4])
+        """)
+        assert self.unwrap(space, w_res) == 1
 
     def test_or(self, space):
         w_res = space.execute("return 3 + 4 || 5")
@@ -583,7 +616,6 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["B", "A overrides all"]
 
-    @py.test.mark.xfail
     def test_class_variables_accessed_from_class_side(self, space):
         w_res = space.execute("""
         class A; @@foo = 'A'; end
@@ -597,7 +629,7 @@ class TestInterpreter(BaseRuPyPyTest):
 
     @py.test.mark.xfail
     def test_class_variable_access_has_static_scope(self, space):
-        with self.raises("NameError"):
+        with self.raises(space, "NameError"):
             w_res = space.execute("""
             class A
               def get
@@ -670,7 +702,7 @@ class TestInterpreter(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == ["A.get", "M#get", "B#override", "M#get (2nd ed)"]
 
     def test_find_const(self, space):
-        with self.raises("NameError"):
+        with self.raises(space, "NameError"):
             space.execute("""
             class A
               Const = "A"
@@ -809,8 +841,19 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
-        with self.raises("TypeError"):
+        with self.raises(space, "TypeError", "wrong argument type"):
             space.execute("f(&3)")
+
+        w_res = space.execute("""
+        return [1, 2, 3].map(&:to_s)
+        """)
+        assert self.unwrap(space, w_res) == ["1", "2", "3"]
+
+        with self.raises(space, "TypeError", "can't convert String to Proc (String#to_proc gives String)"):
+            space.execute("""
+            class String; def to_proc; self; end; end
+            [1, 2, 3].map(&"to_s")
+            """)
 
     def test_block_return(self, space):
         w_res = space.execute("""
@@ -859,7 +902,7 @@ class TestExceptions(BaseRuPyPyTest):
         assert space.int_w(w_res) == 2
 
     def test_uncaught_exception(self, space):
-        with self.raises("NoMethodError"):
+        with self.raises(space, "NoMethodError"):
             space.execute("""
             begin
                 [].dsafdsafsa

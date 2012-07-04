@@ -154,7 +154,7 @@ class W_ModuleObject(W_RootObject):
         return self.instance_variables.set(name, w_value)
 
     def find_instance_var(self, space, name):
-        return self.instance_variables.get(name)
+        return self.instance_variables.get(name) or space.w_nil
 
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
@@ -271,3 +271,30 @@ class W_ModuleObject(W_RootObject):
         space.raise_(space.getclassfor(W_NameError),
              "uninitialized constant %s" % name
         )
+
+    @classdef.method("class_eval", string="str", filename="str")
+    @classdef.method("module_eval", string="str", filename="str")
+    def method_module_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
+        if string is not None:
+            if filename is None:
+                filename = "module_eval"
+            if w_lineno is not None:
+                lineno = space.int_w(w_lineno)
+            else:
+                lineno = 1
+            return space.execute(string, self, self, filename, lineno)
+        else:
+            block.w_self = self
+            block.w_scope = self
+            space.invoke_block(block, [])
+
+    @classdef.method("const_defined?", const="str", inherit="bool")
+    def method_const_definedp(self, space, const, inherit=True):
+        if inherit:
+            return space.newbool(self.find_inherited_const(space, const) is not None)
+        else:
+            return space.newbool(self._find_const_pure(const, self.version) is not None)
+
+    @classdef.method("method_defined?", name="str")
+    def method_method_definedp(self, space, name):
+        return space.newbool(self.find_method(space, name) is not None)

@@ -14,8 +14,14 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute('return "ABC".to_s')
         assert space.str_w(w_res) == "ABC"
 
+    def test_to_str(self, space):
+        w_res = space.execute('return "ABC".to_str')
+        assert space.str_w(w_res) == "ABC"
+
     def test_length(self, space):
         w_res = space.execute("return 'ABC'.length")
+        assert space.int_w(w_res) == 3
+        w_res = space.execute("return 'ABC'.size")
         assert space.int_w(w_res) == 3
 
     def test_comparator_lt(self, space):
@@ -29,6 +35,20 @@ class TestStringObject(BaseRuPyPyTest):
     def test_comparator_gt(self, space):
         w_res = space.execute("return 'b' <=> 'a'")
         assert space.int_w(w_res) == 1
+
+    def test_comparator_to_type_without_to_str(self, space):
+        w_res = space.execute("return 'b' <=> 1")
+        assert w_res is space.w_nil
+
+    def test_comparator_to_type_with_to_str(self, space):
+        w_res = space.execute("""
+        class A
+          def to_str; 'A'; end
+          def <=>(other); other <=> self.to_str; end
+        end
+        return 'A' <=> A.new
+        """)
+        assert space.int_w(w_res) == 0
 
     def test_hash(self, space):
         w_res = space.execute("""
@@ -52,3 +72,24 @@ class TestStringObject(BaseRuPyPyTest):
 
         w_res = space.execute("return ('a' << 'b').clear")
         assert self.unwrap(space, w_res) == ""
+
+    def test_split(self, space):
+        w_res = space.execute("return 'a b c'.split")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+        w_res = space.execute("return 'a-b-c'.split('-')")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+        w_res = space.execute("return 'a-b-c'.split('-', 2)")
+        assert self.unwrap(space, w_res) == ["a", "b-c"]
+        w_res = space.execute("return 'a b c'.split(' ', -1)")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+
+    def test_dup(self, space):
+        w_res = space.execute("""
+        x = "abc"
+        y = x.dup
+        x << "def"
+        return [x, y]
+        """)
+        x, y = self.unwrap(space, w_res)
+        assert x == "abcdef"
+        assert y == "abc"

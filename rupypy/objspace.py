@@ -18,8 +18,10 @@ from rupypy.lib.dir import W_Dir
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, ModuleCache
 from rupypy.modules.comparable import Comparable
+from rupypy.modules.enumerable import Enumerable
 from rupypy.modules.math import Math
 from rupypy.modules.kernel import Kernel
+from rupypy.modules.process import Process
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
@@ -28,7 +30,9 @@ from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
-    W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError, W_ArgumentError, W_RuntimeError)
+                    W_ZeroDivisionError, W_SyntaxError, W_LoadError,
+                    W_TypeError, W_ArgumentError, W_RuntimeError,
+                    W_StandardError)
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -80,12 +84,12 @@ class ObjectSpace(object):
             W_ArrayObject, W_HashObject,
             W_IOObject, W_FileObject,
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
-            W_TypeError, W_ArgumentError, W_RuntimeError,
-            W_Random, W_Dir
+            W_TypeError, W_ArgumentError, W_RuntimeError, W_StandardError,
+            W_Random, W_Dir, W_ProcObject
         ]:
             self.add_class(cls)
 
-        for module in [Math, Comparable]:
+        for module in [Math, Comparable, Enumerable, Kernel, Process]:
             self.add_module(module)
 
         w_load_path = self.newarray([
@@ -123,25 +127,25 @@ class ObjectSpace(object):
 
     # Methods for dealing with source code.
 
-    def parse(self, source):
+    def parse(self, source, initial_lineno=1):
         try:
-            st = ToASTVisitor().transform(_parse(source))
+            st = ToASTVisitor().transform(_parse(source, initial_lineno=initial_lineno))
             return Transformer().visit_main(st)
         except ParseError as e:
             self.raise_(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:
             self.raise_(self.getclassfor(W_SyntaxError))
 
-    def compile(self, source, filepath):
-        astnode = self.parse(source)
+    def compile(self, source, filepath, initial_lineno=1):
+        astnode = self.parse(source, initial_lineno=initial_lineno)
         symtable = SymbolTable()
         astnode.locate_symbols(symtable)
         c = CompilerContext(self, "<main>", symtable, filepath)
         astnode.compile(c)
         return c.create_bytecode([], [], None, None)
 
-    def execute(self, source, w_self=None, w_scope=None, filepath="-e"):
-        bc = self.compile(source, filepath)
+    def execute(self, source, w_self=None, w_scope=None, filepath="-e", initial_lineno=1):
+        bc = self.compile(source, filepath, initial_lineno=initial_lineno)
         frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
@@ -245,6 +249,12 @@ class ObjectSpace(object):
 
     def getsingletonclass(self, w_receiver):
         return w_receiver.getsingletonclass(self)
+
+    def getscope(self, w_receiver):
+        if isinstance(w_receiver, W_ModuleObject):
+            return w_receiver
+        else:
+            return self.getclass(w_receiver)
 
     @jit.unroll_safe
     def getnonsingletonclass(self, w_receiver):

@@ -71,12 +71,10 @@ class W_IOObject(W_Object):
 
     @classdef.method("write")
     def method_write(self, space, w_str):
-        old_pos = self.stream.tell()
-        assert isinstance(old_pos, int)
+        old_pos = int(self.stream.tell())
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
         self.stream.write(string)
-        new_pos = self.stream.tell()
-        assert isinstance(new_pos, int)
+        new_pos = int(self.stream.tell())
         return space.newint(new_pos - old_pos)
 
 
@@ -92,6 +90,7 @@ class W_FileObject(W_IOObject):
         else:
             w_alt_seperator = space.w_nil
             w_fnm_syscase = space.newint(0)
+        space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
         space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
 
@@ -162,3 +161,8 @@ class W_FileObject(W_IOObject):
         if not items:
             return space.newstr_fromstr("/")
         return space.newstr_fromstr("/" + "/".join(items))
+
+    @classdef.singleton_method("join", base="path", path="path")
+    def singleton_method_join(self, space, base, path):
+        sep = space.str_w(space.find_const(self, "SEPARATOR"))
+        return space.newstr_fromstr(base + sep + path)

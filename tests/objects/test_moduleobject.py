@@ -63,6 +63,55 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_missing_instance_variable(self, space):
+        w_res = space.execute("""
+        class X
+            def self.m
+                @a
+            end
+        end
+        return X.m
+        """)
+        assert self.unwrap(space, w_res) is None
+
+    def test_module_eval(self, space, capfd):
+        w_res = space.execute("""
+        class X; end
+        X.module_eval('def foo; 1; end')
+        return X.new.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.module_eval { def foo; 1; end }
+        return X.new.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.module_eval('def foo; [__FILE__, __LINE__]; end', 'dummy', 123)
+        return X.new.foo
+        """)
+        assert self.unwrap(space, w_res) == ["dummy", 123]
+
+    def test_const_definedp(self, space):
+        w_res = space.execute("""
+        class X; Const = 1; end
+        class Y < X; end
+        return X.const_defined?("Const"), X.const_defined?("NoConst"),
+          X.const_defined?("X"), Y.const_defined?("Const"), Y.const_defined?("Const", false)
+        """)
+        assert self.unwrap(space, w_res) == [True, False, True, True, False]
+
+    def test_method_definedp(self, space):
+        w_res = space.execute("""
+        class X; def foo; end; end
+        return X.method_defined?("foo"), X.method_defined?("no_method")
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):

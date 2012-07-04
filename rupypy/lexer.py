@@ -83,12 +83,13 @@ class BaseLexer(object):
     def error(self):
         raise LexerError(self.current_pos())
 
+
 class Lexer(BaseLexer):
-    def __init__(self, source):
+    def __init__(self, source, initial_lineno):
         BaseLexer.__init__(self)
         self.source = source
         self.idx = 0
-        self.lineno = 1
+        self.lineno = initial_lineno
         self.columno = 1
         self.state = self.EXPR_BEG
 
@@ -348,7 +349,7 @@ class Lexer(BaseLexer):
 
     def regexp(self, begin, end):
         self.emit("REGEXP_BEGIN")
-        tokens = StringLexer(self, begin, end, interpolate=True).tokenize()
+        tokens = StringLexer(self, begin, end, interpolate=True, regexp=True).tokenize()
         self.tokens.extend(tokens)
         self.emit("REGEXP_END")
         self.state = self.EXPR_END
@@ -659,13 +660,13 @@ class Lexer(BaseLexer):
                 self.emit("QUESTION")
             else:
                 if ch2 == "\\":
-                    self.add(self.read_escape())
+                    self.add(self.read_escape(character_escape=True))
                 else:
                     self.add(ch2)
                 self.emit("SSTRING")
                 self.state = self.EXPR_END
 
-    def read_escape(self):
+    def read_escape(self, character_escape=False):
         c = self.read()
         if c == self.EOF:
             self.error()
@@ -691,22 +692,46 @@ class Lexer(BaseLexer):
             return " "
         elif c == "u":
             raise NotImplementedError("UTF-8 escape not implemented")
-        elif c in "x0":
-            buf = ""
-            for i in xrange(2):
+        elif c == "x":
+            hex_escape = self.read()
+            if not hex_escape in string.hexdigits:
+                self.error()
+            if self.peek() in string.hexdigits:
+                hex_escape += self.read()
+            return chr(int(hex_escape, 16))
+        elif c in string.octdigits:
+            buf = c
+            octal = True
+            while self.peek() in string.digits:
                 ch2 = self.read()
-                if ch2.isalnum():
-                    if c == "x" and not ch2 in string.hexdigits:
-                        self.error()
-                    if c == "0" and not ch2 in string.octdigits:
-                        self.error()
+                if ch2 in string.octdigits:
                     buf += ch2
+                elif character_escape:
+                    self.error()
                 else:
-                    break
-            if c == "x":
-                return chr(int(buf, 16))
-            elif c == "0":
-                return chr(int(buf, 8))
+                    octal = False
+                    buf += ch2
+                if len(buf) > 3 and character_escape:
+                    self.error()
+            if octal:
+                codepoint = int(buf, 8)
+                if codepoint > 255:
+                    codepoint = codepoint - 256
+                return chr(codepoint)
+            else:
+                buf = "0" * (len(buf) - 3) + buf
+                prefix_idx = 3
+                for i in xrange(3):
+                    if buf[i] not in string.octdigits:
+                        prefix_idx = i
+                        break
+                codepoint = int(buf[0:prefix_idx], 8)
+                if codepoint > 255:
+                    codepoint -= 256
+                unicode_char = chr(codepoint)
+                for ch in buf[prefix_idx:]:
+                    unicode_char += chr(int(ch) + 48)
+                return unicode_char
         elif c == "M":
             if self.read() != "-":
                 self.error()
@@ -873,16 +898,19 @@ class ChildLexer(BaseLexer):
     def unread(self):
         return self.lexer.unread()
 
+    def read_escape(self):
+        return self.lexer.read_escape()
 
 class StringLexer(ChildLexer):
     CODE = 0
     STRING = 1
 
-    def __init__(self, lexer, begin, end, interpolate=True, qwords=False):
+    def __init__(self, lexer, begin, end, interpolate=True, qwords=False, regexp=False):
         ChildLexer.__init__(self, lexer)
 
         self.interpolate = interpolate
         self.qwords = qwords
+        self.regexp = regexp
 
         self.begin = begin
         self.end = end
@@ -903,8 +931,16 @@ class StringLexer(ChildLexer):
             if ch == self.lexer.EOF:
                 self.unread()
                 return self.tokens
-            elif ch == "\\" and self.peek() in [self.begin, self.end, "\\"]:
-                self.add(self.read())
+            elif ch == "\\":
+                if self.peek() in [self.begin, self.end, "\\"]:
+                    self.add(self.read())
+                else:
+                    escaped_char = self.read_escape()
+                    if self.regexp and escaped_char in string.printable:
+                        self.add(ch)
+                        self.add(escaped_char)
+                    else:
+                        self.add(escaped_char)
             elif ch == self.begin and (self.begin != self.end):
                 self.nesting += 1
                 self.add(ch)
@@ -966,14 +1002,14 @@ class StringLexer(ChildLexer):
                 context.append(self.CODE)
             else:
                 chars.append(ch)
-        lexer_tokens = Lexer(chars.build()).tokenize()
+        lexer_tokens = Lexer(chars.build(), self.get_lineno()).tokenize()
         # Remove the EOF
         lexer_tokens.pop()
         self.tokens.extend(lexer_tokens)
         self.emit("DSTRING_END")
 
 
-class HeredocLexer(ChildLexer):
+class HeredocLexer(StringLexer):
     def __init__(self, lexer, marker, indent, interpolate):
         ChildLexer.__init__(self, lexer)
         self.marker = marker
@@ -990,7 +1026,7 @@ class HeredocLexer(ChildLexer):
                 return self.tokens
             chars.append(ch)
         if chars.getlength():
-            lexer_tokens = Lexer(chars.build()).tokenize()
+            lexer_tokens = Lexer(chars.build(), self.get_lineno()).tokenize()
             lexer_tokens.pop()
         else:
             lexer_tokens = []
@@ -1019,6 +1055,10 @@ class HeredocLexer(ChildLexer):
                 else:
                     self.emit("STRING_VALUE")
                     break
+            elif ch == "#" and self.peek() == "{":
+                self.emit_str()
+                self.read()
+                self.tokenize_interpolation()
             elif ch == self.EOF:
                 return self.tokens
             else:

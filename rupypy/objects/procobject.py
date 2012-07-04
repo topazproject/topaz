@@ -10,6 +10,7 @@ class W_ProcObject(W_Object):
         self.block = block
         self.is_lambda = is_lambda
 
+    @classdef.method("[]")
     @classdef.method("call")
     def method_call(self, space, args_w):
         return space.invoke_block(self.block, args_w)
@@ -17,3 +18,7 @@ class W_ProcObject(W_Object):
     @classdef.method("lambda?")
     def method_lambda(self, space):
         return space.newbool(self.is_lambda)
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, args_w, block):
+        return W_ProcObject(space, block, False)

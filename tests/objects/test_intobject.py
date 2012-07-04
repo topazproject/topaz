@@ -23,9 +23,27 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
         assert w_res is space.w_true
+        w_res = space.execute("""
+        class A
+          def ==(o); 'hi'; end
+        end
+        return 1 == A.new
+        """)
+        assert space.str_w(w_res) == 'hi'
+        w_res = space.execute("return 1 == '1'")
+        assert w_res is space.w_false
 
     def test_not_equal(self, space):
         w_res = space.execute("return 1 != 1")
+        assert w_res is space.w_false
+        w_res = space.execute("return 1 != '1'")
+        assert w_res is space.w_true
+        w_res = space.execute("""
+        class A
+          def ==(o); 'hi'; end
+        end
+        return 1 != A.new
+        """)
         assert w_res is space.w_false
 
     def test_less(self, space):
@@ -57,6 +75,18 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_comparator_gt(self, space):
         w_res = space.execute("return 2 <=> 1")
         assert space.int_w(w_res) == 1
+
+    def test_comparator_float(self, space):
+        w_res = space.execute("return 1 <=> 1.1")
+        assert space.int_w(w_res) == -1
+
+    def test_comparator_other_type(self, space):
+        w_res = space.execute("return 1 <=> '1'")
+        assert w_res is space.w_nil
+
+    def test_to_i(self, space):
+        w_res = space.execute("return [1.to_i, 1.to_int]")
+        assert self.unwrap(space, w_res) == [1, 1]
 
     def test_nonzero(self, space):
         w_res = space.execute("return [2.nonzero?, 0.nonzero?]")
