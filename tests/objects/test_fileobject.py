@@ -4,11 +4,18 @@ from ..base import BaseRuPyPyTest
 
 
 class TestFile(object):
+    def test_separator(self, space):
+        space.execute("File::SEPARATOR")
+
     def test_alt_separator(self, space):
         space.execute("File::ALT_SEPARATOR")
 
     def test_fnm_syscase(self, space):
         space.execute("File::FNM_SYSCASE")
+
+    def test_join(self, space):
+        w_res = space.execute("return File.join('/abc', 'bin')")
+        assert space.str_w(w_res) == "/abc/bin"
 
 
 class TestExpandPath(BaseRuPyPyTest):

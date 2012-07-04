@@ -719,7 +719,7 @@ class Lexer(BaseLexer):
                     codepoint = codepoint - 256
                 return chr(codepoint)
             else:
-                buf = buf.rjust(3, "0")
+                buf = "0" * (len(buf) - 3) + buf
                 prefix_idx = 3
                 for i in xrange(3):
                     if buf[i] not in string.octdigits:
@@ -727,7 +727,7 @@ class Lexer(BaseLexer):
                         break
                 codepoint = int(buf[0:prefix_idx], 8)
                 if codepoint > 255:
-                    codepoint = codepoint - 256
+                    codepoint -= 256
                 unicode_char = chr(codepoint)
                 for ch in buf[prefix_idx:]:
                     unicode_char += chr(int(ch) + 48)
