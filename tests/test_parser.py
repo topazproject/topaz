@@ -442,9 +442,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("while true do; puts 5 end") == expected
         assert space.parse("while true; puts 5 end") == expected
         assert space.parse("while true; end") == ast.Main(ast.Block([
-            ast.Statement(ast.While(ast.Variable("true", 1), ast.Block([
-                ast.Statement(ast.Variable("nil", -1))
-            ])))
+            ast.Statement(ast.While(ast.Variable("true", 1), ast.Block([])))
         ]))
 
         res = space.parse("""
@@ -548,11 +546,11 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
         assert space.parse("self[i]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(ast.Variable("self", 1), [ast.Variable("i", 1)], 1))
+            ast.Statement(ast.Subscript(ast.Self(1), [ast.Variable("i", 1)], 1))
         ]))
 
         assert space.parse("self[i].to_s") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Subscript(ast.Variable("self", 1), [ast.Variable("i", 1)], 1), "to_s", [], None, 1))
+            ast.Statement(ast.Send(ast.Subscript(ast.Self(1), [ast.Variable("i", 1)], 1), "to_s", [], None, 1))
         ]))
 
         assert space.parse("a[:a][:a]") == ast.Main(ast.Block([
@@ -921,7 +919,7 @@ HERE
     def test_singleton_class(self, space):
         r = space.parse("class << self; end")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.SingletonClass(ast.Variable("self", 1), ast.Block([]), 1))
+            ast.Statement(ast.SingletonClass(ast.Self(1), ast.Block([]), 1))
         ]))
 
     def test_instance_variable(self, space):
@@ -1046,11 +1044,11 @@ HERE
 
     def test_assign_method(self, space):
         assert space.parse("self.attribute = 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.Send(ast.Variable("self", 1), "attribute", [], None, 1), ast.ConstantInt(3)))
+            ast.Statement(ast.Assignment(ast.Send(ast.Self(1), "attribute", [], None, 1), ast.ConstantInt(3)))
         ]))
 
         assert space.parse("self.attribute.other_attr.other = 12") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.Send(ast.Send(ast.Send(ast.Variable("self", 1), "attribute", [], None, 1), "other_attr", [], None, 1), "other", [], None, 1), ast.ConstantInt(12)))
+            ast.Statement(ast.Assignment(ast.Send(ast.Send(ast.Send(ast.Self(1), "attribute", [], None, 1), "other_attr", [], None, 1), "other", [], None, 1), ast.ConstantInt(12)))
         ]))
 
     def test_augmented_assignment(self, space):
@@ -1065,7 +1063,7 @@ HERE
         ]))
 
         assert space.parse("self.x += 2") == ast.Main(ast.Block([
-            ast.Statement(ast.AugmentedAssignment("+", ast.Send(ast.Variable("self", 1), "x", [], None, 1), ast.ConstantInt(2)))
+            ast.Statement(ast.AugmentedAssignment("+", ast.Send(ast.Self(1), "x", [], None, 1), ast.ConstantInt(2)))
         ]))
 
         assert space.parse("@a += 3") == ast.Main(ast.Block([

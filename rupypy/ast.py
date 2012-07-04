@@ -997,7 +997,7 @@ class Variable(Node):
             transformer.error(node)
 
     def locate_symbols(self, symtable):
-        if (self.name not in ["true", "false", "nil", "self"] and
+        if (self.name not in ["true", "false", "nil"] and
             not self.name[0].isupper()):
             symtable.declare_read(self.name)
 
@@ -1012,8 +1012,6 @@ class Variable(Node):
         }
         if self.name in named_consts:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
-        elif self.name == "self":
-            ctx.emit(consts.LOAD_SELF)
         elif self.name == "__FILE__":
             ctx.emit(consts.LOAD_CODE)
             ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)
