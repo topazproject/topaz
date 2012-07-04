@@ -514,13 +514,13 @@ class Transformer(object):
         idx = 2
         conditions = []
         if len(node.children) > idx and node.children[idx].symbol == "elsifs":
-            for node in node.children[idx].children:
-                cond = self.visit_expr(node.children[1])
-                body = self.visit_block(node, start_idx=3)
+            for n in node.children[idx].children:
+                cond = self.visit_expr(n.children[1])
+                body = self.visit_block(n, start_idx=3)
                 conditions.append((cond, body))
             idx += 1
         if len(node.children) > idx and node.children[idx].symbol == "else":
-            else_node = node.children[2]
+            else_node = node.children[idx]
             else_block = self.visit_block(else_node, start_idx=1)
         else:
             else_block = ast.Block([])

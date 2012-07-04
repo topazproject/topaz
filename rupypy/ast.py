@@ -573,6 +573,28 @@ class AndEqual(Node):
         self.target = target
         self.value = value
 
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        otherwise = ctx.new_block()
+        end = ctx.new_block()
+
+        dup_needed = self.target.compile_receiver(ctx)
+        if dup_needed == 1:
+            ctx.emit(consts.DUP_TOP)
+        elif dup_needed == 2:
+            ctx.emit(consts.DUP_TWO)
+        self.target.compile_load(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit_jump(consts.JUMP_IF_FALSE, end)
+        ctx.use_next_block(otherwise)
+        ctx.emit(consts.DISCARD_TOP)
+        self.value.compile(ctx)
+        ctx.use_next_block(end)
+        self.target.compile_store(ctx)
+
 
 class MultiAssignment(Node):
     def __init__(self, targets, value):

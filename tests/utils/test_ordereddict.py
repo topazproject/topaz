@@ -67,6 +67,15 @@ class BaseTestOrderedDict(object):
         assert self.run(f, [0]) == 4
         assert self.run(f, [1]) == 5
 
+    def test_get(self):
+        def f(n):
+            o = OrderedDict()
+            o[4] = 3
+            return o.get(n, 123)
+
+        assert self.run(f, [12]) == 123
+        assert self.run(f, [4]) == 3
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def run(self, func, args=[]):

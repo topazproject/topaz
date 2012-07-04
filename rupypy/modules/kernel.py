@@ -117,3 +117,10 @@ class Kernel(Module):
             space.raise_(space.getclassfor(W_TypeError), "exception object expected")
 
         raise RubyError(w_exc)
+
+    @moduledef.method("Array")
+    def method_Array(self, space, w_arg):
+        if space.respond_to(w_arg, space.newsymbol("to_ary")):
+            return space.send(w_arg, space.newsymbol("to_ary"))
+        else:
+            return space.send(w_arg, space.newsymbol("to_a"))
