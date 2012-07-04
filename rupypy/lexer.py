@@ -727,7 +727,7 @@ class Lexer(BaseLexer):
                         break
                 codepoint = int(buf[0:prefix_idx], 8)
                 if codepoint > 255:
-                    codepoint = codepoint - 256
+                    codepoint -= 256
                 unicode_char = chr(codepoint)
                 for ch in buf[prefix_idx:]:
                     unicode_char += chr(int(ch) + 48)
