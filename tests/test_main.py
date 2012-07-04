@@ -46,7 +46,7 @@ class TestMain(object):
         self.run(tmpdir, "puts 5", ruby_args=["-v"])
         out, err = capfd.readouterr()
         [version, out] = out.splitlines()
-        assert version.startswith("rupypy")
+        assert version.startswith("topaz")
         assert "1.9.3" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
@@ -55,7 +55,7 @@ class TestMain(object):
         self.run(tmpdir, ruby_args=["-v"])
         out, err = capfd.readouterr()
         [version] = out.splitlines()
-        assert version.startswith("rupypy")
+        assert version.startswith("topaz")
 
     def test_arguments(self, tmpdir, capfd):
         self.run(tmpdir, """
@@ -104,3 +104,8 @@ class TestMain(object):
             "\tfrom {}:2:in `f'",
             "\tfrom {}:4:in `<main>'",
         ])
+
+    def test_ruby_engine(self, tmpdir, capfd):
+        self.run(tmpdir, "puts RUBY_ENGINE")
+        out, err = capfd.readouterr()
+        assert out == "topaz\n"
