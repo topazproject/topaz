@@ -378,3 +378,30 @@ class ObjectSpace(object):
             elif end > length:
                 end = length
         return (start, end, as_range)
+
+    def convert_type(self, w_obj, cls, method, raise_error=True):
+        if isinstance(w_obj, cls):
+            return w_obj
+
+        try:
+            w_res = self.send(w_obj, self.newsymbol(method))
+        except RubyError as e:
+            src_cls = self.getclass(w_obj).name
+            self.raise_(
+                self.getclassfor(W_TypeError),
+                "can't convert %s into %s" % (src_cls, self.getclassfor(cls).name)
+            )
+
+        if not w_res or w_res is self.w_nil and not raise_error:
+            return w_nil
+        elif not isinstance(w_res, cls):
+            src_cls = self.getclass(w_obj).name
+            res_cls = self.getclass(w_res).name
+            self.raise_(
+                self.getclassfor(W_TypeError),
+                "can't convert %s to %s (%s#%s gives %s)" % (
+                    src_cls, self.getclassfor(cls).name, src_cls, method, res_cls
+                )
+            )
+        else:
+            return w_res
