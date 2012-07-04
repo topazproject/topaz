@@ -573,6 +573,28 @@ class AndEqual(Node):
         self.target = target
         self.value = value
 
+    def locate_symbols(self, symtable):
+        self.target.locate_symbols_assignment(symtable)
+        self.value.locate_symbols(symtable)
+
+    def compile(self, ctx):
+        otherwise = ctx.new_block()
+        end = ctx.new_block()
+
+        dup_needed = self.target.compile_receiver(ctx)
+        if dup_needed == 1:
+            ctx.emit(consts.DUP_TOP)
+        elif dup_needed == 2:
+            ctx.emit(consts.DUP_TWO)
+        self.target.compile_load(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit_jump(consts.JUMP_IF_FALSE, end)
+        ctx.use_next_block(otherwise)
+        ctx.emit(consts.DISCARD_TOP)
+        self.value.compile(ctx)
+        ctx.use_next_block(end)
+        self.target.compile_store(ctx)
+
 
 class MultiAssignment(Node):
     def __init__(self, targets, value):
@@ -975,7 +997,7 @@ class Variable(Node):
             transformer.error(node)
 
     def locate_symbols(self, symtable):
-        if (self.name not in ["true", "false", "nil", "self"] and
+        if (self.name not in ["true", "false", "nil"] and
             not self.name[0].isupper()):
             symtable.declare_read(self.name)
 
@@ -990,8 +1012,6 @@ class Variable(Node):
         }
         if self.name in named_consts:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
-        elif self.name == "self":
-            ctx.emit(consts.LOAD_SELF)
         elif self.name == "__FILE__":
             ctx.emit(consts.LOAD_CODE)
             ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)
