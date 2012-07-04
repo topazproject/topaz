@@ -350,15 +350,16 @@ class ObjectSpace(object):
         inclusive = False
         as_range = False
         end = 0
-        if isinstance(w_idx, W_RangeObject):
-            start = self.int_w(w_idx.w_start)
-            end = self.int_w(w_idx.w_end)
+
+        if isinstance(w_idx, W_RangeObject) and not w_count:
+            start = self.int_w(self.convert_type(w_idx.w_start, W_FixnumObject, "to_int"))
+            end = self.int_w(self.convert_type(w_idx.w_end, W_FixnumObject, "to_int"))
             inclusive = not w_idx.exclusive
             as_range = True
         else:
-            start = self.int_w(w_idx)
+            start = self.int_w(self.convert_type(w_idx, W_FixnumObject, "to_int"))
             if w_count:
-                end = self.int_w(w_count)
+                end = self.int_w(self.convert_type(w_count, W_FixnumObject, "to_int"))
                 if end < 0:
                     end = -1
                 else:

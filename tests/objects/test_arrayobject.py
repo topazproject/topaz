@@ -33,6 +33,15 @@ class TestArrayObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [2]
         w_res = space.execute("return [1, 2][-2, 2]")
         assert self.unwrap(space, w_res) == [1, 2]
+        w_res = space.execute("return [1, 2][-2, 2]")
+        assert self.unwrap(space, w_res) == [1, 2]
+        with self.raises(space, "TypeError"):
+            space.execute("[1, 2][1..2, 1]")
+        w_res = space.execute("""
+        class String; def to_int; 1; end; end
+        return [1, 2]["1", "1"]
+        """)
+        assert self.unwrap(space, w_res) == [2]
 
     def test_subscript_assign(self, space):
         w_res = space.execute("a = [1]; a[0] = 42; return a")
@@ -97,6 +106,11 @@ class TestArrayObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == []
         w_res = space.execute("return [1, 2][-1..-2]")
         assert self.unwrap(space, w_res) == []
+        w_res = space.execute("""
+        class String; def to_int; 1; end; end
+        return [1, 2, 3, 4, 5]["1".."1"]
+        """)
+        assert self.unwrap(space, w_res) == [2]
 
     def test_range_exclusive(self, space):
         w_res = space.execute("return [1, 2, 3, 4, 5][1...3]")
