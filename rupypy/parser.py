@@ -302,7 +302,7 @@ class Transformer(object):
     def visit_real_send(self, node):
         if node.children[0].symbol == "ambigious_binop":
             node = node.children[0]
-            lhs = ast.Variable(node.children[0].additional_info, node.getsourcepos().lineno)
+            lhs = self.visit_identifier(node.children[0])
             rhs = self.visit_arg(node.children[2])
             return ast.MaybeBinop(node.children[1].additional_info, lhs, rhs, node.getsourcepos().lineno)
         elif node.children[0].symbol in "global_send" or node.symbol == "global_paren_send":
@@ -502,9 +502,17 @@ class Transformer(object):
         elif node.symbol == "GLOBAL":
             return ast.Global(node.additional_info)
         elif node.symbol == "IDENTIFIER":
-            return ast.Variable(node.additional_info, node.getsourcepos().lineno)
+            return self.visit_identifier(node)
         elif node.symbol == "CONSTANT":
             return ast.LookupConstant(ast.Scope(node.getsourcepos().lineno), node.additional_info, node.getsourcepos().lineno)
+
+    def visit_identifier(self, node):
+        name = node.additional_info
+        lineno = node.getsourcepos().lineno
+        if name == "self":
+            return ast.Self(lineno)
+        else:
+            return ast.Variable(name, lineno)
 
     def visit_if(self, node):
         if_node = node.children[1]
