@@ -10,9 +10,9 @@ module RbConfig
 
   CONFIG = {}
 
-  CONFIG["bindir"]             = prefix
-  CONFIG["ruby_install_name"]  = RUBY_ENGINE
-  CONFIG["RUBY_INSTALL_NAME"]  = RUBY_ENGINE
+  CONFIG["bindir"]             = File.join(prefix, "bin")
+  CONFIG["ruby_install_name"]  = RUBY_ENGINE.dup
+  CONFIG["RUBY_INSTALL_NAME"]  = RUBY_ENGINE.dup
   CONFIG["host_os"]            = RUBY_PLATFORM.split("-")[-1]
   CONFIG["exeext"]             = ""
   CONFIG["EXEEXT"]             = ""

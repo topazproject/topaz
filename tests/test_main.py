@@ -46,7 +46,7 @@ class TestMain(object):
         self.run(tmpdir, "puts 5", ruby_args=["-v"])
         out, err = capfd.readouterr()
         [version, out] = out.splitlines()
-        assert version.startswith("rupypy")
+        assert version.startswith("topaz")
         assert "1.9.3" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
@@ -55,7 +55,7 @@ class TestMain(object):
         self.run(tmpdir, ruby_args=["-v"])
         out, err = capfd.readouterr()
         [version] = out.splitlines()
-        assert version.startswith("rupypy")
+        assert version.startswith("topaz")
 
     def test_arguments(self, tmpdir, capfd):
         self.run(tmpdir, """
