@@ -1,5 +1,5 @@
 from pypy.rlib import jit
-from pypy.rlib.objectmodel import compute_unique_id
+from pypy.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
 from rupypy.mapdict import MapTransitionCache
 from rupypy.module import ClassDef
@@ -72,6 +72,7 @@ class W_BaseObject(object):
     def method_send(self, space, method, args_w, block):
         return space.send(self, space.newsymbol(method), args_w[1:], block)
 
+
 class W_RootObject(W_BaseObject):
     classdef = ClassDef("Object", W_BaseObject.classdef)
 
@@ -98,10 +99,14 @@ class W_RootObject(W_BaseObject):
     def method_eqeqeq(self, space, w_other):
         return space.send(self, space.newsymbol("=="), [w_other])
 
-
     @classdef.method("send")
     def method_send(self, space, args_w, block):
         return space.send(self, space.newsymbol("__send__"), args_w, block)
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return space.newint(compute_identity_hash(self))
+
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):
