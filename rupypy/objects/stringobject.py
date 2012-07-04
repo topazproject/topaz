@@ -192,7 +192,7 @@ class W_StringObject(W_Object):
             res = space.str_w(self).ljust(integer, padstr)
         else:
             required_padding = 1 + ((integer - self.length() - 1) / len(padstr))
-            res = space.str_w(self) + (padstr * required_padding)[0:integer - 1]
+            res = space.str_w(self) + (padstr * required_padding)[:integer - 1]
         return space.newstr_fromstr(res)
 
     @classdef.method("split", limit="int")
