@@ -82,3 +82,14 @@ class TestStringObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == ["a", "b-c"]
         w_res = space.execute("return 'a b c'.split(' ', -1)")
         assert self.unwrap(space, w_res) == ["a", "b", "c"]
+
+    def test_dup(self, space):
+        w_res = space.execute("""
+        x = "abc"
+        y = x.dup
+        x << "def"
+        return [x, y]
+        """)
+        x, y = self.unwrap(space, w_res)
+        assert x == "abcdef"
+        assert y == "abc"

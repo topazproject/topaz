@@ -166,6 +166,10 @@ class W_StringObject(W_Object):
     def method_freeze(self, space):
         pass
 
+    @classdef.method("dup")
+    def method_dup(self, space):
+        return self.copy(space)
+
     @classdef.method("to_sym")
     @classdef.method("intern")
     def method_to_sym(self, space):
