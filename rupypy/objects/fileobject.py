@@ -77,6 +77,36 @@ class W_IOObject(W_Object):
         new_pos = int(self.stream.tell())
         return space.newint(new_pos - old_pos)
 
+    @classdef.method("print")
+    def method_print(self, space, args_w):
+        if not args_w:
+            w_last = space.globals.get("$_")
+            if w_last:
+                args_w.append(w_last)
+        w_sep = space.globals.get("$,")
+        if w_sep:
+            sep = space.str_w(w_sep)
+        else:
+            sep = ""
+        w_end = space.globals.get("$\\")
+        if w_end:
+            end = space.str_w(w_end)
+        else:
+            end = ""
+        strings = [space.str_w(space.send(w_arg, space.newsymbol("to_s"))) for w_arg in args_w]
+        self.stream.write(sep.join(strings))
+        self.stream.write(end)
+        return space.w_nil
+
+    @classdef.method("puts")
+    def method_puts(self, space, args_w):
+        for w_arg in args_w:
+            string = space.str_w(space.send(w_arg, space.newsymbol("to_s")))
+            self.stream.write(string)
+            if not string.endswith("\n"):
+                self.stream.write("\n")
+        return space.w_nil
+
 
 class W_FileObject(W_IOObject):
     classdef = ClassDef("File", W_IOObject.classdef)

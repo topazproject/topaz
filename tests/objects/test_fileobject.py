@@ -49,6 +49,30 @@ class TestIO(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError"):
             space.execute("return File.new('%s').read(-1)" % str(f))
 
+    def test_simple_print(self, space, capfd):
+        space.execute('IO.new(1, "w").print("foo")')
+        out, err = capfd.readouterr()
+        assert out == "foo"
+
+    def test_multi_print(self, space, capfd):
+        space.execute('IO.new(1, "w").print("This", "is", 100, "percent")')
+        out, err = capfd.readouterr()
+        assert out == "Thisis100percent"
+
+    def test_print_globals(self, space, capfd):
+        space.globals.set("$,", space.newstr_fromstr(":"))
+        space.globals.set("$\\", space.newstr_fromstr("\n"))
+        space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
+        space.globals.set("$_", space.newstr_fromstr('lastprint'))
+        space.execute('IO.new(1, "w").print')
+        out, err = capfd.readouterr()
+        assert out == "foo:bar:baz\nlastprint\n"
+
+    def test_puts(self, space, capfd):
+        space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
+        out, err = capfd.readouterr()
+        assert out == "This\nis\n100\npercent\n"
+
 
 class TestFile(BaseRuPyPyTest):
     def test_separator(self, space):
