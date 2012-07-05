@@ -82,6 +82,12 @@ class W_ArgumentError(W_StandardError):
     classdef = ClassDef("ArgumentError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
+
 class W_RuntimeError(W_StandardError):
     classdef = ClassDef("RuntimeError", W_StandardError.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
+
+class W_SystemCallError(W_StandardError):
+    classdef = ClassDef("SystemCallError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
