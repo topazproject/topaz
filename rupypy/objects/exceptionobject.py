@@ -53,6 +53,31 @@ class W_StandardError(W_ExceptionObject):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_SystemExit(W_ExceptionObject):
+    classdef = ClassDef("SystemExit", W_ExceptionObject.classdef)
+
+    def __init__(self, space, msg, status, klass=None):
+        W_Object.__init__(self, space, klass)
+        W_ExceptionObject.__init__(self, space, klass)
+        self.status = status
+
+    @classdef.singleton_method("allocate", msg="str")
+    def method_allocate(self, space, msg="exit", w_status=None):
+        if w_status:
+            status = space.int_w(w_status)
+        else:
+            status = 0
+        return W_SystemExit(space, msg, status)
+
+    @classdef.method("success?")
+    def method_successp(self, space):
+        return space.newbool(self.status is 0)
+
+    @classdef.method("status")
+    def method_status(self, space):
+        return space.newint(self.status)
+
+
 class W_TypeError(W_ExceptionObject):
     classdef = ClassDef("TypeError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)

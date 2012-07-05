@@ -5,6 +5,7 @@ from pypy.rlib.rstring import assert_str0
 from rupypy.module import Module, ModuleDef
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.exceptionobject import W_ExceptionObject, W_TypeError, W_RuntimeError
+from rupypy.modules.process import Process
 from rupypy.error import RubyError
 
 
@@ -124,3 +125,11 @@ class Kernel(Module):
             return space.send(w_arg, space.newsymbol("to_ary"))
         else:
             return space.send(w_arg, space.newsymbol("to_a"))
+
+    @moduledef.function("exit")
+    def method_exit(self, space, w_status=None):
+        return space.send(
+            space.getmoduleobject(Process.moduledef),
+            space.newsymbol("exit"),
+            [w_status]
+        )
