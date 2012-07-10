@@ -4,9 +4,9 @@ python:
 install:
     - pip install pytest
     - wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2
-    - bunzip `pwd`/../pypy.tar.bz2
+    - bunzip2 `pwd`/../pypy.tar.bz2
     - tar -xf `pwd`/../pypy.tar
-script: PYTHONPATH=`python -c "import glob; print glob.glob('../pypy-pypy*')[0]"`:$PYTHONPATH py.test
+script: PYTHONPATH=`python -c "import glob; import os; print os.path.abspath(glob.glob('../pypy-pypy*')[0])"`:$PYTHONPATH py.test
 notifications:
     email: false
     irc: "irc.freenode.org#topaz"
