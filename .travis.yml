@@ -5,7 +5,7 @@ install:
     - pip install pytest
     - wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2
     - bunzip2 `pwd`/../pypy.tar.bz2
-    - tar -xf `pwd`/../pypy.tar
+    - tar -xf `pwd`/../pypy.tar -C `pwd`/../
 script: PYTHONPATH=`python -c "import glob; import os; print os.path.abspath(glob.glob('../pypy-pypy*')[0])"`:$PYTHONPATH py.test
 notifications:
     email: false
