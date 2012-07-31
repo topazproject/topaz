@@ -90,3 +90,13 @@ class Enumerable(Module):
         result
     end
     """)
+
+    moduledef.app_method("""
+    def detect(ifnone = nil, &block)
+        self.each do |o|
+            return o if block.call(o)
+        end
+        return ifnone
+    end
+    alias find detect
+    """)
