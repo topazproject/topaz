@@ -76,6 +76,10 @@ class W_RootObject(W_BaseObject):
     def method_send(self, space, method, args_w, block):
         return space.send(self, space.newsymbol(method), args_w[1:], block)
 
+    @classdef.method("nil?")
+    def method_nilp(self, space):
+        return space.w_false
+
     @classdef.method("==")
     def method_equal(self, space, w_other):
         return space.newbool(self is w_other)
