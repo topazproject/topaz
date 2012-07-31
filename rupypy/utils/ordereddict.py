@@ -29,6 +29,9 @@ class OrderedDict(object):
     def keys(self):
         return [k.key for k in self.contents.keys()]
 
+    def get(self, key, default):
+        return self.contents.get(self._key(key), default)
+
 
 class DictKey(object):
     def __init__(self, d, key):
@@ -145,6 +148,11 @@ class SomeOrderedDict(model.SomeObject):
     def method_keys(self):
         return self.bookkeeper.newlist(self.read_key())
 
+    def method_get(self, s_key, s_default):
+        self.generalize_key(s_key)
+        self.generalize_value(s_default)
+        return self.read_value()
+
 
 class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
     def union((d1, d2)):
@@ -246,6 +254,10 @@ class OrderedDictRepr(Repr):
         r_list = hop.r_result
         c_LIST = hop.inputconst(lltype.Void, r_list.lowleveltype.TO)
         return hop.gendirectcall(LLOrderedDict.ll_keys, c_LIST, v_dict)
+
+    def rtype_method_get(self, hop):
+        v_dict, v_key, v_default = hop.inputargs(self, self.key_repr, self.value_repr)
+        return hop.gendirectcall(LLOrderedDict.ll_get, v_dict, v_key, v_default)
 
 
 class __extend__(pairtype(OrderedDictRepr, Repr)):
@@ -477,3 +489,11 @@ class LLOrderedDict(object):
             idx = d.entries[idx].next
             i += 1
         return res
+
+    @staticmethod
+    def ll_get(d, key, default):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        if not i & LLOrderedDict.HIGHEST_BIT:
+            return d.entries[i].value
+        else:
+            return default

@@ -1,4 +1,5 @@
 import os
+import stat
 
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 
@@ -46,11 +47,14 @@ class TestIO(BaseRuPyPyTest):
         """ % str(f))
         assert space.str_w(w_res) == contents[:10]
 
-        with self.raises("ArgumentError"):
+        with self.raises(space, "ArgumentError"):
             space.execute("return File.new('%s').read(-1)" % str(f))
 
 
 class TestFile(BaseRuPyPyTest):
+    def test_separator(self, space):
+        space.execute("File::SEPARATOR")
+
     def test_alt_separator(self, space):
         space.execute("File::ALT_SEPARATOR")
 
@@ -67,6 +71,27 @@ class TestFile(BaseRuPyPyTest):
 
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
         assert isinstance(w_res, W_FileObject)
+
+    def test_join(self, space):
+        w_res = space.execute("return File.join('/abc', 'bin')")
+        assert space.str_w(w_res) == "/abc/bin"
+
+    def test_existp(self, space, tmpdir):
+        f = tmpdir.join("test.rb")
+        f.write("")
+        w_res = space.execute("return File.exist?('%s')" % str(f))
+        assert w_res is space.w_true
+        w_res = space.execute("return File.exist?('no way this exists')")
+        assert w_res is space.w_false
+
+    def test_executablep(self, space, tmpdir):
+        f = tmpdir.join("test.rb")
+        f.write("")
+        w_res = space.execute("return File.executable?('%s')" % str(f))
+        assert w_res is space.w_false
+        os.chmod(str(f), stat.S_IEXEC)
+        w_res = space.execute("return File.executable?('%s')" % str(f))
+        assert w_res is space.w_true
 
 
 class TestExpandPath(BaseRuPyPyTest):

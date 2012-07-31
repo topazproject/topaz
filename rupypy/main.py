@@ -36,9 +36,20 @@ def entry_point(argv):
                 argv_w.append(space.newstr_fromstr(arg))
     space.set_const(space.getclassfor(W_Object), "ARGV", space.newarray(argv_w))
 
+    system, _, _, _, cpu = os.uname()
+    platform = "%s-%s" % (cpu, system.lower())
+    engine = "topaz"
+    version = "1.9.3"
+    patchlevel = 125
+    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
+    space.set_const(space.getclassfor(W_Object), "RUBY_ENGINE", space.newstr_fromstr(engine))
+    space.set_const(space.getclassfor(W_Object), "RUBY_VERSION", space.newstr_fromstr(version))
+    space.set_const(space.getclassfor(W_Object), "RUBY_PATCHLEVEL", space.newint(patchlevel))
+    space.set_const(space.getclassfor(W_Object), "RUBY_PLATFORM", space.newstr_fromstr(platform))
+    space.set_const(space.getclassfor(W_Object), "RUBY_DESCRIPTION", space.newstr_fromstr(platform))
+
     if verbose:
-        system, _, _, _, cpu = os.uname()
-        os.write(1, "rupypy (ruby-1.9.3p125) [%s-%s]\n" % (cpu, system.lower()))
+        os.write(1, "%s\n" % description)
     if path is not None:
         f = open_file_as_stream(path)
         try:
