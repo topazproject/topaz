@@ -665,13 +665,13 @@ class Lexer(BaseLexer):
                 self.emit("QUESTION")
             else:
                 if ch2 == "\\":
-                    self.add(self.read_escape())
+                    self.add(self.read_escape(character_escape=True))
                 else:
                     self.add(ch2)
                 self.emit("SSTRING")
                 self.state = self.EXPR_END
 
-    def read_escape(self):
+    def read_escape(self, character_escape=False):
         c = self.read()
         if c == self.EOF:
             self.error()
@@ -697,22 +697,46 @@ class Lexer(BaseLexer):
             return " "
         elif c == "u":
             raise NotImplementedError("UTF-8 escape not implemented")
-        elif c in "x0":
-            buf = ""
-            for i in xrange(2):
+        elif c == "x":
+            hex_escape = self.read()
+            if not hex_escape in string.hexdigits:
+                self.error()
+            if self.peek() in string.hexdigits:
+                hex_escape += self.read()
+            return chr(int(hex_escape, 16))
+        elif c in string.octdigits:
+            buf = c
+            octal = True
+            while self.peek() in string.digits:
                 ch2 = self.read()
-                if ch2.isalnum():
-                    if c == "x" and not ch2 in string.hexdigits:
-                        self.error()
-                    if c == "0" and not ch2 in string.octdigits:
-                        self.error()
+                if ch2 in string.octdigits:
                     buf += ch2
+                elif character_escape:
+                    self.error()
                 else:
-                    break
-            if c == "x":
-                return chr(int(buf, 16))
-            elif c == "0":
-                return chr(int(buf, 8))
+                    octal = False
+                    buf += ch2
+                if len(buf) > 3 and character_escape:
+                    self.error()
+            if octal:
+                codepoint = int(buf, 8)
+                if codepoint > 255:
+                    codepoint = codepoint - 256
+                return chr(codepoint)
+            else:
+                buf = "0" * (len(buf) - 3) + buf
+                prefix_idx = 3
+                for i in xrange(3):
+                    if buf[i] not in string.octdigits:
+                        prefix_idx = i
+                        break
+                codepoint = int(buf[0:prefix_idx], 8)
+                if codepoint > 255:
+                    codepoint -= 256
+                unicode_char = chr(codepoint)
+                for ch in buf[prefix_idx:]:
+                    unicode_char += chr(int(ch) + 48)
+                return unicode_char
         elif c == "M":
             if self.read() != "-":
                 self.error()

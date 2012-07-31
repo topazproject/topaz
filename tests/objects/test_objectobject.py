@@ -69,6 +69,16 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [True, False]
 
+    def test_hash(self, space):
+        w_res = space.execute("""
+        a = Object.new
+        return a.hash, a.hash == a.hash, a.hash != Object.new.hash
+        """)
+        w_int, w_self_hash, w_other_hash = space.listview(w_res)
+        assert isinstance(w_int, W_FixnumObject)
+        assert w_self_hash is space.w_true
+        assert w_other_hash is space.w_true
+
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""

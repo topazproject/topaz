@@ -1,5 +1,5 @@
 from pypy.rlib import jit
-from pypy.rlib.objectmodel import compute_unique_id
+from pypy.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
 from rupypy.mapdict import MapTransitionCache
 from rupypy.module import ClassDef
@@ -79,6 +79,10 @@ class W_RootObject(W_BaseObject):
     @classdef.method("==")
     def method_equal(self, space, w_other):
         return space.newbool(self is w_other)
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return space.newint(compute_identity_hash(self))
 
     @classdef.method("=~")
     def method_match(self, space):

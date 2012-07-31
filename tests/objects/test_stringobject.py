@@ -21,6 +21,8 @@ class TestStringObject(BaseRuPyPyTest):
     def test_length(self, space):
         w_res = space.execute("return 'ABC'.length")
         assert space.int_w(w_res) == 3
+        w_res = space.execute("return 'ABC'.size")
+        assert space.int_w(w_res) == 3
 
     def test_comparator_lt(self, space):
         w_res = space.execute("return 'a' <=> 'b'")
@@ -76,3 +78,24 @@ class TestStringObject(BaseRuPyPyTest):
 
         w_res = space.execute("return ('a' << 'b').clear")
         assert self.unwrap(space, w_res) == ""
+
+    def test_split(self, space):
+        w_res = space.execute("return 'a b c'.split")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+        w_res = space.execute("return 'a-b-c'.split('-')")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+        w_res = space.execute("return 'a-b-c'.split('-', 2)")
+        assert self.unwrap(space, w_res) == ["a", "b-c"]
+        w_res = space.execute("return 'a b c'.split(' ', -1)")
+        assert self.unwrap(space, w_res) == ["a", "b", "c"]
+
+    def test_dup(self, space):
+        w_res = space.execute("""
+        x = "abc"
+        y = x.dup
+        x << "def"
+        return [x, y]
+        """)
+        x, y = self.unwrap(space, w_res)
+        assert x == "abcdef"
+        assert y == "abc"
