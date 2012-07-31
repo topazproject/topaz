@@ -85,6 +85,11 @@ class W_ArrayObject(W_Object):
         self.items_w.append(w_obj)
         return self
 
+    @classdef.method("concat")
+    def method_concat(self, space, w_ary):
+        self.items_w += space.listview(w_ary)
+        return self
+
     @classdef.method("unshift")
     def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):
