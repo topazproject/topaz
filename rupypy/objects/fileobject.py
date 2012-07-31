@@ -84,3 +84,12 @@ class W_FileObject(W_IOObject):
                 result += sep
             result += string
         return space.newstr_fromstr(result)
+        return space.newstr_fromstr(base + sep + path)
+
+    @classdef.singleton_method("exist?", filename="str")
+    def method_existp(self, space, filename):
+        return space.newbool(os.path.isfile(filename))
+
+    @classdef.singleton_method("executable?", filename="str")
+    def method_executablep(self, space, filename):
+        return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
