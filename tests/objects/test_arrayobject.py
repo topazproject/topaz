@@ -32,6 +32,14 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return [] << 1")
         assert self.unwrap(space, w_res) == [1]
 
+    def test_concat(self, space):
+        w_res = space.execute("""
+        a = [1, 2]
+        b = a.concat([3, 4])
+        return a, a == b
+        """)
+        assert self.unwrap(space, w_res) == [[1, 2, 3, 4], True]
+
     def test_zip(self, space):
         w_res = space.execute("return [1, 2, 3].zip([3, 2, 1])")
         assert self.unwrap(space, w_res) == [[1, 3], [2, 2], [3, 1]]
