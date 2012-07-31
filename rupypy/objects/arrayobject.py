@@ -124,6 +124,10 @@ class W_ArrayObject(W_Object):
             for w_o in self.items_w
         ]))
 
+    @classdef.method("dup")
+    def method_dup(self, space):
+        return space.newarray(self.items_w[:])
+
     classdef.app_method("""
     def at idx
         self[idx]

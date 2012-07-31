@@ -154,3 +154,14 @@ class TestArrayObject(BaseRuPyPyTest):
         return [1, 2].join(A.new)
         """)
         assert space.str_w(w_res) == "1A2"
+
+    def test_dup(self, space):
+        w_res = space.execute("""
+        x = [1, 2, 3]
+        y = x.dup
+        x << 4
+        return [x, y]
+        """)
+        x, y = self.unwrap(space, w_res)
+        assert x == [1, 2, 3, 4]
+        assert y == [1, 2, 3]
