@@ -20,6 +20,12 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return [1, 2, 3].length")
         assert space.int_w(w_res) == 3
 
+    def test_emptyp(self, space):
+        w_res = space.execute("return [].empty?")
+        assert w_res is space.w_true
+        w_res = space.execute("return [1].empty?")
+        assert w_res is space.w_false
+
     def test_plus(self, space):
         w_res = space.execute("return [1, 2] + [3]")
         assert self.unwrap(space, w_res) == [1, 2, 3]

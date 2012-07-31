@@ -63,6 +63,10 @@ class W_ArrayObject(W_Object):
     def method_length(self, space):
         return space.newint(len(self.items_w))
 
+    @classdef.method("empty?")
+    def method_emptyp(self, space):
+        return space.newbool(len(self.items_w) == 0)
+
     @classdef.method("+")
     def method_add(self, space, w_other):
         assert isinstance(w_other, W_ArrayObject)
