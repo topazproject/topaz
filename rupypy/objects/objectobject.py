@@ -26,6 +26,9 @@ class W_BaseObject(object):
     def getclass(self, space):
         return space.getclassobject(self.classdef)
 
+    def is_kind_of(self, space, w_cls):
+        return w_cls in self.getclass(space).ancestors()
+
     def attach_method(self, space, name, func):
         w_cls = space.getsingletonclass(self)
         w_cls.define_method(space, name, func)

@@ -350,16 +350,17 @@ class ObjectSpace(object):
         inclusive = False
         as_range = False
         end = 0
+        fixnum_class = self.getclassfor(W_FixnumObject)
 
         if isinstance(w_idx, W_RangeObject) and not w_count:
-            start = self.int_w(self.convert_type(w_idx.w_start, W_FixnumObject, "to_int"))
-            end = self.int_w(self.convert_type(w_idx.w_end, W_FixnumObject, "to_int"))
+            start = self.int_w(self.convert_type(w_idx.w_start, fixnum_class, "to_int"))
+            end = self.int_w(self.convert_type(w_idx.w_end, fixnum_class, "to_int"))
             inclusive = not w_idx.exclusive
             as_range = True
         else:
-            start = self.int_w(self.convert_type(w_idx, W_FixnumObject, "to_int"))
+            start = self.int_w(self.convert_type(w_idx, fixnum_class, "to_int"))
             if w_count:
-                end = self.int_w(self.convert_type(w_count, W_FixnumObject, "to_int"))
+                end = self.int_w(self.convert_type(w_count, fixnum_class, "to_int"))
                 if end < 0:
                     end = -1
                 else:
@@ -380,8 +381,8 @@ class ObjectSpace(object):
                 end = length
         return (start, end, as_range)
 
-    def convert_type(self, w_obj, cls, method, raise_error=True):
-        if isinstance(w_obj, cls):
+    def convert_type(self, w_obj, w_cls, method, raise_error=True):
+        if w_obj.is_kind_of(self, w_cls):
             return w_obj
 
         try:
@@ -390,18 +391,18 @@ class ObjectSpace(object):
             src_cls = self.getclass(w_obj).name
             self.raise_(
                 self.getclassfor(W_TypeError),
-                "can't convert %s into %s" % (src_cls, self.getclassfor(cls).name)
+                "can't convert %s into %s" % (src_cls, w_cls.name)
             )
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return w_nil
-        elif not isinstance(w_res, cls):
+        elif not w_res.is_kind_of(self, w_cls):
             src_cls = self.getclass(w_obj).name
             res_cls = self.getclass(w_res).name
             self.raise_(
                 self.getclassfor(W_TypeError),
                 "can't convert %s to %s (%s#%s gives %s)" % (
-                    src_cls, self.getclassfor(cls).name, src_cls, method, res_cls
+                    src_cls, w_cls.name, src_cls, method, res_cls
                 )
             )
         else:
