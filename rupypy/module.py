@@ -37,6 +37,8 @@ class ClassDef(object):
 
     def singleton_method(self, name, **argspec):
         def adder(func):
+            if isinstance(func, staticmethod):
+                func = func.__func__
             self.singleton_methods[name] = (func, argspec)
             return staticmethod(func)
         return adder
