@@ -165,4 +165,4 @@ class W_ArrayObject(W_Object):
         if len(self.items_w) == 0:
             return space.w_nil
         else:
-            return self.items_w[-1]
+            return self.items_w[len(self.items_w) - 1]
