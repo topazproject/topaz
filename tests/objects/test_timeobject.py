@@ -20,7 +20,7 @@ class TestTimeObject(BaseRuPyPyTest):
     def test_to_s(self, space, monkeypatch):
         self.mock_time(monkeypatch)
         w_res = space.execute("return Time.now.to_s")
-        assert space.str_w(w_res) == '1970-01-01 01:16:40 +0000'
+        assert space.str_w(w_res) == time.strftime("%Y-%m-%d %H:%M:%S %z", time.localtime(1000.0))
 
     def test_to_f(self, space, monkeypatch):
         self.mock_time(monkeypatch)
