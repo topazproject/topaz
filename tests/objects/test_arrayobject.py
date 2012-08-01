@@ -105,3 +105,7 @@ class TestArrayObject(BaseRuPyPyTest):
         x, y = self.unwrap(space, w_res)
         assert x == [1, 2, 3, 4]
         assert y == [1, 2, 3]
+
+    def test_compact(self, space):
+        w_res = space.execute("return ['a', nil, 'b', nil, 'c'].compact")
+        assert self.unwrap(space, w_res) == ['a', 'b', 'c']

@@ -159,3 +159,7 @@ class W_ArrayObject(W_Object):
         result
     end
     """)
+
+    @classdef.method("compact")
+    def method_compact(self, space):
+        return space.newarray([i for i in self.items_w if i is not space.w_nil])
