@@ -23,6 +23,7 @@ class W_HashObject(W_Object):
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
 
+    @classdef.method("each_pair")
     @classdef.method("each")
     def method_each(self, space, block):
         for k in self.contents.keys():
