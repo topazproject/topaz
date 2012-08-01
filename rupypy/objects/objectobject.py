@@ -68,6 +68,11 @@ class W_RootObject(W_BaseObject):
     def method_extend(self, space, w_mod):
         self.getsingletonclass(space).method_include(space, w_mod)
 
+    @classdef.method("kind_of?")
+    @classdef.method("is_a?")
+    def method_is_kind_ofp(self, space, w_mod):
+        return space.newbool(self.is_kind_of(space, w_mod))
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("#<%s:0x%x>" % (
