@@ -74,6 +74,10 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("exists?", filename="str")
     @classdef.singleton_method("exist?", filename="str")
     def method_existp(self, space, filename):
+        return space.newbool(os.path.exists(filename))
+
+    @classdef.singleton_method("file?", filename="str")
+    def method_filep(self, space, filename):
         return space.newbool(os.path.isfile(filename))
 
     @classdef.singleton_method("executable?", filename="str")
