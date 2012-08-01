@@ -78,6 +78,10 @@ class W_ArrayObject(W_Object):
     def method_length(self, space):
         return space.newint(len(self.items_w))
 
+    @classdef.method("empty?")
+    def method_emptyp(self, space):
+        return space.newbool(len(self.items_w) == 0)
+
     @classdef.method("+")
     def method_add(self, space, w_other):
         assert isinstance(w_other, W_ArrayObject)
@@ -98,6 +102,11 @@ class W_ArrayObject(W_Object):
     @classdef.method("<<")
     def method_lshift(self, space, w_obj):
         self.items_w.append(w_obj)
+        return self
+
+    @classdef.method("concat")
+    def method_concat(self, space, w_ary):
+        self.items_w += space.listview(w_ary)
         return self
 
     @classdef.method("unshift")

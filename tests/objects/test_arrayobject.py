@@ -69,6 +69,12 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return [1, 2, 3].length")
         assert space.int_w(w_res) == 3
 
+    def test_emptyp(self, space):
+        w_res = space.execute("return [].empty?")
+        assert w_res is space.w_true
+        w_res = space.execute("return [1].empty?")
+        assert w_res is space.w_false
+
     def test_plus(self, space):
         w_res = space.execute("return [1, 2] + [3]")
         assert self.unwrap(space, w_res) == [1, 2, 3]
@@ -80,6 +86,14 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_lshift(self, space):
         w_res = space.execute("return [] << 1")
         assert self.unwrap(space, w_res) == [1]
+
+    def test_concat(self, space):
+        w_res = space.execute("""
+        a = [1, 2]
+        b = a.concat([3, 4])
+        return a, a == b
+        """)
+        assert self.unwrap(space, w_res) == [[1, 2, 3, 4], True]
 
     def test_zip(self, space):
         w_res = space.execute("return [1, 2, 3].zip([3, 2, 1])")
