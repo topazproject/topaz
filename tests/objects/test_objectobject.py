@@ -3,6 +3,30 @@ from rupypy.objects.intobject import W_FixnumObject
 from ..base import BaseRuPyPyTest
 
 
+class TestBaseObject(BaseRuPyPyTest):
+    def test_instance_eval(self, space):
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval('def foo; 1; end')
+        return X.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval { def foo; 1; end }
+        return X.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval('def foo; [__FILE__, __LINE__]; end', 'dummy', 123)
+        return X.foo
+        """)
+        assert self.unwrap(space, w_res) == ["dummy", 123]
+
+
 class TestObjectObject(BaseRuPyPyTest):
     def test_class(self, space):
         w_res = space.execute("return 1.class")
