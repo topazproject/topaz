@@ -939,6 +939,7 @@ class ChildLexer(BaseLexer):
     def read_escape(self):
         return self.lexer.read_escape()
 
+
 class StringLexer(ChildLexer):
     CODE = 0
     STRING = 1
