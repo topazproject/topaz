@@ -162,6 +162,14 @@ class W_ModuleObject(W_RootObject):
         else:
             return self.included_modules[:]
 
+    def is_ancestor_of(self, w_cls):
+        if self is w_cls or self in w_cls.included_modules:
+            return True
+        elif w_cls.superclass is not None:
+            return self.is_ancestor_of(w_cls.superclass)
+        else:
+            return False
+
     def include_module(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)
         if w_mod not in self.ancestors():
