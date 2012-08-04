@@ -30,9 +30,8 @@ from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
-                    W_ZeroDivisionError, W_SyntaxError, W_LoadError,
-                    W_TypeError, W_ArgumentError, W_RuntimeError,
-                    W_StandardError)
+    W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
+    W_ArgumentError, W_RuntimeError, W_StandardError)
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.integerobject import W_IntegerObject

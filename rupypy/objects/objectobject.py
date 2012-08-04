@@ -91,6 +91,15 @@ class W_RootObject(W_BaseObject):
     def method_hash(self, space):
         return space.newint(compute_identity_hash(self))
 
+    @classdef.method("instance_variable_get", name="str")
+    def method_instance_variable_get(self, space, name):
+        return space.find_instance_var(self, name)
+
+    @classdef.method("instance_variable_set", name="str")
+    def method_instance_variable_set(self, space, name, w_value):
+        space.set_instance_var(self, name, w_value)
+        return w_value
+
 
 class W_Object(W_RootObject):
     def __init__(self, space, klass=None):

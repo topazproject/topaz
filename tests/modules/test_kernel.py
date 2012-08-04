@@ -105,6 +105,7 @@ class TestKernel(BaseRuPyPyTest):
         return Array(A.new), Array(B.new)
         """)
         assert self.unwrap(space, w_res) == [["to_ary"], ["to_a"]]
+        assert self.unwrap(space, space.execute("return Array(1)")) == [1]
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
