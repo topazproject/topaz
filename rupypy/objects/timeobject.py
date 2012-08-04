@@ -19,19 +19,20 @@ class W_TimeObject(W_Object):
 
     @classdef.singleton_method("at")
     def singleton_method(self, space, w_sec, w_usec=None):
-        obj = space.send(space.getclassfor(W_TimeObject), space.newsymbol("new"))
         if isinstance(w_sec, W_TimeObject):
-            obj.epoch = w_sec.epoch
-        elif isinstance(w_sec, W_FixnumObject) or w_usec:
+            args = w_sec.time_struct[:5]
+            epoch = w_sec.epoch % 60
+        else:
             if w_usec:
                 usec = space.float_w(w_usec) / 1000
             else:
                 usec = 0.0
-            obj.epoch = int(space.float_w(w_sec)) + usec
-        else:
-            obj.epoch = space.float_w(w_sec)
-        obj.time_struct = time.localtime(obj.epoch)
-        return obj
+            sec = int(space.float_w(w_sec))
+            args = time.localtime(sec)[:5]
+            epoch = (sec + usec) % 60
+        args_w = [space.newint(i) for i in args]
+        args_w.append(space.newfloat(epoch))
+        return space.send(space.getclassfor(W_TimeObject), space.newsymbol("new"), args_w)
 
     @classdef.method("initialize")
     def method_initialize(self, space, args_w):
@@ -39,7 +40,16 @@ class W_TimeObject(W_Object):
             self.epoch = time.time()
             self.time_struct = time.localtime(self.epoch)
         else:
-            raise NotImplementedError("Time.new(year, month, day, hour, min, sec, utc_offset)")
+            if len(args_w) > 6:
+                raise NotImplementedError("Time.new with utc_offset")
+            args = [space.float_w(i) for i in args_w]
+            args += [0] * (6 - len(args))
+            struct = time.strptime(
+                "%04d %02d %02d %02d %02d %02d" % tuple(args),
+                "%Y %m %d %H %M %S"
+            )
+            self.time_struct = struct
+            self.epoch = time.mktime(struct) + (args[5] % 1)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
