@@ -50,7 +50,7 @@ class W_TimeObject(W_Object):
         return space.newfloat(self.epoch)
 
     @classdef.method("-")
-    def method_minux(self, space, w_other):
+    def method_minus(self, space, w_other):
         assert isinstance(w_other, W_TimeObject)
         return space.send(
             space.getclassfor(W_TimeObject),
