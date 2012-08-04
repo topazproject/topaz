@@ -180,6 +180,10 @@ class TestArrayObject(BaseRuPyPyTest):
         assert x == [1, 2, 3, 4]
         assert y == [1, 2, 3]
 
+    def test_compact(self, space):
+        w_res = space.execute("return ['a', nil, 'b', nil, 'c'].compact")
+        assert self.unwrap(space, w_res) == ['a', 'b', 'c']
+
     def test_last(self, space):
         assert space.int_w(space.execute("return [1, 2, 3].last")) == 3
         assert space.execute("return [].last") == space.w_nil
