@@ -286,9 +286,7 @@ class W_ModuleObject(W_RootObject):
                 lineno = 1
             return space.execute(string, self, self, filename, lineno)
         else:
-            block.w_self = self
-            block.w_scope = self
-            space.invoke_block(block, [])
+            space.invoke_block(block.copy(w_self=self, w_scope=self), [])
 
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):

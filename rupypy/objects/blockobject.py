@@ -9,3 +9,14 @@ class W_BlockObject(W_BaseObject):
         self.cells = cells
         self.block = block
         self.parent_interp = parent_interp
+
+    def copy(self, bytecode=None, w_self=None, w_scope=None,
+             cells=None, block=None, parent_interp=None):
+        return W_BlockObject(
+            bytecode or self.bytecode,
+            w_self or self.w_self,
+            w_scope or self.w_scope,
+            cells or self.cells,
+            block or self.block,
+            parent_interp or self.parent_interp
+        )
