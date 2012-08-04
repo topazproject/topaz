@@ -175,6 +175,12 @@ class W_ArrayObject(W_Object):
     end
     """)
 
+    classdef.app_method("""
+    def compact
+        self.select { |each| !each.nil? }
+    end
+    """)
+
     @classdef.method("last")
     def method_last(self, space):
         if len(self.items_w) == 0:
