@@ -196,3 +196,16 @@ class W_FileObject(W_IOObject):
     def singleton_method_join(self, space, base, path):
         sep = space.str_w(space.find_const(self, "SEPARATOR"))
         return space.newstr_fromstr(base + sep + path)
+
+    @classdef.singleton_method("exists?", filename="str")
+    @classdef.singleton_method("exist?", filename="str")
+    def method_existp(self, space, filename):
+        return space.newbool(os.path.exists(filename))
+
+    @classdef.singleton_method("file?", filename="str")
+    def method_filep(self, space, filename):
+        return space.newbool(os.path.isfile(filename))
+
+    @classdef.singleton_method("executable?", filename="str")
+    def method_executablep(self, space, filename):
+        return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))

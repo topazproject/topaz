@@ -1,5 +1,5 @@
 from pypy.rlib import jit
-from pypy.rlib.objectmodel import compute_unique_id
+from pypy.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
 from rupypy.mapdict import MapTransitionCache
 from rupypy.module import ClassDef
@@ -76,9 +76,26 @@ class W_RootObject(W_BaseObject):
     def method_send(self, space, method, args_w, block):
         return space.send(self, space.newsymbol(method), args_w[1:], block)
 
+    @classdef.method("nil?")
+    def method_nilp(self, space):
+        return space.w_false
+
     @classdef.method("==")
     def method_equal(self, space, w_other):
         return space.newbool(self is w_other)
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return space.newint(compute_identity_hash(self))
+
+    @classdef.method("instance_variable_get", name="str")
+    def method_instance_variable_get(self, space, name):
+        return space.find_instance_var(self, name)
+
+    @classdef.method("instance_variable_set", name="str")
+    def method_instance_variable_set(self, space, name, w_value):
+        space.set_instance_var(self, name, w_value)
+        return w_value
 
 
 class W_Object(W_RootObject):

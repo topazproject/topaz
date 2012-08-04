@@ -1,4 +1,5 @@
 import os
+import stat
 
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 
@@ -98,6 +99,35 @@ class TestFile(BaseRuPyPyTest):
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
         assert space.str_w(w_res) == "/abc/bin"
+
+    def test_existp(self, space, tmpdir):
+        f = tmpdir.join("test.rb")
+        f.write("")
+        w_res = space.execute("return File.exist?('%s')" % str(f))
+        assert w_res is space.w_true
+        w_res = space.execute("return File.exist?('%s')" % str(tmpdir))
+        assert w_res is space.w_true
+        w_res = space.execute("return File.exist?('no way this exists')")
+        assert w_res is space.w_false
+
+    def test_filep(self, space, tmpdir):
+        f = tmpdir.join("test.rb")
+        f.write("")
+        w_res = space.execute("return File.file?('%s')" % str(f))
+        assert w_res is space.w_true
+        w_res = space.execute("return File.file?('%s')" % str(tmpdir))
+        assert w_res is space.w_false
+        w_res = space.execute("return File.file?('no way this exists')")
+        assert w_res is space.w_false
+
+    def test_executablep(self, space, tmpdir):
+        f = tmpdir.join("test.rb")
+        f.write("")
+        w_res = space.execute("return File.executable?('%s')" % str(f))
+        assert w_res is space.w_false
+        os.chmod(str(f), stat.S_IEXEC)
+        w_res = space.execute("return File.executable?('%s')" % str(f))
+        assert w_res is space.w_true
 
 
 class TestExpandPath(BaseRuPyPyTest):

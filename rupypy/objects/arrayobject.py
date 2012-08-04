@@ -63,6 +63,10 @@ class W_ArrayObject(W_Object):
     def method_length(self, space):
         return space.newint(len(self.items_w))
 
+    @classdef.method("empty?")
+    def method_emptyp(self, space):
+        return space.newbool(len(self.items_w) == 0)
+
     @classdef.method("+")
     def method_add(self, space, w_other):
         assert isinstance(w_other, W_ArrayObject)
@@ -83,6 +87,11 @@ class W_ArrayObject(W_Object):
     @classdef.method("<<")
     def method_lshift(self, space, w_obj):
         self.items_w.append(w_obj)
+        return self
+
+    @classdef.method("concat")
+    def method_concat(self, space, w_ary):
+        self.items_w += space.listview(w_ary)
         return self
 
     @classdef.method("unshift")
@@ -108,6 +117,10 @@ class W_ArrayObject(W_Object):
             space.str_w(space.send(w_o, space.newsymbol("to_s")))
             for w_o in self.items_w
         ]))
+
+    @classdef.method("dup")
+    def method_dup(self, space):
+        return space.newarray(self.items_w[:])
 
     classdef.app_method("""
     def at idx
@@ -146,3 +159,10 @@ class W_ArrayObject(W_Object):
         result
     end
     """)
+
+    @classdef.method("last")
+    def method_last(self, space):
+        if len(self.items_w) == 0:
+            return space.w_nil
+        else:
+            return self.items_w[len(self.items_w) - 1]

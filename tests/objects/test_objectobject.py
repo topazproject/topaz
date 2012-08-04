@@ -50,6 +50,29 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
 
+    def test_instance_variable_get(self, space):
+        w_res = space.execute("""
+        class Fred
+          def initialize(p1, p2)
+            @a, @b = p1, p2
+          end
+        end
+        fred = Fred.new('cat', 99)
+        return fred.instance_variable_get(:@a), fred.instance_variable_get("@b")
+        """)
+        assert self.unwrap(space, w_res) == ["cat", 99]
+
+    def test_instance_variable_set(self, space):
+        w_res = space.execute("""
+        class A
+          def foo; @foo; end
+        end
+        a = A.new
+        a.instance_variable_set(:@foo, "bar")
+        return a.foo
+        """)
+        assert space.str_w(w_res) == "bar"
+
     def test_to_s(self, space):
         w_res = space.execute("""
         obj = Object.new
@@ -68,6 +91,16 @@ class TestObjectObject(BaseRuPyPyTest):
         return [a == a, a == Object.new]
         """)
         assert self.unwrap(space, w_res) == [True, False]
+
+    def test_hash(self, space):
+        w_res = space.execute("""
+        a = Object.new
+        return a.hash, a.hash == a.hash, a.hash != Object.new.hash
+        """)
+        w_int, w_self_hash, w_other_hash = space.listview(w_res)
+        assert isinstance(w_int, W_FixnumObject)
+        assert w_self_hash is space.w_true
+        assert w_other_hash is space.w_true
 
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
