@@ -160,6 +160,15 @@ class W_ArrayObject(W_Object):
     end
     """)
 
-    @classdef.method("compact")
-    def method_compact(self, space):
-        return space.newarray([i for i in self.items_w if i is not space.w_nil])
+    classdef.app_method("""
+    def compact
+        self.select { |each| !each.nil? }
+    end
+    """)
+
+    @classdef.method("last")
+    def method_last(self, space):
+        if len(self.items_w) == 0:
+            return space.w_nil
+        else:
+            return self.items_w[len(self.items_w) - 1]
