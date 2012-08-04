@@ -344,3 +344,65 @@ class ObjectSpace(object):
 
     def eq_w(self, w_obj1, w_obj2):
         return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
+
+    def subscript_access(self, length, w_idx, w_count):
+        inclusive = False
+        as_range = False
+        end = 0
+        fixnum_class = self.getclassfor(W_FixnumObject)
+
+        if isinstance(w_idx, W_RangeObject) and not w_count:
+            start = self.int_w(self.convert_type(w_idx.w_start, fixnum_class, "to_int"))
+            end = self.int_w(self.convert_type(w_idx.w_end, fixnum_class, "to_int"))
+            inclusive = not w_idx.exclusive
+            as_range = True
+        else:
+            start = self.int_w(self.convert_type(w_idx, fixnum_class, "to_int"))
+            if w_count:
+                end = self.int_w(self.convert_type(w_count, fixnum_class, "to_int"))
+                if end < 0:
+                    end = -1
+                else:
+                    as_range = True
+
+        if start < 0:
+            start += length
+        if as_range:
+            if w_count:
+                end += start
+            if end < 0:
+                end += length
+            if inclusive:
+                end += 1
+            if end < start:
+                end = start
+            elif end > length:
+                end = length
+        return (start, end, as_range)
+
+    def convert_type(self, w_obj, w_cls, method, raise_error=True):
+        if w_obj.is_kind_of(self, w_cls):
+            return w_obj
+
+        try:
+            w_res = self.send(w_obj, self.newsymbol(method))
+        except RubyError as e:
+            src_cls = self.getclass(w_obj).name
+            self.raise_(
+                self.getclassfor(W_TypeError),
+                "can't convert %s into %s" % (src_cls, w_cls.name)
+            )
+
+        if not w_res or w_res is self.w_nil and not raise_error:
+            return w_nil
+        elif not w_res.is_kind_of(self, w_cls):
+            src_cls = self.getclass(w_obj).name
+            res_cls = self.getclass(w_res).name
+            self.raise_(
+                self.getclassfor(W_TypeError),
+                "can't convert %s to %s (%s#%s gives %s)" % (
+                    src_cls, w_cls.name, src_cls, method, res_cls
+                )
+            )
+        else:
+            return w_res
