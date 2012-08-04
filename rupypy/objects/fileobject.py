@@ -63,8 +63,8 @@ class W_IOObject(W_Object):
             return space.w_nil
         read_str = space.newstr_fromstr(read_bytes)
         if w_str is not None:
-            w_str.method_clear(space)
-            w_str.method_lshift(space, read_str)
+            w_str.clear(space)
+            w_str.extend(space, read_str)
             return w_str
         else:
             return read_str

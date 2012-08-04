@@ -115,6 +115,10 @@ class W_StringObject(W_Object):
         storage = strategy.unerase(self.str_storage)
         w_other.strategy.extend_into(w_other.str_storage, storage)
 
+    def clear(self, space):
+        self.strategy.to_mutable(space, self)
+        self.strategy.clear(self)
+
     @classdef.method("to_str")
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -177,8 +181,7 @@ class W_StringObject(W_Object):
 
     @classdef.method("clear")
     def method_clear(self, space):
-        self.strategy.to_mutable(space, self)
-        self.strategy.clear(self)
+        self.clear(space)
         return self
 
     @classdef.method("split", limit="int")
