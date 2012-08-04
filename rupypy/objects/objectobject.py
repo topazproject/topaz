@@ -46,7 +46,7 @@ class W_BaseObject(object):
         )
 
     @classdef.method("instance_eval", string="str", filename="str")
-    def method_module_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
+    def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
         if string is not None:
             if filename is None:
                 filename = "instance_eval"
