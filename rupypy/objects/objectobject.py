@@ -48,6 +48,19 @@ class W_BaseObject(object):
             "undefined method `%s` for %s" % (name, class_name)
         )
 
+    @classdef.method("instance_eval", string="str", filename="str")
+    def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
+        if string is not None:
+            if filename is None:
+                filename = "instance_eval"
+            if w_lineno is not None:
+                lineno = space.int_w(w_lineno)
+            else:
+                lineno = 1
+            return space.execute(string, self, space.getclass(self), filename, lineno)
+        else:
+            space.invoke_block(block.copy(w_self=self, w_scope=space.getclass(self)), [])
+
 
 class W_RootObject(W_BaseObject):
     classdef = ClassDef("Object", W_BaseObject.classdef)
