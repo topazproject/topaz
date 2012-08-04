@@ -105,3 +105,7 @@ class TestArrayObject(BaseRuPyPyTest):
         x, y = self.unwrap(space, w_res)
         assert x == [1, 2, 3, 4]
         assert y == [1, 2, 3]
+
+    def test_last(self, space):
+        assert space.int_w(space.execute("return [1, 2, 3].last")) == 3
+        assert space.execute("return [].last") == space.w_nil

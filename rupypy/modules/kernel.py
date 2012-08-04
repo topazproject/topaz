@@ -122,5 +122,7 @@ class Kernel(Module):
     def method_Array(self, space, w_arg):
         if space.respond_to(w_arg, space.newsymbol("to_ary")):
             return space.send(w_arg, space.newsymbol("to_ary"))
-        else:
+        elif space.respond_to(w_arg, space.newsymbol("to_a")):
             return space.send(w_arg, space.newsymbol("to_a"))
+        else:
+            return space.newarray([w_arg])

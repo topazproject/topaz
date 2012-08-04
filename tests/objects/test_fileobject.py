@@ -23,7 +23,19 @@ class TestFile(object):
         f.write("")
         w_res = space.execute("return File.exist?('%s')" % str(f))
         assert w_res is space.w_true
+        w_res = space.execute("return File.exist?('%s')" % str(tmpdir))
+        assert w_res is space.w_true
         w_res = space.execute("return File.exist?('no way this exists')")
+        assert w_res is space.w_false
+
+    def test_filep(self, space, tmpdir):
+        f = tmpdir.join("test.rb")
+        f.write("")
+        w_res = space.execute("return File.file?('%s')" % str(f))
+        assert w_res is space.w_true
+        w_res = space.execute("return File.file?('%s')" % str(tmpdir))
+        assert w_res is space.w_false
+        w_res = space.execute("return File.file?('no way this exists')")
         assert w_res is space.w_false
 
     def test_executablep(self, space, tmpdir):
