@@ -23,9 +23,11 @@ class W_HashObject(W_Object):
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
 
-    @classdef.method("each_pair")
-    @classdef.method("each")
-    def method_each(self, space, block):
-        for k in self.contents.keys():
-            space.invoke_block(block, [k, self.contents.get(k, space.w_nil)])
-        return self
+    classdef.app_method("""
+    def each
+        self.keys.each do |k|
+            yield k, self[k]
+        end
+    end
+    alias each_pair each
+    """)
