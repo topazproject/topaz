@@ -4,9 +4,6 @@ python:
 install:
     - pip install pytest fabric
     - fab travis.download_pypy
-    - wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2
-    - bunzip2 `pwd`/../pypy.tar.bz2
-    - tar -xf `pwd`/../pypy.tar -C `pwd`/../
 script: fab travis.run_tests
 notifications:
     email: false
