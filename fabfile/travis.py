@@ -1,7 +1,7 @@
 import glob
 import os
 
-from fabric.api import task, local, prefix
+from fabric.api import task, local
 
 
 @task
@@ -19,5 +19,4 @@ def download_pypy():
 def run_tests():
     with open("pypy_marker") as f:
         path_name = f.read()
-    with prefix("PYTHONPATH=%s:$PYTHONPATH" % path_name):
-        local("py.test")
+    local("PYTHONPATH=%s:$PYTHONPATH py.test" % path_name)
