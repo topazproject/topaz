@@ -52,12 +52,12 @@ class W_ArrayObject(W_Object):
         start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
         if w_count and end < start:
-            space.raise_(
+            raise space.error(
                 space.getclassfor(W_IndexError),
                 "negative length (%d)" % (end - start)
             )
         elif start < 0:
-            space.raise_(
+            raise space.error(
                 space.getclassfor(W_IndexError),
                 "index %d too small for array; minimum: %d" % (
                     start - len(self.items_w),
@@ -68,6 +68,7 @@ class W_ArrayObject(W_Object):
             self.items_w += [space.w_nil] * (start - len(self.items_w) + 1)
             self.items_w[start] = w_obj
         elif as_range:
+            assert end >= 0
             self.items_w[start:end] = [w_obj]
         else:
             self.items_w[start] = w_obj
@@ -125,7 +126,7 @@ class W_ArrayObject(W_Object):
         elif space.respond_to(w_sep, space.newsymbol("to_str")):
             separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
         else:
-            return space.raise_(space.getclassfor(W_TypeError),
+            raise space.error(space.getclassfor(W_TypeError),
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([

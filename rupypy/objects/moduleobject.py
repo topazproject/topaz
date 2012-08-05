@@ -278,7 +278,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
-        space.raise_(space.getclassfor(W_NameError),
+        raise space.error(space.getclassfor(W_NameError),
              "uninitialized constant %s" % name
         )
 

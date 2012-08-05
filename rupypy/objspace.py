@@ -131,9 +131,9 @@ class ObjectSpace(object):
             st = ToASTVisitor().transform(_parse(source, initial_lineno=initial_lineno))
             return Transformer().visit_main(st)
         except ParseError as e:
-            self.raise_(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
+            raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:
-            self.raise_(self.getclassfor(W_SyntaxError))
+            raise self.error(self.getclassfor(W_SyntaxError))
 
     def compile(self, source, filepath, initial_lineno=1):
         astnode = self.parse(source, initial_lineno=initial_lineno)
@@ -333,11 +333,11 @@ class ObjectSpace(object):
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
-    def raise_(self, w_type, msg=""):
+    def error(self, w_type, msg=""):
         w_new_sym = self.newsymbol("new")
         w_exc = self.send(w_type, w_new_sym, [self.newstr_fromstr(msg)])
         assert isinstance(w_exc, W_ExceptionObject)
-        raise RubyError(w_exc)
+        return RubyError(w_exc)
 
     def hash_w(self, w_obj):
         return self.int_w(self.send(w_obj, self.newsymbol("hash")))
@@ -386,19 +386,19 @@ class ObjectSpace(object):
 
         try:
             w_res = self.send(w_obj, self.newsymbol(method))
-        except RubyError as e:
+        except RubyError:
             src_cls = self.getclass(w_obj).name
-            self.raise_(
+            raise self.error(
                 self.getclassfor(W_TypeError),
                 "can't convert %s into %s" % (src_cls, w_cls.name)
             )
 
         if not w_res or w_res is self.w_nil and not raise_error:
-            return w_nil
+            return self.w_nil
         elif not w_res.is_kind_of(self, w_cls):
             src_cls = self.getclass(w_obj).name
             res_cls = self.getclass(w_res).name
-            self.raise_(
+            raise self.error(
                 self.getclassfor(W_TypeError),
                 "can't convert %s to %s (%s#%s gives %s)" % (
                     src_cls, w_cls.name, src_cls, method, res_cls
