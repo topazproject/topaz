@@ -1,7 +1,7 @@
 import glob
 import os
 
-from fabric.api import task, local
+from fabric.api import task, local, lcd
 
 
 @task
