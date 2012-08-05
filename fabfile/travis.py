@@ -6,8 +6,9 @@ from fabric.api import task, local, prefix
 
 @task
 def download_pypy():
-    local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O ../pypy.tar.bz2")
-    local("tar -xf ../pypy.tar.bz2 ../")
+    local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
+    local("bunzip2 `pwd`/../pypy.tar.bz2")
+    local("tar -xf `pwd`/../pypy.tar ../")
     [path_name] = glob.glob("../pypy-pypy*")
     path_name = os.path.abspath(path_name)
     with open("pypy_marker", "w") as f:
