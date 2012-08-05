@@ -6,9 +6,9 @@ env:
     - TEST_TYPE=own
     - TEST_TYPE=translate
 install:
-    - pip install pytest fabric sphinx
+    - pip install fabric
     - fab travis.download_pypy
-script: fab travis.run_tests
+script: fab travis.install_requirements
 notifications:
     email: false
     irc: "irc.freenode.org#topaz"
