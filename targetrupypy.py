@@ -4,7 +4,7 @@ from rupypy.main import entry_point
 
 
 def target(driver, args):
-    driver.exe_name = "./bin/topaz"
+    driver.exe_name = "topaz-c"
     return entry_point, None
 
 
