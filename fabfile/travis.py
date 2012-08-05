@@ -19,4 +19,18 @@ def download_pypy():
 def run_tests():
     with open("pypy_marker") as f:
         path_name = f.read()
-    local("PYTHONPATH=%s:$PYTHONPATH py.test" % path_name)
+    TEST_TYPES[os.environ["TEST_TYPE"]]({"pypy_path": path_name})
+
+
+def run_own_tests(env):
+    local("PYTHONPATH=%(pypy_path)s:$PYTHONPATH py.test" % env)
+
+
+def run_translate_tests(env):
+    local("PYTHONPATH=%(pypy_path)s:$PYTHONPATH %(pypy_path)s/pypy/translator/goal/translate.py -Ojit targetrupypy.py" % env)
+
+TEST_TYPES = {
+    "own": run_own_tests,
+    "translate": run_translate_tests,
+}
+
