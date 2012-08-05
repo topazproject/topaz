@@ -4,8 +4,9 @@ python:
 env:
     - TEST_TYPE=own
     - TEST_TYPE=translate
+    - TEST_TYPE=docs
 install:
-    - pip install pytest fabric
+    - pip install pytest fabric sphinx
     - fab travis.download_pypy
 script: fab travis.run_tests
 notifications:
