@@ -155,6 +155,10 @@ class TestObjectObject(BaseRuPyPyTest):
         s, oid = self.unwrap(space, w_res)
         assert s == "#<Object:0x%x>" % oid
 
+    def test_send(self, space):
+        w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
+        assert self.unwrap(space, w_res) == ['1', 3]
+
     def test_eqeqeq(self, space):
         w_res = space.execute("""
         class A; end
