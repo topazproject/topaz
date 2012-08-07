@@ -306,3 +306,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):
         return space.newbool(self.find_method(space, name) is not None)
+
+    @classdef.method("===")
+    def method_eqeqeq(self, space, w_obj):
+        return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
