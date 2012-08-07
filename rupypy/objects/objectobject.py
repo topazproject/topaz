@@ -36,6 +36,10 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
+    @classdef.method("initialize")
+    def method_initialize(self):
+        return self
+
     @classdef.method("__id__")
     def method___id__(self, space):
         return space.newint(compute_unique_id(self))
@@ -47,6 +51,25 @@ class W_BaseObject(object):
         raise space.error(space.find_const(space.getclassfor(W_Object), "NoMethodError"),
             "undefined method `%s` for %s" % (name, class_name)
         )
+
+    @classdef.method("==")
+    @classdef.method("equal?")
+    def method_eq(self, space, w_other):
+        return space.newbool(self is w_other)
+
+    @classdef.method("!")
+    def method_not(self, space):
+        return space.newbool(not space.is_true(self))
+
+    @classdef.method("!=")
+    def method_ne(self, space, w_other):
+        return space.newbool(
+            not space.is_true(space.send(self, space.newsymbol("=="), [w_other]))
+        )
+
+    @classdef.method("__send__", method="str")
+    def method_send(self, space, method, args_w, block):
+        return space.send(self, space.newsymbol(method), args_w[1:], block)
 
     @classdef.method("instance_eval", string="str", filename="str")
     def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
@@ -64,10 +87,6 @@ class W_BaseObject(object):
 
 class W_RootObject(W_BaseObject):
     classdef = ClassDef("Object", W_BaseObject.classdef)
-
-    @classdef.method("initialize")
-    def method_initialize(self):
-        return self
 
     @classdef.method("object_id")
     def method_object_id(self, space):
@@ -93,17 +112,17 @@ class W_RootObject(W_BaseObject):
             space.int_w(space.send(self, space.newsymbol("__id__")))
         ))
 
-    @classdef.method("send", method="str")
-    def method_send(self, space, method, args_w, block):
-        return space.send(self, space.newsymbol(method), args_w[1:], block)
+    @classdef.method("===")
+    def method_eqeqeq(self, space, w_other):
+        return space.send(self, space.newsymbol("=="), [w_other])
+
+    @classdef.method("send")
+    def method_send(self, space, args_w, block):
+        return space.send(self, space.newsymbol("__send__"), args_w, block)
 
     @classdef.method("nil?")
     def method_nilp(self, space):
         return space.w_false
-
-    @classdef.method("==")
-    def method_equal(self, space, w_other):
-        return space.newbool(self is w_other)
 
     @classdef.method("hash")
     def method_hash(self, space):
