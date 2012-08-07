@@ -55,7 +55,7 @@ real_statement: return_expr | alias | expr;
 
 return_expr: RETURN expr_splats?;
 
-alias: ALIAS IDENTIFIER IDENTIFIER;
+alias: ALIAS method_name method_name;
 
 expr_splats: expr_splat [COMMA] >expr_splats< | expr_splat;
 expr_splat: <expr> | <splat>;
