@@ -126,6 +126,25 @@ class TestObjectObject(BaseRuPyPyTest):
         assert w_self_hash is space.w_true
         assert w_other_hash is space.w_true
 
+    def test_is_kind_ofp(self, space):
+        w_res = space.execute("""
+        r = []
+        module M; end
+        class A
+          include M
+        end
+        class B < A; end
+        class C < B; end
+        b = B.new
+        r << b.kind_of? A
+        r << b.kind_of? B
+        r << b.kind_of? C
+        r << b.kind_of? M
+        return r
+        """)
+        assert self.unwrap(space, w_res) == [True, True, False, True]
+
+
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""
