@@ -1566,10 +1566,10 @@ class TestCompiler(object):
     def test_not(self, space):
         self.assert_compiles(space, "!3", """
         LOAD_CONST 0
-        UNARY_NOT
+        SEND 1 0
         DISCARD_TOP
 
-        LOAD_CONST 1
+        LOAD_CONST 2
         RETURN
         """)
 
