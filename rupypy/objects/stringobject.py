@@ -191,3 +191,7 @@ class W_StringObject(W_Object):
             raise NotImplementedError("Regexp separators for String#split")
         results = space.str_w(self).split(sep, limit - 1)
         return space.newarray([space.newstr_fromstr(s) for s in results])
+
+    @classdef.method("to_i", radix="int")
+    def method_to_i(self, space, radix=10):
+        return space.newint(int(space.str_w(self), radix))

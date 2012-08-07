@@ -3,6 +3,30 @@ from rupypy.objects.intobject import W_FixnumObject
 from ..base import BaseRuPyPyTest
 
 
+class TestBaseObject(BaseRuPyPyTest):
+    def test_instance_eval(self, space):
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval('def foo; 1; end')
+        return X.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval { def foo; 1; end }
+        return X.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval('def foo; [__FILE__, __LINE__]; end', 'dummy', 123)
+        return X.foo
+        """)
+        assert self.unwrap(space, w_res) == ["dummy", 123]
+
+
 class TestObjectObject(BaseRuPyPyTest):
     def test_class(self, space):
         w_res = space.execute("return 1.class")
@@ -49,6 +73,29 @@ class TestObjectObject(BaseRuPyPyTest):
         return A.new.foo('bar', 42)
         """)
         assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
+
+    def test_instance_variable_get(self, space):
+        w_res = space.execute("""
+        class Fred
+          def initialize(p1, p2)
+            @a, @b = p1, p2
+          end
+        end
+        fred = Fred.new('cat', 99)
+        return fred.instance_variable_get(:@a), fred.instance_variable_get("@b")
+        """)
+        assert self.unwrap(space, w_res) == ["cat", 99]
+
+    def test_instance_variable_set(self, space):
+        w_res = space.execute("""
+        class A
+          def foo; @foo; end
+        end
+        a = A.new
+        a.instance_variable_set(:@foo, "bar")
+        return a.foo
+        """)
+        assert space.str_w(w_res) == "bar"
 
     def test_to_s(self, space):
         w_res = space.execute("""

@@ -27,7 +27,7 @@ class W_BaseObject(object):
         return space.getclassobject(self.classdef)
 
     def is_kind_of(self, space, w_cls):
-        return w_cls in self.getclass(space).ancestors()
+        return w_cls.is_ancestor_of(self.getclass(space))
 
     def attach_method(self, space, name, func):
         w_cls = space.getsingletonclass(self)
@@ -44,9 +44,22 @@ class W_BaseObject(object):
     def method_method_missing(self, space, w_name):
         name = space.symbol_w(w_name)
         class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
-        space.raise_(space.find_const(space.getclassfor(W_Object), "NoMethodError"),
+        raise space.error(space.find_const(space.getclassfor(W_Object), "NoMethodError"),
             "undefined method `%s` for %s" % (name, class_name)
         )
+
+    @classdef.method("instance_eval", string="str", filename="str")
+    def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
+        if string is not None:
+            if filename is None:
+                filename = "instance_eval"
+            if w_lineno is not None:
+                lineno = space.int_w(w_lineno)
+            else:
+                lineno = 1
+            return space.execute(string, self, space.getclass(self), filename, lineno)
+        else:
+            space.invoke_block(block.copy(w_self=self, w_scope=space.getclass(self)), [])
 
 
 class W_RootObject(W_BaseObject):
@@ -95,6 +108,15 @@ class W_RootObject(W_BaseObject):
     @classdef.method("hash")
     def method_hash(self, space):
         return space.newint(compute_identity_hash(self))
+
+    @classdef.method("instance_variable_get", name="str")
+    def method_instance_variable_get(self, space, name):
+        return space.find_instance_var(self, name)
+
+    @classdef.method("instance_variable_set", name="str")
+    def method_instance_variable_set(self, space, name, w_value):
+        space.set_instance_var(self, name, w_value)
+        return w_value
 
 
 class W_Object(W_RootObject):

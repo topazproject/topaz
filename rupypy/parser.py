@@ -303,6 +303,7 @@ class Transformer(object):
         if node.children[0].symbol == "ambigious_binop":
             node = node.children[0]
             lhs = self.visit_identifier(node.children[0])
+            assert isinstance(lhs, ast.Variable)
             rhs = self.visit_arg(node.children[2])
             return ast.MaybeBinop(node.children[1].additional_info, lhs, rhs, node.getsourcepos().lineno)
         elif node.children[0].symbol in "global_send" or node.symbol == "global_paren_send":
