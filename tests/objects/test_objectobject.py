@@ -3,7 +3,29 @@ from rupypy.objects.intobject import W_FixnumObject
 from ..base import BaseRuPyPyTest
 
 
-class TestBasicObject(BaseRuPyPyTest):
+class TestBaseObject(BaseRuPyPyTest):
+    def test_instance_eval(self, space):
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval('def foo; 1; end')
+        return X.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval { def foo; 1; end }
+        return X.foo
+        """)
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("""
+        class X; end
+        X.instance_eval('def foo; [__FILE__, __LINE__]; end', 'dummy', 123)
+        return X.foo
+        """)
+        assert self.unwrap(space, w_res) == ["dummy", 123]
+
     def test___id__(self, space):
         w_res = space.execute("return BasicObject.new.__id__")
         assert isinstance(w_res, W_FixnumObject)
@@ -90,6 +112,40 @@ class TestObjectObject(BaseRuPyPyTest):
         return x.attrs
         """)
         assert self.unwrap(space, w_res) == [2, 3]
+
+    def test_method_missing(self, space):
+        w_res = space.execute("""
+        class A
+          def method_missing(name, *args, &block)
+            return name, args, block
+          end
+        end
+        return A.new.foo('bar', 42)
+        """)
+        assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
+
+    def test_instance_variable_get(self, space):
+        w_res = space.execute("""
+        class Fred
+          def initialize(p1, p2)
+            @a, @b = p1, p2
+          end
+        end
+        fred = Fred.new('cat', 99)
+        return fred.instance_variable_get(:@a), fred.instance_variable_get("@b")
+        """)
+        assert self.unwrap(space, w_res) == ["cat", 99]
+
+    def test_instance_variable_set(self, space):
+        w_res = space.execute("""
+        class A
+          def foo; @foo; end
+        end
+        a = A.new
+        a.instance_variable_set(:@foo, "bar")
+        return a.foo
+        """)
+        assert space.str_w(w_res) == "bar"
 
     def test_to_s(self, space):
         w_res = space.execute("""

@@ -30,9 +30,8 @@ from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
-                    W_ZeroDivisionError, W_SyntaxError, W_LoadError,
-                    W_TypeError, W_ArgumentError, W_RuntimeError,
-                    W_StandardError)
+    W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
+    W_ArgumentError, W_RuntimeError, W_StandardError)
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -132,9 +131,9 @@ class ObjectSpace(object):
             st = ToASTVisitor().transform(_parse(source, initial_lineno=initial_lineno))
             return Transformer().visit_main(st)
         except ParseError as e:
-            self.raise_(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
+            raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:
-            self.raise_(self.getclassfor(W_SyntaxError))
+            raise self.error(self.getclassfor(W_SyntaxError))
 
     def compile(self, source, filepath, initial_lineno=1):
         astnode = self.parse(source, initial_lineno=initial_lineno)
@@ -334,14 +333,76 @@ class ObjectSpace(object):
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
-    def raise_(self, w_type, msg=""):
+    def error(self, w_type, msg=""):
         w_new_sym = self.newsymbol("new")
         w_exc = self.send(w_type, w_new_sym, [self.newstr_fromstr(msg)])
         assert isinstance(w_exc, W_ExceptionObject)
-        raise RubyError(w_exc)
+        return RubyError(w_exc)
 
     def hash_w(self, w_obj):
         return self.int_w(self.send(w_obj, self.newsymbol("hash")))
 
     def eq_w(self, w_obj1, w_obj2):
         return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
+
+    def subscript_access(self, length, w_idx, w_count):
+        inclusive = False
+        as_range = False
+        end = 0
+        fixnum_class = self.getclassfor(W_FixnumObject)
+
+        if isinstance(w_idx, W_RangeObject) and not w_count:
+            start = self.int_w(self.convert_type(w_idx.w_start, fixnum_class, "to_int"))
+            end = self.int_w(self.convert_type(w_idx.w_end, fixnum_class, "to_int"))
+            inclusive = not w_idx.exclusive
+            as_range = True
+        else:
+            start = self.int_w(self.convert_type(w_idx, fixnum_class, "to_int"))
+            if w_count:
+                end = self.int_w(self.convert_type(w_count, fixnum_class, "to_int"))
+                if end < 0:
+                    end = -1
+                else:
+                    as_range = True
+
+        if start < 0:
+            start += length
+        if as_range:
+            if w_count:
+                end += start
+            if end < 0:
+                end += length
+            if inclusive:
+                end += 1
+            if end < start:
+                end = start
+            elif end > length:
+                end = length
+        return (start, end, as_range)
+
+    def convert_type(self, w_obj, w_cls, method, raise_error=True):
+        if w_obj.is_kind_of(self, w_cls):
+            return w_obj
+
+        try:
+            w_res = self.send(w_obj, self.newsymbol(method))
+        except RubyError:
+            src_cls = self.getclass(w_obj).name
+            raise self.error(
+                self.getclassfor(W_TypeError),
+                "can't convert %s into %s" % (src_cls, w_cls.name)
+            )
+
+        if not w_res or w_res is self.w_nil and not raise_error:
+            return self.w_nil
+        elif not w_res.is_kind_of(self, w_cls):
+            src_cls = self.getclass(w_obj).name
+            res_cls = self.getclass(w_res).name
+            raise self.error(
+                self.getclassfor(W_TypeError),
+                "can't convert %s to %s (%s#%s gives %s)" % (
+                    src_cls, w_cls.name, src_cls, method, res_cls
+                )
+            )
+        else:
+            return w_res
