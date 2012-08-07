@@ -59,11 +59,7 @@ class W_BaseObject(object):
 
     @classdef.method("!")
     def method_not(self, space):
-        equal = space.newsymbol("equal?")
-        return space.newbool(
-            space.is_true(space.send(self, equal, [space.w_false])) or
-            space.is_true(space.send(self, equal, [space.w_nil]))
-        )
+        return space.newbool(not space.is_true(self))
 
     @classdef.method("!=")
     def method_ne(self, space, w_other):
