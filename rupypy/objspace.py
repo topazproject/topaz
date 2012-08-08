@@ -31,7 +31,7 @@ from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
-    W_ArgumentError, W_RuntimeError, W_StandardError)
+    W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit)
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -83,7 +83,7 @@ class ObjectSpace(object):
             W_ArrayObject, W_HashObject,
             W_IOObject, W_FileObject,
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
-            W_TypeError, W_ArgumentError, W_RuntimeError, W_StandardError,
+            W_TypeError, W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
             W_Random, W_Dir, W_ProcObject
         ]:
             self.add_class(cls)
@@ -333,9 +333,12 @@ class ObjectSpace(object):
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
-    def error(self, w_type, msg=""):
+    def error(self, w_type, msg="", optargs=None):
+        if not optargs:
+            optargs = []
         w_new_sym = self.newsymbol("new")
-        w_exc = self.send(w_type, w_new_sym, [self.newstr_fromstr(msg)])
+        args_w = [self.newstr_fromstr(msg)] + optargs
+        w_exc = self.send(w_type, w_new_sym, args_w)
         assert isinstance(w_exc, W_ExceptionObject)
         return RubyError(w_exc)
 
@@ -344,6 +347,9 @@ class ObjectSpace(object):
 
     def eq_w(self, w_obj1, w_obj2):
         return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
+
+    def run_exit_handlers(self):
+        pass
 
     def subscript_access(self, length, w_idx, w_count):
         inclusive = False

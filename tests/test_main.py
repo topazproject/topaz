@@ -109,3 +109,7 @@ class TestMain(object):
         self.run(tmpdir, "puts RUBY_ENGINE")
         out, err = capfd.readouterr()
         assert out == "topaz\n"
+
+    def test_system_exit(self, tmpdir):
+        self.run(tmpdir, "raise SystemExit", 0)
+        self.run(tmpdir, "raise SystemExit.new('exit', 1)", 1)
