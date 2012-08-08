@@ -333,9 +333,10 @@ class ObjectSpace(object):
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
-    def error(self, w_type, msg=""):
+    def error(self, w_type, msg="", optargs=[]):
         w_new_sym = self.newsymbol("new")
-        w_exc = self.send(w_type, w_new_sym, [self.newstr_fromstr(msg)])
+        args_w = [self.newstr_fromstr(msg)] + optargs
+        w_exc = self.send(w_type, w_new_sym, args_w)
         assert isinstance(w_exc, W_ExceptionObject)
         return RubyError(w_exc)
 
