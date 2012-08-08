@@ -66,7 +66,7 @@ class W_SystemExit(W_ExceptionObject):
 
     @classdef.method("success?")
     def method_successp(self, space):
-        return space.newbool(self.status is 0)
+        return space.newbool(self.status == 0)
 
     @classdef.method("status")
     def method_status(self, space):
