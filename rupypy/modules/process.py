@@ -11,10 +11,10 @@ class Process(Module):
     def method_pid(self, space):
         return space.newint(os.getpid())
 
-    @moduledef.function("exit")
-    def method_exit(self, space, w_status=None):
+    @moduledef.function("exit", status="int")
+    def method_exit(self, space, status=0):
         raise space.error(
             space.getclassfor(W_SystemExit),
             "exit",
-            [w_status]
+            [space.newint(status)]
         )

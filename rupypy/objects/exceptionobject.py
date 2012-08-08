@@ -61,12 +61,8 @@ class W_SystemExit(W_ExceptionObject):
         W_ExceptionObject.__init__(self, space, klass)
         self.status = status
 
-    @classdef.singleton_method("allocate", msg="str")
-    def method_allocate(self, space, msg="exit", w_status=None):
-        if w_status:
-            status = space.int_w(w_status)
-        else:
-            status = 0
+    @classdef.singleton_method("allocate", msg="str", status="int")
+    def method_allocate(self, space, msg="exit", status=0):
         return W_SystemExit(space, msg, status)
 
     @classdef.method("success?")

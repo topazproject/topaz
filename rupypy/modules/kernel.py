@@ -132,10 +132,10 @@ class Kernel(Module):
         else:
             return space.newarray([w_arg])
 
-    @moduledef.function("exit")
-    def method_exit(self, space, w_status=None):
+    @moduledef.function("exit", status="int")
+    def method_exit(self, space, status=0):
         return space.send(
             space.getmoduleobject(Process.moduledef),
             space.newsymbol("exit"),
-            [w_status]
+            [space.newint(status)]
         )
