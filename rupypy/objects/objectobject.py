@@ -15,7 +15,7 @@ class ObjectMetaclass(type):
 
 class W_BaseObject(object):
     __metaclass__ = ObjectMetaclass
-    _attrs_ = ()
+    _attrs_ = []
 
     classdef = ClassDef("BasicObject")
 
