@@ -8,6 +8,7 @@ from pypy.rlib.streamio import open_file_as_stream
 
 from rupypy.error import RubyError, format_traceback
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.exceptionobject import W_SystemExit
 from rupypy.objspace import ObjectSpace
 
 
@@ -60,10 +61,14 @@ def entry_point(argv):
         try:
             space.execute(source, filepath=path)
         except RubyError as e:
-            lines = format_traceback(space, e.w_value)
-            for line in lines:
-                os.write(2, line)
-            return 1
+            if isinstance(e.w_value, W_SystemExit):
+                space.run_exit_handlers()
+                return e.w_value.status
+            else:
+                lines = format_traceback(space, e.w_value)
+                for line in lines:
+                    os.write(2, line)
+                return 1
     return 0
 
 if __name__ == "__main__":
