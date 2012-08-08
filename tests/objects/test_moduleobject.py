@@ -112,6 +112,44 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [True, False]
 
+    def test_attr_reader(self, space):
+        w_res = space.execute("""
+        class X
+          attr_reader :foo, :bar
+          def initialize; @foo = 1; @bar = 2; end
+        end
+        return X.new.foo, X.new.bar
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_attr_accessor(self, space):
+        w_res = space.execute("""
+        class X; attr_accessor :foo, :bar; end
+        x = X.new
+        x.foo = 1
+        x.bar = 2
+        return x.foo, x.bar
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_eqeqeq(self, space):
+        w_res = space.execute("""
+        r = []
+        module M; end
+        class A
+          include M
+        end
+        class B < A; end
+        class C < B; end
+        b = B.new
+        r << (A === b)
+        r << (B === b)
+        r << (C === b)
+        r << (M === b)
+        return r
+        """)
+        assert self.unwrap(space, w_res) == [True, True, False, True]
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):

@@ -7,7 +7,7 @@ from pypy.rlib.objectmodel import hlinvoke
 from pypy.rlib.rarithmetic import r_uint, intmask, LONG_BIT
 from pypy.rpython.extregistry import ExtRegistryEntry
 from pypy.rpython.lltypesystem import lltype
-from pypy.rpython.rmodel import Repr
+from pypy.rpython.rmodel import Repr, externalvsinternal
 from pypy.tool.pairtype import pairtype
 
 
@@ -177,12 +177,18 @@ class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
 class OrderedDictRepr(Repr):
     def __init__(self, rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr):
         self.rtyper = rtyper
-        self.key_repr = key_repr
-        self.value_repr = value_repr
         self.eq_func_repr = eq_func_repr
         self.hash_func_repr = hash_func_repr
+        self.external_key_repr, self.key_repr = self.pickrepr(key_repr)
+        self.external_value_repr, self.value_repr = self.pickrepr(value_repr)
 
         self.lowleveltype = self.create_lowlevel_type()
+
+    def pickrepr(self, item_repr):
+        if self.eq_func_repr and self.hash_func_repr:
+            return item_repr, item_repr
+        else:
+            return externalvsinternal(self.rtyper, item_repr)
 
     def create_lowlevel_type(self):
         entry_methods = {
@@ -236,6 +242,9 @@ class OrderedDictRepr(Repr):
         DICT = lltype.GcStruct("ORDEREDDICT", *fields, adtmeths=dict_methods)
         return lltype.Ptr(DICT)
 
+    def recast_value(self, hop, v):
+        return hop.llops.convertvar(v, self.value_repr, self.external_value_repr)
+
     def rtyper_new(self, hop):
         hop.exception_cannot_occur()
         c_TP = hop.inputconst(lltype.Void, self.lowleveltype.TO)
@@ -270,7 +279,8 @@ class __extend__(pairtype(OrderedDictRepr, Repr)):
     def rtype_getitem((self, r_key), hop):
         v_dict, v_key = hop.inputargs(self, self.key_repr)
         hop.exception_is_here()
-        return hop.gendirectcall(LLOrderedDict.ll_getitem, v_dict, v_key)
+        v_res = hop.gendirectcall(LLOrderedDict.ll_getitem, v_dict, v_key)
+        return self.recast_value(hop, v_res)
 
 
 class __extend__(pairtype(OrderedDictRepr, OrderedDictRepr)):
@@ -315,6 +325,13 @@ class LLOrderedDict(object):
     @staticmethod
     def ll_hash_from_cache(entries, i):
         return entries[i].hash
+
+    @staticmethod
+    def recast(P, v):
+        if isinstance(P, lltype.Ptr):
+            return lltype.cast_pointer(P, v)
+        else:
+            return v
 
     @staticmethod
     def ll_newdict(DICT):
@@ -482,10 +499,11 @@ class LLOrderedDict(object):
     @staticmethod
     def ll_keys(LIST, d):
         res = LIST.ll_newlist(d.num_items)
+        ELEM = lltype.typeOf(res.ll_items()).TO.OF
         i = 0
         idx = d.first_entry
         while idx != -1:
-            res.ll_items()[i] = d.entries[idx].key
+            res.ll_items()[i] = LLOrderedDict.recast(ELEM, d.entries[idx].key)
             idx = d.entries[idx].next
             i += 1
         return res

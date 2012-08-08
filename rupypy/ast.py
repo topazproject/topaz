@@ -756,7 +756,7 @@ class Not(Node):
 
     def compile(self, ctx):
         self.value.compile(ctx)
-        ctx.emit(consts.UNARY_NOT)
+        ctx.emit(consts.SEND, ctx.create_symbol_const("!"), 0)
 
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):

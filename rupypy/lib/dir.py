@@ -18,7 +18,7 @@ class W_Dir(W_Object):
         elif not os.path.isdir(path):
             msg = "Not a directory - %s" % path
         if msg:
-            space.raise_(space.getclassfor(W_SystemCallError), msg)
+            raise space.error(space.getclassfor(W_SystemCallError), msg)
         self.path = path
 
     @classdef.singleton_method("allocate")
@@ -34,5 +34,5 @@ class W_Dir(W_Object):
         try:
             os.rmdir(path)
         except OSError as e:
-            space.raise_(space.getclassfor(W_SystemCallError), str(e))
+            raise space.error(space.getclassfor(W_SystemCallError), str(e))
         return space.newint(0)
