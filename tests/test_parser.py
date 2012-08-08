@@ -1441,6 +1441,16 @@ HERE
             )))
         ]))
 
+    def test_begin(self, space):
+        r = space.parse("""
+        begin
+            3
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Block([ast.Statement(ast.ConstantInt(3))]))
+        ]))
+
     def test_module(self, space):
         r = space.parse("""
         module M

@@ -156,7 +156,7 @@ primary: LPAREN expr RPAREN |
          CLASS LSHIFT arg [LINE_END] line* statement? [LINE_END]? END |
          CLASS CONSTANT (LT arg)? [LINE_END] line* statement? [LINE_END]? END |
          MODULE CONSTANT line* statement? [LINE_END]? END |
-         BEGIN line* statement? [LINE_END]? rescue* else? ensure? END |
+         BEGIN line* statement? [LINE_END]? rescue* else? ensure? [END] |
          CASE expr? [LINE_END]? whens else? END |
          UNBOUND_COLONCOLON CONSTANT |
          varname |
