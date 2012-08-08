@@ -44,6 +44,7 @@ from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.regexpobject import W_RegexpObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
+from rupypy.objects.timeobject import W_TimeObject
 from rupypy.parser import Transformer, _parse, ToASTVisitor
 
 
@@ -84,7 +85,7 @@ class ObjectSpace(object):
             W_IOObject, W_FileObject,
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError, W_SyntaxError,
             W_TypeError, W_ArgumentError, W_RuntimeError, W_StandardError,
-            W_Random, W_Dir, W_ProcObject
+            W_Random, W_Dir, W_ProcObject, W_TimeObject
         ]:
             self.add_class(cls)
 
