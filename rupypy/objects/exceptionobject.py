@@ -57,7 +57,6 @@ class W_SystemExit(W_ExceptionObject):
     classdef = ClassDef("SystemExit", W_ExceptionObject.classdef)
 
     def __init__(self, space, msg, status, klass=None):
-        W_Object.__init__(self, space, klass)
         W_ExceptionObject.__init__(self, space, klass)
         self.status = status
 
