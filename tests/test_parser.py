@@ -1441,6 +1441,16 @@ HERE
             )))
         ]))
 
+    def test_begin(self, space):
+        r = space.parse("""
+        begin
+            3
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Block([ast.Statement(ast.ConstantInt(3))]))
+        ]))
+
     def test_module(self, space):
         r = space.parse("""
         module M
@@ -1945,6 +1955,9 @@ HERE
     def test_alias(self, space):
         assert space.parse("alias a b") == ast.Main(ast.Block([
             ast.Alias(ast.ConstantSymbol("a"), ast.ConstantSymbol("b"), 1)
+        ]))
+        assert space.parse("alias << b") == ast.Main(ast.Block([
+            ast.Alias(ast.ConstantSymbol("<<"), ast.ConstantSymbol("b"), 1)
         ]))
 
     def test_custom_lineno(self, space):

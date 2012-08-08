@@ -162,6 +162,14 @@ class W_ModuleObject(W_RootObject):
         else:
             return self.included_modules[:]
 
+    def is_ancestor_of(self, w_cls):
+        if self is w_cls or self in w_cls.included_modules:
+            return True
+        elif w_cls.superclass is not None:
+            return self.is_ancestor_of(w_cls.superclass)
+        else:
+            return False
+
     def include_module(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)
         if w_mod not in self.ancestors():
@@ -207,14 +215,16 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("attr_accessor")
     def method_attr_accessor(self, space, args_w):
+        self.method_attr_reader(space, args_w)
         for w_arg in args_w:
             varname = space.symbol_w(w_arg)
-            self.method_attr_reader(space, varname)
             self.define_method(space, varname + "=", AttributeWriter("@" + varname))
 
-    @classdef.method("attr_reader", varname="symbol")
-    def method_attr_reader(self, space, varname):
-        self.define_method(space, varname, AttributeReader("@" + varname))
+    @classdef.method("attr_reader")
+    def method_attr_reader(self, space, args_w):
+        for w_arg in args_w:
+            varname = space.symbol_w(w_arg)
+            self.define_method(space, varname, AttributeReader("@" + varname))
 
     @classdef.method("module_function", name="symbol")
     def method_module_function(self, space, name):
@@ -268,7 +278,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
-        space.raise_(space.getclassfor(W_NameError),
+        raise space.error(space.getclassfor(W_NameError),
              "uninitialized constant %s" % name
         )
 
@@ -284,9 +294,7 @@ class W_ModuleObject(W_RootObject):
                 lineno = 1
             return space.execute(string, self, self, filename, lineno)
         else:
-            block.w_self = self
-            block.w_scope = self
-            space.invoke_block(block, [])
+            space.invoke_block(block.copy(w_self=self, w_scope=self), [])
 
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):
@@ -298,3 +306,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):
         return space.newbool(self.find_method(space, name) is not None)
+
+    @classdef.method("===")
+    def method_eqeqeq(self, space, w_obj):
+        return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))

@@ -37,6 +37,8 @@ class ClassDef(object):
 
     def singleton_method(self, name, **argspec):
         def adder(func):
+            if isinstance(func, staticmethod):
+                func = func.__func__
             self.singleton_methods[name] = (func, argspec)
             return staticmethod(func)
         return adder
@@ -60,6 +62,7 @@ class ModuleDef(object):
     def method(self, name, **argspec):
         def adder(func):
             self.methods[name] = (func, argspec)
+            return func
         return adder
 
     def app_method(self, source):
@@ -70,6 +73,7 @@ class ModuleDef(object):
             # XXX: should be private, once we have visibility
             self.methods[name] = (func, argspec)
             self.singleton_methods[name] = (func, argspec)
+            return func
         return adder
 
 
