@@ -186,9 +186,9 @@ class W_StringObject(W_Object):
     def method_ljust(self, space, integer, padstr=" "):
         if integer <= self.length():
             return self
-        if len(padstr) is 0:
-            space.raise_(space.getclassfor(W_ArgumentError), "zero width padding")
-        elif len(padstr) is 1:
+        if not padstr:
+            raise space.error(space.getclassfor(W_ArgumentError), "zero width padding")
+        elif len(padstr) == 1:
             res = space.str_w(self).ljust(integer, padstr)
         else:
             required_padding = 1 + ((integer - self.length() - 1) / len(padstr))
