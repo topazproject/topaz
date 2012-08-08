@@ -31,6 +31,7 @@ class W_Dir(W_Object):
 
     @classdef.singleton_method("delete", path="path")
     def method_delete(self, space, path):
+        assert path
         try:
             os.rmdir(path)
         except OSError as e:
