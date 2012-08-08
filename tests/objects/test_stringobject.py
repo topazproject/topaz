@@ -79,7 +79,8 @@ class TestStringObject(BaseRuPyPyTest):
         return a, a.ljust(1)
         """)
         w_original, w_adjusted = space.listview(w_res)
-        assert w_original is w_adjusted
+        assert w_original is not w_adjusted
+        assert space.str_w(w_adjusted) == space.str_w(w_original)
 
         w_res = space.execute("return 'a'.ljust(3)")
         assert space.str_w(w_res) == "a  "
