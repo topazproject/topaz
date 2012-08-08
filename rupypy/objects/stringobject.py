@@ -184,16 +184,16 @@ class W_StringObject(W_Object):
 
     @classdef.method("ljust", integer="int", padstr="str")
     def method_ljust(self, space, integer, padstr=" "):
-        if integer <= self.length():
-            return self
         if not padstr:
             raise space.error(space.getclassfor(W_ArgumentError), "zero width padding")
-        elif len(padstr) == 1:
-            res = space.str_w(self).ljust(integer, padstr)
+        elif integer <= self.length():
+            return self.copy(space)
         else:
-            required_padding = 1 + ((integer - self.length() - 1) / len(padstr))
-            res = space.str_w(self) + (padstr * required_padding)[:integer - 1]
-        return space.newstr_fromstr(res)
+            pad_len = integer - self.length() - 1
+            assert pad_len >= 0
+            padding = [padstr] * (pad_len / len(padstr))
+            tail = [padstr[:pad_len % len(padstr) + 1]]
+            return space.newstr_fromchars([space.str_w(self)] + padding + tail)
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=-1):
