@@ -333,7 +333,9 @@ class ObjectSpace(object):
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
-    def error(self, w_type, msg="", optargs=[]):
+    def error(self, w_type, msg="", optargs=None):
+        if not optargs:
+            optargs = []
         w_new_sym = self.newsymbol("new")
         args_w = [self.newstr_fromstr(msg)] + optargs
         w_exc = self.send(w_type, w_new_sym, args_w)
