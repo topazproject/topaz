@@ -61,11 +61,12 @@ def entry_point(argv):
         try:
             space.execute(source, filepath=path)
         except RubyError as e:
-            if isinstance(e.w_value, W_SystemExit):
+            w_exc = e.w_value
+            if isinstance(w_exc, W_SystemExit):
                 space.run_exit_handlers()
-                return e.w_value.status
+                return w_exc.status
             else:
-                lines = format_traceback(space, e.w_value)
+                lines = format_traceback(space, w_exc)
                 for line in lines:
                     os.write(2, line)
                 return 1
