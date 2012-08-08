@@ -86,6 +86,8 @@ class W_BaseObject(object):
 
 
 class W_RootObject(W_BaseObject):
+    _attrs_ = []
+
     classdef = ClassDef("Object", W_BaseObject.classdef)
 
     @classdef.method("object_id")
@@ -139,6 +141,8 @@ class W_RootObject(W_BaseObject):
 
 
 class W_Object(W_RootObject):
+    _attrs_ = ["map", "storage"]
+
     def __init__(self, space, klass=None):
         if klass is None:
             klass = space.getclassfor(self.__class__)
