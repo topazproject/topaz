@@ -33,6 +33,7 @@ def format_traceback(space, exc):
     return lines
 
 def error_for_oserror(space, exc):
+    assert isinstance(exc, OSError)
     return space.error(
         space.getclassfor(W_SystemCallError),
         exc.strerror,
