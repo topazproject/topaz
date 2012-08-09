@@ -1,3 +1,6 @@
+from rupypy.objects.exceptionobject import W_SystemCallError
+
+
 class RubyError(Exception):
     def __init__(self, w_value):
         self.w_value = w_value
@@ -28,3 +31,10 @@ def format_traceback(space, exc):
         last_instr_idx += 1
         frame = frame.backref()
     return lines
+
+def error_for_oserror(space, exc):
+    return space.error(
+        space.getclassfor(W_SystemCallError),
+        exc.strerror,
+        [space.newint(exc.errno)]
+    )

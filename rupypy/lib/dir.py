@@ -1,5 +1,6 @@
 import os
 
+from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.exceptionobject import W_SystemCallError
@@ -35,5 +36,5 @@ class W_Dir(W_Object):
         try:
             os.rmdir(path)
         except OSError as e:
-            raise space.error(space.getclassfor(W_SystemCallError), str(e))
+            raise error_for_oserror(space, e)
         return space.newint(0)
