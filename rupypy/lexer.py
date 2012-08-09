@@ -266,6 +266,8 @@ class Lexer(BaseLexer):
     def emit_identifier(self):
         value = "".join(self.current_value)
         state = self.state
+        if value == "__END__":
+            return self.emit_END()
         if value in self.keywords and self.state not in [self.EXPR_DOT, self.EXPR_FNAME]:
             keyword = self.keywords[value]
             self.state = keyword.state
@@ -288,6 +290,16 @@ class Lexer(BaseLexer):
             else:
                 self.state = self.EXPR_END
         return token
+
+    def emit_END(self):
+        ch = self.read()
+        data = ""
+        idx = self.get_idx()
+        while ch != self.EOF:
+            ch = self.read()
+            data += ch
+        self.tokens.insert(0, Token("RAW_DATA", idx - 1, SourcePos(-1, -1, -1)))
+        self.emit("EOF")
 
     def comment(self, ch):
         while True:

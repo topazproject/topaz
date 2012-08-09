@@ -1,10 +1,57 @@
 import os
 import stat
 
+from rupypy.objects.fileobject import W_FileObject, W_IOObject
+
 from ..base import BaseRuPyPyTest
 
 
-class TestFile(object):
+class TestIO(BaseRuPyPyTest):
+    def test_new_from_file(self, space, tmpdir):
+        contents = "foo\nbar\nbaz\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+
+        w_res = space.execute("""
+        f = File.new('%s')
+        io = IO.new(f)
+        return io.read
+        """ % str(f))
+        assert space.str_w(w_res) == contents
+
+    def test_new_from_fd(self, space):
+        w_res = space.execute("return IO.new(1)")
+        assert isinstance(w_res, W_IOObject)
+
+    def test_write(self, space, capfd):
+        content = "foo\n"
+        w_res = space.execute('return IO.new(1, "w").write("%s")' % content)
+        out, err = capfd.readouterr()
+        assert out == content
+
+    def test_read(self, space, tmpdir):
+        contents = "foo\nbar\nbaz\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+
+        w_res = space.execute("return File.new('%s').read" % str(f))
+        assert space.str_w(w_res) == contents
+
+        w_res = space.execute("return File.new('%s').read(4)" % str(f))
+        assert space.str_w(w_res) == contents[:4]
+
+        w_res = space.execute("""
+        a = 'hello world'
+        File.new('%s').read(10, a)
+        return a
+        """ % str(f))
+        assert space.str_w(w_res) == contents[:10]
+
+        with self.raises(space, "ArgumentError"):
+            space.execute("return File.new('%s').read(-1)" % str(f))
+
+
+class TestFile(BaseRuPyPyTest):
     def test_separator(self, space):
         space.execute("File::SEPARATOR")
 
@@ -13,6 +60,17 @@ class TestFile(object):
 
     def test_fnm_syscase(self, space):
         space.execute("File::FNM_SYSCASE")
+
+    def test_new_simple(self, space, tmpdir):
+        contents = "foo\nbar\nbaz\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+
+        w_res = space.execute("return File.new('%s')" % str(f))
+        assert isinstance(w_res, W_FileObject)
+
+        w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
+        assert isinstance(w_res, W_FileObject)
 
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")

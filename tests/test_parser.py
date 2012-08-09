@@ -1965,3 +1965,37 @@ HERE
             assert space.parse("[]{}[]")
         with self.raises(space, "SyntaxError", "line 10"):
             assert space.parse("[]{}[]", 10)
+
+    def test___END__(self, space):
+        assert space.parse("1\n2\n__END__\nfoo bar baz") == ast.Main(ast.Block([
+            ast.Statement(ast.If(
+                ast.Send(
+                   ast.Global("$LOADED_FEATURES"),
+                   "include?",
+                   [ast.Variable("__FILE__", -1)],
+                   None,
+                   -1),
+                ast.Block([]),
+                ast.Block([
+                    ast.Assignment(
+                        ast.LookupConstant(ast.Scope(-1), "DATA", -1),
+                        ast.Send(
+                            ast.LookupConstant(ast.Scope(-1), "File", -1),
+                            "new",
+                            [ast.Variable("__FILE__", -1)],
+                            None,
+                            -1
+                        ),
+                    ),
+                    ast.Send(
+                        ast.LookupConstant(ast.Scope(-1), "DATA", -1),
+                        "read",
+                        [ast.ConstantInt(len("1\n2\n__END__\n"))],
+                        None,
+                        -1
+                    ),
+                ])
+            )),
+            ast.Statement(ast.ConstantInt(1)),
+            ast.Statement(ast.ConstantInt(2))
+        ]))
