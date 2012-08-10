@@ -59,7 +59,7 @@ class W_IOObject(W_Object):
             if len(current_read) == 0:
                 break
             read_bytes += len(current_read)
-            read_chunks.append(current_read)
+            read_chunks += current_read
         # Return nil on EOF if length is given
         if read_bytes == 0:
             return space.w_nil
