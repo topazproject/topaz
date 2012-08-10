@@ -76,6 +76,15 @@ class TestIO(BaseRuPyPyTest):
 
 
 class TestFile(BaseRuPyPyTest):
+    def test_access_flags(self, space):
+        assert space.int_w(space.execute("return File::RDONLY")) == os.O_RDONLY
+        assert space.int_w(space.execute("return File::WRONLY")) == os.O_WRONLY
+        assert space.int_w(space.execute("return File::RDWR")) == os.O_RDWR
+        assert space.int_w(space.execute("return File::APPEND")) == os.O_APPEND
+        assert space.int_w(space.execute("return File::CREAT")) == os.O_CREAT
+        assert space.int_w(space.execute("return File::EXCL")) == os.O_EXCL
+        assert space.int_w(space.execute("return File::TRUNC")) == os.O_TRUNC
+
     def test_separator(self, space):
         space.execute("File::SEPARATOR")
 
