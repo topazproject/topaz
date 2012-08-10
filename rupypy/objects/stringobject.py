@@ -191,9 +191,12 @@ class W_StringObject(W_Object):
         else:
             pad_len = integer - self.length() - 1
             assert pad_len >= 0
-            padding = [padstr] * (pad_len / len(padstr))
-            tail = [padstr[:pad_len % len(padstr) + 1]]
-            return space.newstr_fromchars([space.str_w(self)] + padding + tail)
+            chars = []
+            chars += space.str_w(self)
+            for i in xrange(pad_len / len(padstr)):
+                chars += padstr
+            chars += padstr[:pad_len % len(padstr) + 1]
+            return space.newstr_fromchars(chars)
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=-1):
