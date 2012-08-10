@@ -303,6 +303,7 @@ class Transformer(object):
         if node.children[0].symbol == "ambigious_binop":
             node = node.children[0]
             lhs = self.visit_identifier(node.children[0])
+            assert isinstance(lhs, ast.Variable)
             rhs = self.visit_arg(node.children[2])
             return ast.MaybeBinop(node.children[1].additional_info, lhs, rhs, node.getsourcepos().lineno)
         elif node.children[0].symbol in "global_send" or node.symbol == "global_paren_send":
@@ -637,11 +638,11 @@ class Transformer(object):
             idx += 1
         body_block = self.visit_block(node, start_idx=1, end_idx=idx)
         handlers = []
-        while node.children[idx].symbol == "rescue":
+        while idx < len(node.children) and node.children[idx].symbol == "rescue":
             handlers.append(self.visit_rescue(node.children[idx]))
             idx += 1
 
-        if node.children[idx].symbol == "else":
+        if idx < len(node.children) and node.children[idx].symbol == "else":
             else_node = node.children[idx]
             else_block = self.visit_block(else_node, start_idx=1)
             has_else_block = True
@@ -652,7 +653,7 @@ class Transformer(object):
         if handlers or has_else_block:
             body_block = ast.TryExcept(body_block, handlers, else_block)
 
-        if node.children[idx].symbol == "ensure":
+        if idx < len(node.children) and node.children[idx].symbol == "ensure":
             ensure_node = node.children[idx]
             block = self.visit_block(ensure_node, start_idx=1)
             body_block = ast.TryFinally(body_block, block)

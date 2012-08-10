@@ -161,7 +161,7 @@ class Interpreter(object):
         assert isinstance(w_module, W_ModuleObject)
         w_value = space.find_class_var(w_module, name)
         if w_value is None:
-            space.raise_(space.getclassfor(W_NameError),
+            raise space.error(space.getclassfor(W_NameError),
                 "uninitialized class variable %s in %s" % (name, w_module.name)
             )
         frame.push(w_value)
@@ -313,21 +313,11 @@ class Interpreter(object):
             frame.push(w_block.block)
         elif space.respond_to(w_block, space.newsymbol("to_proc")):
             # Proc implements to_proc, too, but MRI doesn't call it
-            w_res = space.send(w_block, space.newsymbol("to_proc"))
-            if isinstance(w_res, W_ProcObject):
-                frame.push(w_res.block)
-            else:
-                block_class_name = space.getclass(w_block).name
-                result_class_name = space.getclass(w_res).name
-                space.raise_(space.getclassfor(W_TypeError),
-                    "can't convert %s to Proc (%s#to_proc gives %s)" % (
-                        block_class_name,
-                        block_class_name,
-                        result_class_name
-                    )
-                )
+            w_res = space.convert_type(w_block, space.getclassfor(W_ProcObject), "to_proc")
+            assert isinstance(w_res, W_ProcObject)
+            frame.push(w_res.block)
         else:
-            space.raise_(space.getclassfor(W_TypeError),
+            raise space.error(space.getclassfor(W_TypeError),
                 "wrong argument type"
             )
 
@@ -464,10 +454,6 @@ class Interpreter(object):
             return pc
         else:
             return self.jump(space, bytecode, frame, pc, target_pc)
-
-    def UNARY_NOT(self, space, bytecode, frame, pc):
-        w_obj = frame.pop()
-        frame.push(space.newbool(not space.is_true(w_obj)))
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()

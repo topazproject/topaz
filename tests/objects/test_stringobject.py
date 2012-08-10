@@ -93,3 +93,13 @@ class TestStringObject(BaseRuPyPyTest):
         x, y = self.unwrap(space, w_res)
         assert x == "abcdef"
         assert y == "abc"
+
+    def test_to_i(self, space):
+        w_res = space.execute('return "1234".to_i')
+        assert space.int_w(w_res) == 1234
+        w_res = space.execute('return "1010".to_i(2)')
+        assert space.int_w(w_res) == 10
+        w_res = space.execute('return "77".to_i(8)')
+        assert space.int_w(w_res) == 63
+        w_res = space.execute('return "AA".to_i(16)')
+        assert space.int_w(w_res) == 170
