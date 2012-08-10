@@ -50,12 +50,15 @@ class W_IOObject(W_Object):
                     space.getclassfor(W_ArgumentError), "negative length %d given" % length
                 )
         else:
-            length = os.lseek(self.fd, 0, os.SEEK_END)
-            os.lseek(self.fd, -length, os.SEEK_END)
+            length = -1
         read_bytes = 0
         read_chunks = []
-        while read_bytes < length:
-            current_read = os.read(self.fd, int(length - read_bytes))
+        while length < 0 or read_bytes < length:
+            if length > 0:
+                max_read = int(length - read_bytes)
+            else:
+                max_read = 8192
+            current_read = os.read(self.fd, max_read)
             if len(current_read) == 0:
                 break
             read_bytes += len(current_read)
