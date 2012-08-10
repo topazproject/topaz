@@ -11,3 +11,7 @@ class W_NilObject(W_Object):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("")
+
+    @classdef.method("nil?")
+    def method_nilp(self, space):
+        return space.w_true

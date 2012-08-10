@@ -768,6 +768,51 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_multiple_blocks_in_block(self, space):
+        bc = self.assert_compiles(space, """
+        f {
+            x = 2
+            g { x }
+            g { x }
+        }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        STORE_DEREF 0
+        DISCARD_TOP
+
+        LOAD_SELF
+        LOAD_CONST 1
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 2 1
+        DISCARD_TOP
+
+        LOAD_SELF
+        LOAD_CONST 3
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 2 1
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0].consts_w[1], """
+        LOAD_DEREF 0
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0].consts_w[3], """
+        LOAD_DEREF 0
+        RETURN
+        """)
+
     def test_method_assignment(self, space):
         bc = self.assert_compiles(space, "self.abc = 3", """
         LOAD_SELF
@@ -1521,10 +1566,10 @@ class TestCompiler(object):
     def test_not(self, space):
         self.assert_compiles(space, "!3", """
         LOAD_CONST 0
-        UNARY_NOT
+        SEND 1 0
         DISCARD_TOP
 
-        LOAD_CONST 1
+        LOAD_CONST 2
         RETURN
         """)
 
@@ -1665,6 +1710,22 @@ class TestCompiler(object):
         LOAD_INSTANCE_VAR 0
         DUP_TOP
         JUMP_IF_TRUE 13
+        DISCARD_TOP
+        LOAD_CONST 1
+        STORE_INSTANCE_VAR 0
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+    def test_and_equal(self, space):
+        self.assert_compiles(space, "@a &&= 4", """
+        LOAD_SELF
+        DUP_TOP
+        LOAD_INSTANCE_VAR 0
+        DUP_TOP
+        JUMP_IF_FALSE 13
         DISCARD_TOP
         LOAD_CONST 1
         STORE_INSTANCE_VAR 0

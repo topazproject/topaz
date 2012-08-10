@@ -2,7 +2,7 @@ from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.rangeobject import W_RangeObject
-from rupypy.objects.exceptionobject import W_TypeError
+from rupypy.objects.exceptionobject import W_TypeError, W_IndexError
 
 
 class W_ArrayObject(W_Object):
@@ -31,37 +31,57 @@ class W_ArrayObject(W_Object):
     """)
 
     @classdef.method("[]")
-    def method_subscript(self, space, w_idx):
-        if isinstance(w_idx, W_RangeObject):
-            start = space.int_w(w_idx.w_start)
-            if w_idx.exclusive:
-                end = space.int_w(w_idx.w_end)
-            else:
-                end = space.int_w(w_idx.w_end) + 1
-            assert start >= 0
-            assert end >= 0
+    def method_subscript(self, space, w_idx, w_count=None):
+        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        if (as_range and end < start or
+            start < 0 or end < 0 or
+            not as_range and start >= len(self.items_w)):
+            return space.w_nil
+        elif as_range:
             return space.newarray(self.items_w[start:end])
         else:
-            return self.items_w[space.int_w(w_idx)]
+            return self.items_w[start]
 
     @classdef.method("[]=")
-    def method_subscript_assign(self, space, w_idx, w_obj):
-        if isinstance(w_idx, W_RangeObject):
-            start = space.int_w(w_idx.w_start)
-            if w_idx.exclusive:
-                end = space.int_w(w_idx.w_end)
-            else:
-                end = space.int_w(w_idx.w_end) + 1
-            assert start >= 0
+    def method_subscript_assign(self, space, w_idx, w_count_or_obj, w_obj=None):
+        w_count = None
+        if w_obj:
+            w_count = w_count_or_obj
+        else:
+            w_obj = w_count_or_obj
+        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+
+        if w_count and end < start:
+            raise space.error(
+                space.getclassfor(W_IndexError),
+                "negative length (%d)" % (end - start)
+            )
+        elif start < 0:
+            raise space.error(
+                space.getclassfor(W_IndexError),
+                "index %d too small for array; minimum: %d" % (
+                    start - len(self.items_w),
+                    -len(self.items_w)
+                )
+            )
+        elif start >= len(self.items_w):
+            self.items_w += [space.w_nil] * (start - len(self.items_w) + 1)
+            self.items_w[start] = w_obj
+        elif as_range:
             assert end >= 0
             self.items_w[start:end] = [w_obj]
         else:
-            self.items_w[space.int_w(w_idx)] = w_obj
+            self.items_w[start] = w_obj
+        return w_obj
 
     @classdef.method("size")
     @classdef.method("length")
     def method_length(self, space):
         return space.newint(len(self.items_w))
+
+    @classdef.method("empty?")
+    def method_emptyp(self, space):
+        return space.newbool(len(self.items_w) == 0)
 
     @classdef.method("+")
     def method_add(self, space, w_other):
@@ -85,6 +105,11 @@ class W_ArrayObject(W_Object):
         self.items_w.append(w_obj)
         return self
 
+    @classdef.method("concat")
+    def method_concat(self, space, w_ary):
+        self.items_w += space.listview(w_ary)
+        return self
+
     @classdef.method("unshift")
     def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):
@@ -101,13 +126,17 @@ class W_ArrayObject(W_Object):
         elif space.respond_to(w_sep, space.newsymbol("to_str")):
             separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
         else:
-            return space.raise_(space.getclassfor(W_TypeError),
+            raise space.error(space.getclassfor(W_TypeError),
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([
             space.str_w(space.send(w_o, space.newsymbol("to_s")))
             for w_o in self.items_w
         ]))
+
+    @classdef.method("dup")
+    def method_dup(self, space):
+        return space.newarray(self.items_w[:])
 
     classdef.app_method("""
     def at idx
@@ -146,3 +175,16 @@ class W_ArrayObject(W_Object):
         result
     end
     """)
+
+    classdef.app_method("""
+    def compact
+        self.select { |each| !each.nil? }
+    end
+    """)
+
+    @classdef.method("last")
+    def method_last(self, space):
+        if len(self.items_w) == 0:
+            return space.w_nil
+        else:
+            return self.items_w[len(self.items_w) - 1]

@@ -34,6 +34,24 @@ class Enumerable(Module):
     """)
 
     moduledef.app_method("""
+    def all?(&block)
+        self.each do |obj|
+            return false unless (block ? block.call(obj) : obj)
+        end
+        true
+    end
+    """)
+
+    moduledef.app_method("""
+    def any?(&block)
+        self.each do |obj|
+            return true if (block ? block.call(obj) : obj)
+        end
+        false
+    end
+    """)
+
+    moduledef.app_method("""
     def select(&block)
       ary = []
       self.each do |o|
@@ -71,4 +89,14 @@ class Enumerable(Module):
         end
         result
     end
+    """)
+
+    moduledef.app_method("""
+    def detect(ifnone = nil, &block)
+        self.each do |o|
+            return o if block.call(o)
+        end
+        return ifnone
+    end
+    alias find detect
     """)

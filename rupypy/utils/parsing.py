@@ -18,5 +18,6 @@ def make_parse_function(grammar, lexer_cls):
 
     def parse(s, initial_lineno):
         lexer = lexer_cls(s, initial_lineno=initial_lineno)
-        return parser.parse(lexer.tokenize())
+        tokens = [t for t in lexer.tokenize()]
+        return parser.parse(tokens)
     return parse, ToASTVisitor

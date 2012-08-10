@@ -93,6 +93,27 @@ class TestKernel(BaseRuPyPyTest):
             raise CustomError, 'foo'
             """)
 
+    def test_Array(self, space):
+        w_res = space.execute("""
+        class A
+          def to_ary; ["to_ary"]; end
+          def to_a; ["to_a"]; end
+        end
+        class B
+          def to_a; ["to_a"]; end
+        end
+        return Array(A.new), Array(B.new)
+        """)
+        assert self.unwrap(space, w_res) == [["to_ary"], ["to_a"]]
+        assert self.unwrap(space, space.execute("return Array(1)")) == [1]
+
+    def test_exit(self, space):
+        with self.raises(space, "SystemExit"):
+            space.execute("Kernel.exit")
+        with self.raises(space, "SystemExit"):
+            space.execute("exit")
+
+
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
         f = tmpdir.join("t.rb")

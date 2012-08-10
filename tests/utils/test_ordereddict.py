@@ -3,10 +3,15 @@ from pypy.rpython.test.test_llinterp import interpret
 from rupypy.utils.ordereddict import OrderedDict
 
 
+class Simple(object):
+    def __init__(self, x):
+        self.x = x
+
+
 class BaseTestOrderedDict(object):
     def test_create(self):
         def f():
-            o = OrderedDict()
+            OrderedDict()
 
         self.run(f)
 
@@ -18,21 +23,25 @@ class BaseTestOrderedDict(object):
 
         assert self.run(f) == 2
 
-    def test_custom_eq_hash(self):
-        class X(object):
-            def __init__(self, a):
-                self.a = a
+    def test_get_set_object(self):
+        def f(n):
+            x = Simple(n)
+            o = OrderedDict()
+            o[x] = x
+            return o[x].x
+        assert self.run(f, [10]) == 10
 
+    def test_custom_eq_hash(self):
         def eq(x, y):
-            return x.a == y.a
+            return x.x == y.x
 
         def hash(x):
-            return x.a
+            return x.x
 
         def f(n):
             o = OrderedDict(eq, hash)
-            o[X(n)] = 23
-            return o[X(n)]
+            o[Simple(n)] = 23
+            return o[Simple(n)]
         assert self.run(f, [15]) == 23
 
     def test_merge_dicts(self):
@@ -66,6 +75,24 @@ class BaseTestOrderedDict(object):
 
         assert self.run(f, [0]) == 4
         assert self.run(f, [1]) == 5
+
+    def test_keys_object(self):
+        def f(n):
+            o = OrderedDict()
+            o[Simple(1)] = None
+            o[Simple(2)] = None
+            o[Simple(3)] = None
+            return o.keys()[n].x
+        assert self.run(f, [2]) == 3
+
+    def test_get(self):
+        def f(n):
+            o = OrderedDict()
+            o[4] = 3
+            return o.get(n, 123)
+
+        assert self.run(f, [12]) == 123
+        assert self.run(f, [4]) == 3
 
 
 class TestPythonOrderedDict(BaseTestOrderedDict):

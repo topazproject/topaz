@@ -27,6 +27,48 @@ class TestEnumberable(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [[5, 0], [6, 1], [7, 2], [8, 3], [9, 4], [10, 5]]
 
+    def test_all(self, space):
+        w_res = space.execute("""
+        return ["ant", "bear", "cat"].all? do |word|
+            word.length > 2
+        end
+        """)
+        assert w_res is space.w_true
+
+    def test_all_false(self, space):
+        w_res = space.execute("""
+        return ["ant", "bear", "cat"].all? do |word|
+            word.length > 3
+        end
+        """)
+        assert w_res is space.w_false
+
+    def test_all_empty(self, space):
+        w_res = space.execute("""
+        return [].all?
+        """)
+        assert w_res is space.w_true
+
+    def test_all_no_block(self, space):
+        w_res = space.execute("""
+        return [1, 2, 3].all?
+        """)
+        assert w_res is space.w_true
+
+    def test_any(self, space):
+        w_res = space.execute("""
+        return ["ant", "bear", "cat"].any? do |word|
+            word.length > 2
+        end
+        """)
+        assert w_res is space.w_true
+
+    def test_any_false(self, space):
+        w_res = space.execute("""
+        return [nil, nil, nil].any?
+        """)
+        assert w_res is space.w_false
+
     def test_select(self, space):
         w_res = space.execute("""
         return (2..4).select { |x| x == 2 }
@@ -78,3 +120,11 @@ class TestEnumberable(BaseRuPyPyTest):
         end
         return A.new.to_a""")
         assert self.unwrap(space, w_res) == [0,1,2,3,4]
+
+    def test_detect(self, space):
+        w_res = space.execute("return (1..10).detect { |i| i == 11 }")
+        assert w_res == space.w_nil
+        w_res = space.execute("return (1..10).detect(-1) { |i| i == 11 }")
+        assert space.int_w(w_res) == -1
+        w_res = space.execute("return (1..10).detect { |i| i == 5 }")
+        assert space.int_w(w_res) == 5

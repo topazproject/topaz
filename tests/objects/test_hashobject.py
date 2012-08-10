@@ -12,6 +12,13 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_lookup_non_existing(self, space):
+        w_res = space.execute("""
+        x = {}
+        return x[2]
+        """)
+        assert w_res is space.w_nil
+
     def test_keys(self, space):
         w_res = space.execute("""
         x = {2 => 3, "four" => 5, 1 => 3, '1' => 'a'}
