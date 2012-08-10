@@ -16,10 +16,12 @@ class W_Dir(W_Object):
         msg = None
         if not os.path.exists(path):
             msg = "No such file or directory - %s" % path
+            w_errno = space.newint(os.errno.ENOENT)
         elif not os.path.isdir(path):
             msg = "Not a directory - %s" % path
+            w_errno = space.newint(os.errno.ENOTDIR)
         if msg:
-            raise space.error(space.getclassfor(W_SystemCallError), msg)
+            raise space.error(space.getclassfor(W_SystemCallError), msg, [w_errno])
         self.path = path
 
     @classdef.singleton_method("allocate")
