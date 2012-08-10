@@ -145,7 +145,6 @@ class W_FileObject(W_IOObject):
             perm = 0665
             w_opt = w_perm_or_opt
         elif w_opt is not None:
-            assert isinstance(w_perm_or_opt, W_FixnumObject)
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
