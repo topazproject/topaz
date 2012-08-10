@@ -16,6 +16,11 @@ class W_IOObject(W_Object):
         W_Object.__init__(self, space)
         self.fd = -1
 
+    def __del__(self):
+        # Do not close standard file streams
+        if self.fd > 3:
+            os.close(self.fd)
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_IOObject(space)
