@@ -1,8 +1,6 @@
 import os
 import sys
 
-from pypy.rlib.streamio import fdopen_as_stream, open_file_as_stream
-
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.stringobject import W_StringObject
@@ -17,7 +15,6 @@ class W_IOObject(W_Object):
     def __init__(self, space):
         W_Object.__init__(self, space)
         self.fd = -1
-        self.stream = None
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -41,27 +38,32 @@ class W_IOObject(W_Object):
             raise NotImplementedError("options hash for IO.new")
         if mode is None:
             mode = "r"
-        self.stream = fdopen_as_stream(fd, "r")
         self.fd = fd
         return self
 
     @classdef.method("read")
     def method_read(self, space, w_length=None, w_str=None):
-        if w_length is None:
-            return space.newstr_fromstr(str(self.stream.read(-1)))
-        length = space.int_w(w_length)
-        if length < 0:
-            space.raise_(space.getclassfor(W_ArgumentError), "negative length %d given" % length)
-        read_bytes = ""
-        while len(read_bytes) < length:
-            current_read = self.stream.read(length - len(read_bytes))
-            read_bytes += current_read
+        if w_length:
+            length = space.int_w(w_length)
+            if length < 0:
+                raise space.error(
+                    space.getclassfor(W_ArgumentError), "negative length %d given" % length
+                )
+        else:
+            length = os.lseek(self.fd, 0, os.SEEK_END)
+            os.lseek(self.fd, -length, os.SEEK_END)
+        read_bytes = 0
+        read_chunks = []
+        while read_bytes < length:
+            current_read = os.read(self.fd, length - read_bytes)
             if len(current_read) == 0:
                 break
+            read_bytes += len(current_read)
+            read_chunks.append(current_read)
         # Return nil on EOF if length is given
-        if len(read_bytes) == 0:
+        if read_bytes == 0:
             return space.w_nil
-        read_str = space.newstr_fromstr(read_bytes)
+        read_str = space.newstr_fromchars(read_chunks)
         if w_str is not None:
             w_str.clear(space)
             w_str.extend(space, read_str)
@@ -71,11 +73,9 @@ class W_IOObject(W_Object):
 
     @classdef.method("write")
     def method_write(self, space, w_str):
-        old_pos = int(self.stream.tell())
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
-        self.stream.write(string)
-        new_pos = int(self.stream.tell())
-        return space.newint(new_pos - old_pos)
+        bytes_written = os.write(self.fd, string)
+        return space.newint(bytes_written)
 
     @classdef.method("print")
     def method_print(self, space, args_w):
@@ -94,17 +94,17 @@ class W_IOObject(W_Object):
         else:
             end = ""
         strings = [space.str_w(space.send(w_arg, space.newsymbol("to_s"))) for w_arg in args_w]
-        self.stream.write(sep.join(strings))
-        self.stream.write(end)
+        os.write(self.fd, sep.join(strings))
+        os.write(self.fd, end)
         return space.w_nil
 
     @classdef.method("puts")
     def method_puts(self, space, args_w):
         for w_arg in args_w:
             string = space.str_w(space.send(w_arg, space.newsymbol("to_s")))
-            self.stream.write(string)
+            os.write(self.fd, string)
             if not string.endswith("\n"):
-                self.stream.write("\n")
+                os.write(self.fd, "\n")
         return space.w_nil
 
 
@@ -123,6 +123,13 @@ class W_FileObject(W_IOObject):
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
         space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
+        space.set_const(w_cls, "RDONLY", os.O_RDONLY)
+        space.set_const(w_cls, "WRONLY", os.O_WRONLY)
+        space.set_const(w_cls, "RDWR", os.O_RDWR)
+        space.set_const(w_cls, "APPEND", os.O_APPEND)
+        space.set_const(w_cls, "CREAT", os.O_CREAT)
+        space.set_const(w_cls, "EXCL", os.O_EXCL)
+        space.set_const(w_cls, "TRUNC", os.O_TRUNC)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -132,23 +139,41 @@ class W_FileObject(W_IOObject):
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
         if isinstance(w_perm_or_opt, W_HashObject):
             assert w_opt is None
-            perm = 665
+            perm = 0665
             w_opt = w_perm_or_opt
         elif w_opt is not None:
             assert isinstance(w_perm_or_opt, W_FixnumObject)
             perm = space.int_w(w_perm_or_opt)
         else:
-            perm = 665
+            perm = 0665
         if w_mode is None:
-            mode = "r"
+            mode = os.O_RDONLY
         elif isinstance(w_mode, W_StringObject):
-            mode = space.str_w(w_mode)
+            mode_str = space.str_w(w_mode)
+
+            if "+" in mode_str:
+                mode = os.O_RDWR
+                if "w" in mode_str:
+                    mode |= os.O_CREAT | os.O_TRUNC
+                elif "a" in mode_str:
+                    mode |= os.O_CREAT | os.O_APPEND
+            elif mode_str == "r":
+                mode = os.O_RDONLY
+            elif mode_str == "w":
+                mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+            elif mode_str == "a":
+                mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+
+            if sys.platform == "win32":
+                if "b" in mode_str:
+                    mode |= os.O_BINARY
+                elif "t" in mode_str:
+                    mode |= os.O_TEXT
         else:
-            raise NotImplementedError("int mode for File.new")
+            mode = space.int_w(w_mode)
         if w_perm_or_opt is not None or w_opt is not None:
             raise NotImplementedError("options hash or permissions for File.new")
-        self.stream = open_file_as_stream(filename, mode)
-        self.fd = self.stream.try_to_find_file_descriptor()
+        self.fd = os.open(filename, mode, perm)
         return self
 
     @classdef.singleton_method("dirname", path="path")
