@@ -1,3 +1,5 @@
+import os
+
 from rupypy.objects.exceptionobject import W_SystemCallError
 
 
@@ -36,6 +38,6 @@ def error_for_oserror(space, exc):
     assert isinstance(exc, OSError)
     return space.error(
         space.getclassfor(W_SystemCallError),
-        exc.strerror,
+        os.strerror(exc.errno),
         [space.newint(exc.errno)]
     )
