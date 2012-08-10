@@ -55,7 +55,7 @@ class W_IOObject(W_Object):
         read_bytes = 0
         read_chunks = []
         while read_bytes < length:
-            current_read = os.read(self.fd, length - read_bytes)
+            current_read = os.read(self.fd, int(length - read_bytes))
             if len(current_read) == 0:
                 break
             read_bytes += len(current_read)
@@ -163,12 +163,10 @@ class W_FileObject(W_IOObject):
                 mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
             elif mode_str == "a":
                 mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-
-            if sys.platform == "win32":
-                if "b" in mode_str:
-                    mode |= os.O_BINARY
-                elif "t" in mode_str:
-                    mode |= os.O_TEXT
+            else:
+                raise space.error(
+                    space.getclassfor(W_ArgumentError), "invalid access mode %s" % mode_str
+                )
         else:
             mode = space.int_w(w_mode)
         if w_perm_or_opt is not None or w_opt is not None:
