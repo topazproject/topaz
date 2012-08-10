@@ -1,4 +1,5 @@
 import os
+import errno
 
 from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
@@ -16,10 +17,10 @@ class W_Dir(W_Object):
         msg = None
         if not os.path.exists(path):
             msg = "No such file or directory - %s" % path
-            w_errno = space.newint(os.errno.ENOENT)
+            w_errno = space.newint(errno.ENOENT)
         elif not os.path.isdir(path):
             msg = "Not a directory - %s" % path
-            w_errno = space.newint(os.errno.ENOTDIR)
+            w_errno = space.newint(errno.ENOTDIR)
         if msg:
             raise space.error(space.getclassfor(W_SystemCallError), msg, [w_errno])
         self.path = path
