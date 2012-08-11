@@ -125,6 +125,8 @@ class ObjectSpace(object):
         "NOT_RPYTHON"
         w_cls = self.getclassfor(W_Object)
         self.set_const(w_cls, cls.classdef.name, self.getclassfor(cls))
+        for source in cls.classdef.requires:
+            self.execute(source)
 
     # Methods for dealing with source code.
 

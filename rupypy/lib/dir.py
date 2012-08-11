@@ -11,6 +11,7 @@ from rupypy.modules.enumerable import Enumerable
 class W_Dir(W_Object):
     classdef = ClassDef("Dir", W_Object.classdef)
     classdef.include_module(Enumerable)
+    classdef.require("kernel/common/dir19.rb")
 
     @classdef.method("initialize", path="str")
     def method_initialize(self, space, path):
