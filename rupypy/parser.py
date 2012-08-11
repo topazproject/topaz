@@ -51,7 +51,12 @@ def none(p):
 
 @pg.production("stmt : NUMBER")
 def stmt(p):
-    return BoxAST(ast.ConstantInt(int(p[0].getstr())))
+    s = p[0].getstr()
+    if "." in s:
+        node = ast.ConstantFloat(float(s))
+    else:
+        node = ast.ConstantInt(int(s))
+    return BoxAST(node)
 
 
 parser = pg.build()
