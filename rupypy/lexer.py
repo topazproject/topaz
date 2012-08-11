@@ -1,7 +1,8 @@
 import string
 
-from pypy.rlib.parsing.lexer import Token, SourcePos
 from pypy.rlib.rstring import StringBuilder
+
+from rply import Token
 
 
 class LexerError(Exception):
@@ -77,7 +78,7 @@ class BaseLexer(object):
     def emit(self, token):
         value = "".join(self.current_value)
         self.clear()
-        return Token(token, value, self.current_pos())
+        return Token(token, value)
 
     def error(self):
         raise LexerError(self.current_pos())
