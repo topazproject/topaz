@@ -59,15 +59,15 @@ class SpaceCache(Cache):
 
 
 class ObjectSpace(object):
-    # def __init__(self):
-        # self.cache = SpaceCache(self)
+    def __init__(self):
+        self.cache = SpaceCache(self)
         # self.symbol_cache = {}
         # self._executioncontext = None
         # self.globals = CellDict()
-        # self.bootstrap = True
+        self.bootstrap = True
         # self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
-        # self.w_true = W_TrueObject(self)
+        self.w_true = W_TrueObject(self)
         # self.w_false = W_FalseObject(self)
         # self.w_nil = W_NilObject(self)
 
@@ -132,7 +132,7 @@ class ObjectSpace(object):
     def parse(self, source, initial_lineno=1):
         lexer = LexerWrapper(Lexer(source, initial_lineno=initial_lineno).tokenize())
         try:
-            return parser.parse(lexer)
+            return parser.parse(lexer).getast()
         except ParsingError as e:
             raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
         except LexerError:

@@ -9,42 +9,48 @@ pg = ParserGenerator(["EOF", "LINE_END", "NUMBER"])
 
 @pg.production("main : suite EOF")
 def main(p):
-    return p[0]
+    return BoxAST(ast.Main(p[0].getast()))
 
 
-@pg.production("suite : lines opt_statement opt_line_end")
+@pg.production("suite : stmts opt_line_ends")
 def suite(p):
-    raise NotImplementedError
+    return BoxAST(ast.Block(p[0].getlist()))
 
 
-@pg.production("lines : line lines")
-@pg.production("lines :")
-def lines(p):
-    if p:
-        return BoxList([p[0]] + p[1].getlist())
-    else:
-        return BoxList([])
+@pg.production("stmts : none")
+def stmts_none(p):
+    return BoxASTList([])
 
 
-@pg.production("line : opt_statement LINE_END")
-def statement(p):
-    return p[0]
+@pg.production("stmts : stmt")
+def stmts_stmt(p):
+    return BoxASTList([p[0].getast()])
 
 
-@pg.production("opt_line_end : LINE_END")
-@pg.production("opt_line_end :")
-def opt_line_end(p):
+@pg.production("stmts : stmts line_ends stmt")
+def stmts_stmts(p):
+    return BoxASTList(p[0].getlist() + [p[2].getast()])
+
+
+@pg.production("line_ends : line_ends LINE_END")
+@pg.production("line_ends : LINE_END")
+def line_ends(p):
     return None
 
 
-@pg.production("opt_statement : statement")
-@pg.production("opt_statement :")
-def opt_statement(p):
-    return p[0] if p else None
+@pg.production("opt_line_ends : none")
+@pg.production("opt_line_ends : line_ends")
+def opt_line_ends(p):
+    return None
 
 
-@pg.production("statement : NUMBER")
-def statement_number(p):
+@pg.production("none :")
+def none(p):
+    return None
+
+
+@pg.production("stmt : NUMBER")
+def stmt(p):
     return BoxAST(ast.ConstantInt(int(p[0].getstr())))
 
 
@@ -67,3 +73,15 @@ class BoxAST(BaseBox):
     def __init__(self, node):
         BaseBox.__init__(self)
         self.node = node
+
+    def getast(self):
+        return self.node
+
+
+class BoxASTList(BaseBox):
+    def __init__(self, nodes):
+        BaseBox.__init__(self)
+        self.nodes = nodes
+
+    def getlist(self):
+        return self.nodes
