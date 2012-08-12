@@ -5,10 +5,13 @@ from rupypy import ast
 
 
 pg = ParserGenerator([
-    "EOF", "LINE_END", "NUMBER", "PLUS", "DIV", "MODULO", "EQEQEQ",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END",
+    "EOF", "LINE_END", "NUMBER", "PLUS", "DIV", "MODULO", "AMP", "PIPE",
+    "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END",
     "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
     "DSTRING_END",
+], precedence=[
+    ("left", ["PIPE"]),
+    ("left", ["AMP"]),
 ])
 
 
@@ -64,6 +67,8 @@ def stmt(p):
 @pg.production("arg : arg MODULO arg")
 @pg.production("arg : arg EQEQEQ arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
+@pg.production("arg : arg PIPE arg")
+@pg.production("arg : arg AMP arg")
 def arg_binop(p):
     node = ast.BinOp(
         p[1].getstr(),
