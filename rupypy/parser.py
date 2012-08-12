@@ -6,7 +6,9 @@ from rupypy import ast
 
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "PLUS", "DIV", "MODULO", "EQEQEQ",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE"
+    "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END",
+    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
+    "DSTRING_END",
 ])
 
 
@@ -83,8 +85,13 @@ def arg_exclamation_tilde(p):
     return BoxAST(node)
 
 
-@pg.production("arg : NUMBER")
-def arg_number(p):
+@pg.production("arg : primary")
+def arg_primary(p):
+    return p[0]
+
+
+@pg.production("primary : NUMBER")
+def primary_number(p):
     s = p[0].getstr()
     if "." in s or "E" in s:
         node = ast.ConstantFloat(float(s))
@@ -97,6 +104,48 @@ def arg_number(p):
     else:
         node = ast.ConstantInt(int(s))
     return BoxAST(node)
+
+
+@pg.production("primary : regexp")
+def primary_regexp(p):
+    return p[0]
+
+
+@pg.production("regexp : REGEXP_BEGIN string REGEXP_END")
+def regexp(p):
+    s = ""
+    for node in p[1].getlist():
+        if not isinstance(node, ast.ConstantString):
+            break
+        s += node.strvalue
+    else:
+        return BoxAST(ast.ConstantRegexp(s))
+    return BoxAST(ast.DynamicRegexp(p[1].getlist()))
+
+
+@pg.production("string : STRING_BEGIN string_contents STRING_END")
+def string(p):
+    return p[1]
+
+
+@pg.production("string_contents : string_contents string_content")
+def string_contents(p):
+    return BoxASTList(p[0].getlist() + [p[1].getast()])
+
+
+@pg.production("string_contents : none")
+def string_contents_empty(p):
+    return BoxASTList([])
+
+
+@pg.production("string_content : STRING_VALUE")
+def string_content(p):
+    return BoxAST(ast.ConstantString(p[0].getstr()))
+
+
+@pg.production("string_content : DSTRING_START stmt DSTRING_END")
+def string_content_dstring(p):
+    return BoxAST(p[1].getast())
 
 
 parser = pg.build()
