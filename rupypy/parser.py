@@ -4,7 +4,10 @@ from rply.token import BaseBox
 from rupypy import ast
 
 
-pg = ParserGenerator(["EOF", "LINE_END", "NUMBER", "PLUS"])
+pg = ParserGenerator([
+    "EOF", "LINE_END", "NUMBER", "PLUS", "DIV", "MODULO", "EQEQEQ",
+    "EQUAL_TILDE", "EXCLAMATION_TILDE"
+])
 
 
 @pg.production("main : suite EOF")
@@ -51,20 +54,46 @@ def none(p):
 
 @pg.production("stmt : arg")
 def stmt(p):
-    return p[0]
+    return BoxAST(ast.Statement(p[0].getast()))
 
 
 @pg.production("arg : arg PLUS arg")
+@pg.production("arg : arg DIV arg")
+@pg.production("arg : arg MODULO arg")
+@pg.production("arg : arg EQEQEQ arg")
+@pg.production("arg : arg EQUAL_TILDE arg")
 def arg_binop(p):
-    node = ast.BinOp("+", p[0].getast(), p[2].getast(), p[1].getsourcepos().lineno)
+    node = ast.BinOp(
+        p[1].getstr(),
+        p[0].getast(),
+        p[2].getast(),
+        p[1].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
+
+@pg.production("arg : arg EXCLAMATION_TILDE arg")
+def arg_exclamation_tilde(p):
+    node = ast.Not(ast.BinOp(
+        "=~",
+        p[0].getast(),
+        p[2].getast(),
+        p[1].getsourcepos().lineno
+    ))
     return BoxAST(node)
 
 
 @pg.production("arg : NUMBER")
 def arg_number(p):
     s = p[0].getstr()
-    if "." in s:
+    if "." in s or "E" in s:
         node = ast.ConstantFloat(float(s))
+    elif "X" in s:
+        node = ast.ConstantInt(int(s[2:], 16))
+    elif "O" in s:
+        node = ast.ConstantInt(int(s[2:], 8))
+    elif "B" in s:
+        node = ast.ConstantInt(int(s[2:], 2))
     else:
         node = ast.ConstantInt(int(s))
     return BoxAST(node)
