@@ -3,6 +3,7 @@ import string
 from pypy.rlib.rstring import StringBuilder
 
 from rply import Token
+from rply.token import SourcePosition
 
 
 class LexerError(Exception):
@@ -73,12 +74,12 @@ class BaseLexer(object):
         del self.current_value[:]
 
     def current_pos(self):
-        return SourcePos(self.get_idx(), self.get_lineno(), self.get_columno())
+        return SourcePosition(self.get_idx(), self.get_lineno(), self.get_columno())
 
     def emit(self, token):
         value = "".join(self.current_value)
         self.clear()
-        return Token(token, value)
+        return Token(token, value, self.current_pos())
 
     def error(self):
         raise LexerError(self.current_pos())

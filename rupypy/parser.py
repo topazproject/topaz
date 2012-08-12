@@ -4,7 +4,7 @@ from rply.token import BaseBox
 from rupypy import ast
 
 
-pg = ParserGenerator(["EOF", "LINE_END", "NUMBER"])
+pg = ParserGenerator(["EOF", "LINE_END", "NUMBER", "PLUS"])
 
 
 @pg.production("main : suite EOF")
@@ -49,8 +49,19 @@ def none(p):
     return None
 
 
-@pg.production("stmt : NUMBER")
+@pg.production("stmt : arg")
 def stmt(p):
+    return p[0]
+
+
+@pg.production("arg : arg PLUS arg")
+def arg_binop(p):
+    node = ast.BinOp("+", p[0].getast(), p[2].getast(), p[1].getsourcepos().lineno)
+    return BoxAST(node)
+
+
+@pg.production("arg : NUMBER")
+def arg_number(p):
     s = p[0].getstr()
     if "." in s:
         node = ast.ConstantFloat(float(s))

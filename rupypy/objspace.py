@@ -61,7 +61,7 @@ class SpaceCache(Cache):
 class ObjectSpace(object):
     def __init__(self):
         self.cache = SpaceCache(self)
-        # self.symbol_cache = {}
+        self.symbol_cache = {}
         # self._executioncontext = None
         # self.globals = CellDict()
         self.bootstrap = True
