@@ -36,9 +36,10 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "GLOBAL", "LBRACKET", "RBRACKET", "COMMA",
-    "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
+    "OR_LITERAL", "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
     "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END",
-    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START", "DSTRING_END",
+    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
+    "DSTRING_END",
 ], precedence=[
     ("left", ["PIPE"]),
     ("left", ["AMP"]),
@@ -87,9 +88,19 @@ def none(p):
     return None
 
 
-@pg.production("stmt : arg")
+@pg.production("stmt : expr")
 def stmt(p):
     return BoxAST(ast.Statement(p[0].getast()))
+
+
+@pg.production("expr : expr OR_LITERAL expr")
+def expr_binop(p):
+    return BoxAST(ast.Or(p[0].getast(), p[2].getast()))
+
+
+@pg.production("expr : arg")
+def expr_arg(p):
+    return p[0]
 
 
 @pg.production("arg : arg PLUS arg")
