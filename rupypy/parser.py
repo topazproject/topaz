@@ -36,10 +36,11 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "GLOBAL", "LBRACKET",
-    "RBRACKET", "COMMA", "AND_LITERAL", "OR_LITERAL", "PLUS", "DIV", "MODULO",
-    "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ", "EQUAL_TILDE",
-    "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END", "STRING_BEGIN",
-    "STRING_END", "STRING_VALUE", "DSTRING_START", "DSTRING_END",
+    "LSUBSCRIPT", "RBRACKET", "COMMA", "AND_LITERAL", "OR_LITERAL", "PLUS",
+    "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ", "EQEQEQ",
+    "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN",
+    "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
+    "DSTRING_START", "DSTRING_END",
 ], precedence=[
     ("left", ["PIPE"]),
     ("left", ["AMP"]),
@@ -111,6 +112,7 @@ def expr_arg(p):
 @pg.production("arg : arg PLUS arg")
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
+@pg.production("arg : arg EQEQ arg")
 @pg.production("arg : arg EQEQEQ arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 @pg.production("arg : arg LSHIFT arg")
@@ -146,6 +148,16 @@ def arg_call(p):
         p[1].getlist(),
         None,
         p[0].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
+
+@pg.production("arg : arg LSUBSCRIPT args RBRACKET")
+def arg_subscript(p):
+    node = ast.Subscript(
+        p[0].getast(),
+        p[2].getlist(),
+        p[1].getsourcepos().lineno,
     )
     return BoxAST(node)
 
@@ -201,6 +213,16 @@ def primary_regexp(p):
 @pg.production("primary : variable")
 def primary_variable(p):
     return p[0]
+
+
+@pg.production("primary : SSTRING")
+def primary_sstring(p):
+    return BoxAST(ast.ConstantString(p[0].getstr()))
+
+
+@pg.production("variable : IDENTIFIER")
+def variable_identifier(p):
+    return BoxAST(ast.Variable(p[0].getstr(), p[0].getsourcepos().lineno))
 
 
 @pg.production("variable : GLOBAL")
