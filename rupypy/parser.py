@@ -35,10 +35,10 @@ class BoxASTList(BaseBox):
 
 
 pg = ParserGenerator([
-    "EOF", "LINE_END", "NUMBER", "GLOBAL", "PLUS", "DIV", "MODULO", "LSHIFT",
-    "AMP", "PIPE", "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN",
-    "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
-    "DSTRING_START", "DSTRING_END",
+    "EOF", "LINE_END", "NUMBER", "GLOBAL", "LBRACKET", "RBRACKET", "COMMA",
+    "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
+    "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END",
+    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START", "DSTRING_END",
 ], precedence=[
     ("left", ["PIPE"]),
     ("left", ["AMP"]),
@@ -98,6 +98,7 @@ def stmt(p):
 @pg.production("arg : arg EQEQEQ arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 @pg.production("arg : arg LSHIFT arg")
+@pg.production("arg : arg RSHIFT arg")
 @pg.production("arg : arg PIPE arg")
 @pg.production("arg : arg AMP arg")
 def arg_binop(p):
@@ -126,6 +127,28 @@ def arg_primary(p):
     return p[0]
 
 
+@pg.production("args : args arg")
+def args(p):
+    return BoxASTList(p[0].getlist() + [p[1].getast()])
+
+
+@pg.production("args : none")
+def args_empty(p):
+    return BoxASTList([])
+
+
+@pg.production("primary : LBRACKET args opt_array_trailer RBRACKET")
+def primary_array(p):
+    return BoxAST(ast.Array(p[1].getlist()))
+
+
+@pg.production("opt_array_trailer : COMMA")
+@pg.production("opt_array_trailer : LINE_END")
+@pg.production("opt_array_trailer : none")
+def opt_array_trailer(p):
+    return None
+
+
 @pg.production("primary : NUMBER")
 def primary_number(p):
     s = p[0].getstr()
@@ -150,6 +173,7 @@ def primary_regexp(p):
 @pg.production("primary : variable")
 def primary_variable(p):
     return p[0]
+
 
 @pg.production("variable : GLOBAL")
 def variable_global(p):
