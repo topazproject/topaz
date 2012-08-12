@@ -4,11 +4,41 @@ from rply.token import BaseBox
 from rupypy import ast
 
 
+class LexerWrapper(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.token_iter = iter(lexer)
+
+    def next(self):
+        try:
+            return self.token_iter.next()
+        except StopIteration:
+            return None
+
+
+class BoxAST(BaseBox):
+    def __init__(self, node):
+        BaseBox.__init__(self)
+        self.node = node
+
+    def getast(self):
+        return self.node
+
+
+class BoxASTList(BaseBox):
+    def __init__(self, nodes):
+        BaseBox.__init__(self)
+        self.nodes = nodes
+
+    def getlist(self):
+        return self.nodes
+
+
 pg = ParserGenerator([
-    "EOF", "LINE_END", "NUMBER", "PLUS", "DIV", "MODULO", "AMP", "PIPE",
-    "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END",
-    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
-    "DSTRING_END",
+    "EOF", "LINE_END", "NUMBER", "GLOBAL", "PLUS", "DIV", "MODULO", "LSHIFT",
+    "AMP", "PIPE", "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN",
+    "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
+    "DSTRING_START", "DSTRING_END",
 ], precedence=[
     ("left", ["PIPE"]),
     ("left", ["AMP"]),
@@ -67,6 +97,7 @@ def stmt(p):
 @pg.production("arg : arg MODULO arg")
 @pg.production("arg : arg EQEQEQ arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
+@pg.production("arg : arg LSHIFT arg")
 @pg.production("arg : arg PIPE arg")
 @pg.production("arg : arg AMP arg")
 def arg_binop(p):
@@ -116,6 +147,15 @@ def primary_regexp(p):
     return p[0]
 
 
+@pg.production("primary : variable")
+def primary_variable(p):
+    return p[0]
+
+@pg.production("variable : GLOBAL")
+def variable_global(p):
+    return BoxAST(ast.Global(p[0].getstr()))
+
+
 @pg.production("regexp : REGEXP_BEGIN string REGEXP_END")
 def regexp(p):
     s = ""
@@ -154,33 +194,3 @@ def string_content_dstring(p):
 
 
 parser = pg.build()
-
-
-class LexerWrapper(object):
-    def __init__(self, lexer):
-        self.lexer = lexer
-        self.token_iter = iter(lexer)
-
-    def next(self):
-        try:
-            return self.token_iter.next()
-        except StopIteration:
-            return None
-
-
-class BoxAST(BaseBox):
-    def __init__(self, node):
-        BaseBox.__init__(self)
-        self.node = node
-
-    def getast(self):
-        return self.node
-
-
-class BoxASTList(BaseBox):
-    def __init__(self, nodes):
-        BaseBox.__init__(self)
-        self.nodes = nodes
-
-    def getlist(self):
-        return self.nodes
