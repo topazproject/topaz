@@ -35,11 +35,11 @@ class BoxASTList(BaseBox):
 
 
 pg = ParserGenerator([
-    "EOF", "LINE_END", "NUMBER", "GLOBAL", "LBRACKET", "RBRACKET", "COMMA",
-    "OR_LITERAL", "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END",
-    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
-    "DSTRING_END",
+    "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "GLOBAL", "LBRACKET",
+    "RBRACKET", "COMMA", "AND_LITERAL", "OR_LITERAL", "PLUS", "DIV", "MODULO",
+    "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ", "EQUAL_TILDE",
+    "EXCLAMATION_TILDE", "REGEXP_BEGIN", "REGEXP_END", "STRING_BEGIN",
+    "STRING_END", "STRING_VALUE", "DSTRING_START", "DSTRING_END",
 ], precedence=[
     ("left", ["PIPE"]),
     ("left", ["AMP"]),
@@ -94,8 +94,13 @@ def stmt(p):
 
 
 @pg.production("expr : expr OR_LITERAL expr")
-def expr_binop(p):
+def expr_or(p):
     return BoxAST(ast.Or(p[0].getast(), p[2].getast()))
+
+
+@pg.production("expr : expr AND_LITERAL expr")
+def expr_and(p):
+    return BoxAST(ast.And(p[0].getast(), p[2].getast()))
 
 
 @pg.production("expr : arg")
@@ -130,6 +135,18 @@ def arg_exclamation_tilde(p):
         p[2].getast(),
         p[1].getsourcepos().lineno
     ))
+    return BoxAST(node)
+
+
+@pg.production("arg : IDENTIFIER args")
+def arg_call(p):
+    node = ast.Send(
+        ast.Self(p[0].getsourcepos().lineno),
+        p[0].getstr(),
+        p[1].getlist(),
+        None,
+        p[0].getsourcepos().lineno
+    )
     return BoxAST(node)
 
 
