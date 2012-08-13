@@ -50,7 +50,7 @@ def run_own_tests(env):
 
 
 def run_translate_tests(env):
-    local("PYTHONPATH={pypy_path}:$PYTHONPATH {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
+    local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
 
 
 def run_docs_tests(env):
