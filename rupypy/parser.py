@@ -36,11 +36,12 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "GLOBAL", "LBRACKET",
-    "LSUBSCRIPT", "RBRACKET", "COMMA", "AND_LITERAL", "OR_LITERAL", "PLUS", "MUL",
-    "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ", "EQEQEQ",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN",
-    "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
-    "DSTRING_START", "DSTRING_END",
+    "LSUBSCRIPT", "RBRACKET", "COMMA", "AND_LITERAL", "OR_LITERAL", "PLUS",
+    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ", "NE",
+    "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT", "EQUAL_TILDE",
+    "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN", "REGEXP_END",
+    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
+    "DSTRING_END",
 ], precedence=[
     ("left", ["PIPE"]),
     ("left", ["AMP"]),
@@ -116,7 +117,13 @@ def expr_arg(p):
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
 @pg.production("arg : arg EQEQ arg")
+@pg.production("arg : arg NE arg")
 @pg.production("arg : arg EQEQEQ arg")
+@pg.production("arg : arg LT arg")
+@pg.production("arg : arg LE arg")
+@pg.production("arg : arg GT arg")
+@pg.production("arg : arg GE arg")
+@pg.production("arg : arg LEGT arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 @pg.production("arg : arg LSHIFT arg")
 @pg.production("arg : arg RSHIFT arg")
