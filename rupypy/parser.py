@@ -37,7 +37,7 @@ class BoxASTList(BaseBox):
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "GLOBAL", "LBRACKET",
     "LSUBSCRIPT", "RBRACKET", "COMMA", "AND_LITERAL", "OR_LITERAL", "PLUS",
-    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ", "NE",
+    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "AND", "OR", "EQEQ", "NE",
     "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT", "EQUAL_TILDE",
     "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN", "REGEXP_END",
     "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
@@ -147,6 +147,18 @@ def arg_exclamation_tilde(p):
         p[2].getast(),
         p[1].getsourcepos().lineno
     ))
+    return BoxAST(node)
+
+
+@pg.production("arg : arg AND arg")
+def arg_and(p):
+    node = ast.And(p[0].getast(), p[2].getast())
+    return BoxAST(node)
+
+
+@pg.production("arg : arg OR arg")
+def arg_or(p):
+    node = ast.Or(p[0].getast(), p[2].getast())
     return BoxAST(node)
 
 
