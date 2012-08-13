@@ -36,12 +36,12 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "GLOBAL", "LBRACKET",
-    "LSUBSCRIPT", "RBRACKET", "COMMA", "AND_LITERAL", "OR_LITERAL", "PLUS",
-    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "AND", "OR", "EQEQ", "NE",
-    "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT", "EQUAL_TILDE",
-    "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN", "REGEXP_END",
-    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
-    "DSTRING_END",
+    "LSUBSCRIPT", "RBRACKET", "COMMA", "EXCLAMATION", "AND_LITERAL",
+    "OR_LITERAL", "NOT_LITERAL", "PLUS", "MUL", "DIV", "MODULO", "LSHIFT",
+    "RSHIFT", "AMP", "PIPE", "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE",
+    "GT", "GE", "LEGT", "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING",
+    "REGEXP_BEGIN", "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
+    "DSTRING_START", "DSTRING_END",
 ], precedence=[
     ("left", ["PIPE"]),
     ("left", ["AMP"]),
@@ -107,6 +107,11 @@ def expr_and(p):
     return BoxAST(ast.And(p[0].getast(), p[2].getast()))
 
 
+@pg.production("expr : NOT_LITERAL expr")
+def expr_not(p):
+    return BoxAST(ast.Not(p[1].getast()))
+
+
 @pg.production("expr : arg")
 def expr_arg(p):
     return p[0]
@@ -160,6 +165,11 @@ def arg_and(p):
 def arg_or(p):
     node = ast.Or(p[0].getast(), p[2].getast())
     return BoxAST(node)
+
+
+@pg.production("arg : EXCLAMATION arg")
+def arg_exclamation(p):
+    return BoxAST(ast.Not(p[1].getast()))
 
 
 @pg.production("arg : IDENTIFIER args")
