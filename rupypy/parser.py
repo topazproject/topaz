@@ -226,9 +226,14 @@ def arg_primary(p):
     return p[0]
 
 
-@pg.production("args : args arg")
+@pg.production("args : args COMMA arg")
 def args(p):
-    return BoxASTList(p[0].getlist() + [p[1].getast()])
+    return BoxASTList(p[0].getlist() + [p[2].getast()])
+
+
+@pg.production("args : arg")
+def args_single(p):
+    return BoxASTList([p[0].getast()])
 
 
 @pg.production("args : none")
