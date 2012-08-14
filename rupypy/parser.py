@@ -43,6 +43,7 @@ pg = ParserGenerator([
     "REGEXP_BEGIN", "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
     "DSTRING_START", "DSTRING_END",
 ], precedence=[
+    ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
     ("right", ["NOT_LITERAL"]),
     ("left", ["OR"]),
