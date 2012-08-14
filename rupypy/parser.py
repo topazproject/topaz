@@ -38,11 +38,11 @@ pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "CONSTANT", "GLOBAL",
     "INSTANCE_VAR", "LBRACKET", "LSUBSCRIPT", "RBRACKET", "COMMA",
     "EXCLAMATION", "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "PLUS", "MINUS",
-    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "AND", "OR",
-    "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT", "EQUAL_TILDE",
-    "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN", "REGEXP_END",
-    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
-    "DSTRING_END",
+    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "CARET", "AND",
+    "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT",
+    "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN",
+    "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
+    "DSTRING_START", "DSTRING_END", "SYMBOL_BEGIN",
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -171,6 +171,7 @@ def operation(p):
 @pg.production("arg : arg RSHIFT arg")
 @pg.production("arg : arg PIPE arg")
 @pg.production("arg : arg AMP arg")
+@pg.production("arg : arg CARET arg")
 def arg_binop(p):
     node = ast.BinOp(
         p[1].getstr(),
@@ -275,6 +276,16 @@ def primary_variable(p):
 @pg.production("primary : SSTRING")
 def primary_sstring(p):
     return BoxAST(ast.ConstantString(p[0].getstr()))
+
+
+@pg.production("primary : SYMBOL_BEGIN symbol")
+def primary_symbol(p):
+    return p[1]
+
+
+@pg.production("symbol : IDENTIFIER")
+def symbol_variable(p):
+    return BoxAST(ast.ConstantSymbol(p[0].getstr()))
 
 
 @pg.production("variable : IDENTIFIER")
