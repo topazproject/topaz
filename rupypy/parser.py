@@ -35,7 +35,7 @@ class BoxASTList(BaseBox):
 
 
 pg = ParserGenerator([
-    "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "GLOBAL", "LBRACKET",
+    "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "CONSTANT", "GLOBAL", "LBRACKET",
     "LSUBSCRIPT", "RBRACKET", "COMMA", "EXCLAMATION", "AND_LITERAL",
     "OR_LITERAL", "NOT_LITERAL", "PLUS", "MUL", "DIV", "MODULO", "LSHIFT",
     "RSHIFT", "AMP", "PIPE", "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE",
@@ -124,7 +124,31 @@ def expr_not(p):
 
 
 @pg.production("expr : arg")
+@pg.production("expr : command_call")
 def expr_arg(p):
+    return p[0]
+
+
+@pg.production("command_call : command")
+def command_call(p):
+    return p[0]
+
+
+@pg.production("command : operation args", precedence="LOWEST")
+def command(p):
+    node = ast.Send(
+        ast.Self(p[0].getsourcepos().lineno),
+        p[0].getstr(),
+        p[1].getlist(),
+        None,
+        p[0].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
+
+@pg.production("operation : IDENTIFIER")
+@pg.production("operation : CONSTANT")
+def operation(p):
     return p[0]
 
 
@@ -181,18 +205,6 @@ def arg_or(p):
 @pg.production("arg : EXCLAMATION arg")
 def arg_exclamation(p):
     return BoxAST(ast.Not(p[1].getast()))
-
-
-@pg.production("arg : IDENTIFIER args")
-def arg_call(p):
-    node = ast.Send(
-        ast.Self(p[0].getsourcepos().lineno),
-        p[0].getstr(),
-        p[1].getlist(),
-        None,
-        p[0].getsourcepos().lineno
-    )
-    return BoxAST(node)
 
 
 @pg.production("arg : arg LSUBSCRIPT args RBRACKET")
