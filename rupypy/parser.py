@@ -35,13 +35,14 @@ class BoxASTList(BaseBox):
 
 
 pg = ParserGenerator([
-    "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "CONSTANT", "GLOBAL", "LBRACKET",
-    "LSUBSCRIPT", "RBRACKET", "COMMA", "EXCLAMATION", "AND_LITERAL",
-    "OR_LITERAL", "NOT_LITERAL", "PLUS", "MUL", "DIV", "MODULO", "LSHIFT",
-    "RSHIFT", "AMP", "PIPE", "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE",
-    "GT", "GE", "LEGT", "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING",
-    "REGEXP_BEGIN", "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
-    "DSTRING_START", "DSTRING_END",
+    "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "CONSTANT", "GLOBAL",
+    "INSTANCE_VAR", "LBRACKET", "LSUBSCRIPT", "RBRACKET", "COMMA",
+    "EXCLAMATION", "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "PLUS", "MINUS",
+    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "AND", "OR",
+    "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT", "EQUAL_TILDE",
+    "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN", "REGEXP_END",
+    "STRING_BEGIN", "STRING_END", "STRING_VALUE", "DSTRING_START",
+    "DSTRING_END",
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -153,6 +154,7 @@ def operation(p):
 
 
 @pg.production("arg : arg PLUS arg")
+@pg.production("arg : arg MINUS arg")
 @pg.production("arg : arg MUL arg")
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
@@ -283,6 +285,11 @@ def variable_identifier(p):
 @pg.production("variable : GLOBAL")
 def variable_global(p):
     return BoxAST(ast.Global(p[0].getstr()))
+
+
+@pg.production("variable : INSTANCE_VAR")
+def variable_instance_var(p):
+    return BoxAST(ast.InstanceVariable(p[0].getstr()))
 
 
 @pg.production("regexp : REGEXP_BEGIN string REGEXP_END")
