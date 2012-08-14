@@ -62,14 +62,14 @@ class ObjectSpace(object):
     def __init__(self):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        # self._executioncontext = None
+        self._executioncontext = None
         # self.globals = CellDict()
         self.bootstrap = True
         # self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
         self.w_true = W_TrueObject(self)
         # self.w_false = W_FalseObject(self)
-        # self.w_nil = W_NilObject(self)
+        self.w_nil = W_NilObject(self)
 
         # # This is bootstrap. We have to delay sending until true, false and nil
         # # are defined
@@ -134,7 +134,7 @@ class ObjectSpace(object):
         try:
             return parser.parse(lexer).getast()
         except ParsingError as e:
-            raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
+            raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.getsourcepos().lineno)
         except LexerError:
             raise self.error(self.getclassfor(W_SyntaxError))
 
