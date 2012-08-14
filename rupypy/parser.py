@@ -36,7 +36,7 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "CONSTANT", "GLOBAL",
-    "INSTANCE_VAR", "LBRACKET", "LSUBSCRIPT", "RBRACKET", "LPAREN", "RPAREN",
+    "INSTANCE_VAR", "DEF", "END", "LBRACKET", "LSUBSCRIPT", "RBRACKET", "LPAREN", "RPAREN",
     "COMMA", "EXCLAMATION", "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "PLUS",
     "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE",
     "CARET", "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE",
@@ -244,6 +244,55 @@ def args_empty(p):
 @pg.production("primary : LPAREN expr RPAREN")
 def primary_parens(p):
     return BoxAST(p[1].getast())
+
+
+@pg.production("primary : DEF func_name argdecl_list suite END")
+def primary_def(p):
+    node = ast.Function(
+        None,
+        p[1].getstr(),
+        p[2].getlist(),
+        None,
+        None,
+        p[3].getast()
+    )
+    return BoxAST(node)
+
+
+@pg.production("func_name : IDENTIFIER")
+@pg.production("func_name : GT")
+def func_name(p):
+    return p[0]
+
+
+@pg.production("argdecl_list : argdecl_list_contents LINE_END")
+def ardecl_list(p):
+    return p[0]
+
+
+@pg.production("argdecl_list : LPAREN argdecl_list_contents RPAREN")
+def argdecl_list_parens(p):
+    return p[1]
+
+
+@pg.production("argdecl_list_contents : argdecl_list_contents COMMA argdecl")
+def argdecl_list_contents(p):
+    return BoxASTList(p[0].getlist() + [p[2].getast()])
+
+
+@pg.production("argdecl_list_contents : none")
+def argdecl_list_contents_empty(p):
+    return BoxASTList([])
+
+
+@pg.production("argdecl_list_contents : argdecl")
+def argdecl_list_contents_single(p):
+    return BoxASTList([p[0].getast()])
+
+
+@pg.production("argdecl : IDENTIFIER")
+def argdecl_identifier(p):
+    return BoxAST(ast.Argument(p[0].getstr()))
 
 
 @pg.production("primary : LBRACKET args opt_array_trailer RBRACKET")
