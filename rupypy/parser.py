@@ -36,11 +36,11 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "CONSTANT", "GLOBAL",
-    "INSTANCE_VAR", "LBRACKET", "LSUBSCRIPT", "RBRACKET", "COMMA",
-    "EXCLAMATION", "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "PLUS", "MINUS",
-    "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE", "CARET",
-    "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN",
+    "INSTANCE_VAR", "LBRACKET", "LSUBSCRIPT", "RBRACKET", "LPAREN", "RPAREN",
+    "COMMA", "EXCLAMATION", "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "PLUS",
+    "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE",
+    "CARET", "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE",
+    "LEGT", "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN",
     "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
     "DSTRING_START", "DSTRING_END", "SYMBOL_BEGIN",
 ], precedence=[
@@ -234,6 +234,11 @@ def args(p):
 @pg.production("args : none")
 def args_empty(p):
     return BoxASTList([])
+
+
+@pg.production("primary : LPAREN expr RPAREN")
+def primary_parens(p):
+    return BoxAST(p[1].getast())
 
 
 @pg.production("primary : LBRACKET args opt_array_trailer RBRACKET")
