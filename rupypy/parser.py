@@ -38,8 +38,8 @@ pg = ParserGenerator([
     "EOF", "LINE_END", "NUMBER", "IDENTIFIER", "CONSTANT", "GLOBAL",
     "INSTANCE_VAR", "LBRACKET", "LSUBSCRIPT", "RBRACKET", "COMMA",
     "EXCLAMATION", "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "PLUS", "MINUS",
-    "MUL", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "CARET", "AND",
-    "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT",
+    "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE", "CARET",
+    "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "LEGT",
     "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN",
     "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
     "DSTRING_START", "DSTRING_END", "SYMBOL_BEGIN",
@@ -158,6 +158,7 @@ def operation(p):
 @pg.production("arg : arg MUL arg")
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
+@pg.production("arg : arg POW arg")
 @pg.production("arg : arg EQEQ arg")
 @pg.production("arg : arg NE arg")
 @pg.production("arg : arg EQEQEQ arg")
