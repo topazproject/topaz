@@ -140,7 +140,7 @@ def command_call(p):
     return p[0]
 
 
-@pg.production("command : operation args", precedence="LOWEST")
+@pg.production("command : operation call_args", precedence="LOWEST")
 def command(p):
     node = ast.Send(
         ast.Self(p[0].getsourcepos().lineno),
@@ -156,6 +156,16 @@ def command(p):
 @pg.production("operation : CONSTANT")
 def operation(p):
     return p[0]
+
+
+@pg.production("call_args : args")
+def call_args(p):
+    return p[0]
+
+
+@pg.production("call_args : LPAREN args RPAREN")
+def call_args_paren(p):
+    return p[1]
 
 
 @pg.production("arg : arg PLUS arg")
