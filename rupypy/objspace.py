@@ -68,7 +68,7 @@ class ObjectSpace(object):
         # self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
         self.w_true = W_TrueObject(self)
-        # self.w_false = W_FalseObject(self)
+        self.w_false = W_FalseObject(self)
         self.w_nil = W_NilObject(self)
 
         # # This is bootstrap. We have to delay sending until true, false and nil

@@ -42,7 +42,7 @@ pg = ParserGenerator([
     "CARET", "AND", "OR", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE",
     "LEGT", "EQUAL_TILDE", "EXCLAMATION_TILDE", "SSTRING", "REGEXP_BEGIN",
     "REGEXP_END", "STRING_BEGIN", "STRING_END", "STRING_VALUE",
-    "DSTRING_START", "DSTRING_END", "SYMBOL_BEGIN",
+    "DSTRING_START", "DSTRING_END", "SYMBOL_BEGIN", "RETURN"
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -107,6 +107,11 @@ def none(p):
 @pg.production("stmt : expr")
 def stmt(p):
     return BoxAST(ast.Statement(p[0].getast()))
+
+
+@pg.production("stmt : RETURN expr")
+def stmt_return(p):
+    return BoxAST(ast.Return(p[1].getast()))
 
 
 @pg.production("expr : expr OR_LITERAL expr")
