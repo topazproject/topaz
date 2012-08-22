@@ -38,19 +38,21 @@ pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON",
 
     "NUMBER",
+
+    "PLUS", "DIV", "MODULO", "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE"
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
     ("right", ["NOT_LITERAL"]),
     ("left", ["OR"]),
     ("left", ["AND"]),
-    ("nonassoc", ["LEGT", "EQ", "EQEQ", "NE", "EQUAL_TILDE", "EXCLAMATION_TILDE"]),
+    ("nonassoc", ["LEGT", "EQ", "EQEQ", "EQEQEQ", "NE", "EQUAL_TILDE", "EXCLAMATION_TILDE"]),
     ("left", ["GT", "GE", "LT", "LE"]),
     ("left", ["PIPE", "CARET"]),
     ("left", ["AMP"]),
     ("left", ["LSHIFT", "RSHIFT"]),
     ("left", ["PLUS", "MINUS"]),
-    ("left", ["MUL", "DIV", "MOD"]),
+    ("left", ["MUL", "DIV", "MODULO"]),
     ("right", ["UMINUS"]),
     ("right", ["POW"]),
     ("right", ["EXCLAMATION", "TILDE", "UPLUS"]),
@@ -620,20 +622,11 @@ arg             : lhs '=' arg {
                     boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
                     $$ = new DotNode(support.getPosition($1), $1, $3, true, isLiteral);
                 }
-                | arg tPLUS arg {
-                    $$ = support.getOperatorCallNode($1, "+", $3, lexer.getPosition());
-                }
                 | arg tMINUS arg {
                     $$ = support.getOperatorCallNode($1, "-", $3, lexer.getPosition());
                 }
                 | arg tSTAR2 arg {
                     $$ = support.getOperatorCallNode($1, "*", $3, lexer.getPosition());
-                }
-                | arg tDIVIDE arg {
-                    $$ = support.getOperatorCallNode($1, "/", $3, lexer.getPosition());
-                }
-                | arg tPERCENT arg {
-                    $$ = support.getOperatorCallNode($1, "%", $3, lexer.getPosition());
                 }
                 | arg tPOW arg {
                     $$ = support.getOperatorCallNode($1, "**", $3, lexer.getPosition());
@@ -677,23 +670,8 @@ arg             : lhs '=' arg {
                 | arg tEQ arg {
                     $$ = support.getOperatorCallNode($1, "==", $3, lexer.getPosition());
                 }
-                | arg tEQQ arg {
-                    $$ = support.getOperatorCallNode($1, "===", $3, lexer.getPosition());
-                }
                 | arg tNEQ arg {
                     $$ = support.getOperatorCallNode($1, "!=", $3, lexer.getPosition());
-                }
-                | arg tMATCH arg {
-                    $$ = support.getMatchNode($1, $3);
-                  /* ENEBO
-                        $$ = match_op($1, $3);
-                        if (nd_type($1) == NODE_LIT && TYPE($1->nd_lit) == T_REGEXP) {
-                            $$ = reg_named_capture_assign($1->nd_lit, $$);
-                        }
-                  */
-                }
-                | arg tNMATCH arg {
-                    $$ = support.getOperatorCallNode($1, "!~", $3, lexer.getPosition());
                 }
                 | tBANG arg {
                     $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
@@ -721,6 +699,36 @@ arg             : lhs '=' arg {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($1), $3, $6);
                 }
 """
+
+
+@pg.production("arg : arg PLUS arg")
+@pg.production("arg : arg DIV arg")
+@pg.production("arg : arg MODULO arg")
+@pg.production("arg : arg EQEQEQ arg")
+@pg.production("arg : arg EQUAL_TILDE arg")
+def arg_binop(p):
+    node = ast.BinOp(
+        p[1].getstr(),
+        p[0].getast(),
+        p[2].getast(),
+        p[1].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
+
+@pg.production("arg : arg EXCLAMATION_TILDE arg")
+def arg_not_match(p):
+    node = ast.Not(
+        ast.BinOp(
+            "=~",
+            p[0].getast(),
+            p[2].getast(),
+            p[1].getsourcepos().lineno
+        )
+    )
+    return BoxAST(node)
+
+
 @pg.production("arg : primary")
 def arg_primary(p):
     return p[0]
