@@ -371,7 +371,7 @@ class Lexer(BaseLexer):
                 self.add(ch)
 
     def regexp(self, begin, end):
-        yield self.emit("REGEXP_BEGIN")
+        yield self.emit("REGEXP_BEG")
         for token in StringLexer(self, begin, end, interpolate=True, regexp=True).tokenize():
             yield token
         yield self.emit("REGEXP_END")
@@ -952,7 +952,7 @@ class BaseStringLexer(BaseLexer):
 
     def emit_str(self):
         if self.current_value:
-            return self.emit("STRING_VALUE")
+            return self.emit("STRING_CONTENT")
 
     def tokenize_interpolation(self):
         yield self.emit("DSTRING_START")
@@ -1014,7 +1014,8 @@ class StringLexer(BaseStringLexer):
         if self.qwords:
             while self.peek().isspace():
                 self.read()
-        yield self.emit("STRING_BEGIN")
+        if not self.regexp:
+            yield self.emit("STRING_BEGIN")
         while True:
             ch = self.read()
             if ch == self.lexer.EOF:
@@ -1060,7 +1061,8 @@ class StringLexer(BaseStringLexer):
                 self.add(self.read())
             else:
                 self.add(ch)
-        yield self.emit("STRING_END")
+        if not self.regexp:
+            yield self.emit("STRING_END")
         if self.qwords and ch.isspace():
             for token in self.tokenize():
                 yield token
@@ -1112,7 +1114,7 @@ class HeredocLexer(BaseStringLexer):
                             self.add(c)
                         break
                 else:
-                    yield self.emit("STRING_VALUE")
+                    yield self.emit("STRING_CONTENT")
                     break
             elif ch == "#" and self.peek() == "{":
                 token = self.emit_str()

@@ -1,3 +1,5 @@
+from pypy.rlib.rstring import StringBuilder
+
 from rply import ParserGenerator
 from rply.token import BaseBox
 
@@ -38,6 +40,8 @@ pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON",
 
     "NUMBER",
+
+    "STRING_CONTENT", "REGEXP_BEG", "REGEXP_END",
 
     "PLUS", "DIV", "MODULO", "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE"
 ], precedence=[
@@ -850,7 +854,6 @@ mrhs            : args ',' arg_value {
 
 primary         : strings
                 | xstring
-                | regexp
                 | words
                 | qwords
                 | var_ref
@@ -1039,9 +1042,18 @@ primary         : strings
                     $$ = new RetryNode($1.getPosition());
                 }
 """
+
+
 @pg.production("primary : literal")
 def primary_literal(p):
     return p[0]
+
+
+@pg.production("primary : regexp")
+def primary_regexp(p):
+    return p[0]
+
+
 """
 primary_value   : primary {
                     support.checkExpression($1);
@@ -1424,11 +1436,21 @@ xstring         : tXSTRING_BEG xstring_contents tSTRING_END {
                         $$ = new DXStrNode(position).add($2);
                     }
                 }
+"""
 
-regexp          : tREGEXP_BEG xstring_contents tREGEXP_END {
-                    $$ = support.newRegexpNode($1.getPosition(), $2, (RegexpNode) $3);
-                }
 
+@pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
+def regexp(p):
+    builder = StringBuilder()
+    for node in p[1].getlist():
+        if not isinstance(node, ast.ConstantString):
+            break
+        builder.append(node.strvalue)
+    else:
+        return BoxAST(ast.ConstantRegexp(builder.build()))
+    return BoxAST(ast.DynamicRegexp(p[1].getlist()))
+
+"""
 words           : tWORDS_BEG ' ' tSTRING_END {
                     $$ = new ZArrayNode($1.getPosition());
                 }
@@ -1471,18 +1493,20 @@ string_contents : /* none */ {
                 | string_contents string_content {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
+"""
 
-xstring_contents: /* none */ {
-                    $$ = null;
-                }
-                | xstring_contents string_content {
-                    $$ = support.literal_concat(support.getPosition($1), $1, $2);
-                }
 
-string_content  : tSTRING_CONTENT {
-                    $$ = $1;
-                }
-                | tSTRING_DVAR {
+@pg.production("xstring_contents : none")
+def xstring_contents_none(p):
+    return BoxASTList([])
+
+
+@pg.production("xstring_contents : xstring_contents string_content")
+def xstring_contents(p):
+    return BoxASTList(p[0].getlist() + [p[1].getast()])
+
+"""
+string_content  : tSTRING_DVAR {
                     $$ = lexer.getStrTerm();
                     lexer.setStrTerm(null);
                     lexer.setState(LexState.EXPR_BEG);
@@ -1503,7 +1527,13 @@ string_content  : tSTRING_CONTENT {
 
                    $$ = support.newEvStrNode($1.getPosition(), $3);
                 }
+"""
 
+
+@pg.production("string_content : STRING_CONTENT")
+def string_content(p):
+    return BoxAST(ast.ConstantString(p[0].getstr()))
+"""
 string_dvar     : tGVAR {
                      $$ = new GlobalVarNode($1.getPosition(), (String) $1.getValue());
                 }
