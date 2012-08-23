@@ -618,7 +618,7 @@ class Lexer(BaseLexer):
             ch3 = self.read()
             if ch3 == ">":
                 self.add(ch3)
-                yield self.emit("LEGT")
+                yield self.emit("CMP")
             else:
                 self.unread()
                 yield self.emit("LE")
@@ -814,7 +814,7 @@ class Lexer(BaseLexer):
         else:
             self.unread()
             self.state = self.EXPR_FNAME
-            yield self.emit("SYMBOL_BEGIN")
+            yield self.emit("SYMBOL_BEG")
 
     def left_bracket(self, ch, space_seen):
         self.add(ch)

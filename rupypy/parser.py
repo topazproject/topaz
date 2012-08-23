@@ -44,12 +44,12 @@ pg = ParserGenerator([
     "NUMBER",
 
     "STRING_BEG", "STRING_END", "STRING_CONTENT", "CHAR", "REGEXP_BEG",
-    "REGEXP_END",
+    "REGEXP_END", "SYMBOL_BEG",
 
     "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
 
-    "PLUS", "MINUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ",
-    "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE",
+    "PLUS", "MINUS", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE",
+    "CARET", "EQEQ", "NE", "EQEQEQ", "CMP", "EQUAL_TILDE", "EXCLAMATION_TILDE",
 
     "LBRACKET", "RBRACKET", "LSUBSCRIPT"
 ], precedence=[
@@ -58,7 +58,7 @@ pg = ParserGenerator([
     ("right", ["NOT_LITERAL"]),
     ("left", ["OR"]),
     ("left", ["AND"]),
-    ("nonassoc", ["LEGT", "EQ", "EQEQ", "EQEQEQ", "NE", "EQUAL_TILDE", "EXCLAMATION_TILDE"]),
+    ("nonassoc", ["CMP", "EQ", "EQEQ", "EQEQEQ", "NE", "EQUAL_TILDE", "EXCLAMATION_TILDE"]),
     ("left", ["GT", "GE", "LT", "LE"]),
     ("left", ["PIPE", "CARET"]),
     ("left", ["AMP"]),
@@ -517,7 +517,7 @@ cpath           : tCOLON3 cname {
                 }
 
 // Token:fname - A function name [!null]
-fname          : tIDENTIFIER | tCONSTANT | tFID
+fname          : tCONSTANT | tFID
                | op {
                    lexer.setState(LexState.EXPR_ENDFN);
                    $$ = $1;
@@ -526,7 +526,11 @@ fname          : tIDENTIFIER | tCONSTANT | tFID
                    lexer.setState(LexState.EXPR_ENDFN);
                    $$ = $1;
                }
-
+"""
+@pg.production("fname : IDENTIFIER")
+def fname(p):
+    return p[0]
+"""
 // LiteralNode:fsym
 fsym           : fname {
                     $$ = new LiteralNode($1);
@@ -655,9 +659,6 @@ arg             : lhs '=' arg {
                 | arg tSTAR2 arg {
                     $$ = support.getOperatorCallNode($1, "*", $3, lexer.getPosition());
                 }
-                | arg tPOW arg {
-                    $$ = support.getOperatorCallNode($1, "**", $3, lexer.getPosition());
-                }
                 | tUMINUS_NUM tINTEGER tPOW arg {
                     $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
                 }
@@ -670,12 +671,6 @@ arg             : lhs '=' arg {
                 | tUMINUS arg {
                     $$ = support.getOperatorCallNode($2, "-@");
                 }
-                | arg tCARET arg {
-                    $$ = support.getOperatorCallNode($1, "^", $3, lexer.getPosition());
-                }
-                | arg tCMP arg {
-                    $$ = support.getOperatorCallNode($1, "<=>", $3, lexer.getPosition());
-                }
                 | arg tGT arg {
                     $$ = support.getOperatorCallNode($1, ">", $3, lexer.getPosition());
                 }
@@ -687,9 +682,6 @@ arg             : lhs '=' arg {
                 }
                 | arg tLEQ arg {
                     $$ = support.getOperatorCallNode($1, "<=", $3, lexer.getPosition());
-                }
-                | arg tNEQ arg {
-                    $$ = support.getOperatorCallNode($1, "!=", $3, lexer.getPosition());
                 }
                 | tBANG arg {
                     $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
@@ -717,11 +709,15 @@ arg             : lhs '=' arg {
 @pg.production("arg : arg MINUS arg")
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
+@pg.production("arg : arg POW arg")
 @pg.production("arg : arg LSHIFT arg")
 @pg.production("arg : arg RSHIFT arg")
 @pg.production("arg : arg AMP arg")
 @pg.production("arg : arg PIPE arg")
+@pg.production("arg : arg CARET arg")
 @pg.production("arg : arg EQEQ arg")
+@pg.production("arg : arg NE arg")
+@pg.production("arg : arg CMP arg")
 @pg.production("arg : arg EQEQEQ arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 def arg_binop(p):
@@ -1398,11 +1394,7 @@ opt_ensure      : kENSURE compstmt {
                 }
                 | none
 
-literal         : symbol {
-                    // FIXME: We may be intern'ing more than once.
-                    $$ = new SymbolNode($1.getPosition(), ((String) $1.getValue()).intern());
-                }
-                | dsym
+literal         : dsym
 """
 
 
@@ -1421,6 +1413,10 @@ def literal_number(p):
         node = ast.ConstantInt(int(s))
     return BoxAST(node)
 
+
+@pg.production("literal : symbol")
+def literal_symbol(p):
+    return p[0]
 
 @pg.production("strings : string")
 def strings(p):
@@ -1578,15 +1574,18 @@ string_dvar     : tGVAR {
                 | backref
 
 // Token:symbol
-symbol          : tSYMBEG sym {
-                     lexer.setState(LexState.EXPR_END);
-                     $$ = $2;
-                     $<ISourcePositionHolder>$.setPosition($1.getPosition());
-                }
-
+"""
+@pg.production("symbol : SYMBOL_BEG sym")
+def symbol(p):
+    return BoxAST(ast.ConstantSymbol(p[1].getstr()))
+"""
 // Token:symbol
-sym             : fname | tIVAR | tGVAR | tCVAR
-
+sym             : tIVAR | tGVAR | tCVAR
+"""
+@pg.production("sym : fname")
+def sym(p):
+    return p[0]
+"""
 dsym            : tSYMBEG xstring_contents tSTRING_END {
                      lexer.setState(LexState.EXPR_END);
 
