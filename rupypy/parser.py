@@ -45,7 +45,7 @@ pg = ParserGenerator([
 
     "STRING_CONTENT", "REGEXP_BEG", "REGEXP_END",
 
-    "GLOBAL",
+    "IDENTIFIER", "GLOBAL",
 
     "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
     "EQUAL_TILDE", "EXCLAMATION_TILDE",
@@ -260,8 +260,7 @@ command_asgn    : lhs '=' command_call {
                 }
 
 // Node:expr *CURRENT* all but arg so far
-expr            : command_call
-                | kNOT opt_nl expr {
+expr            : kNOT opt_nl expr {
                     $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
                 }
                 | tBANG command_call {
@@ -269,6 +268,9 @@ expr            : command_call
                 }
 """
 
+@pg.production("expr : command_call")
+def expr_command_call(p):
+    return p[0]
 
 @pg.production("expr : arg")
 def expr_arg(p):
@@ -289,8 +291,7 @@ expr_value      : expr {
                 }
 
 // Node:command - call with or with block on end [!null]
-command_call    : command
-                | block_command
+command_call    : block_command
                 | kRETURN call_args {
                     $$ = new ReturnNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
                 }
@@ -300,7 +301,11 @@ command_call    : command
                 | kNEXT call_args {
                     $$ = new NextNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
                 }
-
+"""
+@pg.production("command_call : command")
+def command_call_command(p):
+    return p[0]
+"""
 // Node:block_command - A call with a block (foo.bar {...}, foo::bar {...}, bar {...}) [!null]
 block_command   : block_call
                 | block_call tDOT operation2 command_args {
@@ -319,10 +324,7 @@ cmd_brace_block : tLBRACE_ARG {
                 }
 
 // Node:command - fcall/call/yield/super [!null]
-command        : operation command_args %prec tLOWEST {
-                    $$ = support.new_fcall($1, $2, null);
-                }
-                | operation command_args cmd_brace_block {
+command        : operation command_args cmd_brace_block {
                     $$ = support.new_fcall($1, $2, $3);
                 }
                 | primary_value tDOT operation2 command_args %prec tLOWEST {
@@ -343,7 +345,19 @@ command        : operation command_args %prec tLOWEST {
                 | kYIELD command_args {
                     $$ = support.new_yield($1.getPosition(), $2);
                 }
+"""
+@pg.production("command : operation command_args", precedence="LOWEST")
+def command(p):
+    node = ast.Send(
+        ast.Self(p[0].getsourcepos().lineno),
+        p[0].getstr(),
+        p[1].getlist(),
+        None,
+        p[0].getsourcepos().lineno
+    )
+    return BoxAST(node)
 
+"""
 // MultipleAssig19Node:mlhs - [!null]
 mlhs            : mlhs_basic
                 | tLPAREN mlhs_inner rparen {
@@ -740,12 +754,12 @@ def arg_not_match(p):
 def arg_primary(p):
     return p[0]
 
-"""
-arg_value       : arg {
-                    support.checkExpression($1);
-                    $$ = $1 != null ? $1 : NilImplicitNode.NIL;
-                }
 
+@pg.production("arg_value : arg")
+def arg_value(p):
+    return p[0]
+
+"""
 aref_args       : args trailer {
                     $$ = $1;
                 }
@@ -770,10 +784,7 @@ opt_paren_args  : none | paren_args
 opt_call_args   : none | call_args
 
 // [!null]
-call_args       : command {
-                    $$ = support.newArrayNode(support.getPosition($1), $1);
-                }
-                | args opt_block_arg {
+call_args       : args opt_block_arg {
                     $$ = support.arg_blk_pass($1, $2);
                 }
                 | assocs opt_block_arg {
@@ -787,13 +798,24 @@ call_args       : command {
                 | block_arg {
                 }
 
-command_args    : /* none */ {
-                    $$ = Long.valueOf(lexer.getCmdArgumentState().begin());
-                } call_args {
-                    lexer.getCmdArgumentState().reset($<Long>1.longValue());
-                    $$ = $2;
-                }
+"""
 
+@pg.production("call_args : command")
+def call_args_command(p):
+    return BoxASTList([p[0].getast()])
+
+@pg.production("call_args : args opt_block_arg")
+def call_args_args(p):
+    return p[0]
+
+@pg.production("command_args : none")
+def command_args_empty(p):
+    return None
+
+@pg.production("command_args : call_args")
+def command_args(p):
+    return p[0]
+"""
 block_arg       : tAMPER arg_value {
                     $$ = new BlockPassNode($1.getPosition(), $2);
                 }
@@ -804,14 +826,13 @@ opt_block_arg   : ',' block_arg {
                 | ',' {
                     $$ = null;
                 }
-                | none_block_pass
-
+"""
+@pg.production("opt_block_arg : none_block_pass")
+def opt_block_arg_none(p):
+    return None
+"""
 // [!null]
-args            : arg_value {
-                    ISourcePosition pos = $1 == null ? lexer.getPosition() : $1.getPosition();
-                    $$ = support.newArrayNode(pos, $1);
-                }
-                | tSTAR arg_value {
+args            : tSTAR arg_value {
                     $$ = support.newSplatNode($1.getPosition(), $2);
                 }
                 | args ',' arg_value {
@@ -834,7 +855,11 @@ args            : arg_value {
                         $$ = support.arg_concat(support.getPosition($1), $1, $4);
                     }
                 }
-
+"""
+@pg.production("args : arg_value")
+def args_arg(p):
+    return BoxASTList([p[0].getast()])
+"""
 mrhs            : args ',' arg_value {
                     Node node = support.splat_array($1);
 
@@ -1850,8 +1875,12 @@ assoc           : arg_value tASSOC arg_value {
                     ISourcePosition pos = $1.getPosition();
                     $$ = support.newArrayNode(pos, new SymbolNode(pos, (String) $1.getValue())).add($2);
                 }
-
-operation       : tIDENTIFIER | tCONSTANT | tFID
+"""
+@pg.production("operation : IDENTIFIER")
+def operation(p):
+    return p[0]
+"""
+operation       : tCONSTANT | tFID
 operation2      : tIDENTIFIER | tCONSTANT | tFID | op
 operation3      : tIDENTIFIER | tFID | op
 dot_or_colon    : tDOT | tCOLON2
@@ -1887,12 +1916,8 @@ def terms(p):
 def none(p):
     return None
 
-"""
-none_block_pass : /* none */ {
-                  $$ = null;
-                }
-
-
-"""
+@pg.production("none_block_pass :")
+def none_block_pass(p):
+    return None
 
 parser = pg.build()
