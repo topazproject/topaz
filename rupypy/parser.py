@@ -39,11 +39,18 @@ class BoxASTList(BaseBox):
 pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON",
 
+    "AND_LITERAL", "OR_LITERAL",
+
     "NUMBER",
 
     "STRING_CONTENT", "REGEXP_BEG", "REGEXP_END",
 
-    "PLUS", "DIV", "MODULO", "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE"
+    "GLOBAL",
+
+    "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
+    "EQUAL_TILDE", "EXCLAMATION_TILDE",
+
+    "LBRACKET", "RBRACKET"
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -254,12 +261,6 @@ command_asgn    : lhs '=' command_call {
 
 // Node:expr *CURRENT* all but arg so far
 expr            : command_call
-                | expr kAND expr {
-                    $$ = support.newAndNode($2.getPosition(), $1, $3);
-                }
-                | expr kOR expr {
-                    $$ = support.newOrNode($2.getPosition(), $1, $3);
-                }
                 | kNOT opt_nl expr {
                     $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
                 }
@@ -268,10 +269,20 @@ expr            : command_call
                 }
 """
 
+
 @pg.production("expr : arg")
 def expr_arg(p):
     return p[0]
 
+
+@pg.production("expr : expr AND_LITERAL expr")
+def expr_and(p):
+    return BoxAST(ast.And(p[0].getast(), p[2].getast()))
+
+
+@pg.production("expr : expr OR_LITERAL expr")
+def expr_or(p):
+    return BoxAST(ast.Or(p[0].getast(), p[2].getast()))
 """
 expr_value      : expr {
                     support.checkExpression($1);
@@ -647,14 +658,8 @@ arg             : lhs '=' arg {
                 | tUMINUS arg {
                     $$ = support.getOperatorCallNode($2, "-@");
                 }
-                | arg tPIPE arg {
-                    $$ = support.getOperatorCallNode($1, "|", $3, lexer.getPosition());
-                }
                 | arg tCARET arg {
                     $$ = support.getOperatorCallNode($1, "^", $3, lexer.getPosition());
-                }
-                | arg tAMPER2 arg {
-                    $$ = support.getOperatorCallNode($1, "&", $3, lexer.getPosition());
                 }
                 | arg tCMP arg {
                     $$ = support.getOperatorCallNode($1, "<=>", $3, lexer.getPosition());
@@ -683,12 +688,6 @@ arg             : lhs '=' arg {
                 | tTILDE arg {
                     $$ = support.getOperatorCallNode($2, "~");
                 }
-                | arg tLSHFT arg {
-                    $$ = support.getOperatorCallNode($1, "<<", $3, lexer.getPosition());
-                }
-                | arg tRSHFT arg {
-                    $$ = support.getOperatorCallNode($1, ">>", $3, lexer.getPosition());
-                }
                 | arg tANDOP arg {
                     $$ = support.newAndNode($2.getPosition(), $1, $3);
                 }
@@ -708,6 +707,10 @@ arg             : lhs '=' arg {
 @pg.production("arg : arg PLUS arg")
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
+@pg.production("arg : arg LSHIFT arg")
+@pg.production("arg : arg RSHIFT arg")
+@pg.production("arg : arg AMP arg")
+@pg.production("arg : arg PIPE arg")
 @pg.production("arg : arg EQEQEQ arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 def arg_binop(p):
@@ -743,8 +746,7 @@ arg_value       : arg {
                     $$ = $1 != null ? $1 : NilImplicitNode.NIL;
                 }
 
-aref_args       : none
-                | args trailer {
+aref_args       : args trailer {
                     $$ = $1;
                 }
                 | args ',' assocs trailer {
@@ -753,7 +755,11 @@ aref_args       : none
                 | assocs trailer {
                     $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
                 }
-
+"""
+@pg.production("aref_args : none")
+def aref_args_empty(p):
+    return BoxASTList([])
+"""
 paren_args      : tLPAREN2 opt_call_args rparen {
                     $$ = $2;
                     if ($$ != null) $<Node>$.setPosition($1.getPosition());
@@ -856,7 +862,6 @@ primary         : strings
                 | xstring
                 | words
                 | qwords
-                | var_ref
                 | backref
                 | tFID {
                     $$ = new FCallNoArgNode($1.getPosition(), (String) $1.getValue());
@@ -884,15 +889,6 @@ primary         : strings
                 }
                 | tCOLON3 tCONSTANT {
                     $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
-                }
-                | tLBRACK aref_args tRBRACK {
-                    ISourcePosition position = $1.getPosition();
-                    if ($2 == null) {
-                        $$ = new ZArrayNode(position); /* zero length array */
-                    } else {
-                        $$ = $2;
-                        $<ISourcePositionHolder>$.setPosition(position);
-                    }
                 }
                 | tLBRACE assoc_list tRCURLY {
                     $$ = new Hash19Node($1.getPosition(), $2);
@@ -1049,10 +1045,19 @@ def primary_literal(p):
     return p[0]
 
 
+@pg.production("primary : var_ref")
+def primary_var_ref(p):
+    return p[0]
+
+
 @pg.production("primary : regexp")
 def primary_regexp(p):
     return p[0]
 
+
+@pg.production("primary : LBRACKET aref_args RBRACKET")
+def primary_array(p):
+    return BoxAST(ast.Array(p[1].getlist()))
 
 """
 primary_value   : primary {
@@ -1575,7 +1580,7 @@ dsym            : tSYMBEG xstring_contents tSTRING_END {
                 }
 
 // [!null]
-variable        : tIDENTIFIER | tIVAR | tGVAR | tCONSTANT | tCVAR
+variable        : tIDENTIFIER | tIVAR | tCONSTANT | tCVAR
                 | kNIL {
                     $$ = new Token("nil", Tokens.kNIL, $1.getPosition());
                 }
@@ -1597,12 +1602,18 @@ variable        : tIDENTIFIER | tIVAR | tGVAR | tCONSTANT | tCVAR
                 | k__ENCODING__ {
                     $$ = new Token("__ENCODING__", Tokens.k__ENCODING__, $1.getPosition());
                 }
+"""
 
-// [!null]
-var_ref         : variable {
-                    $$ = support.gettable($1);
-                }
 
+@pg.production("variable : GLOBAL")
+def variable_global(p):
+    return BoxAST(ast.Global(p[0].getstr()))
+
+
+@pg.production("var_ref : variable")
+def var_ref(p):
+    return p[0]
+"""
 // [!null]
 var_lhs         : variable {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
