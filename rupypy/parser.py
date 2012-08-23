@@ -50,7 +50,7 @@ pg = ParserGenerator([
     "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
     "EQUAL_TILDE", "EXCLAMATION_TILDE",
 
-    "LBRACKET", "RBRACKET"
+    "LBRACKET", "RBRACKET", "LSUBSCRIPT"
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -780,9 +780,16 @@ paren_args      : tLPAREN2 opt_call_args rparen {
                 }
 
 opt_paren_args  : none | paren_args
+"""
+@pg.production("opt_call_args : none")
+def opt_call_args_none(p):
+    return BoxASTList([])
 
-opt_call_args   : none | call_args
 
+@pg.production("opt_call_args : call_args")
+def opt_call_args(p):
+    return p[0]
+"""
 // [!null]
 call_args       : args opt_block_arg {
                     $$ = support.arg_blk_pass($1, $2);
@@ -942,7 +949,6 @@ primary         : strings
                 | operation brace_block {
                     $$ = new FCallNoArgBlockNode($1.getPosition(), (String) $1.getValue(), $2);
                 }
-                | method_call
                 | method_call brace_block {
                     if ($1 != null &&
                           $<BlockAcceptingNode>1.getIterNode() instanceof BlockPassNode) {
@@ -1080,17 +1086,21 @@ def primary_regexp(p):
     return p[0]
 
 
+@pg.production("primary : method_call")
+def primary_method_call(p):
+    return p[0]
+
+
 @pg.production("primary : LBRACKET aref_args RBRACKET")
 def primary_array(p):
     return BoxAST(ast.Array(p[1].getlist()))
 
-"""
-primary_value   : primary {
-                    support.checkExpression($1);
-                    $$ = $1;
-                    if ($$ == null) $$ = NilImplicitNode.NIL;
-                }
 
+@pg.production("primary_value : primary")
+def primary_value(p):
+    return p[0]
+
+"""
 then            : term
                 | kTHEN
                 | term kTHEN
@@ -1320,14 +1330,16 @@ method_call     : operation paren_args {
                 | kSUPER {
                     $$ = new ZSuperNode($1.getPosition());
                 }
-                | primary_value '[' opt_call_args rbracket {
-                    if ($1 instanceof SelfNode) {
-                        $$ = support.new_fcall(new Token("[]", support.getPosition($1)), $3, null);
-                    } else {
-                        $$ = support.new_call($1, new Token("[]", support.getPosition($1)), $3, null);
-                    }
-                }
-
+"""
+@pg.production("method_call : primary_value LSUBSCRIPT opt_call_args rbracket")
+def method_call_subscript(p):
+    node = ast.Subscript(
+        p[0].getast(),
+        p[2].getlist(),
+        p[1].getsourcepos().lineno
+    )
+    return BoxAST(node)
+"""
 brace_block     : tLCURLY {
                     support.pushBlockScope();
                 } opt_block_param compstmt tRCURLY {
@@ -1891,14 +1903,19 @@ dot_or_colon    : tDOT | tCOLON2
 def opt_terms(p):
     return None
 
+@pg.production("opt_nl : none")
+@pg.production("opt_nl : NEWLINE")
+def opt_nl(p):
+    return None
 """
-opt_nl          : /* none */ | '\n'
 rparen          : opt_nl tRPAREN {
                     $$ = $2;
                 }
-rbracket        : opt_nl tRBRACK {
-                    $$ = $2;
-                }
+"""
+@pg.production("rbracket : opt_nl RBRACKET")
+def rbracket(p):
+    return None
+"""
 trailer         : /* none */ | '\n' | ','
 """
 
