@@ -48,7 +48,7 @@ pg = ParserGenerator([
 
     "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
 
-    "PLUS", "MINUS", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE",
+    "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE",
     "CARET", "EQEQ", "NE", "EQEQEQ", "CMP", "EQUAL_TILDE", "EXCLAMATION_TILDE",
 
     "LBRACKET", "RBRACKET", "LSUBSCRIPT"
@@ -656,9 +656,6 @@ arg             : lhs '=' arg {
                     boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
                     $$ = new DotNode(support.getPosition($1), $1, $3, true, isLiteral);
                 }
-                | arg tSTAR2 arg {
-                    $$ = support.getOperatorCallNode($1, "*", $3, lexer.getPosition());
-                }
                 | tUMINUS_NUM tINTEGER tPOW arg {
                     $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
                 }
@@ -707,6 +704,7 @@ arg             : lhs '=' arg {
 
 @pg.production("arg : arg PLUS arg")
 @pg.production("arg : arg MINUS arg")
+@pg.production("arg : arg MUL arg")
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
 @pg.production("arg : arg POW arg")
