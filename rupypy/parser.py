@@ -43,12 +43,13 @@ pg = ParserGenerator([
 
     "NUMBER",
 
-    "STRING_CONTENT", "REGEXP_BEG", "REGEXP_END",
+    "STRING_BEG", "STRING_END", "STRING_CONTENT", "CHAR", "REGEXP_BEG",
+    "REGEXP_END",
 
     "IDENTIFIER", "GLOBAL",
 
-    "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQEQ",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE",
+    "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ",
+    "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE",
 
     "LBRACKET", "RBRACKET", "LSUBSCRIPT"
 ], precedence=[
@@ -690,9 +691,6 @@ arg             : lhs '=' arg {
                 | arg tLEQ arg {
                     $$ = support.getOperatorCallNode($1, "<=", $3, lexer.getPosition());
                 }
-                | arg tEQ arg {
-                    $$ = support.getOperatorCallNode($1, "==", $3, lexer.getPosition());
-                }
                 | arg tNEQ arg {
                     $$ = support.getOperatorCallNode($1, "!=", $3, lexer.getPosition());
                 }
@@ -725,6 +723,7 @@ arg             : lhs '=' arg {
 @pg.production("arg : arg RSHIFT arg")
 @pg.production("arg : arg AMP arg")
 @pg.production("arg : arg PIPE arg")
+@pg.production("arg : arg EQEQ arg")
 @pg.production("arg : arg EQEQEQ arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 def arg_binop(p):
@@ -890,8 +889,7 @@ mrhs            : args ',' arg_value {
                      $$ = support.newSplatNode(support.getPosition($1), $2);
                 }
 
-primary         : strings
-                | xstring
+primary         : xstring
                 | words
                 | qwords
                 | backref
@@ -1078,6 +1076,11 @@ def primary_literal(p):
 
 @pg.production("primary : var_ref")
 def primary_var_ref(p):
+    return p[0]
+
+
+@pg.production("primary : strings")
+def primary_strings(p):
     return p[0]
 
 
@@ -1421,48 +1424,38 @@ def literal_number(p):
     return BoxAST(node)
 
 
-"""
-strings         : string {
-                    $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
-                    /*
-                    NODE *node = $1;
-                    if (!node) {
-                        node = NEW_STR(STR_NEW0());
-                    } else {
-                        node = evstr2dstr(node);
-                    }
-                    $$ = node;
-                    */
-                }
+@pg.production("strings : string")
+def strings(p):
+    builder = StringBuilder()
+    for node in p[0].getlist():
+        if not isinstance(node, ast.ConstantString):
+            break
+        builder.append(node.strvalue)
+    else:
+        return BoxAST(ast.ConstantString(builder.build()))
+    return BoxAST(ast.DynamicString(p[0].getlist()))
 
+"""
 // [!null]
-string          : tCHAR {
-                    ByteList aChar = ByteList.create((String) $1.getValue());
-                    aChar.setEncoding(lexer.getEncoding());
-                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
-                }
-                | string1 {
-                    $$ = $1;
-                }
-                | string string1 {
+string          : string string1 {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
+"""
 
-string1         : tSTRING_BEG string_contents tSTRING_END {
-                    $$ = $2;
+@pg.production("string : CHAR")
+def string_char(p):
+    return BoxASTList([ast.ConstantString(p[0].getstr())])
 
-                    $<ISourcePositionHolder>$.setPosition($1.getPosition());
-                    int extraLength = ((String) $1.getValue()).length() - 1;
 
-                    // We may need to subtract addition offset off of first
-                    // string fragment (we optimistically take one off in
-                    // ParserSupport.literal_concat).  Check token length
-                    // and subtract as neeeded.
-                    if (($2 instanceof DStrNode) && extraLength > 0) {
-                      Node strNode = ((DStrNode)$2).get(0);
-                    }
-                }
+@pg.production("string : string1")
+def string_string1(p):
+    return p[0]
 
+
+@pg.production("string1 : STRING_BEG string_contents STRING_END")
+def string1(p):
+    return p[1]
+"""
 xstring         : tXSTRING_BEG xstring_contents tSTRING_END {
                     ISourcePosition position = $1.getPosition();
 
@@ -1526,16 +1519,15 @@ qword_list      : /* none */ {
                 | qword_list tSTRING_CONTENT ' ' {
                     $$ = $1.add($2);
                 }
-
-string_contents : /* none */ {
-                    ByteList aChar = ByteList.create("");
-                    aChar.setEncoding(lexer.getEncoding());
-                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
-                }
-                | string_contents string_content {
-                    $$ = support.literal_concat($1.getPosition(), $1, $2);
-                }
 """
+@pg.production("string_contents : none")
+def string_contents_none(p):
+    return BoxASTList([ast.ConstantString("")])
+
+
+@pg.production("string_contents : string_contents string_content")
+def string_contents(p):
+    return BoxASTList(p[0].getlist() + [p[1].getast()])
 
 
 @pg.production("xstring_contents : none")
@@ -1617,7 +1609,7 @@ dsym            : tSYMBEG xstring_contents tSTRING_END {
                 }
 
 // [!null]
-variable        : tIDENTIFIER | tIVAR | tCONSTANT | tCVAR
+variable        : tIVAR | tCONSTANT | tCVAR
                 | kNIL {
                     $$ = new Token("nil", Tokens.kNIL, $1.getPosition());
                 }
@@ -1641,6 +1633,9 @@ variable        : tIDENTIFIER | tIVAR | tCONSTANT | tCVAR
                 }
 """
 
+@pg.production("variable : IDENTIFIER")
+def variable_identifier(p):
+    return BoxAST(ast.Variable(p[0].getstr(), p[0].getsourcepos().lineno))
 
 @pg.production("variable : GLOBAL")
 def variable_global(p):

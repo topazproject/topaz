@@ -359,16 +359,18 @@ class Lexer(BaseLexer):
 
     def single_quote(self, ch):
         self.state = self.EXPR_END
+        yield self.emit("STRING_BEG")
         while True:
             ch = self.read()
             if ch == self.EOF:
                 self.unread()
                 break
             elif ch == "'":
-                yield self.emit("SSTRING")
+                yield self.emit("STRING_CONTENT")
                 break
             else:
                 self.add(ch)
+        yield self.emit("STRING_END")
 
     def regexp(self, begin, end):
         yield self.emit("REGEXP_BEG")
@@ -692,7 +694,7 @@ class Lexer(BaseLexer):
                         self.add(ch)
                 else:
                     self.add(ch2)
-                yield self.emit("SSTRING")
+                yield self.emit("CHAR")
                 self.state = self.EXPR_END
 
     def read_escape(self, character_escape=False):
