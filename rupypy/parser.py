@@ -46,9 +46,9 @@ pg = ParserGenerator([
     "STRING_BEG", "STRING_END", "STRING_CONTENT", "CHAR", "REGEXP_BEG",
     "REGEXP_END",
 
-    "IDENTIFIER", "GLOBAL",
+    "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
 
-    "PLUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ",
+    "PLUS", "MINUS", "DIV", "MODULO", "LSHIFT", "RSHIFT", "AMP", "PIPE", "EQEQ",
     "EQEQEQ", "EQUAL_TILDE", "EXCLAMATION_TILDE",
 
     "LBRACKET", "RBRACKET", "LSUBSCRIPT"
@@ -652,9 +652,6 @@ arg             : lhs '=' arg {
                     boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
                     $$ = new DotNode(support.getPosition($1), $1, $3, true, isLiteral);
                 }
-                | arg tMINUS arg {
-                    $$ = support.getOperatorCallNode($1, "-", $3, lexer.getPosition());
-                }
                 | arg tSTAR2 arg {
                     $$ = support.getOperatorCallNode($1, "*", $3, lexer.getPosition());
                 }
@@ -717,6 +714,7 @@ arg             : lhs '=' arg {
 
 
 @pg.production("arg : arg PLUS arg")
+@pg.production("arg : arg MINUS arg")
 @pg.production("arg : arg DIV arg")
 @pg.production("arg : arg MODULO arg")
 @pg.production("arg : arg LSHIFT arg")
@@ -1609,7 +1607,7 @@ dsym            : tSYMBEG xstring_contents tSTRING_END {
                 }
 
 // [!null]
-variable        : tIVAR | tCONSTANT | tCVAR
+variable        : tCONSTANT | tCVAR
                 | kNIL {
                     $$ = new Token("nil", Tokens.kNIL, $1.getPosition());
                 }
@@ -1640,6 +1638,10 @@ def variable_identifier(p):
 @pg.production("variable : GLOBAL")
 def variable_global(p):
     return BoxAST(ast.Global(p[0].getstr()))
+
+@pg.production("variable : INSTANCE_VAR")
+def variable_instance_Var(p):
+    return BoxAST(ast.InstanceVariable(p[0].getstr()))
 
 
 @pg.production("var_ref : variable")
