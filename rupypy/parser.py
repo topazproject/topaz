@@ -1735,18 +1735,17 @@ superclass      : term {
                 | error term {
                    $$ = null;
                 }
-
-// [!null]
-// ENEBO: Look at command_start stuff I am ripping out
-f_arglist       : f_args term {
-                    $$ = $1;
-                }
 """
 
 
 @pg.production("f_arglist : LPAREN f_args rparen")
 def f_arglist(p):
     return p[1]
+
+
+@pg.production("f_arglist : f_args term")
+def f_arglist_no_paren(p):
+    return p[0]
 """
 // [!null]
 f_args          : f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
