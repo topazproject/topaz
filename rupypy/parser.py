@@ -40,7 +40,7 @@ pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
     "LSUBSCRIPT", "LPAREN", "RPAREN",
 
-    "AND_LITERAL", "OR_LITERAL", "IF", "END", "THEN",
+    "AND_LITERAL", "OR_LITERAL", "IF", "DEF", "END", "THEN",
 
     "NUMBER",
 
@@ -109,36 +109,32 @@ top_stmt      : klBEGIN {
                     support.getResult().addBeginNode(new PreExe19Node($1.getPosition(), support.getCurrentScope(), $4));
                     $$ = null;
               }
-
-bodystmt      : compstmt opt_rescue opt_else opt_ensure {
-                  Node node = $1;
-
-                  if ($2 != null) {
-                      node = new RescueNode(support.getPosition($1), $1, $2, $3);
-                  } else if ($3 != null) {
-                      support.warn(ID.ELSE_WITHOUT_RESCUE, support.getPosition($1), "else without rescue is useless");
-                      node = support.appendToBlock($1, $3);
-                  }
-                  if ($4 != null) {
-                      if (node == null) node = NilImplicitNode.NIL;
-                      node = new EnsureNode(support.getPosition($1), node, $4);
-                  }
-
-                  $$ = node;
-                }
 """
+
+
+@pg.production("bodystmt : compstmt opt_rescue opt_else opt_ensure")
+def bodystmt(p):
+    return p[0]
+
+
 @pg.production("compstmt : stmts opt_terms")
 def compstmt(p):
     return BoxAST(ast.Block(p[0].getlist()))
 """
-stmts           : none
-                | stmts terms stmt {
+stmts           : stmts terms stmt {
                     $$ = support.appendToBlock($1, support.newline_node($3, support.getPosition($3)));
                 }
                 | error stmt {
                     $$ = $2;
                 }
 """
+
+
+@pg.production("stmts : none")
+def stmts_none(p):
+    return BoxASTList([])
+
+
 @pg.production("stmts : stmt")
 def stmts_stmt(p):
     return BoxASTList([p[0].getast()])
@@ -267,9 +263,11 @@ expr            : kNOT opt_nl expr {
                 }
 """
 
+
 @pg.production("expr : command_call")
 def expr_command_call(p):
     return p[0]
+
 
 @pg.production("expr : arg")
 def expr_arg(p):
@@ -303,6 +301,8 @@ command_call    : block_command
                     $$ = new NextNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
                 }
 """
+
+
 @pg.production("command_call : command")
 def command_call_command(p):
     return p[0]
@@ -344,6 +344,8 @@ command        : operation command_args cmd_brace_block {
                     $$ = support.new_yield($1.getPosition(), $2);
                 }
 """
+
+
 @pg.production("command : operation command_args", precedence="LOWEST")
 def command(p):
     node = ast.Send(
@@ -354,6 +356,7 @@ def command(p):
         p[0].getsourcepos().lineno
     )
     return BoxAST(node)
+
 
 @pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
 def command_dot(p):
@@ -535,6 +538,8 @@ fname          : tCONSTANT | tFID
                    $$ = $1;
                }
 """
+
+
 @pg.production("fname : IDENTIFIER")
 def fname(p):
     return p[0]
@@ -1021,17 +1026,6 @@ primary         : xstring
                     $$ = new ModuleNode($1.getPosition(), $<Colon3Node>2, support.getCurrentScope(), body);
                     support.popCurrentScope();
                 }
-                | kDEF fname {
-                    support.setInDef(true);
-                    support.pushLocalScope();
-                } f_arglist bodystmt kEND {
-                    // TODO: We should use implicit nil for body, but problem (punt til later)
-                    Node body = $5; //$5 == null ? NilImplicitNode.NIL : $5;
-
-                    $$ = new DefnNode($1.getPosition(), new ArgumentNode($2.getPosition(), (String) $2.getValue()), $4, support.getCurrentScope(), body);
-                    support.popCurrentScope();
-                    support.setInDef(false);
-                }
                 | kDEF singleton dot_or_colon {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fname {
@@ -1094,6 +1088,19 @@ def primary_method_call(p):
 @pg.production("primary : LBRACKET aref_args RBRACKET")
 def primary_array(p):
     return BoxAST(ast.Array(p[1].getlist()))
+
+
+@pg.production("primary : DEF fname f_arglist bodystmt END")
+def primary_def(p):
+    node = ast.Function(
+        None,
+        p[1].getstr(),
+        p[2].getlist(),
+        None,
+        None,
+        p[3].getast()
+    )
+    return BoxAST(node)
 
 
 @pg.production("primary : IF expr_value then compstmt if_tail END")
@@ -1414,10 +1421,13 @@ opt_rescue      : kRESCUE exc_list exc_var then compstmt opt_rescue {
                     Node body = node == null ? NilImplicitNode.NIL : node;
                     $$ = new RescueBodyNode($1.getPosition(), $2, body, $6);
                 }
-                | {
-                    $$ = null;
-                }
+"""
 
+
+@pg.production("opt_rescue :")
+def opt_rescue_none(p):
+    return None
+"""
 exc_list        : arg_value {
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
@@ -1435,8 +1445,13 @@ exc_var         : tASSOC lhs {
 opt_ensure      : kENSURE compstmt {
                     $$ = $2;
                 }
-                | none
+"""
 
+
+@pg.production("opt_ensure : none")
+def opt_ensure_none(p):
+    return None
+"""
 literal         : dsym
 """
 
@@ -1717,15 +1732,16 @@ superclass      : term {
 
 // [!null]
 // ENEBO: Look at command_start stuff I am ripping out
-f_arglist       : tLPAREN2 f_args rparen {
-                    $$ = $2;
-                    $<ISourcePositionHolder>$.setPosition($1.getPosition());
-                    lexer.setState(LexState.EXPR_BEG);
-                }
-                | f_args term {
+f_arglist       : f_args term {
                     $$ = $1;
                 }
+"""
 
+
+@pg.production("f_arglist : LPAREN f_args rparen")
+def f_arglist(p):
+    return p[1]
+"""
 // [!null]
 f_args          : f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
@@ -1769,10 +1785,13 @@ f_args          : f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
                 | f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
-                | /* none */ {
-                    $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
-                }
+"""
 
+
+@pg.production("f_args : ")
+def f_args_empty(p):
+    return BoxASTList([])
+"""
 f_bad_arg       : tCONSTANT {
                     support.yyerror("formal argument cannot be a constant");
                 }
