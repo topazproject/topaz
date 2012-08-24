@@ -40,7 +40,7 @@ pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
     "LSUBSCRIPT", "LPAREN", "RPAREN", "EXCLAMATION",
 
-    "NOT_LITERAL", "AND_LITERAL", "OR_LITERAL", "IF", "DEF", "END", "THEN",
+    "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "IF", "DEF", "END", "THEN",
 
     "NUMBER",
 
@@ -51,7 +51,7 @@ pg = ParserGenerator([
 
     "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP",
     "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "CMP",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE",
+    "EQUAL_TILDE", "EXCLAMATION_TILDE", "UNARY_STAR"
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -757,10 +757,7 @@ def arg_value(p):
     return p[0]
 
 """
-aref_args       : args trailer {
-                    $$ = $1;
-                }
-                | args ',' assocs trailer {
+aref_args       : args ',' assocs trailer {
                     $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
                 }
                 | assocs trailer {
@@ -773,6 +770,10 @@ aref_args       : args trailer {
 def aref_args_empty(p):
     return BoxASTList([])
 
+
+@pg.production("aref_args : args trailer")
+def aref_args_args(p):
+    return p[0]
 
 @pg.production("paren_args : LPAREN opt_call_args rparen")
 def paren_args(p):
@@ -849,30 +850,26 @@ opt_block_arg   : ',' block_arg {
 @pg.production("opt_block_arg : none_block_pass")
 def opt_block_arg_none(p):
     return None
-"""
-// [!null]
-args            : tSTAR arg_value {
-                    $$ = support.newSplatNode($1.getPosition(), $2);
-                }
-                | args ',' tSTAR arg_value {
-                    Node node = null;
 
-                    // FIXME: lose syntactical elements here (and others like this)
-                    if ($4 instanceof ArrayNode &&
-                        (node = support.splat_array($1)) != null) {
-                        $$ = support.list_concat(node, $4);
-                    } else {
-                        $$ = support.arg_concat(support.getPosition($1), $1, $4);
-                    }
-                }
-"""
-@pg.production("args : args COMMA arg_value")
-def args_args(p):
-    return BoxASTList(p[0].getlist() + [p[2].getast()])
 
 @pg.production("args : arg_value")
 def args_arg(p):
     return BoxASTList([p[0].getast()])
+
+
+@pg.production("args : UNARY_STAR arg_value")
+def args_splat_arg(p):
+    return BoxASTList([ast.Splat(p[1].getast())])
+
+
+@pg.production("args : args COMMA arg_value")
+def args_args(p):
+    return BoxASTList(p[0].getlist() + [p[2].getast()])
+
+
+@pg.production("args : args COMMA UNARY_STAR arg_value")
+def args_args_splat(p):
+    return BoxASTList(p[0].getlist() + [ast.Splat(p[3].getast())])
 """
 mrhs            : args ',' arg_value {
                     Node node = support.splat_array($1);
@@ -1972,12 +1969,17 @@ def opt_nl(p):
 @pg.production("rparen : opt_nl RPAREN")
 def rparen(p):
     return None
+
+
 @pg.production("rbracket : opt_nl RBRACKET")
 def rbracket(p):
     return None
-"""
-trailer         : /* none */ | '\n' | ','
-"""
+
+@pg.production("trailer : NEWLINE")
+@pg.production("trailer : COMMA")
+@pg.production("trailer :")
+def trailer(p):
+    return None
 
 @pg.production("term : SEMICOLON")
 @pg.production("term : NEWLINE")
