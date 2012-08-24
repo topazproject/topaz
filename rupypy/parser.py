@@ -40,7 +40,7 @@ pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
     "LSUBSCRIPT", "LPAREN", "RPAREN",
 
-    "AND_LITERAL", "OR_LITERAL",
+    "AND_LITERAL", "OR_LITERAL", "IF", "END", "THEN",
 
     "NUMBER",
 
@@ -284,11 +284,13 @@ def expr_and(p):
 @pg.production("expr : expr OR_LITERAL expr")
 def expr_or(p):
     return BoxAST(ast.Or(p[0].getast(), p[2].getast()))
-"""
-expr_value      : expr {
-                    support.checkExpression($1);
-                }
 
+
+@pg.production("expr_value : expr")
+def expr_value(p):
+    return p[0]
+
+"""
 // Node:command - call with or with block on end [!null]
 command_call    : block_command
                 | kRETURN call_args {
@@ -951,9 +953,6 @@ primary         : xstring
                 | tLAMBDA lambda {
                     $$ = $2;
                 }
-                | kIF expr_value then compstmt if_tail kEND {
-                    $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
-                }
                 | kUNLESS expr_value then compstmt opt_else kEND {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $5, $4);
                 }
@@ -1061,6 +1060,7 @@ primary         : xstring
                 }
 """
 
+
 @pg.production("primary : literal")
 def primary_literal(p):
     return p[0]
@@ -1096,28 +1096,52 @@ def primary_array(p):
     return BoxAST(ast.Array(p[1].getlist()))
 
 
+@pg.production("primary : IF expr_value then compstmt if_tail END")
+def primary_if(p):
+    node = ast.If(
+        p[1].getast(),
+        p[3].getast(),
+        p[4].getast()
+    )
+    return BoxAST(node)
+
+
 @pg.production("primary_value : primary")
 def primary_value(p):
     return p[0]
 
-"""
-then            : term
-                | kTHEN
-                | term kTHEN
 
+@pg.production("then : term THEN")
+@pg.production("then : THEN")
+@pg.production("then : term")
+def then(p):
+    return None
+
+"""
 do              : term
                 | kDO_COND
 
-if_tail         : opt_else
-                | kELSIF expr_value then compstmt if_tail {
+if_tail         : kELSIF expr_value then compstmt if_tail {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
                 }
+"""
 
-opt_else        : none
-                | kELSE compstmt {
+
+@pg.production("if_tail : opt_else")
+def if_tail_else(p):
+    return p[0]
+
+"""
+opt_else        : kELSE compstmt {
                     $$ = $2;
                 }
+"""
 
+
+@pg.production("opt_else : none")
+def opt_else_none(p):
+    return BoxAST(ast.Block([]))
+"""
 for_var         : lhs
                 | mlhs {
                 }
