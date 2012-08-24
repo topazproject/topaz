@@ -326,9 +326,6 @@ cmd_brace_block : tLBRACE_ARG {
 command        : operation command_args cmd_brace_block {
                     $$ = support.new_fcall($1, $2, $3);
                 }
-                | primary_value tDOT operation2 command_args %prec tLOWEST {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
                 | primary_value tDOT operation2 command_args cmd_brace_block {
                     $$ = support.new_call($1, $3, $4, $5);
                 }
@@ -353,6 +350,17 @@ def command(p):
         p[1].getlist(),
         None,
         p[0].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
+@pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
+def command_dot(p):
+    node = ast.Send(
+        p[0].getast(),
+        p[2].getstr(),
+        p[3].getlist(),
+        None,
+        p[2].getsourcepos().lineno
     )
     return BoxAST(node)
 
@@ -1053,11 +1061,6 @@ primary         : xstring
                 }
 """
 
-@pg.production("primary : LPAREN compstmt RPAREN")
-def primary_parens(p):
-    return p[1]
-
-
 @pg.production("primary : literal")
 def primary_literal(p):
     return p[0]
@@ -1076,6 +1079,11 @@ def primary_strings(p):
 @pg.production("primary : regexp")
 def primary_regexp(p):
     return p[0]
+
+
+@pg.production("primary : LPAREN compstmt RPAREN")
+def primary_parens(p):
+    return p[1]
 
 
 @pg.production("primary : method_call")
@@ -1317,17 +1325,6 @@ method_call     : primary_value tCOLON2 operation2 paren_args {
                     $$ = new ZSuperNode($1.getPosition());
                 }
 """
-@pg.production("method_call : primary_value DOT operation2 opt_paren_args")
-def method_call_dot(p):
-    node = ast.Send(
-        p[0].getast(),
-        p[2].getstr(),
-        p[3].getlist(),
-        None,
-        p[2].getsourcepos().lineno
-    )
-    return BoxAST(node)
-
 @pg.production("method_call : operation paren_args")
 def method_call_paren_args(p):
     node = ast.Send(
@@ -1336,6 +1333,17 @@ def method_call_paren_args(p):
         p[1].getlist(),
         None,
         p[0].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
+@pg.production("method_call : primary_value DOT operation2 opt_paren_args")
+def method_call_dot(p):
+    node = ast.Send(
+        p[0].getast(),
+        p[2].getstr(),
+        p[3].getlist(),
+        None,
+        p[2].getsourcepos().lineno
     )
     return BoxAST(node)
 
@@ -1900,7 +1908,7 @@ def operation(p):
     return p[0]
 """
 operation       : tCONSTANT | tFID
-operation2      : tIDENTIFIER | tCONSTANT | tFID | op
+operation2      : tCONSTANT | tFID | op
 """
 @pg.production("operation2 : IDENTIFIER")
 def operation2(p):
