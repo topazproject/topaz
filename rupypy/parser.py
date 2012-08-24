@@ -529,17 +529,13 @@ cpath           : tCOLON3 cname {
 
 // Token:fname - A function name [!null]
 fname          : tCONSTANT | tFID
-               | op {
-                   lexer.setState(LexState.EXPR_ENDFN);
-                   $$ = $1;
-               }
                | reswords {
                    lexer.setState(LexState.EXPR_ENDFN);
                    $$ = $1;
                }
 """
 
-
+@pg.production("fname : op")
 @pg.production("fname : IDENTIFIER")
 def fname(p):
     return p[0]
@@ -571,10 +567,14 @@ undef_list      : fitem {
 
 // Token:op
 op              : tPIPE | tCARET | tAMPER2 | tCMP | tEQ | tEQQ | tMATCH
-                | tNMATCH | tGT | tGEQ | tLT | tLEQ | tNEQ | tLSHFT | tRSHFT
+                | tNMATCH | tGEQ | tLT | tLEQ | tNEQ | tLSHFT | tRSHFT
                 | tPLUS | tMINUS | tSTAR2 | tSTAR | tDIVIDE | tPERCENT | tPOW
                 | tBANG | tTILDE | tUPLUS | tUMINUS | tAREF | tASET | tBACK_REF2
-
+"""
+@pg.production("op : GT")
+def op(p):
+    return p[0]
+"""
 // Token:op
 reswords        : k__LINE__ | k__FILE__ | k__ENCODING__ | klBEGIN | klEND
                 | kALIAS | kAND | kBEGIN | kBREAK | kCASE | kCLASS | kDEF
