@@ -534,6 +534,7 @@ fname          : tCONSTANT | tFID
                }
 """
 
+
 @pg.production("fname : op")
 @pg.production("fname : IDENTIFIER")
 def fname(p):
@@ -570,6 +571,8 @@ op              : tPIPE | tCARET | tAMPER2 | tCMP | tEQ | tEQQ | tMATCH
                 | tPLUS | tMINUS | tSTAR2 | tSTAR | tDIVIDE | tPERCENT | tPOW
                 | tBANG | tTILDE | tUPLUS | tUMINUS | tAREF | tASET | tBACK_REF2
 """
+
+
 @pg.production("op : GT")
 def op(p):
     return p[0]
@@ -775,6 +778,7 @@ def aref_args_empty(p):
 def aref_args_args(p):
     return p[0]
 
+
 @pg.production("paren_args : LPAREN opt_call_args rparen")
 def paren_args(p):
     return p[1]
@@ -847,6 +851,8 @@ opt_block_arg   : ',' block_arg {
                     $$ = null;
                 }
 """
+
+
 @pg.production("opt_block_arg : none_block_pass")
 def opt_block_arg_none(p):
     return None
@@ -1352,6 +1358,8 @@ method_call     : primary_value tCOLON2 operation2 paren_args {
                     $$ = new ZSuperNode($1.getPosition());
                 }
 """
+
+
 @pg.production("method_call : operation paren_args")
 def method_call_paren_args(p):
     node = ast.Send(
@@ -1363,6 +1371,7 @@ def method_call_paren_args(p):
     )
     return BoxAST(node)
 
+
 @pg.production("method_call : primary_value DOT operation2 opt_paren_args")
 def method_call_dot(p):
     node = ast.Send(
@@ -1373,6 +1382,7 @@ def method_call_dot(p):
         p[2].getsourcepos().lineno
     )
     return BoxAST(node)
+
 
 @pg.production("method_call : primary_value LSUBSCRIPT opt_call_args rbracket")
 def method_call_subscript(p):
@@ -1472,6 +1482,7 @@ def literal_number(p):
 def literal_symbol(p):
     return p[0]
 
+
 @pg.production("strings : string")
 def strings(p):
     builder = StringBuilder()
@@ -1489,6 +1500,7 @@ string          : string string1 {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
 """
+
 
 @pg.production("string : CHAR")
 def string_char(p):
@@ -1568,6 +1580,8 @@ qword_list      : /* none */ {
                     $$ = $1.add($2);
                 }
 """
+
+
 @pg.production("string_contents : none")
 def string_contents_none(p):
     return BoxASTList([ast.ConstantString("")])
@@ -1629,6 +1643,8 @@ string_dvar     : tGVAR {
 
 // Token:symbol
 """
+
+
 @pg.production("symbol : SYMBOL_BEG sym")
 def symbol(p):
     return BoxAST(ast.ConstantSymbol(p[1].getstr()))
@@ -1636,6 +1652,8 @@ def symbol(p):
 // Token:symbol
 sym             : tIVAR | tGVAR | tCVAR
 """
+
+
 @pg.production("sym : fname")
 def sym(p):
     return p[0]
@@ -1684,13 +1702,16 @@ variable        : tCONSTANT | tCVAR
                 }
 """
 
+
 @pg.production("variable : IDENTIFIER")
 def variable_identifier(p):
     return BoxAST(ast.Variable(p[0].getstr(), p[0].getsourcepos().lineno))
 
+
 @pg.production("variable : GLOBAL")
 def variable_global(p):
     return BoxAST(ast.Global(p[0].getstr()))
+
 
 @pg.production("variable : INSTANCE_VAR")
 def variable_instance_Var(p):
@@ -1941,6 +1962,8 @@ assoc           : arg_value tASSOC arg_value {
                     $$ = support.newArrayNode(pos, new SymbolNode(pos, (String) $1.getValue())).add($2);
                 }
 """
+
+
 @pg.production("operation : IDENTIFIER")
 def operation(p):
     return p[0]
@@ -1948,6 +1971,8 @@ def operation(p):
 operation       : tCONSTANT | tFID
 operation2      : tCONSTANT | tFID | op
 """
+
+
 @pg.production("operation2 : IDENTIFIER")
 def operation2(p):
     return p[0]
@@ -1956,15 +1981,18 @@ operation3      : tIDENTIFIER | tFID | op
 dot_or_colon    : tDOT | tCOLON2
 """
 
+
 @pg.production("opt_terms : terms")
 @pg.production("opt_terms : none")
 def opt_terms(p):
     return None
 
+
 @pg.production("opt_nl : none")
 @pg.production("opt_nl : NEWLINE")
 def opt_nl(p):
     return None
+
 
 @pg.production("rparen : opt_nl RPAREN")
 def rparen(p):
@@ -1975,25 +2003,30 @@ def rparen(p):
 def rbracket(p):
     return None
 
+
 @pg.production("trailer : NEWLINE")
 @pg.production("trailer : COMMA")
 @pg.production("trailer :")
 def trailer(p):
     return None
 
+
 @pg.production("term : SEMICOLON")
 @pg.production("term : NEWLINE")
 def term(p):
     return None
+
 
 @pg.production("terms : term")
 @pg.production("terms : terms SEMICOLON")
 def terms(p):
     return None
 
+
 @pg.production("none :")
 def none(p):
     return None
+
 
 @pg.production("none_block_pass :")
 def none_block_pass(p):
