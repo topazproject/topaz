@@ -115,7 +115,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_parens(self, space):
         assert space.parse("1 * (2 - 3)") == ast.Main(ast.Block([
-            ast.Statement(ast.BinOp("*", ast.ConstantInt(1), ast.BinOp("-", ast.ConstantInt(2), ast.ConstantInt(3), 1), 1))
+            ast.Statement(ast.BinOp("*", ast.ConstantInt(1), ast.Block([ast.Statement(ast.BinOp("-", ast.ConstantInt(2), ast.ConstantInt(3), 1))]), 1))
         ]))
 
     def test_multiple_statements_no_sep(self, space):

@@ -48,10 +48,11 @@ pg = ParserGenerator([
 
     "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
 
-    "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP", "PIPE",
-    "CARET", "EQEQ", "NE", "EQEQEQ", "CMP", "EQUAL_TILDE", "EXCLAMATION_TILDE",
+    "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP",
+    "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "CMP", "EQUAL_TILDE",
+    "EXCLAMATION_TILDE",
 
-    "LBRACKET", "RBRACKET", "LSUBSCRIPT"
+    "LBRACKET", "RBRACKET", "LSUBSCRIPT", "LPAREN", "RPAREN",
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -126,25 +127,23 @@ bodystmt      : compstmt opt_rescue opt_else opt_ensure {
 
                   $$ = node;
                 }
-
-compstmt        : stmts opt_terms {
-                    if ($1 instanceof BlockNode) {
-                        support.checkUselessStatements($<BlockNode>1);
-                    }
-                    $$ = $1;
-                }
-
+"""
+@pg.production("compstmt : stmts opt_terms")
+def compstmt(p):
+    return BoxAST(ast.Block(p[0].getlist()))
+"""
 stmts           : none
-                | stmt {
-                    $$ = support.newline_node($1, support.getPosition($1));
-                }
                 | stmts terms stmt {
                     $$ = support.appendToBlock($1, support.newline_node($3, support.getPosition($3)));
                 }
                 | error stmt {
                     $$ = $2;
                 }
-
+"""
+@pg.production("stmts : stmt")
+def stmts_stmt(p):
+    return BoxASTList([p[0].getast()])
+"""
 stmt            : kALIAS fitem {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fitem {
@@ -897,15 +896,6 @@ primary         : xstring
                     support.warning(ID.GROUPED_EXPRESSION, $1.getPosition(), "(...) interpreted as grouped expression");
                     $$ = $2;
                 }
-                | tLPAREN compstmt tRPAREN {
-                    if ($2 != null) {
-                        // compstmt position includes both parens around it
-                        ((ISourcePositionHolder) $2).setPosition($1.getPosition());
-                        $$ = $2;
-                    } else {
-                        $$ = new NilNode($1.getPosition());
-                    }
-                }
                 | primary_value tCOLON2 tCONSTANT {
                     $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
                 }
@@ -1059,6 +1049,10 @@ primary         : xstring
                     $$ = new RetryNode($1.getPosition());
                 }
 """
+
+@pg.production("primary : LPAREN compstmt RPAREN")
+def primary_parens(p):
+    return p[1]
 
 
 @pg.production("primary : literal")
