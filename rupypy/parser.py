@@ -38,9 +38,9 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
-    "LSUBSCRIPT", "LPAREN", "RPAREN",
+    "LSUBSCRIPT", "LPAREN", "RPAREN", "EXCLAMATION",
 
-    "AND_LITERAL", "OR_LITERAL", "IF", "DEF", "END", "THEN",
+    "NOT_LITERAL", "AND_LITERAL", "OR_LITERAL", "IF", "DEF", "END", "THEN",
 
     "NUMBER",
 
@@ -251,15 +251,16 @@ command_asgn    : lhs '=' command_call {
                     support.checkExpression($3);
                     $$ = support.node_assign($1, $3);
                 }
-
-// Node:expr *CURRENT* all but arg so far
-expr            : kNOT opt_nl expr {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
-                }
-                | tBANG command_call {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
-                }
 """
+
+@pg.production("expr : NOT_LITERAL opt_nl expr")
+def expr_not(p):
+    return BoxAST(ast.Not(p[2].getast()))
+
+
+@pg.production("expr : EXCLAMATION command_call")
+def expr_exclamation(p):
+    return BoxAST(ast.Not(p[1].getast()))
 
 
 @pg.production("expr : command_call")
@@ -688,9 +689,6 @@ arg             : lhs '=' arg {
                 | arg tLEQ arg {
                     $$ = support.getOperatorCallNode($1, "<=", $3, lexer.getPosition());
                 }
-                | tBANG arg {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
-                }
                 | tTILDE arg {
                     $$ = support.getOperatorCallNode($2, "~");
                 }
@@ -735,6 +733,11 @@ def arg_binop(p):
         p[1].getsourcepos().lineno
     )
     return BoxAST(node)
+
+
+@pg.production("arg : EXCLAMATION arg")
+def arg_exclamation(p):
+    return BoxAST(ast.Not(p[1].getast()))
 
 
 @pg.production("arg : arg EXCLAMATION_TILDE arg")
