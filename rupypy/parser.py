@@ -38,9 +38,9 @@ class BoxASTList(BaseBox):
 
 pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
-    "LSUBSCRIPT", "LPAREN", "RPAREN", "EXCLAMATION",
+    "LSUBSCRIPT", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "EXCLAMATION",
 
-    "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "IF", "DEF", "END", "THEN",
+    "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "IF", "DEF", "DO", "END", "THEN",
 
     "NUMBER",
 
@@ -51,7 +51,7 @@ pg = ParserGenerator([
 
     "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP",
     "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "CMP",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE", "UNARY_STAR"
+    "EQUAL_TILDE", "EXCLAMATION_TILDE", "OR", "UNARY_STAR"
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -253,6 +253,7 @@ command_asgn    : lhs '=' command_call {
                 }
 """
 
+
 @pg.production("expr : NOT_LITERAL opt_nl expr")
 def expr_not(p):
     return BoxAST(ast.Not(p[2].getast()))
@@ -289,8 +290,7 @@ def expr_value(p):
 
 """
 // Node:command - call with or with block on end [!null]
-command_call    : block_command
-                | kRETURN call_args {
+command_call    : kRETURN call_args {
                     $$ = new ReturnNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
                 }
                 | kBREAK call_args {
@@ -302,32 +302,34 @@ command_call    : block_command
 """
 
 
+@pg.production("command_call : block_command")
 @pg.production("command_call : command")
 def command_call_command(p):
     return p[0]
 """
 // Node:block_command - A call with a block (foo.bar {...}, foo::bar {...}, bar {...}) [!null]
-block_command   : block_call
-                | block_call tDOT operation2 command_args {
+block_command   : block_call tDOT operation2 command_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
                 | block_call tCOLON2 operation2 command_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
+"""
 
-// :brace_block - [!null]
-cmd_brace_block : tLBRACE_ARG {
-                    support.pushBlockScope();
-                } opt_block_param compstmt tRCURLY {
-                    $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
-                    support.popCurrentScope();
-                }
 
+@pg.production("block_command : block_call")
+def block_command(p):
+    return p[0]
+
+
+@pg.production("cmd_brace_block : LBRACE opt_block_param compstmt RBRACE")
+def cmd_brace_block(p):
+    import pdb
+    pdb.set_trace()
+
+"""
 // Node:command - fcall/call/yield/super [!null]
-command        : operation command_args cmd_brace_block {
-                    $$ = support.new_fcall($1, $2, $3);
-                }
-                | primary_value tDOT operation2 command_args cmd_brace_block {
+command        : primary_value tDOT operation2 command_args cmd_brace_block {
                     $$ = support.new_call($1, $3, $4, $5);
                 }
                 | primary_value tCOLON2 operation2 command_args %prec tLOWEST {
@@ -355,6 +357,12 @@ def command(p):
         p[0].getsourcepos().lineno
     )
     return BoxAST(node)
+
+
+@pg.production("command : operation command_args cmd_brace_block")
+def command_braces_block(p):
+    import pdb
+    pdb.set_trace()
 
 
 @pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
@@ -1245,49 +1253,58 @@ block_param     : f_arg ',' f_block_optarg ',' f_rest_arg opt_f_block_arg {
                 | f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
+"""
 
-opt_block_param : none {
-    // was $$ = null;
-                   $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
-                }
-                | block_param_def {
-                    lexer.commandStart = true;
-                    $$ = $1;
-                }
 
-block_param_def : tPIPE opt_bv_decl tPIPE {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
-                }
-                | tOROP {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
-                }
-                | tPIPE block_param opt_bv_decl tPIPE {
-                    $$ = $2;
-                }
+@pg.production("opt_block_param : none")
+def opt_block_param_none(p):
+    return BoxASTList([])
 
-// shadowed block variables....
-opt_bv_decl     : opt_nl {
-                    $$ = null;
-                }
-                | opt_nl ';' bv_decls opt_nl {
-                    $$ = null;
-                }
 
-// ENEBO: This is confusing...
-bv_decls        : bvar {
-                    $$ = null;
-                }
-                | bv_decls ',' bvar {
-                    $$ = null;
-                }
+@pg.production("opt_block_param : block_param_def")
+def opt_block_param(p):
+    return p[0]
 
-bvar            : tIDENTIFIER {
-                    support.new_bv($1);
-                }
-                | f_bad_arg {
-                    $$ = null;
-                }
 
+@pg.production("block_param_def : PIPE opt_bv_decl PIPE")
+def block_param_def(p):
+    return p[1]
+
+
+@pg.production("block_param_def : OR")
+def block_param_def_empty(p):
+    return BoxASTList([])
+
+
+@pg.production("block_param_def : PIPE block_param opt_bv_decl PIPE")
+def block_param_def_real(p):
+    return p[1]
+
+
+@pg.production("opt_bv_decl : opt_nl")
+def opt_bv_decl_empty(p):
+    return None
+
+
+@pg.production("opt_bv_decl : opt_nl SEMICOLON bv_decls opt_nl")
+def opt_bv_decl(p):
+    return p[2]
+
+
+@pg.production("bv_decls : bvar")
+def bv_decls_bvar(p):
+    return None
+
+
+@pg.production("bv_decls : bv_decls COMMA bvar")
+def bv_decls(p):
+    return None
+
+
+@pg.production("bvar : IDENTIFIER")
+def bvar(p):
+    return None
+"""
 lambda          : /* none */  {
                     support.pushBlockScope();
                     $$ = lexer.getLeftParenBegin();
@@ -1312,32 +1329,28 @@ lambda_body     : tLAMBEG compstmt tRCURLY {
                 | kDO_LAMBDA compstmt kEND {
                     $$ = $2;
                 }
+"""
 
-do_block        : kDO_BLOCK {
-                    support.pushBlockScope();
-                } opt_block_param compstmt kEND {
-                    $$ = new IterNode(support.getPosition($1), $3, $4, support.getCurrentScope());
-                    support.popCurrentScope();
-                }
 
-block_call      : command do_block {
-                    // Workaround for JRUBY-2326 (MRI does not enter this production for some reason)
-                    if ($1 instanceof YieldNode) {
-                        throw new SyntaxException(PID.BLOCK_GIVEN_TO_YIELD, $1.getPosition(), lexer.getCurrentLine(), "block given to yield");
-                    }
-                    if ($<BlockAcceptingNode>1.getIterNode() instanceof BlockPassNode) {
-                        throw new SyntaxException(PID.BLOCK_ARG_AND_BLOCK_GIVEN, $1.getPosition(), lexer.getCurrentLine(), "Both block arg and actual block given.");
-                    }
-                    $$ = $<BlockAcceptingNode>1.setIterNode($2);
-                    $<Node>$.setPosition($1.getPosition());
-                }
-                | block_call tDOT operation2 opt_paren_args {
+@pg.production("do_block : DO opt_block_param compstmt END")
+def do_block(p):
+    import pdb
+    pdb.set_trace()
+"""
+block_call      : block_call tDOT operation2 opt_paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
                 | block_call tCOLON2 operation2 opt_paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
+"""
 
+
+@pg.production("block_call : command do_block")
+def block_call(p):
+    import pdb
+    pdb.set_trace()
+"""
 // [!null]
 method_call     : primary_value tCOLON2 operation2 paren_args {
                     $$ = support.new_call($1, $3, $4, null);
