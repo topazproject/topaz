@@ -120,14 +120,6 @@ def bodystmt(p):
 @pg.production("compstmt : stmts opt_terms")
 def compstmt(p):
     return BoxAST(ast.Block(p[0].getlist()))
-"""
-stmts           : stmts terms stmt {
-                    $$ = support.appendToBlock($1, support.newline_node($3, support.getPosition($3)));
-                }
-                | error stmt {
-                    $$ = $2;
-                }
-"""
 
 
 @pg.production("stmts : none")
@@ -138,6 +130,12 @@ def stmts_none(p):
 @pg.production("stmts : stmt")
 def stmts_stmt(p):
     return BoxASTList([p[0].getast()])
+
+
+@pg.production("stmts : stmts term stmt")
+def stmts_stmts(p):
+    return BoxASTList(p[0].getlist() + [p[2].getast()])
+
 """
 stmt            : kALIAS fitem {
                     lexer.setState(LexState.EXPR_FNAME);
