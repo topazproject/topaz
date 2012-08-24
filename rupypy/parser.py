@@ -50,8 +50,8 @@ pg = ParserGenerator([
     "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
 
     "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP",
-    "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "GT", "CMP", "EQUAL_TILDE",
-    "EXCLAMATION_TILDE",
+    "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "CMP",
+    "EQUAL_TILDE", "EXCLAMATION_TILDE",
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -680,15 +680,6 @@ arg             : lhs '=' arg {
                 | tUMINUS arg {
                     $$ = support.getOperatorCallNode($2, "-@");
                 }
-                | arg tGEQ arg {
-                    $$ = support.getOperatorCallNode($1, ">=", $3, lexer.getPosition());
-                }
-                | arg tLT arg {
-                    $$ = support.getOperatorCallNode($1, "<", $3, lexer.getPosition());
-                }
-                | arg tLEQ arg {
-                    $$ = support.getOperatorCallNode($1, "<=", $3, lexer.getPosition());
-                }
                 | tTILDE arg {
                     $$ = support.getOperatorCallNode($2, "~");
                 }
@@ -722,7 +713,10 @@ arg             : lhs '=' arg {
 @pg.production("arg : arg EQEQ arg")
 @pg.production("arg : arg NE arg")
 @pg.production("arg : arg EQEQEQ arg")
+@pg.production("arg : arg LT arg")
+@pg.production("arg : arg LE arg")
 @pg.production("arg : arg GT arg")
+@pg.production("arg : arg GE arg")
 @pg.production("arg : arg CMP arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 def arg_binop(p):
