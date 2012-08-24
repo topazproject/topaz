@@ -37,7 +37,8 @@ class BoxASTList(BaseBox):
 
 
 pg = ParserGenerator([
-    "EOF", "NEWLINE", "SEMICOLON", "COMMA",
+    "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
+    "LSUBSCRIPT", "LPAREN", "RPAREN",
 
     "AND_LITERAL", "OR_LITERAL",
 
@@ -51,8 +52,6 @@ pg = ParserGenerator([
     "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP",
     "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "CMP", "EQUAL_TILDE",
     "EXCLAMATION_TILDE",
-
-    "LBRACKET", "RBRACKET", "LSUBSCRIPT", "LPAREN", "RPAREN",
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -763,14 +762,23 @@ aref_args       : args trailer {
 @pg.production("aref_args : none")
 def aref_args_empty(p):
     return BoxASTList([])
-"""
-paren_args      : tLPAREN2 opt_call_args rparen {
-                    $$ = $2;
-                    if ($$ != null) $<Node>$.setPosition($1.getPosition());
-                }
 
-opt_paren_args  : none | paren_args
-"""
+
+@pg.production("paren_args : LPAREN opt_call_args rparen")
+def paren_args(p):
+    return p[1]
+
+
+@pg.production("opt_paren_args : none")
+def opt_paren_args_none(p):
+    return BoxASTList([])
+
+
+@pg.production("opt_paren_args : paren_args")
+def opt_paren_args(p):
+    return p[0]
+
+
 @pg.production("opt_call_args : none")
 def opt_call_args_none(p):
     return BoxASTList([])
@@ -1290,13 +1298,7 @@ block_call      : command do_block {
                 }
 
 // [!null]
-method_call     : operation paren_args {
-                    $$ = support.new_fcall($1, $2, null);
-                }
-                | primary_value tDOT operation2 opt_paren_args {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-                | primary_value tCOLON2 operation2 paren_args {
+method_call     : primary_value tCOLON2 operation2 paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
                 | primary_value tCOLON2 operation3 {
@@ -1315,6 +1317,28 @@ method_call     : operation paren_args {
                     $$ = new ZSuperNode($1.getPosition());
                 }
 """
+@pg.production("method_call : primary_value DOT operation2 opt_paren_args")
+def method_call_dot(p):
+    node = ast.Send(
+        p[0].getast(),
+        p[2].getstr(),
+        p[3].getlist(),
+        None,
+        p[2].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
+@pg.production("method_call : operation paren_args")
+def method_call_paren_args(p):
+    node = ast.Send(
+        ast.Self(p[0].getsourcepos().lineno),
+        p[0].getstr(),
+        p[1].getlist(),
+        None,
+        p[0].getsourcepos().lineno
+    )
+    return BoxAST(node)
+
 @pg.production("method_call : primary_value LSUBSCRIPT opt_call_args rbracket")
 def method_call_subscript(p):
     node = ast.Subscript(
@@ -1877,6 +1901,11 @@ def operation(p):
 """
 operation       : tCONSTANT | tFID
 operation2      : tIDENTIFIER | tCONSTANT | tFID | op
+"""
+@pg.production("operation2 : IDENTIFIER")
+def operation2(p):
+    return p[0]
+"""
 operation3      : tIDENTIFIER | tFID | op
 dot_or_colon    : tDOT | tCOLON2
 """
@@ -1890,11 +1919,10 @@ def opt_terms(p):
 @pg.production("opt_nl : NEWLINE")
 def opt_nl(p):
     return None
-"""
-rparen          : opt_nl tRPAREN {
-                    $$ = $2;
-                }
-"""
+
+@pg.production("rparen : opt_nl RPAREN")
+def rparen(p):
+    return None
 @pg.production("rbracket : opt_nl RBRACKET")
 def rbracket(p):
     return None
