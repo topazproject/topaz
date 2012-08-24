@@ -50,7 +50,7 @@ pg = ParserGenerator([
     "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
 
     "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP",
-    "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "CMP", "EQUAL_TILDE",
+    "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "GT", "CMP", "EQUAL_TILDE",
     "EXCLAMATION_TILDE",
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
@@ -681,9 +681,6 @@ arg             : lhs '=' arg {
                 | tUMINUS arg {
                     $$ = support.getOperatorCallNode($2, "-@");
                 }
-                | arg tGT arg {
-                    $$ = support.getOperatorCallNode($1, ">", $3, lexer.getPosition());
-                }
                 | arg tGEQ arg {
                     $$ = support.getOperatorCallNode($1, ">=", $3, lexer.getPosition());
                 }
@@ -728,8 +725,9 @@ arg             : lhs '=' arg {
 @pg.production("arg : arg CARET arg")
 @pg.production("arg : arg EQEQ arg")
 @pg.production("arg : arg NE arg")
-@pg.production("arg : arg CMP arg")
 @pg.production("arg : arg EQEQEQ arg")
+@pg.production("arg : arg GT arg")
+@pg.production("arg : arg CMP arg")
 @pg.production("arg : arg EQUAL_TILDE arg")
 def arg_binop(p):
     node = ast.BinOp(
