@@ -40,7 +40,8 @@ pg = ParserGenerator([
     "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
     "LSUBSCRIPT", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "EXCLAMATION",
 
-    "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "IF", "DEF", "DO", "END", "THEN",
+    "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "IF", "DEF", "DO", "END",
+    "THEN",
 
     "NUMBER",
 
@@ -49,9 +50,9 @@ pg = ParserGenerator([
 
     "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
 
-    "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT", "AMP",
-    "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE", "CMP",
-    "EQUAL_TILDE", "EXCLAMATION_TILDE", "OR", "UNARY_STAR"
+    "EQ", "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT",
+    "AMP", "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE",
+    "CMP", "EQUAL_TILDE", "EXCLAMATION_TILDE", "OR", "UNARY_STAR"
 ], precedence=[
     ("nonassoc", ["LOWEST"]),
     ("left", ["OR_LITERAL", "AND_LITERAL"]),
@@ -1206,54 +1207,26 @@ f_margs         : f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
                 }
 
-// [!null]
-block_param     : f_arg ',' f_block_optarg ',' f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
-                }
-                | f_arg ',' f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
-                }
-                | f_arg ',' f_block_optarg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
-                }
-                | f_arg ',' f_block_optarg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
-                }
-                | f_arg ',' f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
-                }
-                | f_arg ',' {
-                    RestArgNode rest = new UnnamedRestArgNode($1.getPosition(), null, support.getCurrentScope().addVariable("*"));
-                    $$ = support.new_args($1.getPosition(), $1, null, rest, null, null);
-                }
-                | f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
-                }
-                | f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
-                }
-                | f_block_optarg ',' f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args(support.getPosition($1), null, $1, $3, null, $4);
-                }
-                | f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args(support.getPosition($1), null, $1, $3, $5, $6);
-                }
-                | f_block_optarg opt_f_block_arg {
-                    $$ = support.new_args(support.getPosition($1), null, $1, null, null, $2);
-                }
-                | f_block_optarg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
-                }
-                | f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
-                }
-                | f_rest_arg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, $1, $3, $4);
-                }
-                | f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
-                }
 """
+
+
+@pg.production("block_param : f_arg COMMA f_block_optarg COMMA f_rest_arg opt_f_block_arg")
+@pg.production("block_param : f_arg COMMA f_block_optarg COMMA f_rest_arg COMMA f_arg opt_f_block_arg")
+@pg.production("block_param : f_arg COMMA f_block_optarg opt_f_block_arg")
+@pg.production("block_param : f_arg COMMA f_block_optarg COMMA f_arg opt_f_block_arg")
+@pg.production("block_param : f_arg COMMA f_rest_arg opt_f_block_arg")
+@pg.production("block_param : f_arg COMMA")
+@pg.production("block_param : f_arg COMMA f_rest_arg COMMA f_arg opt_f_block_arg")
+@pg.production("block_param : f_arg opt_f_block_arg")
+@pg.production("block_param : f_block_optarg COMMA f_rest_arg opt_f_block_arg")
+@pg.production("block_param : f_block_optarg COMMA f_rest_arg COMMA f_arg opt_f_block_arg")
+@pg.production("block_param : f_block_optarg opt_f_block_arg")
+@pg.production("block_param : f_block_optarg COMMA f_arg opt_f_block_arg")
+@pg.production("block_param : f_rest_arg opt_f_block_arg")
+@pg.production("block_param : f_rest_arg COMMA f_arg opt_f_block_arg")
+@pg.production("block_param : f_block_arg")
+def block_param(p):
+    raise NotImplementedError(p)
 
 
 @pg.production("opt_block_param : none")
@@ -1836,17 +1809,12 @@ f_bad_arg       : tCONSTANT {
 
 // Token:f_norm_arg [!null]
 f_norm_arg      : f_bad_arg
-                | tIDENTIFIER {
-                    $$ = support.formal_argument($1);
-                }
-
-f_arg_item      : f_norm_arg {
-                    $$ = support.arg_var($1);
-  /*
-                    $$ = new ArgAuxiliaryNode($1.getPosition(), (String) $1.getValue(), 1);
-  */
-                }
-                | tLPAREN f_margs rparen {
+"""
+@pg.production("f_norm_arg : IDENTIFIER")
+def f_norm_arg(p):
+    return BoxAST(ast.Argument(p[0]))
+"""
+f_arg_item      : tLPAREN f_margs rparen {
                     $$ = $2;
                     /*          {
             ID tid = internal_id();
@@ -1860,73 +1828,77 @@ f_arg_item      : f_norm_arg {
             $$ = NEW_ARGS_AUX(tid, 1);
             $$->nd_next = $2;*/
                 }
+"""
+@pg.production("f_arg_item : f_norm_arg")
+def f_arg_item_norm(p):
+    return p[0]
 
-// [!null]
-f_arg           : f_arg_item {
-                    $$ = new ArrayNode(lexer.getPosition(), $1);
-                }
-                | f_arg ',' f_arg_item {
-                    $1.add($3);
-                    $$ = $1;
-                }
 
+@pg.production("f_arg : f_arg_item")
+def f_arg(p):
+    return BoxASTList([p[0].getast()])
+
+
+@pg.production("f_arg : f_arg COMMA f_arg_item")
+def f_arg_args(p):
+    return BoxASTList(p[0].getlist() + [p[2].getast()])
+"""
 f_opt           : tIDENTIFIER '=' arg_value {
                     support.arg_var(support.formal_argument($1));
                     $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
                 }
+"""
 
-f_block_opt     : tIDENTIFIER '=' primary_value {
-                    support.arg_var(support.formal_argument($1));
-                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
-                }
+@pg.production("f_block_opt : IDENTIFIER EQ primary_value")
+def f_block_opt(p):
+    return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
 
-f_block_optarg  : f_block_opt {
-                    $$ = new BlockNode($1.getPosition()).add($1);
-                }
-                | f_block_optarg ',' f_block_opt {
-                    $$ = support.appendToBlock($1, $3);
-                }
 
+@pg.production("f_block_optarg : f_block_opt")
+def f_block_optargs_opt(p):
+    raise NotImplementedError(p)
+
+
+@pg.production("f_block_optarg : f_block_optarg COMMA f_block_opt")
+def f_block_optargs(p):
+    raise NotImplementedError(p)
+"""
 f_optarg        : f_opt {
                     $$ = new BlockNode($1.getPosition()).add($1);
                 }
                 | f_optarg ',' f_opt {
                     $$ = support.appendToBlock($1, $3);
                 }
+"""
+@pg.production("restarg_mark : UNARY_STAR")
+def restarg_mark(p):
+    return p[0]
 
-restarg_mark    : tSTAR2 | tSTAR
+@pg.production("f_rest_arg : restarg_mark IDENTIFIER")
+@pg.production("f_rest_arg : restarg_mark")
+def f_rest_arg(p):
+    raise NotImplementedError(p)
 
-// [!null]
-f_rest_arg      : restarg_mark tIDENTIFIER {
-                    if (!support.is_local_id($2)) {
-                        support.yyerror("rest argument must be local variable");
-                    }
 
-                    $$ = new RestArgNode(support.arg_var(support.shadowing_lvar($2)));
-                }
-                | restarg_mark {
-                    $$ = new UnnamedRestArgNode($1.getPosition(), "", support.getCurrentScope().addVariable("*"));
-                }
+@pg.production("blkarg_mark : AMP")
+def blkarg_mark(p):
+    return p[0]
 
-// [!null]
-blkarg_mark     : tAMPER2 | tAMPER
 
-// f_block_arg - Block argument def for function (foo(&block)) [!null]
-f_block_arg     : blkarg_mark tIDENTIFIER {
-                    if (!support.is_local_id($2)) {
-                        support.yyerror("block argument must be local variable");
-                    }
+@pg.production("f_block_arg : blkarg_mark IDENTIFIER")
+def f_block_arg(p):
+    raise NotImplementedError(p)
 
-                    $$ = new BlockArgNode(support.arg_var(support.shadowing_lvar($2)));
-                }
 
-opt_f_block_arg : ',' f_block_arg {
-                    $$ = $2;
-                }
-                | /* none */ {
-                    $$ = null;
-                }
+@pg.production("opt_f_block_arg : COMMA f_block_arg")
+def opt_f_block_arg(p):
+    return p[1]
 
+
+@pg.production("opt_f_block_arg :")
+def opt_f_block_arg_empty(p):
+    return None
+"""
 singleton       : var_ref {
                     if (!($1 instanceof SelfNode)) {
                         support.checkExpression($1);
