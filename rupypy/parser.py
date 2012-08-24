@@ -774,6 +774,8 @@ aref_args       : args trailer {
                     $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
                 }
 """
+
+
 @pg.production("aref_args : none")
 def aref_args_empty(p):
     return BoxASTList([])
@@ -820,17 +822,21 @@ call_args       : args opt_block_arg {
 
 """
 
+
 @pg.production("call_args : command")
 def call_args_command(p):
     return BoxASTList([p[0].getast()])
+
 
 @pg.production("call_args : args opt_block_arg")
 def call_args_args(p):
     return p[0]
 
+
 @pg.production("command_args : none")
 def command_args_empty(p):
     return None
+
 
 @pg.production("command_args : call_args")
 def command_args(p):
