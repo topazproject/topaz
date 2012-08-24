@@ -37,7 +37,7 @@ class BoxASTList(BaseBox):
 
 
 pg = ParserGenerator([
-    "EOF", "NEWLINE", "SEMICOLON",
+    "EOF", "NEWLINE", "SEMICOLON", "COMMA",
 
     "AND_LITERAL", "OR_LITERAL",
 
@@ -832,15 +832,6 @@ def opt_block_arg_none(p):
 args            : tSTAR arg_value {
                     $$ = support.newSplatNode($1.getPosition(), $2);
                 }
-                | args ',' arg_value {
-                    Node node = support.splat_array($1);
-
-                    if (node != null) {
-                        $$ = support.list_append(node, $3);
-                    } else {
-                        $$ = support.arg_append($1, $3);
-                    }
-                }
                 | args ',' tSTAR arg_value {
                     Node node = null;
 
@@ -853,6 +844,10 @@ args            : tSTAR arg_value {
                     }
                 }
 """
+@pg.production("args : args COMMA arg_value")
+def args_args(p):
+    return BoxASTList(p[0].getlist() + [p[2].getast()])
+
 @pg.production("args : arg_value")
 def args_arg(p):
     return BoxASTList([p[0].getast()])
