@@ -71,13 +71,13 @@ class W_IOObject(W_Object):
         # Return nil on EOF if length is given
         if read_bytes == 0:
             return space.w_nil
-        read_str = space.newstr_fromchars(read_chunks)
+        w_read_str = space.newstr_fromchars(read_chunks)
         if w_str is not None:
             w_str.clear(space)
-            w_str.extend(space, read_str)
+            w_str.extend(space, w_read_str)
             return w_str
         else:
-            return read_str
+            return w_read_str
 
     @classdef.method("write")
     def method_write(self, space, w_str):
