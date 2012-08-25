@@ -5,7 +5,6 @@ from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.hashobject import W_HashObject
-from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.exceptionobject import W_ArgumentError
 
 
