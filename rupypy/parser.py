@@ -147,61 +147,126 @@ compstmt        : stmts opt_terms {
     def stmts_error(self, p):
         return p[1]
 
-    """
-stmt            : kALIAS fitem {
+    @pg.production("stmt : ALIAS fitem fitem")
+    def stmt_alias_fitem(self, p):
+        """
+        kALIAS fitem {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fitem {
                     $$ = support.newAlias($1.getPosition(), $2, $4);
                 }
-                | kALIAS tGVAR tGVAR {
+        """
+
+    @pg.production("stmt : ALIAS GVAR GVAR")
+    def stmt_alias_gvar(self, p):
+        """
+kALIAS tGVAR tGVAR {
                     $$ = new VAliasNode($1.getPosition(), (String) $2.getValue(), (String) $3.getValue());
                 }
-                | kALIAS tGVAR tBACK_REF {
+        """
+
+    @pg.production("stmt : ALIAS GVAR BACK_REF")
+    def stmt_alias_gvar_backref(self, p):
+        """
+        kALIAS tGVAR tBACK_REF {
                     $$ = new VAliasNode($1.getPosition(), (String) $2.getValue(), "$" + $<BackRefNode>3.getType());
                 }
-                | kALIAS tGVAR tNTH_REF {
+        """
+
+    @pg.production("stmt : ALIAS GVAR NTH_REF")
+    def stmt_alias_gvar_nref(self, p):
+        """
+        kALIAS tGVAR tNTH_REF {
                     support.yyerror("can't make alias for the number variables");
                 }
-                | kUNDEF undef_list {
+        """
+
+    @pg.production("stmt : UNDEF undef_list")
+    def stmt_undef(self, p):
+        """
+        kUNDEF undef_list {
                     $$ = $2;
                 }
-                | stmt kIF_MOD expr_value {
+        """
+
+    @pg.production("stmt : stmt IF_MOD expr_value")
+    def stmt_ifmod(self, p):
+        """
+        stmt kIF_MOD expr_value {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($3), $1, null);
                 }
-                | stmt kUNLESS_MOD expr_value {
+        """
+
+    @pg.production("stmt : stmt UNLESS_MOD expr_value")
+    def stmt_unlessmod(self, p):
+        """
+        stmt kUNLESS_MOD expr_value {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($3), null, $1);
                 }
-                | stmt kWHILE_MOD expr_value {
+        """
+
+    @pg.production("stmt : stmt WHILE_MOD expr_value")
+    def stmt_while_mod(self, p):
+        """
+        stmt kWHILE_MOD expr_value {
                     if ($1 != null && $1 instanceof BeginNode) {
                         $$ = new WhileNode(support.getPosition($1), support.getConditionNode($3), $<BeginNode>1.getBodyNode(), false);
                     } else {
                         $$ = new WhileNode(support.getPosition($1), support.getConditionNode($3), $1, true);
                     }
                 }
-                | stmt kUNTIL_MOD expr_value {
+        """
+
+    @pg.production("stmt : stmt UNTIL_MOD expr_value")
+    def stmt_until_mod(self, p):
+        """
+        stmt kUNTIL_MOD expr_value {
                     if ($1 != null && $1 instanceof BeginNode) {
                         $$ = new UntilNode(support.getPosition($1), support.getConditionNode($3), $<BeginNode>1.getBodyNode(), false);
                     } else {
                         $$ = new UntilNode(support.getPosition($1), support.getConditionNode($3), $1, true);
                     }
                 }
-                | stmt kRESCUE_MOD stmt {
+        """
+
+    @pg.production("stmt : stmt RESCUE_MOD stmt")
+    def stmt_rescue_mod(self, p):
+        """
+        stmt kRESCUE_MOD stmt {
                     Node body = $3 == null ? NilImplicitNode.NIL : $3;
                     $$ = new RescueNode(support.getPosition($1), $1, new RescueBodyNode(support.getPosition($1), null, body, null), null);
                 }
-                | klEND tLCURLY compstmt tRCURLY {
+        """
+
+    @pg.production("stmt : lEND LCURLY compstmt RCURLY")
+    def stmt_lend(self, p):
+        """
+        klEND tLCURLY compstmt tRCURLY {
                     if (support.isInDef() || support.isInSingle()) {
                         support.warn(ID.END_IN_METHOD, $1.getPosition(), "END in method; use at_exit");
                     }
                     $$ = new PostExeNode($1.getPosition(), $3);
                 }
-                | command_asgn
-                | mlhs '=' command_call {
+        """
+
+    @pg.production("stmt : command_asgn")
+    def stmt_command_assign(self, p):
+        return p[0]
+
+    @pg.production("stmt : mlhs LITERAL_EQUAL command_call")
+    def stmt_mlhs_equal_command_call(self, p):
+        """
+        mlhs '=' command_call {
                     support.checkExpression($3);
                     $1.setValueNode($3);
                     $$ = $1;
                 }
-                | var_lhs tOP_ASGN command_call {
+        """
+
+    @pg.production("stmt : var_lhs OP_ASGN command_call")
+    def stmt_var_lhs_op_asgn_command_call(self, p):
+        """
+        var_lhs tOP_ASGN command_call {
                     support.checkExpression($3);
 
                     ISourcePosition pos = $1.getPosition();
@@ -218,36 +283,77 @@ stmt            : kALIAS fitem {
                         $$ = $1;
                     }
                 }
-                | primary_value '[' opt_call_args rbracket tOP_ASGN command_call {
+        """
+
+    @pg.production("stmt : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN command_call")
+    def stmt_subscript_op_asgn_command_call(self, p):
+        """
+        primary_value '[' opt_call_args rbracket tOP_ASGN command_call {
   // FIXME: arg_concat logic missing for opt_call_args
                     $$ = support.new_opElementAsgnNode(support.getPosition($1), $1, (String) $5.getValue(), $3, $6);
                 }
-                | primary_value tDOT tIDENTIFIER tOP_ASGN command_call {
+        """
+
+    @pg.production("stmt : primary_value DOT IDENTIFIER OP_ASGN command_call")
+    def stmt_method_op_asgn_command_call(self, p):
+        """
+        primary_value tDOT tIDENTIFIER tOP_ASGN command_call {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
-                | primary_value tDOT tCONSTANT tOP_ASGN command_call {
+        """
+
+    @pg.production("stmt : primary_value DOT CONSTANT OP_ASGN command_call")
+    def stmt_method_constant_op_asgn_command_call(self, p):
+        """
+        primary_value tDOT tCONSTANT tOP_ASGN command_call {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
-                | primary_value tCOLON2 tIDENTIFIER tOP_ASGN command_call {
+        """
+
+    @pg.production("stmt : primary_value COLON2 IDENTIFIER OP_ASGN command_call")
+    def stmt_constant_op_asgn_command_call(self, p):
+        """
+        primary_value tCOLON2 tIDENTIFIER tOP_ASGN command_call {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
-                | backref tOP_ASGN command_call {
-                    support.backrefAssignError($1);
-                }
-                | lhs '=' mrhs {
+        """
+
+    @pg.production("stmt : backref OP_ASGN command_call")
+    def stmt_backref_op_asgn_command_call(self, p):
+        self.backref_assign_error(p[0])
+
+    @pg.production("stmt : lhs LITERAL_EQUAL mrhs")
+    def stmt_lhs_equal_mrhs(self, p):
+        """
+        lhs '=' mrhs {
                     $$ = support.node_assign($1, $3);
                 }
-                | mlhs '=' arg_value {
+        """
+
+    @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
+    def stmt_mlhs_equal_arg_value(self, p):
+        """
+        mlhs '=' arg_value {
                     $1.setValueNode($3);
                     $$ = $1;
                 }
-                | mlhs '=' mrhs {
+        """
+
+    @pg.production("stmt : mlhs LITERAL_EQUAL mrhs")
+    def stmt_mlhs_equal_mrhs(self, p):
+        """
+        mlhs '=' mrhs {
                     $<AssignableNode>1.setValueNode($3);
                     $$ = $1;
                     $1.setPosition(support.getPosition($1));
                 }
-                | expr
+        """
 
+    @pg.production("stmt : expr")
+    def stmt_expr(self, p):
+        return p[0]
+
+    """
 command_asgn    : lhs '=' command_call {
                     support.checkExpression($3);
                     $$ = support.node_assign($1, $3);
