@@ -423,16 +423,28 @@ kALIAS tGVAR tGVAR {
     def command_call_next(self, p):
         return self.new_next(p[1])
 
-    """
-// Node:block_command - A call with a block (foo.bar {...}, foo::bar {...}, bar {...}) [!null]
-block_command   : block_call
-                | block_call tDOT operation2 command_args {
+    @pg.production("block_command : block_call")
+    def block_command_block_call(self, p):
+        return p[0]
+
+    @pg.production("block_command : block_call DOT operation2 command_args")
+    def block_command_dot(self, p):
+        """
+        block_call tDOT operation2 command_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
-                | block_call tCOLON2 operation2 command_args {
+        """
+
+    @pg.production("block_command : block_call COLON2 operation2 command_args")
+    def block_command_colon(self, p):
+        """
+        block_call tCOLON2 operation2 command_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
 
+        """
+
+    """
 // :brace_block - [!null]
 cmd_brace_block : tLBRACE_ARG {
                     support.pushBlockScope();
