@@ -395,11 +395,15 @@ kALIAS tGVAR tGVAR {
     def expr_arg(self, p):
         return p[0]
 
-    """
-expr_value      : expr {
+    @pg.production("expr_value : expr")
+    def expr_value(self, p):
+        """
+        expr {
                     support.checkExpression($1);
                 }
+        """
 
+    """
 // Node:command - call with or with block on end [!null]
 command_call    : command
                 | block_command
