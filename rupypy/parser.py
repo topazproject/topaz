@@ -81,7 +81,13 @@ top_compstmt  : top_stmts opt_terms {
     def top_stmts_error(self, p):
         return p[1]
 
-    """
+    @pg.production("top_stmt : stmt")
+    def top_stmt_stmt(self, p):
+        return p[0]
+
+    @pg.production("top_stmt : lBEGIN LCURLY top_compstmt RCURLY")
+    def top_stmt_lbegin(self, p):
+        """
 top_stmt      : stmt
               | klBEGIN {
                     if (support.isInDef() || support.isInSingle()) {
@@ -91,7 +97,11 @@ top_stmt      : stmt
                     support.getResult().addBeginNode(new PreExe19Node($1.getPosition(), support.getCurrentScope(), $4));
                     $$ = null;
               }
+        """
 
+    @pg.production("bodystmt : compstmt opt_rescue opt_else opt_ensure")
+    def bodystmt(self, p):
+        """
 bodystmt      : compstmt opt_rescue opt_else opt_ensure {
                   Node node = $1;
 
@@ -108,13 +118,20 @@ bodystmt      : compstmt opt_rescue opt_else opt_ensure {
 
                   $$ = node;
                 }
+        """
 
+    @pg.production("compstmt : stmts opt_terms")
+    def compstmt(self, p):
+        """
 compstmt        : stmts opt_terms {
                     if ($1 instanceof BlockNode) {
                         support.checkUselessStatements($<BlockNode>1);
                     }
                     $$ = $1;
                 }
+        """
+
+    """
 
 stmts           : none
                 | stmt {
