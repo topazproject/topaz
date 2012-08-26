@@ -353,16 +353,25 @@ kALIAS tGVAR tGVAR {
     def stmt_expr(self, p):
         return p[0]
 
-    """
-command_asgn    : lhs '=' command_call {
+    @pg.production("command_asgn : lhs LITERAL_EQUAL command_call")
+    def command_asgn_lhs_equal_command_call(self, p):
+        """
+        lhs '=' command_call {
                     support.checkExpression($3);
                     $$ = support.node_assign($1, $3);
                 }
-                | lhs '=' command_asgn {
-                    support.checkExpression($3);
-                    $$ = support.node_assign($1, $3);
-                }
+        """
 
+    @pg.production("command_asgn : lhs LITERAL_EQUAL command_asgn")
+    def command_asgn_lhs_equal_command_asgn(self, p):
+        """
+        lhs '=' command_asgn {
+                    support.checkExpression($3);
+                    $$ = support.node_assign($1, $3);
+                }
+        """
+
+    """
 // Node:expr *CURRENT* all but arg so far
 expr            : command_call
                 | expr kAND expr {
