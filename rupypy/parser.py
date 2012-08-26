@@ -403,20 +403,27 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// Node:command - call with or with block on end [!null]
-command_call    : command
-                | block_command
-                | kRETURN call_args {
-                    $$ = new ReturnNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
-                }
-                | kBREAK call_args {
-                    $$ = new BreakNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
-                }
-                | kNEXT call_args {
-                    $$ = new NextNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
-                }
+    @pg.production("command_call : command")
+    def command_call_command(self, p):
+        return p[0]
 
+    @pg.production("command_call : block_command")
+    def command_call_block_command(self, p):
+        return p[0]
+
+    @pg.production("command_call : RETURN call_args")
+    def command_call_return(self, p):
+        return self.new_return(p[1])
+
+    @pg.production("command_call : BREAK call_args")
+    def command_call_break(self, p):
+        return self.new_break(self, p[1])
+
+    @pg.production("command_call : NEXT call_args")
+    def command_call_next(self, p):
+        return self.new_next(p[1])
+
+    """
 // Node:block_command - A call with a block (foo.bar {...}, foo::bar {...}, bar {...}) [!null]
 block_command   : block_call
                 | block_call tDOT operation2 command_args {
