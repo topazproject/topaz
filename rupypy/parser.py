@@ -1,108 +1,76 @@
-from pypy.rlib.rstring import StringBuilder
-
 from rply import ParserGenerator
-from rply.token import BaseBox
-
-from rupypy import ast
 
 
-class LexerWrapper(object):
+class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
-        self.token_iter = iter(lexer)
 
-    def next(self):
-        try:
-            return self.token_iter.next()
-        except StopIteration:
-            return None
+    def parse(self):
+        l = LexerWrapper(self.lexer.tokenize())
+        return self.parser.parse(l, state=self)
 
-
-class BoxAST(BaseBox):
-    def __init__(self, node):
-        BaseBox.__init__(self)
-        self.node = node
-
-    def getast(self):
-        return self.node
-
-
-class BoxASTList(BaseBox):
-    def __init__(self, nodes):
-        BaseBox.__init__(self)
-        self.nodes = nodes
-
-    def getlist(self):
-        return self.nodes
-
-
-pg = ParserGenerator([
-    "EOF", "NEWLINE", "SEMICOLON", "COMMA", "DOT", "LBRACKET", "RBRACKET",
-    "LSUBSCRIPT", "LPAREN", "RPAREN", "LBRACE", "RBRACE", "EXCLAMATION",
-
-    "AND_LITERAL", "OR_LITERAL", "NOT_LITERAL", "IF", "DEF", "DO", "END",
-    "THEN",
-
-    "NUMBER",
-
-    "STRING_BEG", "STRING_END", "STRING_CONTENT", "CHAR", "REGEXP_BEG",
-    "REGEXP_END", "SYMBOL_BEG",
-
-    "IDENTIFIER", "GLOBAL", "INSTANCE_VAR",
-
-    "EQ", "PLUS", "MINUS", "MUL", "DIV", "MODULO", "POW", "LSHIFT", "RSHIFT",
-    "AMP", "PIPE", "CARET", "EQEQ", "NE", "EQEQEQ", "LT", "LE", "GT", "GE",
-    "CMP", "EQUAL_TILDE", "EXCLAMATION_TILDE", "OR", "UNARY_STAR"
-], precedence=[
-    ("nonassoc", ["LOWEST"]),
-    ("left", ["OR_LITERAL", "AND_LITERAL"]),
-    ("right", ["NOT_LITERAL"]),
-    ("left", ["OR"]),
-    ("left", ["AND"]),
-    ("nonassoc", ["CMP", "EQ", "EQEQ", "EQEQEQ", "NE", "EQUAL_TILDE", "EXCLAMATION_TILDE"]),
-    ("left", ["GT", "GE", "LT", "LE"]),
-    ("left", ["PIPE", "CARET"]),
-    ("left", ["AMP"]),
-    ("left", ["LSHIFT", "RSHIFT"]),
-    ("left", ["PLUS", "MINUS"]),
-    ("left", ["MUL", "DIV", "MODULO"]),
-    ("right", ["UMINUS"]),
-    ("right", ["POW"]),
-    ("right", ["EXCLAMATION", "TILDE", "UPLUS"]),
-])
-
-
-@pg.production("program : top_compstmt EOF")
-def program(p):
-    return BoxAST(ast.Main(p[0].getast()))
-
-
-@pg.production("top_compstmt : top_stmts opt_terms")
-def top_compstmt(p):
-    return BoxAST(ast.Block(p[0].getlist()))
-
-
-@pg.production("top_stmts : top_stmt")
-def top_stmts_top_stmt(p):
-    return BoxASTList([p[0].getast()])
-
-
-@pg.production("top_stmts : top_stmts terms top_stmt")
-def top_stmts(p):
-    return BoxASTList(p[0].getlist() + [p[2].getast()])
-
-
-@pg.production("top_stmts : none")
-def top_stmts_none(p):
-    return BoxASTList([])
-
-
-@pg.production("top_stmt : stmt")
-def top_stmt(p):
-    return p[0]
-
+    pg = ParserGenerator([], precedence=[
+        ("nonassoc", ["LOWEST"]),
+        ("nonassoc", ["LBRACE_ARG"]),
+        ("nonassoc", ["IF_MOD", "UNLESS_MOD", "WHILE_MOD", "UNTIL_MOD"]),
+        ("left", ["OR", "AND"]),
+        ("right", ["NOT"]),
+        ("nonassoc", ["DEFINED"]),
+        ("right", ["LITERAL_EQUAL", "OP_ASGN"]),
+        ("left", "RESCUE_MOD"),
+        ("right", ["LITERAL_QUESTION_MARK", "LITERAL_COLON"]),
+        ("nonassoc", ["DOT2", "DOT3"]),
+        ("left", ["OROP"]),
+        ("left", ["ANDOP"]),
+        ("nonassoc", ["CMP", "EQ", "EQQ", "NEQ", "MATCH", "NMATCH"]),
+        ("left", ["GT", "GEQ", "LT", "LEQ"]),
+        ("left", ["PIPE", "CARET"]),
+        ("left", ["AMPER2"]),
+        ("left", ["LSHFT", "RSHFT"]),
+        ("left", ["PLUS", "MINUS"]),
+        ("left", ["STAR2", "DIVIDE", "PERCENT"])
+        ("right", ["UMINUS_NUM", "UMINUS"]),
+        ("right", ["POW"]),
+        ("rigth", ["BANG", "TILDE", "UPLUS"]),
+    ])
 """
-top_stmt      : klBEGIN {
+%%
+program       : {
+                  lexer.setState(LexState.EXPR_BEG);
+                  support.initTopLocalVariables();
+              } top_compstmt {
+  // ENEBO: Removed !compile_for_eval which probably is to reduce warnings
+                  if ($2 != null) {
+                      /* last expression should not be void */
+                      if ($2 instanceof BlockNode) {
+                          support.checkUselessStatement($<BlockNode>2.getLast());
+                      } else {
+                          support.checkUselessStatement($2);
+                      }
+                  }
+                  support.getResult().setAST(support.addRootNode($2, support.getPosition($2)));
+              }
+
+top_compstmt  : top_stmts opt_terms {
+                  if ($1 instanceof BlockNode) {
+                      support.checkUselessStatements($<BlockNode>1);
+                  }
+                  $$ = $1;
+              }
+
+top_stmts     : none
+              | top_stmt {
+                    $$ = support.newline_node($1, support.getPosition($1));
+              }
+              | top_stmts terms top_stmt {
+                    $$ = support.appendToBlock($1, support.newline_node($3, support.getPosition($3)));
+              }
+              | error top_stmt {
+                    $$ = $2;
+              }
+
+top_stmt      : stmt
+              | klBEGIN {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("BEGIN in method");
                     }
@@ -110,34 +78,42 @@ top_stmt      : klBEGIN {
                     support.getResult().addBeginNode(new PreExe19Node($1.getPosition(), support.getCurrentScope(), $4));
                     $$ = null;
               }
-"""
 
+bodystmt      : compstmt opt_rescue opt_else opt_ensure {
+                  Node node = $1;
 
-@pg.production("bodystmt : compstmt opt_rescue opt_else opt_ensure")
-def bodystmt(p):
-    return p[0]
+                  if ($2 != null) {
+                      node = new RescueNode(support.getPosition($1), $1, $2, $3);
+                  } else if ($3 != null) {
+                      support.warn(ID.ELSE_WITHOUT_RESCUE, support.getPosition($1), "else without rescue is useless");
+                      node = support.appendToBlock($1, $3);
+                  }
+                  if ($4 != null) {
+                      if (node == null) node = NilImplicitNode.NIL;
+                      node = new EnsureNode(support.getPosition($1), node, $4);
+                  }
 
+                  $$ = node;
+                }
 
-@pg.production("compstmt : stmts opt_terms")
-def compstmt(p):
-    return BoxAST(ast.Block(p[0].getlist()))
+compstmt        : stmts opt_terms {
+                    if ($1 instanceof BlockNode) {
+                        support.checkUselessStatements($<BlockNode>1);
+                    }
+                    $$ = $1;
+                }
 
+stmts           : none
+                | stmt {
+                    $$ = support.newline_node($1, support.getPosition($1));
+                }
+                | stmts terms stmt {
+                    $$ = support.appendToBlock($1, support.newline_node($3, support.getPosition($3)));
+                }
+                | error stmt {
+                    $$ = $2;
+                }
 
-@pg.production("stmts : none")
-def stmts_none(p):
-    return BoxASTList([])
-
-
-@pg.production("stmts : stmt")
-def stmts_stmt(p):
-    return BoxASTList([p[0].getast()])
-
-
-@pg.production("stmts : stmts term stmt")
-def stmts_stmts(p):
-    return BoxASTList(p[0].getlist() + [p[2].getast()])
-
-"""
 stmt            : kALIAS fitem {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fitem {
@@ -236,14 +212,8 @@ stmt            : kALIAS fitem {
                     $$ = $1;
                     $1.setPosition(support.getPosition($1));
                 }
-"""
+                | expr
 
-
-@pg.production("stmt : expr")
-def stmt_expr(p):
-    return BoxAST(ast.Statement(p[0].getast()))
-
-"""
 command_asgn    : lhs '=' command_call {
                     support.checkExpression($3);
                     $$ = support.node_assign($1, $3);
@@ -252,46 +222,31 @@ command_asgn    : lhs '=' command_call {
                     support.checkExpression($3);
                     $$ = support.node_assign($1, $3);
                 }
-"""
 
+// Node:expr *CURRENT* all but arg so far
+expr            : command_call
+                | expr kAND expr {
+                    $$ = support.newAndNode($2.getPosition(), $1, $3);
+                }
+                | expr kOR expr {
+                    $$ = support.newOrNode($2.getPosition(), $1, $3);
+                }
+                | kNOT opt_nl expr {
+                    $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
+                }
+                | tBANG command_call {
+                    $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
+                }
+                | arg
 
-@pg.production("expr : NOT_LITERAL opt_nl expr")
-def expr_not(p):
-    return BoxAST(ast.Not(p[2].getast()))
+expr_value      : expr {
+                    support.checkExpression($1);
+                }
 
-
-@pg.production("expr : EXCLAMATION command_call")
-def expr_exclamation(p):
-    return BoxAST(ast.Not(p[1].getast()))
-
-
-@pg.production("expr : command_call")
-def expr_command_call(p):
-    return p[0]
-
-
-@pg.production("expr : arg")
-def expr_arg(p):
-    return p[0]
-
-
-@pg.production("expr : expr AND_LITERAL expr")
-def expr_and(p):
-    return BoxAST(ast.And(p[0].getast(), p[2].getast()))
-
-
-@pg.production("expr : expr OR_LITERAL expr")
-def expr_or(p):
-    return BoxAST(ast.Or(p[0].getast(), p[2].getast()))
-
-
-@pg.production("expr_value : expr")
-def expr_value(p):
-    return p[0]
-
-"""
 // Node:command - call with or with block on end [!null]
-command_call    : kRETURN call_args {
+command_call    : command
+                | block_command
+                | kRETURN call_args {
                     $$ = new ReturnNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
                 }
                 | kBREAK call_args {
@@ -300,37 +255,35 @@ command_call    : kRETURN call_args {
                 | kNEXT call_args {
                     $$ = new NextNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
                 }
-"""
 
-
-@pg.production("command_call : block_command")
-@pg.production("command_call : command")
-def command_call_command(p):
-    return p[0]
-"""
 // Node:block_command - A call with a block (foo.bar {...}, foo::bar {...}, bar {...}) [!null]
-block_command   : block_call tDOT operation2 command_args {
+block_command   : block_call
+                | block_call tDOT operation2 command_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
                 | block_call tCOLON2 operation2 command_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
-"""
 
+// :brace_block - [!null]
+cmd_brace_block : tLBRACE_ARG {
+                    support.pushBlockScope();
+                } opt_block_param compstmt tRCURLY {
+                    $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
+                    support.popCurrentScope();
+                }
 
-@pg.production("block_command : block_call")
-def block_command(p):
-    return p[0]
-
-
-@pg.production("cmd_brace_block : LBRACE opt_block_param compstmt RBRACE")
-def cmd_brace_block(p):
-    import pdb
-    pdb.set_trace()
-
-"""
 // Node:command - fcall/call/yield/super [!null]
-command        : primary_value tDOT operation2 command_args cmd_brace_block {
+command        : operation command_args %prec tLOWEST {
+                    $$ = support.new_fcall($1, $2, null);
+                }
+                | operation command_args cmd_brace_block {
+                    $$ = support.new_fcall($1, $2, $3);
+                }
+                | primary_value tDOT operation2 command_args %prec tLOWEST {
+                    $$ = support.new_call($1, $3, $4, null);
+                }
+                | primary_value tDOT operation2 command_args cmd_brace_block {
                     $$ = support.new_call($1, $3, $4, $5);
                 }
                 | primary_value tCOLON2 operation2 command_args %prec tLOWEST {
@@ -345,39 +298,7 @@ command        : primary_value tDOT operation2 command_args cmd_brace_block {
                 | kYIELD command_args {
                     $$ = support.new_yield($1.getPosition(), $2);
                 }
-"""
 
-
-@pg.production("command : operation command_args", precedence="LOWEST")
-def command(p):
-    node = ast.Send(
-        ast.Self(p[0].getsourcepos().lineno),
-        p[0].getstr(),
-        p[1].getlist(),
-        None,
-        p[0].getsourcepos().lineno
-    )
-    return BoxAST(node)
-
-
-@pg.production("command : operation command_args cmd_brace_block")
-def command_braces_block(p):
-    import pdb
-    pdb.set_trace()
-
-
-@pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
-def command_dot(p):
-    node = ast.Send(
-        p[0].getast(),
-        p[2].getstr(),
-        p[3].getlist(),
-        None,
-        p[2].getsourcepos().lineno
-    )
-    return BoxAST(node)
-
-"""
 // MultipleAssig19Node:mlhs - [!null]
 mlhs            : mlhs_basic
                 | tLPAREN mlhs_inner rparen {
@@ -536,19 +457,16 @@ cpath           : tCOLON3 cname {
                 }
 
 // Token:fname - A function name [!null]
-fname          : tCONSTANT | tFID
+fname          : tIDENTIFIER | tCONSTANT | tFID
+               | op {
+                   lexer.setState(LexState.EXPR_ENDFN);
+                   $$ = $1;
+               }
                | reswords {
                    lexer.setState(LexState.EXPR_ENDFN);
                    $$ = $1;
                }
-"""
 
-
-@pg.production("fname : op")
-@pg.production("fname : IDENTIFIER")
-def fname(p):
-    return p[0]
-"""
 // LiteralNode:fsym
 fsym           : fname {
                     $$ = new LiteralNode($1);
@@ -576,16 +494,10 @@ undef_list      : fitem {
 
 // Token:op
 op              : tPIPE | tCARET | tAMPER2 | tCMP | tEQ | tEQQ | tMATCH
-                | tNMATCH | tGEQ | tLT | tLEQ | tNEQ | tLSHFT | tRSHFT
+                | tNMATCH | tGT | tGEQ | tLT | tLEQ | tNEQ | tLSHFT | tRSHFT
                 | tPLUS | tMINUS | tSTAR2 | tSTAR | tDIVIDE | tPERCENT | tPOW
                 | tBANG | tTILDE | tUPLUS | tUMINUS | tAREF | tASET | tBACK_REF2
-"""
 
-
-@pg.production("op : GT")
-def op(p):
-    return p[0]
-"""
 // Token:op
 reswords        : k__LINE__ | k__FILE__ | k__ENCODING__ | klBEGIN | klEND
                 | kALIAS | kAND | kBEGIN | kBREAK | kCASE | kCLASS | kDEF
@@ -680,6 +592,24 @@ arg             : lhs '=' arg {
                     boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
                     $$ = new DotNode(support.getPosition($1), $1, $3, true, isLiteral);
                 }
+                | arg tPLUS arg {
+                    $$ = support.getOperatorCallNode($1, "+", $3, lexer.getPosition());
+                }
+                | arg tMINUS arg {
+                    $$ = support.getOperatorCallNode($1, "-", $3, lexer.getPosition());
+                }
+                | arg tSTAR2 arg {
+                    $$ = support.getOperatorCallNode($1, "*", $3, lexer.getPosition());
+                }
+                | arg tDIVIDE arg {
+                    $$ = support.getOperatorCallNode($1, "/", $3, lexer.getPosition());
+                }
+                | arg tPERCENT arg {
+                    $$ = support.getOperatorCallNode($1, "%", $3, lexer.getPosition());
+                }
+                | arg tPOW arg {
+                    $$ = support.getOperatorCallNode($1, "**", $3, lexer.getPosition());
+                }
                 | tUMINUS_NUM tINTEGER tPOW arg {
                     $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
                 }
@@ -692,8 +622,62 @@ arg             : lhs '=' arg {
                 | tUMINUS arg {
                     $$ = support.getOperatorCallNode($2, "-@");
                 }
+                | arg tPIPE arg {
+                    $$ = support.getOperatorCallNode($1, "|", $3, lexer.getPosition());
+                }
+                | arg tCARET arg {
+                    $$ = support.getOperatorCallNode($1, "^", $3, lexer.getPosition());
+                }
+                | arg tAMPER2 arg {
+                    $$ = support.getOperatorCallNode($1, "&", $3, lexer.getPosition());
+                }
+                | arg tCMP arg {
+                    $$ = support.getOperatorCallNode($1, "<=>", $3, lexer.getPosition());
+                }
+                | arg tGT arg {
+                    $$ = support.getOperatorCallNode($1, ">", $3, lexer.getPosition());
+                }
+                | arg tGEQ arg {
+                    $$ = support.getOperatorCallNode($1, ">=", $3, lexer.getPosition());
+                }
+                | arg tLT arg {
+                    $$ = support.getOperatorCallNode($1, "<", $3, lexer.getPosition());
+                }
+                | arg tLEQ arg {
+                    $$ = support.getOperatorCallNode($1, "<=", $3, lexer.getPosition());
+                }
+                | arg tEQ arg {
+                    $$ = support.getOperatorCallNode($1, "==", $3, lexer.getPosition());
+                }
+                | arg tEQQ arg {
+                    $$ = support.getOperatorCallNode($1, "===", $3, lexer.getPosition());
+                }
+                | arg tNEQ arg {
+                    $$ = support.getOperatorCallNode($1, "!=", $3, lexer.getPosition());
+                }
+                | arg tMATCH arg {
+                    $$ = support.getMatchNode($1, $3);
+                  /* ENEBO
+                        $$ = match_op($1, $3);
+                        if (nd_type($1) == NODE_LIT && TYPE($1->nd_lit) == T_REGEXP) {
+                            $$ = reg_named_capture_assign($1->nd_lit, $$);
+                        }
+                  */
+                }
+                | arg tNMATCH arg {
+                    $$ = support.getOperatorCallNode($1, "!~", $3, lexer.getPosition());
+                }
+                | tBANG arg {
+                    $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
+                }
                 | tTILDE arg {
                     $$ = support.getOperatorCallNode($2, "~");
+                }
+                | arg tLSHFT arg {
+                    $$ = support.getOperatorCallNode($1, "<<", $3, lexer.getPosition());
+                }
+                | arg tRSHFT arg {
+                    $$ = support.getOperatorCallNode($1, ">>", $3, lexer.getPosition());
                 }
                 | arg tANDOP arg {
                     $$ = support.newAndNode($2.getPosition(), $1, $3);
@@ -708,112 +692,40 @@ arg             : lhs '=' arg {
                 | arg '?' arg opt_nl ':' arg {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($1), $3, $6);
                 }
-"""
+                | primary {
+                    $$ = $1;
+                }
 
+arg_value       : arg {
+                    support.checkExpression($1);
+                    $$ = $1 != null ? $1 : NilImplicitNode.NIL;
+                }
 
-@pg.production("arg : arg PLUS arg")
-@pg.production("arg : arg MINUS arg")
-@pg.production("arg : arg MUL arg")
-@pg.production("arg : arg DIV arg")
-@pg.production("arg : arg MODULO arg")
-@pg.production("arg : arg POW arg")
-@pg.production("arg : arg LSHIFT arg")
-@pg.production("arg : arg RSHIFT arg")
-@pg.production("arg : arg AMP arg")
-@pg.production("arg : arg PIPE arg")
-@pg.production("arg : arg CARET arg")
-@pg.production("arg : arg EQEQ arg")
-@pg.production("arg : arg NE arg")
-@pg.production("arg : arg EQEQEQ arg")
-@pg.production("arg : arg LT arg")
-@pg.production("arg : arg LE arg")
-@pg.production("arg : arg GT arg")
-@pg.production("arg : arg GE arg")
-@pg.production("arg : arg CMP arg")
-@pg.production("arg : arg EQUAL_TILDE arg")
-def arg_binop(p):
-    node = ast.BinOp(
-        p[1].getstr(),
-        p[0].getast(),
-        p[2].getast(),
-        p[1].getsourcepos().lineno
-    )
-    return BoxAST(node)
-
-
-@pg.production("arg : EXCLAMATION arg")
-def arg_exclamation(p):
-    return BoxAST(ast.Not(p[1].getast()))
-
-
-@pg.production("arg : arg EXCLAMATION_TILDE arg")
-def arg_not_match(p):
-    node = ast.Not(
-        ast.BinOp(
-            "=~",
-            p[0].getast(),
-            p[2].getast(),
-            p[1].getsourcepos().lineno
-        )
-    )
-    return BoxAST(node)
-
-
-@pg.production("arg : primary")
-def arg_primary(p):
-    return p[0]
-
-
-@pg.production("arg_value : arg")
-def arg_value(p):
-    return p[0]
-
-"""
-aref_args       : args ',' assocs trailer {
+aref_args       : none
+                | args trailer {
+                    $$ = $1;
+                }
+                | args ',' assocs trailer {
                     $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
                 }
                 | assocs trailer {
                     $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
                 }
-"""
 
+paren_args      : tLPAREN2 opt_call_args rparen {
+                    $$ = $2;
+                    if ($$ != null) $<Node>$.setPosition($1.getPosition());
+                }
 
-@pg.production("aref_args : none")
-def aref_args_empty(p):
-    return BoxASTList([])
+opt_paren_args  : none | paren_args
 
+opt_call_args   : none | call_args
 
-@pg.production("aref_args : args trailer")
-def aref_args_args(p):
-    return p[0]
-
-
-@pg.production("paren_args : LPAREN opt_call_args rparen")
-def paren_args(p):
-    return p[1]
-
-
-@pg.production("opt_paren_args : none")
-def opt_paren_args_none(p):
-    return BoxASTList([])
-
-
-@pg.production("opt_paren_args : paren_args")
-def opt_paren_args(p):
-    return p[0]
-
-
-@pg.production("opt_call_args : none")
-def opt_call_args_none(p):
-    return BoxASTList([])
-
-
-@pg.production("opt_call_args : call_args")
-def opt_call_args(p):
-    return p[0]
-"""
 // [!null]
-call_args       : args opt_block_arg {
+call_args       : command {
+                    $$ = support.newArrayNode(support.getPosition($1), $1);
+                }
+                | args opt_block_arg {
                     $$ = support.arg_blk_pass($1, $2);
                 }
                 | assocs opt_block_arg {
@@ -827,28 +739,13 @@ call_args       : args opt_block_arg {
                 | block_arg {
                 }
 
-"""
+command_args    : /* none */ {
+                    $$ = Long.valueOf(lexer.getCmdArgumentState().begin());
+                } call_args {
+                    lexer.getCmdArgumentState().reset($<Long>1.longValue());
+                    $$ = $2;
+                }
 
-
-@pg.production("call_args : command")
-def call_args_command(p):
-    return BoxASTList([p[0].getast()])
-
-
-@pg.production("call_args : args opt_block_arg")
-def call_args_args(p):
-    return p[0]
-
-
-@pg.production("command_args : none")
-def command_args_empty(p):
-    return None
-
-
-@pg.production("command_args : call_args")
-def command_args(p):
-    return p[0]
-"""
 block_arg       : tAMPER arg_value {
                     $$ = new BlockPassNode($1.getPosition(), $2);
                 }
@@ -859,33 +756,37 @@ opt_block_arg   : ',' block_arg {
                 | ',' {
                     $$ = null;
                 }
-"""
+                | none_block_pass
 
+// [!null]
+args            : arg_value {
+                    ISourcePosition pos = $1 == null ? lexer.getPosition() : $1.getPosition();
+                    $$ = support.newArrayNode(pos, $1);
+                }
+                | tSTAR arg_value {
+                    $$ = support.newSplatNode($1.getPosition(), $2);
+                }
+                | args ',' arg_value {
+                    Node node = support.splat_array($1);
 
-@pg.production("opt_block_arg : none_block_pass")
-def opt_block_arg_none(p):
-    return None
+                    if (node != null) {
+                        $$ = support.list_append(node, $3);
+                    } else {
+                        $$ = support.arg_append($1, $3);
+                    }
+                }
+                | args ',' tSTAR arg_value {
+                    Node node = null;
 
+                    // FIXME: lose syntactical elements here (and others like this)
+                    if ($4 instanceof ArrayNode &&
+                        (node = support.splat_array($1)) != null) {
+                        $$ = support.list_concat(node, $4);
+                    } else {
+                        $$ = support.arg_concat(support.getPosition($1), $1, $4);
+                    }
+                }
 
-@pg.production("args : arg_value")
-def args_arg(p):
-    return BoxASTList([p[0].getast()])
-
-
-@pg.production("args : UNARY_STAR arg_value")
-def args_splat_arg(p):
-    return BoxASTList([ast.Splat(p[1].getast())])
-
-
-@pg.production("args : args COMMA arg_value")
-def args_args(p):
-    return BoxASTList(p[0].getlist() + [p[2].getast()])
-
-
-@pg.production("args : args COMMA UNARY_STAR arg_value")
-def args_args_splat(p):
-    return BoxASTList(p[0].getlist() + [ast.Splat(p[3].getast())])
-"""
 mrhs            : args ',' arg_value {
                     Node node = support.splat_array($1);
 
@@ -909,9 +810,13 @@ mrhs            : args ',' arg_value {
                      $$ = support.newSplatNode(support.getPosition($1), $2);
                 }
 
-primary         : xstring
+primary         : literal
+                | strings
+                | xstring
+                | regexp
                 | words
                 | qwords
+                | var_ref
                 | backref
                 | tFID {
                     $$ = new FCallNoArgNode($1.getPosition(), (String) $1.getValue());
@@ -925,11 +830,29 @@ primary         : xstring
                     support.warning(ID.GROUPED_EXPRESSION, $1.getPosition(), "(...) interpreted as grouped expression");
                     $$ = $2;
                 }
+                | tLPAREN compstmt tRPAREN {
+                    if ($2 != null) {
+                        // compstmt position includes both parens around it
+                        ((ISourcePositionHolder) $2).setPosition($1.getPosition());
+                        $$ = $2;
+                    } else {
+                        $$ = new NilNode($1.getPosition());
+                    }
+                }
                 | primary_value tCOLON2 tCONSTANT {
                     $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
                 }
                 | tCOLON3 tCONSTANT {
                     $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
+                }
+                | tLBRACK aref_args tRBRACK {
+                    ISourcePosition position = $1.getPosition();
+                    if ($2 == null) {
+                        $$ = new ZArrayNode(position); /* zero length array */
+                    } else {
+                        $$ = $2;
+                        $<ISourcePositionHolder>$.setPosition(position);
+                    }
                 }
                 | tLBRACE assoc_list tRCURLY {
                     $$ = new Hash19Node($1.getPosition(), $2);
@@ -958,6 +881,7 @@ primary         : xstring
                 | operation brace_block {
                     $$ = new FCallNoArgBlockNode($1.getPosition(), (String) $1.getValue(), $2);
                 }
+                | method_call
                 | method_call brace_block {
                     if ($1 != null &&
                           $<BlockAcceptingNode>1.getIterNode() instanceof BlockPassNode) {
@@ -968,6 +892,9 @@ primary         : xstring
                 }
                 | tLAMBDA lambda {
                     $$ = $2;
+                }
+                | kIF expr_value then compstmt if_tail kEND {
+                    $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
                 }
                 | kUNLESS expr_value then compstmt opt_else kEND {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $5, $4);
@@ -1037,6 +964,17 @@ primary         : xstring
                     $$ = new ModuleNode($1.getPosition(), $<Colon3Node>2, support.getCurrentScope(), body);
                     support.popCurrentScope();
                 }
+                | kDEF fname {
+                    support.setInDef(true);
+                    support.pushLocalScope();
+                } f_arglist bodystmt kEND {
+                    // TODO: We should use implicit nil for body, but problem (punt til later)
+                    Node body = $5; //$5 == null ? NilImplicitNode.NIL : $5;
+
+                    $$ = new DefnNode($1.getPosition(), new ArgumentNode($2.getPosition(), (String) $2.getValue()), $4, support.getCurrentScope(), body);
+                    support.popCurrentScope();
+                    support.setInDef(false);
+                }
                 | kDEF singleton dot_or_colon {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fname {
@@ -1063,103 +1001,30 @@ primary         : xstring
                 | kRETRY {
                     $$ = new RetryNode($1.getPosition());
                 }
-"""
 
+primary_value   : primary {
+                    support.checkExpression($1);
+                    $$ = $1;
+                    if ($$ == null) $$ = NilImplicitNode.NIL;
+                }
 
-@pg.production("primary : literal")
-def primary_literal(p):
-    return p[0]
+then            : term
+                | kTHEN
+                | term kTHEN
 
-
-@pg.production("primary : var_ref")
-def primary_var_ref(p):
-    return p[0]
-
-
-@pg.production("primary : strings")
-def primary_strings(p):
-    return p[0]
-
-
-@pg.production("primary : regexp")
-def primary_regexp(p):
-    return p[0]
-
-
-@pg.production("primary : LPAREN compstmt RPAREN")
-def primary_parens(p):
-    return p[1]
-
-
-@pg.production("primary : method_call")
-def primary_method_call(p):
-    return p[0]
-
-
-@pg.production("primary : LBRACKET aref_args RBRACKET")
-def primary_array(p):
-    return BoxAST(ast.Array(p[1].getlist()))
-
-
-@pg.production("primary : DEF fname f_arglist bodystmt END")
-def primary_def(p):
-    node = ast.Function(
-        None,
-        p[1].getstr(),
-        p[2].getlist(),
-        None,
-        None,
-        p[3].getast()
-    )
-    return BoxAST(node)
-
-
-@pg.production("primary : IF expr_value then compstmt if_tail END")
-def primary_if(p):
-    node = ast.If(
-        p[1].getast(),
-        p[3].getast(),
-        p[4].getast()
-    )
-    return BoxAST(node)
-
-
-@pg.production("primary_value : primary")
-def primary_value(p):
-    return p[0]
-
-
-@pg.production("then : term THEN")
-@pg.production("then : THEN")
-@pg.production("then : term")
-def then(p):
-    return None
-
-"""
 do              : term
                 | kDO_COND
 
-if_tail         : kELSIF expr_value then compstmt if_tail {
+if_tail         : opt_else
+                | kELSIF expr_value then compstmt if_tail {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
                 }
-"""
 
-
-@pg.production("if_tail : opt_else")
-def if_tail_else(p):
-    return p[0]
-
-"""
-opt_else        : kELSE compstmt {
+opt_else        : none
+                | kELSE compstmt {
                     $$ = $2;
                 }
-"""
 
-
-@pg.production("opt_else : none")
-def opt_else_none(p):
-    return BoxAST(ast.Block([]))
-"""
 for_var         : lhs
                 | mlhs {
                 }
@@ -1207,77 +1072,96 @@ f_margs         : f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
                 }
 
-"""
+// [!null]
+block_param     : f_arg ',' f_block_optarg ',' f_rest_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
+                }
+                | f_arg ',' f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
+                }
+                | f_arg ',' f_block_optarg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
+                }
+                | f_arg ',' f_block_optarg ',' f_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
+                }
+                | f_arg ',' f_rest_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
+                }
+                | f_arg ',' {
+                    RestArgNode rest = new UnnamedRestArgNode($1.getPosition(), null, support.getCurrentScope().addVariable("*"));
+                    $$ = support.new_args($1.getPosition(), $1, null, rest, null, null);
+                }
+                | f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
+                }
+                | f_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
+                }
+                | f_block_optarg ',' f_rest_arg opt_f_block_arg {
+                    $$ = support.new_args(support.getPosition($1), null, $1, $3, null, $4);
+                }
+                | f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+                    $$ = support.new_args(support.getPosition($1), null, $1, $3, $5, $6);
+                }
+                | f_block_optarg opt_f_block_arg {
+                    $$ = support.new_args(support.getPosition($1), null, $1, null, null, $2);
+                }
+                | f_block_optarg ',' f_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
+                }
+                | f_rest_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
+                }
+                | f_rest_arg ',' f_arg opt_f_block_arg {
+                    $$ = support.new_args($1.getPosition(), null, null, $1, $3, $4);
+                }
+                | f_block_arg {
+                    $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
+                }
 
+opt_block_param : none {
+    // was $$ = null;
+                   $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
+                }
+                | block_param_def {
+                    lexer.commandStart = true;
+                    $$ = $1;
+                }
 
-@pg.production("block_param : f_arg COMMA f_block_optarg COMMA f_rest_arg opt_f_block_arg")
-@pg.production("block_param : f_arg COMMA f_block_optarg COMMA f_rest_arg COMMA f_arg opt_f_block_arg")
-@pg.production("block_param : f_arg COMMA f_block_optarg opt_f_block_arg")
-@pg.production("block_param : f_arg COMMA f_block_optarg COMMA f_arg opt_f_block_arg")
-@pg.production("block_param : f_arg COMMA f_rest_arg opt_f_block_arg")
-@pg.production("block_param : f_arg COMMA")
-@pg.production("block_param : f_arg COMMA f_rest_arg COMMA f_arg opt_f_block_arg")
-@pg.production("block_param : f_arg opt_f_block_arg")
-@pg.production("block_param : f_block_optarg COMMA f_rest_arg opt_f_block_arg")
-@pg.production("block_param : f_block_optarg COMMA f_rest_arg COMMA f_arg opt_f_block_arg")
-@pg.production("block_param : f_block_optarg opt_f_block_arg")
-@pg.production("block_param : f_block_optarg COMMA f_arg opt_f_block_arg")
-@pg.production("block_param : f_rest_arg opt_f_block_arg")
-@pg.production("block_param : f_rest_arg COMMA f_arg opt_f_block_arg")
-@pg.production("block_param : f_block_arg")
-def block_param(p):
-    raise NotImplementedError(p)
+block_param_def : tPIPE opt_bv_decl tPIPE {
+                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
+                }
+                | tOROP {
+                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
+                }
+                | tPIPE block_param opt_bv_decl tPIPE {
+                    $$ = $2;
+                }
 
+// shadowed block variables....
+opt_bv_decl     : opt_nl {
+                    $$ = null;
+                }
+                | opt_nl ';' bv_decls opt_nl {
+                    $$ = null;
+                }
 
-@pg.production("opt_block_param : none")
-def opt_block_param_none(p):
-    return BoxASTList([])
+// ENEBO: This is confusing...
+bv_decls        : bvar {
+                    $$ = null;
+                }
+                | bv_decls ',' bvar {
+                    $$ = null;
+                }
 
+bvar            : tIDENTIFIER {
+                    support.new_bv($1);
+                }
+                | f_bad_arg {
+                    $$ = null;
+                }
 
-@pg.production("opt_block_param : block_param_def")
-def opt_block_param(p):
-    return p[0]
-
-
-@pg.production("block_param_def : PIPE opt_bv_decl PIPE")
-def block_param_def(p):
-    return p[1]
-
-
-@pg.production("block_param_def : OR")
-def block_param_def_empty(p):
-    return BoxASTList([])
-
-
-@pg.production("block_param_def : PIPE block_param opt_bv_decl PIPE")
-def block_param_def_real(p):
-    return p[1]
-
-
-@pg.production("opt_bv_decl : opt_nl")
-def opt_bv_decl_empty(p):
-    return None
-
-
-@pg.production("opt_bv_decl : opt_nl SEMICOLON bv_decls opt_nl")
-def opt_bv_decl(p):
-    return p[2]
-
-
-@pg.production("bv_decls : bvar")
-def bv_decls_bvar(p):
-    return None
-
-
-@pg.production("bv_decls : bv_decls COMMA bvar")
-def bv_decls(p):
-    return None
-
-
-@pg.production("bvar : IDENTIFIER")
-def bvar(p):
-    return None
-"""
 lambda          : /* none */  {
                     support.pushBlockScope();
                     $$ = lexer.getLeftParenBegin();
@@ -1302,30 +1186,40 @@ lambda_body     : tLAMBEG compstmt tRCURLY {
                 | kDO_LAMBDA compstmt kEND {
                     $$ = $2;
                 }
-"""
 
+do_block        : kDO_BLOCK {
+                    support.pushBlockScope();
+                } opt_block_param compstmt kEND {
+                    $$ = new IterNode(support.getPosition($1), $3, $4, support.getCurrentScope());
+                    support.popCurrentScope();
+                }
 
-@pg.production("do_block : DO opt_block_param compstmt END")
-def do_block(p):
-    import pdb
-    pdb.set_trace()
-"""
-block_call      : block_call tDOT operation2 opt_paren_args {
+block_call      : command do_block {
+                    // Workaround for JRUBY-2326 (MRI does not enter this production for some reason)
+                    if ($1 instanceof YieldNode) {
+                        throw new SyntaxException(PID.BLOCK_GIVEN_TO_YIELD, $1.getPosition(), lexer.getCurrentLine(), "block given to yield");
+                    }
+                    if ($<BlockAcceptingNode>1.getIterNode() instanceof BlockPassNode) {
+                        throw new SyntaxException(PID.BLOCK_ARG_AND_BLOCK_GIVEN, $1.getPosition(), lexer.getCurrentLine(), "Both block arg and actual block given.");
+                    }
+                    $$ = $<BlockAcceptingNode>1.setIterNode($2);
+                    $<Node>$.setPosition($1.getPosition());
+                }
+                | block_call tDOT operation2 opt_paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
                 | block_call tCOLON2 operation2 opt_paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
-"""
 
-
-@pg.production("block_call : command do_block")
-def block_call(p):
-    import pdb
-    pdb.set_trace()
-"""
 // [!null]
-method_call     : primary_value tCOLON2 operation2 paren_args {
+method_call     : operation paren_args {
+                    $$ = support.new_fcall($1, $2, null);
+                }
+                | primary_value tDOT operation2 opt_paren_args {
+                    $$ = support.new_call($1, $3, $4, null);
+                }
+                | primary_value tCOLON2 operation2 paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
                 | primary_value tCOLON2 operation3 {
@@ -1343,42 +1237,14 @@ method_call     : primary_value tCOLON2 operation2 paren_args {
                 | kSUPER {
                     $$ = new ZSuperNode($1.getPosition());
                 }
-"""
+                | primary_value '[' opt_call_args rbracket {
+                    if ($1 instanceof SelfNode) {
+                        $$ = support.new_fcall(new Token("[]", support.getPosition($1)), $3, null);
+                    } else {
+                        $$ = support.new_call($1, new Token("[]", support.getPosition($1)), $3, null);
+                    }
+                }
 
-
-@pg.production("method_call : operation paren_args")
-def method_call_paren_args(p):
-    node = ast.Send(
-        ast.Self(p[0].getsourcepos().lineno),
-        p[0].getstr(),
-        p[1].getlist(),
-        None,
-        p[0].getsourcepos().lineno
-    )
-    return BoxAST(node)
-
-
-@pg.production("method_call : primary_value DOT operation2 opt_paren_args")
-def method_call_dot(p):
-    node = ast.Send(
-        p[0].getast(),
-        p[2].getstr(),
-        p[3].getlist(),
-        None,
-        p[2].getsourcepos().lineno
-    )
-    return BoxAST(node)
-
-
-@pg.production("method_call : primary_value LSUBSCRIPT opt_call_args rbracket")
-def method_call_subscript(p):
-    node = ast.Subscript(
-        p[0].getast(),
-        p[2].getlist(),
-        p[1].getsourcepos().lineno
-    )
-    return BoxAST(node)
-"""
 brace_block     : tLCURLY {
                     support.pushBlockScope();
                 } opt_block_param compstmt tRCURLY {
@@ -1413,13 +1279,10 @@ opt_rescue      : kRESCUE exc_list exc_var then compstmt opt_rescue {
                     Node body = node == null ? NilImplicitNode.NIL : node;
                     $$ = new RescueBodyNode($1.getPosition(), $2, body, $6);
                 }
-"""
+                | {
+                    $$ = null;
+                }
 
-
-@pg.production("opt_rescue :")
-def opt_rescue_none(p):
-    return None
-"""
 exc_list        : arg_value {
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
@@ -1437,71 +1300,56 @@ exc_var         : tASSOC lhs {
 opt_ensure      : kENSURE compstmt {
                     $$ = $2;
                 }
-"""
+                | none
 
+literal         : numeric
+                | symbol {
+                    // FIXME: We may be intern'ing more than once.
+                    $$ = new SymbolNode($1.getPosition(), ((String) $1.getValue()).intern());
+                }
+                | dsym
 
-@pg.production("opt_ensure : none")
-def opt_ensure_none(p):
-    return None
-"""
-literal         : dsym
-"""
+strings         : string {
+                    $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
+                    /*
+                    NODE *node = $1;
+                    if (!node) {
+                        node = NEW_STR(STR_NEW0());
+                    } else {
+                        node = evstr2dstr(node);
+                    }
+                    $$ = node;
+                    */
+                }
 
-
-@pg.production("literal : NUMBER")
-def literal_number(p):
-    s = p[0].getstr()
-    if "." in s or "E" in s:
-        node = ast.ConstantFloat(float(s))
-    elif "X" in s:
-        node = ast.ConstantInt(int(s[2:], 16))
-    elif "O" in s:
-        node = ast.ConstantInt(int(s[2:], 8))
-    elif "B" in s:
-        node = ast.ConstantInt(int(s[2:], 2))
-    else:
-        node = ast.ConstantInt(int(s))
-    return BoxAST(node)
-
-
-@pg.production("literal : symbol")
-def literal_symbol(p):
-    return p[0]
-
-
-@pg.production("strings : string")
-def strings(p):
-    builder = StringBuilder()
-    for node in p[0].getlist():
-        if not isinstance(node, ast.ConstantString):
-            break
-        builder.append(node.strvalue)
-    else:
-        return BoxAST(ast.ConstantString(builder.build()))
-    return BoxAST(ast.DynamicString(p[0].getlist()))
-
-"""
 // [!null]
-string          : string string1 {
+string          : tCHAR {
+                    ByteList aChar = ByteList.create((String) $1.getValue());
+                    aChar.setEncoding(lexer.getEncoding());
+                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
+                }
+                | string1 {
+                    $$ = $1;
+                }
+                | string string1 {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
-"""
 
+string1         : tSTRING_BEG string_contents tSTRING_END {
+                    $$ = $2;
 
-@pg.production("string : CHAR")
-def string_char(p):
-    return BoxASTList([ast.ConstantString(p[0].getstr())])
+                    $<ISourcePositionHolder>$.setPosition($1.getPosition());
+                    int extraLength = ((String) $1.getValue()).length() - 1;
 
+                    // We may need to subtract addition offset off of first
+                    // string fragment (we optimistically take one off in
+                    // ParserSupport.literal_concat).  Check token length
+                    // and subtract as neeeded.
+                    if (($2 instanceof DStrNode) && extraLength > 0) {
+                      Node strNode = ((DStrNode)$2).get(0);
+                    }
+                }
 
-@pg.production("string : string1")
-def string_string1(p):
-    return p[0]
-
-
-@pg.production("string1 : STRING_BEG string_contents STRING_END")
-def string1(p):
-    return p[1]
-"""
 xstring         : tXSTRING_BEG xstring_contents tSTRING_END {
                     ISourcePosition position = $1.getPosition();
 
@@ -1517,21 +1365,11 @@ xstring         : tXSTRING_BEG xstring_contents tSTRING_END {
                         $$ = new DXStrNode(position).add($2);
                     }
                 }
-"""
 
+regexp          : tREGEXP_BEG xstring_contents tREGEXP_END {
+                    $$ = support.newRegexpNode($1.getPosition(), $2, (RegexpNode) $3);
+                }
 
-@pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
-def regexp(p):
-    builder = StringBuilder()
-    for node in p[1].getlist():
-        if not isinstance(node, ast.ConstantString):
-            break
-        builder.append(node.strvalue)
-    else:
-        return BoxAST(ast.ConstantRegexp(builder.build()))
-    return BoxAST(ast.DynamicRegexp(p[1].getlist()))
-
-"""
 words           : tWORDS_BEG ' ' tSTRING_END {
                     $$ = new ZArrayNode($1.getPosition());
                 }
@@ -1565,30 +1403,27 @@ qword_list      : /* none */ {
                 | qword_list tSTRING_CONTENT ' ' {
                     $$ = $1.add($2);
                 }
-"""
 
+string_contents : /* none */ {
+                    ByteList aChar = ByteList.create("");
+                    aChar.setEncoding(lexer.getEncoding());
+                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
+                }
+                | string_contents string_content {
+                    $$ = support.literal_concat($1.getPosition(), $1, $2);
+                }
 
-@pg.production("string_contents : none")
-def string_contents_none(p):
-    return BoxASTList([ast.ConstantString("")])
+xstring_contents: /* none */ {
+                    $$ = null;
+                }
+                | xstring_contents string_content {
+                    $$ = support.literal_concat(support.getPosition($1), $1, $2);
+                }
 
-
-@pg.production("string_contents : string_contents string_content")
-def string_contents(p):
-    return BoxASTList(p[0].getlist() + [p[1].getast()])
-
-
-@pg.production("xstring_contents : none")
-def xstring_contents_none(p):
-    return BoxASTList([])
-
-
-@pg.production("xstring_contents : xstring_contents string_content")
-def xstring_contents(p):
-    return BoxASTList(p[0].getlist() + [p[1].getast()])
-
-"""
-string_content  : tSTRING_DVAR {
+string_content  : tSTRING_CONTENT {
+                    $$ = $1;
+                }
+                | tSTRING_DVAR {
                     $$ = lexer.getStrTerm();
                     lexer.setStrTerm(null);
                     lexer.setState(LexState.EXPR_BEG);
@@ -1609,13 +1444,7 @@ string_content  : tSTRING_DVAR {
 
                    $$ = support.newEvStrNode($1.getPosition(), $3);
                 }
-"""
 
-
-@pg.production("string_content : STRING_CONTENT")
-def string_content(p):
-    return BoxAST(ast.ConstantString(p[0].getstr()))
-"""
 string_dvar     : tGVAR {
                      $$ = new GlobalVarNode($1.getPosition(), (String) $1.getValue());
                 }
@@ -1628,22 +1457,15 @@ string_dvar     : tGVAR {
                 | backref
 
 // Token:symbol
-"""
+symbol          : tSYMBEG sym {
+                     lexer.setState(LexState.EXPR_END);
+                     $$ = $2;
+                     $<ISourcePositionHolder>$.setPosition($1.getPosition());
+                }
 
-
-@pg.production("symbol : SYMBOL_BEG sym")
-def symbol(p):
-    return BoxAST(ast.ConstantSymbol(p[1].getstr()))
-"""
 // Token:symbol
-sym             : tIVAR | tGVAR | tCVAR
-"""
+sym             : fname | tIVAR | tGVAR | tCVAR
 
-
-@pg.production("sym : fname")
-def sym(p):
-    return p[0]
-"""
 dsym            : tSYMBEG xstring_contents tSTRING_END {
                      lexer.setState(LexState.EXPR_END);
 
@@ -1663,8 +1485,21 @@ dsym            : tSYMBEG xstring_contents tSTRING_END {
                      }
                 }
 
+numeric         : tINTEGER {
+                    $$ = $1;
+                }
+                | tFLOAT {
+                     $$ = $1;
+                }
+                | tUMINUS_NUM tINTEGER %prec tLOWEST {
+                     $$ = support.negateInteger($2);
+                }
+                | tUMINUS_NUM tFLOAT %prec tLOWEST {
+                     $$ = support.negateFloat($2);
+                }
+
 // [!null]
-variable        : tCONSTANT | tCVAR
+variable        : tIDENTIFIER | tIVAR | tGVAR | tCONSTANT | tCVAR
                 | kNIL {
                     $$ = new Token("nil", Tokens.kNIL, $1.getPosition());
                 }
@@ -1686,28 +1521,12 @@ variable        : tCONSTANT | tCVAR
                 | k__ENCODING__ {
                     $$ = new Token("__ENCODING__", Tokens.k__ENCODING__, $1.getPosition());
                 }
-"""
 
+// [!null]
+var_ref         : variable {
+                    $$ = support.gettable($1);
+                }
 
-@pg.production("variable : IDENTIFIER")
-def variable_identifier(p):
-    return BoxAST(ast.Variable(p[0].getstr(), p[0].getsourcepos().lineno))
-
-
-@pg.production("variable : GLOBAL")
-def variable_global(p):
-    return BoxAST(ast.Global(p[0].getstr()))
-
-
-@pg.production("variable : INSTANCE_VAR")
-def variable_instance_Var(p):
-    return BoxAST(ast.InstanceVariable(p[0].getstr()))
-
-
-@pg.production("var_ref : variable")
-def var_ref(p):
-    return p[0]
-"""
 // [!null]
 var_lhs         : variable {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
@@ -1732,18 +1551,18 @@ superclass      : term {
                 | error term {
                    $$ = null;
                 }
-"""
 
+// [!null]
+// ENEBO: Look at command_start stuff I am ripping out
+f_arglist       : tLPAREN2 f_args rparen {
+                    $$ = $2;
+                    $<ISourcePositionHolder>$.setPosition($1.getPosition());
+                    lexer.setState(LexState.EXPR_BEG);
+                }
+                | f_args term {
+                    $$ = $1;
+                }
 
-@pg.production("f_arglist : LPAREN f_args rparen")
-def f_arglist(p):
-    return p[1]
-
-
-@pg.production("f_arglist : f_args term")
-def f_arglist_no_paren(p):
-    return p[0]
-"""
 // [!null]
 f_args          : f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
@@ -1787,13 +1606,10 @@ f_args          : f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
                 | f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
-"""
+                | /* none */ {
+                    $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
+                }
 
-
-@pg.production("f_args : ")
-def f_args_empty(p):
-    return BoxASTList([])
-"""
 f_bad_arg       : tCONSTANT {
                     support.yyerror("formal argument cannot be a constant");
                 }
@@ -1809,12 +1625,17 @@ f_bad_arg       : tCONSTANT {
 
 // Token:f_norm_arg [!null]
 f_norm_arg      : f_bad_arg
-"""
-@pg.production("f_norm_arg : IDENTIFIER")
-def f_norm_arg(p):
-    return BoxAST(ast.Argument(p[0]))
-"""
-f_arg_item      : tLPAREN f_margs rparen {
+                | tIDENTIFIER {
+                    $$ = support.formal_argument($1);
+                }
+
+f_arg_item      : f_norm_arg {
+                    $$ = support.arg_var($1);
+  /*
+                    $$ = new ArgAuxiliaryNode($1.getPosition(), (String) $1.getValue(), 1);
+  */
+                }
+                | tLPAREN f_margs rparen {
                     $$ = $2;
                     /*          {
             ID tid = internal_id();
@@ -1828,77 +1649,73 @@ f_arg_item      : tLPAREN f_margs rparen {
             $$ = NEW_ARGS_AUX(tid, 1);
             $$->nd_next = $2;*/
                 }
-"""
-@pg.production("f_arg_item : f_norm_arg")
-def f_arg_item_norm(p):
-    return p[0]
 
+// [!null]
+f_arg           : f_arg_item {
+                    $$ = new ArrayNode(lexer.getPosition(), $1);
+                }
+                | f_arg ',' f_arg_item {
+                    $1.add($3);
+                    $$ = $1;
+                }
 
-@pg.production("f_arg : f_arg_item")
-def f_arg(p):
-    return BoxASTList([p[0].getast()])
-
-
-@pg.production("f_arg : f_arg COMMA f_arg_item")
-def f_arg_args(p):
-    return BoxASTList(p[0].getlist() + [p[2].getast()])
-"""
 f_opt           : tIDENTIFIER '=' arg_value {
                     support.arg_var(support.formal_argument($1));
                     $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
                 }
-"""
 
-@pg.production("f_block_opt : IDENTIFIER EQ primary_value")
-def f_block_opt(p):
-    return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
+f_block_opt     : tIDENTIFIER '=' primary_value {
+                    support.arg_var(support.formal_argument($1));
+                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
+                }
 
+f_block_optarg  : f_block_opt {
+                    $$ = new BlockNode($1.getPosition()).add($1);
+                }
+                | f_block_optarg ',' f_block_opt {
+                    $$ = support.appendToBlock($1, $3);
+                }
 
-@pg.production("f_block_optarg : f_block_opt")
-def f_block_optargs_opt(p):
-    raise NotImplementedError(p)
-
-
-@pg.production("f_block_optarg : f_block_optarg COMMA f_block_opt")
-def f_block_optargs(p):
-    raise NotImplementedError(p)
-"""
 f_optarg        : f_opt {
                     $$ = new BlockNode($1.getPosition()).add($1);
                 }
                 | f_optarg ',' f_opt {
                     $$ = support.appendToBlock($1, $3);
                 }
-"""
-@pg.production("restarg_mark : UNARY_STAR")
-def restarg_mark(p):
-    return p[0]
 
-@pg.production("f_rest_arg : restarg_mark IDENTIFIER")
-@pg.production("f_rest_arg : restarg_mark")
-def f_rest_arg(p):
-    raise NotImplementedError(p)
+restarg_mark    : tSTAR2 | tSTAR
 
+// [!null]
+f_rest_arg      : restarg_mark tIDENTIFIER {
+                    if (!support.is_local_id($2)) {
+                        support.yyerror("rest argument must be local variable");
+                    }
 
-@pg.production("blkarg_mark : AMP")
-def blkarg_mark(p):
-    return p[0]
+                    $$ = new RestArgNode(support.arg_var(support.shadowing_lvar($2)));
+                }
+                | restarg_mark {
+                    $$ = new UnnamedRestArgNode($1.getPosition(), "", support.getCurrentScope().addVariable("*"));
+                }
 
+// [!null]
+blkarg_mark     : tAMPER2 | tAMPER
 
-@pg.production("f_block_arg : blkarg_mark IDENTIFIER")
-def f_block_arg(p):
-    raise NotImplementedError(p)
+// f_block_arg - Block argument def for function (foo(&block)) [!null]
+f_block_arg     : blkarg_mark tIDENTIFIER {
+                    if (!support.is_local_id($2)) {
+                        support.yyerror("block argument must be local variable");
+                    }
 
+                    $$ = new BlockArgNode(support.arg_var(support.shadowing_lvar($2)));
+                }
 
-@pg.production("opt_f_block_arg : COMMA f_block_arg")
-def opt_f_block_arg(p):
-    return p[1]
+opt_f_block_arg : ',' f_block_arg {
+                    $$ = $2;
+                }
+                | /* none */ {
+                    $$ = null;
+                }
 
-
-@pg.production("opt_f_block_arg :")
-def opt_f_block_arg_empty(p):
-    return None
-"""
 singleton       : var_ref {
                     if (!($1 instanceof SelfNode)) {
                         support.checkExpression($1);
@@ -1946,75 +1763,46 @@ assoc           : arg_value tASSOC arg_value {
                     ISourcePosition pos = $1.getPosition();
                     $$ = support.newArrayNode(pos, new SymbolNode(pos, (String) $1.getValue())).add($2);
                 }
-"""
 
-
-@pg.production("operation : IDENTIFIER")
-def operation(p):
-    return p[0]
-"""
-operation       : tCONSTANT | tFID
-operation2      : tCONSTANT | tFID | op
-"""
-
-
-@pg.production("operation2 : IDENTIFIER")
-def operation2(p):
-    return p[0]
-"""
+operation       : tIDENTIFIER | tCONSTANT | tFID
+operation2      : tIDENTIFIER | tCONSTANT | tFID | op
 operation3      : tIDENTIFIER | tFID | op
 dot_or_colon    : tDOT | tCOLON2
+opt_terms       : /* none */ | terms
+opt_nl          : /* none */ | '\n'
+rparen          : opt_nl tRPAREN {
+                    $$ = $2;
+                }
+rbracket        : opt_nl tRBRACK {
+                    $$ = $2;
+                }
+trailer         : /* none */ | '\n' | ','
+
+term            : ';'
+                | '\n'
+
+terms           : term
+                | terms ';'
+
+none            : /* none */ {
+                      $$ = null;
+                }
+
+none_block_pass : /* none */ {
+                  $$ = null;
+                }
+
+
 """
+    parser = pg.build()
 
 
-@pg.production("opt_terms : terms")
-@pg.production("opt_terms : none")
-def opt_terms(p):
-    return None
+class LexerWrapper(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
 
-
-@pg.production("opt_nl : none")
-@pg.production("opt_nl : NEWLINE")
-def opt_nl(p):
-    return None
-
-
-@pg.production("rparen : opt_nl RPAREN")
-def rparen(p):
-    return None
-
-
-@pg.production("rbracket : opt_nl RBRACKET")
-def rbracket(p):
-    return None
-
-
-@pg.production("trailer : NEWLINE")
-@pg.production("trailer : COMMA")
-@pg.production("trailer :")
-def trailer(p):
-    return None
-
-
-@pg.production("term : SEMICOLON")
-@pg.production("term : NEWLINE")
-def term(p):
-    return None
-
-
-@pg.production("terms : term")
-@pg.production("terms : terms SEMICOLON")
-def terms(p):
-    return None
-
-
-@pg.production("none :")
-def none(p):
-    return None
-
-
-@pg.production("none_block_pass :")
-def none_block_pass(p):
-    return None
-
-parser = pg.build()
+    def next(self):
+        try:
+            return self.lexer.next()
+        except StopIteration:
+            return None
