@@ -371,23 +371,31 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// Node:expr *CURRENT* all but arg so far
-expr            : command_call
-                | expr kAND expr {
-                    $$ = support.newAndNode($2.getPosition(), $1, $3);
-                }
-                | expr kOR expr {
-                    $$ = support.newOrNode($2.getPosition(), $1, $3);
-                }
-                | kNOT opt_nl expr {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
-                }
-                | tBANG command_call {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
-                }
-                | arg
+    @pg.production("expr : command_call")
+    def expr_command_call(self, p):
+        return p[0]
 
+    @pg.production("expr : expr AND expr")
+    def expr_and(self, p):
+        return self.new_and(p[0], p[2])
+
+    @pg.production("expr : expr OR expr")
+    def expr_or(self, p):
+        return self.new_or(p[0], p[2])
+
+    @pg.production("expr : NOT opt_nl expr")
+    def expr_not(self, p):
+        return BoxAST(ast.Not(p[2].getast()))
+
+    @pg.production("expr : BAND command_call")
+    def expr_bang_command_call(self, p):
+        return BoxAST(ast.Not(p[2].getast()))
+
+    @pg.production("expr : arg")
+    def expr_arg(self, p):
+        return p[0]
+
+    """
 expr_value      : expr {
                     support.checkExpression($1);
                 }
