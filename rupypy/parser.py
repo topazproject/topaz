@@ -131,19 +131,23 @@ compstmt        : stmts opt_terms {
                 }
         """
 
+    @pg.production("stmts : none")
+    def stmts_none(self, p):
+        return p[0]
+
+    @pg.production("stmts : stmt")
+    def stmts_stmt(self, p):
+        return self.new_list(p[0])
+
+    @pg.production("stmts : stmts term stmt")
+    def stmts(self, p):
+        return self.append_to_list(p[0], p[2])
+
+    @pg.production("stmts : error stmt")
+    def stmts_error(self, p):
+        return p[1]
+
     """
-
-stmts           : none
-                | stmt {
-                    $$ = support.newline_node($1, support.getPosition($1));
-                }
-                | stmts terms stmt {
-                    $$ = support.appendToBlock($1, support.newline_node($3, support.getPosition($3)));
-                }
-                | error stmt {
-                    $$ = $2;
-                }
-
 stmt            : kALIAS fitem {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fitem {
