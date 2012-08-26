@@ -444,15 +444,18 @@ kALIAS tGVAR tGVAR {
 
         """
 
-    """
-// :brace_block - [!null]
-cmd_brace_block : tLBRACE_ARG {
+    @pg.production("cmd_brace_block : LBRACE_ARG opt_block_param compstmt RCURLY")
+    def cmd_brace_block(self, p):
+        """
+        tLBRACE_ARG {
                     support.pushBlockScope();
                 } opt_block_param compstmt tRCURLY {
                     $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
                     support.popCurrentScope();
                 }
+        """
 
+    """
 // Node:command - fcall/call/yield/super [!null]
 command        : operation command_args %prec tLOWEST {
                     $$ = support.new_fcall($1, $2, null);
