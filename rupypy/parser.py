@@ -17,7 +17,7 @@ class Parser(object):
         ("right", ["NOT"]),
         ("nonassoc", ["DEFINED"]),
         ("right", ["LITERAL_EQUAL", "OP_ASGN"]),
-        ("left", "RESCUE_MOD"),
+        ("left", ["RESCUE_MOD"]),
         ("right", ["LITERAL_QUESTION_MARK", "LITERAL_COLON"]),
         ("nonassoc", ["DOT2", "DOT3"]),
         ("left", ["OROP"]),
@@ -28,13 +28,15 @@ class Parser(object):
         ("left", ["AMPER2"]),
         ("left", ["LSHFT", "RSHFT"]),
         ("left", ["PLUS", "MINUS"]),
-        ("left", ["STAR2", "DIVIDE", "PERCENT"])
+        ("left", ["STAR2", "DIVIDE", "PERCENT"]),
         ("right", ["UMINUS_NUM", "UMINUS"]),
         ("right", ["POW"]),
-        ("rigth", ["BANG", "TILDE", "UPLUS"]),
+        ("right", ["BANG", "TILDE", "UPLUS"]),
     ])
-"""
-%%
+
+    @pg.production("program : top_compstmt")
+    def program(self, p):
+        """
 program       : {
                   lexer.setState(LexState.EXPR_BEG);
                   support.initTopLocalVariables();
@@ -50,25 +52,36 @@ program       : {
                   }
                   support.getResult().setAST(support.addRootNode($2, support.getPosition($2)));
               }
+        """
 
+    @pg.production("top_compstmt : top_stmts opt_terms")
+    def top_compstmt(self, p):
+        """
 top_compstmt  : top_stmts opt_terms {
                   if ($1 instanceof BlockNode) {
                       support.checkUselessStatements($<BlockNode>1);
                   }
                   $$ = $1;
               }
+        """
 
-top_stmts     : none
-              | top_stmt {
-                    $$ = support.newline_node($1, support.getPosition($1));
-              }
-              | top_stmts terms top_stmt {
-                    $$ = support.appendToBlock($1, support.newline_node($3, support.getPosition($3)));
-              }
-              | error top_stmt {
-                    $$ = $2;
-              }
+    @pg.production("top_stmts : none")
+    def top_stmts_none(self, p):
+        return p[0]
 
+    @pg.production("top_stmts : top_stmt")
+    def top_stmts_top_stmt(self, p):
+        return self.new_list(p[0])
+
+    @pg.production("top_stmts : top_stmts terms top_stmt")
+    def top_stmts(self, p):
+        return self.append_to_list(p[0], p[2])
+
+    @pg.production("top_stmts : error top_stmt")
+    def top_stmts_error(self, p):
+        return p[1]
+
+    """
 top_stmt      : stmt
               | klBEGIN {
                     if (support.isInDef() || support.isInSingle()) {
@@ -1793,7 +1806,7 @@ none_block_pass : /* none */ {
                 }
 
 
-"""
+    """
     parser = pg.build()
 
 
