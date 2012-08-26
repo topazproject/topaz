@@ -455,33 +455,63 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// Node:command - fcall/call/yield/super [!null]
-command        : operation command_args %prec tLOWEST {
+    @pg.production("command : operation command_args", precedence="LOWEST")
+    def command_operation_command_args(self, p):
+        """
+        operation command_args %prec tLOWEST {
                     $$ = support.new_fcall($1, $2, null);
                 }
-                | operation command_args cmd_brace_block {
+        """
+
+    @pg.production("command : operation command_args cmd_brace_block")
+    def command_operation_command_args_cmd_brace_block(self, p):
+        """
+        operation command_args cmd_brace_block {
                     $$ = support.new_fcall($1, $2, $3);
                 }
-                | primary_value tDOT operation2 command_args %prec tLOWEST {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-                | primary_value tDOT operation2 command_args cmd_brace_block {
-                    $$ = support.new_call($1, $3, $4, $5);
-                }
-                | primary_value tCOLON2 operation2 command_args %prec tLOWEST {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-                | primary_value tCOLON2 operation2 command_args cmd_brace_block {
-                    $$ = support.new_call($1, $3, $4, $5);
-                }
-                | kSUPER command_args {
-                    $$ = support.new_super($2, $1); // .setPosFrom($2);
-                }
-                | kYIELD command_args {
-                    $$ = support.new_yield($1.getPosition(), $2);
-                }
+        """
 
+    @pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
+    def command_method_call_args(self, p):
+        """
+        primary_value tDOT operation2 command_args %prec tLOWEST {
+                    $$ = support.new_call($1, $3, $4, null);
+                }
+        """
+
+    @pg.production("command : primary_value DOT operation2 command_args cmd_brace_block")
+    def command_method_call_args_brace_block(self, p):
+        """
+        primary_value tDOT operation2 command_args cmd_brace_block {
+                    $$ = support.new_call($1, $3, $4, $5);
+                }
+        """
+
+    @pg.production("command : primary_value COLON2 operation2 command_args", precedence="LOWEST")
+    def command_colon_call_args(self, p):
+        """
+        primary_value tCOLON2 operation2 command_args %prec tLOWEST {
+                    $$ = support.new_call($1, $3, $4, null);
+                }
+        """
+
+    @pg.production("command : primary_value COLON2 operation2 command_args cmd_brace_block")
+    def command_colon_call_args_brace_block(self, p):
+        """
+        primary_value tCOLON2 operation2 command_args cmd_brace_block {
+                    $$ = support.new_call($1, $3, $4, $5);
+                }
+        """
+
+    @pg.production("command : SUPER command_args")
+    def command_super(self, p):
+        return self.new_super(p[1])
+
+    @pg.production("command : YIELD command_args")
+    def command_yield(self, p):
+        return self.new_yield(p[1])
+
+    """
 // MultipleAssig19Node:mlhs - [!null]
 mlhs            : mlhs_basic
                 | tLPAREN mlhs_inner rparen {
