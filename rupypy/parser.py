@@ -640,15 +640,15 @@ kALIAS tGVAR tGVAR {
     def mlhs_item_paren(self, p):
         return p[1]
 
-    """
-// Set of mlhs terms at front of mlhs (a, *b, d, e = arr  # a is head)
-mlhs_head       : mlhs_item ',' {
-                    $$ = support.newArrayNode($1.getPosition(), $1);
-                }
-                | mlhs_head mlhs_item ',' {
-                    $$ = $1.add($2);
-                }
+    @pg.production("mlhs_head : mlhs_item COMMA")
+    def mlhs_head_item(self, p):
+        return self.new_list(p[0])
 
+    @pg.production("mlhs_head : mlhs_head mlhs_item COMMA")
+    def mlhs_head_head_item(self, p):
+        return self.append_to_list(p[0], p[1])
+
+    """
 // Set of mlhs terms at end of mlhs (a, *b, d, e = arr  # d,e is post)
 mlhs_post       : mlhs_item {
                     $$ = support.newArrayNode($1.getPosition(), $1);
