@@ -656,24 +656,50 @@ kALIAS tGVAR tGVAR {
     def mlhs_post_post_item(self, p):
         return self.append_to_list(p[0], p[2])
 
-
-    """
-mlhs_node       : variable {
+    @pg.production("mlhs_node : variable")
+    def mlhs_node_variable(self, p):
+        """
+        variable {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
-                | primary_value '[' opt_call_args rbracket {
+        """
+
+    @pg.production("mlhs_node : primary_value LITERAL_LBRACKET opt_call_args rbracket")
+    def mlhs_node_subscript(self, p):
+        """
+        primary_value '[' opt_call_args rbracket {
                     $$ = support.aryset($1, $3);
                 }
-                | primary_value tDOT tIDENTIFIER {
+        """
+
+    @pg.production("mlhs_node : primary_value DOT IDENTIFIER")
+    def mlhs_node_attr(self, p):
+        """
+        primary_value tDOT tIDENTIFIER {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
-                | primary_value tCOLON2 tIDENTIFIER {
+        """
+
+    @pg.production("mlhs_node : primary_value COLON2 IDENTIFIER")
+    def mlhs_node_colon_attr(self, p):
+        """
+        primary_value tCOLON2 tIDENTIFIER {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
-                | primary_value tDOT tCONSTANT {
+        """
+
+    @pg.production("mlhs_node : primary_value DOT CONSTANT")
+    def mlhs_node_attr_constant(self, p):
+        """
+        primary_value tDOT tCONSTANT {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
-                | primary_value tCOLON2 tCONSTANT {
+        """
+
+    @pg.production("mlhs_node : primary_value COLON2 CONSTANT")
+    def mlhs_node_constant(self, p):
+        """
+        primary_value tCOLON2 tCONSTANT {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("dynamic constant assignment");
                     }
@@ -682,7 +708,12 @@ mlhs_node       : variable {
 
                     $$ = new ConstDeclNode(position, null, support.new_colon2(position, $1, (String) $3.getValue()), NilImplicitNode.NIL);
                 }
-                | tCOLON3 tCONSTANT {
+        """
+
+    @pg.production("mlhs_node : COLON3 CONSTANT")
+    def mlhs_node_colon_constant(self, p):
+        """
+        tCOLON3 tCONSTANT {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("dynamic constant assignment");
                     }
@@ -691,10 +722,17 @@ mlhs_node       : variable {
 
                     $$ = new ConstDeclNode(position, null, support.new_colon3(position, (String) $2.getValue()), NilImplicitNode.NIL);
                 }
-                | backref {
+        """
+
+    @pg.production("mlhs_node : backref")
+    def mlhs_node_backref(self, p):
+        """
+        backref {
                     support.backrefAssignError($1);
                 }
+        """
 
+    """
 lhs             : variable {
                       // if (!($$ = assignable($1, 0))) $$ = NEW_BEGIN(0);
                     $$ = support.assignable($1, NilImplicitNode.NIL);
