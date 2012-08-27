@@ -532,21 +532,27 @@ kALIAS tGVAR tGVAR {
     def command_yield(self, p):
         return self.new_yield(p[1])
 
-    """
-// MultipleAssig19Node:mlhs - [!null]
-mlhs            : mlhs_basic
-                | tLPAREN mlhs_inner rparen {
-                    $$ = $2;
-                }
+    @pg.production("mlhs : mlhs_basic")
+    def mlhs(self, p):
+        return p[0]
 
-// MultipleAssign19Node:mlhs_entry - mlhs w or w/o parens [!null]
-mlhs_inner      : mlhs_basic {
-                    $$ = $1;
-                }
-                | tLPAREN mlhs_inner rparen {
+    @pg.production("mlhs : LPAREN mlhs_inner rparen")
+    def mlhs_paren(self, p):
+        return p[1]
+
+    @pg.production("mlhs_inner : mlhs_basic")
+    def mlhs_inner(self, p):
+        return p[0]
+
+    @pg.production("mlhs_inner : LPAREN mlhs_inner rparen")
+    def mlhs_inner_paren(self, p):
+        """
+        tLPAREN mlhs_inner rparen {
                     $$ = new MultipleAsgn19Node($1.getPosition(), support.newArrayNode($1.getPosition(), $2), null, null);
                 }
+        """
 
+    """
 // MultipleAssign19Node:mlhs_basic - multiple left hand side (basic because used in multiple context) [!null]
 mlhs_basic      : mlhs_head {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
