@@ -632,12 +632,15 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-mlhs_item       : mlhs_node
-                | tLPAREN mlhs_inner rparen {
-                    $$ = $2;
-                }
+    @pg.production("mlhs_item : mlhs_node")
+    def mlhs_item_node(self, p):
+        return p[0]
 
+    @pg.production("mlhs_item : LPAREN mlhs_inner rparen")
+    def mlhs_item_paren(self, p):
+        return p[1]
+
+    """
 // Set of mlhs terms at front of mlhs (a, *b, d, e = arr  # a is head)
 mlhs_head       : mlhs_item ',' {
                     $$ = support.newArrayNode($1.getPosition(), $1);
