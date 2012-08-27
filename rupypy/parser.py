@@ -552,39 +552,87 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// MultipleAssign19Node:mlhs_basic - multiple left hand side (basic because used in multiple context) [!null]
-mlhs_basic      : mlhs_head {
+    @pg.production("mlhs_basic : mlhs_head")
+    def mlhs_basic_mlhs_head(self, p):
+        """
+        mlhs_head {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
                 }
-                | mlhs_head mlhs_item {
+        """
+
+    @pg.production("mlhs_basic : mlhs_head mlhs_item")
+    def mlhs_basic_mlhs_head_mlhs_item(self, p):
+        """
+        mlhs_head mlhs_item {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1.add($2), null, null);
                 }
-                | mlhs_head tSTAR mlhs_node {
+        """
+
+    @pg.production("mlhs_basic : mlhs_head STAR mlhs_node")
+    def mlhs_basic_mlhs_head_star_node(self, p):
+        """
+        mlhs_head tSTAR mlhs_node {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, $3, (ListNode) null);
                 }
-                | mlhs_head tSTAR mlhs_node ',' mlhs_post {
+        """
+
+    @pg.production("mlhs_basic : mlhs_head STAR mlhs_node COMMA mlhs_post")
+    def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
+        """
+        mlhs_head tSTAR mlhs_node ',' mlhs_post {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, $3, $5);
                 }
-                | mlhs_head tSTAR {
+        """
+
+    @pg.production("mlhs_basic : mlhs_head STAR")
+    def mlhs_basic_mlhs_head_star(self, p):
+        """
+        mlhs_head tSTAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
                 }
-                | mlhs_head tSTAR ',' mlhs_post {
+        """
+
+    @pg.production("mlhs_basic : mlhs_head STAR COMMA mlhs_post")
+    def mlhs_basic_mlhs_head_star_comma_post(self, p):
+        """
+        mlhs_head tSTAR ',' mlhs_post {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $4);
                 }
-                | tSTAR mlhs_node {
+        """
+
+    @pg.production("mlhs_basic : STAR mlhs_node")
+    def mlhs_basic_star_mlhs_node(self, p):
+        """
+        tSTAR mlhs_node {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, $2, null);
                 }
-                | tSTAR mlhs_node ',' mlhs_post {
+        """
+
+    @pg.production("mlhs_basic : STAR mlhs_node COMMA mlhs_post")
+    def mlhs_basic_star_mlhs_node_comma_post(self, p):
+        """
+        tSTAR mlhs_node ',' mlhs_post {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, $2, $4);
                 }
-                | tSTAR {
+        """
+
+    @pg.production("mlhs_basic : STAR")
+    def mlhs_basic_star(self, p):
+        """
+        tSTAR {
                       $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
                 }
-                | tSTAR ',' mlhs_post {
+        """
+
+    @pg.production("mlhs_basic : STAR COMMA mlhs_post")
+    def mlhs_basic_star_comma_post(self, p):
+        """
+        tSTAR ',' mlhs_post {
                       $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), $3);
                 }
+        """
 
+    """
 mlhs_item       : mlhs_node
                 | tLPAREN mlhs_inner rparen {
                     $$ = $2;
