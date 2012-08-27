@@ -654,7 +654,7 @@ kALIAS tGVAR tGVAR {
 
     @pg.production("mlhs_post : mlhs_post COMMA mlhs_item")
     def mlhs_post_post_item(self, p):
-        return self.append_to_list(p[0], p[1])
+        return self.append_to_list(p[0], p[2])
 
 
     """
