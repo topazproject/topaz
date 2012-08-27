@@ -648,15 +648,16 @@ kALIAS tGVAR tGVAR {
     def mlhs_head_head_item(self, p):
         return self.append_to_list(p[0], p[1])
 
-    """
-// Set of mlhs terms at end of mlhs (a, *b, d, e = arr  # d,e is post)
-mlhs_post       : mlhs_item {
-                    $$ = support.newArrayNode($1.getPosition(), $1);
-                }
-                | mlhs_post ',' mlhs_item {
-                    $$ = $1.add($3);
-                }
+    @pg.production("mlhs_post : mlhs_item")
+    def mlhs_post_item(self, p):
+        return self.new_list(p[0])
 
+    @pg.production("mlhs_post : mlhs_post COMMA mlhs_item")
+    def mlhs_post_post_item(self, p):
+        return self.append_to_list(p[0], p[1])
+
+
+    """
 mlhs_node       : variable {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
