@@ -9,7 +9,28 @@ class Parser(object):
         l = LexerWrapper(self.lexer.tokenize())
         return self.parser.parse(l, state=self)
 
-    pg = ParserGenerator([], precedence=[
+    pg = ParserGenerator([
+        "CLASS", "MODULE", "DEF", "UNDEF", "BEGIN", "RESCUE", "ENSURE", "END",
+        "IF", "UNLESS", "THEN", "ELSIF", "ELSE", "CASE", "WHEN", "WHILE",
+        "UNTIL", "FOR", "BREAK", "NEXT", "REDO", "RETRY", "IN", "DO",
+        "DO_COND", "DO_BLOCK", "RETURN", "YIELD", "SUPER", "SELF", "NIL",
+        "TRUE", "FALSE", "AND", "OR", "NOT", "IF_MOD", "UNLESS_MOD",
+        "WHILE_MOD", "UNTIL_MOD", "RESCUE_MOD", "ALIAS", "DEFINED",
+        "lBEGIN", "lEND", "__LINE__", "__FILE__", "__ENCODING__", "DO_LAMBDA",
+
+        "IDENTIFIER", "FID", "GVAR", "IVAR", "CONSTANT", "CVAR", "LABEL",
+        "CHAR", "UPLUS", "UMINUS", "UMINUS_NUM", "POW", "CMP", "EQ", "EQQ",
+        "NEQ", "GEQ", "LEQ", "ANDOP", "OROP", "MATCH", "NMATCH", "DOT", "DOT2",
+        "DOT3", "AREF", "ASET", "LSHFT", "RSHFT", "COLON2", "COLON3",
+        "OP_ASGN", "ASSOC", "LPAREN", "LPAREN2", "RPAREN", "LPAREN_ARG",
+        "LBRACK", "RBRACE", "LBRACE", "LBRACE_ARG", "STAR", "STAR2", "AMPER",
+        "AMPER2", "TILDE", "PERCENT", "DIVIDE", "PLUS", "MINUS", "LT", "GT",
+        "PIPE", "BANG", "CARET", "LCURLY", "RCURLY", "BACK_REF2", "SYMBEG",
+        "STRING_BEG", "XSTRING_BEG", "REGEXP_BEG", "WORDS_BEG", "QWORDS_BEG",
+        "STRING_DBEG", "STRING_DVAR", "STRING_END", "LAMBDA", "LAMBEG",
+        "NTH_REF", "BACK_REF", "STRING_CONTENT", "INTEGER", "FLOAT",
+        "REGEXP_END",
+    ], precedence=[
         ("nonassoc", ["LOWEST"]),
         ("nonassoc", ["LBRACE_ARG"]),
         ("nonassoc", ["IF_MOD", "UNLESS_MOD", "WHILE_MOD", "UNTIL_MOD"]),
