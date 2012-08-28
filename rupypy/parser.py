@@ -813,17 +813,31 @@ kALIAS tGVAR tGVAR {
     def cname_constant(self, p):
         return p[0]
 
-    """
-cpath           : tCOLON3 cname {
+    @pg.production("cpath : COLON3 cname")
+    def cpath_unbound_colon_cname(self, p):
+        """
+        tCOLON3 cname {
                     $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
                 }
-                | cname {
+        """
+
+    @pg.production("cpath : cname")
+    def cpath_cname(self, p):
+        """
+        cname {
                     $$ = support.new_colon2($1.getPosition(), null, (String) $1.getValue());
                 }
-                | primary_value tCOLON2 cname {
+        """
+
+    @pg.production("cpath : primary_value COLON2 cname")
+    def cpath_colon_cname(self, p):
+        """
+        primary_value tCOLON2 cname {
                     $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
                 }
+        """
 
+    """
 // Token:fname - A function name [!null]
 fname          : tIDENTIFIER | tCONSTANT | tFID
                | op {
