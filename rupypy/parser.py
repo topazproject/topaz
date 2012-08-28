@@ -933,16 +933,52 @@ kALIAS tGVAR tGVAR {
     def op(self, p):
         return p[0]
 
-    """
-// Token:op
-reswords        : k__LINE__ | k__FILE__ | k__ENCODING__ | klBEGIN | klEND
-                | kALIAS | kAND | kBEGIN | kBREAK | kCASE | kCLASS | kDEF
-                | kDEFINED | kDO | kELSE | kELSIF | kEND | kENSURE | kFALSE
-                | kFOR | kIN | kMODULE | kNEXT | kNIL | kNOT
-                | kOR | kREDO | kRESCUE | kRETRY | kRETURN | kSELF | kSUPER
-                | kTHEN | kTRUE | kUNDEF | kWHEN | kYIELD
-                | kIF_MOD | kUNLESS_MOD | kWHILE_MOD | kUNTIL_MOD | kRESCUE_MOD
+    @pg.production("reswords : __LINE__")
+    @pg.production("reswords : __FILE__")
+    @pg.production("reswords : __ENCODING__")
+    @pg.production("reswords : lBEGIN")
+    @pg.production("reswords : lEND")
+    @pg.production("reswords : ALIAS")
+    @pg.production("reswords : AND")
+    @pg.production("reswords : BEGIN")
+    @pg.production("reswords : BREAK")
+    @pg.production("reswords : CASE")
+    @pg.production("reswords : CLASS")
+    @pg.production("reswords : DEF")
+    @pg.production("reswords : DEFINED")
+    @pg.production("reswords : DO")
+    @pg.production("reswords : ELSE")
+    @pg.production("reswords : ELSIF")
+    @pg.production("reswords : END")
+    @pg.production("reswords : ENSURE")
+    @pg.production("reswords : FALSE")
+    @pg.production("reswords : FOR")
+    @pg.production("reswords : IN")
+    @pg.production("reswords : MODULE")
+    @pg.production("reswords : NEXT")
+    @pg.production("reswords : NIL")
+    @pg.production("reswords : NOT")
+    @pg.production("reswords : OR")
+    @pg.production("reswords : REDO")
+    @pg.production("reswords : RESCUE")
+    @pg.production("reswords : RETRY")
+    @pg.production("reswords : RETURN")
+    @pg.production("reswords : SELF")
+    @pg.production("reswords : SUPER")
+    @pg.production("reswords : THEN")
+    @pg.production("reswords : TRUE")
+    @pg.production("reswords : UNDEF")
+    @pg.production("reswords : WHEN")
+    @pg.production("reswords : YIELD")
+    @pg.production("reswords : IF_MOD")
+    @pg.production("reswords : UNLESS_MOD")
+    @pg.production("reswords : WHILE_MOD")
+    @pg.production("reswords : UNTIL_MOD")
+    @pg.production("reswords : RESCUE_MOD")
+    def reswords(self, p):
+        return p[0]
 
+    """
 arg             : lhs '=' arg {
                     $$ = support.node_assign($1, $3);
                     // FIXME: Consider fixing node_assign itself rather than single case
