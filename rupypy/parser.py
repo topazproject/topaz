@@ -978,18 +978,30 @@ kALIAS tGVAR tGVAR {
     def reswords(self, p):
         return p[0]
 
-    """
-arg             : lhs '=' arg {
+    @pg.production("arg : lhs LITERAL_EQUAL arg")
+    def arg_lhs_equal_arg(self, p):
+        """
+        lhs '=' arg {
                     $$ = support.node_assign($1, $3);
                     // FIXME: Consider fixing node_assign itself rather than single case
                     $<Node>$.setPosition(support.getPosition($1));
                 }
-                | lhs '=' arg kRESCUE_MOD arg {
+        """
+
+    @pg.production("arg : lhs LITERAL_EQUAL arg RESCUE_MOD arg")
+    def arg_lhs_equal_arg_rescue_mod(self, p):
+        """
+        lhs '=' arg kRESCUE_MOD arg {
                     ISourcePosition position = $4.getPosition();
                     Node body = $5 == null ? NilImplicitNode.NIL : $5;
                     $$ = support.node_assign($1, new RescueNode(position, $3, new RescueBodyNode(position, null, body, null), null));
                 }
-                | var_lhs tOP_ASGN arg {
+        """
+
+    @pg.production("argb : var_lhs OP_ASGN arg")
+    def arg_var_lhs_op_asgn_arg(self, p):
+        """
+        var_lhs tOP_ASGN arg {
                     support.checkExpression($3);
 
                     ISourcePosition pos = $1.getPosition();
@@ -1006,7 +1018,12 @@ arg             : lhs '=' arg {
                         $$ = $1;
                     }
                 }
-                | var_lhs tOP_ASGN arg kRESCUE_MOD arg {
+        """
+
+    @pg.production("arg : var_lhs OP_ASGN arg RESCUE_MOD arg")
+    def arg_var_lhs_op_asgn_arg_rescue_mod(self, p):
+        """
+        var_lhs tOP_ASGN arg kRESCUE_MOD arg {
                     support.checkExpression($3);
                     ISourcePosition pos = $4.getPosition();
                     Node body = $5 == null ? NilImplicitNode.NIL : $5;
@@ -1028,106 +1045,125 @@ arg             : lhs '=' arg {
 
                     $$ = new RescueNode($4.getPosition(), rest, new RescueBodyNode($4.getPosition(), null, body, null), null);
                 }
-                | primary_value '[' opt_call_args rbracket tOP_ASGN arg {
+        """
+
+    @pg.production("arg : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN arg")
+    def arg_subscript_op_asgn_arg(self, p):
+        """
+        primary_value '[' opt_call_args rbracket tOP_ASGN arg {
   // FIXME: arg_concat missing for opt_call_args
                     $$ = support.new_opElementAsgnNode(support.getPosition($1), $1, (String) $5.getValue(), $3, $6);
                 }
-                | primary_value tDOT tIDENTIFIER tOP_ASGN arg {
+        """
+
+    @pg.production("arg : primary_value DOT IDENTIFIER OP_ASGN arg")
+    def arg_method_op_asgn_arg(self, p):
+        """
+        primary_value tDOT tIDENTIFIER tOP_ASGN arg {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
-                | primary_value tDOT tCONSTANT tOP_ASGN arg {
+        """
+
+    @pg.production("arg : primary_value DOT CONSTANT OP_ASGN arg")
+    def arg_method_constant_op_asgn_arg(self, p):
+        """
+        primary_value tDOT tCONSTANT tOP_ASGN arg {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
-                | primary_value tCOLON2 tIDENTIFIER tOP_ASGN arg {
+        """
+
+    @pg.production("arg : primary_value COLON2 IDENTIFIER OP_ASGN arg")
+    def arg_colon_method_op_asgn_arg(self, p):
+        """
+        primary_value tCOLON2 tIDENTIFIER tOP_ASGN arg {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
-                | primary_value tCOLON2 tCONSTANT tOP_ASGN arg {
-                    support.yyerror("constant re-assignment");
-                }
-                | tCOLON3 tCONSTANT tOP_ASGN arg {
-                    support.yyerror("constant re-assignment");
-                }
-                | backref tOP_ASGN arg {
-                    support.backrefAssignError($1);
-                }
-                | arg tDOT2 arg {
+        """
+
+    @pg.production("arg : primary_value COLON2 CONSTANT OP_ASGN arg")
+    def arg_constant_op_asgn_arg(self, p):
+        raise self.error(p[2], "constant re-assignment")
+
+    @pg.production("arg : COLON3 CONSTANT OP_ASGN arg")
+    def arg_unbound_constant_op_asgn_arg(self, p):
+        raise self.error(p[2], "constant re-assignment")
+
+    @pg.production("arg : backref OP_ASGN arg")
+    def arg_backref_op_asgn_arg(self, p):
+        self.backref_assign_error()
+
+    @pg.production("arg : arg DOT2 arg")
+    def arg_dot2(self, p):
+        """
+        arg tDOT2 arg {
                     support.checkExpression($1);
                     support.checkExpression($3);
 
                     boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
                     $$ = new DotNode(support.getPosition($1), $1, $3, false, isLiteral);
                 }
-                | arg tDOT3 arg {
+        """
+
+    @pg.production("arg : arg DOT3 arg")
+    def arg_dot3(self, p):
+        """
+        arg tDOT3 arg {
                     support.checkExpression($1);
                     support.checkExpression($3);
 
                     boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
                     $$ = new DotNode(support.getPosition($1), $1, $3, true, isLiteral);
                 }
-                | arg tPLUS arg {
-                    $$ = support.getOperatorCallNode($1, "+", $3, lexer.getPosition());
-                }
-                | arg tMINUS arg {
-                    $$ = support.getOperatorCallNode($1, "-", $3, lexer.getPosition());
-                }
-                | arg tSTAR2 arg {
-                    $$ = support.getOperatorCallNode($1, "*", $3, lexer.getPosition());
-                }
-                | arg tDIVIDE arg {
-                    $$ = support.getOperatorCallNode($1, "/", $3, lexer.getPosition());
-                }
-                | arg tPERCENT arg {
-                    $$ = support.getOperatorCallNode($1, "%", $3, lexer.getPosition());
-                }
-                | arg tPOW arg {
-                    $$ = support.getOperatorCallNode($1, "**", $3, lexer.getPosition());
-                }
-                | tUMINUS_NUM tINTEGER tPOW arg {
+        """
+
+    @pg.production("arg : arg POW arg")
+    @pg.production("arg : arg PERCENT arg")
+    @pg.production("arg : arg DIVIDE arg")
+    @pg.production("arg : arg STAR2 arg")
+    @pg.production("arg : arg MINUS arg")
+    @pg.production("arg : arg PLUS arg")
+    def arg_binop(self, p):
+        return self.new_binary_call(p[0], p[1], p[2])
+
+    @pg.production("arg : UMINUS_NUM INTEGER POW arg")
+    def arg_uminus_num_integer_pow_arg(self, p):
+        """
+        tUMINUS_NUM tINTEGER tPOW arg {
                     $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
                 }
-                | tUMINUS_NUM tFLOAT tPOW arg {
+        """
+
+    @pg.production("arg : UMINUS_NUM FLOAT POW arg")
+    def arg_uminus_num_float_pow_arg(self, p):
+        """
+        tUMINUS_NUM tFLOAT tPOW arg {
                     $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
                 }
-                | tUPLUS arg {
-                    $$ = support.getOperatorCallNode($2, "+@");
-                }
-                | tUMINUS arg {
-                    $$ = support.getOperatorCallNode($2, "-@");
-                }
-                | arg tPIPE arg {
-                    $$ = support.getOperatorCallNode($1, "|", $3, lexer.getPosition());
-                }
-                | arg tCARET arg {
-                    $$ = support.getOperatorCallNode($1, "^", $3, lexer.getPosition());
-                }
-                | arg tAMPER2 arg {
-                    $$ = support.getOperatorCallNode($1, "&", $3, lexer.getPosition());
-                }
-                | arg tCMP arg {
-                    $$ = support.getOperatorCallNode($1, "<=>", $3, lexer.getPosition());
-                }
-                | arg tGT arg {
-                    $$ = support.getOperatorCallNode($1, ">", $3, lexer.getPosition());
-                }
-                | arg tGEQ arg {
-                    $$ = support.getOperatorCallNode($1, ">=", $3, lexer.getPosition());
-                }
-                | arg tLT arg {
-                    $$ = support.getOperatorCallNode($1, "<", $3, lexer.getPosition());
-                }
-                | arg tLEQ arg {
-                    $$ = support.getOperatorCallNode($1, "<=", $3, lexer.getPosition());
-                }
-                | arg tEQ arg {
-                    $$ = support.getOperatorCallNode($1, "==", $3, lexer.getPosition());
-                }
-                | arg tEQQ arg {
-                    $$ = support.getOperatorCallNode($1, "===", $3, lexer.getPosition());
-                }
-                | arg tNEQ arg {
-                    $$ = support.getOperatorCallNode($1, "!=", $3, lexer.getPosition());
-                }
-                | arg tMATCH arg {
+        """
+
+    @pg.production("arg : UMINUS arg")
+    @pg.production("arg : UPLUS arg")
+    def arg_uplus_arg(self, p):
+        return self.new_unary_call(p[0], p[1])
+
+    @pg.production("arg : arg NEQ arg")
+    @pg.production("arg : arg EQQ arg")
+    @pg.production("arg : arg EQ arg")
+    @pg.production("arg : arg LEQ")
+    @pg.production("arg : arg LT")
+    @pg.production("arg : arg GEQ")
+    @pg.production("arg : arg GT arg")
+    @pg.production("arg : arg CMP arg")
+    @pg.production("arg : arg AMPER2 arg")
+    @pg.production("arg : arg CARET arg")
+    @pg.production("arg : arg PIPE arg")
+    def arg_binop2(self, p):
+        return self.new_binary_call(p[0], p[1], p[2])
+
+    @pg.production("arg : arg MATCH arg")
+    def arg_match_arg(self, p):
+        """
+        arg tMATCH arg {
                     $$ = support.getMatchNode($1, $3);
                   /* ENEBO
                         $$ = match_op($1, $3);
@@ -1136,38 +1172,63 @@ arg             : lhs '=' arg {
                         }
                   */
                 }
-                | arg tNMATCH arg {
+        """
+
+    @pg.production("arg : arg NMATCH arg")
+    def arg_nmatch_arg(self, p):
+        """
+        arg tNMATCH arg {
                     $$ = support.getOperatorCallNode($1, "!~", $3, lexer.getPosition());
                 }
-                | tBANG arg {
+        """
+
+    @pg.production("arg : BANG arg")
+    def arg_bang_arg(self, p):
+        """
+        tBANG arg {
                     $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
                 }
-                | tTILDE arg {
-                    $$ = support.getOperatorCallNode($2, "~");
-                }
-                | arg tLSHFT arg {
-                    $$ = support.getOperatorCallNode($1, "<<", $3, lexer.getPosition());
-                }
-                | arg tRSHFT arg {
-                    $$ = support.getOperatorCallNode($1, ">>", $3, lexer.getPosition());
-                }
-                | arg tANDOP arg {
-                    $$ = support.newAndNode($2.getPosition(), $1, $3);
-                }
-                | arg tOROP arg {
-                    $$ = support.newOrNode($2.getPosition(), $1, $3);
-                }
-                | kDEFINED opt_nl arg {
+        """
+
+    @pg.production("arg : TILDE arg")
+    def arg_tilde_arg(self, p):
+        return self.new_unary_call(p[0], p[1])
+
+    @pg.production("arg : arg RSHFT arg")
+    @pg.production("arg : arg LSHFT arg")
+    def arg_binop3(self, p):
+        return self.new_binary_call(p[0], p[1], p[2])
+
+    @pg.production("arg : arg ANDOP arg")
+    def arg_andop_arg(self, p):
+        return self.new_and(p[0], p[2])
+
+    @pg.production("arg : arg OROP arg")
+    def arg_orop_arg(self, p):
+        return self.new_or(p[0], p[2])
+
+    @pg.production("arg : DEFINED opt_nl arg")
+    def arg_defined(self, p):
+        """
+        kDEFINED opt_nl arg {
                     // ENEBO: arg surrounded by in_defined set/unset
                     $$ = new DefinedNode($1.getPosition(), $3);
                 }
-                | arg '?' arg opt_nl ':' arg {
+        """
+
+    @pg.production("arg : arg LITERAL_QUESTION_MARK arg opt_nl LITERAL_COLON arg")
+    def arg_ternary(self, p):
+        """
+        arg '?' arg opt_nl ':' arg {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($1), $3, $6);
                 }
-                | primary {
-                    $$ = $1;
-                }
+        """
 
+    @pg.production("arg : primary")
+    def arg_primary(self, p):
+        return p[0]
+
+    """
 arg_value       : arg {
                     support.checkExpression($1);
                     $$ = $1 != null ? $1 : NilImplicitNode.NIL;
