@@ -576,7 +576,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("mlhs_basic : mlhs_head STAR mlhs_node COMMA mlhs_post")
+    @pg.production("mlhs_basic : mlhs_head STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
         """
         mlhs_head tSTAR mlhs_node ',' mlhs_post {
@@ -592,7 +592,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("mlhs_basic : mlhs_head STAR COMMA mlhs_post")
+    @pg.production("mlhs_basic : mlhs_head STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_comma_post(self, p):
         """
         mlhs_head tSTAR ',' mlhs_post {
@@ -608,7 +608,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("mlhs_basic : STAR mlhs_node COMMA mlhs_post")
+    @pg.production("mlhs_basic : STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_mlhs_node_comma_post(self, p):
         """
         tSTAR mlhs_node ',' mlhs_post {
@@ -624,7 +624,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("mlhs_basic : STAR COMMA mlhs_post")
+    @pg.production("mlhs_basic : STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_comma_post(self, p):
         """
         tSTAR ',' mlhs_post {
@@ -640,11 +640,11 @@ kALIAS tGVAR tGVAR {
     def mlhs_item_paren(self, p):
         return p[1]
 
-    @pg.production("mlhs_head : mlhs_item COMMA")
+    @pg.production("mlhs_head : mlhs_item LITERAL_COMMA")
     def mlhs_head_item(self, p):
         return self.new_list(p[0])
 
-    @pg.production("mlhs_head : mlhs_head mlhs_item COMMA")
+    @pg.production("mlhs_head : mlhs_head mlhs_item LITERAL_COMMA")
     def mlhs_head_head_item(self, p):
         return self.append_to_list(p[0], p[1])
 
@@ -652,7 +652,7 @@ kALIAS tGVAR tGVAR {
     def mlhs_post_item(self, p):
         return self.new_list(p[0])
 
-    @pg.production("mlhs_post : mlhs_post COMMA mlhs_item")
+    @pg.production("mlhs_post : mlhs_post LITERAL_COMMA mlhs_item")
     def mlhs_post_post_item(self, p):
         return self.append_to_list(p[0], p[2])
 
@@ -891,7 +891,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("undef_list : undef_list COMMA fitem")
+    @pg.production("undef_list : undef_list LITERAL_COMMA fitem")
     def undef_list_undef_list(self, p):
         """
         undef_list ',' {
@@ -1228,23 +1228,40 @@ kALIAS tGVAR tGVAR {
     def arg_primary(self, p):
         return p[0]
 
-    """
-arg_value       : arg {
+    @pg.production("arg_value : arg")
+    def arg_value(self, p):
+        """
+        arg {
                     support.checkExpression($1);
                     $$ = $1 != null ? $1 : NilImplicitNode.NIL;
                 }
+        """
 
-aref_args       : none
-                | args trailer {
-                    $$ = $1;
-                }
-                | args ',' assocs trailer {
+    @pg.production("aref_args : none")
+    def aref_args_none(self, p):
+        return p[0]
+
+    @pg.production("aref_args : args trailer")
+    def aref_args_args_trailer(self, p):
+        return p[0]
+
+    @pg.production("aref_args : args LITERAL_COMMA assocs trailer")
+    def aref_args_args_comma_assocs_trailer(self, p):
+        """
+        args ',' assocs trailer {
                     $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
                 }
-                | assocs trailer {
+        """
+
+    @pg.production("aref_args : assocs trailer")
+    def aref_args_assocs_trailer(self, p):
+        """
+        assocs trailer {
                     $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
                 }
+        """
 
+    """
 paren_args      : tLPAREN2 opt_call_args rparen {
                     $$ = $2;
                     if ($$ != null) $<Node>$.setPosition($1.getPosition());
