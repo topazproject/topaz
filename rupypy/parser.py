@@ -901,13 +901,39 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// Token:op
-op              : tPIPE | tCARET | tAMPER2 | tCMP | tEQ | tEQQ | tMATCH
-                | tNMATCH | tGT | tGEQ | tLT | tLEQ | tNEQ | tLSHFT | tRSHFT
-                | tPLUS | tMINUS | tSTAR2 | tSTAR | tDIVIDE | tPERCENT | tPOW
-                | tBANG | tTILDE | tUPLUS | tUMINUS | tAREF | tASET | tBACK_REF2
+    @pg.production("op : PIPE")
+    @pg.production("op : CARET")
+    @pg.production("op : AMPER2")
+    @pg.production("op : CMP")
+    @pg.production("op : EQ")
+    @pg.production("op : EQQ")
+    @pg.production("op : MATCH")
+    @pg.production("op : NMATCH")
+    @pg.production("op : GT")
+    @pg.production("op : GEQ")
+    @pg.production("op : LT")
+    @pg.production("op : LEQ")
+    @pg.production("op : NEQ")
+    @pg.production("op : LSHFT")
+    @pg.production("op : RSHFT")
+    @pg.production("op : PLUS")
+    @pg.production("op : MINUS")
+    @pg.production("op : STAR2")
+    @pg.production("op : STAR")
+    @pg.production("op : DIVIDE")
+    @pg.production("op : PERCENT")
+    @pg.production("op : POW")
+    @pg.production("op : BANG")
+    @pg.production("op : TILDE")
+    @pg.production("op : UPLUS")
+    @pg.production("op : UMINUS")
+    @pg.production("op : AREF")
+    @pg.production("op : ASET")
+    @pg.production("op : BACK_REF2")
+    def op(self, p):
+        return p[0]
 
+    """
 // Token:op
 reswords        : k__LINE__ | k__FILE__ | k__ENCODING__ | klBEGIN | klEND
                 | kALIAS | kAND | kBEGIN | kBREAK | kCASE | kCLASS | kDEF
