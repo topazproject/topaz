@@ -859,15 +859,23 @@ kALIAS tGVAR tGVAR {
         self.lexer.state = self.lexer.EXPR_ENDFN
         return p[0]
 
-    """
-// LiteralNode:fsym
-fsym           : fname {
+    @pg.production("fsym : fname")
+    def fsym_fname(self, p):
+        """
+        fname {
                     $$ = new LiteralNode($1);
                 }
-                | symbol {
-                    $$ = new LiteralNode($1);
-                }
+        """
 
+    @pg.production("fsym : symbol")
+    def fsym_symbol(self, p):
+        """
+        symbol {
+                    $$ = new LiteralNode($1);
+                }
+        """
+
+    """
 // Node:fitem
 fitem           : fsym {
                     $$ = $1;
