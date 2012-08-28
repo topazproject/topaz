@@ -805,12 +805,15 @@ kALIAS tGVAR tGVAR {
     def lhs_backref(self, p):
         self.backref_assign_error()
 
-    """
-cname           : tIDENTIFIER {
-                    support.yyerror("class/module name must be CONSTANT");
-                }
-                | tCONSTANT
+    @pg.production("cname : IDENTIFIER")
+    def cname_identifier(self, p):
+        raise self.error(p[0], "class/module name must be CONSTANT")
 
+    @pg.production("cname : CONSTANT")
+    def cname_constant(self, p):
+        return p[0]
+
+    """
 cpath           : tCOLON3 cname {
                     $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
                 }
