@@ -732,24 +732,51 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-lhs             : variable {
+    @pg.production("lhs : variable")
+    def lhs_variable(self, p):
+        """
+        variable {
                       // if (!($$ = assignable($1, 0))) $$ = NEW_BEGIN(0);
                     $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
-                | primary_value '[' opt_call_args rbracket {
+        """
+
+    @pg.production("lhs : primary_value LITERAL_LBRACKET opt_call_args rbracket")
+    def lhs_subscript(self, p):
+        """
+        primary_value '[' opt_call_args rbracket {
                     $$ = support.aryset($1, $3);
                 }
-                | primary_value tDOT tIDENTIFIER {
+        """
+
+    @pg.production("lhs : primary_value DOT IDENTIFIER")
+    def lhs_dot_identifier(self, p):
+        """
+        primary_value tDOT tIDENTIFIER {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
-                | primary_value tCOLON2 tIDENTIFIER {
+        """
+
+    @pg.production("lhs : primary_value COLON2 IDENTIFIER")
+    def lhs_colon_identifier(self, p):
+        """
+        primary_value tCOLON2 tIDENTIFIER {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
-                | primary_value tDOT tCONSTANT {
+        """
+
+    @pg.production("lhs : primary_value DOT CONSTANT")
+    def lhs_dot_constant(self, p):
+        """
+        primary_value tDOT tCONSTANT {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
-                | primary_value tCOLON2 tCONSTANT {
+        """
+
+    @pg.production("lhs : primary_value COLON2 CONSTANT")
+    def lhs_colon_constant(self, p):
+        """
+        primary_value tCOLON2 tCONSTANT {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("dynamic constant assignment");
                     }
@@ -758,7 +785,12 @@ lhs             : variable {
 
                     $$ = new ConstDeclNode(position, null, support.new_colon2(position, $1, (String) $3.getValue()), NilImplicitNode.NIL);
                 }
-                | tCOLON3 tCONSTANT {
+        """
+
+    @pg.production("lhs : COLON3 CONSTANT")
+    def lhs_unbound_colon_constant(self, p):
+        """
+        tCOLON3 tCONSTANT {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("dynamic constant assignment");
                     }
@@ -767,10 +799,13 @@ lhs             : variable {
 
                     $$ = new ConstDeclNode(position, null, support.new_colon3(position, (String) $2.getValue()), NilImplicitNode.NIL);
                 }
-                | backref {
-                    support.backrefAssignError($1);
-                }
+        """
 
+    @pg.production("lhs : backref")
+    def lhs_backref(self, p):
+        self.backref_assign_error()
+
+    """
 cname           : tIDENTIFIER {
                     support.yyerror("class/module name must be CONSTANT");
                 }
