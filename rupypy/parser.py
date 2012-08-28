@@ -875,15 +875,15 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// Node:fitem
-fitem           : fsym {
-                    $$ = $1;
-                }
-                | dsym {
-                    $$ = $1;
-                }
+    @pg.production("fitem : fsym")
+    def fitem_fsym(self, p):
+        return p[0]
 
+    @pg.production("fitem : dsym")
+    def fitem_dsym(self, p):
+        return p[0]
+
+    """
 undef_list      : fitem {
                     $$ = support.newUndef($1.getPosition(), $1);
                 }
