@@ -1265,11 +1265,23 @@ kALIAS tGVAR tGVAR {
     def paren_args(self, p):
         return p[1]
 
+    @pg.production("opt_paren_args : none")
+    def opt_paren_args_none(self, p):
+        return p[0]
+
+    @pg.production("opt_paren_args : paren_args")
+    def opt_paren_args(self, p):
+        return p[0]
+
+    @pg.production("opt_call_args : none")
+    def opt_call_args_none(self, p):
+        return p[0]
+
+    @pg.production("opt_call_args : call_args")
+    def opt_call_args(self, p):
+        return p[0]
+
     """
-opt_paren_args  : none | paren_args
-
-opt_call_args   : none | call_args
-
 // [!null]
 call_args       : command {
                     $$ = support.newArrayNode(support.getPosition($1), $1);
