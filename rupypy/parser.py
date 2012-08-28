@@ -1261,12 +1261,11 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-paren_args      : tLPAREN2 opt_call_args rparen {
-                    $$ = $2;
-                    if ($$ != null) $<Node>$.setPosition($1.getPosition());
-                }
+    @pg.production("paren_args : LPAREN2 opt_call_args rparen")
+    def paren_args(self, p):
+        return p[1]
 
+    """
 opt_paren_args  : none | paren_args
 
 opt_call_args   : none | call_args
