@@ -837,18 +837,29 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// Token:fname - A function name [!null]
-fname          : tIDENTIFIER | tCONSTANT | tFID
-               | op {
-                   lexer.setState(LexState.EXPR_ENDFN);
-                   $$ = $1;
-               }
-               | reswords {
-                   lexer.setState(LexState.EXPR_ENDFN);
-                   $$ = $1;
-               }
+    @pg.production("fname : IDENTIFIER")
+    def fname_identifier(self, p):
+        return p[0]
 
+    @pg.production("fname : CONSTANT")
+    def fname_constant(self, p):
+        return p[0]
+
+    @pg.production("fname : FID")
+    def fname_fid(self, p):
+        return p[0]
+
+    @pg.production("fname : op")
+    def fname_op(self, p):
+        self.lexer.state = self.lexer.EXPR_ENDFN
+        return p[0]
+
+    @pg.production("fname : reswords")
+    def fname_reswords(self, p):
+        self.lexer.state = self.lexer.EXPR_ENDFN
+        return p[0]
+
+    """
 // LiteralNode:fsym
 fsym           : fname {
                     $$ = new LiteralNode($1);
