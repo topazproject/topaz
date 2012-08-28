@@ -883,16 +883,25 @@ kALIAS tGVAR tGVAR {
     def fitem_dsym(self, p):
         return p[0]
 
-    """
-undef_list      : fitem {
+    @pg.production("undef_list : fitem")
+    def undef_list_fitem(self, p):
+        """
+        fitem {
                     $$ = support.newUndef($1.getPosition(), $1);
                 }
-                | undef_list ',' {
+        """
+
+    @pg.production("undef_list : undef_list COMMA fitem")
+    def undef_list_undef_list(self, p):
+        """
+        undef_list ',' {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fitem {
                     $$ = support.appendToBlock($1, support.newUndef($1.getPosition(), $4));
                 }
+        """
 
+    """
 // Token:op
 op              : tPIPE | tCARET | tAMPER2 | tCMP | tEQ | tEQQ | tMATCH
                 | tNMATCH | tGT | tGEQ | tLT | tLEQ | tNEQ | tLSHFT | tRSHFT
