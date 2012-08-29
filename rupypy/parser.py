@@ -1322,14 +1322,18 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-command_args    : /* none */ {
+    @pg.production("command_args : call_args")
+    def command_args(self, p):
+        """
+        /* none */ {
                     $$ = Long.valueOf(lexer.getCmdArgumentState().begin());
                 } call_args {
                     lexer.getCmdArgumentState().reset($<Long>1.longValue());
                     $$ = $2;
                 }
+        """
 
+    """
 block_arg       : tAMPER arg_value {
                     $$ = new BlockPassNode($1.getPosition(), $2);
                 }
