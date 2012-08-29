@@ -1337,15 +1337,19 @@ kALIAS tGVAR tGVAR {
     def block_arg(self, p):
         return BoxAST(ast.BlockArgument(p[1].getast()))
 
-    """
-opt_block_arg   : ',' block_arg {
-                    $$ = $2;
-                }
-                | ',' {
-                    $$ = null;
-                }
-                | none_block_pass
+    @pg.production("opt_block_arg : LITERAL_COMMA block_arg")
+    def opt_block_arg(self, p):
+        return p[1]
 
+    @pg.production("opt_block_arg : LITERAL_COMMA")
+    def opt_block_arg_comma(self, p):
+        return None
+
+    @pg.production("opt_block_arg : none_block_pass")
+    def opt_block_arg_none(self, p):
+        return p[0]
+
+    """
 // [!null]
 args            : arg_value {
                     ISourcePosition pos = $1 == null ? lexer.getPosition() : $1.getPosition();
