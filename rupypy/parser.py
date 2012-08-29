@@ -1281,25 +1281,48 @@ kALIAS tGVAR tGVAR {
     def opt_call_args(self, p):
         return p[0]
 
-    """
-// [!null]
-call_args       : command {
+    @pg.production("call_args : command")
+    def call_args_command(self, p):
+        """
+        command {
                     $$ = support.newArrayNode(support.getPosition($1), $1);
                 }
-                | args opt_block_arg {
+        """
+
+    @pg.production("call_args : args opt_block_arg")
+    def call_args_args_opt_block_arg(self, p):
+        """
+        args opt_block_arg {
                     $$ = support.arg_blk_pass($1, $2);
                 }
-                | assocs opt_block_arg {
+        """
+
+    @pg.production("call_args : assocs opt_block_arg")
+    def call_args_assocs_opt_block_arg(self, p):
+        """
+        assocs opt_block_arg {
                     $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
                     $$ = support.arg_blk_pass((Node)$$, $2);
                 }
-                | args ',' assocs opt_block_arg {
+        """
+
+    @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
+    def call_args_args_comma_assocs_opt_block_arg(self, p):
+        """
+        args ',' assocs opt_block_arg {
                     $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
                     $$ = support.arg_blk_pass((Node)$$, $4);
                 }
-                | block_arg {
-                }
+        """
 
+    @pg.production("call_args : block_arg")
+    def call_args_block_arg(self, p):
+        """
+        block_arg {
+                }
+        """
+
+    """
 command_args    : /* none */ {
                     $$ = Long.valueOf(lexer.getCmdArgumentState().begin());
                 } call_args {
