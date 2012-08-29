@@ -1333,11 +1333,11 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-block_arg       : tAMPER arg_value {
-                    $$ = new BlockPassNode($1.getPosition(), $2);
-                }
+    @pg.production("block_arg : AMPER arg_value")
+    def block_arg(self, p):
+        return BoxAST(ast.BlockArgument(p[1].getast()))
 
+    """
 opt_block_arg   : ',' block_arg {
                     $$ = $2;
                 }
