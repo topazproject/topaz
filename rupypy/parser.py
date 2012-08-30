@@ -1396,8 +1396,10 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-mrhs            : args ',' arg_value {
+    @pg.production("mrhs : args LITERAL_COMMA arg_value")
+    def mrhs_args_comma_arg_value(self, p):
+        """
+        args ',' arg_value {
                     Node node = support.splat_array($1);
 
                     if (node != null) {
@@ -1406,7 +1408,12 @@ mrhs            : args ',' arg_value {
                         $$ = support.arg_append($1, $3);
                     }
                 }
-                | args ',' tSTAR arg_value {
+        """
+
+    @pg.production("mrhs : args LITERAL_COMMA STAR arg_value")
+    def mrhs_args_comma_star_arg_value(self, p):
+        """
+        args ',' tSTAR arg_value {
                     Node node = null;
 
                     if ($4 instanceof ArrayNode &&
@@ -1416,10 +1423,17 @@ mrhs            : args ',' arg_value {
                         $$ = support.arg_concat($1.getPosition(), $1, $4);
                     }
                 }
-                | tSTAR arg_value {
+        """
+
+    @pg.production("mrhs : STAR arg_value")
+    def mrhs_star_arg_value(self, p):
+        """
+        tSTAR arg_value {
                      $$ = support.newSplatNode(support.getPosition($1), $2);
                 }
+        """
 
+    """
 primary         : literal
                 | strings
                 | xstring
