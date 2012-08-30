@@ -1838,12 +1838,19 @@ kALIAS tGVAR tGVAR {
     def do(self, p):
         return p[0]
 
-    """
-if_tail         : opt_else
-                | kELSIF expr_value then compstmt if_tail {
+    @pg.production("if_tail : opt_else")
+    def if_tail_opt_else(self, p):
+        return p[0]
+
+    @pg.production("if_tail : ELSIF expr_value then compstmt if_tail")
+    def if_tail_elsif(self, p):
+        """
+        kELSIF expr_value then compstmt if_tail {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
                 }
+        """
 
+    """
 opt_else        : none
                 | kELSE compstmt {
                     $$ = $2;
