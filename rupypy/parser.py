@@ -998,7 +998,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("argb : var_lhs OP_ASGN arg")
+    @pg.production("arg : var_lhs OP_ASGN arg")
     def arg_var_lhs_op_asgn_arg(self, p):
         """
         var_lhs tOP_ASGN arg {
