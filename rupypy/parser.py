@@ -1850,12 +1850,15 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-opt_else        : none
-                | kELSE compstmt {
-                    $$ = $2;
-                }
+    @pg.production("opt_else : none")
+    def opt_else_none(self, p):
+        return p[0]
 
+    @pg.production("opt_else : ELSE compstmt")
+    def opt_else(self, p):
+        return p[1]
+
+    """
 for_var         : lhs
                 | mlhs {
                 }
