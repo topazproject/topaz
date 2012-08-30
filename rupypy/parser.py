@@ -1817,20 +1817,28 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-primary_value   : primary {
+    @pg.production("primary_value : primary")
+    def primary_value(self, p):
+        """
+        primary {
                     support.checkExpression($1);
                     $$ = $1;
                     if ($$ == null) $$ = NilImplicitNode.NIL;
                 }
+        """
 
-then            : term
-                | kTHEN
-                | term kTHEN
+    @pg.production("then : term THEN")
+    @pg.production("then : THEN")
+    @pg.production("then : term")
+    def then(self, p):
+        return p[0]
 
-do              : term
-                | kDO_COND
+    @pg.production("do : DO_COND")
+    @pg.production("do : term")
+    def do(self, p):
+        return p[0]
 
+    """
 if_tail         : opt_else
                 | kELSIF expr_value then compstmt if_tail {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
