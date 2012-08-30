@@ -1858,11 +1858,12 @@ kALIAS tGVAR tGVAR {
     def opt_else(self, p):
         return p[1]
 
-    """
-for_var         : lhs
-                | mlhs {
-                }
+    @pg.production("for_var : mlhs")
+    @pg.production("for_var : lhs")
+    def for_var(self, p):
+        return p[0]
 
+    """
 f_marg          : f_norm_arg {
                      $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
