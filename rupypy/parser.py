@@ -1863,14 +1863,23 @@ kALIAS tGVAR tGVAR {
     def for_var(self, p):
         return p[0]
 
-    """
-f_marg          : f_norm_arg {
+    @pg.production("f_marg : f_norm_arg")
+    def f_marg_f_norm_arg(self, p):
+        """
+        f_norm_arg {
                      $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
-                | tLPAREN f_margs rparen {
+        """
+
+    @pg.production("f_arg : LPAREN f_margs rparen")
+    def f_marg_paren(self, p):
+        """
+        tLPAREN f_margs rparen {
                     $$ = $2;
                 }
+        """
 
+    """
 // [!null]
 f_marg_list     : f_marg {
                     $$ = support.newArrayNode($1.getPosition(), $1);
