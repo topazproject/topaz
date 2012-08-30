@@ -1349,16 +1349,27 @@ kALIAS tGVAR tGVAR {
     def opt_block_arg_none(self, p):
         return p[0]
 
-    """
-// [!null]
-args            : arg_value {
+    @pg.production("args : arg_value")
+    def args_arg_value(self, p):
+        """
+        arg_value {
                     ISourcePosition pos = $1 == null ? lexer.getPosition() : $1.getPosition();
                     $$ = support.newArrayNode(pos, $1);
                 }
-                | tSTAR arg_value {
+        """
+
+    @pg.production("args : STAR arg_value")
+    def args_star_arg_value(self, p):
+        """
+        tSTAR arg_value {
                     $$ = support.newSplatNode($1.getPosition(), $2);
                 }
-                | args ',' arg_value {
+        """
+
+    @pg.production("args : args LITERAL_COMMA arg_value")
+    def args_comma_arg_value(self, p):
+        """
+        args ',' arg_value {
                     Node node = support.splat_array($1);
 
                     if (node != null) {
@@ -1367,7 +1378,12 @@ args            : arg_value {
                         $$ = support.arg_append($1, $3);
                     }
                 }
-                | args ',' tSTAR arg_value {
+        """
+
+    @pg.production("args : args LITERAL_COMMA STAR arg_value")
+    def args_comma_star_arg_value(self, p):
+        """
+        args ',' tSTAR arg_value {
                     Node node = null;
 
                     // FIXME: lose syntactical elements here (and others like this)
@@ -1378,7 +1394,9 @@ args            : arg_value {
                         $$ = support.arg_concat(support.getPosition($1), $1, $4);
                     }
                 }
+        """
 
+    """
 mrhs            : args ',' arg_value {
                     Node node = support.splat_array($1);
 
