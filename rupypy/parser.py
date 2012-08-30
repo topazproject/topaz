@@ -1873,21 +1873,25 @@ kALIAS tGVAR tGVAR {
 
     @pg.production("f_arg : LPAREN f_margs rparen")
     def f_marg_paren(self, p):
+        return p[1]
+
+    @pg.production("f_marg_list : f_marg")
+    def f_marg_list_f_marg(self, p):
         """
-        tLPAREN f_margs rparen {
-                    $$ = $2;
+        f_marg {
+                    $$ = support.newArrayNode($1.getPosition(), $1);
+                }
+        """
+
+    @pg.production("f_marg_list : f_marg_list LITERAL_COMMA f_marg")
+    def f_marg_list(self, p):
+        """
+        f_marg_list ',' f_marg {
+                    $$ = $1.add($3);
                 }
         """
 
     """
-// [!null]
-f_marg_list     : f_marg {
-                    $$ = support.newArrayNode($1.getPosition(), $1);
-                }
-                | f_marg_list ',' f_marg {
-                    $$ = $1.add($3);
-                }
-
 f_margs         : f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
                 }
