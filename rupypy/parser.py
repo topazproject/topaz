@@ -1433,28 +1433,69 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-primary         : literal
-                | strings
-                | xstring
-                | regexp
-                | words
-                | qwords
-                | var_ref
-                | backref
-                | tFID {
+    @pg.production("primary : literal")
+    def primary_literal(self, p):
+        return p[0]
+
+    @pg.production("primary : strings")
+    def primary_strings(self, p):
+        return p[0]
+
+    @pg.production("primary : xstring")
+    def primary_xstring(self, p):
+        return p[0]
+
+    @pg.production("primary : regexp")
+    def primary_regexp(self, p):
+        return p[0]
+
+    @pg.production("primary : words")
+    def primary_words(self, p):
+        return p[0]
+
+    @pg.production("primary : qwords")
+    def primary_qwords(self, p):
+        return p[0]
+
+    @pg.production("primary : var_ref")
+    def primary_var_ref(self, p):
+        return p[0]
+
+    @pg.production("primary : backref")
+    def primary_backref(self, p):
+        return p[0]
+
+    @pg.production("primary : FID")
+    def primary_fid(self, p):
+        """
+        tFID {
                     $$ = new FCallNoArgNode($1.getPosition(), (String) $1.getValue());
                 }
-                | kBEGIN bodystmt kEND {
+        """
+
+    @pg.production("primary : BEGIN bodystmt END")
+    def primary_begin_end(self, p):
+        """
+        kBEGIN bodystmt kEND {
                     $$ = new BeginNode(support.getPosition($1), $2 == null ? NilImplicitNode.NIL : $2);
                 }
-                | tLPAREN_ARG expr {
+        """
+
+    @pg.production("primary : LPAREN_ARG expr rparen")
+    def primary_paren_arg(self, p):
+        """
+        tLPAREN_ARG expr {
                     lexer.setState(LexState.EXPR_ENDARG);
                 } rparen {
                     support.warning(ID.GROUPED_EXPRESSION, $1.getPosition(), "(...) interpreted as grouped expression");
                     $$ = $2;
                 }
-                | tLPAREN compstmt tRPAREN {
+        """
+
+    @pg.production("primary : LPAREN compstmt RPAREN")
+    def primary_lparen(self, p):
+        """
+        tLPAREN compstmt tRPAREN {
                     if ($2 != null) {
                         // compstmt position includes both parens around it
                         ((ISourcePositionHolder) $2).setPosition($1.getPosition());
@@ -1463,13 +1504,28 @@ primary         : literal
                         $$ = new NilNode($1.getPosition());
                     }
                 }
-                | primary_value tCOLON2 tCONSTANT {
+        """
+
+    @pg.production("primary : primary_value COLON2 CONSTANT")
+    def primary_constant_lookup(self, p):
+        """
+        primary_value tCOLON2 tCONSTANT {
                     $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
                 }
-                | tCOLON3 tCONSTANT {
+        """
+
+    @pg.production("primary : COLON3 CONSTANT")
+    def primary_unbound_constant(self, p):
+        """
+        tCOLON3 tCONSTANT {
                     $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
                 }
-                | tLBRACK aref_args tRBRACK {
+        """
+
+    @pg.production("primary : LBRACK aref_args RBRACK")
+    def primary_array(self, p):
+        """
+        tLBRACK aref_args tRBRACK {
                     ISourcePosition position = $1.getPosition();
                     if ($2 == null) {
                         $$ = new ZArrayNode(position); /* zero length array */
@@ -1478,35 +1534,88 @@ primary         : literal
                         $<ISourcePositionHolder>$.setPosition(position);
                     }
                 }
-                | tLBRACE assoc_list tRCURLY {
+        """
+
+    @pg.production("primary : LBRACE assoc_list RCURLY")
+    def primary_hash(self, p):
+        """
+        tLBRACE assoc_list tRCURLY {
                     $$ = new Hash19Node($1.getPosition(), $2);
                 }
-                | kRETURN {
+        """
+
+    @pg.production("primary : RETURN")
+    def primary_return(self, p):
+        """
+        kRETURN {
                     $$ = new ReturnNode($1.getPosition(), NilImplicitNode.NIL);
                 }
-                | kYIELD tLPAREN2 call_args rparen {
+        """
+
+    @pg.production("primary : YIELD LPAREN2 call_args rparen")
+    def primary_yield_paren_args(self, p):
+        """
+        kYIELD tLPAREN2 call_args rparen {
                     $$ = support.new_yield($1.getPosition(), $3);
                 }
-                | kYIELD tLPAREN2 rparen {
+        """
+
+    @pg.production("primary : YIELD LPAREN2 rparen")
+    def primary_yield_paren(self, p):
+        """
+        kYIELD tLPAREN2 rparen {
                     $$ = new ZYieldNode($1.getPosition());
                 }
-                | kYIELD {
+        """
+
+    @pg.production("primary : YIELD")
+    def primary_yield(self, p):
+        """
+        kYIELD {
                     $$ = new ZYieldNode($1.getPosition());
                 }
-                | kDEFINED opt_nl tLPAREN2 expr rparen {
+        """
+
+    @pg.production("primary : DEFINED opt_nl LPAREN2 expr rparen")
+    def primary_defined(self, p):
+        """
+        kDEFINED opt_nl tLPAREN2 expr rparen {
                     $$ = new DefinedNode($1.getPosition(), $4);
                 }
-                | kNOT tLPAREN2 expr rparen {
+        """
+
+    @pg.production("primary : NOT LPAREN2 expr rparen")
+    def primary_not_paren_expr(self, p):
+        """
+        kNOT tLPAREN2 expr rparen {
                     $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
                 }
-                | kNOT tLPAREN2 rparen {
+        """
+
+    @pg.production("primary : NOT LPAREN2 rparen")
+    def primary_not_paren(self, p):
+        """
+        kNOT tLPAREN2 rparen {
                     $$ = support.getOperatorCallNode(NilImplicitNode.NIL, "!");
                 }
-                | operation brace_block {
+        """
+
+    @pg.production("primary : operation brace_block")
+    def primary_operation_brace_block(self, p):
+        """
+        operation brace_block {
                     $$ = new FCallNoArgBlockNode($1.getPosition(), (String) $1.getValue(), $2);
                 }
-                | method_call
-                | method_call brace_block {
+        """
+
+    @pg.production("primary : method_call")
+    def primary_method_call(self, p):
+        return p[0]
+
+    @pg.production("primary : method_call brace_block")
+    def primary_method_call_brace_block(self, p):
+        """
+        method_call brace_block {
                     if ($1 != null &&
                           $<BlockAcceptingNode>1.getIterNode() instanceof BlockPassNode) {
                         throw new SyntaxException(PID.BLOCK_ARG_AND_BLOCK_GIVEN, $1.getPosition(), lexer.getCurrentLine(), "Both block arg and actual block given.");
@@ -1514,16 +1623,32 @@ primary         : literal
                     $$ = $<BlockAcceptingNode>1.setIterNode($2);
                     $<Node>$.setPosition($1.getPosition());
                 }
-                | tLAMBDA lambda {
-                    $$ = $2;
-                }
-                | kIF expr_value then compstmt if_tail kEND {
+        """
+
+    @pg.production("primary : LAMBDA lambda")
+    def primary_lambda(self, p):
+        return p[0]
+
+    @pg.production("primary : IF expr_value then compstmt if_tail END")
+    def primary_if(self, p):
+        """
+        kIF expr_value then compstmt if_tail kEND {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
                 }
-                | kUNLESS expr_value then compstmt opt_else kEND {
+        """
+
+    @pg.production("primary : UNLESS expr_value then compstmt opt_else END")
+    def primary_unless(self, p):
+        """
+        kUNLESS expr_value then compstmt opt_else kEND {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $5, $4);
                 }
-                | kWHILE {
+        """
+
+    @pg.production("primary : WHILE expr_value do compstmt END")
+    def primary_while(self, p):
+        """
+        kWHILE {
                     lexer.getConditionState().begin();
                 } expr_value do {
                     lexer.getConditionState().end();
@@ -1531,7 +1656,12 @@ primary         : literal
                     Node body = $6 == null ? NilImplicitNode.NIL : $6;
                     $$ = new WhileNode($1.getPosition(), support.getConditionNode($3), body);
                 }
-                | kUNTIL {
+        """
+
+    @pg.production("primary : UNTIL expr_Value do compstmt END")
+    def primary_until(self, p):
+        """
+        kUNTIL {
                   lexer.getConditionState().begin();
                 } expr_value do {
                   lexer.getConditionState().end();
@@ -1539,13 +1669,28 @@ primary         : literal
                     Node body = $6 == null ? NilImplicitNode.NIL : $6;
                     $$ = new UntilNode($1.getPosition(), support.getConditionNode($3), body);
                 }
-                | kCASE expr_value opt_terms case_body kEND {
+        """
+
+    @pg.production("primary : CASE expr_value opt_terms case_body END")
+    def primary_case_expr_value(self, p):
+        """
+        kCASE expr_value opt_terms case_body kEND {
                     $$ = support.newCaseNode($1.getPosition(), $2, $4);
                 }
-                | kCASE opt_terms case_body kEND {
+        """
+
+    @pg.production("primary : CASE opt_terms case_body END")
+    def primary_case(self, p):
+        """
+        kCASE opt_terms case_body kEND {
                     $$ = support.newCaseNode($1.getPosition(), null, $3);
                 }
-                | kFOR for_var kIN {
+        """
+
+    @pg.production("primary : FOR for_var IN expr_value do compstmt END")
+    def primary_for(self, p):
+        """
+        kFOR for_var kIN {
                     lexer.getConditionState().begin();
                 } expr_value do {
                     lexer.getConditionState().end();
@@ -1553,7 +1698,12 @@ primary         : literal
                       // ENEBO: Lots of optz in 1.9 parser here
                     $$ = new ForNode($1.getPosition(), $2, $8, $5, support.getCurrentScope());
                 }
-                | kCLASS cpath superclass {
+        """
+
+    @pg.production("primary : CLASS cpath superclass bodystmt END")
+    def primary_class(self, p):
+        """
+        kCLASS cpath superclass {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("class definition in method body");
                     }
@@ -1564,7 +1714,12 @@ primary         : literal
                     $$ = new ClassNode($1.getPosition(), $<Colon3Node>2, support.getCurrentScope(), body, $3);
                     support.popCurrentScope();
                 }
-                | kCLASS tLSHFT expr {
+        """
+
+    @pg.production("primary : CLASS LSHFT expr term bodystmt END")
+    def primary_singleton_class(self, p):
+        """
+        kCLASS tLSHFT expr {
                     $$ = Boolean.valueOf(support.isInDef());
                     support.setInDef(false);
                 } term {
@@ -1577,7 +1732,12 @@ primary         : literal
                     support.setInDef($<Boolean>4.booleanValue());
                     support.setInSingle($<Integer>6.intValue());
                 }
-                | kMODULE cpath {
+        """
+
+    @pg.production("primary : MODULE cpath bodystmt END")
+    def primary_module(self, p):
+        """
+        kMODULE cpath {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("module definition in method body");
                     }
@@ -1588,7 +1748,12 @@ primary         : literal
                     $$ = new ModuleNode($1.getPosition(), $<Colon3Node>2, support.getCurrentScope(), body);
                     support.popCurrentScope();
                 }
-                | kDEF fname {
+        """
+
+    @pg.production("primary : DEF fname f_arglist bodystmt END")
+    def primary_def(self, p):
+        """
+        kDEF fname {
                     support.setInDef(true);
                     support.pushLocalScope();
                 } f_arglist bodystmt kEND {
@@ -1599,7 +1764,12 @@ primary         : literal
                     support.popCurrentScope();
                     support.setInDef(false);
                 }
-                | kDEF singleton dot_or_colon {
+        """
+
+    @pg.production("primary : DEF singleton dot_or_colon fname f_arglist bodystmt END")
+    def primary_def_singleton(self, p):
+        """
+        kDEF singleton dot_or_colon {
                     lexer.setState(LexState.EXPR_FNAME);
                 } fname {
                     support.setInSingle(support.getInSingle() + 1);
@@ -1613,19 +1783,41 @@ primary         : literal
                     support.popCurrentScope();
                     support.setInSingle(support.getInSingle() - 1);
                 }
-                | kBREAK {
+        """
+
+    @pg.production("primary : BREAK")
+    def primary_break(self, p):
+        """
+        kBREAK {
                     $$ = new BreakNode($1.getPosition(), NilImplicitNode.NIL);
                 }
-                | kNEXT {
+        """
+
+    @pg.production("primary : NEXT")
+    def primary_next(self, p):
+        """
+        kNEXT {
                     $$ = new NextNode($1.getPosition(), NilImplicitNode.NIL);
                 }
-                | kREDO {
+        """
+
+    @pg.production("primary : REDO")
+    def primary_redo(self, p):
+        """
+        kREDO {
                     $$ = new RedoNode($1.getPosition());
                 }
-                | kRETRY {
+        """
+
+    @pg.production("primary : RETRY")
+    def primary_retry(self, p):
+        """
+        kRETRY {
                     $$ = new RetryNode($1.getPosition());
                 }
+        """
 
+    """
 primary_value   : primary {
                     support.checkExpression($1);
                     $$ = $1;
