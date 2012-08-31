@@ -2180,14 +2180,18 @@ kALIAS tGVAR tGVAR {
     def lambda_body_do(self, p):
         return p[1]
 
-    """
-do_block        : kDO_BLOCK {
+    @pg.production("do_block : DO_BLOCK opt_block_param compstmt END")
+    def do_block(self, p):
+        """
+        kDO_BLOCK {
                     support.pushBlockScope();
                 } opt_block_param compstmt kEND {
                     $$ = new IterNode(support.getPosition($1), $3, $4, support.getCurrentScope());
                     support.popCurrentScope();
                 }
+        """
 
+    """
 block_call      : command do_block {
                     // Workaround for JRUBY-2326 (MRI does not enter this production for some reason)
                     if ($1 instanceof YieldNode) {
