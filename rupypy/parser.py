@@ -2191,8 +2191,10 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-block_call      : command do_block {
+    @pg.production("block_call : command do_block")
+    def block_call_command_do_block(self, p):
+        """
+        command do_block {
                     // Workaround for JRUBY-2326 (MRI does not enter this production for some reason)
                     if ($1 instanceof YieldNode) {
                         throw new SyntaxException(PID.BLOCK_GIVEN_TO_YIELD, $1.getPosition(), lexer.getCurrentLine(), "block given to yield");
@@ -2203,14 +2205,26 @@ block_call      : command do_block {
                     $$ = $<BlockAcceptingNode>1.setIterNode($2);
                     $<Node>$.setPosition($1.getPosition());
                 }
-                | block_call tDOT operation2 opt_paren_args {
+        """
+
+    @pg.production("block_arg : block_call DOT operation2 opt_paren_args")
+    def block_call_dot_operation_opt_paren_args(self, p):
+        """
+        block_call tDOT operation2 opt_paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
-                | block_call tCOLON2 operation2 opt_paren_args {
+        """
+
+    @pg.production("block_call : block_call COLON2 operation2 opt_paren_args")
+    def block_call_colon_operation_opt_paren_args(self, p):
+        """
+        block_call tCOLON2 operation2 opt_paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
 
-// [!null]
+        """
+
+    """
 method_call     : operation paren_args {
                     $$ = support.new_fcall($1, $2, null);
                 }
