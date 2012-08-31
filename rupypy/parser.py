@@ -2138,15 +2138,20 @@ kALIAS tGVAR tGVAR {
     def bv_decls(self, p):
         return None
 
-
-    """
-bvar            : tIDENTIFIER {
+    @pg.production("bvar : IDENTIFIER")
+    def bvar_identifier(self, p):
+        """
+        tIDENTIFIER {
                     support.new_bv($1);
                 }
-                | f_bad_arg {
-                    $$ = null;
-                }
+        """
 
+    @pg.production("bvar : f_bad_arg")
+    def bvar_f_bad_arg(self, p):
+        return None
+
+
+    """
 lambda          : /* none */  {
                     support.pushBlockScope();
                     $$ = lexer.getLeftParenBegin();
