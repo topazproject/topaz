@@ -1891,35 +1891,79 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-f_margs         : f_marg_list {
+    @pg.production("f_margs : f_marg_list")
+    def f_margs_f_marg_list(self, p):
+        """
+        f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
                 }
-                | f_marg_list ',' tSTAR f_norm_arg {
+        """
+
+    @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg")
+    def f_margs_f_marg_list_comma_star_f_norm_Arg(self, p):
+        """
+        f_marg_list ',' tSTAR f_norm_arg {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), null);
                 }
-                | f_marg_list ',' tSTAR f_norm_arg ',' f_marg_list {
+        """
+
+    @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg COMMA f_marg_list")
+    def f_margs_f_marg_list_comma_star_f_norm_arg_comm_f_marg_list(self, p):
+        """
+        f_marg_list ',' tSTAR f_norm_arg ',' f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), $6);
                 }
-                | f_marg_list ',' tSTAR {
+        """
+
+    @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR")
+    def f_margs_f_marg_list_comma_star(self, p):
+        """
+        f_marg_list ',' tSTAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
                 }
-                | f_marg_list ',' tSTAR ',' f_marg_list {
+        """
+
+    @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR LITERAL_COMMA f_marg_list")
+    def f_margs_f_marg_list_comma_star_comma_f_marg_list(self, p):
+        """
+        f_marg_list ',' tSTAR ',' f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $5);
                 }
-                | tSTAR f_norm_arg {
+        """
+
+    @pg.production("f_margs : STAR f_norm_arg")
+    def f_margs_star_f_norm_arg(self, p):
+        """
+        tSTAR f_norm_arg {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), null);
                 }
-                | tSTAR f_norm_arg ',' f_marg_list {
+        """
+
+    @pg.production("f_margs : STAR f_norm_arg LITERAL_COMMA f_marg_list")
+    def f_margs_star_f_norm_arg_comma_f_marg_list(self, p):
+        """
+        tSTAR f_norm_arg ',' f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), $4);
                 }
-                | tSTAR {
+        """
+
+    @pg.production("f_margs : STAR")
+    def f_margs_star(self, p):
+        """
+        tSTAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
                 }
-                | tSTAR ',' f_marg_list {
+        """
+
+    @pg.production("f_margs : STAR LITERAL_COMMA f_marg_list")
+    def f_margs_star_comma_f_marg_list(self, p):
+        """
+        tSTAR ',' f_marg_list {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
                 }
+        """
 
+    """
 // [!null]
 block_param     : f_arg ',' f_block_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
