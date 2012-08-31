@@ -2172,14 +2172,15 @@ kALIAS tGVAR tGVAR {
     def f_larglist(self, p):
         return p[0]
 
-    """
-lambda_body     : tLAMBEG compstmt tRCURLY {
-                    $$ = $2;
-                }
-                | kDO_LAMBDA compstmt kEND {
-                    $$ = $2;
-                }
+    @pg.production("lambda_body : LAMBEG compstmt RCURLY")
+    def lambda_body_lambeg(self, p):
+        return p[1]
 
+    @pg.production("lambda_body : DO_LAMBDA compstmt END")
+    def lambda_body_do(self, p):
+        return p[1]
+
+    """
 do_block        : kDO_BLOCK {
                     support.pushBlockScope();
                 } opt_block_param compstmt kEND {
