@@ -2084,16 +2084,25 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-opt_block_param : none {
+    @pg.production("opt_block_param : none")
+    def opt_block_param_none(self, p):
+        """
+        none {
     // was $$ = null;
                    $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
                 }
-                | block_param_def {
+        """
+
+    @pg.production("opt_block_param : block_param_def")
+    def opt_block_param(self, p):
+        """
+        block_param_def {
                     lexer.commandStart = true;
                     $$ = $1;
                 }
+        """
 
+    """
 block_param_def : tPIPE opt_bv_decl tPIPE {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, null);
                 }
