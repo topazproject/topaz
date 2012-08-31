@@ -2102,17 +2102,27 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-block_param_def : tPIPE opt_bv_decl tPIPE {
+    @pg.production("block_param_def : PIPE opt_bv_decl PIPE")
+    def block_param_def_pipe_opt_bv_decl_pipe(self, p):
+        """
+        tPIPE opt_bv_decl tPIPE {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, null);
                 }
-                | tOROP {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
-                }
-                | tPIPE block_param opt_bv_decl tPIPE {
-                    $$ = $2;
-                }
+        """
 
+    @pg.production("block_param_def : OROP")
+    def block_param_def_orop(self, p):
+        """
+        tOROP {
+                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
+                }
+        """
+
+    @pg.production("block_param_def : PIPE block_param opt_bv_decl PIPE")
+    def block_param_def_pipe_block_param_opt_bv_decl_pipe(self, p):
+        return p[1]
+
+    """
 // shadowed block variables....
 opt_bv_decl     : opt_nl {
                     $$ = null;
