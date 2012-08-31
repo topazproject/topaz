@@ -2164,15 +2164,15 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-f_larglist      : tLPAREN2 f_args opt_bv_decl tRPAREN {
-                    $$ = $2;
-                    $<ISourcePositionHolder>$.setPosition($1.getPosition());
-                }
-                | f_args opt_bv_decl {
-                    $$ = $1;
-                }
+    @pg.production("f_larglist : LPAREN2 f_args opt_bv_decl RPAREN")
+    def f_larglist_parens(self, p):
+        return p[1]
 
+    @pg.production("f_larglist : f_args opt_bv_decl")
+    def f_larglist(self, p):
+        return p[0]
+
+    """
 lambda_body     : tLAMBEG compstmt tRCURLY {
                     $$ = $2;
                 }
