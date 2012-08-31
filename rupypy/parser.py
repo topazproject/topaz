@@ -2130,15 +2130,16 @@ kALIAS tGVAR tGVAR {
     def opt_bv_decl(self, p):
         return None
 
-    """
-// ENEBO: This is confusing...
-bv_decls        : bvar {
-                    $$ = null;
-                }
-                | bv_decls ',' bvar {
-                    $$ = null;
-                }
+    @pg.production("bv_decls : bvar")
+    def bv_decls_bvar(self, p):
+        return None
 
+    @pg.production("bv_decls : bv_decls LITERAL_COMMA bvar")
+    def bv_decls(self, p):
+        return None
+
+
+    """
 bvar            : tIDENTIFIER {
                     support.new_bv($1);
                 }
