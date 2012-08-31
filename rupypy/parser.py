@@ -2150,9 +2150,10 @@ kALIAS tGVAR tGVAR {
     def bvar_f_bad_arg(self, p):
         return None
 
-
-    """
-lambda          : /* none */  {
+    @pg.production("lambda : f_larglist lambda_body")
+    def lambda_p(self, p):
+        """
+        /* none */  {
                     support.pushBlockScope();
                     $$ = lexer.getLeftParenBegin();
                     lexer.setLeftParenBegin(lexer.incrementParenNest());
@@ -2161,7 +2162,9 @@ lambda          : /* none */  {
                     support.popCurrentScope();
                     lexer.setLeftParenBegin($<Integer>1);
                 }
+        """
 
+    """
 f_larglist      : tLPAREN2 f_args opt_bv_decl tRPAREN {
                     $$ = $2;
                     $<ISourcePositionHolder>$.setPosition($1.getPosition());
