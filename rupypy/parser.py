@@ -1963,55 +1963,128 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// [!null]
-block_param     : f_arg ',' f_block_optarg ',' f_rest_arg opt_f_block_arg {
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_block_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
                 }
-                | f_arg ',' f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
                 }
-                | f_arg ',' f_block_optarg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg opt_f_block_arg")
+    def block_param_f_arg_comma_f_block_optarg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_block_optarg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
                 }
-                | f_arg ',' f_block_optarg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    def block_param_f_arg_comma_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_block_optarg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
                 }
-                | f_arg ',' f_rest_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    def block_param_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
                 }
-                | f_arg ',' {
+        """
+
+    @pg.production("block_param : f_arg LITERAL_COMMA")
+    def block_param_f_arg_comma(self, p):
+        """
+        f_arg ',' {
                     RestArgNode rest = new UnnamedRestArgNode($1.getPosition(), null, support.getCurrentScope().addVariable("*"));
                     $$ = support.new_args($1.getPosition(), $1, null, rest, null, null);
                 }
-                | f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def block_param_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
                 }
-                | f_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_arg opt_f_block_arg")
+    def block_param_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
                 }
-                | f_block_optarg ',' f_rest_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    def block_param_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_block_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args(support.getPosition($1), null, $1, $3, null, $4);
                 }
-                | f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def block_param_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args(support.getPosition($1), null, $1, $3, $5, $6);
                 }
-                | f_block_optarg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_block_optarg opt_f_block_arg")
+    def block_param_f_block_optarg_opt_f_block_arg(self, p):
+        """
+        f_block_optarg opt_f_block_arg {
                     $$ = support.new_args(support.getPosition($1), null, $1, null, null, $2);
                 }
-                | f_block_optarg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    def block_param_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_block_optarg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
                 }
-                | f_rest_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_rest_arg opt_f_block_arg")
+    def block_param_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
                 }
-                | f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("block_param : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def block_param_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, $1, $3, $4);
                 }
-                | f_block_arg {
+        """
+
+    @pg.production("block_param : f_block_arg")
+    def block_param_f_block_arg(self, p):
+        """
+        f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
+        """
 
+    """
 opt_block_param : none {
     // was $$ = null;
                    $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
