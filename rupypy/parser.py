@@ -2122,15 +2122,15 @@ kALIAS tGVAR tGVAR {
     def block_param_def_pipe_block_param_opt_bv_decl_pipe(self, p):
         return p[1]
 
-    """
-// shadowed block variables....
-opt_bv_decl     : opt_nl {
-                    $$ = null;
-                }
-                | opt_nl ';' bv_decls opt_nl {
-                    $$ = null;
-                }
+    @pg.production("opt_bv_decl : opt_nl")
+    def opt_bv_decl_opt_nl(self, p):
+        return None
 
+    @pg.production("opt_bv_decl : opt_nl LITERAL_SEMICOLON bv_decls opt_nl")
+    def opt_bv_decl(self, p):
+        return None
+
+    """
 // ENEBO: This is confusing...
 bv_decls        : bvar {
                     $$ = null;
