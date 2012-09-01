@@ -2300,14 +2300,21 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-brace_block     : tLCURLY {
+    @pg.production("brace_block : LCURLY opt_block_param compstmt RCURLY")
+    def brace_block_curly(self, p):
+        """
+        tLCURLY {
                     support.pushBlockScope();
                 } opt_block_param compstmt tRCURLY {
                     $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
                     support.popCurrentScope();
                 }
-                | kDO {
+        """
+
+    @pg.production("brace_block : DO opt_block_param compstmt END")
+    def brace_block_do(self, p):
+        """
+        kDO {
                     support.pushBlockScope();
                 } opt_block_param compstmt kEND {
                     $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
@@ -2315,7 +2322,9 @@ brace_block     : tLCURLY {
                     $<ISourcePositionHolder>0.setPosition(support.getPosition($<ISourcePositionHolder>0));
                     support.popCurrentScope();
                 }
+        """
 
+    """
 case_body       : kWHEN args then compstmt cases {
                     $$ = support.newWhenNode($1.getPosition(), $2, $4, $5);
                 }
