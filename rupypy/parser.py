@@ -2224,39 +2224,83 @@ kALIAS tGVAR tGVAR {
 
         """
 
-    """
-method_call     : operation paren_args {
+    @pg.production("method_call : operation paren_args")
+    def method_call_operation_paren_args(self, p):
+        """
+        operation paren_args {
                     $$ = support.new_fcall($1, $2, null);
                 }
-                | primary_value tDOT operation2 opt_paren_args {
+        """
+
+    @pg.production("method_call : primary_value DOT operation2 opt_paren_args")
+    def method_call_primary_value_dot_operation_opt_paren_args(self, p):
+        """
+        primary_value tDOT operation2 opt_paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
-                | primary_value tCOLON2 operation2 paren_args {
+        """
+
+    @pg.production("method_call : primary_value COLON2 operation2 paren_args")
+    def method_call_primary_value_colon_operation_paren_args(self, p):
+        """
+        primary_value tCOLON2 operation2 paren_args {
                     $$ = support.new_call($1, $3, $4, null);
                 }
-                | primary_value tCOLON2 operation3 {
+        """
+
+    @pg.production("method_call : primary_value COLON2 operation3")
+    def method_call_primary_value_colon_operation(self, p):
+        """
+        primary_value tCOLON2 operation3 {
                     $$ = support.new_call($1, $3, null, null);
                 }
-                | primary_value tDOT paren_args {
+        """
+
+    @pg.production("method_call : primary_value DOT paren_args")
+    def method_call_primary_value_dot_paren_args(self, p):
+        """
+        primary_value tDOT paren_args {
                     $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
                 }
-                | primary_value tCOLON2 paren_args {
+        """
+
+    @pg.production("method_call : primary_value COLON2 paren_args")
+    def method_call_primary_value_colon_paren_args(self, p):
+        """
+        primary_value tCOLON2 paren_args {
                     $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
                 }
-                | kSUPER paren_args {
+        """
+
+    @pg.production("method_call : SUPER paren_args")
+    def method_call_super_paren_args(self, p):
+        """
+        kSUPER paren_args {
                     $$ = support.new_super($2, $1);
                 }
-                | kSUPER {
+        """
+
+    @pg.production("method_call : SUPER")
+    def method_call_super(self, p):
+        """
+        kSUPER {
                     $$ = new ZSuperNode($1.getPosition());
                 }
-                | primary_value '[' opt_call_args rbracket {
+        """
+
+    @pg.production("method_call : primary_value LITERAL_LBRACKET opt_call_args rbracket")
+    def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
+        """
+        primary_value '[' opt_call_args rbracket {
                     if ($1 instanceof SelfNode) {
                         $$ = support.new_fcall(new Token("[]", support.getPosition($1)), $3, null);
                     } else {
                         $$ = support.new_call($1, new Token("[]", support.getPosition($1)), $3, null);
                     }
                 }
+        """
 
+    """
 brace_block     : tLCURLY {
                     support.pushBlockScope();
                 } opt_block_param compstmt tRCURLY {
