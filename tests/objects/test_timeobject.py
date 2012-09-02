@@ -1,6 +1,10 @@
 import time
 
+import py
 
+
+# pytest currently explodes with monkeypatching time.time
+@py.test.mark.xfail(run=False)
 class TestTimeObject(object):
     def test_now(self, space, monkeypatch):
         monkeypatch.setattr(time, "time", lambda: 342.1)
