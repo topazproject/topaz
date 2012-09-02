@@ -57,7 +57,7 @@ def run_docs_tests(env):
     local("sphinx-build -W -b html docs/ docs/_build/")
 
 TEST_TYPES = {
-    "own": Test(run_own_tests, deps=["pytest"]),
+    "own": Test(run_own_tests, deps=["-i http://pypi.testrun.org pytest"]),
     "translate": Test(run_translate_tests),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_pypy=False),
 }
