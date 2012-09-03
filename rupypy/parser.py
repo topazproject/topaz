@@ -2600,11 +2600,14 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-string_content  : tSTRING_CONTENT {
-                    $$ = $1;
-                }
-                | tSTRING_DVAR {
+    @pg.production("string_content : STRING_CONTENT")
+    def string_content_string_content(self, p):
+        return p[0]
+
+    @pg.production("string_content : STRING_DVAR string_dvar")
+    def string_content_string_dvar(self, p):
+        """
+        tSTRING_DVAR {
                     $$ = lexer.getStrTerm();
                     lexer.setStrTerm(null);
                     lexer.setState(LexState.EXPR_BEG);
@@ -2612,7 +2615,12 @@ string_content  : tSTRING_CONTENT {
                     lexer.setStrTerm($<StrTerm>2);
                     $$ = new EvStrNode($1.getPosition(), $3);
                 }
-                | tSTRING_DBEG {
+        """
+
+    @pg.production("string_content : STRING_DBEG compstmt RCURLY")
+    def string_content_string_dbeg(self, p):
+        """
+        tSTRING_DBEG {
                    $$ = lexer.getStrTerm();
                    lexer.getConditionState().stop();
                    lexer.getCmdArgumentState().stop();
@@ -2625,7 +2633,9 @@ string_content  : tSTRING_CONTENT {
 
                    $$ = support.newEvStrNode($1.getPosition(), $3);
                 }
+        """
 
+    """
 string_dvar     : tGVAR {
                      $$ = new GlobalVarNode($1.getPosition(), (String) $1.getValue());
                 }
