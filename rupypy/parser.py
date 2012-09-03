@@ -2323,7 +2323,7 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
-    
+
     @pg.production("case_body : WHEN args then compstmt cases")
     def case_body(self, p):
         """
@@ -2331,15 +2331,15 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newWhenNode($1.getPosition(), $2, $4, $5);
                 }
         """
-    
+
     @pg.production("cases : opt_else")
     def cases_opt_else(self, p):
         return p[0]
-    
+
     @pg.production("cases : case_body")
     def cases_case_body(self, p):
         return p[0]
-    
+
     @pg.production("opt_rescue : RESCUE exc_list exc_var then compstmt opt_rescue")
     def opt_rescue(self, p):
         """"
@@ -2357,21 +2357,33 @@ kALIAS tGVAR tGVAR {
                     $$ = new RescueBodyNode($1.getPosition(), $2, body, $6);
                 }
         """
-    
+
     @pg.production("opt_rescue : ")
     def opt_rescue_empty(self, p):
         return None
 
-    """
-exc_list        : arg_value {
+    @pg.production("exc_list : arg_value")
+    def exc_list_arg_value(self, p):
+        """
+        arg_value {
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
-                | mrhs {
+        """
+
+    @pg.production("exc_list : mrhs")
+    def exc_list_mrhs(self, p):
+        """
+        mrhs {
                     $$ = support.splat_array($1);
                     if ($$ == null) $$ = $1;
                 }
-                | none
+        """
 
+    @pg.production("exc_list : none")
+    def exc_list_none(self, p):
+        return p[0]
+
+    """
 exc_var         : tASSOC lhs {
                     $$ = $2;
                 }
