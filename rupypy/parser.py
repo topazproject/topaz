@@ -2651,15 +2651,12 @@ kALIAS tGVAR tGVAR {
     def string_dvar_backref(self, p):
         return p[0]
 
-    """
-// Token:symbol
-symbol          : tSYMBEG sym {
-                     lexer.setState(LexState.EXPR_END);
-                     $$ = $2;
-                     $<ISourcePositionHolder>$.setPosition($1.getPosition());
-                }
+    @pg.production("symbol : SYMBEG sym")
+    def symbol(self, p):
+        self.lexer.state = self.lexer.EXPR_END
+        return p[1]
 
-// Token:symbol
+    """
 sym             : fname | tIVAR | tGVAR | tCVAR
 
 dsym            : tSYMBEG xstring_contents tSTRING_END {
