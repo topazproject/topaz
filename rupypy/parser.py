@@ -32,6 +32,8 @@ class Parser(object):
         "STRING_DBEG", "STRING_DVAR", "STRING_END", "LAMBDA", "LAMBEG",
         "NTH_REF", "BACK_REF", "STRING_CONTENT", "INTEGER", "FLOAT",
         "REGEXP_END",
+
+        "LITERAL_EQUAL",
     ], precedence=[
         ("nonassoc", ["LOWEST"]),
         ("nonassoc", ["LBRACE_ARG"]),
@@ -3021,13 +3023,12 @@ terms           : term
 none            : /* none */ {
                       $$ = null;
                 }
-
-none_block_pass : /* none */ {
-                  $$ = null;
-                }
-
-
     """
+
+    @pg.production("none_block_pass : ")
+    def none_block_pass(self, p):
+        return None
+
     parser = pg.build()
 
 
