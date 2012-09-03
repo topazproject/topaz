@@ -2416,8 +2416,10 @@ kALIAS tGVAR tGVAR {
     def literal_dsym(self, p):
         return p[0]
 
-    """
-strings         : string {
+    @pg.production("strings : string")
+    def strings(self, p):
+        """
+        string {
                     $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
                     /*
                     NODE *node = $1;
@@ -2429,7 +2431,9 @@ strings         : string {
                     $$ = node;
                     */
                 }
+        """
 
+    """
 // [!null]
 string          : tCHAR {
                     ByteList aChar = ByteList.create((String) $1.getValue());
