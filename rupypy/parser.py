@@ -2382,13 +2382,16 @@ kALIAS tGVAR tGVAR {
     @pg.production("exc_list : none")
     def exc_list_none(self, p):
         return p[0]
+    
+    @pg.production("exc_var  : ASSOC lhs")
+    def exc_var(self, p):
+        return p[1]
+    
+    @pg.production("exc_var : none")
+    def exc_var_none(self, p):
+        return p[0]
 
     """
-exc_var         : tASSOC lhs {
-                    $$ = $2;
-                }
-                | none
-
 opt_ensure      : kENSURE compstmt {
                     $$ = $2;
                 }
