@@ -2762,20 +2762,20 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-// [!null]
-var_lhs         : variable {
+    @pg.production("var_lhs : variable")
+    def var_lhs(self, p):
+        """
+        variable {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
+        """
 
-// [!null]
-backref         : tNTH_REF {
-                    $$ = $1;
-                }
-                | tBACK_REF {
-                    $$ = $1;
-                }
+    @pg.production("backref : BACK_REF")
+    @pg.production("backref : NTH_REF")
+    def backref(self, p):
+        return p[0]
 
+    """
 superclass      : term {
                     $$ = null;
                 }
