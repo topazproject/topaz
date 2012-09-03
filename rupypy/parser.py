@@ -2530,12 +2530,19 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-word            : string_content
-                | word string_content {
+    @pg.production("word : string_content")
+    def word_string_content(self, p):
+        return p[0]
+
+    @pg.production("word : word string_content")
+    def word(self, p):
+        """
+        word string_content {
                      $$ = support.literal_concat(support.getPosition($1), $1, $2);
                 }
+        """
 
+    """
 qwords          : tQWORDS_BEG ' ' tSTRING_END {
                      $$ = new ZArrayNode($1.getPosition());
                 }
