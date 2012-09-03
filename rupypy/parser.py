@@ -2656,9 +2656,14 @@ kALIAS tGVAR tGVAR {
         self.lexer.state = self.lexer.EXPR_END
         return p[1]
 
-    """
-sym             : fname | tIVAR | tGVAR | tCVAR
+    @pg.production("sym : CVAR")
+    @pg.production("sym : GVAR")
+    @pg.production("sym : IVAR")
+    @pg.production("sym : fname")
+    def sym(self, p):
+        return p[0]
 
+    """
 dsym            : tSYMBEG xstring_contents tSTRING_END {
                      lexer.setState(LexState.EXPR_END);
 
