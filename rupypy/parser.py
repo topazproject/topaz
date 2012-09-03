@@ -2514,14 +2514,23 @@ kALIAS tGVAR tGVAR {
     def words_word_list(self, p):
         return p[1]
 
-    """
-word_list       : /* none */ {
+    @pg.production("word_list : ")
+    def word_list_empty(self, p):
+        """
+        /* none */ {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
-                | word_list word ' ' {
+        """
+
+    @pg.production("word_list : word_list word LITERAL_SPACE")
+    def word_list(self, p):
+        """
+        word_list word ' ' {
                      $$ = $1.add($2 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($2) : $2);
                 }
+        """
 
+    """
 word            : string_content
                 | word string_content {
                      $$ = support.literal_concat(support.getPosition($1), $1, $2);
