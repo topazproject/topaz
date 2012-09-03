@@ -2775,20 +2775,25 @@ kALIAS tGVAR tGVAR {
     def backref(self, p):
         return p[0]
 
-    """
-superclass      : term {
-                    $$ = null;
-                }
-                | tLT {
+    @pg.production("superclass : term")
+    def superclass_term(self, p):
+        return None
+
+    @pg.production("superclass : LT expr_value term")
+    def superclass(self, p):
+        """"
+        tLT {
                    lexer.setState(LexState.EXPR_BEG);
                 } expr_value term {
                     $$ = $3;
                 }
-                | error term {
-                   $$ = null;
-                }
+        """
 
-// [!null]
+    @pg.production("superclass : error term")
+    def superclass_error(self, p):
+        return None
+
+    """
 // ENEBO: Look at command_start stuff I am ripping out
 f_arglist       : tLPAREN2 f_args rparen {
                     $$ = $2;
