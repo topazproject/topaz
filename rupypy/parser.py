@@ -2553,7 +2553,7 @@ kALIAS tGVAR tGVAR {
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
     def qwords_qword_list(self, p):
         return p[1]
-    
+
     @pg.production("qword_list : ")
     def qword_list_empty(self, p):
         """
@@ -2561,7 +2561,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
         """
-    
+
     @pg.production("qword_list : qword_list STRING_CONTENT LITERAL_SPACE")
     def qword_list(self, p):
         """
@@ -2570,16 +2570,25 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-string_contents : /* none */ {
+    @pg.production("string_contents : ")
+    def string_contents_empty(self, p):
+        """
+        /* none */ {
                     ByteList aChar = ByteList.create("");
                     aChar.setEncoding(lexer.getEncoding());
                     $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
                 }
-                | string_contents string_content {
+        """
+
+    @pg.production("string_contents : string_contents string_content")
+    def string_contents(self, p):
+        """
+        string_contents string_content {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
+        """
 
+    """
 xstring_contents: /* none */ {
                     $$ = null;
                 }
