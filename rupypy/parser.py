@@ -2432,21 +2432,30 @@ kALIAS tGVAR tGVAR {
                     */
                 }
         """
-
-    """
-// [!null]
-string          : tCHAR {
+    
+    @pg.production("string : CHAR")
+    def string_char(self, p):
+        """
+        tCHAR {
                     ByteList aChar = ByteList.create((String) $1.getValue());
                     aChar.setEncoding(lexer.getEncoding());
                     $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
                 }
-                | string1 {
-                    $$ = $1;
-                }
-                | string string1 {
+        """
+    
+    @pg.production("string : string1")
+    def string_string1(self, p):
+        return p[0]
+    
+    @pg.production("string : string string1")
+    def string_string_string1(self, p):
+        """
+        string string1 {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
+        """
 
+    """
 string1         : tSTRING_BEG string_contents tSTRING_END {
                     $$ = $2;
 
