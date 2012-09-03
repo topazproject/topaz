@@ -2588,14 +2588,19 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-xstring_contents: /* none */ {
-                    $$ = null;
-                }
-                | xstring_contents string_content {
+    @pg.production("xstring_contents : ")
+    def xstring_contents_empty(self, p):
+        return None
+
+    @pg.production("xstring_contents : xstring_contents string_content")
+    def xstring_contents(self, p):
+        """
+        xstring_contents string_content {
                     $$ = support.literal_concat(support.getPosition($1), $1, $2);
                 }
+        """
 
+    """
 string_content  : tSTRING_CONTENT {
                     $$ = $1;
                 }
