@@ -2663,8 +2663,10 @@ kALIAS tGVAR tGVAR {
     def sym(self, p):
         return p[0]
 
-    """
-dsym            : tSYMBEG xstring_contents tSTRING_END {
+    @pg.production("dsym : SYMBEG xstring_contents STRING_END")
+    def dsym(self, p):
+        """"
+        tSYMBEG xstring_contents tSTRING_END {
                      lexer.setState(LexState.EXPR_END);
 
                      // DStrNode: :"some text #{some expression}"
@@ -2682,7 +2684,9 @@ dsym            : tSYMBEG xstring_contents tSTRING_END {
                          $<DSymbolNode>$.add($2);
                      }
                 }
+        """
 
+    """
 numeric         : tINTEGER {
                     $$ = $1;
                 }
