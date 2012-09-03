@@ -25,7 +25,7 @@ class Parser(object):
         "NEQ", "GEQ", "LEQ", "ANDOP", "OROP", "MATCH", "NMATCH", "DOT", "DOT2",
         "DOT3", "AREF", "ASET", "LSHFT", "RSHFT", "COLON2", "COLON3",
         "OP_ASGN", "ASSOC", "LPAREN", "LPAREN2", "RPAREN", "LPAREN_ARG",
-        "LBRACK", "RBRACE", "LBRACE", "LBRACE_ARG", "STAR", "STAR2", "AMPER",
+        "LBRACK", "RBRACK", "LBRACE", "LBRACE_ARG", "STAR", "STAR2", "AMPER",
         "AMPER2", "TILDE", "PERCENT", "DIVIDE", "PLUS", "MINUS", "LT", "GT",
         "PIPE", "BANG", "CARET", "LCURLY", "RCURLY", "BACK_REF2", "SYMBEG",
         "STRING_BEG", "XSTRING_BEG", "REGEXP_BEG", "WORDS_BEG", "QWORDS_BEG",
