@@ -2432,7 +2432,7 @@ kALIAS tGVAR tGVAR {
                     */
                 }
         """
-    
+
     @pg.production("string : CHAR")
     def string_char(self, p):
         """
@@ -2442,11 +2442,11 @@ kALIAS tGVAR tGVAR {
                     $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
                 }
         """
-    
+
     @pg.production("string : string1")
     def string_string1(self, p):
         return p[0]
-    
+
     @pg.production("string : string string1")
     def string_string_string1(self, p):
         """
@@ -2502,14 +2502,19 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-words           : tWORDS_BEG ' ' tSTRING_END {
+    @pg.production("words : WORDS_BEG LITERAL_SPACE STRING_END")
+    def words_space(self, p):
+        """
+        tWORDS_BEG ' ' tSTRING_END {
                     $$ = new ZArrayNode($1.getPosition());
                 }
-                | tWORDS_BEG word_list tSTRING_END {
-                    $$ = $2;
-                }
+        """
 
+    @pg.production("words : WORDS_BEG word_list STRING_END")
+    def words_word_list(self, p):
+        return p[1]
+
+    """
 word_list       : /* none */ {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
