@@ -46,7 +46,7 @@ def run_tests():
 
 
 def run_own_tests(env):
-    local("PYTHONPATH={pypy_path}:$PYTHONPATH py.test".format(**env))
+    local("PYTHONPATH=$PYTHONPATH:{pypy_path} py.test".format(**env))
 
 
 def run_translate_tests(env):

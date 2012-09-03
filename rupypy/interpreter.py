@@ -102,7 +102,7 @@ class Interpreter(object):
         frame.push(w_self)
 
     def LOAD_SCOPE(self, space, bytecode, frame, pc):
-        frame.push(frame.w_scope)
+        frame.push(jit.promote(frame.w_scope))
 
     def LOAD_CODE(self, space, bytecode, frame, pc):
         frame.push(bytecode)

@@ -76,7 +76,7 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("/", other="int")
     def method_div(self, space, other):
         try:
-            return space.newint(self.intvalue / 0)
+            return space.newint(self.intvalue / other)
         except ZeroDivisionError:
             raise space.error(space.getclassfor(W_ZeroDivisionError),
                 "divided by 0"
