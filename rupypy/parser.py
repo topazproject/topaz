@@ -2474,8 +2474,10 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-xstring         : tXSTRING_BEG xstring_contents tSTRING_END {
+    @pg.production("xstring : XSTRING_BEG xstring_contents STRING_END")
+    def xstring(self, p):
+        """
+        tXSTRING_BEG xstring_contents tSTRING_END {
                     ISourcePosition position = $1.getPosition();
 
                     if ($2 == null) {
@@ -2490,7 +2492,9 @@ xstring         : tXSTRING_BEG xstring_contents tSTRING_END {
                         $$ = new DXStrNode(position).add($2);
                     }
                 }
+        """
 
+    """
 regexp          : tREGEXP_BEG xstring_contents tREGEXP_END {
                     $$ = support.newRegexpNode($1.getPosition(), $2, (RegexpNode) $3);
                 }
