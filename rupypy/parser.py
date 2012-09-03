@@ -2323,15 +2323,27 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
-
-    """
-case_body       : kWHEN args then compstmt cases {
+    
+    @pg.production("case_body : WHEN args then compstmt cases")
+    def case_body(self, p):
+        """
+        kWHEN args then compstmt cases {
                     $$ = support.newWhenNode($1.getPosition(), $2, $4, $5);
                 }
-
-cases           : opt_else | case_body
-
-opt_rescue      : kRESCUE exc_list exc_var then compstmt opt_rescue {
+        """
+    
+    @pg.production("cases : opt_else")
+    def cases_opt_else(self, p):
+        return p[0]
+    
+    @pg.production("cases : case_body")
+    def cases_case_body(self, p):
+        return p[0]
+    
+    @pg.production("opt_rescue : RESCUE exc_list exc_var then compstmt opt_rescue")
+    def opt_rescue(self, p):
+        """"
+        kRESCUE exc_list exc_var then compstmt opt_rescue {
                     Node node;
                     if ($3 != null) {
                         node = support.appendToBlock(support.node_assign($3, new GlobalVarNode($1.getPosition(), "$!")), $5);
@@ -2344,10 +2356,13 @@ opt_rescue      : kRESCUE exc_list exc_var then compstmt opt_rescue {
                     Node body = node == null ? NilImplicitNode.NIL : node;
                     $$ = new RescueBodyNode($1.getPosition(), $2, body, $6);
                 }
-                | {
-                    $$ = null;
-                }
+        """
+    
+    @pg.production("opt_rescue : ")
+    def opt_rescue_empty(self, p):
+        return None
 
+    """
 exc_list        : arg_value {
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
