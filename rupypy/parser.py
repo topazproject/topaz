@@ -2455,8 +2455,10 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-string1         : tSTRING_BEG string_contents tSTRING_END {
+    @pg.production("string1 : STRING_BEG string_contents STRING_END")
+    def string1(self, p):
+        """
+        tSTRING_BEG string_contents tSTRING_END {
                     $$ = $2;
 
                     $<ISourcePositionHolder>$.setPosition($1.getPosition());
@@ -2470,7 +2472,9 @@ string1         : tSTRING_BEG string_contents tSTRING_END {
                       Node strNode = ((DStrNode)$2).get(0);
                     }
                 }
+        """
 
+    """
 xstring         : tXSTRING_BEG xstring_contents tSTRING_END {
                     ISourcePosition position = $1.getPosition();
 
