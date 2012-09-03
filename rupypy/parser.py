@@ -2793,18 +2793,16 @@ kALIAS tGVAR tGVAR {
     def superclass_error(self, p):
         return None
 
-    """
-// ENEBO: Look at command_start stuff I am ripping out
-f_arglist       : tLPAREN2 f_args rparen {
-                    $$ = $2;
-                    $<ISourcePositionHolder>$.setPosition($1.getPosition());
-                    lexer.setState(LexState.EXPR_BEG);
-                }
-                | f_args term {
-                    $$ = $1;
-                }
+    @pg.production("f_arglist : LPAREN2 f_args rparen")
+    def f_arglist_parens(self, p):
+        self.lexer.state = self.lexer.EXPR_BEG
+        return p[1]
 
-// [!null]
+    @pg.production("f_arglist : f_args term")
+    def f_arglist(self, p):
+        return p[0]
+
+    """
 f_args          : f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
                 }
