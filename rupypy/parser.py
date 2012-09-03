@@ -2635,18 +2635,23 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-string_dvar     : tGVAR {
-                     $$ = new GlobalVarNode($1.getPosition(), (String) $1.getValue());
-                }
-                | tIVAR {
-                     $$ = new InstVarNode($1.getPosition(), (String) $1.getValue());
-                }
-                | tCVAR {
-                     $$ = new ClassVarNode($1.getPosition(), (String) $1.getValue());
-                }
-                | backref
+    @pg.production("string_Dvar : GVAR")
+    def string_dvar_gvar(self, p):
+        return self.new_global(p[0])
 
+    @pg.production("string_dvar : IVAR")
+    def string_dvar_ivar(self, p):
+        return self.new_instance_var(p[0])
+
+    @pg.production("string_dvar : CVAR")
+    def string_dvar_cvar(self, p):
+        return self.new_class_var(p[0])
+
+    @pg.production("string_dvar : backref")
+    def string_dvar_backref(self, p):
+        return p[0]
+
+    """
 // Token:symbol
 symbol          : tSYMBEG sym {
                      lexer.setState(LexState.EXPR_END);
