@@ -2802,53 +2802,127 @@ kALIAS tGVAR tGVAR {
     def f_arglist(self, p):
         return p[0]
 
-    """
-f_args          : f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    def f_args_f_arg_comma_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
                 }
-                | f_arg ',' f_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def f_args_f_arg_comma_f_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
                 }
-                | f_arg ',' f_optarg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg opt_f_block_arg")
+    def f_args_f_arg_comma_f_optarg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_optarg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
                 }
-                | f_arg ',' f_optarg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    def f_args_f_arg_comma_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_optarg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
                 }
-                | f_arg ',' f_rest_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    def f_args_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
                 }
-                | f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def f_args_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
                 }
-                | f_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_arg opt_f_block_arg")
+    def f_args_f_arg_opt_f_block_arg(self, p):
+        """
+        f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
                 }
-                | f_optarg ',' f_rest_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    def f_args_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_optarg ',' f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, $1, $3, null, $4);
                 }
-                | f_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def f_args_f_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, $1, $3, $5, $6);
                 }
-                | f_optarg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_optarg opt_f_block_arg")
+    def f_args_f_optarg_opt_f_block_arg(self, p):
+        """
+        f_optarg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, $1, null, null, $2);
                 }
-                | f_optarg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    def f_args_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_optarg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
                 }
-                | f_rest_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_rest_arg opt_f_block_arg")
+    def f_args_f_rest_arg_opt_f_block_arg(self, p):
+        """
+        f_rest_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
                 }
-                | f_rest_arg ',' f_arg opt_f_block_arg {
+        """
+
+    @pg.production("f_args : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    def f_args_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
+        """
+        f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, $1, $3, $4);
                 }
-                | f_block_arg {
+        """
+
+    @pg.production("f_args : f_block_arg")
+    def f_args_f_block_arg(self, p):
+        """
+        f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
-                | /* none */ {
+        """
+
+    @pg.production("f_args : ")
+    def f_args_none(self, p):
+        """
+        /* none */ {
                     $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
                 }
+        """
 
+    """
 f_bad_arg       : tCONSTANT {
                     support.yyerror("formal argument cannot be a constant");
                 }
