@@ -2686,21 +2686,23 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-numeric         : tINTEGER {
-                    $$ = $1;
-                }
-                | tFLOAT {
-                     $$ = $1;
-                }
-                | tUMINUS_NUM tINTEGER %prec tLOWEST {
-                     $$ = support.negateInteger($2);
-                }
-                | tUMINUS_NUM tFLOAT %prec tLOWEST {
-                     $$ = support.negateFloat($2);
-                }
+    @pg.production("numeric : INTEGER")
+    def numeric_integer(self, p):
+        raise NotImplementedError
 
-// [!null]
+    @pg.production("numeric : FLOAT")
+    def numeric_float(self, p):
+        raise NotImplementedError
+
+    @pg.production("numeric : UMINUS_NUM INTEGER", precedence="LOWEST")
+    def numeric_minus_integer(self, p):
+        raise NotImplementedError
+
+    @pg.production("numeric : UMINUS_NUM FLOAT", precedence="LOWEST")
+    def numeric_minus_float(self, p):
+        raise NotImplementedError
+
+    """
 variable        : tIDENTIFIER | tIVAR | tGVAR | tCONSTANT | tCVAR
                 | kNIL {
                     $$ = new Token("nil", Tokens.kNIL, $1.getPosition());
