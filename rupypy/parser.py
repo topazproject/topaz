@@ -2553,15 +2553,24 @@ kALIAS tGVAR tGVAR {
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
     def qwords_qword_list(self, p):
         return p[1]
-
-    """
-qword_list      : /* none */ {
+    
+    @pg.production("qword_list : ")
+    def qword_list_empty(self, p):
+        """
+        /* none */ {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
-                | qword_list tSTRING_CONTENT ' ' {
+        """
+    
+    @pg.production("qword_list : qword_list STRING_CONTENT LITERAL_SPACE")
+    def qword_list(self, p):
+        """
+        qword_list tSTRING_CONTENT ' ' {
                     $$ = $1.add($2);
                 }
+        """
 
+    """
 string_contents : /* none */ {
                     ByteList aChar = ByteList.create("");
                     aChar.setEncoding(lexer.getEncoding());
