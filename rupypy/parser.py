@@ -1,5 +1,7 @@
 from rply import ParserGenerator
 
+from rupypy import ast
+
 
 class Parser(object):
     def __init__(self, lexer):
@@ -2702,35 +2704,63 @@ kALIAS tGVAR tGVAR {
     def numeric_minus_float(self, p):
         raise NotImplementedError
 
-    """
-variable        : tIDENTIFIER | tIVAR | tGVAR | tCONSTANT | tCVAR
-                | kNIL {
-                    $$ = new Token("nil", Tokens.kNIL, $1.getPosition());
-                }
-                | kSELF {
-                    $$ = new Token("self", Tokens.kSELF, $1.getPosition());
-                }
-                | kTRUE {
-                    $$ = new Token("true", Tokens.kTRUE, $1.getPosition());
-                }
-                | kFALSE {
-                    $$ = new Token("false", Tokens.kFALSE, $1.getPosition());
-                }
-                | k__FILE__ {
-                    $$ = new Token("__FILE__", Tokens.k__FILE__, $1.getPosition());
-                }
-                | k__LINE__ {
-                    $$ = new Token("__LINE__", Tokens.k__LINE__, $1.getPosition());
-                }
-                | k__ENCODING__ {
-                    $$ = new Token("__ENCODING__", Tokens.k__ENCODING__, $1.getPosition());
-                }
+    @pg.production("variable : IDENTIFIER")
+    def variable_identifier(self, p):
+        return BoxAST(ast.Variable(p[0].getstr(), p[0].getsourcepos().lineno))
 
-// [!null]
-var_ref         : variable {
+    @pg.production("variable : IVAR")
+    def variable_ivar(self, p):
+        return BoxAST(ast.InstanceVariable([0].getstr()))
+
+    @pg.production("variable : GVAR")
+    def variable_gvar(self, p):
+        raise NotImplementedError
+
+    @pg.production("variable : CONSTANT")
+    def variable_constant(self, p):
+        raise NotImplementedError
+
+    @pg.production("variable : CVAR")
+    def variable_cvar(self, p):
+        raise NotImplementedError
+
+    @pg.production("variable : NIL")
+    def variable_nil(self, p):
+        return BoxAST(ast.Nil())
+
+    @pg.production("variable : SELF")
+    def variable_self(self, p):
+        return BoxAST(ast.Self())
+
+    @pg.production("variable : TRUE")
+    def variable_true(self, p):
+        return BoxAST(ast.ConstantBoolean(True))
+
+    @pg.production("variable : FALSE")
+    def variable_false(self, p):
+        return BoxAST(ast.ConstantBoolean(False))
+
+    @pg.production("variable : __FILE__")
+    def variable__file__(self, p):
+        return BoxAST(ast.File())
+
+    @pg.production("variable : __LINE__")
+    def variable__line__(self, p):
+        return BoxAST(ast.ConstantInt(p[0].getsourcepos().lineno))
+
+    @pg.production("variable : __ENCODING__")
+    def variable__encoding__(self, p):
+        return BoxAST(ast.Encoding())
+
+    @pg.production("var_ref : variable")
+    def var_ref(self, p):
+        """
+        variable {
                     $$ = support.gettable($1);
                 }
+        """
 
+    """
 // [!null]
 var_lhs         : variable {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
