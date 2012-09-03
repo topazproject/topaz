@@ -2635,7 +2635,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("string_Dvar : GVAR")
+    @pg.production("string_dvar : GVAR")
     def string_dvar_gvar(self, p):
         return self.new_global(p[0])
 
