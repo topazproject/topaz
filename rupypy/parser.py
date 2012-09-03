@@ -2494,11 +2494,15 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-regexp          : tREGEXP_BEG xstring_contents tREGEXP_END {
+    @pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
+    def regexp(self, p):
+        """
+        tREGEXP_BEG xstring_contents tREGEXP_END {
                     $$ = support.newRegexpNode($1.getPosition(), $2, (RegexpNode) $3);
                 }
+        """
 
+    """
 words           : tWORDS_BEG ' ' tSTRING_END {
                     $$ = new ZArrayNode($1.getPosition());
                 }
