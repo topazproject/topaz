@@ -2399,14 +2399,24 @@ kALIAS tGVAR tGVAR {
     def opt_ensure_none(self, p):
         return p[0]
 
-    """
-literal         : numeric
-                | symbol {
+    @pg.production("literal : numeric")
+    def literal_numeric(self, p):
+        return p[0]
+
+    @pg.production("literal : symbol")
+    def literal_symbol(self, p):
+        """
+        symbol {
                     // FIXME: We may be intern'ing more than once.
                     $$ = new SymbolNode($1.getPosition(), ((String) $1.getValue()).intern());
                 }
-                | dsym
+        """
 
+    @pg.production("literal : dsym")
+    def literal_dsym(self, p):
+        return p[0]
+
+    """
 strings         : string {
                     $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
                     /*
