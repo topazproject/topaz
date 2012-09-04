@@ -3052,31 +3052,44 @@ kALIAS tGVAR tGVAR {
     def restarg_mark(self, p):
         return p[0]
 
-    """
-// [!null]
-f_rest_arg      : restarg_mark tIDENTIFIER {
+    @pg.production("f_rest_arg : restarg_mark IDENTIFIER")
+    def f_rest_arg_restarg_mark_identifer(self, p):
+        """
+        restarg_mark tIDENTIFIER {
                     if (!support.is_local_id($2)) {
                         support.yyerror("rest argument must be local variable");
                     }
 
                     $$ = new RestArgNode(support.arg_var(support.shadowing_lvar($2)));
                 }
-                | restarg_mark {
+        """
+
+    @pg.production("f_rest_arg : restarg_mark")
+    def f_rest_arg_restarg_mark(self, p):
+        """
+        restarg_mark {
                     $$ = new UnnamedRestArgNode($1.getPosition(), "", support.getCurrentScope().addVariable("*"));
                 }
+        """
 
-// [!null]
-blkarg_mark     : tAMPER2 | tAMPER
+    @pg.production("blkarg_mark : AMPER")
+    @pg.production("blkarg_mark : AMPER2")
+    def blkarg_mark(self, p):
+        return p[0]
 
-// f_block_arg - Block argument def for function (foo(&block)) [!null]
-f_block_arg     : blkarg_mark tIDENTIFIER {
+    @pg.production("f_block_arg : blkarg_mark IDENTIFIER")
+    def f_block_arg(self, p):
+        """
+        blkarg_mark tIDENTIFIER {
                     if (!support.is_local_id($2)) {
                         support.yyerror("block argument must be local variable");
                     }
 
                     $$ = new BlockArgNode(support.arg_var(support.shadowing_lvar($2)));
                 }
+        """
 
+    """
 opt_f_block_arg : ',' f_block_arg {
                     $$ = $2;
                 }
