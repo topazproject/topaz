@@ -3015,23 +3015,44 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
+    @pg.production("f_block_optarg : f_block_opt")
+    def f_block_optarg_f_block_opt(self, p):
+        """
+        f_block_opt {
+                    $$ = new BlockNode($1.getPosition()).add($1);
+                }
+        """
+
+    @pg.production("f_block_optarg : f_block_optarg LITERAL_COMMA f_block_opt")
+    def f_block_optarg(self, p):
+        """
+        f_block_optarg ',' f_block_opt {
+                    $$ = support.appendToBlock($1, $3);
+                }
+        """
+
+    @pg.production("f_optarg : f_opt")
+    def f_optarg_f_opt(self, p):
+        """
+        f_opt {
+                    $$ = new BlockNode($1.getPosition()).add($1);
+                }
+        """
+
+    @pg.production("f_optarg : f_optarg LITERAL_COMMA f_opt")
+    def f_optarg(self, p):
+        """
+        f_optarg ',' f_opt {
+                    $$ = support.appendToBlock($1, $3);
+                }
+        """
+
+    @pg.production("restarg_mark : STAR")
+    @pg.production("restarg_mark : STAR2")
+    def restarg_mark(self, p):
+        return p[0]
+
     """
-f_block_optarg  : f_block_opt {
-                    $$ = new BlockNode($1.getPosition()).add($1);
-                }
-                | f_block_optarg ',' f_block_opt {
-                    $$ = support.appendToBlock($1, $3);
-                }
-
-f_optarg        : f_opt {
-                    $$ = new BlockNode($1.getPosition()).add($1);
-                }
-                | f_optarg ',' f_opt {
-                    $$ = support.appendToBlock($1, $3);
-                }
-
-restarg_mark    : tSTAR2 | tSTAR
-
 // [!null]
 f_rest_arg      : restarg_mark tIDENTIFIER {
                     if (!support.is_local_id($2)) {
