@@ -33,7 +33,8 @@ class Parser(object):
         "NTH_REF", "BACK_REF", "STRING_CONTENT", "INTEGER", "FLOAT",
         "REGEXP_END",
 
-        "LITERAL_EQUAL", "LITERAL_COLON", "LITERAL_COMMA",
+        "LITERAL_EQUAL", "LITERAL_COLON", "LITERAL_COMMA", "LITERAL_LBRACKET",
+        "LITERAL_SEMICOLON", "LITERAL_QUESTION_MARK", "LITERAL_SPACE"
     ], precedence=[
         ("nonassoc", ["LOWEST"]),
         ("nonassoc", ["LBRACE_ARG"]),
