@@ -34,7 +34,8 @@ class Parser(object):
         "REGEXP_END",
 
         "LITERAL_EQUAL", "LITERAL_COLON", "LITERAL_COMMA", "LITERAL_LBRACKET",
-        "LITERAL_SEMICOLON", "LITERAL_QUESTION_MARK", "LITERAL_SPACE"
+        "LITERAL_SEMICOLON", "LITERAL_QUESTION_MARK", "LITERAL_SPACE",
+        "LITERAL_NEWLINE",
     ], precedence=[
         ("nonassoc", ["LOWEST"]),
         ("nonassoc", ["LBRACE_ARG"]),
@@ -413,7 +414,7 @@ kALIAS tGVAR tGVAR {
     def expr_not(self, p):
         return BoxAST(ast.Not(p[2].getast()))
 
-    @pg.production("expr : BAND command_call")
+    @pg.production("expr : BANG command_call")
     def expr_bang_command_call(self, p):
         return BoxAST(ast.Not(p[2].getast()))
 
@@ -1663,7 +1664,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("primary : UNTIL expr_Value do compstmt END")
+    @pg.production("primary : UNTIL expr_value do compstmt END")
     def primary_until(self, p):
         """
         kUNTIL {
@@ -1912,7 +1913,7 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg COMMA f_marg_list")
+    @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_f_norm_arg_comm_f_marg_list(self, p):
         """
         f_marg_list ',' tSTAR f_norm_arg ',' f_marg_list {
