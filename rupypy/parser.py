@@ -2938,12 +2938,19 @@ kALIAS tGVAR tGVAR {
     def f_bad_arg_cvar(self, p):
         raise self.error(p[0], "formal argument cannot be a class variable")
 
-    """
-f_norm_arg      : f_bad_arg
-                | tIDENTIFIER {
+    @pg.production("f_norm_arg : f_bad_arg")
+    def f_norm_arg_f_bad_arg(self, p):
+        return p[0]
+
+    @pg.production("f_norm_arg : IDENTIFIER")
+    def f_norm_arg_identifier(self, p):
+        """
+        tIDENTIFIER {
                     $$ = support.formal_argument($1);
                 }
+        """
 
+    """
 f_arg_item      : f_norm_arg {
                     $$ = support.arg_var($1);
   /*
