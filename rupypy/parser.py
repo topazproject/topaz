@@ -33,7 +33,7 @@ class Parser(object):
         "NTH_REF", "BACK_REF", "STRING_CONTENT", "INTEGER", "FLOAT",
         "REGEXP_END",
 
-        "LITERAL_EQUAL",
+        "LITERAL_EQUAL", "LITERAL_COLON", "LITERAL_COMMA",
     ], precedence=[
         ("nonassoc", ["LOWEST"]),
         ("nonassoc", ["LBRACE_ARG"]),
@@ -3191,28 +3191,60 @@ kALIAS tGVAR tGVAR {
     def operation3(self, p):
         return p[0]
 
-    """
-dot_or_colon    : tDOT | tCOLON2
-opt_terms       : /* none */ | terms
-opt_nl          : /* none */ | '\n'
-rparen          : opt_nl tRPAREN {
-                    $$ = $2;
-                }
-rbracket        : opt_nl tRBRACK {
-                    $$ = $2;
-                }
-trailer         : /* none */ | '\n' | ','
+    @pg.production("dot_or_colon : COLON2")
+    @pg.production("dot_or_colon : DOT")
+    def dot_or_colon(self, p):
+        return p[0]
 
-term            : ';'
-                | '\n'
+    @pg.production("opt_terms : ")
+    def opt_terms_none(self, p):
+        return None
 
-terms           : term
-                | terms ';'
+    @pg.production("opt_terms : terms")
+    def opt_terms(self, p):
+        return p[0]
 
-none            : /* none */ {
-                      $$ = null;
-                }
-    """
+    @pg.production("opt_nl : ")
+    def opt_nl_none(self, p):
+        return None
+
+    @pg.production("opt_nl : LITERAL_NEWLINE")
+    def opt_nl(self, p):
+        return None
+
+    @pg.production("rparen : opt_nl RPAREN")
+    def rparen(self, p):
+        return p[1]
+
+    @pg.production("rbracket : opt_nl RBRACK")
+    def rbracket(self, p):
+        return p[1]
+
+    @pg.production("trailer : ")
+    def trailer_none(self, p):
+        return None
+
+    @pg.production("trailer : LITERAL_COMMA")
+    @pg.production("trailer : LITERAL_NEWLINE")
+    def trailer(self, p):
+        return p[0]
+
+    @pg.production("term : LITERAL_NEWLINE")
+    @pg.production("term : LITERAL_SEMICOLON")
+    def term(self, p):
+        return p[0]
+
+    @pg.production("terms : term")
+    def terms_term(self, p):
+        return p[0]
+
+    @pg.production("terms : terms LITERAL_SEMICOLON")
+    def terms(self, p):
+        return p[0]
+
+    @pg.production("none : ")
+    def none(self, p):
+        return None
 
     @pg.production("none_block_pass : ")
     def none_block_pass(self, p):
