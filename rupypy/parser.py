@@ -3124,22 +3124,34 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-assoc_list      : none {
+    @pg.production("assoc_list : none")
+    def assoc_list_none(self, p):
+        """
+        none {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
-                | assocs trailer {
-                    $$ = $1;
-                }
+        """
 
-// [!null]
-assocs          : assoc
-                | assocs ',' assoc {
+    @pg.production("assoc_list : assocs trailer")
+    def assoc_list(self, p):
+        return p[0]
+
+    @pg.production("assocs : assoc")
+    def assocs_assoc(self, p):
+        return p[0]
+
+    @pg.production("assocs : assocs LITERAL_COMMA assoc")
+    def assocs(self, p):
+        """
+        assocs ',' assoc {
                     $$ = $1.addAll($3);
                 }
+        """
 
-// [!null]
-assoc           : arg_value tASSOC arg_value {
+    @pg.production("assoc : arg_value ASSOC arg_value")
+    def assoc_arg_value(self, p):
+        """
+        arg_value tASSOC arg_value {
                     ISourcePosition pos;
                     if ($1 == null && $3 == null) {
                         pos = $2.getPosition();
@@ -3149,11 +3161,18 @@ assoc           : arg_value tASSOC arg_value {
 
                     $$ = support.newArrayNode(pos, $1).add($3);
                 }
-                | tLABEL arg_value {
+        """
+
+    @pg.production("assoc : LABEL arg_value")
+    def assoc_label(self, p):
+        """
+        tLABEL arg_value {
                     ISourcePosition pos = $1.getPosition();
                     $$ = support.newArrayNode(pos, new SymbolNode(pos, (String) $1.getValue())).add($2);
                 }
+        """
 
+    """
 operation       : tIDENTIFIER | tCONSTANT | tFID
 operation2      : tIDENTIFIER | tCONSTANT | tFID | op
 operation3      : tIDENTIFIER | tFID | op
