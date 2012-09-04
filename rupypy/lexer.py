@@ -99,7 +99,6 @@ class Lexer(BaseLexer):
         while True:
             ch = self.read()
             if ch == self.EOF:
-                yield self.emit("EOF")
                 break
             if ch == " ":
                 space_seen = True
