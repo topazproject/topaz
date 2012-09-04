@@ -2950,14 +2950,21 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-f_arg_item      : f_norm_arg {
+    @pg.production("f_arg_item : f_norm_arg")
+    def f_arg_item_f_norm_arg(self, p):
+        """
+        f_norm_arg {
                     $$ = support.arg_var($1);
   /*
                     $$ = new ArgAuxiliaryNode($1.getPosition(), (String) $1.getValue(), 1);
   */
                 }
-                | tLPAREN f_margs rparen {
+        """
+
+    @pg.production("f_arg_item : LPAREN f_margs rparen")
+    def f_arg_item_paren(self, p):
+        """
+        tLPAREN f_margs rparen {
                     $$ = $2;
                     /*          {
             ID tid = internal_id();
@@ -2971,16 +2978,26 @@ f_arg_item      : f_norm_arg {
             $$ = NEW_ARGS_AUX(tid, 1);
             $$->nd_next = $2;*/
                 }
+        """
 
-// [!null]
-f_arg           : f_arg_item {
+    @pg.production("f_arg : f_arg_item")
+    def f_arg_f_arg_item(self, p):
+        """
+        f_arg_item {
                     $$ = new ArrayNode(lexer.getPosition(), $1);
                 }
-                | f_arg ',' f_arg_item {
+        """
+
+    @pg.production("f_arg : f_arg LITERAL_COMMA f_arg_item")
+    def f_arg(self, p):
+        """
+        f_arg ',' f_arg_item {
                     $1.add($3);
                     $$ = $1;
                 }
+        """
 
+    """
 f_opt           : tIDENTIFIER '=' arg_value {
                     support.arg_var(support.formal_argument($1));
                     $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
