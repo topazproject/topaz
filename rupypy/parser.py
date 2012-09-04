@@ -3089,21 +3089,29 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-opt_f_block_arg : ',' f_block_arg {
-                    $$ = $2;
-                }
-                | /* none */ {
-                    $$ = null;
-                }
+    @pg.production("opt_f_block_arg : LITERAL_COMMA f_block_arg")
+    def opt_f_block_arg(self, p):
+        return p[1]
 
-singleton       : var_ref {
+    @pg.production("opt_f_block_arg : ")
+    def opt_f_block_arg_empty(self, p):
+        return None
+
+    @pg.production("singleton : var_ref")
+    def singleton_var_ref(self, p):
+        """
+        var_ref {
                     if (!($1 instanceof SelfNode)) {
                         support.checkExpression($1);
                     }
                     $$ = $1;
                 }
-                | tLPAREN2 {
+        """
+
+    @pg.production("singleton : LPAREN expr rparen")
+    def singleton_paren(self, p):
+        """
+        tLPAREN2 {
                     lexer.setState(LexState.EXPR_BEG);
                 } expr rparen {
                     if ($3 == null) {
@@ -3114,8 +3122,9 @@ singleton       : var_ref {
                     support.checkExpression($3);
                     $$ = $3;
                 }
+        """
 
-// [!null]
+    """
 assoc_list      : none {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
