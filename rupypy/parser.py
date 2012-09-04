@@ -3172,10 +3172,26 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
+    @pg.production("operation : FID")
+    @pg.production("operation : CONSTANT")
+    @pg.production("operation : IDENTIFIER")
+    def operation(self, p):
+        return p[0]
+
+    @pg.production("operation2 : op")
+    @pg.production("operation2 : FID")
+    @pg.production("operation2 : CONSTANT")
+    @pg.production("operation2 : IDENTIFIER")
+    def operation2(self, p):
+        return p[0]
+
+    @pg.production("operation3 : op")
+    @pg.production("operation3 : FID")
+    @pg.production("operation3 : IDENTIFIER")
+    def operation3(self, p):
+        return p[0]
+
     """
-operation       : tIDENTIFIER | tCONSTANT | tFID
-operation2      : tIDENTIFIER | tCONSTANT | tFID | op
-operation3      : tIDENTIFIER | tFID | op
 dot_or_colon    : tDOT | tCOLON2
 opt_terms       : /* none */ | terms
 opt_nl          : /* none */ | '\n'
