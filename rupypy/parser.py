@@ -2997,17 +2997,25 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
+    @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
+    def f_opt(self, p):
+        """
+        tIDENTIFIER '=' arg_value {
+                    support.arg_var(support.formal_argument($1));
+                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
+                }
+        """
+
+    @pg.production("f_block_opt : IDENTIFIER LITERAL_EQUAL primary_value")
+    def f_block_opt(self, p):
+        """
+        tIDENTIFIER '=' primary_value {
+                    support.arg_var(support.formal_argument($1));
+                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
+                }
+        """
+
     """
-f_opt           : tIDENTIFIER '=' arg_value {
-                    support.arg_var(support.formal_argument($1));
-                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
-                }
-
-f_block_opt     : tIDENTIFIER '=' primary_value {
-                    support.arg_var(support.formal_argument($1));
-                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
-                }
-
 f_block_optarg  : f_block_opt {
                     $$ = new BlockNode($1.getPosition()).add($1);
                 }
