@@ -2922,21 +2922,23 @@ kALIAS tGVAR tGVAR {
                 }
         """
 
-    """
-f_bad_arg       : tCONSTANT {
-                    support.yyerror("formal argument cannot be a constant");
-                }
-                | tIVAR {
-                    support.yyerror("formal argument cannot be an instance variable");
-                }
-                | tGVAR {
-                    support.yyerror("formal argument cannot be a global variable");
-                }
-                | tCVAR {
-                    support.yyerror("formal argument cannot be a class variable");
-                }
+    @pg.production("f_bad_arg : CONSTANT")
+    def f_bad_arg_constant(self, p):
+        raise self.error(p[0], "formal argument cannot be a constant")
 
-// Token:f_norm_arg [!null]
+    @pg.production("f_bad_arg : IVAR")
+    def f_bad_arg_invar(self, p):
+        raise self.error(p[0], "formal argument cannot be an instance variable")
+
+    @pg.production("f_bad_arg : GVAR")
+    def f_bad_arg_gvar(self, p):
+        raise self.error(p[0], "formal argument cannot be a global variable")
+
+    @pg.production("f_bad_arg : CVAR")
+    def f_bad_arg_cvar(self, p):
+        raise self.error(p[0], "formal argument cannot be a class variable")
+
+    """
 f_norm_arg      : f_bad_arg
                 | tIDENTIFIER {
                     $$ = support.formal_argument($1);
