@@ -18,6 +18,12 @@ class Parser(object):
     def new_stmt(self, box):
         return BoxAST(ast.Statement(box.getast()))
 
+    def new_binary_call(self, lhs, op, rhs):
+        return self._new_call(lhs.getast(), op, [rhs.getast()])
+
+    def _new_call(self, receiver, method, args):
+        return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
+
     pg = ParserGenerator([
         "CLASS", "MODULE", "DEF", "UNDEF", "BEGIN", "RESCUE", "ENSURE", "END",
         "IF", "UNLESS", "THEN", "ELSIF", "ELSE", "CASE", "WHEN", "WHILE",
