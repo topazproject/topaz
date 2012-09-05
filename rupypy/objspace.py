@@ -63,50 +63,50 @@ class ObjectSpace(object):
     def __init__(self):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        self._executioncontext = None
-        self.globals = CellDict()
-        self.bootstrap = True
-        self.w_top_self = W_Object(self, self.getclassfor(W_Object))
+        # self._executioncontext = None
+        # self.globals = CellDict()
+        # self.bootstrap = True
+        # self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
-        self.w_true = W_TrueObject(self)
-        self.w_false = W_FalseObject(self)
-        self.w_nil = W_NilObject(self)
+        # self.w_true = W_TrueObject(self)
+        # self.w_false = W_FalseObject(self)
+        # self.w_nil = W_NilObject(self)
 
-        # This is bootstrap. We have to delay sending until true, false and nil
-        # are defined
-        w_mod = self.getmoduleobject(Kernel.moduledef)
-        self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
+        # # This is bootstrap. We have to delay sending until true, false and nil
+        # # are defined
+        # w_mod = self.getmoduleobject(Kernel.moduledef)
+        # self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
         self.bootstrap = False
 
-        for cls in [
-            W_NilObject, W_TrueObject, W_FalseObject,
-            W_BaseObject, W_Object,
-            W_StringObject, W_SymbolObject,
-            W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
-            W_ArrayObject, W_HashObject,
-            W_IOObject, W_FileObject,
-            W_TimeObject,
-            W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError,
-            W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
-            W_StandardError, W_SystemExit, W_SystemCallError,
-            W_Random, W_Dir, W_ProcObject
-        ]:
-            self.add_class(cls)
+        # for cls in [
+        #     W_NilObject, W_TrueObject, W_FalseObject,
+        #     W_BaseObject, W_Object,
+        #     W_StringObject, W_SymbolObject,
+        #     W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
+        #     W_ArrayObject, W_HashObject,
+        #     W_IOObject, W_FileObject,
+        #     W_TimeObject,
+        #     W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError,
+        #     W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
+        #     W_StandardError, W_SystemExit, W_SystemCallError,
+        #     W_Random, W_Dir, W_ProcObject
+        # ]:
+        #     self.add_class(cls)
 
-        for module in [Math, Comparable, Enumerable, Kernel, Process]:
-            self.add_module(module)
+        # for module in [Math, Comparable, Enumerable, Kernel, Process]:
+        #     self.add_module(module)
 
-        w_load_path = self.newarray([
-            self.newstr_fromstr(
-                os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
-            )
-        ])
-        self.globals.set("$LOAD_PATH", w_load_path)
-        self.globals.set("$:", w_load_path)
+        # w_load_path = self.newarray([
+        #     self.newstr_fromstr(
+        #         os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
+        #     )
+        # ])
+        # self.globals.set("$LOAD_PATH", w_load_path)
+        # self.globals.set("$:", w_load_path)
 
-        w_loaded_features = self.newarray([])
-        self.globals.set("$LOADED_FEATURES", w_loaded_features)
-        self.globals.set('$"', w_loaded_features)
+        # w_loaded_features = self.newarray([])
+        # self.globals.set("$LOADED_FEATURES", w_loaded_features)
+        # self.globals.set('$"', w_loaded_features)
 
     def _freeze_(self):
         return True

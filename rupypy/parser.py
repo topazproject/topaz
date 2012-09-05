@@ -1,4 +1,5 @@
 from rply import ParserGenerator
+from rply.token import BaseBox
 
 from rupypy import ast
 
@@ -10,6 +11,12 @@ class Parser(object):
     def parse(self):
         l = LexerWrapper(self.lexer.tokenize())
         return self.parser.parse(l, state=self)
+
+    def new_list(self, box):
+        return BoxASTList([box.getast()])
+
+    def new_stmt(self, box):
+        return BoxAST(ast.Statement(box.getast()))
 
     pg = ParserGenerator([
         "CLASS", "MODULE", "DEF", "UNDEF", "BEGIN", "RESCUE", "ENSURE", "END",
@@ -80,19 +87,11 @@ class Parser(object):
                   support.getResult().setAST(support.addRootNode($2, support.getPosition($2)));
               }
         """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Main(ast.Block(p[0].getastlist())))
 
     @pg.production("top_compstmt : top_stmts opt_terms")
     def top_compstmt(self, p):
-        """
-        top_compstmt  : top_stmts opt_terms {
-                  if ($1 instanceof BlockNode) {
-                      support.checkUselessStatements($<BlockNode>1);
-                  }
-                  $$ = $1;
-              }
-        """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("top_stmts : none")
     def top_stmts_none(self, p):
@@ -403,7 +402,7 @@ class Parser(object):
 
     @pg.production("stmt : expr")
     def stmt_expr(self, p):
-        return p[0]
+        return self.new_stmt(p[0])
 
     @pg.production("command_asgn : lhs LITERAL_EQUAL command_call")
     def command_asgn_lhs_equal_command_call(self, p):
@@ -938,7 +937,7 @@ class Parser(object):
                     $$ = new LiteralNode($1);
                 }
         """
-        raise NotImplementedError(p)
+        raise NotImplementedError
 
     @pg.production("fsym : symbol")
     def fsym_symbol(self, p):
@@ -2904,7 +2903,16 @@ class Parser(object):
 
     @pg.production("numeric : INTEGER")
     def numeric_integer(self, p):
-        raise NotImplementedError
+        s = p[0].getstr()
+        if "X" in s:
+            base = 16
+        elif "O" in s:
+            base = 8
+        elif "B" in s:
+            base = 2
+        else:
+            base = 10
+        return BoxAST(ast.ConstantInt(int(s, base)))
 
     @pg.production("numeric : FLOAT")
     def numeric_float(self, p):
@@ -3512,3 +3520,21 @@ class LexerWrapper(object):
             return self.lexer.next()
         except StopIteration:
             return None
+
+
+class BoxAST(BaseBox):
+    def __init__(self, node):
+        BaseBox.__init__(self)
+        self.node = node
+
+    def getast(self):
+        return self.node
+
+
+class BoxASTList(BaseBox):
+    def __init__(self, nodes):
+        BaseBox.__init__(self)
+        self.nodes = nodes
+
+    def getastlist(self):
+        return self.nodes
