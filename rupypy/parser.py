@@ -64,7 +64,7 @@ class Parser(object):
     @pg.production("program : top_compstmt")
     def program(self, p):
         """
-program       : {
+        program       : {
                   lexer.setState(LexState.EXPR_BEG);
                   support.initTopLocalVariables();
               } top_compstmt {
@@ -80,17 +80,19 @@ program       : {
                   support.getResult().setAST(support.addRootNode($2, support.getPosition($2)));
               }
         """
+        raise NotImplementedError(p)
 
     @pg.production("top_compstmt : top_stmts opt_terms")
     def top_compstmt(self, p):
         """
-top_compstmt  : top_stmts opt_terms {
+        top_compstmt  : top_stmts opt_terms {
                   if ($1 instanceof BlockNode) {
                       support.checkUselessStatements($<BlockNode>1);
                   }
                   $$ = $1;
               }
         """
+        raise NotImplementedError(p)
 
     @pg.production("top_stmts : none")
     def top_stmts_none(self, p):
@@ -115,7 +117,7 @@ top_compstmt  : top_stmts opt_terms {
     @pg.production("top_stmt : lBEGIN LCURLY top_compstmt RCURLY")
     def top_stmt_lbegin(self, p):
         """
-top_stmt      : stmt
+        top_stmt      : stmt
               | klBEGIN {
                     if (support.isInDef() || support.isInSingle()) {
                         support.yyerror("BEGIN in method");
@@ -125,11 +127,12 @@ top_stmt      : stmt
                     $$ = null;
               }
         """
+        raise NotImplementedError(p)
 
     @pg.production("bodystmt : compstmt opt_rescue opt_else opt_ensure")
     def bodystmt(self, p):
         """
-bodystmt      : compstmt opt_rescue opt_else opt_ensure {
+        bodystmt      : compstmt opt_rescue opt_else opt_ensure {
                   Node node = $1;
 
                   if ($2 != null) {
@@ -146,17 +149,19 @@ bodystmt      : compstmt opt_rescue opt_else opt_ensure {
                   $$ = node;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("compstmt : stmts opt_terms")
     def compstmt(self, p):
         """
-compstmt        : stmts opt_terms {
+        compstmt        : stmts opt_terms {
                     if ($1 instanceof BlockNode) {
                         support.checkUselessStatements($<BlockNode>1);
                     }
                     $$ = $1;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmts : none")
     def stmts_none(self, p):
@@ -183,14 +188,16 @@ compstmt        : stmts opt_terms {
                     $$ = support.newAlias($1.getPosition(), $2, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : ALIAS GVAR GVAR")
     def stmt_alias_gvar(self, p):
         """
-kALIAS tGVAR tGVAR {
+        kALIAS tGVAR tGVAR {
                     $$ = new VAliasNode($1.getPosition(), (String) $2.getValue(), (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : ALIAS GVAR BACK_REF")
     def stmt_alias_gvar_backref(self, p):
@@ -199,6 +206,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new VAliasNode($1.getPosition(), (String) $2.getValue(), "$" + $<BackRefNode>3.getType());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : ALIAS GVAR NTH_REF")
     def stmt_alias_gvar_nref(self, p):
@@ -207,6 +215,7 @@ kALIAS tGVAR tGVAR {
                     support.yyerror("can't make alias for the number variables");
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : UNDEF undef_list")
     def stmt_undef(self, p):
@@ -215,6 +224,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $2;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : stmt IF_MOD expr_value")
     def stmt_ifmod(self, p):
@@ -223,6 +233,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($3), $1, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : stmt UNLESS_MOD expr_value")
     def stmt_unlessmod(self, p):
@@ -231,6 +242,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($3), null, $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : stmt WHILE_MOD expr_value")
     def stmt_while_mod(self, p):
@@ -243,6 +255,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : stmt UNTIL_MOD expr_value")
     def stmt_until_mod(self, p):
@@ -255,6 +268,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : stmt RESCUE_MOD stmt")
     def stmt_rescue_mod(self, p):
@@ -264,6 +278,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new RescueNode(support.getPosition($1), $1, new RescueBodyNode(support.getPosition($1), null, body, null), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : lEND LCURLY compstmt RCURLY")
     def stmt_lend(self, p):
@@ -275,6 +290,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new PostExeNode($1.getPosition(), $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : command_asgn")
     def stmt_command_assign(self, p):
@@ -289,6 +305,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : var_lhs OP_ASGN command_call")
     def stmt_var_lhs_op_asgn_command_call(self, p):
@@ -311,6 +328,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN command_call")
     def stmt_subscript_op_asgn_command_call(self, p):
@@ -320,6 +338,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_opElementAsgnNode(support.getPosition($1), $1, (String) $5.getValue(), $3, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : primary_value DOT IDENTIFIER OP_ASGN command_call")
     def stmt_method_op_asgn_command_call(self, p):
@@ -328,6 +347,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : primary_value DOT CONSTANT OP_ASGN command_call")
     def stmt_method_constant_op_asgn_command_call(self, p):
@@ -336,6 +356,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : primary_value COLON2 IDENTIFIER OP_ASGN command_call")
     def stmt_constant_op_asgn_command_call(self, p):
@@ -344,6 +365,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : backref OP_ASGN command_call")
     def stmt_backref_op_asgn_command_call(self, p):
@@ -356,6 +378,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.node_assign($1, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
     def stmt_mlhs_equal_arg_value(self, p):
@@ -365,6 +388,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : mlhs LITERAL_EQUAL mrhs")
     def stmt_mlhs_equal_mrhs(self, p):
@@ -375,6 +399,7 @@ kALIAS tGVAR tGVAR {
                     $1.setPosition(support.getPosition($1));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("stmt : expr")
     def stmt_expr(self, p):
@@ -388,6 +413,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.node_assign($1, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command_asgn : lhs LITERAL_EQUAL command_asgn")
     def command_asgn_lhs_equal_command_asgn(self, p):
@@ -397,6 +423,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.node_assign($1, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("expr : command_call")
     def expr_command_call(self, p):
@@ -429,6 +456,7 @@ kALIAS tGVAR tGVAR {
                     support.checkExpression($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command_call : command")
     def command_call_command(self, p):
@@ -461,6 +489,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_command : block_call COLON2 operation2 command_args")
     def block_command_colon(self, p):
@@ -470,6 +499,7 @@ kALIAS tGVAR tGVAR {
                 }
 
         """
+        raise NotImplementedError(p)
 
     @pg.production("cmd_brace_block : LBRACE_ARG opt_block_param compstmt RCURLY")
     def cmd_brace_block(self, p):
@@ -481,6 +511,7 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command : operation command_args", precedence="LOWEST")
     def command_operation_command_args(self, p):
@@ -489,6 +520,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_fcall($1, $2, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command : operation command_args cmd_brace_block")
     def command_operation_command_args_cmd_brace_block(self, p):
@@ -497,6 +529,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_fcall($1, $2, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
     def command_method_call_args(self, p):
@@ -505,6 +538,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command : primary_value DOT operation2 command_args cmd_brace_block")
     def command_method_call_args_brace_block(self, p):
@@ -513,6 +547,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, $5);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command : primary_value COLON2 operation2 command_args", precedence="LOWEST")
     def command_colon_call_args(self, p):
@@ -521,6 +556,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command : primary_value COLON2 operation2 command_args cmd_brace_block")
     def command_colon_call_args_brace_block(self, p):
@@ -529,6 +565,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, $5);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command : SUPER command_args")
     def command_super(self, p):
@@ -557,6 +594,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), support.newArrayNode($1.getPosition(), $2), null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : mlhs_head")
     def mlhs_basic_mlhs_head(self, p):
@@ -565,6 +603,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : mlhs_head mlhs_item")
     def mlhs_basic_mlhs_head_mlhs_item(self, p):
@@ -573,6 +612,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1.add($2), null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node")
     def mlhs_basic_mlhs_head_star_node(self, p):
@@ -581,6 +621,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, $3, (ListNode) null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
@@ -589,6 +630,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, $3, $5);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : mlhs_head STAR")
     def mlhs_basic_mlhs_head_star(self, p):
@@ -597,6 +639,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : mlhs_head STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_comma_post(self, p):
@@ -605,6 +648,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : STAR mlhs_node")
     def mlhs_basic_star_mlhs_node(self, p):
@@ -613,6 +657,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, $2, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_mlhs_node_comma_post(self, p):
@@ -621,6 +666,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, $2, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : STAR")
     def mlhs_basic_star(self, p):
@@ -629,6 +675,7 @@ kALIAS tGVAR tGVAR {
                       $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_basic : STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_comma_post(self, p):
@@ -637,6 +684,7 @@ kALIAS tGVAR tGVAR {
                       $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_item : mlhs_node")
     def mlhs_item_node(self, p):
@@ -669,6 +717,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_node : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def mlhs_node_subscript(self, p):
@@ -677,6 +726,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.aryset($1, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_node : primary_value DOT IDENTIFIER")
     def mlhs_node_attr(self, p):
@@ -685,6 +735,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_node : primary_value COLON2 IDENTIFIER")
     def mlhs_node_colon_attr(self, p):
@@ -693,6 +744,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_node : primary_value DOT CONSTANT")
     def mlhs_node_attr_constant(self, p):
@@ -701,6 +753,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_node : primary_value COLON2 CONSTANT")
     def mlhs_node_constant(self, p):
@@ -715,6 +768,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ConstDeclNode(position, null, support.new_colon2(position, $1, (String) $3.getValue()), NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_node : COLON3 CONSTANT")
     def mlhs_node_colon_constant(self, p):
@@ -729,6 +783,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ConstDeclNode(position, null, support.new_colon3(position, (String) $2.getValue()), NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mlhs_node : backref")
     def mlhs_node_backref(self, p):
@@ -737,6 +792,7 @@ kALIAS tGVAR tGVAR {
                     support.backrefAssignError($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : variable")
     def lhs_variable(self, p):
@@ -746,6 +802,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def lhs_subscript(self, p):
@@ -754,6 +811,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.aryset($1, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : primary_value DOT IDENTIFIER")
     def lhs_dot_identifier(self, p):
@@ -762,6 +820,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : primary_value COLON2 IDENTIFIER")
     def lhs_colon_identifier(self, p):
@@ -770,6 +829,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : primary_value DOT CONSTANT")
     def lhs_dot_constant(self, p):
@@ -778,6 +838,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.attrset($1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : primary_value COLON2 CONSTANT")
     def lhs_colon_constant(self, p):
@@ -792,6 +853,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ConstDeclNode(position, null, support.new_colon2(position, $1, (String) $3.getValue()), NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : COLON3 CONSTANT")
     def lhs_unbound_colon_constant(self, p):
@@ -806,6 +868,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ConstDeclNode(position, null, support.new_colon3(position, (String) $2.getValue()), NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("lhs : backref")
     def lhs_backref(self, p):
@@ -826,6 +889,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("cpath : cname")
     def cpath_cname(self, p):
@@ -834,6 +898,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_colon2($1.getPosition(), null, (String) $1.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("cpath : primary_value COLON2 cname")
     def cpath_colon_cname(self, p):
@@ -842,6 +907,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("fname : IDENTIFIER")
     def fname_identifier(self, p):
@@ -872,6 +938,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new LiteralNode($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("fsym : symbol")
     def fsym_symbol(self, p):
@@ -880,6 +947,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new LiteralNode($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("fitem : fsym")
     def fitem_fsym(self, p):
@@ -896,6 +964,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newUndef($1.getPosition(), $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("undef_list : undef_list LITERAL_COMMA fitem")
     def undef_list_undef_list(self, p):
@@ -906,6 +975,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.appendToBlock($1, support.newUndef($1.getPosition(), $4));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("op : PIPE")
     @pg.production("op : CARET")
@@ -993,6 +1063,7 @@ kALIAS tGVAR tGVAR {
                     $<Node>$.setPosition(support.getPosition($1));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : lhs LITERAL_EQUAL arg RESCUE_MOD arg")
     def arg_lhs_equal_arg_rescue_mod(self, p):
@@ -1003,6 +1074,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.node_assign($1, new RescueNode(position, $3, new RescueBodyNode(position, null, body, null), null));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : var_lhs OP_ASGN arg")
     def arg_var_lhs_op_asgn_arg(self, p):
@@ -1025,6 +1097,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : var_lhs OP_ASGN arg RESCUE_MOD arg")
     def arg_var_lhs_op_asgn_arg_rescue_mod(self, p):
@@ -1052,6 +1125,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new RescueNode($4.getPosition(), rest, new RescueBodyNode($4.getPosition(), null, body, null), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN arg")
     def arg_subscript_op_asgn_arg(self, p):
@@ -1061,6 +1135,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_opElementAsgnNode(support.getPosition($1), $1, (String) $5.getValue(), $3, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : primary_value DOT IDENTIFIER OP_ASGN arg")
     def arg_method_op_asgn_arg(self, p):
@@ -1069,6 +1144,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : primary_value DOT CONSTANT OP_ASGN arg")
     def arg_method_constant_op_asgn_arg(self, p):
@@ -1077,6 +1153,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : primary_value COLON2 IDENTIFIER OP_ASGN arg")
     def arg_colon_method_op_asgn_arg(self, p):
@@ -1085,6 +1162,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : primary_value COLON2 CONSTANT OP_ASGN arg")
     def arg_constant_op_asgn_arg(self, p):
@@ -1109,6 +1187,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new DotNode(support.getPosition($1), $1, $3, false, isLiteral);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : arg DOT3 arg")
     def arg_dot3(self, p):
@@ -1121,6 +1200,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new DotNode(support.getPosition($1), $1, $3, true, isLiteral);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : arg POW arg")
     @pg.production("arg : arg PERCENT arg")
@@ -1138,6 +1218,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : UMINUS_NUM FLOAT POW arg")
     def arg_uminus_num_float_pow_arg(self, p):
@@ -1146,6 +1227,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : UMINUS arg")
     @pg.production("arg : UPLUS arg")
@@ -1179,6 +1261,7 @@ kALIAS tGVAR tGVAR {
                   */
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : arg NMATCH arg")
     def arg_nmatch_arg(self, p):
@@ -1187,6 +1270,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.getOperatorCallNode($1, "!~", $3, lexer.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : BANG arg")
     def arg_bang_arg(self, p):
@@ -1195,6 +1279,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : TILDE arg")
     def arg_tilde_arg(self, p):
@@ -1221,6 +1306,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new DefinedNode($1.getPosition(), $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : arg LITERAL_QUESTION_MARK arg opt_nl LITERAL_COLON arg")
     def arg_ternary(self, p):
@@ -1229,6 +1315,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($1), $3, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("arg : primary")
     def arg_primary(self, p):
@@ -1242,6 +1329,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1 != null ? $1 : NilImplicitNode.NIL;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("aref_args : none")
     def aref_args_none(self, p):
@@ -1258,6 +1346,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("aref_args : assocs trailer")
     def aref_args_assocs_trailer(self, p):
@@ -1266,6 +1355,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("paren_args : LPAREN2 opt_call_args rparen")
     def paren_args(self, p):
@@ -1294,6 +1384,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newArrayNode(support.getPosition($1), $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("call_args : args opt_block_arg")
     def call_args_args_opt_block_arg(self, p):
@@ -1302,6 +1393,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.arg_blk_pass($1, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("call_args : assocs opt_block_arg")
     def call_args_assocs_opt_block_arg(self, p):
@@ -1311,6 +1403,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.arg_blk_pass((Node)$$, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
     def call_args_args_comma_assocs_opt_block_arg(self, p):
@@ -1320,6 +1413,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.arg_blk_pass((Node)$$, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("call_args : block_arg")
     def call_args_block_arg(self, p):
@@ -1327,6 +1421,7 @@ kALIAS tGVAR tGVAR {
         block_arg {
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("command_args : call_args")
     def command_args(self, p):
@@ -1338,6 +1433,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $2;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_arg : AMPER arg_value")
     def block_arg(self, p):
@@ -1363,6 +1459,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newArrayNode(pos, $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("args : STAR arg_value")
     def args_star_arg_value(self, p):
@@ -1371,6 +1468,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newSplatNode($1.getPosition(), $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("args : args LITERAL_COMMA arg_value")
     def args_comma_arg_value(self, p):
@@ -1385,6 +1483,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("args : args LITERAL_COMMA STAR arg_value")
     def args_comma_star_arg_value(self, p):
@@ -1401,6 +1500,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mrhs : args LITERAL_COMMA arg_value")
     def mrhs_args_comma_arg_value(self, p):
@@ -1415,6 +1515,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mrhs : args LITERAL_COMMA STAR arg_value")
     def mrhs_args_comma_star_arg_value(self, p):
@@ -1430,6 +1531,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("mrhs : STAR arg_value")
     def mrhs_star_arg_value(self, p):
@@ -1438,6 +1540,7 @@ kALIAS tGVAR tGVAR {
                      $$ = support.newSplatNode(support.getPosition($1), $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : literal")
     def primary_literal(self, p):
@@ -1478,6 +1581,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new FCallNoArgNode($1.getPosition(), (String) $1.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : BEGIN bodystmt END")
     def primary_begin_end(self, p):
@@ -1486,6 +1590,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new BeginNode(support.getPosition($1), $2 == null ? NilImplicitNode.NIL : $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : LPAREN_ARG expr rparen")
     def primary_paren_arg(self, p):
@@ -1497,6 +1602,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $2;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : LPAREN compstmt RPAREN")
     def primary_lparen(self, p):
@@ -1511,6 +1617,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : primary_value COLON2 CONSTANT")
     def primary_constant_lookup(self, p):
@@ -1519,6 +1626,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : COLON3 CONSTANT")
     def primary_unbound_constant(self, p):
@@ -1527,6 +1635,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : LBRACK aref_args RBRACK")
     def primary_array(self, p):
@@ -1541,6 +1650,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : LBRACE assoc_list RCURLY")
     def primary_hash(self, p):
@@ -1549,6 +1659,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new Hash19Node($1.getPosition(), $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : RETURN")
     def primary_return(self, p):
@@ -1557,6 +1668,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ReturnNode($1.getPosition(), NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : YIELD LPAREN2 call_args rparen")
     def primary_yield_paren_args(self, p):
@@ -1565,6 +1677,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_yield($1.getPosition(), $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : YIELD LPAREN2 rparen")
     def primary_yield_paren(self, p):
@@ -1573,6 +1686,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ZYieldNode($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : YIELD")
     def primary_yield(self, p):
@@ -1581,6 +1695,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ZYieldNode($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : DEFINED opt_nl LPAREN2 expr rparen")
     def primary_defined(self, p):
@@ -1589,6 +1704,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new DefinedNode($1.getPosition(), $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : NOT LPAREN2 expr rparen")
     def primary_not_paren_expr(self, p):
@@ -1597,6 +1713,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : NOT LPAREN2 rparen")
     def primary_not_paren(self, p):
@@ -1605,6 +1722,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.getOperatorCallNode(NilImplicitNode.NIL, "!");
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : operation brace_block")
     def primary_operation_brace_block(self, p):
@@ -1613,6 +1731,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new FCallNoArgBlockNode($1.getPosition(), (String) $1.getValue(), $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : method_call")
     def primary_method_call(self, p):
@@ -1630,6 +1749,7 @@ kALIAS tGVAR tGVAR {
                     $<Node>$.setPosition($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : LAMBDA lambda")
     def primary_lambda(self, p):
@@ -1642,6 +1762,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : UNLESS expr_value then compstmt opt_else END")
     def primary_unless(self, p):
@@ -1650,6 +1771,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $5, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : WHILE expr_value do compstmt END")
     def primary_while(self, p):
@@ -1663,6 +1785,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new WhileNode($1.getPosition(), support.getConditionNode($3), body);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : UNTIL expr_value do compstmt END")
     def primary_until(self, p):
@@ -1676,6 +1799,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new UntilNode($1.getPosition(), support.getConditionNode($3), body);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : CASE expr_value opt_terms case_body END")
     def primary_case_expr_value(self, p):
@@ -1684,6 +1808,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newCaseNode($1.getPosition(), $2, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : CASE opt_terms case_body END")
     def primary_case(self, p):
@@ -1692,6 +1817,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newCaseNode($1.getPosition(), null, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : FOR for_var IN expr_value do compstmt END")
     def primary_for(self, p):
@@ -1705,6 +1831,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ForNode($1.getPosition(), $2, $8, $5, support.getCurrentScope());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : CLASS cpath superclass bodystmt END")
     def primary_class(self, p):
@@ -1721,6 +1848,7 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : CLASS LSHFT expr term bodystmt END")
     def primary_singleton_class(self, p):
@@ -1739,6 +1867,7 @@ kALIAS tGVAR tGVAR {
                     support.setInSingle($<Integer>6.intValue());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : MODULE cpath bodystmt END")
     def primary_module(self, p):
@@ -1755,6 +1884,7 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : DEF fname f_arglist bodystmt END")
     def primary_def(self, p):
@@ -1771,6 +1901,7 @@ kALIAS tGVAR tGVAR {
                     support.setInDef(false);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : DEF singleton dot_or_colon fname f_arglist bodystmt END")
     def primary_def_singleton(self, p):
@@ -1790,6 +1921,7 @@ kALIAS tGVAR tGVAR {
                     support.setInSingle(support.getInSingle() - 1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : BREAK")
     def primary_break(self, p):
@@ -1798,6 +1930,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new BreakNode($1.getPosition(), NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : NEXT")
     def primary_next(self, p):
@@ -1806,6 +1939,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new NextNode($1.getPosition(), NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : REDO")
     def primary_redo(self, p):
@@ -1814,6 +1948,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new RedoNode($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary : RETRY")
     def primary_retry(self, p):
@@ -1822,6 +1957,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new RetryNode($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("primary_value : primary")
     def primary_value(self, p):
@@ -1832,6 +1968,7 @@ kALIAS tGVAR tGVAR {
                     if ($$ == null) $$ = NilImplicitNode.NIL;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("then : term THEN")
     @pg.production("then : THEN")
@@ -1855,6 +1992,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("opt_else : none")
     def opt_else_none(self, p):
@@ -1876,6 +2014,7 @@ kALIAS tGVAR tGVAR {
                      $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_arg : LPAREN f_margs rparen")
     def f_marg_paren(self, p):
@@ -1888,6 +2027,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_marg_list : f_marg_list LITERAL_COMMA f_marg")
     def f_marg_list(self, p):
@@ -1896,6 +2036,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1.add($3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : f_marg_list")
     def f_margs_f_marg_list(self, p):
@@ -1904,6 +2045,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg")
     def f_margs_f_marg_list_comma_star_f_norm_Arg(self, p):
@@ -1912,6 +2054,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_f_norm_arg_comm_f_marg_list(self, p):
@@ -1920,6 +2063,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR")
     def f_margs_f_marg_list_comma_star(self, p):
@@ -1928,6 +2072,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_comma_f_marg_list(self, p):
@@ -1936,6 +2081,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $5);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : STAR f_norm_arg")
     def f_margs_star_f_norm_arg(self, p):
@@ -1944,6 +2090,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_star_f_norm_arg_comma_f_marg_list(self, p):
@@ -1952,6 +2099,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : STAR")
     def f_margs_star(self, p):
@@ -1960,6 +2108,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_margs : STAR LITERAL_COMMA f_marg_list")
     def f_margs_star_comma_f_marg_list(self, p):
@@ -1968,6 +2117,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -1976,6 +2126,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -1984,6 +2135,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_opt_f_block_arg(self, p):
@@ -1992,6 +2144,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2000,6 +2153,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2008,6 +2162,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg LITERAL_COMMA")
     def block_param_f_arg_comma(self, p):
@@ -2017,6 +2172,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, null, rest, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2025,6 +2181,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_arg opt_f_block_arg")
     def block_param_f_arg_opt_f_block_arg(self, p):
@@ -2033,6 +2190,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2041,6 +2199,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args(support.getPosition($1), null, $1, $3, null, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2049,6 +2208,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args(support.getPosition($1), null, $1, $3, $5, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_block_optarg opt_f_block_arg")
     def block_param_f_block_optarg_opt_f_block_arg(self, p):
@@ -2057,6 +2217,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args(support.getPosition($1), null, $1, null, null, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2065,6 +2226,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_rest_arg opt_f_block_arg")
     def block_param_f_rest_arg_opt_f_block_arg(self, p):
@@ -2073,6 +2235,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2081,6 +2244,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, $1, $3, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param : f_block_arg")
     def block_param_f_block_arg(self, p):
@@ -2089,6 +2253,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("opt_block_param : none")
     def opt_block_param_none(self, p):
@@ -2098,6 +2263,7 @@ kALIAS tGVAR tGVAR {
                    $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("opt_block_param : block_param_def")
     def opt_block_param(self, p):
@@ -2107,6 +2273,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param_def : PIPE opt_bv_decl PIPE")
     def block_param_def_pipe_opt_bv_decl_pipe(self, p):
@@ -2115,6 +2282,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param_def : OROP")
     def block_param_def_orop(self, p):
@@ -2123,6 +2291,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_param_def : PIPE block_param opt_bv_decl PIPE")
     def block_param_def_pipe_block_param_opt_bv_decl_pipe(self, p):
@@ -2151,6 +2320,7 @@ kALIAS tGVAR tGVAR {
                     support.new_bv($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("bvar : f_bad_arg")
     def bvar_f_bad_arg(self, p):
@@ -2169,6 +2339,7 @@ kALIAS tGVAR tGVAR {
                     lexer.setLeftParenBegin($<Integer>1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_larglist : LPAREN2 f_args opt_bv_decl RPAREN")
     def f_larglist_parens(self, p):
@@ -2196,6 +2367,7 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_call : command do_block")
     def block_call_command_do_block(self, p):
@@ -2212,6 +2384,7 @@ kALIAS tGVAR tGVAR {
                     $<Node>$.setPosition($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_arg : block_call DOT operation2 opt_paren_args")
     def block_call_dot_operation_opt_paren_args(self, p):
@@ -2220,6 +2393,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("block_call : block_call COLON2 operation2 opt_paren_args")
     def block_call_colon_operation_opt_paren_args(self, p):
@@ -2229,6 +2403,7 @@ kALIAS tGVAR tGVAR {
                 }
 
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : operation paren_args")
     def method_call_operation_paren_args(self, p):
@@ -2237,6 +2412,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_fcall($1, $2, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : primary_value DOT operation2 opt_paren_args")
     def method_call_primary_value_dot_operation_opt_paren_args(self, p):
@@ -2245,6 +2421,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : primary_value COLON2 operation2 paren_args")
     def method_call_primary_value_colon_operation_paren_args(self, p):
@@ -2253,6 +2430,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, $4, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : primary_value COLON2 operation3")
     def method_call_primary_value_colon_operation(self, p):
@@ -2261,6 +2439,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, $3, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : primary_value DOT paren_args")
     def method_call_primary_value_dot_paren_args(self, p):
@@ -2269,6 +2448,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : primary_value COLON2 paren_args")
     def method_call_primary_value_colon_paren_args(self, p):
@@ -2277,6 +2457,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : SUPER paren_args")
     def method_call_super_paren_args(self, p):
@@ -2285,6 +2466,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_super($2, $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : SUPER")
     def method_call_super(self, p):
@@ -2293,6 +2475,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ZSuperNode($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("method_call : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
@@ -2305,6 +2488,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("brace_block : LCURLY opt_block_param compstmt RCURLY")
     def brace_block_curly(self, p):
@@ -2316,6 +2500,7 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("brace_block : DO opt_block_param compstmt END")
     def brace_block_do(self, p):
@@ -2329,6 +2514,7 @@ kALIAS tGVAR tGVAR {
                     support.popCurrentScope();
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("case_body : WHEN args then compstmt cases")
     def case_body(self, p):
@@ -2337,6 +2523,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newWhenNode($1.getPosition(), $2, $4, $5);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("cases : opt_else")
     def cases_opt_else(self, p):
@@ -2363,6 +2550,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new RescueBodyNode($1.getPosition(), $2, body, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("opt_rescue : ")
     def opt_rescue_empty(self, p):
@@ -2375,6 +2563,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("exc_list : mrhs")
     def exc_list_mrhs(self, p):
@@ -2384,6 +2573,7 @@ kALIAS tGVAR tGVAR {
                     if ($$ == null) $$ = $1;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("exc_list : none")
     def exc_list_none(self, p):
@@ -2417,6 +2607,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new SymbolNode($1.getPosition(), ((String) $1.getValue()).intern());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("literal : dsym")
     def literal_dsym(self, p):
@@ -2438,6 +2629,7 @@ kALIAS tGVAR tGVAR {
                     */
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string : CHAR")
     def string_char(self, p):
@@ -2448,6 +2640,7 @@ kALIAS tGVAR tGVAR {
                     $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string : string1")
     def string_string1(self, p):
@@ -2460,6 +2653,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string1 : STRING_BEG string_contents STRING_END")
     def string1(self, p):
@@ -2479,6 +2673,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("xstring : XSTRING_BEG xstring_contents STRING_END")
     def xstring(self, p):
@@ -2499,6 +2694,7 @@ kALIAS tGVAR tGVAR {
                     }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
     def regexp(self, p):
@@ -2507,6 +2703,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newRegexpNode($1.getPosition(), $2, (RegexpNode) $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("words : WORDS_BEG LITERAL_SPACE STRING_END")
     def words_space(self, p):
@@ -2515,6 +2712,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ZArrayNode($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("words : WORDS_BEG word_list STRING_END")
     def words_word_list(self, p):
@@ -2527,6 +2725,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("word_list : word_list word LITERAL_SPACE")
     def word_list(self, p):
@@ -2535,6 +2734,7 @@ kALIAS tGVAR tGVAR {
                      $$ = $1.add($2 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($2) : $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("word : string_content")
     def word_string_content(self, p):
@@ -2547,6 +2747,7 @@ kALIAS tGVAR tGVAR {
                      $$ = support.literal_concat(support.getPosition($1), $1, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("qwords : QWORDS_BEG LITERAL_SPACE STRING_END")
     def qwords_space(self, p):
@@ -2555,6 +2756,7 @@ kALIAS tGVAR tGVAR {
                      $$ = new ZArrayNode($1.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
     def qwords_qword_list(self, p):
@@ -2567,6 +2769,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("qword_list : qword_list STRING_CONTENT LITERAL_SPACE")
     def qword_list(self, p):
@@ -2575,6 +2778,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1.add($2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string_contents : ")
     def string_contents_empty(self, p):
@@ -2585,6 +2789,7 @@ kALIAS tGVAR tGVAR {
                     $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string_contents : string_contents string_content")
     def string_contents(self, p):
@@ -2593,6 +2798,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.literal_concat($1.getPosition(), $1, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("xstring_contents : ")
     def xstring_contents_empty(self, p):
@@ -2605,6 +2811,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.literal_concat(support.getPosition($1), $1, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string_content : STRING_CONTENT")
     def string_content_string_content(self, p):
@@ -2622,6 +2829,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new EvStrNode($1.getPosition(), $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string_content : STRING_DBEG compstmt RCURLY")
     def string_content_string_dbeg(self, p):
@@ -2640,6 +2848,7 @@ kALIAS tGVAR tGVAR {
                    $$ = support.newEvStrNode($1.getPosition(), $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("string_dvar : GVAR")
     def string_dvar_gvar(self, p):
@@ -2691,6 +2900,7 @@ kALIAS tGVAR tGVAR {
                      }
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("numeric : INTEGER")
     def numeric_integer(self, p):
@@ -2763,6 +2973,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.gettable($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("var_lhs : variable")
     def var_lhs(self, p):
@@ -2771,6 +2982,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("backref : BACK_REF")
     @pg.production("backref : NTH_REF")
@@ -2790,6 +3002,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $3;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("superclass : error term")
     def superclass_error(self, p):
@@ -2811,6 +3024,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2819,6 +3033,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg opt_f_block_arg")
     def f_args_f_arg_comma_f_optarg_opt_f_block_arg(self, p):
@@ -2827,6 +3042,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2835,6 +3051,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2843,6 +3060,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2851,6 +3069,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_arg opt_f_block_arg")
     def f_args_f_arg_opt_f_block_arg(self, p):
@@ -2859,6 +3078,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def f_args_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2867,6 +3087,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, $1, $3, null, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2875,6 +3096,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, $1, $3, $5, $6);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_optarg opt_f_block_arg")
     def f_args_f_optarg_opt_f_block_arg(self, p):
@@ -2883,6 +3105,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, $1, null, null, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2891,6 +3114,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_rest_arg opt_f_block_arg")
     def f_args_f_rest_arg_opt_f_block_arg(self, p):
@@ -2899,6 +3123,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2907,6 +3132,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, $1, $3, $4);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : f_block_arg")
     def f_args_f_block_arg(self, p):
@@ -2915,6 +3141,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_args : ")
     def f_args_none(self, p):
@@ -2923,6 +3150,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_bad_arg : CONSTANT")
     def f_bad_arg_constant(self, p):
@@ -2951,6 +3179,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.formal_argument($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_arg_item : f_norm_arg")
     def f_arg_item_f_norm_arg(self, p):
@@ -2962,6 +3191,7 @@ kALIAS tGVAR tGVAR {
   */
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
     def f_arg_item_paren(self, p):
@@ -2981,6 +3211,7 @@ kALIAS tGVAR tGVAR {
             $$->nd_next = $2;*/
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_arg : f_arg_item")
     def f_arg_f_arg_item(self, p):
@@ -2989,6 +3220,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ArrayNode(lexer.getPosition(), $1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_arg : f_arg LITERAL_COMMA f_arg_item")
     def f_arg(self, p):
@@ -2998,6 +3230,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
     def f_opt(self, p):
@@ -3007,6 +3240,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_block_opt : IDENTIFIER LITERAL_EQUAL primary_value")
     def f_block_opt(self, p):
@@ -3016,6 +3250,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_block_optarg : f_block_opt")
     def f_block_optarg_f_block_opt(self, p):
@@ -3024,6 +3259,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new BlockNode($1.getPosition()).add($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_block_optarg : f_block_optarg LITERAL_COMMA f_block_opt")
     def f_block_optarg(self, p):
@@ -3032,6 +3268,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.appendToBlock($1, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_optarg : f_opt")
     def f_optarg_f_opt(self, p):
@@ -3040,6 +3277,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new BlockNode($1.getPosition()).add($1);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_optarg : f_optarg LITERAL_COMMA f_opt")
     def f_optarg(self, p):
@@ -3048,6 +3286,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.appendToBlock($1, $3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("restarg_mark : STAR")
     @pg.production("restarg_mark : STAR2")
@@ -3065,6 +3304,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new RestArgNode(support.arg_var(support.shadowing_lvar($2)));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("f_rest_arg : restarg_mark")
     def f_rest_arg_restarg_mark(self, p):
@@ -3073,6 +3313,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new UnnamedRestArgNode($1.getPosition(), "", support.getCurrentScope().addVariable("*"));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("blkarg_mark : AMPER")
     @pg.production("blkarg_mark : AMPER2")
@@ -3090,6 +3331,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new BlockArgNode(support.arg_var(support.shadowing_lvar($2)));
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("opt_f_block_arg : LITERAL_COMMA f_block_arg")
     def opt_f_block_arg(self, p):
@@ -3109,6 +3351,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("singleton : LPAREN expr rparen")
     def singleton_paren(self, p):
@@ -3125,6 +3368,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $3;
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("assoc_list : none")
     def assoc_list_none(self, p):
@@ -3133,6 +3377,7 @@ kALIAS tGVAR tGVAR {
                     $$ = new ArrayNode(lexer.getPosition());
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("assoc_list : assocs trailer")
     def assoc_list(self, p):
@@ -3149,6 +3394,7 @@ kALIAS tGVAR tGVAR {
                     $$ = $1.addAll($3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("assoc : arg_value ASSOC arg_value")
     def assoc_arg_value(self, p):
@@ -3164,6 +3410,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newArrayNode(pos, $1).add($3);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("assoc : LABEL arg_value")
     def assoc_label(self, p):
@@ -3173,6 +3420,7 @@ kALIAS tGVAR tGVAR {
                     $$ = support.newArrayNode(pos, new SymbolNode(pos, (String) $1.getValue())).add($2);
                 }
         """
+        raise NotImplementedError(p)
 
     @pg.production("operation : FID")
     @pg.production("operation : CONSTANT")
