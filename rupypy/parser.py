@@ -1253,29 +1253,10 @@ class Parser(object):
     def arg_binop2(self, p):
         return self.new_binary_call(p[0], p[1], p[2])
 
+    @pg.production("arg : arg NMATCH arg")
     @pg.production("arg : arg MATCH arg")
     def arg_match_arg(self, p):
-        """
-        arg tMATCH arg {
-                    $$ = support.getMatchNode($1, $3);
-                  /* ENEBO
-                        $$ = match_op($1, $3);
-                        if (nd_type($1) == NODE_LIT && TYPE($1->nd_lit) == T_REGEXP) {
-                            $$ = reg_named_capture_assign($1->nd_lit, $$);
-                        }
-                  */
-                }
-        """
-        raise NotImplementedError(p)
-
-    @pg.production("arg : arg NMATCH arg")
-    def arg_nmatch_arg(self, p):
-        """
-        arg tNMATCH arg {
-                    $$ = support.getOperatorCallNode($1, "!~", $3, lexer.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_binary_call(p[0], p[1], p[2])
 
     @pg.production("arg : BANG arg")
     def arg_bang_arg(self, p):

@@ -45,25 +45,25 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 1))
         ]))
         assert space.parse("1/1") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(1)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(1)], None, 1))
         ]))
         assert space.parse("1===1") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "===", [ast.ConstantInt(1)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(1), "===", [ast.ConstantInt(1)], None, 1))
         ]))
         assert space.parse("2 % 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "%", [ast.ConstantInt(3)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "%", [ast.ConstantInt(3)], None, 1))
         ]))
         assert space.parse("2 =~ 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "=~", [ast.ConstantInt(3)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "=~", [ast.ConstantInt(3)], None, 1))
         ]))
         assert space.parse("2 !~ 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Not(ast.Send(ast.ConstantInt(2), "=~", [ast.ConstantInt(3)], None, )))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "!~", [ast.ConstantInt(3)], None, 1))
         ]))
         assert space.parse("1 =~ /v/") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "=~", [ast.ConstantRegexp("v")], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(1), "=~", [ast.ConstantRegexp("v")], None, 1))
         ]))
         assert space.parse("2 & 3 | 5") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.BinOp("&", "|", [ast.ConstantInt(2), ast.ConstantInt(3)], None, ), ast.ConstantInt(5), 1))
+            ast.Statement(ast.Send(ast.BinOp("&", "|", [ast.ConstantInt(2), ast.ConstantInt(3)], None, 1), ast.ConstantInt(5), 1))
         ]))
         assert space.parse("$a << []") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Global("$a"), "<<", [ast.Array([])], None, ))

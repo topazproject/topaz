@@ -747,6 +747,7 @@ class And(Node):
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
 
+
 class Not(Node):
     def __init__(self, value):
         self.value = value
@@ -757,6 +758,7 @@ class Not(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.SEND, ctx.create_symbol_const("!"), 0)
+
 
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):

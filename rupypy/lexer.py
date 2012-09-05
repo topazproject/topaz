@@ -533,7 +533,7 @@ class Lexer(BaseLexer):
                 else:
                     self.add(ch)
                     self.set_expression_state()
-                    yield self.emit("DIV")
+                    yield self.emit("DIVIDE")
 
     def pipe(self, ch):
         self.add(ch)
@@ -587,13 +587,13 @@ class Lexer(BaseLexer):
             ch3 = self.read()
             if ch3 == "=":
                 self.add(ch3)
-                yield self.emit("EQEQEQ")
+                yield self.emit("EQQ")
             else:
                 self.unread()
                 yield self.emit("EQEQ")
         elif ch2 == "~":
             self.add(ch2)
-            yield self.emit("EQUAL_TILDE")
+            yield self.emit("MATCH")
         elif ch2 == ">":
             self.add(ch2)
             yield self.emit("ARROW")
@@ -673,7 +673,7 @@ class Lexer(BaseLexer):
             yield self.emit("NE")
         elif ch2 == "~":
             self.add(ch2)
-            yield self.emit("EXCLAMATION_TILDE")
+            yield self.emit("NMATCH")
         else:
             self.unread()
             yield self.emit("EXCLAMATION")
@@ -877,7 +877,7 @@ class Lexer(BaseLexer):
             self.unread()
             self.add(ch)
             self.set_expression_state()
-            yield self.emit("MODULO")
+            yield self.emit("PERCENT")
 
     def quote_string(self, begin, end, interpolate):
         yield self.emit("QUOTE_BEGIN")
