@@ -327,10 +327,11 @@ class Lexer(BaseLexer):
         self.add(ch)
         first_zero = ch == "0"
         is_hex = False
+        symbol = "INTEGER"
         while True:
             ch = self.read()
             if ch == self.EOF:
-                yield self.emit("INTEGER")
+                yield self.emit(symbol)
                 self.unread()
                 break
             if first_zero and ch.upper() in "XBDO":
@@ -339,19 +340,21 @@ class Lexer(BaseLexer):
                 is_hex = ch.upper() == "X"
             elif ch == ".":
                 if not self.peek().isdigit():
-                    yield self.emit("INTEGER")
+                    yield self.emit("symbol")
                     self.unread()
                     break
                 self.add(ch)
+                symbol = "FLOAT"
             elif ch.isdigit() or (is_hex and ch.upper() in "ABCDEF"):
                 self.add(ch)
             elif ch == "_":
                 if not self.peek().isdigit():
                     self.error()
             elif ch.upper() == "E":
+                symbol = "FLOAT"
                 self.add(ch.upper())
             else:
-                yield self.emit("INTEGER")
+                yield self.emit(symbol)
                 self.unread()
                 break
             first_zero = False

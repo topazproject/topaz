@@ -2916,7 +2916,7 @@ class Parser(object):
 
     @pg.production("numeric : FLOAT")
     def numeric_float(self, p):
-        raise NotImplementedError
+        return BoxAST(ast.ConstantFloat(float(p[0].getstr())))
 
     @pg.production("numeric : UMINUS_NUM INTEGER", precedence="LOWEST")
     def numeric_minus_integer(self, p):
