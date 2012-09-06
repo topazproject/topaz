@@ -65,10 +65,10 @@ class ObjectSpace(object):
         self.symbol_cache = {}
         # self._executioncontext = None
         # self.globals = CellDict()
-        # self.bootstrap = True
-        # self.w_top_self = W_Object(self, self.getclassfor(W_Object))
+        self.bootstrap = True
+        self.w_top_self = W_Object(self, self.getclassfor(W_Object))
 
-        # self.w_true = W_TrueObject(self)
+        self.w_true = W_TrueObject(self)
         # self.w_false = W_FalseObject(self)
         # self.w_nil = W_NilObject(self)
 
