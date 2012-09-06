@@ -1481,8 +1481,7 @@ class Parser(object):
                     $$ = support.newArrayNode(pos, $1);
                 }
         """
-        # TODO: array?
-        return p[0]
+        raise NotImplementedError
 
     @pg.production("args : STAR arg_value")
     def args_star_arg_value(self, p):
