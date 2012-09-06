@@ -66,19 +66,16 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Send(ast.ConstantInt(2), "&", [ast.ConstantInt(3)], None, 1), "|", [ast.ConstantInt(5)], None, 1))
         ]))
         assert space.parse("$a << []") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Global("$a"), "<<", [ast.Array([])], None, ))
+            ast.Statement(ast.Send(ast.Global("$a"), "<<", [ast.Array([])], None, 1))
         ]))
         assert space.parse("3 >> 2") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(3), ">>", [ast.ConstantInt(2)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(3), ">>", [ast.ConstantInt(2)], None, 1))
         ]))
         assert space.parse("5 or 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Or(ast.ConstantInt(5),
-                                        ast.ConstantInt(3)))
+            ast.Statement(ast.Or(ast.ConstantInt(5), ast.ConstantInt(3)))
         ]))
         assert space.parse("puts 5 and 3") == ast.Main(ast.Block([
-            ast.Statement(ast.And(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)],
-                                                  None, 1),
-                                         ast.ConstantInt(3)))
+            ast.Statement(ast.And(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)], None, 1), ast.ConstantInt(3)))
         ]))
         assert space.parse("x[0] == ?-") == ast.Main(ast.Block([
             ast.Statement(ast.BinOp("==",

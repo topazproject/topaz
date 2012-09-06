@@ -24,6 +24,9 @@ class Parser(object):
     def _new_call(self, receiver, method, args):
         return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
 
+    def new_or(self, lhs, rhs):
+        return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
+
     def concat_literals(self, head, tail):
         if head is None:
             return tail
@@ -124,6 +127,7 @@ class Parser(object):
                   support.getResult().setAST(support.addRootNode($2, support.getPosition($2)));
               }
         """
+        # TODO: sym table setup, and useless statement
         return BoxAST(ast.Main(ast.Block(p[0].getastlist())))
 
     @pg.production("top_compstmt : top_stmts opt_terms")
@@ -1346,7 +1350,8 @@ class Parser(object):
                     $$ = $1 != null ? $1 : NilImplicitNode.NIL;
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: check_expression, none handling
+        return p[0]
 
     @pg.production("aref_args : none")
     def aref_args_none(self, p):
@@ -1476,7 +1481,8 @@ class Parser(object):
                     $$ = support.newArrayNode(pos, $1);
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: array?
+        return p[0]
 
     @pg.production("args : STAR arg_value")
     def args_star_arg_value(self, p):
@@ -1667,7 +1673,11 @@ class Parser(object):
                     }
                 }
         """
-        raise NotImplementedError(p)
+        if p[1] is None:
+            items = []
+        else:
+            items = p[1].getastlist()
+        return BoxAST(ast.Array(items))
 
     @pg.production("primary : LBRACE assoc_list RCURLY")
     def primary_hash(self, p):
@@ -2999,6 +3009,7 @@ class Parser(object):
                     $$ = support.gettable($1);
                 }
         """
+        # TODO: symtable support?
         return p[0]
 
     @pg.production("var_lhs : variable")
