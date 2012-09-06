@@ -2042,7 +2042,7 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("f_arg : LPAREN f_margs rparen")
+    @pg.production("f_marg : LPAREN f_margs rparen")
     def f_marg_paren(self, p):
         return p[1]
 
