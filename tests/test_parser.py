@@ -78,10 +78,12 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.And(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)], None, 1), ast.ConstantInt(3)))
         ]))
         assert space.parse("x[0] == ?-") == ast.Main(ast.Block([
-            ast.Statement(ast.BinOp("==",
+            ast.Statement(ast.Send(
                 ast.Subscript(ast.Variable("x", 1), [ast.ConstantInt(0)], 1),
-                ast.ConstantString("-"),
-            1,))
+                "==",
+                [ast.ConstantString("-")],
+                None, 1
+            ))
         ]))
         assert space.parse("@x-1") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.InstanceVariable("@x"), "-", [ast.ConstantInt(1)], None, ))
@@ -803,9 +805,11 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert space.parse('%W{#{"a b" + "#{\'c d\'}"}}') == ast.Main(ast.Block([
             ast.Statement(ast.Array([ast.DynamicString([
-                ast.BinOp("+",
+                ast.BinOp(
                     ast.DynamicString([ast.ConstantString("a b")]),
-                    ast.DynamicString([ast.ConstantString("c d")]),
+                    "+",
+                    [ast.DynamicString([ast.ConstantString("c d")])],
+                    None,
                     1
                 )
             ])]))
@@ -1090,9 +1094,9 @@ HERE
         end * 5
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.BinOp("*", ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("s"), ast.Argument("x")], None, ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("s"), ast.Argument("x")], None, ast.Block([
                 ast.Statement(ast.Send(ast.Variable("s", 3), "+", [ast.Variable("x", 3)], None, 3))
-            ])), 2), ast.ConstantInt(5), 2))
+            ])), 2), "*", [ast.ConstantInt(5)], None, 2))
         ]))
 
     def test_unary_neg(self, space):
