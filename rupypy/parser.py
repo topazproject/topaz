@@ -24,6 +24,37 @@ class Parser(object):
     def _new_call(self, receiver, method, args):
         return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
 
+    def concat_literals(self, head, tail):
+        if head is None:
+            return tail
+        if tail is None:
+            return head
+
+        dynamic = False
+        const_str = ""
+        dyn_str_components = []
+        for part in [head.getast(), tail.getast()]:
+            if not dynamic:
+                if isinstance(part, ast.ConstantString):
+                    const_str += part.strvalue
+                else:
+                    dynamic = False
+                    dyn_str_components.append(ast.ConstantString(const_str))
+                    if isinstance(part, ast.DynamicString):
+                        dyn_str_components.extend(part.strvalues)
+                    else:
+                        dyn_str_components.append(part)
+            else:
+                if isinstance(part, ast.DynamicString):
+                    dyn_str_components.extend(part.strvalues)
+                else:
+                    dyn_str_components.append(part)
+        if dynamic:
+            node = ast.DynamicString(dyn_str_components)
+        else:
+            node = ast.ConstantString(const_str)
+        return BoxAST(node)
+
     pg = ParserGenerator([
         "CLASS", "MODULE", "DEF", "UNDEF", "BEGIN", "RESCUE", "ENSURE", "END",
         "IF", "UNLESS", "THEN", "ELSIF", "ELSE", "CASE", "WHEN", "WHILE",
@@ -2689,7 +2720,12 @@ class Parser(object):
                     $$ = support.newRegexpNode($1.getPosition(), $2, (RegexpNode) $3);
                 }
         """
-        raise NotImplementedError(p)
+        n = p[1].getast()
+        if isinstance(n, ast.ConstantString):
+            node = ast.ConstantRegexp(n.strvalue)
+        else:
+            node = ast.DynamicRegexp(n)
+        return BoxAST(node)
 
     @pg.production("words : WORDS_BEG LITERAL_SPACE STRING_END")
     def words_space(self, p):
@@ -2792,16 +2828,11 @@ class Parser(object):
 
     @pg.production("xstring_contents : xstring_contents string_content")
     def xstring_contents(self, p):
-        """
-        xstring_contents string_content {
-                    $$ = support.literal_concat(support.getPosition($1), $1, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.concat_literals(p[0], p[1])
 
     @pg.production("string_content : STRING_CONTENT")
     def string_content_string_content(self, p):
-        return p[0]
+        return BoxAST(ast.ConstantString(p[0].getstr()))
 
     @pg.production("string_content : STRING_DVAR string_dvar")
     def string_content_string_dvar(self, p):
@@ -2923,7 +2954,7 @@ class Parser(object):
 
     @pg.production("variable : GVAR")
     def variable_gvar(self, p):
-        raise NotImplementedError
+        return BoxAST(ast.Global(p[0].getstr()))
 
     @pg.production("variable : CONSTANT")
     def variable_constant(self, p):
@@ -2968,7 +2999,7 @@ class Parser(object):
                     $$ = support.gettable($1);
                 }
         """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("var_lhs : variable")
     def var_lhs(self, p):

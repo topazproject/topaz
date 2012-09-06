@@ -93,6 +93,9 @@ class Lexer(BaseLexer):
         self.lineno = initial_lineno
         self.columno = 1
         self.state = self.EXPR_BEG
+        self.paren_nest = 0
+        self.condition_state = StackState()
+        self.cmd_argument_state = StackState()
 
     def tokenize(self):
         space_seen = False
@@ -140,7 +143,7 @@ class Lexer(BaseLexer):
                 for token in self.question_mark(ch):
                     yield token
             elif ch == "&":
-                for token in self.ampersand(ch):
+                for token in self.ampersand(ch, space_seen):
                     yield token
             elif ch == "|":
                 for token in self.pipe(ch):
@@ -164,7 +167,7 @@ class Lexer(BaseLexer):
             elif ch == "]":
                 self.add(ch)
                 self.state = self.EXPR_ENDARG
-                yield self.emit("RBRACKET")
+                yield self.emit("RBRACK")
             elif ch == "}":
                 self.add(ch)
                 yield self.emit("RBRACE")
@@ -433,7 +436,7 @@ class Lexer(BaseLexer):
         ch = self.read()
         if ch in "$>:?\\!\"":
             self.add(ch)
-            yield self.emit("GLOBAL")
+            yield self.emit("GVAR")
         else:
             self.unread()
             while True:
@@ -442,7 +445,7 @@ class Lexer(BaseLexer):
                     self.add(ch)
                 else:
                     self.unread()
-                    yield self.emit("GLOBAL")
+                    yield self.emit("GVAR")
                     break
 
     def at(self, ch):
@@ -557,26 +560,33 @@ class Lexer(BaseLexer):
             self.set_expression_state()
             yield self.emit("PIPE")
 
-    def ampersand(self, ch):
+    def ampersand(self, ch, space_seen):
         self.add(ch)
+
         ch2 = self.read()
-        self.set_expression_state()
         if ch2 == "&":
             self.add(ch2)
+            self.state = self.EXPR_BEG
             ch3 = self.read()
             if ch3 == "=":
                 self.add(ch3)
-                yield self.emit("AND_EQUAL")
+                yield self.emit("OP_ASGN")
             else:
                 self.unread()
-                yield self.emit("AND")
+                yield self.emit("ANDOP")
         elif ch2 == "=":
             self.add(ch2)
-            self.state = self.EXPR_BEG
-            yield self.emit("AMP_EQUAL")
+            yield self.emit("OP_ASGN")
         else:
             self.unread()
-            yield self.emit("AMP")
+            if self.is_arg() and space_seen and not ch2.isspace():
+                tok = "AMPER"
+            elif self.is_beg():
+                tok = "AMPER"
+            else:
+                tok = "AMPER2"
+            self.set_expression_state()
+            yield self.emit(tok)
 
     def equal(self, ch):
         self.add(ch)
@@ -626,7 +636,7 @@ class Lexer(BaseLexer):
                 yield self.emit("LE")
         elif ch2 == "<":
             self.add(ch2)
-            yield self.emit("LSHIFT")
+            yield self.emit("LSHFT")
         else:
             self.unread()
             yield self.emit("LT")
@@ -819,12 +829,32 @@ class Lexer(BaseLexer):
             yield self.emit("SYMBOL_BEG")
 
     def left_bracket(self, ch, space_seen):
-        self.add(ch)
-        if self.is_beg() or (self.is_arg() and space_seen):
-            yield self.emit("LBRACKET")
+        self.paren_nest += 1
+        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]:
+            self.state = self.EXPR_ARG
+
+            ch2 = self.read()
+            if ch2 == "]":
+                self.add(ch2)
+                ch3 = self.read()
+                if ch3 == "=":
+                    self.add(ch3)
+                    yield self.emit("ASET")
+                else:
+                    self.unread()
+                    yield self.emit("AREF")
+            else:
+                self.unread()
+                yield self.emit("LITERAL_LBRACKET")
+        elif (self.is_beg() or (self.is_arg() and space_seen)):
+            tok = "LBRACK"
         else:
-            yield self.emit("LSUBSCRIPT")
+            tok = "LITERAL_LBRACKET"
+
         self.state = self.EXPR_BEG
+        self.condition_state.stop()
+        self.cmd_argument_state.stop()
+        yield self.emit(tok)
 
     def backtick(self, ch):
         if self.state == self.EXPR_FNAME:
@@ -1134,3 +1164,11 @@ class HeredocLexer(BaseStringLexer):
         yield self.emit("STRING_END")
         for token in lexer_tokens:
             yield token
+
+
+class StackState(object):
+    def __init__(self):
+        pass
+
+    def stop(self):
+        pass

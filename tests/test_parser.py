@@ -63,7 +63,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.ConstantInt(1), "=~", [ast.ConstantRegexp("v")], None, 1))
         ]))
         assert space.parse("2 & 3 | 5") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.BinOp("&", "|", [ast.ConstantInt(2), ast.ConstantInt(3)], None, 1), ast.ConstantInt(5), 1))
+            ast.Statement(ast.Send(ast.Send(ast.ConstantInt(2), "&", [ast.ConstantInt(3)], None, 1), "|", [ast.ConstantInt(5)], None, 1))
         ]))
         assert space.parse("$a << []") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Global("$a"), "<<", [ast.Array([])], None, ))
