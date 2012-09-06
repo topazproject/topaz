@@ -27,6 +27,14 @@ class Parser(object):
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
+    def new_args(self, box_arg):
+        return BoxArgs([box_arg.getast()])
+
+    def arg_block_pass(self, box_args, box_block_pass):
+        if box_block_pass is None:
+            return box_args
+        return self._new_args(box_args.getargs(), box_block_pass.getast())
+
     def concat_literals(self, head, tail):
         if head is None:
             return tail
@@ -1410,12 +1418,7 @@ class Parser(object):
 
     @pg.production("call_args : args opt_block_arg")
     def call_args_args_opt_block_arg(self, p):
-        """
-        args opt_block_arg {
-                    $$ = support.arg_blk_pass($1, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.arg_block_pass(p[0], p[1])
 
     @pg.production("call_args : assocs opt_block_arg")
     def call_args_assocs_opt_block_arg(self, p):
@@ -1475,13 +1478,7 @@ class Parser(object):
 
     @pg.production("args : arg_value")
     def args_arg_value(self, p):
-        """
-        arg_value {
-                    ISourcePosition pos = $1 == null ? lexer.getPosition() : $1.getPosition();
-                    $$ = support.newArrayNode(pos, $1);
-                }
-        """
-        raise NotImplementedError
+        return self.new_args(p[0])
 
     @pg.production("args : STAR arg_value")
     def args_star_arg_value(self, p):
@@ -3566,3 +3563,11 @@ class BoxASTList(BaseBox):
 
     def getastlist(self):
         return self.nodes
+
+
+class BoxArgs(BaseBox):
+    def __init__(self, args):
+        self.args = args
+
+    def getargs(self):
+        return self.args
