@@ -21,8 +21,15 @@ class Parser(object):
     def new_binary_call(self, lhs, op, rhs):
         return self._new_call(lhs.getast(), op, [rhs.getast()])
 
+    def new_fcall(self, operation, args):
+        receiver = ast.Self(operation.getsourcepos().lineno)
+        return self._new_call(receiver, operation, args.getargs())
+
     def _new_call(self, receiver, method, args):
         return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
+
+    def new_and(self, lhs, rhs):
+        return BoxAST(ast.And(lhs.getast(), rhs.getast()))
 
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
@@ -563,12 +570,7 @@ class Parser(object):
 
     @pg.production("command : operation command_args", precedence="LOWEST")
     def command_operation_command_args(self, p):
-        """
-        operation command_args %prec tLOWEST {
-                    $$ = support.new_fcall($1, $2, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_fcall(p[0], p[1])
 
     @pg.production("command : operation command_args cmd_brace_block")
     def command_operation_command_args_cmd_brace_block(self, p):
@@ -1448,17 +1450,14 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("command_args : call_args")
+    @pg.production("command_args : start_command_args call_args")
     def command_args(self, p):
-        """
-        /* none */ {
-                    $$ = Long.valueOf(lexer.getCmdArgumentState().begin());
-                } call_args {
-                    lexer.getCmdArgumentState().reset($<Long>1.longValue());
-                    $$ = $2;
-                }
-        """
-        raise NotImplementedError(p)
+        self.lexer.cmd_argument_state.reset(p[0].getint())
+        return p[1]
+
+    @pg.production("start_command_args : ")
+    def start_command_args(self, p):
+        return BoxInt(self.lexer.cmd_argument_state.begin())
 
     @pg.production("block_arg : AMPER arg_value")
     def block_arg(self, p):
@@ -1991,7 +1990,8 @@ class Parser(object):
                     if ($$ == null) $$ = NilImplicitNode.NIL;
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: checkExpression, implicit Nil
+        return p[0]
 
     @pg.production("then : term THEN")
     @pg.production("then : THEN")
@@ -3567,7 +3567,17 @@ class BoxASTList(BaseBox):
 
 class BoxArgs(BaseBox):
     def __init__(self, args):
+        BaseBox.__init__(self)
         self.args = args
 
     def getargs(self):
         return self.args
+
+
+class BoxInt(BaseBox):
+    def __init__(self, intvalue):
+        BaseBox.__init__(self)
+        self.intvalue = intvalue
+
+    def getint(self):
+        return self.intvalue

@@ -1170,5 +1170,11 @@ class StackState(object):
     def __init__(self):
         pass
 
+    def begin(self):
+        pass
+
     def stop(self):
+        pass
+
+    def reset(self, orig):
         pass
