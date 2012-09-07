@@ -617,7 +617,7 @@ class Lexer(BaseLexer):
         if (ch2 == "<" and self.state not in [self.EXPR_DOT, self.EXPR_CLASS] and
             not self.is_end() and (not self.is_arg() or space_seen)):
             tokens_yielded = False
-            for token in  self.here_doc():
+            for token in self.here_doc():
                 tokens_yielded = True
                 yield token
             if tokens_yielded:
