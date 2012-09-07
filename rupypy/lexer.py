@@ -1165,13 +1165,16 @@ class HeredocLexer(BaseStringLexer):
 
 class StackState(object):
     def __init__(self):
-        pass
+        self._stack = 0
 
     def begin(self):
-        pass
+        orig = self._stack
+        self._stack <<= 1
+        self._stack |= 1
+        return orig
 
     def stop(self):
-        pass
+        self._stack <<= 1
 
     def reset(self, orig):
-        pass
+        self._stack = orig
