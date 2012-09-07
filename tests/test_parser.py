@@ -79,26 +79,26 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert space.parse("x[0] == ?-") == ast.Main(ast.Block([
             ast.Statement(ast.Send(
-                ast.Subscript(ast.Variable("x", 1), [ast.ConstantInt(0)], 1),
+                ast.Send(ast.Variable("x", 1), "[]", [ast.ConstantInt(0)], None, 1),
                 "==",
                 [ast.ConstantString("-")],
                 None, 1
             ))
         ]))
         assert space.parse("@x-1") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.InstanceVariable("@x"), "-", [ast.ConstantInt(1)], None, ))
+            ast.Statement(ast.Send(ast.InstanceVariable("@x"), "-", [ast.ConstantInt(1)], None, 1))
         ]))
         assert space.parse(":a <=> :a") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantSymbol("a"), "<=>", [ast.ConstantSymbol("a")], None, ))
+            ast.Statement(ast.Send(ast.ConstantSymbol("a"), "<=>", [ast.ConstantSymbol("a")], None, 1))
         ]))
         assert space.parse(":a != ?-") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantSymbol("a"), "!=", [ast.ConstantString("-")], None, ))
+            ast.Statement(ast.Send(ast.ConstantSymbol("a"), "!=", [ast.ConstantString("-")], None, 1))
         ]))
         assert space.parse("1 ^ 2") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "^", [ast.ConstantInt(2)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(1), "^", [ast.ConstantInt(2)], None, 1))
         ]))
         assert space.parse("1 ** 2") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "**", [ast.ConstantInt(2)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(1), "**", [ast.ConstantInt(2)], None, 1))
         ]))
 
     def test_multi_term_expr(self, space):

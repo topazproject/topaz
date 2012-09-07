@@ -1,4 +1,4 @@
-from rply import ParserGenerator
+from rply import ParserGenerator, Token
 from rply.token import BaseBox
 
 from rupypy import ast
@@ -12,6 +12,9 @@ class Parser(object):
         l = LexerWrapper(self.lexer.tokenize())
         return self.parser.parse(l, state=self)
 
+    def new_token(self, orig, name):
+        return Token(name, name, orig.getsourcepos())
+
     def new_list(self, box):
         return BoxASTList([box.getast()])
 
@@ -21,9 +24,12 @@ class Parser(object):
     def new_binary_call(self, lhs, op, rhs):
         return self._new_call(lhs.getast(), op, [rhs.getast()])
 
-    def new_fcall(self, operation, args):
-        receiver = ast.Self(operation.getsourcepos().lineno)
-        return self._new_call(receiver, operation, args.getargs())
+    def new_call(self, receiver, method, args):
+        return self._new_call(receiver.getast(), method, args.getargs())
+
+    def new_fcall(self, method, args):
+        receiver = ast.Self(method.getsourcepos().lineno)
+        return self._new_call(receiver, method, args.getargs())
 
     def _new_call(self, receiver, method, args):
         return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
@@ -2502,16 +2508,7 @@ class Parser(object):
 
     @pg.production("method_call : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
-        """
-        primary_value '[' opt_call_args rbracket {
-                    if ($1 instanceof SelfNode) {
-                        $$ = support.new_fcall(new Token("[]", support.getPosition($1)), $3, null);
-                    } else {
-                        $$ = support.new_call($1, new Token("[]", support.getPosition($1)), $3, null);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], self.new_token(p[1], "[]"), p[2])
 
     @pg.production("brace_block : LCURLY opt_block_param compstmt RCURLY")
     def brace_block_curly(self, p):
@@ -2624,13 +2621,7 @@ class Parser(object):
 
     @pg.production("literal : symbol")
     def literal_symbol(self, p):
-        """
-        symbol {
-                    // FIXME: We may be intern'ing more than once.
-                    $$ = new SymbolNode($1.getPosition(), ((String) $1.getValue()).intern());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.ConstantSymbol(p[0].getstr()))
 
     @pg.production("literal : dsym")
     def literal_dsym(self, p):
@@ -2641,18 +2632,10 @@ class Parser(object):
         """
         string {
                     $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
-                    /*
-                    NODE *node = $1;
-                    if (!node) {
-                        node = NEW_STR(STR_NEW0());
-                    } else {
-                        node = evstr2dstr(node);
-                    }
-                    $$ = node;
-                    */
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: understand this logic
+        return p[0]
 
     @pg.production("string : CHAR")
     def string_char(self, p):
@@ -2663,7 +2646,8 @@ class Parser(object):
                     $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: encoding
+        return BoxAST(ast.ConstantString(p[0].getstr()))
 
     @pg.production("string : string1")
     def string_string1(self, p):
@@ -2956,7 +2940,7 @@ class Parser(object):
 
     @pg.production("variable : IVAR")
     def variable_ivar(self, p):
-        return BoxAST(ast.InstanceVariable([0].getstr()))
+        return BoxAST(ast.InstanceVariable(p[0].getstr()))
 
     @pg.production("variable : GVAR")
     def variable_gvar(self, p):

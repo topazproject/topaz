@@ -136,6 +136,7 @@ class ObjectSpace(object):
         try:
             return parser.parse().getast()
         except ParsingError as e:
+            raise
             raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.getsourcepos().lineno)
         except LexerError:
             raise self.error(self.getclassfor(W_SyntaxError))

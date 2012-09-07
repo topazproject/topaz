@@ -456,7 +456,7 @@ class Lexer(BaseLexer):
             token = "CLASS_VAR"
         else:
             self.unread()
-            token = "INSTANCE_VAR"
+            token = "IVAR"
         self.state = self.EXPR_END
         while True:
             ch = self.read()
@@ -600,7 +600,7 @@ class Lexer(BaseLexer):
                 yield self.emit("EQQ")
             else:
                 self.unread()
-                yield self.emit("EQEQ")
+                yield self.emit("EQ")
         elif ch2 == "~":
             self.add(ch2)
             yield self.emit("MATCH")
@@ -609,7 +609,7 @@ class Lexer(BaseLexer):
             yield self.emit("ARROW")
         else:
             self.unread()
-            yield self.emit("EQ")
+            yield self.emit("LITERAL_EQUAL")
 
     def less_than(self, ch, space_seen):
         ch2 = self.read()
@@ -807,26 +807,23 @@ class Lexer(BaseLexer):
     def colon(self, ch, space_seen):
         ch2 = self.read()
 
+        self.add(ch)
         if ch2 == ":":
-            self.add(ch)
             self.add(ch2)
-            if (self.is_beg() or self.state == self.EXPR_CLASS or
-                (self.is_arg() and space_seen)):
+            if self.is_beg() or self.state == self.EXPR_CLASS or (self.is_arg and space_seen):
                 self.state = self.EXPR_BEG
-                yield self.emit("UNBOUND_COLONCOLON")
+                yield self.emit("COLON3")
             else:
                 self.state = self.EXPR_DOT
-                yield self.emit("COLONCOLON")
-
+                yield self.emit("COLON2")
         elif self.is_end() or ch2.isspace():
             self.unread()
-            self.add(ch)
             self.state = self.EXPR_BEG
-            yield self.emit("COLON")
+            yield self.emit("LITERAL_COLON")
         else:
             self.unread()
             self.state = self.EXPR_FNAME
-            yield self.emit("SYMBOL_BEG")
+            yield self.emit("SYMBEG")
 
     def left_bracket(self, ch, space_seen):
         self.paren_nest += 1
