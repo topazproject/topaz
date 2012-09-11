@@ -1586,17 +1586,13 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("primary : LPAREN_ARG expr rparen")
+    @pg.production("primary : LPAREN_ARG expr paren_post_expr rparen")
     def primary_paren_arg(self, p):
-        """
-        tLPAREN_ARG expr {
-                    lexer.setState(LexState.EXPR_ENDARG);
-                } rparen {
-                    support.warning(ID.GROUPED_EXPRESSION, $1.getPosition(), "(...) interpreted as grouped expression");
-                    $$ = $2;
-                }
-        """
-        raise NotImplementedError(p)
+        return p[1]
+
+    @pg.production("paren_post_expr : ")
+    def paren_post_expr(self, p):
+        self.lexer.state = self.lexer.EXPR_ENDARG
 
     @pg.production("primary : LPAREN compstmt RPAREN")
     def primary_lparen(self, p):
