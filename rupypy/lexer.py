@@ -501,21 +501,30 @@ class Lexer(BaseLexer):
     def star(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
-        if ch2 == "=":
+        if ch2 == "*":
+            self.add(ch2)
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                self.set_expression_state()
+                yield self.emit("POW")
+        elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
-            yield self.emit("MUL_EQUAL")
-        elif ch2 == "*":
-            self.add(ch2)
-            self.set_expression_state()
-            yield self.emit("POW")
+            yield self.emit("OP_ASGN")
         else:
             self.unread()
-            if self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
-                yield self.emit("UNARY_STAR")
+            if self.is_arg() and space_seen and not ch2.isspace():
+                tok_name = "STAR"
+            elif self.is_beg():
+                tok_name = "STAR"
             else:
-                yield self.emit("MUL")
-            self.set_expression_state()
+                tok_name = "STAR2"
+            yield self.emit(tok_name)
 
     def slash(self, ch, space_seen):
         if self.is_beg():
