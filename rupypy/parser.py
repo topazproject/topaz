@@ -222,7 +222,8 @@ class Parser(object):
                     $$ = $1;
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: checkUslessStatements?
+        return p[0]
 
     @pg.production("stmts : none")
     def stmts_none(self, p):
@@ -1641,7 +1642,8 @@ class Parser(object):
                     }
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: null?
+        return BoxAST(ast.Block(p[1].getastlist()))
 
     @pg.production("primary : primary_value COLON2 CONSTANT")
     def primary_constant_lookup(self, p):
