@@ -112,7 +112,7 @@ class Lexer(BaseLexer):
                 space_seen = True
                 if self.state != self.EXPR_BEG:
                     self.add(ch)
-                    yield self.emit("NEWLINE")
+                    yield self.emit("LITERAL_NEWLINE")
                 self.lineno += 1
                 self.columno = 1
                 self.state = self.EXPR_BEG
@@ -185,7 +185,7 @@ class Lexer(BaseLexer):
             elif ch == ";":
                 self.add(ch)
                 self.state = self.EXPR_BEG
-                yield self.emit("SEMICOLON")
+                yield self.emit("LITERAL_SEMICOLON")
             elif ch == ",":
                 self.add(ch)
                 self.state = self.EXPR_BEG

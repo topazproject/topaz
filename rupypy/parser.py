@@ -18,6 +18,9 @@ class Parser(object):
     def new_list(self, box):
         return BoxASTList([box.getast()])
 
+    def append_to_list(self, box_list, box):
+        return BoxASTList(box_list.getastlist() + [box.getast()])
+
     def new_stmt(self, box):
         return BoxAST(ast.Statement(box.getast()))
 
