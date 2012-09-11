@@ -74,7 +74,7 @@ class ObjectSpace(object):
 
         # # This is bootstrap. We have to delay sending until true, false and nil
         # # are defined
-        w_mod = self.getmoduleobject(Kernel.moduledef)
+        # w_mod = self.getmoduleobject(Kernel.moduledef)
         # self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
         self.bootstrap = False
 
@@ -136,6 +136,7 @@ class ObjectSpace(object):
         try:
             return parser.parse().getast()
         except ParsingError as e:
+            raise
             raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.getsourcepos().lineno)
         except LexerError:
             raise self.error(self.getclassfor(W_SyntaxError))
