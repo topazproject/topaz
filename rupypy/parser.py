@@ -61,6 +61,9 @@ class Parser(object):
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
 
+    def new_symbol(self, token):
+        return BoxAST(ast.ConstantSymbol(token.getstr()))
+
     def concat_literals(self, head, tail):
         if head is None:
             return tail
@@ -254,16 +257,13 @@ class Parser(object):
     def stmts_error(self, p):
         return p[1]
 
-    @pg.production("stmt : ALIAS fitem fitem")
+    @pg.production("stmt : ALIAS fitem alias_after_fitem fitem")
     def stmt_alias_fitem(self, p):
-        """
-        kALIAS fitem {
-                    lexer.setState(LexState.EXPR_FNAME);
-                } fitem {
-                    $$ = support.newAlias($1.getPosition(), $2, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Alias(p[1].getast(), p[3].getast(), p[0].getsourcepos().lineno))
+
+    @pg.production("alias_after_fitem : ")
+    def alias_after_fitem(self, p):
+        self.lexer.state = self.lexer.EXPR_FNAME
 
     @pg.production("stmt : ALIAS GVAR GVAR")
     def stmt_alias_gvar(self, p):
@@ -998,12 +998,7 @@ class Parser(object):
 
     @pg.production("fsym : fname")
     def fsym_fname(self, p):
-        """
-        fname {
-                    $$ = new LiteralNode($1);
-                }
-        """
-        raise NotImplementedError
+        return self.new_symbol(p[0])
 
     @pg.production("fsym : symbol")
     def fsym_symbol(self, p):
@@ -2587,7 +2582,7 @@ class Parser(object):
 
     @pg.production("literal : symbol")
     def literal_symbol(self, p):
-        return BoxAST(ast.ConstantSymbol(p[0].getstr()))
+        return self.new_symbol(p[0])
 
     @pg.production("literal : dsym")
     def literal_dsym(self, p):
