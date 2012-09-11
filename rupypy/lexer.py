@@ -189,7 +189,7 @@ class Lexer(BaseLexer):
             elif ch == ",":
                 self.add(ch)
                 self.state = self.EXPR_BEG
-                yield self.emit("COMMA")
+                yield self.emit("LITERAL_COMMA")
             elif ch == "~":
                 self.add(ch)
                 self.state = self.EXPR_BEG
