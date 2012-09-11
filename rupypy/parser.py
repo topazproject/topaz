@@ -28,7 +28,8 @@ class Parser(object):
         return self._new_call(lhs.getast(), op, [rhs.getast()])
 
     def new_call(self, receiver, method, args):
-        return self._new_call(receiver.getast(), method, args.getargs())
+        args = args.getargs() if args is not None else []
+        return self._new_call(receiver.getast(), method, args)
 
     def new_fcall(self, method, args):
         receiver = ast.Self(method.getsourcepos().lineno)
@@ -44,12 +45,21 @@ class Parser(object):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
     def new_args(self, box_arg):
-        return BoxArgs([box_arg.getast()])
+        return self._new_args([box_arg.getast()], None)
+
+    def _new_args(self, args, block):
+        return BoxArgs(args, block)
 
     def arg_block_pass(self, box_args, box_block_pass):
         if box_block_pass is None:
             return box_args
         return self._new_args(box_args.getargs(), box_block_pass.getast())
+
+    def append_arg(self, box_arg, box):
+        return self._new_args(box_arg.getargs() + [box.getast()], box_arg.getblock())
+
+    def new_splat(self, box):
+        return BoxAST(ast.Splat(box.getast()))
 
     def concat_literals(self, head, tail):
         if head is None:
@@ -593,12 +603,7 @@ class Parser(object):
 
     @pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
     def command_method_call_args(self, p):
-        """
-        primary_value tDOT operation2 command_args %prec tLOWEST {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("command : primary_value DOT operation2 command_args cmd_brace_block")
     def command_method_call_args_brace_block(self, p):
@@ -1491,44 +1496,15 @@ class Parser(object):
 
     @pg.production("args : STAR arg_value")
     def args_star_arg_value(self, p):
-        """
-        tSTAR arg_value {
-                    $$ = support.newSplatNode($1.getPosition(), $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(self.new_splat(p[1]))
 
     @pg.production("args : args LITERAL_COMMA arg_value")
     def args_comma_arg_value(self, p):
-        """
-        args ',' arg_value {
-                    Node node = support.splat_array($1);
-
-                    if (node != null) {
-                        $$ = support.list_append(node, $3);
-                    } else {
-                        $$ = support.arg_append($1, $3);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_arg(p[0], p[2])
 
     @pg.production("args : args LITERAL_COMMA STAR arg_value")
     def args_comma_star_arg_value(self, p):
-        """
-        args ',' tSTAR arg_value {
-                    Node node = null;
-
-                    // FIXME: lose syntactical elements here (and others like this)
-                    if ($4 instanceof ArrayNode &&
-                        (node = support.splat_array($1)) != null) {
-                        $$ = support.list_concat(node, $4);
-                    } else {
-                        $$ = support.arg_concat(support.getPosition($1), $1, $4);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_arg(p[0], self.new_splat(p[3]))
 
     @pg.production("mrhs : args LITERAL_COMMA arg_value")
     def mrhs_args_comma_arg_value(self, p):
@@ -2441,21 +2417,11 @@ class Parser(object):
 
     @pg.production("method_call : operation paren_args")
     def method_call_operation_paren_args(self, p):
-        """
-        operation paren_args {
-                    $$ = support.new_fcall($1, $2, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_fcall(p[0], p[1])
 
     @pg.production("method_call : primary_value DOT operation2 opt_paren_args")
     def method_call_primary_value_dot_operation_opt_paren_args(self, p):
-        """
-        primary_value tDOT operation2 opt_paren_args {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("method_call : primary_value COLON2 operation2 paren_args")
     def method_call_primary_value_colon_operation_paren_args(self, p):
@@ -3555,12 +3521,16 @@ class BoxASTList(BaseBox):
 
 
 class BoxArgs(BaseBox):
-    def __init__(self, args):
+    def __init__(self, args, block):
         BaseBox.__init__(self)
         self.args = args
+        self.block = block
 
     def getargs(self):
         return self.args
+
+    def getblock(self):
+        return self.block
 
 
 class BoxInt(BaseBox):

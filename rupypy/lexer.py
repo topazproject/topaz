@@ -195,9 +195,8 @@ class Lexer(BaseLexer):
                 self.state = self.EXPR_BEG
                 yield self.emit("TILDE")
             elif ch == "(":
-                self.add(ch)
-                self.state = self.EXPR_BEG
-                yield self.emit("LPAREN")
+                for token in self.left_paren(ch, space_seen):
+                    yield token
             elif ch == "[":
                 for token in self.left_bracket(ch, space_seen):
                     yield token
@@ -343,7 +342,7 @@ class Lexer(BaseLexer):
                 is_hex = ch.upper() == "X"
             elif ch == ".":
                 if not self.peek().isdigit():
-                    yield self.emit("symbol")
+                    yield self.emit(symbol)
                     self.unread()
                     break
                 self.add(ch)
@@ -615,7 +614,7 @@ class Lexer(BaseLexer):
             yield self.emit("MATCH")
         elif ch2 == ">":
             self.add(ch2)
-            yield self.emit("ARROW")
+            yield self.emit("ASSOC")
         else:
             self.unread()
             yield self.emit("LITERAL_EQUAL")
@@ -673,10 +672,10 @@ class Lexer(BaseLexer):
             ch3 = self.read()
             if ch3 == ".":
                 self.add(ch3)
-                yield self.emit("DOTDOTDOT")
+                yield self.emit("DOT3")
             else:
                 self.unread()
-                yield self.emit("DOTDOT")
+                yield self.emit("DOT2")
         else:
             self.unread()
             self.state = self.EXPR_DOT
@@ -833,6 +832,19 @@ class Lexer(BaseLexer):
             self.unread()
             self.state = self.EXPR_FNAME
             yield self.emit("SYMBEG")
+
+    def left_paren(self, ch, space_seen):
+        self.add(ch)
+        tok_name = "LPAREN2"
+        if self.is_beg():
+            tok_name = "LPAREN"
+        elif space_seen:
+            tok_name = "LPAREN_ARG"
+        self.paren_nest += 1
+        self.condition_state.stop()
+        self.cmd_argument_state.stop()
+        self.state = self.EXPR_BEG
+        yield self.emit(tok_name)
 
     def left_bracket(self, ch, space_seen):
         self.paren_nest += 1
