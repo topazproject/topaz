@@ -18,6 +18,9 @@ class Parser(object):
     def new_list(self, box):
         return BoxASTList([box.getast()])
 
+    def append_to_list(self, box_list, box):
+        return BoxASTList(box_list.getastlist() + [box.getast()])
+
     def new_stmt(self, box):
         return BoxAST(ast.Statement(box.getast()))
 
@@ -25,7 +28,8 @@ class Parser(object):
         return self._new_call(lhs.getast(), op, [rhs.getast()])
 
     def new_call(self, receiver, method, args):
-        return self._new_call(receiver.getast(), method, args.getargs())
+        args = args.getargs() if args is not None else []
+        return self._new_call(receiver.getast(), method, args)
 
     def new_fcall(self, method, args):
         receiver = ast.Self(method.getsourcepos().lineno)
@@ -41,12 +45,24 @@ class Parser(object):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
     def new_args(self, box_arg):
-        return BoxArgs([box_arg.getast()])
+        return self._new_args([box_arg.getast()], None)
+
+    def _new_args(self, args, block):
+        return BoxArgs(args, block)
 
     def arg_block_pass(self, box_args, box_block_pass):
         if box_block_pass is None:
             return box_args
         return self._new_args(box_args.getargs(), box_block_pass.getast())
+
+    def append_arg(self, box_arg, box):
+        return self._new_args(box_arg.getargs() + [box.getast()], box_arg.getblock())
+
+    def new_splat(self, box):
+        return BoxAST(ast.Splat(box.getast()))
+
+    def new_symbol(self, token):
+        return BoxAST(ast.ConstantSymbol(token.getstr()))
 
     def concat_literals(self, head, tail):
         if head is None:
@@ -222,7 +238,8 @@ class Parser(object):
                     $$ = $1;
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: checkUslessStatements?
+        return p[0]
 
     @pg.production("stmts : none")
     def stmts_none(self, p):
@@ -240,16 +257,13 @@ class Parser(object):
     def stmts_error(self, p):
         return p[1]
 
-    @pg.production("stmt : ALIAS fitem fitem")
+    @pg.production("stmt : ALIAS fitem alias_after_fitem fitem")
     def stmt_alias_fitem(self, p):
-        """
-        kALIAS fitem {
-                    lexer.setState(LexState.EXPR_FNAME);
-                } fitem {
-                    $$ = support.newAlias($1.getPosition(), $2, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Alias(p[1].getast(), p[3].getast(), p[0].getsourcepos().lineno))
+
+    @pg.production("alias_after_fitem : ")
+    def alias_after_fitem(self, p):
+        self.lexer.state = self.lexer.EXPR_FNAME
 
     @pg.production("stmt : ALIAS GVAR GVAR")
     def stmt_alias_gvar(self, p):
@@ -589,12 +603,7 @@ class Parser(object):
 
     @pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
     def command_method_call_args(self, p):
-        """
-        primary_value tDOT operation2 command_args %prec tLOWEST {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("command : primary_value DOT operation2 command_args cmd_brace_block")
     def command_method_call_args_brace_block(self, p):
@@ -989,12 +998,7 @@ class Parser(object):
 
     @pg.production("fsym : fname")
     def fsym_fname(self, p):
-        """
-        fname {
-                    $$ = new LiteralNode($1);
-                }
-        """
-        raise NotImplementedError
+        return self.new_symbol(p[0])
 
     @pg.production("fsym : symbol")
     def fsym_symbol(self, p):
@@ -1440,13 +1444,8 @@ class Parser(object):
 
     @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
     def call_args_args_comma_assocs_opt_block_arg(self, p):
-        """
-        args ',' assocs opt_block_arg {
-                    $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
-                    $$ = support.arg_blk_pass((Node)$$, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        box = self.append_arg(p[0], p[2])
+        return self.arg_block_pass(box, p[3])
 
     @pg.production("call_args : block_arg")
     def call_args_block_arg(self, p):
@@ -1487,44 +1486,15 @@ class Parser(object):
 
     @pg.production("args : STAR arg_value")
     def args_star_arg_value(self, p):
-        """
-        tSTAR arg_value {
-                    $$ = support.newSplatNode($1.getPosition(), $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(self.new_splat(p[1]))
 
     @pg.production("args : args LITERAL_COMMA arg_value")
     def args_comma_arg_value(self, p):
-        """
-        args ',' arg_value {
-                    Node node = support.splat_array($1);
-
-                    if (node != null) {
-                        $$ = support.list_append(node, $3);
-                    } else {
-                        $$ = support.arg_append($1, $3);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_arg(p[0], p[2])
 
     @pg.production("args : args LITERAL_COMMA STAR arg_value")
     def args_comma_star_arg_value(self, p):
-        """
-        args ',' tSTAR arg_value {
-                    Node node = null;
-
-                    // FIXME: lose syntactical elements here (and others like this)
-                    if ($4 instanceof ArrayNode &&
-                        (node = support.splat_array($1)) != null) {
-                        $$ = support.list_concat(node, $4);
-                    } else {
-                        $$ = support.arg_concat(support.getPosition($1), $1, $4);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_arg(p[0], self.new_splat(p[3]))
 
     @pg.production("mrhs : args LITERAL_COMMA arg_value")
     def mrhs_args_comma_arg_value(self, p):
@@ -1616,17 +1586,13 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("primary : LPAREN_ARG expr rparen")
+    @pg.production("primary : LPAREN_ARG expr paren_post_expr rparen")
     def primary_paren_arg(self, p):
-        """
-        tLPAREN_ARG expr {
-                    lexer.setState(LexState.EXPR_ENDARG);
-                } rparen {
-                    support.warning(ID.GROUPED_EXPRESSION, $1.getPosition(), "(...) interpreted as grouped expression");
-                    $$ = $2;
-                }
-        """
-        raise NotImplementedError(p)
+        return p[1]
+
+    @pg.production("paren_post_expr : ")
+    def paren_post_expr(self, p):
+        self.lexer.state = self.lexer.EXPR_ENDARG
 
     @pg.production("primary : LPAREN compstmt RPAREN")
     def primary_lparen(self, p):
@@ -1641,7 +1607,8 @@ class Parser(object):
                     }
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: null?
+        return BoxAST(ast.Block(p[1].getastlist()))
 
     @pg.production("primary : primary_value COLON2 CONSTANT")
     def primary_constant_lookup(self, p):
@@ -2436,21 +2403,11 @@ class Parser(object):
 
     @pg.production("method_call : operation paren_args")
     def method_call_operation_paren_args(self, p):
-        """
-        operation paren_args {
-                    $$ = support.new_fcall($1, $2, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_fcall(p[0], p[1])
 
     @pg.production("method_call : primary_value DOT operation2 opt_paren_args")
     def method_call_primary_value_dot_operation_opt_paren_args(self, p):
-        """
-        primary_value tDOT operation2 opt_paren_args {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("method_call : primary_value COLON2 operation2 paren_args")
     def method_call_primary_value_colon_operation_paren_args(self, p):
@@ -2621,7 +2578,7 @@ class Parser(object):
 
     @pg.production("literal : symbol")
     def literal_symbol(self, p):
-        return BoxAST(ast.ConstantSymbol(p[0].getstr()))
+        return self.new_symbol(p[0])
 
     @pg.production("literal : dsym")
     def literal_dsym(self, p):
@@ -3402,7 +3359,8 @@ class Parser(object):
 
     @pg.production("assocs : assoc")
     def assocs_assoc(self, p):
-        return p[0]
+        [key, value] = p[0].getastlist()
+        return BoxAST(ast.Hash([(key, value)]))
 
     @pg.production("assocs : assocs LITERAL_COMMA assoc")
     def assocs(self, p):
@@ -3415,19 +3373,7 @@ class Parser(object):
 
     @pg.production("assoc : arg_value ASSOC arg_value")
     def assoc_arg_value(self, p):
-        """
-        arg_value tASSOC arg_value {
-                    ISourcePosition pos;
-                    if ($1 == null && $3 == null) {
-                        pos = $2.getPosition();
-                    } else {
-                        pos = $1.getPosition();
-                    }
-
-                    $$ = support.newArrayNode(pos, $1).add($3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(self.new_list(p[0]), p[2])
 
     @pg.production("assoc : LABEL arg_value")
     def assoc_label(self, p):
@@ -3550,12 +3496,16 @@ class BoxASTList(BaseBox):
 
 
 class BoxArgs(BaseBox):
-    def __init__(self, args):
+    def __init__(self, args, block):
         BaseBox.__init__(self)
         self.args = args
+        self.block = block
 
     def getargs(self):
         return self.args
+
+    def getblock(self):
+        return self.block
 
 
 class BoxInt(BaseBox):

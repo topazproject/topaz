@@ -112,7 +112,7 @@ class Lexer(BaseLexer):
                 space_seen = True
                 if self.state != self.EXPR_BEG:
                     self.add(ch)
-                    yield self.emit("NEWLINE")
+                    yield self.emit("LITERAL_NEWLINE")
                 self.lineno += 1
                 self.columno = 1
                 self.state = self.EXPR_BEG
@@ -185,19 +185,18 @@ class Lexer(BaseLexer):
             elif ch == ";":
                 self.add(ch)
                 self.state = self.EXPR_BEG
-                yield self.emit("SEMICOLON")
+                yield self.emit("LITERAL_SEMICOLON")
             elif ch == ",":
                 self.add(ch)
                 self.state = self.EXPR_BEG
-                yield self.emit("COMMA")
+                yield self.emit("LITERAL_COMMA")
             elif ch == "~":
                 self.add(ch)
                 self.state = self.EXPR_BEG
                 yield self.emit("TILDE")
             elif ch == "(":
-                self.add(ch)
-                self.state = self.EXPR_BEG
-                yield self.emit("LPAREN")
+                for token in self.left_paren(ch, space_seen):
+                    yield token
             elif ch == "[":
                 for token in self.left_bracket(ch, space_seen):
                     yield token
@@ -343,7 +342,7 @@ class Lexer(BaseLexer):
                 is_hex = ch.upper() == "X"
             elif ch == ".":
                 if not self.peek().isdigit():
-                    yield self.emit("symbol")
+                    yield self.emit(symbol)
                     self.unread()
                     break
                 self.add(ch)
@@ -501,21 +500,30 @@ class Lexer(BaseLexer):
     def star(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
-        if ch2 == "=":
+        if ch2 == "*":
+            self.add(ch2)
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                self.set_expression_state()
+                yield self.emit("POW")
+        elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
-            yield self.emit("MUL_EQUAL")
-        elif ch2 == "*":
-            self.add(ch2)
-            self.set_expression_state()
-            yield self.emit("POW")
+            yield self.emit("OP_ASGN")
         else:
             self.unread()
-            if self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
-                yield self.emit("UNARY_STAR")
+            if self.is_arg() and space_seen and not ch2.isspace():
+                tok_name = "STAR"
+            elif self.is_beg():
+                tok_name = "STAR"
             else:
-                yield self.emit("MUL")
-            self.set_expression_state()
+                tok_name = "STAR2"
+            yield self.emit(tok_name)
 
     def slash(self, ch, space_seen):
         if self.is_beg():
@@ -606,7 +614,7 @@ class Lexer(BaseLexer):
             yield self.emit("MATCH")
         elif ch2 == ">":
             self.add(ch2)
-            yield self.emit("ARROW")
+            yield self.emit("ASSOC")
         else:
             self.unread()
             yield self.emit("LITERAL_EQUAL")
@@ -664,10 +672,10 @@ class Lexer(BaseLexer):
             ch3 = self.read()
             if ch3 == ".":
                 self.add(ch3)
-                yield self.emit("DOTDOTDOT")
+                yield self.emit("DOT3")
             else:
                 self.unread()
-                yield self.emit("DOTDOT")
+                yield self.emit("DOT2")
         else:
             self.unread()
             self.state = self.EXPR_DOT
@@ -680,7 +688,7 @@ class Lexer(BaseLexer):
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
-            yield self.emit("NE")
+            yield self.emit("NEQ")
         elif ch2 == "~":
             self.add(ch2)
             yield self.emit("NMATCH")
@@ -824,6 +832,19 @@ class Lexer(BaseLexer):
             self.unread()
             self.state = self.EXPR_FNAME
             yield self.emit("SYMBEG")
+
+    def left_paren(self, ch, space_seen):
+        self.add(ch)
+        tok_name = "LPAREN2"
+        if self.is_beg():
+            tok_name = "LPAREN"
+        elif space_seen:
+            tok_name = "LPAREN_ARG"
+        self.paren_nest += 1
+        self.condition_state.stop()
+        self.cmd_argument_state.stop()
+        self.state = self.EXPR_BEG
+        yield self.emit(tok_name)
 
     def left_bracket(self, ch, space_seen):
         self.paren_nest += 1
