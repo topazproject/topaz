@@ -680,7 +680,7 @@ class Lexer(BaseLexer):
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
-            yield self.emit("NE")
+            yield self.emit("NEQ")
         elif ch2 == "~":
             self.add(ch2)
             yield self.emit("NMATCH")
