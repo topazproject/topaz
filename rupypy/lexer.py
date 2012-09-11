@@ -641,7 +641,7 @@ class Lexer(BaseLexer):
                 yield self.emit("CMP")
             else:
                 self.unread()
-                yield self.emit("LE")
+                yield self.emit("LEQ")
         elif ch2 == "<":
             self.add(ch2)
             yield self.emit("LSHFT")
@@ -655,7 +655,7 @@ class Lexer(BaseLexer):
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
-            yield self.emit("GE")
+            yield self.emit("GEQ")
         elif ch2 == ">":
             self.add(ch2)
             yield self.emit("RSHFT")

@@ -422,13 +422,13 @@ class TestParser(BaseRuPyPyTest):
 
     def test_comparison_ops(self, space):
         assert space.parse("1 == 2; 1 < 2; 1 > 2; 1 != 2; 1 <= 2; 1 >= 2; 1 <=> 2") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "==", [ast.ConstantInt(2)], None, )),
-            ast.Statement(ast.Send(ast.ConstantInt(1), "<", [ast.ConstantInt(2)], None, )),
-            ast.Statement(ast.Send(ast.ConstantInt(1), ">", [ast.ConstantInt(2)], None, )),
-            ast.Statement(ast.Send(ast.ConstantInt(1), "!=", [ast.ConstantInt(2)], None, )),
-            ast.Statement(ast.Send(ast.ConstantInt(1), "<=", [ast.ConstantInt(2)], None, )),
-            ast.Statement(ast.Send(ast.ConstantInt(1), ">=", [ast.ConstantInt(2)], None, )),
-            ast.Statement(ast.Send(ast.ConstantInt(1), "<=>", [ast.ConstantInt(2)], None, )),
+            ast.Statement(ast.Send(ast.ConstantInt(1), "==", [ast.ConstantInt(2)], None, 1)),
+            ast.Statement(ast.Send(ast.ConstantInt(1), "<", [ast.ConstantInt(2)], None, 1)),
+            ast.Statement(ast.Send(ast.ConstantInt(1), ">", [ast.ConstantInt(2)], None, 1)),
+            ast.Statement(ast.Send(ast.ConstantInt(1), "!=", [ast.ConstantInt(2)], None, 1)),
+            ast.Statement(ast.Send(ast.ConstantInt(1), "<=", [ast.ConstantInt(2)], None, 1)),
+            ast.Statement(ast.Send(ast.ConstantInt(1), ">=", [ast.ConstantInt(2)], None, 1)),
+            ast.Statement(ast.Send(ast.ConstantInt(1), "<=>", [ast.ConstantInt(2)], None, 1)),
         ]))
 
     def test_while(self, space):
