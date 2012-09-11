@@ -1449,13 +1449,8 @@ class Parser(object):
 
     @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
     def call_args_args_comma_assocs_opt_block_arg(self, p):
-        """
-        args ',' assocs opt_block_arg {
-                    $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
-                    $$ = support.arg_blk_pass((Node)$$, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        box = self.append_arg(p[0], p[2])
+        return self.arg_block_pass(box, p[3])
 
     @pg.production("call_args : block_arg")
     def call_args_block_arg(self, p):
@@ -3373,7 +3368,8 @@ class Parser(object):
 
     @pg.production("assocs : assoc")
     def assocs_assoc(self, p):
-        return p[0]
+        [key, value] = p[0].getastlist()
+        return BoxAST(ast.Hash([(key, value)]))
 
     @pg.production("assocs : assocs LITERAL_COMMA assoc")
     def assocs(self, p):
@@ -3386,19 +3382,7 @@ class Parser(object):
 
     @pg.production("assoc : arg_value ASSOC arg_value")
     def assoc_arg_value(self, p):
-        """
-        arg_value tASSOC arg_value {
-                    ISourcePosition pos;
-                    if ($1 == null && $3 == null) {
-                        pos = $2.getPosition();
-                    } else {
-                        pos = $1.getPosition();
-                    }
-
-                    $$ = support.newArrayNode(pos, $1).add($3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(self.new_list(p[0]), p[2])
 
     @pg.production("assoc : LABEL arg_value")
     def assoc_label(self, p):
