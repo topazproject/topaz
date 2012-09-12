@@ -225,7 +225,7 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("join")
     def singleton_method_join(self, space, args_w):
         sep = space.str_w(space.find_const(self, "SEPARATOR"))
-        result = ""
+        result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
                 string = space.str_w(
@@ -234,12 +234,12 @@ class W_FileObject(W_IOObject):
             else:
                 string = space.str_w(w_arg)
             if string.startswith(sep):
-                result = result.rstrip(sep)
-            elif result and not result.endswith(sep):
+                while result and result[-1] == sep:
+                    result.pop()
+            elif result and not result[-1] == sep:
                 result += sep
             result += string
-        return space.newstr_fromstr(result)
-        return space.newstr_fromstr(base + sep + path)
+        return space.newstr_fromchars(result)
 
     @classdef.singleton_method("exists?", filename="str")
     @classdef.singleton_method("exist?", filename="str")
