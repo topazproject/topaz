@@ -104,9 +104,27 @@ class W_ArgumentError(W_StandardError):
     classdef = ClassDef("ArgumentError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
+
 class W_RuntimeError(W_StandardError):
     classdef = ClassDef("RuntimeError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
+
+
+class W_SystemCallError(W_StandardError):
+    classdef = ClassDef("SystemCallError", W_StandardError.classdef)
+
+    def __init__(self, space, msg, errno, klass=None):
+        W_ExceptionObject.__init__(self, space, msg, klass)
+        self.errno = errno
+
+    @classdef.singleton_method("allocate", msg="str", errno="int")
+    def method_allocate(self, space, msg="exit", errno=0):
+        return W_SystemCallError(space, msg, errno)
+
+    @classdef.method("errno")
+    def method_status(self, space):
+        return space.newint(self.errno)
+
 
 class W_IndexError(W_StandardError):
     classdef = ClassDef("IndexError", W_StandardError.classdef)

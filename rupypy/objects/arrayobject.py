@@ -19,7 +19,6 @@ class W_ArrayObject(W_Object):
     classdef.app_method("""
     def to_s()
         result = "["
-        i = 0
         self.each_with_index do |obj, i|
             if i > 0
                 result << ", "

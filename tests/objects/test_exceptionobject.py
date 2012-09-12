@@ -31,3 +31,7 @@ class TestExceptionObject(BaseRuPyPyTest):
         res = space.listview(w_res)
         assert res[0] is res[1]
         assert res[0] is not res[2]
+
+    def test_systemcallerror(self, space):
+        w_res = space.execute("return SystemCallError.new('msg', 1).errno")
+        assert space.int_w(w_res) == 1
