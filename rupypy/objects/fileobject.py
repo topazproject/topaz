@@ -3,6 +3,7 @@ import sys
 
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.exceptionobject import W_ArgumentError
@@ -221,10 +222,24 @@ class W_FileObject(W_IOObject):
             return space.newstr_fromstr("/")
         return space.newstr_fromstr("/" + "/".join(items))
 
-    @classdef.singleton_method("join", base="path", path="path")
-    def singleton_method_join(self, space, base, path):
+    @classdef.singleton_method("join")
+    def singleton_method_join(self, space, args_w):
         sep = space.str_w(space.find_const(self, "SEPARATOR"))
-        return space.newstr_fromstr(base + sep + path)
+        result = []
+        for w_arg in args_w:
+            if isinstance(w_arg, W_ArrayObject):
+                string = space.str_w(
+                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                )
+            else:
+                string = space.str_w(w_arg)
+            if string.startswith(sep):
+                while result and result[-1] == sep:
+                    result.pop()
+            elif result and not result[-1] == sep:
+                result += sep
+            result += string
+        return space.newstr_fromchars(result)
 
     @classdef.singleton_method("exists?", filename="str")
     @classdef.singleton_method("exist?", filename="str")
