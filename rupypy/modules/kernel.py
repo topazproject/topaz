@@ -139,3 +139,10 @@ class Kernel(Module):
             space.newsymbol("exit"),
             [space.newint(status)]
         )
+
+    @moduledef.function("block_given?")
+    @moduledef.function("iterator?")
+    def method_block_givenp(self, space):
+        return space.newbool(
+            space.getexecutioncontext().gettopframe().get_block() is not None
+        )
