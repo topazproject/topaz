@@ -61,6 +61,12 @@ class Parser(object):
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
 
+    def new_colon2(self, box, constant):
+        return BoxAST(ast.LookupConstant(box.getast(), constant.getstr(), constant.getsourcepos().lineno))
+
+    def new_colon3(self, constant):
+        return BoxAST(ast.LookupConstant(None, constant.getstr(), constant.getsourcepos().lineno))
+
     def new_symbol(self, token):
         return BoxAST(ast.ConstantSymbol(token.getstr()))
 
@@ -616,12 +622,7 @@ class Parser(object):
 
     @pg.production("command : primary_value COLON2 operation2 command_args", precedence="LOWEST")
     def command_colon_call_args(self, p):
-        """
-        primary_value tCOLON2 operation2 command_args %prec tLOWEST {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("command : primary_value COLON2 operation2 command_args cmd_brace_block")
     def command_colon_call_args_brace_block(self, p):
@@ -1612,21 +1613,11 @@ class Parser(object):
 
     @pg.production("primary : primary_value COLON2 CONSTANT")
     def primary_constant_lookup(self, p):
-        """
-        primary_value tCOLON2 tCONSTANT {
-                    $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_colon2(p[0], p[2])
 
     @pg.production("primary : COLON3 CONSTANT")
     def primary_unbound_constant(self, p):
-        """
-        tCOLON3 tCONSTANT {
-                    $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_colon3(p[1])
 
     @pg.production("primary : LBRACK aref_args RBRACK")
     def primary_array(self, p):
@@ -2905,7 +2896,11 @@ class Parser(object):
 
     @pg.production("variable : CONSTANT")
     def variable_constant(self, p):
-        raise NotImplementedError
+        return BoxAST(ast.LookupConstant(
+            ast.Scope(p[0].getsourcepos().lineno),
+            p[0].getstr(),
+            p[0].getsourcepos().lineno
+        ))
 
     @pg.production("variable : CVAR")
     def variable_cvar(self, p):

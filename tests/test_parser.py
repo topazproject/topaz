@@ -1145,14 +1145,14 @@ HERE
         assert space.parse("Module::Constant") == ast.Main(ast.Block([
             ast.Statement(ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Constant", 1))
         ]))
-        assert space.parse("abc::Constant = 5") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.LookupConstant(ast.Variable("abc", 1), "Constant", 1), ast.ConstantInt(5)))
-        ]))
         assert space.parse("X::m nil") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "X", 1), "m", [ast.Variable("nil", 1)], None, 1))
         ]))
         assert space.parse("::Const") == ast.Main(ast.Block([
             ast.Statement(ast.LookupConstant(None, "Const", 1))
+        ]))
+        assert space.parse("abc::Constant = 5") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.LookupConstant(ast.Variable("abc", 1), "Constant", 1), ast.ConstantInt(5)))
         ]))
 
     def test___FILE__(self, space):
