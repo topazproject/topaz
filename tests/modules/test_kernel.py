@@ -113,6 +113,30 @@ class TestKernel(BaseRuPyPyTest):
         with self.raises(space, "SystemExit"):
             space.execute("exit")
 
+    def test_block_given_p(self, space):
+        assert space.execute("return block_given?") is space.w_false
+        assert space.execute("return iterator?") is space.w_false
+        assert space.execute("return (proc { block_given? })[]") is space.w_false
+        w_res = space.execute("""
+        def foo
+          block_given?
+        end
+        return foo, foo { }
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
+        w_res = space.execute("""
+        def foo
+          bar { block_given? }
+        end
+
+        def bar
+          yield
+        end
+
+        return foo, foo { }
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
+
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
