@@ -625,7 +625,7 @@ class Lexer(BaseLexer):
         if (ch2 == "<" and self.state not in [self.EXPR_DOT, self.EXPR_CLASS] and
             not self.is_end() and (not self.is_arg() or space_seen)):
             tokens_yielded = False
-            for token in  self.here_doc():
+            for token in self.here_doc():
                 tokens_yielded = True
                 yield token
             if tokens_yielded:
@@ -641,7 +641,7 @@ class Lexer(BaseLexer):
                 yield self.emit("CMP")
             else:
                 self.unread()
-                yield self.emit("LE")
+                yield self.emit("LEQ")
         elif ch2 == "<":
             self.add(ch2)
             yield self.emit("LSHFT")
@@ -655,7 +655,7 @@ class Lexer(BaseLexer):
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
-            yield self.emit("GE")
+            yield self.emit("GEQ")
         elif ch2 == ">":
             self.add(ch2)
             yield self.emit("RSHFT")
@@ -1186,13 +1186,16 @@ class HeredocLexer(BaseStringLexer):
 
 class StackState(object):
     def __init__(self):
-        pass
+        self._stack = 0
 
     def begin(self):
-        pass
+        orig = self._stack
+        self._stack <<= 1
+        self._stack |= 1
+        return orig
 
     def stop(self):
-        pass
+        self._stack <<= 1
 
     def reset(self, orig):
-        pass
+        self._stack = orig
