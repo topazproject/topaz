@@ -28,12 +28,12 @@ class Parser(object):
         return self._new_call(lhs.getast(), op, [rhs.getast()])
 
     def new_call(self, receiver, method, args):
-        args = args.getargs() if args is not None else []
+        args = args.getcallargs() if args is not None else []
         return self._new_call(receiver.getast(), method, args)
 
     def new_fcall(self, method, args):
         receiver = ast.Self(method.getsourcepos().lineno)
-        return self._new_call(receiver, method, args.getargs() if args is not None else [])
+        return self._new_call(receiver, method, args.getcallargs() if args is not None else [])
 
     def _new_call(self, receiver, method, args):
         return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
@@ -44,19 +44,26 @@ class Parser(object):
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
-    def new_args(self, box_arg):
-        return self._new_args([box_arg.getast()], None)
+    def new_args(self, args=None, block=None):
+        return BoxArgs(
+            args.getastlist() if args is not None else [],
+            block.getast() if block is not None else None
+        )
 
-    def _new_args(self, args, block):
-        return BoxArgs(args, block)
+    def new_call_args(self, box_arg=None):
+        args = [box_arg.getast()] if box_arg else []
+        return self._new_call_args(args, None)
 
-    def arg_block_pass(self, box_args, box_block_pass):
+    def _new_call_args(self, args, block):
+        return BoxCallArgs(args, block)
+
+    def call_arg_block_pass(self, box_args, box_block_pass):
         if box_block_pass is None:
             return box_args
-        return self._new_args(box_args.getargs(), box_block_pass.getast())
+        return self._new_call_args(box_args.getcallargs(), box_block_pass.getast())
 
-    def append_arg(self, box_arg, box):
-        return self._new_args(box_arg.getargs() + [box.getast()], box_arg.getblock())
+    def append_call_arg(self, box_arg, box):
+        return self._new_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
 
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
@@ -1427,7 +1434,7 @@ class Parser(object):
 
     @pg.production("call_args : args opt_block_arg")
     def call_args_args_opt_block_arg(self, p):
-        return self.arg_block_pass(p[0], p[1])
+        return self.call_arg_block_pass(p[0], p[1])
 
     @pg.production("call_args : assocs opt_block_arg")
     def call_args_assocs_opt_block_arg(self, p):
@@ -1479,19 +1486,19 @@ class Parser(object):
 
     @pg.production("args : arg_value")
     def args_arg_value(self, p):
-        return self.new_args(p[0])
+        return self.new_call_args(p[0])
 
     @pg.production("args : STAR arg_value")
     def args_star_arg_value(self, p):
-        return self.new_args(self.new_splat(p[1]))
+        return self.new_call_args(self.new_splat(p[1]))
 
     @pg.production("args : args LITERAL_COMMA arg_value")
     def args_comma_arg_value(self, p):
-        return self.append_arg(p[0], p[2])
+        return self.append_call_arg(p[0], p[2])
 
     @pg.production("args : args LITERAL_COMMA STAR arg_value")
     def args_comma_star_arg_value(self, p):
-        return self.append_arg(p[0], self.new_splat(p[3]))
+        return self.append_call_arg(p[0], self.new_splat(p[3]))
 
     @pg.production("mrhs : args LITERAL_COMMA arg_value")
     def mrhs_args_comma_arg_value(self, p):
@@ -1721,17 +1728,18 @@ class Parser(object):
 
     @pg.production("primary : method_call brace_block")
     def primary_method_call_brace_block(self, p):
-        """
-        method_call brace_block {
-                    if ($1 != null &&
-                          $<BlockAcceptingNode>1.getIterNode() instanceof BlockPassNode) {
-                        throw new SyntaxException(PID.BLOCK_ARG_AND_BLOCK_GIVEN, $1.getPosition(), lexer.getCurrentLine(), "Both block arg and actual block given.");
-                    }
-                    $$ = $<BlockAcceptingNode>1.setIterNode($2);
-                    $<Node>$.setPosition($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        send = p[0].getast()
+        block = p[1].getast()
+        assert isinstance(send, ast.Send)
+        if send.block_arg is not None:
+            raise self.error(p[1], "Both block arg and actual block given.")
+        return BoxAST(ast.Send(
+            send.receiver,
+            send.method,
+            send.args,
+            block,
+            send.lineno
+        ))
 
     @pg.production("primary : LAMBDA lambda")
     def primary_lambda(self, p):
@@ -2166,12 +2174,7 @@ class Parser(object):
 
     @pg.production("block_param : f_arg opt_f_block_arg")
     def block_param_f_arg_opt_f_block_arg(self, p):
-        """
-        f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(p[0], block=p[1])
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2238,23 +2241,12 @@ class Parser(object):
 
     @pg.production("opt_block_param : none")
     def opt_block_param_none(self, p):
-        """
-        none {
-    // was $$ = null;
-                   $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args()
 
     @pg.production("opt_block_param : block_param_def")
     def opt_block_param(self, p):
-        """
-        block_param_def {
-                    lexer.commandStart = true;
-                    $$ = $1;
-                }
-        """
-        raise NotImplementedError(p)
+        self.lexer.command_start = True
+        return p[0]
 
     @pg.production("block_param_def : PIPE opt_bv_decl PIPE")
     def block_param_def_pipe_opt_bv_decl_pipe(self, p):
@@ -2267,12 +2259,7 @@ class Parser(object):
 
     @pg.production("block_param_def : OROP")
     def block_param_def_orop(self, p):
-        """
-        tOROP {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args()
 
     @pg.production("block_param_def : PIPE block_param opt_bv_decl PIPE")
     def block_param_def_pipe_block_param_opt_bv_decl_pipe(self, p):
@@ -2466,17 +2453,9 @@ class Parser(object):
 
     @pg.production("brace_block : DO opt_block_param compstmt END")
     def brace_block_do(self, p):
-        """
-        kDO {
-                    support.pushBlockScope();
-                } opt_block_param compstmt kEND {
-                    $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
-                    // FIXME: What the hell is this?
-                    $<ISourcePositionHolder>0.setPosition(support.getPosition($<ISourcePositionHolder>0));
-                    support.popCurrentScope();
-                }
-        """
-        raise NotImplementedError(p)
+        args = p[1].getargs() if p[1] is not None else []
+        block = ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
+        return BoxAST(ast.SendBlock(args, None, block))
 
     @pg.production("case_body : WHEN args then compstmt cases")
     def case_body(self, p):
@@ -3137,24 +3116,11 @@ class Parser(object):
 
     @pg.production("f_norm_arg : IDENTIFIER")
     def f_norm_arg_identifier(self, p):
-        """
-        tIDENTIFIER {
-                    $$ = support.formal_argument($1);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Argument(p[0].getstr()))
 
     @pg.production("f_arg_item : f_norm_arg")
     def f_arg_item_f_norm_arg(self, p):
-        """
-        f_norm_arg {
-                    $$ = support.arg_var($1);
-  /*
-                    $$ = new ArgAuxiliaryNode($1.getPosition(), (String) $1.getValue(), 1);
-  */
-                }
-        """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
     def f_arg_item_paren(self, p):
@@ -3178,12 +3144,7 @@ class Parser(object):
 
     @pg.production("f_arg : f_arg_item")
     def f_arg_f_arg_item(self, p):
-        """
-        f_arg_item {
-                    $$ = new ArrayNode(lexer.getPosition(), $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list(p[0])
 
     @pg.production("f_arg : f_arg LITERAL_COMMA f_arg_item")
     def f_arg(self, p):
@@ -3484,16 +3445,19 @@ class BoxASTList(BaseBox):
         return self.nodes
 
 
-class BoxArgs(BaseBox):
+class BoxCallArgs(BaseBox):
+    """
+    A box for the arguments of a call/send.
+    """
     def __init__(self, args, block):
         BaseBox.__init__(self)
         self.args = args
         self.block = block
 
-    def getargs(self):
+    def getcallargs(self):
         return self.args
 
-    def getblock(self):
+    def getcallblock(self):
         return self.block
 
 
@@ -3504,3 +3468,14 @@ class BoxInt(BaseBox):
 
     def getint(self):
         return self.intvalue
+
+class BoxArgs(BaseBox):
+    """
+    A box for the arguments of a function/block definition.
+    """
+    def __init__(self, args, block):
+        self.args = args
+        self.block = block
+
+    def getargs(self):
+        return self.args

@@ -558,7 +558,7 @@ class Lexer(BaseLexer):
                 yield self.emit("OR_EQUAL")
             else:
                 self.unread()
-                yield self.emit("OR")
+                yield self.emit("OROP")
         elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
