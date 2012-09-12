@@ -537,7 +537,8 @@ class Parser(object):
                     support.checkExpression($1);
                 }
         """
-        raise NotImplementedError(p)
+        # TODO: checkExpression?
+        return p[0]
 
     @pg.production("command_call : command")
     def command_call_command(self, p):
@@ -1743,12 +1744,11 @@ class Parser(object):
 
     @pg.production("primary : IF expr_value then compstmt if_tail END")
     def primary_if(self, p):
-        """
-        kIF expr_value then compstmt if_tail kEND {
-                    $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.If(
+            p[1].getast(),
+            ast.Block(p[3].getastlist()) if p[3] else ast.Nil(),
+            p[4].getast() if p[4] else ast.Nil()
+        ))
 
     @pg.production("primary : UNLESS expr_value then compstmt opt_else END")
     def primary_unless(self, p):
@@ -1974,12 +1974,11 @@ class Parser(object):
 
     @pg.production("if_tail : ELSIF expr_value then compstmt if_tail")
     def if_tail_elsif(self, p):
-        """
-        kELSIF expr_value then compstmt if_tail {
-                    $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $4, $5);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.If(
+            p[1].getast(),
+            ast.Block(p[3].getastlist()),
+            p[4].getast() if p[4] else ast.Nil(),
+        ))
 
     @pg.production("opt_else : none")
     def opt_else_none(self, p):
@@ -1987,7 +1986,7 @@ class Parser(object):
 
     @pg.production("opt_else : ELSE compstmt")
     def opt_else(self, p):
-        return p[1]
+        return BoxAST(ast.Block(p[1].getastlist()))
 
     @pg.production("for_var : mlhs")
     @pg.production("for_var : lhs")

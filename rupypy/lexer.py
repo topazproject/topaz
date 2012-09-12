@@ -36,7 +36,7 @@ class BaseLexer(object):
     keywords = {
         "return": Keyword("RETURN", "RETURN", EXPR_MID),
         "yield": Keyword("YIELD", "YIELD", EXPR_ARG),
-        "if": Keyword("IF", "IF_INLINE", EXPR_BEG),
+        "if": Keyword("IF", "IF_MOD", EXPR_BEG),
         "unless": Keyword("UNLESS", "UNLESS_INLINE", EXPR_BEG),
         "then": Keyword("THEN", "THEN", EXPR_BEG),
         "elsif": Keyword("ELSIF", "ELSIF", EXPR_BEG),

@@ -47,8 +47,6 @@ class Main(Node):
 
 class Block(Node):
     def __init__(self, stmts):
-        if not stmts:
-            stmts = [Statement(Variable("nil", -1))]
         # The last item shouldn't be popped.
         stmts[-1].dont_pop = True
 
@@ -1279,3 +1277,9 @@ class Symbol(Node):
 
     def compile(self, ctx):
         Send(self.value, "to_sym", [], None, self.lineno).compile(ctx)
+
+
+class Nil(Node):
+    def __init__(self):
+        # This is idiotic, lineno doesn't matter, I suck at inheritance.
+        pass

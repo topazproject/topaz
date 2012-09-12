@@ -331,7 +331,7 @@ class TestParser(BaseRuPyPyTest):
         res = lambda lineno: ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
                 ast.Statement(ast.Send(ast.Self(lineno), "puts", [ast.ConstantInt(2)], None, lineno))
-            ]), ast.Block([])))
+            ]), ast.Nil()))
         ]))
         assert space.parse("if 3 then puts 2 end") == res(1)
         assert space.parse("""
@@ -347,7 +347,7 @@ class TestParser(BaseRuPyPyTest):
         """) == res(4)
         assert space.parse("if 3; puts 2 end") == res(1)
         assert space.parse("if 3; end") == ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([]), ast.Block([])))
+            ast.Statement(ast.If(ast.ConstantInt(3), ast.Nil(), ast.Nil()))
         ]))
         r = space.parse("""
         if 0
@@ -361,7 +361,7 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(2)], None, 3)),
                 ast.Statement(ast.Send(ast.Self(4), "puts", [ast.ConstantInt(3)], None, 4)),
                 ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(4)], None, 5)),
-            ]), ast.Block([])))
+            ]), ast.Nil()))
         ]))
 
     def test_else(self, space):
@@ -387,15 +387,13 @@ class TestParser(BaseRuPyPyTest):
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
-            ]), ast.Block([
-                ast.Statement(ast.If(ast.Send(ast.ConstantInt(4), "==", [ast.ConstantInt(2)], None, ), ast.Block([
+            ]), ast.If(ast.Send(ast.ConstantInt(4), "==", [ast.ConstantInt(2)], None, 4), ast.Block([
                     ast.Statement(ast.ConstantInt(3))
-                ]), ast.Block([
-                    ast.Statement(ast.If(ast.Send(ast.ConstantInt(3), "==", [ast.ConstantInt(1)], None, ), ast.Block([
+                ]), ast.If(ast.Send(ast.ConstantInt(3), "==", [ast.ConstantInt(1)], None, 6), ast.Block([
                         ast.Statement(ast.ConstantInt(2))
-                    ]), ast.Block([ast.Statement(ast.Variable("nil", -1))])))
-                ])))
-            ])))
+                    ]), ast.Nil()))
+                )
+            )
         ]))
 
     def test_elsif_else(self, space):
@@ -411,13 +409,12 @@ class TestParser(BaseRuPyPyTest):
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.Variable("nil", 2), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
-            ]), ast.Block([
-                ast.Statement(ast.If(ast.Variable("nil", 4), ast.Block([
+            ]), ast.If(ast.Variable("nil", 4), ast.Block([
                     ast.Statement(ast.ConstantInt(10)),
                 ]), ast.Block([
                     ast.Statement(ast.ConstantInt(200))
-                ])))
-            ])))
+                ]))
+            ))
         ]))
 
     def test_comparison_ops(self, space):
