@@ -520,7 +520,7 @@ class Parser(object):
 
     @pg.production("expr : NOT opt_nl expr")
     def expr_not(self, p):
-        return BoxAST(ast.Not(p[2].getast()))
+        return self.new_call(p[2], self.new_token(p[0], "!"), None)
 
     @pg.production("expr : BANG command_call")
     def expr_bang_command_call(self, p):
@@ -1317,12 +1317,7 @@ class Parser(object):
 
     @pg.production("arg : BANG arg")
     def arg_bang_arg(self, p):
-        """
-        tBANG arg {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($2), "!");
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[1], p[0], None)
 
     @pg.production("arg : TILDE arg")
     def arg_tilde_arg(self, p):

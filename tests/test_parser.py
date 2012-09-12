@@ -1618,10 +1618,10 @@ HERE
 
     def test_not(self, space):
         assert space.parse("!3") == ast.Main(ast.Block([
-            ast.Statement(ast.Not(ast.ConstantInt(3)))
+            ast.Statement(ast.Send(ast.ConstantInt(3), "!", [], None, 1))
         ]))
         assert space.parse("not 3") == ast.Main(ast.Block([
-            ast.Statement(ast.Not(ast.ConstantInt(3)))
+            ast.Statement(ast.Send(ast.ConstantInt(3), "!", [], None, 1))
         ]))
 
     def test_inline_if(self, space):

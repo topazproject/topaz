@@ -746,18 +746,6 @@ class And(Node):
         ctx.use_next_block(end)
 
 
-class Not(Node):
-    def __init__(self, value):
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        self.value.compile(ctx)
-        ctx.emit(consts.SEND, ctx.create_symbol_const("!"), 0)
-
-
 class Send(Node):
     def __init__(self, receiver, method, args, block_arg, lineno):
         self.receiver = receiver

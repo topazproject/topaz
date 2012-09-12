@@ -55,7 +55,7 @@ class BaseLexer(object):
         "end": Keyword("END", "END", EXPR_END),
         "and": Keyword("AND", "AND", EXPR_BEG),
         "or": Keyword("OR", "OR", EXPR_BEG),
-        "not": Keyword("NOT_LITERAL", "NOT_LITERAL", EXPR_BEG),
+        "not": Keyword("NOT", "NOT", EXPR_BEG),
         "alias": Keyword("ALIAS", "ALIAS", EXPR_FNAME),
     }
 
@@ -694,7 +694,7 @@ class Lexer(BaseLexer):
             yield self.emit("NMATCH")
         else:
             self.unread()
-            yield self.emit("EXCLAMATION")
+            yield self.emit("BANG")
 
     def question_mark(self, ch):
         if self.is_end():
