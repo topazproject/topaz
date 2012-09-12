@@ -94,6 +94,7 @@ class Lexer(BaseLexer):
         self.columno = 1
         self.state = self.EXPR_BEG
         self.paren_nest = 0
+        self.left_paren_begin = 0
         self.condition_state = StackState()
         self.cmd_argument_state = StackState()
 
@@ -273,6 +274,9 @@ class Lexer(BaseLexer):
             keyword = self.keywords[value]
             self.state = keyword.state
 
+            if keyword.normal_token == "DO":
+                return self.emit_do(state)
+
             if state in [self.EXPR_BEG, self.EXPR_VALUE]:
                 token = self.emit(keyword.normal_token)
             else:
@@ -291,6 +295,23 @@ class Lexer(BaseLexer):
             else:
                 self.state = self.EXPR_END
         return token
+
+    def emit_do(self, state):
+        self.command_start = True
+
+        if self.left_paren_begin > 0 and self.left_paren_begin == self.paren_nest:
+            self.left_paren_begin = 0
+            self.paren_nest -= 1
+            return self.emit("DO_LAMBDA")
+
+        if self.condition_state.is_in_state():
+            return self.emit("DO_COND")
+
+        if state != self.EXPR_CMDARG and self.cmd_argument_state.is_in_state():
+            return self.emit("DO_BLOCK")
+        if state in [self.EXPR_ENDARG, self.EXPR_BEG]:
+            return self.emit("DO_BLOCK")
+        return self.emit("DO")
 
     def comment(self, ch):
         while True:
@@ -1199,3 +1220,6 @@ class StackState(object):
 
     def reset(self, orig):
         self._stack = orig
+
+    def is_in_state(self):
+        return (self._stack & 1) != 0
