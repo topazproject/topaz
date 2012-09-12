@@ -1600,8 +1600,8 @@ HERE
         ]))
         assert space.parse("3 + 4 || 4 * 5") == ast.Main(ast.Block([
             ast.Statement(ast.Or(
-                ast.Send(ast.ConstantInt(3), "+", [ast.ConstantInt(4)], None, ),
-                ast.Send(ast.ConstantInt(4), "*", [ast.ConstantInt(5)], None, ),
+                ast.Send(ast.ConstantInt(3), "+", [ast.ConstantInt(4)], None, 1),
+                ast.Send(ast.ConstantInt(4), "*", [ast.ConstantInt(5)], None, 1),
             ))
         ]))
 
