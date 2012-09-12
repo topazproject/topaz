@@ -239,7 +239,14 @@ class Parser(object):
                   $$ = node;
                 }
         """
-        raise NotImplementedError(p)
+        body = ast.Block(p[0].getastlist()) if p[0] is not None else ast.Nil()
+        if p[1] is not None:
+            raise NotImplementedError(p)
+        elif p[2] is not None:
+            raise NotImplementedError(p)
+        if p[3] is not None:
+            raise NotImplementedError(p)
+        return BoxAST(body)
 
     @pg.production("compstmt : stmts opt_terms")
     def compstmt(self, p):
@@ -3087,19 +3094,14 @@ class Parser(object):
 
     @pg.production("f_args : ")
     def f_args_none(self, p):
-        """
-        /* none */ {
-                    $$ = support.new_args(lexer.getPosition(), null, null, null, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args()
 
     @pg.production("f_bad_arg : CONSTANT")
     def f_bad_arg_constant(self, p):
         raise self.error(p[0], "formal argument cannot be a constant")
 
     @pg.production("f_bad_arg : IVAR")
-    def f_bad_arg_invar(self, p):
+    def f_bad_arg_ivar(self, p):
         raise self.error(p[0], "formal argument cannot be an instance variable")
 
     @pg.production("f_bad_arg : GVAR")
