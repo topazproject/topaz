@@ -33,7 +33,7 @@ class Parser(object):
 
     def new_fcall(self, method, args):
         receiver = ast.Self(method.getsourcepos().lineno)
-        return self._new_call(receiver, method, args.getargs())
+        return self._new_call(receiver, method, args.getargs() if args is not None else [])
 
     def _new_call(self, receiver, method, args):
         return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
@@ -1631,7 +1631,7 @@ class Parser(object):
         if p[1] is None:
             items = []
         else:
-            items = p[1].getastlist()
+            items = p[1].getargs()
         return BoxAST(ast.Array(items))
 
     @pg.production("primary : LBRACE assoc_list RCURLY")
