@@ -948,7 +948,7 @@ class Lexer(BaseLexer):
         # drop empty last string
         n_tokens = len(tokens)
         if n_tokens > 2:
-            if tokens[n_tokens - 2].name == "STRING_BEGIN":
+            if tokens[n_tokens - 2].name == "STRING_BEG":
                 tokens.pop()
                 tokens.pop()
         else:
@@ -1116,7 +1116,7 @@ class StringLexer(BaseStringLexer):
             while self.peek().isspace():
                 self.read()
         if not self.regexp:
-            yield self.emit("STRING_BEGIN")
+            yield self.emit("STRING_BEG")
         while True:
             ch = self.read()
             if ch == self.lexer.EOF:
@@ -1193,7 +1193,7 @@ class HeredocLexer(BaseStringLexer):
         else:
             lexer_tokens = []
 
-        yield self.emit("STRING_BEGIN")
+        yield self.emit("STRING_BEG")
         while True:
             ch = self.read()
             if ch == "\n":

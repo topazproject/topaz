@@ -676,16 +676,16 @@ class TestParser(BaseRuPyPyTest):
 
     def test_string(self, space):
         assert space.parse('"abc"') == ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString([ast.ConstantString("abc")]))
+            ast.Statement(ast.ConstantString("abc"))
         ]))
         assert space.parse('"abc".size') == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.DynamicString([ast.ConstantString("abc")]), "size", [], None, 1))
+            ast.Statement(ast.Send(ast.ConstantString("abc"), "size", [], None, 1))
         ]))
         assert space.parse("'abc'") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("abc"))
         ]))
         assert space.parse('"\n"') == ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString([ast.ConstantString("\n")]))
+            ast.Statement(ast.ConstantString("\n"))
         ]))
         assert space.parse("?-") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("-"))
@@ -697,9 +697,6 @@ class TestParser(BaseRuPyPyTest):
     def test_escape_character(self, space):
         string = lambda content: ast.Main(ast.Block([
             ast.Statement(ast.ConstantString(content))
-        ]))
-        dyn_string = lambda content: ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString([ast.ConstantString(content)]))
         ]))
 
         assert space.parse('?\\\\') == string("\\")
@@ -726,20 +723,20 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('?\\0') == string("\0")
         assert space.parse('?\\01') == string("\x01")
         assert space.parse('?\\001') == string("\x01")
-        assert space.parse('"\\0"') == dyn_string("\x00")
-        assert space.parse('"\\01"') == dyn_string("\x01")
-        assert space.parse('"\\012"') == dyn_string("\n")
-        assert space.parse('"\\0\\1\\2"') == dyn_string("\x00\x01\x02")
-        assert space.parse('"\\09"') == dyn_string("\x009")
-        assert space.parse('"\\019"') == dyn_string("\x019")
+        assert space.parse('"\\0"') == string("\x00")
+        assert space.parse('"\\01"') == string("\x01")
+        assert space.parse('"\\012"') == string("\n")
+        assert space.parse('"\\0\\1\\2"') == string("\x00\x01\x02")
+        assert space.parse('"\\09"') == string("\x009")
+        assert space.parse('"\\019"') == string("\x019")
         with self.raises(space, "SyntaxError"):
             space.parse("?\\09")
         with self.raises(space, "SyntaxError"):
             space.parse("?\\019")
         assert space.parse('?\\12') == string("\n")
-        assert space.parse('"\\12"') == dyn_string("\n")
+        assert space.parse('"\\12"') == string("\n")
         assert space.parse('?\\012') == string("\n")
-        assert space.parse('"\\342\\234\\224"') == dyn_string("✔")
+        assert space.parse('"\\342\\234\\224"') == string("✔")
 
     def test_dynamic_string(self, space):
         dyn_string = lambda *components: ast.Main(ast.Block([

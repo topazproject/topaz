@@ -2465,23 +2465,7 @@ class Parser(object):
 
     @pg.production("string1 : STRING_BEG string_contents STRING_END")
     def string1(self, p):
-        """
-        tSTRING_BEG string_contents tSTRING_END {
-                    $$ = $2;
-
-                    $<ISourcePositionHolder>$.setPosition($1.getPosition());
-                    int extraLength = ((String) $1.getValue()).length() - 1;
-
-                    // We may need to subtract addition offset off of first
-                    // string fragment (we optimistically take one off in
-                    // ParserSupport.literal_concat).  Check token length
-                    // and subtract as neeeded.
-                    if (($2 instanceof DStrNode) && extraLength > 0) {
-                      Node strNode = ((DStrNode)$2).get(0);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return p[1]
 
     @pg.production("xstring : XSTRING_BEG xstring_contents STRING_END")
     def xstring(self, p):
@@ -2595,23 +2579,12 @@ class Parser(object):
 
     @pg.production("string_contents : ")
     def string_contents_empty(self, p):
-        """
-        /* none */ {
-                    ByteList aChar = ByteList.create("");
-                    aChar.setEncoding(lexer.getEncoding());
-                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
-                }
-        """
-        raise NotImplementedError(p)
+        # TODO: Encoding?
+        return BoxAST(ast.ConstantString(""))
 
     @pg.production("string_contents : string_contents string_content")
     def string_contents(self, p):
-        """
-        string_contents string_content {
-                    $$ = support.literal_concat($1.getPosition(), $1, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.concat_literals(p[0], p[1])
 
     @pg.production("xstring_contents : ")
     def xstring_contents_empty(self, p):
