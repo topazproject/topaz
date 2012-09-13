@@ -63,7 +63,7 @@ class Parser(object):
         return self._new_call_args(box_args.getcallargs(), box_block_pass.getast())
 
     def append_call_arg(self, box_arg, box):
-        return self._new_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
+        return self._new_call_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
 
     def new_send_block(self, params, body):
         args = params.getargs() if params is not None else []
@@ -1664,7 +1664,7 @@ class Parser(object):
         if p[1] is None:
             items = []
         else:
-            items = p[1].getargs()
+            items = p[1].getcallargs()
         return BoxAST(ast.Array(items))
 
     @pg.production("primary : LBRACE assoc_list RCURLY")
