@@ -588,7 +588,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_def(self, space):
         assert space.parse("def f() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([])))
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
         ]))
 
         assert space.parse("def f(a, b) a + b end") == ast.Main(ast.Block([

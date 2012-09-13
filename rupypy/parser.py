@@ -1892,20 +1892,14 @@ class Parser(object):
 
     @pg.production("primary : DEF fname f_arglist bodystmt END")
     def primary_def(self, p):
-        """
-        kDEF fname {
-                    support.setInDef(true);
-                    support.pushLocalScope();
-                } f_arglist bodystmt kEND {
-                    // TODO: We should use implicit nil for body, but problem (punt til later)
-                    Node body = $5; //$5 == null ? NilImplicitNode.NIL : $5;
-
-                    $$ = new DefnNode($1.getPosition(), new ArgumentNode($2.getPosition(), (String) $2.getValue()), $4, support.getCurrentScope(), body);
-                    support.popCurrentScope();
-                    support.setInDef(false);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Function(
+            None,
+            p[1].getstr(),
+            p[2].getargs(),
+            None,
+            None,
+            p[3].getast()
+        ))
 
     @pg.production("primary : DEF singleton dot_or_colon fname f_arglist bodystmt END")
     def primary_def_singleton(self, p):
@@ -2999,12 +2993,7 @@ class Parser(object):
 
     @pg.production("f_args : f_arg opt_f_block_arg")
     def f_args_f_arg_opt_f_block_arg(self, p):
-        """
-        f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, null, null, null, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(p[0], p[1])
 
     @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def f_args_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -3127,13 +3116,7 @@ class Parser(object):
 
     @pg.production("f_arg : f_arg LITERAL_COMMA f_arg_item")
     def f_arg(self, p):
-        """
-        f_arg ',' f_arg_item {
-                    $1.add($3);
-                    $$ = $1;
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], p[2])
 
     @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
     def f_opt(self, p):
