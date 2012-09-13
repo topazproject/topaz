@@ -533,47 +533,55 @@ class TestParser(BaseRuPyPyTest):
 
     def test_subscript(self, space):
         assert space.parse("[1][0]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(ast.Array([ast.ConstantInt(1)]), [ast.ConstantInt(0)], 1))
+            ast.Statement(ast.Send(ast.Array([ast.ConstantInt(1)]), "[]", [ast.ConstantInt(0)], None, 1))
         ]))
 
         assert space.parse("self[i]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(ast.Self(1), [ast.Variable("i", 1)], 1))
+            ast.Statement(ast.Send(ast.Self(1), "[]", [ast.Variable("i", 1)], None, 1))
         ]))
 
         assert space.parse("self[i].to_s") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Subscript(ast.Self(1), [ast.Variable("i", 1)], 1), "to_s", [], None, 1))
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "[]", [ast.Variable("i", 1)], None, 1), "to_s", [], None, 1))
         ]))
 
         assert space.parse("a[:a][:a]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(
-                ast.Subscript(
+            ast.Statement(ast.Send(
+                ast.Send(
                     ast.Variable("a", 1),
+                    "[]",
                     [ast.ConstantSymbol("a")],
+                    None,
                     1
                 ),
+                "[]",
                 [ast.ConstantSymbol("a")],
+                None,
                 1,
             ))
         ]))
         assert space.parse("x.y[0]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(
+            ast.Statement(ast.Send(
                 ast.Send(ast.Variable("x", 1), "y", [], None, 1),
+                "[]",
                 [ast.ConstantInt(0)],
+                None,
                 1,
             ))
         ]))
         assert space.parse("r[0, 0]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(
+            ast.Statement(ast.Send(
                 ast.Variable("r", 1),
+                "[]",
                 [ast.ConstantInt(0), ast.ConstantInt(0)],
+                None,
                 1,
             ))
         ]))
         assert space.parse("r[]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(ast.Variable("r", 1), [], 1))
+            ast.Statement(ast.Send(ast.Variable("r", 1), "[]", [], None, 1))
         ]))
         assert space.parse("f()[]") == ast.Main(ast.Block([
-            ast.Statement(ast.Subscript(ast.Send(ast.Self(1), "f", [], None, 1), [], 1))
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "f", [], None, 1), "[]", [], None, 1))
         ]))
 
     def test_subscript_assginment(self, space):

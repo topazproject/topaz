@@ -2770,7 +2770,7 @@ class Parser(object):
 
     @pg.production("variable : SELF")
     def variable_self(self, p):
-        return BoxAST(ast.Self())
+        return BoxAST(ast.Self(p[0].getsourcepos().lineno))
 
     @pg.production("variable : TRUE")
     def variable_true(self, p):
