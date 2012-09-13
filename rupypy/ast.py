@@ -969,7 +969,7 @@ class Variable(Node):
             transformer.error(node)
 
     def locate_symbols(self, symtable):
-        if (self.name not in ["true", "false", "nil"] and
+        if (self.name not in ["true", "false"] and
             not self.name[0].isupper()):
             symtable.declare_read(self.name)
 
@@ -980,7 +980,6 @@ class Variable(Node):
         named_consts = {
             "true": ctx.space.w_true,
             "false": ctx.space.w_false,
-            "nil": ctx.space.w_nil,
         }
         if self.name in named_consts:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
@@ -1255,3 +1254,9 @@ class Nil(Node):
     def __init__(self):
         # This is idiotic, lineno doesn't matter, I suck at inheritance.
         pass
+
+    def locate_symbols(self, symtable):
+        pass
+
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
