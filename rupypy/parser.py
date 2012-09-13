@@ -24,6 +24,9 @@ class Parser(object):
     def new_stmt(self, box):
         return BoxAST(ast.Statement(box.getast()))
 
+    def assignable(self, box):
+        return box
+
     def new_binary_call(self, lhs, op, rhs):
         return self._new_call(lhs.getast(), op, [rhs.getast()])
 
@@ -904,13 +907,7 @@ class Parser(object):
 
     @pg.production("lhs : variable")
     def lhs_variable(self, p):
-        """
-        variable {
-                      // if (!($$ = assignable($1, 0))) $$ = NEW_BEGIN(0);
-                    $$ = support.assignable($1, NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.assignable(p[0])
 
     @pg.production("lhs : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def lhs_subscript(self, p):
@@ -1159,14 +1156,7 @@ class Parser(object):
 
     @pg.production("arg : lhs LITERAL_EQUAL arg")
     def arg_lhs_equal_arg(self, p):
-        """
-        lhs '=' arg {
-                    $$ = support.node_assign($1, $3);
-                    // FIXME: Consider fixing node_assign itself rather than single case
-                    $<Node>$.setPosition(support.getPosition($1));
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Assignment(p[0].getast(), p[2].getast()))
 
     @pg.production("arg : lhs LITERAL_EQUAL arg RESCUE_MOD arg")
     def arg_lhs_equal_arg_rescue_mod(self, p):
@@ -1482,8 +1472,8 @@ class Parser(object):
 
     @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
     def call_args_args_comma_assocs_opt_block_arg(self, p):
-        box = self.append_arg(p[0], p[2])
-        return self.arg_block_pass(box, p[3])
+        box = self.append_call_arg(p[0], p[2])
+        return self.call_arg_block_pass(box, p[3])
 
     @pg.production("call_args : block_arg")
     def call_args_block_arg(self, p):
