@@ -22,7 +22,10 @@ class Parser(object):
         return BoxASTList(box_list.getastlist() + [box.getast()])
 
     def new_stmt(self, box):
-        return BoxAST(ast.Statement(box.getast()))
+        return self._new_stmt(box.getast())
+
+    def _new_stmt(self, node):
+        return BoxAST(ast.Statement(node))
 
     def assignable(self, box):
         return box
@@ -507,13 +510,7 @@ class Parser(object):
 
     @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
     def stmt_mlhs_equal_arg_value(self, p):
-        """
-        mlhs '=' arg_value {
-                    $1.setValueNode($3);
-                    $$ = $1;
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_stmt(ast.MultiAssignment(p[0].getastlist(), p[2].getast()))
 
     @pg.production("stmt : mlhs LITERAL_EQUAL mrhs")
     def stmt_mlhs_equal_mrhs(self, p):
@@ -718,12 +715,7 @@ class Parser(object):
 
     @pg.production("mlhs_basic : mlhs_head mlhs_item")
     def mlhs_basic_mlhs_head_mlhs_item(self, p):
-        """
-        mlhs_head mlhs_item {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1.add($2), null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], p[1])
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node")
     def mlhs_basic_mlhs_head_star_node(self, p):
@@ -823,30 +815,19 @@ class Parser(object):
 
     @pg.production("mlhs_node : variable")
     def mlhs_node_variable(self, p):
-        """
-        variable {
-                    $$ = support.assignable($1, NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.assignable(p[0])
 
     @pg.production("mlhs_node : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def mlhs_node_subscript(self, p):
-        """
-        primary_value '[' opt_call_args rbracket {
-                    $$ = support.aryset($1, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Subscript(
+            p[0].getast(),
+            p[2].getcallargs(),
+            p[1].getsourcepos().lineno
+        ))
 
     @pg.production("mlhs_node : primary_value DOT IDENTIFIER")
     def mlhs_node_attr(self, p):
-        """
-        primary_value tDOT tIDENTIFIER {
-                    $$ = support.attrset($1, (String) $3.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], None)
 
     @pg.production("mlhs_node : primary_value COLON2 IDENTIFIER")
     def mlhs_node_colon_attr(self, p):
@@ -868,18 +849,7 @@ class Parser(object):
 
     @pg.production("mlhs_node : primary_value COLON2 CONSTANT")
     def mlhs_node_constant(self, p):
-        """
-        primary_value tCOLON2 tCONSTANT {
-                    if (support.isInDef() || support.isInSingle()) {
-                        support.yyerror("dynamic constant assignment");
-                    }
-
-                    ISourcePosition position = support.getPosition($1);
-
-                    $$ = new ConstDeclNode(position, null, support.new_colon2(position, $1, (String) $3.getValue()), NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.LookupConstant(p[0].getast(), p[2].getstr(), p[1].getsourcepos().lineno))
 
     @pg.production("mlhs_node : COLON3 CONSTANT")
     def mlhs_node_colon_constant(self, p):
