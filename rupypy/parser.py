@@ -501,12 +501,7 @@ class Parser(object):
 
     @pg.production("stmt : lhs LITERAL_EQUAL mrhs")
     def stmt_lhs_equal_mrhs(self, p):
-        """
-        lhs '=' mrhs {
-                    $$ = support.node_assign($1, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_stmt(ast.Assignment(p[0].getast(), ast.Array(p[2].getcallargs())))
 
     @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
     def stmt_mlhs_equal_arg_value(self, p):
@@ -1496,18 +1491,7 @@ class Parser(object):
 
     @pg.production("mrhs : args LITERAL_COMMA arg_value")
     def mrhs_args_comma_arg_value(self, p):
-        """
-        args ',' arg_value {
-                    Node node = support.splat_array($1);
-
-                    if (node != null) {
-                        $$ = support.list_append(node, $3);
-                    } else {
-                        $$ = support.arg_append($1, $3);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_call_arg(p[0], p[2])
 
     @pg.production("mrhs : args LITERAL_COMMA STAR arg_value")
     def mrhs_args_comma_star_arg_value(self, p):
