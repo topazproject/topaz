@@ -660,7 +660,7 @@ class TestParser(BaseRuPyPyTest):
             end
             """ % s)
             assert r == ast.Main(ast.Block([
-                ast.Statement(ast.Function(None, s, [], None, None, ast.Block([])))
+                ast.Statement(ast.Function(None, s, [], None, None, ast.Nil()))
             ]))
         test_name("abc")
         test_name("<=>")

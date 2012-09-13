@@ -54,10 +54,10 @@ class Parser(object):
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
-    def new_args(self, args=None, block=None):
+    def new_args(self, args=None, block_arg=None):
         return BoxArgs(
             args.getastlist() if args is not None else [],
-            block.getast() if block is not None else None
+            block_arg.getstr() if block_arg is not None else None
         )
 
     def new_call_args(self, box_arg=None):
@@ -1799,7 +1799,7 @@ class Parser(object):
             p[1].getstr(),
             p[2].getargs(),
             None,
-            None,
+            p[2].getblockarg(),
             p[3].getast()
         ))
 
@@ -2085,7 +2085,7 @@ class Parser(object):
 
     @pg.production("block_param : f_arg opt_f_block_arg")
     def block_param_f_arg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], block=p[1])
+        return self.new_args(p[0], block_arg=p[1])
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2953,12 +2953,7 @@ class Parser(object):
 
     @pg.production("f_args : f_block_arg")
     def f_args_f_block_arg(self, p):
-        """
-        f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(block_arg=p[0])
 
     @pg.production("f_args : ")
     def f_args_none(self, p):
@@ -3110,16 +3105,7 @@ class Parser(object):
 
     @pg.production("f_block_arg : blkarg_mark IDENTIFIER")
     def f_block_arg(self, p):
-        """
-        blkarg_mark tIDENTIFIER {
-                    if (!support.is_local_id($2)) {
-                        support.yyerror("block argument must be local variable");
-                    }
-
-                    $$ = new BlockArgNode(support.arg_var(support.shadowing_lvar($2)));
-                }
-        """
-        raise NotImplementedError(p)
+        return p[1]
 
     @pg.production("opt_f_block_arg : LITERAL_COMMA f_block_arg")
     def opt_f_block_arg(self, p):
@@ -3337,9 +3323,12 @@ class BoxArgs(BaseBox):
     """
     A box for the arguments of a function/block definition.
     """
-    def __init__(self, args, block):
+    def __init__(self, args, block_arg):
         self.args = args
-        self.block = block
+        self.block_arg = block_arg
 
     def getargs(self):
         return self.args
+
+    def getblockarg(self):
+        return self.block_arg
