@@ -170,9 +170,8 @@ class Lexer(BaseLexer):
                 self.state = self.EXPR_ENDARG
                 yield self.emit("RBRACK")
             elif ch == "}":
-                self.add(ch)
-                yield self.emit("RBRACE")
-                self.state = self.EXPR_ENDFN
+                for token in self.right_brace(ch):
+                    yield token
             elif ch == ":":
                 for token in self.colon(ch, space_seen):
                     yield token
@@ -202,9 +201,8 @@ class Lexer(BaseLexer):
                 for token in self.left_bracket(ch, space_seen):
                     yield token
             elif ch == "{":
-                self.add(ch)
-                yield self.emit("LBRACE")
-                self.state = self.EXPR_BEG
+                for token in self.left_brace(ch):
+                    yield token
             elif ch == "\\":
                 ch2 = self.read()
                 if ch2 == "\n":
@@ -895,6 +893,35 @@ class Lexer(BaseLexer):
         self.cmd_argument_state.stop()
         yield self.emit(tok)
 
+    def left_brace(self, ch):
+        self.add(ch)
+        if self.left_paren_begin > 0 and self.left_paren_begin == self.paren_nest:
+            self.state = self.EXPR_BEG
+            self.left_paren_begin = 0
+            self.paren_nest -= 1
+            self.condition_state.stop()
+            self.cmd_argument_state.stop()
+            yield self.emit("LAMBEG")
+        else:
+            if self.is_arg() or self.state in [self.EXPR_END, self.EXPR_ENDFN]:
+                tok = "LCURLY"
+            elif self.state == self.EXPR_ENDARG:
+                tok = "LBRACE_ARG"
+            else:
+                tok = "LBRACE"
+                self.command_start = True
+            self.condition_state.stop()
+            self.cmd_argument_state.stop()
+            self.state = self.EXPR_BEG
+            yield self.emit(tok)
+
+    def right_brace(self, ch):
+        self.add(ch)
+        self.condition_state.restart()
+        self.cmd_argument_state.restart()
+        self.state = self.EXPR_ENDARG
+        yield self.emit("RCURLY")
+
     def backtick(self, ch):
         if self.state == self.EXPR_FNAME:
             self.add(ch)
@@ -1220,6 +1247,10 @@ class StackState(object):
 
     def reset(self, orig):
         self._stack = orig
+
+    def restart(self):
+        self._stack |= (self._stack & 1) << 1
+        self._stack >>= 1
 
     def is_in_state(self):
         return (self._stack & 1) != 0

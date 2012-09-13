@@ -2435,15 +2435,7 @@ class Parser(object):
 
     @pg.production("brace_block : LCURLY opt_block_param compstmt RCURLY")
     def brace_block_curly(self, p):
-        """
-        tLCURLY {
-                    support.pushBlockScope();
-                } opt_block_param compstmt tRCURLY {
-                    $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
-                    support.popCurrentScope();
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_send_block(p[1], p[2])
 
     @pg.production("brace_block : DO opt_block_param compstmt END")
     def brace_block_do(self, p):
