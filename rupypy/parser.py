@@ -16,7 +16,10 @@ class Parser(object):
         return Token(name, name, orig.getsourcepos())
 
     def new_list(self, box):
-        return BoxASTList([box.getast()])
+        return self._new_list([box.getast()])
+
+    def _new_list(self, nodes):
+        return BoxASTList(nodes)
 
     def append_to_list(self, box_list, box):
         return BoxASTList(box_list.getastlist() + [box.getast()])
@@ -501,22 +504,21 @@ class Parser(object):
 
     @pg.production("stmt : lhs LITERAL_EQUAL mrhs")
     def stmt_lhs_equal_mrhs(self, p):
-        return self._new_stmt(ast.Assignment(p[0].getast(), ast.Array(p[2].getcallargs())))
+        return self._new_stmt(ast.Assignment(p[0].getast(), ast.Array(p[2].getastlist())))
 
     @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
     def stmt_mlhs_equal_arg_value(self, p):
-        return self._new_stmt(ast.MultiAssignment(p[0].getastlist(), p[2].getast()))
+        return self._new_stmt(ast.MultiAssignment(
+            p[0].getastlist(),
+            p[2].getast()
+        ))
 
     @pg.production("stmt : mlhs LITERAL_EQUAL mrhs")
     def stmt_mlhs_equal_mrhs(self, p):
-        """
-        mlhs '=' mrhs {
-                    $<AssignableNode>1.setValueNode($3);
-                    $$ = $1;
-                    $1.setPosition(support.getPosition($1));
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_stmt(ast.MultiAssignment(
+            p[0].getastlist(),
+            ast.Array(p[2].getastlist()),
+        ))
 
     @pg.production("stmt : expr")
     def stmt_expr(self, p):
@@ -1491,32 +1493,15 @@ class Parser(object):
 
     @pg.production("mrhs : args LITERAL_COMMA arg_value")
     def mrhs_args_comma_arg_value(self, p):
-        return self.append_call_arg(p[0], p[2])
+        return self.append_to_list(self._new_list(p[0].getcallargs()), p[2])
 
     @pg.production("mrhs : args LITERAL_COMMA STAR arg_value")
     def mrhs_args_comma_star_arg_value(self, p):
-        """
-        args ',' tSTAR arg_value {
-                    Node node = null;
-
-                    if ($4 instanceof ArrayNode &&
-                        (node = support.splat_array($1)) != null) {
-                        $$ = support.list_concat(node, $4);
-                    } else {
-                        $$ = support.arg_concat($1.getPosition(), $1, $4);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(self._new_list(p[0].getcallargs()), self.new_splat(p[3]))
 
     @pg.production("mrhs : STAR arg_value")
     def mrhs_star_arg_value(self, p):
-        """
-        tSTAR arg_value {
-                     $$ = support.newSplatNode(support.getPosition($1), $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list(self.new_splat(p[1]))
 
     @pg.production("primary : literal")
     def primary_literal(self, p):

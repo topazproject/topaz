@@ -218,25 +218,25 @@ class TestParser(BaseRuPyPyTest):
                     ast.Variable("b", 1),
                     ast.Variable("c", 1),
                 ],
-                ast.Splat(ast.Array(
+                ast.Array([ast.Splat(ast.Array(
                     [
                         ast.ConstantInt(1),
                         ast.ConstantInt(2),
                         ast.ConstantInt(3),
                     ]
-                ))
+                ))])
             ))
         ]))
         assert space.parse("a = *[1,2,3]") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(
                 ast.Variable("a", 1),
-                ast.Splat(ast.Array(
+                ast.Array([ast.Splat(ast.Array(
                     [
                         ast.ConstantInt(1),
                         ast.ConstantInt(2),
                         ast.ConstantInt(3),
                     ]
-                ))
+                ))])
             ))
         ]))
         assert space.parse("a = 0, *[1,2,3]") == ast.Main(ast.Block([
