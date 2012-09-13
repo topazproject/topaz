@@ -1703,19 +1703,14 @@ class Parser(object):
     def post_while_do(self, p):
         self.lexer.condition_state.end()
 
-    @pg.production("primary : UNTIL expr_value do compstmt END")
+    @pg.production("primary : until expr_value do post_while_do compstmt END")
     def primary_until(self, p):
-        """
-        kUNTIL {
-                  lexer.getConditionState().begin();
-                } expr_value do {
-                  lexer.getConditionState().end();
-                } compstmt kEND {
-                    Node body = $6 == null ? NilImplicitNode.NIL : $6;
-                    $$ = new UntilNode($1.getPosition(), support.getConditionNode($3), body);
-                }
-        """
-        raise NotImplementedError(p)
+        body = ast.Block(p[4].getastlist()) if p[4] is not None else ast.Nil()
+        return BoxAST(ast.Until(p[1].getast(), body))
+
+    @pg.production("until : UNTIL")
+    def until_token(self, p):
+        self.lexer.condition_state.begin()
 
     @pg.production("primary : CASE expr_value opt_terms case_body END")
     def primary_case_expr_value(self, p):
