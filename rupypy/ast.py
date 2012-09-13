@@ -604,37 +604,21 @@ class MultiAssignment(Node):
             target.locate_symbols_assignment(symtable)
         self.value.locate_symbols(symtable)
 
-    def compile(self, ctx):
-        self.value.compile(ctx)
-        ctx.emit(consts.DUP_TOP)
-        ctx.emit(consts.COERCE_ARRAY)
-        ctx.emit(consts.UNPACK_SEQUENCE, len(self.targets))
-        for target in self.targets:
-            elems = target.compile_receiver(ctx)
-            if elems == 1:
-                ctx.emit(consts.ROT_TWO)
-            elif elems == 2:
-                ctx.emit(consts.ROT_THREE)
-                ctx.emit(consts.ROT_THREE)
-            target.compile_store(ctx)
-            ctx.emit(consts.DISCARD_TOP)
-
-class SplatAssignment(Node):
-    def __init__(self, targets, value, n_pre):
-        self.targets = targets
-        self.value = value
-        self.n_pre = n_pre
-
-    def locate_symbols(self, symtable):
-        for target in self.targets:
-            target.locate_symbols_assignment(symtable)
-        self.value.locate_symbols(symtable)
+    def splat_index(self):
+        for i, node in enumerate(self.targets):
+            if isinstance(node, Splat):
+                return i
+        return -1
 
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.DUP_TOP)
         ctx.emit(consts.COERCE_ARRAY)
-        ctx.emit(consts.UNPACK_SEQUENCE_SPLAT, len(self.targets), self.n_pre)
+        splat_index = self.splat_index()
+        if splat_index == -1:
+            ctx.emit(consts.UNPACK_SEQUENCE, len(self.targets))
+        else:
+            ctx.emit(consts.UNPACK_SEQUENCE_SPLAT, len(self.targets), splat_index)
         for target in self.targets:
             elems = target.compile_receiver(ctx)
             if elems == 1:

@@ -1242,6 +1242,9 @@ class StackState(object):
         self._stack |= 1
         return orig
 
+    def end(self):
+        self._stack >>= 1
+
     def stop(self):
         self._stack <<= 1
 

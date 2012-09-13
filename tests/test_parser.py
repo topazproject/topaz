@@ -264,59 +264,54 @@ class TestParser(BaseRuPyPyTest):
 
     def test_splat_lhs_assignment(self, space):
         assert space.parse("a,*b,c = *[1,2]") == ast.Main(ast.Block([
-            ast.Statement(ast.SplatAssignment(
+            ast.Statement(ast.MultiAssignment(
                 [
                     ast.Variable("a", 1),
                     ast.Splat(ast.Variable("b", 1)),
                     ast.Variable("c", 1),
                 ],
-                ast.Splat(ast.Array(
+                ast.Array([ast.Splat(ast.Array(
                     [
                         ast.ConstantInt(1),
                         ast.ConstantInt(2)
                     ]
-                )),
-                1
+                ))]),
             ))
         ]))
         assert space.parse("a, *b, c = 1") == ast.Main(ast.Block([
-            ast.Statement(ast.SplatAssignment(
+            ast.Statement(ast.MultiAssignment(
                 [
                     ast.Variable("a", 1),
                     ast.Splat(ast.Variable("b", 1)),
                     ast.Variable("c", 1),
                 ],
                 ast.ConstantInt(1),
-                1
             ))
         ]))
         assert space.parse("*b,c = 1") == ast.Main(ast.Block([
-            ast.Statement(ast.SplatAssignment(
+            ast.Statement(ast.MultiAssignment(
                 [
                     ast.Splat(ast.Variable("b", 1)),
                     ast.Variable("c", 1),
                 ],
                 ast.ConstantInt(1),
-                0
             ))
         ]))
         assert space.parse("b,*c = 1") == ast.Main(ast.Block([
-            ast.Statement(ast.SplatAssignment(
+            ast.Statement(ast.MultiAssignment(
                 [
                     ast.Variable("b", 1),
                     ast.Splat(ast.Variable("c", 1)),
                 ],
                 ast.ConstantInt(1),
-                1
             ))
         ]))
         assert space.parse("*c = 1") == ast.Main(ast.Block([
-            ast.Statement(ast.SplatAssignment(
+            ast.Statement(ast.MultiAssignment(
                 [
                     ast.Splat(ast.Variable("c", 1)),
                 ],
                 ast.ConstantInt(1),
-                0
             ))
         ]))
         with self.raises(space, "SyntaxError"):
@@ -438,7 +433,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("while true do; puts 5 end") == expected
         assert space.parse("while true; puts 5 end") == expected
         assert space.parse("while true; end") == ast.Main(ast.Block([
-            ast.Statement(ast.While(ast.Variable("true", 1), ast.Block([])))
+            ast.Statement(ast.While(ast.Variable("true", 1), ast.Nil()))
         ]))
 
         res = space.parse("""

@@ -22,7 +22,8 @@ class Parser(object):
         return BoxASTList(nodes)
 
     def append_to_list(self, box_list, box):
-        return BoxASTList(box_list.getastlist() + [box.getast()])
+        base = box_list.getastlist() if box_list is not None else []
+        return BoxASTList(base + [box.getast()])
 
     def new_stmt(self, box):
         return self._new_stmt(box.getast())
@@ -716,21 +717,11 @@ class Parser(object):
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node")
     def mlhs_basic_mlhs_head_star_node(self, p):
-        """
-        mlhs_head tSTAR mlhs_node {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, $3, (ListNode) null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], self.new_splat(p[2]))
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
-        """
-        mlhs_head tSTAR mlhs_node ',' mlhs_post {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, $3, $5);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_list(self.append_to_list(p[0], self.new_splat(p[2])).getastlist() +  p[4].getastlist())
 
     @pg.production("mlhs_basic : mlhs_head STAR")
     def mlhs_basic_mlhs_head_star(self, p):
@@ -752,21 +743,11 @@ class Parser(object):
 
     @pg.production("mlhs_basic : STAR mlhs_node")
     def mlhs_basic_star_mlhs_node(self, p):
-        """
-        tSTAR mlhs_node {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, $2, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list(self.new_splat(p[1]))
 
     @pg.production("mlhs_basic : STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_mlhs_node_comma_post(self, p):
-        """
-        tSTAR mlhs_node ',' mlhs_post {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, $2, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_list([self.new_splat(p[1]).getast()] + p[3].getastlist())
 
     @pg.production("mlhs_basic : STAR")
     def mlhs_basic_star(self, p):
@@ -1709,19 +1690,18 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("primary : WHILE expr_value do compstmt END")
+    @pg.production("primary : while expr_value do post_while_do compstmt END")
     def primary_while(self, p):
-        """
-        kWHILE {
-                    lexer.getConditionState().begin();
-                } expr_value do {
-                    lexer.getConditionState().end();
-                } compstmt kEND {
-                    Node body = $6 == null ? NilImplicitNode.NIL : $6;
-                    $$ = new WhileNode($1.getPosition(), support.getConditionNode($3), body);
-                }
-        """
-        raise NotImplementedError(p)
+        body = ast.Block(p[4].getastlist()) if p[4] is not None else ast.Nil()
+        return BoxAST(ast.While(p[1].getast(), body))
+
+    @pg.production("while : WHILE")
+    def while_token(self, p):
+        self.lexer.condition_state.begin()
+
+    @pg.production("post_while_do : ")
+    def post_while_do(self, p):
+        self.lexer.condition_state.end()
 
     @pg.production("primary : UNTIL expr_value do compstmt END")
     def primary_until(self, p):
