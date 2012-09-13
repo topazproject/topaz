@@ -65,6 +65,25 @@ class Parser(object):
     def append_call_arg(self, box_arg, box):
         return self._new_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
 
+    def new_send_block(self, params, body):
+        args = params.getargs() if params is not None else []
+        block = ast.Block(body.getastlist()) if body is not None else ast.Nil()
+        return BoxAST(ast.SendBlock(args, None, block))
+
+    def combine_send_block(self, send_box, block_box):
+        send = send_box.getast()
+        block = block_box.getast()
+        assert isinstance(send, ast.Send)
+        if send.block_arg is not None:
+            raise self.error(p[1], "Both block arg and actual block given.")
+        return BoxAST(ast.Send(
+            send.receiver,
+            send.method,
+            send.args,
+            block,
+            send.lineno
+        ))
+
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
 
@@ -1735,18 +1754,7 @@ class Parser(object):
 
     @pg.production("primary : method_call brace_block")
     def primary_method_call_brace_block(self, p):
-        send = p[0].getast()
-        block = p[1].getast()
-        assert isinstance(send, ast.Send)
-        if send.block_arg is not None:
-            raise self.error(p[1], "Both block arg and actual block given.")
-        return BoxAST(ast.Send(
-            send.receiver,
-            send.method,
-            send.args,
-            block,
-            send.lineno
-        ))
+        return self.combine_send_block(p[0], p[1])
 
     @pg.production("primary : LAMBDA lambda")
     def primary_lambda(self, p):
@@ -2334,32 +2342,11 @@ class Parser(object):
 
     @pg.production("do_block : DO_BLOCK opt_block_param compstmt END")
     def do_block(self, p):
-        """
-        kDO_BLOCK {
-                    support.pushBlockScope();
-                } opt_block_param compstmt kEND {
-                    $$ = new IterNode(support.getPosition($1), $3, $4, support.getCurrentScope());
-                    support.popCurrentScope();
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_send_block(p[1], p[2])
 
     @pg.production("block_call : command do_block")
     def block_call_command_do_block(self, p):
-        """
-        command do_block {
-                    // Workaround for JRUBY-2326 (MRI does not enter this production for some reason)
-                    if ($1 instanceof YieldNode) {
-                        throw new SyntaxException(PID.BLOCK_GIVEN_TO_YIELD, $1.getPosition(), lexer.getCurrentLine(), "block given to yield");
-                    }
-                    if ($<BlockAcceptingNode>1.getIterNode() instanceof BlockPassNode) {
-                        throw new SyntaxException(PID.BLOCK_ARG_AND_BLOCK_GIVEN, $1.getPosition(), lexer.getCurrentLine(), "Both block arg and actual block given.");
-                    }
-                    $$ = $<BlockAcceptingNode>1.setIterNode($2);
-                    $<Node>$.setPosition($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.combine_send_block(p[0], p[1])
 
     @pg.production("block_arg : block_call DOT operation2 opt_paren_args")
     def block_call_dot_operation_opt_paren_args(self, p):
@@ -2460,9 +2447,7 @@ class Parser(object):
 
     @pg.production("brace_block : DO opt_block_param compstmt END")
     def brace_block_do(self, p):
-        args = p[1].getargs() if p[1] is not None else []
-        block = ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
-        return BoxAST(ast.SendBlock(args, None, block))
+        return self.new_send_block(p[1], p[2])
 
     @pg.production("case_body : WHEN args then compstmt cases")
     def case_body(self, p):
