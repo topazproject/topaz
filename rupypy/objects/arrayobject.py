@@ -29,6 +29,7 @@ class W_ArrayObject(W_Object):
     end
     """)
 
+    @classdef.method("at")
     @classdef.method("[]")
     def method_subscript(self, space, w_idx, w_count=None):
         start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
@@ -180,6 +181,36 @@ class W_ArrayObject(W_Object):
         self.select { |each| !each.nil? }
     end
     """)
+
+    classdef.app_method("""
+    def reject!(&block)
+        prev_size = self.size
+        self.delete_if(&block)
+        return nil if prev_size == self.size
+        self
+    end
+    """)
+
+    classdef.app_method("""
+    def delete_if
+        i = 0
+        while i < self.size
+            if yield(self.at(i))
+                self.delete_at(i)
+            else
+                i += 1
+            end
+        end
+        self
+    end
+    """)
+
+    @classdef.method("delete_at", idx="int")
+    def method_delete_at(self, space, idx):
+        if idx >= len(self.items_w):
+            return space.w_nil
+        else:
+            return self.items_w.pop(idx)
 
     @classdef.method("last")
     def method_last(self, space):

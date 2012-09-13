@@ -15,6 +15,8 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_subscript(self, space):
         w_res = space.execute("return [1][0]")
         assert space.int_w(w_res) == 1
+        w_res = space.execute("return [1].at(0)")
+        assert space.int_w(w_res) == 1
         w_res = space.execute("return [1][1]")
         assert w_res is space.w_nil
         w_res = space.execute("return [1][-1]")
@@ -183,6 +185,36 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_compact(self, space):
         w_res = space.execute("return ['a', nil, 'b', nil, 'c'].compact")
         assert self.unwrap(space, w_res) == ['a', 'b', 'c']
+
+    def test_rejectbang(self, space):
+        w_res = space.execute("return [1, 2, 3, 4].reject! { false }")
+        assert w_res == space.w_nil
+        w_res = space.execute("return [1, 2, 3, 4].reject! { true }")
+        assert space.listview(w_res) == []
+
+    def test_delete_if(self, space):
+        w_res = space.execute("""
+        a = [1, 2, 3]
+        a.delete_if { true }
+        return a
+        """)
+        assert self.unwrap(space, w_res) == []
+        w_res = space.execute("""
+        a = [1, 2, 3, 4]
+        return a.delete_if {|x| x > 2 }
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_delete_at(self, space):
+        w_res = space.execute("""
+        res = []
+        a = ["ant", "bat", "cat", "dog"]
+        res << a.delete_at(2)    #=> "cat"
+        res << a                 #=> ["ant", "bat", "dog"]
+        res << a.delete_at(99)   #=> nil
+        return res
+        """)
+        assert self.unwrap(space, w_res) == ["cat", ["ant", "bat", "dog"], None]
 
     def test_last(self, space):
         assert space.int_w(space.execute("return [1, 2, 3].last")) == 3
