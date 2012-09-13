@@ -616,7 +616,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
         assert space.parse("x = def f() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.Variable("x", 1), ast.Function(None, "f", [], None, None, ast.Block([]))))
+            ast.Statement(ast.Assignment(ast.Variable("x", 1), ast.Function(None, "f", [], None, None, ast.Nil())))
         ]))
 
         r = space.parse("""

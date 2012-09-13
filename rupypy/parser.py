@@ -859,12 +859,7 @@ class Parser(object):
 
     @pg.production("lhs : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def lhs_subscript(self, p):
-        """
-        primary_value '[' opt_call_args rbracket {
-                    $$ = support.aryset($1, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno))
 
     @pg.production("lhs : primary_value DOT IDENTIFIER")
     def lhs_dot_identifier(self, p):
