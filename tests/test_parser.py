@@ -474,20 +474,20 @@ class TestParser(BaseRuPyPyTest):
 
     def test_return(self, space):
         assert space.parse("return 4") == ast.Main(ast.Block([
-            ast.Return(ast.ConstantInt(4))
+            ast.Statement(ast.Return(ast.ConstantInt(4)))
         ]))
         assert space.parse("return") == ast.Main(ast.Block([
-            ast.Return(ast.Variable("nil", 1))
+            ast.Statement(ast.Return(ast.Nil()))
         ]))
         assert space.parse("return 3, 4, 5") == ast.Main(ast.Block([
-            ast.Return(ast.Array([
+            ast.Statement(ast.Return(ast.Array([
                 ast.ConstantInt(3),
                 ast.ConstantInt(4),
                 ast.ConstantInt(5),
-            ]))
+            ])))
         ]))
         assert space.parse("return *3") == ast.Main(ast.Block([
-            ast.Return(ast.Splat(ast.ConstantInt(3)))
+            ast.Statement(ast.Return(ast.Splat(ast.ConstantInt(3))))
         ]))
 
     def test_array(self, space):

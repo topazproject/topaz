@@ -84,6 +84,14 @@ class Parser(object):
             send.lineno
         ))
 
+    def new_return(self, box):
+        args = box.getcallargs()
+        if len(args) == 1:
+            [node] = args
+        else:
+            node = ast.Array(args)
+        return BoxAST(ast.Return(node))
+
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
 
@@ -1678,12 +1686,7 @@ class Parser(object):
 
     @pg.production("primary : RETURN")
     def primary_return(self, p):
-        """
-        kRETURN {
-                    $$ = new ReturnNode($1.getPosition(), NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Return(ast.Nil()))
 
     @pg.production("primary : YIELD LPAREN2 call_args rparen")
     def primary_yield_paren_args(self, p):
