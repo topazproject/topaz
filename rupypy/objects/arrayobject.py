@@ -226,9 +226,9 @@ class W_ArrayObject(W_Object):
                 raise space.error(space.getclassfor(W_ArgumentError), "negative array size")
             else:
                 pop_size = max(0, len(self.items_w) - num)
-                res = self.items_w[pop_size:]
-                self.items_w[:len(self.items_w)] = self.items_w[:pop_size]
-                return space.newarray(res)
+                res_w = self.items_w[pop_size:]
+                del self.items_w[pop_size:]
+                return space.newarray(res_w)
 
     @classdef.method("delete_at", idx="int")
     def method_delete_at(self, space, idx):
