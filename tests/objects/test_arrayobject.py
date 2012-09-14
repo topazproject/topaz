@@ -204,6 +204,16 @@ class TestArrayObject(BaseRuPyPyTest):
         return a.delete_if {|x| x > 2 }
         """)
         assert self.unwrap(space, w_res) == [1, 2]
+        w_res = space.execute("""
+        a = [1, 2, 3, 4]
+        return a.delete_if {|x| x == 2 || x == 4 }
+        """)
+        assert self.unwrap(space, w_res) == [1, 3]
+        w_res = space.execute("""
+        a = [1, 2, 3, 4]
+        return a.delete_if {|x| x == 1 || x == 3 }
+        """)
+        assert self.unwrap(space, w_res) == [2, 4]
 
     def test_pop(self, space):
         assert self.unwrap(space, space.execute("return [1, 2, 3].pop")) == 3
