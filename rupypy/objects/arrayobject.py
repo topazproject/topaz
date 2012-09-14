@@ -2,7 +2,8 @@ from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.rangeobject import W_RangeObject
-from rupypy.objects.exceptionobject import W_TypeError, W_IndexError
+from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.exceptionobject import W_TypeError, W_IndexError, W_ArgumentError
 
 
 class W_ArrayObject(W_Object):
@@ -194,16 +195,40 @@ class W_ArrayObject(W_Object):
     classdef.app_method("""
     def delete_if
         i = 0
-        while i < self.size
-            if yield(self.at(i))
-                self.delete_at(i)
+        c = 0
+        sz = self.size
+        while i < sz - c
+            item = self[i + c]
+            if yield(item)
+                c += 1
             else
+                self[i] = item
                 i += 1
             end
         end
+        self.pop(c)
         self
     end
     """)
+
+    @classdef.method("pop")
+    def method_pop(self, space, w_num=None):
+        if w_num is None:
+            if self.items_w:
+                return self.items_w.pop()
+            else:
+                return space.w_nil
+        else:
+            num = space.int_w(space.convert_type(
+                    w_num, space.getclassfor(W_FixnumObject), "to_int"
+                  ))
+            if num < 0:
+                raise space.error(space.getclassfor(W_ArgumentError), "negative array size")
+            else:
+                pop_size = max(0, len(self.items_w) - num)
+                res = self.items_w[pop_size:]
+                self.items_w[:len(self.items_w)] = self.items_w[:pop_size]
+                return space.newarray(res)
 
     @classdef.method("delete_at", idx="int")
     def method_delete_at(self, space, idx):

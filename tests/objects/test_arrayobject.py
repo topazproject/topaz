@@ -205,6 +205,19 @@ class TestArrayObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 2]
 
+    def test_pop(self, space):
+        assert self.unwrap(space, space.execute("return [1, 2, 3].pop")) == 3
+        assert self.unwrap(space, space.execute("return [1, 2, 3].pop(0)")) == []
+        assert self.unwrap(space, space.execute("return [1, 2, 3].pop(1)")) == [3]
+        assert self.unwrap(space, space.execute("return [1, 2, 3].pop(2)")) == [2, 3]
+        assert self.unwrap(space, space.execute("return [1, 2, 3].pop(10)")) == [1, 2, 3]
+        assert self.unwrap(space, space.execute("return [].pop(1)")) == []
+        assert self.unwrap(space, space.execute("return [].pop")) == None
+        with self.raises(space, "ArgumentError"):
+            space.execute("return [1].pop(-1)")
+        with self.raises(space, "TypeError"):
+            space.execute("return [1].pop('a')")
+
     def test_delete_at(self, space):
         w_res = space.execute("""
         res = []
