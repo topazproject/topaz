@@ -98,10 +98,18 @@ class Lexer(BaseLexer):
         self.left_paren_begin = 0
         self.condition_state = StackState()
         self.cmd_argument_state = StackState()
+        self.str_term = None
 
     def tokenize(self):
         space_seen = False
         while True:
+            if self.str_term is not None:
+                tok = self.str_term.next()
+                if tok.gettokentype() in ["STRING_END", "REGEXP_END"]:
+                    self.str_term = None
+                    self.state = self.EXPR_END
+                yield tok
+
             ch = self.read()
             if ch == self.EOF:
                 break
@@ -135,9 +143,8 @@ class Lexer(BaseLexer):
                 for token in self.greater_than(ch):
                     yield token
             elif ch == '"':
-                for token in StringLexer(self, '"', '"').tokenize():
+                for token in self.double_quote(ch):
                     yield token
-                self.state = self.EXPR_END
             elif ch == "'":
                 for token in self.single_quote(ch):
                     yield token
@@ -380,6 +387,10 @@ class Lexer(BaseLexer):
                 self.unread()
                 break
             first_zero = False
+
+    def double_quote(self, ch):
+        self.str_term = StringTerm(self, ch)
+        yield self.emit("STRING_BEG")
 
     def single_quote(self, ch):
         self.state = self.EXPR_END
@@ -1025,213 +1036,56 @@ class Lexer(BaseLexer):
         self.state = self.EXPR_END
 
 
-class BaseStringLexer(BaseLexer):
-    CODE = 0
-    STRING = 1
-
+class BaseStringTerm(object):
     def __init__(self, lexer):
-        BaseLexer.__init__(self)
         self.lexer = lexer
 
-    def get_idx(self):
-        return self.lexer.get_idx()
 
-    def get_lineno(self):
-        return self.lexer.get_lineno()
+class StringTerm(BaseStringTerm):
+    def __init__(self, lexer, end_char):
+        BaseStringTerm.__init__(self, lexer)
+        self.end_char = end_char
+        self.expand = True
+        self.is_regexp = False
+        self.is_qwords = False
+        self.nest = 0
 
-    def get_columno(self):
-        return self.lexer.get_columno()
+    def next(self):
+        ch = self.lexer.read()
+        space_seen = False
+        if self.is_qwords and ch.isspace():
+            while ch.isspace():
+                ch = self.lexer.read()
+            space_seen = True
 
-    def read(self):
-        return self.lexer.read()
+        if ch == self.end_char and self.nest == 0:
+            return self.end_found()
 
-    def unread(self):
-        return self.lexer.unread()
+        if space_seen:
+            self.lexer.unread()
+            return self.lexer.emit("LITERAL_SPACE")
 
-    def read_escape(self):
-        return self.lexer.read_escape()
-
-    def emit_str(self):
-        if self.current_value:
-            return self.emit("STRING_CONTENT")
-
-    def tokenize_interpolation(self):
-        yield self.emit("DSTRING_START")
-        chars = StringBuilder()
-        context = [self.CODE]
-        braces_count = [1]
-        while True:
-            ch = self.read()
-            if ch == self.lexer.EOF:
-                self.unread()
-                return
-            elif ch == "{" and context[-1] == self.CODE:
-                chars.append(ch)
-                braces_count[-1] += 1
-            elif ch == "}" and context[-1] == self.CODE:
-                braces_count[-1] -= 1
-                if braces_count[-1] == 0:
-                    braces_count.pop()
-                    context.pop()
-                    if not braces_count:
-                        break
-                chars.append(ch)
-            elif ch == '"' and context[-1] == self.STRING:
-                chars.append(ch)
-                context.pop()
-            elif ch == '"' and context[-1] == self.CODE:
-                chars.append(ch)
-                context.append(self.STRING)
-            elif ch == "#" and self.peek() == "{":
-                chars.append(ch)
-                ch = self.read()
-                chars.append(ch)
-                braces_count.append(1)
-                context.append(self.CODE)
+        if self.expand and ch == "#":
+            self.lexer.add(ch)
+            ch = self.lexer.read()
+            if ch in ["$", "@"]:
+                self.lexer.unread()
+                return self.lexer.emit("STRING_DVAR")
+            elif ch == "{":
+                self.lexer.add(ch)
+                return self.lexer.emit("STRING_DBEG")
             else:
-                chars.append(ch)
-        last = None
-        for token in Lexer(chars.build(), self.get_lineno()).tokenize():
-            if last is not None:
-                yield last
-            last = token
-        yield self.emit("DSTRING_END")
+                self.lexer.add("#")
+        self.lexer.unread()
+        raise NotImplementedError
 
-
-class StringLexer(BaseStringLexer):
-    def __init__(self, lexer, begin, end, interpolate=True, qwords=False, regexp=False):
-        BaseStringLexer.__init__(self, lexer)
-
-        self.interpolate = interpolate
-        self.qwords = qwords
-        self.regexp = regexp
-
-        self.begin = begin
-        self.end = end
-
-        self.nesting = 0
-
-    def tokenize(self):
-        if self.qwords:
-            while self.peek().isspace():
-                self.read()
-        if not self.regexp:
-            yield self.emit("STRING_BEG")
-        while True:
-            ch = self.read()
-            if ch == self.lexer.EOF:
-                self.unread()
-                break
-            elif ch == "\\":
-                if self.peek() in [self.begin, self.end, "\\"]:
-                    self.add(self.read())
-                else:
-                    escaped_char = self.read_escape()
-                    if (self.regexp and len(escaped_char) == 1 and
-                        escaped_char[0] in string.printable):
-                        self.add(ch)
-                        self.add(escaped_char[0])
-                    else:
-                        for c in escaped_char:
-                            self.add(c)
-            elif ch == self.begin and (self.begin != self.end):
-                self.nesting += 1
-                self.add(ch)
-            elif ch == self.end:
-                if self.nesting == 0:
-                    token = self.emit_str()
-                    if token:
-                        yield token
-                    break
-                else:
-                    self.nesting -= 1
-                    self.add(ch)
-            elif ch == "#" and self.peek() == "{" and self.interpolate:
-                token = self.emit_str()
-                if token:
-                    yield token
-                self.read()
-                for token in self.tokenize_interpolation():
-                    yield token
-            elif self.qwords and ch.isspace():
-                token = self.emit_str()
-                if token:
-                    yield token
-                break
-            elif self.qwords and ch == "\\" and self.peek().isspace():
-                self.add(self.read())
-            else:
-                self.add(ch)
-        if not self.regexp:
-            yield self.emit("STRING_END")
-        if self.qwords and ch.isspace():
-            for token in self.tokenize():
-                yield token
-
-
-class HeredocLexer(BaseStringLexer):
-    def __init__(self, lexer, marker, indent, interpolate):
-        BaseStringLexer.__init__(self, lexer)
-        self.marker = marker
-        self.indent = indent
-        self.interpolate = interpolate
-
-    def tokenize(self):
-        chars = StringBuilder()
-        while True:
-            ch = self.read()
-            if ch == "\n":
-                break
-            elif ch == self.EOF:
-                return
-            chars.append(ch)
-        if chars.getlength():
-            lexer_tokens = []
-            for token in Lexer(chars.build(), self.get_lineno()).tokenize():
-                lexer_tokens.append(token)
-            lexer_tokens.pop()
-        else:
-            lexer_tokens = []
-
-        yield self.emit("STRING_BEG")
-        while True:
-            ch = self.read()
-            if ch == "\n":
-                self.add(ch)
-                chars = StringBuilder(len(self.marker))
-                if self.indent:
-                    while True:
-                        ch = self.read()
-                        if ch.isspace():
-                            chars.append(ch)
-                        else:
-                            self.unread()
-                            break
-                for c in self.marker:
-                    ch = self.read()
-                    chars.append(ch)
-                    if ch != c:
-                        for c in chars.build():
-                            self.add(c)
-                        break
-                else:
-                    yield self.emit("STRING_CONTENT")
-                    break
-            elif ch == "#" and self.peek() == "{":
-                token = self.emit_str()
-                if token:
-                    yield token
-                self.read()
-                for token in self.tokenize_interpolation():
-                    yield token
-            elif ch == self.EOF:
-                return
-            else:
-                self.add(ch)
-        yield self.emit("STRING_END")
-        for token in lexer_tokens:
-            yield token
-
+    def end_found(self):
+        if self.is_qwords:
+            self.is_end = True
+            return self.lexer.emit("LITERAL_SPACE")
+        if self.is_regexp:
+            raise NotImplementedError
+        return self.lexer.emit("STRING_END")
 
 class StackState(object):
     def __init__(self):

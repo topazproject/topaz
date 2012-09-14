@@ -2612,24 +2612,21 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("string_content : STRING_DBEG compstmt RCURLY")
+    @pg.production("string_content : string_dbeg compstmt RCURLY")
     def string_content_string_dbeg(self, p):
-        """
-        tSTRING_DBEG {
-                   $$ = lexer.getStrTerm();
-                   lexer.getConditionState().stop();
-                   lexer.getCmdArgumentState().stop();
-                   lexer.setStrTerm(null);
-                   lexer.setState(LexState.EXPR_BEG);
-                } compstmt tRCURLY {
-                   lexer.getConditionState().restart();
-                   lexer.getCmdArgumentState().restart();
-                   lexer.setStrTerm($<StrTerm>2);
+        self.lexer.condition_state.restart()
+        self.lexer.cmd_argument_state.restart()
+        self.lexer.str_term = p[0].getstrterm()
+        return BoxAST(ast.DynamicString(p[1].getastlist()))
 
-                   $$ = support.newEvStrNode($1.getPosition(), $3);
-                }
-        """
-        raise NotImplementedError(p)
+    @pg.production("string_dbeg : STRING_DBEG")
+    def string_dbeg(self, p):
+        str_term = self.lexer.str_term
+        self.lexer.condition_state.stop()
+        self.lexer.cmd_argument_state.stop()
+        self.lexer.str_term = None
+        self.lexer.state = self.lexer.EXPR_BEG
+        return BoxStrTerm(str_term)
 
     @pg.production("string_dvar : GVAR")
     def string_dvar_gvar(self, p):
@@ -3305,3 +3302,10 @@ class BoxArgs(BaseBox):
 
     def getblockarg(self):
         return self.block_arg
+
+class BoxStrTerm(BaseBox):
+    def __init__(self, str_term):
+        self.str_term = str_term
+
+    def getstrterm(self):
+        return self.str_term
