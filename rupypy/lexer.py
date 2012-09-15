@@ -1001,10 +1001,20 @@ class Lexer(BaseLexer):
             for token in self.shellout(begin, end):
                 yield token
         elif ch == "W":
-            for token in self.qwords(begin, end, interpolate=True):
-                yield token
+            self.str_term = StringTerm(self, begin, end, expand=True, is_qwords=True)
+            while True:
+                ch = self.read()
+                if not ch.isspace():
+                    break
+            self.unread()
+            yield self.emit("WORDS_BEG")
         elif ch == "w":
             self.str_term = StringTerm(self, begin, end, expand=False, is_qwords=True)
+            while True:
+                ch = self.read()
+                if not ch.isspace():
+                    break
+            self.unread()
             yield self.emit("QWORDS_BEG")
         elif ch == "r":
             for token in self.regexp(begin, end):

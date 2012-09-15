@@ -2518,25 +2518,15 @@ class Parser(object):
 
     @pg.production("words : WORDS_BEG word_list STRING_END")
     def words_word_list(self, p):
-        return p[1]
+        return BoxAST(ast.Array(p[1].getastlist()))
 
     @pg.production("word_list : ")
     def word_list_empty(self, p):
-        """
-        /* none */ {
-                    $$ = new ArrayNode(lexer.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list()
 
     @pg.production("word_list : word_list word LITERAL_SPACE")
     def word_list(self, p):
-        """
-        word_list word ' ' {
-                     $$ = $1.add($2 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($2) : $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], p[1])
 
     @pg.production("word : string_content")
     def word_string_content(self, p):

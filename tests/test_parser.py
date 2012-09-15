@@ -787,39 +787,39 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert space.parse('%w{  hello world  }') == ast.Main(ast.Block([
             ast.Statement(ast.Array([
-                ast.DynamicString([ast.ConstantString("hello")]),
-                ast.DynamicString([ast.ConstantString("world")]),
+                ast.ConstantString("hello"),
+                ast.ConstantString("world"),
             ]))
         ]))
         assert space.parse('%W{hello world  }') == ast.Main(ast.Block([
             ast.Statement(ast.Array([
-                ast.DynamicString([ast.ConstantString("hello")]),
-                ast.DynamicString([ast.ConstantString("world")])
+                ast.ConstantString("hello"),
+                ast.ConstantString("world"),
             ]))
         ]))
         assert space.parse('%w{#{"a b" + "#{\'c d\'}"}}') == ast.Main(ast.Block([
             ast.Statement(ast.Array([
-                ast.DynamicString([ast.ConstantString('#{"a')]),
-                ast.DynamicString([ast.ConstantString('b"')]),
-                ast.DynamicString([ast.ConstantString('+')]),
-                ast.DynamicString([ast.ConstantString('"#{\'c')]),
-                ast.DynamicString([ast.ConstantString('d\'}"}')])
+                ast.ConstantString('#{"a'),
+                ast.ConstantString('b"'),
+                ast.ConstantString('+'),
+                ast.ConstantString('"#{\'c'),
+                ast.ConstantString('d\'}"}'),
             ]))
         ]))
         assert space.parse('%W{#{"a b" + "#{\'c d\'}"}}') == ast.Main(ast.Block([
-            ast.Statement(ast.Array([ast.DynamicString([
-                ast.BinOp(
-                    ast.DynamicString([ast.ConstantString("a b")]),
+            ast.Statement(ast.Array([ast.DynamicString([ast.Block([ast.Statement(
+                ast.Send(
+                    ast.ConstantString("a b"),
                     "+",
-                    [ast.DynamicString([ast.ConstantString("c d")])],
+                    [ast.DynamicString([ast.Block([ast.Statement(ast.ConstantString("c d"))])])],
                     None,
                     1
                 )
-            ])]))
+            )])])]))
         ]))
 
         assert space.parse("f %q[/]") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "f", [ast.DynamicString([ast.ConstantString("/")])], None, 1)),
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantString("/")], None, 1)),
         ]))
 
     def test_heredoc(self, space):

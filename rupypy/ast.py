@@ -630,21 +630,6 @@ class MultiAssignment(Node):
             ctx.emit(consts.DISCARD_TOP)
 
 
-class BinOp(Node):
-    def __init__(self, op, left, right, lineno):
-        Node.__init__(self, lineno)
-        self.op = op
-        self.left = left
-        self.right = right
-
-    def locate_symbols(self, symtable):
-        self.left.locate_symbols(symtable)
-        self.right.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        Send(self.left, self.op, [self.right], None, self.lineno).compile(ctx)
-
-
 class MaybeBinop(Node):
     def __init__(self, op, left, right, lineno):
         Node.__init__(self, lineno)
