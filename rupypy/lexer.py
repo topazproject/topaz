@@ -989,12 +989,6 @@ class Lexer(BaseLexer):
             self.set_expression_state()
             yield self.emit("PERCENT")
 
-    def quote_string(self, begin, end, interpolate):
-        yield self.emit("QUOTE_BEGIN")
-        for token in  StringLexer(self, begin, end, interpolate=interpolate).tokenize():
-            yield token
-        yield self.emit("QUOTE_END")
-
     def quote(self, ch):
         if not ch.isalnum():
             begin = ch
@@ -1016,8 +1010,8 @@ class Lexer(BaseLexer):
             end = begin
 
         if ch == "Q":
-            for token in self.quote_string(begin, end, True):
-                yield token
+            self.str_term = StringTerm(self, begin, end)
+            yield self.emit("STRING_BEG")
         elif ch == "q":
             for token in self.quote_string(begin, end, False):
                 yield token

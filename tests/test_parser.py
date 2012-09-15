@@ -762,11 +762,14 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('"\M-a"') == const_string("\xe1")
 
     def test_percent_terms(self, space):
+        const_string = lambda strvalue: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(strvalue))
+        ]))
         dyn_string = lambda *components: ast.Main(ast.Block([
             ast.Statement(ast.DynamicString(list(components)))
         ]))
-        assert space.parse('%{1}') == dyn_string(ast.ConstantString("1"))
-        assert space.parse('%Q{1}') == dyn_string(ast.ConstantString("1"))
+        assert space.parse('%{1}') == const_string("1")
+        assert space.parse('%Q{1}') == const_string("1")
         assert space.parse('%Q{#{2}}') == dyn_string(ast.ConstantInt(2))
         assert space.parse('%Q(#{2})') == dyn_string(ast.ConstantInt(2))
         assert space.parse('%Q<#{2}>') == dyn_string(ast.ConstantInt(2))
