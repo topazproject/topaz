@@ -559,8 +559,8 @@ class Lexer(BaseLexer):
 
     def slash(self, ch, space_seen):
         if self.is_beg():
-            for token in self.regexp("/", "/"):
-                yield token
+            self.str_term = StringTerm(self, "\0", "/", is_regexp=True)
+            yield self.emit("REGEXP_BEG")
         else:
             ch2 = self.read()
             if ch2 == "=":
@@ -1043,12 +1043,12 @@ class BaseStringTerm(object):
 
 
 class StringTerm(BaseStringTerm):
-    def __init__(self, lexer, begin, end_char):
+    def __init__(self, lexer, begin, end_char, is_regexp=False):
         BaseStringTerm.__init__(self, lexer)
         self.begin = begin
         self.end_char = end_char
         self.expand = True
-        self.is_regexp = False
+        self.is_regexp = is_regexp
         self.is_qwords = False
         self.nest = 0
 
@@ -1100,8 +1100,8 @@ class StringTerm(BaseStringTerm):
                     break
                 self.lexer.unread()
             elif ch == "\\":
-                ch2 = self.lexer.read_escape()
-                self.lexer.add(ch2)
+                for ch in self.lexer.read_escape():
+                    self.lexer.add(ch)
             elif self.is_qwords and ch.isspace():
                 self.lexer.unread()
                 break
@@ -1114,7 +1114,7 @@ class StringTerm(BaseStringTerm):
             self.is_end = True
             return self.lexer.emit("LITERAL_SPACE")
         if self.is_regexp:
-            raise NotImplementedError
+            return self.lexer.emit("REGEXP_END")
         return self.lexer.emit("STRING_END")
 
 class StackState(object):
