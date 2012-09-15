@@ -1013,8 +1013,8 @@ class Lexer(BaseLexer):
             self.str_term = StringTerm(self, begin, end)
             yield self.emit("STRING_BEG")
         elif ch == "q":
-            for token in self.quote_string(begin, end, False):
-                yield token
+            self.str_term = StringTerm(self, begin, end, expand=False)
+            yield self.emit("STRING_BEG")
         elif ch == "x":
             for token in self.shellout(begin, end):
                 yield token
@@ -1038,11 +1038,11 @@ class BaseStringTerm(object):
 
 
 class StringTerm(BaseStringTerm):
-    def __init__(self, lexer, begin, end_char, is_regexp=False):
+    def __init__(self, lexer, begin, end_char, expand=True, is_regexp=False):
         BaseStringTerm.__init__(self, lexer)
         self.begin = begin
         self.end_char = end_char
-        self.expand = True
+        self.expand = expand
         self.is_regexp = is_regexp
         self.is_qwords = False
         self.nest = 0
@@ -1080,11 +1080,13 @@ class StringTerm(BaseStringTerm):
             if ch == self.lexer.EOF:
                 break
             if self.begin != "\0" and ch == self.begin:
+                self.lexer.add(ch)
                 self.nest += 1
             elif ch == self.end_char:
                 if self.nest == 0:
                     self.lexer.unread()
                     break
+                self.lexer.add(ch)
                 self.nest -= 1
             elif self.expand and ch == "#" and not self.lexer.peek() == "\n":
                 ch2 = self.lexer.read()

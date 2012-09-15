@@ -372,12 +372,6 @@ class Parser(object):
             ast.Block([p[0].getast()]),
             ast.Nil(),
         ))
-        """
-        stmt kIF_MOD expr_value {
-                    $$ = new IfNode(support.getPosition($1), support.getConditionNode($3), $1, null);
-                }
-        """
-        raise NotImplementedError(p)
 
     @pg.production("stmt : stmt UNLESS_MOD expr_value")
     def stmt_unlessmod(self, p):
