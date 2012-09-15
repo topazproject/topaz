@@ -35,18 +35,23 @@ class Parser(object):
         return box
 
     def new_binary_call(self, lhs, op, rhs):
-        return self._new_call(lhs.getast(), op, [rhs.getast()])
+        return self._new_call(lhs.getast(), op, [rhs.getast()], None)
 
-    def new_call(self, receiver, method, args):
-        args = args.getcallargs() if args is not None else []
-        return self._new_call(receiver.getast(), method, args)
+    def new_call(self, receiver, method, box_args):
+        args = box_args.getcallargs() if box_args is not None else []
+        block = box_args.getcallblock() if box_args is not None else None
+        return self._new_call(receiver.getast(), method, args, block)
 
     def new_fcall(self, method, args):
         receiver = ast.Self(method.getsourcepos().lineno)
-        return self._new_call(receiver, method, args.getcallargs() if args is not None else [])
+        return self._new_call(
+            receiver, method,
+            args.getcallargs() if args is not None else [],
+            args.getcallblock() if args is not None else None,
+        )
 
-    def _new_call(self, receiver, method, args):
-        return BoxAST(ast.Send(receiver, method.getstr(), args, None, method.getsourcepos().lineno))
+    def _new_call(self, receiver, method, args, block):
+        return BoxAST(ast.Send(receiver, method.getstr(), args, block, method.getsourcepos().lineno))
 
     def new_and(self, lhs, rhs):
         return BoxAST(ast.And(lhs.getast(), rhs.getast()))
@@ -60,9 +65,10 @@ class Parser(object):
             block_arg.getstr() if block_arg is not None else None
         )
 
-    def new_call_args(self, box_arg=None):
+    def new_call_args(self, box_arg=None, box_block=None):
         args = [box_arg.getast()] if box_arg else []
-        return self._new_call_args(args, None)
+        block = box_block.getast() if box_block is not None else None
+        return self._new_call_args(args, block)
 
     def _new_call_args(self, args, block):
         return BoxCallArgs(args, block)
@@ -1650,12 +1656,7 @@ class Parser(object):
 
     @pg.production("primary : operation brace_block")
     def primary_operation_brace_block(self, p):
-        """
-        operation brace_block {
-                    $$ = new FCallNoArgBlockNode($1.getPosition(), (String) $1.getValue(), $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_fcall(p[0], self.new_call_args(box_block=p[1]))
 
     @pg.production("primary : method_call")
     def primary_method_call(self, p):
