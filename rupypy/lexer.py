@@ -58,6 +58,7 @@ class BaseLexer(object):
         "not": Keyword("NOT", "NOT", EXPR_BEG),
         "alias": Keyword("ALIAS", "ALIAS", EXPR_FNAME),
         "self": Keyword("SELF", "SELF", EXPR_END),
+        "nil": Keyword("NIL", "NIL", EXPR_END),
     }
 
     def __init__(self):

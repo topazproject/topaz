@@ -367,6 +367,11 @@ class Parser(object):
 
     @pg.production("stmt : stmt IF_MOD expr_value")
     def stmt_ifmod(self, p):
+        return self._new_stmt(ast.If(
+            p[2].getast(),
+            ast.Block([p[0].getast()]),
+            ast.Nil(),
+        ))
         """
         stmt kIF_MOD expr_value {
                     $$ = new IfNode(support.getPosition($1), support.getConditionNode($3), $1, null);

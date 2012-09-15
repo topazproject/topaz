@@ -402,9 +402,9 @@ class TestParser(BaseRuPyPyTest):
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.Variable("nil", 2), ast.Block([
+            ast.Statement(ast.If(ast.Nil(), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
-            ]), ast.If(ast.Variable("nil", 4), ast.Block([
+            ]), ast.If(ast.Nil(), ast.Block([
                     ast.Statement(ast.ConstantInt(10)),
                 ]), ast.Block([
                     ast.Statement(ast.ConstantInt(200))
@@ -739,6 +739,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('"\\342\\234\\224"') == string("✔")
 
     def test_dynamic_string(self, space):
+        const_string = lambda strvalue: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(strvalue))
+        ]))
         dyn_string = lambda *components: ast.Main(ast.Block([
             ast.Statement(ast.DynamicString(list(components)))
         ]))
@@ -748,15 +751,15 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('"#{f { 2 }}"') == dyn_string(ast.Block([ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))]))
         assert space.parse('"#{p("")}"') == dyn_string(ast.Block([ast.Statement(ast.Send(ast.Self(1), "p", [ast.ConstantString("")], None, 1))]))
         assert space.parse('"#{"#{2}"}"') == dyn_string(ast.Block([ast.Statement(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))]))
-        assert space.parse('"#{nil if 2}"') == dyn_string(ast.If(
+        assert space.parse('"#{nil if 2}"') == dyn_string(ast.Block([ast.Statement(ast.If(
             ast.ConstantInt(2),
-            ast.Block([ast.Statement(ast.Variable("nil", 1))]),
-            ast.Block([]),
-        ))
-        assert space.parse('"\\""') == dyn_string(ast.ConstantString('"'))
-        assert space.parse('"\n"') == dyn_string(ast.ConstantString("\n"))
-        assert space.parse('"\w"') == dyn_string(ast.ConstantString("w"))
-        assert space.parse('"\M-a"') == dyn_string(ast.ConstantString("\xe1"))
+            ast.Block([ast.Statement(ast.Nil())]),
+            ast.Nil(),
+        ))]))
+        assert space.parse('"\\""') == const_string('"')
+        assert space.parse('"\n"') == const_string("\n")
+        assert space.parse('"\w"') == const_string("w")
+        assert space.parse('"\M-a"') == const_string("\xe1")
 
     def test_percent_terms(self, space):
         dyn_string = lambda *components: ast.Main(ast.Block([
