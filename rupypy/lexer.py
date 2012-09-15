@@ -109,6 +109,7 @@ class Lexer(BaseLexer):
                     self.str_term = None
                     self.state = self.EXPR_END
                 yield tok
+                continue
 
             ch = self.read()
             if ch == self.EOF:
@@ -389,7 +390,7 @@ class Lexer(BaseLexer):
             first_zero = False
 
     def double_quote(self, ch):
-        self.str_term = StringTerm(self, ch)
+        self.str_term = StringTerm(self, "\0", ch)
         yield self.emit("STRING_BEG")
 
     def single_quote(self, ch):
@@ -1042,8 +1043,9 @@ class BaseStringTerm(object):
 
 
 class StringTerm(BaseStringTerm):
-    def __init__(self, lexer, end_char):
+    def __init__(self, lexer, begin, end_char):
         BaseStringTerm.__init__(self, lexer)
+        self.begin = begin
         self.end_char = end_char
         self.expand = True
         self.is_regexp = False
@@ -1077,7 +1079,35 @@ class StringTerm(BaseStringTerm):
             else:
                 self.lexer.add("#")
         self.lexer.unread()
-        raise NotImplementedError
+
+        while True:
+            ch = self.lexer.read()
+            if ch == self.lexer.EOF:
+                break
+            if self.begin != "\0" and ch == self.begin:
+                self.nest += 1
+            elif ch == self.end_char:
+                if self.nest == 0:
+                    self.lexer.unread()
+                    break
+                self.nest -= 1
+            elif self.expand and ch == "#" and not self.lexer.peek() == "\n":
+                ch2 = self.lexer.read()
+
+                if ch2 in ["$", "@", "{"]:
+                    self.lexer.unread()
+                    self.lexer.unread()
+                    break
+                self.lexer.unread()
+            elif ch == "\\":
+                ch2 = self.lexer.read_escape()
+                self.lexer.add(ch2)
+            elif self.is_qwords and ch.isspace():
+                self.lexer.unread()
+                break
+            else:
+                self.lexer.add(ch)
+        return self.lexer.emit("STRING_CONTENT")
 
     def end_found(self):
         if self.is_qwords:

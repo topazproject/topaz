@@ -128,8 +128,9 @@ class Parser(object):
                 if isinstance(part, ast.ConstantString):
                     const_str += part.strvalue
                 else:
-                    dynamic = False
-                    dyn_str_components.append(ast.ConstantString(const_str))
+                    dynamic = True
+                    if const_str:
+                        dyn_str_components.append(ast.ConstantString(const_str))
                     if isinstance(part, ast.DynamicString):
                         dyn_str_components.extend(part.strvalues)
                     else:
@@ -2617,7 +2618,7 @@ class Parser(object):
         self.lexer.condition_state.restart()
         self.lexer.cmd_argument_state.restart()
         self.lexer.str_term = p[0].getstrterm()
-        return BoxAST(ast.DynamicString(p[1].getastlist()))
+        return BoxAST(ast.DynamicString([ast.Block(p[1].getastlist())]))
 
     @pg.production("string_dbeg : STRING_DBEG")
     def string_dbeg(self, p):
