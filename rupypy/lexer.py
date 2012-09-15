@@ -953,24 +953,6 @@ class Lexer(BaseLexer):
         yield self.emit("SHELL_END")
         self.state = self.EXPR_END
 
-    def qwords(self, begin, end, interpolate=True):
-        yield self.emit("QWORDS_BEGIN")
-        tokens = []
-        for token in StringLexer(self, begin, end, interpolate=interpolate, qwords=True).tokenize():
-            tokens.append(token)
-        # drop empty last string
-        n_tokens = len(tokens)
-        if n_tokens > 2:
-            if tokens[n_tokens - 2].name == "STRING_BEG":
-                tokens.pop()
-                tokens.pop()
-        else:
-            tokens = []
-        for token in tokens:
-            yield token
-        yield self.emit("QWORDS_END")
-        self.state = self.EXPR_END
-
     def percent(self, ch, space_seen):
         c = self.read()
         if self.is_beg():
@@ -1018,18 +1000,17 @@ class Lexer(BaseLexer):
         elif ch == "x":
             for token in self.shellout(begin, end):
                 yield token
-        elif ch == "w":
-            for token in self.qwords(begin, end, interpolate=False):
-                yield token
         elif ch == "W":
             for token in self.qwords(begin, end, interpolate=True):
                 yield token
+        elif ch == "w":
+            self.str_term = StringTerm(self, begin, end, expand=False, is_qwords=True)
+            yield self.emit("QWORDS_BEG")
         elif ch == "r":
             for token in self.regexp(begin, end):
                 yield token
         else:
             raise NotImplementedError('%' + ch)
-        self.state = self.EXPR_END
 
 
 class BaseStringTerm(object):
@@ -1038,18 +1019,21 @@ class BaseStringTerm(object):
 
 
 class StringTerm(BaseStringTerm):
-    def __init__(self, lexer, begin, end_char, expand=True, is_regexp=False):
+    def __init__(self, lexer, begin, end_char, expand=True, is_regexp=False, is_qwords=False):
         BaseStringTerm.__init__(self, lexer)
         self.begin = begin
         self.end_char = end_char
         self.expand = expand
         self.is_regexp = is_regexp
-        self.is_qwords = False
+        self.is_qwords = is_qwords
         self.nest = 0
+        self.is_end = False
 
     def next(self):
         ch = self.lexer.read()
         space_seen = False
+        if self.is_end:
+            return self.lexer.emit("STRING_END")
         if self.is_qwords and ch.isspace():
             while ch.isspace():
                 ch = self.lexer.read()

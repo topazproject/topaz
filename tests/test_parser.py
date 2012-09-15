@@ -783,7 +783,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('%{\\{}') == const_string('{')
         assert space.parse('%{\\}}') == const_string('}')
         assert space.parse('%w{\ -}') == ast.Main(ast.Block([
-            ast.Statement(ast.Array([ast.DynamicString([ast.ConstantString(" -")])]))
+            ast.Statement(ast.Array([ast.ConstantString(" -")]))
         ]))
         assert space.parse('%w{  hello world  }') == ast.Main(ast.Block([
             ast.Statement(ast.Array([

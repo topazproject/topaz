@@ -15,8 +15,12 @@ class Parser(object):
     def new_token(self, orig, name):
         return Token(name, name, orig.getsourcepos())
 
-    def new_list(self, box):
-        return self._new_list([box.getast()])
+    def new_list(self, box=None):
+        if box is None:
+            contents = []
+        else:
+            contents = [box.getast()]
+        return self._new_list(contents)
 
     def _new_list(self, nodes):
         return BoxASTList(nodes)
@@ -2558,25 +2562,15 @@ class Parser(object):
 
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
     def qwords_qword_list(self, p):
-        return p[1]
+        return BoxAST(ast.Array(p[1].getastlist()))
 
     @pg.production("qword_list : ")
     def qword_list_empty(self, p):
-        """
-        /* none */ {
-                    $$ = new ArrayNode(lexer.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list()
 
     @pg.production("qword_list : qword_list STRING_CONTENT LITERAL_SPACE")
     def qword_list(self, p):
-        """
-        qword_list tSTRING_CONTENT ' ' {
-                    $$ = $1.add($2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], BoxAST(ast.ConstantString(p[1].getstr())))
 
     @pg.production("string_contents : ")
     def string_contents_empty(self, p):
