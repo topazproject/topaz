@@ -420,17 +420,17 @@ class Lexer(BaseLexer):
         ch = self.read()
 
         indent = ch == "-"
-        interpolate = True
-        shellout = True
+        expand = True
+        regexp = True
         if indent:
             ch = self.read()
 
         if ch in "'\"`":
             term = ch
             if term == "'":
-                interpolate = False
+                expand = False
             elif term == "`":
-                shellout = True
+                regexp = True
 
             marker = StringBuilder()
             while True:
@@ -458,9 +458,21 @@ class Lexer(BaseLexer):
                     break
                 marker.append(ch)
 
-        for token in HeredocLexer(self, marker.build(), indent, interpolate=True).tokenize():
-            yield token
-        self.state = self.EXPR_END
+        last_line = StringBuilder()
+        while True:
+            ch = self.read()
+            last_line.append(ch)
+            if ch == "\n":
+                break
+            elif ch == self.EOF:
+                self.unread()
+                break
+
+        self.str_term = HeredocTerm(self, marker.build(), last_line.build(), indent=indent, expand=expand)
+        if regexp:
+            yield self.emit("XSTRING_BEG")
+        else:
+            yield self.emit("STRING_BEG")
 
     def dollar(self, ch):
         self.add(ch)
