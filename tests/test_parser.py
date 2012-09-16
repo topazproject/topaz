@@ -1147,7 +1147,7 @@ HERE
             ast.Statement(ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Constant", 1))
         ]))
         assert space.parse("X::m nil") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "X", 1), "m", [ast.Variable("nil", 1)], None, 1))
+            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "X", 1), "m", [ast.Nil()], None, 1))
         ]))
         assert space.parse("::Const") == ast.Main(ast.Block([
             ast.Statement(ast.LookupConstant(None, "Const", 1))

@@ -921,18 +921,7 @@ class Parser(object):
 
     @pg.production("lhs : primary_value COLON2 CONSTANT")
     def lhs_colon_constant(self, p):
-        """
-        primary_value tCOLON2 tCONSTANT {
-                    if (support.isInDef() || support.isInSingle()) {
-                        support.yyerror("dynamic constant assignment");
-                    }
-
-                    ISourcePosition position = support.getPosition($1);
-
-                    $$ = new ConstDeclNode(position, null, support.new_colon2(position, $1, (String) $3.getValue()), NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_colon2(p[0], p[2])
 
     @pg.production("lhs : COLON3 CONSTANT")
     def lhs_unbound_colon_constant(self, p):
