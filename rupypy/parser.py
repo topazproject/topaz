@@ -13,6 +13,7 @@ class Parser(object):
         return self.parser.parse(l, state=self)
 
     def error(self, msg):
+        # TODO: this should use a real SourcePosition
         return ParsingError(msg, SourcePosition(-1, -1, -1))
 
     def new_token(self, orig, name):
