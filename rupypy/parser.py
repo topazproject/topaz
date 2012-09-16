@@ -1655,12 +1655,11 @@ class Parser(object):
 
     @pg.production("primary : UNLESS expr_value then compstmt opt_else END")
     def primary_unless(self, p):
-        """
-        kUNLESS expr_value then compstmt opt_else kEND {
-                    $$ = new IfNode($1.getPosition(), support.getConditionNode($2), $5, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.If(
+            p[1].getast(),
+            p[4].getast() if p[4] is not None else ast.Nil(),
+            ast.Block(p[3].getastlist()) if p[3] else ast.Nil(),
+        ))
 
     @pg.production("primary : while expr_value do post_while_do compstmt END")
     def primary_while(self, p):

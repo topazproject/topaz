@@ -1123,8 +1123,8 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.Send(ast.ConstantInt(1), "==", [ast.ConstantInt(2)], None, ), ast.Block([]), ast.Block([
-                ast.Return(ast.ConstantInt(4))
+            ast.Statement(ast.If(ast.Send(ast.ConstantInt(1), "==", [ast.ConstantInt(2)], None, 2), ast.Nil(), ast.Block([
+                ast.Statement(ast.Return(ast.ConstantInt(4)))
             ])))
         ]))
 
