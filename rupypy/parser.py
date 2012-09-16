@@ -1222,29 +1222,11 @@ class Parser(object):
 
     @pg.production("arg : arg DOT2 arg")
     def arg_dot2(self, p):
-        """
-        arg tDOT2 arg {
-                    support.checkExpression($1);
-                    support.checkExpression($3);
-
-                    boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
-                    $$ = new DotNode(support.getPosition($1), $1, $3, false, isLiteral);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Range(p[0].getast(), p[2].getast(), False))
 
     @pg.production("arg : arg DOT3 arg")
     def arg_dot3(self, p):
-        """
-        arg tDOT3 arg {
-                    support.checkExpression($1);
-                    support.checkExpression($3);
-
-                    boolean isLiteral = $1 instanceof FixnumNode && $3 instanceof FixnumNode;
-                    $$ = new DotNode(support.getPosition($1), $1, $3, true, isLiteral);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Range(p[0].getast(), p[2].getast(), True))
 
     @pg.production("arg : arg POW arg")
     @pg.production("arg : arg PERCENT arg")
