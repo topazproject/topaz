@@ -1028,9 +1028,7 @@ HERE
         assert space.parse(":@abc") == sym("@abc")
         assert space.parse(":@@abc") == sym("@@abc")
         assert space.parse(":$abc") == sym("$abc")
-        assert space.parse(':"@abc"') == ast.Main(ast.Block([
-            ast.Statement(ast.Symbol(ast.DynamicString([ast.ConstantString("@abc")]), 1))
-        ]))
+        assert space.parse(':"@abc"') == sym("@abc")
 
     def test_range(self, space):
         assert space.parse("2..3") == ast.Main(ast.Block([

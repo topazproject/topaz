@@ -2606,27 +2606,11 @@ class Parser(object):
 
     @pg.production("dsym : SYMBEG xstring_contents STRING_END")
     def dsym(self, p):
-        """"
-        tSYMBEG xstring_contents tSTRING_END {
-                     lexer.setState(LexState.EXPR_END);
-
-                     // DStrNode: :"some text #{some expression}"
-                     // StrNode: :"some text"
-                     // EvStrNode :"#{some expression}"
-                     // Ruby 1.9 allows empty strings as symbols
-                     if ($2 == null) {
-                         $$ = new SymbolNode($1.getPosition(), "");
-                     } else if ($2 instanceof DStrNode) {
-                         $$ = new DSymbolNode($1.getPosition(), $<DStrNode>2);
-                     } else if ($2 instanceof StrNode) {
-                         $$ = new SymbolNode($1.getPosition(), $<StrNode>2.getValue().toString().intern());
-                     } else {
-                         $$ = new DSymbolNode($1.getPosition());
-                         $<DSymbolNode>$.add($2);
-                     }
-                }
-        """
-        raise NotImplementedError(p)
+        node = p[1].getast()
+        if isinstance(node, ast.ConstantString):
+            return BoxAST(ast.ConstantSymbol(node.strvalue))
+        else:
+            raise NotImplementedError
 
     @pg.production("numeric : INTEGER")
     def numeric_integer(self, p):

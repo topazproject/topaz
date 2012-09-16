@@ -497,7 +497,7 @@ class Lexer(BaseLexer):
         ch = self.read()
         if ch == "@":
             self.add(ch)
-            token = "CLASS_VAR"
+            token = "CVAR"
         else:
             self.unread()
             token = "IVAR"
@@ -874,7 +874,12 @@ class Lexer(BaseLexer):
             self.state = self.EXPR_BEG
             yield self.emit("LITERAL_COLON")
         else:
-            self.unread()
+            if ch2 == "'":
+                self.str_term = StringTerm(self, "\0", ch2, expand=False)
+            elif ch2 == '"':
+                self.str_term = StringTerm(self, "\0", ch2)
+            else:
+                self.unread()
             self.state = self.EXPR_FNAME
             yield self.emit("SYMBEG")
 
