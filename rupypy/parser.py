@@ -875,12 +875,7 @@ class Parser(object):
 
     @pg.production("lhs : primary_value DOT IDENTIFIER")
     def lhs_dot_identifier(self, p):
-        """
-        primary_value tDOT tIDENTIFIER {
-                    $$ = support.attrset($1, (String) $3.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], None)
 
     @pg.production("lhs : primary_value COLON2 IDENTIFIER")
     def lhs_colon_identifier(self, p):
@@ -1122,26 +1117,16 @@ class Parser(object):
 
     @pg.production("arg : var_lhs OP_ASGN arg")
     def arg_var_lhs_op_asgn_arg(self, p):
-        """
-        var_lhs tOP_ASGN arg {
-                    support.checkExpression($3);
-
-                    ISourcePosition pos = $1.getPosition();
-                    String asgnOp = (String) $2.getValue();
-                    if (asgnOp.equals("||")) {
-                        $1.setValueNode($3);
-                        $$ = new OpAsgnOrNode(pos, support.gettable2($1), $1);
-                    } else if (asgnOp.equals("&&")) {
-                        $1.setValueNode($3);
-                        $$ = new OpAsgnAndNode(pos, support.gettable2($1), $1);
-                    } else {
-                        $1.setValueNode(support.getOperatorCallNode(support.gettable2($1), asgnOp, $3));
-                        $1.setPosition(pos);
-                        $$ = $1;
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        op = p[1].getstr()
+        target = p[0].getast()
+        value = p[2].getast()
+        if op == "||":
+            raise NotImplementedError
+        elif op == "&&":
+            raise NotImplementedError
+        else:
+            node = ast.AugmentedAssignment(op[:-1], target, value)
+        return BoxAST(node)
 
     @pg.production("arg : var_lhs OP_ASGN arg RESCUE_MOD arg")
     def arg_var_lhs_op_asgn_arg_rescue_mod(self, p):
@@ -2683,12 +2668,7 @@ class Parser(object):
 
     @pg.production("var_lhs : variable")
     def var_lhs(self, p):
-        """
-        variable {
-                    $$ = support.assignable($1, NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.assignable(p[0])
 
     @pg.production("backref : BACK_REF")
     @pg.production("backref : NTH_REF")
