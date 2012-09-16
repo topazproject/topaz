@@ -1036,16 +1036,16 @@ class Lexer(BaseLexer):
 
 
 class BaseStringTerm(object):
-    def __init__(self, lexer):
+    def __init__(self, lexer, expand):
         self.lexer = lexer
+        self.expand = expand
 
 
 class StringTerm(BaseStringTerm):
     def __init__(self, lexer, begin, end_char, expand=True, is_regexp=False, is_qwords=False):
-        BaseStringTerm.__init__(self, lexer)
+        BaseStringTerm.__init__(self, lexer, expand=expand)
         self.begin = begin
         self.end_char = end_char
-        self.expand = expand
         self.is_regexp = is_regexp
         self.is_qwords = is_qwords
         self.nest = 0
@@ -1119,6 +1119,15 @@ class StringTerm(BaseStringTerm):
         if self.is_regexp:
             return self.lexer.emit("REGEXP_END")
         return self.lexer.emit("STRING_END")
+
+
+class HeredocTerm(BaseStringTerm):
+    def __init__(self, lexer, marker, last_line, indent, expand=True):
+        BaseStringTerm.__init__(self, lexer, expand=expand)
+        self.marker = marker
+        self.last_line = last_line
+        self.indent = indent
+
 
 class StackState(object):
     def __init__(self):
