@@ -691,7 +691,7 @@ class Parser(object):
 
     @pg.production("command : YIELD command_args")
     def command_yield(self, p):
-        return self.new_yield(p[1])
+        return BoxAST(ast.Yield(p[1].getcallargs(), p[0].getsourcepos().lineno))
 
     @pg.production("mlhs : mlhs_basic")
     def mlhs(self, p):
@@ -1603,12 +1603,7 @@ class Parser(object):
 
     @pg.production("primary : YIELD LPAREN2 call_args rparen")
     def primary_yield_paren_args(self, p):
-        """
-        kYIELD tLPAREN2 call_args rparen {
-                    $$ = support.new_yield($1.getPosition(), $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Yield(p[2].getcallargs(), p[0].getsourcepos().lineno))
 
     @pg.production("primary : YIELD LPAREN2 rparen")
     def primary_yield_paren(self, p):
@@ -1621,12 +1616,7 @@ class Parser(object):
 
     @pg.production("primary : YIELD")
     def primary_yield(self, p):
-        """
-        kYIELD {
-                    $$ = new ZYieldNode($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Yield([], p[0].getsourcepos().lineno))
 
     @pg.production("primary : DEFINED opt_nl LPAREN2 expr rparen")
     def primary_defined(self, p):
