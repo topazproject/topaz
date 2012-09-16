@@ -1110,10 +1110,10 @@ HERE
 
     def test_unary_ops(self, space):
         assert space.parse("-yield") == ast.Main(ast.Block([
-            ast.Statement(ast.UnaryOp("-", ast.Yield([], 1), 1))
+            ast.Statement(ast.Send(ast.Yield([], 1), "-@", [], None, 1))
         ]))
         assert space.parse("~3") == ast.Main(ast.Block([
-            ast.Statement(ast.UnaryOp("~", ast.ConstantInt(3), 1))
+            ast.Statement(ast.Send(ast.ConstantInt(3), "~", [], None, 1))
         ]))
 
     def test_unless(self, space):

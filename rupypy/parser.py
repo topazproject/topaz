@@ -170,6 +170,18 @@ class Parser(object):
             node = ast.ConstantString(const_str)
         return BoxAST(node)
 
+    def _parse_int(self, box):
+        s = box.getstr()
+        if "X" in s:
+            base = 16
+        elif "O" in s:
+            base = 8
+        elif "B" in s:
+            base = 2
+        else:
+            base = 10
+        return int(s, base)
+
     pg = ParserGenerator([
         "CLASS", "MODULE", "DEF", "UNDEF", "BEGIN", "RESCUE", "ENSURE", "END",
         "IF", "UNLESS", "THEN", "ELSIF", "ELSE", "CASE", "WHEN", "WHILE",
@@ -1275,7 +1287,7 @@ class Parser(object):
 
     @pg.production("arg : TILDE arg")
     def arg_tilde_arg(self, p):
-        return self.new_unary_call(p[0], p[1])
+        return self.new_call(p[1], p[0], None)
 
     @pg.production("arg : arg RSHFT arg")
     @pg.production("arg : arg LSHFT arg")
@@ -2586,16 +2598,7 @@ class Parser(object):
 
     @pg.production("numeric : INTEGER")
     def numeric_integer(self, p):
-        s = p[0].getstr()
-        if "X" in s:
-            base = 16
-        elif "O" in s:
-            base = 8
-        elif "B" in s:
-            base = 2
-        else:
-            base = 10
-        return BoxAST(ast.ConstantInt(int(s, base)))
+        return BoxAST(ast.ConstantInt(self._parse_int(p[0])))
 
     @pg.production("numeric : FLOAT")
     def numeric_float(self, p):
@@ -2603,7 +2606,7 @@ class Parser(object):
 
     @pg.production("numeric : UMINUS_NUM INTEGER", precedence="LOWEST")
     def numeric_minus_integer(self, p):
-        raise NotImplementedError
+        return BoxAST(ast.ConstantInt(-self._parse_int(p[1])))
 
     @pg.production("numeric : UMINUS_NUM FLOAT", precedence="LOWEST")
     def numeric_minus_float(self, p):
