@@ -2725,21 +2725,17 @@ class Parser(object):
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg opt_f_block_arg")
     def f_args_f_arg_comma_f_optarg_opt_f_block_arg(self, p):
-        """
-        f_arg ',' f_optarg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(
+            self._new_list(p[0].getastlist() + p[2].getastlist()),
+            block_arg=p[3],
+        )
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
-        """
-        f_arg ',' f_optarg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(
+            self._new_list(p[0].getastlist() + p[2].getastlist() + p[4].getastlist()),
+            block_arg=p[5],
+        )
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2792,12 +2788,10 @@ class Parser(object):
 
     @pg.production("f_args : f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
-        """
-        f_optarg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(
+            self._new_list(p[0].getastlist() + p[2].getastlist()),
+            block_arg=p[3]
+        )
 
     @pg.production("f_args : f_rest_arg opt_f_block_arg")
     def f_args_f_rest_arg_opt_f_block_arg(self, p):
@@ -2883,13 +2877,7 @@ class Parser(object):
 
     @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
     def f_opt(self, p):
-        """
-        tIDENTIFIER '=' arg_value {
-                    support.arg_var(support.formal_argument($1));
-                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
 
     @pg.production("f_block_opt : IDENTIFIER LITERAL_EQUAL primary_value")
     def f_block_opt(self, p):
@@ -2921,12 +2909,7 @@ class Parser(object):
 
     @pg.production("f_optarg : f_opt")
     def f_optarg_f_opt(self, p):
-        """
-        f_opt {
-                    $$ = new BlockNode($1.getPosition()).add($1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list(p[0])
 
     @pg.production("f_optarg : f_optarg LITERAL_COMMA f_opt")
     def f_optarg(self, p):

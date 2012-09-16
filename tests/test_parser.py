@@ -1169,7 +1169,7 @@ HERE
 
     def test_function_default_arguments(self, space):
         function = lambda name, args: ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, name, args, None, None, ast.Block([])))
+            ast.Statement(ast.Function(None, name, args, None, None, ast.Nil()))
         ]))
 
         r = space.parse("""
