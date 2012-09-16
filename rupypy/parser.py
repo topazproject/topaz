@@ -951,12 +951,8 @@ class Parser(object):
 
     @pg.production("cpath : cname")
     def cpath_cname(self, p):
-        """
-        cname {
-                    $$ = support.new_colon2($1.getPosition(), null, (String) $1.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        # TODO: should something structured, not just the name
+        return p[0]
 
     @pg.production("cpath : primary_value COLON2 cname")
     def cpath_colon_cname(self, p):
@@ -1746,20 +1742,11 @@ class Parser(object):
 
     @pg.production("primary : CLASS cpath superclass bodystmt END")
     def primary_class(self, p):
-        """
-        kCLASS cpath superclass {
-                    if (support.isInDef() || support.isInSingle()) {
-                        support.yyerror("class definition in method body");
-                    }
-                    support.pushLocalScope();
-                } bodystmt kEND {
-                    Node body = $5 == null ? NilImplicitNode.NIL : $5;
-
-                    $$ = new ClassNode($1.getPosition(), $<Colon3Node>2, support.getCurrentScope(), body, $3);
-                    support.popCurrentScope();
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Class(
+            p[1].getstr(),
+            p[2].getast() if p[2] is not None else None,
+            p[3].getast(),
+        ))
 
     @pg.production("primary : CLASS LSHFT expr term bodystmt END")
     def primary_singleton_class(self, p):
@@ -2770,16 +2757,13 @@ class Parser(object):
     def superclass_term(self, p):
         return None
 
-    @pg.production("superclass : LT expr_value term")
+    @pg.production("superclass : superclass_lt expr_value term")
     def superclass(self, p):
-        """"
-        tLT {
-                   lexer.setState(LexState.EXPR_BEG);
-                } expr_value term {
-                    $$ = $3;
-                }
-        """
-        raise NotImplementedError(p)
+        return p[1]
+
+    @pg.production("superclass_lt : LT")
+    def superclass_lt(self, p):
+        self.lexer.state = self.lexer.EXPR_BEG
 
     @pg.production("superclass : error term")
     def superclass_error(self, p):

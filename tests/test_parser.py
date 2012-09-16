@@ -883,7 +883,7 @@ HERE
         class X
         end""")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", None, ast.Block([])))
+            ast.Statement(ast.Class("X", None, ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -902,11 +902,11 @@ HERE
         ]))
 
         assert space.parse("class X < Object; end") == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(1), "Object", 1), ast.Block([])))
+            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(1), "Object", 1), ast.Nil()))
         ]))
 
         assert space.parse("class X < Module::Object; end") == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Object", 1), ast.Block([])))
+            ast.Statement(ast.Class("X", ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Object", 1), ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -916,8 +916,8 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(2), "Object", 2), ast.Block([]))),
-            ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([]))),
+            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(2), "Object", 2), ast.Nil())),
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil())),
         ]))
 
     def test_singleton_class(self, space):
