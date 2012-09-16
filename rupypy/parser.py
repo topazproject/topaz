@@ -35,6 +35,18 @@ class Parser(object):
     def _new_stmt(self, node):
         return BoxAST(ast.Statement(node))
 
+    def new_augmented_assignment(self, op, lhs, rhs):
+        op = op.getstr()[:-1]
+        target = lhs.getast()
+        value = rhs.getast()
+        if op == "||":
+            raise NotImplementedError
+        elif op == "&&":
+            raise NotImplementedError
+        else:
+            node = ast.AugmentedAssignment(op, target, value)
+        return BoxAST(node)
+
     def assignable(self, box):
         return box
 
@@ -1117,16 +1129,7 @@ class Parser(object):
 
     @pg.production("arg : var_lhs OP_ASGN arg")
     def arg_var_lhs_op_asgn_arg(self, p):
-        op = p[1].getstr()
-        target = p[0].getast()
-        value = p[2].getast()
-        if op == "||":
-            raise NotImplementedError
-        elif op == "&&":
-            raise NotImplementedError
-        else:
-            node = ast.AugmentedAssignment(op[:-1], target, value)
-        return BoxAST(node)
+        return self.new_augmented_assignment(p[1], p[0], p[2])
 
     @pg.production("arg : var_lhs OP_ASGN arg RESCUE_MOD arg")
     def arg_var_lhs_op_asgn_arg_rescue_mod(self, p):
@@ -1168,12 +1171,11 @@ class Parser(object):
 
     @pg.production("arg : primary_value DOT IDENTIFIER OP_ASGN arg")
     def arg_method_op_asgn_arg(self, p):
-        """
-        primary_value tDOT tIDENTIFIER tOP_ASGN arg {
-                    $$ = new OpAsgnNode(support.getPosition($1), $1, $5, (String) $3.getValue(), (String) $4.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_augmented_assignment(
+            p[3],
+            self.new_call(p[0], p[2], None),
+            p[4]
+        )
 
     @pg.production("arg : primary_value DOT CONSTANT OP_ASGN arg")
     def arg_method_constant_op_asgn_arg(self, p):

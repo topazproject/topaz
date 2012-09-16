@@ -579,8 +579,8 @@ class Lexer(BaseLexer):
             if ch2 == "=":
                 self.add(ch)
                 self.add(ch2)
-                yield self.emit("DIV_EQUAL")
                 self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
             else:
                 self.unread()
                 if self.is_arg() and space_seen and not ch2.isspace():
@@ -607,7 +607,7 @@ class Lexer(BaseLexer):
         elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
-            yield self.emit("PIPE_EQUAL")
+            yield self.emit("OP_ASGN")
         else:
             self.unread()
             self.set_expression_state()
@@ -978,7 +978,8 @@ class Lexer(BaseLexer):
         elif c == "=":
             self.add(ch)
             self.add(c)
-            yield self.emit("MODULO_EQUAL")
+            self.state = self.EXPR_BEG
+            yield self.emit("OP_ASGN")
         elif self.is_arg() and space_seen and not c.isspace():
             for token in self.quote(c):
                 yield token
