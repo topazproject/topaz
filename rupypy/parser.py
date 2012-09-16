@@ -1242,10 +1242,13 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("arg : UMINUS arg")
     @pg.production("arg : UPLUS arg")
     def arg_uplus_arg(self, p):
-        return self.new_unary_call(p[0], p[1])
+        raise NotImplementedError(p)
+
+    @pg.production("arg : UMINUS arg")
+    def arg_uminus_arg(self, p):
+        return BoxAST(ast.Send(p[1].getast(), "-@", [], None, p[0].getsourcepos().lineno))
 
     @pg.production("arg : arg NEQ arg")
     @pg.production("arg : arg EQQ arg")

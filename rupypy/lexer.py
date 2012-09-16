@@ -525,21 +525,32 @@ class Lexer(BaseLexer):
     def minus(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
+        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]:
+            self.state = self.EXPR_ARG
+            if ch2 == "@":
+                self.add(ch2)
+                yield self.emit("UMINUS")
+            else:
+                self.unread()
+                yield self.emit("MINUS")
         if ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
+        elif ch2 == ">":
+            self.add(ch2)
+            self.state = self.EXPR_ARG
+            yield self.emit("LAMBDA")
         elif self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
             self.state = self.EXPR_BEG
-            if ch2.isdigit():
-                for token in self.number(ch2):
-                    yield token
-            else:
-                self.unread()
-                yield self.emit("UNARY_MINUS")
-        else:
             self.unread()
+            if ch2.isdigit():
+                yield self.emit("UMINUS_NUM")
+            else:
+                yield self.emit("UMINUS")
+        else:
             self.state = self.EXPR_BEG
+            self.unread()
             yield self.emit("MINUS")
 
     def star(self, ch, space_seen):

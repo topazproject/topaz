@@ -655,22 +655,6 @@ class MaybeBinop(Node):
             ).compile(ctx)
 
 
-class UnaryOp(Node):
-    def __init__(self, op, value, lineno):
-        Node.__init__(self, lineno)
-        self.op = op
-        self.value = value
-
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        op = self.op
-        if op in "-":
-            op += "@"
-        Send(self.value, op, [], None, self.lineno).compile(ctx)
-
-
 class Or(Node):
     def __init__(self, lhs, rhs):
         self.lhs = lhs

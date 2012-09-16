@@ -1102,10 +1102,10 @@ HERE
 
     def test_unary_neg(self, space):
         assert space.parse("-b") == ast.Main(ast.Block([
-            ast.Statement(ast.UnaryOp("-", ast.Variable("b", 1), 1))
+            ast.Statement(ast.Send(ast.Variable("b", 1), "-@", [], None, 1))
         ]))
         assert space.parse("Math.exp(-a)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.UnaryOp("-", ast.Variable("a", 1), 1)], None, 1))
+            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.Send(ast.Variable("a", 1), "-@", [], None, 1)], None, 1))
         ]))
 
     def test_unary_ops(self, space):
