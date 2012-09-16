@@ -59,6 +59,8 @@ class BaseLexer(object):
         "alias": Keyword("ALIAS", "ALIAS", EXPR_FNAME),
         "self": Keyword("SELF", "SELF", EXPR_END),
         "nil": Keyword("NIL", "NIL", EXPR_END),
+        "__FILE__": Keyword("__FILE__", "__FILE__", EXPR_END),
+        "__LINE__": Keyword("__LINE__", "__LINE__", EXPR_END),
     }
 
     def __init__(self):

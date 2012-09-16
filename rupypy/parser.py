@@ -1,5 +1,5 @@
-from rply import ParserGenerator, Token
-from rply.token import BaseBox
+from rply import ParserGenerator, Token, ParsingError
+from rply.token import BaseBox, SourcePosition
 
 from rupypy import ast
 
@@ -11,6 +11,9 @@ class Parser(object):
     def parse(self):
         l = LexerWrapper(self.lexer.tokenize())
         return self.parser.parse(l, state=self)
+
+    def error(self, msg):
+        return ParsingError(msg, SourcePosition(-1, -1, -1))
 
     def new_token(self, orig, name):
         return Token(name, name, orig.getsourcepos())
@@ -48,6 +51,11 @@ class Parser(object):
         return BoxAST(node)
 
     def assignable(self, box):
+        node = box.getast()
+        if isinstance(node, ast.File):
+            raise self.error("Can't assign to __FILE__")
+        elif isinstance(node, ast.Line):
+            raise self.error("Can't assign to __LINE__")
         return box
 
     def new_binary_call(self, lhs, op, rhs):
@@ -2646,7 +2654,7 @@ class Parser(object):
 
     @pg.production("variable : __LINE__")
     def variable__line__(self, p):
-        return BoxAST(ast.ConstantInt(p[0].getsourcepos().lineno))
+        return BoxAST(ast.Line(p[0].getsourcepos().lineno))
 
     @pg.production("variable : __ENCODING__")
     def variable__encoding__(self, p):

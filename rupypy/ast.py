@@ -7,14 +7,11 @@ from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
 from rupypy.objects.objectobject import W_RootObject
 
 
-class Node(object):
-    _attrs_ = ["lineno"]
-
-    def __init__(self, lineno):
-        self.lineno = lineno
+class BaseNode(object):
+    _attrs_ = []
 
     def __eq__(self, other):
-        if not isinstance(other, Node):
+        if not isinstance(other, BaseNode):
             return NotImplemented
         return type(self) is type(other) and self.__dict__ == other.__dict__
 
@@ -29,6 +26,13 @@ class Node(object):
             raise NotImplementedError
         else:
             raise NotImplementedError(type(self).__name__)
+
+
+class Node(BaseNode):
+    _attrs_ = ["lineno"]
+
+    def __init__(self, lineno):
+        self.lineno = lineno
 
 
 class Main(Node):
@@ -1219,13 +1223,17 @@ class Symbol(Node):
         Send(self.value, "to_sym", [], None, self.lineno).compile(ctx)
 
 
-class Nil(Node):
-    def __init__(self):
-        # This is idiotic, lineno doesn't matter, I suck at inheritance.
-        pass
-
+class Nil(BaseNode):
     def locate_symbols(self, symtable):
         pass
 
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+
+class File(BaseNode):
+    pass
+
+
+class Line(Node):
+    pass

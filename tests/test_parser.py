@@ -1158,7 +1158,7 @@ HERE
 
     def test___FILE__(self, space):
         assert space.parse("__FILE__") == ast.Main(ast.Block([
-            ast.Statement(ast.Variable("__FILE__", 1))
+            ast.Statement(ast.File())
         ]))
         with self.raises(space, "SyntaxError"):
             space.parse("__FILE__ = 5")
