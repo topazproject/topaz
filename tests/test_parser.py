@@ -1097,7 +1097,7 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Send(ast.Array([]), "inject", [ast.ConstantInt(0)], ast.SendBlock([ast.Argument("s"), ast.Argument("x")], None, ast.Block([
                 ast.Statement(ast.Send(ast.Variable("s", 3), "+", [ast.Variable("x", 3)], None, 3))
-            ])), 2), "*", [ast.ConstantInt(5)], None, 2))
+            ])), 2), "*", [ast.ConstantInt(5)], None, 4))
         ]))
 
     def test_unary_neg(self, space):
