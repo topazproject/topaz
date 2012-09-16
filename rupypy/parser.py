@@ -63,10 +63,11 @@ class Parser(object):
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
-    def new_args(self, args=None, block_arg=None):
+    def new_args(self, args=None, splat_arg=None, block_arg=None):
         return BoxArgs(
             args.getastlist() if args is not None else [],
-            block_arg.getstr() if block_arg is not None else None
+            splat_arg.getstr() if splat_arg is not None else None,
+            block_arg.getstr() if block_arg is not None else None,
         )
 
     def new_call_args(self, box_arg=None, box_block=None):
@@ -87,8 +88,9 @@ class Parser(object):
 
     def new_send_block(self, params, body):
         args = params.getargs() if params is not None else []
+        splat = params.getsplatarg() if params is not None else None
         block = ast.Block(body.getastlist()) if body is not None else ast.Nil()
-        return BoxAST(ast.SendBlock(args, None, block))
+        return BoxAST(ast.SendBlock(args, splat, block))
 
     def combine_send_block(self, send_box, block_box):
         send = send_box.getast()
@@ -2106,12 +2108,7 @@ class Parser(object):
 
     @pg.production("block_param : f_rest_arg opt_f_block_arg")
     def block_param_f_rest_arg_opt_f_block_arg(self, p):
-        """
-        f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(splat_arg=p[0], block_arg=p[1])
 
     @pg.production("block_param : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -3006,16 +3003,7 @@ class Parser(object):
 
     @pg.production("f_rest_arg : restarg_mark IDENTIFIER")
     def f_rest_arg_restarg_mark_identifer(self, p):
-        """
-        restarg_mark tIDENTIFIER {
-                    if (!support.is_local_id($2)) {
-                        support.yyerror("rest argument must be local variable");
-                    }
-
-                    $$ = new RestArgNode(support.arg_var(support.shadowing_lvar($2)));
-                }
-        """
-        raise NotImplementedError(p)
+        return p[1]
 
     @pg.production("f_rest_arg : restarg_mark")
     def f_rest_arg_restarg_mark(self, p):
@@ -3247,19 +3235,25 @@ class BoxInt(BaseBox):
     def getint(self):
         return self.intvalue
 
+
 class BoxArgs(BaseBox):
     """
     A box for the arguments of a function/block definition.
     """
-    def __init__(self, args, block_arg):
+    def __init__(self, args, splat_arg, block_arg):
         self.args = args
+        self.splat_arg = splat_arg
         self.block_arg = block_arg
 
     def getargs(self):
         return self.args
 
+    def getsplatarg(self):
+        return self.splat_arg
+
     def getblockarg(self):
         return self.block_arg
+
 
 class BoxStrTerm(BaseBox):
     def __init__(self, str_term):
