@@ -72,13 +72,13 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject(self)
         self.w_nil = W_NilObject(self)
 
-        # # This is bootstrap. We have to delay sending until true, false and nil
-        # # are defined
+        # This is bootstrap. We have to delay sending until true, false and nil
+        # are defined
         w_mod = self.getmoduleobject(Kernel.moduledef)
-        # self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
+        self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
         self.bootstrap = False
 
-        # for cls in [
+        for cls in [
         #     W_NilObject, W_TrueObject, W_FalseObject,
         #     W_BaseObject, W_Object,
         #     W_StringObject, W_SymbolObject,
@@ -90,8 +90,8 @@ class ObjectSpace(object):
         #     W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
         #     W_StandardError, W_SystemExit, W_SystemCallError,
         #     W_Random, W_Dir, W_ProcObject
-        # ]:
-        #     self.add_class(cls)
+        ]:
+            self.add_class(cls)
 
         # for module in [Math, Comparable, Enumerable, Kernel, Process]:
         #     self.add_module(module)
