@@ -1094,7 +1094,7 @@ class StringTerm(BaseStringTerm):
                     break
                 self.lexer.add(ch)
                 self.nest -= 1
-            elif self.expand and ch == "#" and not self.lexer.peek() == "\n":
+            elif self.expand and ch == "#" and self.lexer.peek() != "\n":
                 ch2 = self.lexer.read()
 
                 if ch2 in ["$", "@", "{"]:
