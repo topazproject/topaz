@@ -79,7 +79,7 @@ class ObjectSpace(object):
         self.bootstrap = False
 
         for cls in [
-        #     W_NilObject, W_TrueObject, W_FalseObject,
+            W_NilObject, W_TrueObject, W_FalseObject,
         #     W_BaseObject, W_Object,
         #     W_StringObject, W_SymbolObject,
         #     W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
