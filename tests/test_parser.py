@@ -923,7 +923,7 @@ HERE
     def test_singleton_class(self, space):
         r = space.parse("class << self; end")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.SingletonClass(ast.Self(1), ast.Block([]), 1))
+            ast.Statement(ast.SingletonClass(ast.Self(1), ast.Nil(), 1))
         ]))
 
     def test_instance_variable(self, space):

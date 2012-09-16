@@ -1750,22 +1750,11 @@ class Parser(object):
 
     @pg.production("primary : CLASS LSHFT expr term bodystmt END")
     def primary_singleton_class(self, p):
-        """
-        kCLASS tLSHFT expr {
-                    $$ = Boolean.valueOf(support.isInDef());
-                    support.setInDef(false);
-                } term {
-                    $$ = Integer.valueOf(support.getInSingle());
-                    support.setInSingle(0);
-                    support.pushLocalScope();
-                } bodystmt kEND {
-                    $$ = new SClassNode($1.getPosition(), $3, support.getCurrentScope(), $7);
-                    support.popCurrentScope();
-                    support.setInDef($<Boolean>4.booleanValue());
-                    support.setInSingle($<Integer>6.intValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.SingletonClass(
+            p[2].getast(),
+            p[4].getast(),
+            p[0].getsourcepos().lineno
+        ))
 
     @pg.production("primary : MODULE cpath bodystmt END")
     def primary_module(self, p):
