@@ -415,48 +415,40 @@ class Parser(object):
 
     @pg.production("stmt : stmt UNLESS_MOD expr_value")
     def stmt_unlessmod(self, p):
-        """
-        stmt kUNLESS_MOD expr_value {
-                    $$ = new IfNode(support.getPosition($1), support.getConditionNode($3), null, $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_stmt(ast.If(
+            p[2].getast(),
+            ast.Nil(),
+            ast.Block([p[0].getast()]),
+        ))
 
     @pg.production("stmt : stmt WHILE_MOD expr_value")
     def stmt_while_mod(self, p):
-        """
-        stmt kWHILE_MOD expr_value {
-                    if ($1 != null && $1 instanceof BeginNode) {
-                        $$ = new WhileNode(support.getPosition($1), support.getConditionNode($3), $<BeginNode>1.getBodyNode(), false);
-                    } else {
-                        $$ = new WhileNode(support.getPosition($1), support.getConditionNode($3), $1, true);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_stmt(ast.While(
+            p[2].getast(),
+            ast.Block([p[0].getast()])
+        ))
 
     @pg.production("stmt : stmt UNTIL_MOD expr_value")
     def stmt_until_mod(self, p):
-        """
-        stmt kUNTIL_MOD expr_value {
-                    if ($1 != null && $1 instanceof BeginNode) {
-                        $$ = new UntilNode(support.getPosition($1), support.getConditionNode($3), $<BeginNode>1.getBodyNode(), false);
-                    } else {
-                        $$ = new UntilNode(support.getPosition($1), support.getConditionNode($3), $1, true);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_stmt(ast.Until(
+            p[2].getast(),
+            ast.Block([p[0].getast()])
+        ))
 
     @pg.production("stmt : stmt RESCUE_MOD stmt")
     def stmt_rescue_mod(self, p):
-        """
-        stmt kRESCUE_MOD stmt {
-                    Node body = $3 == null ? NilImplicitNode.NIL : $3;
-                    $$ = new RescueNode(support.getPosition($1), $1, new RescueBodyNode(support.getPosition($1), null, body, null), null);
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[1].getsourcepos().lineno
+        return self._new_stmt(ast.TryExcept(
+            ast.Block([p[0].getast()]),
+            [
+                ast.ExceptHandler(
+                    [ast.LookupConstant(ast.Scope(lineno), "StandardError", lineno)],
+                    None,
+                    ast.Block([p[2].getast()]),
+                )
+            ],
+            ast.Nil()
+        ))
 
     @pg.production("stmt : lEND LCURLY compstmt RCURLY")
     def stmt_lend(self, p):

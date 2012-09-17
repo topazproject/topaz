@@ -1631,15 +1631,15 @@ HERE
     def test_inline_if(self, space):
         assert space.parse("return 5 if 3") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
-                ast.Return(ast.ConstantInt(5))
-            ]), ast.Block([])))
+                ast.Statement(ast.Return(ast.ConstantInt(5)))
+            ]), ast.Nil()))
         ]))
 
     def test_inline_unless(self, space):
         assert space.parse("return 5 unless 3") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3),
-                ast.Block([]),
-                ast.Block([ast.Return(ast.ConstantInt(5))]),
+                ast.Nil(),
+                ast.Block([ast.Statement(ast.Return(ast.ConstantInt(5)))]),
             ))
         ]))
 
@@ -1664,16 +1664,16 @@ HERE
                 [
                     ast.ExceptHandler([ast.LookupConstant(ast.Scope(1), "StandardError", 1)], None, ast.Block([ast.Statement(ast.Variable("bar", 1))]))
                 ],
-                ast.Block([]),
+                ast.Nil(),
             ))
         ]))
 
     def test_inline_precedence(self, space):
         assert space.parse("return unless x = 3") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 1), ast.ConstantInt(3)),
-                ast.Block([]),
+                ast.Nil(),
                 ast.Block([
-                    ast.Return(ast.Variable("nil", 1)),
+                    ast.Statement(ast.Return(ast.Nil())),
                 ])
             ))
         ]))
@@ -1685,9 +1685,9 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([
                 ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 3), ast.ConstantInt(3)),
-                    ast.Block([]),
+                    ast.Nil(),
                     ast.Block([
-                        ast.Return(ast.Variable("nil", 3))
+                        ast.Statement(ast.Return(ast.Nil()))
                     ])
                 ))
             ])))
