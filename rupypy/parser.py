@@ -118,7 +118,7 @@ class Parser(object):
         block = block_box.getast()
         assert isinstance(send, ast.Send)
         if send.block_arg is not None:
-            raise self.error(p[1], "Both block arg and actual block given.")
+            raise self.error("Both block arg and actual block given.")
         return BoxAST(ast.Send(
             send.receiver,
             send.method,
@@ -1411,11 +1411,7 @@ class Parser(object):
 
     @pg.production("call_args : block_arg")
     def call_args_block_arg(self, p):
-        """
-        block_arg {
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call_args(None, box_block=p[0])
 
     @pg.production("command_args : start_command_args call_args")
     def command_args(self, p):
