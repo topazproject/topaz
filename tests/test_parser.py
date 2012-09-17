@@ -1579,9 +1579,6 @@ HERE
         ]))
 
         with self.raises(space, "SyntaxError"):
-            space.parse("def f(*args, g)")
-
-        with self.raises(space, "SyntaxError"):
             space.parse("def f(*args, g=5)")
 
     def test_regexp(self, space):
