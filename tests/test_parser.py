@@ -1945,7 +1945,9 @@ HERE
         assert space.parse("%{a} 'b'") == cstr("ab")
         with self.raises(space, "SyntaxError"):
             space.parse("%{a} %{b}")
+        with self.raises(space, "SyntaxError"):
             space.parse("%{a} 'b' %{b}")
+        with self.raises(space, "SyntaxError"):
             space.parse("'b' %{b}")
 
     def test_alias(self, space):
