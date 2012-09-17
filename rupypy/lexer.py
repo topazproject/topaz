@@ -405,13 +405,6 @@ class Lexer(BaseLexer):
                 self.add(ch)
         yield self.emit("STRING_END")
 
-    def regexp(self, begin, end):
-        yield self.emit("REGEXP_BEG")
-        for token in StringLexer(self, begin, end, interpolate=True, regexp=True).tokenize():
-            yield token
-        yield self.emit("REGEXP_END")
-        self.state = self.EXPR_END
-
     def here_doc(self):
         ch = self.read()
 
@@ -1042,8 +1035,8 @@ class Lexer(BaseLexer):
             self.unread()
             yield self.emit("QWORDS_BEG")
         elif ch == "r":
-            for token in self.regexp(begin, end):
-                yield token
+            self.str_term = StringTerm(self, begin, end, is_regexp=True)
+            yield self.emit("REGEXP_BEG")
         else:
             raise NotImplementedError('%' + ch)
 
@@ -1116,8 +1109,14 @@ class StringTerm(BaseStringTerm):
                     break
                 self.lexer.unread()
             elif ch == "\\":
-                for ch in self.lexer.read_escape():
+                escaped_char = self.lexer.read_escape()
+                if (self.is_regexp and len(escaped_char) == 1 and
+                    escaped_char[0] in string.printable):
                     self.lexer.add(ch)
+                    self.lexer.add(escaped_char[0])
+                else:
+                    for ch in escaped_char:
+                        self.lexer.add(ch)
             elif self.is_qwords and ch.isspace():
                 self.lexer.unread()
                 break
