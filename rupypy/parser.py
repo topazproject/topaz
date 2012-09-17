@@ -44,7 +44,7 @@ class Parser(object):
         target = lhs.getast()
         value = rhs.getast()
         if op == "||":
-            raise NotImplementedError
+            node = ast.OrEqual(target, value)
         elif op == "&&":
             raise NotImplementedError
         else:
@@ -146,6 +146,13 @@ class Parser(object):
 
     def new_symbol(self, token):
         return BoxAST(ast.ConstantSymbol(token.getstr()))
+
+    def new_hash(self, box):
+        items = []
+        raw_items = box.getastlist()
+        for i in xrange(0, len(raw_items), 2):
+            items.append((raw_items[i], raw_items[i + 1]))
+        return BoxAST(ast.Hash(items))
 
     def concat_literals(self, head, tail):
         if head is None:
@@ -1397,7 +1404,7 @@ class Parser(object):
 
     @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
     def call_args_args_comma_assocs_opt_block_arg(self, p):
-        box = self.append_call_arg(p[0], p[2])
+        box = self.append_call_arg(p[0], self.new_hash(p[2]))
         return self.call_arg_block_pass(box, p[3])
 
     @pg.production("call_args : block_arg")
@@ -1550,12 +1557,7 @@ class Parser(object):
 
     @pg.production("primary : LBRACE assoc_list RCURLY")
     def primary_hash(self, p):
-        """
-        tLBRACE assoc_list tRCURLY {
-                    $$ = new Hash19Node($1.getPosition(), $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_hash(p[1])
 
     @pg.production("primary : RETURN")
     def primary_return(self, p):
@@ -2931,17 +2933,11 @@ class Parser(object):
 
     @pg.production("assocs : assoc")
     def assocs_assoc(self, p):
-        [key, value] = p[0].getastlist()
-        return BoxAST(ast.Hash([(key, value)]))
+        return p[0]
 
     @pg.production("assocs : assocs LITERAL_COMMA assoc")
     def assocs(self, p):
-        """
-        assocs ',' assoc {
-                    $$ = $1.addAll($3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_list(p[0].getastlist() + p[2].getastlist())
 
     @pg.production("assoc : arg_value ASSOC arg_value")
     def assoc_arg_value(self, p):

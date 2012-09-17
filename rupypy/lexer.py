@@ -600,7 +600,7 @@ class Lexer(BaseLexer):
             ch3 = self.read()
             if ch3 == "=":
                 self.add(ch3)
-                yield self.emit("OR_EQUAL")
+                yield self.emit("OP_ASGN")
             else:
                 self.unread()
                 yield self.emit("OROP")
