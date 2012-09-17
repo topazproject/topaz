@@ -80,16 +80,16 @@ class ObjectSpace(object):
 
         for cls in [
             W_NilObject, W_TrueObject, W_FalseObject,
-        #     W_BaseObject, W_Object,
-        #     W_StringObject, W_SymbolObject,
-        #     W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
+            W_BaseObject, W_Object,
+            W_StringObject, W_SymbolObject,
+            W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
         #     W_ArrayObject, W_HashObject,
-        #     W_IOObject, W_FileObject,
-        #     W_TimeObject,
-        #     W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError,
-        #     W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
-        #     W_StandardError, W_SystemExit, W_SystemCallError,
-        #     W_Random, W_Dir, W_ProcObject
+            W_IOObject, W_FileObject,
+            W_TimeObject,
+            W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError,
+            W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
+            W_StandardError, W_SystemExit, W_SystemCallError,
+            # W_Random, W_Dir, W_ProcObject
         ]:
             self.add_class(cls)
 
