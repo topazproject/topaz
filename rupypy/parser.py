@@ -1727,20 +1727,7 @@ class Parser(object):
 
     @pg.production("primary : MODULE cpath bodystmt END")
     def primary_module(self, p):
-        """
-        kMODULE cpath {
-                    if (support.isInDef() || support.isInSingle()) {
-                        support.yyerror("module definition in method body");
-                    }
-                    support.pushLocalScope();
-                } bodystmt kEND {
-                    Node body = $4 == null ? NilImplicitNode.NIL : $4;
-
-                    $$ = new ModuleNode($1.getPosition(), $<Colon3Node>2, support.getCurrentScope(), body);
-                    support.popCurrentScope();
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Module(p[1].getstr(), p[2].getast()))
 
     @pg.production("primary : DEF fname f_arglist bodystmt END")
     def primary_def(self, p):

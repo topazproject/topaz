@@ -1462,7 +1462,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Module("M", ast.Block([
-                ast.Statement(ast.Function(None, "method", [], None, None, ast.Block([])))
+                ast.Statement(ast.Function(None, "method", [], None, None, ast.Nil()))
             ])))
         ]))
 
@@ -1471,7 +1471,7 @@ HERE
             ast.Statement(ast.Send(ast.Variable("obj", 1), "method?", [], None, 1))
         ]))
         assert space.parse("def method?() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "method?", [], None, None, ast.Block([])))
+            ast.Statement(ast.Function(None, "method?", [], None, None, ast.Nil()))
         ]))
         assert space.parse("method?") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("method?", 1))
@@ -1484,7 +1484,7 @@ HERE
             ast.Statement(ast.Send(ast.Variable("obj", 1), "method!", [], None, 1))
         ]))
         assert space.parse("def method!() end") == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "method!", [], None, None, ast.Block([])))
+            ast.Statement(ast.Function(None, "method!", [], None, None, ast.Nil()))
         ]))
         assert space.parse("method!") == ast.Main(ast.Block([
             ast.Statement(ast.Variable("method!", 1))
