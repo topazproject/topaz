@@ -46,7 +46,7 @@ class Parser(object):
         if op == "||":
             node = ast.OrEqual(target, value)
         elif op == "&&":
-            raise NotImplementedError
+            node = ast.AndEqual(target, value)
         else:
             node = ast.AugmentedAssignment(op, target, value)
         return BoxAST(node)
@@ -2920,12 +2920,7 @@ class Parser(object):
 
     @pg.production("assoc_list : none")
     def assoc_list_none(self, p):
-        """
-        none {
-                    $$ = new ArrayNode(lexer.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list()
 
     @pg.production("assoc_list : assocs trailer")
     def assoc_list(self, p):
