@@ -324,11 +324,12 @@ class Parser(object):
         """
         body = ast.Block(p[0].getastlist()) if p[0] is not None else ast.Nil()
         if p[1] is not None:
-            raise NotImplementedError(p)
+            except_handlers = p[1].getastlist()
+            body = ast.TryExcept(body, except_handlers, ast.Nil())
         elif p[2] is not None:
-            raise NotImplementedError(p)
+            body = ast.TryExcept(body, [], p[2].getast())
         if p[3] is not None:
-            raise NotImplementedError(p)
+            body = ast.TryFinally(body, ast.Block(p[3].getastlist()))
         return BoxAST(body)
 
     @pg.production("compstmt : stmts opt_terms")
@@ -1512,12 +1513,7 @@ class Parser(object):
 
     @pg.production("primary : BEGIN bodystmt END")
     def primary_begin_end(self, p):
-        """
-        kBEGIN bodystmt kEND {
-                    $$ = new BeginNode(support.getPosition($1), $2 == null ? NilImplicitNode.NIL : $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return p[1]
 
     @pg.production("primary : LPAREN_ARG expr paren_post_expr rparen")
     def primary_paren_arg(self, p):
@@ -2305,22 +2301,16 @@ class Parser(object):
 
     @pg.production("opt_rescue : RESCUE exc_list exc_var then compstmt opt_rescue")
     def opt_rescue(self, p):
-        """"
-        kRESCUE exc_list exc_var then compstmt opt_rescue {
-                    Node node;
-                    if ($3 != null) {
-                        node = support.appendToBlock(support.node_assign($3, new GlobalVarNode($1.getPosition(), "$!")), $5);
-                        if ($5 != null) {
-                            node.setPosition(support.unwrapNewlineNode($5).getPosition());
-                        }
-                    } else {
-                        node = $5;
-                    }
-                    Node body = node == null ? NilImplicitNode.NIL : node;
-                    $$ = new RescueBodyNode($1.getPosition(), $2, body, $6);
-                }
-        """
-        raise NotImplementedError(p)
+        handlers = [
+            ast.ExceptHandler(
+                p[1].getastlist() if p[1] is not None else [],
+                p[2].getast() if p[2] is not None else None,
+                ast.Block(p[4].getastlist()) if p[4] is not None else ast.Nil(),
+            )
+        ]
+        if p[5] is not None:
+            handlers.extend(p[5].getastlist())
+        return BoxASTList(handlers)
 
     @pg.production("opt_rescue : ")
     def opt_rescue_empty(self, p):
@@ -2328,22 +2318,11 @@ class Parser(object):
 
     @pg.production("exc_list : arg_value")
     def exc_list_arg_value(self, p):
-        """
-        arg_value {
-                    $$ = support.newArrayNode($1.getPosition(), $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list(p[0])
 
     @pg.production("exc_list : mrhs")
     def exc_list_mrhs(self, p):
-        """
-        mrhs {
-                    $$ = support.splat_array($1);
-                    if ($$ == null) $$ = $1;
-                }
-        """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("exc_list : none")
     def exc_list_none(self, p):

@@ -1213,14 +1213,14 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.TryExcept(
                 ast.Block([
-                    ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, ))
+                    ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 3))
                 ]),
                 [
                     ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], None, ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("zero")], None, 5))
                     ]))
                 ],
-                ast.Block([])
+                ast.Nil()
             ))
         ]))
 
@@ -1234,14 +1234,14 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.TryExcept(
                 ast.Block([
-                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, ))
+                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                 ]),
                 [
                     ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], ast.Variable("e", 4), ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], None, 5))
                     ]))
                 ],
-                ast.Block([])
+                ast.Nil()
             ))
         ]))
 
@@ -1257,7 +1257,7 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.TryExcept(
                 ast.Block([
-                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, ))
+                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                 ]),
                 [
                     ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], ast.Variable("e", 4), ast.Block([
@@ -1267,7 +1267,7 @@ HERE
                         ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("?")], None, 7))
                     ])),
                 ],
-                ast.Block([])
+                ast.Nil()
             ))
         ]))
 
@@ -1281,14 +1281,14 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.TryExcept(
                 ast.Block([
-                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, ))
+                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                 ]),
                 [
                     ast.ExceptHandler([], None, ast.Block([
                         ast.Statement(ast.ConstantInt(5))
                     ]))
                 ],
-                ast.Block([]),
+                ast.Nil(),
             ))
         ]))
 
@@ -1302,7 +1302,7 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.TryFinally(
                 ast.Block([
-                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, ))
+                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                 ]),
                 ast.Block([
                     ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("ensure")], None, 5))
@@ -1323,14 +1323,14 @@ HERE
             ast.Statement(ast.TryFinally(
                 ast.TryExcept(
                     ast.Block([
-                        ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, ))
+                        ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                     ]),
                     [
                         ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], None, ast.Block([
                             ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("rescue")], None, 5)),
                         ])),
                     ],
-                    ast.Block([])
+                    ast.Nil()
                 ),
                 ast.Block([
                     ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("ensure")], None, 7))
@@ -1349,14 +1349,14 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.TryExcept(
                 ast.Block([
-                    ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, )),
-                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, )),
+                    ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 3)),
+                    ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 4)),
                 ]), [
                     ast.ExceptHandler([], None, ast.Block([
                         ast.Statement(ast.Send(ast.Self(6), "puts", [ast.ConstantString("rescue")], None, 6))
                     ]))
                 ],
-                ast.Block([]),
+                ast.Nil(),
             ))
         ]))
         r = space.parse("""
@@ -1384,9 +1384,9 @@ HERE
             ast.Statement(ast.TryExcept(
                 ast.Block([ast.Statement(ast.ConstantInt(2))]),
                 [
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "E1", 4), ast.LookupConstant(ast.Scope(4), "E2", 4)], None, ast.Block([])),
+                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "E1", 4), ast.LookupConstant(ast.Scope(4), "E2", 4)], None, ast.Nil()),
                 ],
-                ast.Block([]),
+                ast.Nil(),
             ))
         ]))
 
@@ -1397,15 +1397,15 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.TryExcept(
-                ast.Block([]),
+                ast.Nil(),
                 [
                     ast.ExceptHandler(
                         [ast.LookupConstant(ast.LookupConstant(ast.Scope(3), "Mod", 3), "Exc", 3)],
                         None,
-                        ast.Block([]),
+                        ast.Nil(),
                     )
                 ],
-                ast.Block([]),
+                ast.Nil(),
             ))
         ]))
 
@@ -1425,7 +1425,7 @@ HERE
                         ast.Statement(ast.ConstantInt(5))
                     ]))
                 ],
-                ast.Block([]),
+                ast.Nil(),
             )))
         ]))
 
