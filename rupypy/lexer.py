@@ -345,14 +345,8 @@ class Lexer(BaseLexer):
             elif ch.isalnum() or ch == "_":
                 self.add(ch)
             else:
-                state = self.state
+                self.unread()
                 yield self.emit_identifier()
-                if state == self.EXPR_FNAME and ch == ".":
-                    self.add(ch)
-                    yield self.emit("DOT")
-                    self.state = self.EXPR_FNAME
-                else:
-                    self.unread()
                 break
 
     def number(self, ch):

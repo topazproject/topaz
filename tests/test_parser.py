@@ -1508,7 +1508,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(ast.Variable("x", 2), "r=", [], None, None, ast.Block([])))
+            ast.Statement(ast.Function(ast.Variable("x", 2), "r=", [], None, None, ast.Nil()))
         ]))
 
     def test_global_var(self, space):
@@ -1538,7 +1538,7 @@ HERE
         # another comment
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, ))
+            ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 3))
         ]))
 
     def test_send_block_argument(self, space):

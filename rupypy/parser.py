@@ -1735,25 +1735,24 @@ class Parser(object):
             p[3].getast()
         ))
 
-    @pg.production("primary : DEF singleton dot_or_colon fname f_arglist bodystmt END")
+    @pg.production("primary : DEF singleton dot_or_colon singleton_method_post_dot_colon fname singleton_method_post_fname f_arglist bodystmt END")
     def primary_def_singleton(self, p):
-        """
-        kDEF singleton dot_or_colon {
-                    lexer.setState(LexState.EXPR_FNAME);
-                } fname {
-                    support.setInSingle(support.getInSingle() + 1);
-                    support.pushLocalScope();
-                    lexer.setState(LexState.EXPR_ENDFN); /* force for args */
-                } f_arglist bodystmt kEND {
-                    // TODO: We should use implicit nil for body, but problem (punt til later)
-                    Node body = $8; //$8 == null ? NilImplicitNode.NIL : $8;
+        return BoxAST(ast.Function(
+            p[1].getast(),
+            p[4].getstr(),
+            p[6].getargs(),
+            None,
+            p[6].getblockarg(),
+            p[7].getast(),
+        ))
 
-                    $$ = new DefsNode($1.getPosition(), $2, new ArgumentNode($5.getPosition(), (String) $5.getValue()), $7, support.getCurrentScope(), body);
-                    support.popCurrentScope();
-                    support.setInSingle(support.getInSingle() - 1);
-                }
-        """
-        raise NotImplementedError(p)
+    @pg.production("singleton_method_post_dot_colon : ")
+    def singleton_method_post_dot_colon(self, p):
+        self.lexer.state = self.lexer.EXPR_FNAME
+
+    @pg.production("singleton_method_post_fname : ")
+    def singleton_method_post_fname(self, p):
+        self.lexer.state = self.lexer.EXPR_ENDFN
 
     @pg.production("primary : BREAK")
     def primary_break(self, p):
@@ -2918,15 +2917,7 @@ class Parser(object):
 
     @pg.production("singleton : var_ref")
     def singleton_var_ref(self, p):
-        """
-        var_ref {
-                    if (!($1 instanceof SelfNode)) {
-                        support.checkExpression($1);
-                    }
-                    $$ = $1;
-                }
-        """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("singleton : LPAREN expr rparen")
     def singleton_paren(self, p):
