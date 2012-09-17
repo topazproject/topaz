@@ -1570,12 +1570,12 @@ HERE
     def test_declare_splat_argument(self, space):
         r = space.parse("def f(*args) end")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [], "args", None, ast.Block([])))
+            ast.Statement(ast.Function(None, "f", [], "args", None, ast.Nil()))
         ]))
 
         r = space.parse("def f(*args, &g) end")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [], "args", "g", ast.Block([])))
+            ast.Statement(ast.Function(None, "f", [], "args", "g", ast.Nil()))
         ]))
 
         with self.raises(space, "SyntaxError"):

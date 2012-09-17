@@ -1726,7 +1726,7 @@ class Parser(object):
             None,
             p[1].getstr(),
             p[2].getargs(),
-            None,
+            p[2].getsplatarg(),
             p[2].getblockarg(),
             p[3].getast()
         ))
@@ -1737,7 +1737,7 @@ class Parser(object):
             p[1].getast(),
             p[4].getstr(),
             p[6].getargs(),
-            None,
+            p[6].getsplatarg(),
             p[6].getblockarg(),
             p[7].getast(),
         ))
@@ -2751,12 +2751,7 @@ class Parser(object):
 
     @pg.production("f_args : f_rest_arg opt_f_block_arg")
     def f_args_f_rest_arg_opt_f_block_arg(self, p):
-        """
-        f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, $1, null, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(splat_arg=p[0], block_arg=p[1])
 
     @pg.production("f_args : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
