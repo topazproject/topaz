@@ -1889,7 +1889,7 @@ HERE
         1
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(2), "f", [], ast.SendBlock([], None, ast.Block([])), 2)),
+            ast.Statement(ast.Send(ast.Self(2), "f", [], ast.SendBlock([], None, ast.Nil()), 2)),
             ast.Statement(ast.ConstantInt(1))
         ]))
 
