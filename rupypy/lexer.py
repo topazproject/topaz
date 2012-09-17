@@ -745,14 +745,14 @@ class Lexer(BaseLexer):
         if self.is_end():
             self.add(ch)
             self.state = self.EXPR_VALUE
-            yield self.emit("QUESTION")
+            yield self.emit("LITERAL_QUESTION_MARK")
         else:
             ch2 = self.read()
             if ch2.isspace():
                 self.unread()
                 self.add(ch)
                 self.state = self.EXPR_VALUE
-                yield self.emit("QUESTION")
+                yield self.emit("LITERAL_QUESTION_MARK")
             else:
                 if ch2 == "\\":
                     for ch in self.read_escape(character_escape=True):

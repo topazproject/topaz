@@ -1696,32 +1696,32 @@ HERE
     def test_ternary_operator(self, space):
         assert space.parse("3 ? 2 : 5") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3),
-                ast.Block([ast.Statement(ast.ConstantInt(2))]),
-                ast.Block([ast.Statement(ast.ConstantInt(5))]),
+                ast.ConstantInt(2),
+                ast.ConstantInt(5),
             ))
         ]))
         assert space.parse("0 ? nil : nil") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0),
-                ast.Block([ast.Statement(ast.Variable("nil", 1))]),
-                ast.Block([ast.Statement(ast.Variable("nil", 1))]),
+                ast.Nil(),
+                ast.Nil(),
             ))
         ]))
         assert space.parse("empty? ? '[]' : nil") == ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.Variable("empty?", 1),
-                ast.Block([ast.Statement(ast.ConstantString("[]"))]),
-                ast.Block([ast.Statement(ast.Variable("nil", 1))])
+            ast.Statement(ast.If(ast.Send(ast.Self(1), "empty?", [], None, 1),
+                ast.ConstantString("[]"),
+                ast.Nil(),
             ))
         ]))
         assert space.parse("0 ? ?- : ?w") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0),
-                ast.Block([ast.Statement(ast.ConstantString("-"))]),
-                ast.Block([ast.Statement(ast.ConstantString("w"))]),
+                ast.ConstantString("-"),
+                ast.ConstantString("w"),
             ))
         ]))
         assert space.parse("0 ? ?T:0") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0),
-                ast.Block([ast.Statement(ast.ConstantString("T"))]),
-                ast.Block([ast.Statement(ast.ConstantInt(0))]),
+                ast.ConstantString("T"),
+                ast.ConstantInt(0),
             ))
         ]))
         r = space.parse("""
@@ -1729,10 +1729,10 @@ HERE
         0
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.ConstantInt(0),
-                ast.Block([ast.Statement(ast.ConstantInt(0))]),
-                ast.Block([ast.Statement(ast.ConstantString(""))]),
-            )),
+            ast.Statement(ast.Block([ast.Statement(ast.If(ast.ConstantInt(0),
+                ast.ConstantInt(0),
+                ast.ConstantString(""),
+            ))])),
             ast.Statement(ast.ConstantInt(0)),
         ]))
         assert space.parse("0 ? (0) :(0)") == ast.Main(ast.Block([
@@ -1748,7 +1748,7 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0),
                 ast.Block([ast.Statement(ast.ConstantInt(0))]),
-                ast.Block([ast.Statement(ast.ConstantInt(0))]),
+                ast.ConstantInt(0),
             ))
         ]))
 

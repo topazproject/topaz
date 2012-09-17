@@ -1305,12 +1305,11 @@ class Parser(object):
 
     @pg.production("arg : arg LITERAL_QUESTION_MARK arg opt_nl LITERAL_COLON arg")
     def arg_ternary(self, p):
-        """
-        arg '?' arg opt_nl ':' arg {
-                    $$ = new IfNode(support.getPosition($1), support.getConditionNode($1), $3, $6);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.If(
+            p[0].getast(),
+            p[2].getast(),
+            p[5].getast()
+        ))
 
     @pg.production("arg : primary")
     def arg_primary(self, p):
