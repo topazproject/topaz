@@ -1931,20 +1931,18 @@ HERE
         assert space.parse("%x(#{2})") == shellout(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
 
     def test_strings(self, space):
-        cstr = lambda c: ast.ConstantString(c)
-        dstr = lambda *c: ast.DynamicString(list(c))
-        strs = lambda *components: ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString(list(components)))
+        cstr = lambda c: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(c))
         ]))
-        assert space.parse("'a' 'b' 'c'") == strs(cstr('a'), cstr('b'), cstr('c'))
-        assert space.parse("'a' \"b\"") == strs(cstr('a'), dstr(cstr('b')))
-        assert space.parse('"a" "b"') == strs(dstr(cstr('a')), dstr(cstr('b')))
-        assert space.parse('"a" \'b\'') == strs(dstr(cstr('a')), cstr('b'))
+        assert space.parse("'a' 'b' 'c'") == cstr("abc")
+        assert space.parse("'a' \"b\"") == cstr("ab")
+        assert space.parse('"a" "b"') == cstr("ab")
+        assert space.parse('"a" \'b\'') == cstr("ab")
         assert space.parse("""
         'a' \\
         'b'
-        """) == strs(cstr('a'), cstr('b'))
-        assert space.parse("%{a} 'b'") == strs(dstr(cstr('a')), cstr('b'))
+        """) == cstr("ab")
+        assert space.parse("%{a} 'b'") == cstr("ab")
         with self.raises(space, "SyntaxError"):
             space.parse("%{a} %{b}")
             space.parse("%{a} 'b' %{b}")

@@ -2368,12 +2368,7 @@ class Parser(object):
 
     @pg.production("string : string string1")
     def string_string_string1(self, p):
-        """
-        string string1 {
-                    $$ = support.literal_concat($1.getPosition(), $1, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.concat_literals(p[0] , p[1])
 
     @pg.production("string1 : STRING_BEG string_contents STRING_END")
     def string1(self, p):
