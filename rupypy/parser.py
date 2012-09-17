@@ -2578,7 +2578,7 @@ class Parser(object):
 
     @pg.production("variable : CVAR")
     def variable_cvar(self, p):
-        raise NotImplementedError
+        return BoxAST(ast.ClassVariable(p[0].getstr()))
 
     @pg.production("variable : NIL")
     def variable_nil(self, p):
