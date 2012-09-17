@@ -954,21 +954,17 @@ class Lexer(BaseLexer):
         yield self.emit("RCURLY")
 
     def backtick(self, ch):
-        if self.state == self.EXPR_FNAME:
-            self.add(ch)
-            yield self.emit_identifier()
-        elif self.state == self.EXPR_DOT:
-            raise NotImplementedError("`")
-        else:
-            for token in self.shellout("`", "`"):
-                yield token
+        self.add(ch)
 
-    def shellout(self, begin, end):
-        yield self.emit("SHELL_BEGIN")
-        for token in StringLexer(self, begin, end, interpolate=True).tokenize():
-            yield token
-        yield self.emit("SHELL_END")
-        self.state = self.EXPR_END
+        if self.state == self.EXPR_FNAME:
+            self.state = self.EXPR_ENDFN
+            yield self.emit("BACK_REF2")
+        elif self.state == self.EXPR_DOT:
+            self.state = self.EXPR_CMDARG if command_state else self.EXPR_ARG
+            yield self.emit("BACK_REF2")
+        else:
+            self.str_term = StringTerm(self, "\0", "`")
+            yield self.emit("XSTRING_BEG")
 
     def percent(self, ch, space_seen):
         c = self.read()
@@ -1016,8 +1012,8 @@ class Lexer(BaseLexer):
             self.str_term = StringTerm(self, begin, end, expand=False)
             yield self.emit("STRING_BEG")
         elif ch == "x":
-            for token in self.shellout(begin, end):
-                yield token
+            self.str_term = StringTerm(self, begin, end)
+            yield self.emit("XSTRING_BEG")
         elif ch == "W":
             self.str_term = StringTerm(self, begin, end, expand=True, is_qwords=True)
             while True:

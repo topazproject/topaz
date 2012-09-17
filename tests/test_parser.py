@@ -1923,12 +1923,12 @@ HERE
 
     def test_shellout(self, space):
         shellout = lambda *components: ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "`", [ast.DynamicString(list(components))], None, 1))
+            ast.Statement(ast.Send(ast.Self(1), "`", list(components), None, 1))
         ]))
         assert space.parse("`ls`") == shellout(ast.ConstantString("ls"))
         assert space.parse('%x(ls)') == shellout(ast.ConstantString("ls"))
-        assert space.parse("`#{2}`") == shellout(ast.ConstantInt(2))
-        assert space.parse("%x(#{2})") == shellout(ast.ConstantInt(2))
+        assert space.parse("`#{2}`") == shellout(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
+        assert space.parse("%x(#{2})") == shellout(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
 
     def test_strings(self, space):
         cstr = lambda c: ast.ConstantString(c)

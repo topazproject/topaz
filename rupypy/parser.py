@@ -2381,24 +2381,7 @@ class Parser(object):
 
     @pg.production("xstring : XSTRING_BEG xstring_contents STRING_END")
     def xstring(self, p):
-        """
-        tXSTRING_BEG xstring_contents tSTRING_END {
-                    ISourcePosition position = $1.getPosition();
-
-                    if ($2 == null) {
-                        $$ = new XStrNode(position, null);
-                    } else if ($2 instanceof StrNode) {
-                        $$ = new XStrNode(position, (ByteList) $<StrNode>2.getValue().clone());
-                    } else if ($2 instanceof DStrNode) {
-                        $$ = new DXStrNode(position, $<DStrNode>2);
-
-                        $<Node>$.setPosition(position);
-                    } else {
-                        $$ = new DXStrNode(position).add($2);
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_fcall(self.new_token(p[0], "`"), self.new_call_args(p[1]))
 
     @pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
     def regexp(self, p):
