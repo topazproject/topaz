@@ -1765,8 +1765,8 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                ([ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
-                ([ast.ConstantInt(4)], ast.Block([ast.Statement(ast.ConstantInt(7))]))
+                ast.When([ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
+                ast.When([ast.ConstantInt(4)], ast.Block([ast.Statement(ast.ConstantInt(7))]))
             ], ast.Block([ast.Statement(ast.ConstantInt(9))])))
         ]))
         r = space.parse("""
@@ -1777,8 +1777,8 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                ([ast.ConstantInt(4), ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
-            ], ast.Block([])))
+                ast.When([ast.ConstantInt(4), ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
+            ], ast.Nil()))
         ]))
 
     def test_case_regexp(self, space):
@@ -1789,8 +1789,8 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(0), [
-                ([ast.ConstantRegexp("a")], ast.Block([]))
-            ], ast.Block([])))
+                ast.When([ast.ConstantRegexp("a")], ast.Nil())
+            ], ast.Nil()))
         ]))
 
     def test_case_without_expr(self, space):
@@ -1824,8 +1824,7 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.Or(ast.ConstantInt(4), ast.ConstantInt(5)), ast.Block([
                 ast.Statement(ast.ConstantInt(6))
-            ]), ast.Block([ast.Statement(ast.Variable("nil", -1))])
-            ))
+            ]), ast.Nil()))
         ]))
         r = space.parse("""
         case
@@ -1835,8 +1834,7 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(4), ast.Block([
                 ast.Statement(ast.Variable("nil", -1))
-            ]), ast.Block([ast.Statement(ast.Variable("nil", -1))])
-            ))
+            ]), ast.Nil()))
         ]))
 
     def test_and_regexp(self, space):

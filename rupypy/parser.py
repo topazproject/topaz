@@ -1663,12 +1663,14 @@ class Parser(object):
 
     @pg.production("primary : CASE expr_value opt_terms case_body END")
     def primary_case_expr_value(self, p):
-        """
-        kCASE expr_value opt_terms case_body kEND {
-                    $$ = support.newCaseNode($1.getPosition(), $2, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        elsebody = p[3].getastlist()[-1]
+        assert isinstance(elsebody, ast.When)
+        assert elsebody.conds is None
+        return BoxAST(ast.Case(
+            p[1].getast(),
+            p[3].getastlist()[:-1],
+            elsebody.block,
+        ))
 
     @pg.production("primary : CASE opt_terms case_body END")
     def primary_case(self, p):
@@ -2254,16 +2256,17 @@ class Parser(object):
 
     @pg.production("case_body : WHEN args then compstmt cases")
     def case_body(self, p):
-        """
-        kWHEN args then compstmt cases {
-                    $$ = support.newWhenNode($1.getPosition(), $2, $4, $5);
-                }
-        """
-        raise NotImplementedError(p)
+        body = ast.Block(p[3].getastlist()) if p[3] is not None else ast.Nil()
+        items = [
+            ast.When(p[1].getcallargs(), body)
+        ]
+        items.extend(p[4].getastlist())
+        return self._new_list(items)
 
     @pg.production("cases : opt_else")
     def cases_opt_else(self, p):
-        return p[0]
+        body = p[0].getast() if p[0] is not None else ast.Nil()
+        return self.new_list(BoxAST(ast.When(None, body)))
 
     @pg.production("cases : case_body")
     def cases_case_body(self, p):

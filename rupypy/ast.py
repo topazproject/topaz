@@ -420,21 +420,19 @@ class Case(Node):
 
     def locate_symbols(self, symtable):
         self.cond.locate_symbols(symtable)
-        for when, block in self.whens:
-            for expr in when:
-                expr.locate_symbols(symtable)
-            block.locate_symbols(symtable)
+        for when in self.whens:
+            when.locate_symbols(symtable)
         self.elsebody.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()
 
         self.cond.compile(ctx)
-        for when, block in self.whens:
+        for when in self.whens:
             next_when = ctx.new_block()
             when_block = ctx.new_block()
 
-            for expr in when:
+            for expr in when.conds:
                 next_expr = ctx.new_block()
                 ctx.emit(consts.DUP_TOP)
                 expr.compile(ctx)
@@ -444,12 +442,18 @@ class Case(Node):
             ctx.emit_jump(consts.JUMP, next_when)
             ctx.use_next_block(when_block)
             ctx.emit(consts.DISCARD_TOP)
-            block.compile(ctx)
+            when.block.compile(ctx)
             ctx.emit_jump(consts.JUMP, end)
             ctx.use_next_block(next_when)
         ctx.emit(consts.DISCARD_TOP)
         self.elsebody.compile(ctx)
         ctx.use_next_block(end)
+
+
+class When(Node):
+    def __init__(self, conds, block):
+        self.conds = conds
+        self.block = block
 
 
 class Return(BaseStatement):
