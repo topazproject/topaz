@@ -1504,12 +1504,7 @@ class Parser(object):
 
     @pg.production("primary : FID")
     def primary_fid(self, p):
-        """
-        tFID {
-                    $$ = new FCallNoArgNode($1.getPosition(), (String) $1.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_fcall(p[0], None)
 
     @pg.production("primary : BEGIN bodystmt END")
     def primary_begin_end(self, p):

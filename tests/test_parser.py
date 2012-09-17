@@ -1474,7 +1474,7 @@ HERE
             ast.Statement(ast.Function(None, "method?", [], None, None, ast.Nil()))
         ]))
         assert space.parse("method?") == ast.Main(ast.Block([
-            ast.Statement(ast.Variable("method?", 1))
+            ast.Statement(ast.Send(ast.Self(1), "method?", [], None, 1))
         ]))
         with self.raises(space, "SyntaxError"):
             space.parse("method? = 4")
@@ -1487,7 +1487,7 @@ HERE
             ast.Statement(ast.Function(None, "method!", [], None, None, ast.Nil()))
         ]))
         assert space.parse("method!") == ast.Main(ast.Block([
-            ast.Statement(ast.Variable("method!", 1))
+            ast.Statement(ast.Send(ast.Self(1), "method!", [], None, 1))
         ]))
         with self.raises(space, "SyntaxError"):
             space.parse("method! = 4")

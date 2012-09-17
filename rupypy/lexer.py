@@ -277,7 +277,7 @@ class Lexer(BaseLexer):
         else:
             self.state = self.EXPR_BEG
 
-    def emit_identifier(self):
+    def emit_identifier(self, token_name="IDENTIFIER"):
         value = "".join(self.current_value)
         state = self.state
         if value in self.keywords and self.state not in [self.EXPR_DOT, self.EXPR_FNAME]:
@@ -297,7 +297,7 @@ class Lexer(BaseLexer):
             if value[0].isupper():
                 token = self.emit("CONSTANT")
             else:
-                token = self.emit("IDENTIFIER")
+                token = self.emit(token_name)
             if self.is_beg() or self.state == self.EXPR_DOT or self.is_arg():
                 self.state = self.EXPR_ARG
             elif self.state == self.EXPR_ENDFN:
@@ -340,7 +340,7 @@ class Lexer(BaseLexer):
                 break
             if ch in "!?" or (ch == "=" and self.state == self.EXPR_FNAME):
                 self.add(ch)
-                yield self.emit_identifier()
+                yield self.emit_identifier("FID")
                 break
             elif ch.isalnum() or ch == "_":
                 self.add(ch)
