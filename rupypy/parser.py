@@ -1674,12 +1674,23 @@ class Parser(object):
 
     @pg.production("primary : CASE opt_terms case_body END")
     def primary_case(self, p):
-        """
-        kCASE opt_terms case_body kEND {
-                    $$ = support.newCaseNode($1.getPosition(), null, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        elsebody = p[2].getastlist()[-1]
+        assert isinstance(elsebody, ast.When)
+        assert elsebody.conds is None
+
+        conditions = []
+        for when in p[2].getastlist()[:-1]:
+            cond = when.conds[0]
+            for expr in when.conds[1:]:
+                cond = ast.Or(cond, expr)
+            conditions.append((cond, when.block))
+
+        else_block = elsebody.block
+        for idx in range(len(conditions) - 1, 0, -1):
+            cond, block = conditions[idx]
+            else_block = ast.If(cond, block, else_block)
+
+        return BoxAST(ast.If(conditions[0][0], conditions[0][1], else_block))
 
     @pg.production("primary : FOR for_var IN expr_value do compstmt END")
     def primary_for(self, p):

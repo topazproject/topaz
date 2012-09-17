@@ -1807,13 +1807,13 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
-            ]), ast.Block([
-                ast.Statement(ast.If(ast.Send(ast.ConstantInt(4), "==", [ast.ConstantInt(2)], None, ), ast.Block([
+            ]),
+                ast.If(ast.Send(ast.ConstantInt(4), "==", [ast.ConstantInt(2)], None, 5), ast.Block([
                     ast.Statement(ast.ConstantInt(3))
                 ]), ast.Block([
                     ast.Statement(ast.ConstantInt(9))
-                ])))
-            ])))
+                ]))
+            ))
         ]))
         r = space.parse("""
         case
@@ -1832,9 +1832,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.ConstantInt(4), ast.Block([
-                ast.Statement(ast.Variable("nil", -1))
-            ]), ast.Nil()))
+            ast.Statement(ast.If(ast.ConstantInt(4), ast.Nil(), ast.Nil()))
         ]))
 
     def test_and_regexp(self, space):
