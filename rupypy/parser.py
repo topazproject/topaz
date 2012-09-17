@@ -2395,16 +2395,14 @@ class Parser(object):
 
     @pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
     def regexp(self, p):
-        """
-        tREGEXP_BEG xstring_contents tREGEXP_END {
-                    $$ = support.newRegexpNode($1.getPosition(), $2, (RegexpNode) $3);
-                }
-        """
-        n = p[1].getast()
-        if isinstance(n, ast.ConstantString):
-            node = ast.ConstantRegexp(n.strvalue)
+        if p[1] is not None:
+            n = p[1].getast()
+            if isinstance(n, ast.ConstantString):
+                node = ast.ConstantRegexp(n.strvalue)
+            else:
+                node = ast.DynamicRegexp(n)
         else:
-            node = ast.DynamicRegexp(n)
+            node = ast.ConstantRegexp("")
         return BoxAST(node)
 
     @pg.production("words : WORDS_BEG LITERAL_SPACE STRING_END")
