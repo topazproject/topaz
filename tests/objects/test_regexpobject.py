@@ -29,3 +29,20 @@ class TestRegexp(BaseRuPyPyTest):
         return idx1, idx2
         """)
         assert self.unwrap(space, w_res) == [None, 0]
+        
+    def test_equality(self, space):
+        w_res = space.execute("""
+        idx1 = /abc/
+        idx2 = /abc/
+        idx3 = /bca/
+        return idx1 == idx2, idx2 == idx3, idx1.eql? idx2
+        """)
+        assert self.unwrap(space, w_res) == [True, False, True]
+        
+    def test_new_regexp(self, space):
+        w_res = space.execute("""
+        idx1 = Regexp.new("..abc..")
+        idx2 = Regexp.compile("..abc..")
+        return idx1 == idx2
+        """)
+        assert self.unwrap(space, w_res) == True
