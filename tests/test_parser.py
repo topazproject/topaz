@@ -1029,6 +1029,9 @@ HERE
         assert space.parse(":@@abc") == sym("@@abc")
         assert space.parse(":$abc") == sym("$abc")
         assert space.parse(':"@abc"') == sym("@abc")
+        assert space.parse(':"#{2}"') == ast.Main(ast.Block([
+            ast.Statement(ast.Symbol(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]), 1))
+        ]))
 
     def test_range(self, space):
         assert space.parse("2..3") == ast.Main(ast.Block([

@@ -2532,7 +2532,7 @@ class Parser(object):
         if isinstance(node, ast.ConstantString):
             return BoxAST(ast.ConstantSymbol(node.strvalue))
         else:
-            raise NotImplementedError
+            return BoxAST(ast.Symbol(node, p[0].getsourcepos().lineno))
 
     @pg.production("numeric : INTEGER")
     def numeric_integer(self, p):
