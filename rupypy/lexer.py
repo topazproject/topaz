@@ -566,6 +566,7 @@ class Lexer(BaseLexer):
                 tok_name = "STAR"
             else:
                 tok_name = "STAR2"
+            self.set_expression_state()
             yield self.emit(tok_name)
 
     def slash(self, ch, space_seen):
