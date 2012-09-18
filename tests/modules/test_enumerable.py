@@ -120,3 +120,11 @@ class TestEnumberable(BaseRuPyPyTest):
         end
         return A.new.to_a""")
         assert self.unwrap(space, w_res) == [0,1,2,3,4]
+
+    def test_detect(self, space):
+        w_res = space.execute("return (1..10).detect { |i| i == 11 }")
+        assert w_res == space.w_nil
+        w_res = space.execute("return (1..10).detect(-1) { |i| i == 11 }")
+        assert space.int_w(w_res) == -1
+        w_res = space.execute("return (1..10).detect { |i| i == 5 }")
+        assert space.int_w(w_res) == 5

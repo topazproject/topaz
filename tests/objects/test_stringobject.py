@@ -79,6 +79,27 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return ('a' << 'b').clear")
         assert self.unwrap(space, w_res) == ""
 
+    def test_ljust(self, space):
+        w_res = space.execute("""
+        a = 'hi'
+        return a, a.ljust(1)
+        """)
+        w_original, w_adjusted = space.listview(w_res)
+        assert w_original is not w_adjusted
+        assert space.str_w(w_adjusted) == space.str_w(w_original)
+
+        w_res = space.execute("return 'a'.ljust(3)")
+        assert space.str_w(w_res) == "a  "
+
+        w_res = space.execute("return 'a'.ljust(3, 'l')")
+        assert space.str_w(w_res) == "all"
+
+        w_res = space.execute("return 'a'.ljust(5, '-_*')")
+        assert space.str_w(w_res) == "a-_*-"
+
+        with self.raises(space, "ArgumentError", "zero width padding"):
+            space.execute("'hi'.ljust(10, '')")
+
     def test_split(self, space):
         w_res = space.execute("return 'a b c'.split")
         assert self.unwrap(space, w_res) == ["a", "b", "c"]
@@ -99,3 +120,13 @@ class TestStringObject(BaseRuPyPyTest):
         x, y = self.unwrap(space, w_res)
         assert x == "abcdef"
         assert y == "abc"
+
+    def test_to_i(self, space):
+        w_res = space.execute('return "1234".to_i')
+        assert space.int_w(w_res) == 1234
+        w_res = space.execute('return "1010".to_i(2)')
+        assert space.int_w(w_res) == 10
+        w_res = space.execute('return "77".to_i(8)')
+        assert space.int_w(w_res) == 63
+        w_res = space.execute('return "AA".to_i(16)')
+        assert space.int_w(w_res) == 170

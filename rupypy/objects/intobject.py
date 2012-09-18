@@ -32,7 +32,7 @@ class W_FixnumObject(W_RootObject):
         return float(self.intvalue)
 
     def getsingletonclass(self, space):
-        space.raise_(space.getclassfor(W_TypeError), "can't define singleton")
+        raise space.error(space.getclassfor(W_TypeError), "can't define singleton")
 
     def find_instance_var(self, space, name):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
@@ -76,13 +76,12 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("/", other="int")
     def method_div(self, space, other):
         try:
-            return space.newint(self.intvalue / 0)
+            return space.newint(self.intvalue / other)
         except ZeroDivisionError:
-            raise space.raise_(space.getclassfor(W_ZeroDivisionError),
+            raise space.error(space.getclassfor(W_ZeroDivisionError),
                 "divided by 0"
             )
 
-    @classdef.method("===")
     @classdef.method("==")
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_FixnumObject):
@@ -138,7 +137,7 @@ class W_FixnumObject(W_RootObject):
     def next
         succ
     end
-    
+
     def succ
         self + 1
     end

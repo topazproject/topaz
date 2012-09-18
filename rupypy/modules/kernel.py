@@ -5,6 +5,7 @@ from pypy.rlib.rstring import assert_str0
 from rupypy.module import Module, ModuleDef
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.exceptionobject import W_ExceptionObject, W_TypeError, W_RuntimeError
+from rupypy.modules.process import Process
 from rupypy.error import RubyError
 
 
@@ -75,7 +76,7 @@ class Kernel(Module):
             return space.w_false
 
         if not os.path.exists(assert_str0(path)):
-            space.raise_(space.getclassfor(W_LoadError), orig_path)
+            raise space.error(space.getclassfor(W_LoadError), orig_path)
 
         f = open_file_as_stream(path)
         try:
@@ -103,7 +104,9 @@ class Kernel(Module):
             w_exception = w_str_or_exception
 
         if not space.respond_to(w_exception, space.newsymbol("exception")):
-            space.raise_(space.getclassfor(W_TypeError), "exception class/object expected")
+            raise space.error(space.getclassfor(W_TypeError),
+                "exception class/object expected"
+            )
 
         if w_string is not None:
             w_exc = space.send(w_exception, space.newsymbol("exception"), [w_string])
@@ -114,7 +117,9 @@ class Kernel(Module):
             raise NotImplementedError("custom backtrace for Kernel#raise")
 
         if not isinstance(w_exc, W_ExceptionObject):
-            space.raise_(space.getclassfor(W_TypeError), "exception object expected")
+            raise space.error(space.getclassfor(W_TypeError),
+                "exception object expected"
+            )
 
         raise RubyError(w_exc)
 
@@ -122,5 +127,22 @@ class Kernel(Module):
     def method_Array(self, space, w_arg):
         if space.respond_to(w_arg, space.newsymbol("to_ary")):
             return space.send(w_arg, space.newsymbol("to_ary"))
-        else:
+        elif space.respond_to(w_arg, space.newsymbol("to_a")):
             return space.send(w_arg, space.newsymbol("to_a"))
+        else:
+            return space.newarray([w_arg])
+
+    @moduledef.function("exit", status="int")
+    def method_exit(self, space, status=0):
+        return space.send(
+            space.getmoduleobject(Process.moduledef),
+            space.newsymbol("exit"),
+            [space.newint(status)]
+        )
+
+    @moduledef.function("block_given?")
+    @moduledef.function("iterator?")
+    def method_block_givenp(self, space):
+        return space.newbool(
+            space.getexecutioncontext().gettopframe().get_block() is not None
+        )
