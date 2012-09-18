@@ -1209,7 +1209,7 @@ class Parser(object):
 
     @pg.production("arg : primary_value COLON2 CONSTANT OP_ASGN arg")
     def arg_constant_op_asgn_arg(self, p):
-        raise self.error(p[2], "constant re-assignment")
+        raise self.error("constant re-assignment")
 
     @pg.production("arg : COLON3 CONSTANT OP_ASGN arg")
     def arg_unbound_constant_op_asgn_arg(self, p):
@@ -2212,12 +2212,7 @@ class Parser(object):
 
     @pg.production("method_call : primary_value COLON2 operation3")
     def method_call_primary_value_colon_operation(self, p):
-        """
-        primary_value tCOLON2 operation3 {
-                    $$ = support.new_call($1, $3, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], None)
 
     @pg.production("method_call : primary_value DOT paren_args")
     def method_call_primary_value_dot_paren_args(self, p):
@@ -2698,7 +2693,7 @@ class Parser(object):
 
     @pg.production("f_args : f_arg opt_f_block_arg")
     def f_args_f_arg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], p[1])
+        return self.new_args(p[0], block_arg=p[1])
 
     @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def f_args_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2720,12 +2715,7 @@ class Parser(object):
 
     @pg.production("f_args : f_optarg opt_f_block_arg")
     def f_args_f_optarg_opt_f_block_arg(self, p):
-        """
-        f_optarg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, $1, null, null, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(p[0], block_arg=p[1])
 
     @pg.production("f_args : f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2849,12 +2839,7 @@ class Parser(object):
 
     @pg.production("f_optarg : f_optarg LITERAL_COMMA f_opt")
     def f_optarg(self, p):
-        """
-        f_optarg ',' f_opt {
-                    $$ = support.appendToBlock($1, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], p[2])
 
     @pg.production("restarg_mark : STAR")
     @pg.production("restarg_mark : STAR2")

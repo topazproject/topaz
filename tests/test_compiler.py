@@ -1,6 +1,6 @@
 from rupypy import consts
 from rupypy.objects.boolobject import W_TrueObject
-from rupypy.objects.objectobject import W_BaseObject, W_RootObject
+from rupypy.objects.objectobject import W_RootObject
 
 
 class TestCompiler(object):
@@ -1101,23 +1101,14 @@ class TestCompiler(object):
         assert bc.consts_w[0] is space.getclassfor(W_RootObject)
 
     def test_assign_constant(self, space):
-        self.assert_compiles(space, "abc::Constant = 5; abc::Constant += 1", """
+        self.assert_compiles(space, "abc::Constant = 5", """
         LOAD_SELF
         SEND 0 0
         LOAD_CONST 1
         STORE_CONSTANT 2
         DISCARD_TOP
 
-        LOAD_SELF
-        SEND 0 0
-        DUP_TOP
-        LOAD_CONSTANT 2
         LOAD_CONST 3
-        SEND 4 1
-        STORE_CONSTANT 2
-        DISCARD_TOP
-
-        LOAD_CONST 5
         RETURN
         """)
 

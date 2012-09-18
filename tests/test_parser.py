@@ -180,6 +180,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("Integer other") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Variable("other", 1)], None, 1))
         ]))
+        assert space.parse("Module::constant") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Module", 1), "constant", [], None, 1))
+        ]))
 
         with self.raises(space, "SyntaxError"):
             space.parse("2.to_s(:base => 5, 3)")
@@ -1198,6 +1201,12 @@ HERE
         end
         """)
         assert r == function("f", [ast.Argument("a"), ast.Argument("b", ast.ConstantInt(3)), ast.Argument("c")])
+
+        r = space.parse("""
+        def f(a=1, b=2)
+        end
+        """)
+        assert r == function("f", [ast.Argument("a", ast.ConstantInt(1)), ast.Argument("b", ast.ConstantInt(2))])
 
         with self.raises(space, "SyntaxError"):
             space.parse("""
