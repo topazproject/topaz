@@ -2533,7 +2533,7 @@ class Parser(object):
 
     @pg.production("numeric : UMINUS_NUM FLOAT", precedence="LOWEST")
     def numeric_minus_float(self, p):
-        raise NotImplementedError
+        return BoxAST(ast.ConstantFloat(-float(p[1].getstr())))
 
     @pg.production("variable : IDENTIFIER")
     def variable_identifier(self, p):

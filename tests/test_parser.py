@@ -39,6 +39,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("1e1") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(10.0))
         ]))
+        assert space.parse("-1.2") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantFloat(-1.2))
+        ]))
 
     def test_binary_expression(self, space):
         assert space.parse("1+1") == ast.Main(ast.Block([
