@@ -83,30 +83,30 @@ class ObjectSpace(object):
             W_BaseObject, W_Object,
             W_StringObject, W_SymbolObject,
             W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
-        #     W_ArrayObject, W_HashObject,
+            W_ArrayObject, W_HashObject,
             W_IOObject, W_FileObject,
             W_TimeObject,
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError,
             W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
             W_StandardError, W_SystemExit, W_SystemCallError,
-            # W_Random, W_Dir, W_ProcObject
+            W_Random, W_Dir, W_ProcObject
         ]:
             self.add_class(cls)
 
-        # for module in [Math, Comparable, Enumerable, Kernel, Process]:
-        #     self.add_module(module)
+        for module in [Math, Comparable, Enumerable, Kernel, Process]:
+            self.add_module(module)
 
-        # w_load_path = self.newarray([
-        #     self.newstr_fromstr(
-        #         os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
-        #     )
-        # ])
-        # self.globals.set("$LOAD_PATH", w_load_path)
-        # self.globals.set("$:", w_load_path)
+        w_load_path = self.newarray([
+            self.newstr_fromstr(
+                os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
+            )
+        ])
+        self.globals.set("$LOAD_PATH", w_load_path)
+        self.globals.set("$:", w_load_path)
 
-        # w_loaded_features = self.newarray([])
-        # self.globals.set("$LOADED_FEATURES", w_loaded_features)
-        # self.globals.set('$"', w_loaded_features)
+        w_loaded_features = self.newarray([])
+        self.globals.set("$LOADED_FEATURES", w_loaded_features)
+        self.globals.set('$"', w_loaded_features)
 
     def _freeze_(self):
         return True
