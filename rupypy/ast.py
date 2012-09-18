@@ -1243,4 +1243,8 @@ class File(BaseNode):
 
 
 class Line(Node):
-    pass
+    def locate_symbols(self, symtable):
+        pass
+
+    def compile(self, ctx):
+        ConstantInt(self.lineno).compile(ctx)

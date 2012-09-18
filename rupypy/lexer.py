@@ -280,7 +280,7 @@ class Lexer(BaseLexer):
     def emit_identifier(self, token_name="IDENTIFIER"):
         value = "".join(self.current_value)
         state = self.state
-        if value in self.keywords and self.state not in [self.EXPR_DOT, self.EXPR_FNAME]:
+        if value in self.keywords and self.state != self.EXPR_DOT:
             keyword = self.keywords[value]
             self.state = keyword.state
 

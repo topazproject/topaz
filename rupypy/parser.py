@@ -2589,12 +2589,6 @@ class Parser(object):
 
     @pg.production("var_ref : variable")
     def var_ref(self, p):
-        """
-        variable {
-                    $$ = support.gettable($1);
-                }
-        """
-        # TODO: symtable support?
         return p[0]
 
     @pg.production("var_lhs : variable")
