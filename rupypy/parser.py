@@ -473,7 +473,7 @@ class Parser(object):
 
     @pg.production("stmt : command_asgn")
     def stmt_command_assign(self, p):
-        return p[0]
+        return self.new_stmt(p[0])
 
     @pg.production("stmt : mlhs LITERAL_EQUAL command_call")
     def stmt_mlhs_equal_command_call(self, p):
@@ -574,13 +574,10 @@ class Parser(object):
 
     @pg.production("command_asgn : lhs LITERAL_EQUAL command_call")
     def command_asgn_lhs_equal_command_call(self, p):
-        """
-        lhs '=' command_call {
-                    support.checkExpression($3);
-                    $$ = support.node_assign($1, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Assignment(
+            p[0].getast(),
+            p[2].getast()
+        ))
 
     @pg.production("command_asgn : lhs LITERAL_EQUAL command_asgn")
     def command_asgn_lhs_equal_command_asgn(self, p):

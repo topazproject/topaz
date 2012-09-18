@@ -194,6 +194,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("a = b = 3") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.Assignment(ast.Variable("b", 1), ast.ConstantInt(3))))
         ]))
+        assert space.parse("a = method 1") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.Send(ast.Self(1), "method", [ast.ConstantInt(1)], None, 1)))
+        ]))
 
     def test_multi_assignment(self, space):
         assert space.parse("a.x, b[:idx], c::Const, d = 3") == ast.Main(ast.Block([
