@@ -487,6 +487,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("return *3") == ast.Main(ast.Block([
             ast.Return(ast.Splat(ast.ConstantInt(3)))
         ]))
+        assert space.parse("return f 1, 2") == ast.Main(ast.Block([
+            ast.Return(ast.Send(ast.Self(1), "f", [ast.ConstantInt(1), ast.ConstantInt(2)], None, 1))
+        ]))
 
     def test_array(self, space):
         assert space.parse("[]") == ast.Main(ast.Block([

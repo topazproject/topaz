@@ -1381,12 +1381,7 @@ class Parser(object):
 
     @pg.production("call_args : command")
     def call_args_command(self, p):
-        """
-        command {
-                    $$ = support.newArrayNode(support.getPosition($1), $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call_args(p[0])
 
     @pg.production("call_args : args opt_block_arg")
     def call_args_args_opt_block_arg(self, p):
