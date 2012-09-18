@@ -174,13 +174,11 @@ class Lexer(BaseLexer):
                 for token in self.number(ch):
                     yield token
             elif ch == ")":
-                self.add(ch)
-                self.state = self.EXPR_ENDFN
-                yield self.emit("RPAREN")
+                for token in self.right_paren(ch):
+                    yield token
             elif ch == "]":
-                self.add(ch)
-                self.state = self.EXPR_ENDARG
-                yield self.emit("RBRACK")
+                for token in self.right_bracket(ch):
+                    yield token
             elif ch == "}":
                 for token in self.right_brace(ch):
                     yield token
@@ -889,12 +887,20 @@ class Lexer(BaseLexer):
         if self.is_beg():
             tok_name = "LPAREN"
         elif space_seen:
-            tok_name = "LPAREN_ARG"
+            if self.state in [self.EXPR_CMDARG, self.EXPR_ARG]:
+                tok_name = "LPAREN_ARG"
         self.paren_nest += 1
         self.condition_state.stop()
         self.cmd_argument_state.stop()
         self.state = self.EXPR_BEG
         yield self.emit(tok_name)
+
+    def right_paren(self, ch):
+        self.paren_nest -= 1
+        self.condition_state.restart()
+        self.cmd_argument_state.restart()
+        self.state = self.EXPR_ENDFN
+        yield self.emit("RPAREN")
 
     def left_bracket(self, ch, space_seen):
         self.paren_nest += 1
@@ -914,15 +920,24 @@ class Lexer(BaseLexer):
             else:
                 self.unread()
                 yield self.emit("LITERAL_LBRACKET")
-        elif (self.is_beg() or (self.is_arg() and space_seen)):
-            tok = "LBRACK"
         else:
-            tok = "LITERAL_LBRACKET"
+            if (self.is_beg() or (self.is_arg() and space_seen)):
+                tok = "LBRACK"
+            else:
+                tok = "LITERAL_LBRACKET"
 
-        self.state = self.EXPR_BEG
-        self.condition_state.stop()
-        self.cmd_argument_state.stop()
-        yield self.emit(tok)
+            self.state = self.EXPR_BEG
+            self.condition_state.stop()
+            self.cmd_argument_state.stop()
+            yield self.emit(tok)
+
+    def right_bracket(self, ch):
+        self.add(ch)
+        self.paren_nest -= 1
+        self.condition_state.restart()
+        self.cmd_argument_state.restart()
+        self.state = self.EXPR_ENDARG
+        yield self.emit("RBRACK")
 
     def left_brace(self, ch):
         self.add(ch)
