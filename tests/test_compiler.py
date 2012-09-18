@@ -956,10 +956,10 @@ class TestCompiler(object):
         self.assert_compiled(bc.consts_w[3], """
         LOAD_DEREF 0
         LOAD_DEREF 1
+        SEND 0 1
         LOAD_DEREF 2
+        SEND 0 1
         LOAD_LOCAL 0
-        SEND 0 1
-        SEND 0 1
         SEND 0 1
         RETURN
         """)
