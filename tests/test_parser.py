@@ -469,20 +469,20 @@ class TestParser(BaseRuPyPyTest):
 
     def test_return(self, space):
         assert space.parse("return 4") == ast.Main(ast.Block([
-            ast.Statement(ast.Return(ast.ConstantInt(4)))
+            ast.Return(ast.ConstantInt(4))
         ]))
         assert space.parse("return") == ast.Main(ast.Block([
-            ast.Statement(ast.Return(ast.Nil()))
+            ast.Return(ast.Nil())
         ]))
         assert space.parse("return 3, 4, 5") == ast.Main(ast.Block([
-            ast.Statement(ast.Return(ast.Array([
+            ast.Return(ast.Array([
                 ast.ConstantInt(3),
                 ast.ConstantInt(4),
                 ast.ConstantInt(5),
-            ])))
+            ]))
         ]))
         assert space.parse("return *3") == ast.Main(ast.Block([
-            ast.Statement(ast.Return(ast.Splat(ast.ConstantInt(3))))
+            ast.Return(ast.Splat(ast.ConstantInt(3)))
         ]))
 
     def test_array(self, space):
@@ -1124,7 +1124,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.Send(ast.ConstantInt(1), "==", [ast.ConstantInt(2)], None, 2), ast.Nil(), ast.Block([
-                ast.Statement(ast.Return(ast.ConstantInt(4)))
+                ast.Return(ast.ConstantInt(4))
             ])))
         ]))
 
@@ -1628,7 +1628,7 @@ HERE
     def test_inline_if(self, space):
         assert space.parse("return 5 if 3") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
-                ast.Statement(ast.Return(ast.ConstantInt(5)))
+                ast.Return(ast.ConstantInt(5))
             ]), ast.Nil()))
         ]))
 
@@ -1636,7 +1636,7 @@ HERE
         assert space.parse("return 5 unless 3") == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3),
                 ast.Nil(),
-                ast.Block([ast.Statement(ast.Return(ast.ConstantInt(5)))]),
+                ast.Block([ast.Return(ast.ConstantInt(5))]),
             ))
         ]))
 
@@ -1670,7 +1670,7 @@ HERE
             ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 1), ast.ConstantInt(3)),
                 ast.Nil(),
                 ast.Block([
-                    ast.Statement(ast.Return(ast.Nil())),
+                    ast.Return(ast.Nil()),
                 ])
             ))
         ]))
@@ -1684,7 +1684,7 @@ HERE
                 ast.Statement(ast.If(ast.Assignment(ast.Variable("x", 3), ast.ConstantInt(3)),
                     ast.Nil(),
                     ast.Block([
-                        ast.Statement(ast.Return(ast.Nil()))
+                        ast.Return(ast.Nil())
                     ])
                 ))
             ])))

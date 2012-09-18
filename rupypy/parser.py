@@ -37,7 +37,9 @@ class Parser(object):
         return self._new_stmt(box.getast())
 
     def _new_stmt(self, node):
-        return BoxAST(ast.Statement(node))
+        if not isinstance(node, ast.BaseStatement):
+            node = ast.Statement(node)
+        return BoxAST(node)
 
     def new_augmented_assignment(self, op, lhs, rhs):
         op = op.getstr()[:-1]
