@@ -455,6 +455,11 @@ class When(Node):
         self.conds = conds
         self.block = block
 
+    def locate_symbols(self, symtable):
+        for cond in self.conds:
+            cond.locate_symbols(symtable)
+        self.block.locate_symbols(symtable)
+
 
 class Return(BaseStatement):
     def __init__(self, expr):
