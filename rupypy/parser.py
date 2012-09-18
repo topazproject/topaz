@@ -16,8 +16,8 @@ class Parser(object):
         # TODO: this should use a real SourcePosition
         return ParsingError(msg, SourcePosition(-1, -1, -1))
 
-    def new_token(self, orig, name):
-        return Token(name, name, orig.getsourcepos())
+    def new_token(self, orig, name, value):
+        return Token(name, value, orig.getsourcepos())
 
     def new_list(self, box=None):
         if box is None:
@@ -603,7 +603,7 @@ class Parser(object):
 
     @pg.production("expr : NOT opt_nl expr")
     def expr_not(self, p):
-        return self.new_call(p[2], self.new_token(p[0], "!"), None)
+        return self.new_call(p[2], self.new_token(p[0], "!", "!"), None)
 
     @pg.production("expr : BANG command_call")
     def expr_bang_command_call(self, p):
@@ -2242,7 +2242,7 @@ class Parser(object):
 
     @pg.production("method_call : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
-        return self.new_call(p[0], self.new_token(p[1], "[]"), p[2])
+        return self.new_call(p[0], self.new_token(p[1], "[]", "[]"), p[2])
 
     @pg.production("brace_block : LCURLY opt_block_param compstmt RCURLY")
     def brace_block_curly(self, p):
@@ -2363,7 +2363,7 @@ class Parser(object):
 
     @pg.production("xstring : XSTRING_BEG xstring_contents STRING_END")
     def xstring(self, p):
-        return self.new_fcall(self.new_token(p[0], "`"), self.new_call_args(p[1]))
+        return self.new_fcall(self.new_token(p[0], "`", "`"), self.new_call_args(p[1]))
 
     @pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
     def regexp(self, p):
@@ -2659,12 +2659,11 @@ class Parser(object):
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
-        """
-        f_arg ',' f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(
+            p[0],
+            splat_arg=p[2],
+            block_arg=p[3],
+        )
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def f_args_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2836,12 +2835,7 @@ class Parser(object):
 
     @pg.production("f_rest_arg : restarg_mark")
     def f_rest_arg_restarg_mark(self, p):
-        """
-        restarg_mark {
-                    $$ = new UnnamedRestArgNode($1.getPosition(), "", support.getCurrentScope().addVariable("*"));
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_token(p[0], "IDENTIFIER", "")
 
     @pg.production("blkarg_mark : AMPER")
     @pg.production("blkarg_mark : AMPER2")

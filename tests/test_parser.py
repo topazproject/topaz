@@ -1601,6 +1601,11 @@ HERE
             ast.Statement(ast.Function(None, "f", [], "args", "g", ast.Nil()))
         ]))
 
+        r = space.parse("def f(a, *) end")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a")], "", None, ast.Nil()))
+        ]))
+
         with self.raises(space, "SyntaxError"):
             space.parse("def f(*args, g=5)")
 
