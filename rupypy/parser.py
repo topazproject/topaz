@@ -1173,13 +1173,11 @@ class Parser(object):
 
     @pg.production("arg : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN arg")
     def arg_subscript_op_asgn_arg(self, p):
-        """
-        primary_value '[' opt_call_args rbracket tOP_ASGN arg {
-  // FIXME: arg_concat missing for opt_call_args
-                    $$ = support.new_opElementAsgnNode(support.getPosition($1), $1, (String) $5.getValue(), $3, $6);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_augmented_assignment(
+            p[4],
+            BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno)),
+            p[5],
+        )
 
     @pg.production("arg : primary_value DOT IDENTIFIER OP_ASGN arg")
     def arg_method_op_asgn_arg(self, p):

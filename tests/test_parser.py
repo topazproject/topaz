@@ -1078,6 +1078,10 @@ HERE
             ast.Statement(ast.AugmentedAssignment("+", ast.InstanceVariable("@a"), ast.ConstantInt(3)))
         ]))
 
+        assert space.parse("self[1] += 2") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("+", ast.Subscript(ast.Self(1), [ast.ConstantInt(1)], 1), ast.ConstantInt(2)))
+        ]))
+
         assert space.parse("x /= 2") == ast.Main(ast.Block([
             ast.Statement(ast.AugmentedAssignment("/", ast.Variable("x", 1), ast.ConstantInt(2)))
         ]))
