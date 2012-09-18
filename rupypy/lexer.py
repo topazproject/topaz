@@ -522,7 +522,7 @@ class Lexer(BaseLexer):
             else:
                 self.unread()
                 yield self.emit("MINUS")
-        if ch2 == "=":
+        elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")

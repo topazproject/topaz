@@ -676,6 +676,7 @@ class TestParser(BaseRuPyPyTest):
         test_name("==")
         test_name("=~")
         test_name("<<")
+        test_name("-")
 
     def test_string(self, space):
         assert space.parse('"abc"') == ast.Main(ast.Block([
