@@ -79,16 +79,16 @@ class Match(object):
 class CConfig:
     includes = ["oniguruma.h", "rffi_helper.h"]
 
-    onig_lib_path = os.getcwd() + "/rupypy/utils/re/onig-5.9.2/.libs"
-    onig_path = os.getcwd() + "/rupypy/utils/re/onig-5.9.2" 
+    onig_lib_path = os.getcwd() + "/rupypy/utils/re/onig/.libs"
+    onig_path = os.getcwd() + "/rupypy/utils/re/onig" 
 
     if not os.path.exists(onig_lib_path):
-	#trigger a build of the oniguruma lib
-	old_dir = os.getcwd()
-	os.chdir(onig_path)
-	os.system("/bin/bash ./configure")
-	os.system("make")
-	os.chdir(old_dir)
+    	#trigger a build of the oniguruma lib
+    	old_dir = os.getcwd()
+    	os.chdir(onig_path)
+    	os.system("/bin/bash ./configure")
+    	os.system("make")
+    	os.chdir(old_dir)
 
     eci = ExternalCompilationInfo(
             includes=includes,
