@@ -428,6 +428,11 @@ class Lexer(BaseLexer):
         if ch in "!@&+`'=~/\\,.;<>_*\"$:?":
             self.add(ch)
             yield self.emit("GLOBAL")
+        elif ch == "-":
+            if self.peek().isalnum():
+                self.add(ch)
+                self.add(self.read())
+            yield self.emit("GLOBAL")
         else:
             self.unread()
             while True:
