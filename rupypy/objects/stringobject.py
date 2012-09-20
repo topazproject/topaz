@@ -12,6 +12,34 @@ class StringStrategy(object):
     def __init__(self, space):
         pass
 
+# not unicode compatible
+def expand(source, res_len, inv=False):
+    # check the source for range definitions
+    # and insert the missing characters
+    expanded_source = ""
+    char = ""
+    for i in range(res_len):
+        if i < len(source):
+            char = source[i]
+        if char == "-":
+            # expand the range
+            assert 0 < i < len(source)-1
+            range_beg = ord(source[i - 1])
+            range_end = ord(source[i + 1])
+            for j in range(range_beg + 1, range_end - 1):
+                expanded_source += chr(j)
+        else:
+            expanded_source += char      
+    
+    if inv:
+        inverted_source = ""
+        # invert the source
+        for i in range(256):
+            if chr(i) not in expanded_source:
+                inverted_source += chr(i)
+        return inverted_source
+    
+    return expanded_source
 
 class ConstantStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("constant")
@@ -120,6 +148,39 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         self.strategy.clear(self)
 
+    def tr_trans(self, space, source, replacement, squeeze):
+        change_made = False
+        string = space.str_w(self)
+        new_string = "" 
+        is_negative_set = len(source) > 1 and source[0] == "^"
+        if is_negative_set:
+            source = source[1:]
+        
+        source = expand(source, len(source), is_negative_set)
+        replacement = expand(replacement, len(source))
+        
+        if squeeze:
+            last_repl = ""
+            for i in range(len(string)):
+                if string[i] in source:
+                    change_made = True
+                    repl = replacement[source.rfind(string[i])]
+                    if last_repl == repl:
+                        continue
+                    last_repl = repl
+                    new_string += repl
+                else:
+                    new_string += string[i]
+        else:
+            for i in range(len(string)):
+                if string[i] in source:
+                    change_made = True
+                    new_string += replacement[source.rfind(string[i])]
+                else:
+                    new_string += string[i]
+            
+        return new_string if change_made else ""
+
     @classdef.method("to_str")
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -219,3 +280,27 @@ class W_StringObject(W_Object):
     @classdef.method("to_i", radix="int")
     def method_to_i(self, space, radix=10):
         return space.newint(int(space.str_w(self), radix))
+        
+    @classdef.method("tr", source="str", replacement="str")
+    def method_tr(self, space, source, replacement):
+        string = self.copy(space)
+        new_string = self.tr_trans(space, source, replacement, False)
+        return space.newstr_fromstr(new_string) if new_string else string
+    
+    @classdef.method("tr!", source="str", replacement="str")
+    def method_tr_i(self, space, source, replacement):
+        new_string = self.tr_trans(space, source, replacement, False)
+        return space.newstr_fromstr(new_string) if new_string else space.w_nil
+        
+    @classdef.method("tr_s", source="str", replacement="str")
+    def method_tr_s(self, space, source, replacement):
+        string = self.copy(space)
+        new_string = self.tr_trans(space, source, replacement, True)
+        return space.newstr_fromstr(new_string) if new_string else string
+        
+    @classdef.method("tr_s!", source="str", replacement="str")
+    def method_tr_s_i(self, space, source, replacement):
+        new_string = self.tr_trans(space, source, replacement, True)
+        return space.newstr_fromstr(new_string) if new_string else space.w_nil
+
+        
