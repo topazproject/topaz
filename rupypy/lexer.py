@@ -99,6 +99,7 @@ class Lexer(BaseLexer):
         self.state = self.EXPR_BEG
         self.paren_nest = 0
         self.left_paren_begin = 0
+        self.command_start = True
         self.condition_state = StackState()
         self.cmd_argument_state = StackState()
         self.str_term = None
@@ -114,6 +115,8 @@ class Lexer(BaseLexer):
                 yield tok
                 continue
 
+            command_state = self.command_start
+            self.command_start = False
             ch = self.read()
             if ch == self.EOF:
                 break
@@ -126,6 +129,7 @@ class Lexer(BaseLexer):
                 space_seen = True
                 if self.state != self.EXPR_BEG:
                     self.add(ch)
+                    self.command_start = True
                     yield self.emit("LITERAL_NEWLINE")
                 self.lineno += 1
                 self.columno = 1
@@ -234,7 +238,7 @@ class Lexer(BaseLexer):
                 for token in self.backtick(ch):
                     yield token
             else:
-                for token in self.identifier(ch):
+                for token in self.identifier(ch, command_state):
                     yield token
             space_seen = False
 
@@ -275,7 +279,7 @@ class Lexer(BaseLexer):
         else:
             self.state = self.EXPR_BEG
 
-    def emit_identifier(self, token_name="IDENTIFIER"):
+    def emit_identifier(self, command_state, token_name="IDENTIFIER"):
         value = "".join(self.current_value)
         state = self.state
         if value in self.keywords and self.state != self.EXPR_DOT:
@@ -297,7 +301,10 @@ class Lexer(BaseLexer):
             else:
                 token = self.emit(token_name)
             if self.is_beg() or self.state == self.EXPR_DOT or self.is_arg():
-                self.state = self.EXPR_ARG
+                if command_state:
+                    self.state = self.EXPR_CMDARG
+                else:
+                    self.state = self.EXPR_ARG
             elif self.state == self.EXPR_ENDFN:
                 self.state = self.EXPR_ENDFN
             else:
@@ -328,23 +335,23 @@ class Lexer(BaseLexer):
                 self.unread()
                 break
 
-    def identifier(self, ch):
+    def identifier(self, ch, command_state):
         self.add(ch)
         while True:
             ch = self.read()
             if ch == self.EOF:
-                yield self.emit_identifier()
+                yield self.emit_identifier(command_state)
                 self.unread()
                 break
             if ch in "!?" or (ch == "=" and self.state == self.EXPR_FNAME):
                 self.add(ch)
-                yield self.emit_identifier("FID")
+                yield self.emit_identifier(command_state, "FID")
                 break
             elif ch.isalnum() or ch == "_":
                 self.add(ch)
             else:
                 self.unread()
-                yield self.emit_identifier()
+                yield self.emit_identifier(command_state)
                 break
 
     def number(self, ch):

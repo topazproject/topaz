@@ -2164,7 +2164,7 @@ class Parser(object):
     def block_call_command_do_block(self, p):
         return self.combine_send_block(p[0], p[1])
 
-    @pg.production("block_arg : block_call DOT operation2 opt_paren_args")
+    @pg.production("block_call : block_call DOT operation2 opt_paren_args")
     def block_call_dot_operation_opt_paren_args(self, p):
         """
         block_call tDOT operation2 opt_paren_args {
