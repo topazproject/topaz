@@ -50,6 +50,12 @@ class TestStringObject(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 0
 
+    def test_match(self, space):
+        w_res = space.execute("return 'abc' =~ 1")
+        assert w_res == space.w_nil
+        w_res = space.execute("return 'abc' =~ /abc/")
+        assert space.int_w(w_res) == 0
+
     def test_hash(self, space):
         w_res = space.execute("""
         return ['abc'.hash, ('a' << 'b' << 'c').hash]
@@ -124,3 +130,26 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.int_w(w_res) == 63
         w_res = space.execute('return "AA".to_i(16)')
         assert space.int_w(w_res) == 170
+        
+    def test_tr(self, space):
+        w_res = space.execute("return 'hello'.tr('el', 'ip')")
+        assert space.str_w(w_res) == "hippo"
+        w_res = space.execute("return 'hello'.tr('aeiou', '*')")
+        assert space.str_w(w_res) == "h*ll*"
+        w_res = space.execute("return 'hello'.tr('a-y', 'b-z')")
+        assert space.str_w(w_res) == "ifmmp"
+        w_res = space.execute("return 'hello'.tr('^aieou', '*')")
+        assert space.str_w(w_res) == "*e**o"
+        w_res = space.execute("return 'hello'.tr!('','').nil?")
+        assert self.unwrap(space, w_res) is True
+        
+    def test_tr_s(self, space):
+        w_res = space.execute("return 'hello'.tr_s('l', 'r')")
+        assert space.str_w(w_res) == "hero"
+        w_res = space.execute("return 'hello'.tr_s('el', '*')")
+        assert space.str_w(w_res) == "h*o"
+        w_res = space.execute("return 'hello'.tr_s('el', 'hx')")
+        assert space.str_w(w_res) == "hhxo"
+        w_res = space.execute("return 'hello'.tr_s!('','').nil?")
+        assert self.unwrap(space, w_res) is True
+        
