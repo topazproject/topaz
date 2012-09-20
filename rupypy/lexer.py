@@ -1126,6 +1126,7 @@ class StringTerm(BaseStringTerm):
                     self.lexer.unread()
                     self.lexer.unread()
                     break
+                self.lexer.add(ch)
                 self.lexer.unread()
             elif ch == "\\":
                 escaped_char = self.lexer.read_escape()
