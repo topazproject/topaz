@@ -136,6 +136,12 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.str_w(w_res) == "*e**o"
         w_res = space.execute("return 'hello'.tr!('','').nil?")
         assert self.unwrap(space, w_res) is True
+        w_res = space.execute("""
+            s = 'hello'
+            s.tr!('e', 'a')
+            return s
+        """)
+        assert space.str_w(w_res) == "hallo"
         
     def test_tr_s(self, space):
         w_res = space.execute("return 'hello'.tr_s('l', 'r')")
@@ -143,6 +149,12 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'hello'.tr_s('el', '*')")
         assert space.str_w(w_res) == "h*o"
         w_res = space.execute("return 'hello'.tr_s('el', 'hx')")
+        assert space.str_w(w_res) == "hhxo"
+        w_res = space.execute("""
+            s = 'hello'
+            s.tr_s!('el', 'hx')
+            return s
+        """)
         assert space.str_w(w_res) == "hhxo"
         w_res = space.execute("return 'hello'.tr_s!('','').nil?")
         assert self.unwrap(space, w_res) is True

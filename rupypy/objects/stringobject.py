@@ -12,7 +12,18 @@ class StringStrategy(object):
     def __init__(self, space):
         pass
 
-# not unicode compatible
+def create_trans_table(source, replacement, inv=False):
+    source = expand(source, len(source), inv)
+    replacement = expand(replacement, len(source))
+    table = []
+    for i in range(256):
+        idx = source.rfind(chr(i))
+        if idx != -1:
+            table.append(replacement[idx])
+        else:
+            table.append(chr(i))
+    return table
+
 def expand(source, res_len, inv=False):
     # check the source for range definitions
     # and insert the missing characters
@@ -136,6 +147,11 @@ class W_StringObject(W_Object):
 
     def copy(self, space):
         return self.strategy.copy(space, self.str_storage)
+        
+    def replace(self, space, new_str):
+        strategy = space.fromcache(ConstantStringStrategy)
+        self.str_storage = strategy.erase(new_str)
+        self.strategy = strategy
 
     def extend(self, space, w_other):
         self.strategy.to_mutable(space, self)
@@ -156,28 +172,25 @@ class W_StringObject(W_Object):
         if is_negative_set:
             source = source[1:]
         
-        source = expand(source, len(source), is_negative_set)
-        replacement = expand(replacement, len(source))
+        trans_table = create_trans_table(source, replacement, is_negative_set)
         
         if squeeze:
             last_repl = ""
-            for i in range(len(string)):
-                if string[i] in source:
-                    change_made = True
-                    repl = replacement[source.rfind(string[i])]
-                    if last_repl == repl:
-                        continue
+            for char in string:
+                repl = trans_table[ord(char)]
+                if last_repl == repl:
+                    continue
+                if repl != char:
                     last_repl = repl
-                    new_string += repl
-                else:
-                    new_string += string[i]
+                    if not change_made:
+                        change_made = True
+                new_string += repl
         else:
-            for i in range(len(string)):
-                if string[i] in source:
+            for char in string:
+                repl = trans_table[ord(char)]
+                if not change_made and repl != char:
                     change_made = True
-                    new_string += replacement[source.rfind(string[i])]
-                else:
-                    new_string += string[i]
+                new_string += repl
             
         return new_string if change_made else ""
 
@@ -286,7 +299,8 @@ class W_StringObject(W_Object):
     @classdef.method("tr!", source="str", replacement="str")
     def method_tr_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, False)
-        return space.newstr_fromstr(new_string) if new_string else space.w_nil
+        self.replace(space, new_string)
+        return self if new_string else space.w_nil
         
     @classdef.method("tr_s", source="str", replacement="str")
     def method_tr_s(self, space, source, replacement):
@@ -297,6 +311,7 @@ class W_StringObject(W_Object):
     @classdef.method("tr_s!", source="str", replacement="str")
     def method_tr_s_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, True)
-        return space.newstr_fromstr(new_string) if new_string else space.w_nil
+        self.replace(space, new_string)
+        return self if new_string else space.w_nil
 
         
