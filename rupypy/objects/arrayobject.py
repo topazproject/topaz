@@ -187,3 +187,7 @@ class W_ArrayObject(W_Object):
             return space.w_nil
         else:
             return self.items_w[len(self.items_w) - 1]
+
+    @classdef.method("to_ary")
+    def method_to_ary(self, space):
+        return self

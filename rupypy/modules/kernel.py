@@ -4,7 +4,10 @@ from pypy.rlib.rstring import assert_str0
 
 from rupypy.module import Module, ModuleDef
 from rupypy.objects.stringobject import W_StringObject
-from rupypy.objects.exceptionobject import W_ExceptionObject, W_TypeError, W_RuntimeError
+from rupypy.objects.arrayobject import W_ArrayObject
+from rupypy.objects.hashobject import W_HashObject
+from rupypy.objects.exceptionobject import (W_NotImplementedError, W_ExceptionObject,
+    W_TypeError, W_RuntimeError)
 from rupypy.modules.process import Process
 from rupypy.error import RubyError
 
@@ -146,3 +149,35 @@ class Kernel(Module):
         return space.newbool(
             space.getexecutioncontext().gettopframe().get_block() is not None
         )
+
+    @moduledef.function("exec")
+    def method_exec(self, space, args_w):
+        if len(args_w) > 1 and space.respond_to(args_w[0], space.newsymbol("to_hash")):
+            raise space.error(space.getclassfor(W_NotImplementedError), "exec with environment")
+
+        if len(args_w) > 1 and space.respond_to(args_w[-1], space.newsymbol("to_hash")):
+            raise space.error(space.getclassfor(W_NotImplementedError), "exec with options")
+
+        if space.respond_to(args_w[0], space.newsymbol("to_ary")):
+            w_cmd = space.convert_type(args_w[0], space.getclassfor(W_ArrayObject), "to_ary")
+            cmd, argv0 = [
+                space.str_w(space.convert_type(
+                    w_e, space.getclassfor(W_StringObject), "to_str"
+                )) for w_e in space.listview(w_cmd)
+            ]
+        else:
+            w_cmd = space.convert_type(args_w[0], space.getclassfor(W_StringObject), "to_str")
+            cmd = space.str_w(w_cmd)
+            argv0 = None
+
+        if len(args_w) > 1 or argv0 is not None:
+            args = [argv0 or os.path.basename(cmd)]
+            args += [
+                space.str_w(space.convert_type(
+                    w_arg, space.getclassfor(W_StringObject), "to_str"
+                )) for w_arg in args_w[1:]
+            ]
+            os.execvp(cmd, args)
+        else:
+            shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
+            os.execlp(shell, os.path.basename(shell), "-c", cmd)
