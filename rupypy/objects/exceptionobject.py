@@ -100,6 +100,11 @@ class W_SyntaxError(W_ScriptError):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_NotImplementedError(W_ScriptError):
+    classdef = ClassDef("NotImplementedError", W_ScriptError.classdef)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_ArgumentError(W_StandardError):
     classdef = ClassDef("ArgumentError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
