@@ -2623,6 +2623,7 @@ class Parser(object):
 
     @pg.production("variable : __ENCODING__")
     def variable__encoding__(self, p):
+        raise NotImplementedError(p)
         return BoxAST(ast.Encoding())
 
     @pg.production("var_ref : variable")
