@@ -2777,19 +2777,19 @@ class Parser(object):
 
     @pg.production("f_bad_arg : CONSTANT")
     def f_bad_arg_constant(self, p):
-        raise self.error(p[0], "formal argument cannot be a constant")
+        raise self.error("formal argument cannot be a constant")
 
     @pg.production("f_bad_arg : IVAR")
     def f_bad_arg_ivar(self, p):
-        raise self.error(p[0], "formal argument cannot be an instance variable")
+        raise self.error("formal argument cannot be an instance variable")
 
     @pg.production("f_bad_arg : GVAR")
     def f_bad_arg_gvar(self, p):
-        raise self.error(p[0], "formal argument cannot be a global variable")
+        raise self.error("formal argument cannot be a global variable")
 
     @pg.production("f_bad_arg : CVAR")
     def f_bad_arg_cvar(self, p):
-        raise self.error(p[0], "formal argument cannot be a class variable")
+        raise self.error("formal argument cannot be a class variable")
 
     @pg.production("f_norm_arg : f_bad_arg")
     def f_norm_arg_f_bad_arg(self, p):
