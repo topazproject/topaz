@@ -621,7 +621,7 @@ class Parser(object):
 
     @pg.production("expr : BANG command_call")
     def expr_bang_command_call(self, p):
-        return BoxAST(ast.Not(p[2].getast()))
+        raise NotImplementedError(p)
 
     @pg.production("expr : arg")
     def expr_arg(self, p):
