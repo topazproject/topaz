@@ -1222,7 +1222,7 @@ class Parser(object):
 
     @pg.production("arg : COLON3 CONSTANT OP_ASGN arg")
     def arg_unbound_constant_op_asgn_arg(self, p):
-        raise self.error(p[2], "constant re-assignment")
+        raise self.error("constant re-assignment")
 
     @pg.production("arg : backref OP_ASGN arg")
     def arg_backref_op_asgn_arg(self, p):
