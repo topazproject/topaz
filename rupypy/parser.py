@@ -966,7 +966,7 @@ class Parser(object):
 
     @pg.production("cname : IDENTIFIER")
     def cname_identifier(self, p):
-        raise self.error(p[0], "class/module name must be CONSTANT")
+        raise self.error("class/module name must be CONSTANT")
 
     @pg.production("cname : CONSTANT")
     def cname_constant(self, p):
