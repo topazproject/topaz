@@ -2,6 +2,7 @@ from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
 
 from rupypy import ast
+from rupypy.astcompiler import SymbolTable, BlockSymbolTable
 
 
 class Parser(object):
@@ -15,6 +16,17 @@ class Parser(object):
     def error(self, msg):
         # TODO: this should use a real SourcePosition
         return ParsingError(msg, SourcePosition(-1, -1, -1))
+
+    def push_local_scope(self):
+        self.lexer.symtable = SymbolTable(self.lexer.symtable)
+
+    def push_block_scope(self):
+        self.lexer.symtable = BlockSymbolTable(self.lexer.symtable)
+
+    def save_and_pop_scope(self, node):
+        child_symtable = self.lexer.symtable
+        child_symtable.parent_symtable.add_subscope(node, child_symtable)
+        self.lexer.symtable = child_symtable.parent_symtable
 
     def new_token(self, orig, name, value):
         return Token(name, value, orig.getsourcepos())
@@ -59,6 +71,8 @@ class Parser(object):
             raise self.error("Can't assign to __FILE__")
         elif isinstance(node, ast.Line):
             raise self.error("Can't assign to __LINE__")
+        elif isinstance(node, ast.Variable):
+            self.lexer.symtable.declare_write(node.name)
         return box
 
     def new_binary_call(self, lhs, op, rhs):
@@ -1698,47 +1712,61 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("primary : CLASS cpath superclass bodystmt END")
+    @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
-        return BoxAST(ast.Class(
+        node = ast.Class(
             p[1].getstr(),
             p[2].getast() if p[2] is not None else None,
-            p[3].getast(),
-        ))
-
-    @pg.production("primary : CLASS LSHFT expr term bodystmt END")
-    def primary_singleton_class(self, p):
-        return BoxAST(ast.SingletonClass(
-            p[2].getast(),
             p[4].getast(),
+        )
+        self.save_and_pop_scope(node)
+        return BoxAST(node)
+
+    @pg.production("push_local_scope : ")
+    def push_local_scope_prod(self, p):
+        self.push_local_scope()
+
+    @pg.production("primary : CLASS LSHFT expr term push_local_scope bodystmt END")
+    def primary_singleton_class(self, p):
+        node = ast.SingletonClass(
+            p[2].getast(),
+            p[5].getast(),
             p[0].getsourcepos().lineno
-        ))
+        )
+        self.save_and_pop_scope(node)
+        return BoxAST(node)
 
-    @pg.production("primary : MODULE cpath bodystmt END")
+    @pg.production("primary : MODULE cpath push_local_scope bodystmt END")
     def primary_module(self, p):
-        return BoxAST(ast.Module(p[1].getstr(), p[2].getast()))
+        node = ast.Module(p[1].getstr(), p[3].getast())
+        self.save_and_pop_scope(node)
+        return BoxAST(node)
 
-    @pg.production("primary : DEF fname f_arglist bodystmt END")
+    @pg.production("primary : DEF fname push_local_scope f_arglist bodystmt END")
     def primary_def(self, p):
-        return BoxAST(ast.Function(
+        node = ast.Function(
             None,
             p[1].getstr(),
-            p[2].getargs(),
-            p[2].getsplatarg(),
-            p[2].getblockarg(),
-            p[3].getast()
-        ))
+            p[3].getargs(),
+            p[3].getsplatarg(),
+            p[3].getblockarg(),
+            p[4].getast()
+        )
+        self.save_and_pop_scope(node)
+        return BoxAST(node)
 
-    @pg.production("primary : DEF singleton dot_or_colon singleton_method_post_dot_colon fname singleton_method_post_fname f_arglist bodystmt END")
+    @pg.production("primary : DEF singleton dot_or_colon singleton_method_post_dot_colon fname push_local_scope singleton_method_post_fname f_arglist bodystmt END")
     def primary_def_singleton(self, p):
-        return BoxAST(ast.Function(
+        node = ast.Function(
             p[1].getast(),
             p[4].getstr(),
-            p[6].getargs(),
-            p[6].getsplatarg(),
-            p[6].getblockarg(),
-            p[7].getast(),
-        ))
+            p[7].getargs(),
+            p[7].getsplatarg(),
+            p[7].getblockarg(),
+            p[8].getast(),
+        )
+        self.save_and_pop_scope(node)
+        return BoxAST(node)
 
     @pg.production("singleton_method_post_dot_colon : ")
     def singleton_method_post_dot_colon(self, p):
@@ -2126,7 +2154,7 @@ class Parser(object):
         return None
 
     @pg.production("lambda : f_larglist lambda_body")
-    def lambda_p(self, p):
+    def lambda_prod(self, p):
         """
         /* none */  {
                     support.pushBlockScope();
@@ -2156,9 +2184,15 @@ class Parser(object):
     def lambda_body_do(self, p):
         return p[1]
 
-    @pg.production("do_block : DO_BLOCK opt_block_param compstmt END")
+    @pg.production("do_block : DO_BLOCK push_block_scope opt_block_param compstmt END")
     def do_block(self, p):
-        return self.new_send_block(p[1], p[2])
+        box = self.new_send_block(p[1], p[3])
+        self.save_and_pop_scope(box.getast())
+        return box
+
+    @pg.production("push_block_scope : ")
+    def push_block_scope_prod(self, p):
+        self.push_block_scope()
 
     @pg.production("block_call : command do_block")
     def block_call_command_do_block(self, p):
@@ -2244,13 +2278,17 @@ class Parser(object):
     def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
         return self.new_call(p[0], self.new_token(p[1], "[]", "[]"), p[2])
 
-    @pg.production("brace_block : LCURLY opt_block_param compstmt RCURLY")
+    @pg.production("brace_block : LCURLY push_block_scope opt_block_param compstmt RCURLY")
     def brace_block_curly(self, p):
-        return self.new_send_block(p[1], p[2])
+        box = self.new_send_block(p[2], p[3])
+        self.save_and_pop_scope(box.getast())
+        return box
 
-    @pg.production("brace_block : DO opt_block_param compstmt END")
+    @pg.production("brace_block : DO push_block_scope opt_block_param compstmt END")
     def brace_block_do(self, p):
-        return self.new_send_block(p[1], p[2])
+        box = self.new_send_block(p[2], p[3])
+        self.save_and_pop_scope(box.getast())
+        return box
 
     @pg.production("case_body : WHEN args then compstmt cases")
     def case_body(self, p):
@@ -2569,11 +2607,11 @@ class Parser(object):
 
     @pg.production("variable : TRUE")
     def variable_true(self, p):
-        return BoxAST(ast.ConstantBoolean(True))
+        return BoxAST(ast.ConstantBool(True))
 
     @pg.production("variable : FALSE")
     def variable_false(self, p):
-        return BoxAST(ast.ConstantBoolean(False))
+        return BoxAST(ast.ConstantBool(False))
 
     @pg.production("variable : __FILE__")
     def variable__file__(self, p):
@@ -2589,7 +2627,15 @@ class Parser(object):
 
     @pg.production("var_ref : variable")
     def var_ref(self, p):
-        return p[0]
+        node = p[0].getast()
+        if isinstance(node, ast.Variable):
+            if self.lexer.symtable.is_defined(node.name):
+                self.lexer.symtable.declare_read(node.name)
+                return p[0]
+            else:
+                return BoxAST(ast.Send(ast.Self(node.lineno), node.name, [], None, node.lineno))
+        else:
+            return p[0]
 
     @pg.production("var_lhs : variable")
     def var_lhs(self, p):
@@ -2754,6 +2800,7 @@ class Parser(object):
 
     @pg.production("f_arg_item : f_norm_arg")
     def f_arg_item_f_norm_arg(self, p):
+        self.lexer.symtable.declare_local(p[0].getast().name)
         return p[0]
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
@@ -2786,6 +2833,7 @@ class Parser(object):
 
     @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
     def f_opt(self, p):
+        self.lexer.symtable.declare_local(p[0].getstr())
         return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
 
     @pg.production("f_block_opt : IDENTIFIER LITERAL_EQUAL primary_value")
@@ -2831,11 +2879,13 @@ class Parser(object):
 
     @pg.production("f_rest_arg : restarg_mark IDENTIFIER")
     def f_rest_arg_restarg_mark_identifer(self, p):
+        self.lexer.symtable.declare_local(p[1].getstr())
         return p[1]
 
     @pg.production("f_rest_arg : restarg_mark")
     def f_rest_arg_restarg_mark(self, p):
-        return self.new_token(p[0], "IDENTIFIER", "")
+        self.lexer.symtable.declare_local("*")
+        return self.new_token(p[0], "IDENTIFIER", "*")
 
     @pg.production("blkarg_mark : AMPER")
     @pg.production("blkarg_mark : AMPER2")
@@ -2844,6 +2894,7 @@ class Parser(object):
 
     @pg.production("f_block_arg : blkarg_mark IDENTIFIER")
     def f_block_arg(self, p):
+        self.lexer.symtable.declare_local(p[1].getstr())
         return p[1]
 
     @pg.production("opt_f_block_arg : LITERAL_COMMA f_block_arg")

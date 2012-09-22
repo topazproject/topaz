@@ -82,7 +82,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert space.parse("x[0] == ?-") == ast.Main(ast.Block([
             ast.Statement(ast.Send(
-                ast.Send(ast.Variable("x", 1), "[]", [ast.ConstantInt(0)], None, 1),
+                ast.Send(ast.Send(ast.Self(1), "x", [], None, 1), "[]", [ast.ConstantInt(0)], None, 1),
                 "==",
                 [ast.ConstantString("-")],
                 None, 1
@@ -175,13 +175,13 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Splat(ast.ConstantInt(10))], None, 1))
         ]))
         assert space.parse("2.to_s(10, *x)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Splat(ast.Variable("x", 1))], None, 1))
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Splat(ast.Send(ast.Self(1), "x", [], None, 1))], None, 1))
         ]))
         assert space.parse("2.to_s(10, :base => 5)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(5))])], None, 1))
         ]))
         assert space.parse("Integer other") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Variable("other", 1)], None, 1))
+            ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Send(ast.Self(1), "other", [], None, 1)], None, 1))
         ]))
         assert space.parse("Module::constant") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Module", 1), "constant", [], None, 1))
@@ -205,9 +205,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("a.x, b[:idx], c::Const, d = 3") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
                 [
-                    ast.Send(ast.Variable("a", 1), "x", [], None, 1),
-                    ast.Subscript(ast.Variable("b", 1), [ast.ConstantSymbol("idx")], 1),
-                    ast.LookupConstant(ast.Variable("c", 1), "Const", 1),
+                    ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "x", [], None, 1),
+                    ast.Subscript(ast.Send(ast.Self(1), "b", [], None, 1), [ast.ConstantSymbol("idx")], 1),
+                    ast.LookupConstant(ast.Send(ast.Self(1), "c", [], None, 1), "Const", 1),
                     ast.Variable("d", 1),
                 ],
                 ast.ConstantInt(3)
@@ -328,7 +328,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_load_variable(self, space):
         assert space.parse("a") == ast.Main(ast.Block([
-            ast.Statement(ast.Variable("a", 1))
+            ast.Statement(ast.Send(ast.Self(1), "a", [], None, 1))
         ]))
 
     def test_if_statement(self, space):
@@ -434,7 +434,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_while(self, space):
         expected = ast.Main(ast.Block([
-            ast.Statement(ast.While(ast.Variable("true", 1), ast.Block([
+            ast.Statement(ast.While(ast.ConstantBool(True), ast.Block([
                 ast.Statement(ast.Send(ast.Self(1), "puts", [ast.ConstantInt(5)], None, 1))
             ])))
         ]))
@@ -442,7 +442,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("while true do; puts 5 end") == expected
         assert space.parse("while true; puts 5 end") == expected
         assert space.parse("while true; end") == ast.Main(ast.Block([
-            ast.Statement(ast.While(ast.Variable("true", 1), ast.Nil()))
+            ast.Statement(ast.While(ast.ConstantBool(True), ast.Nil()))
         ]))
 
         res = space.parse("""
@@ -460,7 +460,7 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
                 ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
                 ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], None, 6)),
-                ast.Statement(ast.Send(ast.Self(7), "puts", [ast.Variable("true", 7)], None, 7)),
+                ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantBool(True)], None, 7)),
             ])))
         ]))
 
@@ -549,17 +549,17 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
         assert space.parse("self[i]") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "[]", [ast.Variable("i", 1)], None, 1))
+            ast.Statement(ast.Send(ast.Self(1), "[]", [ast.Send(ast.Self(1), "i", [], None, 1)], None, 1))
         ]))
 
         assert space.parse("self[i].to_s") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Send(ast.Self(1), "[]", [ast.Variable("i", 1)], None, 1), "to_s", [], None, 1))
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "[]", [ast.Send(ast.Self(1), "i", [], None, 1)], None, 1), "to_s", [], None, 1))
         ]))
 
         assert space.parse("a[:a][:a]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(
                 ast.Send(
-                    ast.Variable("a", 1),
+                    ast.Send(ast.Self(1), "a", [], None, 1),
                     "[]",
                     [ast.ConstantSymbol("a")],
                     None,
@@ -573,7 +573,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert space.parse("x.y[0]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(
-                ast.Send(ast.Variable("x", 1), "y", [], None, 1),
+                ast.Send(ast.Send(ast.Self(1), "x", [], None, 1), "y", [], None, 1),
                 "[]",
                 [ast.ConstantInt(0)],
                 None,
@@ -582,7 +582,7 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert space.parse("r[0, 0]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(
-                ast.Variable("r", 1),
+                ast.Send(ast.Self(1), "r", [], None, 1),
                 "[]",
                 [ast.ConstantInt(0), ast.ConstantInt(0)],
                 None,
@@ -590,7 +590,7 @@ class TestParser(BaseRuPyPyTest):
             ))
         ]))
         assert space.parse("r[]") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("r", 1), "[]", [], None, 1))
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "r", [], None, 1), "[]", [], None, 1))
         ]))
         assert space.parse("f()[]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Send(ast.Self(1), "f", [], None, 1), "[]", [], None, 1))
@@ -598,7 +598,7 @@ class TestParser(BaseRuPyPyTest):
 
     def test_subscript_assginment(self, space):
         assert space.parse("x[0] = 5") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.Subscript(ast.Variable("x", 1), [ast.ConstantInt(0)], 1), ast.ConstantInt(5)))
+            ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [ast.ConstantInt(0)], 1), ast.ConstantInt(5)))
         ]))
 
     def test_def(self, space):
@@ -758,7 +758,7 @@ class TestParser(BaseRuPyPyTest):
         dyn_string = lambda *components: ast.Main(ast.Block([
             ast.Statement(ast.DynamicString(list(components)))
         ]))
-        assert space.parse('"#{x}"') == dyn_string(ast.Block([ast.Statement(ast.Variable("x", 1))]))
+        assert space.parse('"#{x}"') == dyn_string(ast.Block([ast.Statement(ast.Send(ast.Self(1), "x", [], None, 1))]))
         assert space.parse('"abc #{2} abc"') == dyn_string(ast.ConstantString("abc "), ast.Block([ast.Statement(ast.ConstantInt(2))]), ast.ConstantString(" abc"))
         assert space.parse('"#{"}"}"') == dyn_string(ast.Block([ast.Statement(ast.ConstantString("}"))]))
         assert space.parse('"#{f { 2 }}"') == dyn_string(ast.Block([ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, ast.Block([ast.Statement(ast.ConstantInt(2))])), 1))]))
@@ -954,7 +954,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], None, ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "x", [], None, 2), "each", [], ast.SendBlock([], None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], None, 3))
             ])), 2))
         ]))
@@ -964,7 +964,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([], None, ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "x", [], None, 2), "each", [], ast.SendBlock([], None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.ConstantInt(1)], None, 3))
             ])), 2))
         ]))
@@ -974,7 +974,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "each", [], ast.SendBlock([ast.Argument("a")], None, ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "x", [], None, 2), "each", [], ast.SendBlock([ast.Argument("a")], None, ast.Block([
                 ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], None, 3))
             ])), 2))
         ]))
@@ -982,7 +982,7 @@ HERE
         x.meth y.meth do end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("x", 2), "meth", [ast.Send(ast.Variable("y", 2), "meth", [], None, 2)], ast.SendBlock([], None, ast.Nil()), 2))
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "x", [], None, 2), "meth", [ast.Send(ast.Send(ast.Self(2), "y", [], None, 2), "meth", [], None, 2)], ast.SendBlock([], None, ast.Nil()), 2))
         ]))
 
         with self.raises(space, "SyntaxError"):
@@ -1122,10 +1122,10 @@ HERE
 
     def test_unary_neg(self, space):
         assert space.parse("-b") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("b", 1), "-@", [], None, 1))
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "b", [], None, 1), "-@", [], None, 1))
         ]))
         assert space.parse("Math.exp(-a)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.Send(ast.Variable("a", 1), "-@", [], None, 1)], None, 1))
+            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "-@", [], None, 1)], None, 1))
         ]))
 
     def test_unary_ops(self, space):
@@ -1173,7 +1173,7 @@ HERE
             ast.Statement(ast.LookupConstant(None, "Const", 1))
         ]))
         assert space.parse("abc::Constant = 5") == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.LookupConstant(ast.Variable("abc", 1), "Constant", 1), ast.ConstantInt(5)))
+            ast.Statement(ast.Assignment(ast.LookupConstant(ast.Send(ast.Self(1), "abc", [], None, 1), "Constant", 1), ast.ConstantInt(5)))
         ]))
 
     def test___FILE__(self, space):
@@ -1494,7 +1494,7 @@ HERE
 
     def test_question_mark(self, space):
         assert space.parse("obj.method?") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("obj", 1), "method?", [], None, 1))
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "obj", [], None, 1), "method?", [], None, 1))
         ]))
         assert space.parse("def method?() end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "method?", [], None, None, ast.Nil()))
@@ -1507,7 +1507,7 @@ HERE
 
     def test_exclamation_point(self, space):
         assert space.parse("obj.method!") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Variable("obj", 1), "method!", [], None, 1))
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "obj", [], None, 1), "method!", [], None, 1))
         ]))
         assert space.parse("def method!() end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "method!", [], None, None, ast.Nil()))
@@ -1534,7 +1534,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(ast.Variable("x", 2), "r=", [], None, None, ast.Nil()))
+            ast.Statement(ast.Function(ast.Send(ast.Self(2), "x", [], None, 2), "r=", [], None, None, ast.Nil()))
         ]))
 
     def test_global_var(self, space):
@@ -1570,12 +1570,12 @@ HERE
     def test_send_block_argument(self, space):
         r = space.parse("f(&b)")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.BlockArgument(ast.Variable("b", 1)), 1))
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.BlockArgument(ast.Send(ast.Self(1), "b", [], None, 1)), 1))
         ]))
 
         r = space.parse("f(3, 4, &a)")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantInt(3), ast.ConstantInt(4)], ast.BlockArgument(ast.Variable("a", 1)), 1))
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantInt(3), ast.ConstantInt(4)], ast.BlockArgument(ast.Send(ast.Self(1), "a", [], None, 1)), 1))
         ]))
 
         with self.raises(space, "SyntaxError"):
@@ -1606,7 +1606,7 @@ HERE
 
         r = space.parse("def f(a, *) end")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, "f", [ast.Argument("a")], "", None, ast.Nil()))
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a")], "*", None, ast.Nil()))
         ]))
 
         with self.raises(space, "SyntaxError"):
@@ -1688,9 +1688,11 @@ HERE
     def test_inline_rescue(self, space):
         assert space.parse("foo rescue bar") == ast.Main(ast.Block([
             ast.Statement(ast.TryExcept(
-                ast.Block([ast.Statement(ast.Variable("foo", 1))]),
+                ast.Block([ast.Statement(ast.Send(ast.Self(1), "foo", [], None, 1))]),
                 [
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(1), "StandardError", 1)], None, ast.Block([ast.Statement(ast.Variable("bar", 1))]))
+                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(1), "StandardError", 1)], None, ast.Block([
+                        ast.Statement(ast.Send(ast.Self(1), "bar", [], None, 1))
+                    ]))
                 ],
                 ast.Nil(),
             ))

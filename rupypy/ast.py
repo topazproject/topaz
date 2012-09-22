@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
-from rupypy.astcompiler import CompilerContext, SymbolTable, BlockSymbolTable
+from rupypy.astcompiler import CompilerContext, BlockSymbolTable
 from rupypy.objects.objectobject import W_RootObject
 
 
@@ -14,12 +14,6 @@ class BaseNode(object):
         if not isinstance(other, BaseNode):
             return NotImplemented
         return type(self) is type(other) and self.__dict__ == other.__dict__
-
-    def locate_symbols(self, symtable):
-        if we_are_translated():
-            raise NotImplementedError
-        else:
-            raise NotImplementedError(type(self).__name__)
 
     def compile(self, ctx):
         if we_are_translated():
@@ -39,9 +33,6 @@ class Main(Node):
     def __init__(self, block):
         self.block = block
 
-    def locate_symbols(self, symtable):
-        self.block.locate_symbols(symtable)
-
     def compile(self, ctx):
         self.block.compile(ctx)
         ctx.emit(consts.DISCARD_TOP)
@@ -56,10 +47,6 @@ class Block(Node):
 
         self.stmts = stmts
 
-    def locate_symbols(self, symtable):
-        for stmt in self.stmts:
-            stmt.locate_symbols(symtable)
-
     def compile(self, ctx):
         for idx, stmt in enumerate(self.stmts):
             stmt.compile(ctx)
@@ -73,9 +60,6 @@ class Statement(BaseStatement):
     def __init__(self, expr):
         self.expr = expr
 
-    def locate_symbols(self, symtable):
-        self.expr.locate_symbols(symtable)
-
     def compile(self, ctx):
         self.expr.compile(ctx)
         if not self.dont_pop:
@@ -87,11 +71,6 @@ class If(Node):
         self.cond = cond
         self.body = body
         self.elsebody = elsebody
-
-    def locate_symbols(self, symtable):
-        self.cond.locate_symbols(symtable)
-        self.body.locate_symbols(symtable)
-        self.elsebody.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()
@@ -109,10 +88,6 @@ class While(Node):
     def __init__(self, cond, body):
         self.cond = cond
         self.body = body
-
-    def locate_symbols(self, symtable):
-        self.cond.locate_symbols(symtable)
-        self.body.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()
@@ -136,10 +111,6 @@ class Until(Node):
         self.cond = cond
         self.body = body
 
-    def locate_symbols(self, symtable):
-        self.cond.locate_symbols(symtable)
-        self.body.locate_symbols(symtable)
-
     def compile(self, ctx):
         end = ctx.new_block()
         loop = ctx.new_block()
@@ -159,11 +130,6 @@ class TryExcept(Node):
         self.body = body
         self.except_handlers = except_handlers
         self.else_body = else_body
-
-    def locate_symbols(self, symtable):
-        self.body.locate_symbols(symtable)
-        for handler in self.except_handlers:
-            handler.locate_symbols(symtable)
 
     def compile(self, ctx):
         exc = ctx.new_block()
@@ -221,22 +187,11 @@ class ExceptHandler(Node):
         self.target = target
         self.body = body
 
-    def locate_symbols(self, symtable):
-        for exception in self.exceptions:
-            exception.locate_symbols(symtable)
-        if self.target is not None:
-            self.target.locate_symbols_assignment(symtable)
-        self.body.locate_symbols(symtable)
-
 
 class TryFinally(Node):
     def __init__(self, body, finally_body):
         self.body = body
         self.finally_body = finally_body
-
-    def locate_symbols(self, symtable):
-        self.body.locate_symbols(symtable)
-        self.finally_body.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()
@@ -257,11 +212,6 @@ class Class(Node):
         self.name = name
         self.superclass = superclass
         self.body = body
-
-    def locate_symbols(self, symtable):
-        body_symtable = SymbolTable()
-        symtable.add_subscope(self, body_symtable)
-        self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SCOPE)
@@ -289,13 +239,6 @@ class SingletonClass(Node):
         self.value = value
         self.body = body
 
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
-        body_symtable = SymbolTable()
-        symtable.add_subscope(self, body_symtable)
-        self.body.locate_symbols(body_symtable)
-
     def compile(self, ctx):
         Send(self.value, "singleton_class", [], None, self.lineno).compile(ctx)
 
@@ -314,11 +257,6 @@ class Module(Node):
     def __init__(self, name, body):
         self.name = name
         self.body = body
-
-    def locate_symbols(self, symtable):
-        body_symtable = SymbolTable()
-        symtable.add_subscope(self, body_symtable)
-        self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
         body_ctx = ctx.get_subctx(self.name, self)
@@ -342,22 +280,6 @@ class Function(Node):
         self.splat_arg = splat_arg
         self.block_arg = block_arg
         self.body = body
-
-    def locate_symbols(self, symtable):
-        if self.parent is not None:
-            self.parent.locate_symbols(symtable)
-
-        body_symtable = SymbolTable()
-        symtable.add_subscope(self, body_symtable)
-        for arg in self.args:
-            body_symtable.declare_local(arg.name)
-            if arg.defl is not None:
-                arg.defl.locate_symbols(body_symtable)
-        if self.block_arg is not None:
-            body_symtable.declare_local(self.block_arg)
-        if self.splat_arg is not None:
-            body_symtable.declare_local(self.splat_arg)
-        self.body.locate_symbols(body_symtable)
 
     def compile(self, ctx):
         function_ctx = ctx.get_subctx(self.name, self)
@@ -418,12 +340,6 @@ class Case(Node):
         self.whens = whens
         self.elsebody = elsebody
 
-    def locate_symbols(self, symtable):
-        self.cond.locate_symbols(symtable)
-        for when in self.whens:
-            when.locate_symbols(symtable)
-        self.elsebody.locate_symbols(symtable)
-
     def compile(self, ctx):
         end = ctx.new_block()
 
@@ -455,18 +371,10 @@ class When(Node):
         self.conds = conds
         self.block = block
 
-    def locate_symbols(self, symtable):
-        for cond in self.conds:
-            cond.locate_symbols(symtable)
-        self.block.locate_symbols(symtable)
-
 
 class Return(BaseStatement):
     def __init__(self, expr):
         self.expr = expr
-
-    def locate_symbols(self, symtable):
-        self.expr.locate_symbols(symtable)
 
     def compile(self, ctx):
         self.expr.compile(ctx)
@@ -481,10 +389,6 @@ class Yield(Node):
         Node.__init__(self, lineno)
         self.args = args
 
-    def locate_symbols(self, symtable):
-        for arg in self.args:
-            arg.locate_symbols(symtable)
-
     def compile(self, ctx):
         for arg in self.args:
             arg.compile(ctx)
@@ -497,10 +401,6 @@ class Alias(BaseStatement):
         BaseStatement.__init__(self, lineno)
         self.new_name = new_name
         self.old_name = old_name
-
-    def locate_symbols(self, symtable):
-        self.new_name.locate_symbols(symtable)
-        self.old_name.locate_symbols(symtable)
 
     def compile(self, ctx):
         Send(
@@ -519,10 +419,6 @@ class Assignment(Node):
         self.target = target
         self.value = value
 
-    def locate_symbols(self, symtable):
-        self.target.locate_symbols_assignment(symtable)
-        self.value.locate_symbols(symtable)
-
     def compile(self, ctx):
         self.target.compile_receiver(ctx)
         self.value.compile(ctx)
@@ -534,10 +430,6 @@ class AugmentedAssignment(Node):
         self.oper = oper
         self.target = target
         self.value = value
-
-    def locate_symbols(self, symtable):
-        self.target.locate_symbols_assignment(symtable)
-        self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
         dup_needed = self.target.compile_receiver(ctx)
@@ -555,10 +447,6 @@ class OrEqual(Node):
     def __init__(self, target, value):
         self.target = target
         self.value = value
-
-    def locate_symbols(self, symtable):
-        self.target.locate_symbols_assignment(symtable)
-        self.value.locate_symbols(symtable)
 
     def compile(self, ctx):
         otherwise = ctx.new_block()
@@ -584,10 +472,6 @@ class AndEqual(Node):
         self.target = target
         self.value = value
 
-    def locate_symbols(self, symtable):
-        self.target.locate_symbols_assignment(symtable)
-        self.value.locate_symbols(symtable)
-
     def compile(self, ctx):
         otherwise = ctx.new_block()
         end = ctx.new_block()
@@ -611,11 +495,6 @@ class MultiAssignment(Node):
     def __init__(self, targets, value):
         self.targets = targets
         self.value = value
-
-    def locate_symbols(self, symtable):
-        for target in self.targets:
-            target.locate_symbols_assignment(symtable)
-        self.value.locate_symbols(symtable)
 
     def splat_index(self):
         for i, node in enumerate(self.targets):
@@ -643,39 +522,10 @@ class MultiAssignment(Node):
             ctx.emit(consts.DISCARD_TOP)
 
 
-class MaybeBinop(Node):
-    def __init__(self, op, left, right, lineno):
-        Node.__init__(self, lineno)
-        self.op = op
-        self.left = left
-        self.right = right
-
-    def locate_symbols(self, symtable):
-        if symtable.is_defined(self.left.name):
-            self.left.locate_symbols(symtable)
-        self.right.locate_symbols(symtable)
-
-    def compile(self, ctx):
-        if ctx.symtable.is_defined(self.left.name):
-            Send(self.left, self.op, [self.right], None, self.lineno).compile(ctx)
-        else:
-            Send(
-                Self(self.lineno),
-                self.left.name,
-                [UnaryOp(self.op, self.right, self.lineno)],
-                None,
-                self.lineno
-            ).compile(ctx)
-
-
 class Or(Node):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
-
-    def locate_symbols(self, symtable):
-        self.lhs.locate_symbols(symtable)
-        self.rhs.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()
@@ -694,10 +544,6 @@ class And(Node):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
-
-    def locate_symbols(self, symtable):
-        self.lhs.locate_symbols(symtable)
-        self.rhs.locate_symbols(symtable)
 
     def compile(self, ctx):
         end = ctx.new_block()
@@ -719,21 +565,6 @@ class Send(Node):
         self.args = args
         self.block_arg = block_arg
         self.lineno = lineno
-
-    def validate_assignment(self, transformer, node):
-        if self.args or self.block_arg:
-            transformer.error(node)
-
-    def locate_symbols(self, symtable):
-        self.receiver.locate_symbols(symtable)
-        for arg in self.args:
-            arg.locate_symbols(symtable)
-
-        if self.block_arg is not None:
-            self.block_arg.locate_symbols(symtable)
-
-    def locate_symbols_assignment(self, symtable):
-        self.receiver.locate_symbols(symtable)
 
     def compile(self, ctx):
         self.receiver.compile(ctx)
@@ -782,12 +613,6 @@ class Splat(Node):
     def __init__(self, value):
         self.value = value
 
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
-    def locate_symbols_assignment(self, symtable):
-        self.value.locate_symbols_assignment(symtable)
-
     def compile_receiver(self, ctx):
         return self.value.compile_receiver(ctx)
 
@@ -804,13 +629,6 @@ class SendBlock(Node):
         self.block_args = block_args
         self.splat_arg = splat_arg
         self.block = block
-
-    def locate_symbols(self, symtable):
-        block_symtable = BlockSymbolTable(symtable)
-        symtable.add_subscope(self, block_symtable)
-        for arg in self.block_args:
-            block_symtable.declare_local(arg.name)
-        self.block.locate_symbols(block_symtable)
 
     def compile(self, ctx):
         block_ctx = ctx.get_subctx("block in %s" % ctx.code_name, self)
@@ -846,9 +664,6 @@ class BlockArgument(Node):
     def __init__(self, value):
         self.value = value
 
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.COERCE_BLOCK)
@@ -859,17 +674,6 @@ class Subscript(Node):
         Node.__init__(self, lineno)
         self.target = target
         self.args = args
-
-    def validate_assignment(self, transformer, node):
-        pass
-
-    def locate_symbols(self, symtable):
-        self.target.locate_symbols(symtable)
-        for arg in self.args:
-            arg.locate_symbols(symtable)
-
-    def locate_symbols_assignment(self, symtable):
-        self.locate_symbols(symtable)
 
     def compile(self, ctx):
         Send(self.target, "[]", self.args, None, self.lineno).compile(ctx)
@@ -896,16 +700,6 @@ class LookupConstant(Node):
         self.value = value
         self.name = name
 
-    def validate_assignment(self, transformer, node):
-        pass
-
-    def locate_symbols(self, symtable):
-        if self.value is not None:
-            self.value.locate_symbols(symtable)
-
-    def locate_symbols_assignment(self, symtable):
-        self.locate_symbols(symtable)
-
     def compile(self, ctx):
         if self.value is not None:
             self.value.compile(ctx)
@@ -926,17 +720,11 @@ class LookupConstant(Node):
 
 
 class Self(Node):
-    def locate_symbols(self, symtable):
-        pass
-
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
 
 
 class Scope(Node):
-    def locate_symbols(self, symtable):
-        pass
-
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SCOPE)
 
@@ -946,29 +734,13 @@ class Variable(Node):
         Node.__init__(self, lineno)
         self.name = name
 
-    def locate_symbols(self, symtable):
-        if (self.name not in ["true", "false"] and
-            not self.name[0].isupper()):
-            symtable.declare_read(self.name)
-
-    def locate_symbols_assignment(self, symtable):
-        symtable.declare_write(self.name)
-
     def compile(self, ctx):
-        named_consts = {
-            "true": ctx.space.w_true,
-            "false": ctx.space.w_false,
-        }
-        if self.name in named_consts:
-            ctx.emit(consts.LOAD_CONST, ctx.create_const(named_consts[self.name]))
-        elif self.name == "__LINE__":
-            ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.lineno))
-        elif ctx.symtable.is_local(self.name):
+        if ctx.symtable.is_local(self.name):
             ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(self.name))
         elif ctx.symtable.is_cell(self.name):
             ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
         else:
-            Send(Self(self.lineno), self.name, [], None, self.lineno).compile(ctx)
+            raise SystemError
 
     def compile_receiver(self, ctx):
         return 0
@@ -989,15 +761,6 @@ class Global(Node):
     def __init__(self, name):
         self.name = name
 
-    def validate_assignment(self, transformer, node):
-        pass
-
-    def locate_symbols(self, symtable):
-        pass
-
-    def locate_symbols_assignment(self, symtable):
-        pass
-
     def compile(self, ctx):
         ctx.emit(consts.LOAD_GLOBAL, ctx.create_symbol_const(self.name))
 
@@ -1014,15 +777,6 @@ class Global(Node):
 class InstanceVariable(Node):
     def __init__(self, name):
         self.name = name
-
-    def validate_assignment(self, transformer, node):
-        pass
-
-    def locate_symbols(self, symtable):
-        pass
-
-    def locate_symbols_assignment(self, symtable):
-        pass
 
     def compile(self, ctx):
         self.compile_receiver(ctx)
@@ -1043,15 +797,6 @@ class ClassVariable(Node):
     def __init__(self, name):
         self.name = name
 
-    def validate_assignment(self, transformer, node):
-        pass
-
-    def locate_symbols(self, symtable):
-        pass
-
-    def locate_symbols_assignment(self, symtable):
-        pass
-
     def compile(self, ctx):
         self.compile_receiver(ctx)
         self.compile_load(ctx)
@@ -1070,10 +815,6 @@ class ClassVariable(Node):
 class Array(Node):
     def __init__(self, items):
         self.items = items
-
-    def locate_symbols(self, symtable):
-        for item in self.items:
-            item.locate_symbols(symtable)
 
     def compile(self, ctx):
         n_items = 0
@@ -1098,11 +839,6 @@ class Hash(Node):
     def __init__(self, items):
         self.items = items
 
-    def locate_symbols(self, symtable):
-        for k, v in self.items:
-            k.locate_symbols(symtable)
-            v.locate_symbols(symtable)
-
     def compile(self, ctx):
         ctx.emit(consts.BUILD_HASH)
         for k, v in self.items:
@@ -1119,10 +855,6 @@ class Range(Node):
         self.stop = stop
         self.exclusive = exclusive
 
-    def locate_symbols(self, symtable):
-        self.start.locate_symbols(symtable)
-        self.stop.locate_symbols(symtable)
-
     def compile(self, ctx):
         self.start.compile(ctx)
         self.stop.compile(ctx)
@@ -1133,9 +865,6 @@ class Range(Node):
 
 
 class ConstantNode(Node):
-    def locate_symbols(self, symtable):
-        pass
-
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, self.create_const(ctx))
 
@@ -1184,13 +913,17 @@ class ConstantRegexp(ConstantNode):
         return ctx.create_const(ctx.space.newregexp(self.regexp))
 
 
+class ConstantBool(ConstantNode):
+    def __init__(self, boolval):
+        self.boolval = boolval
+
+    def create_const(self, ctx):
+        return ctx.create_const(ctx.space.newbool(self.boolval))
+
+
 class DynamicString(Node):
     def __init__(self, strvalues):
         self.strvalues = strvalues
-
-    def locate_symbols(self, symtable):
-        for strvalue in self.strvalues:
-            strvalue.locate_symbols(symtable)
 
     def compile(self, ctx):
         for strvalue in self.strvalues:
@@ -1205,9 +938,6 @@ class DynamicRegexp(Node):
     def __init__(self, dstring):
         self.dstring = dstring
 
-    def locate_symbols(self, symtable):
-        self.dstring.locate_symbols(symtable)
-
     def compile(self, ctx):
         self.dstring.compile(ctx)
         ctx.emit(consts.BUILD_REGEXP)
@@ -1218,33 +948,21 @@ class Symbol(Node):
         Node.__init__(self, lineno)
         self.value = value
 
-    def locate_symbols(self, symtable):
-        self.value.locate_symbols(symtable)
-
     def compile(self, ctx):
         Send(self.value, "to_sym", [], None, self.lineno).compile(ctx)
 
 
 class Nil(BaseNode):
-    def locate_symbols(self, symtable):
-        pass
-
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
 
 class File(BaseNode):
-    def locate_symbols(self, symtable):
-        pass
-
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CODE)
         ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)
 
 
 class Line(Node):
-    def locate_symbols(self, symtable):
-        pass
-
     def compile(self, ctx):
         ConstantInt(self.lineno).compile(ctx)

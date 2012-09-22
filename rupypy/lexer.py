@@ -18,7 +18,7 @@ class Keyword(object):
         self.state = state
 
 
-class BaseLexer(object):
+class Lexer(object):
     EOF = chr(0)
 
     EXPR_BEG = 0
@@ -61,10 +61,24 @@ class BaseLexer(object):
         "nil": Keyword("NIL", "NIL", EXPR_END),
         "__FILE__": Keyword("__FILE__", "__FILE__", EXPR_END),
         "__LINE__": Keyword("__LINE__", "__LINE__", EXPR_END),
+        "true": Keyword("TRUE", "TRUE", EXPR_END),
+        "false": Keyword("FALSE", "FALSE", EXPR_END),
     }
 
-    def __init__(self):
+    def __init__(self, source, initial_lineno, symtable):
+        self.source = source
+        self.lineno = initial_lineno
+        self.symtable = symtable
         self.current_value = []
+        self.idx = 0
+        self.columno = 1
+        self.state = self.EXPR_BEG
+        self.paren_nest = 0
+        self.left_paren_begin = 0
+        self.command_start = True
+        self.condition_state = StackState()
+        self.cmd_argument_state = StackState()
+        self.str_term = None
 
     def peek(self):
         ch = self.read()
@@ -87,22 +101,6 @@ class BaseLexer(object):
 
     def error(self):
         raise LexerError(self.current_pos())
-
-
-class Lexer(BaseLexer):
-    def __init__(self, source, initial_lineno):
-        BaseLexer.__init__(self)
-        self.source = source
-        self.idx = 0
-        self.lineno = initial_lineno
-        self.columno = 1
-        self.state = self.EXPR_BEG
-        self.paren_nest = 0
-        self.left_paren_begin = 0
-        self.command_start = True
-        self.condition_state = StackState()
-        self.cmd_argument_state = StackState()
-        self.str_term = None
 
     def tokenize(self):
         space_seen = False
@@ -309,6 +307,8 @@ class Lexer(BaseLexer):
                 self.state = self.EXPR_ENDFN
             else:
                 self.state = self.EXPR_END
+        if token.gettokentype() == "IDENTIFIER" and self.symtable.is_defined(token.getstr()):
+            self.state = self.EXPR_END
         return token
 
     def emit_do(self, state):
@@ -895,7 +895,7 @@ class Lexer(BaseLexer):
         if self.is_beg():
             tok_name = "LPAREN"
         elif space_seen:
-            if self.state in [self.EXPR_CMDARG, self.EXPR_ARG]:
+            if self.is_arg():
                 tok_name = "LPAREN_ARG"
         self.paren_nest += 1
         self.condition_state.stop()

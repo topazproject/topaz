@@ -131,8 +131,10 @@ class ObjectSpace(object):
 
     # Methods for dealing with source code.
 
-    def parse(self, source, initial_lineno=1):
-        parser = Parser(Lexer(source, initial_lineno=initial_lineno))
+    def parse(self, source, initial_lineno=1, symtable=None):
+        if symtable is None:
+            symtable = SymbolTable()
+        parser = Parser(Lexer(source, initial_lineno=initial_lineno, symtable=symtable))
         try:
             return parser.parse().getast()
         except ParsingError as e:
@@ -141,9 +143,8 @@ class ObjectSpace(object):
             raise self.error(self.getclassfor(W_SyntaxError))
 
     def compile(self, source, filepath, initial_lineno=1):
-        astnode = self.parse(source, initial_lineno=initial_lineno)
         symtable = SymbolTable()
-        astnode.locate_symbols(symtable)
+        astnode = self.parse(source, initial_lineno=initial_lineno, symtable=symtable)
         c = CompilerContext(self, "<main>", symtable, filepath)
         astnode.compile(c)
         return c.create_bytecode([], [], None, None)
