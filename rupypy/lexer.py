@@ -233,7 +233,7 @@ class Lexer(object):
                 for token in self.at(ch):
                     yield token
             elif ch == "`":
-                for token in self.backtick(ch):
+                for token in self.backtick(ch, command_state):
                     yield token
             else:
                 for token in self.identifier(ch, command_state):
@@ -976,7 +976,7 @@ class Lexer(object):
         self.state = self.EXPR_ENDARG
         yield self.emit("RCURLY")
 
-    def backtick(self, ch):
+    def backtick(self, ch, command_state):
         self.add(ch)
 
         if self.state == self.EXPR_FNAME:
