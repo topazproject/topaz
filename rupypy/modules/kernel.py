@@ -139,6 +139,10 @@ class Kernel(Module):
             space.newsymbol("exit"),
             [space.newint(status)]
         )
+        
+    @moduledef.function("at_exit")
+    def method_at_exit(self, space, block):
+        return space.register_exit_handler(space.newproc(block))
 
     @moduledef.function("block_given?")
     @moduledef.function("iterator?")

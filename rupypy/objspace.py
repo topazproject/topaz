@@ -60,6 +60,7 @@ class SpaceCache(Cache):
 
 class ObjectSpace(object):
     def __init__(self):
+        self.exithandlers = []
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
         self._executioncontext = None
@@ -352,8 +353,13 @@ class ObjectSpace(object):
     def eq_w(self, w_obj1, w_obj2):
         return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
 
+    def register_exit_handler(self, proc):
+        self.exithandlers.append(proc)
+        return proc
+
     def run_exit_handlers(self):
-        pass
+        while self.exithandlers:
+            self.exithandlers.pop().method_call(self, [])
 
     def subscript_access(self, length, w_idx, w_count):
         inclusive = False

@@ -113,3 +113,15 @@ class TestMain(object):
     def test_system_exit(self, tmpdir):
         self.run(tmpdir, "raise SystemExit", 0)
         self.run(tmpdir, "raise SystemExit.new('exit', 1)", 1)
+        
+    def test_at_exit(self, tmpdir, capfd):
+        self.run(tmpdir, """
+            def do_at_exit(str1)
+              at_exit { puts str1 }
+            end
+            at_exit { puts "cruel world" }
+            do_at_exit("goodbye ")
+            exit
+            """)
+        out, err = capfd.readouterr()
+        assert out == "goodbye \ncruel world\n"
