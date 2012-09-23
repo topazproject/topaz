@@ -1027,6 +1027,7 @@ class Lexer(object):
             end = ">"
         else:
             end = begin
+            begin = "\0"
 
         if ch == "Q":
             self.str_term = StringTerm(self, begin, end)

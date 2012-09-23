@@ -1636,6 +1636,7 @@ HERE
         assert space.parse('%r{2}') == re("2")
         assert space.parse('%r{#{2}}') == dyn_re(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
         assert space.parse('/#{2}/') == dyn_re(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
+        assert space.parse("%r!a!") == re("a")
 
     def test_or(self, space):
         assert space.parse("3 || 4") == ast.Main(ast.Block([
