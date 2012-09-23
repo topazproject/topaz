@@ -347,6 +347,7 @@ class Case(Node):
 
         self.cond.compile(ctx)
         for when in self.whens:
+            assert isinstance(when, When)
             next_when = ctx.new_block()
             when_block = ctx.new_block()
 
