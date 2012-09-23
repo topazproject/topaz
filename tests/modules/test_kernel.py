@@ -1,3 +1,5 @@
+import os
+
 from rupypy.objects.procobject import W_ProcObject
 
 from ..base import BaseRuPyPyTest
@@ -136,6 +138,31 @@ class TestKernel(BaseRuPyPyTest):
         return foo, foo { }
         """)
         assert self.unwrap(space, w_res) == [False, True]
+
+    def test_exec(self, space, capfd):
+        cpid = os.fork()
+        if cpid == 0:
+            space.execute("exec 'echo $0'")
+        else:
+            os.waitpid(cpid, 0)
+            out, err = capfd.readouterr()
+            assert out == "sh\n"
+
+        cpid = os.fork()
+        if cpid == 0:
+            space.execute("exec 'echo', '$0'")
+        else:
+            os.waitpid(cpid, 0)
+            out, err = capfd.readouterr()
+            assert out == "$0\n"
+
+        cpid = os.fork()
+        if cpid == 0:
+            space.execute("exec ['sh', 'argv0'], '-c', 'echo $0'")
+        else:
+            os.waitpid(cpid, 0)
+            out, err = capfd.readouterr()
+            assert out == "argv0\n"
 
 
 class TestRequire(BaseRuPyPyTest):
