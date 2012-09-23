@@ -773,6 +773,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('"\n"') == const_string("\n")
         assert space.parse('"\w"') == const_string("w")
         assert space.parse('"\M-a"') == const_string("\xe1")
+        assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab"))
 
     def test_percent_terms(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([

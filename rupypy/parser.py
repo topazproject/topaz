@@ -172,6 +172,15 @@ class Parser(object):
             items.append((raw_items[i], raw_items[i + 1]))
         return BoxAST(ast.Hash(items))
 
+    def new_global(self, box):
+        return BoxAST(ast.Global(box.getstr()))
+
+    def new_instance_var(self, box):
+        return BoxAST(ast.InstanceVariable(box.getstr()))
+
+    def new_class_var(self, box):
+        return BoxAST(ast.ClassVariable(box.getstr()))
+
     def concat_literals(self, head, tail):
         if head is None:
             return tail
@@ -635,7 +644,10 @@ class Parser(object):
 
     @pg.production("command_call : BREAK call_args")
     def command_call_break(self, p):
-        return self.new_break(self, p[1])
+        """
+        $$ = new BreakNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
+        """
+        raise NotImplementedError(p)
 
     @pg.production("command_call : NEXT call_args")
     def command_call_next(self, p):
@@ -2476,19 +2488,17 @@ class Parser(object):
     def string_content_string_content(self, p):
         return BoxAST(ast.ConstantString(p[0].getstr()))
 
-    @pg.production("string_content : STRING_DVAR string_dvar")
+    @pg.production("string_content : string_dvar_prod string_dvar")
     def string_content_string_dvar(self, p):
-        """
-        tSTRING_DVAR {
-                    $$ = lexer.getStrTerm();
-                    lexer.setStrTerm(null);
-                    lexer.setState(LexState.EXPR_BEG);
-                } string_dvar {
-                    lexer.setStrTerm($<StrTerm>2);
-                    $$ = new EvStrNode($1.getPosition(), $3);
-                }
-        """
-        raise NotImplementedError(p)
+        self.lexer.str_term = p[0].getstrterm()
+        return p[1]
+
+    @pg.production("string_dvar_prod : STRING_DVAR")
+    def string_dvar_prod(self, p):
+        str_term = self.lexer.str_term
+        self.lexer.str_term = None
+        self.lexer.state = self.lexer.EXPR_BEG
+        return BoxStrTerm(str_term)
 
     @pg.production("string_content : string_dbeg compstmt RCURLY")
     def string_content_string_dbeg(self, p):
@@ -2564,11 +2574,11 @@ class Parser(object):
 
     @pg.production("variable : IVAR")
     def variable_ivar(self, p):
-        return BoxAST(ast.InstanceVariable(p[0].getstr()))
+        return self.new_instance_var(p[0])
 
     @pg.production("variable : GVAR")
     def variable_gvar(self, p):
-        return BoxAST(ast.Global(p[0].getstr()))
+        return self.new_global(p[0])
 
     @pg.production("variable : CONSTANT")
     def variable_constant(self, p):
@@ -2580,7 +2590,7 @@ class Parser(object):
 
     @pg.production("variable : CVAR")
     def variable_cvar(self, p):
-        return BoxAST(ast.ClassVariable(p[0].getstr()))
+        return self.new_class_var(p[0])
 
     @pg.production("variable : NIL")
     def variable_nil(self, p):
