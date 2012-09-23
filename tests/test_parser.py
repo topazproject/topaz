@@ -1708,6 +1708,15 @@ HERE
                 ast.Nil(),
             ))
         ]))
+        assert space.parse("a = 2 rescue 3") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.TryExcept(
+                ast.ConstantInt(2),
+                [
+                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(1), "StandardError", 1)], None, ast.ConstantInt(3))
+                ],
+                ast.Nil(),
+            )))
+        ]))
 
     def test_inline_precedence(self, space):
         assert space.parse("return unless x = 3") == ast.Main(ast.Block([

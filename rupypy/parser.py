@@ -1139,14 +1139,21 @@ class Parser(object):
 
     @pg.production("arg : lhs LITERAL_EQUAL arg RESCUE_MOD arg")
     def arg_lhs_equal_arg_rescue_mod(self, p):
-        """
-        lhs '=' arg kRESCUE_MOD arg {
-                    ISourcePosition position = $4.getPosition();
-                    Node body = $5 == null ? NilImplicitNode.NIL : $5;
-                    $$ = support.node_assign($1, new RescueNode(position, $3, new RescueBodyNode(position, null, body, null), null));
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[1].getsourcepos().lineno
+        return BoxAST(ast.Assignment(
+            p[0].getast(),
+            ast.TryExcept(
+                p[2].getast(),
+                [
+                    ast.ExceptHandler(
+                        [ast.LookupConstant(ast.Scope(lineno), "StandardError", lineno)],
+                        None,
+                        p[4].getast()
+                    )
+                ],
+                ast.Nil()
+            )
+        ))
 
     @pg.production("arg : var_lhs OP_ASGN arg")
     def arg_var_lhs_op_asgn_arg(self, p):
