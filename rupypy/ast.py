@@ -43,7 +43,9 @@ class Main(Node):
 class Block(Node):
     def __init__(self, stmts):
         # The last item shouldn't be popped.
-        stmts[-1].dont_pop = True
+        node = stmts[-1]
+        assert isinstance(node, BaseStatement)
+        node.dont_pop = True
 
         self.stmts = stmts
 

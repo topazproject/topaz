@@ -1,3 +1,5 @@
+from pypy.rlib.objectmodel import specialize
+
 from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
 
@@ -1686,6 +1688,7 @@ class Parser(object):
 
         conditions = []
         for when in p[2].getastlist()[:-1]:
+            assert isinstance(when, ast.When)
             cond = when.conds[0]
             for expr in when.conds[1:]:
                 cond = ast.Or(cond, expr)
@@ -2801,7 +2804,8 @@ class Parser(object):
 
     @pg.production("f_arg_item : f_norm_arg")
     def f_arg_item_f_norm_arg(self, p):
-        self.lexer.symtable.declare_local(p[0].getast().name)
+        node = p[0].getast(ast.Argument)
+        self.lexer.symtable.declare_local(node.name)
         return p[0]
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
@@ -3054,8 +3058,12 @@ class BoxAST(BaseBox):
         BaseBox.__init__(self)
         self.node = node
 
-    def getast(self):
-        return self.node
+    @specialize.arg(1)
+    def getast(self, cls=None):
+        node = self.node
+        if cls is not None:
+            assert isinstance(node, cls)
+        return node
 
 
 class BoxASTList(BaseBox):
