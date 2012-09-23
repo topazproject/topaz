@@ -147,6 +147,7 @@ class TryExcept(Node):
         ctx.use_next_block(exc)
 
         for handler in self.except_handlers:
+            assert isinstance(handler, ExceptHandler)
             next_except = ctx.new_block()
             handle_block = ctx.new_block()
 

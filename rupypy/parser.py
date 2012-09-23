@@ -329,24 +329,6 @@ class Parser(object):
 
     @pg.production("bodystmt : compstmt opt_rescue opt_else opt_ensure")
     def bodystmt(self, p):
-        """
-        bodystmt      : compstmt opt_rescue opt_else opt_ensure {
-                  Node node = $1;
-
-                  if ($2 != null) {
-                      node = new RescueNode(support.getPosition($1), $1, $2, $3);
-                  } else if ($3 != null) {
-                      support.warn(ID.ELSE_WITHOUT_RESCUE, support.getPosition($1), "else without rescue is useless");
-                      node = support.appendToBlock($1, $3);
-                  }
-                  if ($4 != null) {
-                      if (node == null) node = NilImplicitNode.NIL;
-                      node = new EnsureNode(support.getPosition($1), node, $4);
-                  }
-
-                  $$ = node;
-                }
-        """
         body = ast.Block(p[0].getastlist()) if p[0] is not None else ast.Nil()
         if p[1] is not None:
             except_handlers = p[1].getastlist()
