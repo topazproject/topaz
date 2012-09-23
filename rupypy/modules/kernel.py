@@ -171,7 +171,13 @@ class Kernel(Module):
             argv0 = None
 
         if len(args_w) > 1 or argv0 is not None:
-            args = [argv0 or os.path.basename(cmd)]
+            if argv0 is None:
+                sepidx = cmd.rfind(os.sep) + 1
+                if sepidx > 0:
+                    argv0 = cmd[sepidx:]
+                else:
+                    argv0 = cmd
+            args = [argv0]
             args += [
                 space.str_w(space.convert_type(
                     w_arg, space.getclassfor(W_StringObject), "to_str"
@@ -180,4 +186,9 @@ class Kernel(Module):
             os.execvp(cmd, args)
         else:
             shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
-            os.execlp(shell, os.path.basename(shell), "-c", cmd)
+            sepidx = shell.rfind(os.sep) + 1
+            if sepidx > 0:
+                argv0 = shell[sepidx:]
+            else:
+                argv0 = shell
+            os.execlp(shell, argv0, "-c", cmd)
