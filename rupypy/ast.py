@@ -286,7 +286,10 @@ class Function(Node):
     def compile(self, ctx):
         function_ctx = ctx.get_subctx(self.name, self)
         defaults = []
+        arg_names = []
         for arg in self.args:
+            assert isinstance(arg, Argument)
+            arg_names.append(arg.name)
             if function_ctx.symtable.is_local(arg.name):
                 function_ctx.symtable.get_local_num(arg.name)
             elif function_ctx.symtable.is_cell(arg.name):
@@ -311,7 +314,6 @@ class Function(Node):
 
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
-        arg_names = [a.name for a in self.args]
         bytecode = function_ctx.create_bytecode(
             arg_names, defaults, self.splat_arg, self.block_arg
         )
