@@ -652,7 +652,10 @@ class Parser(object):
 
     @pg.production("command_call : NEXT call_args")
     def command_call_next(self, p):
-        return self.new_next(p[1])
+        """
+        $$ = new NextNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
+        """
+        raise NotImplementedError(p)
 
     @pg.production("block_command : block_call")
     def block_command_block_call(self, p):
