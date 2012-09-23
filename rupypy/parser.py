@@ -484,14 +484,10 @@ class Parser(object):
 
     @pg.production("stmt : mlhs LITERAL_EQUAL command_call")
     def stmt_mlhs_equal_command_call(self, p):
-        """
-        mlhs '=' command_call {
-                    support.checkExpression($3);
-                    $1.setValueNode($3);
-                    $$ = $1;
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_stmt(ast.MultiAssignment(
+            p[0].getastlist(),
+            p[2].getast()
+        ))
 
     @pg.production("stmt : var_lhs OP_ASGN command_call")
     def stmt_var_lhs_op_asgn_command_call(self, p):
