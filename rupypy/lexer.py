@@ -590,8 +590,8 @@ class Lexer(object):
             else:
                 self.unread()
                 if self.is_arg() and space_seen and not ch2.isspace():
-                    for token in self.regexp("/", "/"):
-                        yield token
+                    self.str_term = StringTerm(self, "\0", "/", is_regexp=True)
+                    yield self.emit("REGEXP_BEG")
                 else:
                     self.add(ch)
                     self.set_expression_state()
