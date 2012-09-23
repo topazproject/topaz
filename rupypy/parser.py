@@ -733,6 +733,7 @@ class Parser(object):
 
     @pg.production("command : SUPER command_args")
     def command_super(self, p):
+        raise NotImplementedError(p)
         return self.new_super(p[1])
 
     @pg.production("command : YIELD command_args")
