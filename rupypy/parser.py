@@ -555,6 +555,7 @@ class Parser(object):
 
     @pg.production("stmt : backref OP_ASGN command_call")
     def stmt_backref_op_asgn_command_call(self, p):
+        raise NotImplementedError(p)
         self.backref_assign_error(p[0])
 
     @pg.production("stmt : lhs LITERAL_EQUAL mrhs")
@@ -958,6 +959,7 @@ class Parser(object):
 
     @pg.production("lhs : backref")
     def lhs_backref(self, p):
+        raise NotImplementedError(p)
         self.backref_assign_error()
 
     @pg.production("cname : IDENTIFIER")
@@ -1222,6 +1224,7 @@ class Parser(object):
 
     @pg.production("arg : backref OP_ASGN arg")
     def arg_backref_op_asgn_arg(self, p):
+        raise NotImplementedError(p)
         self.backref_assign_error()
 
     @pg.production("arg : arg DOT2 arg")
