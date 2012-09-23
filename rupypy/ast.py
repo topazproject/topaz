@@ -640,7 +640,10 @@ class SendBlock(Node):
         for name, kind in block_ctx.symtable.cells.iteritems():
             if kind == block_ctx.symtable.CELLVAR:
                 block_ctx.symtable.get_cell_num(name)
+        block_args = []
         for arg in self.block_args:
+            assert isinstance(arg, Argument)
+            block_args.append(arg.name)
             if block_ctx.symtable.is_local(arg.name):
                 block_ctx.symtable.get_local_num(arg.name)
             elif block_ctx.symtable.is_cell(arg.name):
@@ -648,7 +651,6 @@ class SendBlock(Node):
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        block_args = [a.name for a in self.block_args]
         bc = block_ctx.create_bytecode(block_args, [], None, None)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
