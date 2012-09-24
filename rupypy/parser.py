@@ -273,7 +273,7 @@ class Parser(object):
         ("right", ["UMINUS_NUM", "UMINUS"]),
         ("right", ["POW"]),
         ("right", ["BANG", "TILDE", "UPLUS"]),
-    ])
+    ], cache_id="topaz")
 
     @pg.production("program : top_compstmt")
     def program(self, p):
