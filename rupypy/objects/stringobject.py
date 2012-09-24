@@ -1,3 +1,5 @@
+import pprint
+
 from pypy.rlib.objectmodel import newlist_hint, compute_hash
 from pypy.rlib.rarithmetic import intmask
 from pypy.rlib.rerased import new_static_erasing_pair
@@ -13,21 +15,24 @@ class StringStrategy(object):
         pass
 
 def create_trans_table(source, replacement, inv=False):
-    source = expand(source, len(source), inv)
-    replacement = expand(replacement, len(source))
-    table = []
-    for i in range(256):
-        idx = source.rfind(chr(i))
-        if idx != -1:
-            table.append(replacement[idx])
-        else:
-            table.append(chr(i))
+    # I have no idea why, but there seems to be no other
+    # way to convince rpython, that every element of
+    # the result of expand() is a string of length 1
+    src = [] 
+    for c in "".join(expand(source, len(source), inv)):
+        src.append(c)
+    repl = []
+    for c in "".join(expand(replacement, len(src))):
+        repl.append(c)
+    table = [chr(i) for i in xrange(256)]
+    for i, c in enumerate(src):
+        table[ord(c)] = repl[i]
     return table
 
 def expand(source, res_len, inv=False):
     # check the source for range definitions
     # and insert the missing characters
-    expanded_source = ""
+    expanded_source = []
     char = ""
     for i in range(res_len):
         if i < len(source):
@@ -38,16 +43,16 @@ def expand(source, res_len, inv=False):
             range_beg = ord(source[i - 1])
             range_end = ord(source[i + 1])
             for j in range(range_beg + 1, range_end - 1):
-                expanded_source += chr(j)
-        else:
-            expanded_source += char      
+                expanded_source.append(chr(j))
+        elif char:
+            expanded_source.append(char)
     
     if inv:
-        inverted_source = ""
+        inverted_source = []
         # invert the source
         for i in range(256):
             if chr(i) not in expanded_source:
-                inverted_source += chr(i)
+                inverted_source.append(chr(i))
         return inverted_source
     
     return expanded_source
@@ -149,7 +154,7 @@ class W_StringObject(W_Object):
         return self.strategy.copy(space, self.str_storage)
         
     def replace(self, space, new_str):
-        strategy = space.fromcache(ConstantStringStrategy)
+        strategy = space.fromcache(MutableStringStrategy)
         self.str_storage = strategy.erase(new_str)
         self.strategy = strategy
 
@@ -167,7 +172,7 @@ class W_StringObject(W_Object):
     def tr_trans(self, space, source, replacement, squeeze):
         change_made = False
         string = space.str_w(self)
-        new_string = "" 
+        new_string = []
         is_negative_set = len(source) > 1 and source[0] == "^"
         if is_negative_set:
             source = source[1:]
@@ -184,15 +189,15 @@ class W_StringObject(W_Object):
                     last_repl = repl
                     if not change_made:
                         change_made = True
-                new_string += repl
+                new_string.append(repl)
         else:
             for char in string:
                 repl = trans_table[ord(char)]
                 if not change_made and repl != char:
                     change_made = True
-                new_string += repl
+                new_string.append(repl)
             
-        return new_string if change_made else ""
+        return new_string if change_made else []
 
     @classdef.method("to_str")
     @classdef.method("to_s")
@@ -294,7 +299,7 @@ class W_StringObject(W_Object):
     def method_tr(self, space, source, replacement):
         string = self.copy(space)
         new_string = self.tr_trans(space, source, replacement, False)
-        return space.newstr_fromstr(new_string) if new_string else string
+        return space.newstr_fromchars(new_string) if new_string else string
     
     @classdef.method("tr!", source="str", replacement="str")
     def method_tr_i(self, space, source, replacement):
@@ -306,7 +311,7 @@ class W_StringObject(W_Object):
     def method_tr_s(self, space, source, replacement):
         string = self.copy(space)
         new_string = self.tr_trans(space, source, replacement, True)
-        return space.newstr_fromstr(new_string) if new_string else string
+        return space.newstr_fromchars(new_string) if new_string else string
         
     @classdef.method("tr_s!", source="str", replacement="str")
     def method_tr_s_i(self, space, source, replacement):
