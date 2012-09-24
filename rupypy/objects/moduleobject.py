@@ -2,9 +2,9 @@ from pypy.rlib import jit
 
 from rupypy.celldict import CellDict, VersionTag
 from rupypy.module import ClassDef
+from rupypy.objects.exceptionobject import W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_RootObject
-from rupypy.objects.exceptionobject import W_NameError
 
 
 class AttributeReader(W_FunctionObject):
