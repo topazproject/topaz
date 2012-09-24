@@ -900,7 +900,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(2), "f", [
-                ast.DynamicString([ast.ConstantString("        abc\n")]),
+                ast.ConstantString("        abc\n"),
                 ast.ConstantInt(3),
             ], None, 2))
         ]))
