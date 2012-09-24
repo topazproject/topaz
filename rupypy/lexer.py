@@ -250,7 +250,9 @@ class Lexer(object):
         return ch
 
     def unread(self):
-        self.idx -= 1
+        idx = self.idx - 1
+        assert idx >= 0
+        self.idx = idx
         self.columno -= 1
 
     def get_idx(self):
