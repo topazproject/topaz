@@ -153,18 +153,10 @@ class Kernel(Module):
     @moduledef.function("exec")
     def method_exec(self, space, args_w):
         if len(args_w) > 1 and space.respond_to(args_w[0], space.newsymbol("to_hash")):
-            w_env = space.convert_type(args_w[0], space.getclassfor(W_HashObject), "to_hash")
-            if w_env is not space.w_nil:
-                raise space.error(
-                    space.getclassfor(W_NotImplementedError), "exec with environment"
-                )
+            raise space.error(space.getclassfor(W_NotImplementedError), "exec with environment")
 
         if len(args_w) > 1 and space.respond_to(args_w[-1], space.newsymbol("to_hash")):
-            w_opthash = space.convert_type(args_w[-1], space.getclassfor(W_HashObject), "to_hash")
-            if w_opthash is not space.w_nil:
-                raise space.error(
-                    space.getclassfor(W_NotImplementedError), "exec with additional options"
-                )
+            raise space.error(space.getclassfor(W_NotImplementedError), "exec with options")
 
         if space.respond_to(args_w[0], space.newsymbol("to_ary")):
             w_cmd = space.convert_type(args_w[0], space.getclassfor(W_ArrayObject), "to_ary")
@@ -188,4 +180,9 @@ class Kernel(Module):
             os.execvp(cmd, args)
         else:
             shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
-            os.execlp(shell, os.path.basename(shell), "-c", cmd)
+            sepidx = shell.rfind(os.sep) + 1
+            if sepidx > 0:
+                argv0 = shell[sepidx:]
+            else:
+                argv0 = shell
+            os.execlp(shell, argv0, "-c", cmd)
