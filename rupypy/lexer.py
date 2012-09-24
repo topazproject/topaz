@@ -455,12 +455,12 @@ class Lexer(object):
         last_line = StringBuilder()
         while True:
             ch = self.read()
-            last_line.append(ch)
             if ch == "\n":
                 break
             elif ch == self.EOF:
                 self.unread()
                 break
+            last_line.append(ch)
 
         self.str_term = HeredocTerm(self, marker.build(), last_line.build(), indent=indent, expand=expand)
         if regexp:
@@ -1166,6 +1166,9 @@ class HeredocTerm(BaseStringTerm):
 
     def next(self):
         if self.is_end:
+            if self.last_line:
+                # TODO: there should be a real API for this.
+                self.lexer.source = self.lexer.source[:self.lexer.idx] + self.last_line + self.lexer.source[self.lexer.idx:]
             return self.lexer.emit("STRING_END")
         if self.start_of_line:
             self.start_of_line = False
