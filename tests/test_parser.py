@@ -894,6 +894,20 @@ HERE
         ]))
 
         r = space.parse("""
+        <<HERE
+        abc #{123}
+HERE
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString([
+                ast.ConstantString("        abc "),
+                ast.Block([ast.Statement(ast.ConstantInt(123))]),
+                ast.ConstantString("\n"),
+                ast.ConstantString(""),
+            ]))
+        ]))
+
+        r = space.parse("""
         f(<<-HERE, 3)
         abc
         HERE

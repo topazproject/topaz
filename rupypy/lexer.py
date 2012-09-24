@@ -1221,7 +1221,7 @@ class HeredocTerm(BaseStringTerm):
                 if ch2 in ["$", "@", "{"]:
                     self.lexer.unread()
                     self.lexer.unread()
-                    break
+                    return self.lexer.emit("STRING_CONTENT")
                 self.lexer.add(ch)
                 self.lexer.unread()
             else:
