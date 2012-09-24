@@ -415,7 +415,7 @@ class Lexer(object):
 
         indent = ch == "-"
         expand = True
-        regexp = True
+        regexp = False
         if indent:
             ch = self.read()
 
@@ -1065,6 +1065,7 @@ class BaseStringTerm(object):
     def __init__(self, lexer, expand):
         self.lexer = lexer
         self.expand = expand
+        self.is_end = False
 
 
 class StringTerm(BaseStringTerm):
@@ -1075,7 +1076,6 @@ class StringTerm(BaseStringTerm):
         self.is_regexp = is_regexp
         self.is_qwords = is_qwords
         self.nest = 0
-        self.is_end = False
 
     def next(self):
         ch = self.lexer.read()
@@ -1141,6 +1141,8 @@ class StringTerm(BaseStringTerm):
             elif self.is_qwords and ch.isspace():
                 self.lexer.unread()
                 break
+            elif ch == self.lexer.EOF:
+                self.lexer.error()
             else:
                 self.lexer.add(ch)
         return self.lexer.emit("STRING_CONTENT")
@@ -1160,6 +1162,67 @@ class HeredocTerm(BaseStringTerm):
         self.marker = marker
         self.last_line = last_line
         self.indent = indent
+        self.start_of_line = True
+
+    def next(self):
+        if self.is_end:
+            return self.lexer.emit("STRING_END")
+        if self.start_of_line:
+            self.start_of_line = False
+            chars = []
+            if self.indent:
+                while True:
+                    ch = self.lexer.read()
+                    if ch.isspace():
+                        chars.append(ch)
+                    else:
+                        self.lexer.unread()
+                        break
+            for c in self.marker:
+                ch = self.lexer.read()
+                if ch != c:
+                    self.lexer.unread()
+                    for c in chars:
+                        self.lexer.add(c)
+                    return self.lexer.emit("STRING_CONTENT")
+                chars.append(ch)
+            else:
+                self.is_end = True
+                return self.lexer.emit("STRING_CONTENT")
+
+        ch = self.lexer.read()
+        if self.expand and ch == "#":
+            self.lexer.add(ch)
+            ch = self.lexer.read()
+            if ch in ["$", "@"]:
+                self.lexer.unread()
+                return self.lexer.emit("STRING_DVAR")
+            elif ch == "{":
+                self.lexer.add(ch)
+                return self.lexer.emit("STRING_DBEG")
+            else:
+                self.lexer.add("#")
+        self.lexer.unread()
+
+        while True:
+            ch = self.lexer.read()
+            if ch == "\n":
+                self.lexer.add(ch)
+                self.start_of_line = True
+                return self.lexer.emit("STRING_CONTENT")
+            elif ch == self.lexer.EOF:
+                self.lexer.error()
+            elif self.expand and ch == "#" and self.lexer.peek() != "\n":
+                ch2 = self.lexer.read()
+
+                if ch2 in ["$", "@", "{"]:
+                    self.lexer.unread()
+                    self.lexer.unread()
+                    break
+                self.lexer.add(ch)
+                self.lexer.unread()
+            else:
+                self.lexer.add(ch)
 
 
 class StackState(object):

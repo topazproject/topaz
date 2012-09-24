@@ -847,8 +847,8 @@ class TestParser(BaseRuPyPyTest):
         ]))
 
     def test_heredoc(self, space):
-        heredoc = lambda *contents: ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString(list(contents)))
+        const_heredoc = lambda s: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString(s))
         ]))
 
         r = space.parse("""
@@ -857,27 +857,41 @@ abc
 HERE
         """)
 
-        assert r == heredoc(ast.ConstantString("abc\n"))
+        assert r == const_heredoc("abc\n")
         r = space.parse("""
         <<"HERE"
 abc
 HERE
         """)
-        assert r == heredoc(ast.ConstantString("abc\n"))
+        assert r == const_heredoc("abc\n")
 
         r = space.parse("""
         <<'HERE'
 abc
 HERE
         """)
-        assert r == heredoc(ast.ConstantString("abc\n"))
+        assert r == const_heredoc("abc\n")
 
         r = space.parse("""
         <<-HERE
         abc
         HERE
         """)
-        assert r == heredoc(ast.ConstantString("        abc\n"))
+        assert r == const_heredoc("        abc\n")
+
+        r = space.parse("""
+        <<-HERE
+        #{false}
+        HERE
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.DynamicString([
+                ast.ConstantString("        "),
+                ast.Block([ast.Statement(ast.ConstantBool(False))]),
+                ast.ConstantString("\n"),
+                ast.ConstantString(""),
+            ]))
+        ]))
 
         r = space.parse("""
         f(<<-HERE, 3)
@@ -890,17 +904,6 @@ HERE
                 ast.ConstantInt(3),
             ], None, 2))
         ]))
-
-        r = space.parse("""
-        <<-HERE
-        #{foo}
-        HERE
-        """)
-        assert r == heredoc(
-            ast.ConstantString("        "),
-            ast.Variable("foo", 2),
-            ast.ConstantString("\n")
-        )
 
     def test_class(self, space):
         r = space.parse("""
