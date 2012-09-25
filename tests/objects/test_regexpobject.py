@@ -35,7 +35,7 @@ class TestRegexp(BaseRuPyPyTest):
         idx1 = /abc/
         idx2 = /abc/
         idx3 = /bca/
-        return idx1 == idx2, idx2 == idx3, idx1.eql? idx2
+        return idx1 == idx2, idx2 == idx3, idx1.eql?(idx2)
         """)
         assert self.unwrap(space, w_res) == [True, False, True]
         
