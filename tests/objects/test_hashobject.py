@@ -25,3 +25,12 @@ class TestHashObject(BaseRuPyPyTest):
         return x.keys
         """)
         assert self.unwrap(space, w_res) == [2, "four", 1, "1"]
+
+    def test_each(self, space):
+        w_res = space.execute("""
+        a = []
+        x = {2 => 3, "four" => 5, 1 => 3, '1' => 'a'}
+        x.each { |k, v| (a << k) << v }
+        return a
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, "four", 5, 1, 3, '1', 'a']

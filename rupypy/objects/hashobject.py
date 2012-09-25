@@ -22,3 +22,12 @@ class W_HashObject(W_Object):
     @classdef.method("keys")
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
+
+    classdef.app_method("""
+    def each
+        self.keys.each do |k|
+            yield k, self[k]
+        end
+    end
+    alias each_pair each
+    """)
