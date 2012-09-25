@@ -1,11 +1,11 @@
-import os
 import errno
+import os
 
 from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
-from rupypy.objects.exceptionobject import W_SystemCallError
 from rupypy.modules.enumerable import Enumerable
+from rupypy.objects.exceptionobject import W_SystemCallError
+from rupypy.objects.objectobject import W_Object
 
 
 class W_Dir(W_Object):

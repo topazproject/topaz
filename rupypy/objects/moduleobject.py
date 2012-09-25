@@ -1,9 +1,10 @@
 from pypy.rlib import jit
 
+from rupypy.celldict import CellDict, VersionTag
 from rupypy.module import ClassDef
+from rupypy.objects.exceptionobject import W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_RootObject
-from rupypy.objects.exceptionobject import W_NameError
 
 
 class AttributeReader(W_FunctionObject):
@@ -28,10 +29,6 @@ class AttributeWriter(W_FunctionObject):
         return w_value
 
 
-class VersionTag(object):
-    pass
-
-
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = [
         "version?", "included_modules?[*]", "lexical_scope?", "klass?"
@@ -40,8 +37,6 @@ class W_ModuleObject(W_RootObject):
     classdef = ClassDef("Module", W_RootObject.classdef)
 
     def __init__(self, space, name, superclass):
-        from rupypy.celldict import CellDict
-
         self.name = name
         self.klass = None
         self.superclass = superclass
