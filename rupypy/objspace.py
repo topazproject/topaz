@@ -27,6 +27,7 @@ from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
+from rupypy.objects.envobject import W_EnvObject
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
@@ -89,7 +90,7 @@ class ObjectSpace(object):
             W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError,
             W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
             W_StandardError, W_SystemExit, W_SystemCallError,
-            W_Random, W_Dir, W_ProcObject
+            W_Random, W_Dir, W_ProcObject, W_EnvObject
         ]:
             self.add_class(cls)
 
