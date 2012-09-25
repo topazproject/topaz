@@ -1387,13 +1387,8 @@ class Parser(object):
 
     @pg.production("call_args : assocs opt_block_arg")
     def call_args_assocs_opt_block_arg(self, p):
-        """
-        assocs opt_block_arg {
-                    $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
-                    $$ = support.arg_blk_pass((Node)$$, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        box = self.new_call_args(self.new_hash(p[0]))
+        return self.call_arg_block_pass(box, p[1])
 
     @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
     def call_args_args_comma_assocs_opt_block_arg(self, p):
