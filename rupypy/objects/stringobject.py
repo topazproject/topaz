@@ -5,6 +5,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.exceptionobject import W_ArgumentError
 
 
 class StringStrategy(object):
@@ -115,6 +116,10 @@ class W_StringObject(W_Object):
         storage = strategy.unerase(self.str_storage)
         w_other.strategy.extend_into(w_other.str_storage, storage)
 
+    def clear(self, space):
+        self.strategy.to_mutable(space, self)
+        self.strategy.clear(self)
+
     @classdef.method("to_str")
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -177,9 +182,24 @@ class W_StringObject(W_Object):
 
     @classdef.method("clear")
     def method_clear(self, space):
-        self.strategy.to_mutable(space, self)
-        self.strategy.clear(self)
+        self.clear(space)
         return self
+
+    @classdef.method("ljust", integer="int", padstr="str")
+    def method_ljust(self, space, integer, padstr=" "):
+        if not padstr:
+            raise space.error(space.getclassfor(W_ArgumentError), "zero width padding")
+        elif integer <= self.length():
+            return self.copy(space)
+        else:
+            pad_len = integer - self.length() - 1
+            assert pad_len >= 0
+            chars = []
+            chars += space.str_w(self)
+            for i in xrange(pad_len / len(padstr)):
+                chars += padstr
+            chars += padstr[:pad_len % len(padstr) + 1]
+            return space.newstr_fromchars(chars)
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=-1):

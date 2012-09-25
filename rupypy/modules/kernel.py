@@ -2,11 +2,11 @@ import os
 
 from pypy.rlib.rstring import assert_str0
 
+from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
+from rupypy.modules.process import Process
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.exceptionobject import W_ExceptionObject, W_TypeError, W_RuntimeError
-from rupypy.modules.process import Process
-from rupypy.error import RubyError
 
 
 class Kernel(Module):
@@ -34,7 +34,7 @@ class Kernel(Module):
         return space.newproc(block, True)
 
     @moduledef.method("proc")
-    def function_lambda(self, space, block):
+    def function_proc(self, space, block):
         return space.newproc(block, False)
 
     @moduledef.function("puts")
@@ -138,4 +138,11 @@ class Kernel(Module):
             space.getmoduleobject(Process.moduledef),
             space.newsymbol("exit"),
             [space.newint(status)]
+        )
+
+    @moduledef.function("block_given?")
+    @moduledef.function("iterator?")
+    def method_block_givenp(self, space):
+        return space.newbool(
+            space.getexecutioncontext().gettopframe().get_block() is not None
         )

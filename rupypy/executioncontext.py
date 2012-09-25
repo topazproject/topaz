@@ -25,6 +25,9 @@ class ExecutionContext(object):
     def visit_frame(self, frame, append_instr=False):
         return _VisitFrameContextManager(self, frame, append_instr)
 
+    def gettopframe(self):
+        return self.topframeref()
+
 
 class _VisitFrameContextManager(object):
     def __init__(self, ec, frame, append_instr):

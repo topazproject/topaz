@@ -46,18 +46,20 @@ def run_tests():
 
 
 def run_own_tests(env):
-    local("PYTHONPATH={pypy_path}:$PYTHONPATH py.test".format(**env))
+    local("PYTHONPATH=$PYTHONPATH:{pypy_path} py.test".format(**env))
 
 
 def run_translate_tests(env):
-    local("PYTHONPATH={pypy_path}:$PYTHONPATH {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
+    local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
 
 
 def run_docs_tests(env):
     local("sphinx-build -W -b html docs/ docs/_build/")
 
+RPLY_URL = "-e git+https://github.com/alex/rply#egg=rply"
+
 TEST_TYPES = {
-    "own": Test(run_own_tests, deps=["pytest"]),
-    "translate": Test(run_translate_tests),
+    "own": Test(run_own_tests, deps=["pytest", RPLY_URL]),
+    "translate": Test(run_translate_tests, deps=[RPLY_URL]),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_pypy=False),
 }

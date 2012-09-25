@@ -1,8 +1,8 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
+from rupypy.objects.exceptionobject import W_TypeError, W_IndexError, W_ArgumentError
+from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.objectobject import W_Object
-from rupypy.objects.rangeobject import W_RangeObject
-from rupypy.objects.exceptionobject import W_TypeError, W_IndexError
 
 
 class W_ArrayObject(W_Object):
@@ -19,7 +19,6 @@ class W_ArrayObject(W_Object):
     classdef.app_method("""
     def to_s()
         result = "["
-        i = 0
         self.each_with_index do |obj, i|
             if i > 0
                 result << ", "
@@ -30,6 +29,7 @@ class W_ArrayObject(W_Object):
     end
     """)
 
+    @classdef.method("at")
     @classdef.method("[]")
     def method_subscript(self, space, w_idx, w_count=None):
         start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
@@ -181,6 +181,60 @@ class W_ArrayObject(W_Object):
         self.select { |each| !each.nil? }
     end
     """)
+
+    classdef.app_method("""
+    def reject!(&block)
+        prev_size = self.size
+        self.delete_if(&block)
+        return nil if prev_size == self.size
+        self
+    end
+    """)
+
+    classdef.app_method("""
+    def delete_if
+        i = 0
+        c = 0
+        sz = self.size
+        while i < sz - c
+            item = self[i + c]
+            if yield(item)
+                c += 1
+            else
+                self[i] = item
+                i += 1
+            end
+        end
+        self.pop(c)
+        self
+    end
+    """)
+
+    @classdef.method("pop")
+    def method_pop(self, space, w_num=None):
+        if w_num is None:
+            if self.items_w:
+                return self.items_w.pop()
+            else:
+                return space.w_nil
+        else:
+            num = space.int_w(space.convert_type(
+                    w_num, space.getclassfor(W_FixnumObject), "to_int"
+                  ))
+            if num < 0:
+                raise space.error(space.getclassfor(W_ArgumentError), "negative array size")
+            else:
+                pop_size = max(0, len(self.items_w) - num)
+                res_w = self.items_w[pop_size:]
+                del self.items_w[pop_size:]
+                return space.newarray(res_w)
+
+    @classdef.method("delete_at", idx="int")
+    def method_delete_at(self, space, idx):
+        if idx >= len(self.items_w):
+            return space.w_nil
+        else:
+            return self.items_w.pop(idx)
 
     @classdef.method("last")
     def method_last(self, space):
