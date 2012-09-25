@@ -189,6 +189,13 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("Module::constant") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Module", 1), "constant", [], None, 1))
         ]))
+        r = space.parse("""
+        nil.
+            f
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Nil(), "f", [], None, 3))
+        ]))
 
         with self.raises(space, "SyntaxError"):
             space.parse("2.to_s(:base => 5, 3)")

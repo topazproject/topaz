@@ -125,13 +125,13 @@ class Lexer(object):
                 self.comment(ch)
             elif ch == "\n":
                 space_seen = True
-                if self.state != self.EXPR_BEG:
-                    self.add(ch)
-                    self.command_start = True
-                    yield self.emit("LITERAL_NEWLINE")
                 self.lineno += 1
                 self.columno = 1
-                self.state = self.EXPR_BEG
+                if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
+                    self.add(ch)
+                    self.command_start = True
+                    self.state = self.EXPR_BEG
+                    yield self.emit("LITERAL_NEWLINE")
                 continue
             elif ch == "*":
                 for token in self.star(ch, space_seen):
