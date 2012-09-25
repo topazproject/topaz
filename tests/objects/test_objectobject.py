@@ -190,10 +190,10 @@ class TestObjectObject(BaseRuPyPyTest):
         class B < A; end
         class C < B; end
         b = B.new
-        r << b.kind_of? A
-        r << b.kind_of? B
-        r << b.kind_of? C
-        r << b.kind_of? M
+        r << b.kind_of?(A)
+        r << b.kind_of?(B)
+        r << b.kind_of?(C)
+        r << b.kind_of?(M)
         return r
         """)
         assert self.unwrap(space, w_res) == [True, True, False, True]

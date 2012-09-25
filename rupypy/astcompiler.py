@@ -6,7 +6,8 @@ class BaseSymbolTable(object):
     FREEVAR = 0
     CELLVAR = 1
 
-    def __init__(self):
+    def __init__(self, parent_symtable=None):
+        self.parent_symtable = parent_symtable
         self.subscopes = {}
         self.locals = {}
         self.cells = {}
@@ -59,10 +60,6 @@ class SymbolTable(BaseSymbolTable):
 
 
 class BlockSymbolTable(BaseSymbolTable):
-    def __init__(self, parent_symtable):
-        BaseSymbolTable.__init__(self)
-        self.parent_symtable = parent_symtable
-
     def declare_read(self, name):
         if (name not in self.locals and name not in self.cells and
             self.parent_symtable.is_defined(name)):

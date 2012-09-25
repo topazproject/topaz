@@ -4,8 +4,9 @@ import os
 
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import specialize
-from pypy.rlib.parsing.parsing import ParseError
 from pypy.tool.cache import Cache
+
+from rply.errors import ParsingError
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
 from rupypy.celldict import CellDict
@@ -13,7 +14,7 @@ from rupypy.error import RubyError
 from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
 from rupypy.interpreter import Interpreter
-from rupypy.lexer import LexerError
+from rupypy.lexer import LexerError, Lexer
 from rupypy.lib.dir import W_Dir
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, ModuleCache
@@ -26,19 +27,19 @@ from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
-from rupypy.objects.fileobject import W_FileObject, W_IOObject
-from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError)
+from rupypy.objects.fileobject import W_FileObject, W_IOObject
+from rupypy.objects.floatobject import W_FloatObject
+from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.hashobject import W_HashObject
-from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.integerobject import W_IntegerObject
-from rupypy.objects.numericobject import W_NumericObject
+from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
+from rupypy.objects.numericobject import W_NumericObject
 from rupypy.objects.objectobject import W_Object, W_BaseObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.rangeobject import W_RangeObject
@@ -46,7 +47,7 @@ from rupypy.objects.regexpobject import W_RegexpObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
 from rupypy.objects.timeobject import W_TimeObject
-from rupypy.parser import Transformer, _parse, ToASTVisitor
+from rupypy.parser import Parser
 
 
 class SpaceCache(Cache):
@@ -131,19 +132,20 @@ class ObjectSpace(object):
 
     # Methods for dealing with source code.
 
-    def parse(self, source, initial_lineno=1):
+    def parse(self, source, initial_lineno=1, symtable=None):
+        if symtable is None:
+            symtable = SymbolTable()
+        parser = Parser(Lexer(source, initial_lineno=initial_lineno, symtable=symtable))
         try:
-            st = ToASTVisitor().transform(_parse(source, initial_lineno=initial_lineno))
-            return Transformer().visit_main(st)
-        except ParseError as e:
-            raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.source_pos.lineno)
+            return parser.parse().getast()
+        except ParsingError as e:
+            raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.getsourcepos().lineno)
         except LexerError:
             raise self.error(self.getclassfor(W_SyntaxError))
 
     def compile(self, source, filepath, initial_lineno=1):
-        astnode = self.parse(source, initial_lineno=initial_lineno)
         symtable = SymbolTable()
-        astnode.locate_symbols(symtable)
+        astnode = self.parse(source, initial_lineno=initial_lineno, symtable=symtable)
         c = CompilerContext(self, "<main>", symtable, filepath)
         astnode.compile(c)
         return c.create_bytecode([], [], None, None)

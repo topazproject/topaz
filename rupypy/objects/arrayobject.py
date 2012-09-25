@@ -1,9 +1,8 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
-from rupypy.objects.objectobject import W_Object
-from rupypy.objects.rangeobject import W_RangeObject
-from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.exceptionobject import W_TypeError, W_IndexError, W_ArgumentError
+from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.objectobject import W_Object
 
 
 class W_ArrayObject(W_Object):
