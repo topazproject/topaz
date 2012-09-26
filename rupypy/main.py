@@ -70,8 +70,8 @@ def entry_point(argv):
                 w_exit_error = w_exc
                 status = 1
         space.run_exit_handlers()
-        if w_exit_error:
-            print_traceback(space, w_exc)
+        if w_exit_error is not None:
+            print_traceback(space, w_exit_error)
     return status
 
 if __name__ == "__main__":
