@@ -250,6 +250,10 @@ class W_FileObject(W_IOObject):
     def method_filep(self, space, filename):
         return space.newbool(os.path.isfile(filename))
 
+    @classdef.singleton_method("directory?", filename="str")
+    def method_directoryp(self, space, filename):
+        return space.newbool(os.path.isdir(filename))
+
     @classdef.singleton_method("executable?", filename="str")
     def method_executablep(self, space, filename):
         return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
