@@ -10,7 +10,7 @@ from rply.errors import ParsingError
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
 from rupypy.celldict import CellDict
-from rupypy.error import RubyError
+from rupypy.error import RubyError, print_traceback
 from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
 from rupypy.interpreter import Interpreter
@@ -67,6 +67,7 @@ class ObjectSpace(object):
         self.globals = CellDict()
         self.bootstrap = True
         self.w_top_self = W_Object(self, self.getclassfor(W_Object))
+        self.exit_handlers_w = []
 
         self.w_true = W_TrueObject(self)
         self.w_false = W_FalseObject(self)
@@ -354,8 +355,16 @@ class ObjectSpace(object):
     def eq_w(self, w_obj1, w_obj2):
         return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
 
+    def register_exit_handler(self, w_proc):
+        self.exit_handlers_w.append(w_proc)
+
     def run_exit_handlers(self):
-        pass
+        while self.exit_handlers_w:
+            w_proc = self.exit_handlers_w.pop()
+            try:
+                self.send(w_proc, self.newsymbol("call"))
+            except RubyError as e:
+                print_traceback(self, e.w_value)
 
     def subscript_access(self, length, w_idx, w_count):
         inclusive = False

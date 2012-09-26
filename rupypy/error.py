@@ -24,7 +24,7 @@ def format_traceback(space, exc):
     ))
     last_instr_idx += 1
     frame = frame.backref()
-    while frame is not None:
+    while frame is not None and frame.has_contents():
         lines.append("\tfrom %s:%d:in `%s'\n" % (
             frame.get_filename(),
             frame.get_lineno(exc.last_instructions[last_instr_idx]),
@@ -33,6 +33,12 @@ def format_traceback(space, exc):
         last_instr_idx += 1
         frame = frame.backref()
     return lines
+
+
+def print_traceback(space, w_exc):
+    for line in format_traceback(space, w_exc):
+        os.write(2, line)
+
 
 def error_for_oserror(space, exc):
     assert isinstance(exc, OSError)

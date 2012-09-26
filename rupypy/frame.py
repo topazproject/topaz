@@ -110,6 +110,9 @@ class Frame(BaseFrame):
                 return block
             block.cleanupstack(self)
 
+    def has_contents(self):
+        return True
+
     def get_filename(self):
         return self.bytecode.filepath
 
@@ -127,6 +130,9 @@ class BuiltinFrame(BaseFrame):
     def __init__(self, name):
         BaseFrame.__init__(self)
         self.name = name
+
+    def has_contents(self):
+        return self.backref() is not None
 
     def get_filename(self):
         return self.backref().get_filename()

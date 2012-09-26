@@ -6,7 +6,7 @@ import sys
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.streamio import open_file_as_stream
 
-from rupypy.error import RubyError, format_traceback
+from rupypy.error import RubyError, print_traceback
 from rupypy.objects.exceptionobject import W_SystemExit
 from rupypy.objects.objectobject import W_Object
 from rupypy.objspace import ObjectSpace
@@ -51,6 +51,8 @@ def entry_point(argv):
 
     if verbose:
         os.write(1, "%s\n" % description)
+    status = 0
+    w_exit_error = None
     if path is not None:
         f = open_file_as_stream(path)
         try:
@@ -63,14 +65,14 @@ def entry_point(argv):
         except RubyError as e:
             w_exc = e.w_value
             if isinstance(w_exc, W_SystemExit):
-                space.run_exit_handlers()
                 return w_exc.status
             else:
-                lines = format_traceback(space, w_exc)
-                for line in lines:
-                    os.write(2, line)
-                return 1
-    return 0
+                w_exit_error = w_exc
+                status = 1
+        space.run_exit_handlers()
+        if w_exit_error:
+            print_traceback(space, w_exc)
+    return status
 
 if __name__ == "__main__":
     entry_point(sys.argv)

@@ -146,3 +146,9 @@ class Kernel(Module):
         return space.newbool(
             space.getexecutioncontext().gettopframe().get_block() is not None
         )
+
+    @moduledef.function("at_exit")
+    def method_at_exit(self, space, block):
+        w_proc = space.newproc(block)
+        space.register_exit_handler(w_proc)
+        return w_proc
