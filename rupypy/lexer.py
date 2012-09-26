@@ -1080,10 +1080,10 @@ class StringTerm(BaseStringTerm):
         self.nest = 0
 
     def next(self):
-        ch = self.lexer.read()
-        space_seen = False
         if self.is_end:
             return self.lexer.emit("STRING_END")
+        ch = self.lexer.read()
+        space_seen = False
         if self.is_qwords and ch.isspace():
             while ch.isspace():
                 ch = self.lexer.read()

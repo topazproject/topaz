@@ -851,6 +851,14 @@ class TestParser(BaseRuPyPyTest):
                 )
             )])])]))
         ]))
+        r = space.parse("""
+        %w!a!
+        nil
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.ConstantString("a")])),
+            ast.Statement(ast.Nil()),
+        ]))
 
         assert space.parse("f %q[/]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantString("/")], None, 1)),
