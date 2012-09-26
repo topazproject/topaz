@@ -15,21 +15,14 @@ class StringStrategy(object):
         pass
 
 def create_trans_table(source, replacement, inv=False):
-    # I have no idea why, but there seems to be no other
-    # way to convince rpython, that every element of
-    # the result of expand() is a string of length 1
-    src = [] 
-    for c in "".join(expand(source, len(source), inv)):
-        src.append(c)
-    repl = []
-    for c in "".join(expand(replacement, len(src))):
-        repl.append(c)
+    src = expand_trans_str(source, len(source), inv)
+    repl = expand_trans_str(replacement, len(src))
     table = [chr(i) for i in xrange(256)]
     for i, c in enumerate(src):
         table[ord(c)] = repl[i]
     return table
 
-def expand(source, res_len, inv=False):
+def expand_trans_str(source, res_len, inv=False):
     # check the source for range definitions
     # and insert the missing characters
     expanded_source = []
@@ -39,13 +32,13 @@ def expand(source, res_len, inv=False):
             char = source[i]
         if char == "-":
             # expand the range
-            assert 0 < i < len(source)-1
+            assert 0 < i < len(source) - 1
             range_beg = ord(source[i - 1])
             range_end = ord(source[i + 1])
             for j in range(range_beg + 1, range_end - 1):
                 expanded_source.append(chr(j))
         elif char:
-            expanded_source.append(char)
+            expanded_source.append(char[0])
     
     if inv:
         inverted_source = []
