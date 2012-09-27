@@ -166,6 +166,9 @@ class Interpreter(object):
         space.set_instance_var(w_obj, space.symbol_w(w_name), w_value)
         frame.push(w_value)
 
+    def DEFINED_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
+        raise NotImplementedError
+
     def LOAD_CLASS_VAR(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
         w_module = frame.pop()
