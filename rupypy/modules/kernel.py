@@ -152,3 +152,7 @@ class Kernel(Module):
         w_proc = space.newproc(block)
         space.register_exit_handler(w_proc)
         return w_proc
+
+    @moduledef.function("=~")
+    def method_match(self, space, w_other):
+        return space.w_nil

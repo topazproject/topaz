@@ -1004,3 +1004,7 @@ class TestExceptions(BaseRuPyPyTest):
     def test_defined(self, space):
         w_res = space.execute("return [defined? A, defined? Array]")
         assert self.unwrap(space, w_res) == [None, "constant"]
+
+    def test_match(self, space):
+        w_res = space.execute("return 3 =~ nil")
+        assert self.unwrap(space, w_res) is None
