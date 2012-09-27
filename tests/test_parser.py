@@ -2051,6 +2051,14 @@ HERE
             ast.Alias(ast.ConstantSymbol("<<"), ast.ConstantSymbol("b"), 1)
         ]))
 
+    def test_defined(self, space):
+        assert space.parse("defined? Const") == ast.Main(ast.Block([
+            ast.Statement(ast.Defined(ast.LookupConstant(ast.Scope(1), "Const", 1), 1))
+        ]))
+        assert space.parse("defined?(3)") == ast.Main(ast.Block([
+            ast.Statement(ast.Defined(ast.ConstantInt(3), 1))
+        ]))
+
     def test_custom_lineno(self, space):
         with self.raises(space, "SyntaxError", "line 1"):
             assert space.parse("[]{}[]")

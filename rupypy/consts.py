@@ -24,9 +24,11 @@ BYTECODES = [
 
     ("LOAD_CONSTANT", 1, 0),
     ("STORE_CONSTANT", 1, 0),
+    ("DEFINED_CONSTANT", 1, 0),
 
     ("LOAD_INSTANCE_VAR", 1, 0),
     ("STORE_INSTANCE_VAR", 1, -1),
+    ("DEFINED_INSTANCE_VAR", 1, 0),
 
     ("LOAD_CLASS_VAR", 1, 0),
     ("STORE_CLASS_VAR", 1, -1),

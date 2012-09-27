@@ -279,8 +279,11 @@ class ObjectSpace(object):
     def getmoduleobject(self, moduledef):
         return self.fromcache(ModuleCache).getorbuild(moduledef)
 
-    def find_const(self, module, name):
-        return module.find_const(self, name)
+    def find_const(self, w_module, name):
+        w_obj = w_module.find_const(self, name)
+        if w_obj is None:
+            w_obj = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
+        return w_obj
 
     def set_const(self, module, name, w_value):
         module.set_const(self, name, w_value)

@@ -1835,3 +1835,19 @@ class TestCompiler(object):
         assert space.symbol_w(w_a) == "a"
         assert space.symbol_w(w_b) == "b"
         assert space.symbol_w(w_alias_method) == "alias_method"
+
+    def test_defined(self, space):
+        self.assert_compiles(space, """
+        defined? Const
+        defined? @a
+        """, """
+        LOAD_SCOPE
+        DEFINED_CONSTANT 0
+        DISCARD_TOP
+        LOAD_SELF
+        DEFINED_INSTANCE_VAR 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)

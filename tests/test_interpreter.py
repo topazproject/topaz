@@ -1000,3 +1000,7 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert space.int_w(w_res) == 3
+
+    def test_defined(self, space):
+        w_res = space.execute("return [defined? A, defined? Array]")
+        assert self.unwrap(space, w_res) == [None, "constant"]

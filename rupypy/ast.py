@@ -420,6 +420,16 @@ class Alias(BaseStatement):
             ctx.emit(consts.DISCARD_TOP)
 
 
+class Defined(Node):
+    def __init__(self, node, lineno):
+        Node.__init__(self, lineno)
+        self.node = node
+
+    def compile(self, ctx):
+        self.node.compile_receiver(ctx)
+        self.node.compile_defined(ctx)
+
+
 class Assignment(Node):
     def __init__(self, target, value):
         self.target = target
@@ -726,6 +736,9 @@ class LookupConstant(Node):
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_CONSTANT, ctx.create_symbol_const(self.name))
+
 
 class Self(Node):
     def compile(self, ctx):
@@ -799,6 +812,9 @@ class InstanceVariable(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 
 class ClassVariable(Node):

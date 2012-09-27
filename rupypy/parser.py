@@ -162,6 +162,9 @@ class Parser(object):
     def new_colon3(self, constant):
         return BoxAST(ast.LookupConstant(None, constant.getstr(), constant.getsourcepos().lineno))
 
+    def new_defined(self, box, token):
+        return BoxAST(ast.Defined(box.getast(), token.getsourcepos().lineno))
+
     def new_symbol(self, token):
         return BoxAST(ast.ConstantSymbol(token.getstr()))
 
@@ -1300,13 +1303,7 @@ class Parser(object):
 
     @pg.production("arg : DEFINED opt_nl arg")
     def arg_defined(self, p):
-        """
-        kDEFINED opt_nl arg {
-                    // ENEBO: arg surrounded by in_defined set/unset
-                    $$ = new DefinedNode($1.getPosition(), $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_defined(p[2], p[0])
 
     @pg.production("arg : arg LITERAL_QUESTION_MARK arg opt_nl LITERAL_COLON arg")
     def arg_ternary(self, p):
@@ -1570,12 +1567,7 @@ class Parser(object):
 
     @pg.production("primary : DEFINED opt_nl LPAREN2 expr rparen")
     def primary_defined(self, p):
-        """
-        kDEFINED opt_nl tLPAREN2 expr rparen {
-                    $$ = new DefinedNode($1.getPosition(), $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_defined(p[3], p[0])
 
     @pg.production("primary : NOT LPAREN2 expr rparen")
     def primary_not_paren_expr(self, p):

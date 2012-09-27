@@ -133,8 +133,6 @@ class Interpreter(object):
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
         w_obj = space.find_const(w_scope, name)
-        if w_obj is None:
-            space.send(w_scope, space.newsymbol("const_missing"), [w_name])
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
@@ -144,6 +142,16 @@ class Interpreter(object):
         w_scope = frame.pop()
         space.set_const(w_scope, name, w_value)
         frame.push(w_value)
+
+    def DEFINED_CONSTANT(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        name = space.symbol_w(w_name)
+        w_scope = frame.pop()
+        w_res = w_scope.find_const(space, name)
+        if w_res is None:
+            frame.push(space.w_nil)
+        else:
+            frame.push(space.newstr_fromstr("constant"))
 
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
@@ -243,7 +251,7 @@ class Interpreter(object):
         w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_cls = space.find_const(w_scope, name)
+        w_cls = w_scope.find_const(space, name)
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.getclassfor(W_Object)
@@ -260,7 +268,7 @@ class Interpreter(object):
         w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_mod = space.find_const(w_scope, name)
+        w_mod = w_scope.find_const(space, name)
         if w_mod is None:
             w_mod = space.newmodule(name)
             space.set_const(w_scope, name, w_mod)
