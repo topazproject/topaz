@@ -116,8 +116,8 @@ class Frame(BaseFrame):
     def get_filename(self):
         return self.bytecode.filepath
 
-    def get_lineno(self, idx):
-        return self.bytecode.lineno_table[idx]
+    def get_lineno(self, last_instructions, last_instr_idx):
+        return self.bytecode.lineno_table[last_instructions[last_instr_idx]]
 
     def get_code_name(self):
         return self.bytecode.name
@@ -137,8 +137,8 @@ class BuiltinFrame(BaseFrame):
     def get_filename(self):
         return self.backref().get_filename()
 
-    def get_lineno(self, idx):
-        return self.backref().get_lineno(idx)
+    def get_lineno(self, last_instructions, last_instr_idx):
+        return self.backref().get_lineno(last_instructions, last_instr_idx + 1)
 
     def get_code_name(self):
         return self.name

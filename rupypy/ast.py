@@ -396,10 +396,10 @@ class Yield(Node):
         self.args = args
 
     def compile(self, ctx):
-        for arg in self.args:
-            arg.compile(ctx)
-        ctx.current_lineno = self.lineno
-        ctx.emit(consts.YIELD, len(self.args))
+        with ctx.set_lineno(self.lineno):
+            for arg in self.args:
+                arg.compile(ctx)
+            ctx.emit(consts.YIELD, len(self.args))
 
 
 class Alias(BaseStatement):
@@ -583,30 +583,33 @@ class Send(Node):
         self.lineno = lineno
 
     def compile(self, ctx):
-        self.receiver.compile(ctx)
-        if self.is_splat():
-            for arg in self.args:
-                arg.compile(ctx)
-                if not isinstance(arg, Splat):
-                    ctx.emit(consts.BUILD_ARRAY, 1)
-            for i in range(len(self.args) - 1):
-                ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
-        else:
-            for arg in self.args:
-                arg.compile(ctx)
-        if self.block_arg is not None:
-            self.block_arg.compile(ctx)
+        with ctx.set_lineno(self.lineno):
+            self.receiver.compile(ctx)
+            if self.is_splat():
+                for arg in self.args:
+                    arg.compile(ctx)
+                    if not isinstance(arg, Splat):
+                        ctx.emit(consts.BUILD_ARRAY, 1)
+                for i in range(len(self.args) - 1):
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+            else:
+                for arg in self.args:
+                    arg.compile(ctx)
+            if self.block_arg is not None:
+                self.block_arg.compile(ctx)
 
-        ctx.current_lineno = self.lineno
-        symbol = ctx.create_symbol_const(self.method)
-        if self.is_splat() and self.block_arg is not None:
-            ctx.emit(consts.SEND_BLOCK_SPLAT, symbol)
-        elif self.is_splat():
-            ctx.emit(consts.SEND_SPLAT, symbol)
-        elif self.block_arg is not None:
-            ctx.emit(consts.SEND_BLOCK, symbol, len(self.args) + 1)
-        else:
-            ctx.emit(consts.SEND, symbol, len(self.args))
+            symbol = ctx.create_symbol_const(self.method)
+            if ctx.current_lineno == -1:
+                import pdb
+                pdb.set_trace()
+            if self.is_splat() and self.block_arg is not None:
+                ctx.emit(consts.SEND_BLOCK_SPLAT, symbol)
+            elif self.is_splat():
+                ctx.emit(consts.SEND_SPLAT, symbol)
+            elif self.block_arg is not None:
+                ctx.emit(consts.SEND_BLOCK, symbol, len(self.args) + 1)
+            else:
+                ctx.emit(consts.SEND, symbol, len(self.args))
 
     def is_splat(self):
         for arg in self.args:
@@ -719,12 +722,12 @@ class LookupConstant(Node):
         self.name = name
 
     def compile(self, ctx):
-        if self.value is not None:
-            self.value.compile(ctx)
-        else:
-            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_RootObject)))
-        ctx.current_lineno = self.lineno
-        ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+        with ctx.set_lineno(self.lineno):
+            if self.value is not None:
+                self.value.compile(ctx)
+            else:
+                ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_RootObject)))
+            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
         self.value.compile(ctx)

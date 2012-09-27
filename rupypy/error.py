@@ -17,7 +17,7 @@ def format_traceback(space, exc):
     frame = exc.frame
     lines.append("%s:%d:in `%s': %s (%s)\n" % (
         frame.get_filename(),
-        frame.get_lineno(exc.last_instructions[last_instr_idx]),
+        frame.get_lineno(exc.last_instructions, last_instr_idx),
         frame.get_code_name(),
         exc.msg,
         space.getclass(exc).name,
@@ -27,7 +27,7 @@ def format_traceback(space, exc):
     while frame is not None and frame.has_contents():
         lines.append("\tfrom %s:%d:in `%s'\n" % (
             frame.get_filename(),
-            frame.get_lineno(exc.last_instructions[last_instr_idx]),
+            frame.get_lineno(exc.last_instructions, last_instr_idx),
             frame.get_code_name(),
         ))
         last_instr_idx += 1

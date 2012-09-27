@@ -199,6 +199,9 @@ class CompilerContext(object):
             stack_effect = instr.arg0 - 1
         return stack_effect
 
+    def set_lineno(self, lineno):
+        return SetLinenoConextManager(self, lineno)
+
     def new_block(self):
         return Block()
 
@@ -304,3 +307,16 @@ class Instruction(object):
     def patch_loc(self, offsets):
         if self.has_jump():
             self.arg0 = offsets[self.jump]
+
+
+class SetLinenoConextManager(object):
+    def __init__(self, ctx, lineno):
+        self.ctx = ctx
+        self.lineno = lineno
+
+    def __enter__(self):
+        self.orig_lineno = self.ctx.current_lineno
+        self.ctx.current_lineno = self.lineno
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.ctx.current_lineno = self.orig_lineno
