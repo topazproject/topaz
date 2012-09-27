@@ -599,9 +599,6 @@ class Send(Node):
                 self.block_arg.compile(ctx)
 
             symbol = ctx.create_symbol_const(self.method)
-            if ctx.current_lineno == -1:
-                import pdb
-                pdb.set_trace()
             if self.is_splat() and self.block_arg is not None:
                 ctx.emit(consts.SEND_BLOCK_SPLAT, symbol)
             elif self.is_splat():
