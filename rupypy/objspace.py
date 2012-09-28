@@ -23,11 +23,13 @@ from rupypy.modules.enumerable import Enumerable
 from rupypy.modules.math import Math
 from rupypy.modules.kernel import Kernel
 from rupypy.modules.process import Process
+from rupypy.modules.topaz import Topaz
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.encodingobject import W_EncodingObject
+from rupypy.objects.envobject import W_EnvObject
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
@@ -92,6 +94,9 @@ class ObjectSpace(object):
         self.w_TypeError = self.getclassfor(W_TypeError)
         self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
         self.w_kernel = self.getmoduleobject(Kernel.moduledef)
+
+        self.w_topaz = self.getmoduleobject(Topaz.moduledef)
+
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
             self.w_fixnum,
@@ -121,6 +126,13 @@ class ObjectSpace(object):
         ]:
             self.set_const(
                 self.w_object,
+                self.str_w(self.send(w_cls, self.newsymbol("name"))),
+                w_cls
+            )
+
+        for w_cls in [self.getclassfor(W_EnvObject)]:
+            self.set_const(
+                self.w_topaz,
                 self.str_w(self.send(w_cls, self.newsymbol("name"))),
                 w_cls
             )
