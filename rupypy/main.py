@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import os
-import sys
 
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.streamio import open_file_as_stream
@@ -73,6 +72,3 @@ def entry_point(argv):
         if w_exit_error is not None:
             print_traceback(space, w_exit_error)
     return status
-
-if __name__ == "__main__":
-    entry_point(sys.argv)
