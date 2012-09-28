@@ -7,7 +7,7 @@ from pypy.rlib.objectmodel import hlinvoke
 from pypy.rlib.rarithmetic import r_uint, intmask, LONG_BIT
 from pypy.rpython.extregistry import ExtRegistryEntry
 from pypy.rpython.lltypesystem import lltype
-from pypy.rpython.rmodel import Repr, externalvsinternal
+from pypy.rpython.rmodel import Repr, IteratorRepr, externalvsinternal
 from pypy.tool.pairtype import pairtype
 
 
@@ -31,6 +31,10 @@ class OrderedDict(object):
 
     def get(self, key, default):
         return self.contents.get(self._key(key), default)
+
+    def iteritems(self):
+        for k, v in self.contents.iteritems():
+            yield k.key, v
 
 
 class DictKey(object):
@@ -153,6 +157,26 @@ class SomeOrderedDict(model.SomeObject):
         self.generalize_value(s_default)
         return self.read_value()
 
+    def method_iteritems(self):
+        return SomeOrderedDictIterator(self)
+
+
+class SomeOrderedDictIterator(model.SomeObject):
+    def __init__(self, d):
+        super(SomeOrderedDictIterator, self).__init__()
+        self.d = d
+
+    def iter(self):
+        return self
+
+    def next(self):
+        s_key = self.d.read_key()
+        s_value = self.d.read_value()
+        if (isinstance(s_key, model.SomeImpossibleValue) or
+            isinstance(s_value, model.SomeImpossibleValue)):
+            return model.s_ImpossibleValue
+        return model.SomeTuple((s_key, s_value))
+
 
 class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
     def union((d1, d2)):
@@ -267,6 +291,18 @@ class OrderedDictRepr(Repr):
     def rtype_method_get(self, hop):
         v_dict, v_key, v_default = hop.inputargs(self, self.key_repr, self.value_repr)
         return hop.gendirectcall(LLOrderedDict.ll_get, v_dict, v_key, v_default)
+
+    def rtype_method_iteritems(self, hop):
+        return OrderedDictIteratorRepr(self).newiter(hop)
+
+
+class OrderedDictIteratorRepr(IteratorRepr):
+    def __init__(self, r_dict):
+        super(OrderedDictIteratorRepr, self).__init__()
+        self.r_dict = r_dict
+
+    def newiter(self, hop):
+        raise NotImplementedError
 
 
 class __extend__(pairtype(OrderedDictRepr, Repr)):

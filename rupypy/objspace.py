@@ -33,11 +33,11 @@ from rupypy.objects.envobject import W_EnvObject
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
-    W_SystemCallError, W_NameError, W_IndexError)
+    W_SystemCallError, W_NameError, W_IndexError, W_StopIteration)
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
-from rupypy.objects.hashobject import W_HashObject
+from rupypy.objects.hashobject import W_HashObject, W_HashIterator
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
@@ -105,7 +105,7 @@ class ObjectSpace(object):
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RuntimeError,
             self.w_SystemCallError, self.w_LoadError,
 
-            self.w_kernel,
+            self.w_kernel, self.w_topaz,
 
             self.getclassfor(W_NumericObject),
             self.getclassfor(W_StringObject),
@@ -119,6 +119,7 @@ class ObjectSpace(object):
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
+            self.getclassfor(W_StopIteration),
 
             self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),
@@ -131,7 +132,9 @@ class ObjectSpace(object):
                 w_cls
             )
 
-        for w_cls in [self.getclassfor(W_EnvObject)]:
+        for w_cls in [
+            self.getclassfor(W_EnvObject), self.getclassfor(W_HashIterator),
+        ]:
             self.set_const(
                 self.w_topaz,
                 self.str_w(self.send(w_cls, self.newsymbol("name"))),

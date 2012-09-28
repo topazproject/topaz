@@ -22,3 +22,30 @@ class W_HashObject(W_Object):
     @classdef.method("keys")
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
+
+    classdef.app_method("""
+    def each
+        iter = Topaz::HashIterator.new(self)
+        while true
+            begin
+                key, value = iter.next()
+            rescue StopIteration
+                return
+            end
+            yield key, value
+        end
+    end
+    """)
+
+
+class W_HashIterator(W_Object):
+    classdef = ClassDef("HashIterator", W_Object.classdef)
+
+    def __init__(self, space, d):
+        W_Object.__init__(self, space)
+        self.iterator = d.iteritems()
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, w_obj):
+        assert isinstance(w_obj, W_HashObject)
+        return W_HashIterator(space, w_obj.contents)

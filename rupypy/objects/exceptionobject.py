@@ -129,3 +129,8 @@ class W_SystemCallError(W_StandardError):
 class W_IndexError(W_StandardError):
     classdef = ClassDef("IndexError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
+
+
+class W_StopIteration(W_IndexError):
+    classdef = ClassDef("StopIteration", W_IndexError.classdef)
+    method_allocate = new_exception_allocate(classdef)

@@ -28,3 +28,14 @@ class TestHashObject(BaseRuPyPyTest):
         return x.keys
         """)
         assert self.unwrap(space, w_res) == [2, "four", 1, "1"]
+
+    def test_each(self, space):
+        w_res = space.execute("""
+        x = {2 => 3, "four" => 5, 3 => 2}
+        result = []
+        x.each do |k, v|
+            result << [k, v]
+        end
+        return result
+        """)
+        assert self.unwrap(space, w_res) == [[2, 3], ["four", 5], [3, 2]]
