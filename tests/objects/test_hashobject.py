@@ -2,6 +2,9 @@ from ..base import BaseRuPyPyTest
 
 
 class TestHashObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("Hash")
+
     def test_create(self, space):
         space.execute("{2 => 3, 4 => 5}")
 
