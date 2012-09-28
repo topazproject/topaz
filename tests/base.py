@@ -4,12 +4,11 @@ import py
 
 from rupypy.error import RubyError
 from rupypy.objects.arrayobject import W_ArrayObject
-from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.stringobject import W_StringObject
+from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
 
 
@@ -23,7 +22,7 @@ class BaseRuPyPyTest(object):
             assert exc.value.w_value.msg == msg
 
     def find_const(self, space, name):
-        return space.find_const(space.getclassfor(W_Object), name)
+        return space.find_const(space.w_object, name)
 
     def unwrap(self, space, w_obj):
         if isinstance(w_obj, W_FixnumObject):

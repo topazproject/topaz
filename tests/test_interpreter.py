@@ -109,7 +109,7 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
         w_res = space.execute("""
@@ -138,7 +138,7 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
     def test_singleton_class(self, space):
@@ -166,8 +166,7 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("Abc = 3; return Abc")
         assert space.int_w(w_res)
 
-        w_object_cls = space.getclassfor(W_Object)
-        assert w_object_cls.constants_w["Abc"] is w_res
+        assert space.w_object.constants_w["Abc"] is w_res
 
     def test_class_constant(self, space):
         w_res = space.execute("""
@@ -180,8 +179,7 @@ class TestInterpreter(BaseRuPyPyTest):
         return X.new.f
         """)
         assert space.int_w(w_res) == 3
-        w_object_cls = space.getclassfor(W_Object)
-        assert "Constant" not in w_object_cls.constants_w
+        assert "Constant" not in space.w_object.constants_w
 
     def test_module_constant(self, space):
         w_res = space.execute("""
@@ -667,15 +665,12 @@ class TestInterpreter(BaseRuPyPyTest):
         b = self.find_const(space, 'B')
         c = self.find_const(space, 'C')
         d = self.find_const(space, 'D')
-        objct = self.find_const(space, 'Object')
-        basic = space.getclassobject(W_BaseObject.classdef)
-        kernel = space.getmoduleobject(Kernel.moduledef)
         assert self.unwrap(space, w_res) == [
-            [a, objct, kernel, basic],
-            [b, a, objct, kernel, basic],
+            [a, space.w_object, space.w_kernel, space.w_basicobject],
+            [b, a, space.w_object, space.w_kernel, space.w_basicobject],
             [c],
             [d, c],
-            [b, d, c, a, objct, kernel, basic]
+            [b, d, c, a, space.w_object, space.w_kernel, space.w_basicobject]
         ]
 
     def test_lookup_for_includes(self, space):

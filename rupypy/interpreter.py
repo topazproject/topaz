@@ -178,7 +178,7 @@ class Interpreter(object):
         assert isinstance(w_module, W_ModuleObject)
         w_value = space.find_class_var(w_module, name)
         if w_value is None:
-            raise space.error(space.getclassfor(W_NameError),
+            raise space.error(space.w_NameError,
                 "uninitialized class variable %s in %s" % (name, w_module.name)
             )
         frame.push(w_value)
@@ -260,7 +260,7 @@ class Interpreter(object):
         w_cls = w_scope.find_const(space, name)
         if w_cls is None:
             if superclass is space.w_nil:
-                superclass = space.getclassfor(W_Object)
+                superclass = space.w_object
             assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
@@ -319,13 +319,11 @@ class Interpreter(object):
             frame.push(w_block.block)
         elif space.respond_to(w_block, space.newsymbol("to_proc")):
             # Proc implements to_proc, too, but MRI doesn't call it
-            w_res = space.convert_type(w_block, space.getclassfor(W_ProcObject), "to_proc")
+            w_res = space.convert_type(w_block, space.w_proc, "to_proc")
             assert isinstance(w_res, W_ProcObject)
             frame.push(w_res.block)
         else:
-            raise space.error(space.getclassfor(W_TypeError),
-                "wrong argument type"
-            )
+            raise space.error(space.w_TypeError, "wrong argument type")
 
     @jit.unroll_safe
     def UNPACK_SEQUENCE(self, space, bytecode, frame, pc, n_items):

@@ -1,6 +1,3 @@
-from rupypy.objects.objectobject import W_Object
-
-
 class TestClassObject(object):
     def test_to_s(self, space):
         w_res = space.execute("return 1.class.to_s")
@@ -16,7 +13,7 @@ class TestClassObject(object):
 
         return X.new
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = space.w_object.constants_w["X"]
         assert space.getclass(w_res) is w_cls
 
         w_res = space.execute("""

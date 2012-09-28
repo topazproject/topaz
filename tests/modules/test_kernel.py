@@ -1,5 +1,3 @@
-from rupypy.objects.procobject import W_ProcObject
-
 from ..base import BaseRuPyPyTest
 
 
@@ -15,7 +13,7 @@ class TestKernel(BaseRuPyPyTest):
         return [l.class, l.lambda?]
         """)
         w_cls, w_lambda = space.listview(w_res)
-        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_cls is space.w_proc
         assert w_lambda is space.w_true
 
     def test_proc(self, space):
@@ -24,7 +22,7 @@ class TestKernel(BaseRuPyPyTest):
         return [l.class, l.lambda?]
         """)
         w_cls, w_lambda = space.listview(w_res)
-        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_cls is space.w_proc
         assert w_lambda is space.w_false
 
     def test_singleton_methods(self, space):

@@ -1,7 +1,5 @@
 import os
 
-from rupypy.objects.exceptionobject import W_SystemCallError
-
 
 class RubyError(Exception):
     def __init__(self, w_value):
@@ -43,7 +41,7 @@ def print_traceback(space, w_exc):
 def error_for_oserror(space, exc):
     assert isinstance(exc, OSError)
     return space.error(
-        space.getclassfor(W_SystemCallError),
+        space.w_SystemCallError,
         os.strerror(exc.errno),
         [space.newint(exc.errno)]
     )

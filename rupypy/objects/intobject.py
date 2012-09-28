@@ -13,7 +13,7 @@ class FixnumStorage(object):
         try:
             storage = self.storages[intvalue]
         except KeyError:
-            self.storages[intvalue] = storage = space.send(space.getclassfor(W_Object), space.newsymbol("new"))
+            self.storages[intvalue] = storage = space.send(space.w_object, space.newsymbol("new"))
         return storage
 
 
@@ -32,7 +32,7 @@ class W_FixnumObject(W_RootObject):
         return float(self.intvalue)
 
     def getsingletonclass(self, space):
-        raise space.error(space.getclassfor(W_TypeError), "can't define singleton")
+        raise space.error(space.w_TypeError, "can't define singleton")
 
     def find_instance_var(self, space, name):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
@@ -78,7 +78,7 @@ class W_FixnumObject(W_RootObject):
         try:
             return space.newint(self.intvalue / other)
         except ZeroDivisionError:
-            raise space.error(space.getclassfor(W_ZeroDivisionError),
+            raise space.error(space.w_ZeroDivisionError,
                 "divided by 0"
             )
 

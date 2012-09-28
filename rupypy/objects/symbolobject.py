@@ -20,7 +20,7 @@ class W_SymbolObject(W_Object):
         return self.symbol
 
     def getsingletonclass(self, space):
-        raise space.error(space.getclassfor(W_TypeError), "can't define singleton")
+        raise space.error(space.W_TypeError, "can't define singleton")
 
     @classdef.method("to_s")
     def method_to_s(self, space):

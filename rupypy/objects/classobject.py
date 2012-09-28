@@ -19,7 +19,7 @@ class W_ClassObject(W_ModuleObject):
     def getsingletonclass(self, space):
         if self.klass is None:
             if self.superclass is None:
-                singleton_superclass = space.getclassfor(W_ClassObject)
+                singleton_superclass = space.w_class
             else:
                 singleton_superclass = self.superclass.getsingletonclass(space)
             self.klass = space.newclass(

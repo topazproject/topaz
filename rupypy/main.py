@@ -7,7 +7,6 @@ from pypy.rlib.streamio import open_file_as_stream
 
 from rupypy.error import RubyError, print_traceback
 from rupypy.objects.exceptionobject import W_SystemExit
-from rupypy.objects.objectobject import W_Object
 from rupypy.objspace import ObjectSpace
 
 
@@ -34,7 +33,7 @@ def entry_point(argv):
                 arg = argv[idx]
                 idx += 1
                 argv_w.append(space.newstr_fromstr(arg))
-    space.set_const(space.getclassfor(W_Object), "ARGV", space.newarray(argv_w))
+    space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
     system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
@@ -42,11 +41,11 @@ def entry_point(argv):
     version = "1.9.3"
     patchlevel = 125
     description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
-    space.set_const(space.getclassfor(W_Object), "RUBY_ENGINE", space.newstr_fromstr(engine))
-    space.set_const(space.getclassfor(W_Object), "RUBY_VERSION", space.newstr_fromstr(version))
-    space.set_const(space.getclassfor(W_Object), "RUBY_PATCHLEVEL", space.newint(patchlevel))
-    space.set_const(space.getclassfor(W_Object), "RUBY_PLATFORM", space.newstr_fromstr(platform))
-    space.set_const(space.getclassfor(W_Object), "RUBY_DESCRIPTION", space.newstr_fromstr(platform))
+    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
+    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
+    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
+    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
+    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(platform))
 
     if verbose:
         os.write(1, "%s\n" % description)

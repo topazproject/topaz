@@ -5,8 +5,8 @@ from pypy.rlib.rstring import assert_str0
 from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
 from rupypy.modules.process import Process
+from rupypy.objects.exceptionobject import W_ExceptionObject
 from rupypy.objects.stringobject import W_StringObject
-from rupypy.objects.exceptionobject import W_ExceptionObject, W_TypeError, W_RuntimeError
 
 
 class Kernel(Module):
@@ -76,7 +76,7 @@ class Kernel(Module):
             return space.w_false
 
         if not os.path.exists(assert_str0(path)):
-            raise space.error(space.getclassfor(W_LoadError), orig_path)
+            raise space.error(space.w_LoadError, orig_path)
 
         f = open_file_as_stream(path)
         try:
@@ -96,15 +96,15 @@ class Kernel(Module):
         if w_str_or_exception is None:
             w_exception = space.globals.get("$!")
             if w_exception is space.w_nil:
-                w_exception = space.getclassfor(W_RuntimeError)
+                w_exception = space.w_RuntimeError
         elif isinstance(w_str_or_exception, W_StringObject):
-            w_exception = space.getclassfor(W_RuntimeError)
+            w_exception = space.w_RuntimeError
             w_string = w_str_or_exception
         else:
             w_exception = w_str_or_exception
 
         if not space.respond_to(w_exception, space.newsymbol("exception")):
-            raise space.error(space.getclassfor(W_TypeError),
+            raise space.error(space.w_TypeError,
                 "exception class/object expected"
             )
 
@@ -117,7 +117,7 @@ class Kernel(Module):
             raise NotImplementedError("custom backtrace for Kernel#raise")
 
         if not isinstance(w_exc, W_ExceptionObject):
-            raise space.error(space.getclassfor(W_TypeError),
+            raise space.error(space.w_TypeError,
                 "exception object expected"
             )
 

@@ -80,7 +80,7 @@ class TestBaseObject(BaseRuPyPyTest):
 class TestObjectObject(BaseRuPyPyTest):
     def test_class(self, space):
         w_res = space.execute("return 1.class")
-        assert w_res is space.getclassfor(W_FixnumObject)
+        assert w_res is space.w_fixnum
 
     def test_initialize(self, space):
         w_res = space.execute("""

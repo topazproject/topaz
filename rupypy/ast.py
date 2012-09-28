@@ -4,7 +4,6 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, BlockSymbolTable
-from rupypy.objects.objectobject import W_RootObject
 
 
 class BaseNode(object):
@@ -723,7 +722,7 @@ class LookupConstant(Node):
             if self.value is not None:
                 self.value.compile(ctx)
             else:
-                ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_RootObject)))
+                ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
             ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):

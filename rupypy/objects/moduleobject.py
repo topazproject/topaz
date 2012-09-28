@@ -57,7 +57,7 @@ class W_ModuleObject(W_RootObject):
     def getsingletonclass(self, space):
         if self.klass is None:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, space.getclassfor(W_ModuleObject), is_singleton=True
+                "#<Class:%s>" % self.name, space.w_module, is_singleton=True
             )
         return self.klass
 
@@ -273,9 +273,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
-        raise space.error(space.getclassfor(W_NameError),
-             "uninitialized constant %s" % name
-        )
+        raise space.error(space.w_NameError, "uninitialized constant %s" % name)
 
     @classdef.method("class_eval", string="str", filename="str")
     @classdef.method("module_eval", string="str", filename="str")

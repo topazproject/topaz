@@ -18,7 +18,6 @@ from rupypy.lexer import LexerError, Lexer
 from rupypy.lib.dir import W_Dir
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, ModuleCache
-from rupypy.modules.comparable import Comparable
 from rupypy.modules.enumerable import Enumerable
 from rupypy.modules.math import Math
 from rupypy.modules.kernel import Kernel
@@ -31,12 +30,11 @@ from rupypy.objects.encodingobject import W_EncodingObject
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
-    W_SystemCallError)
+    W_SystemCallError, W_NameError, W_IndexError)
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.hashobject import W_HashObject
-from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
@@ -67,36 +65,69 @@ class ObjectSpace(object):
         self._executioncontext = None
         self.globals = CellDict()
         self.bootstrap = True
-        self.w_top_self = W_Object(self, self.getclassfor(W_Object))
         self.exit_handlers_w = []
 
         self.w_true = W_TrueObject(self)
         self.w_false = W_FalseObject(self)
         self.w_nil = W_NilObject(self)
 
+        # Force the setup of a few key classes
+        self.w_basicobject = self.getclassfor(W_BaseObject)
+        self.w_object = self.getclassfor(W_Object)
+        self.w_class = self.getclassfor(W_ClassObject)
+        self.w_array = self.getclassfor(W_ArrayObject)
+        self.w_proc = self.getclassfor(W_ProcObject)
+        self.w_fixnum = self.getclassfor(W_FixnumObject)
+        self.w_module = self.getclassfor(W_ModuleObject)
+        self.w_NoMethodError = self.getclassfor(W_NoMethodError)
+        self.w_ArgumentError = self.getclassfor(W_ArgumentError)
+        self.w_NameError = self.getclassfor(W_NameError)
+        self.w_IndexError = self.getclassfor(W_IndexError)
+        self.w_LoadError = self.getclassfor(W_LoadError)
+        self.w_RuntimeError = self.getclassfor(W_RuntimeError)
+        self.w_SyntaxError = self.getclassfor(W_SyntaxError)
+        self.w_SystemCallError = self.getclassfor(W_SystemCallError)
+        self.w_SystemExit = self.getclassfor(W_SystemExit)
+        self.w_TypeError = self.getclassfor(W_TypeError)
+        self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
+        self.w_kernel = self.getmoduleobject(Kernel.moduledef)
+        for w_cls in [
+            self.w_basicobject, self.w_object, self.w_array, self.w_proc,
+            self.w_fixnum,
+
+            self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
+            self.w_ZeroDivisionError, self.w_SystemExit, self.w_RuntimeError,
+            self.w_SystemCallError,
+
+            self.w_kernel,
+
+            self.getclassfor(W_NumericObject),
+            self.getclassfor(W_StringObject),
+            self.getclassfor(W_IOObject),
+            self.getclassfor(W_FileObject),
+            self.getclassfor(W_Dir),
+            self.getclassfor(W_EncodingObject),
+            self.getclassfor(W_Random),
+            self.getclassfor(W_TimeObject),
+
+            self.getclassfor(W_StandardError),
+
+            self.getmoduleobject(Enumerable.moduledef),
+            self.getmoduleobject(Math.moduledef),
+            self.getmoduleobject(Process.moduledef),
+        ]:
+            self.set_const(
+                self.w_object,
+                self.str_w(self.send(w_cls, self.newsymbol("name"))),
+                w_cls
+            )
+
+        self.w_top_self = W_Object(self, self.w_object)
+
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
-        w_mod = self.getmoduleobject(Kernel.moduledef)
-        self.send(self.getclassfor(W_Object), self.newsymbol("include"), [w_mod])
+        self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
-
-        for cls in [
-            W_NilObject, W_TrueObject, W_FalseObject,
-            W_BaseObject, W_Object,
-            W_StringObject, W_SymbolObject,
-            W_NumericObject, W_IntegerObject, W_FloatObject, W_FixnumObject,
-            W_ArrayObject, W_HashObject,
-            W_IOObject, W_FileObject,
-            W_TimeObject,
-            W_ExceptionObject, W_NoMethodError, W_LoadError, W_ZeroDivisionError,
-            W_SyntaxError, W_TypeError, W_ArgumentError, W_RuntimeError,
-            W_StandardError, W_SystemExit, W_SystemCallError,
-            W_Random, W_Dir, W_ProcObject, W_EncodingObject,
-        ]:
-            self.add_class(cls)
-
-        for module in [Math, Comparable, Enumerable, Kernel, Process]:
-            self.add_module(module)
 
         w_load_path = self.newarray([
             self.newstr_fromstr(
@@ -117,20 +148,6 @@ class ObjectSpace(object):
     def fromcache(self, key):
         return self.cache.getorbuild(key)
 
-    # Setup methods
-
-    def add_module(self, module):
-        "NOT_RPYTHON"
-        w_cls = self.getclassfor(W_Object)
-        self.set_const(w_cls,
-            module.moduledef.name, self.getmoduleobject(module.moduledef)
-        )
-
-    def add_class(self, cls):
-        "NOT_RPYTHON"
-        w_cls = self.getclassfor(W_Object)
-        self.set_const(w_cls, cls.classdef.name, self.getclassfor(cls))
-
     # Methods for dealing with source code.
 
     def parse(self, source, initial_lineno=1, symtable=None):
@@ -140,9 +157,9 @@ class ObjectSpace(object):
         try:
             return parser.parse().getast()
         except ParsingError as e:
-            raise self.error(self.getclassfor(W_SyntaxError), "line %d" % e.getsourcepos().lineno)
+            raise self.error(self.w_SyntaxError, "line %d" % e.getsourcepos().lineno)
         except LexerError:
-            raise self.error(self.getclassfor(W_SyntaxError))
+            raise self.error(self.w_SyntaxError)
 
     def compile(self, source, filepath, initial_lineno=1):
         symtable = SymbolTable()
@@ -170,7 +187,7 @@ class ObjectSpace(object):
         if w_self is None:
             w_self = self.w_top_self
         if w_scope is None:
-            w_scope = self.getclassfor(W_Object)
+            w_scope = self.w_object
         return Frame(jit.promote(bc), w_self, w_scope, block, parent_interp)
 
     def execute_frame(self, frame, bc):
@@ -217,7 +234,7 @@ class ObjectSpace(object):
         return W_RegexpObject(self, regexp)
 
     def newmodule(self, name):
-        return W_ModuleObject(self, name, self.getclassfor(W_Object))
+        return W_ModuleObject(self, name, self.w_object)
 
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
@@ -375,17 +392,16 @@ class ObjectSpace(object):
         inclusive = False
         as_range = False
         end = 0
-        fixnum_class = self.getclassfor(W_FixnumObject)
 
         if isinstance(w_idx, W_RangeObject) and not w_count:
-            start = self.int_w(self.convert_type(w_idx.w_start, fixnum_class, "to_int"))
-            end = self.int_w(self.convert_type(w_idx.w_end, fixnum_class, "to_int"))
+            start = self.int_w(self.convert_type(w_idx.w_start, self.w_fixnum, "to_int"))
+            end = self.int_w(self.convert_type(w_idx.w_end, self.w_fixnum, "to_int"))
             inclusive = not w_idx.exclusive
             as_range = True
         else:
-            start = self.int_w(self.convert_type(w_idx, fixnum_class, "to_int"))
+            start = self.int_w(self.convert_type(w_idx, self.w_fixnum, "to_int"))
             if w_count:
-                end = self.int_w(self.convert_type(w_count, fixnum_class, "to_int"))
+                end = self.int_w(self.convert_type(w_count, self.w_fixnum, "to_int"))
                 if end < 0:
                     end = -1
                 else:
@@ -415,8 +431,7 @@ class ObjectSpace(object):
         except RubyError:
             src_cls = self.getclass(w_obj).name
             raise self.error(
-                self.getclassfor(W_TypeError),
-                "can't convert %s into %s" % (src_cls, w_cls.name)
+                self.w_TypeError, "can't convert %s into %s" % (src_cls, w_cls.name)
             )
 
         if not w_res or w_res is self.w_nil and not raise_error:
@@ -424,8 +439,7 @@ class ObjectSpace(object):
         elif not w_res.is_kind_of(self, w_cls):
             src_cls = self.getclass(w_obj).name
             res_cls = self.getclass(w_res).name
-            raise self.error(
-                self.getclassfor(W_TypeError),
+            raise self.error(self.w_TypeError,
                 "can't convert %s to %s (%s#%s gives %s)" % (
                     src_cls, w_cls.name, src_cls, method, res_cls
                 )

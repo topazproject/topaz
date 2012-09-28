@@ -188,7 +188,7 @@ class W_StringObject(W_Object):
     @classdef.method("ljust", integer="int", padstr="str")
     def method_ljust(self, space, integer, padstr=" "):
         if not padstr:
-            raise space.error(space.getclassfor(W_ArgumentError), "zero width padding")
+            raise space.error(space.w_ArgumentError, "zero width padding")
         elif integer <= self.length():
             return self.copy(space)
         else:
