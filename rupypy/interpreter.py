@@ -145,13 +145,11 @@ class Interpreter(object):
 
     def DEFINED_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
-        name = space.symbol_w(w_name)
         w_scope = frame.pop()
-        w_res = w_scope.find_const(space, name)
-        if w_res is None:
-            frame.push(space.w_nil)
-        else:
+        if space.is_true(space.send(w_scope, space.newsymbol("const_defined?"), [w_name])):
             frame.push(space.newstr_fromstr("constant"))
+        else:
+            frame.push(space.w_nil)
 
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
@@ -167,7 +165,12 @@ class Interpreter(object):
         frame.push(w_value)
 
     def DEFINED_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
-        raise NotImplementedError
+        w_name = bytecode.consts_w[idx]
+        w_obj = frame.pop()
+        if space.is_true(space.send(w_obj, space.newsymbol("instance_variable_defined?"), [w_name])):
+            frame.push(space.newstr_fromstr("instance-variable"))
+        else:
+            frame.push(space.w_nil)
 
     def LOAD_CLASS_VAR(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])

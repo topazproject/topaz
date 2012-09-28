@@ -163,7 +163,7 @@ class W_Object(W_RootObject):
     def find_instance_var(self, space, name):
         idx = jit.promote(self.map).find_attr(space, name)
         if idx == -1:
-            return space.w_nil
+            return None
         return self.storage[idx]
 
     def set_instance_var(self, space, name, w_value):

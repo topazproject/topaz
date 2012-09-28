@@ -1004,6 +1004,11 @@ class TestExceptions(BaseRuPyPyTest):
     def test_defined(self, space):
         w_res = space.execute("return [defined? A, defined? Array]")
         assert self.unwrap(space, w_res) == [None, "constant"]
+        w_res = space.execute("""
+        @a = 3
+        return [defined? @a, defined? @b]
+        """)
+        assert self.unwrap(space, w_res) == ["instance-variable", None]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
