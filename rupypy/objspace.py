@@ -18,6 +18,7 @@ from rupypy.lexer import LexerError, Lexer
 from rupypy.lib.dir import W_Dir
 from rupypy.lib.random import W_Random
 from rupypy.module import ClassCache, ModuleCache
+from rupypy.modules.comparable import Comparable
 from rupypy.modules.enumerable import Enumerable
 from rupypy.modules.math import Math
 from rupypy.modules.kernel import Kernel
@@ -97,7 +98,7 @@ class ObjectSpace(object):
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RuntimeError,
-            self.w_SystemCallError,
+            self.w_SystemCallError, self.w_LoadError,
 
             self.w_kernel,
 
@@ -110,8 +111,10 @@ class ObjectSpace(object):
             self.getclassfor(W_Random),
             self.getclassfor(W_TimeObject),
 
+            self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
 
+            self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),
             self.getmoduleobject(Math.moduledef),
             self.getmoduleobject(Process.moduledef),
