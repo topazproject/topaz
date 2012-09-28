@@ -5,7 +5,6 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
-from rupypy.objects.exceptionobject import W_ArgumentError
 
 
 class StringStrategy(object):

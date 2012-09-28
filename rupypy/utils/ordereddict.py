@@ -346,7 +346,6 @@ class LLOrderedDict(object):
     @staticmethod
     def ll_lookup(d, key, hash):
         entries = d.entries
-        ENTRIES = lltype.typeOf(entries).TO
         mask = len(entries) - 1
         i = hash & mask
         if entries.valid(i):

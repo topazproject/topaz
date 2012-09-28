@@ -1,8 +1,7 @@
 from rupypy.module import ClassDef
-from rupypy.objects.exceptionobject import W_ZeroDivisionError, W_TypeError
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
-from rupypy.objects.objectobject import W_RootObject, W_Object
+from rupypy.objects.objectobject import W_RootObject
 
 
 class FixnumStorage(object):

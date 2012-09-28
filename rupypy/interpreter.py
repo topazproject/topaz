@@ -8,10 +8,9 @@ from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.blockobject import W_BlockObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
-from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.objectobject import W_BaseObject, W_Object
+from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
 

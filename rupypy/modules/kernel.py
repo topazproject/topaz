@@ -52,8 +52,6 @@ class Kernel(Module):
     def function_require(self, space, path):
         from pypy.rlib.streamio import open_file_as_stream
 
-        from rupypy.objects.exceptionobject import W_LoadError
-
         assert path is not None
         orig_path = path
         if not path.endswith(".rb"):
