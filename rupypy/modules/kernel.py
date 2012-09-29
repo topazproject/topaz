@@ -2,14 +2,14 @@ import os
 
 from pypy.rlib.rstring import assert_str0
 
+from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
-from rupypy.objects.stringobject import W_StringObject
+from rupypy.modules.process import Process
 from rupypy.objects.arrayobject import W_ArrayObject
-from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.exceptionobject import (W_NotImplementedError, W_ExceptionObject,
     W_TypeError, W_RuntimeError)
-from rupypy.modules.process import Process
-from rupypy.error import RubyError
+from rupypy.objects.hashobject import W_HashObject
+from rupypy.objects.stringobject import W_StringObject
 
 
 class Kernel(Module):
@@ -37,7 +37,7 @@ class Kernel(Module):
         return space.newproc(block, True)
 
     @moduledef.method("proc")
-    def function_lambda(self, space, block):
+    def function_proc(self, space, block):
         return space.newproc(block, False)
 
     @moduledef.function("puts")

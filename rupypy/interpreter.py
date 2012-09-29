@@ -4,11 +4,14 @@ from pypy.rlib.objectmodel import we_are_translated, specialize, newlist_hint
 
 from rupypy import consts
 from rupypy.error import RubyError
+from rupypy.objects.arrayobject import W_ArrayObject
+from rupypy.objects.blockobject import W_BlockObject
 from rupypy.objects.classobject import W_ClassObject
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.moduleobject import W_ModuleObject
+from rupypy.objects.objectobject import W_BaseObject, W_Object
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
 
@@ -226,9 +229,6 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def BUILD_BLOCK(self, space, bytecode, frame, pc, n_cells):
-        from rupypy.objects.blockobject import W_BlockObject
-        from rupypy.objects.codeobject import W_CodeObject
-
         cells = [frame.pop() for _ in range(n_cells)]
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
@@ -238,8 +238,6 @@ class Interpreter(object):
         frame.push(block)
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):
-        from rupypy.objects.objectobject import W_Object
-
         superclass = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
@@ -257,8 +255,6 @@ class Interpreter(object):
         frame.push(w_cls)
 
     def BUILD_MODULE(self, space, bytecode, frame, pc):
-        from rupypy.objects.codeobject import W_CodeObject
-
         w_bytecode = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
@@ -282,15 +278,11 @@ class Interpreter(object):
         frame.push(space.newregexp(space.str_w(w_string)))
 
     def COPY_STRING(self, space, bytecode, frame, pc):
-        from rupypy.objects.stringobject import W_StringObject
-
         w_s = frame.pop()
         assert isinstance(w_s, W_StringObject)
         frame.push(w_s.copy(space))
 
     def COERCE_ARRAY(self, space, bytecode, frame, pc):
-        from rupypy.objects.arrayobject import W_ArrayObject
-
         w_obj = frame.pop()
         if w_obj is space.w_nil:
             frame.push(space.newarray([]))
@@ -366,8 +358,6 @@ class Interpreter(object):
         frame.push(space.w_nil)
 
     def EVALUATE_CLASS(self, space, bytecode, frame, pc):
-        from rupypy.objects.codeobject import W_CodeObject
-
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
@@ -386,8 +376,6 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
-        from rupypy.objects.blockobject import W_BlockObject
-
         w_block = frame.pop()
         args_w = frame.popitemsreverse(num_args - 1)
         w_receiver = frame.pop()
@@ -405,8 +393,6 @@ class Interpreter(object):
         frame.push(w_res)
 
     def SEND_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx):
-        from rupypy.objects.blockobject import W_BlockObject
-
         w_block = frame.pop()
         args_w = space.listview(frame.pop())
         w_receiver = frame.pop()
