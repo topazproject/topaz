@@ -1850,3 +1850,56 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+
+    def test_super(self, space):
+        bc = self.assert_compiles(space, """
+        super
+        """, """
+        LOAD_SELF
+        SEND_SUPER 0 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+        assert bc.consts_w[0] is space.w_nil
+
+        bc = self.assert_compiles(space, """
+        def f(a, b, c)
+            super
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_FUNCTION
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[1], """
+        LOAD_SELF
+        LOAD_LOCAL 0
+        LOAD_LOCAL 1
+        LOAD_LOCAL 2
+        SEND_SUPER 0 3
+        RETURN
+        """)
+        assert space.str_w(bc.consts_w[1].consts_w[0]) == "f"
+
+        bc = self.assert_compiles(space, """
+        super(1, 2, 3)
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND_SUPER 3 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)

@@ -2059,6 +2059,17 @@ HERE
             ast.Statement(ast.Defined(ast.ConstantInt(3), 1))
         ]))
 
+    def test_super(self, space):
+        assert space.parse("super") == ast.Main(ast.Block([
+            ast.Statement(ast.AutoSuper(1))
+        ]))
+        assert space.parse("super(nil)") == ast.Main(ast.Block([
+            ast.Statement(ast.Super([ast.Nil()], None, 1))
+        ]))
+        assert space.parse("super nil") == ast.Main(ast.Block([
+            ast.Statement(ast.Super([ast.Nil()], None, 1))
+        ]))
+
     def test_custom_lineno(self, space):
         with self.raises(space, "SyntaxError", "line 1"):
             assert space.parse("[]{}[]")

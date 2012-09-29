@@ -411,6 +411,18 @@ class Interpreter(object):
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
+    def SEND_SUPER(self, space, bytecode, frame, pc, meth_idx, num_args):
+        args_w = frame.popitemsreverse(num_args)
+        w_receiver = frame.pop()
+        w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        frame.push(w_res)
+
+    def SEND_SUPER_SPLAT(self, space, bytecode, frame, pc, meth_idx):
+        args_w = space.listview(frame.pop())
+        w_receiver = frame.pop()
+        w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        frame.push(w_res)
+
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = ExceptBlock(target_pc, frame.lastblock, frame.stackpos)
 

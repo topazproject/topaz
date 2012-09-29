@@ -153,6 +153,13 @@ class Parser(object):
             node = ast.Array(args)
         return BoxAST(ast.Return(node))
 
+    def new_super(self, args, token):
+        return BoxAST(ast.Super(
+            args.getcallargs(),
+            args.getcallblock(),
+            token.getsourcepos().lineno
+        ))
+
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
 
@@ -713,8 +720,7 @@ class Parser(object):
 
     @pg.production("command : SUPER command_args")
     def command_super(self, p):
-        raise NotImplementedError(p)
-        return self.new_super(p[1])
+        return self.new_super(p[1], p[0])
 
     @pg.production("command : YIELD command_args")
     def command_yield(self, p):
@@ -2233,21 +2239,11 @@ class Parser(object):
 
     @pg.production("method_call : SUPER paren_args")
     def method_call_super_paren_args(self, p):
-        """
-        kSUPER paren_args {
-                    $$ = support.new_super($2, $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_super(p[1], p[0])
 
     @pg.production("method_call : SUPER")
     def method_call_super(self, p):
-        """
-        kSUPER {
-                    $$ = new ZSuperNode($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.AutoSuper(p[0].getsourcepos().lineno))
 
     @pg.production("method_call : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
@@ -2775,7 +2771,7 @@ class Parser(object):
     @pg.production("f_arg_item : f_norm_arg")
     def f_arg_item_f_norm_arg(self, p):
         node = p[0].getast(ast.Argument)
-        self.lexer.symtable.declare_local(node.name)
+        self.lexer.symtable.declare_argument(node.name)
         return p[0]
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
@@ -2808,7 +2804,7 @@ class Parser(object):
 
     @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
     def f_opt(self, p):
-        self.lexer.symtable.declare_local(p[0].getstr())
+        self.lexer.symtable.declare_argument(p[0].getstr())
         return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
 
     @pg.production("f_block_opt : IDENTIFIER LITERAL_EQUAL primary_value")
@@ -2854,12 +2850,12 @@ class Parser(object):
 
     @pg.production("f_rest_arg : restarg_mark IDENTIFIER")
     def f_rest_arg_restarg_mark_identifer(self, p):
-        self.lexer.symtable.declare_local(p[1].getstr())
+        self.lexer.symtable.declare_argument(p[1].getstr())
         return p[1]
 
     @pg.production("f_rest_arg : restarg_mark")
     def f_rest_arg_restarg_mark(self, p):
-        self.lexer.symtable.declare_local("*")
+        self.lexer.symtable.declare_argument("*")
         return self.new_token(p[0], "IDENTIFIER", "*")
 
     @pg.production("blkarg_mark : AMPER")
@@ -2869,7 +2865,7 @@ class Parser(object):
 
     @pg.production("f_block_arg : blkarg_mark IDENTIFIER")
     def f_block_arg(self, p):
-        self.lexer.symtable.declare_local(p[1].getstr())
+        self.lexer.symtable.declare_argument(p[1].getstr())
         return p[1]
 
     @pg.production("opt_f_block_arg : LITERAL_COMMA f_block_arg")

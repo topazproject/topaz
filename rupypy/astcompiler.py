@@ -11,6 +11,7 @@ class BaseSymbolTable(object):
         self.subscopes = {}
         self.locals = {}
         self.cells = {}
+        self.arguments = []
 
         self.local_numbers = {}
         self.cell_numbers = {}
@@ -20,6 +21,10 @@ class BaseSymbolTable(object):
 
     def get_subscope(self, node):
         return self.subscopes[node]
+
+    def declare_argument(self, name):
+        self.arguments.append(name)
+        self.declare_local(name)
 
     def declare_local(self, name):
         if name not in self.locals:

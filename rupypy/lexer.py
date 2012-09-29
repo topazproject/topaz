@@ -64,6 +64,7 @@ class Lexer(object):
         "true": Keyword("TRUE", "TRUE", EXPR_END),
         "false": Keyword("FALSE", "FALSE", EXPR_END),
         "defined?": Keyword("DEFINED", "DEFINED", EXPR_ARG),
+        "super": Keyword("SUPER", "SUPER", EXPR_ARG),
     }
 
     def __init__(self, source, initial_lineno, symtable):

@@ -33,6 +33,12 @@ class W_ClassObject(W_ModuleObject):
             method = self.superclass.find_method(space, name)
         return method
 
+    def find_method_super(self, space, name):
+        method = W_ModuleObject.find_method_super(self, space, name)
+        if method is None and self.superclass is not None:
+            method = self.superclass.find_method(space, name)
+        return method
+
     def ancestors(self, include_singleton=True, include_self=True):
         assert include_self
         ary = W_ModuleObject.ancestors(self,

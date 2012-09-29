@@ -573,13 +573,12 @@ class And(Node):
         ctx.use_next_block(end)
 
 
-class Send(Node):
-    def __init__(self, receiver, method, args, block_arg, lineno):
+class BaseSend(Node):
+    def __init__(self, receiver, args, block_arg, lineno):
+        Node.__init__(self, lineno)
         self.receiver = receiver
-        self.method = method
         self.args = args
         self.block_arg = block_arg
-        self.lineno = lineno
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
@@ -597,15 +596,15 @@ class Send(Node):
             if self.block_arg is not None:
                 self.block_arg.compile(ctx)
 
-            symbol = ctx.create_symbol_const(self.method)
+            symbol = self.method_name_const(ctx)
             if self.is_splat() and self.block_arg is not None:
-                ctx.emit(consts.SEND_BLOCK_SPLAT, symbol)
+                ctx.emit(self.send_block_splat, symbol)
             elif self.is_splat():
-                ctx.emit(consts.SEND_SPLAT, symbol)
+                ctx.emit(self.send_splat, symbol)
             elif self.block_arg is not None:
-                ctx.emit(consts.SEND_BLOCK, symbol, len(self.args) + 1)
+                ctx.emit(self.send_block, symbol, len(self.args) + 1)
             else:
-                ctx.emit(consts.SEND, symbol, len(self.args))
+                ctx.emit(self.send, symbol, len(self.args))
 
     def is_splat(self):
         for arg in self.args:
@@ -622,6 +621,34 @@ class Send(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.method + "="), 1)
+
+
+class Send(BaseSend):
+    send = consts.SEND
+    send_block = consts.SEND_BLOCK
+    send_splat = consts.SEND_SPLAT
+    send_block_splat = consts.SEND_BLOCK_SPLAT
+
+    def __init__(self, receiver, method, args, block_arg, lineno):
+        BaseSend.__init__(self, receiver, args, block_arg, lineno)
+        self.method = method
+
+    def method_name_const(self, ctx):
+        return ctx.create_symbol_const(self.method)
+
+
+class Super(BaseSend):
+    send = consts.SEND_SUPER
+    send_splat = consts.SEND_SUPER_SPLAT
+
+    def __init__(self, args, block_arg, lineno):
+        BaseSend.__init__(self, Self(lineno), args, block_arg, lineno)
+
+    def method_name_const(self, ctx):
+        if ctx.code_name == "<main>":
+            return ctx.create_const(ctx.space.w_nil)
+        else:
+            return ctx.create_symbol_const(ctx.code_name)
 
 
 class Splat(Node):
@@ -684,6 +711,19 @@ class BlockArgument(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.COERCE_BLOCK)
+
+
+class AutoSuper(Node):
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
+        for name in ctx.symtable.arguments:
+            ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(name))
+
+        if ctx.code_name == "<main>":
+            name = ctx.create_const(ctx.space.w_nil)
+        else:
+            name = ctx.create_symbol_const(ctx.code_name)
+        ctx.emit(consts.SEND_SUPER, name, len(ctx.symtable.arguments))
 
 
 class Subscript(Node):

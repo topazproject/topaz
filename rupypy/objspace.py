@@ -347,6 +347,14 @@ class ObjectSpace(object):
 
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
+        return self._send_raw(w_method, raw_method, w_receiver, w_cls, args_w, block)
+
+    def send_super(self, w_cls, w_receiver, w_method, args_w, block=None):
+        name = self.symbol_w(w_method)
+        raw_method = w_cls.find_method_super(self, name)
+        return self._send_raw(w_method, raw_method, w_receiver, w_cls, args_w, block)
+
+    def _send_raw(self, w_method, raw_method, w_receiver, w_cls, args_w, block):
         if raw_method is None:
             method_missing = w_cls.find_method(self, "method_missing")
             assert method_missing is not None

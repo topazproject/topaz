@@ -77,6 +77,14 @@ class W_ModuleObject(W_RootObject):
                     return method
         return method
 
+    @jit.unroll_safe
+    def find_method_super(self, space, name):
+        for module in self.included_modules:
+            method = module.find_method(space, name)
+            if method is not None:
+                return method
+        return None
+
     @jit.elidable
     def _find_method_pure(self, space, method, version):
         return self.methods_w.get(method, None)
