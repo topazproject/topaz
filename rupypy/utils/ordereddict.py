@@ -179,6 +179,7 @@ class SomeOrderedDictIterator(model.SomeObject):
             isinstance(s_value, model.SomeImpossibleValue)):
             return model.s_ImpossibleValue
         return model.SomeTuple((s_key, s_value))
+    method_next = next
 
 
 class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
