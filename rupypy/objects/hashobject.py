@@ -49,3 +49,11 @@ class W_HashIterator(W_Object):
     def method_allocate(self, space, w_obj):
         assert isinstance(w_obj, W_HashObject)
         return W_HashIterator(space, w_obj.contents)
+
+    @classdef.method("next")
+    def method_next(self, space):
+        try:
+            w_k, w_v = self.iterator.next()
+        except StopIteration:
+            raise space.error(space.w_StopIteration)
+        return space.newarray([w_k, w_v])

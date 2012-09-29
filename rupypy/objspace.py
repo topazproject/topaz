@@ -88,6 +88,7 @@ class ObjectSpace(object):
         self.w_IndexError = self.getclassfor(W_IndexError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RuntimeError = self.getclassfor(W_RuntimeError)
+        self.w_StopIteration = self.getclassfor(W_StopIteration)
         self.w_SyntaxError = self.getclassfor(W_SyntaxError)
         self.w_SystemCallError = self.getclassfor(W_SystemCallError)
         self.w_SystemExit = self.getclassfor(W_SystemExit)
@@ -103,7 +104,7 @@ class ObjectSpace(object):
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RuntimeError,
-            self.w_SystemCallError, self.w_LoadError,
+            self.w_SystemCallError, self.w_LoadError, self.w_StopIteration,
 
             self.w_kernel, self.w_topaz,
 
@@ -119,7 +120,6 @@ class ObjectSpace(object):
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
-            self.getclassfor(W_StopIteration),
 
             self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),

@@ -166,6 +166,9 @@ class SomeOrderedDictIterator(model.SomeObject):
         super(SomeOrderedDictIterator, self).__init__()
         self.d = d
 
+    def rtyper_makerepr(self, rtyper):
+        return OrderedDictIteratorRepr(rtyper.getrepr(self.d))
+
     def iter(self):
         return self
 
@@ -301,8 +304,24 @@ class OrderedDictIteratorRepr(IteratorRepr):
         super(OrderedDictIteratorRepr, self).__init__()
         self.r_dict = r_dict
 
+        self.lowleveltype = self.create_lowlevel_type()
+
+    def create_lowlevel_type(self):
+        return lltype.Ptr(lltype.GcStruct("ORDEREDDICTITER",
+            ("d", self.r_dict.lowleveltype),
+            ("index", lltype.Signed),
+        ))
+
     def newiter(self, hop):
-        raise NotImplementedError
+        [v_dict] = hop.inputargs(self.r_dict)
+        c_TP = hop.inputconst(lltype.Void, self.lowleveltype.TO)
+        return hop.gendirectcall(LLOrderedDict.ll_newdictiter, c_TP, v_dict)
+
+    def rtype_next(self, hop):
+        [v_iter] = hop.inputargs(self)
+        c_TP = hop.inputconst(lltype.Void, hop.r_result.lowleveltype)
+        hop.exception_is_here()
+        return hop.gendirectcall(LLOrderedDict.ll_dictiternext, c_TP, v_iter)
 
 
 class __extend__(pairtype(OrderedDictRepr, Repr)):
@@ -550,3 +569,21 @@ class LLOrderedDict(object):
             return d.entries[i].value
         else:
             return default
+
+    @staticmethod
+    def ll_newdictiter(ITER, d):
+        it = lltype.malloc(ITER)
+        it.d = d
+        it.index = d.first_entry
+        return it
+
+    @staticmethod
+    def ll_dictiternext(RESTYPE, it):
+        if it.index == -1:
+            raise StopIteration
+        r = lltype.malloc(RESTYPE.TO)
+        entry = it.d.entries[it.index]
+        r.item0 = LLOrderedDict.recast(RESTYPE.TO.item0, entry.key)
+        r.item1 = LLOrderedDict.recast(RESTYPE.TO.item1, entry.value)
+        it.index = entry.next
+        return r
