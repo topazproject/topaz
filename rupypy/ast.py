@@ -224,7 +224,7 @@ class Class(Node):
             self.superclass.compile(ctx)
         ctx.emit(consts.BUILD_CLASS)
 
-        body_ctx = ctx.get_subctx(self.name, self)
+        body_ctx = ctx.get_subctx("<class:%s>" % self.name, self)
         self.body.compile(body_ctx)
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))

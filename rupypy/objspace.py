@@ -183,9 +183,10 @@ class ObjectSpace(object):
     def compile(self, source, filepath, initial_lineno=1):
         symtable = SymbolTable()
         astnode = self.parse(source, initial_lineno=initial_lineno, symtable=symtable)
-        c = CompilerContext(self, "<main>", symtable, filepath)
-        astnode.compile(c)
-        return c.create_bytecode([], [], None, None)
+        ctx = CompilerContext(self, "<main>", symtable, filepath)
+        with ctx.set_lineno(initial_lineno):
+            astnode.compile(ctx)
+        return ctx.create_bytecode([], [], None, None)
 
     def execute(self, source, w_self=None, w_scope=None, filepath="-e", initial_lineno=1):
         bc = self.compile(source, filepath, initial_lineno=initial_lineno)

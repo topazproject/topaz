@@ -93,6 +93,17 @@ class TestMain(object):
             "\tfrom {}:2:in `<main>'",
         ])
 
+    def test_traceback_class(self, tmpdir, capfd):
+        self.assert_traceback(tmpdir, capfd, """
+        class X
+            1 / 0
+        end
+        """, [
+            "{}:3:in `/': divided by 0 (ZeroDivisionError)",
+            "\tfrom {}:3:in `<class:X>'",
+            "\tfrom {}:1:in `<main>'",
+        ])
+
     @py.test.mark.xfail
     def test_traceback_default_arg(self, tmpdir, capfd):
         self.assert_traceback(tmpdir, capfd, """
