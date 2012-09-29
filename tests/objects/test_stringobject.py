@@ -24,6 +24,38 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'ABC'.size")
         assert space.int_w(w_res) == 3
 
+    def test_subscript_constant(self, space):
+        w_res = space.execute("""
+        a = "hello there"
+        return [
+            a[1],
+            a[2, 3],
+            a[2..3],
+            a[-3, 2],
+            a[7..-2],
+            a[-4..-2],
+            a[-2..-4],
+            a[12..-1],
+        ]
+        """)
+        assert self.unwrap(space, w_res) == ["e", "llo", "ll", "er", "her", "her", "", None]
+
+    def test_subscript_mutable(self, space):
+        w_res = space.execute("""
+        a = "hello" << " " << "there"
+        return [
+            a[1],
+            a[2, 3],
+            a[2..3],
+            a[-3, 2],
+            a[7..-2],
+            a[-4..-2],
+            a[-2..-4],
+            a[12..-1],
+        ]
+        """)
+        assert self.unwrap(space, w_res) == ["e", "llo", "ll", "er", "her", "her", "", None]
+
     def test_comparator_lt(self, space):
         w_res = space.execute("return 'a' <=> 'b'")
         assert space.int_w(w_res) == -1

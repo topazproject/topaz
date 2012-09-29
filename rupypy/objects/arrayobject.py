@@ -30,10 +30,8 @@ class W_ArrayObject(W_Object):
     @classdef.method("at")
     @classdef.method("[]")
     def method_subscript(self, space, w_idx, w_count=None):
-        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
-        if (as_range and end < start or
-            start < 0 or end < 0 or
-            not as_range and start >= len(self.items_w)):
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        if nil:
             return space.w_nil
         elif as_range:
             return space.newarray(self.items_w[start:end])
@@ -47,7 +45,7 @@ class W_ArrayObject(W_Object):
             w_count = w_count_or_obj
         else:
             w_obj = w_count_or_obj
-        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
         if w_count and end < start:
             raise space.error(space.w_IndexError,

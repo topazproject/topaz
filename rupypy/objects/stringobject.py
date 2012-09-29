@@ -1,5 +1,3 @@
-import pprint
-
 from pypy.rlib.objectmodel import newlist_hint, compute_hash
 from pypy.rlib.rarithmetic import intmask
 from pypy.rlib.rerased import new_static_erasing_pair
@@ -9,10 +7,6 @@ from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
 
 
-class StringStrategy(object):
-    def __init__(self, space):
-        pass
-
 def create_trans_table(source, replacement, inv=False):
     src = expand_trans_str(source, len(source), inv)
     repl = expand_trans_str(replacement, len(src))
@@ -20,6 +14,7 @@ def create_trans_table(source, replacement, inv=False):
     for i, c in enumerate(src):
         table[ord(c)] = repl[i]
     return table
+
 
 def expand_trans_str(source, res_len, inv=False):
     # check the source for range definitions
@@ -38,7 +33,7 @@ def expand_trans_str(source, res_len, inv=False):
                 expanded_source.append(chr(j))
         elif char:
             expanded_source.append(char[0])
-    
+
     if inv:
         inverted_source = []
         # invert the source
@@ -46,8 +41,14 @@ def expand_trans_str(source, res_len, inv=False):
             if chr(i) not in expanded_source:
                 inverted_source.append(chr(i))
         return inverted_source
-    
+
     return expanded_source
+
+
+class StringStrategy(object):
+    def __init__(self, space):
+        pass
+
 
 class ConstantStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("constant")
@@ -61,6 +62,12 @@ class ConstantStringStrategy(StringStrategy):
 
     def length(self, storage):
         return len(self.unerase(storage))
+
+    def getitem(self, storage, idx):
+        return self.unerase(storage)[idx]
+
+    def getslice(self, space, storage, start, end):
+        return space.newstr_fromstr(self.unerase(storage)[start:end])
 
     def hash(self, storage):
         return compute_hash(self.unerase(storage))
@@ -87,6 +94,12 @@ class MutableStringStrategy(StringStrategy):
 
     def length(self, storage):
         return len(self.unerase(storage))
+
+    def getitem(self, storage, idx):
+        return self.unerase(storage)[idx]
+
+    def getslice(self, space, storage, start, end):
+        return space.newstr_fromchars(self.unerase(storage)[start:end])
 
     def hash(self, storage):
         storage = self.unerase(storage)
@@ -155,7 +168,7 @@ class W_StringObject(W_Object):
 
     def copy(self, space):
         return self.strategy.copy(space, self.str_storage)
-        
+
     def replace(self, space, chars):
         strategy = space.fromcache(MutableStringStrategy)
         self.str_storage = strategy.erase(chars)
@@ -179,9 +192,9 @@ class W_StringObject(W_Object):
         is_negative_set = len(source) > 1 and source[0] == "^"
         if is_negative_set:
             source = source[1:]
-        
+
         trans_table = create_trans_table(source, replacement, is_negative_set)
-        
+
         if squeeze:
             last_repl = ""
             for char in string:
@@ -199,7 +212,7 @@ class W_StringObject(W_Object):
                 if not change_made and repl != char:
                     change_made = True
                 new_string.append(repl)
-            
+
         return new_string if change_made else None
 
     @classdef.method("to_str")
@@ -230,6 +243,16 @@ class W_StringObject(W_Object):
     @classdef.method("hash")
     def method_hash(self, space):
         return space.newint(self.strategy.hash(self.str_storage))
+
+    @classdef.method("[]")
+    def method_subscript(self, space, w_idx, w_count=None):
+        start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
+        if nil:
+            return space.w_nil
+        elif as_range:
+            return self.strategy.getslice(space, self.str_storage, start, end)
+        else:
+            return space.newstr_fromstr(self.strategy.getitem(self.str_storage, start))
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
@@ -303,29 +326,27 @@ class W_StringObject(W_Object):
     @classdef.method("to_i", radix="int")
     def method_to_i(self, space, radix=10):
         return space.newint(int(space.str_w(self), radix))
-        
+
     @classdef.method("tr", source="str", replacement="str")
     def method_tr(self, space, source, replacement):
         string = self.copy(space)
         new_string = self.tr_trans(space, source, replacement, False)
         return space.newstr_fromchars(new_string) if new_string else string
-    
+
     @classdef.method("tr!", source="str", replacement="str")
     def method_tr_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, False)
         self.replace(space, new_string)
         return self if new_string else space.w_nil
-        
+
     @classdef.method("tr_s", source="str", replacement="str")
     def method_tr_s(self, space, source, replacement):
         string = self.copy(space)
         new_string = self.tr_trans(space, source, replacement, True)
         return space.newstr_fromchars(new_string) if new_string else string
-        
+
     @classdef.method("tr_s!", source="str", replacement="str")
     def method_tr_s_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
         return self if new_string else space.w_nil
-
-        

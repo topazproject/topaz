@@ -430,9 +430,7 @@ class ObjectSpace(object):
             start = self.int_w(self.convert_type(w_idx, self.w_fixnum, "to_int"))
             if w_count:
                 end = self.int_w(self.convert_type(w_count, self.w_fixnum, "to_int"))
-                if end < 0:
-                    end = -1
-                else:
+                if end >= 0:
                     as_range = True
 
         if start < 0:
@@ -448,7 +446,10 @@ class ObjectSpace(object):
                 end = start
             elif end > length:
                 end = length
-        return (start, end, as_range)
+
+        nil = ((not as_range and start >= length) or
+            start < 0 or end < 0 or (start > 0 and start > length))
+        return (start, end, as_range, nil)
 
     def convert_type(self, w_obj, w_cls, method, raise_error=True):
         if w_obj.is_kind_of(self, w_cls):
