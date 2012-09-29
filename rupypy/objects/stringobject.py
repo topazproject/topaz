@@ -254,6 +254,7 @@ class W_StringObject(W_Object):
             return space.w_nil
         elif as_range:
             assert start >= 0
+            assert end >= 0
             return self.strategy.getslice(space, self.str_storage, start, end)
         else:
             return space.newstr_fromstr(self.strategy.getitem(self.str_storage, start))
