@@ -105,6 +105,20 @@ class W_ArrayObject(W_Object):
         self.items_w += space.listview(w_ary)
         return self
 
+    @classdef.method("shift")
+    def method_shift(self, space, w_n=None):
+        if w_n is None:
+            if self.items_w:
+                return self.items_w.pop(0)
+            else:
+                return space.w_nil
+        n = space.int_w(space.convert_type(w_n, space.w_fixnum, "to_int"))
+        if n < 0:
+            raise space.error(space.w_ArgumentError, "negative array size")
+        items_w = self.items_w[:n]
+        del self.items_w[:n]
+        return space.newarray(items_w)
+
     @classdef.method("unshift")
     def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):

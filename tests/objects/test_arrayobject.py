@@ -242,3 +242,22 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_last(self, space):
         assert space.int_w(space.execute("return [1, 2, 3].last")) == 3
         assert space.execute("return [].last") == space.w_nil
+
+    def test_shift(self, space):
+        w_res = space.execute("return [].shift")
+        assert w_res is space.w_nil
+
+        w_res = space.execute("""
+        a = [1, 2]
+        return [a.shift, a]
+        """)
+        assert self.unwrap(space, w_res) == [1, [2]]
+
+        w_res = space.execute("""
+        a = [1, 2, 3, 4, 5]
+        return [a.shift(2), a]
+        """)
+        assert self.unwrap(space, w_res) == [[1, 2], [3, 4, 5]]
+
+        with self.raises(space, "ArgumentError"):
+            space.execute("[].shift(-2)")
