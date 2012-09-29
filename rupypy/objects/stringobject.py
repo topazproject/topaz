@@ -146,9 +146,9 @@ class W_StringObject(W_Object):
     def copy(self, space):
         return self.strategy.copy(space, self.str_storage)
         
-    def replace(self, space, new_str):
+    def replace(self, space, chars):
         strategy = space.fromcache(MutableStringStrategy)
-        self.str_storage = strategy.erase(new_str)
+        self.str_storage = strategy.erase(chars)
         self.strategy = strategy
 
     def extend(self, space, w_other):
@@ -190,7 +190,7 @@ class W_StringObject(W_Object):
                     change_made = True
                 new_string.append(repl)
             
-        return new_string if change_made else []
+        return new_string if change_made else None
 
     @classdef.method("to_str")
     @classdef.method("to_s")
