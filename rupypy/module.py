@@ -74,7 +74,7 @@ class ModuleDef(object):
         name = __name
 
         def adder(func):
-            # XXX: should be private, once we have visibility
+            # TODO: should be private, once we have visibility
             self.methods[name] = (func, argspec)
             self.singleton_methods[name] = (func, argspec)
             return func
