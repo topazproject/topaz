@@ -7,3 +7,4 @@ Authors
 * Alex Gaynor
 * Curt Micol
 * Charles Oliver Nutter
+* Robin Schreiber
