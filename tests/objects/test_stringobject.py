@@ -147,6 +147,10 @@ class TestStringObject(BaseRuPyPyTest):
         assert x == "abcdef"
         assert y == "abc"
 
+    def test_dup_mutable(self, space):
+        w_res = space.execute("return ('abc' << 'def').dup")
+        assert self.unwrap(space, w_res) == 'abcdef'
+
     def test_to_i(self, space):
         w_res = space.execute('return "1234".to_i')
         assert space.int_w(w_res) == 1234

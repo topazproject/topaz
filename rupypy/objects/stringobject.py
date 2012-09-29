@@ -114,6 +114,9 @@ class MutableStringStrategy(StringStrategy):
         x ^= length
         return intmask(x)
 
+    def copy(self, space, storage):
+        return W_StringObject(space, storage, self)
+
     def to_mutable(self, space, s):
         pass
 
