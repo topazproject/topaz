@@ -34,6 +34,7 @@ class W_ArrayObject(W_Object):
         if nil:
             return space.w_nil
         elif as_range:
+            assert start >= 0
             return space.newarray(self.items_w[start:end])
         else:
             return self.items_w[start]

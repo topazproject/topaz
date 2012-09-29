@@ -449,8 +449,6 @@ class ObjectSpace(object):
 
         nil = ((not as_range and start >= length) or
             start < 0 or end < 0 or (start > 0 and start > length))
-        if start < 0:
-            start = 0
         return (start, end, as_range, nil)
 
     def convert_type(self, w_obj, w_cls, method, raise_error=True):
