@@ -74,6 +74,15 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(s.str_storage)
         del storage[:]
 
+    def downcase(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i, c in enumerate(storage):
+            new_c = c.lower()
+            changed |= (c != new_c)
+            storage[i] = new_c
+        return changed
+
 
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef)
@@ -210,6 +219,12 @@ class W_StringObject(W_Object):
             raise NotImplementedError("Regexp separators for String#split")
         results = space.str_w(self).split(sep, limit - 1)
         return space.newarray([space.newstr_fromstr(s) for s in results])
+
+    @classdef.method("downcase!")
+    def method_downcase(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.downcase(self.str_storage)
+        return self if changed else space.w_nil
 
     @classdef.method("to_i", radix="int")
     def method_to_i(self, space, radix=10):

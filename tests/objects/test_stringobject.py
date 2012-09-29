@@ -124,3 +124,14 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.int_w(w_res) == 63
         w_res = space.execute('return "AA".to_i(16)')
         assert space.int_w(w_res) == 170
+
+    def test_downcase(self, space):
+        w_res = space.execute("""
+        a = "AbC123aBc"
+        a.downcase!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "abc123abc"
+
+        w_res = space.execute("return '123'.downcase!")
+        assert self.unwrap(space, w_res) is None
