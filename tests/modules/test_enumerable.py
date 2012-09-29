@@ -11,7 +11,7 @@ class TestEnumberable(BaseRuPyPyTest):
         assert space.int_w(w_res) == 151200
 
         w_res = space.execute("""
-        return (1..10).inject 0 do |sum, n|
+        return (1..10).inject(0) do |sum, n|
             sum + n
         end
         """)

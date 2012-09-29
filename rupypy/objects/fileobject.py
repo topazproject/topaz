@@ -2,11 +2,11 @@ import os
 import sys
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
 from rupypy.objects.arrayobject import W_ArrayObject
-from rupypy.objects.stringobject import W_StringObject
-from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.exceptionobject import W_ArgumentError
+from rupypy.objects.hashobject import W_HashObject
+from rupypy.objects.objectobject import W_Object
+from rupypy.objects.stringobject import W_StringObject
 
 
 class W_IOObject(W_Object):
