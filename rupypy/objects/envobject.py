@@ -13,4 +13,8 @@ class W_EnvObject(W_Object):
 
     @classdef.method("[]", key="str")
     def method_subscript(self, space, key):
-        return space.newstr_fromstr(os.environ[key])
+        try:
+            val = os.environ[key]
+        except KeyError:
+            return space.w_nil
+        return space.newstr_fromstr(val)
