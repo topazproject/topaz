@@ -1,6 +1,7 @@
 import os
 
 from pypy.rlib.rstring import assert_str0
+from pypy.rlib.streamio import open_file_as_stream
 
 from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
@@ -48,12 +49,8 @@ class Kernel(Module):
         os.write(1, "\n")
         return space.w_nil
 
-    @moduledef.function("require", path="path")
-    def function_require(self, space, path):
-        from pypy.rlib.streamio import open_file_as_stream
-
-        assert path is not None
-        orig_path = path
+    @staticmethod
+    def find_feature(space, path):
         if not path.endswith(".rb"):
             path += ".rb"
 
@@ -65,14 +62,10 @@ class Kernel(Module):
                 if os.path.exists(assert_str0(full)):
                     path = os.path.join(base, path)
                     break
+        return path
 
-        w_loaded_features = space.globals.get('$"')
-        w_already_loaded = space.send(
-            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
-        )
-        if space.is_true(w_already_loaded):
-            return space.w_false
-
+    @staticmethod
+    def load_feature(space, path, orig_path):
         if not os.path.exists(assert_str0(path)):
             raise space.error(space.w_LoadError, orig_path)
 
@@ -82,8 +75,30 @@ class Kernel(Module):
         finally:
             f.close()
 
-        w_loaded_features.method_lshift(space, space.newstr_fromstr(path))
         space.execute(contents, filepath=path)
+
+    @moduledef.function("require", path="path")
+    def function_require(self, space, path):
+        assert path is not None
+        orig_path = path
+        path = Kernel.find_feature(space, path)
+
+        w_loaded_features = space.globals.get('$"')
+        w_already_loaded = space.send(
+            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
+        )
+        if space.is_true(w_already_loaded):
+            return space.w_false
+
+        Kernel.load_feature(space, path, orig_path)
+        w_loaded_features.method_lshift(space, space.newstr_fromstr(path))
+        return space.w_true
+
+    @moduledef.function("load", path="path")
+    def function_load(self, space, path):
+        orig_path = path
+        path = Kernel.find_feature(space, path)
+        Kernel.load_feature(space, path, orig_path)
         return space.w_true
 
     moduledef.app_method("alias fail raise")

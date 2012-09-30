@@ -205,3 +205,19 @@ class TestRequire(BaseRuPyPyTest):
         return @a
         """ % (str(f), str(f), str(f)))
         assert space.int_w(w_res) == 1
+
+    def test_load(self, space, tmpdir):
+        f = tmpdir.join("f.rb")
+        f.write("""
+        @a += 1
+        """)
+
+        w_res = space.execute("""
+        @a = 0
+        load '%s'
+        load '%s'
+        load '%s'
+
+        return @a
+        """ % (str(f), str(f), str(f)))
+        assert space.int_w(w_res) == 3
