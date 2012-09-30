@@ -96,6 +96,7 @@ class Kernel(Module):
 
     @moduledef.function("load", path="path")
     def function_load(self, space, path):
+        assert path is not None
         orig_path = path
         path = Kernel.find_feature(space, path)
         Kernel.load_feature(space, path, orig_path)
