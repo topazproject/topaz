@@ -261,3 +261,7 @@ class TestArrayObject(BaseRuPyPyTest):
 
         with self.raises(space, "ArgumentError"):
             space.execute("[].shift(-2)")
+
+    def test_push(self, space):
+        w_res = space.execute("return [].push(2, 3)")
+        assert self.unwrap(space, w_res) == [2, 3]

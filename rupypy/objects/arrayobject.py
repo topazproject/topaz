@@ -106,6 +106,11 @@ class W_ArrayObject(W_Object):
         self.items_w += space.listview(w_ary)
         return self
 
+    @classdef.method("push")
+    def method_push(self, space, args_w):
+        self.items_w.extend(args_w)
+        return self
+
     @classdef.method("shift")
     def method_shift(self, space, w_n=None):
         if w_n is None:
