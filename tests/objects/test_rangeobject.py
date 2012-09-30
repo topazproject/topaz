@@ -2,6 +2,9 @@ from ..base import BaseRuPyPyTest
 
 
 class TestRangeObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("Range")
+
     def test_map(self, space):
         w_res = space.execute("""
         return (1..3).map do |x|

@@ -111,6 +111,7 @@ class ObjectSpace(object):
             self.getclassfor(W_NumericObject),
             self.getclassfor(W_StringObject),
             self.getclassfor(W_HashObject),
+            self.getclassfor(W_RangeObject),
             self.getclassfor(W_IOObject),
             self.getclassfor(W_FileObject),
             self.getclassfor(W_Dir),
