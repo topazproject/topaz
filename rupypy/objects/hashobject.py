@@ -10,6 +10,10 @@ class W_HashObject(W_Object):
         W_Object.__init__(self, space)
         self.contents = OrderedDict(space.eq_w, space.hash_w)
 
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space):
+        return W_HashObject(space)
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         return self.contents.get(w_key, space.w_nil)

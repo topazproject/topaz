@@ -8,6 +8,10 @@ class TestHashObject(BaseRuPyPyTest):
     def test_create(self, space):
         space.execute("{2 => 3, 4 => 5}")
 
+    def test_new(self, space):
+        w_res = space.execute("return Hash.new.keys")
+        assert self.unwrap(space, w_res) == []
+
     def test_lookup(self, space):
         w_res = space.execute("""
         x = {2 => 3}
