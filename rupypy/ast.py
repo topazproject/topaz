@@ -206,15 +206,18 @@ class TryFinally(Node):
     def compile(self, ctx):
         end = ctx.new_block()
         ctx.emit_jump(consts.SETUP_FINALLY, end)
-        ctx.use_next_block(ctx.new_block())
-        self.body.compile(ctx)
-        ctx.emit(consts.POP_BLOCK)
+        body = ctx.new_block()
+        ctx.use_next_block(body)
+        with ctx.enter_frame_block(ctx.F_BLOCK_FINALLY, body):
+            self.body.compile(ctx)
+            ctx.emit(consts.POP_BLOCK)
         # Put a None on the stack where an exception would be.
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
         ctx.use_next_block(end)
-        self.finally_body.compile(ctx)
-        ctx.emit(consts.DISCARD_TOP)
-        ctx.emit(consts.END_FINALLY)
+        with ctx.enter_frame_block(ctx.F_BLOCK_FINALLY_END, end):
+            self.finally_body.compile(ctx)
+            ctx.emit(consts.DISCARD_TOP)
+            ctx.emit(consts.END_FINALLY)
 
 
 class Class(Node):

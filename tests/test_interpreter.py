@@ -982,6 +982,15 @@ class TestExceptions(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [12, 5]
 
+    def test_ensure_result(self, space):
+        w_res = space.execute("""
+        return begin
+        ensure
+            nil
+        end
+        """)
+        assert w_res is space.w_nil
+
     def test_rescue_loop(self, space):
         w_res = space.execute("""
         i = 0

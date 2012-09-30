@@ -1298,6 +1298,27 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_ensure(self, space):
+        bc = self.assert_compiles(space, """
+        begin
+        ensure
+            nil
+        end
+        """, """
+        SETUP_FINALLY 10
+        LOAD_CONST 0
+        POP_BLOCK
+        LOAD_CONST 0
+        LOAD_CONST 0
+        DISCARD_TOP
+        END_FINALLY
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+        assert bc.max_stackdepth == 4
+
     def test_block_argument(self, space):
         bc = self.assert_compiles(space, """
         def f(a, &b)

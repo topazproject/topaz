@@ -94,6 +94,8 @@ class BlockSymbolTable(BaseSymbolTable):
 
 class CompilerContext(object):
     F_BLOCK_LOOP = 0
+    F_BLOCK_FINALLY = 1
+    F_BLOCK_FINALLY_END = 2
 
     def __init__(self, space, code_name, symtable, filepath):
         self.space = space
@@ -187,7 +189,7 @@ class CompilerContext(object):
                 target_depth = depth
                 jump_op = instr.opcode
                 if jump_op in [consts.SETUP_FINALLY, consts.SETUP_EXCEPT]:
-                    target_depth += 2
+                    target_depth += 3
                     max_depth = max(max_depth, target_depth)
                 max_depth = self._count_stackdepth(instr.jump, target_depth, max_depth)
         if block.next_block is not None:
