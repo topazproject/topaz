@@ -346,7 +346,7 @@ class W_StringObject(W_Object):
                 digit = c - ord("a") + 10
             elif ord("A") <= c <= ord("Z"):
                 digit = c - ord("A") + 10
-            elif ord("0") <= c <= "9":
+            elif ord("0") <= c <= ord("9"):
                 digit = c - ord("0")
             else:
                 break
