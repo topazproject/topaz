@@ -85,50 +85,53 @@ class If(Node):
         ctx.use_next_block(end)
 
 
-class While(Node):
+class BaseLoop(Node):
     def __init__(self, cond, body):
         self.cond = cond
         self.body = body
 
     def compile(self, ctx):
+        anchor = ctx.new_block()
         end = ctx.new_block()
         loop = ctx.new_block()
 
-        ctx.use_next_block(loop)
-        self.cond.compile(ctx)
-        ctx.emit_jump(consts.JUMP_IF_FALSE, end)
-        self.body.compile(ctx)
-        # The body leaves an extra item on the stack, discard it.
-        ctx.emit(consts.DISCARD_TOP)
-        ctx.emit_jump(consts.JUMP, loop)
-        ctx.use_next_block(end)
-        # For now, while always returns a nil, eventually it can also return a
-        # value from a break
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        ctx.emit_jump(consts.SETUP_LOOP, end)
+        with ctx.enter_frame_block(ctx.F_BLOCK_LOOP, loop):
+            ctx.use_next_block(loop)
+            self.cond.compile(ctx)
+            ctx.emit_jump(self.cond_instr, anchor)
 
+            self.body.compile(ctx)
+            ctx.emit(consts.DISCARD_TOP)
+            ctx.emit_jump(consts.JUMP, loop)
 
-class Until(Node):
-    def __init__(self, cond, body):
-        self.cond = cond
-        self.body = body
-
-    def compile(self, ctx):
-        end = ctx.new_block()
-        loop = ctx.new_block()
-
-        ctx.use_next_block(loop)
-        self.cond.compile(ctx)
-        ctx.emit_jump(consts.JUMP_IF_TRUE, end)
-        self.body.compile(ctx)
-        ctx.emit(consts.DISCARD_TOP)
-        ctx.emit_jump(consts.JUMP, loop)
+            ctx.use_next_block(anchor)
+            ctx.emit(consts.POP_BLOCK)
         ctx.use_next_block(end)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+
+class While(BaseLoop):
+    cond_instr = consts.JUMP_IF_FALSE
+
+
+class Until(BaseLoop):
+    cond_instr = consts.JUMP_IF_TRUE
 
 
 class Next(BaseStatement):
     def __init__(self, expr):
         self.expr = expr
+
+    def compile(self, ctx):
+        self.expr.compile(ctx)
+        if isinstance(ctx.symtable, BlockSymbolTable):
+            ctx.emit(consts.RETURN)
+        elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
+            block = ctx.find_frame_block(ctx.F_BLOCK_LOOP)
+            ctx.emit_jump(consts.CONTINUE_LOOP, block)
+        else:
+            raise NotImplementedError
 
 
 class TryExcept(Node):

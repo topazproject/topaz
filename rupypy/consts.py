@@ -65,6 +65,7 @@ BYTECODES = [
     ("SEND_SUPER", 2, SEND_EFFECT),
     ("SEND_SUPER_SPLAT", 1, -1),
 
+    ("SETUP_LOOP", 1, 0),
     ("SETUP_EXCEPT", 1, 0),
     ("SETUP_FINALLY", 1, 0),
     ("END_FINALLY", 0, -2),
@@ -84,6 +85,7 @@ BYTECODES = [
     ("RETURN", 0, -1),
     ("RAISE_RETURN", 0, -1),
     ("YIELD", 1, ARRAY_EFFECT),
+    ("CONTINUE_LOOP", 1, -1),
 ]
 
 BYTECODE_NAMES = []

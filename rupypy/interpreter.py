@@ -423,6 +423,9 @@ class Interpreter(object):
         w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
+    def SETUP_LOOP(self, space, bytecode, frame, pc, target_pc):
+        frame.lastblock = LoopBlock(target_pc, frame.lastblock, frame.stackpos)
+
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = ExceptBlock(target_pc, frame.lastblock, frame.stackpos)
 
@@ -516,6 +519,10 @@ class Interpreter(object):
         w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
+    def CONTINUE_LOOP(self, space, bytecode, frame, pc, target_pc):
+        frame.pop()
+        return frame.unrollstack_and_jump(ContinueLoop(target_pc))
+
     def UNREACHABLE(self, space, bytecode, frame, pc):
         raise Exception
 
@@ -566,6 +573,13 @@ class RaiseReturnValue(SuspendedUnroller):
         raise RaiseReturn(self.parent_interp, self.w_returnvalue)
 
 
+class ContinueLoop(SuspendedUnroller):
+    kind = 1 << 3
+
+    def __init__(self, target_pc):
+        self.target_pc = target_pc
+
+
 class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):
         self.target_pc = target_pc
@@ -577,6 +591,20 @@ class FrameBlock(object):
     def cleanupstack(self, frame):
         while frame.stackpos > self.stackdepth:
             frame.pop()
+
+
+class LoopBlock(FrameBlock):
+    handling_mask = ContinueLoop.kind
+
+    def cleanup(self, space, frame):
+        self.cleanupstack(frame)
+
+    def handle(self, frame, unroller):
+        if isinstance(unroller, ContinueLoop):
+            frame.lastblock = self
+            return unroller.target_pc
+        else:
+            raise SystemError
 
 
 class ExceptBlock(FrameBlock):

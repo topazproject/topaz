@@ -1035,3 +1035,18 @@ class TestExceptions(BaseRuPyPyTest):
         return C.new.f
         """)
         assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_next_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        while i < 10
+            i += 1
+            if i > 3
+                next
+            end
+            res << i
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]

@@ -257,11 +257,13 @@ class TestCompiler(object):
 
     def test_while(self, space):
         self.assert_compiles(space, "while true do end", """
+        SETUP_LOOP 17
         LOAD_CONST 0
-        JUMP_IF_FALSE 13
+        JUMP_IF_FALSE 16
         LOAD_CONST 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 1
         DISCARD_TOP
 
@@ -270,13 +272,15 @@ class TestCompiler(object):
         """)
 
         self.assert_compiles(space, "while true do puts 5 end", """
+        SETUP_LOOP 23
         LOAD_CONST 0
-        JUMP_IF_FALSE 19
+        JUMP_IF_FALSE 22
         LOAD_SELF
         LOAD_CONST 1
         SEND 2 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 3
         DISCARD_TOP
 
@@ -286,11 +290,13 @@ class TestCompiler(object):
 
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
+        SETUP_LOOP 17
         LOAD_CONST 0
-        JUMP_IF_TRUE 13
+        JUMP_IF_TRUE 16
         LOAD_CONST 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 2
         DISCARD_TOP
 
@@ -1901,5 +1907,58 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 4
+        RETURN
+        """)
+
+    def test_next_block(self, space):
+        bc = self.assert_compiles(space, """
+        f {
+            next 5
+            3 + 4
+        }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        RETURN
+
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND 3 1
+        RETURN
+        """)
+
+    def test_next_loop(self, space):
+        self.assert_compiles(space, """
+        while true do
+            next
+            2 + 2
+        end
+        """, """
+        SETUP_LOOP 31
+        LOAD_CONST 0
+        JUMP_IF_FALSE 30
+
+        LOAD_CONST 1
+        CONTINUE_LOOP 3
+        LOAD_CONST 2
+        LOAD_CONST 3
+        SEND 4 1
+        DISCARD_TOP
+        JUMP 3
+        POP_BLOCK
+        LOAD_CONST 1
+        DISCARD_TOP
+
+        LOAD_CONST 0
         RETURN
         """)

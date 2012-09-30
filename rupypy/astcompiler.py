@@ -93,6 +93,8 @@ class BlockSymbolTable(BaseSymbolTable):
 
 
 class CompilerContext(object):
+    F_BLOCK_LOOP = 0
+
     def __init__(self, space, code_name, symtable, filepath):
         self.space = space
         self.code_name = code_name
@@ -103,6 +105,7 @@ class CompilerContext(object):
         self.current_lineno = -1
 
         self.current_block = self.first_block = self.new_block()
+        self.frame_blocks = []
 
     def create_bytecode(self, args, defaults, splat_arg, block_arg):
         locs = [None] * len(self.symtable.local_numbers)
@@ -206,6 +209,21 @@ class CompilerContext(object):
 
     def set_lineno(self, lineno):
         return SetLinenoConextManager(self, lineno)
+
+    def enter_frame_block(self, block_type, block):
+        return EnterFrameBlockContextManager(self, block_type, block)
+
+    def in_frame_block(self, block_type):
+        for t, _ in self.frame_blocks:
+            if t == block_type:
+                return True
+        return False
+
+    def find_frame_block(self, block_type):
+        for i in xrange(len(self.frame_blocks) - 1, -1, -1):
+            if self.frame_blocks[i][0] == block_type:
+                return self.frame_blocks[i][1]
+        raise SystemError
 
     def new_block(self):
         return Block()
@@ -325,3 +343,18 @@ class SetLinenoConextManager(object):
 
     def __exit__(self, exc_type, exc_value, tb):
         self.ctx.current_lineno = self.orig_lineno
+
+
+class EnterFrameBlockContextManager(object):
+    def __init__(self, ctx, block_type, block):
+        self.ctx = ctx
+        self.block_type = block_type
+        self.block = block
+
+    def __enter__(self):
+        self.ctx.frame_blocks.append((self.block_type, self.block))
+
+    def __exit__(self, exc_type, exc_value, tb):
+        block_type, block = self.ctx.frame_blocks.pop()
+        assert block_type == self.block_type
+        assert block is self.block
