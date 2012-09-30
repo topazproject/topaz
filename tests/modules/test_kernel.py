@@ -221,3 +221,7 @@ class TestRequire(BaseRuPyPyTest):
         return @a
         """ % (str(f), str(f), str(f)))
         assert space.int_w(w_res) == 3
+
+    def test_responds_to(self, space):
+        w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
+        assert self.unwrap(space, w_res) == [False, True]

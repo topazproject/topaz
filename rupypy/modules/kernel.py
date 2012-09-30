@@ -174,3 +174,7 @@ class Kernel(Module):
     @moduledef.function("instance_variable_defined?", name="symbol")
     def method_instance_variable_definedp(self, space, name):
         return space.newbool(self.find_instance_var(space, name) is not None)
+
+    @moduledef.method("respond_to?")
+    def method_respond_top(self, space, w_name):
+        return space.newbool(space.respond_to(self, w_name))
