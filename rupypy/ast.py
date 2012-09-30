@@ -126,6 +126,11 @@ class Until(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
 
+class Next(BaseStatement):
+    def __init__(self, expr):
+        self.expr = expr
+
+
 class TryExcept(Node):
     def __init__(self, body, except_handlers, else_body):
         self.body = body

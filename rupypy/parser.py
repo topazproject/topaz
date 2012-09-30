@@ -639,10 +639,12 @@ class Parser(object):
 
     @pg.production("command_call : NEXT call_args")
     def command_call_next(self, p):
-        """
-        $$ = new NextNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
-        """
-        raise NotImplementedError(p)
+        args = p[1].getcallargs()
+        if len(args) == 1:
+            [node] = args
+        else:
+            node = ast.Array(args)
+        return BoxAST(ast.Next(node))
 
     @pg.production("block_command : block_call")
     def block_command_block_call(self, p):
@@ -1768,12 +1770,7 @@ class Parser(object):
 
     @pg.production("primary : NEXT")
     def primary_next(self, p):
-        """
-        kNEXT {
-                    $$ = new NextNode($1.getPosition(), NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Next(ast.Nil()))
 
     @pg.production("primary : REDO")
     def primary_redo(self, p):

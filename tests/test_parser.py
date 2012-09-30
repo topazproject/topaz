@@ -2070,6 +2070,17 @@ HERE
             ast.Statement(ast.Super([ast.Nil()], None, 1))
         ]))
 
+    def test_next(self, space):
+        assert space.parse("next") == ast.Main(ast.Block([
+            ast.Next(ast.Nil())
+        ]))
+        assert space.parse("next true") == ast.Main(ast.Block([
+            ast.Next(ast.ConstantBool(True))
+        ]))
+        assert space.parse("next 3, 4") == ast.Main(ast.Block([
+            ast.Next(ast.Array([ast.ConstantInt(3), ast.ConstantInt(4)]))
+        ]))
+
     def test_custom_lineno(self, space):
         with self.raises(space, "SyntaxError", "line 1"):
             assert space.parse("[]{}[]")
