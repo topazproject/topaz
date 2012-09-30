@@ -521,7 +521,7 @@ class Interpreter(object):
 
     def CONTINUE_LOOP(self, space, bytecode, frame, pc, target_pc):
         frame.pop()
-        return frame.unrollstack_and_jump(ContinueLoop(target_pc))
+        return frame.unrollstack_and_jump(space, ContinueLoop(target_pc))
 
     def UNREACHABLE(self, space, bytecode, frame, pc):
         raise Exception
@@ -599,7 +599,7 @@ class LoopBlock(FrameBlock):
     def cleanup(self, space, frame):
         self.cleanupstack(frame)
 
-    def handle(self, frame, unroller):
+    def handle(self, space, frame, unroller):
         if isinstance(unroller, ContinueLoop):
             frame.lastblock = self
             return unroller.target_pc

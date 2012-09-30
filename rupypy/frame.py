@@ -110,9 +110,9 @@ class Frame(BaseFrame):
                 return block
             block.cleanupstack(self)
 
-    def unrollstack_and_jump(self, unroller):
+    def unrollstack_and_jump(self, space, unroller):
         block = self.unrollstack(unroller.kind)
-        return block.handle(self, unroller)
+        return block.handle(space, self, unroller)
 
     def has_contents(self):
         return True
