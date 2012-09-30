@@ -105,6 +105,10 @@ class TestKernel(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [["to_ary"], ["to_a"]]
         assert self.unwrap(space, space.execute("return Array(1)")) == [1]
 
+    def test_String(self, space):
+        w_res = space.execute("return [String('hello'), String(4)]")
+        assert self.unwrap(space, w_res) == ["hello", "4"]
+
     def test_exit(self, space):
         with self.raises(space, "SystemExit"):
             space.execute("Kernel.exit")

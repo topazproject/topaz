@@ -146,6 +146,13 @@ class Kernel(Module):
         else:
             return space.newarray([w_arg])
 
+    moduledef.app_method("""
+    def String arg
+        arg.to_s
+    end
+    module_function :String
+    """)
+
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
         return space.send(
