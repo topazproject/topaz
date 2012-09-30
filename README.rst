@@ -17,4 +17,4 @@ run::
 
     $ /path/to/pypy/src/pypy/translator/goal/translate.py -Ojit targetrupypy.py
 
-This will compile RuPyPy with a JIT, it'll take 5-10 minutes.
+This will compile Topaz with a JIT, it'll take 5-10 minutes.
