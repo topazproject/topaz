@@ -160,6 +160,18 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.int_w(w_res) == 63
         w_res = space.execute('return "AA".to_i(16)')
         assert space.int_w(w_res) == 170
+        w_res = space.execute('return "12a".to_i')
+        assert space.int_w(w_res) == 12
+        w_res = space.execute('return "-a".to_i')
+        assert space.int_w(w_res) == 0
+        w_res = space.execute('return "".to_i')
+        assert space.int_w(w_res) == 0
+        w_res = space.execute('return "-12fdsa".to_i')
+        assert space.int_w(w_res) == -12
+        with self.raises(space, "ArgumentError"):
+            space.execute('return "".to_i(1)')
+        with self.raises(space, "ArgumentError"):
+            space.execute('return "".to_i(37)')
 
     def test_downcase(self, space):
         w_res = space.execute("""

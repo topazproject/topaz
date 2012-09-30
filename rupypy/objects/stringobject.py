@@ -330,7 +330,33 @@ class W_StringObject(W_Object):
 
     @classdef.method("to_i", radix="int")
     def method_to_i(self, space, radix=10):
-        return space.newint(int(space.str_w(self), radix))
+        if not 2 <= radix <= 36:
+            raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
+        s = space.str_w(self)
+        if not s:
+            return space.newint(0)
+        i = 0
+        neg = s[i] == "-"
+        if neg:
+            i += 1
+        val = 0
+        while i < len(s):
+            c = ord(s[i])
+            if ord("a") <= c <= ord("z"):
+                digit = c - ord("a") + 10
+            elif ord("A") <= c <= ord("Z"):
+                digit = c - ord("A") + 10
+            elif ord("0") <= c <= "9":
+                digit = c - ord("0")
+            else:
+                break
+            if digit >= radix:
+                break
+            val = val * radix + digit
+            i += 1
+        if neg:
+            val = -val
+        return space.newint(val)
 
     @classdef.method("tr", source="str", replacement="str")
     def method_tr(self, space, source, replacement):
