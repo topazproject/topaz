@@ -84,6 +84,11 @@ class W_IOObject(W_Object):
         bytes_written = os.write(self.fd, string)
         return space.newint(bytes_written)
 
+    @classdef.method("flush")
+    def method_flush(self, space):
+        # We have no internal buffers to flush!
+        return self
+
     @classdef.method("print")
     def method_print(self, space, args_w):
         if not args_w:

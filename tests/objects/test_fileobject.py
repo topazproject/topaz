@@ -74,6 +74,11 @@ class TestIO(BaseRuPyPyTest):
         out, err = capfd.readouterr()
         assert out == "This\nis\n100\npercent\n"
 
+    def test_flush(self, space, capfd):
+        space.execute("IO.new(1, 'w').flush.puts('String')")
+        out, err = capfd.readouterr()
+        assert out == "String\n"
+
 
 class TestFile(BaseRuPyPyTest):
     def test_access_flags(self, space):
