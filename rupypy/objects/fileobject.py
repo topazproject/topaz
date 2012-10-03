@@ -22,10 +22,17 @@ class W_IOObject(W_Object):
 
     @classmethod
     def setup_class(cls, space, w_cls):
-        for name, fd in [["stdin", 0], ["stdout", 1], ["stderr", 2]]:
-            w_io = space.send(w_cls, space.newsymbol("new"), [space.newint(fd)])
-            space.globals.set("$%s" % name, w_io)
-            space.set_const(space.getclassfor(W_Object), name.upper(), w_io)
+        w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
+        space.globals.set("$stdin", w_stdin)
+        space.set_const(space.w_object, "STDIN", w_stdin)
+
+        w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
+        space.globals.set("$stdout", w_stdout)
+        space.set_const(space.w_object, "STDOUT", w_stdout)
+
+        w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
+        space.globals.set("$stderr", w_stderr)
+        space.set_const(space.w_object, "STDERR", w_stderr)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
