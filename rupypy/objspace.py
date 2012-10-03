@@ -33,7 +33,8 @@ from rupypy.objects.envobject import W_EnvObject
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
-    W_SystemCallError, W_NameError, W_IndexError, W_StopIteration)
+    W_SystemCallError, W_NameError, W_IndexError, W_StopIteration,
+    W_NotImplementedError)
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
@@ -82,9 +83,11 @@ class ObjectSpace(object):
         self.w_proc = self.getclassfor(W_ProcObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
         self.w_module = self.getclassfor(W_ModuleObject)
+        self.w_string = self.getclassfor(W_StringObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_NameError = self.getclassfor(W_NameError)
+        self.w_NotImplementedError = self.getclassfor(W_NotImplementedError)
         self.w_IndexError = self.getclassfor(W_IndexError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RuntimeError = self.getclassfor(W_RuntimeError)
@@ -100,7 +103,7 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_fixnum,
+            self.w_fixnum, self.w_string,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RuntimeError,
@@ -109,7 +112,6 @@ class ObjectSpace(object):
             self.w_kernel, self.w_topaz,
 
             self.getclassfor(W_NumericObject),
-            self.getclassfor(W_StringObject),
             self.getclassfor(W_HashObject),
             self.getclassfor(W_RangeObject),
             self.getclassfor(W_IOObject),

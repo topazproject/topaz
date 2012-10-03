@@ -6,9 +6,7 @@ from pypy.rlib.streamio import open_file_as_stream
 from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
 from rupypy.modules.process import Process
-from rupypy.objects.arrayobject import W_ArrayObject
-from rupypy.objects.exceptionobject import (W_NotImplementedError, W_ExceptionObject,
-    W_TypeError, W_RuntimeError)
+from rupypy.objects.exceptionobject import W_ExceptionObject
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.stringobject import W_StringObject
 
@@ -174,20 +172,20 @@ class Kernel(Module):
     @moduledef.function("exec")
     def method_exec(self, space, args_w):
         if len(args_w) > 1 and space.respond_to(args_w[0], space.newsymbol("to_hash")):
-            raise space.error(space.getclassfor(W_NotImplementedError), "exec with environment")
+            raise space.error(space.w_NotImplementedError, "exec with environment")
 
         if len(args_w) > 1 and space.respond_to(args_w[-1], space.newsymbol("to_hash")):
-            raise space.error(space.getclassfor(W_NotImplementedError), "exec with options")
+            raise space.error(space.w_NotImplementedError, "exec with options")
 
         if space.respond_to(args_w[0], space.newsymbol("to_ary")):
-            w_cmd = space.convert_type(args_w[0], space.getclassfor(W_ArrayObject), "to_ary")
+            w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
             cmd, argv0 = [
                 space.str_w(space.convert_type(
-                    w_e, space.getclassfor(W_StringObject), "to_str"
+                    w_e, space.w_string, "to_str"
                 )) for w_e in space.listview(w_cmd)
             ]
         else:
-            w_cmd = space.convert_type(args_w[0], space.getclassfor(W_StringObject), "to_str")
+            w_cmd = space.convert_type(args_w[0], space.w_string, "to_str")
             cmd = space.str_w(w_cmd)
             argv0 = None
 
@@ -201,7 +199,7 @@ class Kernel(Module):
             args = [argv0]
             args += [
                 space.str_w(space.convert_type(
-                    w_arg, space.getclassfor(W_StringObject), "to_str"
+                    w_arg, space.w_string, "to_str"
                 )) for w_arg in args_w[1:]
             ]
             os.execv(cmd, args)
