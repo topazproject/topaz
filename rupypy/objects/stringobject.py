@@ -363,14 +363,33 @@ class W_StringObject(W_Object):
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=-1):
-        if w_sep is None:
-            sep = None
-        elif isinstance(w_sep, W_StringObject):
-            sep = space.str_w(w_sep)
+        if w_sep is None or space.is_kind_of(w_sep, space.w_string):
+            sep = space.str_w(w_sep) if w_sep else None
+            return space.newarray([
+                space.newstr_fromstr(s) for s in space.str_w(self).split(sep, limit - 1)
+            ])
+        elif space.is_kind_of(w_sep, space.w_regexp):
+            results_w = []
+            w_string = self
+            w_match = space.send(w_sep, space.newsymbol("match"), [w_string])
+            while (w_match is not space.w_nil and len(space.str_w(w_string)) > 0
+                   and (limit == -1 or len(results_w) < limit)):
+                if space.int_w(space.send(w_match, space.newsymbol("end"), [space.newint(0)])) == 0:
+                    string = space.str_w(w_string)
+                    results_w.append(space.newstr_fromstr(string[0]))
+                    w_string = space.newstr_fromstr(string[1:])
+                else:
+                    results_w.append(space.send(w_match, space.newsymbol("pre_match")))
+                    w_string = space.send(w_match, space.newsymbol("post_match"))
+                w_match = space.send(w_sep, space.newsymbol("match"), [w_string])
+            if len(space.str_w(w_string)) > 0:
+                results_w.append(w_string)
+            return space.newarray(results_w)
         else:
-            raise NotImplementedError("Regexp separators for String#split")
-        results = space.str_w(self).split(sep, limit - 1)
-        return space.newarray([space.newstr_fromstr(s) for s in results])
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Regexp)" % space.getclass(w_sep).name
+            )
 
     classdef.app_method("""
     def downcase
