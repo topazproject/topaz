@@ -79,6 +79,19 @@ class TestIO(BaseRuPyPyTest):
         out, err = capfd.readouterr()
         assert out == "String\n"
 
+    def test_globals(self, space, capfd):
+        w_res = space.execute("""
+        STDOUT.puts("STDOUT")
+        $stdout.puts("$stdout")
+        STDERR.puts("STDERR")
+        $stderr.puts("$stderr")
+        return STDIN.read, $stdin.read
+        """)
+        out, err = capfd.readouterr()
+        assert out == "STDOUT\n$stdout\n"
+        assert err == "STDERR\n$stderr\n"
+        assert self.unwrap(space, w_res) == [None, None]
+
 
 class TestFile(BaseRuPyPyTest):
     def test_access_flags(self, space):
