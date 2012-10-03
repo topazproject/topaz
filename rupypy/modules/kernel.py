@@ -192,13 +192,7 @@ class Kernel(Module):
             argv0 = None
 
         if len(args_w) > 1 or argv0 is not None:
-            if argv0 is None:
-                sepidx = cmd.rfind(os.sep) + 1
-                if sepidx > 0:
-                    argv0 = cmd[sepidx:]
-                else:
-                    argv0 = cmd
-            args = [argv0]
+            args = [argv0 or os.path.basename(cmd)]
             args += [
                 space.str_w(space.convert_type(
                     w_arg, space.getclassfor(W_StringObject), "to_str"
