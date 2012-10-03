@@ -1,6 +1,25 @@
+import struct
+
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
+from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.stringobject import W_StringObject
+
+
+def create_pack_table():
+    ruby_fmt = "CcSsIiLlQqNnVvDdFfEeGgAaZ"
+    py_fmt  = []
+    py_fmt += "BbHhIiLlQq"
+    py_fmt += [">H", ">I", "<H", "<I"]
+    py_fmt += "ddff"
+    py_fmt += ["<d", "<f", ">d", ">f"]
+    py_fmt += "sss"
+    table = [None] * (ord('z') - ord('A'))
+    for c in ruby_fmt:
+        table[ord(c) - ord('A')] = py_fmt[ruby_fmt.index(c)]
+    return table
+pack_table = create_pack_table()
 
 
 class W_ArrayObject(W_Object):
@@ -257,3 +276,84 @@ class W_ArrayObject(W_Object):
             return space.w_nil
         else:
             return self.items_w[len(self.items_w) - 1]
+
+    @classdef.method("pack", template="str")
+    def method_pack(self, space, template):
+        result = []
+        idx = 0
+        iidx = 0
+
+        while idx < len(template):
+            if iidx >= len(self.items_w):
+                raise space.error(space.w_ArgumentError, "too few arguments")
+
+            ch = template[idx]
+
+            endianess = "@"
+            if ch in "SsIiLlQq":
+                # These allow other endianess definitions
+                if idx + 1 < len(template):
+                    ch2 = template[idx + 1]
+                    if ch2 == "!" and idx + 2 < len(template) and template[idx + 2] in "<>":
+                        endianess = template[idx + 2]
+                        idx += 2
+                    elif ch2 in "<>":
+                        idx += 1
+                        endianess = ch2
+                    elif ch2 in "!_":
+                        idx += 1
+            elif ch == "Z":
+                if idx + 1 < len(template) and template[idx + 1] == "*":
+                    # star adds \0, do it during the next run
+                    template[idx + 1] = "x"
+
+            count = 1
+            while idx + count < len(template):
+                if template[idx + 1].isdigit():
+                    count += 1
+
+            fmt = "%s%d%s" % (endianess, count, pack_table(ord(ch) - ord('A')))
+
+            if ch in "CcSsIiLlQqNnVvUw":
+                if ch in "Uw":
+                    raise NotImplementedError("UTF-8 and BER pack")
+                num = space.int_w(self.convert_type(space.w_fixnum, self.items_w[iidx], "to_int"))
+                result += struct.pack(fmt, num)
+            elif ch in "DdFfEeGg":
+                w_item = self.items_w[iidx]
+                if not isinstance(w_item, W_FloatObject):
+                    raise space.error(
+                        space.w_TypeError,
+                        "can't convert %s into Float" % space.getclass(w_item).name
+                    )
+                flt = space.float_w(w_item)
+                result += struct.pack(fmt, flt)
+            elif ch in "AaBbHhMmPpuZ":
+                if ch in "BbHhMmPpu":
+                    raise NotImplementedError("%s in string packing" % ch)
+
+                string = space.str_w(self.convert_type(
+                        space.getclassfor(W_StringObject), self.items_w[iidx], "to_str"
+                ))
+                if ch == "A":
+                    result += struct.pack("s", string[:count]).ljust(count)
+                else:
+                    result += struct.pack(fmt, string)
+            else:
+                # Anything now does not advance the data set
+                iidx -= 1
+                if ch == "@":
+                    if len(result) < count:
+                        result += ["\0"] * count - len(result)
+                    else:
+                        result = result[:count]
+                elif ch == "X":
+                    if not result:
+                        raise space.error(space.w_ArgumentError, "X outside of string")
+                    else:
+                        result.pop()
+                elif ch == "x":
+                    result.append("\0")
+
+            iidx += 1
+            idx += count
