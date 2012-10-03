@@ -265,3 +265,24 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_push(self, space):
         w_res = space.execute("return [].push(2, 3)")
         assert self.unwrap(space, w_res) == [2, 3]
+
+    def test_pack(self, space):
+        assert space.str_w(space.execute("return [].pack ''")) == ""
+        assert space.str_w(space.execute("return [].pack 'yy'")) == ""
+        assert space.str_w(space.execute("return [1, 2].pack 'y3'")) == ""
+
+        assert space.str_w(space.execute("return [].pack 'xx'")) == "\0\0"
+        assert space.str_w(space.execute("return [].pack 'x2'")) == "\0\0"
+        assert space.str_w(space.execute("return [].pack '@2'")) == "\0\0"
+        assert space.str_w(space.execute("return [].pack 'xx@2'")) == "\0\0"
+        assert space.str_w(space.execute("return [].pack 'xxXX'")) == ""
+        with self.raises(space, "ArgumentError"):
+            space.execute("[].pack 'X'")
+
+        assert space.str_w(space.execute("return ['ab'].pack 'A'")) == "a"
+        assert space.str_w(space.execute("return ['ab'].pack 'A5'")) == "ab   "
+        assert space.str_w(space.execute("return ['ab'].pack 'a'")) == "a"
+        assert space.str_w(space.execute("return ['ab'].pack 'a5'")) == "ab\0\0\0"
+
+        assert space.str_w(space.execute("return [-10, 10].pack 'c2'")) == "\xf6\n"
+        assert space.str_w(space.execute("return [255].pack 'C'")) == "\xff"

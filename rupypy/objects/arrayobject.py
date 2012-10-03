@@ -20,6 +20,9 @@ def create_pack_table():
         table[ord(c) - ord('A')] = py_fmt[ruby_fmt.index(c)]
     return table
 pack_table = create_pack_table()
+fixnum_formats = "CcSsIiLlQqNnVvUw"
+float_formats  = "DdFfEeGg"
+string_formats = "AaBbHhMmPpuZ"
 
 
 class W_ArrayObject(W_Object):
@@ -284,9 +287,6 @@ class W_ArrayObject(W_Object):
         iidx = 0
 
         while idx < len(template):
-            if iidx >= len(self.items_w):
-                raise space.error(space.w_ArgumentError, "too few arguments")
-
             ch = template[idx]
 
             endianess = "@"
@@ -304,47 +304,28 @@ class W_ArrayObject(W_Object):
                         idx += 1
             elif ch == "Z":
                 if idx + 1 < len(template) and template[idx + 1] == "*":
-                    # star adds \0, do it during the next run
+                    # star adds \0, defer to the next iteration
                     template[idx + 1] = "x"
 
-            count = 1
-            while idx + count < len(template):
-                if template[idx + 1].isdigit():
-                    count += 1
-
-            fmt = "%s%d%s" % (endianess, count, pack_table(ord(ch) - ord('A')))
-
-            if ch in "CcSsIiLlQqNnVvUw":
-                if ch in "Uw":
-                    raise NotImplementedError("UTF-8 and BER pack")
-                num = space.int_w(self.convert_type(space.w_fixnum, self.items_w[iidx], "to_int"))
-                result += struct.pack(fmt, num)
-            elif ch in "DdFfEeGg":
-                w_item = self.items_w[iidx]
-                if not isinstance(w_item, W_FloatObject):
-                    raise space.error(
-                        space.w_TypeError,
-                        "can't convert %s into Float" % space.getclass(w_item).name
-                    )
-                flt = space.float_w(w_item)
-                result += struct.pack(fmt, flt)
-            elif ch in "AaBbHhMmPpuZ":
-                if ch in "BbHhMmPpu":
-                    raise NotImplementedError("%s in string packing" % ch)
-
-                string = space.str_w(self.convert_type(
-                        space.getclassfor(W_StringObject), self.items_w[iidx], "to_str"
-                ))
-                if ch == "A":
-                    result += struct.pack("s", string[:count]).ljust(count)
+            count_digits = 0
+            while idx + count_digits + 1 < len(template):
+                if template[idx + count_digits + 1].isdigit():
+                    count_digits += 1
                 else:
-                    result += struct.pack(fmt, string)
+                    break
+            idx += 1
+            if count_digits > 0:
+                count = int(template[idx:idx + count_digits])
+                idx += count_digits
             else:
-                # Anything now does not advance the data set
-                iidx -= 1
+                count = 1
+
+            fmt_point = ord(ch) - ord('A')
+            if fmt_point < 0 or fmt_point > len(pack_table) or pack_table[fmt_point] is None:
+                # Anything now does not advance in the data
                 if ch == "@":
                     if len(result) < count:
-                        result += ["\0"] * count - len(result)
+                        result += ["\0"] * (count - len(result))
                     else:
                         result = result[:count]
                 elif ch == "X":
@@ -353,7 +334,45 @@ class W_ArrayObject(W_Object):
                     else:
                         result.pop()
                 elif ch == "x":
-                    result.append("\0")
+                    result += ["\0"] * count
+            elif ch in string_formats:
+                if ch in "BbHhMmPpu":
+                    raise NotImplementedError("%s in string packing" % ch)
 
-            iidx += 1
-            idx += count
+                fmt = "%d%s" % (count, pack_table[ord(ch) - ord('A')])
+                string = space.str_w(space.convert_type(
+                        self.items_w[iidx], space.getclassfor(W_StringObject), "to_str"
+                ))
+                if ch == "A":
+                    string = string[:count]
+                    result += struct.pack("%ds" % len(string), string).ljust(count)
+                else:
+                    result += struct.pack(fmt, string)
+                iidx += 1
+            else:
+                if iidx + count > len(self.items_w):
+                    raise space.error(space.w_ArgumentError, "too few arguments")
+                fmt = "%s%s" % (endianess, pack_table[ord(ch) - ord('A')])
+
+                if ch in fixnum_formats:
+                    if ch in "Uw":
+                        raise NotImplementedError("UTF-8 and BER pack")
+
+                    for i in range(count):
+                        num = space.int_w(
+                            space.convert_type(self.items_w[iidx + i], space.w_fixnum, "to_int")
+                        )
+                        result += struct.pack(fmt, num)
+                elif ch in float_formats:
+                    for i in range(count):
+                        w_item = self.items_w[iidx + 1]
+                        if not isinstance(w_item, W_FloatObject):
+                            raise space.error(
+                                space.w_TypeError,
+                                "can't convert %s into Float" % space.getclass(w_item).name
+                            )
+                        flt = space.float_w(w_item)
+                        result += struct.pack(fmt, flt)
+                iidx += count
+
+        return space.newstr_fromchars(result)
