@@ -204,7 +204,7 @@ class Kernel(Module):
                     w_arg, space.getclassfor(W_StringObject), "to_str"
                 )) for w_arg in args_w[1:]
             ]
-            os.execvp(cmd, args)
+            os.execv(cmd, args)
         else:
             shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
             sepidx = shell.rfind(os.sep) + 1
@@ -212,7 +212,7 @@ class Kernel(Module):
                 argv0 = shell[sepidx:]
             else:
                 argv0 = shell
-            os.execlp(shell, argv0, "-c", cmd)
+            os.execl(shell, argv0, "-c", cmd)
 
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):

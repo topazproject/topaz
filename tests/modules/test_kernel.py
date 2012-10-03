@@ -1,4 +1,5 @@
 import os
+import py
 
 from rupypy.objects.procobject import W_ProcObject
 
@@ -154,7 +155,7 @@ class TestKernel(BaseRuPyPyTest):
 
         cpid = os.fork()
         if cpid == 0:
-            space.execute("exec 'echo', '$0'")
+            space.execute("exec '/bin/echo', '$0'")
         else:
             os.waitpid(cpid, 0)
             out, err = capfd.readouterr()
@@ -162,11 +163,21 @@ class TestKernel(BaseRuPyPyTest):
 
         cpid = os.fork()
         if cpid == 0:
-            space.execute("exec ['sh', 'argv0'], '-c', 'echo $0'")
+            space.execute("exec ['/bin/sh', 'argv0'], '-c', 'echo $0'")
         else:
             os.waitpid(cpid, 0)
             out, err = capfd.readouterr()
             assert out == "argv0\n"
+
+    @py.test.mark.xfail
+    def test_exec_with_path_search(self, space, capfd):
+        cpid = os.fork()
+        if cpid == 0:
+            space.execute("exec 'echo', '$0'")
+        else:
+            os.waitpid(cpid, 0)
+            out, err = capfd.readouterr()
+            assert out == "$0\n"
 
 
 class TestRequire(BaseRuPyPyTest):
