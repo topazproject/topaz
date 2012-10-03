@@ -212,7 +212,7 @@ class Kernel(Module):
                 argv0 = shell[sepidx:]
             else:
                 argv0 = shell
-            os.execl(shell, argv0, "-c", cmd)
+            os.execv(shell, [argv0, "-c", cmd])
 
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):
