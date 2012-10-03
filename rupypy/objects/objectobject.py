@@ -49,7 +49,7 @@ class W_BaseObject(object):
         name = space.symbol_w(w_name)
         class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
         raise space.error(space.w_NoMethodError,
-            "undefined method `%s` for %s" % (name, class_name)
+            "undefined method `%s' for %s" % (name, class_name)
         )
 
     @classdef.method("==")

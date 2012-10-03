@@ -10,27 +10,25 @@ class RubyError(Exception):
 
 
 def format_traceback(space, exc):
-    lines = []
     last_instr_idx = 0
     frame = exc.frame
-    lines.append("%s:%d:in `%s': %s (%s)\n" % (
+    yield "%s:%d:in `%s': %s (%s)\n" % (
         frame.get_filename(),
         frame.get_lineno(exc.last_instructions, last_instr_idx),
         frame.get_code_name(),
         exc.msg,
         space.getclass(exc).name,
-    ))
+    )
     last_instr_idx += 1
     frame = frame.backref()
     while frame is not None and frame.has_contents():
-        lines.append("\tfrom %s:%d:in `%s'\n" % (
+        yield "\tfrom %s:%d:in `%s'\n" % (
             frame.get_filename(),
             frame.get_lineno(exc.last_instructions, last_instr_idx),
             frame.get_code_name(),
-        ))
+        )
         last_instr_idx += 1
         frame = frame.backref()
-    return lines
 
 
 def print_traceback(space, w_exc):
