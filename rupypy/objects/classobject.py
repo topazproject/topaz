@@ -19,7 +19,7 @@ class W_ClassObject(W_ModuleObject):
     def getsingletonclass(self, space):
         if self.klass is None:
             if self.superclass is None:
-                singleton_superclass = space.getclassfor(W_ClassObject)
+                singleton_superclass = space.w_class
             else:
                 singleton_superclass = self.superclass.getsingletonclass(space)
             self.klass = space.newclass(
@@ -29,6 +29,12 @@ class W_ClassObject(W_ModuleObject):
 
     def find_method(self, space, name):
         method = W_ModuleObject.find_method(self, space, name)
+        if method is None and self.superclass is not None:
+            method = self.superclass.find_method(space, name)
+        return method
+
+    def find_method_super(self, space, name):
+        method = W_ModuleObject.find_method_super(self, space, name)
         if method is None and self.superclass is not None:
             method = self.superclass.find_method(space, name)
         return method

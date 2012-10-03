@@ -1,6 +1,5 @@
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
-from rupypy.objects.exceptionobject import W_TypeError
 from rupypy.objects.objectobject import W_Object
 
 
@@ -20,7 +19,7 @@ class W_SymbolObject(W_Object):
         return self.symbol
 
     def getsingletonclass(self, space):
-        raise space.error(space.getclassfor(W_TypeError), "can't define singleton")
+        raise space.error(space.w_TypeError, "can't define singleton")
 
     @classdef.method("to_s")
     def method_to_s(self, space):

@@ -24,9 +24,11 @@ BYTECODES = [
 
     ("LOAD_CONSTANT", 1, 0),
     ("STORE_CONSTANT", 1, 0),
+    ("DEFINED_CONSTANT", 1, 0),
 
     ("LOAD_INSTANCE_VAR", 1, 0),
     ("STORE_INSTANCE_VAR", 1, -1),
+    ("DEFINED_INSTANCE_VAR", 1, 0),
 
     ("LOAD_CLASS_VAR", 1, 0),
     ("STORE_CLASS_VAR", 1, -1),
@@ -60,6 +62,10 @@ BYTECODES = [
     ("SEND_SPLAT", 1, -1),
     ("SEND_BLOCK_SPLAT", 1, -2),
 
+    ("SEND_SUPER", 2, SEND_EFFECT),
+    ("SEND_SUPER_SPLAT", 1, -1),
+
+    ("SETUP_LOOP", 1, 0),
     ("SETUP_EXCEPT", 1, 0),
     ("SETUP_FINALLY", 1, 0),
     ("END_FINALLY", 0, -2),
@@ -79,6 +85,7 @@ BYTECODES = [
     ("RETURN", 0, -1),
     ("RAISE_RETURN", 0, -1),
     ("YIELD", 1, ARRAY_EFFECT),
+    ("CONTINUE_LOOP", 1, -1),
 ]
 
 BYTECODE_NAMES = []

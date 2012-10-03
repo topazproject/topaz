@@ -122,6 +122,10 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_succ(self, space):
         w_res = space.execute("return -1.succ")
         assert self.unwrap(space, w_res) == 0
-        
+
         w_res = space.execute("return 7.succ")
         assert self.unwrap(space, w_res) == 8
+
+    def test_zero(self, space):
+        w_res = space.execute("return [0.zero?, 2.zero?]")
+        assert self.unwrap(space, w_res) == [True, False]

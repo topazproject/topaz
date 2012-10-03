@@ -1,7 +1,5 @@
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
-from rupypy.objects.exceptionobject import W_TypeError, W_IndexError, W_ArgumentError
-from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.objectobject import W_Object
 
 
@@ -32,12 +30,12 @@ class W_ArrayObject(W_Object):
     @classdef.method("at")
     @classdef.method("[]")
     def method_subscript(self, space, w_idx, w_count=None):
-        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
-        if (as_range and end < start or
-            start < 0 or end < 0 or
-            not as_range and start >= len(self.items_w)):
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        if nil:
             return space.w_nil
         elif as_range:
+            assert start >= 0
+            assert end >= 0
             return space.newarray(self.items_w[start:end])
         else:
             return self.items_w[start]
@@ -49,16 +47,14 @@ class W_ArrayObject(W_Object):
             w_count = w_count_or_obj
         else:
             w_obj = w_count_or_obj
-        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
         if w_count and end < start:
-            raise space.error(
-                space.getclassfor(W_IndexError),
+            raise space.error(space.w_IndexError,
                 "negative length (%d)" % (end - start)
             )
         elif start < 0:
-            raise space.error(
-                space.getclassfor(W_IndexError),
+            raise space.error(space.w_IndexError,
                 "index %d too small for array; minimum: %d" % (
                     start - len(self.items_w),
                     -len(self.items_w)
@@ -110,6 +106,25 @@ class W_ArrayObject(W_Object):
         self.items_w += space.listview(w_ary)
         return self
 
+    @classdef.method("push")
+    def method_push(self, space, args_w):
+        self.items_w.extend(args_w)
+        return self
+
+    @classdef.method("shift")
+    def method_shift(self, space, w_n=None):
+        if w_n is None:
+            if self.items_w:
+                return self.items_w.pop(0)
+            else:
+                return space.w_nil
+        n = space.int_w(space.convert_type(w_n, space.w_fixnum, "to_int"))
+        if n < 0:
+            raise space.error(space.w_ArgumentError, "negative array size")
+        items_w = self.items_w[:n]
+        del self.items_w[:n]
+        return space.newarray(items_w)
+
     @classdef.method("unshift")
     def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):
@@ -126,7 +141,7 @@ class W_ArrayObject(W_Object):
         elif space.respond_to(w_sep, space.newsymbol("to_str")):
             separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
         else:
-            raise space.error(space.getclassfor(W_TypeError),
+            raise space.error(space.w_TypeError,
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([
@@ -219,10 +234,10 @@ class W_ArrayObject(W_Object):
                 return space.w_nil
         else:
             num = space.int_w(space.convert_type(
-                    w_num, space.getclassfor(W_FixnumObject), "to_int"
-                  ))
+                w_num, space.w_fixnum, "to_int"
+            ))
             if num < 0:
-                raise space.error(space.getclassfor(W_ArgumentError), "negative array size")
+                raise space.error(space.w_ArgumentError, "negative array size")
             else:
                 pop_size = max(0, len(self.items_w) - num)
                 res_w = self.items_w[pop_size:]

@@ -1,8 +1,7 @@
 from rupypy.module import ClassDef
-from rupypy.objects.exceptionobject import W_ZeroDivisionError, W_TypeError
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
-from rupypy.objects.objectobject import W_RootObject, W_Object
+from rupypy.objects.objectobject import W_RootObject
 
 
 class FixnumStorage(object):
@@ -13,7 +12,7 @@ class FixnumStorage(object):
         try:
             storage = self.storages[intvalue]
         except KeyError:
-            self.storages[intvalue] = storage = space.send(space.getclassfor(W_Object), space.newsymbol("new"))
+            self.storages[intvalue] = storage = space.send(space.w_object, space.newsymbol("new"))
         return storage
 
 
@@ -32,7 +31,7 @@ class W_FixnumObject(W_RootObject):
         return float(self.intvalue)
 
     def getsingletonclass(self, space):
-        raise space.error(space.getclassfor(W_TypeError), "can't define singleton")
+        raise space.error(space.w_TypeError, "can't define singleton")
 
     def find_instance_var(self, space, name):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
@@ -78,7 +77,7 @@ class W_FixnumObject(W_RootObject):
         try:
             return space.newint(self.intvalue / other)
         except ZeroDivisionError:
-            raise space.error(space.getclassfor(W_ZeroDivisionError),
+            raise space.error(space.w_ZeroDivisionError,
                 "divided by 0"
             )
 
@@ -128,6 +127,10 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("hash")
     def method_hash(self, space):
         return self
+
+    @classdef.method("zero?")
+    def method_zerop(self, space):
+        return space.newbool(self.intvalue == 0)
 
     @classdef.method("nonzero?")
     def method_nonzerop(self, space):

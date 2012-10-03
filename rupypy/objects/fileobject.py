@@ -3,7 +3,6 @@ import sys
 
 from rupypy.module import ClassDef
 from rupypy.objects.arrayobject import W_ArrayObject
-from rupypy.objects.exceptionobject import W_ArgumentError
 from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.stringobject import W_StringObject
@@ -51,8 +50,8 @@ class W_IOObject(W_Object):
         if w_length:
             length = space.int_w(w_length)
             if length < 0:
-                raise space.error(
-                    space.getclassfor(W_ArgumentError), "negative length %d given" % length
+                raise space.error(space.w_ArgumentError,
+                    "negative length %d given" % length
                 )
         else:
             length = -1
@@ -84,6 +83,11 @@ class W_IOObject(W_Object):
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
         bytes_written = os.write(self.fd, string)
         return space.newint(bytes_written)
+
+    @classdef.method("flush")
+    def method_flush(self, space):
+        # We have no internal buffers to flush!
+        return self
 
     @classdef.method("print")
     def method_print(self, space, args_w):
@@ -121,7 +125,6 @@ class W_FileObject(W_IOObject):
 
     @classmethod
     def setup_class(cls, space, w_cls):
-        super(W_FileObject, cls).setup_class(space, w_cls)
         if sys.platform == "win32":
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
@@ -171,8 +174,8 @@ class W_FileObject(W_IOObject):
             elif mode_str == "a":
                 mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
             else:
-                raise space.error(
-                    space.getclassfor(W_ArgumentError), "invalid access mode %s" % mode_str
+                raise space.error(space.w_ArgumentError,
+                    "invalid access mode %s" % mode_str
                 )
         else:
             mode = space.int_w(w_mode)
@@ -249,6 +252,10 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("file?", filename="str")
     def method_filep(self, space, filename):
         return space.newbool(os.path.isfile(filename))
+
+    @classdef.singleton_method("directory?", filename="str")
+    def method_directoryp(self, space, filename):
+        return space.newbool(os.path.isdir(filename))
 
     @classdef.singleton_method("executable?", filename="str")
     def method_executablep(self, space, filename):

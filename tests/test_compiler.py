@@ -1,6 +1,5 @@
 from rupypy import consts
 from rupypy.objects.boolobject import W_TrueObject
-from rupypy.objects.objectobject import W_RootObject
 
 
 class TestCompiler(object):
@@ -258,11 +257,13 @@ class TestCompiler(object):
 
     def test_while(self, space):
         self.assert_compiles(space, "while true do end", """
+        SETUP_LOOP 17
         LOAD_CONST 0
-        JUMP_IF_FALSE 13
+        JUMP_IF_FALSE 16
         LOAD_CONST 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 1
         DISCARD_TOP
 
@@ -271,13 +272,15 @@ class TestCompiler(object):
         """)
 
         self.assert_compiles(space, "while true do puts 5 end", """
+        SETUP_LOOP 23
         LOAD_CONST 0
-        JUMP_IF_FALSE 19
+        JUMP_IF_FALSE 22
         LOAD_SELF
         LOAD_CONST 1
         SEND 2 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 3
         DISCARD_TOP
 
@@ -287,11 +290,13 @@ class TestCompiler(object):
 
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
+        SETUP_LOOP 17
         LOAD_CONST 0
-        JUMP_IF_TRUE 13
+        JUMP_IF_TRUE 16
         LOAD_CONST 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 2
         DISCARD_TOP
 
@@ -1098,7 +1103,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        assert bc.consts_w[0] is space.getclassfor(W_RootObject)
+        assert bc.consts_w[0] is space.w_object
 
     def test_assign_constant(self, space):
         self.assert_compiles(space, "abc::Constant = 5", """
@@ -1292,6 +1297,27 @@ class TestCompiler(object):
         LOAD_CONST 4
         RETURN
         """)
+
+    def test_ensure(self, space):
+        bc = self.assert_compiles(space, """
+        begin
+        ensure
+            nil
+        end
+        """, """
+        SETUP_FINALLY 10
+        LOAD_CONST 0
+        POP_BLOCK
+        LOAD_CONST 0
+        LOAD_CONST 0
+        DISCARD_TOP
+        END_FINALLY
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+        assert bc.max_stackdepth == 4
 
     def test_block_argument(self, space):
         bc = self.assert_compiles(space, """
@@ -1835,3 +1861,125 @@ class TestCompiler(object):
         assert space.symbol_w(w_a) == "a"
         assert space.symbol_w(w_b) == "b"
         assert space.symbol_w(w_alias_method) == "alias_method"
+
+    def test_defined(self, space):
+        self.assert_compiles(space, """
+        defined? Const
+        defined? @a
+        """, """
+        LOAD_SCOPE
+        DEFINED_CONSTANT 0
+        DISCARD_TOP
+        LOAD_SELF
+        DEFINED_INSTANCE_VAR 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+    def test_super(self, space):
+        bc = self.assert_compiles(space, """
+        super
+        """, """
+        LOAD_SELF
+        SEND_SUPER 0 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+        assert bc.consts_w[0] is space.w_nil
+
+        bc = self.assert_compiles(space, """
+        def f(a, b, c)
+            super
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_FUNCTION
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[1], """
+        LOAD_SELF
+        LOAD_LOCAL 0
+        LOAD_LOCAL 1
+        LOAD_LOCAL 2
+        SEND_SUPER 0 3
+        RETURN
+        """)
+        assert space.str_w(bc.consts_w[1].consts_w[0]) == "f"
+
+        bc = self.assert_compiles(space, """
+        super(1, 2, 3)
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND_SUPER 3 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+
+    def test_next_block(self, space):
+        bc = self.assert_compiles(space, """
+        f {
+            next 5
+            3 + 4
+        }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        RETURN
+
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND 3 1
+        RETURN
+        """)
+
+    def test_next_loop(self, space):
+        self.assert_compiles(space, """
+        while true do
+            next
+            2 + 2
+        end
+        """, """
+        SETUP_LOOP 31
+        LOAD_CONST 0
+        JUMP_IF_FALSE 30
+
+        LOAD_CONST 1
+        CONTINUE_LOOP 3
+        LOAD_CONST 2
+        LOAD_CONST 3
+        SEND 4 1
+        DISCARD_TOP
+        JUMP 3
+        POP_BLOCK
+        LOAD_CONST 1
+        DISCARD_TOP
+
+        LOAD_CONST 0
+        RETURN
+        """)

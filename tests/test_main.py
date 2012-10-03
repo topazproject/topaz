@@ -93,10 +93,21 @@ class TestMain(object):
             "\tfrom {}:2:in `<main>'",
         ])
 
+    def test_traceback_class(self, tmpdir, capfd):
+        self.assert_traceback(tmpdir, capfd, """
+        class X
+            1 / 0
+        end
+        """, [
+            "{}:3:in `/': divided by 0 (ZeroDivisionError)",
+            "\tfrom {}:3:in `<class:X>'",
+            "\tfrom {}:1:in `<main>'",
+        ])
+
     @py.test.mark.xfail
     def test_traceback_default_arg(self, tmpdir, capfd):
         self.assert_traceback(tmpdir, capfd, """
-        def f(a=1/2)
+        def f(a=1 / 0)
         end
         f
         """, [
@@ -113,3 +124,22 @@ class TestMain(object):
     def test_system_exit(self, tmpdir):
         self.run(tmpdir, "raise SystemExit", 0)
         self.run(tmpdir, "raise SystemExit.new('exit', 1)", 1)
+
+    def test_at_exit(self, tmpdir, capfd):
+        f = self.run(tmpdir, """
+        at_exit { puts "1" }
+        at_exit { 1 / 0 }
+        at_exit { puts "2" }
+        1 / 0
+        """, status=1)
+        out, err = capfd.readouterr()
+        assert out.splitlines() == [
+            "2",
+            "1",
+        ]
+        assert err.splitlines() == [
+            "{}:3:in `/': divided by 0 (ZeroDivisionError)".format(f),
+            "\tfrom {}:3:in `block in <main>'".format(f),
+            "{}:5:in `/': divided by 0 (ZeroDivisionError)".format(f),
+            "\tfrom {}:5:in `<main>'".format(f),
+        ]

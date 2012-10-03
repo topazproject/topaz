@@ -4,6 +4,12 @@ from ..base import BaseRuPyPyTest
 
 
 class TestExceptionObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("""
+        Exception
+        LoadError
+        """)
+
     def test_new(self, space):
         w_res = space.execute("return TypeError.new")
         assert isinstance(w_res, W_TypeError)
