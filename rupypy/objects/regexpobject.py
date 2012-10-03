@@ -1,5 +1,6 @@
 from rupypy.utils.re import re_rffi as re
 from rupypy.module import ClassDef
+from rupypy.objects.matchdataobject import W_MatchDataObject
 from rupypy.objects.objectobject import W_Object
 
 class W_RegexpObject(W_Object):
@@ -21,7 +22,7 @@ class W_RegexpObject(W_Object):
         return space.newstr_fromstr(self.regexp)
 
     @classdef.method("=~", string="str")
-    def method_match(self, space, string):
+    def method_comparator(self, space, string):
         if space.globals.get("$=") is not None and space.is_true(space.globals.get("$=")):
             # recompile the regexp
             regexp = re.compile(self.regexp, re.I)
@@ -41,6 +42,22 @@ class W_RegexpObject(W_Object):
             space.globals.set("$`", space.newstr_fromstr(string[0:match.start()]))
             space.globals.set("$'", space.newstr_fromstr(string[match.end():len(string)]))
         return space.newint(match.start())
+
+    @classdef.method("match", string="str", pos="int")
+    def method_match(self, space, string, pos=0, block=None):
+        if space.globals.get("$=") is not None and space.is_true(space.globals.get("$=")):
+            regexp = re.compile(self.regexp, re.I)
+        else:
+            regexp = re.compile(self.regexp, self.options)
+        match = regexp.search(string[pos:])
+        if not match:
+            return space.w_nil
+        else:
+            data = W_MatchDataObject(space, match)
+            if block:
+                return space.invoke_block(block, [data])
+            else:
+                return data
 
     @classdef.method("==")
     @classdef.method("eql?")

@@ -82,11 +82,21 @@ class TestStringObject(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 0
 
-    def test_match(self, space):
+    def test_comparator(self, space):
         w_res = space.execute("return 'abc' =~ 1")
         assert w_res == space.w_nil
         w_res = space.execute("return 'abc' =~ /abc/")
         assert space.int_w(w_res) == 0
+
+    def test_match(self, space):
+        w_res = space.execute("return 'abc'.match('abc').class.name")
+        assert space.str_w(w_res) == "MatchData"
+        w_res = space.execute("return 'abc'.match(/abc/).class.name")
+        assert space.str_w(w_res) == "MatchData"
+        w_res = space.execute("return 'abc'.match(/xyz/)")
+        assert w_res == space.w_nil
+        with self.raises(space, "ArgumentError", "wrong argument type Fixnum (expected Regexp)"):
+            space.execute("return 'abc'.match(1)")
 
     def test_hash(self, space):
         w_res = space.execute("""

@@ -6,14 +6,14 @@ class TestRegexp(BaseRuPyPyTest):
         w_res = space.execute("return /abc/.source")
         assert space.str_w(w_res) == "abc"
 
-    def test_match(self, space):
+    def test_comparator(self, space):
         w_res = space.execute("""
         idx = /(l)(l)(o)(a)(b)(c)(h)(e)(l)/ =~ 'helloabchello'
         return idx, $1, $2, $3, $4, $5, $6, $7, $8, $9, $&, $+, $`, $'
         """)
         assert self.unwrap(space, w_res) == [2] + [s for s in "lloabchel"] + ["lloabchel", "l", "he", "lo"]
 
-    def test_match_resets_globals(self, space):
+    def test_comparator_resets_globals(self, space):
         w_res = space.execute("""
         idx = /(l)(l)(o)(a)(b)(c)(h)(e)(l)/ =~ 'helloabchello'
         /nomatch/ =~ "this"
@@ -21,7 +21,7 @@ class TestRegexp(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [None] * 13
 
-    def test_match_ignore_case_global(self, space):
+    def test_comparator_ignore_case_global(self, space):
         w_res = space.execute("""
         idx1 = /abc/ =~ "ABC"
         $= = true
@@ -29,7 +29,17 @@ class TestRegexp(BaseRuPyPyTest):
         return idx1, idx2
         """)
         assert self.unwrap(space, w_res) == [None, 0]
-        
+
+    def test_match(self, space):
+        w_res = space.execute("return /abc/.match('abc').class.name")
+        assert space.str_w(w_res) == "MatchData"
+        w_res = space.execute("return /abc/.match('abc', 10)")
+        assert w_res == space.w_nil
+        w_res = space.execute("return /abc/.match('abc', 10) { }")
+        assert w_res == space.w_nil
+        w_res = space.execute("return /abc/.match('abc') {|m| 'My ' + m.class.name }")
+        assert space.str_w(w_res) == "My MatchData"
+
     def test_equality(self, space):
         w_res = space.execute("""
         idx1 = /abc/

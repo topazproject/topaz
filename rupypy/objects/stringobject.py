@@ -283,6 +283,21 @@ class W_StringObject(W_Object):
     def method_comparator(self, space, w_other):
         return space.send(w_other, space.newsymbol("=~"), [self])
 
+    @classdef.method("match")
+    def method_match(self, space, w_other):
+        if isinstance(w_other, W_StringObject):
+            w_regexp = space.send(
+                space.getclassfor(W_RegexpObject), space.newsymbol("new"), [w_other]
+            )
+        elif isinstance(w_other, W_RegexpObject):
+            w_regexp = w_other
+        else:
+            raise space.error(
+                space.w_ArgumentError,
+                "wrong argument type %s (expected Regexp)" % space.getclass(w_other).name
+            )
+        return space.send(w_regexp, space.newsymbol("match"), [self])
+
     @classdef.method("freeze")
     def method_freeze(self, space):
         pass

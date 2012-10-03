@@ -42,6 +42,7 @@ from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.numericobject import W_NumericObject
+from rupypy.objects.matchdataobject import W_MatchDataObject
 from rupypy.objects.objectobject import W_Object, W_BaseObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.rangeobject import W_RangeObject
@@ -119,6 +120,7 @@ class ObjectSpace(object):
             self.getclassfor(W_Random),
             self.getclassfor(W_TimeObject),
             self.getclassfor(W_RegexpObject),
+            self.getclassfor(W_MatchDataObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
