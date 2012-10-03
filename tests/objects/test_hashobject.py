@@ -2,8 +2,15 @@ from ..base import BaseRuPyPyTest
 
 
 class TestHashObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("Hash")
+
     def test_create(self, space):
         space.execute("{2 => 3, 4 => 5}")
+
+    def test_new(self, space):
+        w_res = space.execute("return Hash.new.keys")
+        assert self.unwrap(space, w_res) == []
 
     def test_lookup(self, space):
         w_res = space.execute("""
@@ -25,3 +32,14 @@ class TestHashObject(BaseRuPyPyTest):
         return x.keys
         """)
         assert self.unwrap(space, w_res) == [2, "four", 1, "1"]
+
+    def test_each(self, space):
+        w_res = space.execute("""
+        x = {2 => 3, "four" => 5, 3 => 2}
+        result = []
+        x.each do |k, v|
+            result << [k, v]
+        end
+        return result
+        """)
+        assert self.unwrap(space, w_res) == [[2, 3], ["four", 5], [3, 2]]

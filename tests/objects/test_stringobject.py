@@ -24,6 +24,38 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'ABC'.size")
         assert space.int_w(w_res) == 3
 
+    def test_subscript_constant(self, space):
+        w_res = space.execute("""
+        a = "hello there"
+        return [
+            a[1],
+            a[2, 3],
+            a[2..3],
+            a[-3, 2],
+            a[7..-2],
+            a[-4..-2],
+            a[-2..-4],
+            a[12..-1],
+        ]
+        """)
+        assert self.unwrap(space, w_res) == ["e", "llo", "ll", "er", "her", "her", "", None]
+
+    def test_subscript_mutable(self, space):
+        w_res = space.execute("""
+        a = "hello" << " " << "there"
+        return [
+            a[1],
+            a[2, 3],
+            a[2..3],
+            a[-3, 2],
+            a[7..-2],
+            a[-4..-2],
+            a[-2..-4],
+            a[12..-1],
+        ]
+        """)
+        assert self.unwrap(space, w_res) == ["e", "llo", "ll", "er", "her", "her", "", None]
+
     def test_comparator_lt(self, space):
         w_res = space.execute("return 'a' <=> 'b'")
         assert space.int_w(w_res) == -1
@@ -121,6 +153,10 @@ class TestStringObject(BaseRuPyPyTest):
         assert x == "abcdef"
         assert y == "abc"
 
+    def test_dup_mutable(self, space):
+        w_res = space.execute("return ('abc' << 'def').dup")
+        assert self.unwrap(space, w_res) == 'abcdef'
+
     def test_to_i(self, space):
         w_res = space.execute('return "1234".to_i')
         assert space.int_w(w_res) == 1234
@@ -130,3 +166,60 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.int_w(w_res) == 63
         w_res = space.execute('return "AA".to_i(16)')
         assert space.int_w(w_res) == 170
+        w_res = space.execute('return "12a".to_i')
+        assert space.int_w(w_res) == 12
+        w_res = space.execute('return "-a".to_i')
+        assert space.int_w(w_res) == 0
+        w_res = space.execute('return "".to_i')
+        assert space.int_w(w_res) == 0
+        w_res = space.execute('return "-12fdsa".to_i')
+        assert space.int_w(w_res) == -12
+        with self.raises(space, "ArgumentError"):
+            space.execute('return "".to_i(1)')
+        with self.raises(space, "ArgumentError"):
+            space.execute('return "".to_i(37)')
+
+    def test_downcase(self, space):
+        w_res = space.execute("""
+        a = "AbC123aBc"
+        a.downcase!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "abc123abc"
+
+        w_res = space.execute("return '123'.downcase!")
+        assert self.unwrap(space, w_res) is None
+
+    def test_tr(self, space):
+        w_res = space.execute("return 'hello'.tr('el', 'ip')")
+        assert space.str_w(w_res) == "hippo"
+        w_res = space.execute("return 'hello'.tr('aeiou', '*')")
+        assert space.str_w(w_res) == "h*ll*"
+        w_res = space.execute("return 'hello'.tr('a-y', 'b-z')")
+        assert space.str_w(w_res) == "ifmmp"
+        w_res = space.execute("return 'hello'.tr('^aieou', '*')")
+        assert space.str_w(w_res) == "*e**o"
+        w_res = space.execute("return 'hello'.tr!('','').nil?")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("""
+            s = 'hello'
+            s.tr!('e', 'a')
+            return s
+        """)
+        assert space.str_w(w_res) == "hallo"
+
+    def test_tr_s(self, space):
+        w_res = space.execute("return 'hello'.tr_s('l', 'r')")
+        assert space.str_w(w_res) == "hero"
+        w_res = space.execute("return 'hello'.tr_s('el', '*')")
+        assert space.str_w(w_res) == "h*o"
+        w_res = space.execute("return 'hello'.tr_s('el', 'hx')")
+        assert space.str_w(w_res) == "hhxo"
+        w_res = space.execute("""
+            s = 'hello'
+            s.tr_s!('el', 'hx')
+            return s
+        """)
+        assert space.str_w(w_res) == "hhxo"
+        w_res = space.execute("return 'hello'.tr_s!('','').nil?")
+        assert self.unwrap(space, w_res) is True

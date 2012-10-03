@@ -8,10 +8,9 @@ from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.blockobject import W_BlockObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
-from rupypy.objects.exceptionobject import W_TypeError, W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.objectobject import W_BaseObject, W_Object
+from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
 
@@ -133,8 +132,6 @@ class Interpreter(object):
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
         w_obj = space.find_const(w_scope, name)
-        if w_obj is None:
-            space.send(w_scope, space.newsymbol("const_missing"), [w_name])
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
@@ -144,6 +141,14 @@ class Interpreter(object):
         w_scope = frame.pop()
         space.set_const(w_scope, name, w_value)
         frame.push(w_value)
+
+    def DEFINED_CONSTANT(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        w_scope = frame.pop()
+        if space.is_true(space.send(w_scope, space.newsymbol("const_defined?"), [w_name])):
+            frame.push(space.newstr_fromstr("constant"))
+        else:
+            frame.push(space.w_nil)
 
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
@@ -158,13 +163,21 @@ class Interpreter(object):
         space.set_instance_var(w_obj, space.symbol_w(w_name), w_value)
         frame.push(w_value)
 
+    def DEFINED_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        w_obj = frame.pop()
+        if space.is_true(space.send(w_obj, space.newsymbol("instance_variable_defined?"), [w_name])):
+            frame.push(space.newstr_fromstr("instance-variable"))
+        else:
+            frame.push(space.w_nil)
+
     def LOAD_CLASS_VAR(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
         w_module = frame.pop()
         assert isinstance(w_module, W_ModuleObject)
         w_value = space.find_class_var(w_module, name)
         if w_value is None:
-            raise space.error(space.getclassfor(W_NameError),
+            raise space.error(space.w_NameError,
                 "uninitialized class variable %s in %s" % (name, w_module.name)
             )
         frame.push(w_value)
@@ -243,10 +256,10 @@ class Interpreter(object):
         w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_cls = space.find_const(w_scope, name)
+        w_cls = w_scope.find_const(space, name)
         if w_cls is None:
             if superclass is space.w_nil:
-                superclass = space.getclassfor(W_Object)
+                superclass = space.w_object
             assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
@@ -260,7 +273,7 @@ class Interpreter(object):
         w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_mod = space.find_const(w_scope, name)
+        w_mod = w_scope.find_const(space, name)
         if w_mod is None:
             w_mod = space.newmodule(name)
             space.set_const(w_scope, name, w_mod)
@@ -305,13 +318,11 @@ class Interpreter(object):
             frame.push(w_block.block)
         elif space.respond_to(w_block, space.newsymbol("to_proc")):
             # Proc implements to_proc, too, but MRI doesn't call it
-            w_res = space.convert_type(w_block, space.getclassfor(W_ProcObject), "to_proc")
+            w_res = space.convert_type(w_block, space.w_proc, "to_proc")
             assert isinstance(w_res, W_ProcObject)
             frame.push(w_res.block)
         else:
-            raise space.error(space.getclassfor(W_TypeError),
-                "wrong argument type"
-            )
+            raise space.error(space.w_TypeError, "wrong argument type")
 
     @jit.unroll_safe
     def UNPACK_SEQUENCE(self, space, bytecode, frame, pc, n_items):
@@ -399,6 +410,21 @@ class Interpreter(object):
         assert isinstance(w_block, W_BlockObject)
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
+
+    def SEND_SUPER(self, space, bytecode, frame, pc, meth_idx, num_args):
+        args_w = frame.popitemsreverse(num_args)
+        w_receiver = frame.pop()
+        w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        frame.push(w_res)
+
+    def SEND_SUPER_SPLAT(self, space, bytecode, frame, pc, meth_idx):
+        args_w = space.listview(frame.pop())
+        w_receiver = frame.pop()
+        w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        frame.push(w_res)
+
+    def SETUP_LOOP(self, space, bytecode, frame, pc, target_pc):
+        frame.lastblock = LoopBlock(target_pc, frame.lastblock, frame.stackpos)
 
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = ExceptBlock(target_pc, frame.lastblock, frame.stackpos)
@@ -493,6 +519,10 @@ class Interpreter(object):
         w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
+    def CONTINUE_LOOP(self, space, bytecode, frame, pc, target_pc):
+        frame.pop()
+        return frame.unrollstack_and_jump(space, ContinueLoop(target_pc))
+
     def UNREACHABLE(self, space, bytecode, frame, pc):
         raise Exception
 
@@ -543,6 +573,13 @@ class RaiseReturnValue(SuspendedUnroller):
         raise RaiseReturn(self.parent_interp, self.w_returnvalue)
 
 
+class ContinueLoop(SuspendedUnroller):
+    kind = 1 << 3
+
+    def __init__(self, target_pc):
+        self.target_pc = target_pc
+
+
 class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):
         self.target_pc = target_pc
@@ -554,6 +591,20 @@ class FrameBlock(object):
     def cleanupstack(self, frame):
         while frame.stackpos > self.stackdepth:
             frame.pop()
+
+
+class LoopBlock(FrameBlock):
+    handling_mask = ContinueLoop.kind
+
+    def cleanup(self, space, frame):
+        self.cleanupstack(frame)
+
+    def handle(self, space, frame, unroller):
+        if isinstance(unroller, ContinueLoop):
+            frame.lastblock = self
+            return unroller.target_pc
+        else:
+            raise SystemError
 
 
 class ExceptBlock(FrameBlock):

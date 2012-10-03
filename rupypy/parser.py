@@ -153,6 +153,13 @@ class Parser(object):
             node = ast.Array(args)
         return BoxAST(ast.Return(node))
 
+    def new_super(self, args, token):
+        return BoxAST(ast.Super(
+            args.getcallargs(),
+            args.getcallblock(),
+            token.getsourcepos().lineno
+        ))
+
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
 
@@ -161,6 +168,9 @@ class Parser(object):
 
     def new_colon3(self, constant):
         return BoxAST(ast.LookupConstant(None, constant.getstr(), constant.getsourcepos().lineno))
+
+    def new_defined(self, box, token):
+        return BoxAST(ast.Defined(box.getast(), token.getsourcepos().lineno))
 
     def new_symbol(self, token):
         return BoxAST(ast.ConstantSymbol(token.getstr()))
@@ -491,26 +501,7 @@ class Parser(object):
 
     @pg.production("stmt : var_lhs OP_ASGN command_call")
     def stmt_var_lhs_op_asgn_command_call(self, p):
-        """
-        var_lhs tOP_ASGN command_call {
-                    support.checkExpression($3);
-
-                    ISourcePosition pos = $1.getPosition();
-                    String asgnOp = (String) $2.getValue();
-                    if (asgnOp.equals("||")) {
-                        $1.setValueNode($3);
-                        $$ = new OpAsgnOrNode(pos, support.gettable2($1), $1);
-                    } else if (asgnOp.equals("&&")) {
-                        $1.setValueNode($3);
-                        $$ = new OpAsgnAndNode(pos, support.gettable2($1), $1);
-                    } else {
-                        $1.setValueNode(support.getOperatorCallNode(support.gettable2($1), asgnOp, $3));
-                        $1.setPosition(pos);
-                        $$ = $1;
-                    }
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_stmt(self.new_augmented_assignment(p[1], p[0], p[2]))
 
     @pg.production("stmt : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN command_call")
     def stmt_subscript_op_asgn_command_call(self, p):
@@ -648,10 +639,12 @@ class Parser(object):
 
     @pg.production("command_call : NEXT call_args")
     def command_call_next(self, p):
-        """
-        $$ = new NextNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
-        """
-        raise NotImplementedError(p)
+        args = p[1].getcallargs()
+        if len(args) == 1:
+            [node] = args
+        else:
+            node = ast.Array(args)
+        return BoxAST(ast.Next(node))
 
     @pg.production("block_command : block_call")
     def block_command_block_call(self, p):
@@ -729,8 +722,7 @@ class Parser(object):
 
     @pg.production("command : SUPER command_args")
     def command_super(self, p):
-        raise NotImplementedError(p)
-        return self.new_super(p[1])
+        return self.new_super(p[1], p[0])
 
     @pg.production("command : YIELD command_args")
     def command_yield(self, p):
@@ -1319,13 +1311,7 @@ class Parser(object):
 
     @pg.production("arg : DEFINED opt_nl arg")
     def arg_defined(self, p):
-        """
-        kDEFINED opt_nl arg {
-                    // ENEBO: arg surrounded by in_defined set/unset
-                    $$ = new DefinedNode($1.getPosition(), $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_defined(p[2], p[0])
 
     @pg.production("arg : arg LITERAL_QUESTION_MARK arg opt_nl LITERAL_COLON arg")
     def arg_ternary(self, p):
@@ -1406,13 +1392,8 @@ class Parser(object):
 
     @pg.production("call_args : assocs opt_block_arg")
     def call_args_assocs_opt_block_arg(self, p):
-        """
-        assocs opt_block_arg {
-                    $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
-                    $$ = support.arg_blk_pass((Node)$$, $2);
-                }
-        """
-        raise NotImplementedError(p)
+        box = self.new_call_args(self.new_hash(p[0]))
+        return self.call_arg_block_pass(box, p[1])
 
     @pg.production("call_args : args LITERAL_COMMA assocs opt_block_arg")
     def call_args_args_comma_assocs_opt_block_arg(self, p):
@@ -1594,12 +1575,7 @@ class Parser(object):
 
     @pg.production("primary : DEFINED opt_nl LPAREN2 expr rparen")
     def primary_defined(self, p):
-        """
-        kDEFINED opt_nl tLPAREN2 expr rparen {
-                    $$ = new DefinedNode($1.getPosition(), $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_defined(p[3], p[0])
 
     @pg.production("primary : NOT LPAREN2 expr rparen")
     def primary_not_paren_expr(self, p):
@@ -1794,12 +1770,7 @@ class Parser(object):
 
     @pg.production("primary : NEXT")
     def primary_next(self, p):
-        """
-        kNEXT {
-                    $$ = new NextNode($1.getPosition(), NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Next(ast.Nil()))
 
     @pg.production("primary : REDO")
     def primary_redo(self, p):
@@ -2265,21 +2236,11 @@ class Parser(object):
 
     @pg.production("method_call : SUPER paren_args")
     def method_call_super_paren_args(self, p):
-        """
-        kSUPER paren_args {
-                    $$ = support.new_super($2, $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_super(p[1], p[0])
 
     @pg.production("method_call : SUPER")
     def method_call_super(self, p):
-        """
-        kSUPER {
-                    $$ = new ZSuperNode($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.AutoSuper(p[0].getsourcepos().lineno))
 
     @pg.production("method_call : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
@@ -2807,7 +2768,7 @@ class Parser(object):
     @pg.production("f_arg_item : f_norm_arg")
     def f_arg_item_f_norm_arg(self, p):
         node = p[0].getast(ast.Argument)
-        self.lexer.symtable.declare_local(node.name)
+        self.lexer.symtable.declare_argument(node.name)
         return p[0]
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
@@ -2840,7 +2801,7 @@ class Parser(object):
 
     @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
     def f_opt(self, p):
-        self.lexer.symtable.declare_local(p[0].getstr())
+        self.lexer.symtable.declare_argument(p[0].getstr())
         return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
 
     @pg.production("f_block_opt : IDENTIFIER LITERAL_EQUAL primary_value")
@@ -2886,12 +2847,12 @@ class Parser(object):
 
     @pg.production("f_rest_arg : restarg_mark IDENTIFIER")
     def f_rest_arg_restarg_mark_identifer(self, p):
-        self.lexer.symtable.declare_local(p[1].getstr())
+        self.lexer.symtable.declare_argument(p[1].getstr())
         return p[1]
 
     @pg.production("f_rest_arg : restarg_mark")
     def f_rest_arg_restarg_mark(self, p):
-        self.lexer.symtable.declare_local("*")
+        self.lexer.symtable.declare_argument("*")
         return self.new_token(p[0], "IDENTIFIER", "*")
 
     @pg.production("blkarg_mark : AMPER")
@@ -2901,7 +2862,7 @@ class Parser(object):
 
     @pg.production("f_block_arg : blkarg_mark IDENTIFIER")
     def f_block_arg(self, p):
-        self.lexer.symtable.declare_local(p[1].getstr())
+        self.lexer.symtable.declare_argument(p[1].getstr())
         return p[1]
 
     @pg.production("opt_f_block_arg : LITERAL_COMMA f_block_arg")

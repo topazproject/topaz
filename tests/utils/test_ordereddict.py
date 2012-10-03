@@ -94,6 +94,31 @@ class BaseTestOrderedDict(object):
         assert self.run(f, [12]) == 123
         assert self.run(f, [4]) == 3
 
+    def test_iteritems(self):
+        def f(n):
+            o = OrderedDict()
+            o[0] = 10
+            o[2] = 15
+            o[3] = 12
+            r = []
+            for k, v in o.iteritems():
+                r.append((k, v))
+            p = r[n]
+            return p[0] * 100 + p[1]
+
+        assert self.run(f, [0]) == 10
+        assert self.run(f, [2]) == 312
+        assert self.run(f, [1]) == 215
+
+    def test_iteritems_next_method(self):
+        def f(n):
+            o = OrderedDict()
+            o[n] = 5
+            it = o.iteritems()
+            return it.next()[1]
+
+        assert self.run(f, [2]) == 5
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def run(self, func, args=[]):

@@ -4,7 +4,6 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, BlockSymbolTable
-from rupypy.objects.objectobject import W_RootObject
 
 
 class BaseNode(object):
@@ -86,45 +85,53 @@ class If(Node):
         ctx.use_next_block(end)
 
 
-class While(Node):
+class BaseLoop(Node):
     def __init__(self, cond, body):
         self.cond = cond
         self.body = body
 
     def compile(self, ctx):
+        anchor = ctx.new_block()
         end = ctx.new_block()
         loop = ctx.new_block()
 
-        ctx.use_next_block(loop)
-        self.cond.compile(ctx)
-        ctx.emit_jump(consts.JUMP_IF_FALSE, end)
-        self.body.compile(ctx)
-        # The body leaves an extra item on the stack, discard it.
-        ctx.emit(consts.DISCARD_TOP)
-        ctx.emit_jump(consts.JUMP, loop)
+        ctx.emit_jump(consts.SETUP_LOOP, end)
+        with ctx.enter_frame_block(ctx.F_BLOCK_LOOP, loop):
+            ctx.use_next_block(loop)
+            self.cond.compile(ctx)
+            ctx.emit_jump(self.cond_instr, anchor)
+
+            self.body.compile(ctx)
+            ctx.emit(consts.DISCARD_TOP)
+            ctx.emit_jump(consts.JUMP, loop)
+
+            ctx.use_next_block(anchor)
+            ctx.emit(consts.POP_BLOCK)
         ctx.use_next_block(end)
-        # For now, while always returns a nil, eventually it can also return a
-        # value from a break
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
 
 
-class Until(Node):
-    def __init__(self, cond, body):
-        self.cond = cond
-        self.body = body
+class While(BaseLoop):
+    cond_instr = consts.JUMP_IF_FALSE
+
+
+class Until(BaseLoop):
+    cond_instr = consts.JUMP_IF_TRUE
+
+
+class Next(BaseStatement):
+    def __init__(self, expr):
+        self.expr = expr
 
     def compile(self, ctx):
-        end = ctx.new_block()
-        loop = ctx.new_block()
-
-        ctx.use_next_block(loop)
-        self.cond.compile(ctx)
-        ctx.emit_jump(consts.JUMP_IF_TRUE, end)
-        self.body.compile(ctx)
-        ctx.emit(consts.DISCARD_TOP)
-        ctx.emit_jump(consts.JUMP, loop)
-        ctx.use_next_block(end)
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        self.expr.compile(ctx)
+        if isinstance(ctx.symtable, BlockSymbolTable):
+            ctx.emit(consts.RETURN)
+        elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
+            block = ctx.find_frame_block(ctx.F_BLOCK_LOOP)
+            ctx.emit_jump(consts.CONTINUE_LOOP, block)
+        else:
+            raise NotImplementedError
 
 
 class TryExcept(Node):
@@ -199,15 +206,18 @@ class TryFinally(Node):
     def compile(self, ctx):
         end = ctx.new_block()
         ctx.emit_jump(consts.SETUP_FINALLY, end)
-        ctx.use_next_block(ctx.new_block())
-        self.body.compile(ctx)
-        ctx.emit(consts.POP_BLOCK)
+        body = ctx.new_block()
+        ctx.use_next_block(body)
+        with ctx.enter_frame_block(ctx.F_BLOCK_FINALLY, body):
+            self.body.compile(ctx)
+            ctx.emit(consts.POP_BLOCK)
         # Put a None on the stack where an exception would be.
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
         ctx.use_next_block(end)
-        self.finally_body.compile(ctx)
-        ctx.emit(consts.DISCARD_TOP)
-        ctx.emit(consts.END_FINALLY)
+        with ctx.enter_frame_block(ctx.F_BLOCK_FINALLY_END, end):
+            self.finally_body.compile(ctx)
+            ctx.emit(consts.DISCARD_TOP)
+            ctx.emit(consts.END_FINALLY)
 
 
 class Class(Node):
@@ -225,7 +235,7 @@ class Class(Node):
             self.superclass.compile(ctx)
         ctx.emit(consts.BUILD_CLASS)
 
-        body_ctx = ctx.get_subctx(self.name, self)
+        body_ctx = ctx.get_subctx("<class:%s>" % self.name, self)
         self.body.compile(body_ctx)
         body_ctx.emit(consts.DISCARD_TOP)
         body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
@@ -396,10 +406,10 @@ class Yield(Node):
         self.args = args
 
     def compile(self, ctx):
-        for arg in self.args:
-            arg.compile(ctx)
-        ctx.current_lineno = self.lineno
-        ctx.emit(consts.YIELD, len(self.args))
+        with ctx.set_lineno(self.lineno):
+            for arg in self.args:
+                arg.compile(ctx)
+            ctx.emit(consts.YIELD, len(self.args))
 
 
 class Alias(BaseStatement):
@@ -418,6 +428,16 @@ class Alias(BaseStatement):
         ).compile(ctx)
         if not self.dont_pop:
             ctx.emit(consts.DISCARD_TOP)
+
+
+class Defined(Node):
+    def __init__(self, node, lineno):
+        Node.__init__(self, lineno)
+        self.node = node
+
+    def compile(self, ctx):
+        self.node.compile_receiver(ctx)
+        self.node.compile_defined(ctx)
 
 
 class Assignment(Node):
@@ -564,39 +584,38 @@ class And(Node):
         ctx.use_next_block(end)
 
 
-class Send(Node):
-    def __init__(self, receiver, method, args, block_arg, lineno):
+class BaseSend(Node):
+    def __init__(self, receiver, args, block_arg, lineno):
+        Node.__init__(self, lineno)
         self.receiver = receiver
-        self.method = method
         self.args = args
         self.block_arg = block_arg
-        self.lineno = lineno
 
     def compile(self, ctx):
-        self.receiver.compile(ctx)
-        if self.is_splat():
-            for arg in self.args:
-                arg.compile(ctx)
-                if not isinstance(arg, Splat):
-                    ctx.emit(consts.BUILD_ARRAY, 1)
-            for i in range(len(self.args) - 1):
-                ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
-        else:
-            for arg in self.args:
-                arg.compile(ctx)
-        if self.block_arg is not None:
-            self.block_arg.compile(ctx)
+        with ctx.set_lineno(self.lineno):
+            self.receiver.compile(ctx)
+            if self.is_splat():
+                for arg in self.args:
+                    arg.compile(ctx)
+                    if not isinstance(arg, Splat):
+                        ctx.emit(consts.BUILD_ARRAY, 1)
+                for i in range(len(self.args) - 1):
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+            else:
+                for arg in self.args:
+                    arg.compile(ctx)
+            if self.block_arg is not None:
+                self.block_arg.compile(ctx)
 
-        ctx.current_lineno = self.lineno
-        symbol = ctx.create_symbol_const(self.method)
-        if self.is_splat() and self.block_arg is not None:
-            ctx.emit(consts.SEND_BLOCK_SPLAT, symbol)
-        elif self.is_splat():
-            ctx.emit(consts.SEND_SPLAT, symbol)
-        elif self.block_arg is not None:
-            ctx.emit(consts.SEND_BLOCK, symbol, len(self.args) + 1)
-        else:
-            ctx.emit(consts.SEND, symbol, len(self.args))
+            symbol = self.method_name_const(ctx)
+            if self.is_splat() and self.block_arg is not None:
+                ctx.emit(self.send_block_splat, symbol)
+            elif self.is_splat():
+                ctx.emit(self.send_splat, symbol)
+            elif self.block_arg is not None:
+                ctx.emit(self.send_block, symbol, len(self.args) + 1)
+            else:
+                ctx.emit(self.send, symbol, len(self.args))
 
     def is_splat(self):
         for arg in self.args:
@@ -613,6 +632,34 @@ class Send(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.method + "="), 1)
+
+
+class Send(BaseSend):
+    send = consts.SEND
+    send_block = consts.SEND_BLOCK
+    send_splat = consts.SEND_SPLAT
+    send_block_splat = consts.SEND_BLOCK_SPLAT
+
+    def __init__(self, receiver, method, args, block_arg, lineno):
+        BaseSend.__init__(self, receiver, args, block_arg, lineno)
+        self.method = method
+
+    def method_name_const(self, ctx):
+        return ctx.create_symbol_const(self.method)
+
+
+class Super(BaseSend):
+    send = consts.SEND_SUPER
+    send_splat = consts.SEND_SUPER_SPLAT
+
+    def __init__(self, args, block_arg, lineno):
+        BaseSend.__init__(self, Self(lineno), args, block_arg, lineno)
+
+    def method_name_const(self, ctx):
+        if ctx.code_name == "<main>":
+            return ctx.create_const(ctx.space.w_nil)
+        else:
+            return ctx.create_symbol_const(ctx.code_name)
 
 
 class Splat(Node):
@@ -677,6 +724,19 @@ class BlockArgument(Node):
         ctx.emit(consts.COERCE_BLOCK)
 
 
+class AutoSuper(Node):
+    def compile(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
+        for name in ctx.symtable.arguments:
+            ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(name))
+
+        if ctx.code_name == "<main>":
+            name = ctx.create_const(ctx.space.w_nil)
+        else:
+            name = ctx.create_symbol_const(ctx.code_name)
+        ctx.emit(consts.SEND_SUPER, name, len(ctx.symtable.arguments))
+
+
 class Subscript(Node):
     def __init__(self, target, args, lineno):
         Node.__init__(self, lineno)
@@ -709,12 +769,12 @@ class LookupConstant(Node):
         self.name = name
 
     def compile(self, ctx):
-        if self.value is not None:
-            self.value.compile(ctx)
-        else:
-            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.getclassfor(W_RootObject)))
-        ctx.current_lineno = self.lineno
-        ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+        with ctx.set_lineno(self.lineno):
+            if self.value is not None:
+                self.value.compile(ctx)
+            else:
+                ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
+            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
         self.value.compile(ctx)
@@ -725,6 +785,9 @@ class LookupConstant(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_CONSTANT, ctx.create_symbol_const(self.name))
 
 
 class Self(Node):
@@ -799,6 +862,9 @@ class InstanceVariable(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 
 class ClassVariable(Node):

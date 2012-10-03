@@ -1,5 +1,3 @@
-from rupypy.objects.procobject import W_ProcObject
-
 from ..base import BaseRuPyPyTest
 
 
@@ -15,7 +13,7 @@ class TestKernel(BaseRuPyPyTest):
         return [l.class, l.lambda?]
         """)
         w_cls, w_lambda = space.listview(w_res)
-        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_cls is space.w_proc
         assert w_lambda is space.w_true
 
     def test_proc(self, space):
@@ -24,7 +22,7 @@ class TestKernel(BaseRuPyPyTest):
         return [l.class, l.lambda?]
         """)
         w_cls, w_lambda = space.listview(w_res)
-        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_cls is space.w_proc
         assert w_lambda is space.w_false
 
     def test_singleton_methods(self, space):
@@ -106,6 +104,10 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [["to_ary"], ["to_a"]]
         assert self.unwrap(space, space.execute("return Array(1)")) == [1]
+
+    def test_String(self, space):
+        w_res = space.execute("return [String('hello'), String(4)]")
+        assert self.unwrap(space, w_res) == ["hello", "4"]
 
     def test_exit(self, space):
         with self.raises(space, "SystemExit"):
@@ -207,3 +209,23 @@ class TestRequire(BaseRuPyPyTest):
         return @a
         """ % (str(f), str(f), str(f)))
         assert space.int_w(w_res) == 1
+
+    def test_load(self, space, tmpdir):
+        f = tmpdir.join("f.rb")
+        f.write("""
+        @a += 1
+        """)
+
+        w_res = space.execute("""
+        @a = 0
+        load '%s'
+        load '%s'
+        load '%s'
+
+        return @a
+        """ % (str(f), str(f), str(f)))
+        assert space.int_w(w_res) == 3
+
+    def test_responds_to(self, space):
+        w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
+        assert self.unwrap(space, w_res) == [False, True]

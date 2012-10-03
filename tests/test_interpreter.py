@@ -109,7 +109,7 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
         w_res = space.execute("""
@@ -138,7 +138,7 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
     def test_singleton_class(self, space):
@@ -166,8 +166,7 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("Abc = 3; return Abc")
         assert space.int_w(w_res)
 
-        w_object_cls = space.getclassfor(W_Object)
-        assert w_object_cls.constants_w["Abc"] is w_res
+        assert space.w_object.constants_w["Abc"] is w_res
 
     def test_class_constant(self, space):
         w_res = space.execute("""
@@ -180,8 +179,7 @@ class TestInterpreter(BaseRuPyPyTest):
         return X.new.f
         """)
         assert space.int_w(w_res) == 3
-        w_object_cls = space.getclassfor(W_Object)
-        assert "Constant" not in w_object_cls.constants_w
+        assert "Constant" not in space.w_object.constants_w
 
     def test_module_constant(self, space):
         w_res = space.execute("""
@@ -667,15 +665,12 @@ class TestInterpreter(BaseRuPyPyTest):
         b = self.find_const(space, 'B')
         c = self.find_const(space, 'C')
         d = self.find_const(space, 'D')
-        objct = self.find_const(space, 'Object')
-        basic = space.getclassobject(W_BaseObject.classdef)
-        kernel = space.getmoduleobject(Kernel.moduledef)
         assert self.unwrap(space, w_res) == [
-            [a, objct, kernel, basic],
-            [b, a, objct, kernel, basic],
+            [a, space.w_object, space.w_kernel, space.w_basicobject],
+            [b, a, space.w_object, space.w_kernel, space.w_basicobject],
             [c],
             [d, c],
-            [b, d, c, a, objct, kernel, basic]
+            [b, d, c, a, space.w_object, space.w_kernel, space.w_basicobject]
         ]
 
     def test_lookup_for_includes(self, space):
@@ -987,6 +982,15 @@ class TestExceptions(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [12, 5]
 
+    def test_ensure_result(self, space):
+        w_res = space.execute("""
+        return begin
+        ensure
+            nil
+        end
+        """)
+        assert w_res is space.w_nil
+
     def test_rescue_loop(self, space):
         w_res = space.execute("""
         i = 0
@@ -1000,3 +1004,58 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert space.int_w(w_res) == 3
+
+    def test_defined(self, space):
+        w_res = space.execute("return [defined? A, defined? Array]")
+        assert self.unwrap(space, w_res) == [None, "constant"]
+        w_res = space.execute("""
+        @a = 3
+        return [defined? @a, defined? @b]
+        """)
+        assert self.unwrap(space, w_res) == ["instance-variable", None]
+
+    def test_match(self, space):
+        w_res = space.execute("return 3 =~ nil")
+        assert self.unwrap(space, w_res) is None
+
+    def test_super(self, space):
+        w_res = space.execute("""
+        class A
+            def f(a, b)
+                return [a, b]
+            end
+        end
+        class B < A
+            def f(a, b)
+                a += 10
+                return super
+            end
+        end
+        return B.new.f(4, 5)
+        """)
+        assert self.unwrap(space, w_res) == [14, 5]
+
+        w_res = space.execute("""
+        class C < A
+            def f
+                super(*[1, 2])
+            end
+        end
+        return C.new.f
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_next_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        while i < 10
+            i += 1
+            if i > 3
+                next
+            end
+            res << i
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]

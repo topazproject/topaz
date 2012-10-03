@@ -180,11 +180,21 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("2.to_s(10, :base => 5)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.ConstantInt(10), ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(5))])], None, 1))
         ]))
+        assert space.parse("2.to_s(:base => 3)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(3))])], None, 1))
+        ]))
         assert space.parse("Integer other") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Send(ast.Self(1), "other", [], None, 1)], None, 1))
         ]))
         assert space.parse("Module::constant") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Module", 1), "constant", [], None, 1))
+        ]))
+        r = space.parse("""
+        nil.
+            f
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Nil(), "f", [], None, 3))
         ]))
 
         with self.raises(space, "SyntaxError"):
@@ -841,6 +851,14 @@ class TestParser(BaseRuPyPyTest):
                 )
             )])])]))
         ]))
+        r = space.parse("""
+        %w!a!
+        nil
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.ConstantString("a")])),
+            ast.Statement(ast.Nil()),
+        ]))
 
         assert space.parse("f %q[/]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantString("/")], None, 1)),
@@ -1012,6 +1030,9 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Send(ast.Self(2), "x", [], None, 2), "meth", [ast.Send(ast.Send(ast.Self(2), "y", [], None, 2), "meth", [], None, 2)], ast.SendBlock([], None, ast.Nil()), 2))
         ]))
+        assert space.parse("each do end") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "each", [], ast.SendBlock([], None, ast.Nil()), 1))
+        ]))
 
         with self.raises(space, "SyntaxError"):
             space.parse("""
@@ -1134,6 +1155,10 @@ HERE
 
         assert space.parse("x &= 2") == ast.Main(ast.Block([
             ast.Statement(ast.AugmentedAssignment("&", ast.Variable("x", 1), ast.ConstantInt(2)))
+        ]))
+
+        assert space.parse("x += f 2") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("+", ast.Variable("x", 1), ast.Send(ast.Self(1), "f", [ast.ConstantInt(2)], None, 1)))
         ]))
 
     def test_block_result(self, space):
@@ -2040,6 +2065,36 @@ HERE
         ]))
         assert space.parse("alias << b") == ast.Main(ast.Block([
             ast.Alias(ast.ConstantSymbol("<<"), ast.ConstantSymbol("b"), 1)
+        ]))
+
+    def test_defined(self, space):
+        assert space.parse("defined? Const") == ast.Main(ast.Block([
+            ast.Statement(ast.Defined(ast.LookupConstant(ast.Scope(1), "Const", 1), 1))
+        ]))
+        assert space.parse("defined?(3)") == ast.Main(ast.Block([
+            ast.Statement(ast.Defined(ast.ConstantInt(3), 1))
+        ]))
+
+    def test_super(self, space):
+        assert space.parse("super") == ast.Main(ast.Block([
+            ast.Statement(ast.AutoSuper(1))
+        ]))
+        assert space.parse("super(nil)") == ast.Main(ast.Block([
+            ast.Statement(ast.Super([ast.Nil()], None, 1))
+        ]))
+        assert space.parse("super nil") == ast.Main(ast.Block([
+            ast.Statement(ast.Super([ast.Nil()], None, 1))
+        ]))
+
+    def test_next(self, space):
+        assert space.parse("next") == ast.Main(ast.Block([
+            ast.Next(ast.Nil())
+        ]))
+        assert space.parse("next true") == ast.Main(ast.Block([
+            ast.Next(ast.ConstantBool(True))
+        ]))
+        assert space.parse("next 3, 4") == ast.Main(ast.Block([
+            ast.Next(ast.Array([ast.ConstantInt(3), ast.ConstantInt(4)]))
         ]))
 
     def test_custom_lineno(self, space):

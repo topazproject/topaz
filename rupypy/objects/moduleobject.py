@@ -2,7 +2,6 @@ from pypy.rlib import jit
 
 from rupypy.celldict import CellDict, VersionTag
 from rupypy.module import ClassDef
-from rupypy.objects.exceptionobject import W_NameError
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_RootObject
 
@@ -57,7 +56,7 @@ class W_ModuleObject(W_RootObject):
     def getsingletonclass(self, space):
         if self.klass is None:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, space.getclassfor(W_ModuleObject), is_singleton=True
+                "#<Class:%s>" % self.name, space.w_module, is_singleton=True
             )
         return self.klass
 
@@ -77,6 +76,14 @@ class W_ModuleObject(W_RootObject):
                 if method is not None:
                     return method
         return method
+
+    @jit.unroll_safe
+    def find_method_super(self, space, name):
+        for module in self.included_modules:
+            method = module.find_method(space, name)
+            if method is not None:
+                return method
+        return None
 
     @jit.elidable
     def _find_method_pure(self, space, method, version):
@@ -273,9 +280,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
-        raise space.error(space.getclassfor(W_NameError),
-             "uninitialized constant %s" % name
-        )
+        raise space.error(space.w_NameError, "uninitialized constant %s" % name)
 
     @classdef.method("class_eval", string="str", filename="str")
     @classdef.method("module_eval", string="str", filename="str")

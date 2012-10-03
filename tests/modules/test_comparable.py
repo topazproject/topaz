@@ -1,4 +1,7 @@
 class TestComparable(object):
+    def test_name(self, space):
+        space.execute("Comparable")
+
     def test_gt(self, space):
         w_res = space.execute("return 'a' > 'b'")
         assert w_res is space.w_false

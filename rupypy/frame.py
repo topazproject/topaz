@@ -110,11 +110,18 @@ class Frame(BaseFrame):
                 return block
             block.cleanupstack(self)
 
+    def unrollstack_and_jump(self, space, unroller):
+        block = self.unrollstack(unroller.kind)
+        return block.handle(space, self, unroller)
+
+    def has_contents(self):
+        return True
+
     def get_filename(self):
         return self.bytecode.filepath
 
-    def get_lineno(self, idx):
-        return self.bytecode.lineno_table[idx]
+    def get_lineno(self, last_instructions, last_instr_idx):
+        return self.bytecode.lineno_table[last_instructions[last_instr_idx]]
 
     def get_code_name(self):
         return self.bytecode.name
@@ -128,11 +135,14 @@ class BuiltinFrame(BaseFrame):
         BaseFrame.__init__(self)
         self.name = name
 
+    def has_contents(self):
+        return self.backref() is not None
+
     def get_filename(self):
         return self.backref().get_filename()
 
-    def get_lineno(self, idx):
-        return self.backref().get_lineno(idx)
+    def get_lineno(self, last_instructions, last_instr_idx):
+        return self.backref().get_lineno(last_instructions, last_instr_idx + 1)
 
     def get_code_name(self):
         return self.name

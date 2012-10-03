@@ -10,6 +10,10 @@ class W_HashObject(W_Object):
         W_Object.__init__(self, space)
         self.contents = OrderedDict(space.eq_w, space.hash_w)
 
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space):
+        return W_HashObject(space)
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         return self.contents.get(w_key, space.w_nil)
@@ -22,3 +26,38 @@ class W_HashObject(W_Object):
     @classdef.method("keys")
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
+
+    classdef.app_method("""
+    def each
+        iter = Topaz::HashIterator.new(self)
+        while true
+            begin
+                key, value = iter.next()
+            rescue StopIteration
+                return
+            end
+            yield key, value
+        end
+    end
+    """)
+
+
+class W_HashIterator(W_Object):
+    classdef = ClassDef("HashIterator", W_Object.classdef)
+
+    def __init__(self, space, d):
+        W_Object.__init__(self, space)
+        self.iterator = d.iteritems()
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, w_obj):
+        assert isinstance(w_obj, W_HashObject)
+        return W_HashIterator(space, w_obj.contents)
+
+    @classdef.method("next")
+    def method_next(self, space):
+        try:
+            w_k, w_v = self.iterator.next()
+        except StopIteration:
+            raise space.error(space.w_StopIteration)
+        return space.newarray([w_k, w_v])

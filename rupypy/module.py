@@ -59,7 +59,9 @@ class ModuleDef(object):
     def __deepcopy__(self, memo):
         return self
 
-    def method(self, name, **argspec):
+    def method(self, __name, **argspec):
+        name = __name
+
         def adder(func):
             self.methods[name] = (func, argspec)
             return func
@@ -68,9 +70,11 @@ class ModuleDef(object):
     def app_method(self, source):
         self.app_methods.append(source)
 
-    def function(self, name, **argspec):
+    def function(self, __name, **argspec):
+        name = __name
+
         def adder(func):
-            # XXX: should be private, once we have visibility
+            # TODO: should be private, once we have visibility
             self.methods[name] = (func, argspec)
             self.singleton_methods[name] = (func, argspec)
             return func

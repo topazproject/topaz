@@ -25,7 +25,7 @@ class TestIO(BaseRuPyPyTest):
 
     def test_write(self, space, capfd):
         content = "foo\n"
-        w_res = space.execute('return IO.new(1, "w").write("%s")' % content)
+        space.execute('return IO.new(1, "w").write("%s")' % content)
         out, err = capfd.readouterr()
         assert out == content
 
@@ -73,6 +73,24 @@ class TestIO(BaseRuPyPyTest):
         space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
         out, err = capfd.readouterr()
         assert out == "This\nis\n100\npercent\n"
+
+    def test_flush(self, space, capfd):
+        space.execute("IO.new(1, 'w').flush.puts('String')")
+        out, err = capfd.readouterr()
+        assert out == "String\n"
+
+    def test_globals(self, space, capfd):
+        w_res = space.execute("""
+        STDOUT.puts("STDOUT")
+        $stdout.puts("$stdout")
+        STDERR.puts("STDERR")
+        $stderr.puts("$stderr")
+        return STDIN.read, $stdin.read
+        """)
+        out, err = capfd.readouterr()
+        assert out == "STDOUT\n$stdout\n"
+        assert err == "STDERR\n$stderr\n"
+        assert self.unwrap(space, w_res) == [None, None]
 
 
 class TestFile(BaseRuPyPyTest):
@@ -147,6 +165,12 @@ class TestFile(BaseRuPyPyTest):
         os.chmod(str(f), stat.S_IEXEC)
         w_res = space.execute("return File.executable?('%s')" % str(f))
         assert w_res is space.w_true
+
+    def test_directoryp(self, space, tmpdir):
+        w_res = space.execute("return File.directory?('%s')" % str(tmpdir))
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return File.directory?('%s')" % str(tmpdir.join("t.rb")))
+        assert self.unwrap(space, w_res) is False
 
 
 class TestExpandPath(BaseRuPyPyTest):
