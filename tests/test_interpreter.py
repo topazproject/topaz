@@ -1005,6 +1005,16 @@ class TestExceptions(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 3
 
+    def test_rescue_superclass(self, space):
+        w_res = space.execute("""
+        begin
+            1 / 0
+        rescue StandardError
+            return 0
+        end
+        """)
+        assert space.int_w(w_res) == 0
+
     def test_defined(self, space):
         w_res = space.execute("return [defined? A, defined? Array]")
         assert self.unwrap(space, w_res) == [None, "constant"]

@@ -161,14 +161,14 @@ class TryExcept(Node):
             if handler.exceptions:
                 for exception in handler.exceptions:
                     next_handle = ctx.new_block()
+                    ctx.emit(consts.DUP_TOP)
                     exception.compile(ctx)
-                    ctx.emit(consts.COMPARE_EXC)
+                    ctx.emit(consts.ROT_TWO)
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
                     ctx.emit_jump(consts.JUMP_IF_TRUE, handle_block)
                     ctx.use_next_block(next_handle)
                 ctx.emit_jump(consts.JUMP, next_except)
-                ctx.use_next_block(handle_block)
-            else:
-                ctx.use_next_block(handle_block)
+            ctx.use_next_block(handle_block)
             if handler.target:
                 elems = handler.target.compile_receiver(ctx)
                 if elems == 1:
