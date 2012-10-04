@@ -113,7 +113,7 @@ class Interpreter(object):
         frame.push(bytecode.consts_w[idx])
 
     def LOAD_LOCAL(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.locals_w[idx])
+        frame.push(frame.locals_w[idx] or space.w_nil)
 
     def STORE_LOCAL(self, space, bytecode, frame, pc, idx):
         frame.locals_w[idx] = frame.peek()

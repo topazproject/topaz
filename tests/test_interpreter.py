@@ -29,6 +29,15 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("a = 100; return a")
         assert space.int_w(w_res) == 100
 
+    def test_uninitailized_variables(self, space):
+        w_res = space.execute("""
+        if false
+            x = 5
+        end
+        return x
+        """)
+        assert w_res is space.w_nil
+
     def test_if(self, space):
         w_res = space.execute("if 3 then return 2 end")
         assert space.int_w(w_res) == 2
