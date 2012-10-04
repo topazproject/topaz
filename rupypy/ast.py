@@ -868,12 +868,14 @@ class InstanceVariable(Node):
 
 
 class ClassVariable(Node):
-    def __init__(self, name):
+    def __init__(self, name, lineno):
+        Node.__init__(self, lineno)
         self.name = name
 
     def compile(self, ctx):
-        self.compile_receiver(ctx)
-        self.compile_load(ctx)
+        with ctx.set_lineno(self.lineno):
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
 
     def compile_receiver(self, ctx):
         ctx.emit(consts.LOAD_SCOPE)

@@ -189,7 +189,7 @@ class Parser(object):
         return BoxAST(ast.InstanceVariable(box.getstr()))
 
     def new_class_var(self, box):
-        return BoxAST(ast.ClassVariable(box.getstr()))
+        return BoxAST(ast.ClassVariable(box.getstr(), box.getsourcepos().lineno))
 
     def concat_literals(self, head, tail):
         if head is None:

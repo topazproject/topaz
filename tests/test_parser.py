@@ -801,7 +801,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('"\n"') == const_string("\n")
         assert space.parse('"\w"') == const_string("w")
         assert space.parse('"\M-a"') == const_string("\xe1")
-        assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab"))
+        assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab", 1))
 
     def test_percent_terms(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
@@ -2019,7 +2019,7 @@ HERE
         @@a = @@b
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.ClassVariable("@@a"), ast.ClassVariable("@@b")))
+            ast.Statement(ast.Assignment(ast.ClassVariable("@@a", 2), ast.ClassVariable("@@b", 2)))
         ]))
 
     def test_shellout(self, space):
