@@ -2,7 +2,6 @@ from pypy.rlib import jit, longlong2float
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
 from pypy.rlib.rstruct.ieee import float_pack
-from pypy.rlib.unroll import unrolling_iterable
 
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.floatobject import W_FloatObject
@@ -131,17 +130,16 @@ def make_int_packer(size=0, signed=True, bigendian=native_is_bigendian):
         if repetitions > len(packer.args_w):
             raise space.error(space.w_ArgumentError, "too few arguments")
 
-        unroll_revrange_size = unrolling_iterable(range(size - 1, -1, -1))
         for i in xrange(packer.args_index, repetitions + packer.args_index):
             num = space.int_w(
                 space.convert_type(packer.args_w[i], space.w_fixnum, "to_int")
             )
             if bigendian:
-                for i in unroll_revrange_size:
+                for i in xrange(size - 1, -1, -1):
                     x = (num >> (8*i)) & 0xff
                     packer.result.append(chr(x))
             else:
-                for i in unroll_revrange_size:
+                for i in xrange(size - 1, -1, -1):
                     packer.result.append(chr(num & 0xff))
                     num >>= 8
         packer.args_index += repetitions
@@ -151,20 +149,22 @@ def pack_move_to(packer, position):
     if len(packer.result) < position:
         packer.result.extend(["\0"] * (position - len(packer.result)))
     else:
-        packer.result[position:] = []
+        assert position >= 0
+        packer.result[position:len(packer.result)] = []
 
 def pack_back_up(packer, repetitions):
     size = len(packer.result)
     if size < repetitions:
         raise packer.space.error(packer.space.w_ArgumentError, "X outside of string")
     else:
-        packer.result[size - repetitions:] = []
+        begin = size - repetitions
+        assert begin >= 0
+        packer.result[begin:size] = []
 
 def pack_padding(packer, repetitions):
     packer.result.extend(["\0"] * repetitions)
 
 def make_float_packer(size=0, bigendian=native_is_bigendian):
-    range_unroll = unrolling_iterable(list(reversed(range(size))))
     def pack_float(packer, repetitions):
         space = packer.space
         if repetitions > len(packer.args_w):
@@ -177,12 +177,14 @@ def make_float_packer(size=0, bigendian=native_is_bigendian):
                     "can't convert %s into Float" % space.getclass(w_item).name
                 )
             doubleval = space.float_w(w_item)
-            l = []
+            l = ["\0"] * size
             unsigned = float_pack(doubleval, size)
-            for i in range(size):
-                l.append(chr((unsigned >> (i * 8)) & 0xff))
             if bigendian:
-                l.reverse()
+                for i in xrange(size - 1, -1, -1):
+                    l[i] = chr((unsigned >> (i * 8)) & 0xff)
+            else:
+                for i in xrange(size):
+                    l[i] = chr((unsigned >> (i * 8)) & 0xff)
             packer.result.extend(l)
         packer.args_index += repetitions
     return pack_float
@@ -196,13 +198,19 @@ def pack_string_common(packer, width):
     return string
 
 def pack_string_space_padded(packer, width):
-    packer.result.extend(pack_string_common(packer, width)[:width].ljust(width))
+    assert width >= 0
+    string = pack_string_common(packer, width)[:width]
+    packer.result += string
+    packer.result.extend([" "] * (width - len(string)))
 
 def pack_string_null_padded(packer, width):
-    packer.result.extend(pack_string_common(packer, width)[:width].ljust(width, "\0"))
+    assert width >= 0
+    string = pack_string_common(packer, width)[:width]
+    packer.result += string
+    packer.result.extend(["\0"] * (width - len(string)))
 
 def pack_string_null_terminated(packer, width):
-    packer.result.extend(pack_string_common(packer, width))
+    packer.result += pack_string_common(packer, width)
     packer.result.append("\0")
 
 def make_pack_operators():
