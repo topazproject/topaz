@@ -18,81 +18,89 @@ non_native_endianess_offset = LE_offset if native_is_bigendian else BE_offset
 
 
 class RPacker(object):
-    def __init__(self, fmt):
+    def __init__(self, space, fmt, args_w):
+        self.space = space
         self.fmt = fmt
+        self.args_w = args_w
+        self.args_index = 0
+        self.result = []
 
-    def native_code_count(self, space, fmt, idx):
+    def native_code_count(self, idx):
         end = idx + 1
-        while end < len(fmt) and fmt[end] in native_endian_codes:
+        while end < len(self.fmt) and self.fmt[end] in native_endian_codes:
             end += 1
         native_chars = end - idx - 1
         if native_chars > 0 and ch not in native_codes:
-            raise space.error(
-                space.w_ArgumentError,
+            raise self.space.error(
+                self.space.w_ArgumentError,
                 "%s allowed only after types %s" % (modifier, native_codes)
             )
         return native_chars
 
-    def check_for_bigendianess_code(self, space, fmt, idx):
+    def check_for_bigendianess_code(self, idx):
         end = idx + 1
-        while end < len(fmt) and fmt[end] in endianess_codes:
+        while end < len(self.fmt) and self.fmt[end] in endianess_codes:
             end += 1
         endian_chars = end - idx - 1
         if endian_chars > 0 and ch not in mappable_codes:
-            raise space.error(
-                space.w_ArgumentError,
+            raise self.space.error(
+                self.space.w_ArgumentError,
                 "%s allowed only after types %s" % (modifier, native_codes)
             )
         elif endian_chars > 1:
-            raise space.error(space.w_RangeError, "Can't use both '<' and '>'")
+            raise self.space.error(self.space.w_RangeError, "Can't use both '<' and '>'")
         elif endian_chars == 1:
-            bigendian = (fmt[end - 1] == BE_modifier)
+            bigendian = (self.fmt[end - 1] == BE_modifier)
         else:
             bigendian = native_is_bigendian
         return bigendian
 
-    def check_for_star(self, space, fmt, idx):
-        return idx + 1 < len(fmt) and fmt[idx] in starrable_codes and fmt[idx + 1] == "*"
+    def check_for_star(self, idx):
+        return (
+            idx + 1 < len(self.fmt) and
+            self.fmt[idx] in starrable_codes and
+            self.fmt[idx + 1] == "*"
+        )
 
-    def determine_repetitions(self, space, fmt, idx):
+    def determine_repetitions(self, idx):
         end = idx + 1
-        if end < len(fmt) and fmt[end].isdigit():
-            repetitions = ord(fmt[end]) - ord('0')
+        if end < len(self.fmt) and self.fmt[end].isdigit():
+            repetitions = ord(self.fmt[end]) - ord('0')
             end += 1
-            while end < len(fmt) and fmt[end].isdigit():
+            while end < len(self.fmt) and self.fmt[end].isdigit():
                 try:
-                    repetitions = ovfcheck(repetitions * 10 + (ord(fmt[end]) - ord('0')))
+                    repetitions = ovfcheck(repetitions * 10 + (ord(self.fmt[end]) - ord('0')))
                 except OverflowError:
-                    raise space.error(space.w_RangeError, "pack length too big")
+                    raise self.space.error(self.space.w_RangeError, "pack length too big")
                 end += 1
         else:
             repetitions = 1
         return (repetitions, end - 1)
 
-    def interpret(self, space, fmt):
-        result = []
+    def interpret(self):
         idx = 0
+        indices = []
 
-        while idx < len(fmt):
-            ch = fmt[idx]
+        while idx < len(self.fmt):
+            ch = self.fmt[idx]
 
             # Skip any garbage
             if ch not in codes:
                 idx += 1
                 continue
 
-            native_code_count = self.native_code_count(space, fmt, idx)
+            native_code_count = self.native_code_count(idx)
             idx += native_code_count
 
-            bigendian = self.check_for_bigendianess_code(space, fmt, idx)
+            bigendian = self.check_for_bigendianess_code(idx)
             if bigendian:
                 idx += 1
 
-            starred = self.check_for_star(space, fmt, idx)
+            starred = self.check_for_star(idx)
             if starred:
                 idx += 1
 
-            repetitions, idx = self.determine_repetitions(space, fmt, idx)
+            repetitions, idx = self.determine_repetitions(idx)
 
             converter_idx = ord(ch)
             if starred:
@@ -101,162 +109,109 @@ class RPacker(object):
             if bigendian != native_is_bigendian:
                 converter_idx += non_native_endianess_offset
 
-            result.append([converter_idx, repetitions])
+            indices.append([converter_idx, repetitions])
             idx += 1
-        return result
+        return indices
 
-    def operate(self, space, fmt, code=None, args_w=[]):
-        converter_indices = self.interpret(space, fmt)
-        result = []
-        if code:
-            for idx, reps in converter_indices:
-                result.extend(unpack_operators[idx](space, code, reps))
-        elif args_w:
-            for idx, reps in converter_indices:
-                result.extend(pack_operators[idx](space, args_w, reps))
-        return result
-
-    def pack(self, space, args_w):
-        return space.newstr_fromchars(self.operate(space, self.fmt, args_w=args_w))
-
-    def unpack(self, space, code):
-        return space.newarray(self.operate(space, self.fmt, code=code))
+    def operate(self):
+        indices = self.interpret()
+        for idx, reps in indices:
+            pack_operators[idx](self, reps)
+        return self.result
 
 
-# class Operator(object):
-#     def __init__(self, repetitions):
-#         self.repetitions = repetitions
-
-#     def pack(space, args_w):
-#         pass
-
-#     def unpack(space, code):
-#         pass
-
-
-# class IntOperator(Operator):
-#     def __init__(self, repetitions)
-
-#     def pack(space, args_w):
-#         result = []
-#         if self.repetitions > len(args_w):
-#             raise space.error(space.w_ArgumentError, "too few arguments")
-#         for i in range(self.repetitions):
-#             num = space.int_w(
-#                 space.convert_type(args_w[i], space.w_fixnum, "to_int")
-#             )
-#             result += struct.pack(fmt, num)
-#         return result
-
-
-# class FloatOperator(Operator):
-#     def __init__(self, fmt):
-#         self.fmt = fmt
-
-#     def encode(space, args_w, count=count):
-#         result = []
-#         if count > len(args_w):
-#             raise space.error(space.w_ArgumentError, "too few arguments")
-#         for i in range(count):
-#             w_item = args_w[iidx + 1]
-#             if not isinstance(w_item, W_FloatObject):
-#                 raise space.error(
-#                     space.w_TypeError,
-#                     "can't convert %s into Float" % space.getclass(w_item).name
-#                 )
-#             result += struct.pack(fmt, space.float_w(w_item))
-#         return result
-
-
-def make_int_packer(size=0, signed=True):
-    def pack_int(space, args_w, repetitions):
-        if repetitions > len(args_w):
+def make_int_packer(size=0, signed=True, bigendian=native_is_bigendian):
+    def pack_int(packer, repetitions):
+        space = packer.space
+        if repetitions > len(packer.args_w):
             raise space.error(space.w_ArgumentError, "too few arguments")
 
         unroll_revrange_size = unrolling_iterable(range(size - 1, -1, -1))
-        result = []
-        for i in range(repetitions):
+        for i in xrange(packer.args_index, repetitions + packer.args_index):
             num = space.int_w(
-                space.convert_type(args_w[i], space.w_fixnum, "to_int")
+                space.convert_type(packer.args_w[i], space.w_fixnum, "to_int")
             )
-            if native_is_bigendian:
+            if bigendian:
                 for i in unroll_revrange_size:
                     x = (num >> (8*i)) & 0xff
-                    result.append(chr(x))
+                    packer.result.append(chr(x))
             else:
                 for i in unroll_revrange_size:
-                    result.append(chr(num & 0xff))
+                    packer.result.append(chr(num & 0xff))
                     num >>= 8
-        return result
+        packer.args_index += repetitions
     return pack_int
 
+def move_to(packer, position):
+    if len(packer.result) < position:
+        packer.result.extend(["\0"] * (position - len(packer.result)))
+    else:
+        packer.result[position:] = []
 
-pack_operators = [None] * 255
-pack_operators[ord('C')] = make_int_packer(size=1, signed=False)
-# converters[ord('c')] = IntMappingConverter("b", min=-2**7, max=2**7 - 1)
-# converters[ord('S')] = IntMappingConverter("H", min=0, max=2**16)
-# converters[ord('s')] = IntMappingConverter("h", min=-2**15, max=2**15 - 1)
+def back_up(packer, repetitions):
+    if len(packer.result) < repetitions:
+        raise packer.space.error(packer.space.w_ArgumentError, "X outside of string")
+    else:
+        packer.result[len(packer.result) - repetitions:] = []
 
-# tmp = IntMappingConverter("I", min=0, max=2**32)
-# converters[ord('I')] = tmp
-# converters[ord('L')] = tmp
+def padding(packer, repetitions):
+    packer.result.extend(["\0"] * repetitions)
 
-# tmp = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
-# converters[ord('i')] = tmp
-# converters[ord('l')] = tmp
+def make_pack_operators():
+    ops = [None] * 255
 
-# converters[ord('Q')] = IntMappingConverter("Q", min=0, max=2**64)
-# converters[ord('q')] = IntMappingConverter("q", min=-2**63, max=2**63 - 1)
+    # Int Basics
+    int_sizes = "csiq"
+    for size in xrange(0, len(int_sizes)):
+        code = int_sizes[size]
+        sidx = ord(code)
+        uidx = ord(code.upper())
+        ops[sidx] = make_int_packer(size=2**size, signed=True)
+        ops[uidx] = make_int_packer(size=2**size, signed=False)
+        if size > 0:
+            ops[sidx + BE_offset] = make_int_packer(size=2**size, signed=True, bigendian=True)
+            ops[uidx + BE_offset] = make_int_packer(size=2**size, signed=False, bigendian=True)
+            ops[sidx + LE_offset] = make_int_packer(size=2**size, signed=True, bigendian=False)
+            ops[uidx + LE_offset] = make_int_packer(size=2**size, signed=False, bigendian=False)
+    # Int Aliases
+    ops[ord("L")] = ops[ord("I")]
+    ops[ord("L") + BE_offset] = ops[ord("N")] = ops[ord("I") + BE_offset]
+    ops[ord("L") + LE_offset] = ops[ord("V")] = ops[ord("I") + LE_offset]
+    ops[ord("l")] = ops[ord("i")]
+    ops[ord("l") + BE_offset] = ops[ord("i") + BE_offset]
+    ops[ord("l") + LE_offset] = ops[ord("i") + LE_offset]
+    ops[ord("n")] = ops[ord("S") + BE_offset]
+    ops[ord("v")] = ops[ord("S") + LE_offset]
 
-# converters[ord('s') + BE_offset] = IntMappingConverter(">h", min=-2**15, max=2**15 - 1)
-# converters[ord('s') + LE_offset] = IntMappingConverter("<h", min=-2**15, max=2**15 - 1)
+    # converters[ord('U')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
+    # converters[ord('w')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
 
-# tmp = IntMappingConverter(">H", min=0, max=2**16)
-# converters[ord('n')] = tmp
-# converters[ord('S') + BE_offset] = tmp
-# tmp = IntMappingConverter("<H", min=0, max=2**16)
-# converters[ord('v')] = tmp
-# converters[ord('S') + LE_offset] = tmp
+    # converters[ord('f')] = converters[ord('F')] = FloatMappingConverter("f")
+    # converters[ord('d')] = converters[ord('D')] = FloatMappingConverter("d")
+    # converters[ord('E')] = FloatMappingConverter("<d")
+    # converters[ord('e')] = FloatMappingConverter("<f")
+    # converters[ord('G')] = FloatMappingConverter(">d")
+    # converters[ord('g')] = FloatMappingConverter(">f")
 
-# tmp = IntMappingConverter(">I", min=0, max=2**32)
-# converters[ord('N')] = tmp
-# converters[ord('I') + BE_offset] = tmp
-# converters[ord('L') + BE_offset] = tmp
-# tmp = IntMappingConverter("<I", min=0, max=2**32)
-# converters[ord('V')] = tmp
-# converters[ord('i') + LE_offset] = tmp
-# converters[ord('l') + LE_offset] = tmp
+    # converters[ord('A')] = StringMappingConverter("s", padding=" ")
+    # converters[ord('a')] = StringMappingConverter("s")
+    # converters[ord('Z')] = StringMappingConverter("s")
+    # converters[ord('Z') - 1] = StringMappingConverter("Z", end_null=True)
 
-# converters[ord('Q') + BE_offset] = IntMappingConverter(">Q", min=0, max=2**64)
-# converters[ord('Q') + LE_offset] = IntMappingConverter("<Q", min=0, max=2**64)
-# converters[ord('q') + BE_offset] = IntMappingConverter(">q", min=-2**63, max=2**63 - 1)
-# converters[ord('q') + LE_offset] = IntMappingConverter("<q", min=-2**63, max=2**63 - 1)
+    # converters[ord('B')] = BitStringConverter(msb=True)
+    # converters[ord('b')] = BitStringConverter(msb=False)
+    # converters[ord('H')] = HexStringConverter(high=True)
+    # converters[ord('h')] = HexStringConverter(high=False)
+    # converters[ord('u')] = UUStringConverter()
+    # converters[ord('M')] = QuotedPrintableStringConverter()
+    # converters[ord('m')] = Base64StringConverter()
+    # converters[ord('P')] # not supported
+    # converters[ord('p')] # not supported
 
-# converters[ord('U')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
-# converters[ord('w')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
+    ops[ord('@')] = move_to
+    ops[ord('X')] = back_up
+    ops[ord('x')] = padding
 
-# converters[ord('f')] = converters[ord('F')] = FloatMappingConverter("f")
-# converters[ord('d')] = converters[ord('D')] = FloatMappingConverter("d")
-# converters[ord('E')] = FloatMappingConverter("<d")
-# converters[ord('e')] = FloatMappingConverter("<f")
-# converters[ord('G')] = FloatMappingConverter(">d")
-# converters[ord('g')] = FloatMappingConverter(">f")
+    return ops
 
-# converters[ord('A')] = StringMappingConverter("s", padding=" ")
-# converters[ord('a')] = StringMappingConverter("s")
-# converters[ord('Z')] = StringMappingConverter("s")
-# converters[ord('Z') - 1] = StringMappingConverter("Z", end_null=True)
-
-# converters[ord('B')] = BitStringConverter(msb=True)
-# converters[ord('b')] = BitStringConverter(msb=False)
-# converters[ord('H')] = HexStringConverter(high=True)
-# converters[ord('h')] = HexStringConverter(high=False)
-# converters[ord('u')] = UUStringConverter()
-# converters[ord('M')] = QuotedPrintableStringConverter()
-# converters[ord('m')] = Base64StringConverter()
-# converters[ord('P')] # not supported
-# converters[ord('p')] # not supported
-
-# converters[ord('@')] = MoveTo()
-# converters[ord('X')] = BackUp()
-# converters[ord('x')] = Padding()
+pack_operators = make_pack_operators()

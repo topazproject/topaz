@@ -264,4 +264,5 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("pack", template="str")
     def method_pack(self, space, template):
-        return RPacker(template).pack(space, space.listview(self))
+        result = RPacker(space, template, space.listview(self)).operate()
+        return space.newstr_fromchars(result)
