@@ -1,3 +1,5 @@
+from struct import pack
+
 from ..base import BaseRuPyPyTest
 
 
@@ -266,23 +268,61 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return [].push(2, 3)")
         assert self.unwrap(space, w_res) == [2, 3]
 
-    def test_pack(self, space):
+
+class TestArrayPack(BaseRuPyPyTest):
+    def test_garbage_format(self, space):
         assert space.str_w(space.execute("return [].pack ''")) == ""
         assert space.str_w(space.execute("return [].pack 'yy'")) == ""
         assert space.str_w(space.execute("return [1, 2].pack 'y3'")) == ""
 
+    def test_padding(self, space):
         assert space.str_w(space.execute("return [].pack 'xx'")) == "\0\0"
         assert space.str_w(space.execute("return [].pack 'x2'")) == "\0\0"
+
+    def test_moving(self, space):
         assert space.str_w(space.execute("return [].pack '@2'")) == "\0\0"
         assert space.str_w(space.execute("return [].pack 'xx@2'")) == "\0\0"
+
+    def test_backing_up(self, space):
         assert space.str_w(space.execute("return [].pack 'xxXX'")) == ""
         with self.raises(space, "ArgumentError"):
             space.execute("[].pack 'X'")
 
-        assert space.str_w(space.execute("return ['ab'].pack 'A'")) == "a"
-        assert space.str_w(space.execute("return ['ab'].pack 'A5'")) == "ab   "
-        assert space.str_w(space.execute("return ['ab'].pack 'a'")) == "a"
-        assert space.str_w(space.execute("return ['ab'].pack 'a5'")) == "ab\0\0\0"
+    def test_char(self, space):
+        assert space.str_w(space.execute("return [-10, 10].pack 'cc'")) == pack("bb", -10, 10)
+        assert space.str_w(space.execute("return [255].pack 'C'")) == pack("B", 255)
+        assert space.str_w(space.execute("return [256].pack 'C'")) == pack("B", 256 % 256)
+        assert space.str_w(space.execute("return [-255].pack 'C'")) == pack("B", -255 % 256)
+        with self.raises(space, "ArgumentError"):
+            space.execute("return [-255].pack 'C>'")
+        with self.raises(space, "ArgumentError"):
+            space.execute("return [-255].pack 'C!'")
+        with self.raises(space, "ArgumentError"):
+            space.execute("return [-255].pack 'C<'")
 
-        assert space.str_w(space.execute("return [-10, 10].pack 'c2'")) == "\xf6\n"
-        assert space.str_w(space.execute("return [255].pack 'C'")) == "\xff"
+    def test_short(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'S'")) == pack("H", -255 % 2**16)
+        assert space.str_w(space.execute("return [12].pack 's'")) == pack("h", 12)
+        assert space.str_w(space.execute("return [12].pack 'S!'")) == pack("@h", 12)
+        assert space.str_w(space.execute("return [12].pack 'S_'")) == pack("@h", 12)
+        assert space.str_w(space.execute("return [12].pack 'S_!_'")) == pack("@h", 12)
+
+    def test_long(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'I'")) == pack("I", -255 % 2**32)
+        assert space.str_w(space.execute("return [12].pack 'i'")) == pack("i", 12)
+        assert space.str_w(space.execute("return [-255].pack 'L'")) == pack("I", -255 % 2**32)
+        assert space.str_w(space.execute("return [12].pack 'l'")) == pack("i", 12)
+
+    def test_longlong(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'Q'")) == pack("Q", -255 % 2**64)
+        assert space.str_w(space.execute("return [12].pack 'q'")) == pack("q", 12)
+
+    def test_float(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'f'")) == pack("f", -255)
+        assert space.str_w(space.execute("return [-255].pack 'F'")) == pack("f", -255)
+        assert space.str_w(space.execute("return [-255.42].pack 'F'")) == pack("f", -255.42)
+
+    def test_double(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'd'")) == pack("d", -255)
+        assert space.str_w(space.execute("return [-255].pack 'D'")) == pack("d", -255)
+        assert space.str_w(space.execute("return [-255.42].pack 'D'")) == pack("d", -255.42)

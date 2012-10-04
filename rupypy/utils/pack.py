@@ -1,6 +1,11 @@
+from pypy.rlib import jit, longlong2float
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
+from pypy.rlib.rstruct.ieee import float_pack
 from pypy.rlib.unroll import unrolling_iterable
+
+from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.floatobject import W_FloatObject
 
 
 codes = "CcSsIiLlQqNnVvUwDdFfEeGgAaZBbHhuMmPp@Xx"
@@ -25,7 +30,7 @@ class RPacker(object):
         self.args_index = 0
         self.result = []
 
-    def native_code_count(self, idx):
+    def native_code_count(self, idx, ch):
         end = idx + 1
         while end < len(self.fmt) and self.fmt[end] in native_endian_codes:
             end += 1
@@ -33,11 +38,11 @@ class RPacker(object):
         if native_chars > 0 and ch not in native_codes:
             raise self.space.error(
                 self.space.w_ArgumentError,
-                "%s allowed only after types %s" % (modifier, native_codes)
+                "%s allowed only after types %s" % (self.fmt[idx + 1], native_codes)
             )
         return native_chars
 
-    def check_for_bigendianess_code(self, idx):
+    def check_for_bigendianess_code(self, idx, ch):
         end = idx + 1
         while end < len(self.fmt) and self.fmt[end] in endianess_codes:
             end += 1
@@ -45,7 +50,7 @@ class RPacker(object):
         if endian_chars > 0 and ch not in mappable_codes:
             raise self.space.error(
                 self.space.w_ArgumentError,
-                "%s allowed only after types %s" % (modifier, native_codes)
+                "%s allowed only after types %s" % (self.fmt[idx + 1], native_codes)
             )
         elif endian_chars > 1:
             raise self.space.error(self.space.w_RangeError, "Can't use both '<' and '>'")
@@ -55,10 +60,10 @@ class RPacker(object):
             bigendian = native_is_bigendian
         return bigendian
 
-    def check_for_star(self, idx):
+    def check_for_star(self, idx, ch):
         return (
             idx + 1 < len(self.fmt) and
-            self.fmt[idx] in starrable_codes and
+            ch in starrable_codes and
             self.fmt[idx + 1] == "*"
         )
 
@@ -89,14 +94,14 @@ class RPacker(object):
                 idx += 1
                 continue
 
-            native_code_count = self.native_code_count(idx)
+            native_code_count = self.native_code_count(idx, ch)
             idx += native_code_count
 
-            bigendian = self.check_for_bigendianess_code(idx)
+            bigendian = self.check_for_bigendianess_code(idx, ch)
             if bigendian:
                 idx += 1
 
-            starred = self.check_for_star(idx)
+            starred = self.check_for_star(idx, ch)
             if starred:
                 idx += 1
 
@@ -142,20 +147,44 @@ def make_int_packer(size=0, signed=True, bigendian=native_is_bigendian):
         packer.args_index += repetitions
     return pack_int
 
-def move_to(packer, position):
+def pack_move_to(packer, position):
     if len(packer.result) < position:
         packer.result.extend(["\0"] * (position - len(packer.result)))
     else:
         packer.result[position:] = []
 
-def back_up(packer, repetitions):
+def pack_back_up(packer, repetitions):
     if len(packer.result) < repetitions:
         raise packer.space.error(packer.space.w_ArgumentError, "X outside of string")
     else:
         packer.result[len(packer.result) - repetitions:] = []
 
-def padding(packer, repetitions):
+def pack_padding(packer, repetitions):
     packer.result.extend(["\0"] * repetitions)
+
+def make_float_packer(size=0, bigendian=native_is_bigendian):
+    range_unroll = unrolling_iterable(list(reversed(range(size))))
+    def pack_float(packer, repetitions):
+        space = packer.space
+        if repetitions > len(packer.args_w):
+            raise space.error(space.w_ArgumentError, "too few arguments")
+        for i in xrange(packer.args_index, repetitions + packer.args_index):
+            w_item = packer.args_w[i]
+            if not (isinstance(w_item, W_FloatObject) or isinstance(w_item, W_FixnumObject)):
+                raise space.error(
+                    space.w_TypeError,
+                    "can't convert %s into Float" % space.getclass(w_item).name
+                )
+            doubleval = space.float_w(w_item)
+            l = []
+            unsigned = float_pack(doubleval, size)
+            for i in range(size):
+                l.append(chr((unsigned >> (i * 8)) & 0xff))
+            if bigendian:
+                l.reverse()
+            packer.result.extend(l)
+        packer.args_index += repetitions
+    return pack_float
 
 def make_pack_operators():
     ops = [None] * 255
@@ -186,12 +215,12 @@ def make_pack_operators():
     # converters[ord('U')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
     # converters[ord('w')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
 
-    # converters[ord('f')] = converters[ord('F')] = FloatMappingConverter("f")
-    # converters[ord('d')] = converters[ord('D')] = FloatMappingConverter("d")
-    # converters[ord('E')] = FloatMappingConverter("<d")
-    # converters[ord('e')] = FloatMappingConverter("<f")
-    # converters[ord('G')] = FloatMappingConverter(">d")
-    # converters[ord('g')] = FloatMappingConverter(">f")
+    ops[ord('f')] = ops[ord('F')] = make_float_packer(size=4)
+    ops[ord('d')] = ops[ord('D')] = make_float_packer(size=8)
+    ops[ord('E')] = make_float_packer(size=8, bigendian=False)
+    ops[ord('e')] = make_float_packer(size=4, bigendian=False)
+    ops[ord('G')] = make_float_packer(size=8, bigendian=True)
+    ops[ord('g')] = make_float_packer(size=4, bigendian=True)
 
     # converters[ord('A')] = StringMappingConverter("s", padding=" ")
     # converters[ord('a')] = StringMappingConverter("s")
@@ -208,9 +237,9 @@ def make_pack_operators():
     # converters[ord('P')] # not supported
     # converters[ord('p')] # not supported
 
-    ops[ord('@')] = move_to
-    ops[ord('X')] = back_up
-    ops[ord('x')] = padding
+    ops[ord('@')] = pack_move_to
+    ops[ord('X')] = pack_back_up
+    ops[ord('x')] = pack_padding
 
     return ops
 
