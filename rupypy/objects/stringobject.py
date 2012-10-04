@@ -131,9 +131,7 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         changed = False
         for i, c in enumerate(storage):
-            # TODO: obscure hack because lower() returns a string, rather than
-            # a char, this should be fixed upstream.
-            new_c = c.lower()[0]
+            new_c = c.lower()
             changed |= (c != new_c)
             storage[i] = new_c
         return changed
