@@ -20,6 +20,20 @@ class W_IOObject(W_Object):
         if self.fd > 3:
             os.close(self.fd)
 
+    @classmethod
+    def setup_class(cls, space, w_cls):
+        w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
+        space.globals.set("$stdin", w_stdin)
+        space.set_const(space.w_object, "STDIN", w_stdin)
+
+        w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
+        space.globals.set("$stdout", w_stdout)
+        space.set_const(space.w_object, "STDOUT", w_stdout)
+
+        w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
+        space.globals.set("$stderr", w_stderr)
+        space.set_const(space.w_object, "STDERR", w_stderr)
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_IOObject(space)

@@ -266,3 +266,23 @@ class W_ArrayObject(W_Object):
     def method_pack(self, space, template):
         result = RPacker(space, template, space.listview(self)).operate()
         return space.newstr_fromchars(result)
+
+    classdef.app_method("""
+    def ==(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.size != other.size
+            return false
+        end
+        self.each_with_index do |x, i|
+            if x != other[i]
+                return false
+            end
+        end
+        return true
+    end
+    """)

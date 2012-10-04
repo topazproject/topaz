@@ -189,7 +189,7 @@ class Parser(object):
         return BoxAST(ast.InstanceVariable(box.getstr()))
 
     def new_class_var(self, box):
-        return BoxAST(ast.ClassVariable(box.getstr()))
+        return BoxAST(ast.ClassVariable(box.getstr(), box.getsourcepos().lineno))
 
     def concat_literals(self, head, tail):
         if head is None:
@@ -1355,12 +1355,7 @@ class Parser(object):
 
     @pg.production("aref_args : assocs trailer")
     def aref_args_assocs_trailer(self, p):
-        """
-        assocs trailer {
-                    $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call_args(self.new_hash(p[0]))
 
     @pg.production("paren_args : LPAREN2 opt_call_args rparen")
     def paren_args(self, p):
@@ -1507,19 +1502,8 @@ class Parser(object):
 
     @pg.production("primary : LPAREN compstmt RPAREN")
     def primary_lparen(self, p):
-        """
-        tLPAREN compstmt tRPAREN {
-                    if ($2 != null) {
-                        // compstmt position includes both parens around it
-                        ((ISourcePositionHolder) $2).setPosition($1.getPosition());
-                        $$ = $2;
-                    } else {
-                        $$ = new NilNode($1.getPosition());
-                    }
-                }
-        """
-        # TODO: null?
-        return BoxAST(ast.Block(p[1].getastlist()))
+        node = ast.Block(p[1].getastlist()) if p[1] is not None else ast.Nil()
+        return BoxAST(node)
 
     @pg.production("primary : primary_value COLON2 CONSTANT")
     def primary_constant_lookup(self, p):
@@ -1831,7 +1815,7 @@ class Parser(object):
 
     @pg.production("opt_else : ELSE compstmt")
     def opt_else(self, p):
-        return BoxAST(ast.Block(p[1].getastlist()))
+        return BoxAST(ast.Block(p[1].getastlist()) if p[1] is not None else ast.Nil())
 
     @pg.production("for_var : mlhs")
     @pg.production("for_var : lhs")

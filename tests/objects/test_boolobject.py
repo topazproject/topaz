@@ -6,6 +6,10 @@ class TestTrueObject(BaseRuPyPyTest):
         w_res = space.execute("return true.to_s")
         assert space.str_w(w_res) == "true"
 
+    def test_inspect(self, space):
+        w_res = space.execute("return true.inspect")
+        assert space.str_w(w_res) == "true"
+
     def test_eql(self, space):
         w_res = space.execute("return true == false")
         assert self.unwrap(space, w_res) is False
@@ -18,6 +22,7 @@ class TestTrueObject(BaseRuPyPyTest):
         assert space.execute("return true ^ false") is space.w_true
         assert space.execute("return true ^ true") is space.w_false
         assert space.execute("return true ^ 1") is space.w_false
+
 
 class TestFalseObject(BaseRuPyPyTest):
     def test_to_s(self, space):
