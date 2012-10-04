@@ -8,6 +8,7 @@ class TestExceptionObject(BaseRuPyPyTest):
         space.execute("""
         Exception
         LoadError
+        SyntaxError
         """)
 
     def test_new(self, space):
