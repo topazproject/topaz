@@ -212,8 +212,8 @@ def make_pack_operators():
     ops[ord("n")] = ops[ord("S") + BE_offset]
     ops[ord("v")] = ops[ord("S") + LE_offset]
 
-    # converters[ord('U')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
-    # converters[ord('w')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
+    # ops[ord('U')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
+    # ops[ord('w')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
 
     ops[ord('f')] = ops[ord('F')] = make_float_packer(size=4)
     ops[ord('d')] = ops[ord('D')] = make_float_packer(size=8)
@@ -222,20 +222,20 @@ def make_pack_operators():
     ops[ord('G')] = make_float_packer(size=8, bigendian=True)
     ops[ord('g')] = make_float_packer(size=4, bigendian=True)
 
-    # converters[ord('A')] = StringMappingConverter("s", padding=" ")
-    # converters[ord('a')] = StringMappingConverter("s")
-    # converters[ord('Z')] = StringMappingConverter("s")
-    # converters[ord('Z') - 1] = StringMappingConverter("Z", end_null=True)
+    # ops[ord('A')] = StringMappingConverter("s", padding=" ")
+    # ops[ord('a')] = StringMappingConverter("s")
+    # ops[ord('Z')] = StringMappingConverter("s")
+    # ops[ord('Z') - 1] = StringMappingConverter("Z", end_null=True)
 
-    # converters[ord('B')] = BitStringConverter(msb=True)
-    # converters[ord('b')] = BitStringConverter(msb=False)
-    # converters[ord('H')] = HexStringConverter(high=True)
-    # converters[ord('h')] = HexStringConverter(high=False)
-    # converters[ord('u')] = UUStringConverter()
-    # converters[ord('M')] = QuotedPrintableStringConverter()
-    # converters[ord('m')] = Base64StringConverter()
-    # converters[ord('P')] # not supported
-    # converters[ord('p')] # not supported
+    # ops[ord('B')] = BitStringConverter(msb=True)
+    # ops[ord('b')] = BitStringConverter(msb=False)
+    # ops[ord('H')] = HexStringConverter(high=True)
+    # ops[ord('h')] = HexStringConverter(high=False)
+    # ops[ord('u')] = UUStringConverter()
+    # ops[ord('M')] = QuotedPrintableStringConverter()
+    # ops[ord('m')] = Base64StringConverter()
+    # ops[ord('P')] # not supported
+    # ops[ord('p')] # not supported
 
     ops[ord('@')] = pack_move_to
     ops[ord('X')] = pack_back_up
