@@ -381,3 +381,9 @@ class W_StringObject(W_Object):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
         return self if new_string else space.w_nil
+
+    classdef.app_method("""
+    def empty?
+        self.length == 0
+    end
+    """)
