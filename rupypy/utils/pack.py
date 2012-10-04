@@ -186,6 +186,24 @@ def make_float_packer(size=0, bigendian=native_is_bigendian):
         packer.args_index += repetitions
     return pack_float
 
+def pack_string_common(packer, width):
+    space = packer.space
+    string = space.str_w(
+        space.convert_type(packer.args_w[packer.args_index], space.w_string, "to_str")
+    )
+    packer.args_index += 1
+    return string
+
+def pack_string_space_padded(packer, width):
+    packer.result.extend(pack_string_common(packer, width)[:width].ljust(width))
+
+def pack_string_null_padded(packer, width):
+    packer.result.extend(pack_string_common(packer, width)[:width].ljust(width, "\0"))
+
+def pack_string_null_terminated(packer, width):
+    packer.result.extend(pack_string_common(packer, width))
+    packer.result.append("\0")
+
 def make_pack_operators():
     ops = [None] * 255
 
@@ -212,8 +230,8 @@ def make_pack_operators():
     ops[ord("n")] = ops[ord("S") + BE_offset]
     ops[ord("v")] = ops[ord("S") + LE_offset]
 
-    # ops[ord('U')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
-    # ops[ord('w')] = IntMappingConverter("i", min=-2**31, max=2**31 - 1)
+    # ops[ord('U')] # pack UTF-8 sequence
+    # ops[ord('w')] # BER-compressed integer
 
     ops[ord('f')] = ops[ord('F')] = make_float_packer(size=4)
     ops[ord('d')] = ops[ord('D')] = make_float_packer(size=8)
@@ -222,20 +240,19 @@ def make_pack_operators():
     ops[ord('G')] = make_float_packer(size=8, bigendian=True)
     ops[ord('g')] = make_float_packer(size=4, bigendian=True)
 
-    # ops[ord('A')] = StringMappingConverter("s", padding=" ")
-    # ops[ord('a')] = StringMappingConverter("s")
-    # ops[ord('Z')] = StringMappingConverter("s")
-    # ops[ord('Z') - 1] = StringMappingConverter("Z", end_null=True)
+    ops[ord('A')] = pack_string_space_padded
+    ops[ord('a')] = ops[ord('Z')] = pack_string_null_padded
+    ops[ord('Z') - 1] = pack_string_null_terminated
 
-    # ops[ord('B')] = BitStringConverter(msb=True)
-    # ops[ord('b')] = BitStringConverter(msb=False)
-    # ops[ord('H')] = HexStringConverter(high=True)
-    # ops[ord('h')] = HexStringConverter(high=False)
-    # ops[ord('u')] = UUStringConverter()
-    # ops[ord('M')] = QuotedPrintableStringConverter()
-    # ops[ord('m')] = Base64StringConverter()
-    # ops[ord('P')] # not supported
-    # ops[ord('p')] # not supported
+    # ops[ord('B')] # bitstring (msb first)
+    # ops[ord('b')] # bitstring (lsb first)
+    # ops[ord('H')] # hexstring (high first)
+    # ops[ord('h')] # hexstring (low first)
+    # ops[ord('u')] # UU-encoding
+    # ops[ord('M')] # MIME-encoding
+    # ops[ord('m')] # base64-encoding
+    # ops[ord('P')] # pointer to fixed-length structure
+    # ops[ord('p')] # pointer to null-terminated string
 
     ops[ord('@')] = pack_move_to
     ops[ord('X')] = pack_back_up

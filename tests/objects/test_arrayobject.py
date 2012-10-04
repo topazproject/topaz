@@ -326,3 +326,11 @@ class TestArrayPack(BaseRuPyPyTest):
         assert space.str_w(space.execute("return [-255].pack 'd'")) == pack("d", -255)
         assert space.str_w(space.execute("return [-255].pack 'D'")) == pack("d", -255)
         assert space.str_w(space.execute("return [-255.42].pack 'D'")) == pack("d", -255.42)
+
+    def test_strings(self, space):
+        string = "abö"
+        assert space.str_w(space.execute("return ['%s'].pack 'a'" % string)) == string[0]
+        assert space.str_w(space.execute("return ['%s'].pack 'A6'" % string)) == string + "  "
+        assert space.str_w(space.execute("return ['abö'].pack 'a6'")) == string + "\0\0"
+        assert space.str_w(space.execute("return ['abö'].pack 'Z6'")) == string + "\0\0"
+        assert space.str_w(space.execute("return ['abö'].pack 'Z*'")) == string + "\0"
