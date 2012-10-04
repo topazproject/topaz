@@ -400,6 +400,9 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.ConstantInt(4))
             ])))
         ]))
+        assert space.parse("if nil; else; end") == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.Nil(), ast.Nil(), ast.Nil()))
+        ]))
 
     def test_elsif(self, space):
         r = space.parse("""

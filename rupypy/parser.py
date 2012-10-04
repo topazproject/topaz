@@ -1815,7 +1815,7 @@ class Parser(object):
 
     @pg.production("opt_else : ELSE compstmt")
     def opt_else(self, p):
-        return BoxAST(ast.Block(p[1].getastlist()))
+        return BoxAST(ast.Block(p[1].getastlist()) if p[1] is not None else ast.Nil())
 
     @pg.production("for_var : mlhs")
     @pg.production("for_var : lhs")
