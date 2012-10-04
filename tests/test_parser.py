@@ -119,6 +119,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("1 * (2 - 3)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(1), "*", [ast.Block([ast.Statement(ast.Send(ast.ConstantInt(2), "-", [ast.ConstantInt(3)], None, 1))])], None, 1))
         ]))
+        assert space.parse("()") == ast.Main(ast.Block([
+            ast.Statement(ast.Nil())
+        ]))
 
     def test_multiple_statements_no_sep(self, space):
         with self.raises(space, "SyntaxError"):

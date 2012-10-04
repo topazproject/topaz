@@ -1507,19 +1507,8 @@ class Parser(object):
 
     @pg.production("primary : LPAREN compstmt RPAREN")
     def primary_lparen(self, p):
-        """
-        tLPAREN compstmt tRPAREN {
-                    if ($2 != null) {
-                        // compstmt position includes both parens around it
-                        ((ISourcePositionHolder) $2).setPosition($1.getPosition());
-                        $$ = $2;
-                    } else {
-                        $$ = new NilNode($1.getPosition());
-                    }
-                }
-        """
-        # TODO: null?
-        return BoxAST(ast.Block(p[1].getastlist()))
+        node = ast.Block(p[1].getastlist()) if p[1] is not None else ast.Nil()
+        return BoxAST(node)
 
     @pg.production("primary : primary_value COLON2 CONSTANT")
     def primary_constant_lookup(self, p):
