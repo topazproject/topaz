@@ -154,10 +154,11 @@ def pack_move_to(packer, position):
         packer.result[position:] = []
 
 def pack_back_up(packer, repetitions):
-    if len(packer.result) < repetitions:
+    size = len(packer.result)
+    if size < repetitions:
         raise packer.space.error(packer.space.w_ArgumentError, "X outside of string")
     else:
-        packer.result[len(packer.result) - repetitions:] = []
+        packer.result[size - repetitions:] = []
 
 def pack_padding(packer, repetitions):
     packer.result.extend(["\0"] * repetitions)
