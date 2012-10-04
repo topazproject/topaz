@@ -1355,12 +1355,7 @@ class Parser(object):
 
     @pg.production("aref_args : assocs trailer")
     def aref_args_assocs_trailer(self, p):
-        """
-        assocs trailer {
-                    $$ = support.newArrayNode($1.getPosition(), new Hash19Node(lexer.getPosition(), $1));
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call_args(self.new_hash(p[0]))
 
     @pg.production("paren_args : LPAREN2 opt_call_args rparen")
     def paren_args(self, p):
