@@ -1,3 +1,5 @@
+import copy
+
 from pypy.rlib.objectmodel import newlist_hint, compute_hash
 from pypy.rlib.rarithmetic import intmask
 from pypy.rlib.rerased import new_static_erasing_pair
@@ -145,6 +147,12 @@ class W_StringObject(W_Object):
         W_Object.__init__(self, space)
         self.str_storage = storage
         self.strategy = strategy
+
+    def __deepcopy__(self, memo):
+        obj = super(W_StringObject, self).__deepcopy__(memo)
+        obj.str_storage = copy.deepcopy(self.str_storage, memo)
+        obj.strategy = copy.deepcopy(self.strategy, memo)
+        return obj
 
     @staticmethod
     def newstr_fromstr(space, strvalue):
