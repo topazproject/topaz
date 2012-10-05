@@ -3,7 +3,7 @@ import platform
 
 import py
 
-from rupypy.main import entry_point
+from rupypy.main import _entry_point
 
 
 class TestMain(object):
@@ -17,7 +17,7 @@ class TestMain(object):
         else:
             f = None
         args += argv
-        res = entry_point(space, args)
+        res = _entry_point(space, args)
         assert res == status
         return f
 

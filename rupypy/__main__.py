@@ -1,6 +1,6 @@
 import sys
 
-from rupypy.main import entry_point, getspace
+from rupypy.main import entry_point
 
 
-entry_point(getspace(), sys.argv)
+entry_point(sys.argv)

@@ -15,7 +15,11 @@ def getspace():
     return ObjectSpace()
 
 
-def entry_point(space, argv):
+def entry_point(argv):
+    return _entry_point(getspace(), argv)
+
+
+def _entry_point(space, argv):
     verbose = False
     path = None
     argv_w = []
