@@ -30,6 +30,12 @@ class CellDict(object):
         self.values = {}
         self.version = VersionTag()
 
+    def __deepcopy__(self, memo):
+        c = object.__new__(self.__class__)
+        c.values = copy.deepcopy(self.values, memo)
+        c.version = copy.deepcopy(self.version, memo)
+        return c
+
     def mutated(self):
         self.version = VersionTag()
 
