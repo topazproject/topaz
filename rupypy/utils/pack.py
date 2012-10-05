@@ -17,7 +17,7 @@ moving_chars = "@Xx"
 
 BE_modifier = ">"
 LE_offset = ord("<") if native_is_bigendian else 0
-BE_offset = ord(">") if native_is_bigendian else 0
+BE_offset = 0 if native_is_bigendian else ord(">")
 non_native_endianess_offset = LE_offset if native_is_bigendian else BE_offset
 
 
@@ -179,12 +179,10 @@ def make_float_packer(size=0, bigendian=native_is_bigendian):
             doubleval = space.float_w(w_item)
             l = ["\0"] * size
             unsigned = float_pack(doubleval, size)
+            for i in xrange(size):
+                l[i] = chr((unsigned >> (i * 8)) & 0xff)
             if bigendian:
-                for i in xrange(size - 1, -1, -1):
-                    l[i] = chr((unsigned >> (i * 8)) & 0xff)
-            else:
-                for i in xrange(size):
-                    l[i] = chr((unsigned >> (i * 8)) & 0xff)
+                l.reverse()
             packer.result.extend(l)
         packer.args_index += repetitions
     return pack_float

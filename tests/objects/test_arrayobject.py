@@ -348,3 +348,41 @@ class TestArrayPack(BaseRuPyPyTest):
         assert space.str_w(space.execute("return ['abö'].pack 'a6'")) == string + "\0\0"
         assert space.str_w(space.execute("return ['abö'].pack 'Z6'")) == string + "\0\0"
         assert space.str_w(space.execute("return ['abö'].pack 'Z*'")) == string + "\0"
+
+    def test_endianess(self, space):
+        assert space.str_w(space.execute("return [42].pack 's<'")) == pack("<h", 42)
+        assert space.str_w(space.execute("return [42].pack 's>'")) == pack(">h", 42)
+        assert space.str_w(space.execute("return [42].pack 'S<'")) == pack("<H", 42)
+        assert space.str_w(space.execute("return [42].pack 'S>'")) == pack(">H", 42)
+
+        assert space.str_w(space.execute("return [42].pack 'i<'")) == pack("<i", 42)
+        assert space.str_w(space.execute("return [42].pack 'i>'")) == pack(">i", 42)
+        assert space.str_w(space.execute("return [42].pack 'I<'")) == pack("<I", 42)
+        assert space.str_w(space.execute("return [42].pack 'I>'")) == pack(">I", 42)
+
+        assert space.str_w(space.execute("return [42].pack 'q<'")) == pack("<q", 42)
+        assert space.str_w(space.execute("return [42].pack 'q>'")) == pack(">q", 42)
+        assert space.str_w(space.execute("return [42].pack 'Q<'")) == pack("<Q", 42)
+        assert space.str_w(space.execute("return [42].pack 'Q>'")) == pack(">Q", 42)
+
+        assert space.str_w(space.execute("return [42].pack 'v'")) == pack("<H", 42)
+        assert space.str_w(space.execute("return [42].pack 'V'")) == pack("<I", 42)
+        assert space.str_w(space.execute("return [42].pack 'n'")) == pack(">H", 42)
+        assert space.str_w(space.execute("return [42].pack 'N'")) == pack(">I", 42)
+
+        assert space.str_w(space.execute("return [4.2].pack 'e'")) == pack("<f", 4.2)
+        assert space.str_w(space.execute("return [4.2].pack 'g'")) == pack(">f", 4.2)
+        assert space.str_w(space.execute("return [4.2].pack 'E'")) == pack("<d", 4.2)
+        assert space.str_w(space.execute("return [4.2].pack 'G'")) == pack(">d", 4.2)
+
+    def test_complex(self, space):
+        w_res = space.execute("""
+        return [65, 66, 5, 5, 4.2, 4.2, "hello"].pack 'c2s<s>egZ*'
+        """)
+        expected = (pack("2b", 65, 66) +
+                    pack("<h", 5) +
+                    pack(">h", 5) +
+                    pack("<f", 4.2) +
+                    pack(">f", 4.2) +
+                    "hello\0")
+        assert space.str_w(w_res) == expected
