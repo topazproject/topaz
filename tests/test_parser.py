@@ -119,6 +119,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("1 * (2 - 3)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(1), "*", [ast.Block([ast.Statement(ast.Send(ast.ConstantInt(2), "-", [ast.ConstantInt(3)], None, 1))])], None, 1))
         ]))
+        assert space.parse("()") == ast.Main(ast.Block([
+            ast.Statement(ast.Nil())
+        ]))
 
     def test_multiple_statements_no_sep(self, space):
         with self.raises(space, "SyntaxError"):
@@ -397,6 +400,9 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.ConstantInt(4))
             ])))
         ]))
+        assert space.parse("if nil; else; end") == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.Nil(), ast.Nil(), ast.Nil()))
+        ]))
 
     def test_elsif(self, space):
         r = space.parse("""
@@ -560,6 +566,11 @@ class TestParser(BaseRuPyPyTest):
                 ast.ConstantInt(1),
                 ast.Splat(ast.ConstantInt(2)),
                 ast.Splat(ast.ConstantInt(3)),
+            ]))
+        ]))
+        assert space.parse("[:abc => 3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([
+                ast.Hash([(ast.ConstantSymbol("abc"), ast.ConstantInt(3))])
             ]))
         ]))
 
@@ -793,7 +804,7 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('"\n"') == const_string("\n")
         assert space.parse('"\w"') == const_string("w")
         assert space.parse('"\M-a"') == const_string("\xe1")
-        assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab"))
+        assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab", 1))
 
     def test_percent_terms(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
@@ -2027,7 +2038,7 @@ HERE
         @@a = @@b
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Assignment(ast.ClassVariable("@@a"), ast.ClassVariable("@@b")))
+            ast.Statement(ast.Assignment(ast.ClassVariable("@@a", 2), ast.ClassVariable("@@b", 2)))
         ]))
 
     def test_shellout(self, space):

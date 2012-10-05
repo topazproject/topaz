@@ -24,6 +24,12 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'ABC'.size")
         assert space.int_w(w_res) == 3
 
+    def test_emptyp(self, space):
+        w_res = space.execute("return ''.empty?")
+        assert w_res is space.w_true
+        w_res = space.execute("return 'a'.empty?")
+        assert w_res is space.w_false
+
     def test_subscript_constant(self, space):
         w_res = space.execute("""
         a = "hello there"

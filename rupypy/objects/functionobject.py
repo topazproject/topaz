@@ -1,3 +1,5 @@
+import copy
+
 from pypy.rlib import jit
 
 from rupypy.frame import BuiltinFrame
@@ -14,6 +16,12 @@ class W_UserFunction(W_FunctionObject):
     def __init__(self, name, bytecode):
         self.name = name
         self.bytecode = bytecode
+
+    def __deepcopy__(self, memo):
+        obj = super(W_UserFunction, self).__deepcopy__(memo)
+        obj.name = self.name
+        obj.bytecode = copy.deepcopy(self.bytecode, memo)
+        return obj
 
     @jit.unroll_safe
     def call(self, space, w_receiver, args_w, block):
@@ -34,6 +42,12 @@ class W_BuiltinFunction(W_FunctionObject):
     def __init__(self, name, func):
         self.name = name
         self.func = func
+
+    def __deepcopy__(self, memo):
+        obj = super(W_BuiltinFunction, self).__deepcopy__(memo)
+        obj.name = self.name
+        obj.func = self.func
+        return obj
 
     def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)

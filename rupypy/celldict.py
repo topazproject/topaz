@@ -1,16 +1,26 @@
+import copy
+
 from pypy.rlib import jit
 
 from rupypy.objects.objectobject import W_BaseObject
 
 
 class VersionTag(object):
-    pass
+    def __deepcopy__(self, memo):
+        memo[id(self)] = result = VersionTag()
+        return result
 
 
 class Cell(W_BaseObject):
     def __init__(self, name):
         self.name = name
         self.w_value = None
+
+    def __deepcopy__(self, memo):
+        obj = super(Cell, self).__deepcopy__(memo)
+        obj.name = self.name
+        obj.w_value = copy.deepcopy(self.w_value, memo)
+        return obj
 
 
 class CellDict(object):
