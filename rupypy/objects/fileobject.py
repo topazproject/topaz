@@ -20,6 +20,11 @@ class W_IOObject(W_Object):
         if self.fd > 3:
             os.close(self.fd)
 
+    def __deepcopy__(self, memo):
+        obj = super(W_IOObject, self).__deepcopy__(memo)
+        obj.fd = self.fd
+        return obj
+
     @classmethod
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])

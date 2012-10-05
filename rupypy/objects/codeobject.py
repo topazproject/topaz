@@ -1,3 +1,5 @@
+import copy
+
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_BaseObject
 
@@ -51,6 +53,26 @@ class W_CodeObject(W_BaseObject):
             splat_arg_loc, splat_arg_pos = self._get_arg_pos_loc(splat_arg, locals, cellvars)
         self.splat_arg_loc = splat_arg_loc
         self.splat_arg_pos = splat_arg_pos
+
+    def __deepcopy__(self, memo):
+        obj = super(W_CodeObject, self).__deepcopy__(memo)
+        obj.name = self.name
+        obj.filepath = self.filepath
+        obj.code = self.code
+        obj.max_stackdepth = self.max_stackdepth
+        obj.consts_w = copy.deepcopy(self.consts_w, memo)
+        obj.defaults = copy.deepcopy(self.defaults, memo)
+        obj.locals = self.locals
+        obj.cellvars = self.cellvars
+        obj.freevars = self.freevars
+        obj.lineno_table = self.lineno_table
+        obj.arg_locs = self.arg_locs
+        obj.arg_pos = self.arg_pos
+        obj.block_arg_loc = self.block_arg_loc
+        obj.block_arg_pos = self.block_arg_pos
+        obj.splat_arg_loc = self.splat_arg_loc
+        obj.splat_arg_pos = self.splat_arg_pos
+        return obj
 
     def _get_arg_pos_loc(self, arg, locals, cellvars):
         if arg in locals:

@@ -1,4 +1,5 @@
 import struct
+import copy
 
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
@@ -7,6 +8,7 @@ from rupypy.objects.objectobject import W_Object
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.utils.pack import RPacker
 
+
 class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef)
     classdef.include_module(Enumerable)
@@ -14,6 +16,11 @@ class W_ArrayObject(W_Object):
     def __init__(self, space, items_w):
         W_Object.__init__(self, space)
         self.items_w = items_w
+
+    def __deepcopy__(self, memo):
+        obj = super(W_ArrayObject, self).__deepcopy__(memo)
+        obj.items_w = copy.deepcopy(self.items_w, memo)
+        return obj
 
     def listview(self, space):
         return self.items_w
