@@ -51,6 +51,10 @@ class StringStrategy(object):
     def __init__(self, space):
         pass
 
+    def __deepcopy__(self, memo):
+        memo[id(self)] = result = object.__new__(self.__class__)
+        return result
+
 
 class ConstantStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("constant")
