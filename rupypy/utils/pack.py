@@ -1,10 +1,9 @@
-from pypy.rlib import jit, longlong2float
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
-from pypy.rlib.rstruct.ieee import float_pack
 
-from rupypy.objects.intobject import W_FixnumObject
-from rupypy.objects.floatobject import W_FloatObject
+from rupypy.utils.packing.intpacking import make_int_packer
+from rupypy.utils.packing.floatpacking import make_float_packer
+from rupypy.utils.packing.stringpacking import make_string_packer
 
 
 codes = "CcSsIiLlQqNnVvUwDdFfEeGgAaZBbHhuMmPp@Xx"
@@ -124,27 +123,6 @@ class RPacker(object):
         return self.result
 
 
-def make_int_packer(size=0, signed=True, bigendian=native_is_bigendian):
-    def pack_int(packer, repetitions):
-        space = packer.space
-        if repetitions > len(packer.args_w):
-            raise space.error(space.w_ArgumentError, "too few arguments")
-
-        for i in xrange(packer.args_index, repetitions + packer.args_index):
-            num = space.int_w(
-                space.convert_type(packer.args_w[i], space.w_fixnum, "to_int")
-            )
-            if bigendian:
-                for i in xrange(size - 1, -1, -1):
-                    x = (num >> (8*i)) & 0xff
-                    packer.result.append(chr(x))
-            else:
-                for i in xrange(size - 1, -1, -1):
-                    packer.result.append(chr(num & 0xff))
-                    num >>= 8
-        packer.args_index += repetitions
-    return pack_int
-
 def pack_move_to(packer, position):
     if len(packer.result) < position:
         packer.result.extend(["\0"] * (position - len(packer.result)))
@@ -163,53 +141,6 @@ def pack_back_up(packer, repetitions):
 
 def pack_padding(packer, repetitions):
     packer.result.extend(["\0"] * repetitions)
-
-def make_float_packer(size=0, bigendian=native_is_bigendian):
-    def pack_float(packer, repetitions):
-        space = packer.space
-        if repetitions > len(packer.args_w):
-            raise space.error(space.w_ArgumentError, "too few arguments")
-        for i in xrange(packer.args_index, repetitions + packer.args_index):
-            w_item = packer.args_w[i]
-            if not (isinstance(w_item, W_FloatObject) or isinstance(w_item, W_FixnumObject)):
-                raise space.error(
-                    space.w_TypeError,
-                    "can't convert %s into Float" % space.getclass(w_item).name
-                )
-            doubleval = space.float_w(w_item)
-            l = ["\0"] * size
-            unsigned = float_pack(doubleval, size)
-            for i in xrange(size):
-                l[i] = chr((unsigned >> (i * 8)) & 0xff)
-            if bigendian:
-                l.reverse()
-            packer.result.extend(l)
-        packer.args_index += repetitions
-    return pack_float
-
-def pack_string_common(packer, width):
-    space = packer.space
-    string = space.str_w(
-        space.convert_type(packer.args_w[packer.args_index], space.w_string, "to_str")
-    )
-    packer.args_index += 1
-    return string
-
-def pack_string_space_padded(packer, width):
-    assert width >= 0
-    string = pack_string_common(packer, width)[:width]
-    packer.result += string
-    packer.result.extend([" "] * (width - len(string)))
-
-def pack_string_null_padded(packer, width):
-    assert width >= 0
-    string = pack_string_common(packer, width)[:width]
-    packer.result += string
-    packer.result.extend(["\0"] * (width - len(string)))
-
-def pack_string_null_terminated(packer, width):
-    packer.result += pack_string_common(packer, width)
-    packer.result.append("\0")
 
 def make_pack_operators():
     ops = [None] * 255
@@ -247,9 +178,9 @@ def make_pack_operators():
     ops[ord('G')] = make_float_packer(size=8, bigendian=True)
     ops[ord('g')] = make_float_packer(size=4, bigendian=True)
 
-    ops[ord('A')] = pack_string_space_padded
-    ops[ord('a')] = ops[ord('Z')] = pack_string_null_padded
-    ops[ord('Z') - 1] = pack_string_null_terminated
+    ops[ord('A')] = make_string_packer(padding=" ")
+    ops[ord('a')] = ops[ord('Z')] = make_string_packer(padding="\0")
+    ops[ord('Z') - 1] = make_string_packer(nullterminated=True)
 
     # ops[ord('B')] # bitstring (msb first)
     # ops[ord('b')] # bitstring (lsb first)
