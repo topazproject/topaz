@@ -16,8 +16,10 @@ def getspace():
 
 
 def entry_point(argv):
-    space = getspace()
+    return _entry_point(getspace(), argv)
 
+
+def _entry_point(space, argv):
     verbose = False
     path = None
     argv_w = []

@@ -1,3 +1,5 @@
+import copy
+
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
@@ -18,6 +20,11 @@ class W_BaseObject(object):
     _attrs_ = []
 
     classdef = ClassDef("BasicObject")
+
+    def __deepcopy__(self, memo):
+        obj = object.__new__(self.__class__)
+        memo[id(self)] = obj
+        return obj
 
     @classmethod
     def setup_class(cls, space, w_cls):
@@ -49,7 +56,7 @@ class W_BaseObject(object):
         name = space.symbol_w(w_name)
         class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
         raise space.error(space.w_NoMethodError,
-            "undefined method `%s` for %s" % (name, class_name)
+            "undefined method `%s' for %s" % (name, class_name)
         )
 
     @classdef.method("==")
@@ -148,6 +155,12 @@ class W_Object(W_RootObject):
             klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
         self.storage = []
+
+    def __deepcopy__(self, memo):
+        obj = super(W_Object, self).__deepcopy__(memo)
+        obj.map = copy.deepcopy(self.map, memo)
+        obj.storage = copy.deepcopy(self.storage, memo)
+        return obj
 
     def getclass(self, space):
         return jit.promote(self.map).get_class()

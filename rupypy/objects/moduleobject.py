@@ -1,3 +1,5 @@
+import copy
+
 from pypy.rlib import jit
 
 from rupypy.celldict import CellDict, VersionTag
@@ -47,6 +49,21 @@ class W_ModuleObject(W_RootObject):
         self.lexical_scope = None
         self.included_modules = []
         self.descendants = []
+
+    def __deepcopy__(self, memo):
+        obj = super(W_ModuleObject, self).__deepcopy__(memo)
+        obj.name = self.name
+        obj.klass = copy.deepcopy(self.klass, memo)
+        obj.superclass = copy.deepcopy(self.superclass, memo)
+        obj.version = copy.deepcopy(self.version, memo)
+        obj.methods_w = copy.deepcopy(self.methods_w, memo)
+        obj.constants_w = copy.deepcopy(self.constants_w, memo)
+        obj.class_variables = copy.deepcopy(self.class_variables, memo)
+        obj.instance_variables = copy.deepcopy(self.instance_variables, memo)
+        obj.lexical_scope = copy.deepcopy(self.lexical_scope, memo)
+        obj.included_modules = copy.deepcopy(self.included_modules, memo)
+        obj.descendants = copy.deepcopy(self.descendants, memo)
+        return obj
 
     def getclass(self, space):
         if self.klass is not None:

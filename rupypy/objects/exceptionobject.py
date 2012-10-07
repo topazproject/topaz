@@ -40,6 +40,10 @@ class W_ExceptionObject(W_Object):
         else:
             return space.send(space.getclassfor(self.__class__), space.newsymbol("new"), [w_string])
 
+    @classdef.method("message")
+    def method_message(self, space):
+        return space.newstr_fromstr(self.msg)
+
 class W_ScriptError(W_ExceptionObject):
     classdef = ClassDef("ScriptError", W_ExceptionObject.classdef)
     method_allocate = new_exception_allocate(classdef)

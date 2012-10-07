@@ -24,6 +24,11 @@ class W_FixnumObject(W_RootObject):
     def __init__(self, space, intvalue):
         self.intvalue = intvalue
 
+    def __deepcopy__(self, memo):
+        obj = super(W_FixnumObject, self).__deepcopy__(memo)
+        obj.intvalue = self.intvalue
+        return obj
+
     def int_w(self, space):
         return self.intvalue
 
@@ -80,6 +85,13 @@ class W_FixnumObject(W_RootObject):
             raise space.error(space.w_ZeroDivisionError,
                 "divided by 0"
             )
+
+    @classdef.method("<<", other="int")
+    def method_left_shift(self, space, other):
+        if other < 0:
+            return space.newint(self.intvalue >> -other)
+        else:
+            return space.newint(self.intvalue << other)
 
     @classdef.method("==")
     def method_eq(self, space, w_other):

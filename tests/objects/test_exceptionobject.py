@@ -8,6 +8,7 @@ class TestExceptionObject(BaseRuPyPyTest):
         space.execute("""
         Exception
         LoadError
+        SyntaxError
         """)
 
     def test_new(self, space):
@@ -41,3 +42,13 @@ class TestExceptionObject(BaseRuPyPyTest):
     def test_systemcallerror(self, space):
         w_res = space.execute("return SystemCallError.new('msg', 1).errno")
         assert space.int_w(w_res) == 1
+
+    def test_message(self, space):
+        w_res = space.execute("""
+        begin
+            raise "foo"
+        rescue StandardError => e
+            return e.message
+        end
+        """)
+        assert self.unwrap(space, w_res) == "foo"
