@@ -223,3 +223,9 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.str_w(w_res) == "hhxo"
         w_res = space.execute("return 'hello'.tr_s!('','').nil?")
         assert self.unwrap(space, w_res) is True
+
+    def test_match_operator(self, space):
+        w_res = space.execute("return 'abc' =~ 1")
+        assert w_res is space.w_nil
+        w_res = space.execute("return 'abc' =~ /abc/")
+        assert space.int_w(w_res) == 0
