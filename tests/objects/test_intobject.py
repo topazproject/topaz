@@ -64,6 +64,14 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 1 > 2")
         assert w_res is space.w_false
 
+    def test_less_or_equal_than(self, space):
+        assert space.execute("return 1 <= 2") is space.w_true
+        assert space.execute("return 1 <= 1") is space.w_true
+        assert space.execute("return 1 <= 1.1") is space.w_true
+        assert space.execute("return 1 <= 0.9") is space.w_false
+        with self.raises(space, "ArgumentError", "comparison of Fixnum with String failed"):
+            space.execute("return 1 <= 'a'")
+
     def test_times(self, space):
         w_res = space.execute("""
         res = []

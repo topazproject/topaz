@@ -1,6 +1,7 @@
 from rupypy.module import ClassDef
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
+from rupypy.objects.numericobject import W_NumericObject
 from rupypy.objects.objectobject import W_RootObject
 
 
@@ -113,6 +114,16 @@ class W_FixnumObject(W_RootObject):
     @classdef.method(">", other="int")
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
+
+    @classdef.method("<=")
+    def method_let(self, space, w_other):
+        if not (isinstance(w_other, W_NumericObject) or isinstance(w_other, W_FixnumObject)):
+            raise space.error(
+                space.w_ArgumentError,
+                "comparison of Fixnum with %s failed" % space.getclass(w_other).name
+            )
+        else:
+            return space.newbool(self.intvalue <= space.float_w(w_other))
 
     @classdef.method("-@")
     def method_neg(self, space):
