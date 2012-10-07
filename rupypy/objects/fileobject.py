@@ -33,6 +33,7 @@ class W_IOObject(W_Object):
 
         w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
         space.globals.set("$stdout", w_stdout)
+        space.globals.set("$>", w_stdout)
         space.set_const(space.w_object, "STDOUT", w_stdout)
 
         w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
@@ -96,6 +97,13 @@ class W_IOObject(W_Object):
             return w_str
         else:
             return w_read_str
+
+    classdef.app_method("""
+    def << s
+        write(s)
+        return self
+    end
+    """)
 
     @classdef.method("write")
     def method_write(self, space, w_str):

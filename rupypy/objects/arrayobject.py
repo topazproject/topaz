@@ -255,12 +255,28 @@ class W_ArrayObject(W_Object):
                 del self.items_w[pop_size:]
                 return space.newarray(res_w)
 
+    classdef.app_method("""
+    def delete(obj)
+        sz = self.size
+        self.delete_if { |o| o == obj }
+        return obj if sz != self.size
+        return yield if block_given?
+        return nil
+    end
+    """)
+
     @classdef.method("delete_at", idx="int")
     def method_delete_at(self, space, idx):
         if idx >= len(self.items_w):
             return space.w_nil
         else:
             return self.items_w.pop(idx)
+
+    classdef.app_method("""
+    def first
+        return self[0]
+    end
+    """)
 
     @classdef.method("last")
     def method_last(self, space):
