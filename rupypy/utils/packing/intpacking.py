@@ -12,7 +12,7 @@ def make_int_packer(size=0, signed=True, bigendian=native_is_bigendian):
             )
             if bigendian:
                 for i in xrange(size - 1, -1, -1):
-                    x = (num >> (8*i)) & 0xff
+                    x = (num >> (8 * i)) & 0xff
                     packer.result.append(chr(x))
             else:
                 for i in xrange(size - 1, -1, -1):
