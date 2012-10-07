@@ -98,6 +98,13 @@ class W_IOObject(W_Object):
         else:
             return w_read_str
 
+    classdef.app_method("""
+    def << s
+        write(s)
+        return self
+    end
+    """)
+
     @classdef.method("write")
     def method_write(self, space, w_str):
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
