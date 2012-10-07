@@ -103,7 +103,7 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_fixnum, self.w_string,
+            self.w_fixnum, self.w_string, self.w_class, self.w_module,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -112,6 +112,10 @@ class ObjectSpace(object):
 
             self.w_kernel, self.w_topaz,
 
+            self.getclassfor(W_NilObject),
+            self.getclassfor(W_TrueObject),
+            self.getclassfor(W_FalseObject),
+            self.getclassfor(W_SymbolObject),
             self.getclassfor(W_NumericObject),
             self.getclassfor(W_HashObject),
             self.getclassfor(W_RangeObject),

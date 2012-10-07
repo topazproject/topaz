@@ -2,6 +2,9 @@ from ..base import BaseRuPyPyTest
 
 
 class TestTrueObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("TrueClass")
+
     def test_to_s(self, space):
         w_res = space.execute("return true.to_s")
         assert space.str_w(w_res) == "true"
@@ -25,6 +28,9 @@ class TestTrueObject(BaseRuPyPyTest):
 
 
 class TestFalseObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("FalseClass")
+
     def test_to_s(self, space):
         w_res = space.execute("return false.to_s")
         assert space.str_w(w_res) == "false"
