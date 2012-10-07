@@ -871,6 +871,15 @@ class TestBlocks(BaseRuPyPyTest):
             [1, 2, 3].map(&"to_s")
             """)
 
+    def test_too_few_block_arguments(self, space):
+        w_res = space.execute("""
+        def f
+            yield 1
+        end
+        return f { |a,b,c| [a,b,c] }
+        """)
+        assert self.unwrap(space, w_res) == [1, None, None]
+
     def test_block_return(self, space):
         w_res = space.execute("""
         def f
