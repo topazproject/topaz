@@ -133,6 +133,9 @@ class W_ModuleObject(W_RootObject):
             return self.superclass.find_inherited_const(space, name)
         return res
 
+    def find_local_const(self, space, name):
+        return self._find_const_pure(name, self.version)
+
     @jit.elidable
     def _find_const_pure(self, name, version):
         return self.constants_w.get(name, None)
