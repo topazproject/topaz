@@ -2,6 +2,9 @@ from ..base import BaseRuPyPyTest
 
 
 class TestSymbolObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("Symbol")
+
     def test_symbol(self, space):
         w_res = space.execute("return :foo")
         assert space.symbol_w(w_res) == "foo"

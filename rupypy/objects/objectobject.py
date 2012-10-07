@@ -114,6 +114,7 @@ class W_RootObject(W_BaseObject):
     def method_is_kind_ofp(self, space, w_mod):
         return space.newbool(self.is_kind_of(space, w_mod))
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("#<%s:0x%x>" % (
