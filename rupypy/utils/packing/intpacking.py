@@ -3,7 +3,7 @@ from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
 def make_int_packer(size=0, signed=True, bigendian=native_is_bigendian):
     def pack_int(packer, repetitions):
         space = packer.space
-        if repetitions > len(packer.args_w):
+        if repetitions > len(packer.args_w) - packer.args_index:
             raise space.error(space.w_ArgumentError, "too few arguments")
 
         for i in xrange(packer.args_index, repetitions + packer.args_index):

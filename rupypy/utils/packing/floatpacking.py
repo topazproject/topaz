@@ -8,7 +8,7 @@ from rupypy.objects.floatobject import W_FloatObject
 def make_float_packer(size=0, bigendian=native_is_bigendian):
     def pack_float(packer, repetitions):
         space = packer.space
-        if repetitions > len(packer.args_w):
+        if repetitions > len(packer.args_w) - packer.args_index:
             raise space.error(space.w_ArgumentError, "too few arguments")
         for i in xrange(packer.args_index, repetitions + packer.args_index):
             w_item = packer.args_w[i]

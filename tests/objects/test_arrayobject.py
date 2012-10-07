@@ -1,3 +1,4 @@
+import struct
 from struct import pack
 
 from ..base import BaseRuPyPyTest
@@ -386,3 +387,20 @@ class TestArrayPack(BaseRuPyPyTest):
                     pack(">f", 4.2) +
                     "hello\0")
         assert space.str_w(w_res) == expected
+
+    def test_pointers(self, space):
+        pointerlen = struct.calcsize("P")
+        w_res = space.execute("return [''].pack 'P'")
+        assert space.str_w(w_res) == "\0" * pointerlen
+        w_res = space.execute("return [''].pack 'p'")
+        assert space.str_w(w_res) == "\0" * pointerlen
+
+    def test_errors(self, space):
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'P'")
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'a'")
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'c'")
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'f'")

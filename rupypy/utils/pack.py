@@ -3,7 +3,7 @@ from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
 
 from rupypy.utils.packing.intpacking import make_int_packer
 from rupypy.utils.packing.floatpacking import make_float_packer
-from rupypy.utils.packing.stringpacking import make_string_packer
+from rupypy.utils.packing.stringpacking import make_string_packer, pack_pointer
 
 
 codes = "CcSsIiLlQqNnVvUwDdFfEeGgAaZBbHhuMmPp@Xx"
@@ -189,8 +189,7 @@ def make_pack_operators():
     # ops[ord('u')] # UU-encoding
     # ops[ord('M')] # MIME-encoding
     # ops[ord('m')] # base64-encoding
-    # ops[ord('P')] # pointer to fixed-length structure
-    # ops[ord('p')] # pointer to null-terminated string
+    ops[ord('P')] = ops[ord('p')] = pack_pointer
 
     ops[ord('@')] = pack_move_to
     ops[ord('X')] = pack_back_up
