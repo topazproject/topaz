@@ -148,6 +148,16 @@ class BaseTestOrderedDict(object):
     def test_iteritems_next_method(self):
         assert self.iteritems_next_method(2) == 5
 
+    @runner.func
+    def contains(n):
+        o = OrderedDict()
+        o[4] = 5
+        return n in o
+
+    def test_contains(self):
+        assert self.contains(4)
+        assert not self.contains(5)
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):
