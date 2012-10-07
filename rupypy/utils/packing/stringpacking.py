@@ -1,7 +1,7 @@
-from pypy.rlib.rarithmetic import r_uint
+from pypy.rpython.lltypesystem import rffi
 
 
-pointerlen = 8 if r_uint.BITS > 32 else 4
+pointerlen = rffi.sizeof(rffi.INTPTR_T)
 
 
 def make_string_packer(padding=" ", nullterminated=False):
