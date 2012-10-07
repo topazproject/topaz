@@ -1622,6 +1622,8 @@ HERE
         assert space.parse('$"') == simple_global('$"')
         assert space.parse("$&") == simple_global("$&")
         assert space.parse("$+") == simple_global("$+")
+        assert space.parse("$`") == simple_global("$`")
+        assert space.parse("$'") == simple_global("$'")
 
     def test_comments(self, space):
         r = space.parse("""
