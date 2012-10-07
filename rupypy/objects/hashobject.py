@@ -41,6 +41,13 @@ class W_HashObject(W_Object):
     end
     """)
 
+    @classdef.method("key?")
+    @classdef.method("has_key?")
+    @classdef.method("member?")
+    @classdef.method("include?")
+    def method_includep(self, space, w_key):
+        return space.newbool(self.contents.get(w_key, None) is not None)
+
 
 class W_HashIterator(W_Object):
     classdef = ClassDef("HashIterator", W_Object.classdef)
