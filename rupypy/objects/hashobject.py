@@ -47,7 +47,7 @@ class W_HashObject(W_Object):
     @classdef.method("member?")
     @classdef.method("include?")
     def method_includep(self, space, w_key):
-        return space.newbool(self.contents.get(w_key, None) is not None)
+        return space.newbool(w_key in self.contents)
 
 
 class W_HashIterator(W_Object):
