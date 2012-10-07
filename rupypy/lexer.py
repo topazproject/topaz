@@ -477,8 +477,13 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\!\"":
+        if ch in "!@&+`'=~/\\,.;<>_*\"$:?":
             self.add(ch)
+            yield self.emit("GVAR")
+        elif ch == "-":
+            if self.peek().isalnum():
+                self.add(ch)
+                self.add(self.read())
             yield self.emit("GVAR")
         else:
             self.unread()

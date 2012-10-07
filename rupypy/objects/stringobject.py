@@ -7,6 +7,8 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.regexpobject import W_RegexpObject
+from rupypy.utils.re import re_rffi as re
 
 
 def create_trans_table(source, replacement, inv=False):
@@ -287,6 +289,25 @@ class W_StringObject(W_Object):
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
 
+    @classdef.method("=~")
+    def method_comparator(self, space, w_other):
+        return space.send(w_other, space.newsymbol("=~"), [self])
+
+    @classdef.method("match")
+    def method_match(self, space, w_other):
+        if isinstance(w_other, W_StringObject):
+            w_regexp = space.send(
+                space.getclassfor(W_RegexpObject), space.newsymbol("new"), [w_other]
+            )
+        elif isinstance(w_other, W_RegexpObject):
+            w_regexp = w_other
+        else:
+            raise space.error(
+                space.w_ArgumentError,
+                "wrong argument type %s (expected Regexp)" % space.getclass(w_other).name
+            )
+        return space.send(w_regexp, space.newsymbol("match"), [self])
+
     @classdef.method("freeze")
     def method_freeze(self, space):
         pass
@@ -323,13 +344,30 @@ class W_StringObject(W_Object):
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=-1):
-        if w_sep is None:
-            sep = None
-        elif isinstance(w_sep, W_StringObject):
-            sep = space.str_w(w_sep)
+        if w_sep is None or isinstance(w_sep, W_StringObject):
+            sep = space.str_w(w_sep) if w_sep else None
+            results = space.str_w(self).split(sep, limit - 1)
+        elif isinstance(w_sep, W_RegexpObject):
+            results = []
+            string = space.str_w(self)
+            regexp = re.compile(w_sep.regexp, w_sep.options)
+            match = regexp.search(string)
+            while match and string and (limit == -1 or len(results) < limit):
+                if match.end() == 0:
+                    start = 1
+                else:
+                    start = match.start()
+                end = max(match.end(), 1)
+                results.append(string[:start])
+                string = string[end:]
+                match = regexp.search(string)
+            if string:
+                results.append(string)
         else:
-            raise NotImplementedError("Regexp separators for String#split")
-        results = space.str_w(self).split(sep, limit - 1)
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Regexp)" % space.getclass(w_sep).name
+            )
         return space.newarray([space.newstr_fromstr(s) for s in results])
 
     @classdef.method("downcase!")

@@ -1620,6 +1620,22 @@ HERE
         assert space.parse("$\\") == simple_global("$\\")
         assert space.parse("$!") == simple_global("$!")
         assert space.parse('$"') == simple_global('$"')
+        assert space.parse("$@") == simple_global("$@")
+        assert space.parse("$&") == simple_global("$&")
+        assert space.parse("$+") == simple_global("$+")
+        assert space.parse("$`") == simple_global("$`")
+        assert space.parse("$'") == simple_global("$'")
+        assert space.parse("$=") == simple_global("$=")
+        assert space.parse('$~') == simple_global('$~')
+        assert space.parse("$/") == simple_global("$/")
+        assert space.parse("$,") == simple_global("$,")
+        assert space.parse("$.") == simple_global("$.")
+        assert space.parse("$;") == simple_global("$;")
+        assert space.parse("$<") == simple_global("$<")
+        assert space.parse("$_") == simple_global("$_")
+        assert space.parse('$*') == simple_global('$*')
+        assert space.parse('$-0') == simple_global('$-0')
+        assert space.parse('$-F') == simple_global('$-F')
 
     def test_comments(self, space):
         r = space.parse("""
