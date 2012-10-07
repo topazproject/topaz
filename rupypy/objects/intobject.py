@@ -88,7 +88,10 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
-        return space.newint(self.intvalue << other)
+        if other < 0:
+            return space.newint(self.intvalue >> -other)
+        else:
+            return space.newint(self.intvalue << other)
 
     @classdef.method("==")
     def method_eq(self, space, w_other):
