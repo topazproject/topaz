@@ -10,9 +10,25 @@ I = 4
 M = 8
 N = 16
 F = 32
-    
+
+_alphanum = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
 def compile(regex, option_flags=0):
     return Regexp(regex, option_flags)
+    
+def escape(pattern):
+    "Escape all non-alphanumeric characters in pattern."
+    s = list(pattern)
+    alphanum = _alphanum
+    for i, c in enumerate(pattern):
+        if c not in alphanum:
+            if c == "\000":
+                s[i] = "\\000"
+            else:
+                s[i] = "\\" + c
+    return pattern[:0].join(s)
+
 
 class Regexp(object):
     
@@ -24,7 +40,8 @@ class Regexp(object):
         self.re_data = malloc(CConfig.re_data_ptr.TO, flavor='raw', zero=True)
         self.re_data.c_pattern = str2charp(self.pattern)
         self.re_data.c_flags = cast(INT, self.flags)
-        help_compile(self.re_data)    
+        if help_compile(self.re_data):
+            raise Exception, "Could not compile %s" % pattern    
         self.groups = int(self.re_data.c_num_regs) - 1
         
     def search(self, string):
@@ -50,7 +67,6 @@ class Match(object):
                 self.matches.append(("%s:"%i, 
                                      self.string[beg:end]))
         self.re_data = re_data
-        print self.matches
         
     def group(self, index):
         return self.matches[index][1]

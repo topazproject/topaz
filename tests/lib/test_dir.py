@@ -30,3 +30,11 @@ class TestDir(BaseRuPyPyTest):
         f.write("hello")
         with self.raises(space, "SystemCallError"):
             space.execute("Dir.delete('%s')" % str(d))
+            
+    def test_glob(self, space):
+        w_res = space.execute("return Dir.glob('AUTH*.*')")
+        assert ['AUTHORS.rst'] == space.listview(w_res)
+        w_res = space.execute("return Dir.glob(['A*', 'ru*'])")
+        assert ['rupypy', 'AUTHORS.rst'] == space.listview(w_res)
+        w_res = space.execute("return Dir.glob(['*pypy', 'ru*'])")
+        assert ['rupypy'] == space.listview(w_res)
