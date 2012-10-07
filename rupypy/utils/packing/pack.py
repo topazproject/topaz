@@ -67,16 +67,15 @@ class RPacker(object):
 
     def determine_repetitions(self, idx):
         end = idx + 1
-        if end < len(self.fmt) and self.fmt[end].isdigit():
-            repetitions = ord(self.fmt[end]) - ord('0')
+        repetitions = 0
+        while end < len(self.fmt) and self.fmt[end].isdigit():
+            try:
+                repetitions = ovfcheck(repetitions * 10 + (ord(self.fmt[end]) - ord('0')))
+            except OverflowError:
+                raise self.space.error(self.space.w_RangeError, "pack length too big")
             end += 1
-            while end < len(self.fmt) and self.fmt[end].isdigit():
-                try:
-                    repetitions = ovfcheck(repetitions * 10 + (ord(self.fmt[end]) - ord('0')))
-                except OverflowError:
-                    raise self.space.error(self.space.w_RangeError, "pack length too big")
-                end += 1
-        else:
+        if end == idx + 1:
+            # No explicit repetitions definition
             repetitions = 1
         return (repetitions, end - 1)
 
@@ -112,7 +111,7 @@ class RPacker(object):
             if bigendian != native_is_bigendian:
                 converter_idx += non_native_endianess_offset
 
-            indices.append([converter_idx, repetitions])
+            indices.append((converter_idx, repetitions))
             idx += 1
         return indices
 
@@ -147,8 +146,7 @@ def make_pack_operators():
 
     # Int Basics
     int_sizes = "csiq"
-    for size in xrange(0, len(int_sizes)):
-        code = int_sizes[size]
+    for size, code in enumerate(int_sizes):
         sidx = ord(code)
         uidx = ord(code.upper())
         ops[sidx] = make_int_packer(size=2**size, signed=True)
