@@ -268,6 +268,12 @@ class W_ArrayObject(W_Object):
         else:
             return self.items_w.pop(idx)
 
+    classdef.app_method("""
+    def first
+        return self[0]
+    end
+    """)
+
     @classdef.method("last")
     def method_last(self, space):
         if len(self.items_w) == 0:

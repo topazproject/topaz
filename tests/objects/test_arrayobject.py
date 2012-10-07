@@ -251,6 +251,10 @@ class TestArrayObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["cat", ["ant", "bat", "dog"], None]
 
+    def test_first(self, space):
+        assert space.int_w(space.execute("return [1, 2, 3].first")) == 1
+        assert space.execute("return [].first") == space.w_nil
+
     def test_last(self, space):
         assert space.int_w(space.execute("return [1, 2, 3].last")) == 3
         assert space.execute("return [].last") == space.w_nil
