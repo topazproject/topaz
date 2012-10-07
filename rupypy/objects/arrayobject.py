@@ -297,5 +297,5 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("clear")
     def method_clear(self):
-        self.items_w[0:len(self.items_w)] = []
+        self.items_w[:] = []
         return self
