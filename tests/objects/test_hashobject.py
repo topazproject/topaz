@@ -43,6 +43,14 @@ class TestHashObject(BaseRuPyPyTest):
         return result
         """)
         assert self.unwrap(space, w_res) == [[2, 3], ["four", 5], [3, 2]]
+        w_res = space.execute("""
+        result = []
+        {2 => 3}.each_pair do |k, v|
+            result << [k, v]
+        end
+        return result
+        """)
+        assert self.unwrap(space, w_res) == [[2, 3]]
 
     def test_includep(self, space):
         w_res = space.execute("""

@@ -39,6 +39,7 @@ class W_HashObject(W_Object):
             yield key, value
         end
     end
+    alias each_pair each
     """)
 
     @classdef.method("key?")
