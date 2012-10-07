@@ -42,6 +42,13 @@ class W_HashObject(W_Object):
     alias each_pair each
     """)
 
+    @classdef.method("key?")
+    @classdef.method("has_key?")
+    @classdef.method("member?")
+    @classdef.method("include?")
+    def method_includep(self, space, w_key):
+        return space.newbool(w_key in self.contents)
+
 
 class W_HashIterator(W_Object):
     classdef = ClassDef("HashIterator", W_Object.classdef)

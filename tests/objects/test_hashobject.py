@@ -51,3 +51,10 @@ class TestHashObject(BaseRuPyPyTest):
         return result
         """)
         assert self.unwrap(space, w_res) == [[2, 3]]
+
+    def test_includep(self, space):
+        w_res = space.execute("""
+        h = { "a" => 100, "b" => 200 }
+        return h.include?("a"), h.include?("z"), h.key?("a"), h.key?("z"), h.has_key?("a"), h.has_key?("z"), h.member?("a"), h.member?("z")
+        """)
+        assert self.unwrap(space, w_res) == [True, False, True, False, True, False, True, False]

@@ -28,6 +28,12 @@ class TestIO(BaseRuPyPyTest):
         space.execute('return IO.new(1, "w").write("%s")' % content)
         out, err = capfd.readouterr()
         assert out == content
+        content = "foo\n"
+
+    def test_push(self, space, capfd):
+        space.execute('return IO.new(1, "w") << "hello" << "world"')
+        out, err = capfd.readouterr()
+        assert out == "helloworld"
 
     def test_read(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
