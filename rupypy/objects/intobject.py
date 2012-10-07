@@ -86,6 +86,10 @@ class W_FixnumObject(W_RootObject):
                 "divided by 0"
             )
 
+    @classdef.method("<<", other="int")
+    def method_left_shift(self, space, other):
+        return space.newint(self.intvalue << other)
+
     @classdef.method("==")
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_FixnumObject):
