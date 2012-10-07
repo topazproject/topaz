@@ -48,6 +48,7 @@ from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.regexpobject import W_RegexpObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
+from rupypy.objects.threadobject import W_ThreadObject
 from rupypy.objects.timeobject import W_TimeObject
 from rupypy.parser import Parser
 
@@ -123,6 +124,7 @@ class ObjectSpace(object):
             self.getclassfor(W_EncodingObject),
             self.getclassfor(W_Random),
             self.getclassfor(W_TimeObject),
+            self.getclassfor(W_ThreadObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
@@ -148,6 +150,9 @@ class ObjectSpace(object):
             )
 
         self.w_top_self = W_Object(self, self.w_object)
+
+        # TODO ... make this right
+        self.w_main_thread = W_ThreadObject(self, [], None)
 
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
