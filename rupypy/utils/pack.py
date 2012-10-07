@@ -48,7 +48,7 @@ class RPacker(object):
         if endian_chars > 0 and ch not in mappable_codes:
             raise self.space.error(
                 self.space.w_ArgumentError,
-                "%s allowed only after types %s" % (self.fmt[idx + 1], native_codes)
+                "%s allowed only after types %s" % (self.fmt[idx + 1], mappable_codes)
             )
         elif endian_chars > 1:
             raise self.space.error(self.space.w_RangeError, "Can't use both '<' and '>'")

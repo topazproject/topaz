@@ -300,7 +300,7 @@ class TestArrayPack(BaseRuPyPyTest):
 
     def test_backing_up(self, space):
         assert space.str_w(space.execute("return [].pack 'xxXX'")) == ""
-        with self.raises(space, "ArgumentError"):
+        with self.raises(space, "ArgumentError", "X outside of string"):
             space.execute("[].pack 'X'")
 
     def test_char(self, space):
@@ -308,11 +308,11 @@ class TestArrayPack(BaseRuPyPyTest):
         assert space.str_w(space.execute("return [255].pack 'C'")) == pack("B", 255)
         assert space.str_w(space.execute("return [256].pack 'C'")) == pack("B", 256 % 256)
         assert space.str_w(space.execute("return [-255].pack 'C'")) == pack("B", -255 % 256)
-        with self.raises(space, "ArgumentError"):
+        with self.raises(space, "ArgumentError", "> allowed only after types SsIiLlQq"):
             space.execute("return [-255].pack 'C>'")
-        with self.raises(space, "ArgumentError"):
+        with self.raises(space, "ArgumentError", "! allowed only after types SsIiLl"):
             space.execute("return [-255].pack 'C!'")
-        with self.raises(space, "ArgumentError"):
+        with self.raises(space, "ArgumentError", "< allowed only after types SsIiLlQq"):
             space.execute("return [-255].pack 'C<'")
 
     def test_short(self, space):
@@ -321,6 +321,8 @@ class TestArrayPack(BaseRuPyPyTest):
         assert space.str_w(space.execute("return [12].pack 'S!'")) == pack("@h", 12)
         assert space.str_w(space.execute("return [12].pack 'S_'")) == pack("@h", 12)
         assert space.str_w(space.execute("return [12].pack 'S_!_'")) == pack("@h", 12)
+        with self.raises(space, "RangeError", "Can't use both '<' and '>'"):
+            space.execute("return [2].pack 'S><'")
 
     def test_long(self, space):
         assert space.str_w(space.execute("return [-255].pack 'I'")) == pack("I", -255 % 2**32)
@@ -404,3 +406,5 @@ class TestArrayPack(BaseRuPyPyTest):
             space.execute("return [].pack 'c'")
         with self.raises(space, "ArgumentError", "too few arguments"):
             space.execute("return [].pack 'f'")
+        with self.raises(space, "RangeError", "pack length too big"):
+            space.execute("return [].pack 'a18446744073709551617'")
