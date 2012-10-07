@@ -118,6 +118,7 @@ class ObjectSpace(object):
             self.getclassfor(W_Dir),
             self.getclassfor(W_EncodingObject),
             self.getclassfor(W_Random),
+            self.getclassfor(W_RegexpObject),
             self.getclassfor(W_TimeObject),
 
             self.getclassfor(W_ExceptionObject),
