@@ -1,3 +1,5 @@
+import copy
+
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
@@ -18,6 +20,11 @@ class W_BaseObject(object):
     _attrs_ = []
 
     classdef = ClassDef("BasicObject")
+
+    def __deepcopy__(self, memo):
+        obj = object.__new__(self.__class__)
+        memo[id(self)] = obj
+        return obj
 
     @classmethod
     def setup_class(cls, space, w_cls):
@@ -107,6 +114,7 @@ class W_RootObject(W_BaseObject):
     def method_is_kind_ofp(self, space, w_mod):
         return space.newbool(self.is_kind_of(space, w_mod))
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("#<%s:0x%x>" % (
@@ -148,6 +156,12 @@ class W_Object(W_RootObject):
             klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
         self.storage = []
+
+    def __deepcopy__(self, memo):
+        obj = super(W_Object, self).__deepcopy__(memo)
+        obj.map = copy.deepcopy(self.map, memo)
+        obj.storage = copy.deepcopy(self.storage, memo)
+        return obj
 
     def getclass(self, space):
         return jit.promote(self.map).get_class()

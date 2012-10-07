@@ -24,6 +24,12 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 3 / 5")
         assert space.int_w(w_res) == 0
 
+    def test_left_shift(self, space):
+        w_res = space.execute("return 3 << 4")
+        assert space.int_w(w_res) == 48
+        w_res = space.execute("return 48 << -4")
+        assert space.int_w(w_res) == 3
+
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
         assert w_res is space.w_true

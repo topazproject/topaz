@@ -23,6 +23,9 @@ class OrderedDict(object):
     def __setitem__(self, key, value):
         self.contents[self._key(key)] = value
 
+    def __contains__(self, key):
+        return self._key(key) in self.contents
+
     def _key(self, key):
         return DictKey(self, key)
 
@@ -201,6 +204,10 @@ class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
         self.generalize_key(key)
         return self.read_value()
 
+    def contains((self, key)):
+        self.generalize_key(key)
+        return model.s_Bool
+
 
 class OrderedDictRepr(Repr):
     def __init__(self, rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr):
@@ -337,6 +344,10 @@ class __extend__(pairtype(OrderedDictRepr, Repr)):
         hop.exception_is_here()
         v_res = hop.gendirectcall(LLOrderedDict.ll_getitem, v_dict, v_key)
         return self.recast_value(hop, v_res)
+
+    def rtype_contains((self, r_key), hop):
+        v_dict, v_key = hop.inputargs(self, self.key_repr)
+        return hop.gendirectcall(LLOrderedDict.ll_contains, v_dict, v_key)
 
 
 class __extend__(pairtype(OrderedDictRepr, OrderedDictRepr)):
@@ -489,6 +500,11 @@ class LLOrderedDict(object):
             return d.entries[i].value
         else:
             raise KeyError
+
+    @staticmethod
+    def ll_contains(d, key):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        return not bool(i & LLOrderedDict.HIGHEST_BIT)
 
     @staticmethod
     def ll_resize(d):

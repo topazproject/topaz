@@ -29,6 +29,15 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("a = 100; return a")
         assert space.int_w(w_res) == 100
 
+    def test_uninitailized_variables(self, space):
+        w_res = space.execute("""
+        if false
+            x = 5
+        end
+        return x
+        """)
+        assert w_res is space.w_nil
+
     def test_if(self, space):
         w_res = space.execute("if 3 then return 2 end")
         assert space.int_w(w_res) == 2
@@ -140,6 +149,18 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
+
+    def test_shadow_class(self, space):
+        w_res = space.execute("""
+        class X; class Y; end; end
+
+        class A < X
+          OLD_Y = Y
+          class Y; end
+        end
+        return A::OLD_Y.object_id == A::Y.object_id, A::OLD_Y.object_id == X::Y.object_id
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
 
     def test_singleton_class(self, space):
         w_res = space.execute("""
@@ -850,6 +871,15 @@ class TestBlocks(BaseRuPyPyTest):
             [1, 2, 3].map(&"to_s")
             """)
 
+    def test_too_few_block_arguments(self, space):
+        w_res = space.execute("""
+        def f
+            yield 1
+        end
+        return f { |a,b,c| [a,b,c] }
+        """)
+        assert self.unwrap(space, w_res) == [1, None, None]
+
     def test_block_return(self, space):
         w_res = space.execute("""
         def f
@@ -1004,6 +1034,16 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert space.int_w(w_res) == 3
+
+    def test_rescue_superclass(self, space):
+        w_res = space.execute("""
+        begin
+            1 / 0
+        rescue StandardError
+            return 0
+        end
+        """)
+        assert space.int_w(w_res) == 0
 
     def test_defined(self, space):
         w_res = space.execute("return [defined? A, defined? Array]")

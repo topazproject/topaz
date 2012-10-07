@@ -155,6 +155,13 @@ class TestObjectObject(BaseRuPyPyTest):
         s, oid = self.unwrap(space, w_res)
         assert s == "#<Object:0x%x>" % oid
 
+    def test_inspect(self, space):
+        w_res = space.execute("""
+        obj = Object.new
+        return obj.to_s == obj.inspect
+        """)
+        assert w_res == space.w_true
+
     def test_send(self, space):
         w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
         assert self.unwrap(space, w_res) == ['1', 3]

@@ -12,6 +12,11 @@ class W_SymbolObject(W_Object):
         W_Object.__init__(self, space)
         self.symbol = symbol
 
+    def __deepcopy__(self, memo):
+        obj = super(W_SymbolObject, self).__deepcopy__(memo)
+        obj.symbol = self.symbol
+        return obj
+
     def symbol_w(self, space):
         return self.symbol
 

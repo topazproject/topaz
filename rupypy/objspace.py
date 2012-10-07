@@ -101,14 +101,19 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_fixnum, self.w_string,
+            self.w_fixnum, self.w_string, self.w_class, self.w_module,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RuntimeError,
             self.w_SystemCallError, self.w_LoadError, self.w_StopIteration,
+            self.w_SyntaxError,
 
             self.w_kernel, self.w_topaz,
 
+            self.getclassfor(W_NilObject),
+            self.getclassfor(W_TrueObject),
+            self.getclassfor(W_FalseObject),
+            self.getclassfor(W_SymbolObject),
             self.getclassfor(W_NumericObject),
             self.getclassfor(W_HashObject),
             self.getclassfor(W_RangeObject),
@@ -383,7 +388,7 @@ class ObjectSpace(object):
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
         if len(bc.arg_locs) != 0:
-            frame.handle_args(self, bc, args_w, None)
+            frame.handle_block_args(self, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell

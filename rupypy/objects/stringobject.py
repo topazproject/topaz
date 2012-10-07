@@ -1,3 +1,5 @@
+import copy
+
 from pypy.rlib.objectmodel import newlist_hint, compute_hash
 from pypy.rlib.rarithmetic import intmask
 from pypy.rlib.rerased import new_static_erasing_pair
@@ -48,6 +50,10 @@ def expand_trans_str(source, res_len, inv=False):
 class StringStrategy(object):
     def __init__(self, space):
         pass
+
+    def __deepcopy__(self, memo):
+        memo[id(self)] = result = object.__new__(self.__class__)
+        return result
 
 
 class ConstantStringStrategy(StringStrategy):
@@ -131,9 +137,7 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         changed = False
         for i, c in enumerate(storage):
-            # TODO: obscure hack because lower() returns a string, rather than
-            # a char, this should be fixed upstream.
-            new_c = c.lower()[0]
+            new_c = c.lower()
             changed |= (c != new_c)
             storage[i] = new_c
         return changed
@@ -147,6 +151,12 @@ class W_StringObject(W_Object):
         W_Object.__init__(self, space)
         self.str_storage = storage
         self.strategy = strategy
+
+    def __deepcopy__(self, memo):
+        obj = super(W_StringObject, self).__deepcopy__(memo)
+        obj.str_storage = copy.deepcopy(self.str_storage, memo)
+        obj.strategy = copy.deepcopy(self.strategy, memo)
+        return obj
 
     @staticmethod
     def newstr_fromstr(space, strvalue):
@@ -381,3 +391,9 @@ class W_StringObject(W_Object):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
         return self if new_string else space.w_nil
+
+    classdef.app_method("""
+    def empty?
+        self.length == 0
+    end
+    """)

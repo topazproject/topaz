@@ -16,6 +16,11 @@ class W_ClassObject(W_ModuleObject):
             if not self.is_singleton and not space.bootstrap:
                 self.getsingletonclass(space)
 
+    def __deepcopy__(self, memo):
+        obj = super(W_ClassObject, self).__deepcopy__(memo)
+        obj.is_singleton = self.is_singleton
+        return obj
+
     def getsingletonclass(self, space):
         if self.klass is None:
             if self.superclass is None:

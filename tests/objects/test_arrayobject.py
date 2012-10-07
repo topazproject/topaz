@@ -228,6 +228,18 @@ class TestArrayObject(BaseRuPyPyTest):
         with self.raises(space, "TypeError"):
             space.execute("return [1].pop('a')")
 
+    def test_delete(self, space):
+        w_res = space.execute("""
+        a = [ "a", "b", "b", "b", "c" ]
+        r = []
+        r << a.delete("b")
+        r << a
+        r << a.delete("z")
+        r << a.delete("z") { "not found" }
+        return r
+        """)
+        assert self.unwrap(space, w_res) == ["b", ["a", "c"], None, "not found"]
+
     def test_delete_at(self, space):
         w_res = space.execute("""
         res = []
@@ -238,6 +250,10 @@ class TestArrayObject(BaseRuPyPyTest):
         return res
         """)
         assert self.unwrap(space, w_res) == ["cat", ["ant", "bat", "dog"], None]
+
+    def test_first(self, space):
+        assert space.int_w(space.execute("return [1, 2, 3].first")) == 1
+        assert space.execute("return [].first") == space.w_nil
 
     def test_last(self, space):
         assert space.int_w(space.execute("return [1, 2, 3].last")) == 3
@@ -265,3 +281,17 @@ class TestArrayObject(BaseRuPyPyTest):
     def test_push(self, space):
         w_res = space.execute("return [].push(2, 3)")
         assert self.unwrap(space, w_res) == [2, 3]
+
+    def test_eq(self, space):
+        w_res = space.execute("""
+        x = []
+        return [
+            [] == :abc,
+            [] == [],
+            [:abc] == [:abc],
+            x == (x << 2),
+            [1, 2, 3] == [1, 2, 4],
+            [1] == [1, 2],
+        ]
+        """)
+        assert self.unwrap(space, w_res) == [False, True, True, True, False, False]

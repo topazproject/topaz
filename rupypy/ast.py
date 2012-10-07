@@ -161,14 +161,14 @@ class TryExcept(Node):
             if handler.exceptions:
                 for exception in handler.exceptions:
                     next_handle = ctx.new_block()
+                    ctx.emit(consts.DUP_TOP)
                     exception.compile(ctx)
-                    ctx.emit(consts.COMPARE_EXC)
+                    ctx.emit(consts.ROT_TWO)
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
                     ctx.emit_jump(consts.JUMP_IF_TRUE, handle_block)
                     ctx.use_next_block(next_handle)
                 ctx.emit_jump(consts.JUMP, next_except)
-                ctx.use_next_block(handle_block)
-            else:
-                ctx.use_next_block(handle_block)
+            ctx.use_next_block(handle_block)
             if handler.target:
                 elems = handler.target.compile_receiver(ctx)
                 if elems == 1:
@@ -868,12 +868,14 @@ class InstanceVariable(Node):
 
 
 class ClassVariable(Node):
-    def __init__(self, name):
+    def __init__(self, name, lineno):
+        Node.__init__(self, lineno)
         self.name = name
 
     def compile(self, ctx):
-        self.compile_receiver(ctx)
-        self.compile_load(ctx)
+        with ctx.set_lineno(self.lineno):
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
 
     def compile_receiver(self, ctx):
         ctx.emit(consts.LOAD_SCOPE)

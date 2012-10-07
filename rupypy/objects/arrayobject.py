@@ -1,3 +1,5 @@
+import copy
+
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
@@ -10,6 +12,11 @@ class W_ArrayObject(W_Object):
     def __init__(self, space, items_w):
         W_Object.__init__(self, space)
         self.items_w = items_w
+
+    def __deepcopy__(self, memo):
+        obj = super(W_ArrayObject, self).__deepcopy__(memo)
+        obj.items_w = copy.deepcopy(self.items_w, memo)
+        return obj
 
     def listview(self, space):
         return self.items_w
@@ -244,6 +251,16 @@ class W_ArrayObject(W_Object):
                 del self.items_w[pop_size:]
                 return space.newarray(res_w)
 
+    classdef.app_method("""
+    def delete(obj)
+        sz = self.size
+        self.delete_if { |o| o == obj }
+        return obj if sz != self.size
+        return yield if block_given?
+        return nil
+    end
+    """)
+
     @classdef.method("delete_at", idx="int")
     def method_delete_at(self, space, idx):
         if idx >= len(self.items_w):
@@ -251,9 +268,35 @@ class W_ArrayObject(W_Object):
         else:
             return self.items_w.pop(idx)
 
+    classdef.app_method("""
+    def first
+        return self[0]
+    end
+    """)
+
     @classdef.method("last")
     def method_last(self, space):
         if len(self.items_w) == 0:
             return space.w_nil
         else:
             return self.items_w[len(self.items_w) - 1]
+
+    classdef.app_method("""
+    def ==(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.size != other.size
+            return false
+        end
+        self.each_with_index do |x, i|
+            if x != other[i]
+                return false
+            end
+        end
+        return true
+    end
+    """)
