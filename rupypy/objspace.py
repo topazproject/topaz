@@ -109,6 +109,7 @@ class ObjectSpace(object):
 
             self.w_kernel, self.w_topaz,
 
+            self.getclassfor(W_SymbolObject),
             self.getclassfor(W_NumericObject),
             self.getclassfor(W_StringObject),
             self.getclassfor(W_HashObject),
