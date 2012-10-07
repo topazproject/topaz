@@ -291,3 +291,11 @@ class TestArrayObject(BaseRuPyPyTest):
         ]
         """)
         assert self.unwrap(space, w_res) == [False, True, True, True, False, False]
+
+    def test_clear(self, space):
+        w_res = space.execute("""
+        a = [1,2,3]
+        a.clear
+        return a
+        """)
+        assert self.unwrap(space, w_res) == []
