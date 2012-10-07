@@ -2,6 +2,9 @@ from ..base import BaseRuPyPyTest
 
 
 class TestModuleObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("Module")
+
     def test_module_function(self, space):
         w_res = space.execute("""
         module Mod
