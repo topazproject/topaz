@@ -1,6 +1,7 @@
 from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
 
-def make_int_packer(size=0, signed=True, bigendian=native_is_bigendian):
+
+def make_int_packer(size, signed, bigendian):
     def pack_int(packer, repetitions):
         space = packer.space
         if repetitions > len(packer.args_w) - packer.args_index:

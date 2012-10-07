@@ -5,7 +5,7 @@ from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.floatobject import W_FloatObject
 
 
-def make_float_packer(size=0, bigendian=native_is_bigendian):
+def make_float_packer(size, bigendian):
     def pack_float(packer, repetitions):
         space = packer.space
         if repetitions > len(packer.args_w) - packer.args_index:

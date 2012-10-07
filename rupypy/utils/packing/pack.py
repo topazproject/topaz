@@ -149,8 +149,8 @@ def make_pack_operators():
     for size, code in enumerate(int_sizes):
         sidx = ord(code)
         uidx = ord(code.upper())
-        ops[sidx] = make_int_packer(size=2**size, signed=True)
-        ops[uidx] = make_int_packer(size=2**size, signed=False)
+        ops[sidx] = make_int_packer(size=2**size, signed=True, bigendian=native_is_bigendian)
+        ops[uidx] = make_int_packer(size=2**size, signed=False, bigendian=native_is_bigendian)
         if size > 0:
             ops[sidx + BE_offset] = make_int_packer(size=2**size, signed=True, bigendian=True)
             ops[uidx + BE_offset] = make_int_packer(size=2**size, signed=False, bigendian=True)
@@ -169,8 +169,8 @@ def make_pack_operators():
     # ops[ord('U')] # pack UTF-8 sequence
     # ops[ord('w')] # BER-compressed integer
 
-    ops[ord('f')] = ops[ord('F')] = make_float_packer(size=4)
-    ops[ord('d')] = ops[ord('D')] = make_float_packer(size=8)
+    ops[ord('f')] = ops[ord('F')] = make_float_packer(size=4, bigendian=native_is_bigendian)
+    ops[ord('d')] = ops[ord('D')] = make_float_packer(size=8, bigendian=native_is_bigendian)
     ops[ord('E')] = make_float_packer(size=8, bigendian=False)
     ops[ord('e')] = make_float_packer(size=4, bigendian=False)
     ops[ord('G')] = make_float_packer(size=8, bigendian=True)
