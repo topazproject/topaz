@@ -1082,6 +1082,11 @@ HERE
                 ast.Statement(ast.Variable("v", 1))
             ])), 1))
         ]))
+        assert space.parse("f (:a) { |b| 1 }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantSymbol("a")], ast.SendBlock([ast.Argument("b")], None, ast.Block([
+                ast.Statement(ast.ConstantInt(1)),
+            ])), 1))
+        ]))
 
     def test_yield(self, space):
         assert space.parse("yield") == ast.Main(ast.Block([
