@@ -1,3 +1,9 @@
+import os
+
+import py
+
+from rupypy.objects.procobject import W_ProcObject
+
 from ..base import BaseRuPyPyTest
 
 
@@ -229,3 +235,31 @@ class TestRequire(BaseRuPyPyTest):
     def test_responds_to(self, space):
         w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
         assert self.unwrap(space, w_res) == [False, True]
+
+
+class TestExec(BaseRuPyPyTest):
+    def fork_and_wait(self, space, capfd, code):
+        cpid = os.fork()
+        if cpid == 0:
+            space.execute(code)
+        else:
+            os.waitpid(cpid, 0)
+            out, err = capfd.readouterr()
+            return out
+
+    def test_exec_with_sh(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec 'echo $0'")
+        assert out == "sh\n"
+
+    def test_exec_directly(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec '/bin/echo', '$0'")
+        assert out == "$0\n"
+
+    def test_exec_with_custom_argv0(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec ['/bin/sh', 'argv0'], '-c', 'echo $0'")
+        assert out == "argv0\n"
+
+    @py.test.mark.xfail
+    def test_exec_with_path_search(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec 'echo', '$0'")
+        assert out == "$0\n"
