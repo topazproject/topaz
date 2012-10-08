@@ -573,6 +573,12 @@ class TestParser(BaseRuPyPyTest):
                 ast.Hash([(ast.ConstantSymbol("abc"), ast.ConstantInt(3))])
             ]))
         ]))
+        assert space.parse("[1, :abc => 3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([
+                ast.ConstantInt(1),
+                ast.Hash([(ast.ConstantSymbol("abc"), ast.ConstantInt(3))])
+            ]))
+        ]))
 
     def test_subscript(self, space):
         assert space.parse("[1][0]") == ast.Main(ast.Block([

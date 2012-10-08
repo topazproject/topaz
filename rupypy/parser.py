@@ -1346,12 +1346,7 @@ class Parser(object):
 
     @pg.production("aref_args : args LITERAL_COMMA assocs trailer")
     def aref_args_args_comma_assocs_trailer(self, p):
-        """
-        args ',' assocs trailer {
-                    $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_call_arg(p[0], self.new_hash(p[2]))
 
     @pg.production("aref_args : assocs trailer")
     def aref_args_assocs_trailer(self, p):
