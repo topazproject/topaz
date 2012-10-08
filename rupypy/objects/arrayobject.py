@@ -290,6 +290,10 @@ class W_ArrayObject(W_Object):
         result = RPacker(space, template, space.listview(self)).operate()
         return space.newstr_fromchars(result)
 
+    @classdef.method("to_ary")
+    def method_to_ary(self, space):
+        return self
+
     classdef.app_method("""
     def ==(other)
         if self.equal?(other)
