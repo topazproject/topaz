@@ -309,3 +309,8 @@ class W_ArrayObject(W_Object):
         return true
     end
     """)
+
+    @classdef.method("clear")
+    def method_clear(self):
+        del self.items_w[:]
+        return self
