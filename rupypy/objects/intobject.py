@@ -115,15 +115,24 @@ class W_FixnumObject(W_RootObject):
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
 
-    @classdef.method("<=")
-    def method_let(self, space, w_other):
-        if not (isinstance(w_other, W_NumericObject) or isinstance(w_other, W_FixnumObject)):
-            raise space.error(
-                space.w_ArgumentError,
-                "comparison of Fixnum with %s failed" % space.getclass(w_other).name
-            )
-        else:
+    @classdef.method("<=", other="float")
+    def method_let(self, space, other):
+        if isinstance(w_other, W_FloatObject):
             return space.newbool(self.intvalue <= space.float_w(w_other))
+        elif isinstance(w_other, W_FixnumObject):
+            return space.newbool(self.intvalue <= w_other.intvalue)
+        else:
+            w_ary = space.send(self, space.newsymbol("coerce"), [w_other])
+            if isinstance(w_ary, W_ArrayObject):
+                ary = space.listview(w_ary)
+                if (len(ary) == 2 and
+                    isinstance(ary[0], W_FloatObject) and
+                    isinstance(ary[1], W_FloatObject)):
+                    return space.send(ary[0], space.newsymbol("<="), ary[1:])
+        raise space.error(
+            space.w_ArgumentError,
+            "comparison of %s with %s failed" % (space.getclass(self), space.getclass(w_other))
+        )
 
     @classdef.method("-@")
     def method_neg(self, space):

@@ -15,6 +15,24 @@ class W_NumericObject(W_Object):
         else:
             return space.w_nil
 
+    @classdef.method("<=")
+    def method_let(self, space, w_other):
+        cmpresult = space.send(self, space.newsymbol("<=>"), [w_other])
+        if cmpresult is space.w_nil or space.int_w(cmpresult) > 0:
+            return space.w_false
+        else:
+            return space.w_true
+
+    @classdef.method("coerce")
+    def method_coerce(self, space, w_other):
+        if space.getclass(w_other) == space.getclass(self):
+            return space.newarray([w_other, self])
+        else:
+            return space.newarray([
+                    space.send(self, space.newsymbol("Float"), [w_other]),
+                    space.float_w(self)
+            ])
+
     @classdef.method("to_int")
     def method_to_int(self, space):
         return space.send(self, space.newsymbol("to_i"))

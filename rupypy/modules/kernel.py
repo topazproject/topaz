@@ -7,6 +7,8 @@ from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
 from rupypy.modules.process import Process
 from rupypy.objects.exceptionobject import W_ExceptionObject
+from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.numericobject import W_NumericObject
 from rupypy.objects.stringobject import W_StringObject
 
 
@@ -185,3 +187,18 @@ class Kernel(Module):
     @moduledef.method("respond_to?")
     def method_respond_top(self, space, w_name):
         return space.newbool(space.respond_to(self, w_name))
+
+    @moduledef.function("Float")
+    def method_Float(self, space, w_arg):
+        if w_arg is space.w_nil:
+            raise space.error(space.w_TypeError, "can't convert nil into Float")
+        elif isinstance(w_arg, W_NumericObject) or isinstance(w_arg, W_FixnumObject):
+            return space.newfloat(space.float_w(w_arg))
+        elif isinstance(w_arg, W_StringObject):
+            string = space.str_w(w_arg).strip()
+            try:
+                return space.newfloat(float(string))
+            except ValueError:
+                raise space.error(space.w_ArgumentError, "invalid value for Float(): %s" % string)
+        else:
+            return space.convert_type(w_arg, space.w_float, "to_f")

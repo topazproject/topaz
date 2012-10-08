@@ -81,6 +81,7 @@ class ObjectSpace(object):
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
+        self.w_float = self.getclassfor(W_FloatObject)
         self.w_module = self.getclassfor(W_ModuleObject)
         self.w_string = self.getclassfor(W_StringObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)

@@ -13,8 +13,13 @@ class Coerce(object):
 
     @staticmethod
     def float(space, w_obj):
-        w_float_obj = space.send(w_obj, space.newsymbol("to_f"))
-        return space.float_w(w_float_obj)
+        from rupypy.objects.intobject import W_FixnumObject
+        from rupypy.objects.numericobject import W_NumericObject
+        if isinstance(w_obj, W_FixnumObject) or isinstance(w_obj, W_NumericObject):
+            return space.float_w(w_obj)
+        else:
+            w_float_obj = space.send(w_obj, space.newsymbol("Float"), [w_obj])
+            return space.float_w(w_float_obj)
 
     @staticmethod
     def str(space, w_obj):
