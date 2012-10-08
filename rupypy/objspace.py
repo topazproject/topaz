@@ -16,7 +16,7 @@ from rupypy.frame import Frame
 from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError, Lexer
 from rupypy.lib.dir import W_Dir
-from rupypy.lib.random import W_Random
+from rupypy.lib.random import W_RandomObject
 from rupypy.module import ClassCache, ModuleCache
 from rupypy.modules.comparable import Comparable
 from rupypy.modules.enumerable import Enumerable
@@ -49,6 +49,7 @@ from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.regexpobject import W_RegexpObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
+from rupypy.objects.threadobject import W_ThreadObject
 from rupypy.objects.timeobject import W_TimeObject
 from rupypy.parser import Parser
 
@@ -124,7 +125,8 @@ class ObjectSpace(object):
             self.getclassfor(W_FileObject),
             self.getclassfor(W_Dir),
             self.getclassfor(W_EncodingObject),
-            self.getclassfor(W_Random),
+            self.getclassfor(W_RandomObject),
+            self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
 
             self.getclassfor(W_ExceptionObject),
