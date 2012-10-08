@@ -1087,6 +1087,9 @@ HERE
                 ast.Statement(ast.ConstantInt(1)),
             ])), 1))
         ]))
+        assert space.parse("a.b (:a) { }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "b", [ast.ConstantSymbol("a")], ast.SendBlock([], None, ast.Nil()), 1))
+        ]))
 
     def test_yield(self, space):
         assert space.parse("yield") == ast.Main(ast.Block([

@@ -689,12 +689,7 @@ class Parser(object):
 
     @pg.production("command : primary_value DOT operation2 command_args cmd_brace_block")
     def command_method_call_args_brace_block(self, p):
-        """
-        primary_value tDOT operation2 command_args cmd_brace_block {
-                    $$ = support.new_call($1, $3, $4, $5);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.combine_send_block(self.new_call(p[0], p[2], p[3]), p[4])
 
     @pg.production("command : primary_value COLON2 operation2 command_args", precedence="LOWEST")
     def command_colon_call_args(self, p):
