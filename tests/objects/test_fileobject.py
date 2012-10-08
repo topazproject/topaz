@@ -28,6 +28,12 @@ class TestIO(BaseRuPyPyTest):
         space.execute('return IO.new(1, "w").write("%s")' % content)
         out, err = capfd.readouterr()
         assert out == content
+        content = "foo\n"
+
+    def test_push(self, space, capfd):
+        space.execute('return IO.new(1, "w") << "hello" << "world"')
+        out, err = capfd.readouterr()
+        assert out == "helloworld"
 
     def test_read(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
@@ -83,12 +89,13 @@ class TestIO(BaseRuPyPyTest):
         w_res = space.execute("""
         STDOUT.puts("STDOUT")
         $stdout.puts("$stdout")
+        $>.puts("$>")
         STDERR.puts("STDERR")
         $stderr.puts("$stderr")
         return STDIN.read, $stdin.read
         """)
         out, err = capfd.readouterr()
-        assert out == "STDOUT\n$stdout\n"
+        assert out == "STDOUT\n$stdout\n$>\n"
         assert err == "STDERR\n$stderr\n"
         assert self.unwrap(space, w_res) == [None, None]
 
