@@ -15,8 +15,10 @@ def dir_glob(space, pattern, flag=0):
         if not flag:
             res = []
             for each in space.listview(pattern):
-                res += glob.glob(space.str_w(each))
-            return space.newarray(list(set(res)))
+                elem = glob.glob(space.str_w(each))
+                if elem not in res:
+                    res += elem
+            return space.newarray(res)
         else:
             raise NotImplementedError, "No usage of flags supported."
     elif isinstance(pattern, W_StringObject):
