@@ -7,6 +7,7 @@ from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.stringobject import W_StringObject
+from rupypy.objects.intobject import W_FixnumObject
 from rupypy.utils import glob
 
 def dir_glob(space, pattern, flag=0):
