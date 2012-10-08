@@ -27,6 +27,10 @@ class W_HashObject(W_Object):
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
 
+    @classdef.method("to_hash")
+    def method_to_hash(self, space):
+        return self
+
     classdef.app_method("""
     def each
         iter = Topaz::HashIterator.new(self)
@@ -41,6 +45,13 @@ class W_HashObject(W_Object):
     end
     alias each_pair each
     """)
+
+    @classdef.method("key?")
+    @classdef.method("has_key?")
+    @classdef.method("member?")
+    @classdef.method("include?")
+    def method_includep(self, space, w_key):
+        return space.newbool(w_key in self.contents)
 
 
 class W_HashIterator(W_Object):

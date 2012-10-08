@@ -7,6 +7,7 @@ from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
 from rupypy.modules.process import Process
 from rupypy.objects.exceptionobject import W_ExceptionObject
+from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.stringobject import W_StringObject
 
 
@@ -167,6 +168,49 @@ class Kernel(Module):
         return space.newbool(
             space.getexecutioncontext().gettopframe().get_block() is not None
         )
+
+    @moduledef.function("exec")
+    def method_exec(self, space, args_w):
+        if len(args_w) > 1 and space.respond_to(args_w[0], space.newsymbol("to_hash")):
+            raise space.error(space.w_NotImplementedError, "exec with environment")
+
+        if len(args_w) > 1 and space.respond_to(args_w[-1], space.newsymbol("to_hash")):
+            raise space.error(space.w_NotImplementedError, "exec with options")
+
+        if space.respond_to(args_w[0], space.newsymbol("to_ary")):
+            w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
+            cmd, argv0 = [
+                space.str_w(space.convert_type(
+                    w_e, space.w_string, "to_str"
+                )) for w_e in space.listview(w_cmd)
+            ]
+        else:
+            w_cmd = space.convert_type(args_w[0], space.w_string, "to_str")
+            cmd = space.str_w(w_cmd)
+            argv0 = None
+
+        if len(args_w) > 1 or argv0 is not None:
+            if argv0 is None:
+                sepidx = cmd.rfind(os.sep) + 1
+                if sepidx > 0:
+                    argv0 = cmd[sepidx:]
+                else:
+                    argv0 = cmd
+            args = [argv0]
+            args += [
+                space.str_w(space.convert_type(
+                    w_arg, space.w_string, "to_str"
+                )) for w_arg in args_w[1:]
+            ]
+            os.execv(cmd, args)
+        else:
+            shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
+            sepidx = shell.rfind(os.sep) + 1
+            if sepidx > 0:
+                argv0 = shell[sepidx:]
+            else:
+                argv0 = shell
+            os.execv(shell, [argv0, "-c", cmd])
 
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):

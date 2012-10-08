@@ -573,6 +573,12 @@ class TestParser(BaseRuPyPyTest):
                 ast.Hash([(ast.ConstantSymbol("abc"), ast.ConstantInt(3))])
             ]))
         ]))
+        assert space.parse("[1, :abc => 3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([
+                ast.ConstantInt(1),
+                ast.Hash([(ast.ConstantSymbol("abc"), ast.ConstantInt(3))])
+            ]))
+        ]))
 
     def test_subscript(self, space):
         assert space.parse("[1][0]") == ast.Main(ast.Block([
@@ -1075,6 +1081,14 @@ HERE
             ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], "v", ast.Block([
                 ast.Statement(ast.Variable("v", 1))
             ])), 1))
+        ]))
+        assert space.parse("f (:a) { |b| 1 }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantSymbol("a")], ast.SendBlock([ast.Argument("b")], None, ast.Block([
+                ast.Statement(ast.ConstantInt(1)),
+            ])), 1))
+        ]))
+        assert space.parse("a.b (:a) { }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "b", [ast.ConstantSymbol("a")], ast.SendBlock([], None, ast.Nil()), 1))
         ]))
 
     def test_yield(self, space):
@@ -2076,6 +2090,9 @@ HERE
         ]))
         assert space.parse("alias << b") == ast.Main(ast.Block([
             ast.Alias(ast.ConstantSymbol("<<"), ast.ConstantSymbol("b"), 1)
+        ]))
+        assert space.parse("alias :a :b") == ast.Main(ast.Block([
+            ast.Alias(ast.ConstantSymbol("a"), ast.ConstantSymbol("b"), 1)
         ]))
 
     def test_defined(self, space):

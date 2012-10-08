@@ -42,6 +42,12 @@ class Frame(BaseFrame):
         elif loc == bytecode.CELL:
             self.cells[pos].set(w_value)
 
+    def handle_block_args(self, space, bytecode, args_w, block):
+        minargc = len(bytecode.arg_locs) - len(bytecode.defaults)
+        if len(args_w) < minargc:
+            args_w.extend([space.w_nil] * (minargc - len(args_w)))
+        return self.handle_args(space, bytecode, args_w, block)
+
     @jit.unroll_safe
     def handle_args(self, space, bytecode, args_w, block):
         from rupypy.interpreter import Interpreter

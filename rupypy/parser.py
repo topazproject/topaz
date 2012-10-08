@@ -669,17 +669,11 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("cmd_brace_block : LBRACE_ARG opt_block_param compstmt RCURLY")
+    @pg.production("cmd_brace_block : LBRACE_ARG push_block_scope opt_block_param compstmt RCURLY")
     def cmd_brace_block(self, p):
-        """
-        tLBRACE_ARG {
-                    support.pushBlockScope();
-                } opt_block_param compstmt tRCURLY {
-                    $$ = new IterNode($1.getPosition(), $3, $4, support.getCurrentScope());
-                    support.popCurrentScope();
-                }
-        """
-        raise NotImplementedError(p)
+        box = self.new_send_block(p[2], p[3])
+        self.save_and_pop_scope(box.getast())
+        return box
 
     @pg.production("command : operation command_args", precedence="LOWEST")
     def command_operation_command_args(self, p):
@@ -687,12 +681,7 @@ class Parser(object):
 
     @pg.production("command : operation command_args cmd_brace_block")
     def command_operation_command_args_cmd_brace_block(self, p):
-        """
-        operation command_args cmd_brace_block {
-                    $$ = support.new_fcall($1, $2, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.combine_send_block(self.new_fcall(p[0], p[1]), p[2])
 
     @pg.production("command : primary_value DOT operation2 command_args", precedence="LOWEST")
     def command_method_call_args(self, p):
@@ -700,12 +689,7 @@ class Parser(object):
 
     @pg.production("command : primary_value DOT operation2 command_args cmd_brace_block")
     def command_method_call_args_brace_block(self, p):
-        """
-        primary_value tDOT operation2 command_args cmd_brace_block {
-                    $$ = support.new_call($1, $3, $4, $5);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.combine_send_block(self.new_call(p[0], p[2], p[3]), p[4])
 
     @pg.production("command : primary_value COLON2 operation2 command_args", precedence="LOWEST")
     def command_colon_call_args(self, p):
@@ -1013,12 +997,7 @@ class Parser(object):
 
     @pg.production("fsym : symbol")
     def fsym_symbol(self, p):
-        """
-        symbol {
-                    $$ = new LiteralNode($1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_symbol(p[0])
 
     @pg.production("fitem : fsym")
     def fitem_fsym(self, p):
@@ -1346,12 +1325,7 @@ class Parser(object):
 
     @pg.production("aref_args : args LITERAL_COMMA assocs trailer")
     def aref_args_args_comma_assocs_trailer(self, p):
-        """
-        args ',' assocs trailer {
-                    $$ = support.arg_append($1, new Hash19Node(lexer.getPosition(), $3));
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_call_arg(p[0], self.new_hash(p[2]))
 
     @pg.production("aref_args : assocs trailer")
     def aref_args_assocs_trailer(self, p):

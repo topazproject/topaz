@@ -3,6 +3,7 @@ import copy
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
+from rupypy.utils.packing.pack import RPacker
 
 
 class W_ArrayObject(W_Object):
@@ -268,12 +269,27 @@ class W_ArrayObject(W_Object):
         else:
             return self.items_w.pop(idx)
 
+    classdef.app_method("""
+    def first
+        return self[0]
+    end
+    """)
+
     @classdef.method("last")
     def method_last(self, space):
         if len(self.items_w) == 0:
             return space.w_nil
         else:
             return self.items_w[len(self.items_w) - 1]
+
+    @classdef.method("pack", template="str")
+    def method_pack(self, space, template):
+        result = RPacker(space, template, space.listview(self)).operate()
+        return space.newstr_fromchars(result)
+
+    @classdef.method("to_ary")
+    def method_to_ary(self, space):
+        return self
 
     classdef.app_method("""
     def ==(other)
@@ -294,3 +310,8 @@ class W_ArrayObject(W_Object):
         return true
     end
     """)
+
+    @classdef.method("clear")
+    def method_clear(self):
+        del self.items_w[:]
+        return self
