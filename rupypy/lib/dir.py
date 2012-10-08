@@ -13,12 +13,11 @@ from rupypy.utils import glob
 def dir_glob(space, pattern, flag=0):
     if isinstance(pattern, W_ArrayObject):
         if not flag:
-            res = []
+            res = {}
             for each in space.listview(pattern):
-                elem = glob.glob(space.str_w(each))
-                if elem not in res:
-                    res += elem
-            return space.newarray(res)
+                for elem in glob.glob(space.str_w(each)):
+                    res[elem] = 0
+            return space.newarray(res.keys())
         else:
             raise NotImplementedError, "No usage of flags supported."
     elif isinstance(pattern, W_StringObject):

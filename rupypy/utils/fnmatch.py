@@ -49,7 +49,6 @@ def filter(names, pat):
     pat=os.path.normcase(pat)
     if not pat in _cache:
         res = translate(pat)
-        print res
         if len(_cache) >= _MAXCACHE:
             _cache.clear()
         _cache[pat] = re.compile(res)
@@ -57,7 +56,6 @@ def filter(names, pat):
     if os.path is posixpath:
         # normcase on posix is NOP. Optimize it away from the loop.
         for name in names:
-            print name, search(name)
             if search(name):
                 result.append(name)
     else:
