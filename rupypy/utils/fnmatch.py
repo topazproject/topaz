@@ -44,18 +44,16 @@ def fnmatch(name, pat):
 
 def filter(names, pat):
     """Return the subset of the list NAMES that match PAT"""
-    import os,posixpath
+    import os
     result=[]
     pat=os.path.normcase(pat)
-    if not pat in _cache:
-        res = translate(pat)
-        if len(_cache) >= _MAXCACHE:
-            _cache.clear()
-        _cache[pat] = re.compile(res)
-    search=_cache[pat].search
-    if os.path is posixpath:
+    res = translate(pat)
+    regex = re.compile(res)
+    search=regex.search
+    if os.name == 'posix':
         # normcase on posix is NOP. Optimize it away from the loop.
         for name in names:
+            assert isinstance(name, str)
             if search(name):
                 result.append(name)
     else:
@@ -104,7 +102,7 @@ def translate(pat):
             if j >= n:
                 res = res + '\\['
             else:
-                stuff = pat[i:j].replace('\\','\\\\')
+                stuff = replace(pat[i:j], '\\','\\\\')
                 i = j+1
                 if stuff[0] == '!':
                     stuff = '^' + stuff[1:]
@@ -114,3 +112,13 @@ def translate(pat):
         else:
             res = res + re.escape(c)
     return '\A' + res + '\Z'
+    
+# replace that can handle string replacement
+def replace(string, old, new):
+    res = ""
+    for char in string:
+        if char == old:
+            res += new
+        else:
+            res += char
+    return res

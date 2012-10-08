@@ -11,22 +11,23 @@ M = 8
 N = 16
 F = 32
 
-_alphanum = frozenset(
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+_alphanum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 def compile(regex, option_flags=0):
     return Regexp(regex, option_flags)
     
 def escape(pattern):
     "Escape all non-alphanumeric characters in pattern."
-    s = list(pattern)
+    s = [""] * len(pattern)
     alphanum = _alphanum
-    for i, c in enumerate(pattern):
-        if c not in alphanum:
-            if c == "\000":
+    for i in range(len(pattern)):
+        if pattern[i] not in alphanum:
+            if pattern[i] == "\000":
                 s[i] = "\\000"
             else:
-                s[i] = "\\" + c
+                s[i] = "\\" + pattern[i]
+        else:
+            s[i] = pattern[i]
     return pattern[:0].join(s)
 
 
