@@ -361,29 +361,31 @@ class Case(Node):
         self.cond.compile(ctx)
         for when in self.whens:
             assert isinstance(when, When)
-            next_when = ctx.new_block()
-            when_block = ctx.new_block()
+            with ctx.set_lineno(when.lineno):
+                next_when = ctx.new_block()
+                when_block = ctx.new_block()
 
-            for expr in when.conds:
-                next_expr = ctx.new_block()
-                ctx.emit(consts.DUP_TOP)
-                expr.compile(ctx)
-                ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
-                ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
-                ctx.use_next_block(next_expr)
-            ctx.emit_jump(consts.JUMP, next_when)
-            ctx.use_next_block(when_block)
-            ctx.emit(consts.DISCARD_TOP)
-            when.block.compile(ctx)
-            ctx.emit_jump(consts.JUMP, end)
-            ctx.use_next_block(next_when)
+                for expr in when.conds:
+                    next_expr = ctx.new_block()
+                    ctx.emit(consts.DUP_TOP)
+                    expr.compile(ctx)
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
+                    ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
+                    ctx.use_next_block(next_expr)
+                ctx.emit_jump(consts.JUMP, next_when)
+                ctx.use_next_block(when_block)
+                ctx.emit(consts.DISCARD_TOP)
+                when.block.compile(ctx)
+                ctx.emit_jump(consts.JUMP, end)
+                ctx.use_next_block(next_when)
         ctx.emit(consts.DISCARD_TOP)
         self.elsebody.compile(ctx)
         ctx.use_next_block(end)
 
 
 class When(Node):
-    def __init__(self, conds, block):
+    def __init__(self, conds, block, lineno):
+        Node.__init__(self, lineno)
         self.conds = conds
         self.block = block
 

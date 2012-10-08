@@ -1883,8 +1883,8 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                ast.When([ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
-                ast.When([ast.ConstantInt(4)], ast.Block([ast.Statement(ast.ConstantInt(7))]))
+                ast.When([ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))]), 3),
+                ast.When([ast.ConstantInt(4)], ast.Block([ast.Statement(ast.ConstantInt(7))]), 5)
             ], ast.Block([ast.Statement(ast.ConstantInt(9))])))
         ]))
         r = space.parse("""
@@ -1895,7 +1895,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                ast.When([ast.ConstantInt(4), ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
+                ast.When([ast.ConstantInt(4), ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))]), 3),
             ], ast.Nil()))
         ]))
 
@@ -1907,7 +1907,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(0), [
-                ast.When([ast.ConstantRegexp("a")], ast.Nil())
+                ast.When([ast.ConstantRegexp("a")], ast.Nil(), 3)
             ], ast.Nil()))
         ]))
 

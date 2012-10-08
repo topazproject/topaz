@@ -2220,7 +2220,7 @@ class Parser(object):
     def case_body(self, p):
         body = ast.Block(p[3].getastlist()) if p[3] is not None else ast.Nil()
         items = [
-            ast.When(p[1].getcallargs(), body)
+            ast.When(p[1].getcallargs(), body, p[0].getsourcepos().lineno)
         ]
         items.extend(p[4].getastlist())
         return self._new_list(items)
@@ -2228,7 +2228,8 @@ class Parser(object):
     @pg.production("cases : opt_else")
     def cases_opt_else(self, p):
         body = p[0].getast() if p[0] is not None else ast.Nil()
-        return self.new_list(BoxAST(ast.When(None, body)))
+        # TODO: a real line number here
+        return self.new_list(BoxAST(ast.When(None, body, -1)))
 
     @pg.production("cases : case_body")
     def cases_case_body(self, p):
