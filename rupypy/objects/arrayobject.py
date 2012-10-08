@@ -281,6 +281,10 @@ class W_ArrayObject(W_Object):
         else:
             return self.items_w[len(self.items_w) - 1]
 
+    @classdef.method("to_ary")
+    def method_to_ary(self, space):
+        return self
+
     classdef.app_method("""
     def ==(other)
         if self.equal?(other)
