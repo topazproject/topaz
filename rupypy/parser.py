@@ -1013,12 +1013,7 @@ class Parser(object):
 
     @pg.production("fsym : symbol")
     def fsym_symbol(self, p):
-        """
-        symbol {
-                    $$ = new LiteralNode($1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_symbol(p[0])
 
     @pg.production("fitem : fsym")
     def fitem_fsym(self, p):

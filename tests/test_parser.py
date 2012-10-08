@@ -2067,6 +2067,9 @@ HERE
         assert space.parse("alias << b") == ast.Main(ast.Block([
             ast.Alias(ast.ConstantSymbol("<<"), ast.ConstantSymbol("b"), 1)
         ]))
+        assert space.parse("alias :a :b") == ast.Main(ast.Block([
+            ast.Alias(ast.ConstantSymbol("a"), ast.ConstantSymbol("b"), 1)
+        ]))
 
     def test_defined(self, space):
         assert space.parse("defined? Const") == ast.Main(ast.Block([
