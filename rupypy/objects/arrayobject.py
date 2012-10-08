@@ -1,8 +1,12 @@
+import struct
 import copy
 
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
+from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.stringobject import W_StringObject
+from rupypy.utils.packing.pack import RPacker
 
 
 class W_ArrayObject(W_Object):
@@ -280,6 +284,11 @@ class W_ArrayObject(W_Object):
             return space.w_nil
         else:
             return self.items_w[len(self.items_w) - 1]
+
+    @classdef.method("pack", template="str")
+    def method_pack(self, space, template):
+        result = RPacker(space, template, space.listview(self)).operate()
+        return space.newstr_fromchars(result)
 
     @classdef.method("to_ary")
     def method_to_ary(self, space):
