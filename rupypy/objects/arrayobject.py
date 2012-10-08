@@ -1,11 +1,8 @@
-import struct
 import copy
 
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
-from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.objectobject import W_Object
-from rupypy.objects.stringobject import W_StringObject
 from rupypy.utils.packing.pack import RPacker
 
 

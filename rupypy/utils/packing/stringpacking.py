@@ -1,9 +1,6 @@
 from pypy.rpython.lltypesystem import rffi
 
 
-pointerlen = rffi.sizeof(rffi.INTPTR_T)
-
-
 def make_string_packer(padding=" ", nullterminated=False):
     def pack_string(packer, width):
         space = packer.space
@@ -24,6 +21,7 @@ def make_string_packer(padding=" ", nullterminated=False):
         packer.args_index += 1
     return pack_string
 
+
 def pack_pointer(packer, repetitions):
     # Should return a C pointer string to a char* or struct*, but we
     # fake it to return just the right length, just as Rubinius does
@@ -31,5 +29,5 @@ def pack_pointer(packer, repetitions):
         raise packer.space.error(packer.space.w_ArgumentError, "too few arguments")
     for i in xrange(repetitions):
         for i in xrange(packer.args_index, repetitions + packer.args_index):
-            packer.result.extend(["\0"] * pointerlen)
+            packer.result.extend(["\0"] * rffi.sizeof(rffi.INTPTR_T))
     packer.args_index += repetitions

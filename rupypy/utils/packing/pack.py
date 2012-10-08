@@ -1,8 +1,8 @@
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
 
-from rupypy.utils.packing.intpacking import make_int_packer
 from rupypy.utils.packing.floatpacking import make_float_packer
+from rupypy.utils.packing.intpacking import make_int_packer
 from rupypy.utils.packing.stringpacking import make_string_packer, pack_pointer
 
 
@@ -129,6 +129,7 @@ def pack_move_to(packer, position):
         assert position >= 0
         packer.result[position:len(packer.result)] = []
 
+
 def pack_back_up(packer, repetitions):
     size = len(packer.result)
     if size < repetitions:
@@ -138,8 +139,10 @@ def pack_back_up(packer, repetitions):
         assert begin >= 0
         packer.result[begin:size] = []
 
+
 def pack_padding(packer, repetitions):
     packer.result.extend(["\0"] * repetitions)
+
 
 def make_pack_operators():
     ops = [None] * 255
@@ -149,13 +152,13 @@ def make_pack_operators():
     for size, code in enumerate(int_sizes):
         sidx = ord(code)
         uidx = ord(code.upper())
-        ops[sidx] = make_int_packer(size=2**size, signed=True, bigendian=native_is_bigendian)
-        ops[uidx] = make_int_packer(size=2**size, signed=False, bigendian=native_is_bigendian)
+        ops[sidx] = make_int_packer(size=2 ** size, signed=True, bigendian=native_is_bigendian)
+        ops[uidx] = make_int_packer(size=2 ** size, signed=False, bigendian=native_is_bigendian)
         if size > 0:
-            ops[sidx + BE_offset] = make_int_packer(size=2**size, signed=True, bigendian=True)
-            ops[uidx + BE_offset] = make_int_packer(size=2**size, signed=False, bigendian=True)
-            ops[sidx + LE_offset] = make_int_packer(size=2**size, signed=True, bigendian=False)
-            ops[uidx + LE_offset] = make_int_packer(size=2**size, signed=False, bigendian=False)
+            ops[sidx + BE_offset] = make_int_packer(size=2 ** size, signed=True, bigendian=True)
+            ops[uidx + BE_offset] = make_int_packer(size=2 ** size, signed=False, bigendian=True)
+            ops[sidx + LE_offset] = make_int_packer(size=2 ** size, signed=True, bigendian=False)
+            ops[uidx + LE_offset] = make_int_packer(size=2 ** size, signed=False, bigendian=False)
     # Int Aliases
     ops[ord("L")] = ops[ord("I")]
     ops[ord("L") + BE_offset] = ops[ord("N")] = ops[ord("I") + BE_offset]

@@ -1,8 +1,7 @@
 from pypy.rlib.rstruct.ieee import float_pack
-from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
 
-from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.floatobject import W_FloatObject
+from rupypy.objects.intobject import W_FixnumObject
 
 
 def make_float_packer(size, bigendian):

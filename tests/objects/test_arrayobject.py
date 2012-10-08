@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import struct
 
 from ..base import BaseRuPyPyTest
@@ -339,7 +341,7 @@ class TestArrayPack(BaseRuPyPyTest):
             space.execute("return [-255].pack 'C<'")
 
     def test_short(self, space):
-        assert space.str_w(space.execute("return [-255].pack 'S'")) == struct.pack("H", -255 % 2**16)
+        assert space.str_w(space.execute("return [-255].pack 'S'")) == struct.pack("H", -255 % 2 ** 16)
         assert space.str_w(space.execute("return [12].pack 's'")) == struct.pack("h", 12)
         assert space.str_w(space.execute("return [12].pack 'S!'")) == struct.pack("@h", 12)
         assert space.str_w(space.execute("return [12].pack 'S_'")) == struct.pack("@h", 12)
@@ -348,13 +350,13 @@ class TestArrayPack(BaseRuPyPyTest):
             space.execute("return [2].pack 'S><'")
 
     def test_long(self, space):
-        assert space.str_w(space.execute("return [-255].pack 'I'")) == struct.pack("I", -255 % 2**32)
+        assert space.str_w(space.execute("return [-255].pack 'I'")) == struct.pack("I", -255 % 2 ** 32)
         assert space.str_w(space.execute("return [12].pack 'i'")) == struct.pack("i", 12)
-        assert space.str_w(space.execute("return [-255].pack 'L'")) == struct.pack("I", -255 % 2**32)
+        assert space.str_w(space.execute("return [-255].pack 'L'")) == struct.pack("I", -255 % 2 ** 32)
         assert space.str_w(space.execute("return [12].pack 'l'")) == struct.pack("i", 12)
 
     def test_longlong(self, space):
-        assert space.str_w(space.execute("return [-255].pack 'Q'")) == struct.pack("Q", -255 % 2**64)
+        assert space.str_w(space.execute("return [-255].pack 'Q'")) == struct.pack("Q", -255 % 2 ** 64)
         assert space.str_w(space.execute("return [12].pack 'q'")) == struct.pack("q", 12)
 
     def test_float(self, space):
