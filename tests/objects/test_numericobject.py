@@ -25,3 +25,16 @@ class TestNumericObject(BaseRuPyPyTest):
         return A.new <=> A.new
         """)
         assert w_res == space.w_nil
+
+    def test_let(self, space):
+        w_res = space.execute("""
+        class A < Numeric; end
+        return A.new <= A.new
+        """)
+        assert w_res == space.w_false
+        w_res = space.execute("""
+        class A < Numeric; end
+        a = A.new
+        return a <= a
+        """)
+        assert w_res == space.w_true
