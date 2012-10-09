@@ -384,7 +384,7 @@ class Lexer(object):
             elif ch.isdigit() or (is_hex and ch.upper() in "ABCDEF"):
                 self.add(ch)
             elif ch == "_":
-                if not self.peek().isdigit():
+                if not (self.peek().isdigit() or (is_hex and self.peek().upper() in "ABCDEF")):
                     self.error()
             elif ch.upper() == "E":
                 symbol = "FLOAT"

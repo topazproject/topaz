@@ -28,6 +28,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("0b10") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantInt(2))
         ]))
+        assert space.parse("0xbe_ef") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(48879))
+        ]))
 
     def test_float(self, space):
         assert space.parse("0.2") == ast.Main(ast.Block([
