@@ -1107,31 +1107,22 @@ class Parser(object):
 
     @pg.production("arg : var_lhs OP_ASGN arg RESCUE_MOD arg")
     def arg_var_lhs_op_asgn_arg_rescue_mod(self, p):
-        """
-        var_lhs tOP_ASGN arg kRESCUE_MOD arg {
-                    support.checkExpression($3);
-                    ISourcePosition pos = $4.getPosition();
-                    Node body = $5 == null ? NilImplicitNode.NIL : $5;
-                    Node rest;
-
-                    pos = $1.getPosition();
-                    String asgnOp = (String) $2.getValue();
-                    if (asgnOp.equals("||")) {
-                        $1.setValueNode($3);
-                        rest = new OpAsgnOrNode(pos, support.gettable2($1), $1);
-                    } else if (asgnOp.equals("&&")) {
-                        $1.setValueNode($3);
-                        rest = new OpAsgnAndNode(pos, support.gettable2($1), $1);
-                    } else {
-                        $1.setValueNode(support.getOperatorCallNode(support.gettable2($1), asgnOp, $3));
-                        $1.setPosition(pos);
-                        rest = $1;
-                    }
-
-                    $$ = new RescueNode($4.getPosition(), rest, new RescueBodyNode($4.getPosition(), null, body, null), null);
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[3].getsourcepos().lineno
+        return self.new_augmented_assignment(
+            p[1],
+            p[0],
+            BoxAST(ast.TryExcept(
+                p[2].getast(),
+                [
+                    ast.ExceptHandler(
+                        [ast.LookupConstant(ast.Scope(lineno), "StandardError", lineno)],
+                        None,
+                        p[4].getast()
+                    )
+                ],
+                ast.Nil()
+            ))
+        )
 
     @pg.production("arg : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN arg")
     def arg_subscript_op_asgn_arg(self, p):
