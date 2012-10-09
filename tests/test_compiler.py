@@ -512,7 +512,7 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, """
+        self.assert_compiles(space, """
         class X < Object
         end
         """, """
@@ -526,6 +526,22 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 3
+        RETURN
+        """)
+
+        self.assert_compiles(space, """
+        class ::X
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_CLASS
+        LOAD_CONST 3
+        EVALUATE_CLASS
+        DISCARD_TOP
+
+        LOAD_CONST 4
         RETURN
         """)
 

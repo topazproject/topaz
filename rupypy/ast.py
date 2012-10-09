@@ -228,7 +228,10 @@ class Class(Node):
         self.body = body
 
     def compile(self, ctx):
-        self.scope.compile(ctx)
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         if self.superclass is None:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
