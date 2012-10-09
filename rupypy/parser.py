@@ -155,8 +155,8 @@ class Parser(object):
 
     def new_super(self, args, token):
         return BoxAST(ast.Super(
-            args.getcallargs(),
-            args.getcallblock(),
+            args.getcallargs() if args is not None else [],
+            args.getcallblock() if args is not None else None,
             token.getsourcepos().lineno
         ))
 

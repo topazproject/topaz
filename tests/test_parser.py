@@ -2109,6 +2109,9 @@ HERE
         assert space.parse("super nil") == ast.Main(ast.Block([
             ast.Statement(ast.Super([ast.Nil()], None, 1))
         ]))
+        assert space.parse("super()") == ast.Main(ast.Block([
+            ast.Statement(ast.Super([], None, 1))
+        ]))
 
     def test_next(self, space):
         assert space.parse("next") == ast.Main(ast.Block([
