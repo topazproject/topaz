@@ -671,10 +671,14 @@ class Splat(Node):
         self.value = value
 
     def compile_receiver(self, ctx):
-        return self.value.compile_receiver(ctx)
+        if self.value is None:
+            return 0
+        else:
+            return self.value.compile_receiver(ctx)
 
     def compile_store(self, ctx):
-        return self.value.compile_store(ctx)
+        if self.value is not None:
+            return self.value.compile_store(ctx)
 
     def compile(self, ctx):
         self.value.compile(ctx)

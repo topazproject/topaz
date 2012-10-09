@@ -1844,6 +1844,23 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_discard_splat_assignment(self, space):
+        self.assert_compiles(space, """
+        * = 1, 2
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_ARRAY 2
+        DUP_TOP
+        COERCE_ARRAY
+        UNPACK_SEQUENCE_SPLAT 1 0
+        DISCARD_TOP
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_alias(self, space):
         bc = self.assert_compiles(space, """
         alias a b

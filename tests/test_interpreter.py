@@ -563,6 +563,11 @@ class TestInterpreter(BaseRuPyPyTest):
         return [a, b, c]
         """)
         assert self.unwrap(space, w_res) == [1, [], None]
+        w_res = space.execute("""
+        a, = 3, 4
+        return a
+        """)
+        assert space.int_w(w_res) == 3
 
     def test_minus(self, space):
         w_res = space.execute("""

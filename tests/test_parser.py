@@ -346,6 +346,18 @@ class TestParser(BaseRuPyPyTest):
                 ast.ConstantInt(1),
             ))
         ]))
+        assert space.parse("* = 1") == ast.Main(ast.Block([
+            ast.Statement(ast.MultiAssignment(
+                [ast.Splat(None)],
+                ast.ConstantInt(1),
+            ))
+        ]))
+        assert space.parse("a, = 3, 4") == ast.Main(ast.Block([
+            ast.Statement(ast.MultiAssignment(
+                [ast.Variable("a", 1)],
+                ast.Array([ast.ConstantInt(3), ast.ConstantInt(4)]),
+            ))
+        ]))
         with self.raises(space, "SyntaxError"):
             space.parse("*b, *c = 1")
 
@@ -1106,6 +1118,12 @@ HERE
         ]))
         assert space.parse("a.b (:a) { }") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "b", [ast.ConstantSymbol("a")], ast.SendBlock([], None, ast.Nil()), 1))
+        ]))
+        assert space.parse("f { |a,| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([ast.Argument("a")], "*", ast.Nil()), 1))
+        ]))
+        assert space.parse("f { |a, *s| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([ast.Argument("a")], "s", ast.Nil()), 1))
         ]))
 
     def test_yield(self, space):

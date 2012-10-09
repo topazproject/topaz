@@ -730,12 +730,7 @@ class Parser(object):
 
     @pg.production("mlhs_basic : mlhs_head")
     def mlhs_basic_mlhs_head(self, p):
-        """
-        mlhs_head {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("mlhs_basic : mlhs_head mlhs_item")
     def mlhs_basic_mlhs_head_mlhs_item(self, p):
@@ -747,7 +742,7 @@ class Parser(object):
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
-        return self._new_list(self.append_to_list(p[0], self.new_splat(p[2])).getastlist() +  p[4].getastlist())
+        return self._new_list(self.append_to_list(p[0], self.new_splat(p[2])).getastlist() + p[4].getastlist())
 
     @pg.production("mlhs_basic : mlhs_head STAR")
     def mlhs_basic_mlhs_head_star(self, p):
@@ -777,12 +772,7 @@ class Parser(object):
 
     @pg.production("mlhs_basic : STAR")
     def mlhs_basic_star(self, p):
-        """
-        tSTAR {
-                      $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_list([ast.Splat(None)])
 
     @pg.production("mlhs_basic : STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_comma_post(self, p):
@@ -1936,22 +1926,13 @@ class Parser(object):
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
-        """
-        f_arg ',' f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, null, $3, null, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(p[0], splat_arg=p[2], block_arg=p[3])
 
     @pg.production("block_param : f_arg LITERAL_COMMA")
     def block_param_f_arg_comma(self, p):
-        """
-        f_arg ',' {
-                    RestArgNode rest = new UnnamedRestArgNode($1.getPosition(), null, support.getCurrentScope().addVariable("*"));
-                    $$ = support.new_args($1.getPosition(), $1, null, rest, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        self.lexer.symtable.declare_argument("*")
+        tok = self.new_token(p[1], "IDENTIFIER", "*")
+        return self.new_args(p[0], splat_arg=tok)
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
