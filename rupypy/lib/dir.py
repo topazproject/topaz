@@ -77,3 +77,7 @@ class W_Dir(W_Object):
                 raise Exception, "Invalid type of flag"
         else:
             return dir_glob(space, args_w[0])
+            
+    @classdef.singleton_method("[]")
+    def method_subscript(self, space, args_w):
+        return dir_glob(space, space.newarray(args_w))
