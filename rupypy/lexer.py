@@ -478,7 +478,7 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\!\"":
+        if ch in "$>:?\\!\"~&`'+":
             self.add(ch)
             yield self.emit("GVAR")
         else:
