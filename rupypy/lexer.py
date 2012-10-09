@@ -194,9 +194,8 @@ class Lexer(object):
                 for token in self.slash(ch, space_seen):
                     yield token
             elif ch == "^":
-                self.add(ch)
-                self.set_expression_state()
-                yield self.emit("CARET")
+                for token in self.caret(ch):
+                    yield token
             elif ch == ";":
                 self.add(ch)
                 self.state = self.EXPR_BEG
@@ -653,6 +652,19 @@ class Lexer(object):
                 tok = "AMPER2"
             self.set_expression_state()
             yield self.emit(tok)
+
+    def caret(self, ch):
+        self.add(ch)
+
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            yield self.emit("OP_ASGN")
+        else:
+            self.unread()
+            self.set_expression_state()
+            yield self.emit("CARET")
 
     def equal(self, ch):
         self.add(ch)

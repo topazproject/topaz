@@ -1241,6 +1241,10 @@ HERE
             ast.Statement(ast.AugmentedAssignment("+", ast.Variable("x", 1), ast.Send(ast.Self(1), "f", [ast.ConstantInt(2)], None, 1)))
         ]))
 
+        assert space.parse("x ^= 3") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("^", ast.Variable("x", 1), ast.ConstantInt(3)))
+        ]))
+
     def test_block_result(self, space):
         r = space.parse("""
         [].inject(0) do |s, x|
