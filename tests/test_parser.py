@@ -704,6 +704,20 @@ class TestParser(BaseRuPyPyTest):
                 ast.Statement(ast.Variable("b", 3))
             ])))
         ]))
+        r = space.parse("""
+        def f(a=nil, *b)
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a", ast.Nil())], "b", None, ast.Nil()))
+        ]))
+        r = space.parse("""
+        def f(a, b=nil, *c)
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b", ast.Nil())], "c", None, ast.Nil()))
+        ]))
         with self.raises(space, "SyntaxError"):
             space.parse("""
             def f(&b, a)
