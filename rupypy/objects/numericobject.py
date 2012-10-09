@@ -28,10 +28,7 @@ class W_NumericObject(W_Object):
         if space.getclass(w_other) == space.getclass(self):
             return space.newarray([w_other, self])
         else:
-            return space.newarray([
-                    space.send(self, space.newsymbol("Float"), [w_other]),
-                    space.float_w(self)
-            ])
+            return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
 
     @classdef.method("to_int")
     def method_to_int(self, space):

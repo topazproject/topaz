@@ -38,3 +38,13 @@ class TestNumericObject(BaseRuPyPyTest):
         return a <= a
         """)
         assert w_res == space.w_true
+
+    def test_coerce(self, space):
+        w_res = space.execute("return 1.coerce(1)")
+        assert self.unwrap(space, w_res) == [1, 1]
+        w_res = space.execute("return 1.1.coerce(1)")
+        assert self.unwrap(space, w_res) == [1.0, 1.1]
+        w_res = space.execute("return 1.coerce(1.1)")
+        assert self.unwrap(space, w_res) == [1.1, 1.0]
+        w_res = space.execute("return 1.coerce('2')")
+        assert self.unwrap(space, w_res) == [2.0, 1.0]

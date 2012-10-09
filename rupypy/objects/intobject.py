@@ -168,6 +168,13 @@ class W_FixnumObject(W_RootObject):
     def method_nonzerop(self, space):
         return space.newbool(self.intvalue != 0)
 
+    @classdef.method("coerce")
+    def method_coerce(self, space, w_other):
+        if space.getclass(w_other) == space.getclass(self):
+            return space.newarray([w_other, self])
+        else:
+            return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
+
     classdef.app_method("""
     def next
         succ
