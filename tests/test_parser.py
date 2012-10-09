@@ -1060,6 +1060,14 @@ HERE
             ast.Statement(ast.Send(ast.Self(1), "each", [], ast.SendBlock([], None, ast.Nil()), 1))
         ]))
 
+        r = space.parse("""
+        f nil do
+        end.foo nil
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "f", [ast.Nil()], ast.SendBlock([], None, ast.Nil()), 2), "foo", [ast.Nil()], None, 3))
+        ]))
+
         with self.raises(space, "SyntaxError"):
             space.parse("""
             Mod::Const do end

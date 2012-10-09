@@ -652,12 +652,7 @@ class Parser(object):
 
     @pg.production("block_command : block_call DOT operation2 command_args")
     def block_command_dot(self, p):
-        """
-        block_call tDOT operation2 command_args {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("block_command : block_call COLON2 operation2 command_args")
     def block_command_colon(self, p):
