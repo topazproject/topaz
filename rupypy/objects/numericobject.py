@@ -1,6 +1,5 @@
 from rupypy.error import RubyError
 from rupypy.module import ClassDef
-from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.objectobject import W_Object
 
 
@@ -11,7 +10,7 @@ class W_NumericObject(W_Object):
     def retry_binop_coercing(space, w_recv, w_arg, binop):
         try:
             w_ary = space.send(w_recv, space.newsymbol("coerce"), [w_arg])
-            if isinstance(w_ary, W_ArrayObject):
+            if space.getclass(w_ary) is space.w_array:
                 ary = space.listview(w_ary)
                 if len(ary) == 2:
                     return space.send(ary[1], space.newsymbol(binop), ary[:1])

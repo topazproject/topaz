@@ -1,5 +1,4 @@
 from rupypy.module import ClassDef
-from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.numericobject import W_NumericObject
