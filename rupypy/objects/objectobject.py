@@ -138,6 +138,10 @@ class W_RootObject(W_BaseObject):
     def method_hash(self, space):
         return space.newint(compute_identity_hash(self))
 
+    @classdef.method("=~")
+    def method_match(self, space):
+        return space.w_nil
+
     @classdef.method("instance_variable_get", name="str")
     def method_instance_variable_get(self, space, name):
         return space.find_instance_var(self, name)

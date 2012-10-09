@@ -88,6 +88,12 @@ class TestStringObject(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 0
 
+    def test_match(self, space):
+        w_res = space.execute("return 'abc' =~ 1")
+        assert w_res == space.w_nil
+        w_res = space.execute("return 'abc' =~ /abc/")
+        assert space.int_w(w_res) == 0
+
     def test_hash(self, space):
         w_res = space.execute("""
         return ['abc'.hash, ('a' << 'b' << 'c').hash]
