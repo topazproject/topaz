@@ -221,13 +221,14 @@ class TryFinally(Node):
 
 
 class Class(Node):
-    def __init__(self, name, superclass, body):
+    def __init__(self, scope, name, superclass, body):
+        self.scope = scope
         self.name = name
         self.superclass = superclass
         self.body = body
 
     def compile(self, ctx):
-        ctx.emit(consts.LOAD_SCOPE)
+        self.scope.compile(ctx)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         if self.superclass is None:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
@@ -267,7 +268,8 @@ class SingletonClass(Node):
 
 
 class Module(Node):
-    def __init__(self, name, body):
+    def __init__(self, scope, name, body):
+        self.scope = scope
         self.name = name
         self.body = body
 
@@ -279,7 +281,7 @@ class Module(Node):
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
-        ctx.emit(consts.LOAD_SCOPE)
+        self.scope.compile(ctx)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_MODULE)

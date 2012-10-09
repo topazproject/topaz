@@ -957,17 +957,12 @@ class Parser(object):
 
     @pg.production("cpath : cname")
     def cpath_cname(self, p):
-        # TODO: should something structured, not just the name
-        return p[0]
+        lineno = p[0].getsourcepos().lineno
+        return BoxAST(ast.LookupConstant(ast.Scope(lineno), p[0].getstr(), lineno))
 
     @pg.production("cpath : primary_value COLON2 cname")
     def cpath_colon_cname(self, p):
-        """
-        primary_value tCOLON2 cname {
-                    $$ = support.new_colon2(support.getPosition($1), $1, (String) $3.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.LookupConstant(p[0].getast(), p[2].getstr(), p[1].getsourcepos().lineno))
 
     @pg.production("fname : IDENTIFIER")
     def fname_identifier(self, p):
@@ -1655,8 +1650,11 @@ class Parser(object):
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
+        node = p[1].getast()
+        assert isinstance(node, ast.LookupConstant)
         node = ast.Class(
-            p[1].getstr(),
+            node.value,
+            node.name,
             p[2].getast() if p[2] is not None else None,
             p[4].getast(),
         )
@@ -1679,7 +1677,9 @@ class Parser(object):
 
     @pg.production("primary : MODULE cpath push_local_scope bodystmt END")
     def primary_module(self, p):
-        node = ast.Module(p[1].getstr(), p[3].getast())
+        node = p[1].getast()
+        assert isinstance(node, ast.LookupConstant)
+        node = ast.Module(node.value, node.name, p[3].getast())
         self.save_and_pop_scope(node)
         return BoxAST(node)
 
