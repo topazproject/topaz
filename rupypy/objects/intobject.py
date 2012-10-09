@@ -1,4 +1,5 @@
 from rupypy.module import ClassDef
+from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.numericobject import W_NumericObject
@@ -115,24 +116,14 @@ class W_FixnumObject(W_RootObject):
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
 
-    @classdef.method("<=", other="float")
-    def method_let(self, space, other):
+    @classdef.method("<=")
+    def method_let(self, space, w_other):
         if isinstance(w_other, W_FloatObject):
             return space.newbool(self.intvalue <= space.float_w(w_other))
         elif isinstance(w_other, W_FixnumObject):
             return space.newbool(self.intvalue <= w_other.intvalue)
         else:
-            w_ary = space.send(self, space.newsymbol("coerce"), [w_other])
-            if isinstance(w_ary, W_ArrayObject):
-                ary = space.listview(w_ary)
-                if (len(ary) == 2 and
-                    isinstance(ary[0], W_FloatObject) and
-                    isinstance(ary[1], W_FloatObject)):
-                    return space.send(ary[0], space.newsymbol("<="), ary[1:])
-        raise space.error(
-            space.w_ArgumentError,
-            "comparison of %s with %s failed" % (space.getclass(self), space.getclass(w_other))
-        )
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "<=")
 
     @classdef.method("-@")
     def method_neg(self, space):

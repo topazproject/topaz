@@ -35,3 +35,12 @@ class TestFloatObject(BaseRuPyPyTest):
     def test_to_i(self, space):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")
         assert self.unwrap(space, w_res) == [1, 1]
+
+    def test_less_or_equal_than(self, space):
+        assert space.execute("return 1.1 <= 2") is space.w_true
+        assert space.execute("return 1.0 <= 1") is space.w_true
+        assert space.execute("return 1.1 <= 1.1") is space.w_true
+        assert space.execute("return 1.1 <= 0.9") is space.w_false
+        assert space.execute("return 1.0 <= '1.1'") is space.w_true
+        with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
+            space.execute("return 1.0 <= 'a'")

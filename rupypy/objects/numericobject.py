@@ -1,12 +1,27 @@
+from rupypy.error import RubyError
 from rupypy.module import ClassDef
+from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.objectobject import W_Object
 
 
 class W_NumericObject(W_Object):
     classdef = ClassDef("Numeric", W_Object.classdef)
 
-    def float_w(self, space):
-        raise NotImplementedError("my subclass should have implemented #float_w")
+    @staticmethod
+    def retry_binop_coercing(space, w_recv, w_arg, binop):
+        try:
+            w_ary = space.send(w_recv, space.newsymbol("coerce"), [w_arg])
+            if isinstance(w_ary, W_ArrayObject):
+                ary = space.listview(w_ary)
+                if len(ary) == 2:
+                    return space.send(ary[1], space.newsymbol(binop), ary[:1])
+        except RubyError:
+            raise space.error(
+                space.w_ArgumentError,
+                "comparison of %s with %s failed" % (
+                    space.getclass(w_recv).name, space.getclass(w_arg).name
+                )
+            )
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
