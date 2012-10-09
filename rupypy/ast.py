@@ -805,6 +805,12 @@ class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
 
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("self").compile(ctx)
+
 
 class Scope(Node):
     def compile(self, ctx):
@@ -1007,6 +1013,12 @@ class ConstantBool(ConstantNode):
     def create_const(self, ctx):
         return ctx.create_const(ctx.space.newbool(self.boolval))
 
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("true" if self.boolval else "false").compile(ctx)
+
 
 class DynamicString(Node):
     def __init__(self, strvalues):
@@ -1042,6 +1054,12 @@ class Symbol(Node):
 class Nil(BaseNode):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("nil").compile(ctx)
 
 
 class File(BaseNode):
