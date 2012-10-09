@@ -714,7 +714,14 @@ class Lexer(object):
                 yield self.emit("LEQ")
         elif ch2 == "<":
             self.add(ch2)
-            yield self.emit("LSHFT")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                yield self.emit("LSHFT")
         else:
             self.unread()
             yield self.emit("LT")
@@ -728,7 +735,14 @@ class Lexer(object):
             yield self.emit("GEQ")
         elif ch2 == ">":
             self.add(ch2)
-            yield self.emit("RSHFT")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                yield self.emit("RSHFT")
         else:
             self.unread()
             yield self.emit("GT")

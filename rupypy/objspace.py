@@ -188,8 +188,8 @@ class ObjectSpace(object):
             return parser.parse().getast()
         except ParsingError as e:
             raise self.error(self.w_SyntaxError, "line %d" % e.getsourcepos().lineno)
-        except LexerError:
-            raise self.error(self.w_SyntaxError)
+        except LexerError as e:
+            raise self.error(self.w_SyntaxError, "line %d" % e.pos.lineno)
 
     def compile(self, source, filepath, initial_lineno=1):
         symtable = SymbolTable()
