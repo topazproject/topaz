@@ -1515,12 +1515,7 @@ class Parser(object):
 
     @pg.production("primary : YIELD LPAREN2 rparen")
     def primary_yield_paren(self, p):
-        """
-        kYIELD tLPAREN2 rparen {
-                    $$ = new ZYieldNode($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Yield([], p[0].getsourcepos().lineno))
 
     @pg.production("primary : YIELD")
     def primary_yield(self, p):

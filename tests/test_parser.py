@@ -1113,6 +1113,9 @@ HERE
         assert space.parse("yield(*5)") == ast.Main(ast.Block([
             ast.Statement(ast.Yield([ast.Splat(ast.ConstantInt(5))], 1))
         ]))
+        assert space.parse("yield()") == ast.Main(ast.Block([
+            ast.Statement(ast.Yield([], 1))
+        ]))
 
     def test_symbol(self, space):
         sym = lambda s: ast.Main(ast.Block([
