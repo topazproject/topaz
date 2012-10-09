@@ -573,6 +573,12 @@ class TestParser(BaseRuPyPyTest):
                 ast.Hash([(ast.ConstantSymbol("abc"), ast.ConstantInt(3))])
             ]))
         ]))
+        assert space.parse("[1, :abc => 3]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([
+                ast.ConstantInt(1),
+                ast.Hash([(ast.ConstantSymbol("abc"), ast.ConstantInt(3))])
+            ]))
+        ]))
 
     def test_subscript(self, space):
         assert space.parse("[1][0]") == ast.Main(ast.Block([
@@ -953,7 +959,7 @@ HERE
         class X
         end""")
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", None, ast.Nil()))
+            ast.Statement(ast.Class(ast.Scope(2), "X", None, ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -964,7 +970,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", None, ast.Block([
+            ast.Statement(ast.Class(ast.Scope(2), "X", None, ast.Block([
                 ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([
                     ast.Statement(ast.ConstantInt(2))
                 ])))
@@ -972,11 +978,11 @@ HERE
         ]))
 
         assert space.parse("class X < Object; end") == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(1), "Object", 1), ast.Nil()))
+            ast.Statement(ast.Class(ast.Scope(1), "X", ast.LookupConstant(ast.Scope(1), "Object", 1), ast.Nil()))
         ]))
 
         assert space.parse("class X < Module::Object; end") == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Object", 1), ast.Nil()))
+            ast.Statement(ast.Class(ast.Scope(1), "X", ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Object", 1), ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -986,8 +992,17 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Class("X", ast.LookupConstant(ast.Scope(2), "Object", 2), ast.Nil())),
+            ast.Statement(ast.Class(ast.Scope(2), "X", ast.LookupConstant(ast.Scope(2), "Object", 2), ast.Nil())),
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil())),
+        ]))
+
+    def test_nest_class(self, space):
+        r = space.parse("""
+        class Foo::Bar
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Class(ast.LookupConstant(ast.Scope(2), "Foo", 2), "Bar", None, ast.Nil()))
         ]))
 
     def test_singleton_class(self, space):
@@ -1045,6 +1060,14 @@ HERE
             ast.Statement(ast.Send(ast.Self(1), "each", [], ast.SendBlock([], None, ast.Nil()), 1))
         ]))
 
+        r = space.parse("""
+        f nil do
+        end.foo nil
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "f", [ast.Nil()], ast.SendBlock([], None, ast.Nil()), 2), "foo", [ast.Nil()], None, 3))
+        ]))
+
         with self.raises(space, "SyntaxError"):
             space.parse("""
             Mod::Const do end
@@ -1076,6 +1099,14 @@ HERE
                 ast.Statement(ast.Variable("v", 1))
             ])), 1))
         ]))
+        assert space.parse("f (:a) { |b| 1 }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantSymbol("a")], ast.SendBlock([ast.Argument("b")], None, ast.Block([
+                ast.Statement(ast.ConstantInt(1)),
+            ])), 1))
+        ]))
+        assert space.parse("a.b (:a) { }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "b", [ast.ConstantSymbol("a")], ast.SendBlock([], None, ast.Nil()), 1))
+        ]))
 
     def test_yield(self, space):
         assert space.parse("yield") == ast.Main(ast.Block([
@@ -1089,6 +1120,9 @@ HERE
         ]))
         assert space.parse("yield(*5)") == ast.Main(ast.Block([
             ast.Statement(ast.Yield([ast.Splat(ast.ConstantInt(5))], 1))
+        ]))
+        assert space.parse("yield()") == ast.Main(ast.Block([
+            ast.Statement(ast.Yield([], 1))
         ]))
 
     def test_symbol(self, space):
@@ -1551,7 +1585,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Module("M", ast.Block([
+            ast.Statement(ast.Module(ast.Scope(2), "M", ast.Block([
                 ast.Statement(ast.Function(None, "method", [], None, None, ast.Nil()))
             ])))
         ]))
@@ -1869,8 +1903,8 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                ast.When([ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
-                ast.When([ast.ConstantInt(4)], ast.Block([ast.Statement(ast.ConstantInt(7))]))
+                ast.When([ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))]), 3),
+                ast.When([ast.ConstantInt(4)], ast.Block([ast.Statement(ast.ConstantInt(7))]), 5)
             ], ast.Block([ast.Statement(ast.ConstantInt(9))])))
         ]))
         r = space.parse("""
@@ -1881,7 +1915,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(3), [
-                ast.When([ast.ConstantInt(4), ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))])),
+                ast.When([ast.ConstantInt(4), ast.ConstantInt(5)], ast.Block([ast.Statement(ast.ConstantInt(6))]), 3),
             ], ast.Nil()))
         ]))
 
@@ -1893,7 +1927,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(0), [
-                ast.When([ast.ConstantRegexp("a")], ast.Nil())
+                ast.When([ast.ConstantRegexp("a")], ast.Nil(), 3)
             ], ast.Nil()))
         ]))
 
@@ -2061,6 +2095,9 @@ HERE
         assert space.parse("alias << b") == ast.Main(ast.Block([
             ast.Alias(ast.ConstantSymbol("<<"), ast.ConstantSymbol("b"), 1)
         ]))
+        assert space.parse("alias :a :b") == ast.Main(ast.Block([
+            ast.Alias(ast.ConstantSymbol("a"), ast.ConstantSymbol("b"), 1)
+        ]))
 
     def test_defined(self, space):
         assert space.parse("defined? Const") == ast.Main(ast.Block([
@@ -2079,6 +2116,9 @@ HERE
         ]))
         assert space.parse("super nil") == ast.Main(ast.Block([
             ast.Statement(ast.Super([ast.Nil()], None, 1))
+        ]))
+        assert space.parse("super()") == ast.Main(ast.Block([
+            ast.Statement(ast.Super([], None, 1))
         ]))
 
     def test_next(self, space):
