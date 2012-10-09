@@ -239,7 +239,7 @@ class Kernel(Module):
         elif isinstance(w_arg, W_NumericObject) or isinstance(w_arg, W_FixnumObject):
             return space.newfloat(space.float_w(w_arg))
         elif isinstance(w_arg, W_StringObject):
-            string = space.str_w(w_arg).strip()
+            string = space.str_w(w_arg).strip(' ')
             try:
                 return space.newfloat(float(string))
             except ValueError:
