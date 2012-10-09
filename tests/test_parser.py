@@ -1608,6 +1608,15 @@ HERE
             ])))
         ]))
 
+    def test_root_scope_module(self, space):
+        r = space.parse("""
+        module ::M
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Module(None, "M", ast.Nil()))
+        ]))
+
     def test_question_mark(self, space):
         assert space.parse("obj.method?") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Send(ast.Self(1), "obj", [], None, 1), "method?", [], None, 1))

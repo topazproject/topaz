@@ -281,7 +281,10 @@ class Module(Node):
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
-        self.scope.compile(ctx)
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_MODULE)
@@ -778,14 +781,14 @@ class LookupConstant(Node):
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
-            if self.value is not None:
-                self.value.compile(ctx)
-            else:
-                ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
 
     def compile_receiver(self, ctx):
-        self.value.compile(ctx)
+        if self.value is not None:
+            self.value.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         return 1
 
     def compile_load(self, ctx):

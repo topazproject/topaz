@@ -1368,6 +1368,20 @@ class TestCompiler(object):
         RETURN
         """)
 
+        self.assert_compiles(space, """
+        module ::M
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_MODULE
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_splat_send(self, space):
         self.assert_compiles(space, """
         puts *1, 2, 3, *x

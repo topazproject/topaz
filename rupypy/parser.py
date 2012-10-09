@@ -933,12 +933,7 @@ class Parser(object):
 
     @pg.production("cpath : COLON3 cname")
     def cpath_unbound_colon_cname(self, p):
-        """
-        tCOLON3 cname {
-                    $$ = support.new_colon3($1.getPosition(), (String) $2.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_colon3(p[1])
 
     @pg.production("cpath : cname")
     def cpath_cname(self, p):
