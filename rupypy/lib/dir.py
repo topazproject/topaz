@@ -13,17 +13,18 @@ from rupypy.utils import glob
 def dir_glob(space, pattern, flag=0):
     if isinstance(pattern, W_ArrayObject):
         if not flag:
-            res = []
+            d = {}
             for each in space.listview(pattern):
                 for elem in glob.glob(space.str_w(each)):
-                    if elem not in res:
-                        res.append(elem)
-            return space.newarray(res)
+                        d[elem] = 0
+            return space.newarray([space.newstr_fromstr(s) 
+                                   for s in d.keys()])
         else:
             raise NotImplementedError, "No usage of flags supported."
     elif isinstance(pattern, W_StringObject):
         if not flag:
-            return space.newarray(glob.glob(space.str_w(pattern)))
+            return space.newarray([space.newstr_fromstr(s) 
+                                   for s in glob.glob(space.str_w(pattern))])
         else:
             raise NotImplementedError, "No usage of flags supported."
     else:
@@ -70,7 +71,7 @@ class W_Dir(W_Object):
         if len(args_w) > 1:
             # passed in additional flag
             if isinstance(args_w[1], W_FixnumObject):
-                return dir_glob(space, args_w[0], space.w_int(args_w[1]))
+                return dir_glob(space, args_w[0], space.int_w(args_w[1]))
             else:
                 # invalid type of flag
                 raise Exception, "Invalid type of flag"

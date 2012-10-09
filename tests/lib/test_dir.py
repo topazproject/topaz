@@ -33,8 +33,11 @@ class TestDir(BaseRuPyPyTest):
             
     def test_glob(self, space):
         w_res = space.execute("return Dir.glob('AUTH*.*')")
-        assert ['AUTHORS.rst'] == space.listview(w_res)
+        assert ['AUTHORS.rst'] == [space.str_w(s) 
+                                   for s in space.listview(w_res)]
         w_res = space.execute("return Dir.glob(['A*', 'ru*'])")
-        assert ['rupypy', 'AUTHORS.rst'] == space.listview(w_res)
+        assert ['rupypy', 'AUTHORS.rst'] == [space.str_w(s) 
+                                             for s in space.listview(w_res)]
         w_res = space.execute("return Dir.glob(['*pypy', 'ru*'])")
-        assert ['rupypy'] == space.listview(w_res)
+        assert ['rupypy'] == [space.str_w(s) 
+                              for s in space.listview(w_res)]
