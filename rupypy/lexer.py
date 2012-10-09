@@ -390,6 +390,8 @@ class Lexer(object):
             elif ch.upper() == "E":
                 symbol = "FLOAT"
                 self.add(ch.upper())
+                if self.peek() == "-":
+                    self.add(self.read())
             else:
                 yield self.emit(symbol)
                 self.unread()

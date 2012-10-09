@@ -39,6 +39,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse("1e1") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(10.0))
         ]))
+        assert space.parse("1e-3") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantFloat(0.001))
+        ]))
         assert space.parse("-1.2") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(-1.2))
         ]))
