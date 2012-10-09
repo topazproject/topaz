@@ -1295,6 +1295,11 @@ HERE
             ast.Statement(ast.Assignment(ast.LookupConstant(ast.Send(ast.Self(1), "abc", [], None, 1), "Constant", 1), ast.ConstantInt(5)))
         ]))
 
+    def test_constant_assignment(self, space):
+        assert space.parse("::Const = 5") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.LookupConstant(None, "Const", 1), ast.ConstantInt(5)))
+        ]))
+
     def test___FILE__(self, space):
         assert space.parse("__FILE__") == ast.Main(ast.Block([
             ast.Statement(ast.File())
