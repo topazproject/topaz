@@ -155,7 +155,7 @@ class W_Object(W_RootObject):
         if klass is None:
             klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
-        self.storage = []
+        self.storage = None
 
     def __deepcopy__(self, memo):
         obj = super(W_Object, self).__deepcopy__(memo)
