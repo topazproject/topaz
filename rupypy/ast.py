@@ -140,10 +140,10 @@ class Break(BaseStatement):
 
     def compile(self, ctx):
         self.expr.compile(ctx)
-        if isinstance(ctx.symtable, BlockSymbolTable):
-            raise NotImplementedError
-        elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
+        if ctx.in_frame_block(ctx.F_BLOCK_LOOP):
             ctx.emit(consts.BREAK_LOOP)
+        elif isinstance(ctx.symtable, BlockSymbolTable):
+            raise NotImplementedError
         else:
             raise NotImplementedError
 
