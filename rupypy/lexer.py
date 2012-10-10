@@ -1090,6 +1090,10 @@ class Lexer(object):
         elif ch == "r":
             self.str_term = StringTerm(self, begin, end, is_regexp=True)
             yield self.emit("REGEXP_BEG")
+        elif ch == "s":
+            self.str_term = StringTerm(self, begin, end, expand=False)
+            self.state = self.EXPR_FNAME
+            yield self.emit("SYMBEG")
         else:
             raise NotImplementedError('%' + ch)
 
