@@ -107,8 +107,8 @@ class BaseLoop(Node):
 
             ctx.use_next_block(anchor)
             ctx.emit(consts.POP_BLOCK)
-        ctx.use_next_block(end)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        ctx.use_next_block(end)
 
 
 class While(BaseLoop):
@@ -130,6 +130,20 @@ class Next(BaseStatement):
         elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
             block = ctx.find_frame_block(ctx.F_BLOCK_LOOP)
             ctx.emit_jump(consts.CONTINUE_LOOP, block)
+        else:
+            raise NotImplementedError
+
+
+class Break(BaseStatement):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def compile(self, ctx):
+        self.expr.compile(ctx)
+        if isinstance(ctx.symtable, BlockSymbolTable):
+            raise NotImplementedError
+        elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
+            ctx.emit(consts.BREAK_LOOP)
         else:
             raise NotImplementedError
 

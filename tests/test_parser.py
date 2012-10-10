@@ -2211,6 +2211,17 @@ HERE
             ast.Next(ast.Array([ast.ConstantInt(3), ast.ConstantInt(4)]))
         ]))
 
+    def test_break(self, space):
+        assert space.parse("break") == ast.Main(ast.Block([
+            ast.Break(ast.Nil())
+        ]))
+        assert space.parse("break true") == ast.Main(ast.Block([
+            ast.Break(ast.ConstantBool(True))
+        ]))
+        assert space.parse("break 3, 4") == ast.Main(ast.Block([
+            ast.Break(ast.Array([ast.ConstantInt(3), ast.ConstantInt(4)]))
+        ]))
+
     def test_custom_lineno(self, space):
         with self.raises(space, "SyntaxError", "line 1"):
             assert space.parse("[]{}[]")

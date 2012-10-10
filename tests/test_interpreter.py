@@ -1116,3 +1116,19 @@ class TestExceptions(BaseRuPyPyTest):
         return res
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3]
+
+    def test_break_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        other = while i < 10
+            i += 1
+            if i > 3
+                break 200
+            end
+            res << i
+        end
+        res << other
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 200]

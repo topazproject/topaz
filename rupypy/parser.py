@@ -145,13 +145,22 @@ class Parser(object):
             send.lineno
         ))
 
-    def new_return(self, box):
+    def _array_or_node(self, box):
         args = box.getcallargs()
         if len(args) == 1:
             [node] = args
         else:
             node = ast.Array(args)
-        return BoxAST(ast.Return(node))
+        return node
+
+    def new_return(self, box):
+        return BoxAST(ast.Return(self._array_or_node(box)))
+
+    def new_next(self, box):
+        return BoxAST(ast.Next(self._array_or_node(box)))
+
+    def new_break(self, box):
+        return BoxAST(ast.Break(self._array_or_node(box)))
 
     def new_super(self, args, token):
         return BoxAST(ast.Super(
@@ -632,19 +641,11 @@ class Parser(object):
 
     @pg.production("command_call : BREAK call_args")
     def command_call_break(self, p):
-        """
-        $$ = new BreakNode($1.getPosition(), support.ret_args($2, $1.getPosition()));
-        """
-        raise NotImplementedError(p)
+        return self.new_break(p[1])
 
     @pg.production("command_call : NEXT call_args")
     def command_call_next(self, p):
-        args = p[1].getcallargs()
-        if len(args) == 1:
-            [node] = args
-        else:
-            node = ast.Array(args)
-        return BoxAST(ast.Next(node))
+        return self.new_next(p[1])
 
     @pg.production("block_command : block_call")
     def block_command_block_call(self, p):
@@ -1674,12 +1675,7 @@ class Parser(object):
 
     @pg.production("primary : BREAK")
     def primary_break(self, p):
-        """
-        kBREAK {
-                    $$ = new BreakNode($1.getPosition(), NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Break(ast.Nil()))
 
     @pg.production("primary : NEXT")
     def primary_next(self, p):

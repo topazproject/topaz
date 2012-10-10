@@ -257,7 +257,7 @@ class TestCompiler(object):
 
     def test_while(self, space):
         self.assert_compiles(space, "while true do end", """
-        SETUP_LOOP 17
+        SETUP_LOOP 20
         LOAD_CONST 0
         JUMP_IF_FALSE 16
         LOAD_CONST 1
@@ -272,7 +272,7 @@ class TestCompiler(object):
         """)
 
         self.assert_compiles(space, "while true do puts 5 end", """
-        SETUP_LOOP 23
+        SETUP_LOOP 26
         LOAD_CONST 0
         JUMP_IF_FALSE 22
         LOAD_SELF
@@ -290,7 +290,7 @@ class TestCompiler(object):
 
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
-        SETUP_LOOP 17
+        SETUP_LOOP 20
         LOAD_CONST 0
         JUMP_IF_TRUE 16
         LOAD_CONST 1
@@ -2022,7 +2022,7 @@ class TestCompiler(object):
             2 + 2
         end
         """, """
-        SETUP_LOOP 31
+        SETUP_LOOP 34
         LOAD_CONST 0
         JUMP_IF_FALSE 30
 
@@ -2035,6 +2035,28 @@ class TestCompiler(object):
         JUMP 3
         POP_BLOCK
         LOAD_CONST 1
+        DISCARD_TOP
+
+        LOAD_CONST 0
+        RETURN
+        """)
+
+    def test_break_loop(self, space):
+        self.assert_compiles(space, """
+        while true
+            break 5
+        end
+        """, """
+        SETUP_LOOP 21
+        LOAD_CONST 0
+        JUMP_IF_FALSE 17
+
+        LOAD_CONST 1
+        BREAK_LOOP
+        DISCARD_TOP
+        JUMP 3
+        POP_BLOCK
+        LOAD_CONST 2
         DISCARD_TOP
 
         LOAD_CONST 0

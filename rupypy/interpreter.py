@@ -530,6 +530,10 @@ class Interpreter(object):
         frame.pop()
         return frame.unrollstack_and_jump(space, ContinueLoop(target_pc))
 
+    def BREAK_LOOP(self, space, bytecode, frame, pc):
+        w_obj = frame.pop()
+        return frame.unrollstack_and_jump(space, BreakLoop(w_obj))
+
     def UNREACHABLE(self, space, bytecode, frame, pc):
         raise Exception
 
@@ -587,6 +591,13 @@ class ContinueLoop(SuspendedUnroller):
         self.target_pc = target_pc
 
 
+class BreakLoop(SuspendedUnroller):
+    kind = 1 << 4
+
+    def __init__(self, w_obj):
+        self.w_obj = w_obj
+
+
 class FrameBlock(object):
     def __init__(self, target_pc, lastblock, stackdepth):
         self.target_pc = target_pc
@@ -601,7 +612,7 @@ class FrameBlock(object):
 
 
 class LoopBlock(FrameBlock):
-    handling_mask = ContinueLoop.kind
+    handling_mask = ContinueLoop.kind | BreakLoop.kind
 
     def cleanup(self, space, frame):
         self.cleanupstack(frame)
@@ -610,6 +621,10 @@ class LoopBlock(FrameBlock):
         if isinstance(unroller, ContinueLoop):
             frame.lastblock = self
             return unroller.target_pc
+        elif isinstance(unroller, BreakLoop):
+            self.cleanupstack(frame)
+            frame.push(unroller.w_obj)
+            return self.target_pc
         else:
             raise SystemError
 
