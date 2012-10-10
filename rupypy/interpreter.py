@@ -15,24 +15,28 @@ from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
 
 
-def get_printable_location(pc, bytecode):
+def get_printable_location(pc, bytecode, block_bytecode):
     return "%s at %s" % (bytecode.name, consts.BYTECODE_NAMES[ord(bytecode.code[pc])])
 
 
 class Interpreter(object):
     jitdriver = jit.JitDriver(
-        greens=["pc", "bytecode"],
+        greens=["pc", "bytecode", "block_bytecode"],
         reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
     )
+
+    def get_block_bytecode(self, block):
+        return block.bytecode if block is not None else None
 
     def interpret(self, space, frame, bytecode):
         pc = 0
         try:
             while True:
                 self.jitdriver.jit_merge_point(
-                    self=self, bytecode=bytecode, frame=frame, pc=pc
+                    self=self, bytecode=bytecode, frame=frame, pc=pc,
+                    block_bytecode=self.get_block_bytecode(frame.block),
                 )
                 try:
                     pc = self.handle_bytecode(space, pc, frame, bytecode)
@@ -95,6 +99,7 @@ class Interpreter(object):
         if target_pc < cur_pc:
             self.jitdriver.can_enter_jit(
                 self=self, bytecode=bytecode, frame=frame, pc=target_pc,
+                block_bytecode=self.get_block_bytecode(frame.block),
             )
         return target_pc
 
