@@ -132,9 +132,8 @@ class Parser(object):
         return BoxAST(ast.SendBlock(args, splat, block))
 
     def combine_send_block(self, send_box, block_box):
-        send = send_box.getast()
+        send = send_box.getast(ast.Send)
         block = block_box.getast()
-        assert isinstance(send, ast.Send)
         if send.block_arg is not None:
             raise self.error("Both block arg and actual block given.")
         return BoxAST(ast.Send(
@@ -1606,8 +1605,7 @@ class Parser(object):
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
-        node = p[1].getast()
-        assert isinstance(node, ast.LookupConstant)
+        node = p[1].getast(ast.LookupConstant)
         node = ast.Class(
             node.value,
             node.name,
@@ -1633,8 +1631,7 @@ class Parser(object):
 
     @pg.production("primary : MODULE cpath push_local_scope bodystmt END")
     def primary_module(self, p):
-        node = p[1].getast()
-        assert isinstance(node, ast.LookupConstant)
+        node = p[1].getast(ast.LookupConstant)
         node = ast.Module(node.value, node.name, p[3].getast())
         self.save_and_pop_scope(node)
         return BoxAST(node)
