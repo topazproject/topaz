@@ -1917,15 +1917,21 @@ class TestCompiler(object):
         self.assert_compiles(space, """
         defined? Const
         defined? @a
+        defined? nil.nil?
         """, """
         LOAD_SCOPE
         DEFINED_CONSTANT 0
         DISCARD_TOP
+
         LOAD_SELF
         DEFINED_INSTANCE_VAR 1
         DISCARD_TOP
 
         LOAD_CONST 2
+        DEFINED_METHOD 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
         RETURN
         """)
 

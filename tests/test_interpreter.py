@@ -1062,6 +1062,10 @@ class TestExceptions(BaseRuPyPyTest):
         return [defined? self, defined? nil, defined? true, defined? false]
         """)
         assert self.unwrap(space, w_res) == ["self", "nil", "true", "false"]
+        w_res = space.execute("""
+        return [defined? nil.nil?, defined? nil.fdfdafa]
+        """)
+        assert self.unwrap(space, w_res) == ["method", None]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

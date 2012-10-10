@@ -411,6 +411,13 @@ class Interpreter(object):
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
+    def DEFINED_METHOD(self, space, bytecode, frame, pc, meth_idx):
+        w_obj = frame.pop()
+        if space.respond_to(w_obj, bytecode.consts_w[meth_idx]):
+            frame.push(space.newstr_fromstr("method"))
+        else:
+            frame.push(space.w_nil)
+
     def SEND_SUPER(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()

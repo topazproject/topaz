@@ -657,6 +657,9 @@ class Send(BaseSend):
     def method_name_const(self, ctx):
         return ctx.create_symbol_const(self.method)
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_METHOD, self.method_name_const(ctx))
+
 
 class Super(BaseSend):
     send = consts.SEND_SUPER
