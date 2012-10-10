@@ -460,6 +460,12 @@ class Assignment(Node):
         self.value.compile(ctx)
         self.target.compile_store(ctx)
 
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
+
 
 class AugmentedAssignment(Node):
     def __init__(self, oper, target, value):
