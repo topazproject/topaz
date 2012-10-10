@@ -101,6 +101,18 @@ class BaseTestOrderedDict(object):
         assert self.keys(1) == 5
 
     @runner.func
+    def values(n):
+        o = OrderedDict()
+        o[4] = 1
+        o[5] = 2
+        o[4] = 3
+        return o.values()[n]
+
+    def test_values(self):
+        assert self.values(0) == 3
+        assert self.values(1) == 2
+
+    @runner.func
     def keys_object(n):
         o = OrderedDict()
         o[Simple(1)] = None

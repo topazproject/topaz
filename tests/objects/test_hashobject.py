@@ -33,6 +33,13 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [2, "four", 1, "1"]
 
+    def test_values(self, space):
+        w_res = space.execute("""
+        x = {2 => 3, "four" => 5, 1 => 3, '1' => 'a'}
+        return x.values
+        """)
+        assert self.unwrap(space, w_res) == [3, 5, 3, "a"]
+
     def test_each(self, space):
         w_res = space.execute("""
         x = {2 => 3, "four" => 5, 3 => 2}

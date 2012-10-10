@@ -27,6 +27,10 @@ class W_HashObject(W_Object):
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
 
+    @classdef.method("values")
+    def method_values(self, space):
+        return space.newarray(self.contents.values())
+
     @classdef.method("to_hash")
     def method_to_hash(self, space):
         return self

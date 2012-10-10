@@ -32,6 +32,9 @@ class OrderedDict(object):
     def keys(self):
         return [k.key for k in self.contents.keys()]
 
+    def values(self):
+        return self.contents.values()
+
     def get(self, key, default):
         return self.contents.get(self._key(key), default)
 
@@ -154,6 +157,9 @@ class SomeOrderedDict(model.SomeObject):
 
     def method_keys(self):
         return self.bookkeeper.newlist(self.read_key())
+
+    def method_values(self):
+        return self.bookkeeper.newlist(self.read_value())
 
     def method_get(self, s_key, s_default):
         self.generalize_key(s_key)
@@ -298,6 +304,12 @@ class OrderedDictRepr(Repr):
         r_list = hop.r_result
         c_LIST = hop.inputconst(lltype.Void, r_list.lowleveltype.TO)
         return hop.gendirectcall(LLOrderedDict.ll_keys, c_LIST, v_dict)
+
+    def rtype_method_values(self, hop):
+        [v_dict] = hop.inputargs(self)
+        r_list = hop.r_result
+        c_LIST = hop.inputconst(lltype.Void, r_list.lowleveltype.TO)
+        return hop.gendirectcall(LLOrderedDict.ll_values, c_LIST, v_dict)
 
     def rtype_method_get(self, hop):
         v_dict, v_key, v_default = hop.inputargs(self, self.key_repr, self.value_repr)
@@ -575,6 +587,18 @@ class LLOrderedDict(object):
         idx = d.first_entry
         while idx != -1:
             res.ll_items()[i] = LLOrderedDict.recast(ELEM, d.entries[idx].key)
+            idx = d.entries[idx].next
+            i += 1
+        return res
+
+    @staticmethod
+    def ll_values(LIST, d):
+        res = LIST.ll_newlist(d.num_items)
+        ELEM = lltype.typeOf(res.ll_items()).TO.OF
+        i = 0
+        idx = d.first_entry
+        while idx != -1:
+            res.ll_items()[i] = LLOrderedDict.recast(ELEM, d.entries[idx].value)
             idx = d.entries[idx].next
             i += 1
         return res
