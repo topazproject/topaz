@@ -1,8 +1,8 @@
 Topaz
 =====
 
-An implementation of the Ruby programming language, in Python, on top of PyPy's
-VM toolchain.
+An implementation of the Ruby programming language, in Python, using the
+RPython VM toolchain.
 
 You'll need to have `RPly`_ installed.
 
