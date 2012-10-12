@@ -7,6 +7,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
+from rupypy.objects.arrayobject import W_ArrayObject
 
 
 def create_trans_table(source, replacement, inv=False):
@@ -45,7 +46,92 @@ def expand_trans_str(source, res_len, inv=False):
         return inverted_source
 
     return expanded_source
+    
+FLAGS = [" ", "#", "+", "-", "0", "*"] # TODO: (digit)$
+INT_FORMAT = ["b", "B", "d", "i", "o", "u", "x", "X"]
+FLOAT_FORMAT = ["e", "E", "f", "g", "G", "a", "A"]
+OTHER_FORMAT = ["c", "p", "s", "%"]
 
+class Format(object):
+    def __init__(self, flag, width, precision, formatter):
+        self.flag = flag
+        self.width = int(width) if width else 0
+        self.precision = precision
+        self.formatter = formatter
+    
+    def to_s(self):
+        pass
+    
+    def _refine(self, string):
+        pass
+        
+class FloatFormat(Format):
+    def __init__(self, flag, width, precision, formatter, value):
+        self.flag = flag
+        self.width = int(width) if width else 0
+        self.precision = precision
+        self.formatter = formatter
+        self.float_value = value
+        
+    def _refine(self, string):
+        return string
+
+    def to_s(self):
+        if self.formatter == "f":
+            return self._refine("%f" % self.float_value)
+        else:
+            raise NotImplementedError, "This formatter is not yet supported!"
+                    
+class IntegerFormat(Format):
+    def __init__(self, flag, width, precision, formatter, value):
+        self.flag = flag
+        self.width = int(width) if width else 0
+        self.precision = precision
+        self.formatter = formatter
+        self.int_value = value
+        
+    def _refine(self, string):
+        if not self.flag:
+            return string
+        elif self.flag == "0":
+            return (self.flag * (self.width - len(string))) + string
+        elif self.flag == "-":
+            return string + (" " * (self.width - len(string)))
+        else:
+            raise NotImplementedError, "This flag is not yet supported!"
+            
+    def to_s(self):
+        if self.formatter == "d":
+            return self._refine("%d" % self.int_value)
+        elif self.formatter == "o":
+            return self._refine("%o" % self.int_value)
+        elif self.formatter == "x":
+            return self._refine("%x" % self.int_value)
+        else:
+            raise NotImplementedError, "%s formatter is not yet supported!" % self.formatter
+        
+        
+class OtherFormat(Format):
+    def __init__(self, flag, width, precision, formatter, value):
+        self.flag = flag
+        self.width = int(width) if width else 0
+        self.precision = precision
+        self.formatter = formatter
+        self.str_value = value
+
+    def _refine(self, string):
+        if not self.flag:
+            return string
+        elif self.flag == "-":
+            return string + (" " * (self.width - len(string)))
+        else:
+            raise NotImplementedError, "%s flag is not yet supported!" % self.flag
+
+    def to_s(self):
+        if self.formatter == "s":
+            return self._refine("%s" % self.str_value)
+        else:
+            raise NotImplementedError, "This formatter is not yet supported!"
 
 class StringStrategy(object):
     def __init__(self, space):
@@ -54,7 +140,6 @@ class StringStrategy(object):
     def __deepcopy__(self, memo):
         memo[id(self)] = result = object.__new__(self.__class__)
         return result
-
 
 class ConstantStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("constant")
@@ -197,6 +282,52 @@ class W_StringObject(W_Object):
     def clear(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.clear(self)
+
+    def format(self, space, parts):
+        string = self.str_w(space)
+        i = 0
+        part_idx = 0
+        format_parts = []
+        while i < len(string):
+            if string[i] == "%":
+                i += 1
+                flags = ""
+                while string[i] in FLAGS:
+                    flags += string[i]
+                    i += 1
+                width = ""
+                while string[i].isdigit():
+                    width += string[i]
+                    i += 1
+                precision = ""
+                if string[i] == ".":
+                    i += 1
+                    while string[i].isdigit():
+                        precision += string[i]
+                        i += 1
+                if string[i] in FLOAT_FORMAT:
+                    format_parts.append(FloatFormat(flags, width, precision, string[i],
+                                             space.float_w(parts[part_idx])))
+                    part_idx += 1
+                    i += 1
+                    continue
+                elif string[i] in INT_FORMAT:
+                    format_parts.append(IntegerFormat(flags, width, precision, string[i],
+                                                space.int_w(parts[part_idx])))
+                    part_idx += 1
+                    i += 1
+                    continue
+                elif string[i] in OTHER_FORMAT:
+                    format_parts.append(OtherFormat(flags, width, precision, string[i],
+                                              space.str_w(parts[part_idx])))
+                    part_idx += 1
+                    i += 1
+                    continue
+                else:
+                    raise Exception
+            format_parts.append(OtherFormat("", "", "", "s", string[i]))
+            i += 1
+        return "".join([each.to_s() for each in format_parts])
 
     def tr_trans(self, space, source, replacement, squeeze):
         change_made = False
@@ -391,6 +522,12 @@ class W_StringObject(W_Object):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
         return self if new_string else space.w_nil
+
+    @classdef.method("%")
+    def method_strformat(self, space, args_w):
+        if isinstance(args_w[0], W_ArrayObject):
+            return space.newstr_fromstr(self.format(space, args_w[0].listview(space)))
+        return space.newstr_fromstr(self.format(space, args_w))
 
     classdef.app_method("""
     def empty?
