@@ -56,6 +56,30 @@ class BaseTestOrderedDict(object):
         assert self.get_set_object(10) == 10
 
     @runner.func
+    def delitem(n):
+        o = OrderedDict()
+        o[2] = 3
+        o[3] = 4
+        del o[n]
+        vals = o.values()
+        return vals[0] * 10 + len(vals)
+
+    def test_delitem(self):
+        assert self.delitem(2) == 41
+        assert self.delitem(3) == 31
+
+    @runner.func
+    def len(n):
+        o = OrderedDict()
+        for i in xrange(n):
+            o[i] = i
+        return len(o)
+
+    def test_len(self):
+        assert self.len(2) == 2
+        assert self.len(0) == 0
+
+    @runner.func
     def custom_eq_hash(n):
         o = OrderedDict(Simple.eq, Simple.hash)
         o[Simple(n)] = 23
@@ -170,6 +194,27 @@ class BaseTestOrderedDict(object):
         assert self.contains(4)
         assert not self.contains(5)
 
+    @runner.func
+    def pop(n):
+        o = OrderedDict()
+        o[1] = 12
+        o[2] = 3
+        return (o.pop(n) * 10) + len(o)
+
+    def test_pop(self):
+        assert self.pop(1) == 121
+        assert self.pop(2) == 31
+
+    @runner.func
+    def pop_default(n, d):
+        o = OrderedDict()
+        o[1] = 12
+        o[2] = 3
+        return (o.pop(n, d) * 10) + len(o)
+
+    def test_pop_default(self):
+        assert self.pop_default(10, 14) == 142
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):
@@ -179,19 +224,23 @@ class TestPythonOrderedDict(BaseTestOrderedDict):
 
 class TestRPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):
-        def f(n, arg0):
+        def f(n, arg0, arg1):
             if arg0 == -1:
                 return funcs0[n]()
             else:
-                return funcs1[n](arg0)
+                if arg1 == -1:
+                    return funcs1[n](arg0)
+                else:
+                    return funcs2[n](arg0, arg1)
 
         def make_caller(i):
-            def inner(arg0=-1):
-                return interpret(f, [i, arg0])
+            def inner(arg0=-1, arg1=-1):
+                return interpret(f, [i, arg0, arg1])
             return staticmethod(inner)
 
         funcs0 = []
         funcs1 = []
+        funcs2 = []
         for func in cls.runner.functions:
             args = func.__code__.co_argcount
             if args == 0:
@@ -200,6 +249,9 @@ class TestRPythonOrderedDict(BaseTestOrderedDict):
             elif args == 1:
                 i = len(funcs1)
                 funcs1.append(func)
+            elif args == 2:
+                i = len(funcs2)
+                funcs2.append(func)
             else:
                 raise NotImplementedError(args)
             setattr(cls, func.__name__, make_caller(i))

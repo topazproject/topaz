@@ -23,8 +23,14 @@ class OrderedDict(object):
     def __setitem__(self, key, value):
         self.contents[self._key(key)] = value
 
+    def __delitem__(self, key):
+        del self.contents[self._key(key)]
+
     def __contains__(self, key):
         return self._key(key) in self.contents
+
+    def __len__(self):
+        return len(self.contents)
 
     def _key(self, key):
         return DictKey(self, key)
@@ -37,6 +43,9 @@ class OrderedDict(object):
 
     def get(self, key, default):
         return self.contents.get(self._key(key), default)
+
+    def pop(self, key, default=None):
+        return self.contents.pop(self._key(key), default)
 
     def iteritems(self):
         for k, v in self.contents.iteritems():
@@ -166,6 +175,12 @@ class SomeOrderedDict(model.SomeObject):
         self.generalize_value(s_default)
         return self.read_value()
 
+    def method_pop(self, s_key, s_default=None):
+        self.generalize_key(s_key)
+        if s_default is not None:
+            self.generalize_value(s_default)
+        return self.read_value()
+
     def method_iteritems(self):
         return SomeOrderedDictIterator(self)
 
@@ -210,6 +225,9 @@ class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
         self.generalize_key(key)
         return self.read_value()
 
+    def delitem((self, key)):
+        self.generalize_key(key)
+
     def contains((self, key)):
         self.generalize_key(key)
         return model.s_Bool
@@ -231,15 +249,22 @@ class OrderedDictRepr(Repr):
         else:
             return externalvsinternal(self.rtyper, item_repr)
 
+    def _must_clear(self, ll_tp):
+        return isinstance(ll_tp, lltype.Ptr) and ll_tp._needsgc()
+
     def create_lowlevel_type(self):
         entry_methods = {
             "valid": LLOrderedDict.ll_valid_from_flag,
             "everused": LLOrderedDict.ll_everused_from_flag,
+            "mark_deleted": LLOrderedDict.ll_mark_deleted_in_flag,
+            "must_clear_key": self._must_clear(self.key_repr.lowleveltype),
+            "must_clear_value": self._must_clear(self.value_repr.lowleveltype),
         }
         fields = [
             ("key", self.key_repr.lowleveltype),
             ("value", self.value_repr.lowleveltype),
             ("next", lltype.Signed),
+            ("prev", lltype.Signed),
             ("everused", lltype.Bool),
             ("valid", lltype.Bool),
         ]
@@ -299,6 +324,10 @@ class OrderedDictRepr(Repr):
             hop.genop("setfield", [v_res, cname, v_hash])
         return v_res
 
+    def rtype_len(self, hop):
+        [v_dict] = hop.inputargs(self)
+        return hop.gendirectcall(LLOrderedDict.ll_len, v_dict)
+
     def rtype_method_keys(self, hop):
         [v_dict] = hop.inputargs(self)
         r_list = hop.r_result
@@ -314,6 +343,17 @@ class OrderedDictRepr(Repr):
     def rtype_method_get(self, hop):
         v_dict, v_key, v_default = hop.inputargs(self, self.key_repr, self.value_repr)
         return hop.gendirectcall(LLOrderedDict.ll_get, v_dict, v_key, v_default)
+
+    def rtype_method_pop(self, hop):
+        if hop.nb_args == 2:
+            v_args = hop.inputargs(self, self.key_repr)
+            target = LLOrderedDict.ll_pop
+        elif hop.nb_args == 3:
+            v_args = hop.inputargs(self, self.key_repr, self.value_repr)
+            target = LLOrderedDict.ll_pop_default
+        hop.exception_is_here()
+        v_res = hop.gendirectcall(target, *v_args)
+        return self.recast_value(hop, v_res)
 
     def rtype_method_iteritems(self, hop):
         return OrderedDictIteratorRepr(self).newiter(hop)
@@ -357,6 +397,11 @@ class __extend__(pairtype(OrderedDictRepr, Repr)):
         v_res = hop.gendirectcall(LLOrderedDict.ll_getitem, v_dict, v_key)
         return self.recast_value(hop, v_res)
 
+    def rtype_delitem((self, r_key), hop):
+        v_dict, v_key = hop.inputargs(self, self.key_repr)
+        hop.exception_is_here()
+        hop.gendirectcall(LLOrderedDict.ll_delitem, v_dict, v_key)
+
     def rtype_contains((self, r_key), hop):
         v_dict, v_key = hop.inputargs(self, self.key_repr)
         return hop.gendirectcall(LLOrderedDict.ll_contains, v_dict, v_key)
@@ -385,6 +430,10 @@ class LLOrderedDict(object):
     @staticmethod
     def ll_everused_from_flag(entries, i):
         return entries[i].everused
+
+    @staticmethod
+    def ll_mark_deleted_in_flag(entries, i):
+        entries[i].valid = False
 
     @staticmethod
     def ll_hashkey_custom(d, key):
@@ -421,6 +470,10 @@ class LLOrderedDict(object):
         d.last_entry = -1
         d.resize_counter = LLOrderedDict.INIT_SIZE * 2
         return d
+
+    @staticmethod
+    def ll_len(d):
+        return d.num_items
 
     @staticmethod
     def ll_lookup(d, key, hash):
@@ -496,6 +549,7 @@ class LLOrderedDict(object):
             d.first_entry = i
         else:
             d.entries[d.last_entry].next = i
+        entry.prev = d.last_entry
         d.last_entry = i
         entry.next = -1
         if not everused:
@@ -512,6 +566,34 @@ class LLOrderedDict(object):
             return d.entries[i].value
         else:
             raise KeyError
+
+    @staticmethod
+    def ll_delitem(d, key):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        if i & LLOrderedDict.HIGHEST_BIT:
+            raise KeyError
+        LLOrderedDict._ll_del(d, i)
+
+    @staticmethod
+    def _ll_del(d, i):
+        d.entries.mark_deleted(i)
+        d.num_items -= 1
+        entry = d.entries[i]
+        if entry.prev == -1:
+            d.first_entry = entry.next
+        else:
+            d.entries[entry.prev].next = entry.next
+        if entry.next == -1:
+            d.last_entry = entry.prev
+        else:
+            d.entries[entry.next].prev = entry.prev
+
+        ENTRIES = lltype.typeOf(d.entries).TO
+        ENTRY = ENTRIES.OF
+        if ENTRIES.must_clear_key:
+            entry.key = lltype.nullptr(ENTRY.key.TO)
+        if ENTRIES.must_clear_value:
+            entry.value = lltype.nullptr(ENTRY.value.TO)
 
     @staticmethod
     def ll_contains(d, key):
@@ -562,6 +644,7 @@ class LLOrderedDict(object):
             d.first_entry = i
         else:
             d.entries[d.last_entry].next = i
+        entry.prev = d.last_entry
         d.last_entry = i
         entry.next = -1
         d.resize_counter -= 3
@@ -609,6 +692,23 @@ class LLOrderedDict(object):
         if not i & LLOrderedDict.HIGHEST_BIT:
             return d.entries[i].value
         else:
+            return default
+
+    @staticmethod
+    def ll_pop(d, key):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        if not i & LLOrderedDict.HIGHEST_BIT:
+            value = d.entries[i].value
+            LLOrderedDict._ll_del(d, i)
+            return value
+        else:
+            raise KeyError
+
+    @staticmethod
+    def ll_pop_default(d, key, default):
+        try:
+            return LLOrderedDict.ll_pop(d, key)
+        except KeyError:
             return default
 
     @staticmethod

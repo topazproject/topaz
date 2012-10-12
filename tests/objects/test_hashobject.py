@@ -26,6 +26,13 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
+    def test_delete(self, space):
+        w_res = space.execute("""
+        x = {2 => 3, 4 => 5}
+        return [x.delete(2), x.keys, x.delete(123)]
+        """)
+        assert self.unwrap(space, w_res) == [3, [4], None]
+
     def test_keys(self, space):
         w_res = space.execute("""
         x = {2 => 3, "four" => 5, 1 => 3, '1' => 'a'}
