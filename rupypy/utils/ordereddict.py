@@ -116,8 +116,6 @@ class SomeOrderedDict(model.SomeObject):
 
     def generalize_key(self, s_key):
         new_key_type = model.unionof(self.key_type, s_key)
-        if model.isdegenerated(new_key_type):
-            self.bookkeeper.ondegenerated(self, new_key_type)
         updated = new_key_type != self.key_type
         if updated:
             self.key_type = new_key_type
@@ -127,8 +125,6 @@ class SomeOrderedDict(model.SomeObject):
 
     def generalize_value(self, s_value):
         new_value_type = model.unionof(self.value_type, s_value)
-        if model.isdegenerated(new_value_type):
-            self.bookkeeper.ondegenerated(self, new_value_type)
         if new_value_type != self.value_type:
             self.value_type = new_value_type
             for position_key in self.value_read_locations:
@@ -192,6 +188,9 @@ class SomeOrderedDictIterator(model.SomeObject):
 
     def rtyper_makerepr(self, rtyper):
         return OrderedDictIteratorRepr(rtyper.getrepr(self.d))
+
+    def rtyper_makekey(self):
+        return (type(self), self.d)
 
     def iter(self):
         return self
