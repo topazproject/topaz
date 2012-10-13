@@ -215,6 +215,19 @@ class BaseTestOrderedDict(object):
     def test_pop_default(self):
         assert self.pop_default(10, 14) == 142
 
+    @runner.func
+    def pop_keyerror(n):
+        o = OrderedDict()
+        o[3] = 4
+        try:
+            return o.pop(n)
+        except KeyError:
+            return 500
+
+    def test_pop_keyerror(self):
+        assert self.pop_keyerror(3) == 4
+        assert self.pop_keyerror(12) == 500
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):

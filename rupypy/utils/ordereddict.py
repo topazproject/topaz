@@ -11,6 +11,8 @@ from pypy.rpython.rmodel import Repr, IteratorRepr, externalvsinternal
 from pypy.tool.pairtype import pairtype
 
 
+MARKER = object()
+
 class OrderedDict(object):
     def __init__(self, eq_func=None, hash_func=None):
         self.contents = PyOrderedDict()
@@ -44,8 +46,11 @@ class OrderedDict(object):
     def get(self, key, default):
         return self.contents.get(self._key(key), default)
 
-    def pop(self, key, default=None):
-        return self.contents.pop(self._key(key), default)
+    def pop(self, key, default=MARKER):
+        if default is MARKER:
+            return self.contents.pop(self._key(key))
+        else:
+            return self.contents.pop(self._key(key), default)
 
     def iteritems(self):
         for k, v in self.contents.iteritems():
