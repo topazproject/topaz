@@ -518,8 +518,7 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
-        LOAD_SCOPE
-        LOAD_CONSTANT 1
+        LOAD_LOCAL_CONSTANT 1
         BUILD_CLASS
         LOAD_CONST 2
         EVALUATE_CLASS
@@ -562,8 +561,7 @@ class TestCompiler(object):
 
     def test_constants(self, space):
         self.assert_compiles(space, "Abc", """
-        LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         DISCARD_TOP
 
         LOAD_CONST 1
@@ -1094,8 +1092,7 @@ class TestCompiler(object):
 
     def test_lookup_constant(self, space):
         self.assert_compiles(space, "Module::Constant", """
-        LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         LOAD_CONSTANT 1
         DISCARD_TOP
 
@@ -1103,8 +1100,7 @@ class TestCompiler(object):
         RETURN
         """)
         self.assert_compiles(space, "Module::constant", """
-        LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         SEND 1 0
         DISCARD_TOP
 
@@ -1191,21 +1187,20 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 51
+        JUMP 50
         DUP_TOP
-        LOAD_SCOPE
-        LOAD_CONSTANT 3
+        LOAD_LOCAL_CONSTANT 3
         ROT_TWO
         SEND 4 1
-        JUMP_IF_TRUE 35
-        JUMP 50
+        JUMP_IF_TRUE 34
+        JUMP 49
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_CONST 5
         COPY_STRING
         SEND 6 1
-        JUMP 55
+        JUMP 54
         END_FINALLY
         LOAD_CONST 7
         DISCARD_TOP
@@ -1226,21 +1221,20 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 53
+        JUMP 52
         DUP_TOP
-        LOAD_SCOPE
-        LOAD_CONSTANT 3
+        LOAD_LOCAL_CONSTANT 3
         ROT_TWO
         SEND 4 1
-        JUMP_IF_TRUE 35
-        JUMP 52
+        JUMP_IF_TRUE 34
+        JUMP 51
         STORE_LOCAL 0
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_LOCAL 0
         SEND 5 1
-        JUMP 57
+        JUMP 56
         END_FINALLY
         LOAD_CONST 6
         DISCARD_TOP
@@ -1445,8 +1439,7 @@ class TestCompiler(object):
             "hello world"
         end
         """, """
-        LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         LOAD_CONST 1
         LOAD_CONST 1
         LOAD_CONST 2
@@ -1920,7 +1913,7 @@ class TestCompiler(object):
         defined? nil.nil?
         """, """
         LOAD_SCOPE
-        DEFINED_CONSTANT 0
+        DEFINED_LOCAL_CONSTANT 0
         DISCARD_TOP
 
         LOAD_SELF

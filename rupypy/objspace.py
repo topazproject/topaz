@@ -212,14 +212,16 @@ class ObjectSpace(object):
             self._executioncontext = ExecutionContext(self)
         return self._executioncontext
 
-    def create_frame(self, bc, w_self=None, w_scope=None, block=None,
-        parent_interp=None):
+    def create_frame(self, bc, w_self=None, w_scope=None, lexical_scope=None,
+        block=None, parent_interp=None):
 
         if w_self is None:
             w_self = self.w_top_self
         if w_scope is None:
             w_scope = self.w_object
-        return Frame(jit.promote(bc), w_self, w_scope, block, parent_interp)
+        if lexical_scope is None:
+            lexical_scope = w_scope
+        return Frame(jit.promote(bc), w_self, w_scope, lexical_scope, block, parent_interp)
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -270,10 +272,10 @@ class ObjectSpace(object):
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
 
-    def newfunction(self, w_name, w_code):
+    def newfunction(self, w_name, w_code, lexical_scope):
         name = self.symbol_w(w_name)
         assert isinstance(w_code, W_CodeObject)
-        return W_UserFunction(name, w_code)
+        return W_UserFunction(name, w_code, lexical_scope)
 
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)
@@ -328,16 +330,21 @@ class ObjectSpace(object):
         return self.fromcache(ModuleCache).getorbuild(moduledef)
 
     def find_const(self, w_module, name):
-        w_obj = w_module.find_const(self, name)
-        if w_obj is None:
-            w_obj = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
-        return w_obj
+        w_res = w_module.find_const(self, name)
+        if w_res is None:
+            w_res = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
+        return w_res
 
     def set_const(self, module, name, w_value):
         module.set_const(self, name, w_value)
 
-    def set_lexical_scope(self, module, scope):
-        module.set_lexical_scope(self, scope)
+    def find_lexical_const(self, w_module, name, lexical_scope):
+        w_res = lexical_scope.find_const(self, name)
+        if w_res is None:
+            w_res = w_module.find_const(self, name)
+        if w_res is None:
+            w_res = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
+        return w_res
 
     def find_instance_var(self, w_obj, name):
         w_res = w_obj.find_instance_var(self, name)

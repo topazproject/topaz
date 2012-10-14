@@ -164,6 +164,20 @@ class Interpreter(object):
         else:
             frame.push(space.w_nil)
 
+    def LOAD_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        name = space.symbol_w(w_name)
+        frame.push(space.find_lexical_const(frame.w_scope, name, frame.lexical_scope))
+
+    def DEFINED_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        frame.pop()
+        if (space.is_true(space.send(frame.w_scope, space.newsymbol("const_defined?"), [w_name])) or
+            space.is_true(space.send(frame.lexical_scope, space.newsymbol("const_defined?"), [w_name]))):
+            frame.push(space.newstr_fromstr("constant"))
+        else:
+            frame.push(space.w_nil)
+
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
@@ -251,7 +265,7 @@ class Interpreter(object):
     def BUILD_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()
-        w_func = space.newfunction(w_name, w_code)
+        w_func = space.newfunction(w_name, w_code, frame.lexical_scope)
         frame.push(w_func)
 
     @jit.unroll_safe
@@ -277,7 +291,6 @@ class Interpreter(object):
             assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
-            space.set_lexical_scope(w_cls, w_scope)
 
         frame.push(w_cls)
 
@@ -291,7 +304,6 @@ class Interpreter(object):
         if w_mod is None:
             w_mod = space.newmodule(name)
             space.set_const(w_scope, name, w_mod)
-            space.set_lexical_scope(w_mod, w_scope)
 
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = space.create_frame(w_bytecode, w_mod, w_mod)
@@ -386,7 +398,7 @@ class Interpreter(object):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls)
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, frame.w_scope)
         with space.getexecutioncontext().visit_frame(sub_frame):
             space.execute_frame(sub_frame, w_bytecode)
 
