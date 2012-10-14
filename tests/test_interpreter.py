@@ -754,6 +754,89 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == "A"
 
+    def test_defined(self, space):
+        w_res = space.execute("return [defined? A, defined? Array]")
+        assert self.unwrap(space, w_res) == [None, "constant"]
+        w_res = space.execute("""
+        @a = 3
+        return [defined? @a, defined? @b]
+        """)
+        assert self.unwrap(space, w_res) == ["instance-variable", None]
+        w_res = space.execute("""
+        return [defined? self, defined? nil, defined? true, defined? false]
+        """)
+        assert self.unwrap(space, w_res) == ["self", "nil", "true", "false"]
+        w_res = space.execute("""
+        return [defined? nil.nil?, defined? nil.fdfdafa]
+        """)
+        assert self.unwrap(space, w_res) == ["method", None]
+        w_res = space.execute("""
+        return [defined? a = 3]
+        """)
+        assert self.unwrap(space, w_res) == ["assignment"]
+
+    def test_match(self, space):
+        w_res = space.execute("return 3 =~ nil")
+        assert self.unwrap(space, w_res) is None
+
+    def test_super(self, space):
+        w_res = space.execute("""
+        class A
+            def f(a, b)
+                return [a, b]
+            end
+        end
+        class B < A
+            def f(a, b)
+                a += 10
+                return super
+            end
+        end
+        return B.new.f(4, 5)
+        """)
+        assert self.unwrap(space, w_res) == [14, 5]
+
+        w_res = space.execute("""
+        class C < A
+            def f
+                super(*[1, 2])
+            end
+        end
+        return C.new.f
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_next_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        while i < 10
+            i += 1
+            if i > 3
+                next
+            end
+            res << i
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+
+    def test_break_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        other = while i < 10
+            i += 1
+            if i > 3
+                break 200
+            end
+            res << i
+        end
+        res << other
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 200]
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):
@@ -1070,86 +1153,3 @@ class TestExceptions(BaseRuPyPyTest):
         end
         """)
         assert space.int_w(w_res) == 0
-
-    def test_defined(self, space):
-        w_res = space.execute("return [defined? A, defined? Array]")
-        assert self.unwrap(space, w_res) == [None, "constant"]
-        w_res = space.execute("""
-        @a = 3
-        return [defined? @a, defined? @b]
-        """)
-        assert self.unwrap(space, w_res) == ["instance-variable", None]
-        w_res = space.execute("""
-        return [defined? self, defined? nil, defined? true, defined? false]
-        """)
-        assert self.unwrap(space, w_res) == ["self", "nil", "true", "false"]
-        w_res = space.execute("""
-        return [defined? nil.nil?, defined? nil.fdfdafa]
-        """)
-        assert self.unwrap(space, w_res) == ["method", None]
-        w_res = space.execute("""
-        return [defined? a = 3]
-        """)
-        assert self.unwrap(space, w_res) == ["assignment"]
-
-    def test_match(self, space):
-        w_res = space.execute("return 3 =~ nil")
-        assert self.unwrap(space, w_res) is None
-
-    def test_super(self, space):
-        w_res = space.execute("""
-        class A
-            def f(a, b)
-                return [a, b]
-            end
-        end
-        class B < A
-            def f(a, b)
-                a += 10
-                return super
-            end
-        end
-        return B.new.f(4, 5)
-        """)
-        assert self.unwrap(space, w_res) == [14, 5]
-
-        w_res = space.execute("""
-        class C < A
-            def f
-                super(*[1, 2])
-            end
-        end
-        return C.new.f
-        """)
-        assert self.unwrap(space, w_res) == [1, 2]
-
-    def test_next_loop(self, space):
-        w_res = space.execute("""
-        res = []
-        i = 0
-        while i < 10
-            i += 1
-            if i > 3
-                next
-            end
-            res << i
-        end
-        return res
-        """)
-        assert self.unwrap(space, w_res) == [1, 2, 3]
-
-    def test_break_loop(self, space):
-        w_res = space.execute("""
-        res = []
-        i = 0
-        other = while i < 10
-            i += 1
-            if i > 3
-                break 200
-            end
-            res << i
-        end
-        res << other
-        return res
-        """)
-        assert self.unwrap(space, w_res) == [1, 2, 3, 200]
