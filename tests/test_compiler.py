@@ -2062,3 +2062,23 @@ class TestCompiler(object):
         LOAD_CONST 0
         RETURN
         """)
+
+    def test_break_block(self, space):
+        bc = self.assert_compiles(space, """
+        f { break 5 }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        RAISE_BREAK
+        RETURN
+        """)

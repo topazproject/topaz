@@ -1153,3 +1153,24 @@ class TestExceptions(BaseRuPyPyTest):
         return res
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3, 200]
+
+    def test_break_block(self, space):
+        w_res = space.execute("""
+        def f(res, &a)
+            begin
+                g(&a)
+            ensure
+                res << 1
+            end
+            5
+        end
+
+        def g()
+            4 + yield
+        end
+
+        res = []
+        res << (f(res) { break 3})
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 3]

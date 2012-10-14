@@ -88,6 +88,7 @@ BYTECODES = [
     ("YIELD", 1, ARRAY_EFFECT),
     ("CONTINUE_LOOP", 1, -1),
     ("BREAK_LOOP", 0, -1),
+    ("RAISE_BREAK", 0, -1),
 ]
 
 BYTECODE_NAMES = []

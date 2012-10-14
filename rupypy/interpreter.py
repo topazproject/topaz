@@ -44,8 +44,14 @@ class Interpreter(object):
                     pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
                 except RaiseReturn as e:
                     pc = self.handle_raise_return(space, pc, frame, bytecode, e)
+                except RaiseBreak as e:
+                    pc = self.handle_raise_break(space, pc, frame, bytecode, e)
         except RaiseReturn as e:
             if e.parent_interp is self:
+                return e.w_value
+            raise
+        except RaiseBreak as e:
+            if ONE_FRAME_BACKS_INTERP is e.parent_interp:
                 return e.w_value
             raise
         except Return as e:
@@ -102,6 +108,13 @@ class Interpreter(object):
         if block is None:
             raise e
         unroller = RaiseReturnValue(e.parent_interp, e.w_value)
+        return block.handle(space, frame, unroller)
+
+    def handle_raise_break(self, space, pc, frame, bytecode, e):
+        block = frame.unrollstack(RaiseBreakValue.kind)
+        if block is None:
+            raise e
+        unroller = RaiseBreakValue(e.parent_interp, e.w_value)
         return block.handle(space, frame, unroller)
 
     def jump(self, space, bytecode, frame, cur_pc, target_pc):
@@ -548,6 +561,14 @@ class Interpreter(object):
         w_obj = frame.pop()
         return frame.unrollstack_and_jump(space, BreakLoop(w_obj))
 
+    def RAISE_BREAK(self, space, bytecode, frame, pc):
+        w_value = frame.pop()
+        block = frame.unrollstack(RaiseBreakValue.kind)
+        if block is None:
+            raise RaiseBreak(frame.parent_interp, w_value)
+        unroller = RaiseBreakValue(frame.parent_interp, w_value)
+        return block.handle(space, frame, unroller)
+
     def UNREACHABLE(self, space, bytecode, frame, pc):
         raise Exception
 
@@ -558,6 +579,12 @@ class Return(Exception):
 
 
 class RaiseReturn(Exception):
+    def __init__(self, parent_interp, w_value):
+        self.parent_interp = parent_interp
+        self.w_value = w_value
+
+
+class RaiseBreak(Exception):
     def __init__(self, parent_interp, w_value):
         self.parent_interp = parent_interp
         self.w_value = w_value
@@ -608,8 +635,19 @@ class ContinueLoop(SuspendedUnroller):
 class BreakLoop(SuspendedUnroller):
     kind = 1 << 4
 
-    def __init__(self, w_obj):
-        self.w_obj = w_obj
+    def __init__(self, w_value):
+        self.w_value = w_value
+
+
+class RaiseBreakValue(SuspendedUnroller):
+    kind = 1 << 5
+
+    def __init__(self, parent_interp, w_value):
+        self.parent_interp = parent_interp
+        self.w_value = w_value
+
+    def nomoreblocks(self):
+        raise RaiseBreak(self.parent_interp, self.w_value)
 
 
 class FrameBlock(object):
@@ -637,7 +675,7 @@ class LoopBlock(FrameBlock):
             return unroller.target_pc
         elif isinstance(unroller, BreakLoop):
             self.cleanupstack(frame)
-            frame.push(unroller.w_obj)
+            frame.push(unroller.w_value)
             return self.target_pc
         else:
             raise SystemError

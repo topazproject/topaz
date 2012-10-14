@@ -143,7 +143,7 @@ class Break(BaseStatement):
         if ctx.in_frame_block(ctx.F_BLOCK_LOOP):
             ctx.emit(consts.BREAK_LOOP)
         elif isinstance(ctx.symtable, BlockSymbolTable):
-            raise NotImplementedError
+            ctx.emit(consts.RAISE_BREAK)
         else:
             raise NotImplementedError
 
