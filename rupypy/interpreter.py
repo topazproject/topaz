@@ -42,6 +42,8 @@ class Interpreter(object):
                     pc = self.handle_bytecode(space, pc, frame, bytecode)
                 except RubyError as e:
                     pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
+                except RaiseReturn as e:
+                    pc = self.handle_raise_return(space, pc, frame, bytecode, e)
         except RaiseReturn as e:
             if e.parent_interp is self:
                 return e.w_value
@@ -93,6 +95,13 @@ class Interpreter(object):
         if block is None:
             raise e
         unroller = ApplicationException(e)
+        return block.handle(space, frame, unroller)
+
+    def handle_raise_return(self, space, pc, frame, bytecode, e):
+        block = frame.unrollstack(RaiseReturnValue.kind)
+        if block is None:
+            raise e
+        unroller = RaiseReturnValue(e.parent_interp, e.w_value)
         return block.handle(space, frame, unroller)
 
     def jump(self, space, bytecode, frame, cur_pc, target_pc):

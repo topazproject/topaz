@@ -1017,6 +1017,27 @@ class TestExceptions(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [12, 5]
 
+    def test_ensure_nonlocal_block_return(self, space):
+        w_res = space.execute("""
+        def h
+            yield
+        end
+        def g(res, &a)
+            begin
+               yield
+            ensure
+               res << 1
+            end
+        end
+        def f(res)
+            g(res) { return 5 }
+        end
+        res = []
+        res << f(res)
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 5]
+
     def test_ensure_result(self, space):
         w_res = space.execute("""
         return begin
