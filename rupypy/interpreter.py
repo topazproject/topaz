@@ -50,10 +50,6 @@ class Interpreter(object):
             if e.parent_interp is self:
                 return e.w_value
             raise
-        except RaiseBreak as e:
-            if ONE_FRAME_BACKS_INTERP is e.parent_interp:
-                return e.w_value
-            raise
         except Return as e:
             return e.w_value
 
@@ -111,6 +107,10 @@ class Interpreter(object):
         return block.handle(space, frame, unroller)
 
     def handle_raise_break(self, space, pc, frame, bytecode, e):
+        if e.parent_interp is self:
+            # TODO: lolololol hack
+            frame.push(e.w_value)
+            return pc + 5
         block = frame.unrollstack(RaiseBreakValue.kind)
         if block is None:
             raise e
