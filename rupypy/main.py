@@ -60,7 +60,7 @@ def _entry_point(space, argv):
 
     if exprs:
         source = "\n".join(exprs)
-        path = '-e'
+        path = "-e"
     elif path is not None:
         f = open_file_as_stream(path)
         try:
@@ -79,7 +79,7 @@ def _entry_point(space, argv):
     except RubyError as e:
         w_exc = e.w_value
         if isinstance(w_exc, W_SystemExit):
-            return w_exc.status
+            status = w_exc.status
         else:
             w_exit_error = w_exc
             status = 1
