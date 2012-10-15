@@ -332,12 +332,13 @@ class W_StringObject(W_Object):
         results = space.str_w(self).split(sep, limit - 1)
         return space.newarray([space.newstr_fromstr(s) for s in results])
 
-    @classdef.method("downcase")
-    def method_downcase(self, space):
-        copy = self.copy(space)
-        copy.strategy.to_mutable(space, copy)
-        copy.strategy.downcase(copy.str_storage)
+    classdef.app_method("""
+    def downcase
+        copy = self.dup
+        copy.downcase!
         return copy
+    end
+    """)
 
     @classdef.method("downcase!")
     def method_downcase_i(self, space):
