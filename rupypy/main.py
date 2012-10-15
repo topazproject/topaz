@@ -60,6 +60,7 @@ def _entry_point(space, argv):
 
     if exprs:
         source = "\n".join(exprs)
+        path = '-e'
     elif path is not None:
         f = open_file_as_stream(path)
         try:
