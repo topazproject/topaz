@@ -11,6 +11,11 @@ class TestKernel(BaseRuPyPyTest):
         out, err = capfd.readouterr()
         assert out == "\n"
 
+    def test_print(self, space, capfd):
+        space.execute("print 1, 3")
+        out, err = capfd.readouterr()
+        assert out == "13"
+
     def test_lambda(self, space):
         w_res = space.execute("""
         l = lambda { |x| 3 }
