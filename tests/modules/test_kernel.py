@@ -2,8 +2,6 @@ import os
 
 import py
 
-from rupypy.objects.procobject import W_ProcObject
-
 from ..base import BaseRuPyPyTest
 
 
@@ -11,7 +9,7 @@ class TestKernel(BaseRuPyPyTest):
     def test_puts_nil(self, space, capfd):
         space.execute("puts nil")
         out, err = capfd.readouterr()
-        assert out == "nil\n"
+        assert out == "\n"
 
     def test_lambda(self, space):
         w_res = space.execute("""

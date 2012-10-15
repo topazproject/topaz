@@ -7,7 +7,6 @@ from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
 from rupypy.modules.process import Process
 from rupypy.objects.exceptionobject import W_ExceptionObject
-from rupypy.objects.hashobject import W_HashObject
 from rupypy.objects.stringobject import W_StringObject
 
 
@@ -39,16 +38,11 @@ class Kernel(Module):
     def function_proc(self, space, block):
         return space.newproc(block, False)
 
-    @moduledef.function("puts")
-    def function_puts(self, space, w_obj):
-        if w_obj is space.w_nil:
-            s = "nil"
-        else:
-            w_str = space.send(w_obj, space.newsymbol("to_s"))
-            s = space.str_w(w_str)
-        os.write(1, s)
-        os.write(1, "\n")
-        return space.w_nil
+    moduledef.app_method("""
+    def puts *args
+        $stdout.puts(*args)
+    end
+    """)
 
     @staticmethod
     def find_feature(space, path):
