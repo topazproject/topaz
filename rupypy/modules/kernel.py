@@ -52,6 +52,7 @@ class Kernel(Module):
 
     @staticmethod
     def find_feature(space, path):
+        assert path is not None
         if not path.endswith(".rb"):
             path += ".rb"
 
