@@ -44,6 +44,12 @@ class Kernel(Module):
     end
     """)
 
+    moduledef.app_method("""
+    def print *args
+        $stdout.print(*args)
+    end
+    """)
+
     @staticmethod
     def find_feature(space, path):
         if not path.endswith(".rb"):
