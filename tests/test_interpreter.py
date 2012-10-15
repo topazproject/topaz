@@ -1213,3 +1213,38 @@ class TestExceptions(BaseRuPyPyTest):
         end
         """)
         assert space.int_w(w_res) == 0
+
+    def test_constant_lookup_from_trpl_book(self, space):
+        w_res = space.execute("""
+        module Kernel
+          A = B = C = D = E = F = "defined in kernel"
+        end
+        A = B = C = D = E = "defined at toplevel"
+
+        class Super
+          A = B = C = D = "defined in superclass"
+        end
+
+        module Included
+          A = B = C = "defined in included module"
+        end
+
+        module Enclosing
+          A = B = "defined in enclosing module"
+
+          class Local < Super
+            include Included
+            A = "defined Locally"
+            RESULT = [A, B, C, D, E, F]
+          end
+        end
+        return Enclosing::Local::RESULT
+        """)
+        assert self.unwrap(space, w_res) == [
+            "defined Locally",
+            "defined in enclosing module",
+            "defined in included module",
+            "defined in superclass",
+            "defined at toplevel",
+            "defined in kernel"
+        ]
