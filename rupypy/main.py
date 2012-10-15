@@ -66,8 +66,10 @@ def _entry_point(space, argv):
             source = f.readall()
         finally:
             f.close()
+    elif verbose:
+        return 0
     else:
-        return 0 # TODO should run contents of stdin
+        raise NotImplementedError("reading script from stdin")
 
     status = 0
     w_exit_error = None
