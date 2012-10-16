@@ -168,13 +168,13 @@ class Interpreter(object):
     def LOAD_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
-        frame.push(space.find_lexical_const(frame.lexical_scope, name))
+        frame.push(space.find_lexical_const(jit.promote(frame.lexical_scope), name))
 
     @jit.unroll_safe
     def DEFINED_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         frame.pop()
-        scope = frame.lexical_scope
+        scope = jit.promote(frame.lexical_scope)
         while scope is not None:
             w_mod = scope.w_mod
             if space.is_true(space.send(w_mod, space.newsymbol("const_defined?"), [w_name])):
