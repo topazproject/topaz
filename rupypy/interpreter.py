@@ -396,13 +396,15 @@ class Interpreter(object):
         w_obj.attach_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
+    @jit.unroll_safe
     def EVALUATE_CLASS(self, space, bytecode, frame, pc):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
         # TODO: we shouldn't have to copy lexical_scope_w, seems like a bug in
         # jtransform.py upstream
-        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, [w_cls] + frame.lexical_scope_w[:])
+        new_scope_w = [w_cls] + [w_mod for w_mod in frame.lexical_scope_w]
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, new_scope_w)
         with space.getexecutioncontext().visit_frame(sub_frame):
             space.execute_frame(sub_frame, w_bytecode)
 
