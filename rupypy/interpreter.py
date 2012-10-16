@@ -286,7 +286,7 @@ class Interpreter(object):
         w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_cls = w_scope.find_local_const(self, name)
+        w_cls = w_scope.find_local_const(space, name)
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.w_object
