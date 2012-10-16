@@ -212,16 +212,14 @@ class ObjectSpace(object):
             self._executioncontext = ExecutionContext(self)
         return self._executioncontext
 
-    def create_frame(self, bc, w_self=None, w_scope=None, lexical_scope_w=None,
+    def create_frame(self, bc, w_self=None, w_scope=None, lexical_scope=None,
         block=None, parent_interp=None):
 
         if w_self is None:
             w_self = self.w_top_self
         if w_scope is None:
             w_scope = self.w_object
-        if lexical_scope_w is None:
-            lexical_scope_w = []
-        return Frame(jit.promote(bc), w_self, w_scope, lexical_scope_w, block, parent_interp)
+        return Frame(jit.promote(bc), w_self, w_scope, lexical_scope, block, parent_interp)
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -272,10 +270,10 @@ class ObjectSpace(object):
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
 
-    def newfunction(self, w_name, w_code, lexical_scope_w):
+    def newfunction(self, w_name, w_code, lexical_scope):
         name = self.symbol_w(w_name)
         assert isinstance(w_code, W_CodeObject)
-        return W_UserFunction(name, w_code, lexical_scope_w)
+        return W_UserFunction(name, w_code, lexical_scope)
 
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)
@@ -339,13 +337,16 @@ class ObjectSpace(object):
         module.set_const(self, name, w_value)
 
     @jit.unroll_safe
-    def find_lexical_const(self, lexical_scope_w, name):
+    def find_lexical_const(self, lexical_scope, name):
         w_res = None
-        for w_mod in lexical_scope_w:
+        scope = lexical_scope
+        while scope is not None:
+            w_mod = scope.w_mod
             w_res = w_mod.find_local_const(self, name)
             if w_res is not None:
                 return w_res
-        w_mod = lexical_scope_w[0] if lexical_scope_w else self.w_object
+            scope = scope.backscope
+        w_mod = lexical_scope.w_mod if lexical_scope else self.w_object
         w_res = self.find_const(w_mod, name)
         if w_res is None:
             w_res = self.send(w_mod, self.newsymbol("const_missing"), [self.newsymbol(name)])
@@ -397,7 +398,7 @@ class ObjectSpace(object):
         bc = block.bytecode
         frame = self.create_frame(
             bc, w_self=block.w_self, w_scope=block.w_scope,
-            lexical_scope_w=block.lexical_scope_w, block=block.block,
+            lexical_scope=block.lexical_scope, block=block.block,
             parent_interp=block.parent_interp,
         )
         if (len(args_w) == 1 and
