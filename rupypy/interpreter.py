@@ -86,7 +86,13 @@ class Interpreter(object):
             raise NotImplementedError
 
         method = getattr(self, name)
-        res = method(space, bytecode, frame, pc, *args)
+        try:
+            res = method(space, bytecode, frame, pc, *args)
+        except RaiseBreak as e:
+            if e.parent_interp is not self:
+                raise
+            frame.push(e.w_value)
+            res = None
         if res is not None:
             pc = res
         return pc
@@ -107,10 +113,6 @@ class Interpreter(object):
         return block.handle(space, frame, unroller)
 
     def handle_raise_break(self, space, pc, frame, bytecode, e):
-        if e.parent_interp is self:
-            # TODO: lolololol hack
-            frame.push(e.w_value)
-            return pc + 5
         block = frame.unrollstack(RaiseBreakValue.kind)
         if block is None:
             raise e
