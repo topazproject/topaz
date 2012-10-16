@@ -12,11 +12,11 @@ class BaseFrame(object):
 class Frame(BaseFrame):
     _virtualizable2_ = [
         "bytecode", "locals_w[*]", "stack_w[*]", "stackpos", "w_self",
-        "w_scope", "lexical_scope", "block", "cells[*]", "lastblock",
+        "w_scope", "lexical_scope_w[*]", "block", "cells[*]", "lastblock",
     ]
 
     @jit.unroll_safe
-    def __init__(self, bytecode, w_self, w_scope, lexical_scope, block, parent_interp):
+    def __init__(self, bytecode, w_self, w_scope, lexical_scope_w, block, parent_interp):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         BaseFrame.__init__(self)
         self.bytecode = bytecode
@@ -26,7 +26,7 @@ class Frame(BaseFrame):
         self.stackpos = 0
         self.w_self = w_self
         self.w_scope = w_scope
-        self.lexical_scope = lexical_scope
+        self.lexical_scope_w = lexical_scope_w
         self.block = block
         self.parent_interp = parent_interp
         self.lastblock = None

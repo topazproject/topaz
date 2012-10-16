@@ -11,18 +11,18 @@ class W_FunctionObject(W_BaseObject):
 
 
 class W_UserFunction(W_FunctionObject):
-    _immutable_fields_ = ["bytecode", "lexical_scope"]
+    _immutable_fields_ = ["bytecode", "lexical_scope_w[*]"]
 
-    def __init__(self, name, bytecode, lexical_scope):
+    def __init__(self, name, bytecode, lexical_scope_w):
         self.name = name
         self.bytecode = bytecode
-        self.lexical_scope = lexical_scope
+        self.lexical_scope_w = lexical_scope_w
 
     def __deepcopy__(self, memo):
         obj = super(W_UserFunction, self).__deepcopy__(memo)
         obj.name = self.name
         obj.bytecode = copy.deepcopy(self.bytecode, memo)
-        obj.lexical_scope = copy.deepcopy(self.lexical_scope, memo)
+        obj.lexical_scope_w = copy.deepcopy(self.lexical_scope_w, memo)
         return obj
 
     @jit.unroll_safe
@@ -31,7 +31,7 @@ class W_UserFunction(W_FunctionObject):
             self.bytecode,
             w_self=w_receiver,
             w_scope=space.getscope(w_receiver),
-            lexical_scope=self.lexical_scope,
+            lexical_scope_w=self.lexical_scope_w,
             block=block,
         )
         with space.getexecutioncontext().visit_frame(frame):
