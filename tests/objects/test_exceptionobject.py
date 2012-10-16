@@ -52,3 +52,21 @@ class TestExceptionObject(BaseRuPyPyTest):
         end
         """)
         assert self.unwrap(space, w_res) == "foo"
+
+    def test_backtrace(self, space):
+        w_res = space.execute("""
+        def f
+            yield
+        end
+        begin
+            f { 1 / 0}
+        rescue Exception => e
+            return e.backtrace
+        end
+        """)
+        assert self.unwrap(space, w_res) == [
+            "-e:6:in `/'",
+            "-e:6:in `block in <main>'",
+            "-e:3:in `f'",
+            "-e:6:in `<main>'"
+        ]
