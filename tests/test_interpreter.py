@@ -837,6 +837,101 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3, 200]
 
+    def test_simple_lexical_scope_constant(self, space):
+        w_res = space.execute("""
+        class A
+            CONST = 1
+
+            def get
+                CONST
+            end
+        end
+
+        class B < A
+            CONST = 2
+        end
+
+        return A.new.get == B.new.get
+        """)
+        assert space.is_true(w_res)
+
+    def test_complex_lexical_scope_constant(self, space):
+        space.execute("""
+        class Bar
+            module M
+            end
+        end
+
+        module X
+            module M
+                FOO = 5
+            end
+
+            class Foo < Bar
+                def f
+                    M::FOO
+                end
+            end
+        end
+
+        class X::Foo
+            def g
+                M::FOO
+            end
+        end
+        """)
+        w_res = space.execute("return X::Foo.new.f")
+        assert space.int_w(w_res) == 5
+        with self.raises(space, "NameError"):
+            space.execute("X::Foo.new.g")
+
+    def test_lexical_scope_singletonclass(self, space):
+        space.execute("""
+        class M
+            module NestedModule
+            end
+
+            class << self
+                include NestedModule
+            end
+        end
+        """)
+
+    def test_constant_lookup_from_trpl_book(self, space):
+        w_res = space.execute("""
+        module Kernel
+          A = B = C = D = E = F = "defined in kernel"
+        end
+        A = B = C = D = E = "defined at toplevel"
+
+        class Super
+          A = B = C = D = "defined in superclass"
+        end
+
+        module Included
+          A = B = C = "defined in included module"
+        end
+
+        module Enclosing
+          A = B = "defined in enclosing module"
+
+          class Local < Super
+            include Included
+            A = "defined Locally"
+            RESULT = [A, B, C, D, E, F]
+          end
+        end
+        return Enclosing::Local::RESULT
+        """)
+        assert self.unwrap(space, w_res) == [
+            "defined Locally",
+            "defined in enclosing module",
+            "defined in included module",
+            "defined in superclass",
+            "defined at toplevel",
+            "defined in kernel"
+        ]
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):

@@ -799,10 +799,30 @@ class Subscript(Node):
         ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
 
 
-class LookupConstant(Node):
-    def __init__(self, value, name, lineno):
+class Constant(Node):
+    def __init__(self, name, lineno):
         Node.__init__(self, lineno)
-        self.value = value
+        self.name = name
+
+    def compile(self, ctx):
+        with ctx.set_lineno(self.lineno):
+            ctx.emit(consts.LOAD_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
+
+    def compile_receiver(self, ctx):
+        Scope(self.lineno).compile(ctx)
+        return 1
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
+
+
+class LookupConstant(Node):
+    def __init__(self, scope, name, lineno):
+        Node.__init__(self, lineno)
+        self.scope = scope
         self.name = name
 
     def compile(self, ctx):
@@ -811,8 +831,8 @@ class LookupConstant(Node):
             self.compile_load(ctx)
 
     def compile_receiver(self, ctx):
-        if self.value is not None:
-            self.value.compile(ctx)
+        if self.scope is not None:
+            self.scope.compile(ctx)
         else:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         return 1

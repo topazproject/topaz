@@ -13,6 +13,7 @@ from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.objectobject import W_BaseObject
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
+from rupypy.scope import StaticScope
 
 
 def get_printable_location(pc, bytecode, block_bytecode):
@@ -164,6 +165,28 @@ class Interpreter(object):
         else:
             frame.push(space.w_nil)
 
+    def LOAD_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        name = space.symbol_w(w_name)
+        frame.push(space.find_lexical_const(jit.promote(frame.lexical_scope), name))
+
+    @jit.unroll_safe
+    def DEFINED_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        frame.pop()
+        scope = jit.promote(frame.lexical_scope)
+        while scope is not None:
+            w_mod = scope.w_mod
+            if space.is_true(space.send(w_mod, space.newsymbol("const_defined?"), [w_name])):
+                frame.push(space.newstr_fromstr("constant"))
+                break
+            scope = scope.backscope
+        else:
+            if space.is_true(space.send(space.w_object, space.newsymbol("const_defined?"), [w_name])):
+                frame.push(space.newstr_fromstr("constant"))
+            else:
+                frame.push(space.w_nil)
+
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
@@ -251,7 +274,7 @@ class Interpreter(object):
     def BUILD_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()
-        w_func = space.newfunction(w_name, w_code)
+        w_func = space.newfunction(w_name, w_code, frame.lexical_scope)
         frame.push(w_func)
 
     @jit.unroll_safe
@@ -260,7 +283,7 @@ class Interpreter(object):
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
         block = W_BlockObject(
-            w_code, frame.w_self, frame.w_scope, cells, frame.block, self
+            w_code, frame.w_self, frame.w_scope, frame.lexical_scope, cells, frame.block, self
         )
         frame.push(block)
 
@@ -270,14 +293,13 @@ class Interpreter(object):
         w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_cls = w_scope.find_local_const(self, name)
+        w_cls = w_scope.find_local_const(space, name)
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.w_object
             assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
-            space.set_lexical_scope(w_cls, w_scope)
 
         frame.push(w_cls)
 
@@ -291,10 +313,9 @@ class Interpreter(object):
         if w_mod is None:
             w_mod = space.newmodule(name)
             space.set_const(w_scope, name, w_mod)
-            space.set_lexical_scope(w_mod, w_scope)
 
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_mod, w_mod)
+        sub_frame = space.create_frame(w_bytecode, w_mod, w_mod, StaticScope(w_mod, frame.lexical_scope))
         with space.getexecutioncontext().visit_frame(sub_frame):
             space.execute_frame(sub_frame, w_bytecode)
 
@@ -382,11 +403,12 @@ class Interpreter(object):
         w_obj.attach_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
+    @jit.unroll_safe
     def EVALUATE_CLASS(self, space, bytecode, frame, pc):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls)
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope))
         with space.getexecutioncontext().visit_frame(sub_frame):
             space.execute_frame(sub_frame, w_bytecode)
 
