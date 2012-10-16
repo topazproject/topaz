@@ -308,7 +308,7 @@ class W_ModuleObject(W_RootObject):
         if inherit:
             return space.newbool(self.find_const(space, const) is not None)
         else:
-            return space.newbool(self.find_local_const(const, self.version) is not None)
+            return space.newbool(self.find_local_const(space, const) is not None)
 
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):
