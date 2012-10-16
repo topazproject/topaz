@@ -167,7 +167,7 @@ class Interpreter(object):
     def LOAD_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
-        frame.push(space.find_lexical_const(frame.lexical_scope_w[:], name))
+        frame.push(space.find_lexical_const(frame.lexical_scope_w, name))
 
     @jit.unroll_safe
     def DEFINED_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
@@ -267,7 +267,7 @@ class Interpreter(object):
     def BUILD_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()
-        w_func = space.newfunction(w_name, w_code, frame.lexical_scope_w[:])
+        w_func = space.newfunction(w_name, w_code, frame.lexical_scope_w)
         frame.push(w_func)
 
     @jit.unroll_safe
@@ -276,7 +276,7 @@ class Interpreter(object):
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
         block = W_BlockObject(
-            w_code, frame.w_self, frame.w_scope, frame.lexical_scope_w[:], cells, frame.block, self
+            w_code, frame.w_self, frame.w_scope, frame.lexical_scope_w, cells, frame.block, self
         )
         frame.push(block)
 
@@ -401,7 +401,7 @@ class Interpreter(object):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, [w_cls] + [w_mod for w_mod in frame.lexical_scope_w])
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, [w_cls] + frame.lexical_scope_w)
         with space.getexecutioncontext().visit_frame(sub_frame):
             space.execute_frame(sub_frame, w_bytecode)
 

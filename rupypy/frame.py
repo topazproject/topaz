@@ -12,7 +12,7 @@ class BaseFrame(object):
 class Frame(BaseFrame):
     _virtualizable2_ = [
         "bytecode", "locals_w[*]", "stack_w[*]", "stackpos", "w_self",
-        "w_scope", "lexical_scope_w[*]", "block", "cells[*]", "lastblock",
+        "w_scope", "block", "cells[*]", "lastblock",
     ]
 
     @jit.unroll_safe
