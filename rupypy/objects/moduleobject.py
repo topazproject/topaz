@@ -32,7 +32,7 @@ class AttributeWriter(W_FunctionObject):
 
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = [
-        "version?", "included_modules?[*]", "klass?"
+        "version?", "included_modules?[*]", "klass?", "superclass",
     ]
 
     classdef = ClassDef("Module", W_RootObject.classdef)
