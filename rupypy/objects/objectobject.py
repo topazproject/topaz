@@ -26,10 +26,6 @@ class W_BaseObject(object):
         memo[id(self)] = obj
         return obj
 
-    @classmethod
-    def setup_class(cls, space, w_cls):
-        pass
-
     def getclass(self, space):
         return space.getclassobject(self.classdef)
 
@@ -97,7 +93,7 @@ class W_RootObject(W_BaseObject):
 
     classdef = ClassDef("Object", W_BaseObject.classdef)
 
-    @classmethod
+    @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.w_top_self = W_Object(space, w_cls)
 
