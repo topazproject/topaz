@@ -242,6 +242,10 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [5, 5, 5]
 
+    def test_nonmodule_constant(self, space):
+        with self.raises(space, "TypeError", "3 is not a class/module"):
+            space.execute("3::Foo")
+
     def test_instance_var(self, space):
         w_res = space.execute("""
         class X

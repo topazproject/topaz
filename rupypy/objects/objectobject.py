@@ -39,6 +39,11 @@ class W_BaseObject(object):
     def is_true(self, space):
         return True
 
+    def find_const(self, space, name):
+        raise space.error(space.w_TypeError,
+            "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
+        )
+
     @classdef.method("initialize")
     def method_initialize(self):
         return self
