@@ -97,6 +97,10 @@ class W_RootObject(W_BaseObject):
 
     classdef = ClassDef("Object", W_BaseObject.classdef)
 
+    @classmethod
+    def setup_class(cls, space, w_cls):
+        space.w_top_self = W_Object(space, w_cls)
+
     @classdef.method("object_id")
     def method_object_id(self, space):
         return space.send(self, space.newsymbol("__id__"))

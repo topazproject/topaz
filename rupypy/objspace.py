@@ -152,8 +152,6 @@ class ObjectSpace(object):
                 w_cls
             )
 
-        self.w_top_self = W_Object(self, self.w_object)
-
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
@@ -170,6 +168,13 @@ class ObjectSpace(object):
         w_loaded_features = self.newarray([])
         self.globals.set("$LOADED_FEATURES", w_loaded_features)
         self.globals.set('$"', w_loaded_features)
+
+        # TODO: this should really go in a better place.
+        self.execute("""
+        def self.include *mods
+            Object.include *mods
+        end
+        """)
 
     def _freeze_(self):
         return True

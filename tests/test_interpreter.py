@@ -932,6 +932,16 @@ class TestInterpreter(BaseRuPyPyTest):
             "defined in kernel"
         ]
 
+    def test_top_level_include(self, space):
+        w_res = space.execute("""
+        module M
+            Foo = 10
+        end
+        include M
+        return Foo
+        """)
+        assert space.int_w(w_res) == 10
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):
