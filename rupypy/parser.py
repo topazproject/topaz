@@ -1607,7 +1607,7 @@ class Parser(object):
     def primary_class(self, p):
         node = p[1].getast(ast.LookupConstant)
         node = ast.Class(
-            node.value,
+            node.scope,
             node.name,
             p[2].getast() if p[2] is not None else None,
             p[4].getast(),
@@ -1632,7 +1632,7 @@ class Parser(object):
     @pg.production("primary : MODULE cpath push_local_scope bodystmt END")
     def primary_module(self, p):
         node = p[1].getast(ast.LookupConstant)
-        node = ast.Module(node.value, node.name, p[3].getast())
+        node = ast.Module(node.scope, node.name, p[3].getast())
         self.save_and_pop_scope(node)
         return BoxAST(node)
 
@@ -2451,8 +2451,7 @@ class Parser(object):
 
     @pg.production("variable : CONSTANT")
     def variable_constant(self, p):
-        return BoxAST(ast.LookupConstant(
-            ast.Scope(p[0].getsourcepos().lineno),
+        return BoxAST(ast.Constant(
             p[0].getstr(),
             p[0].getsourcepos().lineno
         ))

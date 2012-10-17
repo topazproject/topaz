@@ -754,6 +754,184 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == "A"
 
+    def test_defined(self, space):
+        w_res = space.execute("return [defined? A, defined? Array]")
+        assert self.unwrap(space, w_res) == [None, "constant"]
+        w_res = space.execute("""
+        @a = 3
+        return [defined? @a, defined? @b]
+        """)
+        assert self.unwrap(space, w_res) == ["instance-variable", None]
+        w_res = space.execute("""
+        return [defined? self, defined? nil, defined? true, defined? false]
+        """)
+        assert self.unwrap(space, w_res) == ["self", "nil", "true", "false"]
+        w_res = space.execute("""
+        return [defined? nil.nil?, defined? nil.fdfdafa]
+        """)
+        assert self.unwrap(space, w_res) == ["method", None]
+        w_res = space.execute("""
+        return [defined? a = 3]
+        """)
+        assert self.unwrap(space, w_res) == ["assignment"]
+
+    def test_match(self, space):
+        w_res = space.execute("return 3 =~ nil")
+        assert self.unwrap(space, w_res) is None
+
+    def test_super(self, space):
+        w_res = space.execute("""
+        class A
+            def f(a, b)
+                return [a, b]
+            end
+        end
+        class B < A
+            def f(a, b)
+                a += 10
+                return super
+            end
+        end
+        return B.new.f(4, 5)
+        """)
+        assert self.unwrap(space, w_res) == [14, 5]
+
+        w_res = space.execute("""
+        class C < A
+            def f
+                super(*[1, 2])
+            end
+        end
+        return C.new.f
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_next_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        while i < 10
+            i += 1
+            if i > 3
+                next
+            end
+            res << i
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+
+    def test_break_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        other = while i < 10
+            i += 1
+            if i > 3
+                break 200
+            end
+            res << i
+        end
+        res << other
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 200]
+
+    def test_simple_lexical_scope_constant(self, space):
+        w_res = space.execute("""
+        class A
+            CONST = 1
+
+            def get
+                CONST
+            end
+        end
+
+        class B < A
+            CONST = 2
+        end
+
+        return A.new.get == B.new.get
+        """)
+        assert space.is_true(w_res)
+
+    def test_complex_lexical_scope_constant(self, space):
+        space.execute("""
+        class Bar
+            module M
+            end
+        end
+
+        module X
+            module M
+                FOO = 5
+            end
+
+            class Foo < Bar
+                def f
+                    M::FOO
+                end
+            end
+        end
+
+        class X::Foo
+            def g
+                M::FOO
+            end
+        end
+        """)
+        w_res = space.execute("return X::Foo.new.f")
+        assert space.int_w(w_res) == 5
+        with self.raises(space, "NameError"):
+            space.execute("X::Foo.new.g")
+
+    def test_lexical_scope_singletonclass(self, space):
+        space.execute("""
+        class M
+            module NestedModule
+            end
+
+            class << self
+                include NestedModule
+            end
+        end
+        """)
+
+    def test_constant_lookup_from_trpl_book(self, space):
+        w_res = space.execute("""
+        module Kernel
+          A = B = C = D = E = F = "defined in kernel"
+        end
+        A = B = C = D = E = "defined at toplevel"
+
+        class Super
+          A = B = C = D = "defined in superclass"
+        end
+
+        module Included
+          A = B = C = "defined in included module"
+        end
+
+        module Enclosing
+          A = B = "defined in enclosing module"
+
+          class Local < Super
+            include Included
+            A = "defined Locally"
+            RESULT = [A, B, C, D, E, F]
+          end
+        end
+        return Enclosing::Local::RESULT
+        """)
+        assert self.unwrap(space, w_res) == [
+            "defined Locally",
+            "defined in enclosing module",
+            "defined in included module",
+            "defined in superclass",
+            "defined at toplevel",
+            "defined in kernel"
+        ]
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):
@@ -1091,86 +1269,3 @@ class TestExceptions(BaseRuPyPyTest):
         end
         """)
         assert space.int_w(w_res) == 0
-
-    def test_defined(self, space):
-        w_res = space.execute("return [defined? A, defined? Array]")
-        assert self.unwrap(space, w_res) == [None, "constant"]
-        w_res = space.execute("""
-        @a = 3
-        return [defined? @a, defined? @b]
-        """)
-        assert self.unwrap(space, w_res) == ["instance-variable", None]
-        w_res = space.execute("""
-        return [defined? self, defined? nil, defined? true, defined? false]
-        """)
-        assert self.unwrap(space, w_res) == ["self", "nil", "true", "false"]
-        w_res = space.execute("""
-        return [defined? nil.nil?, defined? nil.fdfdafa]
-        """)
-        assert self.unwrap(space, w_res) == ["method", None]
-        w_res = space.execute("""
-        return [defined? a = 3]
-        """)
-        assert self.unwrap(space, w_res) == ["assignment"]
-
-    def test_match(self, space):
-        w_res = space.execute("return 3 =~ nil")
-        assert self.unwrap(space, w_res) is None
-
-    def test_super(self, space):
-        w_res = space.execute("""
-        class A
-            def f(a, b)
-                return [a, b]
-            end
-        end
-        class B < A
-            def f(a, b)
-                a += 10
-                return super
-            end
-        end
-        return B.new.f(4, 5)
-        """)
-        assert self.unwrap(space, w_res) == [14, 5]
-
-        w_res = space.execute("""
-        class C < A
-            def f
-                super(*[1, 2])
-            end
-        end
-        return C.new.f
-        """)
-        assert self.unwrap(space, w_res) == [1, 2]
-
-    def test_next_loop(self, space):
-        w_res = space.execute("""
-        res = []
-        i = 0
-        while i < 10
-            i += 1
-            if i > 3
-                next
-            end
-            res << i
-        end
-        return res
-        """)
-        assert self.unwrap(space, w_res) == [1, 2, 3]
-
-    def test_break_loop(self, space):
-        w_res = space.execute("""
-        res = []
-        i = 0
-        other = while i < 10
-            i += 1
-            if i > 3
-                break 200
-            end
-            res << i
-        end
-        res << other
-        return res
-        """)
-        assert self.unwrap(space, w_res) == [1, 2, 3, 200]

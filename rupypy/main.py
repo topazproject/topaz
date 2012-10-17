@@ -22,19 +22,25 @@ def entry_point(argv):
 def _entry_point(space, argv):
     verbose = False
     path = None
-    argv_w = []
+    exprs = []
     idx = 1
     while idx < len(argv):
         arg = argv[idx]
-        idx += 1
         if arg == "-v":
             verbose = True
+        elif arg == "-e":
+            idx += 1
+            exprs.append(argv[idx])
         else:
-            path = arg
-            while idx < len(argv):
-                arg = argv[idx]
-                idx += 1
-                argv_w.append(space.newstr_fromstr(arg))
+            break
+        idx += 1
+    if idx < len(argv) and not exprs:
+        path = argv[idx]
+        idx += 1
+    argv_w = []
+    while idx < len(argv):
+        argv_w.append(space.newstr_fromstr(argv[idx]))
+        idx += 1
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
     system, _, _, _, cpu = os.uname()
@@ -51,25 +57,34 @@ def _entry_point(space, argv):
 
     if verbose:
         os.write(1, "%s\n" % description)
-    status = 0
-    w_exit_error = None
-    if path is not None:
+
+    if exprs:
+        source = "\n".join(exprs)
+        path = "-e"
+    elif path is not None:
         f = open_file_as_stream(path)
         try:
             source = f.readall()
         finally:
             f.close()
+    elif verbose:
+        return 0
+    else:
+        raise NotImplementedError("reading script from stdin")
 
-        try:
-            space.execute(source, filepath=path)
-        except RubyError as e:
-            w_exc = e.w_value
-            if isinstance(w_exc, W_SystemExit):
-                return w_exc.status
-            else:
-                w_exit_error = w_exc
-                status = 1
-        space.run_exit_handlers()
-        if w_exit_error is not None:
-            print_traceback(space, w_exit_error)
+    status = 0
+    w_exit_error = None
+    try:
+        space.execute(source, filepath=path)
+    except RubyError as e:
+        w_exc = e.w_value
+        if isinstance(w_exc, W_SystemExit):
+            status = w_exc.status
+        else:
+            w_exit_error = w_exc
+            status = 1
+    space.run_exit_handlers()
+    if w_exit_error is not None:
+        print_traceback(space, w_exit_error)
+
     return status

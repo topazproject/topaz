@@ -196,7 +196,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Send(ast.Self(1), "other", [], None, 1)], None, 1))
         ]))
         assert space.parse("Module::constant") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Module", 1), "constant", [], None, 1))
+            ast.Statement(ast.Send(ast.Constant("Module", 1), "constant", [], None, 1))
         ]))
         r = space.parse("""
         nil.
@@ -1010,11 +1010,11 @@ HERE
         ]))
 
         assert space.parse("class X < Object; end") == ast.Main(ast.Block([
-            ast.Statement(ast.Class(ast.Scope(1), "X", ast.LookupConstant(ast.Scope(1), "Object", 1), ast.Nil()))
+            ast.Statement(ast.Class(ast.Scope(1), "X", ast.Constant("Object", 1), ast.Nil()))
         ]))
 
         assert space.parse("class X < Module::Object; end") == ast.Main(ast.Block([
-            ast.Statement(ast.Class(ast.Scope(1), "X", ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Object", 1), ast.Nil()))
+            ast.Statement(ast.Class(ast.Scope(1), "X", ast.LookupConstant(ast.Constant("Module", 1), "Object", 1), ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -1024,7 +1024,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Class(ast.Scope(2), "X", ast.LookupConstant(ast.Scope(2), "Object", 2), ast.Nil())),
+            ast.Statement(ast.Class(ast.Scope(2), "X", ast.Constant("Object", 2), ast.Nil())),
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil())),
         ]))
 
@@ -1034,7 +1034,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Class(ast.LookupConstant(ast.Scope(2), "Foo", 2), "Bar", None, ast.Nil()))
+            ast.Statement(ast.Class(ast.Constant("Foo", 2), "Bar", None, ast.Nil()))
         ]))
 
     def test_singleton_class(self, space):
@@ -1274,7 +1274,7 @@ HERE
             ast.Statement(ast.Send(ast.Send(ast.Self(1), "b", [], None, 1), "-@", [], None, 1))
         ]))
         assert space.parse("Math.exp(-a)") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "Math", 1), "exp", [ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "-@", [], None, 1)], None, 1))
+            ast.Statement(ast.Send(ast.Constant("Math", 1), "exp", [ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "-@", [], None, 1)], None, 1))
         ]))
 
     def test_unary_ops(self, space):
@@ -1313,10 +1313,10 @@ HERE
 
     def test_constant_lookup(self, space):
         assert space.parse("Module::Constant") == ast.Main(ast.Block([
-            ast.Statement(ast.LookupConstant(ast.LookupConstant(ast.Scope(1), "Module", 1), "Constant", 1))
+            ast.Statement(ast.LookupConstant(ast.Constant("Module", 1), "Constant", 1))
         ]))
         assert space.parse("X::m nil") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.LookupConstant(ast.Scope(1), "X", 1), "m", [ast.Nil()], None, 1))
+            ast.Statement(ast.Send(ast.Constant("X", 1), "m", [ast.Nil()], None, 1))
         ]))
         assert space.parse("::Const") == ast.Main(ast.Block([
             ast.Statement(ast.LookupConstant(None, "Const", 1))
@@ -1396,7 +1396,7 @@ HERE
                     ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 3))
                 ]),
                 [
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], None, ast.Block([
+                    ast.ExceptHandler([ast.Constant("ZeroDivisionError", 4)], None, ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("zero")], None, 5))
                     ]))
                 ],
@@ -1417,7 +1417,7 @@ HERE
                     ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                 ]),
                 [
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], ast.Variable("e", 4), ast.Block([
+                    ast.ExceptHandler([ast.Constant("ZeroDivisionError", 4)], ast.Variable("e", 4), ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], None, 5))
                     ]))
                 ],
@@ -1440,10 +1440,10 @@ HERE
                     ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                 ]),
                 [
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], ast.Variable("e", 4), ast.Block([
+                    ast.ExceptHandler([ast.Constant("ZeroDivisionError", 4)], ast.Variable("e", 4), ast.Block([
                         ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("e", 5)], None, 5))
                     ])),
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(6), "NoMethodError", 6)], None, ast.Block([
+                    ast.ExceptHandler([ast.Constant("NoMethodError", 6)], None, ast.Block([
                         ast.Statement(ast.Send(ast.Self(7), "puts", [ast.ConstantString("?")], None, 7))
                     ])),
                 ],
@@ -1506,7 +1506,7 @@ HERE
                         ast.Statement(ast.Send(ast.ConstantInt(1), "/", [ast.ConstantInt(0)], None, 3))
                     ]),
                     [
-                        ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "ZeroDivisionError", 4)], None, ast.Block([
+                        ast.ExceptHandler([ast.Constant("ZeroDivisionError", 4)], None, ast.Block([
                             ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantString("rescue")], None, 5)),
                         ])),
                     ],
@@ -1564,7 +1564,7 @@ HERE
             ast.Statement(ast.TryExcept(
                 ast.Block([ast.Statement(ast.ConstantInt(2))]),
                 [
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "E1", 4), ast.LookupConstant(ast.Scope(4), "E2", 4)], None, ast.Nil()),
+                    ast.ExceptHandler([ast.Constant("E1", 4), ast.Constant("E2", 4)], None, ast.Nil()),
                 ],
                 ast.Nil(),
             ))
@@ -1580,7 +1580,7 @@ HERE
                 ast.Nil(),
                 [
                     ast.ExceptHandler(
-                        [ast.LookupConstant(ast.LookupConstant(ast.Scope(3), "Mod", 3), "Exc", 3)],
+                        [ast.LookupConstant(ast.Constant("Mod", 3), "Exc", 3)],
                         None,
                         ast.Nil(),
                     )
@@ -1601,7 +1601,7 @@ HERE
             ast.Statement(ast.Function(None, "f", [], None, None, ast.TryExcept(
                 ast.Block([ast.Statement(ast.ConstantInt(3))]),
                 [
-                    ast.ExceptHandler([ast.LookupConstant(ast.Scope(4), "Exception", 4)], ast.Variable("e", 4), ast.Block([
+                    ast.ExceptHandler([ast.Constant("Exception", 4)], ast.Variable("e", 4), ast.Block([
                         ast.Statement(ast.ConstantInt(5))
                     ]))
                 ],
@@ -1688,7 +1688,7 @@ HERE
         end
         """)
         assert r == ast.Main(ast.Block([
-            ast.Statement(ast.Function(ast.LookupConstant(ast.Scope(2), "Array", 2), "hello", [], None, None, ast.Block([
+            ast.Statement(ast.Function(ast.Constant("Array", 2), "hello", [], None, None, ast.Block([
                 ast.Statement(ast.ConstantString("hello world")),
             ])))
         ]))
@@ -2180,7 +2180,7 @@ HERE
 
     def test_defined(self, space):
         assert space.parse("defined? Const") == ast.Main(ast.Block([
-            ast.Statement(ast.Defined(ast.LookupConstant(ast.Scope(1), "Const", 1), 1))
+            ast.Statement(ast.Defined(ast.Constant("Const", 1), 1))
         ]))
         assert space.parse("defined?(3)") == ast.Main(ast.Block([
             ast.Statement(ast.Defined(ast.ConstantInt(3), 1))
