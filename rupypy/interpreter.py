@@ -181,6 +181,7 @@ class Interpreter(object):
             frame.push(space.w_nil)
 
     def LOAD_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
+        frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
         frame.push(space.find_lexical_const(jit.promote(frame.lexical_scope), name))

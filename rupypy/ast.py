@@ -806,7 +806,11 @@ class Constant(Node):
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
-            ctx.emit(consts.LOAD_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.LOAD_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
         Scope(self.lineno).compile(ctx)
