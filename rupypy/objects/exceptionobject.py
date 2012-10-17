@@ -48,16 +48,16 @@ class W_ExceptionObject(W_Object):
     def method_backtrace(self, space):
         last_instr_idx = 0
         frame = self.frame
-        results = []
+        results_w = []
         while frame is not None and frame.has_contents():
-            results.append(space.newstr_fromstr("%s:%d:in `%s'" % (
+            results_w.append(space.newstr_fromstr("%s:%d:in `%s'" % (
                 frame.get_filename(),
                 frame.get_lineno(self.last_instructions, last_instr_idx),
                 frame.get_code_name(),
             )))
             last_instr_idx += 1
             frame = frame.backref()
-        return space.newarray(results)
+        return space.newarray(results_w)
 
 
 class W_ScriptError(W_ExceptionObject):
