@@ -90,6 +90,11 @@ class GlobalsDict(CellDict):
         super(GlobalsDict, self).__init__()
         self.space = space
 
+    def __deepcopy__(self, memo):
+        c = super(GlobalsDict, self).__deepcopy__(memo)
+        c.space = copy.deepcopy(self.space, memo)
+        return c
+
     def get(self, name):
         cell = self._get_cell(name, self.version)
         if isinstance(cell, Cell):
