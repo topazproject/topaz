@@ -208,6 +208,10 @@ class W_ModuleObject(W_RootObject):
     def set_method_visibility(self, space, name, visibility):
         pass
 
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space):
+        return W_ModuleObject(space, None, space.w_object)
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.name)

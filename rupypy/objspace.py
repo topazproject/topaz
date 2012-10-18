@@ -76,10 +76,15 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject(self)
         self.w_nil = W_NilObject(self)
 
-        # Force the setup of a few key classes
+        # Force the setup of a few key classes, we create a fake "Class" class
+        # for the initial bootstrap.
+        self.w_class = self.newclass("FakeClass", None)
         self.w_basicobject = self.getclassfor(W_BaseObject)
         self.w_object = self.getclassfor(W_Object)
         self.w_class = self.getclassfor(W_ClassObject)
+        # We replace the one reference to our FakeClass with the real class.
+        self.w_basicobject.klass.superclass = self.w_class
+
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)

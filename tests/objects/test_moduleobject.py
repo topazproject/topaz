@@ -5,6 +5,14 @@ class TestModuleObject(BaseRuPyPyTest):
     def test_name(self, space):
         space.execute("Module")
 
+    def test_new(self, space):
+        w_res = space.execute("""
+        m = Module.new
+        m::Const = 4
+        return m::Const
+        """)
+        assert space.int_w(w_res) == 4
+
     def test_module_function(self, space):
         w_res = space.execute("""
         module Mod
