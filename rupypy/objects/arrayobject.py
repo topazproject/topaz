@@ -73,7 +73,12 @@ class W_ArrayObject(W_Object):
             self.items_w[start] = w_obj
         elif as_range:
             assert end >= 0
-            self.items_w[start:end] = [w_obj]
+            w_converted = space.convert_type(w_obj, space.w_array, 'to_ary', raise_error=False)
+            if w_converted is space.w_nil:
+                rep = [w_obj]
+            else:
+                rep = space.listview(w_converted)
+            self.items_w[start:end] = rep
         else:
             self.items_w[start] = w_obj
         return w_obj
