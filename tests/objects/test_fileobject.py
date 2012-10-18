@@ -56,6 +56,17 @@ class TestIO(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError"):
             space.execute("return File.new('%s').read(-1)" % str(f))
 
+    def test_gets(self, space, tmpdir):
+        contents = "\nfoo\n\nbar"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+
+        w_res = space.execute("f = File.new('%s'); return (1..6).map {|i| f.gets}" % str(f))
+        lines_w = space.listview(w_res)
+        assert [space.str_w(w_s) for w_s in lines_w[:4]] \
+            == ['\n', 'foo\n', '\n', 'bar']
+        assert lines_w[4:] == [space.w_nil, space.w_nil]
+
     def test_simple_print(self, space, capfd):
         space.execute('IO.new(1, "w").print("foo")')
         out, err = capfd.readouterr()

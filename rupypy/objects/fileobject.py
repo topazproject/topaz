@@ -98,6 +98,32 @@ class W_IOObject(W_Object):
         else:
             return w_read_str
 
+    @classdef.method("gets")
+    def method_gets(self, space):
+        # Very simple scaffold to set $_ so we have a frame-local global.
+        # Doesn't yet accept arguments sep, limit.
+        # Doesn't yet take default sep from "$\" as it should.
+        #w_sep = space.globals.get("$/")
+        sep = "\n" #space.str_w(w_sep) if w_sep else None
+        if sep is None:
+            return self.method_read(space)
+        elif sep == "":
+            raise NotImplementedError # semantics are bizarre, handle later
+        elif len(sep) == 1:
+            # This could be made vastly more efficient by keeping a buffer
+            # on the object between calls.
+            s = ''
+            while True:
+                c = os.read(self.fd, 1)
+                if not c:
+                    return space.newstr_fromstr(s) if s else space.w_nil
+                s += c
+                if c == sep:
+                    return space.newstr_fromstr(s)
+        else:
+            raise NotImplementedError # logic is subtle, especially without a buffer;
+                                      # not worth getting right before we add one
+
     classdef.app_method("""
     def << s
         write(s)
