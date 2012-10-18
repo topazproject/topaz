@@ -210,7 +210,9 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        return W_ModuleObject(space, None, space.w_object)
+        # TODO: this should really store None for the name and all places
+        # reading the name should handle None
+        return W_ModuleObject(space, "", space.w_object)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
