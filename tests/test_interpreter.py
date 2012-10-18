@@ -475,6 +475,13 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("$abc = 3; return $abc")
         assert space.int_w(w_res) == 3
 
+    @py.test.mark.xfail
+    def test_frame_local_global_variables(self, space):
+        for name in "$_ $~ $LAST_READ_LINE $MATCH_INFO".split():
+            w_res = space.execute("def f; %s = 3; end; %s = 4; f; return %s"
+                                  % (name, name, name))
+            assert space.int_w(w_res) == 4
+
     def test_assign_constant(self, space):
         w_res = space.execute("""
         class X
