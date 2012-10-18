@@ -9,6 +9,7 @@ class TestExceptionObject(BaseRuPyPyTest):
         Exception
         LoadError
         SyntaxError
+        NameError
         """)
 
     def test_new(self, space):

@@ -115,7 +115,7 @@ class ObjectSpace(object):
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
             self.w_RuntimeError, self.w_SystemCallError, self.w_LoadError,
-            self.w_StopIteration, self.w_SyntaxError,
+            self.w_StopIteration, self.w_SyntaxError, self.w_NameError,
 
             self.w_kernel, self.w_topaz,
 
