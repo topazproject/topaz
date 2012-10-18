@@ -67,6 +67,9 @@ class TestIO(BaseRuPyPyTest):
             == ['\n', 'foo\n', '\n', 'bar']
         assert lines_w[4:] == [space.w_nil, space.w_nil]
 
+        w_res = space.execute("f = File.new('%s'); f.gets; f.gets; return $_" % str(f))
+        assert space.str_w(w_res) == 'foo\n'
+
     def test_simple_print(self, space, capfd):
         space.execute('IO.new(1, "w").print("foo")')
         out, err = capfd.readouterr()
