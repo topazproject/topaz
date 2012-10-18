@@ -67,4 +67,4 @@ class CellDict(object):
     @jit.elidable
     def _get_cell(self, name, version):
         assert version is self.version
-        return self.values.get(name)
+        return self.values.get(name, None)
