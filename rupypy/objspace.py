@@ -496,6 +496,8 @@ class ObjectSpace(object):
         try:
             w_res = self.send(w_obj, self.newsymbol(method))
         except RubyError:
+            if not raise_error:
+                return self.w_nil
             src_cls = self.getclass(w_obj).name
             raise self.error(
                 self.w_TypeError, "can't convert %s into %s" % (src_cls, w_cls.name)
