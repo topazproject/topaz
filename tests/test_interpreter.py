@@ -783,6 +783,10 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("return 3 =~ nil")
         assert self.unwrap(space, w_res) is None
 
+    def test_not_match(self, space):
+        w_res = space.execute("return 3 !~ nil")
+        assert self.unwrap(space, w_res)
+
     def test_super(self, space):
         w_res = space.execute("""
         class A

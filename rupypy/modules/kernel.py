@@ -223,6 +223,10 @@ class Kernel(Module):
     def method_match(self, space, w_other):
         return space.w_nil
 
+    @moduledef.function("!~")
+    def method_not_match(self, space, w_other):
+        return space.newbool(not space.is_true(space.send(self, space.newsymbol("=~"), [w_other])))
+
     @moduledef.function("instance_variable_defined?", name="symbol")
     def method_instance_variable_definedp(self, space, name):
         return space.newbool(self.find_instance_var(space, name) is not None)
