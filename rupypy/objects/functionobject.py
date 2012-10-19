@@ -54,5 +54,5 @@ class W_BuiltinFunction(W_FunctionObject):
 
     def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
-        with space.getexecutioncontext().visit_frame(frame, append_instr=True):
+        with space.getexecutioncontext().visit_frame(frame):
             return self.func(w_receiver, space, args_w, block)

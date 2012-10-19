@@ -21,7 +21,6 @@ class W_ExceptionObject(W_Object):
         W_Object.__init__(self, space, klass)
         self.msg = msg
         self.frame = None
-        self.last_instructions = []
 
     method_allocate = new_exception_allocate(classdef)
 
@@ -46,16 +45,16 @@ class W_ExceptionObject(W_Object):
 
     @classdef.method("backtrace")
     def method_backtrace(self, space):
-        last_instr_idx = 0
         frame = self.frame
         results_w = []
+        prev_frame = None
         while frame is not None and frame.has_contents():
             results_w.append(space.newstr_fromstr("%s:%d:in `%s'" % (
                 frame.get_filename(),
-                frame.get_lineno(self.last_instructions, last_instr_idx),
+                frame.get_lineno(prev_frame),
                 frame.get_code_name(),
             )))
-            last_instr_idx += 1
+            prev_frame = frame
             frame = frame.backref()
         return space.newarray(results_w)
 

@@ -10,6 +10,8 @@ class ExecutionContext(object):
 
     def enter(self, frame):
         frame.backref = self.topframeref
+        if self.topframeref() is not None:
+            frame.back_last_instr = self.topframeref().last_instr
         self.topframeref = jit.virtual_ref(frame)
 
     def leave(self, frame, got_exception):
@@ -22,18 +24,17 @@ class ExecutionContext(object):
             frame_vref()
         jit.virtual_ref_finish(frame_vref, frame)
 
-    def visit_frame(self, frame, append_instr=False):
-        return _VisitFrameContextManager(self, frame, append_instr)
+    def visit_frame(self, frame):
+        return _VisitFrameContextManager(self, frame)
 
     def gettopframe(self):
         return self.topframeref()
 
 
 class _VisitFrameContextManager(object):
-    def __init__(self, ec, frame, append_instr):
+    def __init__(self, ec, frame):
         self.ec = ec
         self.frame = frame
-        self.append_instr = append_instr
 
     def __enter__(self):
         self.ec.enter(self.frame)
@@ -42,7 +43,5 @@ class _VisitFrameContextManager(object):
         if exc_value is not None and isinstance(exc_value, RubyError):
             if exc_value.w_value.frame is None:
                 exc_value.w_value.frame = self.frame
-            if self.append_instr:
-                exc_value.w_value.last_instructions.append(-1)
 
         self.ec.leave(self.frame, exc_value is not None)

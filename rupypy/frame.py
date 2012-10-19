@@ -12,7 +12,7 @@ class BaseFrame(object):
 class Frame(BaseFrame):
     _virtualizable2_ = [
         "bytecode", "locals_w[*]", "stack_w[*]", "stackpos", "w_self",
-        "w_scope", "block", "cells[*]", "lastblock", "lexical_scope",
+        "w_scope", "block", "cells[*]", "lastblock", "lexical_scope", "last_instr",
     ]
 
     @jit.unroll_safe
@@ -127,8 +127,12 @@ class Frame(BaseFrame):
     def get_filename(self):
         return self.bytecode.filepath
 
-    def get_lineno(self, last_instructions, last_instr_idx):
-        return self.bytecode.lineno_table[last_instructions[last_instr_idx]]
+    def get_lineno(self, prev_frame):
+        if prev_frame is None:
+            instr = self.last_instr
+        else:
+            instr = prev_frame.back_last_instr
+        return self.bytecode.lineno_table[instr]
 
     def get_code_name(self):
         return self.bytecode.name
@@ -138,6 +142,8 @@ class Frame(BaseFrame):
 
 
 class BuiltinFrame(BaseFrame):
+    last_instr = -1
+
     def __init__(self, name):
         BaseFrame.__init__(self)
         self.name = name
@@ -148,8 +154,8 @@ class BuiltinFrame(BaseFrame):
     def get_filename(self):
         return self.backref().get_filename()
 
-    def get_lineno(self, last_instructions, last_instr_idx):
-        return self.backref().get_lineno(last_instructions, last_instr_idx + 1)
+    def get_lineno(self, prev_frame):
+        return self.backref().get_lineno(self)
 
     def get_code_name(self):
         return self.name

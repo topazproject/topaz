@@ -39,6 +39,7 @@ class Interpreter(object):
                     self=self, bytecode=bytecode, frame=frame, pc=pc,
                     block_bytecode=self.get_block_bytecode(frame.block),
                 )
+                frame.last_instr = pc
                 try:
                     pc = self.handle_bytecode(space, pc, frame, bytecode)
                 except RubyError as e:
@@ -99,7 +100,6 @@ class Interpreter(object):
         return pc
 
     def handle_ruby_error(self, space, pc, frame, bytecode, e):
-        e.w_value.last_instructions.append(pc)
         block = frame.unrollstack(ApplicationException.kind)
         if block is None:
             raise e
