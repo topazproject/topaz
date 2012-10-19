@@ -163,9 +163,9 @@ class ObjectSpace(object):
         self.bootstrap = False
 
         w_load_path = self.newarray([
-            self.newstr_fromstr(
+            self.newstr_fromstr(os.path.abspath(
                 os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
-            )
+            ))
         ])
         self.globals.set("$LOAD_PATH", w_load_path)
         self.globals.set("$:", w_load_path)
