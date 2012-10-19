@@ -10,8 +10,9 @@ class ExecutionContext(object):
 
     def enter(self, frame):
         frame.backref = self.topframeref
+        # TODO: this kills the JIT badly
         if self.topframeref() is not None:
-            frame.back_last_instr = self.topframeref().last_instr
+            frame.back_last_instr = self.topframeref().get_last_instr()
         self.topframeref = jit.virtual_ref(frame)
 
     def leave(self, frame, got_exception):
