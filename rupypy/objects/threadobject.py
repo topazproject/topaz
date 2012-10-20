@@ -28,4 +28,4 @@ class W_ThreadObject(W_Object):
     @classdef.method("[]=", key="str")
     def method_subscript_assign(self, space, key, w_value):
         self.local_storage[key] = w_value
-        return key
+        return w_value
