@@ -107,8 +107,8 @@ class BaseLoop(Node):
 
             ctx.use_next_block(anchor)
             ctx.emit(consts.POP_BLOCK)
-        ctx.use_next_block(end)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        ctx.use_next_block(end)
 
 
 class While(BaseLoop):
@@ -130,6 +130,20 @@ class Next(BaseStatement):
         elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
             block = ctx.find_frame_block(ctx.F_BLOCK_LOOP)
             ctx.emit_jump(consts.CONTINUE_LOOP, block)
+        else:
+            raise NotImplementedError
+
+
+class Break(BaseStatement):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def compile(self, ctx):
+        self.expr.compile(ctx)
+        if ctx.in_frame_block(ctx.F_BLOCK_LOOP):
+            ctx.emit(consts.BREAK_LOOP)
+        elif isinstance(ctx.symtable, BlockSymbolTable):
+            ctx.emit(consts.RAISE_BREAK)
         else:
             raise NotImplementedError
 
@@ -228,7 +242,10 @@ class Class(Node):
         self.body = body
 
     def compile(self, ctx):
-        self.scope.compile(ctx)
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         if self.superclass is None:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
@@ -281,7 +298,10 @@ class Module(Node):
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
-        self.scope.compile(ctx)
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_MODULE)
@@ -453,6 +473,12 @@ class Assignment(Node):
         self.target.compile_receiver(ctx)
         self.value.compile(ctx)
         self.target.compile_store(ctx)
+
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
 
 
 class AugmentedAssignment(Node):
@@ -651,6 +677,9 @@ class Send(BaseSend):
     def method_name_const(self, ctx):
         return ctx.create_symbol_const(self.method)
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_METHOD, self.method_name_const(ctx))
+
 
 class Super(BaseSend):
     send = consts.SEND_SUPER
@@ -671,10 +700,14 @@ class Splat(Node):
         self.value = value
 
     def compile_receiver(self, ctx):
-        return self.value.compile_receiver(ctx)
+        if self.value is None:
+            return 0
+        else:
+            return self.value.compile_receiver(ctx)
 
     def compile_store(self, ctx):
-        return self.value.compile_store(ctx)
+        if self.value is not None:
+            return self.value.compile_store(ctx)
 
     def compile(self, ctx):
         self.value.compile(ctx)
@@ -766,22 +799,46 @@ class Subscript(Node):
         ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
 
 
-class LookupConstant(Node):
-    def __init__(self, value, name, lineno):
+class Constant(Node):
+    def __init__(self, name, lineno):
         Node.__init__(self, lineno)
-        self.value = value
         self.name = name
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
-            if self.value is not None:
-                self.value.compile(ctx)
-            else:
-                ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.LOAD_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
-        self.value.compile(ctx)
+        Scope(self.lineno).compile(ctx)
+        return 1
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
+
+
+class LookupConstant(Node):
+    def __init__(self, scope, name, lineno):
+        Node.__init__(self, lineno)
+        self.scope = scope
+        self.name = name
+
+    def compile(self, ctx):
+        with ctx.set_lineno(self.lineno):
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
+
+    def compile_receiver(self, ctx):
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         return 1
 
     def compile_load(self, ctx):
@@ -797,6 +854,12 @@ class LookupConstant(Node):
 class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
+
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("self").compile(ctx)
 
 
 class Scope(Node):
@@ -1000,6 +1063,12 @@ class ConstantBool(ConstantNode):
     def create_const(self, ctx):
         return ctx.create_const(ctx.space.newbool(self.boolval))
 
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("true" if self.boolval else "false").compile(ctx)
+
 
 class DynamicString(Node):
     def __init__(self, strvalues):
@@ -1035,6 +1104,12 @@ class Symbol(Node):
 class Nil(BaseNode):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("nil").compile(ctx)
 
 
 class File(BaseNode):

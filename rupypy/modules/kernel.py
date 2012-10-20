@@ -41,19 +41,21 @@ class Kernel(Module):
     def function_proc(self, space, block):
         return space.newproc(block, False)
 
-    @moduledef.function("puts")
-    def function_puts(self, space, w_obj):
-        if w_obj is space.w_nil:
-            s = "nil"
-        else:
-            w_str = space.send(w_obj, space.newsymbol("to_s"))
-            s = space.str_w(w_str)
-        os.write(1, s)
-        os.write(1, "\n")
-        return space.w_nil
+    moduledef.app_method("""
+    def puts *args
+        $stdout.puts(*args)
+    end
+    """)
+
+    moduledef.app_method("""
+    def print *args
+        $stdout.print(*args)
+    end
+    """)
 
     @staticmethod
     def find_feature(space, path):
+        assert path is not None
         if not path.endswith(".rb"):
             path += ".rb"
 
@@ -223,6 +225,10 @@ class Kernel(Module):
     @moduledef.function("=~")
     def method_match(self, space, w_other):
         return space.w_nil
+
+    @moduledef.function("!~")
+    def method_not_match(self, space, w_other):
+        return space.newbool(not space.is_true(space.send(self, space.newsymbol("=~"), [w_other])))
 
     @moduledef.function("instance_variable_defined?", name="symbol")
     def method_instance_variable_definedp(self, space, name):

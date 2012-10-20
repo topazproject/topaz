@@ -9,6 +9,7 @@ class ClassDef(object):
         self.app_methods = []
         self.singleton_methods = {}
         self.includes = []
+        self.setup_class_func = None
         self.superclassdef = superclassdef
         self.cls = None
 
@@ -42,6 +43,10 @@ class ClassDef(object):
             self.singleton_methods[name] = (func, argspec)
             return staticmethod(func)
         return adder
+
+    def setup_class(self, func):
+        self.setup_class_func = func
+        return func
 
 
 class Module(object):
@@ -110,7 +115,8 @@ class ClassCache(Cache):
             w_mod = self.space.getmoduleobject(mod.moduledef)
             self.space.send(w_class, self.space.newsymbol("include"), [w_mod])
 
-        classdef.cls.setup_class(self.space, w_class)
+        if classdef.setup_class_func is not None:
+            classdef.setup_class_func(classdef.cls, self.space, w_class)
 
 
 class ModuleCache(Cache):
