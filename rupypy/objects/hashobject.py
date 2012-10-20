@@ -65,6 +65,26 @@ class W_HashObject(W_Object):
     def method_includep(self, space, w_key):
         return space.newbool(w_key in self.contents)
 
+    classdef.app_method("""
+    def ==(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Hash)
+            return false
+        end
+        if self.size != other.size
+            return false
+        end
+        self.each do |key, value|
+            if !other.has_key?(key) || other[key] != value
+                return false
+            end
+        end
+        return true
+    end
+    """)
+
 
 class W_HashIterator(W_Object):
     classdef = ClassDef("HashIterator", W_Object.classdef)

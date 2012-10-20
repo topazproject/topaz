@@ -73,8 +73,23 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [True, False, True, False, True, False, True, False]
 
-    def test_hash(self, space):
+    def test_size(self, space):
         w_res = space.execute("return {}.size")
         assert space.int_w(w_res) == 0
         w_res = space.execute("return {:a => 2}.size")
         assert space.int_w(w_res) == 1
+
+    def test_equal(self, space):
+        w_res = space.execute("return {} == nil")
+        assert w_res is space.w_false
+        w_res = space.execute("return {1 => 2, 2 => 3} == {2 => 3, 1 => 2}")
+        assert w_res is space.w_true
+        w_res = space.execute("return {} == {}")
+        assert w_res is space.w_true
+        w_res = space.execute("return {} == {1 => 2}")
+        assert w_res is space.w_false
+        w_res = space.execute("""
+        h = {}
+        return h == h
+        """)
+        assert w_res is space.w_true
