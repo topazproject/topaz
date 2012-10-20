@@ -126,9 +126,6 @@ class Frame(BaseFrame):
     def has_contents(self):
         return True
 
-    def get_last_instr(self):
-        return self.last_instr
-
     def get_filename(self):
         return self.bytecode.filepath
 
@@ -153,9 +150,6 @@ class BuiltinFrame(BaseFrame):
 
     def has_contents(self):
         return self.backref() is not None
-
-    def get_last_instr(self):
-        return -1
 
     def get_filename(self):
         return self.backref().get_filename()

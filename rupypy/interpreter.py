@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated, specialize, newlist_hint
 
 from rupypy import consts
 from rupypy.error import RubyError
+from rupypy.executioncontext import IntegerWrapper
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.blockobject import W_BlockObject
 from rupypy.objects.classobject import W_ClassObject
@@ -40,6 +41,12 @@ class Interpreter(object):
                     block_bytecode=self.get_block_bytecode(frame.block),
                 )
                 frame.last_instr = pc
+                # Why do we wrap the PC in an object? The JIT has store
+                # sinking, but when it encounters a guard it usually performs
+                # all pending stores, *execpt* if the value is a virtual, then
+                # it doesn't, so we make this store be of a virtual, in order
+                # to ensure the JIT sinks the store.
+                space.getexecutioncontext().last_instr_ref = IntegerWrapper(pc)
                 try:
                     pc = self.handle_bytecode(space, pc, frame, bytecode)
                 except RubyError as e:
