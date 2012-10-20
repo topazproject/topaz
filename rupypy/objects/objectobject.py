@@ -154,19 +154,11 @@ class W_RootObject(W_BaseObject):
 
     @classdef.method("method")
     def method_method(self, space, w_sym):
-        if space.getclass(w_sym) is not space.w_symbol:
-            w_str = space.convert_type(w_sym, space.w_string, "to_str", False)
-            if w_str is space.w_nil:
-                w_inspect_str = space.send(w_sym, space.newsymbol("inspect"))
-                raise space.error(
-                    space.w_TypeError,
-                    "%s is not a symbol" % space.str_w(w_inspect_str)
-                )
-            else:
-                name = space.str_w(w_str)
-        else:
-            name = space.symbol_w(w_sym)
-        return space.newmethod(name, self)
+        return space.send(
+            space.send(space.getclass(self), space.newsymbol("instance_method"), [w_sym]),
+            space.newsymbol("bind"),
+            [self]
+        )
 
 
 class W_Object(W_RootObject):

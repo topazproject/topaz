@@ -323,3 +323,19 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("===")
     def method_eqeqeq(self, space, w_obj):
         return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
+
+    @classdef.method("instance_method")
+    def method_instance_method(self, space, w_sym):
+        if space.getclass(w_sym) is not space.w_symbol:
+            w_str = space.convert_type(w_sym, space.w_string, "to_str", False)
+            if w_str is space.w_nil:
+                w_inspect_str = space.send(w_sym, space.newsymbol("inspect"))
+                raise space.error(
+                    space.w_TypeError,
+                    "%s is not a symbol" % space.str_w(w_inspect_str)
+                )
+            else:
+                name = space.str_w(w_str)
+        else:
+            name = space.symbol_w(w_sym)
+        return space.newmethod(name, self)

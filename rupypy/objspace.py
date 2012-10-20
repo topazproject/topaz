@@ -288,8 +288,7 @@ class ObjectSpace(object):
         assert isinstance(w_code, W_CodeObject)
         return W_UserFunction(name, w_code, lexical_scope)
 
-    def newmethod(self, name, w_receiver):
-        w_cls = self.getclass(w_receiver)
+    def newmethod(self, name, w_cls):
         w_function = w_cls.find_method(self, name)
         if w_function is None:
             raise self.error(
@@ -297,7 +296,7 @@ class ObjectSpace(object):
                 "undefined method `%s' for class `%s'" % (name, w_cls.name)
             )
         else:
-            return W_MethodObject(self, w_cls, w_function, w_receiver)
+            return W_UnboundMethodObject(self, w_cls, w_function)
 
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)

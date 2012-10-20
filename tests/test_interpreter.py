@@ -410,9 +410,6 @@ class TestInterpreter(BaseRuPyPyTest):
         assert isinstance(w_res, W_ModuleObject)
         assert w_res.name == "M"
 
-        with self.raises(space, "NoMethodError"):
-            space.execute("M.method")
-
     def test_singleton_method(self, space):
         w_res = space.execute("""
         def Array.hello
