@@ -152,6 +152,22 @@ class W_RootObject(W_BaseObject):
         space.set_instance_var(self, name, w_value)
         return w_value
 
+    @classdef.method("method")
+    def method_method(self, space, w_sym):
+        if space.getclass(w_sym) is not space.w_symbol:
+            w_str = space.convert_type(w_sym, space.w_string, "to_str", False)
+            if w_str is space.w_nil:
+                w_inspect_str = space.send(w_sym, space.newsymbol("inspect"))
+                raise space.error(
+                    space.w_TypeError,
+                    "%s is not a symbol" % space.str_w(w_inspect_str)
+                )
+            else:
+                name = space.str_w(w_str)
+        else:
+            name = space.symbol_w(w_sym)
+        return space.newmethod(name, self)
+
 
 class W_Object(W_RootObject):
     _attrs_ = ["map", "storage"]

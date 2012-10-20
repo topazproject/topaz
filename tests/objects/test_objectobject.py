@@ -1,4 +1,5 @@
 from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.methodobject import W_MethodObject
 
 from ..base import BaseRuPyPyTest
 
@@ -234,3 +235,20 @@ class TestMapDict(BaseRuPyPyTest):
         return X.new.attrs
         """)
         assert space.listview(w_res) == [space.w_nil, space.w_nil]
+
+    def test_method(self, space):
+        w_res = space.execute("""
+        class A; def a; end; end
+        return A.new.method(:a).class, A.new.method(:to_s).class
+        """)
+        assert self.unwrap(space, w_res) == [
+            space.getclassfor(W_MethodObject),
+            space.getclassfor(W_MethodObject)
+        ]
+        with self.raises(space, "NameError"):
+            space.execute("return Object.new.method(:undefined_stuff)")
+        w_res = space.execute("""
+        class A; def to_str; "to_s"; end; end
+        return 'aaa'.method(A.new).class
+        """)
+        assert self.unwrap(space, w_res) == space.getclassfor(W_MethodObject)

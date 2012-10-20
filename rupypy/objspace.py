@@ -40,6 +40,7 @@ from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.hashobject import W_HashObject, W_HashIterator
 from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.methodobject import W_MethodObject, W_UnboundMethodObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.numericobject import W_NumericObject
@@ -90,6 +91,7 @@ class ObjectSpace(object):
         self.w_fixnum = self.getclassfor(W_FixnumObject)
         self.w_module = self.getclassfor(W_ModuleObject)
         self.w_string = self.getclassfor(W_StringObject)
+        self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_NameError = self.getclassfor(W_NameError)
@@ -110,7 +112,7 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_fixnum, self.w_string, self.w_class, self.w_module,
+            self.w_fixnum, self.w_string, self. w_symbol, self.w_class, self.w_module,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -122,7 +124,6 @@ class ObjectSpace(object):
             self.getclassfor(W_NilObject),
             self.getclassfor(W_TrueObject),
             self.getclassfor(W_FalseObject),
-            self.getclassfor(W_SymbolObject),
             self.getclassfor(W_NumericObject),
             self.getclassfor(W_HashObject),
             self.getclassfor(W_RangeObject),
@@ -133,6 +134,8 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
+            self.getclassfor(W_MethodObject),
+            self.getclassfor(W_UnboundMethodObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
@@ -285,6 +288,17 @@ class ObjectSpace(object):
         assert isinstance(w_code, W_CodeObject)
         return W_UserFunction(name, w_code, lexical_scope)
 
+    def newmethod(self, name, w_receiver):
+        w_cls = self.getclass(w_receiver)
+        w_function = w_cls.find_method(self, name)
+        if w_function is None:
+            raise self.error(
+                self.w_NameError,
+                "undefined method `%s' for class `%s'" % (name, w_cls.name)
+            )
+        else:
+            return W_MethodObject(self, w_cls, w_function, w_receiver)
+
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)
 
@@ -424,6 +438,9 @@ class ObjectSpace(object):
 
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
+
+    def invoke_function(self, w_name, w_function, w_receiver, args_w, block):
+        return self._send_raw(w_name, w_function, w_receiver, self.getclass(w_receiver), args_w, block)
 
     def error(self, w_type, msg="", optargs=None):
         if not optargs:
