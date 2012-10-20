@@ -133,7 +133,6 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
-            self.getclassfor(W_ThreadObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
@@ -157,8 +156,6 @@ class ObjectSpace(object):
                 self.str_w(self.send(w_cls, self.newsymbol("name"))),
                 w_cls
             )
-
-        self.w_top_self = W_Object(self, self.w_object)
 
         # TODO ... make this right
         self.w_main_thread = W_ThreadObject(self, [], None)
