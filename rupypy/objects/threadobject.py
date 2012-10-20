@@ -31,7 +31,7 @@ class W_ThreadObject(W_Object):
 
     @classdef.method("run")
     def method_run(self, space):
-        raise space.w_NotImplementedError("no threading yet")
+        raise space.error(space.w_NotImplementedError, "no threading yet")
 
     @classdef.singleton_method("current")
     def method_current(self, space):
