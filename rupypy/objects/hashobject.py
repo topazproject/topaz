@@ -23,6 +23,10 @@ class W_HashObject(W_Object):
         self.contents[w_key] = w_value
         return w_value
 
+    @classdef.method("size")
+    def method_size(self, space):
+        return space.newint(len(self.contents))
+
     @classdef.method("delete")
     def method_delete(self, space, w_key):
         return self.contents.pop(w_key, space.w_nil)
