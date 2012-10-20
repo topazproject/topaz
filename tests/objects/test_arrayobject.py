@@ -1,3 +1,7 @@
+# coding=utf-8
+
+import struct
+
 from ..base import BaseRuPyPyTest
 
 
@@ -295,3 +299,137 @@ class TestArrayObject(BaseRuPyPyTest):
         ]
         """)
         assert self.unwrap(space, w_res) == [False, True, True, True, False, False]
+
+    def test_clear(self, space):
+        w_res = space.execute("""
+        a = [1,2,3]
+        a.clear
+        return a
+        """)
+        assert self.unwrap(space, w_res) == []
+
+
+class TestArrayPack(BaseRuPyPyTest):
+    def test_garbage_format(self, space):
+        assert space.str_w(space.execute("return [].pack ''")) == ""
+        assert space.str_w(space.execute("return [].pack 'yy'")) == ""
+        assert space.str_w(space.execute("return [1, 2].pack 'y3'")) == ""
+
+    def test_padding(self, space):
+        assert space.str_w(space.execute("return [].pack 'xx'")) == "\0\0"
+        assert space.str_w(space.execute("return [].pack 'x2'")) == "\0\0"
+
+    def test_moving(self, space):
+        assert space.str_w(space.execute("return [].pack '@2'")) == "\0\0"
+        assert space.str_w(space.execute("return [].pack 'xx@2'")) == "\0\0"
+
+    def test_backing_up(self, space):
+        assert space.str_w(space.execute("return [].pack 'xxXX'")) == ""
+        with self.raises(space, "ArgumentError", "X outside of string"):
+            space.execute("[].pack 'X'")
+
+    def test_char(self, space):
+        assert space.str_w(space.execute("return [-10, 10].pack 'cc'")) == struct.pack("bb", -10, 10)
+        assert space.str_w(space.execute("return [255].pack 'C'")) == struct.pack("B", 255)
+        assert space.str_w(space.execute("return [256].pack 'C'")) == struct.pack("B", 256 % 256)
+        assert space.str_w(space.execute("return [-255].pack 'C'")) == struct.pack("B", -255 % 256)
+        with self.raises(space, "ArgumentError", "> allowed only after types SsIiLlQq"):
+            space.execute("return [-255].pack 'C>'")
+        with self.raises(space, "ArgumentError", "! allowed only after types SsIiLl"):
+            space.execute("return [-255].pack 'C!'")
+        with self.raises(space, "ArgumentError", "< allowed only after types SsIiLlQq"):
+            space.execute("return [-255].pack 'C<'")
+
+    def test_short(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'S'")) == struct.pack("H", -255 % 2 ** 16)
+        assert space.str_w(space.execute("return [12].pack 's'")) == struct.pack("h", 12)
+        assert space.str_w(space.execute("return [12].pack 'S!'")) == struct.pack("@h", 12)
+        assert space.str_w(space.execute("return [12].pack 'S_'")) == struct.pack("@h", 12)
+        assert space.str_w(space.execute("return [12].pack 'S_!_'")) == struct.pack("@h", 12)
+        with self.raises(space, "RangeError", "Can't use both '<' and '>'"):
+            space.execute("return [2].pack 'S><'")
+
+    def test_long(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'I'")) == struct.pack("I", -255 % 2 ** 32)
+        assert space.str_w(space.execute("return [12].pack 'i'")) == struct.pack("i", 12)
+        assert space.str_w(space.execute("return [-255].pack 'L'")) == struct.pack("I", -255 % 2 ** 32)
+        assert space.str_w(space.execute("return [12].pack 'l'")) == struct.pack("i", 12)
+
+    def test_longlong(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'Q'")) == struct.pack("Q", -255 % 2 ** 64)
+        assert space.str_w(space.execute("return [12].pack 'q'")) == struct.pack("q", 12)
+
+    def test_float(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'f'")) == struct.pack("f", -255)
+        assert space.str_w(space.execute("return [-255].pack 'F'")) == struct.pack("f", -255)
+        assert space.str_w(space.execute("return [-255.42].pack 'F'")) == struct.pack("f", -255.42)
+
+    def test_double(self, space):
+        assert space.str_w(space.execute("return [-255].pack 'd'")) == struct.pack("d", -255)
+        assert space.str_w(space.execute("return [-255].pack 'D'")) == struct.pack("d", -255)
+        assert space.str_w(space.execute("return [-255.42].pack 'D'")) == struct.pack("d", -255.42)
+
+    def test_strings(self, space):
+        string = "abö"
+        assert space.str_w(space.execute("return ['%s'].pack 'a'" % string)) == string[0]
+        assert space.str_w(space.execute("return ['%s'].pack 'A6'" % string)) == string + "  "
+        assert space.str_w(space.execute("return ['abö'].pack 'a6'")) == string + "\0\0"
+        assert space.str_w(space.execute("return ['abö'].pack 'Z6'")) == string + "\0\0"
+        assert space.str_w(space.execute("return ['abö'].pack 'Z*'")) == string + "\0"
+
+    def test_endianess(self, space):
+        assert space.str_w(space.execute("return [42].pack 's<'")) == struct.pack("<h", 42)
+        assert space.str_w(space.execute("return [42].pack 's>'")) == struct.pack(">h", 42)
+        assert space.str_w(space.execute("return [42].pack 'S<'")) == struct.pack("<H", 42)
+        assert space.str_w(space.execute("return [42].pack 'S>'")) == struct.pack(">H", 42)
+
+        assert space.str_w(space.execute("return [42].pack 'i<'")) == struct.pack("<i", 42)
+        assert space.str_w(space.execute("return [42].pack 'i>'")) == struct.pack(">i", 42)
+        assert space.str_w(space.execute("return [42].pack 'I<'")) == struct.pack("<I", 42)
+        assert space.str_w(space.execute("return [42].pack 'I>'")) == struct.pack(">I", 42)
+
+        assert space.str_w(space.execute("return [42].pack 'q<'")) == struct.pack("<q", 42)
+        assert space.str_w(space.execute("return [42].pack 'q>'")) == struct.pack(">q", 42)
+        assert space.str_w(space.execute("return [42].pack 'Q<'")) == struct.pack("<Q", 42)
+        assert space.str_w(space.execute("return [42].pack 'Q>'")) == struct.pack(">Q", 42)
+
+        assert space.str_w(space.execute("return [42].pack 'v'")) == struct.pack("<H", 42)
+        assert space.str_w(space.execute("return [42].pack 'V'")) == struct.pack("<I", 42)
+        assert space.str_w(space.execute("return [42].pack 'n'")) == struct.pack(">H", 42)
+        assert space.str_w(space.execute("return [42].pack 'N'")) == struct.pack(">I", 42)
+
+        assert space.str_w(space.execute("return [4.2].pack 'e'")) == struct.pack("<f", 4.2)
+        assert space.str_w(space.execute("return [4.2].pack 'g'")) == struct.pack(">f", 4.2)
+        assert space.str_w(space.execute("return [4.2].pack 'E'")) == struct.pack("<d", 4.2)
+        assert space.str_w(space.execute("return [4.2].pack 'G'")) == struct.pack(">d", 4.2)
+
+    def test_complex(self, space):
+        w_res = space.execute("""
+        return [65, 66, 5, 5, 4.2, 4.2, "hello"].pack 'c02s<s>egg0Z*'
+        """)
+        expected = (struct.pack("2b", 65, 66) +
+                    struct.pack("<h", 5) +
+                    struct.pack(">h", 5) +
+                    struct.pack("<f", 4.2) +
+                    struct.pack(">f", 4.2) +
+                    "hello\0")
+        assert space.str_w(w_res) == expected
+
+    def test_pointers(self, space):
+        pointerlen = struct.calcsize("P")
+        w_res = space.execute("return [''].pack 'P'")
+        assert space.str_w(w_res) == "\0" * pointerlen
+        w_res = space.execute("return [''].pack 'p'")
+        assert space.str_w(w_res) == "\0" * pointerlen
+
+    def test_errors(self, space):
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'P'")
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'a'")
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'c'")
+        with self.raises(space, "ArgumentError", "too few arguments"):
+            space.execute("return [].pack 'f'")
+        with self.raises(space, "RangeError", "pack length too big"):
+            space.execute("return [].pack 'a18446744073709551617'")

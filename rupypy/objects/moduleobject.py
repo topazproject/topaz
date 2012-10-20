@@ -32,7 +32,7 @@ class AttributeWriter(W_FunctionObject):
 
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = [
-        "version?", "included_modules?[*]", "lexical_scope?", "klass?"
+        "version?", "included_modules?[*]", "klass?", "superclass",
     ]
 
     classdef = ClassDef("Module", W_RootObject.classdef)
@@ -46,7 +46,6 @@ class W_ModuleObject(W_RootObject):
         self.constants_w = {}
         self.class_variables = CellDict()
         self.instance_variables = CellDict()
-        self.lexical_scope = None
         self.included_modules = []
         self.descendants = []
 
@@ -60,7 +59,6 @@ class W_ModuleObject(W_RootObject):
         obj.constants_w = copy.deepcopy(self.constants_w, memo)
         obj.class_variables = copy.deepcopy(self.class_variables, memo)
         obj.instance_variables = copy.deepcopy(self.instance_variables, memo)
-        obj.lexical_scope = copy.deepcopy(self.lexical_scope, memo)
         obj.included_modules = copy.deepcopy(self.included_modules, memo)
         obj.descendants = copy.deepcopy(self.descendants, memo)
         return obj
@@ -106,32 +104,21 @@ class W_ModuleObject(W_RootObject):
     def _find_method_pure(self, space, method, version):
         return self.methods_w.get(method, None)
 
-    def set_lexical_scope(self, space, w_mod):
-        self.lexical_scope = w_mod
-
     def set_const(self, space, name, w_obj):
         self.mutated()
         self.constants_w[name] = w_obj
 
+    @jit.unroll_safe
     def find_const(self, space, name):
-        res = self._find_const_pure(name, self.version)
-        if res is None and self.lexical_scope is not None:
-            res = self.lexical_scope.find_lexical_const(space, name)
-        if res is None and self.superclass is not None:
-            res = self.superclass.find_inherited_const(space, name)
-        return res
-
-    def find_lexical_const(self, space, name):
-        res = self._find_const_pure(name, self.version)
-        if res is None and self.lexical_scope is not None:
-            return self.lexical_scope.find_lexical_const(space, name)
-        return res
-
-    def find_inherited_const(self, space, name):
-        res = self._find_const_pure(name, self.version)
-        if res is None and self.superclass is not None:
-            return self.superclass.find_inherited_const(space, name)
-        return res
+        w_res = self.find_local_const(space, name)
+        if w_res is None:
+            for w_mod in self.included_modules:
+                w_res = w_mod.find_local_const(space, name)
+                if w_res is not None:
+                    break
+        if w_res is None and self.superclass is not None:
+            w_res = self.superclass.find_const(space, name)
+        return w_res
 
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
@@ -220,6 +207,12 @@ class W_ModuleObject(W_RootObject):
 
     def set_method_visibility(self, space, name, visibility):
         pass
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space):
+        # TODO: this should really store None for the name and all places
+        # reading the name should handle None
+        return W_ModuleObject(space, "", space.w_object)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -319,9 +312,9 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):
         if inherit:
-            return space.newbool(self.find_inherited_const(space, const) is not None)
+            return space.newbool(self.find_const(space, const) is not None)
         else:
-            return space.newbool(self._find_const_pure(const, self.version) is not None)
+            return space.newbool(self.find_local_const(space, const) is not None)
 
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):

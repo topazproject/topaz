@@ -16,7 +16,7 @@ from rupypy.frame import Frame
 from rupypy.interpreter import Interpreter
 from rupypy.lexer import LexerError, Lexer
 from rupypy.lib.dir import W_Dir
-from rupypy.lib.random import W_Random
+from rupypy.lib.random import W_RandomObject
 from rupypy.module import ClassCache, ModuleCache
 from rupypy.modules.comparable import Comparable
 from rupypy.modules.enumerable import Enumerable
@@ -33,7 +33,8 @@ from rupypy.objects.envobject import W_EnvObject
 from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
-    W_SystemCallError, W_NameError, W_IndexError, W_StopIteration)
+    W_SystemCallError, W_NameError, W_IndexError, W_StopIteration,
+    W_NotImplementedError, W_RangeError)
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
@@ -48,6 +49,7 @@ from rupypy.objects.rangeobject import W_RangeObject
 from rupypy.objects.regexpobject import W_RegexpObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.objects.symbolobject import W_SymbolObject
+from rupypy.objects.threadobject import W_ThreadObject
 from rupypy.objects.timeobject import W_TimeObject
 from rupypy.parser import Parser
 
@@ -74,10 +76,15 @@ class ObjectSpace(object):
         self.w_false = W_FalseObject(self)
         self.w_nil = W_NilObject(self)
 
-        # Force the setup of a few key classes
+        # Force the setup of a few key classes, we create a fake "Class" class
+        # for the initial bootstrap.
+        self.w_class = self.newclass("FakeClass", None)
         self.w_basicobject = self.getclassfor(W_BaseObject)
         self.w_object = self.getclassfor(W_Object)
         self.w_class = self.getclassfor(W_ClassObject)
+        # We replace the one reference to our FakeClass with the real class.
+        self.w_basicobject.klass.superclass = self.w_class
+
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
@@ -86,8 +93,10 @@ class ObjectSpace(object):
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_NameError = self.getclassfor(W_NameError)
+        self.w_NotImplementedError = self.getclassfor(W_NotImplementedError)
         self.w_IndexError = self.getclassfor(W_IndexError)
         self.w_LoadError = self.getclassfor(W_LoadError)
+        self.w_RangeError = self.getclassfor(W_RangeError)
         self.w_RuntimeError = self.getclassfor(W_RuntimeError)
         self.w_StopIteration = self.getclassfor(W_StopIteration)
         self.w_SyntaxError = self.getclassfor(W_SyntaxError)
@@ -104,9 +113,9 @@ class ObjectSpace(object):
             self.w_fixnum, self.w_string, self.w_class, self.w_module,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
-            self.w_ZeroDivisionError, self.w_SystemExit, self.w_RuntimeError,
-            self.w_SystemCallError, self.w_LoadError, self.w_StopIteration,
-            self.w_SyntaxError,
+            self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
+            self.w_RuntimeError, self.w_SystemCallError, self.w_LoadError,
+            self.w_StopIteration, self.w_SyntaxError, self.w_NameError,
 
             self.w_kernel, self.w_topaz,
 
@@ -121,7 +130,8 @@ class ObjectSpace(object):
             self.getclassfor(W_FileObject),
             self.getclassfor(W_Dir),
             self.getclassfor(W_EncodingObject),
-            self.getclassfor(W_Random),
+            self.getclassfor(W_RandomObject),
+            self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
 
             self.getclassfor(W_ExceptionObject),
@@ -147,17 +157,15 @@ class ObjectSpace(object):
                 w_cls
             )
 
-        self.w_top_self = W_Object(self, self.w_object)
-
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
 
         w_load_path = self.newarray([
-            self.newstr_fromstr(
+            self.newstr_fromstr(os.path.abspath(
                 os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
-            )
+            ))
         ])
         self.globals.set("$LOAD_PATH", w_load_path)
         self.globals.set("$:", w_load_path)
@@ -165,6 +173,13 @@ class ObjectSpace(object):
         w_loaded_features = self.newarray([])
         self.globals.set("$LOADED_FEATURES", w_loaded_features)
         self.globals.set('$"', w_loaded_features)
+
+        # TODO: this should really go in a better place.
+        self.execute("""
+        def self.include *mods
+            Object.include *mods
+        end
+        """)
 
     def _freeze_(self):
         return True
@@ -183,8 +198,8 @@ class ObjectSpace(object):
             return parser.parse().getast()
         except ParsingError as e:
             raise self.error(self.w_SyntaxError, "line %d" % e.getsourcepos().lineno)
-        except LexerError:
-            raise self.error(self.w_SyntaxError)
+        except LexerError as e:
+            raise self.error(self.w_SyntaxError, "line %d" % e.pos.lineno)
 
     def compile(self, source, filepath, initial_lineno=1):
         symtable = SymbolTable()
@@ -207,14 +222,14 @@ class ObjectSpace(object):
             self._executioncontext = ExecutionContext(self)
         return self._executioncontext
 
-    def create_frame(self, bc, w_self=None, w_scope=None, block=None,
-        parent_interp=None):
+    def create_frame(self, bc, w_self=None, w_scope=None, lexical_scope=None,
+        block=None, parent_interp=None):
 
         if w_self is None:
             w_self = self.w_top_self
         if w_scope is None:
             w_scope = self.w_object
-        return Frame(jit.promote(bc), w_self, w_scope, block, parent_interp)
+        return Frame(jit.promote(bc), w_self, w_scope, lexical_scope, block, parent_interp)
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -265,10 +280,10 @@ class ObjectSpace(object):
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
 
-    def newfunction(self, w_name, w_code):
+    def newfunction(self, w_name, w_code, lexical_scope):
         name = self.symbol_w(w_name)
         assert isinstance(w_code, W_CodeObject)
-        return W_UserFunction(name, w_code)
+        return W_UserFunction(name, w_code, lexical_scope)
 
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)
@@ -323,16 +338,29 @@ class ObjectSpace(object):
         return self.fromcache(ModuleCache).getorbuild(moduledef)
 
     def find_const(self, w_module, name):
-        w_obj = w_module.find_const(self, name)
-        if w_obj is None:
-            w_obj = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
-        return w_obj
+        w_res = w_module.find_const(self, name)
+        if w_res is None:
+            w_res = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
+        return w_res
 
     def set_const(self, module, name, w_value):
         module.set_const(self, name, w_value)
 
-    def set_lexical_scope(self, module, scope):
-        module.set_lexical_scope(self, scope)
+    @jit.unroll_safe
+    def find_lexical_const(self, lexical_scope, name):
+        w_res = None
+        scope = lexical_scope
+        while scope is not None:
+            w_mod = scope.w_mod
+            w_res = w_mod.find_local_const(self, name)
+            if w_res is not None:
+                return w_res
+            scope = scope.backscope
+        w_mod = lexical_scope.w_mod if lexical_scope else self.w_object
+        w_res = self.find_const(w_mod, name)
+        if w_res is None:
+            w_res = self.send(w_mod, self.newsymbol("const_missing"), [self.newsymbol(name)])
+        return w_res
 
     def find_instance_var(self, w_obj, name):
         w_res = w_obj.find_instance_var(self, name)
@@ -379,7 +407,8 @@ class ObjectSpace(object):
     def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(
-            bc, w_self=block.w_self, w_scope=block.w_scope, block=block.block,
+            bc, w_self=block.w_self, w_scope=block.w_scope,
+            lexical_scope=block.lexical_scope, block=block.block,
             parent_interp=block.parent_interp,
         )
         if (len(args_w) == 1 and

@@ -12,9 +12,9 @@ class VersionTag(object):
 
 
 class Cell(W_BaseObject):
-    def __init__(self, name):
+    def __init__(self, name, w_value=None):
         self.name = name
-        self.w_value = None
+        self.w_value = w_value
 
     def __deepcopy__(self, memo):
         obj = super(Cell, self).__deepcopy__(memo)
@@ -66,4 +66,5 @@ class CellDict(object):
 
     @jit.elidable
     def _get_cell(self, name, version):
-        return self.values.setdefault(name, Cell(name))
+        assert version is self.version
+        return self.values.get(name, None)

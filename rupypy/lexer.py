@@ -66,6 +66,7 @@ class Lexer(object):
         "defined?": Keyword("DEFINED", "DEFINED", EXPR_ARG),
         "super": Keyword("SUPER", "SUPER", EXPR_ARG),
         "next": Keyword("NEXT", "NEXT", EXPR_MID),
+        "break": Keyword("BREAK", "BREAK", EXPR_MID),
     }
 
     def __init__(self, source, initial_lineno, symtable):
@@ -194,9 +195,8 @@ class Lexer(object):
                 for token in self.slash(ch, space_seen):
                     yield token
             elif ch == "^":
-                self.add(ch)
-                self.set_expression_state()
-                yield self.emit("CARET")
+                for token in self.caret(ch):
+                    yield token
             elif ch == ";":
                 self.add(ch)
                 self.state = self.EXPR_BEG
@@ -385,11 +385,13 @@ class Lexer(object):
             elif ch.isdigit() or (is_hex and ch.upper() in "ABCDEF"):
                 self.add(ch)
             elif ch == "_":
-                if not self.peek().isdigit():
+                if not (self.peek().isdigit() or (is_hex and self.peek().upper() in "ABCDEF")):
                     self.error()
             elif ch.upper() == "E":
                 symbol = "FLOAT"
                 self.add(ch.upper())
+                if self.peek() == "-":
+                    self.add(self.read())
             else:
                 yield self.emit(symbol)
                 self.unread()
@@ -477,7 +479,7 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\!\"":
+        if ch in "$>:?\\!\"~&`'+":
             self.add(ch)
             yield self.emit("GVAR")
         else:
@@ -652,6 +654,19 @@ class Lexer(object):
             self.set_expression_state()
             yield self.emit(tok)
 
+    def caret(self, ch):
+        self.add(ch)
+
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            yield self.emit("OP_ASGN")
+        else:
+            self.unread()
+            self.set_expression_state()
+            yield self.emit("CARET")
+
     def equal(self, ch):
         self.add(ch)
         self.set_expression_state()
@@ -700,7 +715,14 @@ class Lexer(object):
                 yield self.emit("LEQ")
         elif ch2 == "<":
             self.add(ch2)
-            yield self.emit("LSHFT")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                yield self.emit("LSHFT")
         else:
             self.unread()
             yield self.emit("LT")
@@ -714,7 +736,14 @@ class Lexer(object):
             yield self.emit("GEQ")
         elif ch2 == ">":
             self.add(ch2)
-            yield self.emit("RSHFT")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                yield self.emit("RSHFT")
         else:
             self.unread()
             yield self.emit("GT")
@@ -1062,6 +1091,10 @@ class Lexer(object):
         elif ch == "r":
             self.str_term = StringTerm(self, begin, end, is_regexp=True)
             yield self.emit("REGEXP_BEG")
+        elif ch == "s":
+            self.str_term = StringTerm(self, begin, end, expand=False)
+            self.state = self.EXPR_FNAME
+            yield self.emit("SYMBEG")
         else:
             raise NotImplementedError('%' + ch)
 

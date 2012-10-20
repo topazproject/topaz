@@ -187,6 +187,9 @@ class TestStringObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == "abc123abc"
 
+        w_res = space.execute("return 'AbC123aBc'.downcase")
+        assert self.unwrap(space, w_res) == "abc123abc"
+
         w_res = space.execute("return '123'.downcase!")
         assert self.unwrap(space, w_res) is None
 
