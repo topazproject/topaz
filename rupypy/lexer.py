@@ -287,7 +287,11 @@ class Lexer(object):
         state = self.state
         if value in self.keywords and self.state != self.EXPR_DOT:
             keyword = self.keywords[value]
-            self.state = keyword.state
+
+            if keyword.normal_token == "NOT":
+                self.state = self.EXPR_ARG
+            else:
+                self.state = keyword.state
 
             if keyword.normal_token == "DO":
                 return self.emit_do(state)

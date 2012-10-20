@@ -1490,12 +1490,7 @@ class Parser(object):
 
     @pg.production("primary : NOT LPAREN2 expr rparen")
     def primary_not_paren_expr(self, p):
-        """
-        kNOT tLPAREN2 expr rparen {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[2], self.new_token(p[0], "!", "!"), None)
 
     @pg.production("primary : NOT LPAREN2 rparen")
     def primary_not_paren(self, p):
