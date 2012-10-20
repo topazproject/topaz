@@ -174,6 +174,8 @@ class ObjectSpace(object):
         self.globals.set("$LOADED_FEATURES", w_loaded_features)
         self.globals.set('$"', w_loaded_features)
 
+        self.w_main_thread = W_ThreadObject(self)
+
         # TODO: this should really go in a better place.
         self.execute("""
         def self.include *mods
