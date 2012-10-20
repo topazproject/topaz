@@ -241,6 +241,9 @@ class Parser(object):
             base = 2
         else:
             base = 10
+        if base != 10:
+            # Strip off the leading 0[xob]
+            s = s[2:]
         return int(s, base)
 
     pg = ParserGenerator([
