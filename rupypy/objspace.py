@@ -157,6 +157,9 @@ class ObjectSpace(object):
                 w_cls
             )
 
+        # TODO ... make this right
+        self.w_main_thread = W_ThreadObject(self, [], None)
+
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
