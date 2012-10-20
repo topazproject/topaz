@@ -2094,6 +2094,16 @@ HERE
             ast.Statement(ast.OrEqual(ast.Variable("x", 2), ast.Hash([])))
         ]))
 
+    def test_new_hash(self, space):
+        r = space.parse("{a: 2, :b => 3, c: 4}")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Hash([
+                (ast.ConstantSymbol("a"), ast.ConstantInt(2)),
+                (ast.ConstantSymbol("b"), ast.ConstantInt(3)),
+                (ast.ConstantSymbol("c"), ast.ConstantInt(4)),
+            ]))
+        ]))
+
     def test_newline(self, space):
         r = space.parse("""
         x = 123 &&

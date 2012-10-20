@@ -303,6 +303,12 @@ class Lexer(object):
                 if keyword.inline_token != keyword.normal_token:
                     self.state = self.EXPR_BEG
         else:
+            if (state == self.EXPR_BEG and not command_state) or self.is_arg():
+                ch = self.read()
+                if ch == ":" and self.peek() != ":":
+                    self.state = self.EXPR_BEG
+                    return self.emit("LABEL")
+                self.unread()
             if value[0].isupper():
                 token = self.emit("CONSTANT")
             else:
@@ -997,11 +1003,12 @@ class Lexer(object):
         else:
             if self.is_arg() or self.state in [self.EXPR_END, self.EXPR_ENDFN]:
                 tok = "LCURLY"
+                self.command_start = True
             elif self.state == self.EXPR_ENDARG:
                 tok = "LBRACE_ARG"
+                self.command_start = True
             else:
                 tok = "LBRACE"
-                self.command_start = True
             self.condition_state.stop()
             self.cmd_argument_state.stop()
             self.state = self.EXPR_BEG

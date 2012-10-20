@@ -2805,13 +2805,7 @@ class Parser(object):
 
     @pg.production("assoc : LABEL arg_value")
     def assoc_label(self, p):
-        """
-        tLABEL arg_value {
-                    ISourcePosition pos = $1.getPosition();
-                    $$ = support.newArrayNode(pos, new SymbolNode(pos, (String) $1.getValue())).add($2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(self.new_list(self.new_symbol(p[0])), p[1])
 
     @pg.production("operation : FID")
     @pg.production("operation : CONSTANT")
