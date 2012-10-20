@@ -7,7 +7,7 @@ from rupypy.objects.objectobject import W_Object
 class W_EnvObject(W_Object):
     classdef = ClassDef("EnviromentVariables", W_Object.classdef)
 
-    @classmethod
+    @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.set_const(space.w_object, "ENV", cls(space))
 

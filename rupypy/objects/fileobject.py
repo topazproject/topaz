@@ -25,7 +25,7 @@ class W_IOObject(W_Object):
         obj.fd = self.fd
         return obj
 
-    @classmethod
+    @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
         space.globals.set("$stdin", w_stdin)
@@ -98,6 +98,13 @@ class W_IOObject(W_Object):
         else:
             return w_read_str
 
+    classdef.app_method("""
+    def << s
+        write(s)
+        return self
+    end
+    """)
+
     @classdef.method("write")
     def method_write(self, space, w_str):
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
@@ -143,7 +150,7 @@ class W_IOObject(W_Object):
 class W_FileObject(W_IOObject):
     classdef = ClassDef("File", W_IOObject.classdef)
 
-    @classmethod
+    @classdef.setup_class
     def setup_class(cls, space, w_cls):
         if sys.platform == "win32":
             w_alt_seperator = space.newstr_fromstr("\\")

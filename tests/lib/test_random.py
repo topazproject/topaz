@@ -1,12 +1,12 @@
-from rupypy.lib.random import W_Random
+from rupypy.lib.random import W_RandomObject
 
 from ..base import BaseRuPyPyTest
 
 
-class TestRandom(BaseRuPyPyTest):
+class TestRandomObject(BaseRuPyPyTest):
     def test_new(self, space):
         w_res = space.execute("return Random.new")
-        assert isinstance(w_res, W_Random)
+        assert isinstance(w_res, W_RandomObject)
 
     def test_rand(self, space):
         w_res = space.execute("return Random.new.rand")

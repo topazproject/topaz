@@ -26,10 +26,6 @@ class W_BaseObject(object):
         memo[id(self)] = obj
         return obj
 
-    @classmethod
-    def setup_class(cls, space, w_cls):
-        pass
-
     def getclass(self, space):
         return space.getclassobject(self.classdef)
 
@@ -42,6 +38,11 @@ class W_BaseObject(object):
 
     def is_true(self, space):
         return True
+
+    def find_const(self, space, name):
+        raise space.error(space.w_TypeError,
+            "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
+        )
 
     @classdef.method("initialize")
     def method_initialize(self):
@@ -96,6 +97,10 @@ class W_RootObject(W_BaseObject):
     _attrs_ = []
 
     classdef = ClassDef("Object", W_BaseObject.classdef)
+
+    @classdef.setup_class
+    def setup_class(cls, space, w_cls):
+        space.w_top_self = W_Object(space, w_cls)
 
     @classdef.method("object_id")
     def method_object_id(self, space):
@@ -155,7 +160,7 @@ class W_Object(W_RootObject):
         if klass is None:
             klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
-        self.storage = []
+        self.storage = None
 
     def __deepcopy__(self, memo):
         obj = super(W_Object, self).__deepcopy__(memo)

@@ -23,9 +23,21 @@ class W_HashObject(W_Object):
         self.contents[w_key] = w_value
         return w_value
 
+    @classdef.method("delete")
+    def method_delete(self, space, w_key):
+        return self.contents.pop(w_key, space.w_nil)
+
     @classdef.method("keys")
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
+
+    @classdef.method("values")
+    def method_values(self, space):
+        return space.newarray(self.contents.values())
+
+    @classdef.method("to_hash")
+    def method_to_hash(self, space):
+        return self
 
     classdef.app_method("""
     def each
@@ -41,6 +53,13 @@ class W_HashObject(W_Object):
     end
     alias each_pair each
     """)
+
+    @classdef.method("key?")
+    @classdef.method("has_key?")
+    @classdef.method("member?")
+    @classdef.method("include?")
+    def method_includep(self, space, w_key):
+        return space.newbool(w_key in self.contents)
 
 
 class W_HashIterator(W_Object):

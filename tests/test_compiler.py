@@ -257,7 +257,7 @@ class TestCompiler(object):
 
     def test_while(self, space):
         self.assert_compiles(space, "while true do end", """
-        SETUP_LOOP 17
+        SETUP_LOOP 20
         LOAD_CONST 0
         JUMP_IF_FALSE 16
         LOAD_CONST 1
@@ -272,7 +272,7 @@ class TestCompiler(object):
         """)
 
         self.assert_compiles(space, "while true do puts 5 end", """
-        SETUP_LOOP 23
+        SETUP_LOOP 26
         LOAD_CONST 0
         JUMP_IF_FALSE 22
         LOAD_SELF
@@ -290,7 +290,7 @@ class TestCompiler(object):
 
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
-        SETUP_LOOP 17
+        SETUP_LOOP 20
         LOAD_CONST 0
         JUMP_IF_TRUE 16
         LOAD_CONST 1
@@ -512,20 +512,36 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, """
+        self.assert_compiles(space, """
         class X < Object
         end
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
         LOAD_SCOPE
-        LOAD_CONSTANT 1
+        LOAD_LOCAL_CONSTANT 1
         BUILD_CLASS
         LOAD_CONST 2
         EVALUATE_CLASS
         DISCARD_TOP
 
         LOAD_CONST 3
+        RETURN
+        """)
+
+        self.assert_compiles(space, """
+        class ::X
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_CLASS
+        LOAD_CONST 3
+        EVALUATE_CLASS
+        DISCARD_TOP
+
+        LOAD_CONST 4
         RETURN
         """)
 
@@ -547,7 +563,7 @@ class TestCompiler(object):
     def test_constants(self, space):
         self.assert_compiles(space, "Abc", """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         DISCARD_TOP
 
         LOAD_CONST 1
@@ -1079,7 +1095,7 @@ class TestCompiler(object):
     def test_lookup_constant(self, space):
         self.assert_compiles(space, "Module::Constant", """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         LOAD_CONSTANT 1
         DISCARD_TOP
 
@@ -1088,7 +1104,7 @@ class TestCompiler(object):
         """)
         self.assert_compiles(space, "Module::constant", """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         SEND 1 0
         DISCARD_TOP
 
@@ -1178,7 +1194,7 @@ class TestCompiler(object):
         JUMP 51
         DUP_TOP
         LOAD_SCOPE
-        LOAD_CONSTANT 3
+        LOAD_LOCAL_CONSTANT 3
         ROT_TWO
         SEND 4 1
         JUMP_IF_TRUE 35
@@ -1213,7 +1229,7 @@ class TestCompiler(object):
         JUMP 53
         DUP_TOP
         LOAD_SCOPE
-        LOAD_CONSTANT 3
+        LOAD_LOCAL_CONSTANT 3
         ROT_TWO
         SEND 4 1
         JUMP_IF_TRUE 35
@@ -1368,6 +1384,20 @@ class TestCompiler(object):
         RETURN
         """)
 
+        self.assert_compiles(space, """
+        module ::M
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_MODULE
+        DISCARD_TOP
+
+        LOAD_CONST 3
+        RETURN
+        """)
+
     def test_splat_send(self, space):
         self.assert_compiles(space, """
         puts *1, 2, 3, *x
@@ -1416,7 +1446,7 @@ class TestCompiler(object):
         end
         """, """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         LOAD_CONST 1
         LOAD_CONST 1
         LOAD_CONST 2
@@ -1740,6 +1770,21 @@ class TestCompiler(object):
         RETURN
         """)
 
+        self.assert_compiles(space, "Const ||= 3", """
+        LOAD_SCOPE
+        DUP_TOP
+        LOAD_LOCAL_CONSTANT 0
+        DUP_TOP
+        JUMP_IF_TRUE 13
+        DISCARD_TOP
+        LOAD_CONST 1
+        STORE_CONSTANT 0
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_and_equal(self, space):
         self.assert_compiles(space, "@a &&= 4", """
         LOAD_SELF
@@ -1844,6 +1889,23 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_discard_splat_assignment(self, space):
+        self.assert_compiles(space, """
+        * = 1, 2
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_ARRAY 2
+        DUP_TOP
+        COERCE_ARRAY
+        UNPACK_SEQUENCE_SPLAT 1 0
+        DISCARD_TOP
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_alias(self, space):
         bc = self.assert_compiles(space, """
         alias a b
@@ -1870,15 +1932,21 @@ class TestCompiler(object):
         self.assert_compiles(space, """
         defined? Const
         defined? @a
+        defined? nil.nil?
         """, """
         LOAD_SCOPE
-        DEFINED_CONSTANT 0
+        DEFINED_LOCAL_CONSTANT 0
         DISCARD_TOP
+
         LOAD_SELF
         DEFINED_INSTANCE_VAR 1
         DISCARD_TOP
 
         LOAD_CONST 2
+        DEFINED_METHOD 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
         RETURN
         """)
 
@@ -1969,7 +2037,7 @@ class TestCompiler(object):
             2 + 2
         end
         """, """
-        SETUP_LOOP 31
+        SETUP_LOOP 34
         LOAD_CONST 0
         JUMP_IF_FALSE 30
 
@@ -1985,5 +2053,47 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 0
+        RETURN
+        """)
+
+    def test_break_loop(self, space):
+        self.assert_compiles(space, """
+        while true
+            break 5
+        end
+        """, """
+        SETUP_LOOP 21
+        LOAD_CONST 0
+        JUMP_IF_FALSE 17
+
+        LOAD_CONST 1
+        BREAK_LOOP
+        DISCARD_TOP
+        JUMP 3
+        POP_BLOCK
+        LOAD_CONST 2
+        DISCARD_TOP
+
+        LOAD_CONST 0
+        RETURN
+        """)
+
+    def test_break_block(self, space):
+        bc = self.assert_compiles(space, """
+        f { break 5 }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        RAISE_BREAK
         RETURN
         """)
