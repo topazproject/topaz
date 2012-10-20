@@ -45,3 +45,7 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("/", other="float")
     def method_div(self, space, other):
         return space.newfloat(self.floatvalue / other)
+
+    @classdef.method("==", other="float")
+    def method_eq(self, space, other):
+        return space.newbool(self.floatvalue == other)
