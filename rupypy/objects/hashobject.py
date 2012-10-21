@@ -14,6 +14,16 @@ class W_HashObject(W_Object):
     def method_allocate(self, space):
         return W_HashObject(space)
 
+    @classdef.singleton_method("[]")
+    def singleton_method_subscript(self, space, w_obj):
+        w_res = space.convert_type(w_obj, space.w_hash, "to_hash")
+        if w_res is space.w_nil:
+            raise NotImplementedError
+        assert isinstance(w_res, W_HashObject)
+        result = W_HashObject(space)
+        result.contents.update(w_res.contents)
+        return result
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         return self.contents.get(w_key, space.w_nil)
