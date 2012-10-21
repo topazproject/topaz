@@ -96,7 +96,11 @@ class Lexer(object):
         del self.current_value[:]
 
     def current_pos(self):
-        return SourcePosition(self.get_idx(), self.get_lineno(), self.get_columno())
+        return SourcePosition(self.idx, self.lineno, self.columno)
+
+    def newline(self):
+        self.lineno += 1
+        self.columno = 1
 
     def emit(self, token):
         value = "".join(self.current_value)
@@ -129,8 +133,7 @@ class Lexer(object):
                 self.comment(ch)
             elif ch == "\n":
                 space_seen = True
-                self.lineno += 1
-                self.columno = 1
+                self.newline()
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
                     self.add(ch)
                     self.command_start = True
@@ -221,8 +224,7 @@ class Lexer(object):
             elif ch == "\\":
                 ch2 = self.read()
                 if ch2 == "\n":
-                    self.lineno += 1
-                    self.columno = 1
+                    self.newline()
                     space_seen = True
                     continue
                 raise NotImplementedError
@@ -257,15 +259,6 @@ class Lexer(object):
         assert idx >= 0
         self.idx = idx
         self.columno -= 1
-
-    def get_idx(self):
-        return self.idx
-
-    def get_lineno(self):
-        return self.lineno
-
-    def get_columno(self):
-        return self.columno
 
     def is_beg(self):
         return self.state in [self.EXPR_BEG, self.EXPR_MID, self.EXPR_CLASS, self.EXPR_VALUE]
@@ -473,6 +466,7 @@ class Lexer(object):
         while True:
             ch = self.read()
             if ch == "\n":
+                self.newline()
                 break
             elif ch == self.EOF:
                 self.unread()
@@ -1259,6 +1253,7 @@ class HeredocTerm(BaseStringTerm):
         while True:
             ch = self.lexer.read()
             if ch == "\n":
+                self.lexer.newline()
                 self.lexer.add(ch)
                 self.start_of_line = True
                 return self.lexer.emit("STRING_CONTENT")

@@ -2240,3 +2240,15 @@ HERE
             assert space.parse("[]{}[]")
         with self.raises(space, "SyntaxError", "line 10"):
             assert space.parse("[]{}[]", 10)
+
+    def test_lineno(self, space):
+        r = space.parse("""
+        <<HERE
+
+HERE
+        __LINE__
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("\n")),
+            ast.Statement(ast.Line(5)),
+        ]))
