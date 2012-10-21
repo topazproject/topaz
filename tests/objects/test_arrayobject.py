@@ -308,6 +308,14 @@ class TestArrayObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == []
 
+    def test_hashability(self, space):
+        w_res = space.execute("return {[] => 2}[[]]")
+        assert space.int_w(w_res) == 2
+        w_res = space.execute("return {[1] => 5}[[1]]")
+        assert space.int_w(w_res) == 5
+        w_res = space.execute("return {[1, 2, 3] => 5}[[1, 2]]")
+        assert w_res is space.w_nil
+
 
 class TestArrayPack(BaseRuPyPyTest):
     def test_garbage_format(self, space):

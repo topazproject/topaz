@@ -315,3 +315,13 @@ class W_ArrayObject(W_Object):
     def method_clear(self):
         del self.items_w[:]
         return self
+
+    classdef.app_method("""
+    def hash
+        res = 0x345678
+        self.each do |x|
+            res = (1000003 * res) ^ x.hash
+        end
+        return res
+    end
+    """)
