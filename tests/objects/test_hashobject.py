@@ -24,6 +24,19 @@ class TestHashObject(BaseRuPyPyTest):
         return x[2]
         """)
         assert space.int_w(w_res) == 12
+        w_res = space.execute("return Hash.new(2).default")
+        assert space.int_w(w_res) == 2
+
+        w_res = space.execute("""
+        class Foo < Hash
+            def default key
+                key * 2
+            end
+        end
+
+        return Foo.new[6]
+        """)
+        assert space.int_w(w_res) == 12
 
     def test_new(self, space):
         w_res = space.execute("return Hash.new.keys")

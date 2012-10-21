@@ -6,14 +6,14 @@ from rupypy.utils.ordereddict import OrderedDict
 class W_HashObject(W_Object):
     classdef = ClassDef("Hash", W_Object.classdef)
 
-    def __init__(self, space):
-        W_Object.__init__(self, space)
+    def __init__(self, space, klass=None):
+        W_Object.__init__(self, space, klass)
         self.contents = OrderedDict(space.eq_w, space.hash_w)
         self.w_default = space.w_nil
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        return W_HashObject(space)
+        return W_HashObject(space, self)
 
     @classdef.singleton_method("[]")
     def singleton_method_subscript(self, space, w_obj):
@@ -30,9 +30,16 @@ class W_HashObject(W_Object):
         if w_default is not None:
             self.w_default = w_default
 
+    @classdef.method("default")
+    def method_default(self, space, w_key=None):
+        return self.w_default
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
-        return self.contents.get(w_key, self.w_default)
+        try:
+            return self.contents[w_key]
+        except KeyError:
+            return space.send(self, space.newsymbol("default"), [w_key])
 
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
