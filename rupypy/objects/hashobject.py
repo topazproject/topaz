@@ -9,6 +9,7 @@ class W_HashObject(W_Object):
     def __init__(self, space):
         W_Object.__init__(self, space)
         self.contents = OrderedDict(space.eq_w, space.hash_w)
+        self.w_default = space.w_nil
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
@@ -24,9 +25,14 @@ class W_HashObject(W_Object):
         result.contents.update(w_res.contents)
         return result
 
+    @classdef.method("initialize")
+    def method_initialize(self, space, w_default=None):
+        if w_default is not None:
+            self.w_default = w_default
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
-        return self.contents.get(w_key, space.w_nil)
+        return self.contents.get(w_key, self.w_default)
 
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
