@@ -162,6 +162,14 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [False, True]
 
+    def test_class_returnvalue(self, space):
+        w_res = space.execute("""
+        return (class X
+            5
+        end)
+        """)
+        assert space.int_w(w_res) == 5
+
     def test_singleton_class(self, space):
         w_res = space.execute("""
         class X

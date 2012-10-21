@@ -470,8 +470,6 @@ class TestCompiler(object):
 
         self.assert_compiled(bc.consts_w[2], """
         LOAD_CONST 0
-        DISCARD_TOP
-        LOAD_CONST 0
         RETURN
         """)
 
@@ -501,9 +499,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
