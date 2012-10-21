@@ -830,6 +830,9 @@ class Lexer(object):
             return ["\x1b"]
         elif c == "s":
             return [" "]
+        elif c == "\n":
+            self.newline()
+            return ["\n"]
         elif c == "u":
             raise NotImplementedError("UTF-8 escape not implemented")
         elif c == "x":
