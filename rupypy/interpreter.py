@@ -433,9 +433,9 @@ class Interpreter(object):
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope))
         with space.getexecutioncontext().visit_frame(sub_frame):
-            space.execute_frame(sub_frame, w_bytecode)
+            w_res = space.execute_frame(sub_frame, w_bytecode)
 
-        frame.push(space.w_nil)
+        frame.push(w_res)
 
     @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):

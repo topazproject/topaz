@@ -183,6 +183,18 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises(space, "NoMethodError"):
             space.execute("X.new.m")
 
+    def test_singleton_class_return_val(self, space):
+        w_res = space.execute("""
+        class X
+        end
+
+        x = X.new
+        return (class << x
+            5
+        end)
+        """)
+        assert space.int_w(w_res) == 5
+
     def test_constant(self, space):
         w_res = space.execute("Abc = 3; return Abc")
         assert space.int_w(w_res)

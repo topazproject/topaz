@@ -275,8 +275,6 @@ class SingletonClass(Node):
 
         body_ctx = ctx.get_subctx("singletonclass", self)
         self.body.compile(body_ctx)
-        body_ctx.emit(consts.DISCARD_TOP)
-        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
