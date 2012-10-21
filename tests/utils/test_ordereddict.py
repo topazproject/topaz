@@ -228,6 +228,19 @@ class BaseTestOrderedDict(object):
         assert self.pop_keyerror(3) == 4
         assert self.pop_keyerror(12) == 500
 
+    @runner.func
+    def update(n):
+        o = OrderedDict()
+        o[3] = 4
+        v = OrderedDict()
+        v[n] = 5
+        o.update(v)
+        return o[3]
+
+    def test_update(self):
+        assert self.update(3) == 5
+        assert self.update(22) == 4
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):

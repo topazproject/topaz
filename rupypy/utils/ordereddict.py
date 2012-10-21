@@ -13,6 +13,7 @@ from pypy.tool.pairtype import pairtype
 
 MARKER = object()
 
+
 class OrderedDict(object):
     def __init__(self, eq_func=None, hash_func=None):
         self.contents = PyOrderedDict()
@@ -43,6 +44,10 @@ class OrderedDict(object):
     def values(self):
         return self.contents.values()
 
+    def iteritems(self):
+        for k, v in self.contents.iteritems():
+            yield k.key, v
+
     def get(self, key, default):
         return self.contents.get(self._key(key), default)
 
@@ -52,9 +57,8 @@ class OrderedDict(object):
         else:
             return self.contents.pop(self._key(key), default)
 
-    def iteritems(self):
-        for k, v in self.contents.iteritems():
-            yield k.key, v
+    def update(self, d):
+        self.contents.update(d.contents)
 
 
 class DictKey(object):
@@ -171,6 +175,9 @@ class SomeOrderedDict(model.SomeObject):
     def method_values(self):
         return self.bookkeeper.newlist(self.read_value())
 
+    def method_iteritems(self):
+        return SomeOrderedDictIterator(self)
+
     def method_get(self, s_key, s_default):
         self.generalize_key(s_key)
         self.generalize_value(s_default)
@@ -182,8 +189,9 @@ class SomeOrderedDict(model.SomeObject):
             self.generalize_value(s_default)
         return self.read_value()
 
-    def method_iteritems(self):
-        return SomeOrderedDictIterator(self)
+    def method_update(self, s_dict):
+        self.generalize_key(s_dict.key_type)
+        self.generalize_value(s_dict.value_type)
 
 
 class SomeOrderedDictIterator(model.SomeObject):
@@ -344,6 +352,9 @@ class OrderedDictRepr(Repr):
         c_LIST = hop.inputconst(lltype.Void, r_list.lowleveltype.TO)
         return hop.gendirectcall(LLOrderedDict.ll_values, c_LIST, v_dict)
 
+    def rtype_method_iteritems(self, hop):
+        return OrderedDictIteratorRepr(self).newiter(hop)
+
     def rtype_method_get(self, hop):
         v_dict, v_key, v_default = hop.inputargs(self, self.key_repr, self.value_repr)
         return hop.gendirectcall(LLOrderedDict.ll_get, v_dict, v_key, v_default)
@@ -359,8 +370,9 @@ class OrderedDictRepr(Repr):
         v_res = hop.gendirectcall(target, *v_args)
         return self.recast_value(hop, v_res)
 
-    def rtype_method_iteritems(self, hop):
-        return OrderedDictIteratorRepr(self).newiter(hop)
+    def rtype_method_update(self, hop):
+        [v_dict, v_other] = hop.inputargs(self, self)
+        return hop.gendirectcall(LLOrderedDict.ll_update, v_dict, v_other)
 
 
 class OrderedDictIteratorRepr(IteratorRepr):
@@ -714,6 +726,15 @@ class LLOrderedDict(object):
             return LLOrderedDict.ll_pop(d, key)
         except KeyError:
             return default
+
+    @staticmethod
+    def ll_update(d, other):
+        idx = other.first_entry
+        while idx != -1:
+            entry = other.entries[idx]
+            i = LLOrderedDict.ll_lookup(d, entry.key, other.entries.hash(idx))
+            LLOrderedDict.ll_setitem_lookup_done(d, entry.key, entry.value, other.entries.hash(idx), i)
+            idx = entry.next
 
     @staticmethod
     def ll_newdictiter(ITER, d):
