@@ -559,6 +559,12 @@ class TestInterpreter(BaseRuPyPyTest):
         return x[0]
         """)
         assert space.int_w(w_res) == 2
+        w_res = space.execute("""
+        x = [0]
+        x[*[0]] = 45
+        return x[0]
+        """)
+        assert space.int_w(w_res) == 45
 
     def test_empty_hash(self, space):
         space.execute("return {}")

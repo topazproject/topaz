@@ -781,9 +781,17 @@ class Subscript(Node):
 
     def compile_receiver(self, ctx):
         self.target.compile(ctx)
-        for arg in self.args:
-            arg.compile(ctx)
-        ctx.emit(consts.BUILD_ARRAY, len(self.args))
+        if self.is_splat():
+            for arg in self.args:
+                arg.compile(ctx)
+                if not isinstance(arg, Splat):
+                    ctx.emit(consts.BUILD_ARRAY, 1)
+            for i in range(len(self.args) - 1):
+                ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+        else:
+            for arg in self.args:
+                arg.compile(ctx)
+            ctx.emit(consts.BUILD_ARRAY, len(self.args))
         return 2
 
     def compile_load(self, ctx):
@@ -793,6 +801,12 @@ class Subscript(Node):
         ctx.emit(consts.BUILD_ARRAY, 1)
         ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
         ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
+
+    def is_splat(self):
+        for arg in self.args:
+            if isinstance(arg, Splat):
+                return True
+        return False
 
 
 class Constant(Node):
