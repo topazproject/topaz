@@ -1127,6 +1127,8 @@ class StringTerm(BaseStringTerm):
         space_seen = False
         if self.is_qwords and ch.isspace():
             while ch.isspace():
+                if ch == "\n":
+                    self.lexer.newline()
                 ch = self.lexer.read()
             space_seen = True
 

@@ -2252,3 +2252,13 @@ HERE
             ast.Statement(ast.ConstantString("\n")),
             ast.Statement(ast.Line(5)),
         ]))
+
+        r = space.parse("""
+        %W(hello
+           world)
+        __LINE__
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.ConstantString("hello"), ast.ConstantString("world")])),
+            ast.Statement(ast.Line(4)),
+        ]))
