@@ -223,8 +223,15 @@ class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
         assert (d1.eq_func is d2.eq_func is None) or (d1.eq_func.const is d2.eq_func.const)
         assert (d1.hash_func is d2.hash_func is None) or (d1.hash_func.const is d2.hash_func.const)
         s_new = SomeOrderedDict(d1.bookkeeper, d1.eq_func, d1.hash_func)
-        s_new.key_type = d1.key_type = model.unionof(d1.key_type, d2.key_type)
-        s_new.value_type = d1.value_type = model.unionof(d1.value_type, d2.value_type)
+
+        s_new.key_type = model.unionof(d1.key_type, d2.key_type)
+        d1.generalize_key(s_new.key_type)
+        d2.generalize_key(s_new.value_type)
+
+        s_new.value_type = model.unionof(d1.value_type, d2.value_type)
+        d1.generalize_value(s_new.value_type)
+        d2.generalize_value(s_new.value_type)
+
         return s_new
 
 
