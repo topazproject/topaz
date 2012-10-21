@@ -509,11 +509,6 @@ class Interpreter(object):
                 return block.handle(space, frame, unroller)
         return pc
 
-    def COMPARE_EXC(self, space, bytecode, frame, pc):
-        w_expected = frame.pop()
-        w_actual = frame.peek()
-        frame.push(space.newbool(w_expected is space.getclass(w_actual)))
-
     def POP_BLOCK(self, space, bytecode, frame, pc):
         block = frame.popblock()
         block.cleanup(space, frame)
