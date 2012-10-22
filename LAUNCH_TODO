@@ -6,17 +6,41 @@ Stuff to do before public
 * Blog post
 * Working rubyspec and not embarrassing pass rate
   * Web page with passing status
-* Confirm with Evan and Charles Nutter that all "hard problems" are done correctly
-  * binding.eval
-  * bignum
-  * call/cc (unimplemented in JRuby)
-  * fibers
-  * frame globals ($~, $_)
-  * String encodings
-  * Tracing/debugging
-  * ObjectSpace
-  * Validate Constant lookups
+* "Hard" / benchmark-skewing problems (below)
+  * Confirm list with Evan
+  * Confirm with Evan and Charlie we've done any correctly
+    where we're in doubt
 * Documentation (including how to contribute)
 * Public mailing list
 * Anything in the github issue tracker marked for launch.
 * Binaries (with nightly builds preferably)
+
+Hard problems
+-------------
+
+Some language features potentially slow down the whole implementation;
+we need to get them right in order to post meaningful benchmark results.
+See `Charlie's blog post`__ for more details.
+
+__ http://blog.headius.com/2012/10/so-you-want-to-optimize-ruby.html
+
+* DONE closures (i.e., blocks accessing and mutating surrounding locals)
+* TODO Binding#eval; blocks must be usable as bindings, able to access
+       locals, frame globals, proper constant lookups, method visibility, etc.
+* TODO fixnum -> bignum promotion
+* TODO fibers
+* TODO frame globals ($~, $_), which are ubiquitous in principle and can be
+       hard to optimize away because a callee may set them
+* TODO String encodings
+* TODO Threads: #kill, #raise (and thread-safety of internal data structures, e.g. by GIL)
+* TODO Tracing/debugging
+* TODO ObjectSpace#each_object
+* TODO Make sure method caches are properly invalidated (by #extend and singletons)
+* TODO Make sure constant lookups are done right, and constant caches
+       are properly invalidated
+* LATER C extension support
+* WONTFIX call/cc (unimplemented in JRuby too, disrecommended by Matz)
+
+Also, the benchmarks should include allocating a lot and exercising
+the GC, and they should include something heavy on floating-point
+arithmetic.
