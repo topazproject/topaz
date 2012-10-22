@@ -5,6 +5,9 @@ from rupypy.objects.objectobject import W_Object
 class W_NumericObject(W_Object):
     classdef = ClassDef("Numeric", W_Object.classdef)
 
+    def float_w(self, space):
+        raise NotImplementedError("%s should have implemented float_w" % classdef.name)
+
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
         if self == w_other:

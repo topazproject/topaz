@@ -5,20 +5,43 @@ class Coerce(object):
 
     @staticmethod
     def symbol(space, w_obj):
-        return space.symbol_w(w_obj)
+        if w_obj.is_kind_of(space, space.w_symbol):
+            return space.symbol_w(w_obj)
+        else:
+            w_str = space.convert_type(w_obj, space.w_string, "to_str", False)
+            if w_str is space.w_nil:
+                w_inspect_str = space.send(w_obj, space.newsymbol("inspect"))
+                if not w_inspect_str.is_kind_of(space, space.w_string):
+                    inspect_str = "#<%s:0x%x>" % (
+                        space.getclass(w_obj).name,
+                        space.int_w(space.send(self, space.newsymbol("__id__")))
+                    )
+                else:
+                    inspect_str = space.str_w(w_inspect_str)
+                raise space.error(space.w_TypeError, "%s is not a symbol" % inspect_str)
+            else:
+                return space.str_w(w_str)
 
     @staticmethod
     def int(space, w_obj):
-        return space.int_w(w_obj)
+        if w_obj.is_kind_of(space, space.w_fixnum):
+            return space.int_w(w_obj)
+        else:
+            return space.int_w(space.convert_type(w_obj, space.w_fixnum, "to_int"))
 
     @staticmethod
     def float(space, w_obj):
-        w_float_obj = space.send(w_obj, space.newsymbol("to_f"))
-        return space.float_w(w_float_obj)
+        if w_obj.is_kind_of(space, space.w_numeric):
+            return space.float_w(w_obj)
+        else:
+            return space.float_w(space.send(w_obj, space.newsymbol("Float"), [w_obj]))
 
     @staticmethod
     def str(space, w_obj):
-        return space.str_w(w_obj)
+        if w_obj.is_kind_of(space, space.w_string) or w_obj.is_kind_of(space, space.w_symbol):
+            return space.str_w(w_obj)
+        else:
+            return space.str_w(space.convert_type(w_obj, space.w_string, "to_str"))
 
     @staticmethod
     def path(space, w_obj):
