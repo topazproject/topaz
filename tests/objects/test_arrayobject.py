@@ -149,6 +149,12 @@ class TestArrayObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [4, 3]
         w_res = space.execute("x = [1, 2, 3]; x[-1..-2] = 4; return x")
         assert self.unwrap(space, w_res) == [1, 2, 4, 3]
+        w_res = space.execute("x = [1, 2, 3]; x[1..-2] = []; return x")
+        assert self.unwrap(space, w_res) == [1, 3]
+        w_res = space.execute("x = [1, 2, 3]; x[1..-2] = [4]; return x")
+        assert self.unwrap(space, w_res) == [1, 4, 3]
+        w_res = space.execute("x = [1, 2, 3]; x[1..-2] = [4, 5]; return x")
+        assert self.unwrap(space, w_res) == [1, 4, 5, 3]
 
     def test_at(self, space):
         w_res = space.execute("return [1, 2, 3, 4, 5].at(2)")
