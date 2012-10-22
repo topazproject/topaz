@@ -14,7 +14,7 @@ class Coerce(object):
                 if not w_inspect_str.is_kind_of(space, space.w_string):
                     inspect_str = "#<%s:0x%x>" % (
                         space.getclass(w_obj).name,
-                        space.int_w(space.send(self, space.newsymbol("__id__")))
+                        space.int_w(space.send(w_obj, space.newsymbol("__id__")))
                     )
                 else:
                     inspect_str = space.str_w(w_inspect_str)
