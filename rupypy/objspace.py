@@ -90,6 +90,7 @@ class ObjectSpace(object):
         self.w_proc = self.getclassfor(W_ProcObject)
         self.w_numeric = self.getclassfor(W_NumericObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
+        self.w_float = self.getclassfor(W_FloatObject)
         self.w_module = self.getclassfor(W_ModuleObject)
         self.w_string = self.getclassfor(W_StringObject)
         self.w_hash = self.getclassfor(W_HashObject)
@@ -113,8 +114,8 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_numeric, self.w_fixnum, self.w_string, self.w_symbol,
-            self.w_class, self.w_module, self.w_hash,
+            self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
+            self.w_symbol, self.w_class, self.w_module, self.w_hash,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
