@@ -125,8 +125,7 @@ class SomeOrderedDict(model.SomeObject):
 
     def generalize_key(self, s_key):
         new_key_type = model.unionof(self.key_type, s_key)
-        updated = new_key_type != self.key_type
-        if updated:
+        if new_key_type != self.key_type:
             self.key_type = new_key_type
             for position_key in self.key_read_locations:
                 self.bookkeeper.annotator.reflowfromposition(position_key)
