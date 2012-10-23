@@ -76,128 +76,69 @@ class DictKey(object):
 class OrderedDictEntry(ExtRegistryEntry):
     _about_ = OrderedDict
 
-    def compute_result_annotation(self, eq_func=None, hash_func=None):
-        assert eq_func is None or eq_func.is_constant()
-        assert hash_func is None or hash_func.is_constant()
-        return SomeOrderedDict(
-            getbookkeeper(), eq_func, hash_func,
-            DictDef(model.s_ImpossibleValue, model.s_ImpossibleValue)
-        )
+    def compute_result_annotation(self, s_eq_func=None, s_hash_func=None):
+        assert s_eq_func is None or s_eq_func.is_constant()
+        assert s_hash_func is None or s_hash_func.is_constant()
+
+        if s_eq_func is None and s_hash_func is None:
+            dictdef = getbookkeeper().getdictdef()
+        else:
+            dictdef = getbookkeeper().getdictdef(is_r_dict=True)
+            dictdef.dictkey.update_rdict_annotations(s_eq_func, s_hash_func)
+
+        return SomeOrderedDict(getbookkeeper(), dictdef,)
 
     def specialize_call(self, hop):
         return hop.r_result.rtyper_new(hop)
 
 
-class DictDef(object):
-    def __init__(self, key_type, value_type):
-        self.key_type = key_type
-        self.value_type = value_type
-        self.key_read_locations = set()
-        self.value_read_locations = set()
-
-
 class SomeOrderedDict(model.SomeObject):
-    def __init__(self, bookkeeper, eq_func, hash_func, dictdef):
+    def __init__(self, bookkeeper, dictdef):
         self.bookkeeper = bookkeeper
-
-        self.eq_func = eq_func
-        self.hash_func = hash_func
-
         self.dictdef = dictdef
 
     def __eq__(self, other):
         if not isinstance(other, SomeOrderedDict):
             return NotImplemented
-        return (self.eq_func == other.eq_func and
-            self.hash_func == other.hash_func and
-            self.dictdef.key_type == other.dictdef.key_type,
-            self.dictdef.value_type == other.dictdef.value_type
-        )
+        return self.dictdef.same_as(other.dictdef)
 
     def rtyper_makerepr(self, rtyper):
-        key_repr = rtyper.getrepr(self.dictdef.key_type)
-        value_repr = rtyper.getrepr(self.dictdef.value_type)
-        if self.eq_func is not None:
-            eq_func_repr = rtyper.getrepr(self.eq_func)
+        key_repr = rtyper.getrepr(self.dictdef.dictkey.s_value)
+        value_repr = rtyper.getrepr(self.dictdef.dictvalue.s_value)
+        if self.dictdef.dictkey.custom_eq_hash:
+            eq_func_repr = rtyper.getrepr(self.dictdef.dictkey.s_rdict_eqfn)
+            hash_func_repr = rtyper.getrepr(self.dictdef.dictkey.s_rdict_hashfn)
         else:
             eq_func_repr = None
-        if self.hash_func is not None:
-            hash_func_repr = rtyper.getrepr(self.hash_func)
-        else:
             hash_func_repr = None
         return OrderedDictRepr(rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr)
 
     def rtyper_makekey(self):
-        return (type(self), self.dictdef.key_type, self.dictdef.value_type, self.eq_func, self.hash_func)
-
-    def generalize_key(self, s_key):
-        new_key_type = model.unionof(self.dictdef.key_type, s_key)
-        if new_key_type != self.dictdef.key_type:
-            self.dictdef.key_type = new_key_type
-            for position_key in self.dictdef.key_read_locations:
-                self.bookkeeper.annotator.reflowfromposition(position_key)
-            self.emulate_rdict_calls()
-
-    def generalize_value(self, s_value):
-        new_value_type = model.unionof(self.dictdef.value_type, s_value)
-        if new_value_type != self.dictdef.value_type:
-            self.dictdef.value_type = new_value_type
-            for position_key in self.dictdef.value_read_locations:
-                self.bookkeeper.annotator.reflowfromposition(position_key)
-
-    def read_key(self):
-        position_key = self.bookkeeper.position_key
-        self.dictdef.key_read_locations.add(position_key)
-        return self.dictdef.key_type
-
-    def read_value(self):
-        position_key = self.bookkeeper.position_key
-        self.dictdef.value_read_locations.add(position_key)
-        return self.dictdef.value_type
-
-    def emulate_rdict_calls(self):
-        if self.eq_func and self.hash_func:
-            def check_eq_func(annotator, graph):
-                s = annotator.binding(graph.getreturnvar())
-                assert model.s_Bool.contains(s)
-
-            self.bookkeeper.emulate_pbc_call(
-                (self, "eq"), self.eq_func, [self.dictdef.key_type, self.dictdef.key_type],
-                replace=(), callback=check_eq_func
-            )
-
-            def check_hash_func(annotator, graph):
-                s = annotator.binding(graph.getreturnvar())
-                assert model.SomeInteger().contains(s)
-
-            self.bookkeeper.emulate_pbc_call(
-                (self, "hash"), self.hash_func, [self.dictdef.key_type],
-                replace=(), callback=check_hash_func
-            )
+        return (type(self), self.dictdef.dictkey, self.dictdef.dictvalue)
 
     def method_keys(self):
-        return self.bookkeeper.newlist(self.read_key())
+        return self.bookkeeper.newlist(self.dictdef.read_key())
 
     def method_values(self):
-        return self.bookkeeper.newlist(self.read_value())
+        return self.bookkeeper.newlist(self.dictdef.read_value())
 
     def method_iteritems(self):
         return SomeOrderedDictIterator(self)
 
     def method_get(self, s_key, s_default):
-        self.generalize_key(s_key)
-        self.generalize_value(s_default)
-        return self.read_value()
+        self.dictdef.generalize_key(s_key)
+        self.dictdef.generalize_value(s_default)
+        return self.dictdef.read_value()
 
     def method_pop(self, s_key, s_default=None):
-        self.generalize_key(s_key)
+        self.dictdef.generalize_key(s_key)
         if s_default is not None:
-            self.generalize_value(s_default)
-        return self.read_value()
+            self.dictdef.generalize_value(s_default)
+        return self.dictdef.read_value()
 
     def method_update(self, s_dict):
-        self.generalize_key(s_dict.dictdef.key_type)
-        self.generalize_value(s_dict.dictdef.value_type)
+        assert isinstance(s_dict, SomeOrderedDict)
+        self.dictdef.union(s_dict.dictdef)
 
 
 class SomeOrderedDictIterator(model.SomeObject):
@@ -215,8 +156,8 @@ class SomeOrderedDictIterator(model.SomeObject):
         return self
 
     def next(self):
-        s_key = self.d.read_key()
-        s_value = self.d.read_value()
+        s_key = self.d.dictdef.read_key()
+        s_value = self.d.dictdef.read_value()
         if (isinstance(s_key, model.SomeImpossibleValue) or
             isinstance(s_value, model.SomeImpossibleValue)):
             return model.s_ImpossibleValue
@@ -224,17 +165,22 @@ class SomeOrderedDictIterator(model.SomeObject):
     method_next = next
 
 
+class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
+    def union((d1, d2)):
+        return SomeOrderedDict(getbookkeeper(), d1.dictdef.union(d2.dictdef))
+
+
 class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
     def setitem((self, key), s_value):
-        self.generalize_key(key)
-        self.generalize_value(s_value)
+        self.dictdef.generalize_key(key)
+        self.dictdef.generalize_value(s_value)
 
     def getitem((self, key)):
-        self.generalize_key(key)
-        return self.read_value()
+        self.dictdef.generalize_key(key)
+        return self.dictdef.read_value()
 
     def delitem((self, key)):
-        self.generalize_key(key)
+        self.dictdef.generalize_key(key)
 
     def contains((self, key)):
         self.generalize_key(key)
