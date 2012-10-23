@@ -79,37 +79,44 @@ class OrderedDictEntry(ExtRegistryEntry):
     def compute_result_annotation(self, eq_func=None, hash_func=None):
         assert eq_func is None or eq_func.is_constant()
         assert hash_func is None or hash_func.is_constant()
-        return SomeOrderedDict(getbookkeeper(), eq_func, hash_func)
+        return SomeOrderedDict(
+            getbookkeeper(), eq_func, hash_func,
+            DictDef(model.s_ImpossibleValue, model.s_ImpossibleValue)
+        )
 
     def specialize_call(self, hop):
         return hop.r_result.rtyper_new(hop)
 
 
+class DictDef(object):
+    def __init__(self, key_type, value_type):
+        self.key_type = key_type
+        self.value_type = value_type
+        self.key_read_locations = set()
+        self.value_read_locations = set()
+
+
 class SomeOrderedDict(model.SomeObject):
-    def __init__(self, bookkeeper, eq_func, hash_func):
+    def __init__(self, bookkeeper, eq_func, hash_func, dictdef):
         self.bookkeeper = bookkeeper
 
         self.eq_func = eq_func
         self.hash_func = hash_func
 
-        self.key_type = model.s_ImpossibleValue
-        self.value_type = model.s_ImpossibleValue
-
-        self.key_read_locations = set()
-        self.value_read_locations = set()
+        self.dictdef = dictdef
 
     def __eq__(self, other):
         if not isinstance(other, SomeOrderedDict):
             return NotImplemented
         return (self.eq_func == other.eq_func and
             self.hash_func == other.hash_func and
-            self.key_type == other.key_type and
-            self.value_type == other.value_type
+            self.dictdef.key_type == other.dictdef.key_type,
+            self.dictdef.value_type == other.dictdef.value_type
         )
 
     def rtyper_makerepr(self, rtyper):
-        key_repr = rtyper.getrepr(self.key_type)
-        value_repr = rtyper.getrepr(self.value_type)
+        key_repr = rtyper.getrepr(self.dictdef.key_type)
+        value_repr = rtyper.getrepr(self.dictdef.value_type)
         if self.eq_func is not None:
             eq_func_repr = rtyper.getrepr(self.eq_func)
         else:
@@ -121,32 +128,32 @@ class SomeOrderedDict(model.SomeObject):
         return OrderedDictRepr(rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr)
 
     def rtyper_makekey(self):
-        return (type(self), self.key_type, self.value_type, self.eq_func, self.hash_func)
+        return (type(self), self.dictdef.key_type, self.dictdef.value_type, self.eq_func, self.hash_func)
 
     def generalize_key(self, s_key):
-        new_key_type = model.unionof(self.key_type, s_key)
-        if new_key_type != self.key_type:
-            self.key_type = new_key_type
-            for position_key in self.key_read_locations:
+        new_key_type = model.unionof(self.dictdef.key_type, s_key)
+        if new_key_type != self.dictdef.key_type:
+            self.dictdef.key_type = new_key_type
+            for position_key in self.dictdef.key_read_locations:
                 self.bookkeeper.annotator.reflowfromposition(position_key)
             self.emulate_rdict_calls()
 
     def generalize_value(self, s_value):
-        new_value_type = model.unionof(self.value_type, s_value)
-        if new_value_type != self.value_type:
-            self.value_type = new_value_type
-            for position_key in self.value_read_locations:
+        new_value_type = model.unionof(self.dictdef.value_type, s_value)
+        if new_value_type != self.dictdef.value_type:
+            self.dictdef.value_type = new_value_type
+            for position_key in self.dictdef.value_read_locations:
                 self.bookkeeper.annotator.reflowfromposition(position_key)
 
     def read_key(self):
         position_key = self.bookkeeper.position_key
-        self.key_read_locations.add(position_key)
-        return self.key_type
+        self.dictdef.key_read_locations.add(position_key)
+        return self.dictdef.key_type
 
     def read_value(self):
         position_key = self.bookkeeper.position_key
-        self.value_read_locations.add(position_key)
-        return self.value_type
+        self.dictdef.value_read_locations.add(position_key)
+        return self.dictdef.value_type
 
     def emulate_rdict_calls(self):
         if self.eq_func and self.hash_func:
@@ -155,7 +162,7 @@ class SomeOrderedDict(model.SomeObject):
                 assert model.s_Bool.contains(s)
 
             self.bookkeeper.emulate_pbc_call(
-                (self, "eq"), self.eq_func, [self.key_type, self.key_type],
+                (self, "eq"), self.eq_func, [self.dictdef.key_type, self.dictdef.key_type],
                 replace=(), callback=check_eq_func
             )
 
@@ -164,7 +171,7 @@ class SomeOrderedDict(model.SomeObject):
                 assert model.SomeInteger().contains(s)
 
             self.bookkeeper.emulate_pbc_call(
-                (self, "hash"), self.hash_func, [self.key_type],
+                (self, "hash"), self.hash_func, [self.dictdef.key_type],
                 replace=(), callback=check_hash_func
             )
 
@@ -189,8 +196,8 @@ class SomeOrderedDict(model.SomeObject):
         return self.read_value()
 
     def method_update(self, s_dict):
-        self.generalize_key(s_dict.key_type)
-        self.generalize_value(s_dict.value_type)
+        self.generalize_key(s_dict.dictdef.key_type)
+        self.generalize_value(s_dict.dictdef.value_type)
 
 
 class SomeOrderedDictIterator(model.SomeObject):
@@ -215,23 +222,6 @@ class SomeOrderedDictIterator(model.SomeObject):
             return model.s_ImpossibleValue
         return model.SomeTuple((s_key, s_value))
     method_next = next
-
-
-class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
-    def union((d1, d2)):
-        assert (d1.eq_func is d2.eq_func is None) or (d1.eq_func.const is d2.eq_func.const)
-        assert (d1.hash_func is d2.hash_func is None) or (d1.hash_func.const is d2.hash_func.const)
-        s_new = SomeOrderedDict(d1.bookkeeper, d1.eq_func, d1.hash_func)
-
-        s_new.key_type = model.unionof(d1.key_type, d2.key_type)
-        d1.generalize_key(s_new.key_type)
-        d2.generalize_key(s_new.value_type)
-
-        s_new.value_type = model.unionof(d1.value_type, d2.value_type)
-        d1.generalize_value(s_new.value_type)
-        d2.generalize_value(s_new.value_type)
-
-        return s_new
 
 
 class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
