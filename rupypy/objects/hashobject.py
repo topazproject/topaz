@@ -17,8 +17,10 @@ class W_HashObject(W_Object):
         return W_HashObject(space, self)
 
     @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, w_obj):
-        w_res = space.convert_type(w_obj, space.w_hash, "to_hash")
+    def singleton_method_subscript(self, space, w_obj=None):
+        if w_obj is None:
+            return W_HashObject(space)
+        w_res = space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
         if w_res is space.w_nil:
             raise NotImplementedError
         assert isinstance(w_res, W_HashObject)
@@ -52,6 +54,7 @@ class W_HashObject(W_Object):
         self.contents[w_key] = w_value
         return w_value
 
+    @classdef.method("length")
     @classdef.method("size")
     def method_size(self, space):
         return space.newint(len(self.contents))

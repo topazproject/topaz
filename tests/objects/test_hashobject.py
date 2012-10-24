@@ -9,6 +9,10 @@ class TestHashObject(BaseRuPyPyTest):
         space.execute("{2 => 3, 4 => 5}")
 
     def test_subscript_create(self, space):
+        w_res = space.execute("return Hash[].length")
+        assert space.int_w(w_res) == 0
+
+    def test_subscript_create_hash(self, space):
         w_res = space.execute("return Hash[{2 => 3}][2]")
         assert space.int_w(w_res) == 3
 
