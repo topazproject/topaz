@@ -25,6 +25,10 @@ class TestSymbolObject(BaseRuPyPyTest):
         w_res = space.execute("return :b <=> :a")
         assert space.int_w(w_res) == 1
 
+    def test_comparator_non_symbol(self, space):
+        w_res = space.execute("return :a <=> 12")
+        assert w_res is space.w_nil
+
     def test_identity(self, space):
         w_res = space.execute("return [:x.object_id, :x.object_id]")
         id1, id2 = self.unwrap(space, w_res)
