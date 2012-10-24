@@ -10,6 +10,7 @@ class W_HashObject(W_Object):
         W_Object.__init__(self, space, klass)
         self.contents = OrderedDict(space.eq_w, space.hash_w)
         self.w_default = space.w_nil
+        self.default_proc = None
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
@@ -26,13 +27,18 @@ class W_HashObject(W_Object):
         return result
 
     @classdef.method("initialize")
-    def method_initialize(self, space, w_default=None):
+    def method_initialize(self, space, w_default=None, block=None):
         if w_default is not None:
             self.w_default = w_default
+        if block is not None:
+            self.default_proc = block
 
     @classdef.method("default")
     def method_default(self, space, w_key=None):
-        return self.w_default
+        if self.default_proc is not None:
+            return space.invoke_block(self.default_proc, [self, w_key])
+        else:
+            return self.w_default
 
     @classdef.method("[]")
     def method_subscript(self, space, w_key):

@@ -38,6 +38,13 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 12
 
+    def test_default_proc(self, space):
+        w_res = space.execute("""
+        x = Hash.new { |h, k| h[k + 2] = k }
+        return [x[2], x[4]]
+        """)
+        assert self.unwrap(space, w_res) == [2, 2]
+
     def test_new(self, space):
         w_res = space.execute("return Hash.new.keys")
         assert self.unwrap(space, w_res) == []
