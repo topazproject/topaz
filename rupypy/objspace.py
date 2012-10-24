@@ -444,7 +444,7 @@ class ObjectSpace(object):
         return self.int_w(self.send(w_obj, self.newsymbol("hash")))
 
     def eq_w(self, w_obj1, w_obj2):
-        return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
+        return self.is_true(self.send(w_obj1, self.newsymbol("eql?"), [w_obj2]))
 
     def register_exit_handler(self, w_proc):
         self.exit_handlers_w.append(w_proc)

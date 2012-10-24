@@ -67,6 +67,10 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
+    def test_lookup_eql(self, space):
+        w_res = space.execute("return {1 => 2}[1.0]")
+        assert w_res is space.w_nil
+
     def test_delete(self, space):
         w_res = space.execute("""
         x = {2 => 3, 4 => 5}
