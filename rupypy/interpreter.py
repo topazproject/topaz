@@ -466,7 +466,10 @@ class Interpreter(object):
         w_block = frame.pop()
         args_w = space.listview(frame.pop())
         w_receiver = frame.pop()
-        assert isinstance(w_block, W_BlockObject)
+        if w_block is space.w_nil:
+            w_block = None
+        else:
+            assert isinstance(w_block, W_BlockObject)
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
