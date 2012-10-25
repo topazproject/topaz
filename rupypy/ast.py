@@ -387,6 +387,7 @@ class Case(Node):
                     next_expr = ctx.new_block()
                     ctx.emit(consts.DUP_TOP)
                     expr.compile(ctx)
+                    ctx.emit(consts.ROT_TWO)
                     ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
                     ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
                     ctx.use_next_block(next_expr)

@@ -316,6 +316,26 @@ class W_ArrayObject(W_Object):
     end
     """)
 
+    classdef.app_method("""
+    def eql?(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.length != other.length
+            return false
+        end
+        self.each_with_index do |x, i|
+            if !x.eql?(other[i])
+                return false
+            end
+        end
+        return true
+    end
+    """)
+
     @classdef.method("clear")
     def method_clear(self):
         del self.items_w[:]

@@ -10,14 +10,17 @@ class W_HashObject(W_Object):
         W_Object.__init__(self, space, klass)
         self.contents = OrderedDict(space.eq_w, space.hash_w)
         self.w_default = space.w_nil
+        self.default_proc = None
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
         return W_HashObject(space, self)
 
     @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, w_obj):
-        w_res = space.convert_type(w_obj, space.w_hash, "to_hash")
+    def singleton_method_subscript(self, space, w_obj=None):
+        if w_obj is None:
+            return W_HashObject(space)
+        w_res = space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
         if w_res is space.w_nil:
             raise NotImplementedError
         assert isinstance(w_res, W_HashObject)
@@ -26,13 +29,18 @@ class W_HashObject(W_Object):
         return result
 
     @classdef.method("initialize")
-    def method_initialize(self, space, w_default=None):
+    def method_initialize(self, space, w_default=None, block=None):
         if w_default is not None:
             self.w_default = w_default
+        if block is not None:
+            self.default_proc = block
 
     @classdef.method("default")
     def method_default(self, space, w_key=None):
-        return self.w_default
+        if self.default_proc is not None:
+            return space.invoke_block(self.default_proc, [self, w_key])
+        else:
+            return self.w_default
 
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
@@ -46,6 +54,7 @@ class W_HashObject(W_Object):
         self.contents[w_key] = w_value
         return w_value
 
+    @classdef.method("length")
     @classdef.method("size")
     def method_size(self, space):
         return space.newint(len(self.contents))

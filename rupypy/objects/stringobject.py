@@ -287,6 +287,16 @@ class W_StringObject(W_Object):
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
 
+    classdef.app_method("""
+    def eql? other
+        if !other.class.equal?(String)
+            false
+        else
+            self == other
+        end
+    end
+    """)
+
     @classdef.method("freeze")
     def method_freeze(self, space):
         pass

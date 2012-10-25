@@ -488,6 +488,13 @@ class TestInterpreter(BaseRuPyPyTest):
         return f(*2) { 5 }
         """)
         assert space.int_w(w_res) == 7
+        w_res = space.execute("""
+        def f(&a)
+            return a
+        end
+        return f(*[], &nil)
+        """)
+        assert w_res is space.w_nil
 
     def test_global_variables(self, space):
         w_res = space.execute("return $abc")

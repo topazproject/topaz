@@ -1663,20 +1663,22 @@ class TestCompiler(object):
         LOAD_SELF
         DUP_TOP
         LOAD_CONST 0
+        ROT_TWO
         SEND 1 1
-        JUMP_IF_TRUE 16
-        JUMP 23
+        JUMP_IF_TRUE 17
+        JUMP 24
         DISCARD_TOP
         LOAD_CONST 2
-        JUMP 47
+        JUMP 49
         DUP_TOP
         LOAD_SELF
+        ROT_TWO
         SEND 1 1
-        JUMP_IF_TRUE 36
-        JUMP 43
+        JUMP_IF_TRUE 38
+        JUMP 45
         DISCARD_TOP
         LOAD_CONST 3
-        JUMP 47
+        JUMP 49
         DISCARD_TOP
         LOAD_CONST 4
         DISCARD_TOP
@@ -1694,16 +1696,18 @@ class TestCompiler(object):
         LOAD_CONST 0
         DUP_TOP
         LOAD_CONST 1
+        ROT_TWO
         SEND 2 1
-        JUMP_IF_TRUE 30
+        JUMP_IF_TRUE 32
         DUP_TOP
         LOAD_CONST 3
+        ROT_TWO
         SEND 2 1
-        JUMP_IF_TRUE 30
-        JUMP 37
+        JUMP_IF_TRUE 32
+        JUMP 39
         DISCARD_TOP
         LOAD_CONST 4
-        JUMP 41
+        JUMP 43
         DISCARD_TOP
         LOAD_CONST 5
         DISCARD_TOP

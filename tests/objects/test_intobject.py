@@ -64,6 +64,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 1 < 2")
         assert w_res is space.w_true
 
+    def test_less_equal(self, space):
+        w_res = space.execute("return 1 <= 1")
+        assert w_res is space.w_true
+
     def test_greater(self, space):
         w_res = space.execute("return 1 > 2")
         assert w_res is space.w_false
@@ -97,6 +101,12 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_comparator_other_type(self, space):
         w_res = space.execute("return 1 <=> '1'")
         assert w_res is space.w_nil
+
+    def test_eqlp(self, space):
+        w_res = space.execute("return 1.eql? 1.0")
+        assert w_res is space.w_false
+        w_res = space.execute("return 1.eql? 1")
+        assert w_res is space.w_true
 
     def test_to_i(self, space):
         w_res = space.execute("return [1.to_i, 1.to_int]")

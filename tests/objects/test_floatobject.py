@@ -34,6 +34,10 @@ class TestFloatObject(BaseRuPyPyTest):
         w_res = space.execute("return 2.4 == 2.3")
         assert w_res is space.w_false
 
+    def test_hashability(self, space):
+        w_res = space.execute("return 1.0.hash == 1.0.hash")
+        assert w_res is space.w_true
+
     def test_to_s(self, space):
         w_res = space.execute("return 1.5.to_s")
         assert space.str_w(w_res) == "1.5"

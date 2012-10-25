@@ -306,6 +306,14 @@ class TestArrayObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [False, True, True, True, False, False]
 
+    def test_eqlp(self, space):
+        w_res = space.execute("return [].eql? 2")
+        assert w_res is space.w_false
+        w_res = space.execute("return [0].eql? [0.0]")
+        assert w_res is space.w_false
+        w_res = space.execute("return [0].eql? [0]")
+        assert w_res is space.w_true
+
     def test_clear(self, space):
         w_res = space.execute("""
         a = [1,2,3]

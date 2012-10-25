@@ -1,3 +1,5 @@
+from pypy.rlib.objectmodel import compute_hash
+
 from rupypy.module import ClassDef
 from rupypy.objects.numericobject import W_NumericObject
 
@@ -49,3 +51,7 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("==", other="float")
     def method_eq(self, space, other):
         return space.newbool(self.floatvalue == other)
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return space.newint(compute_hash(self.floatvalue))

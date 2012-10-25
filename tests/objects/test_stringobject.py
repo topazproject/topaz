@@ -88,6 +88,12 @@ class TestStringObject(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 0
 
+    def test_eqlp(self, space):
+        w_res = space.execute("return 'abc'.eql? 2")
+        assert w_res is space.w_false
+        w_res = space.execute("return 'abc'.eql? 'abc'")
+        assert w_res is space.w_true
+
     def test_hash(self, space):
         w_res = space.execute("""
         return ['abc'.hash, ('a' << 'b' << 'c').hash]

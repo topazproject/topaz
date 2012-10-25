@@ -407,6 +407,9 @@ class ObjectSpace(object):
         raw_method = w_cls.find_method(self, name)
         return raw_method is not None
 
+    def is_kind_of(self, w_obj, w_cls):
+        return w_obj.is_kind_of(self, w_cls)
+
     @jit.unroll_safe
     def invoke_block(self, block, args_w):
         bc = block.bytecode
@@ -442,7 +445,7 @@ class ObjectSpace(object):
         return self.int_w(self.send(w_obj, self.newsymbol("hash")))
 
     def eq_w(self, w_obj1, w_obj2):
-        return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
+        return self.is_true(self.send(w_obj1, self.newsymbol("eql?"), [w_obj2]))
 
     def register_exit_handler(self, w_proc):
         self.exit_handlers_w.append(w_proc)
@@ -491,7 +494,7 @@ class ObjectSpace(object):
         return (start, end, as_range, nil)
 
     def convert_type(self, w_obj, w_cls, method, raise_error=True):
-        if w_obj.is_kind_of(self, w_cls):
+        if self.is_kind_of(w_obj, w_cls):
             return w_obj
 
         try:
@@ -506,7 +509,7 @@ class ObjectSpace(object):
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return self.w_nil
-        elif not w_res.is_kind_of(self, w_cls):
+        elif not self.is_kind_of(w_res, w_cls):
             src_cls = self.getclass(w_obj).name
             res_cls = self.getclass(w_res).name
             raise self.error(self.w_TypeError,

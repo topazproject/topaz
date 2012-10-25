@@ -9,6 +9,10 @@ class TestHashObject(BaseRuPyPyTest):
         space.execute("{2 => 3, 4 => 5}")
 
     def test_subscript_create(self, space):
+        w_res = space.execute("return Hash[].length")
+        assert space.int_w(w_res) == 0
+
+    def test_subscript_create_hash(self, space):
         w_res = space.execute("return Hash[{2 => 3}][2]")
         assert space.int_w(w_res) == 3
 
@@ -38,6 +42,13 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 12
 
+    def test_default_proc(self, space):
+        w_res = space.execute("""
+        x = Hash.new { |h, k| h[k + 2] = k }
+        return [x[2], x[4]]
+        """)
+        assert self.unwrap(space, w_res) == [2, 2]
+
     def test_new(self, space):
         w_res = space.execute("return Hash.new.keys")
         assert self.unwrap(space, w_res) == []
@@ -54,6 +65,10 @@ class TestHashObject(BaseRuPyPyTest):
         x = {}
         return x[2]
         """)
+        assert w_res is space.w_nil
+
+    def test_lookup_eql(self, space):
+        w_res = space.execute("return {1 => 2}[1.0]")
         assert w_res is space.w_nil
 
     def test_delete(self, space):
