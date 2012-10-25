@@ -12,7 +12,6 @@ class ClassDef(object):
         self.setup_class_func = None
         self.superclassdef = superclassdef
         self.cls = None
-        self.requires = []
 
     def __repr__(self):
         return "<ClassDef: {}>".format(self.name)
@@ -36,9 +35,6 @@ class ClassDef(object):
 
     def app_method(self, source):
         self.app_methods.append(source)
-
-    def require(self, filepath):
-        self.requires.append(open(filepath).read())
 
     def singleton_method(self, name, **argspec):
         def adder(func):
@@ -104,7 +100,6 @@ class ClassCache(Cache):
 
         w_class = self.space.newclass(classdef.name, superclass)
         yield w_class
-
         for name, (method, argspec) in classdef.methods.iteritems():
             func = WrapperGenerator(name, method, argspec, classdef.cls).generate_wrapper()
             w_class.define_method(self.space, name, W_BuiltinFunction(name, func))
@@ -122,9 +117,6 @@ class ClassCache(Cache):
 
         if classdef.setup_class_func is not None:
             classdef.setup_class_func(classdef.cls, self.space, w_class)
-
-        for source in classdef.requires:
-            self.execute(source)
 
 
 class ModuleCache(Cache):

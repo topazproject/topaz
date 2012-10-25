@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 import os
+from glob import glob
 
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import specialize
+from pypy.rlib.streamio import open_file_as_stream
 from pypy.tool.cache import Cache
 
 from rply.errors import ParsingError
@@ -162,6 +164,14 @@ class ObjectSpace(object):
         # are defined
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
+
+        for p in glob(os.path.join(os.path.dirname(__file__), os.path.pardir, "kernel/**/*.rb")):
+            f = open_file_as_stream(p)
+            try:
+                contents = f.readall()
+            finally:
+                f.close()
+            self.execute(contents)
 
         w_load_path = self.newarray([
             self.newstr_fromstr(os.path.abspath(
