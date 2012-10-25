@@ -1,4 +1,6 @@
-from rupypy.objects.procobject import W_ProcObject
+import os
+
+import py
 
 from ..base import BaseRuPyPyTest
 
@@ -7,7 +9,12 @@ class TestKernel(BaseRuPyPyTest):
     def test_puts_nil(self, space, capfd):
         space.execute("puts nil")
         out, err = capfd.readouterr()
-        assert out == "nil\n"
+        assert out == "\n"
+
+    def test_print(self, space, capfd):
+        space.execute("print 1, 3")
+        out, err = capfd.readouterr()
+        assert out == "13"
 
     def test_lambda(self, space):
         w_res = space.execute("""
@@ -15,7 +22,7 @@ class TestKernel(BaseRuPyPyTest):
         return [l.class, l.lambda?]
         """)
         w_cls, w_lambda = space.listview(w_res)
-        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_cls is space.w_proc
         assert w_lambda is space.w_true
 
     def test_proc(self, space):
@@ -24,7 +31,7 @@ class TestKernel(BaseRuPyPyTest):
         return [l.class, l.lambda?]
         """)
         w_cls, w_lambda = space.listview(w_res)
-        assert w_cls is space.getclassfor(W_ProcObject)
+        assert w_cls is space.w_proc
         assert w_lambda is space.w_false
 
     def test_singleton_methods(self, space):
@@ -107,11 +114,39 @@ class TestKernel(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [["to_ary"], ["to_a"]]
         assert self.unwrap(space, space.execute("return Array(1)")) == [1]
 
+    def test_String(self, space):
+        w_res = space.execute("return [String('hello'), String(4)]")
+        assert self.unwrap(space, w_res) == ["hello", "4"]
+
     def test_exit(self, space):
         with self.raises(space, "SystemExit"):
             space.execute("Kernel.exit")
         with self.raises(space, "SystemExit"):
             space.execute("exit")
+
+    def test_block_given_p(self, space):
+        assert space.execute("return block_given?") is space.w_false
+        assert space.execute("return iterator?") is space.w_false
+        assert space.execute("return (proc { block_given? })[]") is space.w_false
+        w_res = space.execute("""
+        def foo
+          block_given?
+        end
+        return foo, foo { }
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
+        w_res = space.execute("""
+        def foo
+          bar { block_given? }
+        end
+
+        def bar
+          yield
+        end
+
+        return foo, foo { }
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
 
 
 class TestRequire(BaseRuPyPyTest):
@@ -183,3 +218,51 @@ class TestRequire(BaseRuPyPyTest):
         return @a
         """ % (str(f), str(f), str(f)))
         assert space.int_w(w_res) == 1
+
+    def test_load(self, space, tmpdir):
+        f = tmpdir.join("f.rb")
+        f.write("""
+        @a += 1
+        """)
+
+        w_res = space.execute("""
+        @a = 0
+        load '%s'
+        load '%s'
+        load '%s'
+
+        return @a
+        """ % (str(f), str(f), str(f)))
+        assert space.int_w(w_res) == 3
+
+    def test_responds_to(self, space):
+        w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
+        assert self.unwrap(space, w_res) == [False, True]
+
+
+class TestExec(BaseRuPyPyTest):
+    def fork_and_wait(self, space, capfd, code):
+        cpid = os.fork()
+        if cpid == 0:
+            space.execute(code)
+        else:
+            os.waitpid(cpid, 0)
+            out, err = capfd.readouterr()
+            return out
+
+    def test_exec_with_sh(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec 'echo $0'")
+        assert out == "sh\n"
+
+    def test_exec_directly(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec '/bin/echo', '$0'")
+        assert out == "$0\n"
+
+    def test_exec_with_custom_argv0(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec ['/bin/sh', 'argv0'], '-c', 'echo $0'")
+        assert out == "argv0\n"
+
+    @py.test.mark.xfail
+    def test_exec_with_path_search(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec 'echo', '$0'")
+        assert out == "$0\n"

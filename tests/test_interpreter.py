@@ -29,6 +29,15 @@ class TestInterpreter(BaseRuPyPyTest):
         w_res = space.execute("a = 100; return a")
         assert space.int_w(w_res) == 100
 
+    def test_uninitailized_variables(self, space):
+        w_res = space.execute("""
+        if false
+            x = 5
+        end
+        return x
+        """)
+        assert w_res is space.w_nil
+
     def test_if(self, space):
         w_res = space.execute("if 3 then return 2 end")
         assert space.int_w(w_res) == 2
@@ -109,7 +118,7 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
         w_res = space.execute("""
@@ -138,8 +147,28 @@ class TestInterpreter(BaseRuPyPyTest):
             end
         end
         """)
-        w_cls = space.getclassfor(W_Object).constants_w["X"]
+        w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
+
+    def test_shadow_class(self, space):
+        w_res = space.execute("""
+        class X; class Y; end; end
+
+        class A < X
+          OLD_Y = Y
+          class Y; end
+        end
+        return A::OLD_Y.object_id == A::Y.object_id, A::OLD_Y.object_id == X::Y.object_id
+        """)
+        assert self.unwrap(space, w_res) == [False, True]
+
+    def test_class_returnvalue(self, space):
+        w_res = space.execute("""
+        return (class X
+            5
+        end)
+        """)
+        assert space.int_w(w_res) == 5
 
     def test_singleton_class(self, space):
         w_res = space.execute("""
@@ -162,12 +191,23 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises(space, "NoMethodError"):
             space.execute("X.new.m")
 
+    def test_singleton_class_return_val(self, space):
+        w_res = space.execute("""
+        class X
+        end
+
+        x = X.new
+        return (class << x
+            5
+        end)
+        """)
+        assert space.int_w(w_res) == 5
+
     def test_constant(self, space):
         w_res = space.execute("Abc = 3; return Abc")
         assert space.int_w(w_res)
 
-        w_object_cls = space.getclassfor(W_Object)
-        assert w_object_cls.constants_w["Abc"] is w_res
+        assert space.w_object.constants_w["Abc"] is w_res
 
     def test_class_constant(self, space):
         w_res = space.execute("""
@@ -180,8 +220,7 @@ class TestInterpreter(BaseRuPyPyTest):
         return X.new.f
         """)
         assert space.int_w(w_res) == 3
-        w_object_cls = space.getclassfor(W_Object)
-        assert "Constant" not in w_object_cls.constants_w
+        assert "Constant" not in space.w_object.constants_w
 
     def test_module_constant(self, space):
         w_res = space.execute("""
@@ -222,6 +261,10 @@ class TestInterpreter(BaseRuPyPyTest):
         return X.new.f
         """)
         assert self.unwrap(space, w_res) == [5, 5, 5]
+
+    def test_nonmodule_constant(self, space):
+        with self.raises(space, "TypeError", "3 is not a class/module"):
+            space.execute("3::Foo")
 
     def test_instance_var(self, space):
         w_res = space.execute("""
@@ -445,6 +488,13 @@ class TestInterpreter(BaseRuPyPyTest):
         return f(*2) { 5 }
         """)
         assert space.int_w(w_res) == 7
+        w_res = space.execute("""
+        def f(&a)
+            return a
+        end
+        return f(*[], &nil)
+        """)
+        assert w_res is space.w_nil
 
     def test_global_variables(self, space):
         w_res = space.execute("return $abc")
@@ -516,6 +566,12 @@ class TestInterpreter(BaseRuPyPyTest):
         return x[0]
         """)
         assert space.int_w(w_res) == 2
+        w_res = space.execute("""
+        x = [0]
+        x[*[0]] = 45
+        return x[0]
+        """)
+        assert space.int_w(w_res) == 45
 
     def test_empty_hash(self, space):
         space.execute("return {}")
@@ -544,6 +600,11 @@ class TestInterpreter(BaseRuPyPyTest):
         return [a, b, c]
         """)
         assert self.unwrap(space, w_res) == [1, [], None]
+        w_res = space.execute("""
+        a, = 3, 4
+        return a
+        """)
+        assert space.int_w(w_res) == 3
 
     def test_minus(self, space):
         w_res = space.execute("""
@@ -667,15 +728,12 @@ class TestInterpreter(BaseRuPyPyTest):
         b = self.find_const(space, 'B')
         c = self.find_const(space, 'C')
         d = self.find_const(space, 'D')
-        objct = self.find_const(space, 'Object')
-        basic = space.getclassobject(W_BaseObject.classdef)
-        kernel = space.getmoduleobject(Kernel.moduledef)
         assert self.unwrap(space, w_res) == [
-            [a, objct, kernel, basic],
-            [b, a, objct, kernel, basic],
+            [a, space.w_object, space.w_kernel, space.w_basicobject],
+            [b, a, space.w_object, space.w_kernel, space.w_basicobject],
             [c],
             [d, c],
-            [b, d, c, a, objct, kernel, basic]
+            [b, d, c, a, space.w_object, space.w_kernel, space.w_basicobject]
         ]
 
     def test_lookup_for_includes(self, space):
@@ -732,6 +790,198 @@ class TestInterpreter(BaseRuPyPyTest):
         return B::BConst
         """)
         assert self.unwrap(space, w_res) == "A"
+
+    def test_defined(self, space):
+        w_res = space.execute("return [defined? A, defined? Array]")
+        assert self.unwrap(space, w_res) == [None, "constant"]
+        w_res = space.execute("""
+        @a = 3
+        return [defined? @a, defined? @b]
+        """)
+        assert self.unwrap(space, w_res) == ["instance-variable", None]
+        w_res = space.execute("""
+        return [defined? self, defined? nil, defined? true, defined? false]
+        """)
+        assert self.unwrap(space, w_res) == ["self", "nil", "true", "false"]
+        w_res = space.execute("""
+        return [defined? nil.nil?, defined? nil.fdfdafa]
+        """)
+        assert self.unwrap(space, w_res) == ["method", None]
+        w_res = space.execute("""
+        return [defined? a = 3]
+        """)
+        assert self.unwrap(space, w_res) == ["assignment"]
+
+    def test_match(self, space):
+        w_res = space.execute("return 3 =~ nil")
+        assert self.unwrap(space, w_res) is None
+
+    def test_not_match(self, space):
+        w_res = space.execute("return 3 !~ nil")
+        assert self.unwrap(space, w_res)
+
+    def test_super(self, space):
+        w_res = space.execute("""
+        class A
+            def f(a, b)
+                return [a, b]
+            end
+        end
+        class B < A
+            def f(a, b)
+                a += 10
+                return super
+            end
+        end
+        return B.new.f(4, 5)
+        """)
+        assert self.unwrap(space, w_res) == [14, 5]
+
+        w_res = space.execute("""
+        class C < A
+            def f
+                super(*[1, 2])
+            end
+        end
+        return C.new.f
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_next_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        while i < 10
+            i += 1
+            if i > 3
+                next
+            end
+            res << i
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+
+    def test_break_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        other = while i < 10
+            i += 1
+            if i > 3
+                break 200
+            end
+            res << i
+        end
+        res << other
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 200]
+
+    def test_simple_lexical_scope_constant(self, space):
+        w_res = space.execute("""
+        class A
+            CONST = 1
+
+            def get
+                CONST
+            end
+        end
+
+        class B < A
+            CONST = 2
+        end
+
+        return A.new.get == B.new.get
+        """)
+        assert space.is_true(w_res)
+
+    def test_complex_lexical_scope_constant(self, space):
+        space.execute("""
+        class Bar
+            module M
+            end
+        end
+
+        module X
+            module M
+                FOO = 5
+            end
+
+            class Foo < Bar
+                def f
+                    M::FOO
+                end
+            end
+        end
+
+        class X::Foo
+            def g
+                M::FOO
+            end
+        end
+        """)
+        w_res = space.execute("return X::Foo.new.f")
+        assert space.int_w(w_res) == 5
+        with self.raises(space, "NameError"):
+            space.execute("X::Foo.new.g")
+
+    def test_lexical_scope_singletonclass(self, space):
+        space.execute("""
+        class M
+            module NestedModule
+            end
+
+            class << self
+                include NestedModule
+            end
+        end
+        """)
+
+    def test_constant_lookup_from_trpl_book(self, space):
+        w_res = space.execute("""
+        module Kernel
+          A = B = C = D = E = F = "defined in kernel"
+        end
+        A = B = C = D = E = "defined at toplevel"
+
+        class Super
+          A = B = C = D = "defined in superclass"
+        end
+
+        module Included
+          A = B = C = "defined in included module"
+        end
+
+        module Enclosing
+          A = B = "defined in enclosing module"
+
+          class Local < Super
+            include Included
+            A = "defined Locally"
+            RESULT = [A, B, C, D, E, F]
+          end
+        end
+        return Enclosing::Local::RESULT
+        """)
+        assert self.unwrap(space, w_res) == [
+            "defined Locally",
+            "defined in enclosing module",
+            "defined in included module",
+            "defined in superclass",
+            "defined at toplevel",
+            "defined in kernel"
+        ]
+
+    def test_top_level_include(self, space):
+        w_res = space.execute("""
+        module M
+            Foo = 10
+        end
+        include M
+        return Foo
+        """)
+        assert space.int_w(w_res) == 10
 
 
 class TestBlocks(BaseRuPyPyTest):
@@ -855,6 +1105,15 @@ class TestBlocks(BaseRuPyPyTest):
             [1, 2, 3].map(&"to_s")
             """)
 
+    def test_too_few_block_arguments(self, space):
+        w_res = space.execute("""
+        def f
+            yield 1
+        end
+        return f { |a,b,c| [a,b,c] }
+        """)
+        assert self.unwrap(space, w_res) == [1, None, None]
+
     def test_block_return(self, space):
         w_res = space.execute("""
         def f
@@ -868,6 +1127,27 @@ class TestBlocks(BaseRuPyPyTest):
         return g
         """)
         assert space.int_w(w_res) == 15
+
+    def test_break_block(self, space):
+        w_res = space.execute("""
+        def f(res, &a)
+            begin
+                g(&a)
+            ensure
+                res << 1
+            end
+            5
+        end
+
+        def g()
+            4 + yield
+        end
+
+        res = []
+        res << (f(res) { break 3})
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 3]
 
 
 class TestExceptions(BaseRuPyPyTest):
@@ -987,6 +1267,36 @@ class TestExceptions(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [12, 5]
 
+    def test_ensure_nonlocal_block_return(self, space):
+        w_res = space.execute("""
+        def h
+            yield
+        end
+        def g(res, &a)
+            begin
+               yield
+            ensure
+               res << 1
+            end
+        end
+        def f(res)
+            g(res) { return 5 }
+        end
+        res = []
+        res << f(res)
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 5]
+
+    def test_ensure_result(self, space):
+        w_res = space.execute("""
+        return begin
+        ensure
+            nil
+        end
+        """)
+        assert w_res is space.w_nil
+
     def test_rescue_loop(self, space):
         w_res = space.execute("""
         i = 0
@@ -1000,3 +1310,13 @@ class TestExceptions(BaseRuPyPyTest):
         return i
         """)
         assert space.int_w(w_res) == 3
+
+    def test_rescue_superclass(self, space):
+        w_res = space.execute("""
+        begin
+            1 / 0
+        rescue StandardError
+            return 0
+        end
+        """)
+        assert space.int_w(w_res) == 0

@@ -4,6 +4,8 @@ from rupypy.objects.cellobject import W_CellObject
 
 
 class BaseFrame(object):
+    _attrs_ = ["backref", "escaped", "back_last_instr"]
+
     def __init__(self):
         self.backref = jit.vref_None
         self.escaped = False
@@ -12,11 +14,11 @@ class BaseFrame(object):
 class Frame(BaseFrame):
     _virtualizable2_ = [
         "bytecode", "locals_w[*]", "stack_w[*]", "stackpos", "w_self",
-        "w_scope", "block", "cells[*]", "lastblock",
+        "w_scope", "block", "cells[*]", "lastblock", "lexical_scope", "last_instr",
     ]
 
     @jit.unroll_safe
-    def __init__(self, bytecode, w_self, w_scope, block, parent_interp):
+    def __init__(self, bytecode, w_self, w_scope, lexical_scope, block, parent_interp):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         BaseFrame.__init__(self)
         self.bytecode = bytecode
@@ -26,6 +28,7 @@ class Frame(BaseFrame):
         self.stackpos = 0
         self.w_self = w_self
         self.w_scope = w_scope
+        self.lexical_scope = lexical_scope
         self.block = block
         self.parent_interp = parent_interp
         self.lastblock = None
@@ -41,6 +44,12 @@ class Frame(BaseFrame):
             self.locals_w[pos] = w_value
         elif loc == bytecode.CELL:
             self.cells[pos].set(w_value)
+
+    def handle_block_args(self, space, bytecode, args_w, block):
+        minargc = len(bytecode.arg_locs) - len(bytecode.defaults)
+        if len(args_w) < minargc:
+            args_w.extend([space.w_nil] * (minargc - len(args_w)))
+        return self.handle_args(space, bytecode, args_w, block)
 
     @jit.unroll_safe
     def handle_args(self, space, bytecode, args_w, block):
@@ -110,14 +119,28 @@ class Frame(BaseFrame):
                 return block
             block.cleanupstack(self)
 
+    def unrollstack_and_jump(self, space, unroller):
+        block = self.unrollstack(unroller.kind)
+        return block.handle(space, self, unroller)
+
+    def has_contents(self):
+        return True
+
     def get_filename(self):
         return self.bytecode.filepath
 
-    def get_lineno(self, idx):
-        return self.bytecode.lineno_table[idx]
+    def get_lineno(self, prev_frame):
+        if prev_frame is None:
+            instr = self.last_instr
+        else:
+            instr = prev_frame.back_last_instr
+        return self.bytecode.lineno_table[instr]
 
     def get_code_name(self):
         return self.bytecode.name
+
+    def get_block(self):
+        return self.block
 
 
 class BuiltinFrame(BaseFrame):
@@ -125,11 +148,17 @@ class BuiltinFrame(BaseFrame):
         BaseFrame.__init__(self)
         self.name = name
 
+    def has_contents(self):
+        return self.backref() is not None
+
     def get_filename(self):
         return self.backref().get_filename()
 
-    def get_lineno(self, idx):
-        return self.backref().get_lineno(idx)
+    def get_lineno(self, prev_frame):
+        return self.backref().get_lineno(self)
 
     def get_code_name(self):
         return self.name
+
+    def get_block(self):
+        return self.backref().get_block()

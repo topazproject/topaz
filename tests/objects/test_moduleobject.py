@@ -2,6 +2,17 @@ from ..base import BaseRuPyPyTest
 
 
 class TestModuleObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("Module")
+
+    def test_new(self, space):
+        w_res = space.execute("""
+        m = Module.new
+        m::Const = 4
+        return m::Const
+        """)
+        assert space.int_w(w_res) == 4
+
     def test_module_function(self, space):
         w_res = space.execute("""
         module Mod
@@ -101,9 +112,10 @@ class TestModuleObject(BaseRuPyPyTest):
         class X; Const = 1; end
         class Y < X; end
         return X.const_defined?("Const"), X.const_defined?("NoConst"),
-          X.const_defined?("X"), Y.const_defined?("Const"), Y.const_defined?("Const", false)
+          X.const_defined?("X"), Y.const_defined?("Const"), Y.const_defined?("Const", false),
+          X.const_defined?("Const", false)
         """)
-        assert self.unwrap(space, w_res) == [True, False, True, True, False]
+        assert self.unwrap(space, w_res) == [True, False, True, True, False, True]
 
     def test_method_definedp(self, space):
         w_res = space.execute("""
@@ -131,6 +143,34 @@ class TestModuleObject(BaseRuPyPyTest):
         return x.foo, x.bar
         """)
         assert self.unwrap(space, w_res) == [1, 2]
+
+    def test_attr(self, space):
+        space.execute("""
+        class X
+            attr :a, false
+            attr :b, true
+            attr :c, :d
+
+            def set_a v
+                @a = v
+            end
+        end
+        """)
+        with self.raises(space, "NoMethodError"):
+            space.execute("X.new.a = 3")
+        w_res = space.execute("""
+        x = X.new
+        x.set_a 3
+        return x.a
+        """)
+        assert space.int_w(w_res) == 3
+
+        w_res = space.execute("""
+        x = X.new
+        x.b = 5
+        return x.b
+        """)
+        assert space.int_w(w_res) == 5
 
     def test_eqeqeq(self, space):
         w_res = space.execute("""

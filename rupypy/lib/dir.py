@@ -1,11 +1,10 @@
-import os
 import errno
+import os
 
 from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
-from rupypy.objects.exceptionobject import W_SystemCallError
 from rupypy.modules.enumerable import Enumerable
+from rupypy.objects.objectobject import W_Object
 
 
 class W_Dir(W_Object):
@@ -23,7 +22,7 @@ class W_Dir(W_Object):
             msg = "Not a directory - %s" % path
             w_errno = space.newint(errno.ENOTDIR)
         if msg:
-            raise space.error(space.getclassfor(W_SystemCallError), msg, [w_errno])
+            raise space.error(space.w_SystemCallError, msg, [w_errno])
         self.path = path
 
     @classdef.singleton_method("allocate")

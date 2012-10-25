@@ -1,7 +1,6 @@
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
-from rupypy.objects.exceptionobject import W_TypeError
 
 
 class W_SymbolObject(W_Object):
@@ -13,6 +12,11 @@ class W_SymbolObject(W_Object):
         W_Object.__init__(self, space)
         self.symbol = symbol
 
+    def __deepcopy__(self, memo):
+        obj = super(W_SymbolObject, self).__deepcopy__(memo)
+        obj.symbol = self.symbol
+        return obj
+
     def symbol_w(self, space):
         return self.symbol
 
@@ -20,16 +24,18 @@ class W_SymbolObject(W_Object):
         return self.symbol
 
     def getsingletonclass(self, space):
-        raise space.error(space.getclassfor(W_TypeError), "can't define singleton")
+        raise space.error(space.w_TypeError, "can't define singleton")
 
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.symbol)
 
-    @classdef.method("<=>", other="symbol")
-    def method_comparator(self, space, other):
+    @classdef.method("<=>")
+    def method_comparator(self, space, w_other):
+        if not space.is_kind_of(w_other, space.w_symbol):
+            return space.w_nil
         s1 = self.symbol
-        s2 = other
+        s2 = space.symbol_w(w_other)
         if s1 < s2:
             return space.newint(-1)
         elif s1 == s2:
@@ -40,5 +46,11 @@ class W_SymbolObject(W_Object):
     classdef.app_method("""
     def to_proc
         Proc.new { |arg| arg.send(self) }
+    end
+    """)
+
+    classdef.app_method("""
+    def to_sym
+        self
     end
     """)

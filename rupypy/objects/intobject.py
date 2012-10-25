@@ -1,8 +1,7 @@
 from rupypy.module import ClassDef
-from rupypy.objects.exceptionobject import W_ZeroDivisionError, W_TypeError
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
-from rupypy.objects.objectobject import W_RootObject, W_Object
+from rupypy.objects.objectobject import W_RootObject
 
 
 class FixnumStorage(object):
@@ -13,7 +12,7 @@ class FixnumStorage(object):
         try:
             storage = self.storages[intvalue]
         except KeyError:
-            self.storages[intvalue] = storage = space.send(space.getclassfor(W_Object), space.newsymbol("new"))
+            self.storages[intvalue] = storage = space.send(space.w_object, space.newsymbol("new"))
         return storage
 
 
@@ -25,6 +24,11 @@ class W_FixnumObject(W_RootObject):
     def __init__(self, space, intvalue):
         self.intvalue = intvalue
 
+    def __deepcopy__(self, memo):
+        obj = super(W_FixnumObject, self).__deepcopy__(memo)
+        obj.intvalue = self.intvalue
+        return obj
+
     def int_w(self, space):
         return self.intvalue
 
@@ -32,7 +36,7 @@ class W_FixnumObject(W_RootObject):
         return float(self.intvalue)
 
     def getsingletonclass(self, space):
-        raise space.error(space.getclassfor(W_TypeError), "can't define singleton")
+        raise space.error(space.w_TypeError, "can't define singleton")
 
     def find_instance_var(self, space, name):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
@@ -42,6 +46,7 @@ class W_FixnumObject(W_RootObject):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
         storage.set_instance_var(space, name, w_value)
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(str(self.intvalue))
@@ -76,11 +81,22 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("/", other="int")
     def method_div(self, space, other):
         try:
-            return space.newint(self.intvalue / 0)
+            return space.newint(self.intvalue / other)
         except ZeroDivisionError:
-            raise space.error(space.getclassfor(W_ZeroDivisionError),
+            raise space.error(space.w_ZeroDivisionError,
                 "divided by 0"
             )
+
+    @classdef.method("<<", other="int")
+    def method_left_shift(self, space, other):
+        if other < 0:
+            return space.newint(self.intvalue >> -other)
+        else:
+            return space.newint(self.intvalue << other)
+
+    @classdef.method("^", other="int")
+    def method_xor(self, space, other):
+        return space.newint(self.intvalue ^ other)
 
     @classdef.method("==")
     def method_eq(self, space, w_other):
@@ -98,6 +114,10 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("<", other="int")
     def method_lt(self, space, other):
         return space.newbool(self.intvalue < other)
+
+    @classdef.method("<=", other="int")
+    def method_lte(self, space, other):
+        return space.newbool(self.intvalue <= other)
 
     @classdef.method(">", other="int")
     def method_gt(self, space, other):
@@ -128,6 +148,10 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("hash")
     def method_hash(self, space):
         return self
+
+    @classdef.method("zero?")
+    def method_zerop(self, space):
+        return space.newbool(self.intvalue == 0)
 
     @classdef.method("nonzero?")
     def method_nonzerop(self, space):

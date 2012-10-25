@@ -1,8 +1,9 @@
+import copy
+
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
-from rupypy.objects.rangeobject import W_RangeObject
-from rupypy.objects.exceptionobject import W_TypeError, W_IndexError
+from rupypy.utils.packing.pack import RPacker
 
 
 class W_ArrayObject(W_Object):
@@ -13,13 +14,17 @@ class W_ArrayObject(W_Object):
         W_Object.__init__(self, space)
         self.items_w = items_w
 
+    def __deepcopy__(self, memo):
+        obj = super(W_ArrayObject, self).__deepcopy__(memo)
+        obj.items_w = copy.deepcopy(self.items_w, memo)
+        return obj
+
     def listview(self, space):
         return self.items_w
 
     classdef.app_method("""
     def to_s()
         result = "["
-        i = 0
         self.each_with_index do |obj, i|
             if i > 0
                 result << ", "
@@ -30,14 +35,15 @@ class W_ArrayObject(W_Object):
     end
     """)
 
+    @classdef.method("at")
     @classdef.method("[]")
     def method_subscript(self, space, w_idx, w_count=None):
-        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
-        if (as_range and end < start or
-            start < 0 or end < 0 or
-            not as_range and start >= len(self.items_w)):
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        if nil:
             return space.w_nil
         elif as_range:
+            assert start >= 0
+            assert end >= 0
             return space.newarray(self.items_w[start:end])
         else:
             return self.items_w[start]
@@ -49,16 +55,14 @@ class W_ArrayObject(W_Object):
             w_count = w_count_or_obj
         else:
             w_obj = w_count_or_obj
-        start, end, as_range = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
         if w_count and end < start:
-            raise space.error(
-                space.getclassfor(W_IndexError),
+            raise space.error(space.w_IndexError,
                 "negative length (%d)" % (end - start)
             )
         elif start < 0:
-            raise space.error(
-                space.getclassfor(W_IndexError),
+            raise space.error(space.w_IndexError,
                 "index %d too small for array; minimum: %d" % (
                     start - len(self.items_w),
                     -len(self.items_w)
@@ -69,7 +73,12 @@ class W_ArrayObject(W_Object):
             self.items_w[start] = w_obj
         elif as_range:
             assert end >= 0
-            self.items_w[start:end] = [w_obj]
+            w_converted = space.convert_type(w_obj, space.w_array, 'to_ary', raise_error=False)
+            if w_converted is space.w_nil:
+                rep = [w_obj]
+            else:
+                rep = space.listview(w_converted)
+            self.items_w[start:end] = rep
         else:
             self.items_w[start] = w_obj
         return w_obj
@@ -110,6 +119,25 @@ class W_ArrayObject(W_Object):
         self.items_w += space.listview(w_ary)
         return self
 
+    @classdef.method("push")
+    def method_push(self, space, args_w):
+        self.items_w.extend(args_w)
+        return self
+
+    @classdef.method("shift")
+    def method_shift(self, space, w_n=None):
+        if w_n is None:
+            if self.items_w:
+                return self.items_w.pop(0)
+            else:
+                return space.w_nil
+        n = space.int_w(space.convert_type(w_n, space.w_fixnum, "to_int"))
+        if n < 0:
+            raise space.error(space.w_ArgumentError, "negative array size")
+        items_w = self.items_w[:n]
+        del self.items_w[:n]
+        return space.newarray(items_w)
+
     @classdef.method("unshift")
     def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):
@@ -126,7 +154,7 @@ class W_ArrayObject(W_Object):
         elif space.respond_to(w_sep, space.newsymbol("to_str")):
             separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
         else:
-            raise space.error(space.getclassfor(W_TypeError),
+            raise space.error(space.w_TypeError,
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([
@@ -182,9 +210,143 @@ class W_ArrayObject(W_Object):
     end
     """)
 
+    classdef.app_method("""
+    def reject!(&block)
+        prev_size = self.size
+        self.delete_if(&block)
+        return nil if prev_size == self.size
+        self
+    end
+    """)
+
+    classdef.app_method("""
+    def delete_if
+        i = 0
+        c = 0
+        sz = self.size
+        while i < sz - c
+            item = self[i + c]
+            if yield(item)
+                c += 1
+            else
+                self[i] = item
+                i += 1
+            end
+        end
+        self.pop(c)
+        self
+    end
+    """)
+
+    @classdef.method("pop")
+    def method_pop(self, space, w_num=None):
+        if w_num is None:
+            if self.items_w:
+                return self.items_w.pop()
+            else:
+                return space.w_nil
+        else:
+            num = space.int_w(space.convert_type(
+                w_num, space.w_fixnum, "to_int"
+            ))
+            if num < 0:
+                raise space.error(space.w_ArgumentError, "negative array size")
+            else:
+                pop_size = max(0, len(self.items_w) - num)
+                res_w = self.items_w[pop_size:]
+                del self.items_w[pop_size:]
+                return space.newarray(res_w)
+
+    classdef.app_method("""
+    def delete(obj)
+        sz = self.size
+        self.delete_if { |o| o == obj }
+        return obj if sz != self.size
+        return yield if block_given?
+        return nil
+    end
+    """)
+
+    @classdef.method("delete_at", idx="int")
+    def method_delete_at(self, space, idx):
+        if idx >= len(self.items_w):
+            return space.w_nil
+        else:
+            return self.items_w.pop(idx)
+
+    classdef.app_method("""
+    def first
+        return self[0]
+    end
+    """)
+
     @classdef.method("last")
     def method_last(self, space):
         if len(self.items_w) == 0:
             return space.w_nil
         else:
             return self.items_w[len(self.items_w) - 1]
+
+    @classdef.method("pack", template="str")
+    def method_pack(self, space, template):
+        result = RPacker(space, template, space.listview(self)).operate()
+        return space.newstr_fromchars(result)
+
+    @classdef.method("to_ary")
+    def method_to_ary(self, space):
+        return self
+
+    classdef.app_method("""
+    def ==(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.size != other.size
+            return false
+        end
+        self.each_with_index do |x, i|
+            if x != other[i]
+                return false
+            end
+        end
+        return true
+    end
+    """)
+
+    classdef.app_method("""
+    def eql?(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.length != other.length
+            return false
+        end
+        self.each_with_index do |x, i|
+            if !x.eql?(other[i])
+                return false
+            end
+        end
+        return true
+    end
+    """)
+
+    @classdef.method("clear")
+    def method_clear(self):
+        del self.items_w[:]
+        return self
+
+    classdef.app_method("""
+    def hash
+        res = 0x345678
+        self.each do |x|
+            res = (1000003 * res) ^ x.hash
+        end
+        return res
+    end
+    """)

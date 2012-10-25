@@ -38,3 +38,27 @@ class W_RangeObject(W_Object):
         end
     end
     """)
+
+    classdef.app_method("""
+    def ===(value)
+        self.include?(value)
+    end
+    """)
+
+    classdef.app_method("""
+    def include?(value)
+        beg_compare = self.begin <=> value
+        if !beg_compare
+            return false
+        end
+        if beg_compare <= 0
+            end_compare = value <=> self.end
+            if self.exclude_end?
+                return true if end_compare < 0
+            else
+                return true if end_compare <= 0
+            end
+        end
+        return false
+    end
+    """)

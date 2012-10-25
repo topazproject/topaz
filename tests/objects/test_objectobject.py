@@ -80,7 +80,7 @@ class TestBaseObject(BaseRuPyPyTest):
 class TestObjectObject(BaseRuPyPyTest):
     def test_class(self, space):
         w_res = space.execute("return 1.class")
-        assert w_res is space.getclassfor(W_FixnumObject)
+        assert w_res is space.w_fixnum
 
     def test_initialize(self, space):
         w_res = space.execute("""
@@ -155,6 +155,13 @@ class TestObjectObject(BaseRuPyPyTest):
         s, oid = self.unwrap(space, w_res)
         assert s == "#<Object:0x%x>" % oid
 
+    def test_inspect(self, space):
+        w_res = space.execute("""
+        obj = Object.new
+        return obj.to_s == obj.inspect
+        """)
+        assert w_res == space.w_true
+
     def test_send(self, space):
         w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
         assert self.unwrap(space, w_res) == ['1', 3]
@@ -190,10 +197,10 @@ class TestObjectObject(BaseRuPyPyTest):
         class B < A; end
         class C < B; end
         b = B.new
-        r << b.kind_of? A
-        r << b.kind_of? B
-        r << b.kind_of? C
-        r << b.kind_of? M
+        r << b.kind_of?(A)
+        r << b.kind_of?(B)
+        r << b.kind_of?(C)
+        r << b.kind_of?(M)
         return r
         """)
         assert self.unwrap(space, w_res) == [True, True, False, True]

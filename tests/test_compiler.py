@@ -1,6 +1,5 @@
 from rupypy import consts
 from rupypy.objects.boolobject import W_TrueObject
-from rupypy.objects.objectobject import W_BaseObject, W_RootObject
 
 
 class TestCompiler(object):
@@ -258,11 +257,13 @@ class TestCompiler(object):
 
     def test_while(self, space):
         self.assert_compiles(space, "while true do end", """
+        SETUP_LOOP 20
         LOAD_CONST 0
-        JUMP_IF_FALSE 13
+        JUMP_IF_FALSE 16
         LOAD_CONST 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 1
         DISCARD_TOP
 
@@ -271,13 +272,15 @@ class TestCompiler(object):
         """)
 
         self.assert_compiles(space, "while true do puts 5 end", """
+        SETUP_LOOP 26
         LOAD_CONST 0
-        JUMP_IF_FALSE 19
+        JUMP_IF_FALSE 22
         LOAD_SELF
         LOAD_CONST 1
         SEND 2 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 3
         DISCARD_TOP
 
@@ -287,11 +290,13 @@ class TestCompiler(object):
 
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
+        SETUP_LOOP 20
         LOAD_CONST 0
-        JUMP_IF_TRUE 13
+        JUMP_IF_TRUE 16
         LOAD_CONST 1
         DISCARD_TOP
-        JUMP 0
+        JUMP 3
+        POP_BLOCK
         LOAD_CONST 2
         DISCARD_TOP
 
@@ -465,8 +470,6 @@ class TestCompiler(object):
 
         self.assert_compiled(bc.consts_w[2], """
         LOAD_CONST 0
-        DISCARD_TOP
-        LOAD_CONST 0
         RETURN
         """)
 
@@ -496,9 +499,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -507,20 +508,36 @@ class TestCompiler(object):
         RETURN
         """)
 
-        bc = self.assert_compiles(space, """
+        self.assert_compiles(space, """
         class X < Object
         end
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
         LOAD_SCOPE
-        LOAD_CONSTANT 1
+        LOAD_LOCAL_CONSTANT 1
         BUILD_CLASS
         LOAD_CONST 2
         EVALUATE_CLASS
         DISCARD_TOP
 
         LOAD_CONST 3
+        RETURN
+        """)
+
+        self.assert_compiles(space, """
+        class ::X
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_CLASS
+        LOAD_CONST 3
+        EVALUATE_CLASS
+        DISCARD_TOP
+
+        LOAD_CONST 4
         RETURN
         """)
 
@@ -542,7 +559,7 @@ class TestCompiler(object):
     def test_constants(self, space):
         self.assert_compiles(space, "Abc", """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         DISCARD_TOP
 
         LOAD_CONST 1
@@ -956,10 +973,10 @@ class TestCompiler(object):
         self.assert_compiled(bc.consts_w[3], """
         LOAD_DEREF 0
         LOAD_DEREF 1
+        SEND 0 1
         LOAD_DEREF 2
+        SEND 0 1
         LOAD_LOCAL 0
-        SEND 0 1
-        SEND 0 1
         SEND 0 1
         RETURN
         """)
@@ -1074,7 +1091,7 @@ class TestCompiler(object):
     def test_lookup_constant(self, space):
         self.assert_compiles(space, "Module::Constant", """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         LOAD_CONSTANT 1
         DISCARD_TOP
 
@@ -1083,7 +1100,7 @@ class TestCompiler(object):
         """)
         self.assert_compiles(space, "Module::constant", """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         SEND 1 0
         DISCARD_TOP
 
@@ -1098,26 +1115,17 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
-        assert bc.consts_w[0] is space.getclassfor(W_RootObject)
+        assert bc.consts_w[0] is space.w_object
 
     def test_assign_constant(self, space):
-        self.assert_compiles(space, "abc::Constant = 5; abc::Constant += 1", """
+        self.assert_compiles(space, "abc::Constant = 5", """
         LOAD_SELF
         SEND 0 0
         LOAD_CONST 1
         STORE_CONSTANT 2
         DISCARD_TOP
 
-        LOAD_SELF
-        SEND 0 0
-        DUP_TOP
-        LOAD_CONSTANT 2
         LOAD_CONST 3
-        SEND 4 1
-        STORE_CONSTANT 2
-        DISCARD_TOP
-
-        LOAD_CONST 5
         RETURN
         """)
 
@@ -1179,25 +1187,27 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 45
+        JUMP 51
+        DUP_TOP
         LOAD_SCOPE
-        LOAD_CONSTANT 3
-        COMPARE_EXC
-        JUMP_IF_TRUE 29
-        JUMP 44
+        LOAD_LOCAL_CONSTANT 3
+        ROT_TWO
+        SEND 4 1
+        JUMP_IF_TRUE 35
+        JUMP 50
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
-        LOAD_CONST 4
+        LOAD_CONST 5
         COPY_STRING
-        SEND 5 1
-        JUMP 49
+        SEND 6 1
+        JUMP 55
         END_FINALLY
-        LOAD_CONST 6
+        LOAD_CONST 7
         DISCARD_TOP
         DISCARD_TOP
 
-        LOAD_CONST 7
+        LOAD_CONST 8
         RETURN
         """)
         self.assert_compiles(space, """
@@ -1212,25 +1222,27 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         POP_BLOCK
-        JUMP 47
+        JUMP 53
+        DUP_TOP
         LOAD_SCOPE
-        LOAD_CONSTANT 3
-        COMPARE_EXC
-        JUMP_IF_TRUE 29
-        JUMP 46
+        LOAD_LOCAL_CONSTANT 3
+        ROT_TWO
+        SEND 4 1
+        JUMP_IF_TRUE 35
+        JUMP 52
         STORE_LOCAL 0
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
         LOAD_LOCAL 0
-        SEND 4 1
-        JUMP 51
+        SEND 5 1
+        JUMP 57
         END_FINALLY
-        LOAD_CONST 5
+        LOAD_CONST 6
         DISCARD_TOP
         DISCARD_TOP
 
-        LOAD_CONST 6
+        LOAD_CONST 7
         RETURN
         """)
 
@@ -1302,6 +1314,27 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_ensure(self, space):
+        bc = self.assert_compiles(space, """
+        begin
+        ensure
+            nil
+        end
+        """, """
+        SETUP_FINALLY 10
+        LOAD_CONST 0
+        POP_BLOCK
+        LOAD_CONST 0
+        LOAD_CONST 0
+        DISCARD_TOP
+        END_FINALLY
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+        assert bc.max_stackdepth == 4
+
     def test_block_argument(self, space):
         bc = self.assert_compiles(space, """
         def f(a, &b)
@@ -1344,6 +1377,20 @@ class TestCompiler(object):
         LOAD_CONST 0
         DISCARD_TOP
         LOAD_CONST 0
+        RETURN
+        """)
+
+        self.assert_compiles(space, """
+        module ::M
+        end
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        BUILD_MODULE
+        DISCARD_TOP
+
+        LOAD_CONST 3
         RETURN
         """)
 
@@ -1395,7 +1442,7 @@ class TestCompiler(object):
         end
         """, """
         LOAD_SCOPE
-        LOAD_CONSTANT 0
+        LOAD_LOCAL_CONSTANT 0
         LOAD_CONST 1
         LOAD_CONST 1
         LOAD_CONST 2
@@ -1616,20 +1663,22 @@ class TestCompiler(object):
         LOAD_SELF
         DUP_TOP
         LOAD_CONST 0
+        ROT_TWO
         SEND 1 1
-        JUMP_IF_TRUE 16
-        JUMP 23
+        JUMP_IF_TRUE 17
+        JUMP 24
         DISCARD_TOP
         LOAD_CONST 2
-        JUMP 47
+        JUMP 49
         DUP_TOP
         LOAD_SELF
+        ROT_TWO
         SEND 1 1
-        JUMP_IF_TRUE 36
-        JUMP 43
+        JUMP_IF_TRUE 38
+        JUMP 45
         DISCARD_TOP
         LOAD_CONST 3
-        JUMP 47
+        JUMP 49
         DISCARD_TOP
         LOAD_CONST 4
         DISCARD_TOP
@@ -1647,16 +1696,18 @@ class TestCompiler(object):
         LOAD_CONST 0
         DUP_TOP
         LOAD_CONST 1
+        ROT_TWO
         SEND 2 1
-        JUMP_IF_TRUE 30
+        JUMP_IF_TRUE 32
         DUP_TOP
         LOAD_CONST 3
+        ROT_TWO
         SEND 2 1
-        JUMP_IF_TRUE 30
-        JUMP 37
+        JUMP_IF_TRUE 32
+        JUMP 39
         DISCARD_TOP
         LOAD_CONST 4
-        JUMP 41
+        JUMP 43
         DISCARD_TOP
         LOAD_CONST 5
         DISCARD_TOP
@@ -1713,6 +1764,21 @@ class TestCompiler(object):
         DISCARD_TOP
         LOAD_CONST 1
         STORE_INSTANCE_VAR 0
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiles(space, "Const ||= 3", """
+        LOAD_SCOPE
+        DUP_TOP
+        LOAD_LOCAL_CONSTANT 0
+        DUP_TOP
+        JUMP_IF_TRUE 13
+        DISCARD_TOP
+        LOAD_CONST 1
+        STORE_CONSTANT 0
         DISCARD_TOP
 
         LOAD_CONST 2
@@ -1823,6 +1889,23 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_discard_splat_assignment(self, space):
+        self.assert_compiles(space, """
+        * = 1, 2
+        """, """
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_ARRAY 2
+        DUP_TOP
+        COERCE_ARRAY
+        UNPACK_SEQUENCE_SPLAT 1 0
+        DISCARD_TOP
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
     def test_alias(self, space):
         bc = self.assert_compiles(space, """
         alias a b
@@ -1844,3 +1927,173 @@ class TestCompiler(object):
         assert space.symbol_w(w_a) == "a"
         assert space.symbol_w(w_b) == "b"
         assert space.symbol_w(w_alias_method) == "alias_method"
+
+    def test_defined(self, space):
+        self.assert_compiles(space, """
+        defined? Const
+        defined? @a
+        defined? nil.nil?
+        """, """
+        LOAD_SCOPE
+        DEFINED_LOCAL_CONSTANT 0
+        DISCARD_TOP
+
+        LOAD_SELF
+        DEFINED_INSTANCE_VAR 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        DEFINED_METHOD 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+
+    def test_super(self, space):
+        bc = self.assert_compiles(space, """
+        super
+        """, """
+        LOAD_SELF
+        SEND_SUPER 0 0
+        DISCARD_TOP
+
+        LOAD_CONST 1
+        RETURN
+        """)
+        assert bc.consts_w[0] is space.w_nil
+
+        bc = self.assert_compiles(space, """
+        def f(a, b, c)
+            super
+        end
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        LOAD_CONST 0
+        LOAD_CONST 1
+        BUILD_FUNCTION
+        DEFINE_FUNCTION
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[1], """
+        LOAD_SELF
+        LOAD_LOCAL 0
+        LOAD_LOCAL 1
+        LOAD_LOCAL 2
+        SEND_SUPER 0 3
+        RETURN
+        """)
+        assert space.str_w(bc.consts_w[1].consts_w[0]) == "f"
+
+        bc = self.assert_compiles(space, """
+        super(1, 2, 3)
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND_SUPER 3 3
+        DISCARD_TOP
+
+        LOAD_CONST 4
+        RETURN
+        """)
+
+    def test_next_block(self, space):
+        bc = self.assert_compiles(space, """
+        f {
+            next 5
+            3 + 4
+        }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        RETURN
+
+        LOAD_CONST 1
+        LOAD_CONST 2
+        SEND 3 1
+        RETURN
+        """)
+
+    def test_next_loop(self, space):
+        self.assert_compiles(space, """
+        while true do
+            next
+            2 + 2
+        end
+        """, """
+        SETUP_LOOP 34
+        LOAD_CONST 0
+        JUMP_IF_FALSE 30
+
+        LOAD_CONST 1
+        CONTINUE_LOOP 3
+        LOAD_CONST 2
+        LOAD_CONST 3
+        SEND 4 1
+        DISCARD_TOP
+        JUMP 3
+        POP_BLOCK
+        LOAD_CONST 1
+        DISCARD_TOP
+
+        LOAD_CONST 0
+        RETURN
+        """)
+
+    def test_break_loop(self, space):
+        self.assert_compiles(space, """
+        while true
+            break 5
+        end
+        """, """
+        SETUP_LOOP 21
+        LOAD_CONST 0
+        JUMP_IF_FALSE 17
+
+        LOAD_CONST 1
+        BREAK_LOOP
+        DISCARD_TOP
+        JUMP 3
+        POP_BLOCK
+        LOAD_CONST 2
+        DISCARD_TOP
+
+        LOAD_CONST 0
+        RETURN
+        """)
+
+    def test_break_block(self, space):
+        bc = self.assert_compiles(space, """
+        f { break 5 }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_CONST 0
+        RAISE_BREAK
+        RETURN
+        """)

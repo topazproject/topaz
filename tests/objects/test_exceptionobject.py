@@ -4,6 +4,14 @@ from ..base import BaseRuPyPyTest
 
 
 class TestExceptionObject(BaseRuPyPyTest):
+    def test_name(self, space):
+        space.execute("""
+        Exception
+        LoadError
+        SyntaxError
+        NameError
+        """)
+
     def test_new(self, space):
         w_res = space.execute("return TypeError.new")
         assert isinstance(w_res, W_TypeError)
@@ -35,3 +43,71 @@ class TestExceptionObject(BaseRuPyPyTest):
     def test_systemcallerror(self, space):
         w_res = space.execute("return SystemCallError.new('msg', 1).errno")
         assert space.int_w(w_res) == 1
+
+    def test_message(self, space):
+        w_res = space.execute("""
+        begin
+            raise "foo"
+        rescue StandardError => e
+            return e.message
+        end
+        """)
+        assert self.unwrap(space, w_res) == "foo"
+
+    def test_backtrace(self, space):
+        w_res = space.execute("""
+        def f
+            yield
+        end
+        begin
+            f { 1 / 0}
+        rescue Exception => e
+            return e.backtrace
+        end
+        """)
+        assert self.unwrap(space, w_res) == [
+            "-e:6:in `/'",
+            "-e:6:in `block in <main>'",
+            "-e:3:in `f'",
+            "-e:6:in `<main>'"
+        ]
+
+    def test_backtrace_complex(self, space):
+        w_res = space.execute("""
+        def f
+            1 / 0
+        end
+
+
+        def g
+            begin
+                f
+            rescue => e
+                return e
+            end
+        end
+
+        def h
+            e = g
+            nil
+            nil
+            nil
+            nil
+            @e = e
+        end
+
+        def i
+            h
+            @e
+        end
+
+        return i.backtrace
+        """)
+        assert self.unwrap(space, w_res) == [
+            "-e:3:in `/'",
+            "-e:3:in `f'",
+            "-e:9:in `g'",
+            "-e:16:in `h'",
+            "-e:25:in `i'",
+            "-e:29:in `<main>'",
+        ]

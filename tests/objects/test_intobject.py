@@ -20,6 +20,20 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 2 - 3.5")
         assert space.float_w(w_res) == -1.5
 
+    def test_division(self, space):
+        w_res = space.execute("return 3 / 5")
+        assert space.int_w(w_res) == 0
+
+    def test_left_shift(self, space):
+        w_res = space.execute("return 3 << 4")
+        assert space.int_w(w_res) == 48
+        w_res = space.execute("return 48 << -4")
+        assert space.int_w(w_res) == 3
+
+    def test_xor(self, space):
+        w_res = space.execute("return 12 ^ 15")
+        assert space.int_w(w_res) == 3
+
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
         assert w_res is space.w_true
@@ -48,6 +62,10 @@ class TestFixnumObject(BaseRuPyPyTest):
 
     def test_less(self, space):
         w_res = space.execute("return 1 < 2")
+        assert w_res is space.w_true
+
+    def test_less_equal(self, space):
+        w_res = space.execute("return 1 <= 1")
         assert w_res is space.w_true
 
     def test_greater(self, space):
@@ -84,6 +102,12 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 1 <=> '1'")
         assert w_res is space.w_nil
 
+    def test_eqlp(self, space):
+        w_res = space.execute("return 1.eql? 1.0")
+        assert w_res is space.w_false
+        w_res = space.execute("return 1.eql? 1")
+        assert w_res is space.w_true
+
     def test_to_i(self, space):
         w_res = space.execute("return [1.to_i, 1.to_int]")
         assert self.unwrap(space, w_res) == [1, 1]
@@ -118,6 +142,10 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_succ(self, space):
         w_res = space.execute("return -1.succ")
         assert self.unwrap(space, w_res) == 0
-        
+
         w_res = space.execute("return 7.succ")
         assert self.unwrap(space, w_res) == 8
+
+    def test_zero(self, space):
+        w_res = space.execute("return [0.zero?, 2.zero?]")
+        assert self.unwrap(space, w_res) == [True, False]

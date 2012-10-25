@@ -7,8 +7,11 @@ from pypy.rlib.objectmodel import hlinvoke
 from pypy.rlib.rarithmetic import r_uint, intmask, LONG_BIT
 from pypy.rpython.extregistry import ExtRegistryEntry
 from pypy.rpython.lltypesystem import lltype
-from pypy.rpython.rmodel import Repr, externalvsinternal
+from pypy.rpython.rmodel import Repr, IteratorRepr, externalvsinternal
 from pypy.tool.pairtype import pairtype
+
+
+MARKER = object()
 
 
 class OrderedDict(object):
@@ -23,14 +26,39 @@ class OrderedDict(object):
     def __setitem__(self, key, value):
         self.contents[self._key(key)] = value
 
+    def __delitem__(self, key):
+        del self.contents[self._key(key)]
+
+    def __contains__(self, key):
+        return self._key(key) in self.contents
+
+    def __len__(self):
+        return len(self.contents)
+
     def _key(self, key):
         return DictKey(self, key)
 
     def keys(self):
         return [k.key for k in self.contents.keys()]
 
+    def values(self):
+        return self.contents.values()
+
+    def iteritems(self):
+        for k, v in self.contents.iteritems():
+            yield k.key, v
+
     def get(self, key, default):
         return self.contents.get(self._key(key), default)
+
+    def pop(self, key, default=MARKER):
+        if default is MARKER:
+            return self.contents.pop(self._key(key))
+        else:
+            return self.contents.pop(self._key(key), default)
+
+    def update(self, d):
+        self.contents.update(d.contents)
 
 
 class DictKey(object):
@@ -48,130 +76,115 @@ class DictKey(object):
 class OrderedDictEntry(ExtRegistryEntry):
     _about_ = OrderedDict
 
-    def compute_result_annotation(self, eq_func=None, hash_func=None):
-        assert eq_func is None or eq_func.is_constant()
-        assert hash_func is None or hash_func.is_constant()
-        return SomeOrderedDict(getbookkeeper(), eq_func, hash_func)
+    def compute_result_annotation(self, s_eq_func=None, s_hash_func=None):
+        assert s_eq_func is None or s_eq_func.is_constant()
+        assert s_hash_func is None or s_hash_func.is_constant()
+
+        if s_eq_func is None and s_hash_func is None:
+            dictdef = getbookkeeper().getdictdef()
+        else:
+            dictdef = getbookkeeper().getdictdef(is_r_dict=True)
+            dictdef.dictkey.update_rdict_annotations(s_eq_func, s_hash_func)
+
+        return SomeOrderedDict(getbookkeeper(), dictdef,)
 
     def specialize_call(self, hop):
         return hop.r_result.rtyper_new(hop)
 
 
 class SomeOrderedDict(model.SomeObject):
-    def __init__(self, bookkeeper, eq_func, hash_func):
+    def __init__(self, bookkeeper, dictdef):
         self.bookkeeper = bookkeeper
-
-        self.eq_func = eq_func
-        self.hash_func = hash_func
-
-        self.key_type = model.s_ImpossibleValue
-        self.value_type = model.s_ImpossibleValue
-
-        self.key_read_locations = set()
-        self.value_read_locations = set()
+        self.dictdef = dictdef
 
     def __eq__(self, other):
         if not isinstance(other, SomeOrderedDict):
             return NotImplemented
-        return (self.eq_func == other.eq_func and
-            self.hash_func == other.hash_func and
-            self.key_type == other.key_type and
-            self.value_type == other.value_type
-        )
+        return self.dictdef.same_as(other.dictdef)
 
     def rtyper_makerepr(self, rtyper):
-        key_repr = rtyper.getrepr(self.key_type)
-        value_repr = rtyper.getrepr(self.value_type)
-        if self.eq_func is not None:
-            eq_func_repr = rtyper.getrepr(self.eq_func)
+        key_repr = rtyper.getrepr(self.dictdef.dictkey.s_value)
+        value_repr = rtyper.getrepr(self.dictdef.dictvalue.s_value)
+        if self.dictdef.dictkey.custom_eq_hash:
+            eq_func_repr = rtyper.getrepr(self.dictdef.dictkey.s_rdict_eqfn)
+            hash_func_repr = rtyper.getrepr(self.dictdef.dictkey.s_rdict_hashfn)
         else:
             eq_func_repr = None
-        if self.hash_func is not None:
-            hash_func_repr = rtyper.getrepr(self.hash_func)
-        else:
             hash_func_repr = None
         return OrderedDictRepr(rtyper, key_repr, value_repr, eq_func_repr, hash_func_repr)
 
     def rtyper_makekey(self):
-        return (type(self), self.key_type, self.value_type, self.eq_func, self.hash_func)
-
-    def generalize_key(self, s_key):
-        new_key_type = model.unionof(self.key_type, s_key)
-        if model.isdegenerated(new_key_type):
-            self.bookkeeper.ondegenerated(self, new_key_type)
-        updated = new_key_type != self.key_type
-        if updated:
-            self.key_type = new_key_type
-            for position_key in self.key_read_locations:
-                self.bookkeeper.annotator.reflowfromposition(position_key)
-            self.emulate_rdict_calls()
-
-    def generalize_value(self, s_value):
-        new_value_type = model.unionof(self.value_type, s_value)
-        if model.isdegenerated(new_value_type):
-            self.bookkeeper.ondegenerated(self, new_value_type)
-        if new_value_type != self.value_type:
-            self.value_type = new_value_type
-            for position_key in self.value_read_locations:
-                self.bookkeeper.annotator.reflowfromposition(position_key)
-
-    def read_key(self):
-        position_key = self.bookkeeper.position_key
-        self.key_read_locations.add(position_key)
-        return self.key_type
-
-    def read_value(self):
-        position_key = self.bookkeeper.position_key
-        self.value_read_locations.add(position_key)
-        return self.value_type
-
-    def emulate_rdict_calls(self):
-        if self.eq_func and self.hash_func:
-            def check_eq_func(annotator, graph):
-                s = annotator.binding(graph.getreturnvar())
-                assert model.s_Bool.contains(s)
-
-            self.bookkeeper.emulate_pbc_call(
-                (self, "eq"), self.eq_func, [self.key_type, self.key_type],
-                replace=(), callback=check_eq_func
-            )
-
-            def check_hash_func(annotator, graph):
-                s = annotator.binding(graph.getreturnvar())
-                assert model.SomeInteger().contains(s)
-
-            self.bookkeeper.emulate_pbc_call(
-                (self, "hash"), self.hash_func, [self.key_type],
-                replace=(), callback=check_hash_func
-            )
+        return (type(self), self.dictdef.dictkey, self.dictdef.dictvalue)
 
     def method_keys(self):
-        return self.bookkeeper.newlist(self.read_key())
+        return self.bookkeeper.newlist(self.dictdef.read_key())
+
+    def method_values(self):
+        return self.bookkeeper.newlist(self.dictdef.read_value())
+
+    def method_iteritems(self):
+        return SomeOrderedDictIterator(self)
 
     def method_get(self, s_key, s_default):
-        self.generalize_key(s_key)
-        self.generalize_value(s_default)
-        return self.read_value()
+        self.dictdef.generalize_key(s_key)
+        self.dictdef.generalize_value(s_default)
+        return self.dictdef.read_value()
+
+    def method_pop(self, s_key, s_default=None):
+        self.dictdef.generalize_key(s_key)
+        if s_default is not None:
+            self.dictdef.generalize_value(s_default)
+        return self.dictdef.read_value()
+
+    def method_update(self, s_dict):
+        assert isinstance(s_dict, SomeOrderedDict)
+        self.dictdef.union(s_dict.dictdef)
+
+
+class SomeOrderedDictIterator(model.SomeObject):
+    def __init__(self, d):
+        super(SomeOrderedDictIterator, self).__init__()
+        self.d = d
+
+    def rtyper_makerepr(self, rtyper):
+        return OrderedDictIteratorRepr(rtyper.getrepr(self.d))
+
+    def rtyper_makekey(self):
+        return (type(self), self.d)
+
+    def iter(self):
+        return self
+
+    def next(self):
+        s_key = self.d.dictdef.read_key()
+        s_value = self.d.dictdef.read_value()
+        if (isinstance(s_key, model.SomeImpossibleValue) or
+            isinstance(s_value, model.SomeImpossibleValue)):
+            return model.s_ImpossibleValue
+        return model.SomeTuple((s_key, s_value))
+    method_next = next
 
 
 class __extend__(pairtype(SomeOrderedDict, SomeOrderedDict)):
     def union((d1, d2)):
-        assert (d1.eq_func is d2.eq_func is None) or (d1.eq_func.const is d2.eq_func.const)
-        assert (d1.hash_func is d2.hash_func is None) or (d1.hash_func.const is d2.hash_func.const)
-        s_new = SomeOrderedDict(d1.bookkeeper, d1.eq_func, d1.hash_func)
-        s_new.key_type = d1.key_type = model.unionof(d1.key_type, d2.key_type)
-        s_new.value_type = d1.value_type = model.unionof(d1.value_type, d2.value_type)
-        return s_new
+        return SomeOrderedDict(getbookkeeper(), d1.dictdef.union(d2.dictdef))
 
 
 class __extend__(pairtype(SomeOrderedDict, model.SomeObject)):
     def setitem((self, key), s_value):
-        self.generalize_key(key)
-        self.generalize_value(s_value)
+        self.dictdef.generalize_key(key)
+        self.dictdef.generalize_value(s_value)
 
     def getitem((self, key)):
+        self.dictdef.generalize_key(key)
+        return self.dictdef.read_value()
+
+    def delitem((self, key)):
+        self.dictdef.generalize_key(key)
+
+    def contains((self, key)):
         self.generalize_key(key)
-        return self.read_value()
+        return model.s_Bool
 
 
 class OrderedDictRepr(Repr):
@@ -190,15 +203,22 @@ class OrderedDictRepr(Repr):
         else:
             return externalvsinternal(self.rtyper, item_repr)
 
+    def _must_clear(self, ll_tp):
+        return isinstance(ll_tp, lltype.Ptr) and ll_tp._needsgc()
+
     def create_lowlevel_type(self):
         entry_methods = {
             "valid": LLOrderedDict.ll_valid_from_flag,
             "everused": LLOrderedDict.ll_everused_from_flag,
+            "mark_deleted": LLOrderedDict.ll_mark_deleted_in_flag,
+            "must_clear_key": self._must_clear(self.key_repr.lowleveltype),
+            "must_clear_value": self._must_clear(self.value_repr.lowleveltype),
         }
         fields = [
             ("key", self.key_repr.lowleveltype),
             ("value", self.value_repr.lowleveltype),
             ("next", lltype.Signed),
+            ("prev", lltype.Signed),
             ("everused", lltype.Bool),
             ("valid", lltype.Bool),
         ]
@@ -258,15 +278,68 @@ class OrderedDictRepr(Repr):
             hop.genop("setfield", [v_res, cname, v_hash])
         return v_res
 
+    def rtype_len(self, hop):
+        [v_dict] = hop.inputargs(self)
+        return hop.gendirectcall(LLOrderedDict.ll_len, v_dict)
+
     def rtype_method_keys(self, hop):
         [v_dict] = hop.inputargs(self)
         r_list = hop.r_result
         c_LIST = hop.inputconst(lltype.Void, r_list.lowleveltype.TO)
         return hop.gendirectcall(LLOrderedDict.ll_keys, c_LIST, v_dict)
 
+    def rtype_method_values(self, hop):
+        [v_dict] = hop.inputargs(self)
+        r_list = hop.r_result
+        c_LIST = hop.inputconst(lltype.Void, r_list.lowleveltype.TO)
+        return hop.gendirectcall(LLOrderedDict.ll_values, c_LIST, v_dict)
+
+    def rtype_method_iteritems(self, hop):
+        return OrderedDictIteratorRepr(self).newiter(hop)
+
     def rtype_method_get(self, hop):
         v_dict, v_key, v_default = hop.inputargs(self, self.key_repr, self.value_repr)
         return hop.gendirectcall(LLOrderedDict.ll_get, v_dict, v_key, v_default)
+
+    def rtype_method_pop(self, hop):
+        if hop.nb_args == 2:
+            v_args = hop.inputargs(self, self.key_repr)
+            target = LLOrderedDict.ll_pop
+        elif hop.nb_args == 3:
+            v_args = hop.inputargs(self, self.key_repr, self.value_repr)
+            target = LLOrderedDict.ll_pop_default
+        hop.exception_is_here()
+        v_res = hop.gendirectcall(target, *v_args)
+        return self.recast_value(hop, v_res)
+
+    def rtype_method_update(self, hop):
+        [v_dict, v_other] = hop.inputargs(self, self)
+        return hop.gendirectcall(LLOrderedDict.ll_update, v_dict, v_other)
+
+
+class OrderedDictIteratorRepr(IteratorRepr):
+    def __init__(self, r_dict):
+        super(OrderedDictIteratorRepr, self).__init__()
+        self.r_dict = r_dict
+
+        self.lowleveltype = self.create_lowlevel_type()
+
+    def create_lowlevel_type(self):
+        return lltype.Ptr(lltype.GcStruct("ORDEREDDICTITER",
+            ("d", self.r_dict.lowleveltype),
+            ("index", lltype.Signed),
+        ))
+
+    def newiter(self, hop):
+        [v_dict] = hop.inputargs(self.r_dict)
+        c_TP = hop.inputconst(lltype.Void, self.lowleveltype.TO)
+        return hop.gendirectcall(LLOrderedDict.ll_newdictiter, c_TP, v_dict)
+
+    def rtype_next(self, hop):
+        [v_iter] = hop.inputargs(self)
+        c_TP = hop.inputconst(lltype.Void, hop.r_result.lowleveltype)
+        hop.exception_is_here()
+        return hop.gendirectcall(LLOrderedDict.ll_dictiternext, c_TP, v_iter)
 
 
 class __extend__(pairtype(OrderedDictRepr, Repr)):
@@ -281,6 +354,15 @@ class __extend__(pairtype(OrderedDictRepr, Repr)):
         hop.exception_is_here()
         v_res = hop.gendirectcall(LLOrderedDict.ll_getitem, v_dict, v_key)
         return self.recast_value(hop, v_res)
+
+    def rtype_delitem((self, r_key), hop):
+        v_dict, v_key = hop.inputargs(self, self.key_repr)
+        hop.exception_is_here()
+        hop.gendirectcall(LLOrderedDict.ll_delitem, v_dict, v_key)
+
+    def rtype_contains((self, r_key), hop):
+        v_dict, v_key = hop.inputargs(self, self.key_repr)
+        return hop.gendirectcall(LLOrderedDict.ll_contains, v_dict, v_key)
 
 
 class __extend__(pairtype(OrderedDictRepr, OrderedDictRepr)):
@@ -306,6 +388,10 @@ class LLOrderedDict(object):
     @staticmethod
     def ll_everused_from_flag(entries, i):
         return entries[i].everused
+
+    @staticmethod
+    def ll_mark_deleted_in_flag(entries, i):
+        entries[i].valid = False
 
     @staticmethod
     def ll_hashkey_custom(d, key):
@@ -344,9 +430,12 @@ class LLOrderedDict(object):
         return d
 
     @staticmethod
+    def ll_len(d):
+        return d.num_items
+
+    @staticmethod
     def ll_lookup(d, key, hash):
         entries = d.entries
-        ENTRIES = lltype.typeOf(entries).TO
         mask = len(entries) - 1
         i = hash & mask
         if entries.valid(i):
@@ -418,6 +507,7 @@ class LLOrderedDict(object):
             d.first_entry = i
         else:
             d.entries[d.last_entry].next = i
+        entry.prev = d.last_entry
         d.last_entry = i
         entry.next = -1
         if not everused:
@@ -434,6 +524,39 @@ class LLOrderedDict(object):
             return d.entries[i].value
         else:
             raise KeyError
+
+    @staticmethod
+    def ll_delitem(d, key):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        if i & LLOrderedDict.HIGHEST_BIT:
+            raise KeyError
+        LLOrderedDict._ll_del(d, i)
+
+    @staticmethod
+    def _ll_del(d, i):
+        d.entries.mark_deleted(i)
+        d.num_items -= 1
+        entry = d.entries[i]
+        if entry.prev == -1:
+            d.first_entry = entry.next
+        else:
+            d.entries[entry.prev].next = entry.next
+        if entry.next == -1:
+            d.last_entry = entry.prev
+        else:
+            d.entries[entry.next].prev = entry.prev
+
+        ENTRIES = lltype.typeOf(d.entries).TO
+        ENTRY = ENTRIES.OF
+        if ENTRIES.must_clear_key:
+            entry.key = lltype.nullptr(ENTRY.key.TO)
+        if ENTRIES.must_clear_value:
+            entry.value = lltype.nullptr(ENTRY.value.TO)
+
+    @staticmethod
+    def ll_contains(d, key):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        return not bool(i & LLOrderedDict.HIGHEST_BIT)
 
     @staticmethod
     def ll_resize(d):
@@ -479,6 +602,7 @@ class LLOrderedDict(object):
             d.first_entry = i
         else:
             d.entries[d.last_entry].next = i
+        entry.prev = d.last_entry
         d.last_entry = i
         entry.next = -1
         d.resize_counter -= 3
@@ -509,9 +633,65 @@ class LLOrderedDict(object):
         return res
 
     @staticmethod
+    def ll_values(LIST, d):
+        res = LIST.ll_newlist(d.num_items)
+        ELEM = lltype.typeOf(res.ll_items()).TO.OF
+        i = 0
+        idx = d.first_entry
+        while idx != -1:
+            res.ll_items()[i] = LLOrderedDict.recast(ELEM, d.entries[idx].value)
+            idx = d.entries[idx].next
+            i += 1
+        return res
+
+    @staticmethod
     def ll_get(d, key, default):
         i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
         if not i & LLOrderedDict.HIGHEST_BIT:
             return d.entries[i].value
         else:
             return default
+
+    @staticmethod
+    def ll_pop(d, key):
+        i = LLOrderedDict.ll_lookup(d, key, d.hashkey(key))
+        if not i & LLOrderedDict.HIGHEST_BIT:
+            value = d.entries[i].value
+            LLOrderedDict._ll_del(d, i)
+            return value
+        else:
+            raise KeyError
+
+    @staticmethod
+    def ll_pop_default(d, key, default):
+        try:
+            return LLOrderedDict.ll_pop(d, key)
+        except KeyError:
+            return default
+
+    @staticmethod
+    def ll_update(d, other):
+        idx = other.first_entry
+        while idx != -1:
+            entry = other.entries[idx]
+            i = LLOrderedDict.ll_lookup(d, entry.key, other.entries.hash(idx))
+            LLOrderedDict.ll_setitem_lookup_done(d, entry.key, entry.value, other.entries.hash(idx), i)
+            idx = entry.next
+
+    @staticmethod
+    def ll_newdictiter(ITER, d):
+        it = lltype.malloc(ITER)
+        it.d = d
+        it.index = d.first_entry
+        return it
+
+    @staticmethod
+    def ll_dictiternext(RESTYPE, it):
+        if it.index == -1:
+            raise StopIteration
+        r = lltype.malloc(RESTYPE.TO)
+        entry = it.d.entries[it.index]
+        r.item0 = LLOrderedDict.recast(RESTYPE.TO.item0, entry.key)
+        r.item1 = LLOrderedDict.recast(RESTYPE.TO.item1, entry.value)
+        it.index = entry.next
+        return r
