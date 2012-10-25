@@ -24,6 +24,14 @@ class W_Dir(W_Object):
             raise space.error(space.w_SystemCallError, msg, [w_errno])
         self.path = path
 
+    @classdef.method("close")
+    def method_close(self, space):
+        return self
+
+    @classdef.method("path")
+    def method_path(self, space):
+        return space.newstr_fromstr(self.path)
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_Dir(space)
