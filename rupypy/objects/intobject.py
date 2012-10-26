@@ -94,6 +94,10 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.newint(self.intvalue << other)
 
+    @classdef.method("^", other="int")
+    def method_xor(self, space, other):
+        return space.newint(self.intvalue ^ other)
+
     @classdef.method("==")
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_FixnumObject):
@@ -110,6 +114,10 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("<", other="int")
     def method_lt(self, space, other):
         return space.newbool(self.intvalue < other)
+
+    @classdef.method("<=", other="int")
+    def method_lte(self, space, other):
+        return space.newbool(self.intvalue <= other)
 
     @classdef.method(">", other="int")
     def method_gt(self, space, other):

@@ -1824,6 +1824,9 @@ HERE
         assert space.parse("not 3") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(3), "!", [], None, 1))
         ]))
+        assert space.parse("f not(3)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.Send(ast.ConstantInt(3), "!", [], None, 1)], None, 1))
+        ]))
 
     def test_inline_if(self, space):
         assert space.parse("return 5 if 3") == ast.Main(ast.Block([
@@ -2091,6 +2094,16 @@ HERE
             ast.Statement(ast.OrEqual(ast.Variable("x", 2), ast.Hash([])))
         ]))
 
+    def test_new_hash(self, space):
+        r = space.parse("{a: 2, :b => 3, c: 4}")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Hash([
+                (ast.ConstantSymbol("a"), ast.ConstantInt(2)),
+                (ast.ConstantSymbol("b"), ast.ConstantInt(3)),
+                (ast.ConstantSymbol("c"), ast.ConstantInt(4)),
+            ]))
+        ]))
+
     def test_newline(self, space):
         r = space.parse("""
         x = 123 &&
@@ -2227,3 +2240,35 @@ HERE
             assert space.parse("[]{}[]")
         with self.raises(space, "SyntaxError", "line 10"):
             assert space.parse("[]{}[]", 10)
+
+    def test_lineno(self, space):
+        r = space.parse("""
+        <<HERE
+
+HERE
+        __LINE__
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("\n")),
+            ast.Statement(ast.Line(5)),
+        ]))
+
+        r = space.parse("""
+        %W(hello
+           world)
+        __LINE__
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.ConstantString("hello"), ast.ConstantString("world")])),
+            ast.Statement(ast.Line(4)),
+        ]))
+
+        r = space.parse("""
+        %w(a\\
+b)
+        __LINE__
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Array([ast.ConstantString("a\nb")])),
+            ast.Statement(ast.Line(4)),
+        ]))

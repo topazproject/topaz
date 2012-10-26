@@ -10,6 +10,12 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute('return "abc" + "def" + "ghi"')
         assert space.str_w(w_res) == "abcdefghi"
 
+    def test_mul(self, space):
+        w_res = space.execute("return 'abc' * 2")
+        assert space.str_w(w_res) == "abcabc"
+        w_res = space.execute("return ('abc' << 'def') * 3")
+        assert space.str_w(w_res) == "abcdefabcdefabcdef"
+
     def test_to_s(self, space):
         w_res = space.execute('return "ABC".to_s')
         assert space.str_w(w_res) == "ABC"
@@ -87,6 +93,12 @@ class TestStringObject(BaseRuPyPyTest):
         return 'A' <=> A.new
         """)
         assert space.int_w(w_res) == 0
+
+    def test_eqlp(self, space):
+        w_res = space.execute("return 'abc'.eql? 2")
+        assert w_res is space.w_false
+        w_res = space.execute("return 'abc'.eql? 'abc'")
+        assert w_res is space.w_true
 
     def test_hash(self, space):
         w_res = space.execute("""

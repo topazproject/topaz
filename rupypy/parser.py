@@ -241,6 +241,9 @@ class Parser(object):
             base = 2
         else:
             base = 10
+        if base != 10:
+            # Strip off the leading 0[xob]
+            s = s[2:]
         return int(s, base)
 
     pg = ParserGenerator([
@@ -1487,12 +1490,7 @@ class Parser(object):
 
     @pg.production("primary : NOT LPAREN2 expr rparen")
     def primary_not_paren_expr(self, p):
-        """
-        kNOT tLPAREN2 expr rparen {
-                    $$ = support.getOperatorCallNode(support.getConditionNode($3), "!");
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[2], self.new_token(p[0], "!", "!"), None)
 
     @pg.production("primary : NOT LPAREN2 rparen")
     def primary_not_paren(self, p):
@@ -2807,13 +2805,7 @@ class Parser(object):
 
     @pg.production("assoc : LABEL arg_value")
     def assoc_label(self, p):
-        """
-        tLABEL arg_value {
-                    ISourcePosition pos = $1.getPosition();
-                    $$ = support.newArrayNode(pos, new SymbolNode(pos, (String) $1.getValue())).add($2);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(self.new_list(self.new_symbol(p[0])), p[1])
 
     @pg.production("operation : FID")
     @pg.production("operation : CONSTANT")

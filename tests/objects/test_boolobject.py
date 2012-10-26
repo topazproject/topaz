@@ -35,6 +35,10 @@ class TestFalseObject(BaseRuPyPyTest):
         w_res = space.execute("return false.to_s")
         assert space.str_w(w_res) == "false"
 
+    def test_inspect(self, space):
+        w_res = space.execute("return false.inspect")
+        assert space.str_w(w_res) == "false"
+
     def test_eql(self, space):
         w_res = space.execute("return false == false")
         assert self.unwrap(space, w_res) is True

@@ -96,7 +96,11 @@ class Lexer(object):
         del self.current_value[:]
 
     def current_pos(self):
-        return SourcePosition(self.get_idx(), self.get_lineno(), self.get_columno())
+        return SourcePosition(self.idx, self.lineno, self.columno)
+
+    def newline(self):
+        self.lineno += 1
+        self.columno = 1
 
     def emit(self, token):
         value = "".join(self.current_value)
@@ -129,8 +133,7 @@ class Lexer(object):
                 self.comment(ch)
             elif ch == "\n":
                 space_seen = True
-                self.lineno += 1
-                self.columno = 1
+                self.newline()
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
                     self.add(ch)
                     self.command_start = True
@@ -221,8 +224,7 @@ class Lexer(object):
             elif ch == "\\":
                 ch2 = self.read()
                 if ch2 == "\n":
-                    self.lineno += 1
-                    self.columno = 1
+                    self.newline()
                     space_seen = True
                     continue
                 raise NotImplementedError
@@ -258,15 +260,6 @@ class Lexer(object):
         self.idx = idx
         self.columno -= 1
 
-    def get_idx(self):
-        return self.idx
-
-    def get_lineno(self):
-        return self.lineno
-
-    def get_columno(self):
-        return self.columno
-
     def is_beg(self):
         return self.state in [self.EXPR_BEG, self.EXPR_MID, self.EXPR_CLASS, self.EXPR_VALUE]
 
@@ -287,7 +280,11 @@ class Lexer(object):
         state = self.state
         if value in self.keywords and self.state != self.EXPR_DOT:
             keyword = self.keywords[value]
-            self.state = keyword.state
+
+            if keyword.normal_token == "NOT":
+                self.state = self.EXPR_ARG
+            else:
+                self.state = keyword.state
 
             if keyword.normal_token == "DO":
                 return self.emit_do(state)
@@ -299,6 +296,12 @@ class Lexer(object):
                 if keyword.inline_token != keyword.normal_token:
                     self.state = self.EXPR_BEG
         else:
+            if (state == self.EXPR_BEG and not command_state) or self.is_arg():
+                ch = self.read()
+                if ch == ":" and self.peek() != ":":
+                    self.state = self.EXPR_BEG
+                    return self.emit("LABEL")
+                self.unread()
             if value[0].isupper():
                 token = self.emit("CONSTANT")
             else:
@@ -463,6 +466,7 @@ class Lexer(object):
         while True:
             ch = self.read()
             if ch == "\n":
+                self.newline()
                 break
             elif ch == self.EOF:
                 self.unread()
@@ -826,6 +830,9 @@ class Lexer(object):
             return ["\x1b"]
         elif c == "s":
             return [" "]
+        elif c == "\n":
+            self.newline()
+            return ["\n"]
         elif c == "u":
             raise NotImplementedError("UTF-8 escape not implemented")
         elif c == "x":
@@ -993,11 +1000,12 @@ class Lexer(object):
         else:
             if self.is_arg() or self.state in [self.EXPR_END, self.EXPR_ENDFN]:
                 tok = "LCURLY"
+                self.command_start = True
             elif self.state == self.EXPR_ENDARG:
                 tok = "LBRACE_ARG"
+                self.command_start = True
             else:
                 tok = "LBRACE"
-                self.command_start = True
             self.condition_state.stop()
             self.cmd_argument_state.stop()
             self.state = self.EXPR_BEG
@@ -1122,6 +1130,8 @@ class StringTerm(BaseStringTerm):
         space_seen = False
         if self.is_qwords and ch.isspace():
             while ch.isspace():
+                if ch == "\n":
+                    self.lexer.newline()
                 ch = self.lexer.read()
             space_seen = True
 
@@ -1248,6 +1258,7 @@ class HeredocTerm(BaseStringTerm):
         while True:
             ch = self.lexer.read()
             if ch == "\n":
+                self.lexer.newline()
                 self.lexer.add(ch)
                 self.start_of_line = True
                 return self.lexer.emit("STRING_CONTENT")
