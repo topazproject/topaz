@@ -30,6 +30,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 48 << -4")
         assert space.int_w(w_res) == 3
 
+    def test_xor(self, space):
+        w_res = space.execute("return 12 ^ 15")
+        assert space.int_w(w_res) == 3
+
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
         assert w_res is space.w_true
@@ -60,11 +64,7 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 1 < 2")
         assert w_res is space.w_true
 
-    def test_greater(self, space):
-        w_res = space.execute("return 1 > 2")
-        assert w_res is space.w_false
-
-    def test_less_or_equal_than(self, space):
+    def test_less_equal(self, space):
         assert space.execute("return 1 <= 2") is space.w_true
         assert space.execute("return 1 <= 1") is space.w_true
         assert space.execute("return 1 <= 1.1") is space.w_true
@@ -72,6 +72,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         assert space.execute("return 1 <= '1.1'") is space.w_true
         with self.raises(space, "ArgumentError", "comparison of Fixnum with String failed"):
             space.execute("return 1 <= 'a'")
+
+    def test_greater(self, space):
+        w_res = space.execute("return 1 > 2")
+        assert w_res is space.w_false
 
     def test_times(self, space):
         w_res = space.execute("""
@@ -102,6 +106,12 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_comparator_other_type(self, space):
         w_res = space.execute("return 1 <=> '1'")
         assert w_res is space.w_nil
+
+    def test_eqlp(self, space):
+        w_res = space.execute("return 1.eql? 1.0")
+        assert w_res is space.w_false
+        w_res = space.execute("return 1.eql? 1")
+        assert w_res is space.w_true
 
     def test_to_i(self, space):
         w_res = space.execute("return [1.to_i, 1.to_int]")

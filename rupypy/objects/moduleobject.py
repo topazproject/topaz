@@ -241,6 +241,17 @@ class W_ModuleObject(W_RootObject):
             varname = space.symbol_w(w_arg)
             self.define_method(space, varname, AttributeReader("@" + varname))
 
+    @classdef.method("attr")
+    def method_attr(self, space, args_w):
+        if len(args_w) == 2 and (args_w[1] is space.w_true or args_w[1] is space.w_false):
+            [w_name, w_writable] = args_w
+            if space.is_true(w_writable):
+                self.method_attr_accessor(space, [w_name])
+            else:
+                self.method_attr_reader(space, [w_name])
+        else:
+            self.method_attr_reader(space, args_w)
+
     @classdef.method("module_function", name="symbol")
     def method_module_function(self, space, name):
         self.attach_method(space, name, self._find_method_pure(space, name, self.version))

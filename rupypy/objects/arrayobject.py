@@ -73,7 +73,12 @@ class W_ArrayObject(W_Object):
             self.items_w[start] = w_obj
         elif as_range:
             assert end >= 0
-            self.items_w[start:end] = [w_obj]
+            w_converted = space.convert_type(w_obj, space.w_array, 'to_ary', raise_error=False)
+            if w_converted is space.w_nil:
+                rep = [w_obj]
+            else:
+                rep = space.listview(w_converted)
+            self.items_w[start:end] = rep
         else:
             self.items_w[start] = w_obj
         return w_obj
@@ -311,7 +316,37 @@ class W_ArrayObject(W_Object):
     end
     """)
 
+    classdef.app_method("""
+    def eql?(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.length != other.length
+            return false
+        end
+        self.each_with_index do |x, i|
+            if !x.eql?(other[i])
+                return false
+            end
+        end
+        return true
+    end
+    """)
+
     @classdef.method("clear")
     def method_clear(self):
         del self.items_w[:]
         return self
+
+    classdef.app_method("""
+    def hash
+        res = 0x345678
+        self.each do |x|
+            res = (1000003 * res) ^ x.hash
+        end
+        return res
+    end
+    """)

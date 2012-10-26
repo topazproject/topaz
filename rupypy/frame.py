@@ -55,8 +55,11 @@ class Frame(BaseFrame):
     def handle_args(self, space, bytecode, args_w, block):
         from rupypy.interpreter import Interpreter
 
-        assert len(args_w) >= (len(bytecode.arg_locs) - len(bytecode.defaults))
-        assert bytecode.splat_arg_pos != -1 or 0 <= len(bytecode.arg_locs) - len(args_w)
+        if (len(args_w) < (len(bytecode.arg_locs) - len(bytecode.defaults)) or
+            (bytecode.splat_arg_pos == -1 and len(args_w) > len(bytecode.arg_locs))):
+            raise space.error(space.w_ArgumentError,
+                "wrong number of arguments (%d for %d)" % (len(args_w), len(bytecode.arg_locs) - len(bytecode.defaults))
+            )
 
         ec = space.getexecutioncontext()
 
@@ -126,9 +129,6 @@ class Frame(BaseFrame):
     def has_contents(self):
         return True
 
-    def get_last_instr(self):
-        return self.last_instr
-
     def get_filename(self):
         return self.bytecode.filepath
 
@@ -153,9 +153,6 @@ class BuiltinFrame(BaseFrame):
 
     def has_contents(self):
         return self.backref() is not None
-
-    def get_last_instr(self):
-        return -1
 
     def get_filename(self):
         return self.backref().get_filename()

@@ -3,16 +3,22 @@ from pypy.rlib import jit
 from rupypy.error import RubyError
 
 
+class IntegerWrapper(object):
+    def __init__(self, value):
+        self.value = value
+
+
 class ExecutionContext(object):
     def __init__(self, space):
         self.space = space
         self.topframeref = jit.vref_None
+        self.last_instr_ref = None
 
     def enter(self, frame):
         frame.backref = self.topframeref
-        # TODO: this kills the JIT badly
-        if self.topframeref() is not None:
-            frame.back_last_instr = self.topframeref().get_last_instr()
+        if self.last_instr_ref is not None:
+            frame.back_last_instr = self.last_instr_ref.value
+            self.last_instr_ref = None
         self.topframeref = jit.virtual_ref(frame)
 
     def leave(self, frame, got_exception):

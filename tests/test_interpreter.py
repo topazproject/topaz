@@ -162,6 +162,14 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [False, True]
 
+    def test_class_returnvalue(self, space):
+        w_res = space.execute("""
+        return (class X
+            5
+        end)
+        """)
+        assert space.int_w(w_res) == 5
+
     def test_singleton_class(self, space):
         w_res = space.execute("""
         class X
@@ -182,6 +190,18 @@ class TestInterpreter(BaseRuPyPyTest):
 
         with self.raises(space, "NoMethodError"):
             space.execute("X.new.m")
+
+    def test_singleton_class_return_val(self, space):
+        w_res = space.execute("""
+        class X
+        end
+
+        x = X.new
+        return (class << x
+            5
+        end)
+        """)
+        assert space.int_w(w_res) == 5
 
     def test_constant(self, space):
         w_res = space.execute("Abc = 3; return Abc")
@@ -468,6 +488,13 @@ class TestInterpreter(BaseRuPyPyTest):
         return f(*2) { 5 }
         """)
         assert space.int_w(w_res) == 7
+        w_res = space.execute("""
+        def f(&a)
+            return a
+        end
+        return f(*[], &nil)
+        """)
+        assert w_res is space.w_nil
 
     def test_global_variables(self, space):
         w_res = space.execute("return $abc")
@@ -539,6 +566,12 @@ class TestInterpreter(BaseRuPyPyTest):
         return x[0]
         """)
         assert space.int_w(w_res) == 2
+        w_res = space.execute("""
+        x = [0]
+        x[*[0]] = 45
+        return x[0]
+        """)
+        assert space.int_w(w_res) == 45
 
     def test_empty_hash(self, space):
         space.execute("return {}")
@@ -949,6 +982,26 @@ class TestInterpreter(BaseRuPyPyTest):
         return Foo
         """)
         assert space.int_w(w_res) == 10
+
+    def test_call_too_few_args(self, space):
+        space.execute("""
+        def f(a, b=2)
+        end
+        def g(a, b, *c)
+        end
+        """)
+        with self.raises(space, "ArgumentError", "wrong number of arguments (0 for 1)"):
+            space.execute("f")
+        with self.raises(space, "ArgumentError", "wrong number of arguments (0 for 2)"):
+            space.execute("g")
+
+    def test_call_too_many_args(self, space):
+        space.execute("""
+        def f
+        end
+        """)
+        with self.raises(space, "ArgumentError", "wrong number of arguments (3 for 0)"):
+            space.execute("f 1, 2, 3")
 
 
 class TestBlocks(BaseRuPyPyTest):

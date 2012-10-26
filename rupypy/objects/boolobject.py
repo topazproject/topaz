@@ -5,13 +5,10 @@ from rupypy.objects.objectobject import W_Object
 class W_TrueObject(W_Object):
     classdef = ClassDef("TrueClass", W_Object.classdef)
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("true")
-
-    @classdef.method("inspect")
-    def method_inspect(self, space):
-        return space.send(self, space.newsymbol("to_s"))
 
     @classdef.method("==")
     def method_eq(self, space, w_other):
@@ -28,6 +25,7 @@ class W_FalseObject(W_Object):
     def is_true(self, space):
         return False
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr("false")

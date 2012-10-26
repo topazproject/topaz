@@ -255,8 +255,6 @@ class Class(Node):
 
         body_ctx = ctx.get_subctx("<class:%s>" % self.name, self)
         self.body.compile(body_ctx)
-        body_ctx.emit(consts.DISCARD_TOP)
-        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
@@ -275,8 +273,6 @@ class SingletonClass(Node):
 
         body_ctx = ctx.get_subctx("singletonclass", self)
         self.body.compile(body_ctx)
-        body_ctx.emit(consts.DISCARD_TOP)
-        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
@@ -391,6 +387,7 @@ class Case(Node):
                     next_expr = ctx.new_block()
                     ctx.emit(consts.DUP_TOP)
                     expr.compile(ctx)
+                    ctx.emit(consts.ROT_TWO)
                     ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
                     ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
                     ctx.use_next_block(next_expr)
@@ -785,9 +782,17 @@ class Subscript(Node):
 
     def compile_receiver(self, ctx):
         self.target.compile(ctx)
-        for arg in self.args:
-            arg.compile(ctx)
-        ctx.emit(consts.BUILD_ARRAY, len(self.args))
+        if self.is_splat():
+            for arg in self.args:
+                arg.compile(ctx)
+                if not isinstance(arg, Splat):
+                    ctx.emit(consts.BUILD_ARRAY, 1)
+            for i in range(len(self.args) - 1):
+                ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+        else:
+            for arg in self.args:
+                arg.compile(ctx)
+            ctx.emit(consts.BUILD_ARRAY, len(self.args))
         return 2
 
     def compile_load(self, ctx):
@@ -797,6 +802,12 @@ class Subscript(Node):
         ctx.emit(consts.BUILD_ARRAY, 1)
         ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
         ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
+
+    def is_splat(self):
+        for arg in self.args:
+            if isinstance(arg, Splat):
+                return True
+        return False
 
 
 class Constant(Node):

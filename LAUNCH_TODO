@@ -4,8 +4,7 @@ Stuff to do before public
 * Change the name to `topaz`.
 * Website
 * Blog post
-* CI
-* Working rubyspec and not emberassing pass rate
+* Working rubyspec and not embarrassing pass rate
   * Web page with passing status
 * Confirm with Evan and Charles Nutter that all "hard problems" are done correctly
   * binding.eval
@@ -20,4 +19,4 @@ Stuff to do before public
 * Documentation (including how to contribute)
 * Public mailing list
 * Anything in the github issue tracker marked for launch.
-* Binaries
+* Binaries (with nightly builds preferably)

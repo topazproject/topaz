@@ -85,12 +85,15 @@ class ObjectSpace(object):
         # We replace the one reference to our FakeClass with the real class.
         self.w_basicobject.klass.superclass = self.w_class
 
+        self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
+        self.w_numeric = self.getclassfor(W_NumericObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
         self.w_float = self.getclassfor(W_FloatObject)
         self.w_module = self.getclassfor(W_ModuleObject)
         self.w_string = self.getclassfor(W_StringObject)
+        self.w_hash = self.getclassfor(W_HashObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_NameError = self.getclassfor(W_NameError)
@@ -111,7 +114,8 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_fixnum, self.w_string, self.w_class, self.w_module,
+            self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
+            self.w_symbol, self.w_class, self.w_module, self.w_hash,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -123,9 +127,6 @@ class ObjectSpace(object):
             self.getclassfor(W_NilObject),
             self.getclassfor(W_TrueObject),
             self.getclassfor(W_FalseObject),
-            self.getclassfor(W_SymbolObject),
-            self.getclassfor(W_NumericObject),
-            self.getclassfor(W_HashObject),
             self.getclassfor(W_RangeObject),
             self.getclassfor(W_IOObject),
             self.getclassfor(W_FileObject),
@@ -174,6 +175,8 @@ class ObjectSpace(object):
         w_loaded_features = self.newarray([])
         self.globals.set("$LOADED_FEATURES", w_loaded_features)
         self.globals.set('$"', w_loaded_features)
+
+        self.w_main_thread = W_ThreadObject(self)
 
         # TODO: this should really go in a better place.
         self.execute("""
@@ -404,6 +407,9 @@ class ObjectSpace(object):
         raw_method = w_cls.find_method(self, name)
         return raw_method is not None
 
+    def is_kind_of(self, w_obj, w_cls):
+        return w_obj.is_kind_of(self, w_cls)
+
     @jit.unroll_safe
     def invoke_block(self, block, args_w):
         bc = block.bytecode
@@ -439,7 +445,7 @@ class ObjectSpace(object):
         return self.int_w(self.send(w_obj, self.newsymbol("hash")))
 
     def eq_w(self, w_obj1, w_obj2):
-        return self.is_true(self.send(w_obj1, self.newsymbol("=="), [w_obj2]))
+        return self.is_true(self.send(w_obj1, self.newsymbol("eql?"), [w_obj2]))
 
     def register_exit_handler(self, w_proc):
         self.exit_handlers_w.append(w_proc)
@@ -488,12 +494,14 @@ class ObjectSpace(object):
         return (start, end, as_range, nil)
 
     def convert_type(self, w_obj, w_cls, method, raise_error=True):
-        if w_obj.is_kind_of(self, w_cls):
+        if self.is_kind_of(w_obj, w_cls):
             return w_obj
 
         try:
             w_res = self.send(w_obj, self.newsymbol(method))
         except RubyError:
+            if not raise_error:
+                return self.w_nil
             src_cls = self.getclass(w_obj).name
             raise self.error(
                 self.w_TypeError, "can't convert %s into %s" % (src_cls, w_cls.name)
@@ -501,7 +509,7 @@ class ObjectSpace(object):
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return self.w_nil
-        elif not w_res.is_kind_of(self, w_cls):
+        elif not self.is_kind_of(w_res, w_cls):
             src_cls = self.getclass(w_obj).name
             res_cls = self.getclass(w_res).name
             raise self.error(self.w_TypeError,

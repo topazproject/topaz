@@ -148,6 +148,13 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [False, True]
 
+    def test_eqlp(self, space):
+        w_res = space.execute("""
+        x = Object.new
+        return [x.eql?(x), x.eql?(4)]
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):

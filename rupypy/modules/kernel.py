@@ -230,6 +230,10 @@ class Kernel(Module):
     def method_not_match(self, space, w_other):
         return space.newbool(not space.is_true(space.send(self, space.newsymbol("=~"), [w_other])))
 
+    @moduledef.function("eql?")
+    def method_eqlp(self, space, w_other):
+        return space.newbool(self is w_other)
+
     @moduledef.function("instance_variable_defined?", name="symbol")
     def method_instance_variable_definedp(self, space, name):
         return space.newbool(self.find_instance_var(space, name) is not None)
@@ -242,9 +246,9 @@ class Kernel(Module):
     def method_Float(self, space, w_arg):
         if w_arg is space.w_nil:
             raise space.error(space.w_TypeError, "can't convert nil into Float")
-        elif isinstance(w_arg, W_NumericObject) or isinstance(w_arg, W_FixnumObject):
+        elif w_arg.is_kind_of(space, space.w_numeric):
             return space.newfloat(space.float_w(w_arg))
-        elif isinstance(w_arg, W_StringObject):
+        elif w_arg.is_kind_of(space, space.w_string):
             string = space.str_w(w_arg).strip(' ')
             try:
                 return space.newfloat(float(string))

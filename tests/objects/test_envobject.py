@@ -1,3 +1,5 @@
+import os
+
 from ..base import BaseRuPyPyTest
 
 
@@ -11,3 +13,15 @@ class TestEnvObject(BaseRuPyPyTest):
         monkeypatch.delenv("ZZZZ", raising=False)
         w_res = space.execute("return ENV['ZZZZ']")
         assert self.unwrap(space, w_res) is None
+
+    def test_set(self, space, monkeypatch):
+        monkeypatch.delenv("ZZZZ", raising=False)
+        w_res = space.execute("""
+        ENV['ZZZZ'] = "/home/newhome"
+        return ENV['ZZZZ']
+        """)
+        assert space.str_w(w_res) == os.environ["ZZZZ"] == "/home/newhome"
+
+    def test_class(self, space):
+        w_res = space.execute("return ENV.class")
+        assert w_res is space.w_object

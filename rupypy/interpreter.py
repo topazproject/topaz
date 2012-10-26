@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated, specialize, newlist_hint
 
 from rupypy import consts
 from rupypy.error import RubyError
+from rupypy.executioncontext import IntegerWrapper
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.blockobject import W_BlockObject
 from rupypy.objects.classobject import W_ClassObject
@@ -40,6 +41,12 @@ class Interpreter(object):
                     block_bytecode=self.get_block_bytecode(frame.block),
                 )
                 frame.last_instr = pc
+                # Why do we wrap the PC in an object? The JIT has store
+                # sinking, but when it encounters a guard it usually performs
+                # all pending stores, *execpt* if the value is a virtual, then
+                # it doesn't, so we make this store be of a virtual, in order
+                # to ensure the JIT sinks the store.
+                space.getexecutioncontext().last_instr_ref = IntegerWrapper(pc)
                 try:
                     pc = self.handle_bytecode(space, pc, frame, bytecode)
                 except RubyError as e:
@@ -426,9 +433,9 @@ class Interpreter(object):
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope))
         with space.getexecutioncontext().visit_frame(sub_frame):
-            space.execute_frame(sub_frame, w_bytecode)
+            w_res = space.execute_frame(sub_frame, w_bytecode)
 
-        frame.push(space.w_nil)
+        frame.push(w_res)
 
     @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
@@ -459,7 +466,10 @@ class Interpreter(object):
         w_block = frame.pop()
         args_w = space.listview(frame.pop())
         w_receiver = frame.pop()
-        assert isinstance(w_block, W_BlockObject)
+        if w_block is space.w_nil:
+            w_block = None
+        else:
+            assert isinstance(w_block, W_BlockObject)
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
@@ -501,11 +511,6 @@ class Interpreter(object):
             else:
                 return block.handle(space, frame, unroller)
         return pc
-
-    def COMPARE_EXC(self, space, bytecode, frame, pc):
-        w_expected = frame.pop()
-        w_actual = frame.peek()
-        frame.push(space.newbool(w_expected is space.getclass(w_actual)))
 
     def POP_BLOCK(self, space, bytecode, frame, pc):
         block = frame.popblock()
