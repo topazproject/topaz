@@ -50,11 +50,18 @@ class TestDir(BaseRuPyPyTest):
         w_res = space.execute("return Dir.open('%s') {|d| d.path } " % str(d))
         assert space.str_w(w_res) == str(d)
 
-    def test_open(self, space, tmpdir):
+    def test_entries(self, space, tmpdir):
         d = tmpdir.mkdir("sub")
         f = d.join("content")
         f.write("hello")
         f = d.join("content2")
         f.write("hello")
-        w_res = space.execute("Dir.entries('%s')" % str(d))
-        assert self.unwrap(space, w_res) == ["content", "content2"]
+        w_res = space.execute("return Dir.entries('%s')" % str(d))
+        assert "content" in self.unwrap(space, w_res)
+        assert "content2" in self.unwrap(space, w_res)
+
+    def test_path(self, space):
+        w_res = space.execute("return Dir.new(Dir.home).path")
+        assert space.str_w(w_res) == os.path.expanduser("~")
+        w_res = space.execute("return Dir.new(Dir.home).to_path")
+        assert space.str_w(w_res) == os.path.expanduser("~")
