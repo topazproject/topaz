@@ -10,6 +10,12 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute('return "abc" + "def" + "ghi"')
         assert space.str_w(w_res) == "abcdefghi"
 
+    def test_mul(self, space):
+        w_res = space.execute("return 'abc' * 2")
+        assert space.str_w(w_res) == "abcabc"
+        w_res = space.execute("return ('abc' << 'def') * 3")
+        assert space.str_w(w_res) == "abcdefabcdefabcdef"
+
     def test_to_s(self, space):
         w_res = space.execute('return "ABC".to_s')
         assert space.str_w(w_res) == "ABC"
