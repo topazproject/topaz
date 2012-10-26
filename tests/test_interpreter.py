@@ -983,6 +983,18 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 10
 
+    def test_call_too_few_args(self, space):
+        space.execute("""
+        def f(a, b=2)
+        end
+        def g(a, b, *c)
+        end
+        """)
+        with self.raises(space, "ArgumentError", "wrong number of arguments (0 for 1)"):
+            space.execute("f")
+        with self.raises(space, "ArgumentError", "wrong number of arguments (0 for 2)"):
+            space.execute("g")
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):
