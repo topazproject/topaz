@@ -23,7 +23,7 @@ class W_NumericObject(W_Object):
             )
 
     def float_w(self, space):
-        raise NotImplementedError("%s should have implemented float_w" % classdef.name)
+        raise NotImplementedError("%s should have implemented float_w" % W_NumericObject.classdef.name)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
