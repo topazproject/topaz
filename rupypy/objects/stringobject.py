@@ -88,6 +88,9 @@ class ConstantStringStrategy(StringStrategy):
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
 
+    def mul(self, space, storage, times):
+        return space.newstr_fromstr(self.unerase(storage) * times)
+
 
 class MutableStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("mutable")
@@ -132,6 +135,9 @@ class MutableStringStrategy(StringStrategy):
     def clear(self, s):
         storage = self.unerase(s.str_storage)
         del storage[:]
+
+    def mul(self, space, storage, times):
+        return space.newstr_fromchars(self.unerase(storage) * times)
 
     def downcase(self, storage):
         storage = self.unerase(storage)
@@ -241,6 +247,10 @@ class W_StringObject(W_Object):
         s.extend(space, self)
         s.extend(space, w_other)
         return s
+
+    @classdef.method("*", times="int")
+    def method_times(self, space, times):
+        return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
     def method_lshift(self, space, w_other):
