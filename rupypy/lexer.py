@@ -171,7 +171,7 @@ class Lexer(object):
                 for token in self.pipe(ch):
                     yield token
             elif ch == "+":
-                for token in self.plus(ch):
+                for token in self.plus(ch, space_seen):
                     yield token
             elif ch == "-":
                 for token in self.minus(ch, space_seen):
@@ -516,12 +516,20 @@ class Lexer(object):
                 yield self.emit(token)
                 break
 
-    def plus(self, ch):
+    def plus(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
             yield self.emit("OP_ASGN")
+        elif self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
+            self.state = self.EXPR_BEG
+            if ch2.isdigit():
+                for token in self.number(ch2):
+                    yield token
+            else:
+                self.unread()
+                yield self.emit("UPLUS")
         else:
             self.unread()
             self.state = self.EXPR_BEG

@@ -1285,6 +1285,14 @@ HERE
             ast.Statement(ast.Send(ast.ConstantInt(3), "~", [], None, 1))
         ]))
 
+    def test_unary_pos(self, space):
+        assert space.parse("+100") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(100))
+        ]))
+        assert space.parse("+yield") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Yield([], 1), "+@", [], None, 1))
+        ]))
+
     def test_unless(self, space):
         r = space.parse("""
         unless 1 == 2 then

@@ -1200,7 +1200,7 @@ class Parser(object):
 
     @pg.production("arg : UPLUS arg")
     def arg_uplus_arg(self, p):
-        raise NotImplementedError(p)
+        return BoxAST(ast.Send(p[1].getast(), "+@", [], None, p[0].getsourcepos().lineno))
 
     @pg.production("arg : UMINUS arg")
     def arg_uminus_arg(self, p):
