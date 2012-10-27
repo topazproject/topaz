@@ -153,6 +153,11 @@ class Kernel(Module):
         arg.to_s
     end
     module_function :String
+
+    def Integer arg
+        arg.to_i
+    end
+    module_function :Integer
     """)
 
     @moduledef.function("exit", status="int")
