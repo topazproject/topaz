@@ -139,16 +139,17 @@ class Kernel(Module):
 
         raise RubyError(w_exc)
 
-    @moduledef.method("Array")
-    def method_Array(self, space, w_arg):
-        if space.respond_to(w_arg, space.newsymbol("to_ary")):
-            return space.send(w_arg, space.newsymbol("to_ary"))
-        elif space.respond_to(w_arg, space.newsymbol("to_a")):
-            return space.send(w_arg, space.newsymbol("to_a"))
-        else:
-            return space.newarray([w_arg])
-
     moduledef.app_method("""
+    def Array arg
+        if arg.respond_to? :to_ary
+            arg.to_ary
+        elsif arg.respond_to? :to_a
+            arg.to_a
+        else
+            [arg]
+        end
+    end
+
     def String arg
         arg.to_s
     end
