@@ -238,3 +238,11 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.str_w(w_res) == "hhxo"
         w_res = space.execute("return 'hello'.tr_s!('','').nil?")
         assert self.unwrap(space, w_res) is True
+        
+    def test_format(self, space):
+        w_res = space.execute("return '%05d' % 123 ")
+        assert space.str_w(w_res) == "00123"
+        w_res = space.execute("return '%-5s: %08x' % [ 'ID',  537793750]")
+        assert space.str_w(w_res) == "ID   : 200e14d6"
+        w_res = space.execute("return '%05f' % 3.14")
+        assert space.str_w(w_res) == "3.140000" 
