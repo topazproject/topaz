@@ -299,7 +299,7 @@ class W_StringObject(W_Object):
 
     classdef.app_method("""
     def eql? other
-        if !other.class.equal?(String)
+        if !other.kind_of?(String)
             false
         else
             self == other
