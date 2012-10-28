@@ -3,11 +3,12 @@ from pypy.rlib.rfloat import formatd
 from pypy.rlib.unroll import unrolling_iterable
 
 
-class StringFormatter(object):
-    FORMAT_CHARS = unrolling_iterable([
-        "s", "d", "f"
-    ])
+FORMAT_CHARS = unrolling_iterable([
+    "s", "d", "f"
+])
 
+
+class StringFormatter(object):
     def __init__(self, fmt, items_w):
         self.fmt = fmt
         self.items_w = items_w
@@ -36,7 +37,7 @@ class StringFormatter(object):
             w_item = self.items_w[self.item_index]
             self.item_index += 1
             i += 1
-            for c in self.FORMAT_CHARS:
+            for c in FORMAT_CHARS:
                 if c == format_char:
                     w_res = getattr(self, "fmt_" + c)(space, w_item, width)
                     result_w.append(w_res)
