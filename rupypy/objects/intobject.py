@@ -87,6 +87,10 @@ class W_FixnumObject(W_RootObject):
                 "divided by 0"
             )
 
+    @classdef.method("%", other="int")
+    def method_mod(self, space, other):
+        return space.newint(self.intvalue % other)
+
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
         if other < 0:
@@ -153,14 +157,6 @@ class W_FixnumObject(W_RootObject):
     def method_hash(self, space):
         return self
 
-    @classdef.method("zero?")
-    def method_zerop(self, space):
-        return space.newbool(self.intvalue == 0)
-
-    @classdef.method("nonzero?")
-    def method_nonzerop(self, space):
-        return space.newbool(self.intvalue != 0)
-
     classdef.app_method("""
     def next
         succ
@@ -169,9 +165,7 @@ class W_FixnumObject(W_RootObject):
     def succ
         self + 1
     end
-    """)
 
-    classdef.app_method("""
     def times
         i = 0
         while i < self
@@ -179,9 +173,19 @@ class W_FixnumObject(W_RootObject):
             i += 1
         end
     end
-    """)
 
-    classdef.app_method("""
+    def zero?
+        self == 0
+    end
+
+    def nonzero?
+        self != 0
+    end
+
+    def even?
+        self % 2 == 0
+    end
+
     def __id__
         self * 2 + 1
     end

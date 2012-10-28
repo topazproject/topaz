@@ -24,6 +24,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 3 / 5")
         assert space.int_w(w_res) == 0
 
+    def test_modulo(self, space):
+        w_res = space.execute("return 5 % 2")
+        assert space.int_w(w_res) == 1
+
     def test_left_shift(self, space):
         w_res = space.execute("return 3 << 4")
         assert space.int_w(w_res) == 48
@@ -153,3 +157,7 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_zero(self, space):
         w_res = space.execute("return [0.zero?, 2.zero?]")
         assert self.unwrap(space, w_res) == [True, False]
+
+    def test_even(self, space):
+        w_res = space.execute("return [1.even?, -2.even?]")
+        assert self.unwrap(space, w_res) == [False, True]
