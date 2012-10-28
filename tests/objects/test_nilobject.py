@@ -19,3 +19,7 @@ class TestNilObject(object):
     def test_to_i(self, space):
         w_res = space.execute("return nil.to_i")
         assert space.int_w(w_res) == 0
+
+    def test_singleton_class(self, space):
+        w_res = space.execute("return nil.singleton_class == NilClass")
+        assert w_res is space.w_true

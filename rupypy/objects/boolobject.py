@@ -5,6 +5,9 @@ from rupypy.objects.objectobject import W_Object
 class W_TrueObject(W_Object):
     classdef = ClassDef("TrueClass", W_Object.classdef)
 
+    def getsingletonclass(self, space):
+        return space.getclassfor(W_TrueObject)
+
     @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -24,6 +27,9 @@ class W_FalseObject(W_Object):
 
     def is_true(self, space):
         return False
+
+    def getsingletonclass(self, space):
+        return space.getclassfor(W_FalseObject)
 
     @classdef.method("inspect")
     @classdef.method("to_s")

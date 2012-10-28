@@ -26,6 +26,10 @@ class TestTrueObject(BaseRuPyPyTest):
         assert space.execute("return true ^ true") is space.w_false
         assert space.execute("return true ^ 1") is space.w_false
 
+    def test_singleton_class(self, space):
+        w_res = space.execute("return true.singleton_class == TrueClass")
+        assert w_res is space.w_true
+
 
 class TestFalseObject(BaseRuPyPyTest):
     def test_name(self, space):
@@ -51,3 +55,7 @@ class TestFalseObject(BaseRuPyPyTest):
         assert space.execute("return false ^ false") is space.w_false
         assert space.execute("return false ^ true") is space.w_true
         assert space.execute("return false ^ 1") is space.w_true
+
+    def test_singleton_class(self, space):
+        w_res = space.execute("return false.singleton_class == FalseClass")
+        assert w_res is space.w_true

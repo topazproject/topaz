@@ -8,6 +8,9 @@ class W_NilObject(W_Object):
     def is_true(self, space):
         return False
 
+    def getsingletonclass(self, space):
+        return space.getclassfor(W_NilObject)
+
     @classdef.method("nil?")
     def method_nilp(self, space):
         return space.w_true
