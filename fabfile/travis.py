@@ -71,16 +71,30 @@ def run_translate_tests(env):
         "language/order_spec.rb",
         "language/unless_spec.rb",
 
+        "core/false/and_spec.rb",
+        "core/false/inspect_spec.rb",
+        "core/false/or_spec.rb",
+        "core/false/to_s_spec.rb",
+        "core/false/xor_spec.rb",
+
         "core/fixnum/comparison_spec.rb",
         "core/fixnum/even_spec.rb",
         "core/fixnum/hash_spec.rb",
         "core/fixnum/odd_spec.rb",
         "core/fixnum/to_f_spec.rb",
         "core/fixnum/zero_spec.rb",
+
+        "core/true/and_spec.rb",
+        "core/true/inspect_spec.rb",
+        "core/true/or_spec.rb",
+        "core/true/to_s_spec.rb",
+        "core/true/xor_spec.rb",
     ]
     local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
     spec_files = " ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests)
-    local("../mspec/bin/mspec -t `pwd`/topaz-c {spec_files}".format(spec_files=spec_files))
+    # TODO: this should be reenabled after we can run mspec unmodified (right
+    # now it requires two small patches)
+    # local("../mspec/bin/mspec -t `pwd`/topaz-c {spec_files}".format(spec_files=spec_files))
 
 
 def run_docs_tests(env):

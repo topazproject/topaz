@@ -20,6 +20,18 @@ class TestTrueObject(BaseRuPyPyTest):
         w_res = space.execute("return true == true")
         assert self.unwrap(space, w_res) is True
 
+    def test_and(self, space):
+        w_res = space.execute("return true & 3")
+        assert w_res is space.w_true
+        w_res = space.execute("return true & false")
+        assert w_res is space.w_false
+
+    def test_or(self, space):
+        w_res = space.execute("return true | 3")
+        assert w_res is space.w_true
+        w_res = space.execute("return true | nil")
+        assert w_res is space.w_true
+
     def test_xor(self, space):
         assert space.execute("return true ^ nil") is space.w_true
         assert space.execute("return true ^ false") is space.w_true
@@ -49,6 +61,18 @@ class TestFalseObject(BaseRuPyPyTest):
 
         w_res = space.execute("return false == true")
         assert self.unwrap(space, w_res) is False
+
+    def test_and(self, space):
+        w_res = space.execute("return false & 3")
+        assert w_res is space.w_false
+        w_res = space.execute("return false & false")
+        assert w_res is space.w_false
+
+    def test_or(self, space):
+        w_res = space.execute("return false | 3")
+        assert w_res is space.w_true
+        w_res = space.execute("return false | nil")
+        assert w_res is space.w_false
 
     def test_xor(self, space):
         assert space.execute("return false ^ nil") is space.w_false

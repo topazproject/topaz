@@ -17,6 +17,14 @@ class W_TrueObject(W_Object):
     def method_eq(self, space, w_other):
         return space.newbool(self is w_other)
 
+    @classdef.method("&")
+    def methof_and(self, space, w_other):
+        return space.newbool(space.is_true(w_other))
+
+    @classdef.method("|")
+    def method_or(self, space, w_other):
+        return space.w_true
+
     @classdef.method("^")
     def method_xor(self, space, w_other):
         return space.newbool(not space.is_true(w_other))
@@ -39,6 +47,14 @@ class W_FalseObject(W_Object):
     @classdef.method("==")
     def method_eq(self, space, w_other):
         return space.newbool(self is w_other)
+
+    @classdef.method("&")
+    def methof_and(self, space, w_other):
+        return space.w_false
+
+    @classdef.method("|")
+    def method_or(self, space, w_other):
+        return space.newbool(space.is_true(w_other))
 
     @classdef.method("^")
     def method_xor(self, space, w_other):
