@@ -35,7 +35,7 @@ class WrapperGenerator(object):
                     coerce_code = "Coerce.{}(space, args_w[{:d}])".format(spec, self.arg_count)
                 lines.append("    if len(args_w) > {}:".format(self.arg_count))
                 lines.append("        args += ({},)".format(coerce_code))
-                if default_start is not None:
+                if default_start is not None and i >= default_start:
                     lines.append("    else:")
                     lines.append("        args += (defaults[{:d}],)".format(i - default_start))
                 self.arg_count += 1
@@ -51,7 +51,10 @@ class WrapperGenerator(object):
             else:
                 raise NotImplementedError(argname, self.func.__name__)
 
-        lines.append("    return func(*args)")
+        lines.append("    w_res = func(*args)")
+        lines.append("    if w_res is None:")
+        lines.append("        w_res = space.w_nil")
+        lines.append("    return w_res")
 
         source = "\n".join(lines)
         namespace = {
