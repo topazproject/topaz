@@ -71,7 +71,7 @@ def run_translate_tests(env):
     ]
     local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
     spec_files = " ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests)
-    local("../mspec/bin/mspec -t topaz-c {spec_files}".format(spec_files=spec_files))
+    local("../mspec/bin/mspec -t `pwd`/topaz-c {spec_files}".format(spec_files=spec_files))
 
 
 def run_docs_tests(env):
