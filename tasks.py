@@ -1,7 +1,7 @@
 import glob
 import os
 
-from fabric.api import task, local
+from invoke import task, run as local
 
 
 class Test(object):
@@ -50,7 +50,7 @@ def run_own_tests(env):
 
 
 def run_translate_tests(env):
-    local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
+    local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env), pty=True)
 
 
 def run_docs_tests(env):
