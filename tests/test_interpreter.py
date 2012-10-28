@@ -672,7 +672,7 @@ class TestInterpreter(BaseRuPyPyTest):
 
     def test_class_variable_accessed_from_instance_side(self, space):
         w_res = space.execute("""
-        module A
+        class A
           @@foo = 'a'
         end
 
