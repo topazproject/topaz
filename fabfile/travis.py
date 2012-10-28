@@ -63,11 +63,20 @@ def run_own_tests(env):
 
 
 def run_translate_tests(env):
+    # TODO: this list is temporary until we have all the machinery necessary to
+    # run the full rubyspec directory (including the tagging feature)
     rubyspec_tests = [
         "language/and_spec.rb",
         "language/not_spec.rb",
         "language/order_spec.rb",
         "language/unless_spec.rb",
+
+        "core/fixnum/comparison_spec.rb",
+        "core/fixnum/even_spec.rb",
+        "core/fixnum/hash_spec.rb",
+        "core/fixnum/odd_spec.rb",
+        "core/fixnum/to_f_spec.rb",
+        "core/fixnum/zero_spec.rb",
     ]
     local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
     spec_files = " ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests)

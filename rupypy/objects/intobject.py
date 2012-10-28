@@ -190,6 +190,10 @@ class W_FixnumObject(W_RootObject):
         self % 2 == 0
     end
 
+    def odd?
+        self % 2 != 0
+    end
+
     def __id__
         self * 2 + 1
     end

@@ -165,3 +165,7 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_even(self, space):
         w_res = space.execute("return [1.even?, -2.even?]")
         assert self.unwrap(space, w_res) == [False, True]
+
+    def test_odd(self, space):
+        w_res = space.execute("return [2.odd?, -1.odd?]")
+        assert self.unwrap(space, w_res) == [False, True]
