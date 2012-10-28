@@ -1,3 +1,5 @@
+from pypy.rpython.lltypesystem import lltype, rffi
+
 from rupypy.module import ClassDef
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -160,6 +162,10 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("hash")
     def method_hash(self, space):
         return self
+
+    @classdef.method("size")
+    def method_size(self, space):
+        return space.newint(rffi.sizeof(lltype.typeOf(self.intvalue)))
 
     classdef.app_method("""
     def next

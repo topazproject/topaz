@@ -1,3 +1,5 @@
+import sys
+
 from ..base import BaseRuPyPyTest
 
 
@@ -169,3 +171,13 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_odd(self, space):
         w_res = space.execute("return [2.odd?, -1.odd?]")
         assert self.unwrap(space, w_res) == [False, True]
+
+    def test_size(self, space):
+        if sys.maxint == 2 ** 63 - 1:
+            expected = 8
+        elif sys.maxint == 2 ** 31 - 1:
+            expected = 4
+        else:
+            raise NotImplementedError(sys.maxint)
+        w_res = space.execute("return 1.size")
+        assert space.int_w(w_res) == expected
