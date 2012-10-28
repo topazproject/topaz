@@ -6,6 +6,10 @@ class TestNilObject(object):
         w_res = space.execute("return nil.to_s")
         assert space.str_w(w_res) == ""
 
+    def test_inspect(self, space):
+        w_res = space.execute("return nil.inspect")
+        assert space.str_w(w_res) == "nil"
+
     def test_nilp(self, space):
         w_res = space.execute("return nil.nil?")
         assert w_res == space.w_true

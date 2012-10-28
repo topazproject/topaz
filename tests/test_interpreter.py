@@ -160,6 +160,13 @@ class TestInterpreter(BaseRuPyPyTest):
             end
             """)
 
+    def test_attach_class_non_module(self, space):
+        with self.raises(space, "TypeError", "nil is not a class/module"):
+            space.execute("""
+            class nil::Foo
+            end
+            """)
+
     def test_shadow_class(self, space):
         w_res = space.execute("""
         class X; class Y; end; end

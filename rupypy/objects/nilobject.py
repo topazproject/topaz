@@ -16,6 +16,10 @@ class W_NilObject(W_Object):
     def method_to_s(self, space):
         return space.newstr_fromstr("")
 
+    @classdef.method("inspect")
+    def method_inspect(self, space):
+        return space.newstr_fromstr("nil")
+
     @classdef.method("to_i")
     def method_to_i(self, space):
         return space.newint(0)
