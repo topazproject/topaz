@@ -2,13 +2,15 @@ import glob
 import os
 
 from fabric.api import task, local
+from fabric.context_managers import lcd
 
 
 class Test(object):
-    def __init__(self, func, deps=[], needs_pypy=True):
+    def __init__(self, func, deps=[], needs_pypy=True, needs_rubyspec=False):
         self.func = func
         self.deps = deps
         self.needs_pypy = needs_pypy
+        self.needs_rubyspec = needs_rubyspec
 
     def install_deps(self):
         local("pip install {}".format(" ".join(self.deps)))
@@ -21,6 +23,14 @@ class Test(object):
         path_name = os.path.abspath(path_name)
         with open("pypy_marker", "w") as f:
             f.write(path_name)
+
+    def download_mspec(self):
+        with lcd(".."):
+            local("git clone --depth=100 --quiet github.com/rubyspec/mspec")
+
+    def download_rubyspec(self):
+        with lcd(".."):
+            local("git clone --depth=100 --quiet github.com/rubyspec/rubyspec")
 
     def run_tests(self):
         env = {}
@@ -37,6 +47,9 @@ def install_requirements():
         t.install_deps()
     if t.needs_pypy:
         t.download_pypy()
+    if t.needs_rubyspec:
+        t.download_mspec()
+        t.download_rubyspec()
 
 
 @task
@@ -50,7 +63,15 @@ def run_own_tests(env):
 
 
 def run_translate_tests(env):
+    rubyspec_tests = [
+        "language/and_spec.rb",
+        "language/not_spec.rb",
+        "language/order_spec.rb",
+        "language/unless_spec.rb",
+    ]
     local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
+    spec_files = " ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests)
+    local("../mspec/bin/mspec -t topaz-c {spec_files}".format(spec_files=spec_files))
 
 
 def run_docs_tests(env):
@@ -60,6 +81,6 @@ RPLY_URL = "-e git+https://github.com/alex/rply#egg=rply"
 
 TEST_TYPES = {
     "own": Test(run_own_tests, deps=["pytest", RPLY_URL]),
-    "translate": Test(run_translate_tests, deps=[RPLY_URL]),
+    "translate": Test(run_translate_tests, deps=[RPLY_URL], needs_rubyspec=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_pypy=False),
 }
