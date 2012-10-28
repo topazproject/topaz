@@ -26,11 +26,11 @@ class Test(object):
 
     def download_mspec(self):
         with lcd(".."):
-            local("git clone --depth=100 --quiet github.com/rubyspec/mspec")
+            local("git clone --depth=100 --quiet https://github.com/rubyspec/mspec")
 
     def download_rubyspec(self):
         with lcd(".."):
-            local("git clone --depth=100 --quiet github.com/rubyspec/rubyspec")
+            local("git clone --depth=100 --quiet https://github.com/rubyspec/rubyspec")
 
     def run_tests(self):
         env = {}
