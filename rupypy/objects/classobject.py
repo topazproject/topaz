@@ -74,3 +74,7 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("allocate")
     def method_allocate(self, space, args_w):
         return W_Object(space, self)
+
+    @classdef.method("superclass")
+    def method_superclass(self, space):
+        return self.superclass if self.superclass is not None else space.w_nil
