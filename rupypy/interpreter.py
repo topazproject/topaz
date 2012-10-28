@@ -425,7 +425,7 @@ class Interpreter(object):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope))
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 

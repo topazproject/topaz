@@ -1198,6 +1198,18 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 3]
 
+    def test_singleton_class_block(self, space):
+        w_res = space.execute("""
+        def f(o)
+            class << o
+                yield
+            end
+        end
+
+        return f(Object.new) { 123 }
+        """)
+        assert space.int_w(w_res) == 123
+
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):
