@@ -265,19 +265,9 @@ class Interpreter(object):
         items_w = frame.popitemsreverse(n_items)
         frame.push(space.newarray(items_w))
 
-    @jit.unroll_safe
     def BUILD_STRING(self, space, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)
-        total_length = 0
-        for w_item in items_w:
-            assert isinstance(w_item, W_StringObject)
-            total_length += w_item.length()
-
-        storage = newlist_hint(total_length)
-        for w_item in items_w:
-            assert isinstance(w_item, W_StringObject)
-            w_item.strategy.extend_into(w_item.str_storage, storage)
-        frame.push(space.newstr_fromchars(storage))
+        frame.push(space.newstr_fromstrs(items_w))
 
     def BUILD_HASH(self, space, bytecode, frame, pc):
         frame.push(space.newhash())

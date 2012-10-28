@@ -265,6 +265,9 @@ class ObjectSpace(object):
     def newstr_fromstr(self, strvalue):
         return W_StringObject.newstr_fromstr(self, strvalue)
 
+    def newstr_fromstrs(self, strs_w):
+        return W_StringObject.newstr_fromstrs(self, strs_w)
+
     def newarray(self, items_w):
         return W_ArrayObject(self, items_w)
 
