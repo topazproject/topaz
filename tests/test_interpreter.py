@@ -265,6 +265,13 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [3, 5]
 
+    def test_subclass_non_class(self, space):
+        with self.raises(space, "TypeError", "wrong argument type String (expected Class)"):
+            space.execute("""
+            class Y < "abc"
+            end
+            """)
+
     def test_class_constant_block(self, space):
         w_res = space.execute("""
         class X

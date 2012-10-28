@@ -310,6 +310,10 @@ class Interpreter(object):
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.w_object
+            if not space.is_kind_of(superclass, space.w_class):
+                raise space.error(space.w_TypeError,
+                    "wrong argument type %s (expected Class)" % space.getclass(superclass).name
+                )
             assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
