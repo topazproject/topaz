@@ -35,9 +35,11 @@ class WrapperGenerator(object):
                     coerce_code = "Coerce.{}(space, args_w[{:d}])".format(spec, self.arg_count)
                 lines.append("    if len(args_w) > {}:".format(self.arg_count))
                 lines.append("        args += ({},)".format(coerce_code))
+                lines.append("    else:")
                 if default_start is not None and i >= default_start:
-                    lines.append("    else:")
                     lines.append("        args += (defaults[{:d}],)".format(i - default_start))
+                else:
+                    lines.append("        raise SystemError('bad arg count')")
                 self.arg_count += 1
             elif argname == "self":
                 lines.append("    assert isinstance(self, self_cls)")
