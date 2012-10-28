@@ -461,11 +461,18 @@ class TestInterpreter(BaseRuPyPyTest):
         space.execute("""
         module Foo
             Const = nil
+            class X
+            end
         end
         """)
         with self.raises(space, "TypeError", "Const is not a module"):
             space.execute("""
             module Foo::Const
+            end
+            """)
+        with self.raises(space, "TypeError", "X is not a module"):
+            space.execute("""
+            module Foo::X
             end
             """)
 

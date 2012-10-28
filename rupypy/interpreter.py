@@ -332,7 +332,7 @@ class Interpreter(object):
         if w_mod is None:
             w_mod = space.newmodule(name)
             space.set_const(w_scope, name, w_mod)
-        elif not space.is_kind_of(w_mod, space.w_module):
+        elif not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a module" % name)
 
         assert isinstance(w_bytecode, W_CodeObject)
