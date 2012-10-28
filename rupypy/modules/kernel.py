@@ -244,3 +244,12 @@ class Kernel(Module):
     @moduledef.method("respond_to?")
     def method_respond_top(self, space, w_name):
         return space.newbool(space.respond_to(self, w_name))
+
+    @moduledef.method("kind_of?")
+    @moduledef.method("is_a?")
+    def method_is_kind_ofp(self, space, w_mod):
+        return space.newbool(self.is_kind_of(space, w_mod))
+
+    @moduledef.method("instance_of?")
+    def method_instance_of(self, space, w_mod):
+        return space.newbool(space.getnonsingletonclass(self) is w_mod)

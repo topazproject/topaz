@@ -205,6 +205,20 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [True, True, False, True]
 
+    def test_instance_ofp(self, space):
+        w_res = space.execute("""
+        class A
+        end
+        class B < A
+        end
+        class C < B
+        end
+
+        b = B.new
+        return [b.instance_of?(A), b.instance_of?(B), b.instance_of?(C)]
+        """)
+        assert self.unwrap(space, w_res) == [False, True, False]
+
 
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):
