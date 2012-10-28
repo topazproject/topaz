@@ -321,6 +321,18 @@ class W_ModuleObject(W_RootObject):
         else:
             return space.newbool(self.find_local_const(space, const) is not None)
 
+    @classdef.method("const_get", const="symbol", inherit="bool")
+    def method_const_get(self, space, const, inherit=True):
+        if inherit:
+            w_res = self.find_const(space, const)
+        else:
+            w_res = self.find_local_const(space, const)
+        if w_res is None:
+            raise space.error(space.w_NameError,
+                "uninitialized constant %s::%s" % (self.name, const)
+            )
+        return w_res
+
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):
         return space.newbool(self.find_method(space, name) is not None)
