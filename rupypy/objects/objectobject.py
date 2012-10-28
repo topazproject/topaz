@@ -58,7 +58,7 @@ class W_BaseObject(object):
         return space.newint(compute_unique_id(self))
 
     @classdef.method("method_missing")
-    def method_method_missing(self, space, w_name):
+    def method_method_missing(self, space, w_name, args_w):
         name = space.symbol_w(w_name)
         class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
         raise space.error(space.w_NoMethodError,

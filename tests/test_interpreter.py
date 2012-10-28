@@ -1046,6 +1046,14 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError", "wrong number of arguments (3 for 0)"):
             space.execute("f 1, 2, 3")
 
+    def test_call_too_few_args_builtin(self, space):
+        with self.raises(space, "ArgumentError", "wrong number of arguments (0 for 1)"):
+            space.execute("1.send(:+)")
+
+    def test_call_too_many_args_builtin(self, space):
+        with self.raises(space, "ArgumentError", "wrong number of arguments (3 for 1)"):
+            space.execute("1.send(:+, 2, 3, 4)")
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):

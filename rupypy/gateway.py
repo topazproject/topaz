@@ -13,6 +13,11 @@ class WrapperGenerator(object):
 
         lines = []
         lines.append("def %s(self, space, args_w, block):" % self.func.__name__)
+        lines.append("    if ((len(args_w) < (argcount - len(defaults)) or")
+        lines.append("        (not takes_args_w and len(args_w) > argcount))):")
+        lines.append("        raise space.error(space.w_ArgumentError,")
+        lines.append("            'wrong number of arguments (%d for %d)' % (len(args_w), argcount - len(defaults))")
+        lines.append("        )")
         lines.append("    args = ()")
         if self.func.__defaults__ is not None:
             default_start = code.co_argcount - len(self.func.__defaults__)
@@ -30,11 +35,9 @@ class WrapperGenerator(object):
                     coerce_code = "Coerce.{}(space, args_w[{:d}])".format(spec, self.arg_count)
                 lines.append("    if len(args_w) > {}:".format(self.arg_count))
                 lines.append("        args += ({},)".format(coerce_code))
-                lines.append("    else:")
-                if default_start is not None and i >= default_start:
+                if default_start is not None:
+                    lines.append("    else:")
                     lines.append("        args += (defaults[{:d}],)".format(i - default_start))
-                else:
-                    lines.append("        raise Exception({}, '{}')".format(i, argname))
                 self.arg_count += 1
             elif argname == "self":
                 lines.append("    assert isinstance(self, self_cls)")
@@ -55,7 +58,9 @@ class WrapperGenerator(object):
             "func": self.func,
             "self_cls": self.self_cls,
             "Coerce": Coerce,
-            "defaults": self.func.__defaults__,
+            "defaults": self.func.__defaults__ or [],
+            "argcount": self.arg_count,
+            "takes_args_w": "args_w" in code.co_varnames[:code.co_argcount],
         }
         exec source in namespace
         return namespace[self.func.__name__]
