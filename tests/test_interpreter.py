@@ -433,6 +433,18 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises(space, "NoMethodError"):
             space.execute("M.method")
 
+    def test_module_reopen_non_module(self, space):
+        space.execute("""
+        module Foo
+            Const = nil
+        end
+        """)
+        with self.raises(space, "TypeError", "Const is not a module"):
+            space.execute("""
+            module Foo::Const
+            end
+            """)
+
     def test_singleton_method(self, space):
         w_res = space.execute("""
         def Array.hello
