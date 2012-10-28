@@ -150,6 +150,16 @@ class TestInterpreter(BaseRuPyPyTest):
         w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
 
+    def test_reopen_non_class(self, space):
+        space.execute("""
+        X = 12
+        """)
+        with self.raises(space, "TypeError", "X is not a class"):
+            space.execute("""
+            class X
+            end
+            """)
+
     def test_shadow_class(self, space):
         w_res = space.execute("""
         class X; class Y; end; end
