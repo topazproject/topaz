@@ -80,6 +80,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 1 > 2")
         assert w_res is space.w_false
 
+    def test_greater_equal(self, space):
+        w_res = space.execute("return 5 >= 4")
+        assert w_res is space.w_true
+
     def test_times(self, space):
         w_res = space.execute("""
         res = []

@@ -131,6 +131,10 @@ class W_FixnumObject(W_RootObject):
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
 
+    @classdef.method(">=", other="int")
+    def method_gte(self, space, other):
+        return space.newbool(self.intvalue >= other)
+
     @classdef.method("-@")
     def method_neg(self, space):
         return space.newint(-self.intvalue)
