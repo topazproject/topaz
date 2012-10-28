@@ -31,16 +31,13 @@ class AttributeWriter(W_FunctionObject):
 
 
 class W_ModuleObject(W_RootObject):
-    _immutable_fields_ = [
-        "version?", "included_modules?[*]", "klass?", "superclass",
-    ]
+    _immutable_fields_ = ["version?", "included_modules?[*]", "klass?"]
 
     classdef = ClassDef("Module", W_RootObject.classdef)
 
-    def __init__(self, space, name, superclass):
+    def __init__(self, space, name):
         self.name = name
         self.klass = None
-        self.superclass = superclass
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
@@ -53,7 +50,6 @@ class W_ModuleObject(W_RootObject):
         obj = super(W_ModuleObject, self).__deepcopy__(memo)
         obj.name = self.name
         obj.klass = copy.deepcopy(self.klass, memo)
-        obj.superclass = copy.deepcopy(self.superclass, memo)
         obj.version = copy.deepcopy(self.version, memo)
         obj.methods_w = copy.deepcopy(self.methods_w, memo)
         obj.constants_w = copy.deepcopy(self.constants_w, memo)
@@ -116,8 +112,6 @@ class W_ModuleObject(W_RootObject):
                 w_res = w_mod.find_local_const(space, name)
                 if w_res is not None:
                     break
-        if w_res is None and self.superclass is not None:
-            w_res = self.superclass.find_const(space, name)
         return w_res
 
     def find_local_const(self, space, name):
@@ -212,7 +206,7 @@ class W_ModuleObject(W_RootObject):
     def method_allocate(self, space):
         # TODO: this should really store None for the name and all places
         # reading the name should handle None
-        return W_ModuleObject(space, "", space.w_object)
+        return W_ModuleObject(space, "")
 
     @classdef.method("to_s")
     def method_to_s(self, space):

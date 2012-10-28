@@ -281,7 +281,7 @@ class ObjectSpace(object):
         return W_RegexpObject(self, regexp)
 
     def newmodule(self, name):
-        return W_ModuleObject(self, name, self.w_object)
+        return W_ModuleObject(self, name)
 
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
@@ -362,9 +362,15 @@ class ObjectSpace(object):
             if w_res is not None:
                 return w_res
             scope = scope.backscope
-        w_mod = lexical_scope.w_mod if lexical_scope else self.w_object
-        w_res = self.find_const(w_mod, name)
+        if lexical_scope is not None:
+            w_res = lexical_scope.w_mod.find_const(self, name)
         if w_res is None:
+            w_res = self.w_object.find_const(self, name)
+        if w_res is None:
+            if lexical_scope is not None:
+                w_mod = lexical_scope.w_mod
+            else:
+                w_mod = self.w_object
             w_res = self.send(w_mod, self.newsymbol("const_missing"), [self.newsymbol(name)])
         return w_res
 
