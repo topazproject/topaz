@@ -1054,6 +1054,12 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError", "wrong number of arguments (3 for 1)"):
             space.execute("1.send(:+, 2, 3, 4)")
 
+    def test_bignum(self, space):
+        w_res = space.execute("return 18446744073709551628.to_s")
+        assert space.str_w(w_res) == "18446744073709551628"
+        w_res = space.execute("return 18446744073709551628.class")
+        assert w_res is space.w_bignum
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from pypy.rlib.objectmodel import we_are_translated
+from pypy.rlib.rarithmetic import ovfcheck
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, BlockSymbolTable
@@ -1027,8 +1028,28 @@ class ConstantInt(ConstantNode):
     def __init__(self, intvalue):
         self.intvalue = intvalue
 
+    def negate(self):
+        try:
+            val = ovfcheck(-self.intvalue)
+        except OverflowError:
+            raise NotImplementedError
+            return ConstantBigInt()
+        else:
+            return ConstantInt(val)
+
     def create_const(self, ctx):
         return ctx.create_int_const(self.intvalue)
+
+
+class ConstantBigInt(ConstantNode):
+    def __init__(self, bigint):
+        self.bigint = bigint
+
+    def negate(self):
+        return ConstantBigInt(self.bigint.neg())
+
+    def create_const(self, ctx):
+        return ctx.create_const(ctx.space.newbigint_fromrbigint(self.bigint))
 
 
 class ConstantFloat(ConstantNode):

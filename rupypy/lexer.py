@@ -525,6 +525,7 @@ class Lexer(object):
         elif self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
             self.state = self.EXPR_BEG
             if ch2.isdigit():
+                self.clear()
                 for token in self.number(ch2):
                     yield token
             else:
