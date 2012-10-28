@@ -94,6 +94,10 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.newint(self.intvalue << other)
 
+    @classdef.method("&", other="int")
+    def method_and(self, space, other):
+        return space.newint(self.intvalue & other)
+
     @classdef.method("^", other="int")
     def method_xor(self, space, other):
         return space.newint(self.intvalue ^ other)
