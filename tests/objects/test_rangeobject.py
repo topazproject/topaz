@@ -33,3 +33,11 @@ class TestRangeObject(BaseRuPyPyTest):
         assert w_res is space.w_true
         w_res = space.execute("return (1..10) === -1")
         assert w_res is space.w_false
+
+    def test_first(self, space):
+        w_res = space.execute("return (1..10).first")
+        assert space.int_w(w_res) == 1
+
+    def test_last(self, space):
+        w_res = space.execute("return (1..10).last")
+        assert space.int_w(w_res) == 10

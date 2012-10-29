@@ -1,3 +1,5 @@
+import sys
+
 from ..base import BaseRuPyPyTest
 
 
@@ -24,11 +26,19 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 3 / 5")
         assert space.int_w(w_res) == 0
 
+    def test_modulo(self, space):
+        w_res = space.execute("return 5 % 2")
+        assert space.int_w(w_res) == 1
+
     def test_left_shift(self, space):
         w_res = space.execute("return 3 << 4")
         assert space.int_w(w_res) == 48
         w_res = space.execute("return 48 << -4")
         assert space.int_w(w_res) == 3
+
+    def test_and(self, space):
+        w_res = space.execute("return 12 & 123")
+        assert space.int_w(w_res) == 8
 
     def test_xor(self, space):
         w_res = space.execute("return 12 ^ 15")
@@ -71,6 +81,10 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_greater(self, space):
         w_res = space.execute("return 1 > 2")
         assert w_res is space.w_false
+
+    def test_greater_equal(self, space):
+        w_res = space.execute("return 5 >= 4")
+        assert w_res is space.w_true
 
     def test_times(self, space):
         w_res = space.execute("""
@@ -149,3 +163,21 @@ class TestFixnumObject(BaseRuPyPyTest):
     def test_zero(self, space):
         w_res = space.execute("return [0.zero?, 2.zero?]")
         assert self.unwrap(space, w_res) == [True, False]
+
+    def test_even(self, space):
+        w_res = space.execute("return [1.even?, -2.even?]")
+        assert self.unwrap(space, w_res) == [False, True]
+
+    def test_odd(self, space):
+        w_res = space.execute("return [2.odd?, -1.odd?]")
+        assert self.unwrap(space, w_res) == [False, True]
+
+    def test_size(self, space):
+        if sys.maxint == 2 ** 63 - 1:
+            expected = 8
+        elif sys.maxint == 2 ** 31 - 1:
+            expected = 4
+        else:
+            raise NotImplementedError(sys.maxint)
+        w_res = space.execute("return 1.size")
+        assert space.int_w(w_res) == expected

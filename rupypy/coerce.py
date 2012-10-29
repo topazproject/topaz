@@ -30,6 +30,10 @@ class Coerce(object):
             return space.int_w(space.convert_type(w_obj, space.w_fixnum, "to_int"))
 
     @staticmethod
+    def bigint(space, w_obj):
+        return space.bigint_w(w_obj)
+
+    @staticmethod
     def float(space, w_obj):
         if space.is_kind_of(w_obj, space.w_numeric):
             return space.float_w(w_obj)

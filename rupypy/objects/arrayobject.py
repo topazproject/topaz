@@ -289,7 +289,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("pack", template="str")
     def method_pack(self, space, template):
-        result = RPacker(space, template, space.listview(self)).operate()
+        result = RPacker(template, space.listview(self)).operate(space)
         return space.newstr_fromchars(result)
 
     @classdef.method("to_ary")
