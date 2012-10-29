@@ -243,9 +243,9 @@ class Kernel(Module):
     def method_Float(self, space, w_arg):
         if w_arg is space.w_nil:
             raise space.error(space.w_TypeError, "can't convert nil into Float")
-        elif w_arg.is_kind_of(space, space.w_numeric):
+        elif space.is_kind_of(w_arg, space.w_numeric):
             return space.newfloat(space.float_w(w_arg))
-        elif w_arg.is_kind_of(space, space.w_string):
+        elif space.is_kind_of(w_arg, space.w_string):
             string = space.str_w(w_arg).strip(' ')
             try:
                 return space.newfloat(float(string))

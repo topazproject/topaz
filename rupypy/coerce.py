@@ -5,13 +5,13 @@ class Coerce(object):
 
     @staticmethod
     def symbol(space, w_obj):
-        if w_obj.is_kind_of(space, space.w_symbol):
+        if space.is_kind_of(w_obj, space.w_symbol):
             return space.symbol_w(w_obj)
         else:
-            w_str = space.convert_type(w_obj, space.w_string, "to_str", False)
+            w_str = space.convert_type(w_obj, space.w_string, "to_str", raise_error=False)
             if w_str is space.w_nil:
                 w_inspect_str = space.send(w_obj, space.newsymbol("inspect"))
-                if not w_inspect_str.is_kind_of(space, space.w_string):
+                if not space.is_kind_of(w_inspect_str, space.w_string):
                     inspect_str = "#<%s:0x%x>" % (
                         space.getclass(w_obj).name,
                         space.int_w(space.send(w_obj, space.newsymbol("__id__")))
@@ -24,21 +24,21 @@ class Coerce(object):
 
     @staticmethod
     def int(space, w_obj):
-        if w_obj.is_kind_of(space, space.w_fixnum):
+        if space.is_kind_of(w_obj, space.w_fixnum):
             return space.int_w(w_obj)
         else:
             return space.int_w(space.convert_type(w_obj, space.w_fixnum, "to_int"))
 
     @staticmethod
     def float(space, w_obj):
-        if w_obj.is_kind_of(space, space.w_numeric):
+        if space.is_kind_of(w_obj, space.w_numeric):
             return space.float_w(w_obj)
         else:
             return space.float_w(space.send(w_obj, space.newsymbol("Float"), [w_obj]))
 
     @staticmethod
     def str(space, w_obj):
-        if w_obj.is_kind_of(space, space.w_string) or w_obj.is_kind_of(space, space.w_symbol):
+        if space.is_kind_of(w_obj, space.w_string) or space.is_kind_of(w_obj, space.w_symbol):
             return space.str_w(w_obj)
         else:
             return space.str_w(space.convert_type(w_obj, space.w_string, "to_str"))

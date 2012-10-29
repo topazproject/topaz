@@ -5,9 +5,6 @@ from rupypy.objects.objectobject import W_Object
 class W_NumericObject(W_Object):
     classdef = ClassDef("Numeric", W_Object.classdef)
 
-    def float_w(self, space):
-        raise NotImplementedError("%s should have implemented float_w" % W_NumericObject.classdef.name)
-
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_NumericObject(space, self)
