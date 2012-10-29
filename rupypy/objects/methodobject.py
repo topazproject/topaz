@@ -18,7 +18,7 @@ def create_to_s(classdef):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(
-            "#<%s: %s#%s>" % (classdef.name, self.w_owner.name, self.w_function.name)
+            "#<%s: %s#%s>" % (classdef.name, self.w_owner.name, self.w_function.get_name())
         )
     return method_to_s
 
@@ -40,7 +40,7 @@ class W_MethodObject(W_Object):
     @classdef.method("call")
     def method_call(self, space, args_w, block):
         return space.invoke_function(
-            space.newsymbol(self.w_function.name),
+            space.newsymbol(self.w_function.get_name()),
             self.w_function,
             self.w_receiver,
             args_w,
