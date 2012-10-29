@@ -250,6 +250,21 @@ class TestRequire(BaseRuPyPyTest):
         w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
         assert self.unwrap(space, w_res) == [False, True]
 
+    def test_Float(self, space):
+        assert space.float_w(space.execute("return Float(1)")) == 1.0
+        assert space.float_w(space.execute("return Float(1.1)")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1')")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1e10')")) == 11000000000.0
+        with self.raises(space, "TypeError"):
+            space.execute("return Float(nil)")
+        with self.raises(space, "ArgumentError"):
+            space.execute("return Float('a')")
+        w_res = space.execute("""
+        class A; def to_f; 1.1; end; end
+        return Float(A.new)
+        """)
+        assert space.float_w(w_res) == 1.1
+
 
 class TestExec(BaseRuPyPyTest):
     def fork_and_wait(self, space, capfd, code):
