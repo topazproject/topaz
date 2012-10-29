@@ -117,6 +117,21 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [True, False, True, True, False, True]
 
+    def test_const_get(self, space):
+        space.execute("""
+        class X
+            Const = 1
+        end
+        class Y < X
+        end
+        """)
+        w_res = space.execute("return X.const_get :Const")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return Y.const_get :Const")
+        assert space.int_w(w_res) == 1
+        with self.raises(space, "NameError", "uninitialized constant Y::Const"):
+            space.execute("Y.const_get :Const, false")
+
     def test_method_definedp(self, space):
         w_res = space.execute("""
         class X; def foo; end; end

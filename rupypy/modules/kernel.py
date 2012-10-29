@@ -139,20 +139,26 @@ class Kernel(Module):
 
         raise RubyError(w_exc)
 
-    @moduledef.method("Array")
-    def method_Array(self, space, w_arg):
-        if space.respond_to(w_arg, space.newsymbol("to_ary")):
-            return space.send(w_arg, space.newsymbol("to_ary"))
-        elif space.respond_to(w_arg, space.newsymbol("to_a")):
-            return space.send(w_arg, space.newsymbol("to_a"))
-        else:
-            return space.newarray([w_arg])
-
     moduledef.app_method("""
+    def Array arg
+        if arg.respond_to? :to_ary
+            arg.to_ary
+        elsif arg.respond_to? :to_a
+            arg.to_a
+        else
+            [arg]
+        end
+    end
+
     def String arg
         arg.to_s
     end
     module_function :String
+
+    def Integer arg
+        arg.to_i
+    end
+    module_function :Integer
     """)
 
     @moduledef.function("exit", status="int")
@@ -238,3 +244,12 @@ class Kernel(Module):
     @moduledef.method("respond_to?")
     def method_respond_top(self, space, w_name):
         return space.newbool(space.respond_to(self, w_name))
+
+    @moduledef.method("kind_of?")
+    @moduledef.method("is_a?")
+    def method_is_kind_ofp(self, space, w_mod):
+        return space.newbool(self.is_kind_of(space, w_mod))
+
+    @moduledef.method("instance_of?")
+    def method_instance_of(self, space, w_mod):
+        return space.newbool(space.getnonsingletonclass(self) is w_mod)

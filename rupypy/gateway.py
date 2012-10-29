@@ -13,6 +13,11 @@ class WrapperGenerator(object):
 
         lines = []
         lines.append("def %s(self, space, args_w, block):" % self.func.__name__)
+        lines.append("    if ((len(args_w) < (argcount - len(defaults)) or")
+        lines.append("        (not takes_args_w and len(args_w) > argcount))):")
+        lines.append("        raise space.error(space.w_ArgumentError,")
+        lines.append("            'wrong number of arguments (%d for %d)' % (len(args_w), argcount - len(defaults))")
+        lines.append("        )")
         lines.append("    args = ()")
         if self.func.__defaults__ is not None:
             default_start = code.co_argcount - len(self.func.__defaults__)
@@ -34,7 +39,7 @@ class WrapperGenerator(object):
                 if default_start is not None and i >= default_start:
                     lines.append("        args += (defaults[{:d}],)".format(i - default_start))
                 else:
-                    lines.append("        raise Exception({}, '{}')".format(i, argname))
+                    lines.append("        raise SystemError('bad arg count')")
                 self.arg_count += 1
             elif argname == "self":
                 lines.append("    assert isinstance(self, self_cls)")
@@ -48,14 +53,19 @@ class WrapperGenerator(object):
             else:
                 raise NotImplementedError(argname, self.func.__name__)
 
-        lines.append("    return func(*args)")
+        lines.append("    w_res = func(*args)")
+        lines.append("    if w_res is None:")
+        lines.append("        w_res = space.w_nil")
+        lines.append("    return w_res")
 
         source = "\n".join(lines)
         namespace = {
             "func": self.func,
             "self_cls": self.self_cls,
             "Coerce": Coerce,
-            "defaults": self.func.__defaults__,
+            "defaults": self.func.__defaults__ or [],
+            "argcount": self.arg_count,
+            "takes_args_w": "args_w" in code.co_varnames[:code.co_argcount],
         }
         exec source in namespace
         return namespace[self.func.__name__]

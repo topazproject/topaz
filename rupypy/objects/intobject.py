@@ -1,3 +1,6 @@
+from pypy.rlib.rbigint import rbigint
+from pypy.rpython.lltypesystem import lltype, rffi
+
 from rupypy.module import ClassDef
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -31,6 +34,9 @@ class W_FixnumObject(W_RootObject):
 
     def int_w(self, space):
         return self.intvalue
+
+    def bigint_w(self, space):
+        return rbigint.fromint(self.intvalue)
 
     def float_w(self, space):
         return float(self.intvalue)
@@ -87,12 +93,20 @@ class W_FixnumObject(W_RootObject):
                 "divided by 0"
             )
 
+    @classdef.method("%", other="int")
+    def method_mod(self, space, other):
+        return space.newint(self.intvalue % other)
+
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
         if other < 0:
             return space.newint(self.intvalue >> -other)
         else:
             return space.newint(self.intvalue << other)
+
+    @classdef.method("&", other="int")
+    def method_and(self, space, other):
+        return space.newint(self.intvalue & other)
 
     @classdef.method("^", other="int")
     def method_xor(self, space, other):
@@ -123,6 +137,10 @@ class W_FixnumObject(W_RootObject):
     def method_gt(self, space, other):
         return space.newbool(self.intvalue > other)
 
+    @classdef.method(">=", other="int")
+    def method_gte(self, space, other):
+        return space.newbool(self.intvalue >= other)
+
     @classdef.method("-@")
     def method_neg(self, space):
         return space.newint(-self.intvalue)
@@ -149,13 +167,9 @@ class W_FixnumObject(W_RootObject):
     def method_hash(self, space):
         return self
 
-    @classdef.method("zero?")
-    def method_zerop(self, space):
-        return space.newbool(self.intvalue == 0)
-
-    @classdef.method("nonzero?")
-    def method_nonzerop(self, space):
-        return space.newbool(self.intvalue != 0)
+    @classdef.method("size")
+    def method_size(self, space):
+        return space.newint(rffi.sizeof(lltype.typeOf(self.intvalue)))
 
     classdef.app_method("""
     def next
@@ -165,9 +179,7 @@ class W_FixnumObject(W_RootObject):
     def succ
         self + 1
     end
-    """)
 
-    classdef.app_method("""
     def times
         i = 0
         while i < self
@@ -175,9 +187,23 @@ class W_FixnumObject(W_RootObject):
             i += 1
         end
     end
-    """)
 
-    classdef.app_method("""
+    def zero?
+        self == 0
+    end
+
+    def nonzero?
+        self != 0
+    end
+
+    def even?
+        self % 2 == 0
+    end
+
+    def odd?
+        self % 2 != 0
+    end
+
     def __id__
         self * 2 + 1
     end

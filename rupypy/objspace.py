@@ -25,6 +25,7 @@ from rupypy.modules.kernel import Kernel
 from rupypy.modules.process import Process
 from rupypy.modules.topaz import Topaz
 from rupypy.objects.arrayobject import W_ArrayObject
+from rupypy.objects.bignumobject import W_BignumObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
@@ -89,6 +90,7 @@ class ObjectSpace(object):
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
+        self.w_bignum = self.getclassfor(W_BignumObject)
         self.w_module = self.getclassfor(W_ModuleObject)
         self.w_string = self.getclassfor(W_StringObject)
         self.w_hash = self.getclassfor(W_HashObject)
@@ -251,6 +253,9 @@ class ObjectSpace(object):
     def newint(self, intvalue):
         return W_FixnumObject(self, intvalue)
 
+    def newbigint_fromrbigint(self, bigint):
+        return W_BignumObject(self, bigint)
+
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
 
@@ -268,6 +273,9 @@ class ObjectSpace(object):
     def newstr_fromstr(self, strvalue):
         return W_StringObject.newstr_fromstr(self, strvalue)
 
+    def newstr_fromstrs(self, strs_w):
+        return W_StringObject.newstr_fromstrs(self, strs_w)
+
     def newarray(self, items_w):
         return W_ArrayObject(self, items_w)
 
@@ -281,7 +289,7 @@ class ObjectSpace(object):
         return W_RegexpObject(self, regexp)
 
     def newmodule(self, name):
-        return W_ModuleObject(self, name, self.w_object)
+        return W_ModuleObject(self, name)
 
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
@@ -306,6 +314,9 @@ class ObjectSpace(object):
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
+
+    def bigint_w(self, w_obj):
+        return w_obj.bigint_w(self)
 
     def float_w(self, w_obj):
         return w_obj.float_w(self)
@@ -372,9 +383,15 @@ class ObjectSpace(object):
             if w_res is not None:
                 return w_res
             scope = scope.backscope
-        w_mod = lexical_scope.w_mod if lexical_scope else self.w_object
-        w_res = self.find_const(w_mod, name)
+        if lexical_scope is not None:
+            w_res = lexical_scope.w_mod.find_const(self, name)
         if w_res is None:
+            w_res = self.w_object.find_const(self, name)
+        if w_res is None:
+            if lexical_scope is not None:
+                w_mod = lexical_scope.w_mod
+            else:
+                w_mod = self.w_object
             w_res = self.send(w_mod, self.newsymbol("const_missing"), [self.newsymbol(name)])
         return w_res
 

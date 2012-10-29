@@ -1,5 +1,7 @@
 # coding=utf-8
 
+from pypy.rlib.rbigint import rbigint
+
 from rupypy import ast
 
 from .base import BaseRuPyPyTest
@@ -47,6 +49,14 @@ class TestParser(BaseRuPyPyTest):
         ]))
         assert space.parse("-1.2") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(-1.2))
+        ]))
+
+    def test_bignum(self, space):
+        assert space.parse("18446744073709551628") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantBigInt(rbigint.fromlong(18446744073709551628)))
+        ]))
+        assert space.parse("-18446744073709551628") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantBigInt(rbigint.fromlong(-18446744073709551628)))
         ]))
 
     def test_binary_expression(self, space):
@@ -1283,6 +1293,14 @@ HERE
         ]))
         assert space.parse("~3") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(3), "~", [], None, 1))
+        ]))
+
+    def test_unary_pos(self, space):
+        assert space.parse("+100") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantInt(100))
+        ]))
+        assert space.parse("+yield") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Yield([], 1), "+@", [], None, 1))
         ]))
 
     def test_unless(self, space):

@@ -1,13 +1,18 @@
+import copy
+
 from rupypy.module import ClassDef
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.objectobject import W_Object
 
 
 class W_ClassObject(W_ModuleObject):
+    _immutable_fields_ = ["superclass"]
+
     classdef = ClassDef("Class", W_ModuleObject.classdef)
 
     def __init__(self, space, name, superclass, is_singleton=False):
-        W_ModuleObject.__init__(self, space, name, superclass)
+        W_ModuleObject.__init__(self, space, name)
+        self.superclass = superclass
         self.is_singleton = is_singleton
 
         if self.superclass is not None:
@@ -19,6 +24,7 @@ class W_ClassObject(W_ModuleObject):
     def __deepcopy__(self, memo):
         obj = super(W_ClassObject, self).__deepcopy__(memo)
         obj.is_singleton = self.is_singleton
+        obj.superclass = copy.deepcopy(self.superclass, memo)
         return obj
 
     def getsingletonclass(self, space):
@@ -31,6 +37,12 @@ class W_ClassObject(W_ModuleObject):
                 "#<Class:%s>" % self.name, singleton_superclass, is_singleton=True
             )
         return self.klass
+
+    def find_const(self, space, name):
+        w_res = W_ModuleObject.find_const(self, space, name)
+        if w_res is None and self.superclass is not None:
+            w_res = self.superclass.find_const(space, name)
+        return w_res
 
     def find_method(self, space, name):
         method = W_ModuleObject.find_method(self, space, name)
@@ -62,3 +74,7 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("allocate")
     def method_allocate(self, space, args_w):
         return W_Object(space, self)
+
+    @classdef.method("superclass")
+    def method_superclass(self, space):
+        return self.superclass if self.superclass is not None else space.w_nil

@@ -12,6 +12,10 @@ class Coerce(object):
         return space.int_w(w_obj)
 
     @staticmethod
+    def bigint(space, w_obj):
+        return space.bigint_w(w_obj)
+
+    @staticmethod
     def float(space, w_obj):
         w_float_obj = space.send(w_obj, space.newsymbol("to_f"))
         return space.float_w(w_float_obj)
