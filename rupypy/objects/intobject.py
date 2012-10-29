@@ -1,3 +1,4 @@
+from pypy.rlib.rbigint import rbigint
 from pypy.rpython.lltypesystem import lltype, rffi
 
 from rupypy.module import ClassDef
@@ -33,6 +34,9 @@ class W_FixnumObject(W_RootObject):
 
     def int_w(self, space):
         return self.intvalue
+
+    def bigint_w(self, space):
+        return rbigint.fromint(self.intvalue)
 
     def float_w(self, space):
         return float(self.intvalue)

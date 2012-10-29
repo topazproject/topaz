@@ -302,6 +302,9 @@ class ObjectSpace(object):
     def int_w(self, w_obj):
         return w_obj.int_w(self)
 
+    def bigint_w(self, w_obj):
+        return w_obj.bigint_w(self)
+
     def float_w(self, w_obj):
         return w_obj.float_w(self)
 
