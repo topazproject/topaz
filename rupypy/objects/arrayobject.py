@@ -346,7 +346,7 @@ class W_ArrayObject(W_Object):
         res = 0x345678
         self.each do |x|
             # We want to keep this within a fixnum range.
-            res = ((1000003 * res) ^ x.hash) & (2 << (0.size * 8) - 1)
+            res = ((1000003 * res) ^ x.hash) & ((2 << (0.size * 8 - 2)) - 1)
         end
         return res
     end

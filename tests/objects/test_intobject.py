@@ -47,6 +47,12 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 48 << -4")
         assert space.int_w(w_res) == 3
 
+    def test_left_shift_ovf(self, space):
+        w_res = space.execute("return 4 << 90")
+        assert space.bigint_w(w_res) == rbigint.fromlong(4951760157141521099596496896)
+        w_res = space.execute("return 4 << -90")
+        assert space.int_w(w_res) == 0
+
     def test_and(self, space):
         w_res = space.execute("return 12 & 123")
         assert space.int_w(w_res) == 8

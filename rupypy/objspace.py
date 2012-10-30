@@ -41,6 +41,7 @@ from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.hashobject import W_HashObject, W_HashIterator
 from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.numericobject import W_NumericObject
@@ -93,6 +94,7 @@ class ObjectSpace(object):
         self.w_fixnum = self.getclassfor(W_FixnumObject)
         self.w_float = self.getclassfor(W_FloatObject)
         self.w_bignum = self.getclassfor(W_BignumObject)
+        self.w_integer = self.getclassfor(W_IntegerObject)
         self.w_module = self.getclassfor(W_ModuleObject)
         self.w_string = self.getclassfor(W_StringObject)
         self.w_hash = self.getclassfor(W_HashObject)

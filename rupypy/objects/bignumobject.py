@@ -19,6 +19,9 @@ class W_BignumObject(W_IntegerObject):
     def newbigint_fromrbigint(space, bigint):
         return W_BignumObject(space, bigint)
 
+    def int_w(self, space):
+        return self.bigint.toint()
+
     def bigint_w(self, space):
         return self.bigint
 
@@ -30,9 +33,17 @@ class W_BignumObject(W_IntegerObject):
     def method_plus(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.add(other))
 
+    @classdef.method("-", other="bigint")
+    def method_sub(self, space, other):
+        return space.newbigint_fromrbigint(self.bigint.sub(other))
+
     @classdef.method("*", other="bigint")
     def method_times(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.mul(other))
+
+    @classdef.method("<<", other="int")
+    def method_left_shift(self, space, other):
+        return space.newbigint_fromrbigint(self.bigint.lshift(other))
 
     @classdef.method("&", other="bigint")
     def method_and(self, space, other):

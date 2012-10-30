@@ -120,7 +120,15 @@ class W_FixnumObject(W_RootObject):
         if other < 0:
             return space.newint(self.intvalue >> -other)
         else:
-            return space.newint(self.intvalue << other)
+            try:
+                value = ovfcheck(self.intvalue << other)
+            except OverflowError:
+                return space.send(
+                    space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
+                    [space.newint(other)]
+                )
+            else:
+                return space.newint(value)
 
     @classdef.method("&", other="int")
     def method_and(self, space, other):

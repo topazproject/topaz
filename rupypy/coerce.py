@@ -27,7 +27,7 @@ class Coerce(object):
         if space.is_kind_of(w_obj, space.w_fixnum):
             return space.int_w(w_obj)
         else:
-            return space.int_w(space.convert_type(w_obj, space.w_fixnum, "to_int"))
+            return space.int_w(space.convert_type(w_obj, space.w_integer, "to_int"))
 
     @staticmethod
     def bigint(space, w_obj):
