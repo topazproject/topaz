@@ -92,8 +92,13 @@ class TestFixnumObject(BaseRuPyPyTest):
         assert w_res is space.w_true
 
     def test_less_equal(self, space):
-        w_res = space.execute("return 1 <= 1")
-        assert w_res is space.w_true
+        assert space.execute("return 1 <= 2") is space.w_true
+        assert space.execute("return 1 <= 1") is space.w_true
+        assert space.execute("return 1 <= 1.1") is space.w_true
+        assert space.execute("return 1 <= 0.9") is space.w_false
+        assert space.execute("return 1 <= '1.1'") is space.w_true
+        with self.raises(space, "ArgumentError", "comparison of Fixnum with String failed"):
+            space.execute("return 1 <= 'a'")
 
     def test_greater(self, space):
         w_res = space.execute("return 1 > 2")
