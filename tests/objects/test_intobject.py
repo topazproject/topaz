@@ -1,5 +1,8 @@
 import sys
 
+from pypy.rlib.rarithmetic import LONG_BIT
+from pypy.rlib.rbigint import rbigint
+
 from ..base import BaseRuPyPyTest
 
 
@@ -10,6 +13,10 @@ class TestFixnumObject(BaseRuPyPyTest):
 
         w_res = space.execute("return 1 + 2.5")
         assert space.float_w(w_res) == 3.5
+
+    def test_addition_ovf(self, space):
+        w_res = space.execute("return (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3))")
+        assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * 3)
 
     def test_multiplication(self, space):
         w_res = space.execute("return 2 * 3")

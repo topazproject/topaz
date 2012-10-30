@@ -1,3 +1,5 @@
+from pypy.rlib.rbigint import rbigint
+
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 
@@ -8,6 +10,14 @@ class W_BignumObject(W_Object):
     def __init__(self, space, bigint):
         W_Object.__init__(self, space)
         self.bigint = bigint
+
+    @staticmethod
+    def newbigint_fromint(space, intvalue):
+        return W_BignumObject(space, rbigint.fromint(intvalue))
+
+    @staticmethod
+    def newbigint_fromrbigint(space, bigint):
+        return W_BignumObject(space, bigint)
 
     def bigint_w(self, space):
         return self.bigint

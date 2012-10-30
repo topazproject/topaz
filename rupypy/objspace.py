@@ -251,8 +251,11 @@ class ObjectSpace(object):
     def newint(self, intvalue):
         return W_FixnumObject(self, intvalue)
 
+    def newbigint_fromint(self, intvalue):
+        return W_BignumObject.newbigint_fromint(self, intvalue)
+
     def newbigint_fromrbigint(self, bigint):
-        return W_BignumObject(self, bigint)
+        return W_BignumObject.newbigint_fromrbigint(self, bigint)
 
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
