@@ -34,6 +34,14 @@ class W_BignumObject(W_IntegerObject):
     def method_times(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.mul(other))
 
+    @classdef.method("^", other="bigint")
+    def method_xor(self, space, other):
+        return space.newbigint_fromrbigint(self.bigint.xor(other))
+
     @classdef.method("-@")
     def method_uminus(self, space):
         return space.newbigint_fromrbigint(self.bigint.neg())
+
+    @classdef.method("hash")
+    def method_hash(self, space):
+        return space.newint(self.bigint.hash())
