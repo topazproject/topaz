@@ -10,6 +10,10 @@ class TestBignumObject(object):
         w_res = space.execute("return -(18446744073709551628)")
         assert space.bigint_w(w_res) == rbigint.fromlong(-18446744073709551628)
 
+    def test_and(self, space):
+        w_res = space.execute("return 18446744073709551628 & 18446744073709551658")
+        assert space.bigint_w(w_res) == rbigint.fromlong(18446744073709551624)
+
     def test_xor(self, space):
         w_res = space.execute("return 18446744073709551628 ^ 18446744073709551658")
         assert space.bigint_w(w_res) == rbigint.fromint(38)
