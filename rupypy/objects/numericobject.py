@@ -37,7 +37,7 @@ class W_NumericObject(W_Object):
             return space.w_nil
 
     @classdef.method("<=")
-    def method_let(self, space, w_other):
+    def method_lte(self, space, w_other):
         cmpresult = space.send(self, space.newsymbol("<=>"), [w_other])
         if cmpresult is space.w_nil or space.int_w(cmpresult) > 0:
             return space.w_false

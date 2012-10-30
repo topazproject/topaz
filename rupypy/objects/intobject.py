@@ -121,7 +121,7 @@ class W_FixnumObject(W_RootObject):
         return space.newbool(self.intvalue > other)
 
     @classdef.method("<=")
-    def method_let(self, space, w_other):
+    def method_lte(self, space, w_other):
         if isinstance(w_other, W_FloatObject):
             return space.newbool(self.intvalue <= space.float_w(w_other))
         elif isinstance(w_other, W_FixnumObject):

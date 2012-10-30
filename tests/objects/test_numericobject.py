@@ -26,7 +26,7 @@ class TestNumericObject(BaseRuPyPyTest):
         """)
         assert w_res == space.w_nil
 
-    def test_let(self, space):
+    def test_less_equal(self, space):
         w_res = space.execute("""
         class A < Numeric; end
         return A.new <= A.new

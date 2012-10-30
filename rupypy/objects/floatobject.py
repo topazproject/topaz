@@ -49,7 +49,7 @@ class W_FloatObject(W_NumericObject):
         return space.newfloat(self.floatvalue / other)
 
     @classdef.method("<=")
-    def method_let(self, space, w_other):
+    def method_lte(self, space, w_other):
         if isinstance(w_other, W_FloatObject):
             return space.newbool(space.float_w(self) <= space.float_w(w_other))
         else:

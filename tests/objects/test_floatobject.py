@@ -46,7 +46,7 @@ class TestFloatObject(BaseRuPyPyTest):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")
         assert self.unwrap(space, w_res) == [1, 1]
 
-    def test_less_or_equal_than(self, space):
+    def test_less_equal(self, space):
         assert space.execute("return 1.1 <= 2") is space.w_true
         assert space.execute("return 1.0 <= 1") is space.w_true
         assert space.execute("return 1.1 <= 1.1") is space.w_true
