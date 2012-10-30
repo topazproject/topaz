@@ -2922,7 +2922,6 @@ class LexerWrapper(object):
 
 class BoxAST(BaseBox):
     def __init__(self, node):
-        BaseBox.__init__(self)
         self.node = node
 
     @specialize.arg(1)
@@ -2935,7 +2934,6 @@ class BoxAST(BaseBox):
 
 class BoxASTList(BaseBox):
     def __init__(self, nodes):
-        BaseBox.__init__(self)
         self.nodes = nodes
 
     def getastlist(self):
@@ -2947,7 +2945,6 @@ class BoxCallArgs(BaseBox):
     A box for the arguments of a call/send.
     """
     def __init__(self, args, block):
-        BaseBox.__init__(self)
         self.args = args
         self.block = block
 
@@ -2960,7 +2957,6 @@ class BoxCallArgs(BaseBox):
 
 class BoxInt(BaseBox):
     def __init__(self, intvalue):
-        BaseBox.__init__(self)
         self.intvalue = intvalue
 
     def getint(self):
