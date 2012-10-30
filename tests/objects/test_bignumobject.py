@@ -14,6 +14,12 @@ class TestBignumObject(object):
         w_res = space.execute("return 18446744073709551628 ^ 18446744073709551658")
         assert space.bigint_w(w_res) == rbigint.fromint(38)
 
+    def test_eq(self, space):
+        w_res = space.execute("return 18446744073709551628 == 18446744073709551628")
+        assert w_res is space.w_true
+        w_res = space.execute("return 18446744073709551628 == 18446744073709551629")
+        assert w_res is space.w_false
+
     def test_hash(self, space):
         w_res = space.execute("return 18446744073709551628.hash == 18446744073709551628.hash")
         assert w_res is space.w_true

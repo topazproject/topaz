@@ -42,6 +42,10 @@ class W_BignumObject(W_IntegerObject):
     def method_uminus(self, space):
         return space.newbigint_fromrbigint(self.bigint.neg())
 
+    @classdef.method("==", other="bigint")
+    def method_eq(self, space, other):
+        return space.newbool(self.bigint.eq(other))
+
     @classdef.method("hash")
     def method_hash(self, space):
         return space.newint(self.bigint.hash())
