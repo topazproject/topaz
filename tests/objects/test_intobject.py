@@ -1,5 +1,8 @@
 import sys
 
+from pypy.rlib.rarithmetic import LONG_BIT
+from pypy.rlib.rbigint import rbigint
+
 from ..base import BaseRuPyPyTest
 
 
@@ -11,9 +14,17 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 1 + 2.5")
         assert space.float_w(w_res) == 3.5
 
+    def test_addition_ovf(self, space):
+        w_res = space.execute("return (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3))")
+        assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * 3)
+
     def test_multiplication(self, space):
         w_res = space.execute("return 2 * 3")
         assert space.int_w(w_res) == 6
+
+    def test_multiplication_ovf(self, space):
+        w_res = space.execute("return (2 << (0.size * 8 - 3)) * (2 << (0.size * 8 - 3))")
+        assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) ** 2)
 
     def test_subtraction(self, space):
         w_res = space.execute("return 2 - 3")
@@ -35,6 +46,12 @@ class TestFixnumObject(BaseRuPyPyTest):
         assert space.int_w(w_res) == 48
         w_res = space.execute("return 48 << -4")
         assert space.int_w(w_res) == 3
+
+    def test_left_shift_ovf(self, space):
+        w_res = space.execute("return 4 << 90")
+        assert space.bigint_w(w_res) == rbigint.fromlong(4951760157141521099596496896)
+        w_res = space.execute("return 4 << -90")
+        assert space.int_w(w_res) == 0
 
     def test_and(self, space):
         w_res = space.execute("return 12 & 123")

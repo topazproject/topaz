@@ -1029,13 +1029,7 @@ class ConstantInt(ConstantNode):
         self.intvalue = intvalue
 
     def negate(self):
-        try:
-            val = ovfcheck(-self.intvalue)
-        except OverflowError:
-            raise NotImplementedError
-            return ConstantBigInt()
-        else:
-            return ConstantInt(val)
+        return ConstantInt(-self.intvalue)
 
     def create_const(self, ctx):
         return ctx.create_int_const(self.intvalue)

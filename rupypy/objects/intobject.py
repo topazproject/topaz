@@ -1,3 +1,5 @@
+from pypy.rlib.debug import check_regular_int
+from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rbigint import rbigint
 from pypy.rpython.lltypesystem import lltype, rffi
 
@@ -25,6 +27,7 @@ class W_FixnumObject(W_RootObject):
     classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
     def __init__(self, space, intvalue):
+        check_regular_int(intvalue)
         self.intvalue = intvalue
 
     def __deepcopy__(self, memo):
@@ -71,7 +74,16 @@ class W_FixnumObject(W_RootObject):
         if isinstance(w_other, W_FloatObject):
             return space.newfloat(self.intvalue + space.float_w(w_other))
         else:
-            return space.newint(self.intvalue + space.int_w(w_other))
+            other = space.int_w(w_other)
+            try:
+                value = ovfcheck(self.intvalue + other)
+            except OverflowError:
+                return space.send(
+                    space.newbigint_fromint(self.intvalue), space.newsymbol("+"),
+                    [w_other]
+                )
+            else:
+                return space.newint(value)
 
     @classdef.method("-")
     def method_sub(self, space, w_other):
@@ -82,7 +94,15 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.method("*", other="int")
     def method_mul(self, space, other):
-        return space.newint(self.intvalue * other)
+        try:
+            value = ovfcheck(self.intvalue * other)
+        except OverflowError:
+            return space.send(
+                space.newbigint_fromint(self.intvalue), space.newsymbol("*"),
+                [space.newint(other)]
+            )
+        else:
+            return space.newint(value)
 
     @classdef.method("/", other="int")
     def method_div(self, space, other):
@@ -102,7 +122,15 @@ class W_FixnumObject(W_RootObject):
         if other < 0:
             return space.newint(self.intvalue >> -other)
         else:
-            return space.newint(self.intvalue << other)
+            try:
+                value = ovfcheck(self.intvalue << other)
+            except OverflowError:
+                return space.send(
+                    space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
+                    [space.newint(other)]
+                )
+            else:
+                return space.newint(value)
 
     @classdef.method("&", other="int")
     def method_and(self, space, other):

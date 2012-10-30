@@ -245,6 +245,21 @@ class Kernel(Module):
     def method_respond_top(self, space, w_name):
         return space.newbool(space.respond_to(self, w_name))
 
+    @moduledef.function("Float")
+    def method_Float(self, space, w_arg):
+        if w_arg is space.w_nil:
+            raise space.error(space.w_TypeError, "can't convert nil into Float")
+        elif space.is_kind_of(w_arg, space.w_numeric):
+            return space.newfloat(space.float_w(w_arg))
+        elif space.is_kind_of(w_arg, space.w_string):
+            string = space.str_w(w_arg).strip(' ')
+            try:
+                return space.newfloat(float(string))
+            except ValueError:
+                raise space.error(space.w_ArgumentError, "invalid value for Float(): %s" % string)
+        else:
+            return space.convert_type(w_arg, space.w_float, "to_f")
+
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")
     def method_is_kind_ofp(self, space, w_mod):
