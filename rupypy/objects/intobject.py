@@ -1,3 +1,4 @@
+from pypy.rlib.debug import check_regular_int
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rbigint import rbigint
 from pypy.rpython.lltypesystem import lltype, rffi
@@ -26,6 +27,7 @@ class W_FixnumObject(W_RootObject):
     classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
     def __init__(self, space, intvalue):
+        check_regular_int(intvalue)
         self.intvalue = intvalue
 
     def __deepcopy__(self, memo):
