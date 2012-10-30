@@ -12,16 +12,14 @@ class W_NumericObject(W_Object):
         try:
             w_ary = space.send(w_recv, space.newsymbol("coerce"), [w_arg])
         except RubyError as e:
-            if space.is_kind_of(e.w_value, space.w_StandardError):
-                if raise_error:
-                    raise space.error(
-                        space.w_ArgumentError,
-                        "comparison of %s with %s failed" % (
-                            space.getclass(w_recv).name, space.getclass(w_arg).name
-                        )
+            if not space.is_kind_of(e.w_value, space.w_StandardError):
+                raise
+            if raise_error:
+                raise space.error(space.w_ArgumentError,
+                    "comparison of %s with %s failed" % (
+                        space.getclass(w_recv).name, space.getclass(w_arg).name
                     )
-            else:
-                raise e
+                )
         if space.getclass(w_ary) is space.w_array:
             ary = space.listview(w_ary)
             if len(ary) == 2:
@@ -44,11 +42,8 @@ class W_NumericObject(W_Object):
 
     @classdef.method("<=")
     def method_lte(self, space, w_other):
-        cmpresult = space.send(self, space.newsymbol("<=>"), [w_other])
-        if cmpresult is space.w_nil or space.int_w(cmpresult) > 0:
-            return space.w_false
-        else:
-            return space.w_true
+        w_result = space.send(self, space.newsymbol("<=>"), [w_other])
+        return space.newbool(not (w_result is space.w_nil or space.int_w(w_result) > 0))
 
     @classdef.method("coerce")
     def method_coerce(self, space, w_other):
