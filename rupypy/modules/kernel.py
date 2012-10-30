@@ -7,9 +7,6 @@ from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
 from rupypy.modules.process import Process
 from rupypy.objects.exceptionobject import W_ExceptionObject
-from rupypy.objects.hashobject import W_HashObject
-from rupypy.objects.intobject import W_FixnumObject
-from rupypy.objects.numericobject import W_NumericObject
 from rupypy.objects.stringobject import W_StringObject
 
 
