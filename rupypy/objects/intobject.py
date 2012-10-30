@@ -165,7 +165,7 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.method("coerce")
     def method_coerce(self, space, w_other):
-        if space.getclass(w_other) == space.getclass(self):
+        if space.getclass(w_other) is space.getclass(self):
             return space.newarray([w_other, self])
         else:
             return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
