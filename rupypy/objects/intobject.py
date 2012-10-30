@@ -1,3 +1,8 @@
+from pypy.rlib.debug import check_regular_int
+from pypy.rlib.rarithmetic import ovfcheck
+from pypy.rlib.rbigint import rbigint
+from pypy.rpython.lltypesystem import lltype, rffi
+
 from rupypy.module import ClassDef
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -23,6 +28,7 @@ class W_FixnumObject(W_RootObject):
     classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
 
     def __init__(self, space, intvalue):
+        check_regular_int(intvalue)
         self.intvalue = intvalue
 
     def __deepcopy__(self, memo):
@@ -32,6 +38,9 @@ class W_FixnumObject(W_RootObject):
 
     def int_w(self, space):
         return self.intvalue
+
+    def bigint_w(self, space):
+        return rbigint.fromint(self.intvalue)
 
     def float_w(self, space):
         return float(self.intvalue)
@@ -66,7 +75,16 @@ class W_FixnumObject(W_RootObject):
         if isinstance(w_other, W_FloatObject):
             return space.newfloat(self.intvalue + space.float_w(w_other))
         else:
-            return space.newint(self.intvalue + space.int_w(w_other))
+            other = space.int_w(w_other)
+            try:
+                value = ovfcheck(self.intvalue + other)
+            except OverflowError:
+                return space.send(
+                    space.newbigint_fromint(self.intvalue), space.newsymbol("+"),
+                    [w_other]
+                )
+            else:
+                return space.newint(value)
 
     @classdef.method("-")
     def method_sub(self, space, w_other):
@@ -77,7 +95,15 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.method("*", other="int")
     def method_mul(self, space, other):
-        return space.newint(self.intvalue * other)
+        try:
+            value = ovfcheck(self.intvalue * other)
+        except OverflowError:
+            return space.send(
+                space.newbigint_fromint(self.intvalue), space.newsymbol("*"),
+                [space.newint(other)]
+            )
+        else:
+            return space.newint(value)
 
     @classdef.method("/", other="int")
     def method_div(self, space, other):
@@ -88,12 +114,28 @@ class W_FixnumObject(W_RootObject):
                 "divided by 0"
             )
 
+    @classdef.method("%", other="int")
+    def method_mod(self, space, other):
+        return space.newint(self.intvalue % other)
+
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
         if other < 0:
             return space.newint(self.intvalue >> -other)
         else:
-            return space.newint(self.intvalue << other)
+            try:
+                value = ovfcheck(self.intvalue << other)
+            except OverflowError:
+                return space.send(
+                    space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
+                    [space.newint(other)]
+                )
+            else:
+                return space.newint(value)
+
+    @classdef.method("&", other="int")
+    def method_and(self, space, other):
+        return space.newint(self.intvalue & other)
 
     @classdef.method("^", other="int")
     def method_xor(self, space, other):
@@ -129,6 +171,10 @@ class W_FixnumObject(W_RootObject):
         else:
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "<=", raise_error=True)
 
+    @classdef.method(">=", other="int")
+    def method_gte(self, space, other):
+        return space.newbool(self.intvalue >= other)
+
     @classdef.method("-@")
     def method_neg(self, space):
         return space.newint(-self.intvalue)
@@ -155,13 +201,9 @@ class W_FixnumObject(W_RootObject):
     def method_hash(self, space):
         return self
 
-    @classdef.method("zero?")
-    def method_zerop(self, space):
-        return space.newbool(self.intvalue == 0)
-
-    @classdef.method("nonzero?")
-    def method_nonzerop(self, space):
-        return space.newbool(self.intvalue != 0)
+    @classdef.method("size")
+    def method_size(self, space):
+        return space.newint(rffi.sizeof(lltype.typeOf(self.intvalue)))
 
     @classdef.method("coerce")
     def method_coerce(self, space, w_other):
@@ -178,9 +220,7 @@ class W_FixnumObject(W_RootObject):
     def succ
         self + 1
     end
-    """)
 
-    classdef.app_method("""
     def times
         i = 0
         while i < self
@@ -188,9 +228,23 @@ class W_FixnumObject(W_RootObject):
             i += 1
         end
     end
-    """)
 
-    classdef.app_method("""
+    def zero?
+        self == 0
+    end
+
+    def nonzero?
+        self != 0
+    end
+
+    def even?
+        self % 2 == 0
+    end
+
+    def odd?
+        self % 2 != 0
+    end
+
     def __id__
         self * 2 + 1
     end

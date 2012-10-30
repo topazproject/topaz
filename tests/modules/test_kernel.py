@@ -118,6 +118,10 @@ class TestKernel(BaseRuPyPyTest):
         w_res = space.execute("return [String('hello'), String(4)]")
         assert self.unwrap(space, w_res) == ["hello", "4"]
 
+    def test_Integer(self, space):
+        w_res = space.execute("return [Integer(4), Integer('123')]")
+        assert self.unwrap(space, w_res) == [4, 123]
+
     def test_exit(self, space):
         with self.raises(space, "SystemExit"):
             space.execute("Kernel.exit")

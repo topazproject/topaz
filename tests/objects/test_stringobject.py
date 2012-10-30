@@ -238,3 +238,33 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.str_w(w_res) == "hhxo"
         w_res = space.execute("return 'hello'.tr_s!('','').nil?")
         assert self.unwrap(space, w_res) is True
+
+
+class TestStringMod(object):
+    def test_s(self, space):
+        w_res = space.execute("return '1 %s 1' % 'abc'")
+        assert space.str_w(w_res) == "1 abc 1"
+
+    def test_f(self, space):
+        w_res = space.execute("return ' %f ' % 1.23")
+        assert space.str_w(w_res) == " 1.230000 "
+
+    def test_f_width(self, space):
+        w_res = space.execute("return '%04f' % 1.23")
+        assert space.str_w(w_res) == "1.230000"
+
+    def test_d(self, space):
+        w_res = space.execute("return ' %d ' % 12")
+        assert space.str_w(w_res) == " 12 "
+
+    def test_d_width(self, space):
+        w_res = space.execute("return ' %05d' % 12")
+        assert space.str_w(w_res) == " 00012"
+        w_res = space.execute("return ' %01d' % 12")
+        assert space.str_w(w_res) == " 12"
+
+    def test_array_param(self, space):
+        w_res = space.execute("return '%d-%s' % [12, 'happy']")
+        assert space.str_w(w_res) == "12-happy"
+        w_res = space.execute("return '1%02d%02d%02d%04d' % [1, 2, 3, 4]")
+        assert space.str_w(w_res) == "10102030004"

@@ -44,6 +44,11 @@ class W_BaseObject(object):
             "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
         )
 
+    def find_local_const(self, space, name):
+        raise space.error(space.w_TypeError,
+            "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
+        )
+
     @classdef.method("initialize")
     def method_initialize(self):
         return self
@@ -53,7 +58,7 @@ class W_BaseObject(object):
         return space.newint(compute_unique_id(self))
 
     @classdef.method("method_missing")
-    def method_method_missing(self, space, w_name):
+    def method_method_missing(self, space, w_name, args_w):
         name = space.symbol_w(w_name)
         class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
         raise space.error(space.w_NoMethodError,
@@ -113,11 +118,6 @@ class W_RootObject(W_BaseObject):
     @classdef.method("extend")
     def method_extend(self, space, w_mod):
         self.getsingletonclass(space).method_include(space, w_mod)
-
-    @classdef.method("kind_of?")
-    @classdef.method("is_a?")
-    def method_is_kind_ofp(self, space, w_mod):
-        return space.newbool(self.is_kind_of(space, w_mod))
 
     @classdef.method("inspect")
     @classdef.method("to_s")

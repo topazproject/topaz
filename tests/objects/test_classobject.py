@@ -33,6 +33,12 @@ class TestClassObject(object):
         [w_x, w_xm] = space.listview(w_res)
         assert w_xm is w_x
 
+    def test_superclass(self, space):
+        w_res = space.execute("return Object.superclass")
+        assert w_res is space.w_basicobject
+        w_res = space.execute("return BasicObject.superclass")
+        assert w_res is space.w_nil
+
     def test_attr_accessor(self, space):
         w_res = space.execute("""
         class X

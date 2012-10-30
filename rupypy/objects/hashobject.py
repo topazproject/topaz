@@ -13,7 +13,7 @@ class W_HashObject(W_Object):
         self.default_proc = None
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space):
+    def method_allocate(self, space, args_w):
         return W_HashObject(space, self)
 
     @classdef.singleton_method("[]")
@@ -129,6 +129,10 @@ class W_HashIterator(W_Object):
     def method_allocate(self, space, w_obj):
         assert isinstance(w_obj, W_HashObject)
         return W_HashIterator(space, w_obj.contents)
+
+    @classdef.method("initialize")
+    def method_initialize(self, w_obj):
+        pass
 
     @classdef.method("next")
     def method_next(self, space):
