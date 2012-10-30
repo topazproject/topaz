@@ -127,7 +127,7 @@ class W_FixnumObject(W_RootObject):
         elif isinstance(w_other, W_FixnumObject):
             return space.newbool(self.intvalue <= w_other.intvalue)
         else:
-            return W_NumericObject.retry_binop_coercing(space, self, w_other, "<=")
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "<=", raise_error=True)
 
     @classdef.method("-@")
     def method_neg(self, space):

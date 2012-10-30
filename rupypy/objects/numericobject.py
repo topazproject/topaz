@@ -7,20 +7,28 @@ class W_NumericObject(W_Object):
     classdef = ClassDef("Numeric", W_Object.classdef)
 
     @staticmethod
-    def retry_binop_coercing(space, w_recv, w_arg, binop):
+    def retry_binop_coercing(space, w_recv, w_arg, binop, raise_error=True):
         try:
             w_ary = space.send(w_recv, space.newsymbol("coerce"), [w_arg])
-            if space.getclass(w_ary) is space.w_array:
-                ary = space.listview(w_ary)
-                if len(ary) == 2:
-                    return space.send(ary[1], space.newsymbol(binop), ary[:1])
-        except RubyError:
-            raise space.error(
-                space.w_ArgumentError,
-                "comparison of %s with %s failed" % (
-                    space.getclass(w_recv).name, space.getclass(w_arg).name
-                )
-            )
+        except RubyError as e:
+            if space.is_kind_of(e.w_value, space.w_StandardError):
+                if raise_error:
+                    raise space.error(
+                        space.w_ArgumentError,
+                        "comparison of %s with %s failed" % (
+                            space.getclass(w_recv).name, space.getclass(w_arg).name
+                        )
+                    )
+            else:
+                raise e
+        if space.getclass(w_ary) is space.w_array:
+            ary = space.listview(w_ary)
+            if len(ary) == 2:
+                return space.send(ary[1], space.newsymbol(binop), ary[:1])
+        elif raise_error:
+            raise space.error(space.w_TypeError, "coerce must return [x, y]")
+        else:
+            return None
 
     def float_w(self, space):
         raise NotImplementedError("%s should have implemented float_w" % W_NumericObject.classdef.name)
