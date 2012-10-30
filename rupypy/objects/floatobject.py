@@ -48,6 +48,13 @@ class W_FloatObject(W_NumericObject):
     def method_div(self, space, other):
         return space.newfloat(self.floatvalue / other)
 
+    @classdef.method("<=")
+    def method_lte(self, space, w_other):
+        if isinstance(w_other, W_FloatObject):
+            return space.newbool(space.float_w(self) <= space.float_w(w_other))
+        else:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "<=", raise_error=True)
+
     @classdef.method("==", other="float")
     def method_eq(self, space, other):
         return space.newbool(self.floatvalue == other)
