@@ -8,6 +8,7 @@ class W_NumericObject(W_Object):
 
     @staticmethod
     def retry_binop_coercing(space, w_recv, w_arg, binop, raise_error=True):
+        w_ary = None
         try:
             w_ary = space.send(w_recv, space.newsymbol("coerce"), [w_arg])
         except RubyError as e:
