@@ -22,6 +22,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 2 * 3")
         assert space.int_w(w_res) == 6
 
+    def test_multiplication_ovf(self, space):
+        w_res = space.execute("return (2 << (0.size * 8 - 3)) * (2 << (0.size * 8 - 3))")
+        assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) ** 2)
+
     def test_subtraction(self, space):
         w_res = space.execute("return 2 - 3")
         assert space.int_w(w_res) == -1

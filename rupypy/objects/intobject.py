@@ -92,7 +92,15 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.method("*", other="int")
     def method_mul(self, space, other):
-        return space.newint(self.intvalue * other)
+        try:
+            value = ovfcheck(self.intvalue * other)
+        except OverflowError:
+            return space.send(
+                space.newbigint_fromint(self.intvalue), space.newsymbol("*"),
+                [space.newint(other)]
+            )
+        else:
+            return space.newint(value)
 
     @classdef.method("/", other="int")
     def method_div(self, space, other):

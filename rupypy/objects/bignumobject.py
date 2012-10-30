@@ -1,14 +1,14 @@
 from pypy.rlib.rbigint import rbigint
 
 from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
+from rupypy.objects.integerobject import W_IntegerObject
 
 
-class W_BignumObject(W_Object):
-    classdef = ClassDef("Bignum", W_Object.classdef)
+class W_BignumObject(W_IntegerObject):
+    classdef = ClassDef("Bignum", W_IntegerObject.classdef)
 
     def __init__(self, space, bigint):
-        W_Object.__init__(self, space)
+        W_IntegerObject.__init__(self, space)
         self.bigint = bigint
 
     @staticmethod
@@ -29,6 +29,10 @@ class W_BignumObject(W_Object):
     @classdef.method("+", other="bigint")
     def method_plus(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.add(other))
+
+    @classdef.method("*", other="bigint")
+    def method_times(self, space, other):
+        return space.newbigint_fromrbigint(self.bigint.mul(other))
 
     @classdef.method("-@")
     def method_uminus(self, space):
