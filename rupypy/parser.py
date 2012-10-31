@@ -1628,11 +1628,12 @@ class Parser(object):
         args = []
         stmts = []
         for idx, var in enumerate(p[1].getastlist()):
+            var_name = var.value.name if isinstance(var, ast.Splat) else var.name
             self.lexer.symtable.declare_argument(str(idx))
-            self.lexer.symtable.declare_write(var.name)
+            self.lexer.symtable.declare_write(var_name)
             args.append(ast.Argument(str(idx)))
             stmts.append(ast.Statement(ast.Assignment(var, ast.Variable(str(idx), lineno))))
-        stmts += p[5].getastlist()
+        stmts += p[5].getastlist() if p[5] is not None else []
         block = ast.SendBlock(args, None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
