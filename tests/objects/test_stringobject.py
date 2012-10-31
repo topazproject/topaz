@@ -187,9 +187,9 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute('return "-12fdsa".to_i')
         assert space.int_w(w_res) == -12
         with self.raises(space, "ArgumentError"):
-            space.execute('return "".to_i(1)')
+            space.execute('"".to_i(1)')
         with self.raises(space, "ArgumentError"):
-            space.execute('return "".to_i(37)')
+            space.execute('"".to_i(37)')
 
     def test_downcase(self, space):
         w_res = space.execute("""

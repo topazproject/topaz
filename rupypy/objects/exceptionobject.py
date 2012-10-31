@@ -173,3 +173,8 @@ class W_IndexError(W_StandardError):
 class W_StopIteration(W_IndexError):
     classdef = ClassDef("StopIteration", W_IndexError.classdef)
     method_allocate = new_exception_allocate(classdef)
+
+
+class W_LocalJumpError(W_StandardError):
+    classdef = ClassDef("LocalJumpError", W_StandardError.classdef)
+    method_allocate = new_exception_allocate(classdef)

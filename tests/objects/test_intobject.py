@@ -33,6 +33,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 2 - 3.5")
         assert space.float_w(w_res) == -1.5
 
+    def test_subtraction_ovf(self, space):
+        w_res = space.execute("return 0 - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3))")
+        assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * -3)
+
     def test_division(self, space):
         w_res = space.execute("return 3 / 5")
         assert space.int_w(w_res) == 0
@@ -98,7 +102,7 @@ class TestFixnumObject(BaseRuPyPyTest):
         assert space.execute("return 1 <= 0.9") is space.w_false
         assert space.execute("return 1 <= '1.1'") is space.w_true
         with self.raises(space, "ArgumentError", "comparison of Fixnum with String failed"):
-            space.execute("return 1 <= 'a'")
+            space.execute("1 <= 'a'")
 
     def test_greater(self, space):
         w_res = space.execute("return 1 > 2")

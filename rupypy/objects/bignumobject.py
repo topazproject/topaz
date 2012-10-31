@@ -64,3 +64,17 @@ class W_BignumObject(W_IntegerObject):
     @classdef.method("hash")
     def method_hash(self, space):
         return space.newint(self.bigint.hash())
+
+    @classdef.method("coerce")
+    def method_coerce(self, space, w_other):
+        if isinstance(w_other, W_BignumObject):
+            return space.newarray([w_other, self])
+        elif space.getclass(w_other) is space.w_fixnum:
+            return space.newarray([
+                space.newbigint_fromint(space.int_w(w_other)),
+                self,
+            ])
+        else:
+            raise space.error(space.w_TypeError,
+                "can't coerce %s to Bignum" % space.getclass(w_other).name
+            )

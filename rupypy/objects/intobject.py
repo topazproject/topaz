@@ -91,7 +91,16 @@ class W_FixnumObject(W_RootObject):
         if isinstance(w_other, W_FloatObject):
             return space.newfloat(self.intvalue - space.float_w(w_other))
         else:
-            return space.newint(self.intvalue - space.int_w(w_other))
+            other = space.int_w(w_other)
+            try:
+                value = ovfcheck(self.intvalue - other)
+            except OverflowError:
+                return space.send(
+                    space.newbigint_fromint(self.intvalue), space.newsymbol("-"),
+                    [w_other]
+                )
+            else:
+                return space.newint(value)
 
     @classdef.method("*", other="int")
     def method_mul(self, space, other):
