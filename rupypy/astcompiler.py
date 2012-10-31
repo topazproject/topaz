@@ -92,6 +92,34 @@ class BlockSymbolTable(BaseSymbolTable):
             self.cells[name] = self.FREEVAR
 
 
+class PassThroughSymbolTable(BlockSymbolTable):
+    def declare_argument(self, name):
+        self.arguments.append(name)
+        self.locals[name] = None
+
+    def declare_local(self, name):
+        self.parent_symtable.declare_local(name)
+        self.upgrade_to_closure(name)
+
+    def declare_write(self, name):
+        self.parent_symtable.declare_write(name)
+        self.upgrade_to_closure(name)
+
+    def declare_read(self, name):
+        self.parent_symtable.declare_read(name)
+        self.upgrade_to_closure(name)
+
+    def upgrade_to_closure(self, name):
+        if name not in self.cells:
+            self.parent_symtable.upgrade_to_closure(name)
+            self.cells[name] = self.FREEVAR
+
+    def is_cell(self, name):
+        if name not in self.cells and self.parent_symtable.is_defined(name):
+            self.upgrade_to_closure(name)
+        return name in self.cells
+
+
 class CompilerContext(object):
     F_BLOCK_LOOP = 0
     F_BLOCK_FINALLY = 1

@@ -5,7 +5,7 @@ from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
 
 from rupypy import ast
-from rupypy.astcompiler import SymbolTable, BlockSymbolTable
+from rupypy.astcompiler import SymbolTable, BlockSymbolTable, PassThroughSymbolTable
 
 
 class Parser(object):
@@ -25,6 +25,9 @@ class Parser(object):
 
     def push_block_scope(self):
         self.lexer.symtable = BlockSymbolTable(self.lexer.symtable)
+
+    def push_passthrough_scope(self):
+        self.lexer.symtable = PassThroughSymbolTable(self.lexer.symtable)
 
     def save_and_pop_scope(self, node):
         child_symtable = self.lexer.symtable
@@ -1620,7 +1623,20 @@ class Parser(object):
                     $$ = new ForNode($1.getPosition(), $2, $8, $5, support.getCurrentScope());
                 }
         """
-        raise NotImplementedError(p)
+        self.push_passthrough_scope()
+        lineno = p[0].getsourcepos().lineno
+        args = []
+        stmts = []
+        for idx, var in enumerate(p[1].getastlist()):
+            self.lexer.symtable.declare_argument(str(idx))
+            self.lexer.symtable.declare_write(var.name)
+            args.append(ast.Argument(str(idx)))
+            stmts.append(ast.Statement(ast.Assignment(var, ast.Variable(str(idx), lineno))))
+        stmts += p[5].getastlist()
+        block = ast.SendBlock(args, None, ast.Block(stmts))
+
+        self.save_and_pop_scope(block)
+        return BoxAST(ast.ForLoop(p[3].getast(), block, lineno))
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
@@ -2931,6 +2947,9 @@ class BoxAST(BaseBox):
         if cls is not None:
             assert isinstance(node, cls)
         return node
+
+    def getastlist(self):
+        return [self.getast()]
 
 
 class BoxASTList(BaseBox):
