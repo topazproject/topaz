@@ -530,6 +530,66 @@ class TestParser(BaseRuPyPyTest):
             ])))
         ]))
 
+    def test_for(self, space):
+        expected = ast.Main(ast.Block([
+            ast.Statement(ast.ForLoop(ast.Array([]), ast.SendBlock(
+                [ast.Argument("0")], None, ast.Block([
+                    ast.Statement(ast.Assignment(ast.Variable("i", 1), ast.Variable("0", 1))),
+                    ast.Statement(ast.Send(ast.Self(1), "puts", [ast.Variable("i", 1)], None, 1))
+                ])
+            ), 1))
+        ]))
+        # assert space.parse("for i in [] do puts i end") == expected
+        # assert space.parse("for i in [] do; puts i end") == expected
+        assert space.parse("for i in []; puts i end") == expected
+        assert space.parse("for i in []; end") == ast.Main(ast.Block([
+            ast.Statement(ast.ForLoop(ast.Array([]), ast.SendBlock(
+                [ast.Argument("0")], None, ast.Block([
+                    ast.Statement(ast.Assignment(ast.Variable("i", 1), ast.Variable("0", 1)))
+            ])), 1))
+        ]))
+
+        res = space.parse("""
+        a = [0]
+        for i in a
+            puts i
+            puts 1
+            puts i
+        end
+        """)
+        assert res == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Variable("a", 2), ast.Array([ast.ConstantInt(0)]))),
+            ast.Statement(ast.ForLoop(ast.Variable("a", 3), ast.SendBlock(
+                [ast.Argument("0")], None, ast.Block([
+                    ast.Statement(ast.Assignment(ast.Variable("i", 3), ast.Variable("0", 3))),
+                    ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
+                    ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
+                    ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], None, 6)),
+            ])), 3))
+        ]))
+
+        res = space.parse("""
+        for @a, *b, $c in []
+        end
+        """)
+        assert res == ast.Main(ast.Block([
+            ast.Statement(ast.ForLoop(ast.Array([]), ast.SendBlock(
+                [ast.Argument("0"), ast.Argument("1"), ast.Argument("2")], None, ast.Block([
+                    ast.Statement(ast.Assignment(
+                        ast.InstanceVariable("@a"),
+                        ast.Variable("0", 2)
+                    )),
+                    ast.Statement(ast.Assignment(
+                        ast.Splat(ast.Variable("b", 2)),
+                        ast.Variable("1", 2)
+                    )),
+                    ast.Statement(ast.Assignment(
+                        ast.Global("$c"),
+                        ast.Variable("2", 2)
+                    )),
+            ])), 2))
+        ]))
+
     def test_return(self, space):
         assert space.parse("return 4") == ast.Main(ast.Block([
             ast.Return(ast.ConstantInt(4))
