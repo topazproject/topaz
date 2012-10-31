@@ -73,12 +73,21 @@ class TestInterpreter(BaseRuPyPyTest):
     def test_for(self, space):
         w_res = space.execute("""
         i = 0
-        for i, b in [1, 2, 3] do
+        for i, *rest, b in [1, 2, 3] do
             bbb = "hello"
         end
-        return i, bbb, b
+        return i, bbb, rest, b
         """)
-        assert self.unwrap(space, w_res) == [3, "hello", None]
+        assert self.unwrap(space, w_res) == [3, "hello", [], None]
+
+        w_res = space.execute("""
+        i = 0
+        for i, *rest, b in [[1, 2, 3, 4]] do
+            bbb = "hello"
+        end
+        return i, bbb, rest, b
+        """)
+        assert self.unwrap(space, w_res) == [1, "hello", [2, 3], 4]
 
         with self.raises(space, "NoMethodError", "undefined method `each' for Fixnum"):
             space.execute("for i in 1; end")

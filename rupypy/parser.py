@@ -1624,21 +1624,16 @@ class Parser(object):
                     $$ = new ForNode($1.getPosition(), $2, $8, $5, support.getCurrentScope());
                 }
         """
-        self.push_passthrough_scope()
         lineno = p[0].getsourcepos().lineno
-        args = []
-        stmts = []
-        for idx, var in enumerate(p[1].getastlist()):
-            var_name = var.value.name if isinstance(var, ast.Splat) else var.name
-            self.lexer.symtable.declare_argument(str(idx))
-            self.lexer.symtable.declare_write(var_name)
-            args.append(ast.Argument(str(idx)))
-            stmts.append(ast.Statement(ast.Assignment(var, ast.Variable(str(idx), lineno))))
+        self.push_passthrough_scope()
+        for varname in p[1].getvarnames():
+            self.lexer.symtable.declare_write(varname)
+        self.lexer.symtable.declare_argument(p[1].getargumentname())
+        stmts = [ast.Statement(p[1].getassignment(lineno))]
         stmts += p[5].getastlist() if p[5] is not None else []
-        block = ast.SendBlock(args, None, ast.Block(stmts))
-
+        block = ast.SendBlock([p[1].getargument()], None, ast.Block(stmts))
         self.save_and_pop_scope(block)
-        return BoxAST(ast.ForLoop(p[3].getast(), p[1].getastlist(), block, lineno))
+        return BoxAST(ast.ForLoop(p[3].getast(), p[1].getvariables(), block, lineno))
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
@@ -1779,7 +1774,7 @@ class Parser(object):
     @pg.production("for_var : mlhs")
     @pg.production("for_var : lhs")
     def for_var(self, p):
-        return p[0]
+        return BoxForVars(p[0])
 
     @pg.production("f_marg : f_norm_arg")
     def f_marg_f_norm_arg(self, p):
@@ -2950,9 +2945,6 @@ class BoxAST(BaseBox):
             assert isinstance(node, cls)
         return node
 
-    def getastlist(self):
-        return [self.getast()]
-
 
 class BoxASTList(BaseBox):
     def __init__(self, nodes):
@@ -3013,3 +3005,39 @@ class BoxStrTerm(BaseBox):
 
     def getstrterm(self):
         return self.str_term
+
+class BoxForVars(BaseBox):
+    def __init__(self, for_var):
+        lineno = -1
+        for_vars = []
+        if isinstance(for_var, BoxAST):
+            for_vars = [for_var.getast()]
+        elif isinstance(for_var, BoxASTList):
+            for_vars = for_var.getastlist()
+        else:
+            raise NotImplementedError(for_var)
+
+        self.argument = ast.Argument("0")
+        self.variables = []
+        self.targets = []
+        for idx, var in enumerate(for_vars):
+            if isinstance(var, ast.Splat):
+                self.variables.append(var.value)
+            else:
+                self.variables.append(var)
+            self.targets.append(var)
+
+    def getargumentname(self):
+        return self.argument.name
+
+    def getargument(self):
+        return self.argument
+
+    def getassignment(self, lineno):
+        return ast.MultiAssignment(self.targets, ast.Variable(self.argument.name, lineno))
+
+    def getvarnames(self):
+        return [var.name for var in self.variables]
+
+    def getvariables(self):
+        return self.variables
