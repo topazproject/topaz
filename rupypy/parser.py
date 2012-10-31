@@ -3033,7 +3033,11 @@ class BoxForVars(BaseBox):
         return ast.MultiAssignment(self.targets, ast.Variable(self.argument.name, lineno))
 
     def getvarnames(self):
-        return [var.name for var in self.variables]
+        names = []
+        for var in self.variables:
+            if isinstance(var, ast.Variable):
+                names.append(var.name)
+        return names
 
     def getvariables(self):
         return self.variables
