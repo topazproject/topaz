@@ -539,8 +539,8 @@ class TestParser(BaseRuPyPyTest):
                 ])
             ), 1))
         ]))
-        # assert space.parse("for i in [] do puts i end") == expected
-        # assert space.parse("for i in [] do; puts i end") == expected
+        assert space.parse("for i in [] do puts i end") == expected
+        assert space.parse("for i in [] do; puts i end") == expected
         assert space.parse("for i in []; puts i end") == expected
         assert space.parse("for i in []; end") == ast.Main(ast.Block([
             ast.Statement(ast.ForLoop(ast.Array([]), ast.SendBlock(

@@ -1611,6 +1611,7 @@ class Parser(object):
 
         return BoxAST(ast.If(conditions[0][0], conditions[0][1], else_block))
 
+    @pg.production("primary : FOR for_var IN expr_value DO_BLOCK compstmt END")
     @pg.production("primary : FOR for_var IN expr_value do compstmt END")
     def primary_for(self, p):
         """
