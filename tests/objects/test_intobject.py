@@ -35,7 +35,7 @@ class TestFixnumObject(BaseRuPyPyTest):
 
     def test_subtraction_ovf(self, space):
         w_res = space.execute("return 0 - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3))")
-        assert space.bigint_w(w_res) == rbigint.fromlong(-13835058055282163712)
+        assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * -3)
 
     def test_division(self, space):
         w_res = space.execute("return 3 / 5")
