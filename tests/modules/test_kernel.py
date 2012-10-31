@@ -256,9 +256,9 @@ class TestRequire(BaseRuPyPyTest):
         assert space.float_w(space.execute("return Float('1.1')")) == 1.1
         assert space.float_w(space.execute("return Float('1.1e10')")) == 11000000000.0
         with self.raises(space, "TypeError"):
-            space.execute("return Float(nil)")
+            space.execute("Float(nil)")
         with self.raises(space, "ArgumentError"):
-            space.execute("return Float('a')")
+            space.execute("Float('a')")
         w_res = space.execute("""
         class A; def to_f; 1.1; end; end
         return Float(A.new)
