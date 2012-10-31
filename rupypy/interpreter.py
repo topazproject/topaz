@@ -575,6 +575,8 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
+        if frame.block is None:
+            raise space.error(space.w_LocalJumpError, "no block given (yield)")
         args_w = [None] * n_args
         for i in xrange(n_args - 1, -1, -1):
             args_w[i] = frame.pop()

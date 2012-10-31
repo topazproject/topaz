@@ -1238,6 +1238,15 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 123
 
+    def test_yield_no_block(self, space):
+        space.execute("""
+        def f
+            yield
+        end
+        """)
+        with self.raises(space, "LocalJumpError"):
+            space.execute("f")
+
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):
