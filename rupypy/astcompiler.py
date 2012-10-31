@@ -94,7 +94,10 @@ class BlockSymbolTable(BaseSymbolTable):
 
 class PassThroughSymbolTable(BlockSymbolTable):
     def upgrade_to_closure(self, name):
-        if name not in self.cells:
+        if self.is_local(name):
+            del self.locals[name]
+            self.cells[name] = self.CELLVAR
+        elif name not in self.cells:
             self.parent_symtable.upgrade_to_closure(name)
             self.cells[name] = self.FREEVAR
 
