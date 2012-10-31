@@ -33,6 +33,10 @@ class TestFixnumObject(BaseRuPyPyTest):
         w_res = space.execute("return 2 - 3.5")
         assert space.float_w(w_res) == -1.5
 
+    def test_subtraction_ovf(self, space):
+        w_res = space.execute("return 0 - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3))")
+        assert space.bigint_w(w_res) == rbigint.fromlong(-13835058055282163712)
+
     def test_division(self, space):
         w_res = space.execute("return 3 / 5")
         assert space.int_w(w_res) == 0
