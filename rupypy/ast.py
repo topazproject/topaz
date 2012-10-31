@@ -694,8 +694,16 @@ class Super(BaseSend):
 
 
 class ForLoop(Send):
-    def __init__(self, iterator, body, lineno):
+    def __init__(self, iterator, for_vars, body, lineno):
         Send.__init__(self, iterator, "each", [], body, lineno)
+        self.for_vars = for_vars
+
+    def compile(self, ctx):
+        for var in self.for_vars:
+            var.compile_receiver(ctx)
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+            var.compile_store(ctx)
+        Send.compile(self, ctx)
 
 
 class Splat(Node):

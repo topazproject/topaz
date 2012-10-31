@@ -70,6 +70,30 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
+    def test_for(self, space):
+        w_res = space.execute("""
+        i = 0
+        for i, b in [1, 2, 3] do
+            bbb = "hello"
+        end
+        return i, bbb, b
+        """)
+        assert self.unwrap(space, w_res) == [3, "hello", None]
+
+        with self.raises(space, "NoMethodError", "undefined method `each' for Fixnum"):
+            space.execute("for i in 1; end")
+
+        w_res = space.execute("""
+        class A
+            def each
+                [1, 2, 3]
+            end
+        end
+        for i in A.new; end
+        return i
+        """)
+        assert self.unwrap(space, w_res) == None
+
     def test_return(self, space):
         w_res = space.execute("return 4")
         assert space.int_w(w_res) == 4

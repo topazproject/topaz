@@ -1638,7 +1638,7 @@ class Parser(object):
         block = ast.SendBlock(args, None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
-        return BoxAST(ast.ForLoop(p[3].getast(), block, lineno))
+        return BoxAST(ast.ForLoop(p[3].getast(), p[1].getastlist(), block, lineno))
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
