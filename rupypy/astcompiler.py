@@ -87,20 +87,12 @@ class BlockSymbolTable(BaseSymbolTable):
         if self.is_local(name):
             del self.locals[name]
             self.cells[name] = self.CELLVAR
-        elif not self.is_cell(name):
+        elif name not in self.cells:
             self.parent_symtable.upgrade_to_closure(name)
             self.cells[name] = self.FREEVAR
 
 
 class PassThroughSymbolTable(BlockSymbolTable):
-    def upgrade_to_closure(self, name):
-        if self.is_local(name):
-            del self.locals[name]
-            self.cells[name] = self.CELLVAR
-        elif name not in self.cells:
-            self.parent_symtable.upgrade_to_closure(name)
-            self.cells[name] = self.FREEVAR
-
     def is_cell(self, name):
         if name not in self.cells and self.parent_symtable.is_defined(name):
             self.upgrade_to_closure(name)
