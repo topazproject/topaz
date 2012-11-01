@@ -2,12 +2,6 @@ from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 
 
-def create_allocate(classdef):
-    @classdef.singleton_method("allocate")
-    def method_allocate(self, space):
-        raise space.error(space.w_TypeError, "allocator undefined for %s" % classdef.name)
-    return method_allocate
-
 def create_owner(classdef):
     @classdef.method("owner")
     def method_owner(self, space):
@@ -23,7 +17,11 @@ def create_to_s(classdef):
     return method_to_s
 
 
-class W_MethodObject(W_Object):
+class W_BaseMethodObject(W_Object):
+    pass
+
+
+class W_MethodObject(W_BaseMethodObject):
     classdef = ClassDef("Method", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function, w_receiver):
@@ -32,7 +30,7 @@ class W_MethodObject(W_Object):
         self.w_function = w_function
         self.w_receiver = w_receiver
 
-    method_allocate = create_allocate(classdef)
+    method_allocate = classdef.undefine_allocator()
     method_owner = create_owner(classdef)
     method_to_s = create_to_s(classdef)
 
@@ -40,7 +38,6 @@ class W_MethodObject(W_Object):
     @classdef.method("call")
     def method_call(self, space, args_w, block):
         return space.invoke_function(
-            space.newsymbol(self.w_function.get_name()),
             self.w_function,
             self.w_receiver,
             args_w,
@@ -65,7 +62,7 @@ class W_MethodObject(W_Object):
             return space.w_false
 
 
-class W_UnboundMethodObject(W_Object):
+class W_UnboundMethodObject(W_BaseMethodObject):
     classdef = ClassDef("UnboundMethod", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function):
@@ -73,7 +70,7 @@ class W_UnboundMethodObject(W_Object):
         self.w_owner = w_owner
         self.w_function = w_function
 
-    method_allocate = create_allocate(classdef)
+    method_allocator = classdef.undefine_allocator()
     method_owner = create_owner(classdef)
     method_to_s = create_to_s(classdef)
 
