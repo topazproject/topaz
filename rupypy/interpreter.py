@@ -583,6 +583,13 @@ class Interpreter(object):
         w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
+    def YIELD_SPLAT(self, space, bytecode, frame, pc):
+        if frame.block is None:
+            raise space.error(space.w_LocalJumpError, "no block given (yield)")
+        w_args = frame.pop()
+        w_res = space.invoke_block(frame.block, space.listview(w_args))
+        frame.push(w_res)
+
     def CONTINUE_LOOP(self, space, bytecode, frame, pc, target_pc):
         frame.pop()
         return frame.unrollstack_and_jump(space, ContinueLoop(target_pc))

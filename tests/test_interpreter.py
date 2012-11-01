@@ -1257,6 +1257,16 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [2, 3, 4]
 
+    def test_yield_splat(self, space):
+        w_res = space.execute("""
+        def f(*args)
+            yield *args
+        end
+
+        return f(3, 5) { |a, b| a + b }
+        """)
+        assert space.int_w(w_res) == 8
+
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):

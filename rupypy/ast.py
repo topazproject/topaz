@@ -428,9 +428,24 @@ class Yield(Node):
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
-            for arg in self.args:
-                arg.compile(ctx)
-            ctx.emit(consts.YIELD, len(self.args))
+            if self.is_splat():
+                for arg in self.args:
+                    arg.compile(ctx)
+                    if not isinstance(arg, Splat):
+                        ctx.emit(consts.BUILD_ARRAY, 1)
+                for i in range(len(self.args) - 1):
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+                ctx.emit(consts.YIELD_SPLAT)
+            else:
+                for arg in self.args:
+                    arg.compile(ctx)
+                ctx.emit(consts.YIELD, len(self.args))
+
+    def is_splat(self):
+        for arg in self.args:
+            if isinstance(arg, Splat):
+                return True
+        return False
 
 
 class Alias(BaseStatement):
