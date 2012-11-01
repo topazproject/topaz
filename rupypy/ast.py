@@ -700,9 +700,8 @@ class ForLoop(Send):
 
     def compile(self, ctx):
         for var in self.for_vars:
-            var.compile_receiver(ctx)
-            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
-            var.compile_store(ctx)
+            Assignment(var, Nil()).compile(ctx)
+            ctx.emit(consts.DISCARD_TOP)
         Send.compile(self, ctx)
 
 
