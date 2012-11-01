@@ -118,6 +118,10 @@ class TestKernel(BaseRuPyPyTest):
         w_res = space.execute("return [String('hello'), String(4)]")
         assert self.unwrap(space, w_res) == ["hello", "4"]
 
+    def test_Integer(self, space):
+        w_res = space.execute("return [Integer(4), Integer('123')]")
+        assert self.unwrap(space, w_res) == [4, 123]
+
     def test_exit(self, space):
         with self.raises(space, "SystemExit"):
             space.execute("Kernel.exit")
@@ -147,6 +151,13 @@ class TestKernel(BaseRuPyPyTest):
         return foo, foo { }
         """)
         assert self.unwrap(space, w_res) == [False, True]
+
+    def test_eqlp(self, space):
+        w_res = space.execute("""
+        x = Object.new
+        return [x.eql?(x), x.eql?(4)]
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
 
 
 class TestRequire(BaseRuPyPyTest):
@@ -238,6 +249,21 @@ class TestRequire(BaseRuPyPyTest):
     def test_responds_to(self, space):
         w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
         assert self.unwrap(space, w_res) == [False, True]
+
+    def test_Float(self, space):
+        assert space.float_w(space.execute("return Float(1)")) == 1.0
+        assert space.float_w(space.execute("return Float(1.1)")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1')")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1e10')")) == 11000000000.0
+        with self.raises(space, "TypeError"):
+            space.execute("Float(nil)")
+        with self.raises(space, "ArgumentError"):
+            space.execute("Float('a')")
+        w_res = space.execute("""
+        class A; def to_f; 1.1; end; end
+        return Float(A.new)
+        """)
+        assert space.float_w(w_res) == 1.1
 
 
 class TestExec(BaseRuPyPyTest):

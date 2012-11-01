@@ -265,19 +265,9 @@ class Interpreter(object):
         items_w = frame.popitemsreverse(n_items)
         frame.push(space.newarray(items_w))
 
-    @jit.unroll_safe
     def BUILD_STRING(self, space, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)
-        total_length = 0
-        for w_item in items_w:
-            assert isinstance(w_item, W_StringObject)
-            total_length += w_item.length()
-
-        storage = newlist_hint(total_length)
-        for w_item in items_w:
-            assert isinstance(w_item, W_StringObject)
-            w_item.strategy.extend_into(w_item.str_storage, storage)
-        frame.push(space.newstr_fromchars(storage))
+        frame.push(space.newstr_fromstrs(items_w))
 
     def BUILD_HASH(self, space, bytecode, frame, pc):
         frame.push(space.newhash())
@@ -320,9 +310,15 @@ class Interpreter(object):
         if w_cls is None:
             if superclass is space.w_nil:
                 superclass = space.w_object
+            if not space.is_kind_of(superclass, space.w_class):
+                raise space.error(space.w_TypeError,
+                    "wrong argument type %s (expected Class)" % space.getclass(superclass).name
+                )
             assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)
             space.set_const(w_scope, name, w_cls)
+        elif not space.is_kind_of(w_cls, space.w_class):
+            raise space.error(space.w_TypeError, "%s is not a class" % name)
 
         frame.push(w_cls)
 
@@ -336,6 +332,8 @@ class Interpreter(object):
         if w_mod is None:
             w_mod = space.newmodule(name)
             space.set_const(w_scope, name, w_mod)
+        elif not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
+            raise space.error(space.w_TypeError, "%s is not a module" % name)
 
         assert isinstance(w_bytecode, W_CodeObject)
         sub_frame = space.create_frame(w_bytecode, w_mod, w_mod, StaticScope(w_mod, frame.lexical_scope))
@@ -431,7 +429,7 @@ class Interpreter(object):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope))
+        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 
@@ -577,6 +575,8 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
+        if frame.block is None:
+            raise space.error(space.w_LocalJumpError, "no block given (yield)")
         args_w = [None] * n_args
         for i in xrange(n_args - 1, -1, -1):
             args_w[i] = frame.pop()

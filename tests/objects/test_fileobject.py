@@ -54,7 +54,7 @@ class TestIO(BaseRuPyPyTest):
         assert space.str_w(w_res) == contents[:10]
 
         with self.raises(space, "ArgumentError"):
-            space.execute("return File.new('%s').read(-1)" % str(f))
+            space.execute("File.new('%s').read(-1)" % str(f))
 
     def test_simple_print(self, space, capfd):
         space.execute('IO.new(1, "w").print("foo")')

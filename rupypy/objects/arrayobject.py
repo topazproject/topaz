@@ -289,7 +289,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("pack", template="str")
     def method_pack(self, space, template):
-        result = RPacker(space, template, space.listview(self)).operate()
+        result = RPacker(template, space.listview(self)).operate(space)
         return space.newstr_fromchars(result)
 
     @classdef.method("to_ary")
@@ -345,7 +345,8 @@ class W_ArrayObject(W_Object):
     def hash
         res = 0x345678
         self.each do |x|
-            res = (1000003 * res) ^ x.hash
+            # We want to keep this within a fixnum range.
+            res = ((1000003 * res) ^ x.hash) & ((2 << (0.size * 8 - 2)) - 1)
         end
         return res
     end

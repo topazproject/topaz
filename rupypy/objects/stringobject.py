@@ -1,5 +1,6 @@
 import copy
 
+from pypy.rlib import jit
 from pypy.rlib.objectmodel import newlist_hint, compute_hash
 from pypy.rlib.rarithmetic import intmask
 from pypy.rlib.rerased import new_static_erasing_pair
@@ -7,6 +8,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
+from rupypy.utils.formatting import StringFormatter
 
 
 def create_trans_table(source, replacement, inv=False):
@@ -88,6 +90,9 @@ class ConstantStringStrategy(StringStrategy):
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
 
+    def mul(self, space, storage, times):
+        return space.newstr_fromstr(self.unerase(storage) * times)
+
 
 class MutableStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("mutable")
@@ -133,6 +138,9 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(s.str_storage)
         del storage[:]
 
+    def mul(self, space, storage, times):
+        return space.newstr_fromchars(self.unerase(storage) * times)
+
     def downcase(self, storage):
         storage = self.unerase(storage)
         changed = False
@@ -163,6 +171,20 @@ class W_StringObject(W_Object):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase(strvalue)
         return W_StringObject(space, storage, strategy)
+
+    @staticmethod
+    @jit.look_inside_iff(lambda space, strs_w: jit.isconstant(len(strs_w)))
+    def newstr_fromstrs(space, strs_w):
+        total_length = 0
+        for w_item in strs_w:
+            assert isinstance(w_item, W_StringObject)
+            total_length += w_item.length()
+
+        storage = newlist_hint(total_length)
+        for w_item in strs_w:
+            assert isinstance(w_item, W_StringObject)
+            w_item.strategy.extend_into(w_item.str_storage, storage)
+        return space.newstr_fromchars(storage)
 
     @staticmethod
     def newstr_fromchars(space, chars):
@@ -242,6 +264,10 @@ class W_StringObject(W_Object):
         s.extend(space, w_other)
         return s
 
+    @classdef.method("*", times="int")
+    def method_times(self, space, times):
+        return self.strategy.mul(space, self.str_storage, times)
+
     @classdef.method("<<")
     def method_lshift(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
@@ -289,7 +315,7 @@ class W_StringObject(W_Object):
 
     classdef.app_method("""
     def eql? other
-        if !other.class.equal?(String)
+        if !other.kind_of?(String)
             false
         else
             self == other
@@ -415,3 +441,12 @@ class W_StringObject(W_Object):
         self.length == 0
     end
     """)
+
+    @classdef.method("%")
+    def method_mod(self, space, w_arg):
+        if space.is_kind_of(w_arg, space.w_array):
+            args_w = space.listview(w_arg)
+        else:
+            args_w = [w_arg]
+        elements_w = StringFormatter(space.str_w(self), args_w).format(space)
+        return space.newstr_fromstrs(elements_w)

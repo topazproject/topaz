@@ -1,4 +1,5 @@
 from pypy.rlib.objectmodel import specialize
+from pypy.rlib.rbigint import rbigint
 
 from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
@@ -244,7 +245,27 @@ class Parser(object):
         if base != 10:
             # Strip off the leading 0[xob]
             s = s[2:]
-        return int(s, base)
+
+        val = rbigint()
+        i = 0
+        while i < len(s):
+            c = ord(s[i])
+            if ord("a") <= c <= ord("z"):
+                digit = c - ord("a") + 10
+            elif ord("A") <= c <= ord("Z"):
+                digit = c - ord("A") + 10
+            elif ord("0") <= c <= ord("9"):
+                digit = c - ord("0")
+            else:
+                break
+            if digit >= base:
+                break
+            val = val.mul(rbigint.fromint(base)).add(rbigint.fromint(digit))
+            i += 1
+        try:
+            return ast.ConstantInt(val.toint())
+        except OverflowError:
+            return ast.ConstantBigInt(val)
 
     pg = ParserGenerator([
         "CLASS", "MODULE", "DEF", "UNDEF", "BEGIN", "RESCUE", "ENSURE", "END",
@@ -1200,7 +1221,7 @@ class Parser(object):
 
     @pg.production("arg : UPLUS arg")
     def arg_uplus_arg(self, p):
-        raise NotImplementedError(p)
+        return BoxAST(ast.Send(p[1].getast(), "+@", [], None, p[0].getsourcepos().lineno))
 
     @pg.production("arg : UMINUS arg")
     def arg_uminus_arg(self, p):
@@ -2421,7 +2442,7 @@ class Parser(object):
 
     @pg.production("numeric : INTEGER")
     def numeric_integer(self, p):
-        return BoxAST(ast.ConstantInt(self._parse_int(p[0])))
+        return BoxAST(self._parse_int(p[0]))
 
     @pg.production("numeric : FLOAT")
     def numeric_float(self, p):
@@ -2429,7 +2450,7 @@ class Parser(object):
 
     @pg.production("numeric : UMINUS_NUM INTEGER", precedence="LOWEST")
     def numeric_minus_integer(self, p):
-        return BoxAST(ast.ConstantInt(-self._parse_int(p[1])))
+        return BoxAST(self._parse_int(p[1]).negate())
 
     @pg.production("numeric : UMINUS_NUM FLOAT", precedence="LOWEST")
     def numeric_minus_float(self, p):
@@ -2901,7 +2922,6 @@ class LexerWrapper(object):
 
 class BoxAST(BaseBox):
     def __init__(self, node):
-        BaseBox.__init__(self)
         self.node = node
 
     @specialize.arg(1)
@@ -2914,7 +2934,6 @@ class BoxAST(BaseBox):
 
 class BoxASTList(BaseBox):
     def __init__(self, nodes):
-        BaseBox.__init__(self)
         self.nodes = nodes
 
     def getastlist(self):
@@ -2926,7 +2945,6 @@ class BoxCallArgs(BaseBox):
     A box for the arguments of a call/send.
     """
     def __init__(self, args, block):
-        BaseBox.__init__(self)
         self.args = args
         self.block = block
 
@@ -2939,7 +2957,6 @@ class BoxCallArgs(BaseBox):
 
 class BoxInt(BaseBox):
     def __init__(self, intvalue):
-        BaseBox.__init__(self)
         self.intvalue = intvalue
 
     def getint(self):
