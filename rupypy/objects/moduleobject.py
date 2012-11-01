@@ -30,6 +30,17 @@ class AttributeWriter(W_FunctionObject):
         return w_value
 
 
+class UndefMethod(W_FunctionObject):
+    _immutable_fields_ = ["name"]
+
+    def __init__(self, name):
+        self.name = name
+
+    def call(self, space, w_obj, args_w, block):
+        args_w.insert(0, space.newsymbol(self.name))
+        return space.send(w_obj, space.newsymbol("method_missing"), args_w, block)
+
+
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = ["version?", "included_modules?[*]", "klass?"]
 
@@ -340,3 +351,8 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("===")
     def method_eqeqeq(self, space, w_obj):
         return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
+
+    @classdef.method("undef_method", name="symbol")
+    def method_undef_method(self, space, name):
+        self.define_method(space, name, UndefMethod(name))
+        return self
