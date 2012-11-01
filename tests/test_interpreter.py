@@ -445,7 +445,7 @@ class TestInterpreter(BaseRuPyPyTest):
     def test_module(self, space):
         w_res = space.execute("""
         module M
-            def method
+            def oninstanceonly
                 5
             end
         end
@@ -453,6 +453,9 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert isinstance(w_res, W_ModuleObject)
         assert w_res.name == "M"
+
+        with self.raises(space, "NoMethodError"):
+            space.execute("M.oninstanceonly")
 
     def test_module_reopen_non_module(self, space):
         space.execute("""

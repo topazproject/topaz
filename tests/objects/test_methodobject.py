@@ -13,7 +13,7 @@ class TestMethodObject(BaseRuPyPyTest):
 
     def test_allocate(self, space):
         with self.raises(space, "TypeError", "allocator undefined for Method"):
-            w_res = space.execute("return Method.allocate")
+            space.execute("Method.allocate")
 
     def test_owner(self, space):
         w_res = space.execute("return 'test'.method(:to_s).owner")

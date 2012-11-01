@@ -467,7 +467,7 @@ class ObjectSpace(object):
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
-    def invoke_function(self, w_name, w_function, w_receiver, args_w, block):
+    def invoke_function(self, w_function, w_name, w_receiver, args_w, block):
         return self._send_raw(w_name, w_function, w_receiver, self.getclass(w_receiver), args_w, block)
 
     def error(self, w_type, msg="", optargs=None):
