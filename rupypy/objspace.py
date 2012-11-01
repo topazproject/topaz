@@ -458,7 +458,7 @@ class ObjectSpace(object):
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
-        if len(bc.arg_locs) != 0:
+        if len(bc.arg_locs) != 0 or bc.splat_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):

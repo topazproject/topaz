@@ -15,21 +15,21 @@ class TestDir(BaseRuPyPyTest):
         d = tmpdir.mkdir("sub")
         f = d.join("content")
         f.write("hello")
-        space.execute("Dir.new('%s')" % str(d))
+        space.execute("Dir.new('%s')" % d)
         with self.raises(space, "SystemCallError"):
             space.execute("Dir.new('this does not exist')")
         with self.raises(space, "SystemCallError"):
-            space.execute("Dir.new('%s')" % str(f))
+            space.execute("Dir.new('%s')" % f)
 
     def test_delete(self, space, tmpdir):
         d = tmpdir.mkdir("sub")
-        space.execute("Dir.delete('%s')" % str(d))
+        space.execute("Dir.delete('%s')" % d)
         assert not tmpdir.listdir()
         d = tmpdir.mkdir("sub")
         f = d.join("content")
         f.write("hello")
         with self.raises(space, "SystemCallError"):
-            space.execute("Dir.delete('%s')" % str(d))
+            space.execute("Dir.delete('%s')" % d)
 
     def test_existp(self, space, tmpdir):
         d = tmpdir.mkdir("sub")
@@ -65,3 +65,23 @@ class TestDir(BaseRuPyPyTest):
         assert space.str_w(w_res) == os.path.expanduser("~")
         w_res = space.execute("return Dir.new(Dir.home).to_path")
         assert space.str_w(w_res) == os.path.expanduser("~")
+
+    def test_chdir(self, space, tmpdir, monkeypatch):
+        w_res = space.execute("""
+        dirs = []
+        dirs << Dir.pwd
+        Dir.chdir('%s') do
+            dirs << Dir.pwd
+        end
+        dirs << Dir.pwd
+        return dirs
+        """ % tmpdir)
+        assert self.unwrap(space, w_res) == [os.getcwd(), str(tmpdir), os.getcwd()]
+
+        monkeypatch.setenv("HOME", str(tmpdir))
+        w_res = space.execute("""
+        Dir.chdir do
+            return Dir.pwd
+        end
+        """)
+        assert space.str_w(w_res) == str(tmpdir)

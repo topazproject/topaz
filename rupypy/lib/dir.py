@@ -48,6 +48,20 @@ class W_Dir(W_Object):
     def method_pwd(self, space):
         return space.newstr_fromstr(os.getcwd())
 
+    @classdef.singleton_method("chdir", path="path")
+    def method_chdir(self, space, path=None, block=None):
+        if path is None:
+            path = os.environ["HOME"]
+        current_dir = os.getcwd()
+        os.chdir(path)
+        if block is not None:
+            try:
+                return space.invoke_block(block, [space.newstr_fromstr(path)])
+            finally:
+                os.chdir(current_dir)
+        else:
+            return space.newint(0)
+
     @classdef.singleton_method("delete", path="path")
     def method_delete(self, space, path):
         assert path

@@ -172,7 +172,7 @@ class TestRequire(BaseRuPyPyTest):
         require '%s'
 
         return t(5, 10)
-        """ % str(f))
+        """ % f)
         assert space.int_w(w_res) == -5
 
     def test_no_ext(self, space, tmpdir):
@@ -201,7 +201,7 @@ class TestRequire(BaseRuPyPyTest):
         require 't.rb'
 
         return t(2, 5)
-        """ % str(tmpdir))
+        """ % tmpdir)
         assert space.int_w(w_res) == -3
 
     def test_stdlib_default_load_path(self, space):
@@ -227,7 +227,7 @@ class TestRequire(BaseRuPyPyTest):
         require '%s'
 
         return @a
-        """ % (str(f), str(f), str(f)))
+        """ % (f, f, f))
         assert space.int_w(w_res) == 1
 
     def test_load(self, space, tmpdir):
@@ -243,7 +243,7 @@ class TestRequire(BaseRuPyPyTest):
         load '%s'
 
         return @a
-        """ % (str(f), str(f), str(f)))
+        """ % (f, f, f))
         assert space.int_w(w_res) == 3
 
     def test_responds_to(self, space):
