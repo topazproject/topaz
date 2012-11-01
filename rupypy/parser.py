@@ -1611,8 +1611,7 @@ class Parser(object):
 
         return BoxAST(ast.If(conditions[0][0], conditions[0][1], else_block))
 
-    @pg.production("primary : FOR for_var IN expr_value DO_BLOCK compstmt END")
-    @pg.production("primary : FOR for_var IN expr_value do compstmt END")
+    @pg.production("primary : for for_var IN expr_value do post_for_do compstmt END")
     def primary_for(self, p):
         """
         kFOR for_var kIN {
@@ -1630,10 +1629,19 @@ class Parser(object):
             self.lexer.symtable.declare_write(varname)
         self.lexer.symtable.declare_argument(p[1].getargumentname())
         stmts = [ast.Statement(p[1].getassignment(lineno))]
-        stmts += p[5].getastlist() if p[5] is not None else []
+        stmts += p[6].getastlist() if p[6] is not None else []
         block = ast.SendBlock([p[1].getargument()], None, ast.Block(stmts))
         self.save_and_pop_scope(block)
         return BoxAST(ast.ForLoop(p[3].getast(), p[1].getvariables(), block, lineno))
+
+    @pg.production("for : FOR")
+    def for_token(self, p):
+        self.lexer.condition_state.begin()
+        return p[0]
+
+    @pg.production("post_for_do : ")
+    def post_for_do(self, p):
+        self.lexer.condition_state.end()
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
