@@ -70,6 +70,7 @@ def run_translate_tests(env):
         "language/not_spec.rb",
         "language/order_spec.rb",
         "language/unless_spec.rb",
+        "language/yield_spec.rb",
 
         "core/false/and_spec.rb",
         "core/false/inspect_spec.rb",
