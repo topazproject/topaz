@@ -33,7 +33,9 @@ class W_Dir(W_Object):
         return space.newstr_fromstr(os.getcwd())
 
     @classdef.singleton_method("chdir", path="path")
-    def method_chdir(self, space, path, block):
+    def method_chdir(self, space, path=None, block=None):
+        if path is None:
+            path = os.environ["HOME"]
         current_dir = os.getcwd()
         os.chdir(path)
         if block is not None:

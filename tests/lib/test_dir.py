@@ -31,7 +31,7 @@ class TestDir(BaseRuPyPyTest):
         with self.raises(space, "SystemCallError"):
             space.execute("Dir.delete('%s')" % d)
 
-    def test_chdir(self, space, tmpdir):
+    def test_chdir(self, space, tmpdir, monkeypatch):
         w_res = space.execute("""
         dirs = []
         dirs << Dir.pwd
@@ -42,3 +42,11 @@ class TestDir(BaseRuPyPyTest):
         return dirs
         """ % tmpdir)
         assert self.unwrap(space, w_res) == [os.getcwd(), str(tmpdir), os.getcwd()]
+
+        monkeypatch.setenv("HOME", str(tmpdir))
+        w_res = space.execute("""
+        Dir.chdir do
+            return Dir.pwd
+        end
+        """)
+        assert space.str_w(w_res) == str(tmpdir)
