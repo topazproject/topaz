@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from pypy.rlib.objectmodel import we_are_translated
-from pypy.rlib.rarithmetic import ovfcheck
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, BlockSymbolTable
@@ -731,10 +730,15 @@ class SendBlock(Node):
                 block_ctx.symtable.get_local_num(arg.name)
             elif block_ctx.symtable.is_cell(arg.name):
                 block_ctx.symtable.get_cell_num(arg.name)
+        if self.splat_arg is not None:
+            if block_ctx.symtable.is_local(self.splat_arg):
+                block_ctx.symtable.get_local_num(self.splat_arg)
+            elif block_ctx.symtable.is_cell(self.splat_arg):
+                block_ctx.symtable.get_cell_num(self.splat_arg)
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, [], None, None)
+        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, None)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)

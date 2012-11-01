@@ -1247,6 +1247,16 @@ class TestBlocks(BaseRuPyPyTest):
         with self.raises(space, "LocalJumpError"):
             space.execute("f")
 
+    def test_splat_arg_block(self, space):
+        w_res = space.execute("""
+        def f a, b, c
+            yield a, b, c
+        end
+
+        return f(2, 3, 4) { |*args| args }
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, 4]
+
 
 class TestExceptions(BaseRuPyPyTest):
     def test_simple(self, space):
