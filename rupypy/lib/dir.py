@@ -23,7 +23,7 @@ class W_Dir(W_Object):
         if msg:
             raise space.error(space.w_SystemCallError, msg, [w_errno])
         self.path = path
-        self.iterator = None
+        self.iterator = iter(os.listdir(self.path))
 
     @classdef.method("close")
     def method_close(self, space):
@@ -35,8 +35,6 @@ class W_Dir(W_Object):
 
     @classdef.method("read")
     def method_read(self, space):
-        if self.iterator is None:
-            self.iterator = iter(os.listdir(self.path))
         try:
             return space.newstr_fromstr(self.iterator.next())
         except StopIteration:
