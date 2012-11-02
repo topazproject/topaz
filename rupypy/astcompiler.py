@@ -92,7 +92,7 @@ class BlockSymbolTable(BaseSymbolTable):
             self.cells[name] = self.FREEVAR
 
 
-class PassThroughSymbolTable(BlockSymbolTable):
+class SharedScopeSymbolTable(BlockSymbolTable):
     def is_cell(self, name):
         if name not in self.cells and self.parent_symtable.is_defined(name):
             self.upgrade_to_closure(name)

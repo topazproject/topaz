@@ -5,7 +5,7 @@ from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
 
 from rupypy import ast
-from rupypy.astcompiler import SymbolTable, BlockSymbolTable, PassThroughSymbolTable
+from rupypy.astcompiler import SymbolTable, BlockSymbolTable, SharedScopeSymbolTable
 
 
 class Parser(object):
@@ -26,8 +26,8 @@ class Parser(object):
     def push_block_scope(self):
         self.lexer.symtable = BlockSymbolTable(self.lexer.symtable)
 
-    def push_passthrough_scope(self):
-        self.lexer.symtable = PassThroughSymbolTable(self.lexer.symtable)
+    def push_shared_scope(self):
+        self.lexer.symtable = SharedScopeSymbolTable(self.lexer.symtable)
 
     def save_and_pop_scope(self, node):
         child_symtable = self.lexer.symtable
@@ -202,6 +202,32 @@ class Parser(object):
 
     def new_class_var(self, box):
         return BoxAST(ast.ClassVariable(box.getstr(), box.getsourcepos().lineno))
+
+    def get_var_name(self, node):
+        if isinstance(node, ast.Variable):
+            return node.name
+        elif isinstance(node, ast.Splat):
+            return node.value.name
+        elif isinstance(node, ast.Subscript):
+            if isinstance(node.target, ast.Variable):
+                return node.target.name
+        return None
+
+    def as_astlist(self, box):
+        if isinstance(box, BoxAST):
+            return [box.getast()]
+        elif isinstance(box, BoxASTList):
+            return box.getastlist()
+        else:
+            raise NotImplementedError(box)
+
+    def new_assignment(self, box, value):
+        if isinstance(box, BoxAST):
+            return ast.Assignment(box.getast(), value)
+        elif isinstance(box, BoxASTList):
+            return ast.MultiAssignment(box.getastlist(), value)
+        else:
+            raise NotImplementedError(box)
 
     def concat_literals(self, head, tail):
         if head is None:
@@ -1624,15 +1650,25 @@ class Parser(object):
                 }
         """
         lineno = p[0].getsourcepos().lineno
-        self.push_passthrough_scope()
-        for varname in p[1].getvarnames():
-            self.lexer.symtable.declare_write(varname)
-        self.lexer.symtable.declare_argument(p[1].getargumentname())
-        stmts = [ast.Statement(p[1].getassignment(lineno))]
-        stmts += p[6].getastlist() if p[6] is not None else []
+        for_vars = p[1].getfor_var()
+        argname = p[1].getargument().name
+
+        self.push_shared_scope()
+
+        for for_var in self.as_astlist(for_vars):
+            varname = self.get_var_name(for_var)
+            if varname is not None:
+                self.lexer.symtable.declare_write(varname)
+        self.lexer.symtable.declare_argument(argname)
+
+        stmts = p[6].getastlist() if p[6] is not None else []
+        stmts.insert(0, ast.Statement(
+            self.new_assignment(p[1].getfor_var(), ast.Variable(argname, lineno))
+        ))
         block = ast.SendBlock([p[1].getargument()], None, ast.Block(stmts))
+
         self.save_and_pop_scope(block)
-        return BoxAST(ast.ForLoop(p[3].getast(), p[1].getvariables(), block, lineno))
+        return BoxAST(ast.ForLoop(p[3].getast(), self.as_astlist(for_vars), block, lineno))
 
     @pg.production("for : FOR")
     def for_token(self, p):
@@ -3012,36 +3048,11 @@ class BoxStrTerm(BaseBox):
 
 class BoxForVars(BaseBox):
     def __init__(self, for_var):
-        lineno = -1
-        for_vars = []
-        if isinstance(for_var, BoxAST):
-            for_vars = [for_var.getast()]
-        elif isinstance(for_var, BoxASTList):
-            for_vars = for_var.getastlist()
-        else:
-            raise NotImplementedError(for_var)
-
+        self.for_var = for_var
         self.argument = ast.Argument("0")
-        self.targets = for_vars
-
-    def getargumentname(self):
-        return self.argument.name
 
     def getargument(self):
         return self.argument
 
-    def getassignment(self, lineno):
-        return ast.MultiAssignment(self.targets, ast.Variable(self.argument.name, lineno))
-
-    def getvarnames(self):
-        names = []
-        for var in self.targets:
-            if isinstance(var, ast.Variable):
-                names.append(var.name)
-            elif isinstance(var, ast.Subscript):
-                if isinstance(var.target, ast.Variable):
-                    names.append(var.target.name)
-        return names
-
-    def getvariables(self):
-        return self.targets
+    def getfor_var(self):
+        return self.for_var

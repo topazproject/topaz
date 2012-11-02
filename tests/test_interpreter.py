@@ -119,6 +119,20 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [[1, 2], 2]
 
+        w_res = space.execute("""
+        for i in [[1, 1]]; end
+        for j, in [[1, 1]]; end
+        return i, j
+        """)
+        assert self.unwrap(space, w_res) == [[1, 1], 1]
+
+        w_res = space.execute("""
+        i = 15
+        for i in []; end
+        return i
+        """)
+        assert self.unwrap(space, w_res) == 15
+
     def test_return(self, space):
         w_res = space.execute("return 4")
         assert space.int_w(w_res) == 4
