@@ -354,5 +354,11 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("undef_method", name="symbol")
     def method_undef_method(self, space, name):
+        w_method = self.find_method(space, name)
+        if w_method is None or isinstance(w_method, UndefMethod):
+            raise space.error(
+                space.w_NameError,
+                "undefined method `%s' for class `%s'" % (name, self.name)
+            )
         self.define_method(space, name, UndefMethod(name))
         return self

@@ -206,14 +206,32 @@ class TestModuleObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [True, True, False, True]
 
     def test_undef_method(self, space):
+        w_res = space.execute("""
+        class A
+          def hello
+          end
+        end
+        return A.new.hello
+        """)
+        assert w_res is space.w_nil
         with self.raises(space, "NoMethodError", "undefined method `hello' for A"):
             space.execute("""
             class A
-              def hello
-              end
               undef_method :hello
             end
             A.new.hello
+            """)
+        with self.raises(space, "NameError", "undefined method `undefinedmethod' for class `A'"):
+            space.execute("""
+            class A
+              undef_method :undefinedmethod
+            end
+            """)
+        with self.raises(space, "NameError", "undefined method `hello' for class `A'"):
+            space.execute("""
+            class A
+              undef_method :hello
+            end
             """)
 
 
