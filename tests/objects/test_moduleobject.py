@@ -233,6 +233,13 @@ class TestModuleObject(BaseRuPyPyTest):
               undef_method :hello
             end
             """)
+        with self.raises(space, "NoMethodError", "undefined method `==' for A"):
+            space.execute("""
+            class A
+              undef_method :==
+            end
+            A.new == 1
+            """)
 
 
 class TestMethodVisibility(object):
