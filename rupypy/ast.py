@@ -727,11 +727,21 @@ class ForLoop(Send):
 
     def compile(self, ctx):
         for var in self.for_vars:
+            otherwise = ctx.new_block()
+            end = ctx.new_block()
             if isinstance(var, Splat):
-                Assignment(var.value, Nil()).compile(ctx)
-            else:
-                Assignment(var, Nil()).compile(ctx)
+                var = var.value
+            var.compile_defined(ctx)
+            ctx.emit_jump(consts.JUMP_IF_TRUE, end)
+            ctx.use_next_block(otherwise)
+
+            var.compile_receiver(ctx)
+            Nil().compile(ctx)
+            var.compile_store(ctx)
+
+            # Assignment(var, Nil()).compile(ctx)
             ctx.emit(consts.DISCARD_TOP)
+            ctx.use_next_block(end)
         Send.compile(self, ctx)
 
     def compile_defined(self, ctx):
