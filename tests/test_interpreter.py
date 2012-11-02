@@ -133,6 +133,19 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == 15
 
+        w_res = space.execute("""
+        for a.bar in []; end
+        return defined?(a)
+        """)
+        assert self.unwrap(space, w_res) is None
+
+        w_res = space.execute("""
+        for a.bar in []; end
+        for b[i] in []; end
+        return defined?(a), defined?(b), defined?(i)
+        """)
+        assert self.unwrap(space, w_res) == [None, None, None]
+
     def test_return(self, space):
         w_res = space.execute("return 4")
         assert space.int_w(w_res) == 4
