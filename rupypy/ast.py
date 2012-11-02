@@ -737,12 +737,7 @@ class ForLoop(Send):
             var.compile_defined(ctx)
             ctx.emit_jump(consts.JUMP_IF_TRUE, end)
             ctx.use_next_block(otherwise)
-
-            var.compile_receiver(ctx)
-            Nil().compile(ctx)
-            var.compile_store(ctx)
-
-            # Assignment(var, Nil()).compile(ctx)
+            Assignment(var, Nil()).compile(ctx)
             ctx.emit(consts.DISCARD_TOP)
             ctx.use_next_block(end)
         Send.compile(self, ctx)
