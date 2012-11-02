@@ -204,14 +204,14 @@ class Parser(object):
         return BoxAST(ast.ClassVariable(box.getstr(), box.getsourcepos().lineno))
 
     def get_var_name(self, node):
+        if isinstance(node, ast.Splat):
+            node = node.value
+        if isinstance(node, ast.Subscript):
+            node = node.target
         if isinstance(node, ast.Variable):
             return node.name
-        elif isinstance(node, ast.Splat):
-            return node.value.name
-        elif isinstance(node, ast.Subscript):
-            if isinstance(node.target, ast.Variable):
-                return node.target.name
-        return None
+        else:
+            return None
 
     def as_astlist(self, box):
         if isinstance(box, BoxAST):
