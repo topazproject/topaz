@@ -700,7 +700,10 @@ class ForLoop(Send):
 
     def compile(self, ctx):
         for var in self.for_vars:
-            Assignment(var, Nil()).compile(ctx)
+            if isinstance(var, Splat):
+                OrEqual(var.value, Nil()).compile(ctx)
+            else:
+                OrEqual(var, Nil()).compile(ctx)
             ctx.emit(consts.DISCARD_TOP)
         Send.compile(self, ctx)
 

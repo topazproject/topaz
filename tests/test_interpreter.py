@@ -70,7 +70,7 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
-    def test_for(self, space):
+    def test_for_loop(self, space):
         w_res = space.execute("""
         i = 0
         for i, *rest, b in [1, 2, 3] do
@@ -109,7 +109,15 @@ class TestInterpreter(BaseRuPyPyTest):
         for i in A.new; end
         return i
         """)
-        assert self.unwrap(space, w_res) == None
+        assert self.unwrap(space, w_res) is None
+
+        w_res = space.execute("""
+        a = []
+        i = 0
+        for a[i], i in [[1, 1], [2, 2]]; end
+        return a, i
+        """)
+        assert self.unwrap(space, w_res) == [[1, 2], 2]
 
     def test_return(self, space):
         w_res = space.execute("return 4")

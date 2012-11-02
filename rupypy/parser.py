@@ -3022,14 +3022,7 @@ class BoxForVars(BaseBox):
             raise NotImplementedError(for_var)
 
         self.argument = ast.Argument("0")
-        self.variables = []
-        self.targets = []
-        for idx, var in enumerate(for_vars):
-            if isinstance(var, ast.Splat):
-                self.variables.append(var.value)
-            else:
-                self.variables.append(var)
-            self.targets.append(var)
+        self.targets = for_vars
 
     def getargumentname(self):
         return self.argument.name
@@ -3042,10 +3035,13 @@ class BoxForVars(BaseBox):
 
     def getvarnames(self):
         names = []
-        for var in self.variables:
+        for var in self.targets:
             if isinstance(var, ast.Variable):
                 names.append(var.name)
+            elif isinstance(var, ast.Subscript):
+                if isinstance(var.target, ast.Variable):
+                    names.append(var.target.name)
         return names
 
     def getvariables(self):
-        return self.variables
+        return self.targets
