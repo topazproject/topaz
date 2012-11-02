@@ -288,29 +288,22 @@ class TestCompiler(object):
         RETURN
         """)
 
-    def test_for(self, space):
+    def test_for_loop(self, space):
         self.assert_compiles(space, "for a, *$b, @c in [] do end", """
+        DEFINED_DEREF 0
+        JUMP_IF_TRUE 13
         LOAD_CONST 0
         STORE_DEREF 0
         DISCARD_TOP
 
-        LOAD_CONST 0
-        STORE_GLOBAL 1
-        DISCARD_TOP
-
-        LOAD_SELF
-        LOAD_CONST 0
-        STORE_INSTANCE_VAR 2
-        DISCARD_TOP
-
         BUILD_ARRAY 0
-        LOAD_CONST 3
+        LOAD_CONST 1
         LOAD_CLOSURE 0
         BUILD_BLOCK 1
-        SEND_BLOCK 4 1
+        SEND_BLOCK 2 1
         DISCARD_TOP
 
-        LOAD_CONST 5
+        LOAD_CONST 3
         RETURN
         """)
 
