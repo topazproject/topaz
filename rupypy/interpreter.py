@@ -1,6 +1,6 @@
 from pypy.rlib import jit
 from pypy.rlib.debug import check_nonneg
-from pypy.rlib.objectmodel import we_are_translated, specialize, newlist_hint
+from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
 from rupypy.error import RubyError
