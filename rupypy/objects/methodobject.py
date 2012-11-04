@@ -8,20 +8,17 @@ def create_owner(classdef):
         return self.w_owner
     return method_owner
 
+
 def create_to_s(classdef):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(
-            "#<%s: %s#%s>" % (classdef.name, self.w_owner.name, self.w_function.get_name())
+            "#<%s: %s#%s>" % (classdef.name, self.w_owner.name, self.w_function.name)
         )
     return method_to_s
 
 
-class W_BaseMethodObject(W_Object):
-    pass
-
-
-class W_MethodObject(W_BaseMethodObject):
+class W_MethodObject(W_Object):
     classdef = ClassDef("Method", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function, w_receiver):
@@ -62,7 +59,7 @@ class W_MethodObject(W_BaseMethodObject):
             return space.w_false
 
 
-class W_UnboundMethodObject(W_BaseMethodObject):
+class W_UnboundMethodObject(W_Object):
     classdef = ClassDef("UnboundMethod", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function):
@@ -77,8 +74,7 @@ class W_UnboundMethodObject(W_BaseMethodObject):
     @classdef.method("bind")
     def method_bind(self, space, w_receiver):
         if not self.w_owner.is_ancestor_of(space.getclass(w_receiver)):
-            raise space.error(
-                space.w_TypeError,
+            raise space.error(space.w_TypeError,
                 "bind argument must be an instance of %s" % self.w_owner.name
             )
         else:
