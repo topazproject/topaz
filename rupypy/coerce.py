@@ -35,7 +35,7 @@ class Coerce(object):
 
     @staticmethod
     def float(space, w_obj):
-        if space.is_kind_of(w_obj, space.w_numeric):
+        if space.is_kind_of(w_obj, space.w_float):
             return space.float_w(w_obj)
         else:
             return space.float_w(space.send(w_obj, space.newsymbol("Float"), [w_obj]))
