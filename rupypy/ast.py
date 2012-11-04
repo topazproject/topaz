@@ -925,6 +925,9 @@ class Variable(Node):
             loc = ctx.symtable.get_cell_num(self.name)
             ctx.emit(consts.STORE_DEREF, loc)
 
+    def compile_defined(self, ctx):
+        ConstantString("local-variable").compile(ctx)
+
 
 class Global(Node):
     def __init__(self, name):
