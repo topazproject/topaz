@@ -13,6 +13,11 @@ class W_FloatObject(W_NumericObject):
         W_NumericObject.__init__(self, space)
         self.floatvalue = floatvalue
 
+    def __deepcopy__(self, memo):
+        obj = super(W_FloatObject, self).__deepcopy__(memo)
+        obj.floatvalue = self.floatvalue
+        return obj
+
     def float_w(self, space):
         return self.floatvalue
 

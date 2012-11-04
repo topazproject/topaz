@@ -8,6 +8,10 @@ from rupypy.module import Module, ModuleDef
 class Math(Module):
     moduledef = ModuleDef("Math")
 
+    @moduledef.setup_module
+    def setup_module(space, w_mod):
+        space.set_const(w_mod, "PI", space.newfloat(math.pi))
+
     @moduledef.function("exp", value="float")
     def method_exp(self, space, value):
         return space.newfloat(math.exp(value))

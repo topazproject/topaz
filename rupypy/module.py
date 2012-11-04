@@ -66,6 +66,7 @@ class ModuleDef(object):
         self.app_methods = []
 
         self.singleton_methods = {}
+        self.setup_module_func = None
 
     def __deepcopy__(self, memo):
         return self
@@ -90,6 +91,10 @@ class ModuleDef(object):
             self.singleton_methods[name] = (func, argspec)
             return func
         return adder
+
+    def setup_module(self, func):
+        self.setup_module_func = func
+        return func
 
 
 class ClassCache(Cache):
@@ -140,4 +145,8 @@ class ModuleCache(Cache):
         for name, (method, argspec) in moduledef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
             w_mod.attach_method(self.space, name, W_BuiltinFunction(name, func))
+
+        if moduledef.setup_module_func is not None:
+            moduledef.setup_module_func(self.space, w_mod)
+
         yield w_mod
