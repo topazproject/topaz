@@ -67,3 +67,7 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("hash")
     def method_hash(self, space):
         return space.newint(compute_hash(self.floatvalue))
+
+    @classdef.method("abs")
+    def method_abs(self, space):
+        return space.newfloat(abs(self.floatvalue))

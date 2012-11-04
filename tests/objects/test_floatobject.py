@@ -54,3 +54,7 @@ class TestFloatObject(BaseRuPyPyTest):
         assert space.execute("return 1.0 <= '1.1'") is space.w_true
         with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
             space.execute("1.0 <= 'a'")
+
+    def test_abs(self, space):
+        w_res = space.execute("return -123.534.abs")
+        assert space.float_w(w_res) == 123.534
