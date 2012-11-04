@@ -48,6 +48,12 @@ class ClassDef(object):
         self.setup_class_func = func
         return func
 
+    def undefine_allocator(self):
+        @self.singleton_method("allocate")
+        def method_allocate(self, space):
+            raise space.error(space.w_TypeError, "allocator undefined for %s" % self.name)
+        return method_allocate
+
 
 class Module(object):
     pass
