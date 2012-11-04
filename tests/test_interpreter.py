@@ -38,6 +38,16 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
+    def test_uninitialized_closure_var(self, space):
+        w_res = space.execute("""
+        if false
+            x = 3
+        end
+        proc { x }
+        return x
+        """)
+        assert w_res is space.w_nil
+
     def test_if(self, space):
         w_res = space.execute("if 3 then return 2 end")
         assert space.int_w(w_res) == 2
