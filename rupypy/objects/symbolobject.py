@@ -47,9 +47,7 @@ class W_SymbolObject(W_Object):
     def to_proc
         Proc.new { |arg| arg.send(self) }
     end
-    """)
 
-    classdef.app_method("""
     def to_sym
         self
     end
