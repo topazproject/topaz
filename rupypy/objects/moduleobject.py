@@ -352,6 +352,10 @@ class W_ModuleObject(W_RootObject):
     def method_eqeqeq(self, space, w_obj):
         return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
 
+    @classdef.method("instance_method", name="symbol")
+    def method_instance_method(self, space, name):
+        return space.newmethod(name, self)
+
     @classdef.method("undef_method", name="symbol")
     def method_undef_method(self, space, name):
         w_method = self.find_method(space, name)

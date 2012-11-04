@@ -152,6 +152,14 @@ class W_RootObject(W_BaseObject):
         space.set_instance_var(self, name, w_value)
         return w_value
 
+    @classdef.method("method")
+    def method_method(self, space, w_sym):
+        return space.send(
+            space.send(space.getclass(self), space.newsymbol("instance_method"), [w_sym]),
+            space.newsymbol("bind"),
+            [self]
+        )
+
 
 class W_Object(W_RootObject):
     _attrs_ = ["map", "storage"]

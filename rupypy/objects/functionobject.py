@@ -25,6 +25,9 @@ class W_UserFunction(W_FunctionObject):
         obj.lexical_scope = copy.deepcopy(self.lexical_scope, memo)
         return obj
 
+    def get_name(self):
+        return self.name
+
     @jit.unroll_safe
     def call(self, space, w_receiver, args_w, block):
         frame = space.create_frame(
@@ -51,6 +54,9 @@ class W_BuiltinFunction(W_FunctionObject):
         obj.name = self.name
         obj.func = self.func
         return obj
+
+    def get_name(self):
+        return self.name
 
     def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
