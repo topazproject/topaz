@@ -45,3 +45,7 @@ class TestBignumObject(BaseRuPyPyTest):
 
         with self.raises(space, "TypeError", "can't coerce String to Bignum"):
             space.execute("18446744073709551628.coerce 'hello'")
+
+    def test_to_f(self, space):
+        w_res = space.execute("return 18446744073709551628.to_f")
+        assert space.float_w(w_res) == 1.8446744073709552e+19

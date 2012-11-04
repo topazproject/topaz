@@ -29,6 +29,10 @@ class W_BignumObject(W_IntegerObject):
     def method_to_s(self, space):
         return space.newstr_fromstr(self.bigint.str())
 
+    @classdef.method("to_f")
+    def method_to_f(self, space):
+        return space.newfloat(self.bigint.tofloat())
+
     @classdef.method("+", other="bigint")
     def method_plus(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.add(other))
