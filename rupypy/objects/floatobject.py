@@ -61,7 +61,7 @@ class W_FloatObject(W_NumericObject):
             if space.is_kind_of(w_other, space.w_float):
                 return space.newbool(func(self.floatvalue, space.float_w(w_other)))
             else:
-                return W_FloatObject.retry_binop_coercing(space, self, w_other, name)
+                return W_NumericObject.retry_binop_coercing(space, self, w_other, name)
         method.__name__ = "method_%s" % func.__name__
         return method
     method_lt = new_bool_op(classdef, "<", operator.lt)

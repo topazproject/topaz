@@ -1,3 +1,5 @@
+import operator
+
 from pypy.rlib.debug import check_regular_int
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rbigint import rbigint
@@ -70,58 +72,36 @@ class W_FixnumObject(W_RootObject):
     def method_to_i(self, space):
         return self
 
-    @classdef.method("+")
-    def method_add(self, space, w_other):
-        if isinstance(w_other, W_FloatObject):
-            return space.newfloat(self.intvalue + space.float_w(w_other))
-        else:
-            other = space.int_w(w_other)
-            try:
-                value = ovfcheck(self.intvalue + other)
-            except OverflowError:
-                return space.send(
-                    space.newbigint_fromint(self.intvalue), space.newsymbol("+"),
-                    [w_other]
-                )
+    def new_binop(classdef, name, func):
+        @classdef.method(name)
+        def method(self, space, w_other):
+            if space.is_kind_of(w_other, space.w_fixnum):
+                other = space.int_w(w_other)
+                try:
+                    value = ovfcheck(func(self.intvalue, other))
+                except OverflowError:
+                    return space.send(
+                        space.newbigint_fromint(self.intvalue), space.newsymbol(name),
+                        [w_other]
+                    )
+                else:
+                    return space.newint(value)
+            elif space.is_kind_of(w_other, space.w_float):
+                return space.newfloat(func(self.intvalue, space.float_w(w_other)))
             else:
-                return space.newint(value)
-
-    @classdef.method("-")
-    def method_sub(self, space, w_other):
-        if isinstance(w_other, W_FloatObject):
-            return space.newfloat(self.intvalue - space.float_w(w_other))
-        else:
-            other = space.int_w(w_other)
-            try:
-                value = ovfcheck(self.intvalue - other)
-            except OverflowError:
-                return space.send(
-                    space.newbigint_fromint(self.intvalue), space.newsymbol("-"),
-                    [w_other]
-                )
-            else:
-                return space.newint(value)
-
-    @classdef.method("*", other="int")
-    def method_mul(self, space, other):
-        try:
-            value = ovfcheck(self.intvalue * other)
-        except OverflowError:
-            return space.send(
-                space.newbigint_fromint(self.intvalue), space.newsymbol("*"),
-                [space.newint(other)]
-            )
-        else:
-            return space.newint(value)
+                return W_NumericObject.retry_binop_coercing(space, self, w_other, name)
+        method.__name__ = "method_%s" % func.__name__
+        return method
+    method_add = new_binop(classdef, "+", operator.add)
+    method_sub = new_binop(classdef, "-", operator.sub)
+    method_mul = new_binop(classdef, "*", operator.mul)
 
     @classdef.method("/", other="int")
     def method_div(self, space, other):
         try:
             return space.newint(self.intvalue / other)
         except ZeroDivisionError:
-            raise space.error(space.w_ZeroDivisionError,
-                "divided by 0"
-            )
+            raise space.error(space.w_ZeroDivisionError, "divided by 0")
 
     @classdef.method("%", other="int")
     def method_mod(self, space, other):
