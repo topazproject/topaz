@@ -172,7 +172,7 @@ class TestRequire(BaseRuPyPyTest):
         require '%s'
 
         return t(5, 10)
-        """ % str(f))
+        """ % f)
         assert space.int_w(w_res) == -5
 
     def test_no_ext(self, space, tmpdir):
@@ -201,7 +201,7 @@ class TestRequire(BaseRuPyPyTest):
         require 't.rb'
 
         return t(2, 5)
-        """ % str(tmpdir))
+        """ % tmpdir)
         assert space.int_w(w_res) == -3
 
     def test_stdlib_default_load_path(self, space):
@@ -227,7 +227,7 @@ class TestRequire(BaseRuPyPyTest):
         require '%s'
 
         return @a
-        """ % (str(f), str(f), str(f)))
+        """ % (f, f, f))
         assert space.int_w(w_res) == 1
 
     def test_load(self, space, tmpdir):
@@ -243,7 +243,7 @@ class TestRequire(BaseRuPyPyTest):
         load '%s'
 
         return @a
-        """ % (str(f), str(f), str(f)))
+        """ % (f, f, f))
         assert space.int_w(w_res) == 3
 
     def test_responds_to(self, space):
@@ -256,9 +256,9 @@ class TestRequire(BaseRuPyPyTest):
         assert space.float_w(space.execute("return Float('1.1')")) == 1.1
         assert space.float_w(space.execute("return Float('1.1e10')")) == 11000000000.0
         with self.raises(space, "TypeError"):
-            space.execute("return Float(nil)")
+            space.execute("Float(nil)")
         with self.raises(space, "ArgumentError"):
-            space.execute("return Float('a')")
+            space.execute("Float('a')")
         w_res = space.execute("""
         class A; def to_f; 1.1; end; end
         return Float(A.new)

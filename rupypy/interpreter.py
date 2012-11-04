@@ -1,6 +1,6 @@
 from pypy.rlib import jit
 from pypy.rlib.debug import check_nonneg
-from pypy.rlib.objectmodel import we_are_translated, specialize, newlist_hint
+from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from rupypy import consts
 from rupypy.error import RubyError
@@ -29,38 +29,44 @@ class Interpreter(object):
         get_printable_location=get_printable_location,
     )
 
+    def __init__(self):
+        self.finished = False
+
     def get_block_bytecode(self, block):
         return block.bytecode if block is not None else None
 
     def interpret(self, space, frame, bytecode):
         pc = 0
         try:
-            while True:
-                self.jitdriver.jit_merge_point(
-                    self=self, bytecode=bytecode, frame=frame, pc=pc,
-                    block_bytecode=self.get_block_bytecode(frame.block),
-                )
-                frame.last_instr = pc
-                # Why do we wrap the PC in an object? The JIT has store
-                # sinking, but when it encounters a guard it usually performs
-                # all pending stores, *execpt* if the value is a virtual, then
-                # it doesn't, so we make this store be of a virtual, in order
-                # to ensure the JIT sinks the store.
-                space.getexecutioncontext().last_instr_ref = IntegerWrapper(pc)
-                try:
-                    pc = self.handle_bytecode(space, pc, frame, bytecode)
-                except RubyError as e:
-                    pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
-                except RaiseReturn as e:
-                    pc = self.handle_raise_return(space, pc, frame, bytecode, e)
-                except RaiseBreak as e:
-                    pc = self.handle_raise_break(space, pc, frame, bytecode, e)
-        except RaiseReturn as e:
-            if e.parent_interp is self:
+            try:
+                while True:
+                    self.jitdriver.jit_merge_point(
+                        self=self, bytecode=bytecode, frame=frame, pc=pc,
+                        block_bytecode=self.get_block_bytecode(frame.block),
+                    )
+                    frame.last_instr = pc
+                    # Why do we wrap the PC in an object? The JIT has store
+                    # sinking, but when it encounters a guard it usually performs
+                    # all pending stores, *execpt* if the value is a virtual, then
+                    # it doesn't, so we make this store be of a virtual, in order
+                    # to ensure the JIT sinks the store.
+                    space.getexecutioncontext().last_instr_ref = IntegerWrapper(pc)
+                    try:
+                        pc = self.handle_bytecode(space, pc, frame, bytecode)
+                    except RubyError as e:
+                        pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
+                    except RaiseReturn as e:
+                        pc = self.handle_raise_return(space, pc, frame, bytecode, e)
+                    except RaiseBreak as e:
+                        pc = self.handle_raise_break(space, pc, frame, bytecode, e)
+            except RaiseReturn as e:
+                if e.parent_interp is self:
+                    return e.w_value
+                raise
+            except Return as e:
                 return e.w_value
-            raise
-        except Return as e:
-            return e.w_value
+        finally:
+            self.finished = True
 
     def handle_bytecode(self, space, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])
@@ -575,10 +581,19 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
+        if frame.block is None:
+            raise space.error(space.w_LocalJumpError, "no block given (yield)")
         args_w = [None] * n_args
         for i in xrange(n_args - 1, -1, -1):
             args_w[i] = frame.pop()
         w_res = space.invoke_block(frame.block, args_w)
+        frame.push(w_res)
+
+    def YIELD_SPLAT(self, space, bytecode, frame, pc):
+        if frame.block is None:
+            raise space.error(space.w_LocalJumpError, "no block given (yield)")
+        w_args = frame.pop()
+        w_res = space.invoke_block(frame.block, space.listview(w_args))
         frame.push(w_res)
 
     def CONTINUE_LOOP(self, space, bytecode, frame, pc, target_pc):
@@ -590,6 +605,8 @@ class Interpreter(object):
         return frame.unrollstack_and_jump(space, BreakLoop(w_obj))
 
     def RAISE_BREAK(self, space, bytecode, frame, pc):
+        if frame.parent_interp.finished:
+            raise space.error(space.w_LocalJumpError, "break from proc-closure")
         w_value = frame.pop()
         block = frame.unrollstack(RaiseBreakValue.kind)
         if block is None:

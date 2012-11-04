@@ -228,6 +228,40 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["Hello ", "there, ", "Dave", "!\n"]
 
+    def test_undef_method(self, space):
+        space.execute("""
+        class A
+          def hello
+          end
+        end
+        """)
+        space.execute("""
+        class A
+          undef_method :hello
+        end
+        """)
+        with self.raises(space, "NoMethodError", "undefined method `hello' for A"):
+            space.execute("A.new.hello")
+        with self.raises(space, "NameError", "undefined method `undefinedmethod' for class `A'"):
+            space.execute("""
+            class A
+              undef_method :undefinedmethod
+            end
+            """)
+        with self.raises(space, "NameError", "undefined method `hello' for class `A'"):
+            space.execute("""
+            class A
+              undef_method :hello
+            end
+            """)
+        with self.raises(space, "NoMethodError", "undefined method `==' for A"):
+            space.execute("""
+            class A
+              undef_method :==
+            end
+            A.new == 1
+            """)
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):

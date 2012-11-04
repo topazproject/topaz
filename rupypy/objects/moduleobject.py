@@ -30,6 +30,17 @@ class AttributeWriter(W_FunctionObject):
         return w_value
 
 
+class UndefMethod(W_FunctionObject):
+    _immutable_fields_ = ["name"]
+
+    def __init__(self, name):
+        self.name = name
+
+    def call(self, space, w_obj, args_w, block):
+        args_w.insert(0, space.newsymbol(self.name))
+        return space.send(w_obj, space.newsymbol("method_missing"), args_w, block)
+
+
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = ["version?", "included_modules?[*]", "klass?"]
 
@@ -344,3 +355,14 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
+
+    @classdef.method("undef_method", name="symbol")
+    def method_undef_method(self, space, name):
+        w_method = self.find_method(space, name)
+        if w_method is None or isinstance(w_method, UndefMethod):
+            raise space.error(
+                space.w_NameError,
+                "undefined method `%s' for class `%s'" % (name, self.name)
+            )
+        self.define_method(space, name, UndefMethod(name))
+        return self

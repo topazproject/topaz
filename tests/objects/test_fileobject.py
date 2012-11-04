@@ -16,7 +16,7 @@ class TestIO(BaseRuPyPyTest):
         f = File.new('%s')
         io = IO.new(f)
         return io.read
-        """ % str(f))
+        """ % f)
         assert space.str_w(w_res) == contents
 
     def test_new_from_fd(self, space):
@@ -40,21 +40,21 @@ class TestIO(BaseRuPyPyTest):
         f = tmpdir.join("file.txt")
         f.write(contents)
 
-        w_res = space.execute("return File.new('%s').read" % str(f))
+        w_res = space.execute("return File.new('%s').read" % f)
         assert space.str_w(w_res) == contents
 
-        w_res = space.execute("return File.new('%s').read(4)" % str(f))
+        w_res = space.execute("return File.new('%s').read(4)" % f)
         assert space.str_w(w_res) == contents[:4]
 
         w_res = space.execute("""
         a = 'hello world'
         File.new('%s').read(10, a)
         return a
-        """ % str(f))
+        """ % f)
         assert space.str_w(w_res) == contents[:10]
 
         with self.raises(space, "ArgumentError"):
-            space.execute("return File.new('%s').read(-1)" % str(f))
+            space.execute("File.new('%s').read(-1)" % f)
 
     def test_simple_print(self, space, capfd):
         space.execute('IO.new(1, "w").print("foo")')
@@ -124,7 +124,7 @@ class TestFile(BaseRuPyPyTest):
         f = tmpdir.join("file.txt")
         f.write(contents)
 
-        w_res = space.execute("return File.new('%s')" % str(f))
+        w_res = space.execute("return File.new('%s')" % f)
         assert isinstance(w_res, W_FileObject)
 
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
@@ -147,9 +147,9 @@ class TestFile(BaseRuPyPyTest):
     def test_existp(self, space, tmpdir):
         f = tmpdir.join("test.rb")
         f.write("")
-        w_res = space.execute("return File.exist?('%s')" % str(f))
+        w_res = space.execute("return File.exist?('%s')" % f)
         assert w_res is space.w_true
-        w_res = space.execute("return File.exist?('%s')" % str(tmpdir))
+        w_res = space.execute("return File.exist?('%s')" % tmpdir)
         assert w_res is space.w_true
         w_res = space.execute("return File.exist?('no way this exists')")
         assert w_res is space.w_false
@@ -157,9 +157,9 @@ class TestFile(BaseRuPyPyTest):
     def test_filep(self, space, tmpdir):
         f = tmpdir.join("test.rb")
         f.write("")
-        w_res = space.execute("return File.file?('%s')" % str(f))
+        w_res = space.execute("return File.file?('%s')" % f)
         assert w_res is space.w_true
-        w_res = space.execute("return File.file?('%s')" % str(tmpdir))
+        w_res = space.execute("return File.file?('%s')" % tmpdir)
         assert w_res is space.w_false
         w_res = space.execute("return File.file?('no way this exists')")
         assert w_res is space.w_false
@@ -167,16 +167,16 @@ class TestFile(BaseRuPyPyTest):
     def test_executablep(self, space, tmpdir):
         f = tmpdir.join("test.rb")
         f.write("")
-        w_res = space.execute("return File.executable?('%s')" % str(f))
+        w_res = space.execute("return File.executable?('%s')" % f)
         assert w_res is space.w_false
         os.chmod(str(f), stat.S_IEXEC)
-        w_res = space.execute("return File.executable?('%s')" % str(f))
+        w_res = space.execute("return File.executable?('%s')" % f)
         assert w_res is space.w_true
 
     def test_directoryp(self, space, tmpdir):
-        w_res = space.execute("return File.directory?('%s')" % str(tmpdir))
+        w_res = space.execute("return File.directory?('%s')" % tmpdir)
         assert self.unwrap(space, w_res) is True
-        w_res = space.execute("return File.directory?('%s')" % str(tmpdir.join("t.rb")))
+        w_res = space.execute("return File.directory?('%s')" % tmpdir.join("t.rb"))
         assert self.unwrap(space, w_res) is False
 
 

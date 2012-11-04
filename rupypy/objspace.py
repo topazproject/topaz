@@ -35,7 +35,7 @@ from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_StopIteration,
-    W_NotImplementedError, W_RangeError)
+    W_NotImplementedError, W_RangeError, W_LocalJumpError)
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
@@ -101,12 +101,14 @@ class ObjectSpace(object):
         self.w_hash = self.getclassfor(W_HashObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
+        self.w_LocalJumpError = self.getclassfor(W_LocalJumpError)
         self.w_NameError = self.getclassfor(W_NameError)
         self.w_NotImplementedError = self.getclassfor(W_NotImplementedError)
         self.w_IndexError = self.getclassfor(W_IndexError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
         self.w_RuntimeError = self.getclassfor(W_RuntimeError)
+        self.w_StandardError = self.getclassfor(W_StandardError)
         self.w_StopIteration = self.getclassfor(W_StopIteration)
         self.w_SyntaxError = self.getclassfor(W_SyntaxError)
         self.w_SystemCallError = self.getclassfor(W_SystemCallError)
@@ -126,6 +128,7 @@ class ObjectSpace(object):
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
             self.w_RuntimeError, self.w_SystemCallError, self.w_LoadError,
             self.w_StopIteration, self.w_SyntaxError, self.w_NameError,
+            self.w_StandardError, self.w_LocalJumpError,
 
             self.w_kernel, self.w_topaz,
 
@@ -458,7 +461,7 @@ class ObjectSpace(object):
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
-        if len(bc.arg_locs) != 0:
+        if len(bc.arg_locs) != 0 or bc.splat_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
