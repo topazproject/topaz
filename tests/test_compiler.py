@@ -1934,24 +1934,71 @@ class TestCompiler(object):
         assert space.symbol_w(w_alias_method) == "alias_method"
 
     def test_defined(self, space):
-        self.assert_compiles(space, """
-        defined? Const
-        defined? @a
-        defined? nil.nil?
+        bc = self.assert_compiles(space, """
+        outer = 1
+        proc do
+          local = 1
+          defined? Const
+          defined? @a
+          defined? nil.nil?
+          defined? a
+          defined? local
+          defined? outer
+        end
         """, """
+        LOAD_CONST 0
+        STORE_DEREF 0
+        DISCARD_TOP
+        LOAD_SELF
+        LOAD_CONST 1
+        BUILD_BLOCK 0
+        SEND_BLOCK 2 1
+        DISCARD_TOP
+        LOAD_CONST 3
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[1], """
+        LOAD_CONST 0
+        STORE_LOCAL 0
+        DISCARD_TOP
+
         LOAD_SCOPE
-        DEFINED_LOCAL_CONSTANT 0
+        DEFINED_LOCAL_CONSTANT 1
         DISCARD_TOP
 
         LOAD_SELF
-        DEFINED_INSTANCE_VAR 1
+        DEFINED_INSTANCE_VAR 2
         DISCARD_TOP
 
-        LOAD_CONST 2
-        DEFINED_METHOD 3
-        DISCARD_TOP
-
+        LOAD_CONST 3
+        COPY_STRING
+        JUMP_IF_FALSE 33
         LOAD_CONST 4
+        DEFINED_METHOD 5
+        JUMP 36
+        LOAD_CONST 4
+        JUMP 42
+        LOAD_CONST 4
+        DISCARD_TOP
+
+        LOAD_CONST 6
+        COPY_STRING
+        JUMP_IF_FALSE 57
+        LOAD_SELF
+        DEFINED_METHOD 7
+        JUMP 60
+        LOAD_CONST 4
+        JUMP 66
+        LOAD_CONST 4
+        DISCARD_TOP
+
+        LOAD_CONST 8
+        COPY_STRING
+        DISCARD_TOP
+
+        LOAD_CONST 9
+        COPY_STRING
+
         RETURN
         """)
 

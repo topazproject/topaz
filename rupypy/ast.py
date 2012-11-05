@@ -20,6 +20,22 @@ class BaseNode(object):
         else:
             raise NotImplementedError(type(self).__name__)
 
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
+    def compile_defined_lhs(self, ctx, lhs):
+        otherwise = ctx.new_block()
+        end = ctx.new_block()
+
+        lhs.compile_defined(ctx)
+        ctx.emit_jump(consts.JUMP_IF_FALSE, otherwise)
+        self.compile_receiver(ctx)
+        self.compile_defined_rhs(ctx)
+        ctx.emit_jump(consts.JUMP, end)
+        ctx.use_next_block(otherwise)
+        Nil().compile(ctx)
+        ctx.use_next_block(end)
+
 
 class Node(BaseNode):
     _attrs_ = ["lineno"]
@@ -472,7 +488,6 @@ class Defined(Node):
         self.node = node
 
     def compile(self, ctx):
-        self.node.compile_receiver(ctx)
         self.node.compile_defined(ctx)
 
 
@@ -690,6 +705,18 @@ class Send(BaseSend):
         return ctx.create_symbol_const(self.method)
 
     def compile_defined(self, ctx):
+        otherwise = ctx.new_block()
+        end = ctx.new_block()
+        for arg in self.args:
+            arg.compile_defined(ctx)
+            ctx.emit_jump(consts.JUMP_IF_FALSE, otherwise)
+        self.compile_defined_lhs(ctx, self.receiver)
+        ctx.emit_jump(consts.JUMP, end)
+        ctx.use_next_block(otherwise)
+        Nil().compile(ctx)
+        ctx.use_next_block(end)
+
+    def compile_defined_rhs(self, ctx):
         ctx.emit(consts.DEFINED_METHOD, self.method_name_const(ctx))
 
 
@@ -823,6 +850,12 @@ class Subscript(Node):
         ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
         ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
 
+    def compile_defined(self, ctx):
+        self.compile_defined_lhs(ctx, self.target)
+
+    def compile_defined_rhs(self, ctx):
+        Send(self.target, "[]", self.args, None, self.lineno).compile_defined(ctx)
+
     def is_splat(self):
         for arg in self.args:
             if isinstance(arg, Splat):
@@ -851,6 +884,7 @@ class Constant(Node):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
 
 
@@ -879,6 +913,9 @@ class LookupConstant(Node):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.scope.compile_defined(ctx)
+
+    def compile_defined_rhs(self, ctx):
         ctx.emit(consts.DEFINED_CONSTANT, ctx.create_symbol_const(self.name))
 
 
@@ -945,6 +982,15 @@ class Global(Node):
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_GLOBAL, ctx.create_symbol_const(self.name))
 
+    def compile_defined(self, ctx):
+        end = ctx.new_block()
+        self.compile(ctx)
+        ctx.emit(consts.DUP_TOP)
+        ctx.emit_jump(consts.JUMP_IF_FALSE, end)
+        ctx.emit(consts.DISCARD_TOP)
+        ConstantString("global-variable").compile(ctx)
+        ctx.use_next_block(end)
+
 
 class InstanceVariable(Node):
     def __init__(self, name):
@@ -965,6 +1011,7 @@ class InstanceVariable(Node):
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 
