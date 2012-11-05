@@ -921,8 +921,8 @@ class TestInterpreter(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == "A"
 
     def test_defined(self, space):
-        w_res = space.execute("return [defined? A, defined? Array, defined? Foo::Bar]")
-        assert self.unwrap(space, w_res) == [None, "constant", None]
+        w_res = space.execute("return [defined? A, defined? Array]")
+        assert self.unwrap(space, w_res) == [None, "constant"]
         w_res = space.execute("""
         @a = 3
         return [defined? @a, defined? @b]
@@ -933,25 +933,13 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["self", "nil", "true", "false"]
         w_res = space.execute("""
-        return [defined? nil.nil?, defined? nil.fdfdafa, defined? foo.bar]
+        return [defined? nil.nil?, defined? nil.fdfdafa]
         """)
-        assert self.unwrap(space, w_res) == ["method", None, None]
+        assert self.unwrap(space, w_res) == ["method", None]
         w_res = space.execute("""
         return [defined? a = 3]
         """)
         assert self.unwrap(space, w_res) == ["assignment"]
-        w_res = space.execute("""
-        return [defined? $aaa, defined? $"]
-        """)
-        assert self.unwrap(space, w_res) == [None, "global-variable"]
-        w_res = space.execute("""
-        return [defined?([]), defined?({})]
-        """)
-        assert self.unwrap(space, w_res) == ["expression", "expression"]
-        w_res = space.execute("""
-        return [defined?([][1]), defined?({}[:a]), defined? Object.new(xxx), defined? Object.new(1)]
-        """)
-        assert self.unwrap(space, w_res) == ["method", "method", None, "method"]
         w_res = space.execute("""
         a = 3
         return defined?(a)

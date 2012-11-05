@@ -10,6 +10,3 @@ class W_CellObject(W_BaseObject):
 
     def set(self, w_value):
         self.w_value = w_value
-
-    def is_defined(self):
-        return self.w_value is not None
