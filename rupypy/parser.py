@@ -1651,7 +1651,7 @@ class Parser(object):
         """
         lineno = p[0].getsourcepos().lineno
         for_vars = p[1].getfor_var()
-        argname = p[1].getargument().name
+        arg = p[1].getargument().name
 
         self.push_shared_scope()
 
@@ -1659,16 +1659,14 @@ class Parser(object):
             varname = self.get_var_name(for_var)
             if varname is not None:
                 self.lexer.symtable.declare_write(varname)
-        self.lexer.symtable.declare_argument(argname)
+        self.lexer.symtable.declare_argument(arg)
 
         stmts = p[6].getastlist() if p[6] is not None else []
-        stmts.insert(0, ast.Statement(
-            self.new_assignment(p[1].getfor_var(), ast.Variable(argname, lineno))
-        ))
+        stmts.insert(0, ast.Statement(self.new_assignment(for_vars, ast.Variable(arg, lineno))))
         block = ast.SendBlock([p[1].getargument()], None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
-        return BoxAST(ast.ForLoop(p[3].getast(), self.as_astlist(for_vars), block, lineno))
+        return BoxAST(ast.ForLoop(p[3].getast(), block, lineno))
 
     @pg.production("for : FOR")
     def for_token(self, p):
