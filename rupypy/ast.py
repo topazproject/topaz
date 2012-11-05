@@ -970,14 +970,6 @@ class Variable(Node):
             loc = ctx.symtable.get_cell_num(self.name)
             ctx.emit(consts.STORE_DEREF, loc)
 
-    # def compile_defined(self, ctx):
-    #     if ctx.symtable.is_local(self.name):
-    #         ctx.emit(consts.DEFINED_LOCAL, ctx.symtable.get_local_num(self.name))
-    #     elif ctx.symtable.is_cell(self.name):
-    #         ctx.emit(consts.DEFINED_DEREF, ctx.symtable.get_cell_num(self.name))
-    #     else:
-    #         Nil().compile(ctx)
-
     def compile_defined(self, ctx):
         ConstantString("local-variable").compile(ctx)
 

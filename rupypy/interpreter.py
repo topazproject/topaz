@@ -161,23 +161,11 @@ class Interpreter(object):
     def STORE_LOCAL(self, space, bytecode, frame, pc, idx):
         frame.locals_w[idx] = frame.peek()
 
-    def DEFINED_LOCAL(self, space, bytecode, frame, pc, idx):
-        if frame.locals_w[idx] is not None:
-            frame.push(space.newstr_fromstr("local-variable"))
-        else:
-            frame.push(space.w_nil)
-
     def LOAD_DEREF(self, space, bytecode, frame, pc, idx):
         frame.push(frame.cells[idx].get() or space.w_nil)
 
     def STORE_DEREF(self, space, bytecode, frame, pc, idx):
         frame.cells[idx].set(frame.peek())
-
-    def DEFINED_DEREF(self, space, bytecode, frame, pc, idx):
-        if frame.cells[idx].is_defined():
-            frame.push(space.newstr_fromstr("local-variable"))
-        else:
-            frame.push(space.w_nil)
 
     def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
         frame.push(frame.cells[idx])
