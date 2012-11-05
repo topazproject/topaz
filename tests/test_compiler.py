@@ -676,10 +676,11 @@ class TestCompiler(object):
 
     def test_yield(self, space):
         bc = self.assert_compiles(space, """
-        def f
+        def f a
             yield
             yield 4
             yield 4, 5
+            yield *a
         end
         """, """
         LOAD_SCOPE
@@ -703,6 +704,10 @@ class TestCompiler(object):
         LOAD_CONST 1
         LOAD_CONST 2
         YIELD 2
+        DISCARD_TOP
+        LOAD_LOCAL 0
+        COERCE_ARRAY
+        YIELD_SPLAT
         RETURN
         """)
 

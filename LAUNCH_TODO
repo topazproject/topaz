@@ -8,7 +8,6 @@ Stuff to do before public
   * Web page with passing status
 * Confirm with Evan and Charles Nutter that all "hard problems" are done correctly
   * binding.eval
-  * bignum
   * call/cc (unimplemented in JRuby)
   * fibers
   * frame globals ($~, $_)

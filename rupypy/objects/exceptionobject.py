@@ -18,6 +18,9 @@ class W_ExceptionObject(W_Object):
         self.msg = ""
         self.frame = None
 
+    def __str__(self):
+        return "%s(%s)" % (self.__class__.__name__, self.msg)
+
     method_allocate = new_exception_allocate(classdef)
 
     @classdef.method("initialize")

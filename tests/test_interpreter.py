@@ -38,6 +38,16 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
+    def test_uninitialized_closure_var(self, space):
+        w_res = space.execute("""
+        if false
+            x = 3
+        end
+        proc { x }
+        return x
+        """)
+        assert w_res is space.w_nil
+
     def test_if(self, space):
         w_res = space.execute("if 3 then return 2 end")
         assert space.int_w(w_res) == 2
@@ -521,7 +531,7 @@ class TestInterpreter(BaseRuPyPyTest):
     def test_module(self, space):
         w_res = space.execute("""
         module M
-            def method
+            def oninstanceonly
                 5
             end
         end
@@ -531,7 +541,7 @@ class TestInterpreter(BaseRuPyPyTest):
         assert w_res.name == "M"
 
         with self.raises(space, "NoMethodError"):
-            space.execute("M.method")
+            space.execute("M.oninstanceonly")
 
     def test_module_reopen_non_module(self, space):
         space.execute("""
@@ -942,6 +952,11 @@ class TestInterpreter(BaseRuPyPyTest):
         return [defined?([][1]), defined?({}[:a]), defined? Object.new(xxx), defined? Object.new(1)]
         """)
         assert self.unwrap(space, w_res) == ["method", "method", None, "method"]
+        w_res = space.execute("""
+        a = 3
+        return defined?(a)
+        """)
+        assert space.str_w(w_res) == "local-variable"
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
@@ -1314,6 +1329,21 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 3]
 
+    def test_break_block_frame_exited(self, space):
+        w_res = space.execute("""
+        def create_block
+            b = capture_block do
+                break
+            end
+        end
+
+        def capture_block(&b)
+            b
+        end
+        """)
+        with self.raises(space, "LocalJumpError", "break from proc-closure"):
+            space.execute("create_block.call")
+
     def test_singleton_class_block(self, space):
         w_res = space.execute("""
         def f(o)
@@ -1334,6 +1364,26 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         with self.raises(space, "LocalJumpError"):
             space.execute("f")
+
+    def test_splat_arg_block(self, space):
+        w_res = space.execute("""
+        def f a, b, c
+            yield a, b, c
+        end
+
+        return f(2, 3, 4) { |*args| args }
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, 4]
+
+    def test_yield_splat(self, space):
+        w_res = space.execute("""
+        def f(*args)
+            yield *args
+        end
+
+        return f(3, 5) { |a, b| a + b }
+        """)
+        assert space.int_w(w_res) == 8
 
 
 class TestExceptions(BaseRuPyPyTest):

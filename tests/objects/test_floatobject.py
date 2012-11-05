@@ -46,7 +46,11 @@ class TestFloatObject(BaseRuPyPyTest):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")
         assert self.unwrap(space, w_res) == [1, 1]
 
-    def test_less_equal(self, space):
+    def test_lt(self, space):
+        assert space.execute("return 1.1 < 1.2") is space.w_true
+        assert space.execute("return 1.2 < 0") is space.w_false
+
+    def test_lte(self, space):
         assert space.execute("return 1.1 <= 2") is space.w_true
         assert space.execute("return 1.0 <= 1") is space.w_true
         assert space.execute("return 1.1 <= 1.1") is space.w_true
@@ -54,3 +58,7 @@ class TestFloatObject(BaseRuPyPyTest):
         assert space.execute("return 1.0 <= '1.1'") is space.w_true
         with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
             space.execute("1.0 <= 'a'")
+
+    def test_abs(self, space):
+        w_res = space.execute("return -123.534.abs")
+        assert space.float_w(w_res) == 123.534

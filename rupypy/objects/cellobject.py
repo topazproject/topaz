@@ -6,7 +6,6 @@ class W_CellObject(W_BaseObject):
         self.w_value = None
 
     def get(self):
-        assert self.w_value is not None
         return self.w_value
 
     def set(self, w_value):

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from pypy.rlib.objectmodel import we_are_translated
-from pypy.rlib.rarithmetic import ovfcheck
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, BlockSymbolTable
@@ -445,9 +444,24 @@ class Yield(Node):
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
-            for arg in self.args:
-                arg.compile(ctx)
-            ctx.emit(consts.YIELD, len(self.args))
+            if self.is_splat():
+                for arg in self.args:
+                    arg.compile(ctx)
+                    if not isinstance(arg, Splat):
+                        ctx.emit(consts.BUILD_ARRAY, 1)
+                for i in range(len(self.args) - 1):
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+                ctx.emit(consts.YIELD_SPLAT)
+            else:
+                for arg in self.args:
+                    arg.compile(ctx)
+                ctx.emit(consts.YIELD, len(self.args))
+
+    def is_splat(self):
+        for arg in self.args:
+            if isinstance(arg, Splat):
+                return True
+        return False
 
 
 class Alias(BaseStatement):
@@ -784,10 +798,15 @@ class SendBlock(Node):
                 block_ctx.symtable.get_local_num(arg.name)
             elif block_ctx.symtable.is_cell(arg.name):
                 block_ctx.symtable.get_cell_num(arg.name)
+        if self.splat_arg is not None:
+            if block_ctx.symtable.is_local(self.splat_arg):
+                block_ctx.symtable.get_local_num(self.splat_arg)
+            elif block_ctx.symtable.is_cell(self.splat_arg):
+                block_ctx.symtable.get_cell_num(self.splat_arg)
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, [], None, None)
+        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, None)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)
@@ -969,13 +988,16 @@ class Variable(Node):
             loc = ctx.symtable.get_cell_num(self.name)
             ctx.emit(consts.STORE_DEREF, loc)
 
+    # def compile_defined(self, ctx):
+    #     if ctx.symtable.is_local(self.name):
+    #         ctx.emit(consts.DEFINED_LOCAL, ctx.symtable.get_local_num(self.name))
+    #     elif ctx.symtable.is_cell(self.name):
+    #         ctx.emit(consts.DEFINED_DEREF, ctx.symtable.get_cell_num(self.name))
+    #     else:
+    #         Nil().compile(ctx)
+
     def compile_defined(self, ctx):
-        if ctx.symtable.is_local(self.name):
-            ctx.emit(consts.DEFINED_LOCAL, ctx.symtable.get_local_num(self.name))
-        elif ctx.symtable.is_cell(self.name):
-            ctx.emit(consts.DEFINED_DEREF, ctx.symtable.get_cell_num(self.name))
-        else:
-            Nil().compile(ctx)
+        ConstantString("local-variable").compile(ctx)
 
 
 class Global(Node):
