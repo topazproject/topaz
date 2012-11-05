@@ -31,6 +31,41 @@ class TestDir(BaseRuPyPyTest):
         with self.raises(space, "SystemCallError"):
             space.execute("Dir.delete('%s')" % d)
 
+    def test_existp(self, space, tmpdir):
+        d = tmpdir.mkdir("sub")
+        assert space.execute("return Dir.exist?('%s')" % str(d)) is space.w_true
+        assert space.execute("return Dir.exists?('%s')" % str(d)) is space.w_true
+
+    def test_home(self, space):
+        w_res = space.execute("return Dir.home")
+        assert space.str_w(w_res) == os.path.expanduser("~")
+
+    def test_open(self, space, tmpdir):
+        d = tmpdir.mkdir("sub")
+        f = d.join("content")
+        f.write("hello")
+        space.execute("Dir.open('%s')" % str(d))
+        with self.raises(space, "SystemCallError"):
+            space.execute("Dir.open('this does not exist')")
+        w_res = space.execute("return Dir.open('%s') {|d| d.path } " % str(d))
+        assert space.str_w(w_res) == str(d)
+
+    def test_entries(self, space, tmpdir):
+        d = tmpdir.mkdir("sub")
+        f = d.join("content")
+        f.write("hello")
+        f = d.join("content2")
+        f.write("hello")
+        w_res = space.execute("return Dir.entries('%s')" % str(d))
+        assert "content" in self.unwrap(space, w_res)
+        assert "content2" in self.unwrap(space, w_res)
+
+    def test_path(self, space):
+        w_res = space.execute("return Dir.new(Dir.home).path")
+        assert space.str_w(w_res) == os.path.expanduser("~")
+        w_res = space.execute("return Dir.new(Dir.home).to_path")
+        assert space.str_w(w_res) == os.path.expanduser("~")
+
     def test_chdir(self, space, tmpdir, monkeypatch):
         w_res = space.execute("""
         dirs = []
