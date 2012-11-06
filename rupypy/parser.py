@@ -1639,16 +1639,6 @@ class Parser(object):
 
     @pg.production("primary : for for_var IN expr_value do post_for_do compstmt END")
     def primary_for(self, p):
-        """
-        kFOR for_var kIN {
-                    lexer.getConditionState().begin();
-                } expr_value do {
-                    lexer.getConditionState().end();
-                } compstmt kEND {
-                      // ENEBO: Lots of optz in 1.9 parser here
-                    $$ = new ForNode($1.getPosition(), $2, $8, $5, support.getCurrentScope());
-                }
-        """
         lineno = p[0].getsourcepos().lineno
         for_vars = p[1].getfor_var()
         arg = p[1].getargument().name
@@ -1666,7 +1656,7 @@ class Parser(object):
         block = ast.SendBlock([p[1].getargument()], None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
-        return BoxAST(ast.ForLoop(p[3].getast(), block, lineno))
+        return BoxAST(ast.Send(p[3].getast(), "each", [], block, lineno))
 
     @pg.production("for : FOR")
     def for_token(self, p):

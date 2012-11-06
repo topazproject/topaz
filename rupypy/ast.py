@@ -707,11 +707,6 @@ class Super(BaseSend):
             return ctx.create_symbol_const(ctx.code_name)
 
 
-class ForLoop(Send):
-    def __init__(self, iterator, body, lineno):
-        Send.__init__(self, iterator, "each", [], body, lineno)
-
-
 class Splat(Node):
     def __init__(self, value):
         self.value = value
