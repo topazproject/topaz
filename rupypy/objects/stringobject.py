@@ -394,9 +394,10 @@ class W_StringObject(W_Object):
         if neg:
             i += 1
         val = 0
+        number_seen = False
         while i < len(s):
             c = ord(s[i])
-            if c == ord("_"):
+            if c == ord("_") and number_seen:
                 i += 1
                 continue
             if ord("a") <= c <= ord("z"):
@@ -409,6 +410,7 @@ class W_StringObject(W_Object):
                 break
             if digit >= radix:
                 break
+            number_seen = True
             val = val * radix + digit
             i += 1
         if neg:

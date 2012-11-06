@@ -188,6 +188,8 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.int_w(w_res) == -12
         w_res = space.execute("return '1_2_3'.to_i")
         assert space.int_w(w_res) == 123
+        w_res = space.execute("return '_1_2_3'.to_i")
+        assert space.int_w(w_res) == 0
         with self.raises(space, "ArgumentError"):
             space.execute('"".to_i(1)')
         with self.raises(space, "ArgumentError"):
