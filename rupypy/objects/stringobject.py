@@ -387,10 +387,12 @@ class W_StringObject(W_Object):
         if not 2 <= radix <= 36:
             raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
         s = space.str_w(self)
-        if not s:
-            return space.newint(0)
         i = 0
-        neg = s[i] == "-"
+        while i < len(s):
+            if not s[i].isspace():
+                break
+            i += 1
+        neg = i < len(s) and s[i] == "-"
         if neg:
             i += 1
         val = 0
