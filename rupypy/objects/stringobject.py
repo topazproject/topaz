@@ -396,6 +396,9 @@ class W_StringObject(W_Object):
         val = 0
         while i < len(s):
             c = ord(s[i])
+            if c == ord("_"):
+                i += 1
+                continue
             if ord("a") <= c <= ord("z"):
                 digit = c - ord("a") + 10
             elif ord("A") <= c <= ord("Z"):
