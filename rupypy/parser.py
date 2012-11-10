@@ -203,14 +203,6 @@ class Parser(object):
     def new_class_var(self, box):
         return BoxAST(ast.ClassVariable(box.getstr(), box.getsourcepos().lineno))
 
-    def as_astlist(self, box):
-        if isinstance(box, BoxAST):
-            return [box.getast()]
-        elif isinstance(box, BoxASTList):
-            return box.getastlist()
-        else:
-            raise NotImplementedError(box)
-
     def concat_literals(self, head, tail):
         if head is None:
             return tail
