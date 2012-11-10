@@ -110,7 +110,7 @@ class Kernel(Module):
     def method_raise(self, space, w_str_or_exception=None, w_string=None, w_array=None):
         w_exception = None
         if w_str_or_exception is None:
-            w_exception = space.globals.get("$!")
+            w_exception = space.globals.get(space, "$!")
             if w_exception is space.w_nil:
                 w_exception = space.w_RuntimeError
         elif isinstance(w_str_or_exception, W_StringObject):
