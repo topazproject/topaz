@@ -67,10 +67,10 @@ class TestIO(BaseRuPyPyTest):
         assert out == "Thisis100percent"
 
     def test_print_globals(self, space, capfd):
-        space.globals.set("$,", space.newstr_fromstr(":"))
-        space.globals.set("$\\", space.newstr_fromstr("\n"))
+        space.globals.set(space, "$,", space.newstr_fromstr(":"))
+        space.globals.set(space, "$\\", space.newstr_fromstr("\n"))
         space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
-        space.globals.set("$_", space.newstr_fromstr('lastprint'))
+        space.globals.set(space, "$_", space.newstr_fromstr('lastprint'))
         space.execute('IO.new(1, "w").print')
         out, err = capfd.readouterr()
         assert out == "foo:bar:baz\nlastprint\n"

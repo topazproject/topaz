@@ -258,13 +258,13 @@ class Interpreter(object):
 
     def LOAD_GLOBAL(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
-        w_value = space.globals.get(name) or space.w_nil
+        w_value = space.globals.get(space, name) or space.w_nil
         frame.push(w_value)
 
     def STORE_GLOBAL(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
         w_value = frame.peek()
-        space.globals.set(name, w_value)
+        space.globals.set(space, name, w_value)
 
     @jit.unroll_safe
     def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):

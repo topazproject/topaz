@@ -71,7 +71,7 @@ class ObjectSpace(object):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
         self._executioncontext = None
-        self.globals = GlobalsDict(self)
+        self.globals = GlobalsDict()
         self.bootstrap = True
         self.exit_handlers_w = []
 
@@ -179,12 +179,12 @@ class ObjectSpace(object):
                 os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
             ))
         ])
-        self.globals.def_virtual("$LOAD_PATH", lambda space: space.w_load_path)
-        self.globals.def_virtual("$:",         lambda space: space.w_load_path)
+        self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
+        self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
         self.w_loaded_features = self.newarray([])
-        self.globals.def_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
-        self.globals.def_virtual('$"',               lambda space: space.w_loaded_features)
+        self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
+        self.globals.define_virtual('$"', lambda space: space.w_loaded_features)
 
         self.w_main_thread = W_ThreadObject(self)
 

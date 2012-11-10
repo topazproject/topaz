@@ -11,19 +11,49 @@ class VersionTag(object):
         return result
 
 
-class Cell(W_BaseObject):
-    def __init__(self, name, w_value=None):
-        self.name = name
+class BaseCell(W_BaseObject):
+    pass
+
+
+class Cell(BaseCell):
+    def __init__(self, w_value):
         self.w_value = w_value
 
     def __deepcopy__(self, memo):
         obj = super(Cell, self).__deepcopy__(memo)
-        obj.name = self.name
         obj.w_value = copy.deepcopy(self.w_value, memo)
         return obj
 
+    def get(self, space, name):
+        return self.w_value
 
-class CellDict(object):
+    def set(self, space, name, w_value):
+        self.w_value = w_value
+
+
+class GetterSetterCell(BaseCell):
+    def __init__(self, getter, setter=None):
+        self.getter = getter
+        self.setter = setter
+
+    def __deepcopy__(self, memo):
+        obj = super(GetterSetterCell, self).__deepcopy__(memo)
+        obj.getter = copy.deepcopy(self.getter, memo)
+        obj.setter = copy.deepcopy(self.setter, memo)
+        return obj
+
+    def get(self, space, name):
+        return self.getter(space)
+
+    def set(self, space, name, w_value):
+        if self.setter is None:
+            raise space.error(space.w_NameError,
+                "%s is a read-only variable" % name
+            )
+        self.setter(space, w_value)
+
+
+class BaseCellDict(object):
     _immutable_fields_ = ["version?"]
 
     def __init__(self):
@@ -39,20 +69,27 @@ class CellDict(object):
     def mutated(self):
         self.version = VersionTag()
 
-    def get(self, name):
+    @jit.elidable
+    def _get_cell(self, name, version):
+        assert version is self.version
+        return self.values.get(name, None)
+
+
+class CellDict(BaseCellDict):
+    def get(self, space, name):
         cell = self._get_cell(name, self.version)
-        if isinstance(cell, Cell):
-            return cell.w_value
+        if isinstance(cell, BaseCell):
+            return cell.get(space, name)
         else:
             return cell
 
-    def set(self, name, w_value):
+    def set(self, space, name, w_value):
         cell = self._get_cell(name, self.version)
-        if isinstance(cell, Cell):
-            cell.w_value = w_value
+        if isinstance(cell, BaseCell):
+            cell.set(space, name, w_value)
         else:
             if cell is not None:
-                w_value = Cell(name, w_value)
+                w_value = Cell(w_value)
             self.mutated()
             self.values[name] = w_value
 
@@ -64,62 +101,8 @@ class CellDict(object):
         else:
             self.mutated()
 
-    @jit.elidable
-    def _get_cell(self, name, version):
-        assert version is self.version
-        return self.values.get(name, None)
-
-
-class GetterSetterCell(W_BaseObject):
-    # getter :: space -> value
-    # setter :: (space, value) -> None
-    def __init__(self, name, getter=None, setter=None):
-        self.name = name
-        self.getter = getter
-        self.setter = setter
-
-    def __deepcopy__(self, memo):
-        obj = super(GetterSetterCell, self).__deepcopy__(memo)
-        obj.name = self.name
-        obj.getter = copy.deepcopy(self.getter, memo)
-        obj.setter = copy.deepcopy(self.setter, memo)
-        return obj
-
 
 class GlobalsDict(CellDict):
-    def __init__(self, space):
-        super(GlobalsDict, self).__init__()
-        self.space = space
-
-    def __deepcopy__(self, memo):
-        c = super(GlobalsDict, self).__deepcopy__(memo)
-        c.space = copy.deepcopy(self.space, memo)
-        return c
-
-    def get(self, name):
-        cell = self._get_cell(name, self.version)
-        if isinstance(cell, Cell):
-            return cell.w_value
-        elif isinstance(cell, GetterSetterCell):
-            return cell.getter(self.space)
-        else:
-            return cell
-
-    def set(self, name, w_value):
-        cell = self._get_cell(name, self.version)
-        if isinstance(cell, Cell):
-            cell.w_value = w_value
-        elif isinstance(cell, GetterSetterCell):
-            if cell.setter is None:
-                raise self.space.error(self.space.w_NameError,
-                                       "%s is a read-only variable" % name)
-            cell.setter(self.space, w_value)
-        else:
-            if cell is not None:
-                w_value = Cell(name, w_value)
-            self.mutated()
-            self.values[name] = w_value
-
-    def def_virtual(self, name, getter, setter=None):
+    def define_virtual(self, name, getter, setter=None):
         self.mutated()
-        self.values[name] = GetterSetterCell(name, getter, setter)
+        self.values[name] = GetterSetterCell(getter, setter)

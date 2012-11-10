@@ -138,22 +138,22 @@ class W_ModuleObject(W_RootObject):
         for idx in xrange(len(ancestors) - 1, -1, -1):
             module = ancestors[idx]
             assert isinstance(module, W_ModuleObject)
-            w_res = module.class_variables.get(name)
+            w_res = module.class_variables.get(space, name)
             if w_res is not None or module is self:
-                module.class_variables.set(name, w_obj)
+                module.class_variables.set(space, name, w_obj)
                 if module is self:
                     for descendant in self.descendants:
                         descendant.remove_class_var(space, name)
 
     @jit.unroll_safe
     def find_class_var(self, space, name):
-        w_res = self.class_variables.get(name)
+        w_res = self.class_variables.get(space, name)
         if w_res is None:
             ancestors = self.ancestors()
             for idx in xrange(1, len(ancestors)):
                 module = ancestors[idx]
                 assert isinstance(module, W_ModuleObject)
-                w_res = module.class_variables.get(name)
+                w_res = module.class_variables.get(space, name)
                 if w_res is not None:
                     break
         return w_res
@@ -165,10 +165,10 @@ class W_ModuleObject(W_RootObject):
             descendant.remove_class_var(space, name)
 
     def set_instance_var(self, space, name, w_value):
-        return self.instance_variables.set(name, w_value)
+        return self.instance_variables.set(space, name, w_value)
 
     def find_instance_var(self, space, name):
-        return self.instance_variables.get(name) or space.w_nil
+        return self.instance_variables.get(space, name) or space.w_nil
 
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:

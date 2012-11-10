@@ -57,7 +57,7 @@ class Kernel(Module):
             path += ".rb"
 
         if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
-            w_load_path = space.globals.get("$LOAD_PATH")
+            w_load_path = space.globals.get(space, "$LOAD_PATH")
             for w_base in space.listview(w_load_path):
                 base = space.str_w(w_base)
                 full = os.path.join(base, path)
@@ -85,7 +85,7 @@ class Kernel(Module):
         orig_path = path
         path = Kernel.find_feature(space, path)
 
-        w_loaded_features = space.globals.get('$"')
+        w_loaded_features = space.globals.get(space, '$"')
         w_already_loaded = space.send(
             w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
         )
