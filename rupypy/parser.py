@@ -203,29 +203,11 @@ class Parser(object):
     def new_class_var(self, box):
         return BoxAST(ast.ClassVariable(box.getstr(), box.getsourcepos().lineno))
 
-    def get_var_name(self, node):
-        if isinstance(node, ast.Splat):
-            node = node.value
-        if isinstance(node, ast.Subscript):
-            node = node.target
-        if isinstance(node, ast.Variable):
-            return node.name
-        else:
-            return None
-
     def as_astlist(self, box):
         if isinstance(box, BoxAST):
             return [box.getast()]
         elif isinstance(box, BoxASTList):
             return box.getastlist()
-        else:
-            raise NotImplementedError(box)
-
-    def new_assignment(self, box, value):
-        if isinstance(box, BoxAST):
-            return ast.Assignment(box.getast(), value)
-        elif isinstance(box, BoxASTList):
-            return ast.MultiAssignment(box.getastlist(), value)
         else:
             raise NotImplementedError(box)
 
@@ -1637,26 +1619,31 @@ class Parser(object):
 
         return BoxAST(ast.If(conditions[0][0], conditions[0][1], else_block))
 
-    @pg.production("primary : FOR for_var IN post_for_in expr_value do post_for_do compstmt END")
+    @pg.production("primary : for for_var IN post_for_in expr_value do post_for_do compstmt END")
     def primary_for(self, p):
         lineno = p[0].getsourcepos().lineno
         for_vars = p[1].get_for_var()
         arg = p[1].getargument()
 
-        self.push_shared_scope()
-
-        for for_var in self.as_astlist(for_vars):
-            varname = self.get_var_name(for_var)
-            if varname is not None:
-                self.lexer.symtable.declare_write(varname)
-        self.lexer.symtable.declare_argument(arg.name)
+        target = ast.Variable(arg.name, lineno)
+        if isinstance(for_vars, BoxAST):
+            asgn = ast.Assignment(for_vars.getast(), target)
+        elif isinstance(for_vars, BoxASTList):
+            asgn = ast.MultiAssignment(for_vars.getastlist(), target)
+        else:
+            raise SystemError
 
         stmts = p[7].getastlist() if p[7] is not None else []
-        stmts = [ast.Statement(self.new_assignment(for_vars, ast.Variable(arg.name, lineno)))] + stmts
+        stmts = [ast.Statement(asgn)] + stmts
         block = ast.SendBlock([arg], None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
         return BoxAST(ast.Send(p[4].getast(), "each", [], block, lineno))
+
+    @pg.production("for : FOR")
+    def for_prod(self, p):
+        self.push_shared_scope()
+        return p[0]
 
     @pg.production("post_for_in : ")
     def post_for_in(self, p):
@@ -1805,7 +1792,9 @@ class Parser(object):
     @pg.production("for_var : mlhs")
     @pg.production("for_var : lhs")
     def for_var(self, p):
-        return BoxForVars(p[0])
+        box = BoxForVars(p[0])
+        self.lexer.symtable.declare_local(box.getargument().name)
+        return box
 
     @pg.production("f_marg : f_norm_arg")
     def f_marg_f_norm_arg(self, p):

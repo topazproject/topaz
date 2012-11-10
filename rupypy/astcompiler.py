@@ -93,10 +93,9 @@ class BlockSymbolTable(BaseSymbolTable):
 
 
 class SharedScopeSymbolTable(BlockSymbolTable):
-    def is_cell(self, name):
-        if name not in self.cells and self.parent_symtable.is_defined(name):
-            self.upgrade_to_closure(name)
-        return name in self.cells
+    def declare_write(self, name):
+        self.parent_symtable.declare_write(name)
+        BlockSymbolTable.declare_write(self, name)
 
 
 class CompilerContext(object):
