@@ -1637,11 +1637,11 @@ class Parser(object):
 
         return BoxAST(ast.If(conditions[0][0], conditions[0][1], else_block))
 
-    @pg.production("primary : for for_var IN expr_value do post_for_do compstmt END")
+    @pg.production("primary : FOR for_var IN post_for_in expr_value do post_for_do compstmt END")
     def primary_for(self, p):
         lineno = p[0].getsourcepos().lineno
-        for_vars = p[1].getfor_var()
-        arg = p[1].getargument().name
+        for_vars = p[1].get_for_var()
+        arg = p[1].getargument()
 
         self.push_shared_scope()
 
@@ -1649,19 +1649,18 @@ class Parser(object):
             varname = self.get_var_name(for_var)
             if varname is not None:
                 self.lexer.symtable.declare_write(varname)
-        self.lexer.symtable.declare_argument(arg)
+        self.lexer.symtable.declare_argument(arg.name)
 
-        stmts = p[6].getastlist() if p[6] is not None else []
-        stmts.insert(0, ast.Statement(self.new_assignment(for_vars, ast.Variable(arg, lineno))))
-        block = ast.SendBlock([p[1].getargument()], None, ast.Block(stmts))
+        stmts = p[7].getastlist() if p[7] is not None else []
+        stmts = [ast.Statement(self.new_assignment(for_vars, ast.Variable(arg.name, lineno)))] + stmts
+        block = ast.SendBlock([arg], None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
-        return BoxAST(ast.Send(p[3].getast(), "each", [], block, lineno))
+        return BoxAST(ast.Send(p[4].getast(), "each", [], block, lineno))
 
-    @pg.production("for : FOR")
-    def for_token(self, p):
+    @pg.production("post_for_in : ")
+    def post_for_in(self, p):
         self.lexer.condition_state.begin()
-        return p[0]
 
     @pg.production("post_for_do : ")
     def post_for_do(self, p):
@@ -3042,5 +3041,5 @@ class BoxForVars(BaseBox):
     def getargument(self):
         return self.argument
 
-    def getfor_var(self):
+    def get_for_var(self):
         return self.for_var
