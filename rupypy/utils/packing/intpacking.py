@@ -1,6 +1,5 @@
 def make_int_packer(size, signed, bigendian):
-    def pack_int(packer, repetitions):
-        space = packer.space
+    def pack_int(space, packer, repetitions):
         if repetitions > len(packer.args_w) - packer.args_index:
             raise space.error(space.w_ArgumentError, "too few arguments")
 

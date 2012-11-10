@@ -117,6 +117,21 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [True, False, True, True, False, True]
 
+    def test_const_get(self, space):
+        space.execute("""
+        class X
+            Const = 1
+        end
+        class Y < X
+        end
+        """)
+        w_res = space.execute("return X.const_get :Const")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return Y.const_get :Const")
+        assert space.int_w(w_res) == 1
+        with self.raises(space, "NameError", "uninitialized constant Y::Const"):
+            space.execute("Y.const_get :Const, false")
+
     def test_method_definedp(self, space):
         w_res = space.execute("""
         class X; def foo; end; end
@@ -189,6 +204,63 @@ class TestModuleObject(BaseRuPyPyTest):
         return r
         """)
         assert self.unwrap(space, w_res) == [True, True, False, True]
+
+    def test_instance_method(self, space):
+        w_res = space.execute("""
+          class Interpreter
+            def do_a() "there, "; end
+            def do_d() "Hello ";  end
+            def do_e() "!\n";     end
+            def do_v() "Dave";    end
+            Dispatcher = {
+              "a" => instance_method(:do_a),
+              "d" => instance_method(:do_d),
+              "e" => instance_method(:do_e),
+              "v" => instance_method(:do_v)
+            }
+            def interpret(instructions)
+              instructions.map {|b| Dispatcher[b].bind(self).call }
+            end
+          end
+
+          interpreter = Interpreter.new
+          return interpreter.interpret(%w[d a v e])
+        """)
+        assert self.unwrap(space, w_res) == ["Hello ", "there, ", "Dave", "!\n"]
+
+    def test_undef_method(self, space):
+        space.execute("""
+        class A
+          def hello
+          end
+        end
+        """)
+        space.execute("""
+        class A
+          undef_method :hello
+        end
+        """)
+        with self.raises(space, "NoMethodError", "undefined method `hello' for A"):
+            space.execute("A.new.hello")
+        with self.raises(space, "NameError", "undefined method `undefinedmethod' for class `A'"):
+            space.execute("""
+            class A
+              undef_method :undefinedmethod
+            end
+            """)
+        with self.raises(space, "NameError", "undefined method `hello' for class `A'"):
+            space.execute("""
+            class A
+              undef_method :hello
+            end
+            """)
+        with self.raises(space, "NoMethodError", "undefined method `==' for A"):
+            space.execute("""
+            class A
+              undef_method :==
+            end
+            A.new == 1
+            """)
 
 
 class TestMethodVisibility(object):

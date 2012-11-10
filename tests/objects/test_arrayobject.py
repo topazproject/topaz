@@ -172,7 +172,7 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return [1, 'a', :b].join(?-)")
         assert space.str_w(w_res) == "1-a-b"
         with self.raises(space, "TypeError", "can't convert Symbol into String"):
-            space.execute("return [1].join(:foo)")
+            space.execute("[1].join(:foo)")
         w_res = space.execute("return [].join(:foo)")
         assert space.str_w(w_res) == ""
         w_res = space.execute("""
@@ -234,9 +234,9 @@ class TestArrayObject(BaseRuPyPyTest):
         assert self.unwrap(space, space.execute("return [].pop(1)")) == []
         assert self.unwrap(space, space.execute("return [].pop")) == None
         with self.raises(space, "ArgumentError"):
-            space.execute("return [1].pop(-1)")
+            space.execute("[1].pop(-1)")
         with self.raises(space, "TypeError"):
-            space.execute("return [1].pop('a')")
+            space.execute("[1].pop('a')")
 
     def test_delete(self, space):
         w_res = space.execute("""
@@ -356,11 +356,11 @@ class TestArrayPack(BaseRuPyPyTest):
         assert space.str_w(space.execute("return [256].pack 'C'")) == struct.pack("B", 256 % 256)
         assert space.str_w(space.execute("return [-255].pack 'C'")) == struct.pack("B", -255 % 256)
         with self.raises(space, "ArgumentError", "> allowed only after types SsIiLlQq"):
-            space.execute("return [-255].pack 'C>'")
+            space.execute("[-255].pack 'C>'")
         with self.raises(space, "ArgumentError", "! allowed only after types SsIiLl"):
-            space.execute("return [-255].pack 'C!'")
+            space.execute("[-255].pack 'C!'")
         with self.raises(space, "ArgumentError", "< allowed only after types SsIiLlQq"):
-            space.execute("return [-255].pack 'C<'")
+            space.execute("[-255].pack 'C<'")
 
     def test_short(self, space):
         assert space.str_w(space.execute("return [-255].pack 'S'")) == struct.pack("H", -255 % 2 ** 16)
@@ -369,7 +369,7 @@ class TestArrayPack(BaseRuPyPyTest):
         assert space.str_w(space.execute("return [12].pack 'S_'")) == struct.pack("@h", 12)
         assert space.str_w(space.execute("return [12].pack 'S_!_'")) == struct.pack("@h", 12)
         with self.raises(space, "RangeError", "Can't use both '<' and '>'"):
-            space.execute("return [2].pack 'S><'")
+            space.execute("[2].pack 'S><'")
 
     def test_long(self, space):
         assert space.str_w(space.execute("return [-255].pack 'I'")) == struct.pack("I", -255 % 2 ** 32)
@@ -446,12 +446,12 @@ class TestArrayPack(BaseRuPyPyTest):
 
     def test_errors(self, space):
         with self.raises(space, "ArgumentError", "too few arguments"):
-            space.execute("return [].pack 'P'")
+            space.execute("[].pack 'P'")
         with self.raises(space, "ArgumentError", "too few arguments"):
-            space.execute("return [].pack 'a'")
+            space.execute("[].pack 'a'")
         with self.raises(space, "ArgumentError", "too few arguments"):
-            space.execute("return [].pack 'c'")
+            space.execute("[].pack 'c'")
         with self.raises(space, "ArgumentError", "too few arguments"):
-            space.execute("return [].pack 'f'")
+            space.execute("[].pack 'f'")
         with self.raises(space, "RangeError", "pack length too big"):
-            space.execute("return [].pack 'a18446744073709551617'")
+            space.execute("[].pack 'a18446744073709551617'")

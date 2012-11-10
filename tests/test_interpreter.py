@@ -38,6 +38,16 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
+    def test_uninitialized_closure_var(self, space):
+        w_res = space.execute("""
+        if false
+            x = 3
+        end
+        proc { x }
+        return x
+        """)
+        assert w_res is space.w_nil
+
     def test_if(self, space):
         w_res = space.execute("if 3 then return 2 end")
         assert space.int_w(w_res) == 2
@@ -69,6 +79,82 @@ class TestInterpreter(BaseRuPyPyTest):
         return x
         """)
         assert w_res is space.w_nil
+
+    def test_for_loop(self, space):
+        w_res = space.execute("""
+        i = 0
+        for i, *rest, b in [1, 2, 3] do
+            bbb = "hello"
+        end
+        return i, bbb, rest, b
+        """)
+        assert self.unwrap(space, w_res) == [3, "hello", [], None]
+
+        w_res = space.execute("""
+        i = 0
+        for i, *rest, b in [[1, 2, 3, 4]] do
+            bbb = "hello"
+        end
+        return i, bbb, rest, b
+        """)
+        assert self.unwrap(space, w_res) == [1, "hello", [2, 3], 4]
+
+        w_res = space.execute("""
+        for i, *$c, @a in [[1, 2, 3, 4]] do
+            bbb = "hello"
+        end
+        return i, bbb, $c, @a
+        """)
+        assert self.unwrap(space, w_res) == [1, "hello", [2, 3], 4]
+
+        with self.raises(space, "NoMethodError", "undefined method `each' for Fixnum"):
+            space.execute("for i in 1; end")
+
+        w_res = space.execute("""
+        class A
+            def each
+                [1, 2, 3]
+            end
+        end
+        for i in A.new; end
+        return i
+        """)
+        assert self.unwrap(space, w_res) is None
+
+        w_res = space.execute("""
+        a = []
+        i = 0
+        for a[i], i in [[1, 1], [2, 2]]; end
+        return a, i
+        """)
+        assert self.unwrap(space, w_res) == [[1, 2], 2]
+
+        w_res = space.execute("""
+        for i in [[1, 1]]; end
+        for j, in [[1, 1]]; end
+        return i, j
+        """)
+        assert self.unwrap(space, w_res) == [[1, 1], 1]
+
+        w_res = space.execute("""
+        i = 15
+        for i in []; end
+        return i
+        """)
+        assert self.unwrap(space, w_res) == 15
+
+        w_res = space.execute("""
+        for a.bar in []; end
+        return defined?(a)
+        """)
+        assert self.unwrap(space, w_res) is None
+
+        w_res = space.execute("""
+        for a.bar in []; end
+        for b[i] in []; end
+        return defined?(a), defined?(b), defined?(i)
+        """)
+        assert self.unwrap(space, w_res) == [None, None, None]
 
     def test_return(self, space):
         w_res = space.execute("return 4")
@@ -149,6 +235,23 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         w_cls = space.w_object.constants_w["X"]
         assert w_cls.methods_w.viewkeys() == {"m", "f"}
+
+    def test_reopen_non_class(self, space):
+        space.execute("""
+        X = 12
+        """)
+        with self.raises(space, "TypeError", "X is not a class"):
+            space.execute("""
+            class X
+            end
+            """)
+
+    def test_attach_class_non_module(self, space):
+        with self.raises(space, "TypeError", "nil is not a class/module"):
+            space.execute("""
+            class nil::Foo
+            end
+            """)
 
     def test_shadow_class(self, space):
         w_res = space.execute("""
@@ -247,6 +350,13 @@ class TestInterpreter(BaseRuPyPyTest):
         return Y.new.f
         """)
         assert self.unwrap(space, w_res) == [3, 5]
+
+    def test_subclass_non_class(self, space):
+        with self.raises(space, "TypeError", "wrong argument type String (expected Class)"):
+            space.execute("""
+            class Y < "abc"
+            end
+            """)
 
     def test_class_constant_block(self, space):
         w_res = space.execute("""
@@ -421,7 +531,7 @@ class TestInterpreter(BaseRuPyPyTest):
     def test_module(self, space):
         w_res = space.execute("""
         module M
-            def method
+            def oninstanceonly
                 5
             end
         end
@@ -431,7 +541,26 @@ class TestInterpreter(BaseRuPyPyTest):
         assert w_res.name == "M"
 
         with self.raises(space, "NoMethodError"):
-            space.execute("M.method")
+            space.execute("M.oninstanceonly")
+
+    def test_module_reopen_non_module(self, space):
+        space.execute("""
+        module Foo
+            Const = nil
+            class X
+            end
+        end
+        """)
+        with self.raises(space, "TypeError", "Const is not a module"):
+            space.execute("""
+            module Foo::Const
+            end
+            """)
+        with self.raises(space, "TypeError", "X is not a module"):
+            space.execute("""
+            module Foo::X
+            end
+            """)
 
     def test_singleton_method(self, space):
         w_res = space.execute("""
@@ -650,7 +779,7 @@ class TestInterpreter(BaseRuPyPyTest):
 
     def test_class_variable_accessed_from_instance_side(self, space):
         w_res = space.execute("""
-        module A
+        class A
           @@foo = 'a'
         end
 
@@ -811,6 +940,11 @@ class TestInterpreter(BaseRuPyPyTest):
         return [defined? a = 3]
         """)
         assert self.unwrap(space, w_res) == ["assignment"]
+        w_res = space.execute("""
+        a = 3
+        return defined?(a)
+        """)
+        assert space.str_w(w_res) == "local-variable"
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
@@ -1003,6 +1137,20 @@ class TestInterpreter(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError", "wrong number of arguments (3 for 0)"):
             space.execute("f 1, 2, 3")
 
+    def test_call_too_few_args_builtin(self, space):
+        with self.raises(space, "ArgumentError", "wrong number of arguments (0 for 1)"):
+            space.execute("1.send(:+)")
+
+    def test_call_too_many_args_builtin(self, space):
+        with self.raises(space, "ArgumentError", "wrong number of arguments (3 for 1)"):
+            space.execute("1.send(:+, 2, 3, 4)")
+
+    def test_bignum(self, space):
+        w_res = space.execute("return 18446744073709551628.to_s")
+        assert space.str_w(w_res) == "18446744073709551628"
+        w_res = space.execute("return 18446744073709551628.class")
+        assert w_res is space.w_bignum
+
 
 class TestBlocks(BaseRuPyPyTest):
     def test_self(self, space):
@@ -1168,6 +1316,62 @@ class TestBlocks(BaseRuPyPyTest):
         return res
         """)
         assert self.unwrap(space, w_res) == [1, 3]
+
+    def test_break_block_frame_exited(self, space):
+        w_res = space.execute("""
+        def create_block
+            b = capture_block do
+                break
+            end
+        end
+
+        def capture_block(&b)
+            b
+        end
+        """)
+        with self.raises(space, "LocalJumpError", "break from proc-closure"):
+            space.execute("create_block.call")
+
+    def test_singleton_class_block(self, space):
+        w_res = space.execute("""
+        def f(o)
+            class << o
+                yield
+            end
+        end
+
+        return f(Object.new) { 123 }
+        """)
+        assert space.int_w(w_res) == 123
+
+    def test_yield_no_block(self, space):
+        space.execute("""
+        def f
+            yield
+        end
+        """)
+        with self.raises(space, "LocalJumpError"):
+            space.execute("f")
+
+    def test_splat_arg_block(self, space):
+        w_res = space.execute("""
+        def f a, b, c
+            yield a, b, c
+        end
+
+        return f(2, 3, 4) { |*args| args }
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, 4]
+
+    def test_yield_splat(self, space):
+        w_res = space.execute("""
+        def f(*args)
+            yield *args
+        end
+
+        return f(3, 5) { |a, b| a + b }
+        """)
+        assert space.int_w(w_res) == 8
 
 
 class TestExceptions(BaseRuPyPyTest):

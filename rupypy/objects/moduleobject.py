@@ -30,17 +30,25 @@ class AttributeWriter(W_FunctionObject):
         return w_value
 
 
+class UndefMethod(W_FunctionObject):
+    _immutable_fields_ = ["name"]
+
+    def __init__(self, name):
+        self.name = name
+
+    def call(self, space, w_obj, args_w, block):
+        args_w.insert(0, space.newsymbol(self.name))
+        return space.send(w_obj, space.newsymbol("method_missing"), args_w, block)
+
+
 class W_ModuleObject(W_RootObject):
-    _immutable_fields_ = [
-        "version?", "included_modules?[*]", "klass?", "superclass",
-    ]
+    _immutable_fields_ = ["version?", "included_modules?[*]", "klass?"]
 
     classdef = ClassDef("Module", W_RootObject.classdef)
 
-    def __init__(self, space, name, superclass):
+    def __init__(self, space, name):
         self.name = name
         self.klass = None
-        self.superclass = superclass
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
@@ -53,7 +61,6 @@ class W_ModuleObject(W_RootObject):
         obj = super(W_ModuleObject, self).__deepcopy__(memo)
         obj.name = self.name
         obj.klass = copy.deepcopy(self.klass, memo)
-        obj.superclass = copy.deepcopy(self.superclass, memo)
         obj.version = copy.deepcopy(self.version, memo)
         obj.methods_w = copy.deepcopy(self.methods_w, memo)
         obj.constants_w = copy.deepcopy(self.constants_w, memo)
@@ -116,8 +123,6 @@ class W_ModuleObject(W_RootObject):
                 w_res = w_mod.find_local_const(space, name)
                 if w_res is not None:
                     break
-        if w_res is None and self.superclass is not None:
-            w_res = self.superclass.find_const(space, name)
         return w_res
 
     def find_local_const(self, space, name):
@@ -212,7 +217,7 @@ class W_ModuleObject(W_RootObject):
     def method_allocate(self, space):
         # TODO: this should really store None for the name and all places
         # reading the name should handle None
-        return W_ModuleObject(space, "", space.w_object)
+        return W_ModuleObject(space, "")
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -327,6 +332,18 @@ class W_ModuleObject(W_RootObject):
         else:
             return space.newbool(self.find_local_const(space, const) is not None)
 
+    @classdef.method("const_get", const="symbol", inherit="bool")
+    def method_const_get(self, space, const, inherit=True):
+        if inherit:
+            w_res = self.find_const(space, const)
+        else:
+            w_res = self.find_local_const(space, const)
+        if w_res is None:
+            raise space.error(space.w_NameError,
+                "uninitialized constant %s::%s" % (self.name, const)
+            )
+        return w_res
+
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):
         return space.newbool(self.find_method(space, name) is not None)
@@ -334,3 +351,18 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("===")
     def method_eqeqeq(self, space, w_obj):
         return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
+
+    @classdef.method("instance_method", name="symbol")
+    def method_instance_method(self, space, name):
+        return space.newmethod(name, self)
+
+    @classdef.method("undef_method", name="symbol")
+    def method_undef_method(self, space, name):
+        w_method = self.find_method(space, name)
+        if w_method is None or isinstance(w_method, UndefMethod):
+            raise space.error(
+                space.w_NameError,
+                "undefined method `%s' for class `%s'" % (name, self.name)
+            )
+        self.define_method(space, name, UndefMethod(name))
+        return self

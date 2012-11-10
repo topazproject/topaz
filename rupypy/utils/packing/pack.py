@@ -21,37 +21,34 @@ non_native_endianess_offset = LE_offset if native_is_bigendian else BE_offset
 
 
 class RPacker(object):
-    def __init__(self, space, fmt, args_w):
-        self.space = space
+    def __init__(self, fmt, args_w):
         self.fmt = fmt
         self.args_w = args_w
         self.args_index = 0
         self.result = []
 
-    def native_code_count(self, idx, ch):
+    def native_code_count(self, space, idx, ch):
         end = idx + 1
         while end < len(self.fmt) and self.fmt[end] in native_endian_codes:
             end += 1
         native_chars = end - idx - 1
         if native_chars > 0 and ch not in native_codes:
-            raise self.space.error(
-                self.space.w_ArgumentError,
+            raise space.error(space.w_ArgumentError,
                 "%s allowed only after types %s" % (self.fmt[idx + 1], native_codes)
             )
         return native_chars
 
-    def check_for_bigendianess_code(self, idx, ch):
+    def check_for_bigendianess_code(self, space, idx, ch):
         end = idx + 1
         while end < len(self.fmt) and self.fmt[end] in endianess_codes:
             end += 1
         endian_chars = end - idx - 1
         if endian_chars > 0 and ch not in mappable_codes:
-            raise self.space.error(
-                self.space.w_ArgumentError,
+            raise space.error(space.w_ArgumentError,
                 "%s allowed only after types %s" % (self.fmt[idx + 1], mappable_codes)
             )
         elif endian_chars > 1:
-            raise self.space.error(self.space.w_RangeError, "Can't use both '<' and '>'")
+            raise space.error(space.w_RangeError, "Can't use both '<' and '>'")
         elif endian_chars == 1:
             bigendian = (self.fmt[end - 1] == BE_modifier)
         else:
@@ -65,21 +62,21 @@ class RPacker(object):
             self.fmt[idx + 1] == "*"
         )
 
-    def determine_repetitions(self, idx):
+    def determine_repetitions(self, space, idx):
         end = idx + 1
         repetitions = 0
         while end < len(self.fmt) and self.fmt[end].isdigit():
             try:
                 repetitions = ovfcheck(repetitions * 10 + (ord(self.fmt[end]) - ord('0')))
             except OverflowError:
-                raise self.space.error(self.space.w_RangeError, "pack length too big")
+                raise space.error(space.w_RangeError, "pack length too big")
             end += 1
         if end == idx + 1:
             # No explicit repetitions definition
             repetitions = 1
         return (repetitions, end - 1)
 
-    def interpret(self):
+    def interpret(self, space):
         idx = 0
         indices = []
 
@@ -91,10 +88,10 @@ class RPacker(object):
                 idx += 1
                 continue
 
-            native_code_count = self.native_code_count(idx, ch)
+            native_code_count = self.native_code_count(space, idx, ch)
             idx += native_code_count
 
-            bigendian = self.check_for_bigendianess_code(idx, ch)
+            bigendian = self.check_for_bigendianess_code(space, idx, ch)
             if bigendian:
                 idx += 1
 
@@ -102,7 +99,7 @@ class RPacker(object):
             if starred:
                 idx += 1
 
-            repetitions, idx = self.determine_repetitions(idx)
+            repetitions, idx = self.determine_repetitions(space, idx)
 
             converter_idx = ord(ch)
             if starred:
@@ -115,14 +112,14 @@ class RPacker(object):
             idx += 1
         return indices
 
-    def operate(self):
-        indices = self.interpret()
+    def operate(self, space):
+        indices = self.interpret(space)
         for idx, reps in indices:
-            pack_operators[idx](self, reps)
+            pack_operators[idx](space, self, reps)
         return self.result
 
 
-def pack_move_to(packer, position):
+def pack_move_to(space, packer, position):
     if len(packer.result) < position:
         packer.result.extend(["\0"] * (position - len(packer.result)))
     else:
@@ -130,17 +127,17 @@ def pack_move_to(packer, position):
         packer.result[position:len(packer.result)] = []
 
 
-def pack_back_up(packer, repetitions):
+def pack_back_up(space, packer, repetitions):
     size = len(packer.result)
     if size < repetitions:
-        raise packer.space.error(packer.space.w_ArgumentError, "X outside of string")
+        raise space.error(space.w_ArgumentError, "X outside of string")
     else:
         begin = size - repetitions
         assert begin >= 0
         packer.result[begin:size] = []
 
 
-def pack_padding(packer, repetitions):
+def pack_padding(space, packer, repetitions):
     packer.result.extend(["\0"] * repetitions)
 
 

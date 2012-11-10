@@ -1,10 +1,11 @@
 from pypy.rlib.objectmodel import specialize
+from pypy.rlib.rbigint import rbigint
 
 from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
 
 from rupypy import ast
-from rupypy.astcompiler import SymbolTable, BlockSymbolTable
+from rupypy.astcompiler import SymbolTable, BlockSymbolTable, SharedScopeSymbolTable
 
 
 class Parser(object):
@@ -24,6 +25,9 @@ class Parser(object):
 
     def push_block_scope(self):
         self.lexer.symtable = BlockSymbolTable(self.lexer.symtable)
+
+    def push_shared_scope(self):
+        self.lexer.symtable = SharedScopeSymbolTable(self.lexer.symtable)
 
     def save_and_pop_scope(self, node):
         child_symtable = self.lexer.symtable
@@ -244,7 +248,27 @@ class Parser(object):
         if base != 10:
             # Strip off the leading 0[xob]
             s = s[2:]
-        return int(s, base)
+
+        val = rbigint()
+        i = 0
+        while i < len(s):
+            c = ord(s[i])
+            if ord("a") <= c <= ord("z"):
+                digit = c - ord("a") + 10
+            elif ord("A") <= c <= ord("Z"):
+                digit = c - ord("A") + 10
+            elif ord("0") <= c <= ord("9"):
+                digit = c - ord("0")
+            else:
+                break
+            if digit >= base:
+                break
+            val = val.mul(rbigint.fromint(base)).add(rbigint.fromint(digit))
+            i += 1
+        try:
+            return ast.ConstantInt(val.toint())
+        except OverflowError:
+            return ast.ConstantBigInt(val)
 
     pg = ParserGenerator([
         "CLASS", "MODULE", "DEF", "UNDEF", "BEGIN", "RESCUE", "ENSURE", "END",
@@ -1587,19 +1611,39 @@ class Parser(object):
 
         return BoxAST(ast.If(conditions[0][0], conditions[0][1], else_block))
 
-    @pg.production("primary : FOR for_var IN expr_value do compstmt END")
+    @pg.production("primary : for for_var IN post_for_in expr_value do post_for_do compstmt END")
     def primary_for(self, p):
-        """
-        kFOR for_var kIN {
-                    lexer.getConditionState().begin();
-                } expr_value do {
-                    lexer.getConditionState().end();
-                } compstmt kEND {
-                      // ENEBO: Lots of optz in 1.9 parser here
-                    $$ = new ForNode($1.getPosition(), $2, $8, $5, support.getCurrentScope());
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[0].getsourcepos().lineno
+        for_vars = p[1].get_for_var()
+        arg = p[1].getargument()
+
+        target = ast.Variable(arg.name, lineno)
+        if isinstance(for_vars, BoxAST):
+            asgn = ast.Assignment(for_vars.getast(), target)
+        elif isinstance(for_vars, BoxASTList):
+            asgn = ast.MultiAssignment(for_vars.getastlist(), target)
+        else:
+            raise SystemError
+
+        stmts = p[7].getastlist() if p[7] is not None else []
+        stmts = [ast.Statement(asgn)] + stmts
+        block = ast.SendBlock([arg], None, ast.Block(stmts))
+
+        self.save_and_pop_scope(block)
+        return BoxAST(ast.Send(p[4].getast(), "each", [], block, lineno))
+
+    @pg.production("for : FOR")
+    def for_prod(self, p):
+        self.push_shared_scope()
+        return p[0]
+
+    @pg.production("post_for_in : ")
+    def post_for_in(self, p):
+        self.lexer.condition_state.begin()
+
+    @pg.production("post_for_do : ")
+    def post_for_do(self, p):
+        self.lexer.condition_state.end()
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
@@ -1740,7 +1784,9 @@ class Parser(object):
     @pg.production("for_var : mlhs")
     @pg.production("for_var : lhs")
     def for_var(self, p):
-        return p[0]
+        box = BoxForVars(p[0])
+        self.lexer.symtable.declare_local(box.getargument().name)
+        return box
 
     @pg.production("f_marg : f_norm_arg")
     def f_marg_f_norm_arg(self, p):
@@ -2421,7 +2467,7 @@ class Parser(object):
 
     @pg.production("numeric : INTEGER")
     def numeric_integer(self, p):
-        return BoxAST(ast.ConstantInt(self._parse_int(p[0])))
+        return BoxAST(self._parse_int(p[0]))
 
     @pg.production("numeric : FLOAT")
     def numeric_float(self, p):
@@ -2429,7 +2475,7 @@ class Parser(object):
 
     @pg.production("numeric : UMINUS_NUM INTEGER", precedence="LOWEST")
     def numeric_minus_integer(self, p):
-        return BoxAST(ast.ConstantInt(-self._parse_int(p[1])))
+        return BoxAST(self._parse_int(p[1]).negate())
 
     @pg.production("numeric : UMINUS_NUM FLOAT", precedence="LOWEST")
     def numeric_minus_float(self, p):
@@ -2901,7 +2947,6 @@ class LexerWrapper(object):
 
 class BoxAST(BaseBox):
     def __init__(self, node):
-        BaseBox.__init__(self)
         self.node = node
 
     @specialize.arg(1)
@@ -2914,7 +2959,6 @@ class BoxAST(BaseBox):
 
 class BoxASTList(BaseBox):
     def __init__(self, nodes):
-        BaseBox.__init__(self)
         self.nodes = nodes
 
     def getastlist(self):
@@ -2926,7 +2970,6 @@ class BoxCallArgs(BaseBox):
     A box for the arguments of a call/send.
     """
     def __init__(self, args, block):
-        BaseBox.__init__(self)
         self.args = args
         self.block = block
 
@@ -2939,7 +2982,6 @@ class BoxCallArgs(BaseBox):
 
 class BoxInt(BaseBox):
     def __init__(self, intvalue):
-        BaseBox.__init__(self)
         self.intvalue = intvalue
 
     def getint(self):
@@ -2971,3 +3013,14 @@ class BoxStrTerm(BaseBox):
 
     def getstrterm(self):
         return self.str_term
+
+class BoxForVars(BaseBox):
+    def __init__(self, for_var):
+        self.for_var = for_var
+        self.argument = ast.Argument("0")
+
+    def getargument(self):
+        return self.argument
+
+    def get_for_var(self):
+        return self.for_var

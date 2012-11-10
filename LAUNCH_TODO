@@ -1,14 +1,13 @@
 Stuff to do before public
 =========================
 
-* Change the name to `topaz`.
+* Change the name to `topaz` and move to new github org.
 * Website
 * Blog post
 * Working rubyspec and not embarrassing pass rate
   * Web page with passing status
 * Confirm with Evan and Charles Nutter that all "hard problems" are done correctly
   * binding.eval
-  * bignum
   * call/cc (unimplemented in JRuby)
   * fibers
   * frame globals ($~, $_)

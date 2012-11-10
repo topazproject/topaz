@@ -25,6 +25,7 @@ from rupypy.modules.kernel import Kernel
 from rupypy.modules.process import Process
 from rupypy.modules.topaz import Topaz
 from rupypy.objects.arrayobject import W_ArrayObject
+from rupypy.objects.bignumobject import W_BignumObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
@@ -34,12 +35,14 @@ from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_StopIteration,
-    W_NotImplementedError, W_RangeError)
+    W_NotImplementedError, W_RangeError, W_LocalJumpError)
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.hashobject import W_HashObject, W_HashIterator
 from rupypy.objects.intobject import W_FixnumObject
+from rupypy.objects.methodobject import W_MethodObject, W_UnboundMethodObject
+from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.numericobject import W_NumericObject
@@ -85,21 +88,27 @@ class ObjectSpace(object):
         # We replace the one reference to our FakeClass with the real class.
         self.w_basicobject.klass.superclass = self.w_class
 
+        self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
+        self.w_numeric = self.getclassfor(W_NumericObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
+        self.w_float = self.getclassfor(W_FloatObject)
+        self.w_bignum = self.getclassfor(W_BignumObject)
+        self.w_integer = self.getclassfor(W_IntegerObject)
         self.w_module = self.getclassfor(W_ModuleObject)
         self.w_string = self.getclassfor(W_StringObject)
         self.w_hash = self.getclassfor(W_HashObject)
-        self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
+        self.w_LocalJumpError = self.getclassfor(W_LocalJumpError)
         self.w_NameError = self.getclassfor(W_NameError)
         self.w_NotImplementedError = self.getclassfor(W_NotImplementedError)
         self.w_IndexError = self.getclassfor(W_IndexError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
         self.w_RuntimeError = self.getclassfor(W_RuntimeError)
+        self.w_StandardError = self.getclassfor(W_StandardError)
         self.w_StopIteration = self.getclassfor(W_StopIteration)
         self.w_SyntaxError = self.getclassfor(W_SyntaxError)
         self.w_SystemCallError = self.getclassfor(W_SystemCallError)
@@ -112,20 +121,20 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_fixnum, self.w_string, self.w_class, self.w_module,
-            self.w_hash, self.w_symbol,
+            self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
+            self.w_symbol, self.w_class, self.w_module, self.w_hash,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
             self.w_RuntimeError, self.w_SystemCallError, self.w_LoadError,
             self.w_StopIteration, self.w_SyntaxError, self.w_NameError,
+            self.w_StandardError, self.w_LocalJumpError,
 
             self.w_kernel, self.w_topaz,
 
             self.getclassfor(W_NilObject),
             self.getclassfor(W_TrueObject),
             self.getclassfor(W_FalseObject),
-            self.getclassfor(W_NumericObject),
             self.getclassfor(W_RangeObject),
             self.getclassfor(W_IOObject),
             self.getclassfor(W_FileObject),
@@ -134,6 +143,8 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
+            self.getclassfor(W_MethodObject),
+            self.getclassfor(W_UnboundMethodObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
@@ -248,6 +259,12 @@ class ObjectSpace(object):
     def newint(self, intvalue):
         return W_FixnumObject(self, intvalue)
 
+    def newbigint_fromint(self, intvalue):
+        return W_BignumObject.newbigint_fromint(self, intvalue)
+
+    def newbigint_fromrbigint(self, bigint):
+        return W_BignumObject.newbigint_fromrbigint(self, bigint)
+
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
 
@@ -265,6 +282,9 @@ class ObjectSpace(object):
     def newstr_fromstr(self, strvalue):
         return W_StringObject.newstr_fromstr(self, strvalue)
 
+    def newstr_fromstrs(self, strs_w):
+        return W_StringObject.newstr_fromstrs(self, strs_w)
+
     def newarray(self, items_w):
         return W_ArrayObject(self, items_w)
 
@@ -278,7 +298,7 @@ class ObjectSpace(object):
         return W_RegexpObject(self, regexp)
 
     def newmodule(self, name):
-        return W_ModuleObject(self, name, self.w_object)
+        return W_ModuleObject(self, name)
 
     def newclass(self, name, superclass, is_singleton=False):
         return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
@@ -288,11 +308,24 @@ class ObjectSpace(object):
         assert isinstance(w_code, W_CodeObject)
         return W_UserFunction(name, w_code, lexical_scope)
 
+    def newmethod(self, name, w_cls):
+        w_function = w_cls.find_method(self, name)
+        if w_function is None:
+            raise self.error(
+                self.w_NameError,
+                "undefined method `%s' for class `%s'" % (name, w_cls.name)
+            )
+        else:
+            return W_UnboundMethodObject(self, w_cls, w_function)
+
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
+
+    def bigint_w(self, w_obj):
+        return w_obj.bigint_w(self)
 
     def float_w(self, w_obj):
         return w_obj.float_w(self)
@@ -359,9 +392,15 @@ class ObjectSpace(object):
             if w_res is not None:
                 return w_res
             scope = scope.backscope
-        w_mod = lexical_scope.w_mod if lexical_scope else self.w_object
-        w_res = self.find_const(w_mod, name)
+        if lexical_scope is not None:
+            w_res = lexical_scope.w_mod.find_const(self, name)
         if w_res is None:
+            w_res = self.w_object.find_const(self, name)
+        if w_res is None:
+            if lexical_scope is not None:
+                w_mod = lexical_scope.w_mod
+            else:
+                w_mod = self.w_object
             w_res = self.send(w_mod, self.newsymbol("const_missing"), [self.newsymbol(name)])
         return w_res
 
@@ -422,7 +461,7 @@ class ObjectSpace(object):
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
-        if len(bc.arg_locs) != 0:
+        if len(bc.arg_locs) != 0 or bc.splat_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, None)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
@@ -430,6 +469,10 @@ class ObjectSpace(object):
 
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
+
+    def invoke_function(self, w_function, w_receiver, args_w, block):
+        w_name = self.newstr_fromstr(w_function.name)
+        return self._send_raw(w_name, w_function, w_receiver, self.getclass(w_receiver), args_w, block)
 
     def error(self, w_type, msg="", optargs=None):
         if not optargs:

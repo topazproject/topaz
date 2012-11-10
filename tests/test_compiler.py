@@ -288,6 +288,38 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_for_loop(self, space):
+        bc = self.assert_compiles(space, "for a, *$b, @c in [] do end", """
+        BUILD_ARRAY 0
+        LOAD_CONST 0
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)
+        self.assert_compiled(bc.consts_w[0], """
+        LOAD_LOCAL 0
+        DUP_TOP
+        COERCE_ARRAY
+        UNPACK_SEQUENCE_SPLAT 3 1
+
+        STORE_DEREF 0
+        DISCARD_TOP
+
+        STORE_GLOBAL 0
+        DISCARD_TOP
+
+        LOAD_SELF
+        ROT_TWO
+        STORE_INSTANCE_VAR 1
+        DISCARD_TOP
+
+        RETURN
+        """)
+
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
         SETUP_LOOP 20
@@ -638,10 +670,11 @@ class TestCompiler(object):
 
     def test_yield(self, space):
         bc = self.assert_compiles(space, """
-        def f
+        def f a
             yield
             yield 4
             yield 4, 5
+            yield *a
         end
         """, """
         LOAD_SCOPE
@@ -665,6 +698,10 @@ class TestCompiler(object):
         LOAD_CONST 1
         LOAD_CONST 2
         YIELD 2
+        DISCARD_TOP
+        LOAD_LOCAL 0
+        COERCE_ARRAY
+        YIELD_SPLAT
         RETURN
         """)
 

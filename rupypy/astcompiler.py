@@ -92,6 +92,12 @@ class BlockSymbolTable(BaseSymbolTable):
             self.cells[name] = self.FREEVAR
 
 
+class SharedScopeSymbolTable(BlockSymbolTable):
+    def declare_write(self, name):
+        self.parent_symtable.declare_write(name)
+        BlockSymbolTable.declare_write(self, name)
+
+
 class CompilerContext(object):
     F_BLOCK_LOOP = 0
     F_BLOCK_FINALLY = 1
