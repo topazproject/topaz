@@ -15,16 +15,20 @@ class ObjectMetaclass(type):
         return new_cls
 
 
-class W_BaseObject(object):
-    __metaclass__ = ObjectMetaclass
+class W_Root(object):
     _attrs_ = []
-
-    classdef = ClassDef("BasicObject")
+    __metaclass__ = ObjectMetaclass
 
     def __deepcopy__(self, memo):
         obj = object.__new__(self.__class__)
         memo[id(self)] = obj
         return obj
+
+
+class W_BaseObject(W_Root):
+    _attrs_ = []
+
+    classdef = ClassDef("BasicObject")
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)

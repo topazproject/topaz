@@ -2,7 +2,7 @@ import copy
 
 from pypy.rlib import jit
 
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Root
 
 
 class VersionTag(object):
@@ -11,7 +11,7 @@ class VersionTag(object):
         return result
 
 
-class BaseCell(W_BaseObject):
+class BaseCell(W_Root):
     pass
 
 

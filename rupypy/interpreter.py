@@ -11,7 +11,7 @@ from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.objectobject import W_BaseObject
+from rupypy.objects.objectobject import W_Root
 from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
 from rupypy.scope import StaticScope
@@ -635,7 +635,7 @@ class RaiseBreak(Exception):
         self.w_value = w_value
 
 
-class SuspendedUnroller(W_BaseObject):
+class SuspendedUnroller(W_Root):
     pass
 
 
