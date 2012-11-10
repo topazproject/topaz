@@ -197,7 +197,7 @@ class TestRequire(BaseRuPyPyTest):
         end
         """)
         w_res = space.execute("""
-        $LOAD_PATH = ['%s']
+        $LOAD_PATH[0..-1] = ['%s']
         require 't.rb'
 
         return t(2, 5)

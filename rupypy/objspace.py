@@ -9,7 +9,7 @@ from pypy.tool.cache import Cache
 from rply.errors import ParsingError
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
-from rupypy.celldict import CellDict
+from rupypy.celldict import GlobalsDict
 from rupypy.error import RubyError, print_traceback
 from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
@@ -71,7 +71,7 @@ class ObjectSpace(object):
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
         self._executioncontext = None
-        self.globals = CellDict()
+        self.globals = GlobalsDict(self)
         self.bootstrap = True
         self.exit_handlers_w = []
 
@@ -174,17 +174,17 @@ class ObjectSpace(object):
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
 
-        w_load_path = self.newarray([
+        self.w_load_path = self.newarray([
             self.newstr_fromstr(os.path.abspath(
                 os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
             ))
         ])
-        self.globals.set("$LOAD_PATH", w_load_path)
-        self.globals.set("$:", w_load_path)
+        self.globals.def_virtual("$LOAD_PATH", lambda space: space.w_load_path)
+        self.globals.def_virtual("$:",         lambda space: space.w_load_path)
 
-        w_loaded_features = self.newarray([])
-        self.globals.set("$LOADED_FEATURES", w_loaded_features)
-        self.globals.set('$"', w_loaded_features)
+        self.w_loaded_features = self.newarray([])
+        self.globals.def_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
+        self.globals.def_virtual('$"',               lambda space: space.w_loaded_features)
 
         self.w_main_thread = W_ThreadObject(self)
 
