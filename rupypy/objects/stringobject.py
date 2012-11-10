@@ -387,15 +387,21 @@ class W_StringObject(W_Object):
         if not 2 <= radix <= 36:
             raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
         s = space.str_w(self)
-        if not s:
-            return space.newint(0)
         i = 0
-        neg = s[i] == "-"
+        while i < len(s):
+            if not s[i].isspace():
+                break
+            i += 1
+        neg = i < len(s) and s[i] == "-"
         if neg:
             i += 1
         val = 0
+        number_seen = False
         while i < len(s):
             c = ord(s[i])
+            if c == ord("_") and number_seen:
+                i += 1
+                continue
             if ord("a") <= c <= ord("z"):
                 digit = c - ord("a") + 10
             elif ord("A") <= c <= ord("Z"):
@@ -406,6 +412,7 @@ class W_StringObject(W_Object):
                 break
             if digit >= radix:
                 break
+            number_seen = True
             val = val * radix + digit
             i += 1
         if neg:

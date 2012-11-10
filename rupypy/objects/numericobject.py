@@ -54,14 +54,10 @@ class W_NumericObject(W_Object):
 
     classdef.app_method("""
     def eql? other
-        if not self.class.equal?(other.class)
-            false
-        else
-            self == other
-        end
+        self.class.equal?(other.class) && self == other
+    end
+
+    def to_int
+        self.to_i
     end
     """)
-
-    @classdef.method("to_int")
-    def method_to_int(self, space):
-        return space.send(self, space.newsymbol("to_i"))

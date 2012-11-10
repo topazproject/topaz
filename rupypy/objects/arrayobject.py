@@ -170,9 +170,7 @@ class W_ArrayObject(W_Object):
     def at idx
         self[idx]
     end
-    """)
 
-    classdef.app_method("""
     def each
         i = 0
         while i < self.length
@@ -180,9 +178,7 @@ class W_ArrayObject(W_Object):
             i += 1
         end
     end
-    """)
 
-    classdef.app_method("""
     def zip ary
         result = []
         self.each_with_index do |obj, idx|
@@ -190,9 +186,7 @@ class W_ArrayObject(W_Object):
         end
         result
     end
-    """)
 
-    classdef.app_method("""
     def product ary
         result = []
         self.each do |obj|
@@ -202,15 +196,11 @@ class W_ArrayObject(W_Object):
         end
         result
     end
-    """)
 
-    classdef.app_method("""
     def compact
         self.select { |each| !each.nil? }
     end
-    """)
 
-    classdef.app_method("""
     def reject!(&block)
         prev_size = self.size
         self.delete_if(&block)
@@ -296,6 +286,11 @@ class W_ArrayObject(W_Object):
     def method_to_ary(self, space):
         return self
 
+    @classdef.method("clear")
+    def method_clear(self):
+        del self.items_w[:]
+        return self
+
     classdef.app_method("""
     def ==(other)
         if self.equal?(other)
@@ -314,9 +309,7 @@ class W_ArrayObject(W_Object):
         end
         return true
     end
-    """)
 
-    classdef.app_method("""
     def eql?(other)
         if self.equal?(other)
             return true
@@ -334,19 +327,12 @@ class W_ArrayObject(W_Object):
         end
         return true
     end
-    """)
 
-    @classdef.method("clear")
-    def method_clear(self):
-        del self.items_w[:]
-        return self
-
-    classdef.app_method("""
     def hash
         res = 0x345678
         self.each do |x|
             # We want to keep this within a fixnum range.
-            res = ((1000003 * res) ^ x.hash) & ((2 << (0.size * 8 - 2)) - 1)
+            res = Topaz.intmask((1000003 * res) ^ x.hash)
         end
         return res
     end
