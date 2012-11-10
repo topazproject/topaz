@@ -87,7 +87,7 @@ class BlockSymbolTable(BaseSymbolTable):
         if self.is_local(name):
             del self.locals[name]
             self.cells[name] = self.CELLVAR
-        elif name not in self.cells:
+        elif not self.is_cell(name):
             self.parent_symtable.upgrade_to_closure(name)
             self.cells[name] = self.FREEVAR
 
