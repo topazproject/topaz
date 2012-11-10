@@ -53,7 +53,7 @@ class GetterSetterCell(BaseCell):
         self.setter(space, w_value)
 
 
-class BaseCellDict(object):
+class CellDict(object):
     _immutable_fields_ = ["version?"]
 
     def __init__(self):
@@ -74,8 +74,6 @@ class BaseCellDict(object):
         assert version is self.version
         return self.values.get(name, None)
 
-
-class CellDict(BaseCellDict):
     def get(self, space, name):
         cell = self._get_cell(name, self.version)
         if isinstance(cell, BaseCell):
