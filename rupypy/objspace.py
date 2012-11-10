@@ -22,6 +22,7 @@ from rupypy.modules.comparable import Comparable
 from rupypy.modules.enumerable import Enumerable
 from rupypy.modules.math import Math
 from rupypy.modules.kernel import Kernel
+from rupypy.modules.objectspace import ObjectSpace as ObjectSpaceModule
 from rupypy.modules.process import Process
 from rupypy.modules.topaz import Topaz
 from rupypy.objects.arrayobject import W_ArrayObject
@@ -153,6 +154,7 @@ class ObjectSpace(object):
             self.getmoduleobject(Enumerable.moduledef),
             self.getmoduleobject(Math.moduledef),
             self.getmoduleobject(Process.moduledef),
+            self.getmoduleobject(ObjectSpaceModule.moduledef),
         ]:
             self.set_const(
                 self.w_object,
