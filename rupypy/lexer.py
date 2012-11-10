@@ -43,6 +43,8 @@ class Lexer(object):
         "else": Keyword("ELSE", "ELSE", EXPR_BEG),
         "while": Keyword("WHILE", "WHILE_MOD", EXPR_BEG),
         "until": Keyword("UNTIL", "UNTIL_MOD", EXPR_BEG),
+        "for": Keyword("FOR", "FOR", EXPR_BEG),
+        "in": Keyword("IN", "IN", EXPR_BEG),
         "do": Keyword("DO", "DO", EXPR_BEG),
         "begin": Keyword("BEGIN", "BEGIN", EXPR_BEG),
         "rescue": Keyword("RESCUE", "RESCUE_MOD", EXPR_MID),

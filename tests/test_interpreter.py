@@ -80,6 +80,82 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert w_res is space.w_nil
 
+    def test_for_loop(self, space):
+        w_res = space.execute("""
+        i = 0
+        for i, *rest, b in [1, 2, 3] do
+            bbb = "hello"
+        end
+        return i, bbb, rest, b
+        """)
+        assert self.unwrap(space, w_res) == [3, "hello", [], None]
+
+        w_res = space.execute("""
+        i = 0
+        for i, *rest, b in [[1, 2, 3, 4]] do
+            bbb = "hello"
+        end
+        return i, bbb, rest, b
+        """)
+        assert self.unwrap(space, w_res) == [1, "hello", [2, 3], 4]
+
+        w_res = space.execute("""
+        for i, *$c, @a in [[1, 2, 3, 4]] do
+            bbb = "hello"
+        end
+        return i, bbb, $c, @a
+        """)
+        assert self.unwrap(space, w_res) == [1, "hello", [2, 3], 4]
+
+        with self.raises(space, "NoMethodError", "undefined method `each' for Fixnum"):
+            space.execute("for i in 1; end")
+
+        w_res = space.execute("""
+        class A
+            def each
+                [1, 2, 3]
+            end
+        end
+        for i in A.new; end
+        return i
+        """)
+        assert self.unwrap(space, w_res) is None
+
+        w_res = space.execute("""
+        a = []
+        i = 0
+        for a[i], i in [[1, 1], [2, 2]]; end
+        return a, i
+        """)
+        assert self.unwrap(space, w_res) == [[1, 2], 2]
+
+        w_res = space.execute("""
+        for i in [[1, 1]]; end
+        for j, in [[1, 1]]; end
+        return i, j
+        """)
+        assert self.unwrap(space, w_res) == [[1, 1], 1]
+
+        w_res = space.execute("""
+        i = 15
+        for i in []; end
+        return i
+        """)
+        assert self.unwrap(space, w_res) == 15
+
+        w_res = space.execute("""
+        for a.bar in []; end
+        return defined?(a)
+        """)
+        assert self.unwrap(space, w_res) is None
+
+        w_res = space.execute("""
+        for a.bar in []; end
+        for b[i] in []; end
+        return defined?(a), defined?(b), defined?(i)
+        """)
+        assert self.unwrap(space, w_res) == [None, None, None]
+
     def test_return(self, space):
         w_res = space.execute("return 4")
         assert space.int_w(w_res) == 4

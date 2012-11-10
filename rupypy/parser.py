@@ -5,7 +5,7 @@ from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
 
 from rupypy import ast
-from rupypy.astcompiler import SymbolTable, BlockSymbolTable
+from rupypy.astcompiler import SymbolTable, BlockSymbolTable, SharedScopeSymbolTable
 
 
 class Parser(object):
@@ -25,6 +25,9 @@ class Parser(object):
 
     def push_block_scope(self):
         self.lexer.symtable = BlockSymbolTable(self.lexer.symtable)
+
+    def push_shared_scope(self):
+        self.lexer.symtable = SharedScopeSymbolTable(self.lexer.symtable)
 
     def save_and_pop_scope(self, node):
         child_symtable = self.lexer.symtable
@@ -199,6 +202,32 @@ class Parser(object):
 
     def new_class_var(self, box):
         return BoxAST(ast.ClassVariable(box.getstr(), box.getsourcepos().lineno))
+
+    def get_var_name(self, node):
+        if isinstance(node, ast.Splat):
+            node = node.value
+        if isinstance(node, ast.Subscript):
+            node = node.target
+        if isinstance(node, ast.Variable):
+            return node.name
+        else:
+            return None
+
+    def as_astlist(self, box):
+        if isinstance(box, BoxAST):
+            return [box.getast()]
+        elif isinstance(box, BoxASTList):
+            return box.getastlist()
+        else:
+            raise NotImplementedError(box)
+
+    def new_assignment(self, box, value):
+        if isinstance(box, BoxAST):
+            return ast.Assignment(box.getast(), value)
+        elif isinstance(box, BoxASTList):
+            return ast.MultiAssignment(box.getastlist(), value)
+        else:
+            raise NotImplementedError(box)
 
     def concat_literals(self, head, tail):
         if head is None:
@@ -1608,19 +1637,35 @@ class Parser(object):
 
         return BoxAST(ast.If(conditions[0][0], conditions[0][1], else_block))
 
-    @pg.production("primary : FOR for_var IN expr_value do compstmt END")
+    @pg.production("primary : for for_var IN expr_value do post_for_do compstmt END")
     def primary_for(self, p):
-        """
-        kFOR for_var kIN {
-                    lexer.getConditionState().begin();
-                } expr_value do {
-                    lexer.getConditionState().end();
-                } compstmt kEND {
-                      // ENEBO: Lots of optz in 1.9 parser here
-                    $$ = new ForNode($1.getPosition(), $2, $8, $5, support.getCurrentScope());
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[0].getsourcepos().lineno
+        for_vars = p[1].getfor_var()
+        arg = p[1].getargument().name
+
+        self.push_shared_scope()
+
+        for for_var in self.as_astlist(for_vars):
+            varname = self.get_var_name(for_var)
+            if varname is not None:
+                self.lexer.symtable.declare_write(varname)
+        self.lexer.symtable.declare_argument(arg)
+
+        stmts = p[6].getastlist() if p[6] is not None else []
+        stmts.insert(0, ast.Statement(self.new_assignment(for_vars, ast.Variable(arg, lineno))))
+        block = ast.SendBlock([p[1].getargument()], None, ast.Block(stmts))
+
+        self.save_and_pop_scope(block)
+        return BoxAST(ast.Send(p[3].getast(), "each", [], block, lineno))
+
+    @pg.production("for : FOR")
+    def for_token(self, p):
+        self.lexer.condition_state.begin()
+        return p[0]
+
+    @pg.production("post_for_do : ")
+    def post_for_do(self, p):
+        self.lexer.condition_state.end()
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
@@ -1761,7 +1806,7 @@ class Parser(object):
     @pg.production("for_var : mlhs")
     @pg.production("for_var : lhs")
     def for_var(self, p):
-        return p[0]
+        return BoxForVars(p[0])
 
     @pg.production("f_marg : f_norm_arg")
     def f_marg_f_norm_arg(self, p):
@@ -2988,3 +3033,14 @@ class BoxStrTerm(BaseBox):
 
     def getstrterm(self):
         return self.str_term
+
+class BoxForVars(BaseBox):
+    def __init__(self, for_var):
+        self.for_var = for_var
+        self.argument = ast.Argument("0")
+
+    def getargument(self):
+        return self.argument
+
+    def getfor_var(self):
+        return self.for_var
