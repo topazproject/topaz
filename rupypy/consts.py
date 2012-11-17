@@ -15,9 +15,6 @@ BYTECODES = [
     ("LOAD_CODE", 0, +1),
     ("LOAD_CONST", 1, +1),
 
-    ("LOAD_LOCAL", 1, +1),
-    ("STORE_LOCAL", 1, 0),
-
     ("LOAD_DEREF", 1, +1),
     ("STORE_DEREF", 1, 0),
     ("LOAD_CLOSURE", 1, +1),

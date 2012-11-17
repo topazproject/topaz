@@ -115,22 +115,22 @@ class TestCompiler(object):
     def test_assignment(self, space):
         self.assert_compiles(space, "a = 3", """
         LOAD_CONST 0
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
         LOAD_CONST 1
         RETURN
         """)
         bc = self.assert_compiles(space, "a = 3; a = 4", """
         LOAD_CONST 0
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
         LOAD_CONST 1
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
         LOAD_CONST 2
         RETURN
         """)
-        assert bc.locals == ["a"]
+        assert bc.cellvars == ["a"]
 
     def test_load_var(self, space):
         bc = self.assert_compiles(space, "a", """
@@ -140,17 +140,17 @@ class TestCompiler(object):
         LOAD_CONST 1
         RETURN
         """)
-        assert bc.locals == []
+        assert bc.cellvars == []
         bc = self.assert_compiles(space, "a = 3; a", """
         LOAD_CONST 0
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         DISCARD_TOP
         LOAD_CONST 1
         RETURN
         """)
-        assert bc.locals == ["a"]
+        assert bc.cellvars == ["a"]
 
     def test_if(self, space):
         self.assert_compiles(space, "if 3 then puts 2 end", """
@@ -173,7 +173,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         JUMP 15
         LOAD_CONST 2
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
 
         LOAD_CONST 3
@@ -186,7 +186,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         JUMP 15
         LOAD_CONST 1
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
 
         LOAD_CONST 2
@@ -221,9 +221,9 @@ class TestCompiler(object):
         LOAD_CONST 1
         JUMP 18
         LOAD_CONST 2
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         DISCARD_TOP
 
         LOAD_CONST 3
@@ -301,12 +301,12 @@ class TestCompiler(object):
         RETURN
         """)
         self.assert_compiled(bc.consts_w[0], """
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         DUP_TOP
         COERCE_ARRAY
         UNPACK_SEQUENCE_SPLAT 3 1
 
-        STORE_DEREF 0
+        STORE_DEREF 1
         DISCARD_TOP
 
         STORE_GLOBAL 0
@@ -390,10 +390,10 @@ class TestCompiler(object):
 
         self.assert_compiles(space, "i = 0; self[i].to_s", """
         LOAD_CONST 0
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
         LOAD_SELF
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         SEND 1 1
         SEND 2 0
         DISCARD_TOP
@@ -435,8 +435,8 @@ class TestCompiler(object):
         """)
 
         self.assert_compiled(bc.consts_w[1], """
-        LOAD_LOCAL 0
-        LOAD_LOCAL 1
+        LOAD_DEREF 0
+        LOAD_DEREF 1
         SEND 0 1
         RETURN
         """)
@@ -457,11 +457,11 @@ class TestCompiler(object):
         "abc, #{x}, easy"
         """, """
         LOAD_CONST 0
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
         LOAD_CONST 1
         COPY_STRING
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         SEND 2 0
         LOAD_CONST 3
         COPY_STRING
@@ -662,7 +662,7 @@ class TestCompiler(object):
         """)
 
         self.assert_compiled(bc.consts_w[3], """
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         LOAD_CONST 0
         SEND 1 1
         RETURN
@@ -699,7 +699,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         YIELD 2
         DISCARD_TOP
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         COERCE_ARRAY
         YIELD_SPLAT
         RETURN
@@ -784,8 +784,8 @@ class TestCompiler(object):
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1], """
-        LOAD_LOCAL 0
-        STORE_DEREF 0
+        LOAD_DEREF 0
+        STORE_DEREF 1
         RETURN
         """)
 
@@ -909,33 +909,33 @@ class TestCompiler(object):
         """)
 
         self.assert_compiled(bc.consts_w[1], """
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         LOAD_CONST 0
-        LOAD_CLOSURE 0
+        LOAD_CLOSURE 1
         BUILD_BLOCK 1
         SEND_BLOCK 1 1
         DISCARD_TOP
-        LOAD_DEREF 0
+        LOAD_DEREF 1
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1].consts_w[0], """
+        LOAD_DEREF 1
         LOAD_DEREF 0
-        LOAD_LOCAL 0
         SEND 0 1
-        STORE_DEREF 0
+        STORE_DEREF 1
         RETURN
         """)
 
     def test_augmented_assignment(self, space):
         self.assert_compiles(space, "i = 0; i += 1", """
         LOAD_CONST 0
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
 
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         LOAD_CONST 1
         SEND 2 1
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
 
         LOAD_CONST 3
@@ -1008,12 +1008,12 @@ class TestCompiler(object):
         """)
 
         self.assert_compiled(bc.consts_w[3], """
-        LOAD_DEREF 0
         LOAD_DEREF 1
-        SEND 0 1
         LOAD_DEREF 2
         SEND 0 1
-        LOAD_LOCAL 0
+        LOAD_DEREF 3
+        SEND 0 1
+        LOAD_DEREF 0
         SEND 0 1
         RETURN
         """)
@@ -1057,15 +1057,15 @@ class TestCompiler(object):
         assert bc.consts_w[0].cellvars == ["x"]
 
         self.assert_compiled(bc.consts_w[0].consts_w[0], """
-        LOAD_DEREF 0
         LOAD_DEREF 1
-        LOAD_LOCAL 0
+        LOAD_DEREF 2
+        LOAD_DEREF 0
         SEND 0 1
         SEND 1 1
         RETURN
         """)
         assert bc.consts_w[0].consts_w[0].freevars == ["sums", "x"]
-        assert bc.consts_w[0].consts_w[0].cellvars == []
+        assert bc.consts_w[0].consts_w[0].cellvars == ["y"]
 
     def test_unary_op(self, space):
         bc = self.assert_compiles(space, "(-a)", """
@@ -1195,9 +1195,9 @@ class TestCompiler(object):
         """)
 
         self.assert_compiled(bc.consts_w[1], """
-        LOAD_LOCAL 0
-        LOAD_LOCAL 1
-        LOAD_LOCAL 2
+        LOAD_DEREF 0
+        LOAD_DEREF 1
+        LOAD_DEREF 2
         BUILD_ARRAY 3
         RETURN
         """)
@@ -1207,7 +1207,7 @@ class TestCompiler(object):
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1].defaults[1], """
-        LOAD_LOCAL 1
+        LOAD_DEREF 1
         RETURN
         """)
 
@@ -1267,11 +1267,11 @@ class TestCompiler(object):
         SEND 4 1
         JUMP_IF_TRUE 35
         JUMP 52
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
         DISCARD_TOP
         LOAD_SELF
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         SEND 5 1
         JUMP 57
         END_FINALLY
@@ -1391,9 +1391,8 @@ class TestCompiler(object):
         """)
 
         w_code = bc.consts_w[1]
-        assert w_code.locals == ["a", "b"]
+        assert w_code.cellvars == ["a", "b"]
         assert w_code.block_arg_pos == 1
-        assert w_code.block_arg_loc == w_code.LOCAL
 
     def test_module(self, space):
         bc = self.assert_compiles(space, """
@@ -1563,7 +1562,7 @@ class TestCompiler(object):
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1], """
-        LOAD_LOCAL 0
+        LOAD_DEREF 0
         RETURN
         """)
 
@@ -1862,10 +1861,10 @@ class TestCompiler(object):
         a.x, b[:idx], c::Const, d = 3
         """, """
         LOAD_CONST 0
-        STORE_LOCAL 0
-        STORE_LOCAL 1
-        STORE_LOCAL 2
-        STORE_LOCAL 3
+        STORE_DEREF 0
+        STORE_DEREF 1
+        STORE_DEREF 2
+        STORE_DEREF 3
         DISCARD_TOP
 
         LOAD_CONST 1
@@ -1873,12 +1872,12 @@ class TestCompiler(object):
         COERCE_ARRAY
         UNPACK_SEQUENCE 4
 
-        LOAD_LOCAL 3
+        LOAD_DEREF 3
         ROT_TWO
         SEND 2 1
         DISCARD_TOP
 
-        LOAD_LOCAL 2
+        LOAD_DEREF 2
         LOAD_CONST 3
         BUILD_ARRAY 1
         ROT_THREE
@@ -1888,12 +1887,12 @@ class TestCompiler(object):
         SEND_SPLAT 5
         DISCARD_TOP
 
-        LOAD_LOCAL 1
+        LOAD_DEREF 1
         ROT_TWO
         STORE_CONSTANT 6
         DISCARD_TOP
 
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
 
         DISCARD_TOP
@@ -1914,11 +1913,11 @@ class TestCompiler(object):
         COERCE_ARRAY
         UNPACK_SEQUENCE_SPLAT 3 1
 
-        STORE_LOCAL 0
+        STORE_DEREF 0
         DISCARD_TOP
-        STORE_LOCAL 1
+        STORE_DEREF 1
         DISCARD_TOP
-        STORE_LOCAL 2
+        STORE_DEREF 2
         DISCARD_TOP
 
         DISCARD_TOP
@@ -2018,9 +2017,9 @@ class TestCompiler(object):
         """)
         self.assert_compiled(bc.consts_w[1], """
         LOAD_SELF
-        LOAD_LOCAL 0
-        LOAD_LOCAL 1
-        LOAD_LOCAL 2
+        LOAD_DEREF 0
+        LOAD_DEREF 1
+        LOAD_DEREF 2
         SEND_SUPER 0 3
         RETURN
         """)

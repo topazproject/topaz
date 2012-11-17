@@ -155,17 +155,11 @@ class Interpreter(object):
     def LOAD_CONST(self, space, bytecode, frame, pc, idx):
         frame.push(bytecode.consts_w[idx])
 
-    def LOAD_LOCAL(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.locals_w[idx] or space.w_nil)
-
-    def STORE_LOCAL(self, space, bytecode, frame, pc, idx):
-        frame.locals_w[idx] = frame.peek()
-
     def LOAD_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx].get(space, None) or space.w_nil)
+        frame.push(frame.cells[idx].get(space, frame, idx) or space.w_nil)
 
     def STORE_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.cells[idx].set(space, None, frame.peek())
+        frame.cells[idx].set(space, frame, idx, frame.peek())
 
     def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
         frame.push(frame.cells[idx])

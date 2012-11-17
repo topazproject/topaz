@@ -9,11 +9,9 @@ class BaseSymbolTable(object):
     def __init__(self, parent_symtable=None):
         self.parent_symtable = parent_symtable
         self.subscopes = {}
-        self.locals = {}
         self.cells = {}
         self.arguments = []
 
-        self.local_numbers = {}
         self.cell_numbers = {}
 
     def add_subscope(self, node, symtable):
@@ -27,21 +25,9 @@ class BaseSymbolTable(object):
         self.declare_local(name)
 
     def declare_local(self, name):
-        if name not in self.locals:
-            self.locals[name] = None
+        self.cells[name] = self.CELLVAR
 
     def is_defined(self, name):
-        return self.is_local(name) or self.is_cell(name)
-
-    def is_local(self, name):
-        return name in self.locals
-
-    def get_local_num(self, name):
-        if name not in self.local_numbers:
-            self.local_numbers[name] = len(self.local_numbers)
-        return self.local_numbers[name]
-
-    def is_cell(self, name):
         return name in self.cells
 
     def get_cell_num(self, name):
@@ -59,21 +45,17 @@ class SymbolTable(BaseSymbolTable):
         pass
 
     def upgrade_to_closure(self, name):
-        if name in self.locals:
-            del self.locals[name]
-            self.cells[name] = self.CELLVAR
+        pass
 
 
 class BlockSymbolTable(BaseSymbolTable):
     def declare_read(self, name):
-        if (name not in self.locals and name not in self.cells and
-            self.parent_symtable.is_defined(name)):
-
+        if name not in self.cells and self.parent_symtable.is_defined(name):
             self.cells[name] = self.FREEVAR
             self.parent_symtable.upgrade_to_closure(name)
 
     def declare_write(self, name):
-        if name not in self.locals and name not in self.cells:
+        if name not in self.cells:
             if self.parent_symtable.is_defined(name):
                 self.cells[name] = self.FREEVAR
                 self.parent_symtable.upgrade_to_closure(name)
@@ -84,10 +66,7 @@ class BlockSymbolTable(BaseSymbolTable):
         return BaseSymbolTable.is_defined(self, name) or self.parent_symtable.is_defined(name)
 
     def upgrade_to_closure(self, name):
-        if self.is_local(name):
-            del self.locals[name]
-            self.cells[name] = self.CELLVAR
-        elif not self.is_cell(name):
+        if name not in self.cells:
             self.parent_symtable.upgrade_to_closure(name)
             self.cells[name] = self.FREEVAR
 
@@ -116,10 +95,6 @@ class CompilerContext(object):
         self.frame_blocks = []
 
     def create_bytecode(self, args, defaults, splat_arg, block_arg):
-        locs = [None] * len(self.symtable.local_numbers)
-        for name, pos in self.symtable.local_numbers.iteritems():
-            locs[pos] = name
-
         cellvars = []
         freevars = []
 
@@ -151,7 +126,6 @@ class CompilerContext(object):
             splat_arg,
             block_arg,
             defaults,
-            locs,
             cellvars,
             freevars,
             lineno_table,

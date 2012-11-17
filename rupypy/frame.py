@@ -1,6 +1,6 @@
 from pypy.rlib import jit
 
-from rupypy.celldict import Cell
+from rupypy.closure import ClosureCell
 
 
 class BaseFrame(object):
@@ -13,8 +13,8 @@ class BaseFrame(object):
 
 class Frame(BaseFrame):
     _virtualizable2_ = [
-        "bytecode", "locals_w[*]", "stack_w[*]", "stackpos", "w_self",
-        "w_scope", "block", "cells[*]", "lastblock", "lexical_scope", "last_instr",
+        "bytecode", "localsstack_w[*]", "stackpos", "w_self", "w_scope",
+        "block", "cells[*]", "lastblock", "lexical_scope", "last_instr",
     ]
 
     @jit.unroll_safe
@@ -22,10 +22,9 @@ class Frame(BaseFrame):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         BaseFrame.__init__(self)
         self.bytecode = bytecode
-        self.stack_w = [None] * bytecode.max_stackdepth
-        self.locals_w = [None] * len(bytecode.locals)
-        self.cells = [Cell(None) for _ in bytecode.cellvars] + [None] * len(bytecode.freevars)
-        self.stackpos = 0
+        self.localsstack_w = [None] * (len(bytecode.cellvars) + bytecode.max_stackdepth)
+        self.stackpos = len(bytecode.cellvars)
+        self.cells = [ClosureCell(None) for _ in bytecode.cellvars] + [None] * len(bytecode.freevars)
         self.w_self = w_self
         self.w_scope = w_scope
         self.lexical_scope = lexical_scope
@@ -34,19 +33,15 @@ class Frame(BaseFrame):
         self.lastblock = None
 
     def _set_normal_arg(self, space, bytecode, i, w_value):
-        loc = bytecode.arg_locs[i]
         pos = bytecode.arg_pos[i]
-        self._set_arg(space, bytecode, loc, pos, w_value)
+        self._set_arg(space, bytecode, pos, w_value)
 
-    def _set_arg(self, space, bytecode, loc, pos, w_value):
+    def _set_arg(self, space, bytecode, pos, w_value):
         assert pos >= 0
-        if loc == bytecode.LOCAL:
-            self.locals_w[pos] = w_value
-        elif loc == bytecode.CELL:
-            self.cells[pos].set(space, None, w_value)
+        self.cells[pos].set(space, self, pos, w_value)
 
     def handle_block_args(self, space, bytecode, args_w, block):
-        minargc = len(bytecode.arg_locs) - len(bytecode.defaults)
+        minargc = len(bytecode.arg_pos) - len(bytecode.defaults)
         if len(args_w) < minargc:
             args_w.extend([space.w_nil] * (minargc - len(args_w)))
         return self.handle_args(space, bytecode, args_w, block)
@@ -55,42 +50,42 @@ class Frame(BaseFrame):
     def handle_args(self, space, bytecode, args_w, block):
         from rupypy.interpreter import Interpreter
 
-        if (len(args_w) < (len(bytecode.arg_locs) - len(bytecode.defaults)) or
-            (bytecode.splat_arg_pos == -1 and len(args_w) > len(bytecode.arg_locs))):
+        if (len(args_w) < (len(bytecode.arg_pos) - len(bytecode.defaults)) or
+            (bytecode.splat_arg_pos == -1 and len(args_w) > len(bytecode.arg_pos))):
             raise space.error(space.w_ArgumentError,
-                "wrong number of arguments (%d for %d)" % (len(args_w), len(bytecode.arg_locs) - len(bytecode.defaults))
+                "wrong number of arguments (%d for %d)" % (len(args_w), len(bytecode.arg_pos) - len(bytecode.defaults))
             )
 
-        for i in xrange(min(len(args_w), len(bytecode.arg_locs))):
+        for i in xrange(min(len(args_w), len(bytecode.arg_pos))):
             self._set_normal_arg(space, bytecode, i, args_w[i])
-        defl_start = len(args_w) - (len(bytecode.arg_locs) - len(bytecode.defaults))
-        for i in xrange(len(bytecode.arg_locs) - len(args_w)):
+        defl_start = len(args_w) - (len(bytecode.arg_pos) - len(bytecode.defaults))
+        for i in xrange(len(bytecode.arg_pos) - len(args_w)):
             bc = bytecode.defaults[i + defl_start]
             w_value = Interpreter().interpret(space, self, bc)
             self._set_normal_arg(space, bytecode, i + len(args_w), w_value)
 
         if bytecode.splat_arg_pos != -1:
-            splat_args_w = args_w[len(bytecode.arg_locs):]
+            splat_args_w = args_w[len(bytecode.arg_pos):]
             w_splat_args = space.newarray(splat_args_w)
-            self._set_arg(space, bytecode, bytecode.splat_arg_loc, bytecode.splat_arg_pos, w_splat_args)
+            self._set_arg(space, bytecode, bytecode.splat_arg_pos, w_splat_args)
 
         if bytecode.block_arg_pos != -1:
             if block is None:
                 w_block = space.w_nil
             else:
                 w_block = space.newproc(block)
-            self._set_arg(space, bytecode, bytecode.block_arg_loc, bytecode.block_arg_pos, w_block)
+            self._set_arg(space, bytecode, bytecode.block_arg_pos, w_block)
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
-        self.stack_w[stackpos] = w_obj
+        self.localsstack_w[stackpos] = w_obj
         self.stackpos = stackpos + 1
 
     def pop(self):
         stackpos = jit.promote(self.stackpos) - 1
         assert stackpos >= 0
-        w_res = self.stack_w[stackpos]
-        self.stack_w[stackpos] = None
+        w_res = self.localsstack_w[stackpos]
+        self.localsstack_w[stackpos] = None
         self.stackpos = stackpos
         return w_res
 
@@ -104,7 +99,7 @@ class Frame(BaseFrame):
     def peek(self):
         stackpos = jit.promote(self.stackpos) - 1
         assert stackpos >= 0
-        return self.stack_w[stackpos]
+        return self.localsstack_w[stackpos]
 
     def popblock(self):
         lastblock = self.lastblock

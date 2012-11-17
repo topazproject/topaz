@@ -319,10 +319,7 @@ class Function(Node):
         for arg in self.args:
             assert isinstance(arg, Argument)
             arg_names.append(arg.name)
-            if function_ctx.symtable.is_local(arg.name):
-                function_ctx.symtable.get_local_num(arg.name)
-            elif function_ctx.symtable.is_cell(arg.name):
-                function_ctx.symtable.get_cell_num(arg.name)
+            function_ctx.symtable.get_cell_num(arg.name)
 
             arg_ctx = CompilerContext(ctx.space, self.name, function_ctx.symtable, ctx.filepath)
             if arg.defl is not None:
@@ -331,15 +328,9 @@ class Function(Node):
                 bc = arg_ctx.create_bytecode([], [], None, None)
                 defaults.append(bc)
         if self.splat_arg is not None:
-            if function_ctx.symtable.is_local(self.splat_arg):
-                function_ctx.symtable.get_local_num(self.splat_arg)
-            elif function_ctx.symtable.is_cell(self.splat_arg):
-                function_ctx.symtable.get_cell_num(self.splat_arg)
+            function_ctx.symtable.get_cell_num(self.splat_arg)
         if self.block_arg is not None:
-            if function_ctx.symtable.is_local(self.block_arg):
-                function_ctx.symtable.get_local_num(self.block_arg)
-            elif function_ctx.symtable.is_cell(self.block_arg):
-                function_ctx.symtable.get_cell_num(self.block_arg)
+            function_ctx.symtable.get_cell_num(self.block_arg)
 
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
@@ -741,15 +732,9 @@ class SendBlock(Node):
         for arg in self.block_args:
             assert isinstance(arg, Argument)
             block_args.append(arg.name)
-            if block_ctx.symtable.is_local(arg.name):
-                block_ctx.symtable.get_local_num(arg.name)
-            elif block_ctx.symtable.is_cell(arg.name):
-                block_ctx.symtable.get_cell_num(arg.name)
+            block_ctx.symtable.get_cell_num(arg.name)
         if self.splat_arg is not None:
-            if block_ctx.symtable.is_local(self.splat_arg):
-                block_ctx.symtable.get_local_num(self.splat_arg)
-            elif block_ctx.symtable.is_cell(self.splat_arg):
-                block_ctx.symtable.get_cell_num(self.splat_arg)
+            block_ctx.symtable.get_cell_num(self.splat_arg)
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
@@ -782,7 +767,7 @@ class AutoSuper(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
         for name in ctx.symtable.arguments:
-            ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(name))
+            ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(name))
 
         if ctx.code_name == "<main>":
             name = ctx.create_const(ctx.space.w_nil)
@@ -904,12 +889,7 @@ class Variable(Node):
         self.name = name
 
     def compile(self, ctx):
-        if ctx.symtable.is_local(self.name):
-            ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(self.name))
-        elif ctx.symtable.is_cell(self.name):
-            ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
-        else:
-            raise SystemError
+        ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
 
     def compile_receiver(self, ctx):
         return 0
@@ -918,12 +898,7 @@ class Variable(Node):
         self.compile(ctx)
 
     def compile_store(self, ctx):
-        if ctx.symtable.is_local(self.name):
-            loc = ctx.symtable.get_local_num(self.name)
-            ctx.emit(consts.STORE_LOCAL, loc)
-        elif ctx.symtable.is_cell(self.name):
-            loc = ctx.symtable.get_cell_num(self.name)
-            ctx.emit(consts.STORE_DEREF, loc)
+        ctx.emit(consts.STORE_DEREF, ctx.symtable.get_cell_num(self.name))
 
     def compile_defined(self, ctx):
         ConstantString("local-variable").compile(ctx)
