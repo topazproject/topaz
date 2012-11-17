@@ -292,15 +292,3 @@ class TestExec(BaseRuPyPyTest):
     def test_exec_with_path_search(self, space, capfd):
         out = self.fork_and_wait(space, capfd, "exec 'echo', '$0'")
         assert out == "$0\n"
-
-
-class TestBinding(object):
-    def test_in_block(self, space):
-        w_res = space.execute("""
-        def f(a, b)
-            return proc { binding }
-        end
-
-        return f(3, 4).call.eval("a + b")
-        """)
-        assert space.int_w(w_res) == 7
