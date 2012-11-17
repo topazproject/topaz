@@ -12,8 +12,7 @@ from .base import BaseRuPyPyTest
 
 class TestInterpreter(BaseRuPyPyTest):
     def test_add(self, space):
-        w_res = space.execute("1 + 1")
-        assert isinstance(w_res, W_TrueObject)
+        space.execute("1 + 1")
 
     def test_global_send(self, space, capfd):
         space.execute("puts 1")

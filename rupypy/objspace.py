@@ -226,7 +226,8 @@ class ObjectSpace(object):
             astnode.compile(ctx)
         return ctx.create_bytecode([], [], None, None)
 
-    def execute(self, source, w_self=None, w_scope=None, filepath="-e", initial_lineno=1):
+    def execute(self, source, w_self=None, w_scope=None, filepath="-e",
+                initial_lineno=1):
         bc = self.compile(source, filepath, initial_lineno=initial_lineno)
         frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
         with self.getexecutioncontext().visit_frame(frame):

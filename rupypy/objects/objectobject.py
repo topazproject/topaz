@@ -99,7 +99,7 @@ class W_BaseObject(W_Root):
                 lineno = 1
             return space.execute(string, self, space.getclass(self), filename, lineno)
         else:
-            space.invoke_block(block.copy(w_self=self, w_scope=space.getclass(self)), [])
+            return space.invoke_block(block.copy(w_self=self, w_scope=space.getclass(self)), [])
 
 
 class W_RootObject(W_BaseObject):

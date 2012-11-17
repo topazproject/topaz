@@ -9,4 +9,4 @@ class W_BindingObject(W_Object):
 
     @classdef.method("eval", source="str")
     def method_eval(self, space, source):
-        return space.execute("return (" + source + ")")
+        return space.execute(source)

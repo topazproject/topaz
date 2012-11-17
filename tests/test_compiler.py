@@ -37,32 +37,25 @@ class TestCompiler(object):
     def test_int_constant(self, space):
         bc = self.assert_compiles(space, "1", """
         LOAD_CONST 0
-        DISCARD_TOP
-        LOAD_CONST 1
         RETURN
         """)
-        [c1, c2] = bc.consts_w
-        assert space.int_w(c1) == 1
-        assert isinstance(c2, W_TrueObject)
+        [c] = bc.consts_w
+        assert space.int_w(c) == 1
         assert bc.max_stackdepth == 1
 
     def test_float_constant(self, space):
         bc = self.assert_compiles(space, "1.2", """
         LOAD_CONST 0
-        DISCARD_TOP
-        LOAD_CONST 1
         RETURN
         """)
-        [c1, c2] = bc.consts_w
-        assert space.float_w(c1) == 1.2
+        [c] = bc.consts_w
+        assert space.float_w(c) == 1.2
 
     def test_addition(self, space):
         bc = self.assert_compiles(space, "1 + 2", """
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
-        DISCARD_TOP
-        LOAD_CONST 3
         RETURN
         """)
         assert bc.max_stackdepth == 2
@@ -75,8 +68,6 @@ class TestCompiler(object):
         LOAD_CONST 2
         SEND 3 1
         SEND 4 1
-        DISCARD_TOP
-        LOAD_CONST 5
         RETURN
         """)
 
@@ -87,8 +78,6 @@ class TestCompiler(object):
         LOAD_CONST 1
         DISCARD_TOP
         LOAD_CONST 2
-        DISCARD_TOP
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -97,8 +86,6 @@ class TestCompiler(object):
         LOAD_SELF
         LOAD_CONST 0
         SEND 1 1
-        DISCARD_TOP
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiles(space, "puts 1, 2, 3", """
@@ -107,8 +94,6 @@ class TestCompiler(object):
         LOAD_CONST 1
         LOAD_CONST 2
         SEND 3 3
-        DISCARD_TOP
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -116,8 +101,6 @@ class TestCompiler(object):
         self.assert_compiles(space, "a = 3", """
         LOAD_CONST 0
         STORE_DEREF 0
-        DISCARD_TOP
-        LOAD_CONST 1
         RETURN
         """)
         bc = self.assert_compiles(space, "a = 3; a = 4", """
@@ -126,8 +109,6 @@ class TestCompiler(object):
         DISCARD_TOP
         LOAD_CONST 1
         STORE_DEREF 0
-        DISCARD_TOP
-        LOAD_CONST 2
         RETURN
         """)
         assert bc.cellvars == ["a"]
@@ -136,8 +117,7 @@ class TestCompiler(object):
         bc = self.assert_compiles(space, "a", """
         LOAD_SELF
         SEND 0 0
-        DISCARD_TOP
-        LOAD_CONST 1
+
         RETURN
         """)
         assert bc.cellvars == []
@@ -146,8 +126,6 @@ class TestCompiler(object):
         STORE_DEREF 0
         DISCARD_TOP
         LOAD_DEREF 0
-        DISCARD_TOP
-        LOAD_CONST 1
         RETURN
         """)
         assert bc.cellvars == ["a"]
@@ -161,9 +139,7 @@ class TestCompiler(object):
         SEND 2 1
         JUMP 21
         LOAD_CONST 3
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -174,9 +150,7 @@ class TestCompiler(object):
         JUMP 15
         LOAD_CONST 2
         STORE_DEREF 0
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -187,9 +161,7 @@ class TestCompiler(object):
         JUMP 15
         LOAD_CONST 1
         STORE_DEREF 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -204,9 +176,7 @@ class TestCompiler(object):
         LOAD_SELF
         LOAD_CONST 4
         SEND 5 1
-        DISCARD_TOP
 
-        LOAD_CONST 6
         RETURN
         """)
 
@@ -224,9 +194,7 @@ class TestCompiler(object):
         STORE_DEREF 0
         DISCARD_TOP
         LOAD_DEREF 0
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -237,9 +205,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         DISCARD_TOP
         LOAD_CONST 2
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
         assert bc.consts_w == [space.w_false, space.w_true, space.w_nil]
@@ -249,9 +215,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         LOAD_CONST 1
         SEND 2 1
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -265,9 +229,7 @@ class TestCompiler(object):
         JUMP 3
         POP_BLOCK
         LOAD_CONST 1
-        DISCARD_TOP
 
-        LOAD_CONST 0
         RETURN
         """)
 
@@ -282,9 +244,7 @@ class TestCompiler(object):
         JUMP 3
         POP_BLOCK
         LOAD_CONST 3
-        DISCARD_TOP
 
-        LOAD_CONST 0
         RETURN
         """)
 
@@ -295,9 +255,7 @@ class TestCompiler(object):
         LOAD_CLOSURE 0
         BUILD_BLOCK 1
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiled(bc.consts_w[0], """
@@ -330,9 +288,7 @@ class TestCompiler(object):
         JUMP 3
         POP_BLOCK
         LOAD_CONST 2
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -340,9 +296,7 @@ class TestCompiler(object):
         self.assert_compiles(space, "return 4", """
         LOAD_CONST 0
         RETURN
-        DISCARD_TOP # this is unreachable
-
-        LOAD_CONST 1
+        # this is unreachable
         RETURN
         """)
 
@@ -355,9 +309,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         BUILD_ARRAY 1
         BUILD_ARRAY 3
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
         assert bc.max_stackdepth == 3
@@ -370,9 +322,7 @@ class TestCompiler(object):
         BUILD_ARRAY 2
         COERCE_ARRAY
         SEND 3 1
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -382,9 +332,7 @@ class TestCompiler(object):
         BUILD_ARRAY 1
         LOAD_CONST 1
         SEND 2 1
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -396,9 +344,7 @@ class TestCompiler(object):
         LOAD_DEREF 0
         SEND 1 1
         SEND 2 0
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -410,9 +356,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -428,9 +372,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -445,9 +387,7 @@ class TestCompiler(object):
         self.assert_compiles(space, '"abc"', """
         LOAD_CONST 0
         COPY_STRING
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
 
@@ -466,9 +406,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         COPY_STRING
         BUILD_STRING 3
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -477,9 +415,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         SEND 1 0
         SEND 2 0
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -494,9 +430,7 @@ class TestCompiler(object):
         BUILD_CLASS
         LOAD_CONST 2
         EVALUATE_CLASS
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -518,9 +452,7 @@ class TestCompiler(object):
         BUILD_CLASS
         LOAD_CONST 2
         EVALUATE_CLASS
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -551,9 +483,7 @@ class TestCompiler(object):
         BUILD_CLASS
         LOAD_CONST 2
         EVALUATE_CLASS
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -567,9 +497,7 @@ class TestCompiler(object):
         BUILD_CLASS
         LOAD_CONST 3
         EVALUATE_CLASS
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -582,9 +510,7 @@ class TestCompiler(object):
         SEND 0 0
         LOAD_CONST 1
         EVALUATE_CLASS
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -592,9 +518,7 @@ class TestCompiler(object):
         self.assert_compiles(space, "Abc", """
         LOAD_SCOPE
         LOAD_LOCAL_CONSTANT 0
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
 
@@ -602,9 +526,7 @@ class TestCompiler(object):
         LOAD_SCOPE
         LOAD_CONST 0
         STORE_CONSTANT 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -612,9 +534,7 @@ class TestCompiler(object):
         self.assert_compiles(space, "return self", """
         LOAD_SELF
         RETURN
-        DISCARD_TOP
-
-        LOAD_CONST 0
+        # this is unreachable
         RETURN
         """)
 
@@ -624,9 +544,7 @@ class TestCompiler(object):
         LOAD_SELF
         LOAD_INSTANCE_VAR 0
         STORE_INSTANCE_VAR 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -636,9 +554,7 @@ class TestCompiler(object):
         LOAD_SCOPE
         LOAD_CLASS_VAR 0
         STORE_CLASS_VAR 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -655,9 +571,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         BUILD_BLOCK 0
         SEND_BLOCK 4 1
-        DISCARD_TOP
 
-        LOAD_CONST 5
         RETURN
         """)
 
@@ -683,9 +597,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -708,31 +620,25 @@ class TestCompiler(object):
     def test_constant_symbol(self, space):
         bc = self.assert_compiles(space, ":abc", """
         LOAD_CONST 0
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
-        [c1, c2] = bc.consts_w
-        assert space.symbol_w(c1) == "abc"
+        [c] = bc.consts_w
+        assert space.symbol_w(c) == "abc"
 
     def test_range(self, space):
         self.assert_compiles(space, "1..10", """
         LOAD_CONST 0
         LOAD_CONST 1
         BUILD_RANGE
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiles(space, "1...10", """
         LOAD_CONST 0
         LOAD_CONST 1
         BUILD_RANGE_EXCLUSIVE
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -752,9 +658,7 @@ class TestCompiler(object):
         LOAD_CLOSURE 0
         BUILD_BLOCK 1
         SEND_BLOCK 2 1
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
         assert bc.max_stackdepth == 3
@@ -778,9 +682,7 @@ class TestCompiler(object):
         LOAD_CLOSURE 0
         BUILD_BLOCK 1
         SEND_BLOCK 2 1
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1], """
@@ -802,9 +704,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1], """
@@ -834,9 +734,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         BUILD_BLOCK 0
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiled(bc.consts_w[0], """
@@ -872,9 +770,7 @@ class TestCompiler(object):
         LOAD_SELF
         LOAD_CONST 0
         SEND 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         assert space.symbol_w(bc.consts_w[1]) == "abc="
@@ -902,9 +798,7 @@ class TestCompiler(object):
         BUILD_ARRAY 0
         LOAD_CONST 2
         SEND 0 2
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -936,9 +830,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         STORE_DEREF 0
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -950,9 +842,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         SEND 3 1
         SEND 4 1
-        DISCARD_TOP
 
-        LOAD_CONST 5
         RETURN
         """)
         assert space.symbol_w(bc.consts_w[0]) == "x"
@@ -967,9 +857,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 1
         STORE_INSTANCE_VAR 0
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -1001,9 +889,7 @@ class TestCompiler(object):
         LOAD_CLOSURE 0
         BUILD_BLOCK 3
         SEND_BLOCK 4 1
-        DISCARD_TOP
 
-        LOAD_CONST 5
         RETURN
         """)
 
@@ -1036,9 +922,7 @@ class TestCompiler(object):
         LOAD_CLOSURE 0
         BUILD_BLOCK 1
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         assert bc.freevars == []
@@ -1072,23 +956,19 @@ class TestCompiler(object):
         LOAD_SELF
         SEND 0 0
         SEND 1 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
-        [_, sym, _] = bc.consts_w
+        [_, sym] = bc.consts_w
         assert space.symbol_w(sym) == "-@"
 
         bc = self.assert_compiles(space, "~3", """
         LOAD_CONST 0
         SEND 1 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
-        [_, sym, _] = bc.consts_w
+        [_, sym] = bc.consts_w
         assert space.symbol_w(sym) == "~"
 
     def test_assignment_in_block_closure(self, space):
@@ -1104,9 +984,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         BUILD_BLOCK 0
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiled(bc.consts_w[0], """
@@ -1130,26 +1008,20 @@ class TestCompiler(object):
         LOAD_SCOPE
         LOAD_LOCAL_CONSTANT 0
         LOAD_CONSTANT 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiles(space, "Module::constant", """
         LOAD_SCOPE
         LOAD_LOCAL_CONSTANT 0
         SEND 1 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         bc = self.assert_compiles(space, "::Constant", """
         LOAD_CONST 0
         LOAD_CONSTANT 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         assert bc.consts_w[0] is space.w_object
@@ -1160,9 +1032,7 @@ class TestCompiler(object):
         SEND 0 0
         LOAD_CONST 1
         STORE_CONSTANT 2
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -1170,9 +1040,7 @@ class TestCompiler(object):
         self.assert_compiles(space, "__FILE__", """
         LOAD_CODE
         SEND 0 0
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
 
@@ -1188,9 +1056,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1242,9 +1108,7 @@ class TestCompiler(object):
         END_FINALLY
         LOAD_CONST 7
         DISCARD_TOP
-        DISCARD_TOP
 
-        LOAD_CONST 8
         RETURN
         """)
         self.assert_compiles(space, """
@@ -1277,9 +1141,7 @@ class TestCompiler(object):
         END_FINALLY
         LOAD_CONST 6
         DISCARD_TOP
-        DISCARD_TOP
 
-        LOAD_CONST 7
         RETURN
         """)
 
@@ -1303,8 +1165,7 @@ class TestCompiler(object):
         END_FINALLY
         LOAD_CONST 4
         DISCARD_TOP
-        DISCARD_TOP
-        LOAD_CONST 5
+
         RETURN
         """)
         self.assert_compiles(space, """
@@ -1326,9 +1187,7 @@ class TestCompiler(object):
         SEND 5 1
         DISCARD_TOP
         END_FINALLY
-        DISCARD_TOP
 
-        LOAD_CONST 6
         RETURN
         """)
 
@@ -1345,9 +1204,7 @@ class TestCompiler(object):
         JUMP 14
         LOAD_CONST 3
         DISCARD_TOP
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -1365,9 +1222,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         DISCARD_TOP
         END_FINALLY
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
         assert bc.max_stackdepth == 4
@@ -1384,9 +1239,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1403,9 +1256,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         LOAD_CONST 1
         BUILD_MODULE
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1424,9 +1275,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         LOAD_CONST 2
         BUILD_MODULE
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -1448,9 +1297,7 @@ class TestCompiler(object):
         SEND 4 1
         SEND 4 1
         SEND_SPLAT 5
-        DISCARD_TOP
 
-        LOAD_CONST 6
         RETURN
         """)
 
@@ -1465,9 +1312,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_BLOCK 0
         SEND_BLOCK_SPLAT 2
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -1484,9 +1329,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         BUILD_FUNCTION
         ATTACH_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -1501,9 +1344,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         assert bc.consts_w[1].max_stackdepth == 2
@@ -1523,9 +1364,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         SEND 3 1
         STORE_GLOBAL 1
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -1538,9 +1377,7 @@ class TestCompiler(object):
         SEND 0 0
         COERCE_BLOCK
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1556,9 +1393,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1], """
@@ -1577,9 +1412,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1], """
@@ -1595,9 +1428,7 @@ class TestCompiler(object):
     def test_regexp(self, space):
         self.assert_compiles(space, "/a/", """
         LOAD_CONST 0
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
 
@@ -1606,9 +1437,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         SEND 1 0
         BUILD_REGEXP
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1623,9 +1452,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         LOAD_CONST 4
         SEND 5 1
-        DISCARD_TOP
 
-        LOAD_CONST 6
         RETURN
         """)
 
@@ -1640,9 +1467,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         LOAD_CONST 4
         SEND 5 1
-        DISCARD_TOP
 
-        LOAD_CONST 6
         RETURN
         """)
 
@@ -1650,9 +1475,7 @@ class TestCompiler(object):
         self.assert_compiles(space, "!3", """
         LOAD_CONST 0
         SEND 1 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1665,9 +1488,7 @@ class TestCompiler(object):
         BUILD_ARRAY 1
         SEND 2 1
         SEND_SPLAT 3
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
         self.assert_compiles(space, "self[3] += 1", """
@@ -1681,9 +1502,7 @@ class TestCompiler(object):
         BUILD_ARRAY 1
         SEND 3 1
         SEND_SPLAT 4
-        DISCARD_TOP
 
-        LOAD_CONST 5
         RETURN
         """)
 
@@ -1717,9 +1536,7 @@ class TestCompiler(object):
         JUMP 49
         DISCARD_TOP
         LOAD_CONST 4
-        DISCARD_TOP
 
-        LOAD_CONST 5
         RETURN
         """)
 
@@ -1746,18 +1563,14 @@ class TestCompiler(object):
         JUMP 43
         DISCARD_TOP
         LOAD_CONST 5
-        DISCARD_TOP
 
-        LOAD_CONST 6
         RETURN
         """)
 
     def test_hash(self, space):
         self.assert_compiles(space, "{}", """
         BUILD_HASH
-        DISCARD_TOP
 
-        LOAD_CONST 0
         RETURN
         """)
         self.assert_compiles(space, "{:abc => 4}", """
@@ -1767,9 +1580,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         SEND 2 2
         DISCARD_TOP
-        DISCARD_TOP
 
-        LOAD_CONST 3
         RETURN
         """)
         self.assert_compiles(space, "{:abc => 4, :def => 5}", """
@@ -1784,9 +1595,7 @@ class TestCompiler(object):
         LOAD_CONST 4
         SEND 2 2
         DISCARD_TOP
-        DISCARD_TOP
 
-        LOAD_CONST 5
         RETURN
         """)
 
@@ -1800,9 +1609,7 @@ class TestCompiler(object):
         DISCARD_TOP
         LOAD_CONST 1
         STORE_INSTANCE_VAR 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1815,9 +1622,7 @@ class TestCompiler(object):
         DISCARD_TOP
         LOAD_CONST 1
         STORE_CONSTANT 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1831,9 +1636,7 @@ class TestCompiler(object):
         DISCARD_TOP
         LOAD_CONST 1
         STORE_INSTANCE_VAR 0
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1843,9 +1646,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         BUILD_BLOCK 0
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1895,9 +1696,6 @@ class TestCompiler(object):
         STORE_DEREF 0
         DISCARD_TOP
 
-        DISCARD_TOP
-
-        LOAD_CONST 7
         RETURN
         """)
 
@@ -1920,8 +1718,6 @@ class TestCompiler(object):
         STORE_DEREF 2
         DISCARD_TOP
 
-        DISCARD_TOP
-        LOAD_CONST 3
         RETURN
         """)
 
@@ -1936,9 +1732,7 @@ class TestCompiler(object):
         COERCE_ARRAY
         UNPACK_SEQUENCE_SPLAT 1 0
         DISCARD_TOP
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -1954,12 +1748,10 @@ class TestCompiler(object):
         DISCARD_TOP
 
         LOAD_CONST 3
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
-        [w_a, w_b, w_alias_method, _, _] = bc.consts_w
+        [w_a, w_b, w_alias_method, _] = bc.consts_w
         assert space.symbol_w(w_a) == "a"
         assert space.symbol_w(w_b) == "b"
         assert space.symbol_w(w_alias_method) == "alias_method"
@@ -1980,9 +1772,7 @@ class TestCompiler(object):
 
         LOAD_CONST 2
         DEFINED_METHOD 3
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -1992,9 +1782,7 @@ class TestCompiler(object):
         """, """
         LOAD_SELF
         SEND_SUPER 0 0
-        DISCARD_TOP
 
-        LOAD_CONST 1
         RETURN
         """)
         assert bc.consts_w[0] is space.w_nil
@@ -2010,9 +1798,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_FUNCTION
         DEFINE_FUNCTION
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1], """
@@ -2033,9 +1819,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         LOAD_CONST 2
         SEND_SUPER 3 3
-        DISCARD_TOP
 
-        LOAD_CONST 4
         RETURN
         """)
 
@@ -2050,9 +1834,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         BUILD_BLOCK 0
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
@@ -2086,9 +1868,7 @@ class TestCompiler(object):
         JUMP 3
         POP_BLOCK
         LOAD_CONST 1
-        DISCARD_TOP
 
-        LOAD_CONST 0
         RETURN
         """)
 
@@ -2108,9 +1888,7 @@ class TestCompiler(object):
         JUMP 3
         POP_BLOCK
         LOAD_CONST 2
-        DISCARD_TOP
 
-        LOAD_CONST 0
         RETURN
         """)
 
@@ -2122,9 +1900,7 @@ class TestCompiler(object):
         LOAD_CONST 0
         BUILD_BLOCK 0
         SEND_BLOCK 1 1
-        DISCARD_TOP
 
-        LOAD_CONST 2
         RETURN
         """)
 
