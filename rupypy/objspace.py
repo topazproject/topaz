@@ -218,8 +218,9 @@ class ObjectSpace(object):
         except LexerError as e:
             raise self.error(self.w_SyntaxError, "line %d" % e.pos.lineno)
 
-    def compile(self, source, filepath, initial_lineno=1):
-        symtable = SymbolTable()
+    def compile(self, source, filepath, initial_lineno=1, symtable=None):
+        if symtable is None:
+            symtable = SymbolTable()
         astnode = self.parse(source, initial_lineno=initial_lineno, symtable=symtable)
         ctx = CompilerContext(self, "<main>", symtable, filepath)
         with ctx.set_lineno(initial_lineno):
@@ -326,7 +327,9 @@ class ObjectSpace(object):
         return W_ProcObject(self, block, is_lambda)
 
     def newbinding_fromframe(self, frame):
-        return W_BindingObject(self)
+        names = frame.bytecode.cellvars + frame.bytecode.freevars
+        cells = [c.upgrade_to_closure(self, frame, idx) for idx, c in enumerate(frame.cells)]
+        return W_BindingObject(self, names, cells, frame.w_self, frame.w_scope)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
