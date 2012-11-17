@@ -162,7 +162,7 @@ class Interpreter(object):
         frame.cells[idx].set(space, frame, idx, frame.peek())
 
     def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx])
+        frame.push(frame.cells[idx].upgrade_to_closure(space, frame, idx))
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
         w_scope = frame.pop()

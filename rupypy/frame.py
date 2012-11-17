@@ -1,6 +1,6 @@
 from pypy.rlib import jit
 
-from rupypy.closure import ClosureCell
+from rupypy.closure import LocalCell
 
 
 class BaseFrame(object):
@@ -24,7 +24,7 @@ class Frame(BaseFrame):
         self.bytecode = bytecode
         self.localsstack_w = [None] * (len(bytecode.cellvars) + bytecode.max_stackdepth)
         self.stackpos = len(bytecode.cellvars)
-        self.cells = [ClosureCell(None) for _ in bytecode.cellvars] + [None] * len(bytecode.freevars)
+        self.cells = [LocalCell() for _ in bytecode.cellvars] + [None] * len(bytecode.freevars)
         self.w_self = w_self
         self.w_scope = w_scope
         self.lexical_scope = lexical_scope
