@@ -135,9 +135,6 @@ class Frame(BaseFrame):
     def get_code_name(self):
         return self.bytecode.name
 
-    def get_block(self):
-        return self.block
-
 
 class BuiltinFrame(BaseFrame):
     def __init__(self, name):
@@ -155,6 +152,3 @@ class BuiltinFrame(BaseFrame):
 
     def get_code_name(self):
         return self.name
-
-    def get_block(self):
-        return self.backref().get_block()

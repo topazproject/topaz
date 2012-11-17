@@ -173,7 +173,7 @@ class Kernel(Module):
     @moduledef.function("iterator?")
     def method_block_givenp(self, space):
         return space.newbool(
-            space.getexecutioncontext().gettopframe().get_block() is not None
+            space.getexecutioncontext().gettoprubyframe().block is not None
         )
 
     @moduledef.function("exec")

@@ -1,6 +1,7 @@
 from pypy.rlib import jit
 
 from rupypy.error import RubyError
+from rupypy.frame import Frame
 
 
 class IntegerWrapper(object):
@@ -35,6 +36,13 @@ class ExecutionContext(object):
 
     def gettopframe(self):
         return self.topframeref()
+
+    @jit.unroll_safe
+    def gettoprubyframe(self):
+        frame = self.gettopframe()
+        while frame is not None and not isinstance(frame, Frame):
+            frame = frame.backref()
+        return frame
 
 
 class _VisitFrameContextManager(object):
