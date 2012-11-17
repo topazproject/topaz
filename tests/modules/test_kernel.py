@@ -296,8 +296,6 @@ class TestExec(BaseRuPyPyTest):
 
 class TestBinding(object):
     def test_in_block(self, space):
-        import py
-        py.test.skip()
         w_res = space.execute("""
         def f(a, b)
             return proc { binding }
