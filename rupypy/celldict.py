@@ -24,10 +24,10 @@ class Cell(BaseCell):
         obj.w_value = copy.deepcopy(self.w_value, memo)
         return obj
 
-    def get(self, space, name):
+    def getvalue(self, space, name):
         return self.w_value
 
-    def set(self, space, name, w_value):
+    def setvalue(self, space, name, w_value):
         self.w_value = w_value
 
 
@@ -42,10 +42,10 @@ class GetterSetterCell(BaseCell):
         obj.setter = copy.deepcopy(self.setter, memo)
         return obj
 
-    def get(self, space, name):
+    def getvalue(self, space, name):
         return self.getter(space)
 
-    def set(self, space, name, w_value):
+    def setvalue(self, space, name, w_value):
         if self.setter is None:
             raise space.error(space.w_NameError,
                 "%s is a read-only variable" % name
@@ -77,14 +77,14 @@ class CellDict(object):
     def get(self, space, name):
         cell = self._get_cell(name, self.version)
         if isinstance(cell, BaseCell):
-            return cell.get(space, name)
+            return cell.getvalue(space, name)
         else:
             return cell
 
     def set(self, space, name, w_value):
         cell = self._get_cell(name, self.version)
         if isinstance(cell, BaseCell):
-            cell.set(space, name, w_value)
+            cell.setvalue(space, name, w_value)
         else:
             if cell is not None:
                 w_value = Cell(w_value)
