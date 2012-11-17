@@ -734,6 +734,13 @@ class SendBlock(Node):
         if self.splat_arg is not None:
             block_ctx.symtable.get_cell_num(self.splat_arg)
 
+        for name in ctx.symtable.cells:
+            if (name not in block_ctx.symtable.cell_numbers and
+                name not in block_ctx.symtable.cells):
+
+                block_ctx.symtable.cells[name] = block_ctx.symtable.FREEVAR
+                block_ctx.symtable.get_cell_num(name)
+
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
         bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, None)

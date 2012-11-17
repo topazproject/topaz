@@ -806,17 +806,18 @@ class TestCompiler(object):
         LOAD_DEREF 0
         LOAD_CONST 0
         LOAD_CLOSURE 1
-        BUILD_BLOCK 1
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 2
         SEND_BLOCK 1 1
         DISCARD_TOP
         LOAD_DEREF 1
         RETURN
         """)
         self.assert_compiled(bc.consts_w[1].consts_w[0], """
-        LOAD_DEREF 1
+        LOAD_DEREF 2
         LOAD_DEREF 0
         SEND 0 1
-        STORE_DEREF 1
+        STORE_DEREF 2
         RETURN
         """)
 
