@@ -61,8 +61,6 @@ class Frame(BaseFrame):
                 "wrong number of arguments (%d for %d)" % (len(args_w), len(bytecode.arg_locs) - len(bytecode.defaults))
             )
 
-        ec = space.getexecutioncontext()
-
         for i in xrange(min(len(args_w), len(bytecode.arg_locs))):
             self._set_normal_arg(space, bytecode, i, args_w[i])
         defl_start = len(args_w) - (len(bytecode.arg_locs) - len(bytecode.defaults))
@@ -73,14 +71,14 @@ class Frame(BaseFrame):
 
         if bytecode.splat_arg_pos != -1:
             splat_args_w = args_w[len(bytecode.arg_locs):]
-            w_splat_args = ec.space.newarray(splat_args_w)
+            w_splat_args = space.newarray(splat_args_w)
             self._set_arg(space, bytecode, bytecode.splat_arg_loc, bytecode.splat_arg_pos, w_splat_args)
 
         if bytecode.block_arg_pos != -1:
             if block is None:
-                w_block = ec.space.w_nil
+                w_block = space.w_nil
             else:
-                w_block = ec.space.newproc(block)
+                w_block = space.newproc(block)
             self._set_arg(space, bytecode, bytecode.block_arg_loc, bytecode.block_arg_pos, w_block)
 
     def push(self, w_obj):

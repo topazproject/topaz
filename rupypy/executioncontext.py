@@ -9,8 +9,7 @@ class IntegerWrapper(object):
 
 
 class ExecutionContext(object):
-    def __init__(self, space):
-        self.space = space
+    def __init__(self):
         self.topframeref = jit.vref_None
         self.last_instr_ref = None
 

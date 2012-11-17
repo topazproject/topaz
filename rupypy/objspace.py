@@ -235,7 +235,7 @@ class ObjectSpace(object):
     def getexecutioncontext(self):
         # When we have threads this should become a thread local.
         if self._executioncontext is None:
-            self._executioncontext = ExecutionContext(self)
+            self._executioncontext = ExecutionContext()
         return self._executioncontext
 
     def create_frame(self, bc, w_self=None, w_scope=None, lexical_scope=None,
