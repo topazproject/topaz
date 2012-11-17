@@ -32,11 +32,7 @@ class Frame(BaseFrame):
         self.parent_interp = parent_interp
         self.lastblock = None
 
-    def _set_normal_arg(self, space, bytecode, i, w_value):
-        pos = bytecode.arg_pos[i]
-        self._set_arg(space, bytecode, pos, w_value)
-
-    def _set_arg(self, space, bytecode, pos, w_value):
+    def _set_arg(self, space, pos, w_value):
         assert pos >= 0
         self.cells[pos].set(space, self, pos, w_value)
 
@@ -57,24 +53,24 @@ class Frame(BaseFrame):
             )
 
         for i in xrange(min(len(args_w), len(bytecode.arg_pos))):
-            self._set_normal_arg(space, bytecode, i, args_w[i])
+            self._set_arg(space, bytecode.arg_pos[i], args_w[i])
         defl_start = len(args_w) - (len(bytecode.arg_pos) - len(bytecode.defaults))
         for i in xrange(len(bytecode.arg_pos) - len(args_w)):
             bc = bytecode.defaults[i + defl_start]
             w_value = Interpreter().interpret(space, self, bc)
-            self._set_normal_arg(space, bytecode, i + len(args_w), w_value)
+            self._set_arg(space, bytecode.arg_pos[i + len(args_w)], w_value)
 
         if bytecode.splat_arg_pos != -1:
             splat_args_w = args_w[len(bytecode.arg_pos):]
             w_splat_args = space.newarray(splat_args_w)
-            self._set_arg(space, bytecode, bytecode.splat_arg_pos, w_splat_args)
+            self._set_arg(space, bytecode.splat_arg_pos, w_splat_args)
 
         if bytecode.block_arg_pos != -1:
             if block is None:
                 w_block = space.w_nil
             else:
                 w_block = space.newproc(block)
-            self._set_arg(space, bytecode, bytecode.block_arg_pos, w_block)
+            self._set_arg(space, bytecode.block_arg_pos, w_block)
 
     def push(self, w_obj):
         stackpos = jit.promote(self.stackpos)
