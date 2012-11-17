@@ -27,6 +27,7 @@ from rupypy.modules.process import Process
 from rupypy.modules.topaz import Topaz
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.bignumobject import W_BignumObject
+from rupypy.objects.bindingobject import W_BindingObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.classobject import W_ClassObject
 from rupypy.objects.codeobject import W_CodeObject
@@ -322,6 +323,9 @@ class ObjectSpace(object):
 
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)
+
+    def newbinding_fromframe(self, frame):
+        return W_BindingObject(self)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)

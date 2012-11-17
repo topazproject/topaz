@@ -176,6 +176,10 @@ class Kernel(Module):
             space.getexecutioncontext().gettoprubyframe().block is not None
         )
 
+    @moduledef.function("binding")
+    def method_binding(self, space):
+        return space.newbinding_fromframe(space.getexecutioncontext().gettoprubyframe())
+
     @moduledef.function("exec")
     def method_exec(self, space, args_w):
         if len(args_w) > 1 and space.respond_to(args_w[0], space.newsymbol("to_hash")):
