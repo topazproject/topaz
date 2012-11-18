@@ -326,7 +326,6 @@ class ObjectSpace(object):
     def newproc(self, block, is_lambda=False):
         return W_ProcObject(self, block, is_lambda)
 
-    @jit.unroll_safe
     def newbinding_fromframe(self, frame):
         names = frame.bytecode.cellvars + frame.bytecode.freevars
         cells = [c.upgrade_to_closure(self, frame, idx) for idx, c in enumerate(frame.cells)]
