@@ -739,7 +739,6 @@ class SendBlock(Node):
                 name not in block_ctx.symtable.cells):
 
                 block_ctx.symtable.cells[name] = block_ctx.symtable.FREEVAR
-                block_ctx.symtable.get_cell_num(name)
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)

@@ -26,3 +26,10 @@ class TestBindingObject(object):
         return f(3, 4).call.eval("a + b")
         """)
         assert space.int_w(w_res) == 7
+
+    def test_unused_closure(self, space):
+        w_res = space.execute("""
+        a = 5
+        return binding.eval('12')
+        """)
+        assert space.int_w(w_res) == 12

@@ -98,6 +98,11 @@ class CompilerContext(object):
         cellvars = []
         freevars = []
 
+        # Make sure that any cell vars have a number.
+        for name in self.symtable.cells:
+            if name not in self.symtable.cell_numbers:
+                self.symtable.get_cell_num(name)
+
         cells = [None] * len(self.symtable.cell_numbers)
         for name, pos in self.symtable.cell_numbers.iteritems():
             cells[pos] = name
