@@ -10,6 +10,13 @@ class TestBindingObject(object):
         """)
         assert space.int_w(w_res) == 6
 
+    def test_local_in_binding(self, space):
+        w_res = space.execute("""
+        a = 5
+        return binding.eval('b = 4; a + b')
+        """)
+        return space.int_w(w_res) == 9
+
     def test_in_block(self, space):
         w_res = space.execute("""
         def f(a, b)

@@ -1,5 +1,4 @@
 from rupypy import consts
-from rupypy.objects.boolobject import W_TrueObject
 
 
 class TestCompiler(object):

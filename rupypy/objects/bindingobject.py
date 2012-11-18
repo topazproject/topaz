@@ -20,10 +20,9 @@ class W_BindingObject(W_Object):
         symtable = SymbolTable()
         for name in self.names:
             symtable.cells[name] = symtable.FREEVAR
-            symtable.get_cell_num(name)
         bc = space.compile(source, "", symtable=symtable)
         frame = space.create_frame(bc, w_self=self.w_self, w_scope=self.w_scope)
         for idx, cell in enumerate(self.cells):
-            frame.cells[idx] = cell
+            frame.cells[idx + len(bc.cellvars)] = cell
         with space.getexecutioncontext().visit_frame(frame):
             return space.execute_frame(frame, bc)
