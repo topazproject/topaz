@@ -328,7 +328,7 @@ class ObjectSpace(object):
 
     def newbinding_fromframe(self, frame):
         names = frame.bytecode.cellvars + frame.bytecode.freevars
-        cells = [c.upgrade_to_closure(self, frame, idx) for idx, c in enumerate(frame.cells)]
+        cells = [c.upgrade_to_closure(frame, idx) for idx, c in enumerate(frame.cells)]
         return W_BindingObject(self, names, cells, frame.w_self, frame.w_scope)
 
     def int_w(self, w_obj):
