@@ -255,6 +255,10 @@ class W_StringObject(W_Object):
     def method_to_s(self, space):
         return self
 
+    @classdef.method("inspect")
+    def method_inspect(self, space):
+        return space.newstr_fromstr('"%s"' % self.str_w(space))
+
     @classdef.method("+")
     def method_plus(self, space, w_other):
         assert isinstance(w_other, W_StringObject)

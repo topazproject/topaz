@@ -20,6 +20,10 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute('return "ABC".to_s')
         assert space.str_w(w_res) == "ABC"
 
+    def test_inspect(self, space):
+        w_res = space.execute('return "abc".inspect')
+        assert space.str_w(w_res) == '"abc"'
+
     def test_to_str(self, space):
         w_res = space.execute('return "ABC".to_str')
         assert space.str_w(w_res) == "ABC"
