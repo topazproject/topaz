@@ -451,6 +451,15 @@ class W_StringObject(W_Object):
     def empty?
         self.length == 0
     end
+
+    def =~(obj)
+        case obj
+        when String
+            raise TypeError, "type mismatch: String given"
+        else
+            return obj =~ self
+        end
+    end
     """)
 
     @classdef.method("%")
