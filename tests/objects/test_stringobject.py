@@ -284,4 +284,3 @@ class TestStringMod(object):
         assert space.str_w(w_res) == "12-happy"
         w_res = space.execute("return '1%02d%02d%02d%04d' % [1, 2, 3, 4]")
         assert space.str_w(w_res) == "10102030004"
->>>>>>> master
