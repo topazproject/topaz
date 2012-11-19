@@ -27,3 +27,17 @@ class TestRangeObject(BaseRuPyPyTest):
 
         w_res = space.execute("return (1...5).exclude_end?")
         assert self.unwrap(space, w_res) is True
+
+    def test_eqeqeq(self, space):
+        w_res = space.execute("return (1..10) === 5")
+        assert w_res is space.w_true
+        w_res = space.execute("return (1..10) === -1")
+        assert w_res is space.w_false
+
+    def test_first(self, space):
+        w_res = space.execute("return (1..10).first")
+        assert space.int_w(w_res) == 1
+
+    def test_last(self, space):
+        w_res = space.execute("return (1..10).last")
+        assert space.int_w(w_res) == 10

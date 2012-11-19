@@ -1,3 +1,7 @@
+import os
+
+import py
+
 from ..base import BaseRuPyPyTest
 
 
@@ -5,7 +9,12 @@ class TestKernel(BaseRuPyPyTest):
     def test_puts_nil(self, space, capfd):
         space.execute("puts nil")
         out, err = capfd.readouterr()
-        assert out == "nil\n"
+        assert out == "\n"
+
+    def test_print(self, space, capfd):
+        space.execute("print 1, 3")
+        out, err = capfd.readouterr()
+        assert out == "13"
 
     def test_lambda(self, space):
         w_res = space.execute("""
@@ -109,6 +118,10 @@ class TestKernel(BaseRuPyPyTest):
         w_res = space.execute("return [String('hello'), String(4)]")
         assert self.unwrap(space, w_res) == ["hello", "4"]
 
+    def test_Integer(self, space):
+        w_res = space.execute("return [Integer(4), Integer('123')]")
+        assert self.unwrap(space, w_res) == [4, 123]
+
     def test_exit(self, space):
         with self.raises(space, "SystemExit"):
             space.execute("Kernel.exit")
@@ -139,6 +152,13 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [False, True]
 
+    def test_eqlp(self, space):
+        w_res = space.execute("""
+        x = Object.new
+        return [x.eql?(x), x.eql?(4)]
+        """)
+        assert self.unwrap(space, w_res) == [True, False]
+
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
@@ -152,7 +172,7 @@ class TestRequire(BaseRuPyPyTest):
         require '%s'
 
         return t(5, 10)
-        """ % str(f))
+        """ % f)
         assert space.int_w(w_res) == -5
 
     def test_no_ext(self, space, tmpdir):
@@ -177,11 +197,11 @@ class TestRequire(BaseRuPyPyTest):
         end
         """)
         w_res = space.execute("""
-        $LOAD_PATH = ['%s']
+        $LOAD_PATH[0..-1] = ['%s']
         require 't.rb'
 
         return t(2, 5)
-        """ % str(tmpdir))
+        """ % tmpdir)
         assert space.int_w(w_res) == -3
 
     def test_stdlib_default_load_path(self, space):
@@ -207,7 +227,7 @@ class TestRequire(BaseRuPyPyTest):
         require '%s'
 
         return @a
-        """ % (str(f), str(f), str(f)))
+        """ % (f, f, f))
         assert space.int_w(w_res) == 1
 
     def test_load(self, space, tmpdir):
@@ -223,9 +243,52 @@ class TestRequire(BaseRuPyPyTest):
         load '%s'
 
         return @a
-        """ % (str(f), str(f), str(f)))
+        """ % (f, f, f))
         assert space.int_w(w_res) == 3
 
     def test_responds_to(self, space):
         w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
         assert self.unwrap(space, w_res) == [False, True]
+
+    def test_Float(self, space):
+        assert space.float_w(space.execute("return Float(1)")) == 1.0
+        assert space.float_w(space.execute("return Float(1.1)")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1')")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1e10')")) == 11000000000.0
+        with self.raises(space, "TypeError"):
+            space.execute("Float(nil)")
+        with self.raises(space, "ArgumentError"):
+            space.execute("Float('a')")
+        w_res = space.execute("""
+        class A; def to_f; 1.1; end; end
+        return Float(A.new)
+        """)
+        assert space.float_w(w_res) == 1.1
+
+
+class TestExec(BaseRuPyPyTest):
+    def fork_and_wait(self, space, capfd, code):
+        cpid = os.fork()
+        if cpid == 0:
+            space.execute(code)
+        else:
+            os.waitpid(cpid, 0)
+            out, err = capfd.readouterr()
+            return out
+
+    def test_exec_with_sh(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec 'echo $0'")
+        assert out == "sh\n"
+
+    def test_exec_directly(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec '/bin/echo', '$0'")
+        assert out == "$0\n"
+
+    def test_exec_with_custom_argv0(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec ['/bin/sh', 'argv0'], '-c', 'echo $0'")
+        assert out == "argv0\n"
+
+    @py.test.mark.xfail
+    def test_exec_with_path_search(self, space, capfd):
+        out = self.fork_and_wait(space, capfd, "exec 'echo', '$0'")
+        assert out == "$0\n"

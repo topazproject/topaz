@@ -34,8 +34,6 @@ class Main(Node):
 
     def compile(self, ctx):
         self.block.compile(ctx)
-        ctx.emit(consts.DISCARD_TOP)
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_true))
         ctx.emit(consts.RETURN)
 
 
@@ -107,8 +105,8 @@ class BaseLoop(Node):
 
             ctx.use_next_block(anchor)
             ctx.emit(consts.POP_BLOCK)
-        ctx.use_next_block(end)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+        ctx.use_next_block(end)
 
 
 class While(BaseLoop):
@@ -130,6 +128,20 @@ class Next(BaseStatement):
         elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
             block = ctx.find_frame_block(ctx.F_BLOCK_LOOP)
             ctx.emit_jump(consts.CONTINUE_LOOP, block)
+        else:
+            raise NotImplementedError
+
+
+class Break(BaseStatement):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def compile(self, ctx):
+        self.expr.compile(ctx)
+        if ctx.in_frame_block(ctx.F_BLOCK_LOOP):
+            ctx.emit(consts.BREAK_LOOP)
+        elif isinstance(ctx.symtable, BlockSymbolTable):
+            ctx.emit(consts.RAISE_BREAK)
         else:
             raise NotImplementedError
 
@@ -221,13 +233,17 @@ class TryFinally(Node):
 
 
 class Class(Node):
-    def __init__(self, name, superclass, body):
+    def __init__(self, scope, name, superclass, body):
+        self.scope = scope
         self.name = name
         self.superclass = superclass
         self.body = body
 
     def compile(self, ctx):
-        ctx.emit(consts.LOAD_SCOPE)
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         if self.superclass is None:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
@@ -237,8 +253,6 @@ class Class(Node):
 
         body_ctx = ctx.get_subctx("<class:%s>" % self.name, self)
         self.body.compile(body_ctx)
-        body_ctx.emit(consts.DISCARD_TOP)
-        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
@@ -257,8 +271,6 @@ class SingletonClass(Node):
 
         body_ctx = ctx.get_subctx("singletonclass", self)
         self.body.compile(body_ctx)
-        body_ctx.emit(consts.DISCARD_TOP)
-        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
@@ -267,7 +279,8 @@ class SingletonClass(Node):
 
 
 class Module(Node):
-    def __init__(self, name, body):
+    def __init__(self, scope, name, body):
+        self.scope = scope
         self.name = name
         self.body = body
 
@@ -279,7 +292,10 @@ class Module(Node):
         body_ctx.emit(consts.RETURN)
         bytecode = body_ctx.create_bytecode([], [], None, None)
 
-        ctx.emit(consts.LOAD_SCOPE)
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_MODULE)
@@ -301,10 +317,7 @@ class Function(Node):
         for arg in self.args:
             assert isinstance(arg, Argument)
             arg_names.append(arg.name)
-            if function_ctx.symtable.is_local(arg.name):
-                function_ctx.symtable.get_local_num(arg.name)
-            elif function_ctx.symtable.is_cell(arg.name):
-                function_ctx.symtable.get_cell_num(arg.name)
+            function_ctx.symtable.get_cell_num(arg.name)
 
             arg_ctx = CompilerContext(ctx.space, self.name, function_ctx.symtable, ctx.filepath)
             if arg.defl is not None:
@@ -313,15 +326,9 @@ class Function(Node):
                 bc = arg_ctx.create_bytecode([], [], None, None)
                 defaults.append(bc)
         if self.splat_arg is not None:
-            if function_ctx.symtable.is_local(self.splat_arg):
-                function_ctx.symtable.get_local_num(self.splat_arg)
-            elif function_ctx.symtable.is_cell(self.splat_arg):
-                function_ctx.symtable.get_cell_num(self.splat_arg)
+            function_ctx.symtable.get_cell_num(self.splat_arg)
         if self.block_arg is not None:
-            if function_ctx.symtable.is_local(self.block_arg):
-                function_ctx.symtable.get_local_num(self.block_arg)
-            elif function_ctx.symtable.is_cell(self.block_arg):
-                function_ctx.symtable.get_cell_num(self.block_arg)
+            function_ctx.symtable.get_cell_num(self.block_arg)
 
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
@@ -361,29 +368,32 @@ class Case(Node):
         self.cond.compile(ctx)
         for when in self.whens:
             assert isinstance(when, When)
-            next_when = ctx.new_block()
-            when_block = ctx.new_block()
+            with ctx.set_lineno(when.lineno):
+                next_when = ctx.new_block()
+                when_block = ctx.new_block()
 
-            for expr in when.conds:
-                next_expr = ctx.new_block()
-                ctx.emit(consts.DUP_TOP)
-                expr.compile(ctx)
-                ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
-                ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
-                ctx.use_next_block(next_expr)
-            ctx.emit_jump(consts.JUMP, next_when)
-            ctx.use_next_block(when_block)
-            ctx.emit(consts.DISCARD_TOP)
-            when.block.compile(ctx)
-            ctx.emit_jump(consts.JUMP, end)
-            ctx.use_next_block(next_when)
+                for expr in when.conds:
+                    next_expr = ctx.new_block()
+                    ctx.emit(consts.DUP_TOP)
+                    expr.compile(ctx)
+                    ctx.emit(consts.ROT_TWO)
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("==="), 1)
+                    ctx.emit_jump(consts.JUMP_IF_TRUE, when_block)
+                    ctx.use_next_block(next_expr)
+                ctx.emit_jump(consts.JUMP, next_when)
+                ctx.use_next_block(when_block)
+                ctx.emit(consts.DISCARD_TOP)
+                when.block.compile(ctx)
+                ctx.emit_jump(consts.JUMP, end)
+                ctx.use_next_block(next_when)
         ctx.emit(consts.DISCARD_TOP)
         self.elsebody.compile(ctx)
         ctx.use_next_block(end)
 
 
 class When(Node):
-    def __init__(self, conds, block):
+    def __init__(self, conds, block, lineno):
+        Node.__init__(self, lineno)
         self.conds = conds
         self.block = block
 
@@ -407,9 +417,24 @@ class Yield(Node):
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
-            for arg in self.args:
-                arg.compile(ctx)
-            ctx.emit(consts.YIELD, len(self.args))
+            if self.is_splat():
+                for arg in self.args:
+                    arg.compile(ctx)
+                    if not isinstance(arg, Splat):
+                        ctx.emit(consts.BUILD_ARRAY, 1)
+                for i in range(len(self.args) - 1):
+                    ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+                ctx.emit(consts.YIELD_SPLAT)
+            else:
+                for arg in self.args:
+                    arg.compile(ctx)
+                ctx.emit(consts.YIELD, len(self.args))
+
+    def is_splat(self):
+        for arg in self.args:
+            if isinstance(arg, Splat):
+                return True
+        return False
 
 
 class Alias(BaseStatement):
@@ -449,6 +474,12 @@ class Assignment(Node):
         self.target.compile_receiver(ctx)
         self.value.compile(ctx)
         self.target.compile_store(ctx)
+
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
 
 
 class AugmentedAssignment(Node):
@@ -647,6 +678,9 @@ class Send(BaseSend):
     def method_name_const(self, ctx):
         return ctx.create_symbol_const(self.method)
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_METHOD, self.method_name_const(ctx))
+
 
 class Super(BaseSend):
     send = consts.SEND_SUPER
@@ -667,10 +701,14 @@ class Splat(Node):
         self.value = value
 
     def compile_receiver(self, ctx):
-        return self.value.compile_receiver(ctx)
+        if self.value is None:
+            return 0
+        else:
+            return self.value.compile_receiver(ctx)
 
     def compile_store(self, ctx):
-        return self.value.compile_store(ctx)
+        if self.value is not None:
+            return self.value.compile_store(ctx)
 
     def compile(self, ctx):
         self.value.compile(ctx)
@@ -692,14 +730,19 @@ class SendBlock(Node):
         for arg in self.block_args:
             assert isinstance(arg, Argument)
             block_args.append(arg.name)
-            if block_ctx.symtable.is_local(arg.name):
-                block_ctx.symtable.get_local_num(arg.name)
-            elif block_ctx.symtable.is_cell(arg.name):
-                block_ctx.symtable.get_cell_num(arg.name)
+            block_ctx.symtable.get_cell_num(arg.name)
+        if self.splat_arg is not None:
+            block_ctx.symtable.get_cell_num(self.splat_arg)
+
+        for name in ctx.symtable.cells:
+            if (name not in block_ctx.symtable.cell_numbers and
+                name not in block_ctx.symtable.cells):
+
+                block_ctx.symtable.cells[name] = block_ctx.symtable.FREEVAR
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, [], None, None)
+        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, None)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)
@@ -728,7 +771,7 @@ class AutoSuper(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
         for name in ctx.symtable.arguments:
-            ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(name))
+            ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(name))
 
         if ctx.code_name == "<main>":
             name = ctx.create_const(ctx.space.w_nil)
@@ -748,9 +791,17 @@ class Subscript(Node):
 
     def compile_receiver(self, ctx):
         self.target.compile(ctx)
-        for arg in self.args:
-            arg.compile(ctx)
-        ctx.emit(consts.BUILD_ARRAY, len(self.args))
+        if self.is_splat():
+            for arg in self.args:
+                arg.compile(ctx)
+                if not isinstance(arg, Splat):
+                    ctx.emit(consts.BUILD_ARRAY, 1)
+            for i in range(len(self.args) - 1):
+                ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+        else:
+            for arg in self.args:
+                arg.compile(ctx)
+            ctx.emit(consts.BUILD_ARRAY, len(self.args))
         return 2
 
     def compile_load(self, ctx):
@@ -761,23 +812,53 @@ class Subscript(Node):
         ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
         ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
 
+    def is_splat(self):
+        for arg in self.args:
+            if isinstance(arg, Splat):
+                return True
+        return False
 
-class LookupConstant(Node):
-    def __init__(self, value, name, lineno):
+
+class Constant(Node):
+    def __init__(self, name, lineno):
         Node.__init__(self, lineno)
-        self.value = value
         self.name = name
 
     def compile(self, ctx):
         with ctx.set_lineno(self.lineno):
-            if self.value is not None:
-                self.value.compile(ctx)
-            else:
-                ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
-            ctx.emit(consts.LOAD_CONSTANT, ctx.create_symbol_const(self.name))
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
+
+    def compile_load(self, ctx):
+        ctx.emit(consts.LOAD_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_receiver(self, ctx):
-        self.value.compile(ctx)
+        Scope(self.lineno).compile(ctx)
+        return 1
+
+    def compile_store(self, ctx):
+        ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
+
+
+class LookupConstant(Node):
+    def __init__(self, scope, name, lineno):
+        Node.__init__(self, lineno)
+        self.scope = scope
+        self.name = name
+
+    def compile(self, ctx):
+        with ctx.set_lineno(self.lineno):
+            self.compile_receiver(ctx)
+            self.compile_load(ctx)
+
+    def compile_receiver(self, ctx):
+        if self.scope is not None:
+            self.scope.compile(ctx)
+        else:
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         return 1
 
     def compile_load(self, ctx):
@@ -794,6 +875,12 @@ class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
 
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("self").compile(ctx)
+
 
 class Scope(Node):
     def compile(self, ctx):
@@ -806,12 +893,7 @@ class Variable(Node):
         self.name = name
 
     def compile(self, ctx):
-        if ctx.symtable.is_local(self.name):
-            ctx.emit(consts.LOAD_LOCAL, ctx.symtable.get_local_num(self.name))
-        elif ctx.symtable.is_cell(self.name):
-            ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
-        else:
-            raise SystemError
+        ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(self.name))
 
     def compile_receiver(self, ctx):
         return 0
@@ -820,12 +902,10 @@ class Variable(Node):
         self.compile(ctx)
 
     def compile_store(self, ctx):
-        if ctx.symtable.is_local(self.name):
-            loc = ctx.symtable.get_local_num(self.name)
-            ctx.emit(consts.STORE_LOCAL, loc)
-        elif ctx.symtable.is_cell(self.name):
-            loc = ctx.symtable.get_cell_num(self.name)
-            ctx.emit(consts.STORE_DEREF, loc)
+        ctx.emit(consts.STORE_DEREF, ctx.symtable.get_cell_num(self.name))
+
+    def compile_defined(self, ctx):
+        ConstantString("local-variable").compile(ctx)
 
 
 class Global(Node):
@@ -949,8 +1029,22 @@ class ConstantInt(ConstantNode):
     def __init__(self, intvalue):
         self.intvalue = intvalue
 
+    def negate(self):
+        return ConstantInt(-self.intvalue)
+
     def create_const(self, ctx):
         return ctx.create_int_const(self.intvalue)
+
+
+class ConstantBigInt(ConstantNode):
+    def __init__(self, bigint):
+        self.bigint = bigint
+
+    def negate(self):
+        return ConstantBigInt(self.bigint.neg())
+
+    def create_const(self, ctx):
+        return ctx.create_const(ctx.space.newbigint_fromrbigint(self.bigint))
 
 
 class ConstantFloat(ConstantNode):
@@ -996,6 +1090,12 @@ class ConstantBool(ConstantNode):
     def create_const(self, ctx):
         return ctx.create_const(ctx.space.newbool(self.boolval))
 
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("true" if self.boolval else "false").compile(ctx)
+
 
 class DynamicString(Node):
     def __init__(self, strvalues):
@@ -1031,6 +1131,12 @@ class Symbol(Node):
 class Nil(BaseNode):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
+
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_defined(self, ctx):
+        ConstantString("nil").compile(ctx)
 
 
 class File(BaseNode):

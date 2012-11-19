@@ -43,6 +43,8 @@ class Lexer(object):
         "else": Keyword("ELSE", "ELSE", EXPR_BEG),
         "while": Keyword("WHILE", "WHILE_MOD", EXPR_BEG),
         "until": Keyword("UNTIL", "UNTIL_MOD", EXPR_BEG),
+        "for": Keyword("FOR", "FOR", EXPR_BEG),
+        "in": Keyword("IN", "IN", EXPR_BEG),
         "do": Keyword("DO", "DO", EXPR_BEG),
         "begin": Keyword("BEGIN", "BEGIN", EXPR_BEG),
         "rescue": Keyword("RESCUE", "RESCUE_MOD", EXPR_MID),
@@ -66,6 +68,7 @@ class Lexer(object):
         "defined?": Keyword("DEFINED", "DEFINED", EXPR_ARG),
         "super": Keyword("SUPER", "SUPER", EXPR_ARG),
         "next": Keyword("NEXT", "NEXT", EXPR_MID),
+        "break": Keyword("BREAK", "BREAK", EXPR_MID),
     }
 
     def __init__(self, source, initial_lineno, symtable):
@@ -95,7 +98,11 @@ class Lexer(object):
         del self.current_value[:]
 
     def current_pos(self):
-        return SourcePosition(self.get_idx(), self.get_lineno(), self.get_columno())
+        return SourcePosition(self.idx, self.lineno, self.columno)
+
+    def newline(self):
+        self.lineno += 1
+        self.columno = 1
 
     def emit(self, token):
         value = "".join(self.current_value)
@@ -128,8 +135,7 @@ class Lexer(object):
                 self.comment(ch)
             elif ch == "\n":
                 space_seen = True
-                self.lineno += 1
-                self.columno = 1
+                self.newline()
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
                     self.add(ch)
                     self.command_start = True
@@ -167,7 +173,7 @@ class Lexer(object):
                 for token in self.pipe(ch):
                     yield token
             elif ch == "+":
-                for token in self.plus(ch):
+                for token in self.plus(ch, space_seen):
                     yield token
             elif ch == "-":
                 for token in self.minus(ch, space_seen):
@@ -194,9 +200,8 @@ class Lexer(object):
                 for token in self.slash(ch, space_seen):
                     yield token
             elif ch == "^":
-                self.add(ch)
-                self.set_expression_state()
-                yield self.emit("CARET")
+                for token in self.caret(ch):
+                    yield token
             elif ch == ";":
                 self.add(ch)
                 self.state = self.EXPR_BEG
@@ -221,8 +226,7 @@ class Lexer(object):
             elif ch == "\\":
                 ch2 = self.read()
                 if ch2 == "\n":
-                    self.lineno += 1
-                    self.columno = 1
+                    self.newline()
                     space_seen = True
                     continue
                 raise NotImplementedError
@@ -258,15 +262,6 @@ class Lexer(object):
         self.idx = idx
         self.columno -= 1
 
-    def get_idx(self):
-        return self.idx
-
-    def get_lineno(self):
-        return self.lineno
-
-    def get_columno(self):
-        return self.columno
-
     def is_beg(self):
         return self.state in [self.EXPR_BEG, self.EXPR_MID, self.EXPR_CLASS, self.EXPR_VALUE]
 
@@ -287,7 +282,11 @@ class Lexer(object):
         state = self.state
         if value in self.keywords and self.state != self.EXPR_DOT:
             keyword = self.keywords[value]
-            self.state = keyword.state
+
+            if keyword.normal_token == "NOT":
+                self.state = self.EXPR_ARG
+            else:
+                self.state = keyword.state
 
             if keyword.normal_token == "DO":
                 return self.emit_do(state)
@@ -299,6 +298,12 @@ class Lexer(object):
                 if keyword.inline_token != keyword.normal_token:
                     self.state = self.EXPR_BEG
         else:
+            if (state == self.EXPR_BEG and not command_state) or self.is_arg():
+                ch = self.read()
+                if ch == ":" and self.peek() != ":":
+                    self.state = self.EXPR_BEG
+                    return self.emit("LABEL")
+                self.unread()
             if value[0].isupper():
                 token = self.emit("CONSTANT")
             else:
@@ -385,11 +390,13 @@ class Lexer(object):
             elif ch.isdigit() or (is_hex and ch.upper() in "ABCDEF"):
                 self.add(ch)
             elif ch == "_":
-                if not self.peek().isdigit():
+                if not (self.peek().isdigit() or (is_hex and self.peek().upper() in "ABCDEF")):
                     self.error()
             elif ch.upper() == "E":
                 symbol = "FLOAT"
                 self.add(ch.upper())
+                if self.peek() == "-":
+                    self.add(self.read())
             else:
                 yield self.emit(symbol)
                 self.unread()
@@ -461,6 +468,7 @@ class Lexer(object):
         while True:
             ch = self.read()
             if ch == "\n":
+                self.newline()
                 break
             elif ch == self.EOF:
                 self.unread()
@@ -477,7 +485,7 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\!\"&+`'":
+        if ch in "$>:?\\!\"~&`'+":
             self.add(ch)
             yield self.emit("GVAR")
         else:
@@ -510,12 +518,21 @@ class Lexer(object):
                 yield self.emit(token)
                 break
 
-    def plus(self, ch):
+    def plus(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
             yield self.emit("OP_ASGN")
+        elif self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
+            self.state = self.EXPR_BEG
+            if ch2.isdigit():
+                self.clear()
+                for token in self.number(ch2):
+                    yield token
+            else:
+                self.unread()
+                yield self.emit("UPLUS")
         else:
             self.unread()
             self.state = self.EXPR_BEG
@@ -652,6 +669,19 @@ class Lexer(object):
             self.set_expression_state()
             yield self.emit(tok)
 
+    def caret(self, ch):
+        self.add(ch)
+
+        ch2 = self.read()
+        if ch2 == "=":
+            self.add(ch2)
+            self.state = self.EXPR_BEG
+            yield self.emit("OP_ASGN")
+        else:
+            self.unread()
+            self.set_expression_state()
+            yield self.emit("CARET")
+
     def equal(self, ch):
         self.add(ch)
         self.set_expression_state()
@@ -700,7 +730,14 @@ class Lexer(object):
                 yield self.emit("LEQ")
         elif ch2 == "<":
             self.add(ch2)
-            yield self.emit("LSHFT")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                yield self.emit("LSHFT")
         else:
             self.unread()
             yield self.emit("LT")
@@ -714,7 +751,14 @@ class Lexer(object):
             yield self.emit("GEQ")
         elif ch2 == ">":
             self.add(ch2)
-            yield self.emit("RSHFT")
+            ch3 = self.read()
+            if ch3 == "=":
+                self.add(ch3)
+                self.state = self.EXPR_BEG
+                yield self.emit("OP_ASGN")
+            else:
+                self.unread()
+                yield self.emit("RSHFT")
         else:
             self.unread()
             yield self.emit("GT")
@@ -797,6 +841,9 @@ class Lexer(object):
             return ["\x1b"]
         elif c == "s":
             return [" "]
+        elif c == "\n":
+            self.newline()
+            return ["\n"]
         elif c == "u":
             raise NotImplementedError("UTF-8 escape not implemented")
         elif c == "x":
@@ -964,11 +1011,12 @@ class Lexer(object):
         else:
             if self.is_arg() or self.state in [self.EXPR_END, self.EXPR_ENDFN]:
                 tok = "LCURLY"
+                self.command_start = True
             elif self.state == self.EXPR_ENDARG:
                 tok = "LBRACE_ARG"
+                self.command_start = True
             else:
                 tok = "LBRACE"
-                self.command_start = True
             self.condition_state.stop()
             self.cmd_argument_state.stop()
             self.state = self.EXPR_BEG
@@ -1062,6 +1110,10 @@ class Lexer(object):
         elif ch == "r":
             self.str_term = StringTerm(self, begin, end, is_regexp=True)
             yield self.emit("REGEXP_BEG")
+        elif ch == "s":
+            self.str_term = StringTerm(self, begin, end, expand=False)
+            self.state = self.EXPR_FNAME
+            yield self.emit("SYMBEG")
         else:
             raise NotImplementedError('%' + ch)
 
@@ -1089,6 +1141,8 @@ class StringTerm(BaseStringTerm):
         space_seen = False
         if self.is_qwords and ch.isspace():
             while ch.isspace():
+                if ch == "\n":
+                    self.lexer.newline()
                 ch = self.lexer.read()
             space_seen = True
 
@@ -1215,6 +1269,7 @@ class HeredocTerm(BaseStringTerm):
         while True:
             ch = self.lexer.read()
             if ch == "\n":
+                self.lexer.newline()
                 self.lexer.add(ch)
                 self.start_of_line = True
                 return self.lexer.emit("STRING_CONTENT")

@@ -9,6 +9,7 @@ class ClassDef(object):
         self.app_methods = []
         self.singleton_methods = {}
         self.includes = []
+        self.setup_class_func = None
         self.superclassdef = superclassdef
         self.cls = None
 
@@ -43,6 +44,16 @@ class ClassDef(object):
             return staticmethod(func)
         return adder
 
+    def setup_class(self, func):
+        self.setup_class_func = func
+        return func
+
+    def undefine_allocator(self):
+        @self.singleton_method("allocate")
+        def method_allocate(self, space):
+            raise space.error(space.w_TypeError, "allocator undefined for %s" % self.name)
+        return method_allocate
+
 
 class Module(object):
     pass
@@ -55,6 +66,7 @@ class ModuleDef(object):
         self.app_methods = []
 
         self.singleton_methods = {}
+        self.setup_module_func = None
 
     def __deepcopy__(self, memo):
         return self
@@ -79,6 +91,10 @@ class ModuleDef(object):
             self.singleton_methods[name] = (func, argspec)
             return func
         return adder
+
+    def setup_module(self, func):
+        self.setup_module_func = func
+        return func
 
 
 class ClassCache(Cache):
@@ -110,7 +126,8 @@ class ClassCache(Cache):
             w_mod = self.space.getmoduleobject(mod.moduledef)
             self.space.send(w_class, self.space.newsymbol("include"), [w_mod])
 
-        classdef.cls.setup_class(self.space, w_class)
+        if classdef.setup_class_func is not None:
+            classdef.setup_class_func(classdef.cls, self.space, w_class)
 
 
 class ModuleCache(Cache):
@@ -128,4 +145,8 @@ class ModuleCache(Cache):
         for name, (method, argspec) in moduledef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
             w_mod.attach_method(self.space, name, W_BuiltinFunction(name, func))
+
+        if moduledef.setup_module_func is not None:
+            moduledef.setup_module_func(self.space, w_mod)
+
         yield w_mod

@@ -25,18 +25,19 @@ class W_IOObject(W_Object):
         obj.fd = self.fd
         return obj
 
-    @classmethod
+    @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
-        space.globals.set("$stdin", w_stdin)
+        space.globals.set(space, "$stdin", w_stdin)
         space.set_const(space.w_object, "STDIN", w_stdin)
 
         w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
-        space.globals.set("$stdout", w_stdout)
+        space.globals.set(space, "$stdout", w_stdout)
+        space.globals.set(space, "$>", w_stdout)
         space.set_const(space.w_object, "STDOUT", w_stdout)
 
         w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
-        space.globals.set("$stderr", w_stderr)
+        space.globals.set(space, "$stderr", w_stderr)
         space.set_const(space.w_object, "STDERR", w_stderr)
 
     @classdef.singleton_method("allocate")
@@ -97,6 +98,13 @@ class W_IOObject(W_Object):
         else:
             return w_read_str
 
+    classdef.app_method("""
+    def << s
+        write(s)
+        return self
+    end
+    """)
+
     @classdef.method("write")
     def method_write(self, space, w_str):
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
@@ -111,15 +119,15 @@ class W_IOObject(W_Object):
     @classdef.method("print")
     def method_print(self, space, args_w):
         if not args_w:
-            w_last = space.globals.get("$_")
-            if w_last:
+            w_last = space.globals.get(space, "$_")
+            if w_last is not None:
                 args_w.append(w_last)
-        w_sep = space.globals.get("$,")
+        w_sep = space.globals.get(space, "$,")
         if w_sep:
             sep = space.str_w(w_sep)
         else:
             sep = ""
-        w_end = space.globals.get("$\\")
+        w_end = space.globals.get(space, "$\\")
         if w_end:
             end = space.str_w(w_end)
         else:
@@ -142,7 +150,7 @@ class W_IOObject(W_Object):
 class W_FileObject(W_IOObject):
     classdef = ClassDef("File", W_IOObject.classdef)
 
-    @classmethod
+    @classdef.setup_class
     def setup_class(cls, space, w_cls):
         if sys.platform == "win32":
             w_alt_seperator = space.newstr_fromstr("\\")
