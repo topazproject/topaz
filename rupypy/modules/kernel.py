@@ -87,7 +87,7 @@ class Kernel(Module):
 
         w_loaded_features = space.globals.get(space, '$"')
         w_already_loaded = space.send(
-            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(orig_path)]
+            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(path)]
         )
         if space.is_true(w_already_loaded):
             return space.w_false
