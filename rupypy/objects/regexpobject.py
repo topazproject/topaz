@@ -1,3 +1,5 @@
+from pypy.rlib.rsre import rsre_core
+
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 from rupypy.utils import re_compile
@@ -22,6 +24,11 @@ class W_RegexpObject(W_Object):
             self.flags = flags
             self.groupindex = groupindex
             self.indexgroup = indexgroup
+
+    def make_ctx(self, s):
+        pos = 0
+        endpos = len(s)
+        return rsre_core.StrMatchContext(self.code, s, pos, endpos, self.flags)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -49,3 +56,12 @@ class W_RegexpObject(W_Object):
     def method_source(self, space):
         self._check_initialized(space)
         return space.newstr_fromstr(self.regexp)
+
+    @classdef.method("=~", s="str")
+    def method_match(self, space, s):
+        ctx = self.make_ctx(s)
+        matched = rsre_core.search_context(ctx)
+        if matched:
+            return space.newint(ctx.match_start)
+        else:
+            return space.w_nil
