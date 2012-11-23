@@ -1,10 +1,11 @@
 from pypy.rlib.rsre.rsre_char import SRE_INFO_PREFIX, SRE_INFO_LITERAL
-from pypy.rlib.rsre.rsre_core import OPCODE_SUCCESS, OPCODE_INFO, OPCODE_LITERAL
+from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
+    OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
-from rupypy.utils.re_consts import (FLAG_IGNORECASE, LITERAL, SUBPATTERN,
-    BRANCH, IN)
+from rupypy.utils.re_consts import (FLAG_IGNORECASE, FLAG_DOTALL, LITERAL,
+    SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT, MAX_REPEAT)
 
 
 def _compile_info(code, pattern, flags):
@@ -20,8 +21,8 @@ def _compile_info(code, pattern, flags):
                 if len(prefix) == prefix_skip:
                     prefix_skip += 1
                 prefix.append(av)
-            elif op == SUBPATTERN and len(av[1]) == 1:
-                op, av = av[1][0]
+            elif op == SUBPATTERN and len(av[1].data) == 1:
+                op, av = av[1].data[0]
                 if op == LITERAL:
                     prefix.append(av)
                 else:
@@ -103,6 +104,25 @@ def _compile(code, pattern, flags):
             assert not flags & FLAG_IGNORECASE
             code.append(OPCODE_LITERAL)
             code.append(av)
+        elif op == NOT_LITERAL:
+            raise NotImplementedError(op, "sre_compile:L42")
+        elif op == IN:
+            raise NotImplementedError(op, "sre_compile:L48")
+        elif op == ANY:
+            if flags & FLAG_DOTALL:
+                code.append(OPCODE_ANY_ALL)
+            else:
+                code.append(OPCODE_ANY)
+        elif op in [REPEAT, MIN_REPEAT, MAX_REPEAT]:
+            raise NotImplementedError(op, "sre_compile:L64")
+        elif op == SUBPATTERN:
+            if av[0]:
+                code.append(OPCODE_MARK)
+                code.append((av[0] - 1) * 2)
+            _compile(code, av[1].data, flags)
+            if av[0]:
+                code.append(OPCODE_MARK)
+                code.append((av[0] - 1) * 2 + 1)
         else:
             raise NotImplementedError(op, "sre_compile:L48")
 

@@ -54,6 +54,18 @@ class Pattern(object):
         self.num_groups = 1
         self.groupdict = {}
 
+    def opengroup(self, name=None):
+        gid = self.num_groups
+        self.num_groups += 1
+        if name is not None:
+            assert name not in self.groupdict
+            self.groupdict[name] = gid
+        self.open.append(gid)
+        return gid
+
+    def closegroup(self, gid):
+        self.open.remove(gid)
+
 
 class SubPattern(object):
     def __init__(self, pattern):
@@ -62,7 +74,7 @@ class SubPattern(object):
 
     def append(self, code):
         self.data.append(code)
-    
+
     def getwidth(self):
         lo = hi = 0
         for op, av in self.data:
