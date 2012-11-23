@@ -17,10 +17,9 @@ class W_RegexpObject(W_Object):
     def set_regexp(self, regexp):
         if regexp is not None:
             self.regexp = regexp
-            code, flags, num_groups, groupindex, indexgroup = re_compile.compile(regexp, 0)
+            code, flags, groupindex, indexgroup = re_compile.compile(regexp, 0)
             self.code = code
             self.flags = flags
-            self.num_groups = num_groups
             self.groupindex = groupindex
             self.indexgroup = indexgroup
 

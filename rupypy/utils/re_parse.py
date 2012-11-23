@@ -6,6 +6,7 @@ from rupypy.utils.re_consts import (LITERAL, BRANCH, CALL, SUBPATTERN,
 
 PATTERN_ENDERS = "|)"
 SPECIAL_CHARS = ".\\[{()*+?^$|"
+REPEAT_CHARS = "*+?{"
 
 
 class RegexpError(Exception):
@@ -49,6 +50,9 @@ class Pattern(object):
     def __init__(self, source, flags):
         self.source = source
         self.flags = flags
+        self.open = []
+        self.num_groups = 1
+        self.groupdict = {}
 
 
 class SubPattern(object):

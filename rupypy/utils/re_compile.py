@@ -1,9 +1,10 @@
 from pypy.rlib.rsre.rsre_char import SRE_INFO_PREFIX, SRE_INFO_LITERAL
-from pypy.rlib.rsre.rsre_core import OPCODE_SUCCESS, OPCODE_INFO
+from pypy.rlib.rsre.rsre_core import OPCODE_SUCCESS, OPCODE_INFO, OPCODE_LITERAL
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
-from rupypy.utils.re_consts import FLAG_IGNORECASE, LITERAL
+from rupypy.utils.re_consts import (FLAG_IGNORECASE, LITERAL, SUBPATTERN,
+    BRANCH, IN)
 
 
 def _compile_info(code, pattern, flags):
@@ -87,12 +88,23 @@ def _compile_info(code, pattern, flags):
         table = [-1] + [0] * len(prefix)
         for i in xrange(len(prefix)):
             table[i + 1] = table[i] + 1
-            while table[i + 1] > 0 and prefix[i] != prefix[table[i + 1] -1]:
+            while table[i + 1] > 0 and prefix[i] != prefix[table[i + 1] - 1]:
                 table[i + 1] = table[table[i + 1] - 1] + 1
         code.extend(table[1:])
     elif charset:
-        _compile_charset(charset, flags, code)
+        _compile_charset(code, charset, flags)
     code[skip] = len(code) - skip
+
+
+def _compile(code, pattern, flags):
+    for op, av in pattern:
+        if op == LITERAL:
+            # TODO: sre_compile:L43
+            assert not flags & FLAG_IGNORECASE
+            code.append(OPCODE_LITERAL)
+            code.append(av)
+        else:
+            raise NotImplementedError(op, "sre_compile:L48")
 
 
 def _code(p, flags):
@@ -109,7 +121,7 @@ def compile(source, flags):
     code = _code(p, flags)
 
     groupindex = p.pattern.groupdict
-    indexgroup = [None] * p.pattern.groups
+    indexgroup = [None] * p.pattern.num_groups
     for k, i in groupindex.iteritems():
         indexgroup[i] = k
-    return code, flags, p.pattern.groups, groupindex, indexgroup
+    return code, flags, groupindex, indexgroup
