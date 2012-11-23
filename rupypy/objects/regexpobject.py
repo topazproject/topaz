@@ -1,5 +1,6 @@
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
+from rupypy.utils import re_compile
 
 
 class W_RegexpObject(W_Object):
@@ -7,11 +8,21 @@ class W_RegexpObject(W_Object):
 
     def __init__(self, space, regexp):
         W_Object.__init__(self, space)
-        self.regexp = regexp
+        self.set_regexp(regexp)
 
     def _check_initialized(self, space):
         if self.regexp is None:
             raise space.error(space.w_TypeError, "uninitialized Regexp")
+
+    def set_regexp(self, regexp):
+        if regexp is not None:
+            self.regexp = regexp
+            code, flags, num_groups, groupindex, indexgroup = re_compile.compile(regexp, 0)
+            self.code = code
+            self.flags = flags
+            self.num_groups = num_groups
+            self.groupindex = groupindex
+            self.indexgroup = indexgroup
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -23,7 +34,7 @@ class W_RegexpObject(W_Object):
 
     @classdef.method("initialize", source="str")
     def method_initialize(self, space, source):
-        self.regexp = source
+        self.set_regexp(source)
 
     @classdef.method("==")
     def method_equal(self, space, w_other):
