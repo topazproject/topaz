@@ -41,11 +41,8 @@ class TestDir(BaseRuPyPyTest):
         dirs << Dir.pwd
         return dirs
         """ % tmpdir)
-
-        cwd = os.getcwd()
-        os.chdir(str(tmpdir))
-        tempdir = os.getcwd()
-        assert self.unwrap(space, w_res) == [cwd, tempdir, cwd]
+        paths = [os.getcwd(), os.path.realpath(str(tmpdir)), os.getcwd()]
+        assert self.unwrap(space, w_res) == paths
 
         monkeypatch.setenv("HOME", str(tmpdir))
         w_res = space.execute("""
@@ -53,6 +50,5 @@ class TestDir(BaseRuPyPyTest):
             return Dir.pwd
         end
         """)
-        os.chdir(str(tmpdir))
-        tempdir = os.getcwd()
-        assert space.str_w(w_res) == tempdir
+
+        assert space.str_w(w_res) == os.path.realpath(str(tmpdir))
