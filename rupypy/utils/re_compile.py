@@ -1,11 +1,12 @@
 from pypy.rlib.rsre.rsre_char import SRE_INFO_PREFIX, SRE_INFO_LITERAL
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
-    OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK)
+    OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
 from rupypy.utils.re_consts import (FLAG_IGNORECASE, FLAG_DOTALL, LITERAL,
-    SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT, MAX_REPEAT)
+    SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT, MAX_REPEAT,
+    SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT)
 
 
 def _compile_info(code, pattern, flags):
@@ -123,8 +124,18 @@ def _compile(code, pattern, flags):
             if av[0]:
                 code.append(OPCODE_MARK)
                 code.append((av[0] - 1) * 2 + 1)
+        elif op in [SUCCESS, FAILURE]:
+            raise NotImplementedError(op, "sre_compile:L106")
+        elif op in [ASSERT, ASSERT_NOT]:
+            raise NotImplementedError(op, "sre_compile:L108")
+        elif op == CALL:
+            raise NotImplementedError(op, "sre_compile:L121")
+        elif op == AT:
+            code.append(OPCODE_AT)
+            assert not flags
+            code.append(av)
         else:
-            raise NotImplementedError(op, "sre_compile:L48")
+            raise NotImplementedError(op, "sre_compile:L135")
 
 
 def _code(p, flags):

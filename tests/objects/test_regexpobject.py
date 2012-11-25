@@ -6,6 +6,11 @@ class TestRegexpObject(BaseRuPyPyTest):
         w_res = space.execute("return /abc/.source")
         assert space.str_w(w_res) == "abc"
 
+    def test_compile_regexps(self, space):
+        space.execute("""
+        /^/
+        """)
+
     def test_match_operator(self, space):
         w_res = space.execute("""
         idx = /(l)(l)(o)(a)(b)(c)(h)(e)(l)/ =~ 'helloabchello'

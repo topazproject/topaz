@@ -1,7 +1,10 @@
 import sys
 
+from pypy.rlib.rsre.rsre_core import AT_BEGINNING
+
 from rupypy.utils.re_consts import (LITERAL, BRANCH, CALL, SUBPATTERN,
-    MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY)
+    MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY, AT,
+    SUCCESS)
 
 
 PATTERN_ENDERS = "|)"
@@ -257,7 +260,7 @@ def _parse(source, state):
                 if char != ")":
                     raise RegexpError("unknown extension")
         elif c == "^":
-            subpattern.append((AT, AT_BEGGINING))
+            subpattern.append((AT, AT_BEGINNING))
         elif c == "$":
             subpattern.append((AT, AT_END))
         elif c and c[0] == "\\":
