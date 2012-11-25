@@ -18,13 +18,15 @@ class Frame(BaseFrame):
     ]
 
     @jit.unroll_safe
-    def __init__(self, bytecode, w_self, w_scope, lexical_scope, block, parent_interp):
+    def __init__(self, bytecode, w_self, w_scope, lexical_scope, block,
+                 parent_interp, regexp_match_cell):
         self = jit.hint(self, fresh_virtualizable=True, access_directly=True)
         BaseFrame.__init__(self)
         self.bytecode = bytecode
         self.localsstack_w = [None] * (len(bytecode.cellvars) + bytecode.max_stackdepth)
         self.stackpos = len(bytecode.cellvars)
         self.cells = [LocalCell() for _ in bytecode.cellvars] + [None] * len(bytecode.freevars)
+        self.regexp_match_cell = regexp_match_cell
         self.w_self = w_self
         self.w_scope = w_scope
         self.lexical_scope = lexical_scope

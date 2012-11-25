@@ -10,6 +10,7 @@ from rply.errors import ParsingError
 
 from rupypy.astcompiler import CompilerContext, SymbolTable
 from rupypy.celldict import GlobalsDict
+from rupypy.closure import ClosureCell
 from rupypy.error import RubyError, print_traceback
 from rupypy.executioncontext import ExecutionContext
 from rupypy.frame import Frame
@@ -243,13 +244,15 @@ class ObjectSpace(object):
         return self._executioncontext
 
     def create_frame(self, bc, w_self=None, w_scope=None, lexical_scope=None,
-        block=None, parent_interp=None):
+        block=None, parent_interp=None, regexp_match_cell=None):
 
         if w_self is None:
             w_self = self.w_top_self
         if w_scope is None:
             w_scope = self.w_object
-        return Frame(jit.promote(bc), w_self, w_scope, lexical_scope, block, parent_interp)
+        if regexp_match_cell is None:
+            regexp_match_cell = ClosureCell(None)
+        return Frame(jit.promote(bc), w_self, w_scope, lexical_scope, block, parent_interp, regexp_match_cell)
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -465,7 +468,7 @@ class ObjectSpace(object):
         frame = self.create_frame(
             bc, w_self=block.w_self, w_scope=block.w_scope,
             lexical_scope=block.lexical_scope, block=block.block,
-            parent_interp=block.parent_interp,
+            parent_interp=block.parent_interp, regexp_match_cell=block.regexp_match_cell,
         )
         if (len(args_w) == 1 and
             isinstance(args_w[0], W_ArrayObject) and len(bc.arg_pos) >= 2):
