@@ -17,6 +17,13 @@ class TestRegexpObject(BaseRuPyPyTest):
         w_res = space.execute("return Regexp.new('..abc..') == Regexp.compile('..abc..')")
         assert w_res is space.w_true
 
+    def test_size(self, space):
+        w_res = space.execute("""
+        /(a)(b)(c)/ =~ "hey hey, abc, hey hey"
+        return $~.size
+        """)
+        assert space.int_w(w_res) == 4
+
     def test_set_match_data_wrong_type(self, space):
         with self.raises(space, "TypeError"):
             space.execute("$~ = 12")

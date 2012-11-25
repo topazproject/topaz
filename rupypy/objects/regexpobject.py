@@ -15,31 +15,35 @@ class W_RegexpObject(W_Object):
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.globals.define_virtual("$~",
-            cls._get_regexp_cell,
-            cls._set_regexp_cell,
+            cls._get_regexp_match,
+            cls._set_regexp_match,
         )
-        space.globals.define_virtual("$1", cls.create_regexp_match_getter(1))
-        space.globals.define_virtual("$2", cls.create_regexp_match_getter(2))
-        space.globals.define_virtual("$3", cls.create_regexp_match_getter(3))
-        space.globals.define_virtual("$4", cls.create_regexp_match_getter(4))
-        space.globals.define_virtual("$5", cls.create_regexp_match_getter(5))
-        space.globals.define_virtual("$6", cls.create_regexp_match_getter(6))
-        space.globals.define_virtual("$7", cls.create_regexp_match_getter(7))
-        space.globals.define_virtual("$8", cls.create_regexp_match_getter(8))
-        space.globals.define_virtual("$9", cls.create_regexp_match_getter(9))
+        space.globals.define_virtual("$1", cls._create_regexp_match_getter(1))
+        space.globals.define_virtual("$2", cls._create_regexp_match_getter(2))
+        space.globals.define_virtual("$3", cls._create_regexp_match_getter(3))
+        space.globals.define_virtual("$4", cls._create_regexp_match_getter(4))
+        space.globals.define_virtual("$5", cls._create_regexp_match_getter(5))
+        space.globals.define_virtual("$6", cls._create_regexp_match_getter(6))
+        space.globals.define_virtual("$7", cls._create_regexp_match_getter(7))
+        space.globals.define_virtual("$8", cls._create_regexp_match_getter(8))
+        space.globals.define_virtual("$9", cls._create_regexp_match_getter(9))
+        space.globals.define_virtual("$&", cls._create_regexp_match_getter(0))
+        space.globals.define_virtual("$+", cls._get_last_match)
+        space.globals.define_virtual("$`", cls._get_pre_match)
+        space.globals.define_virtual("$'", cls._get_post_match)
 
     @staticmethod
-    def _get_regexp_cell(space):
+    def _get_regexp_match(space):
         return space.getexecutioncontext().regexp_match_cell.get(None, 0)
 
     @staticmethod
-    def _set_regexp_cell(space, w_match):
+    def _set_regexp_match(space, w_match):
         if not space.is_kind_of(w_match, space.getclassfor(W_MatchDataObject)):
             raise space.error(space.w_TypeError, "wrong argument type %s (expected MatchData)" % space.getclass(w_match).name)
         space.getexecutioncontext().regexp_match_cell.set(None, 0, w_match)
 
     @staticmethod
-    def create_regexp_match_getter(n):
+    def _create_regexp_match_getter(n):
         def getter(space):
             w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
             if w_match is None:
@@ -47,6 +51,32 @@ class W_RegexpObject(W_Object):
             else:
                 return space.send(w_match, space.newsymbol("[]"), [space.newint(n)])
         return getter
+
+    @staticmethod
+    def _get_last_match(space):
+        w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
+        if w_match is None:
+            return space.w_nil
+        else:
+            w_size = space.send(w_match, space.newsymbol("size"))
+            w_last = space.send(w_size, space.newsymbol("-"), [space.newint(1)])
+            return space.send(w_match, space.newsymbol("[]"), [w_last])
+
+    @staticmethod
+    def _get_pre_match(space):
+        w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
+        if w_match is None:
+            return space.w_nil
+        else:
+            return space.send(w_match, space.newsymbol("pre_match"))
+
+    @staticmethod
+    def _get_post_match(space):
+        w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
+        if w_match is None:
+            return space.w_nil
+        else:
+            return space.send(w_match, space.newsymbol("post_match"))
 
     def _check_initialized(self, space):
         if self.regexp is None:
@@ -146,8 +176,22 @@ class W_MatchDataObject(W_Object):
 
     @classdef.method("[]", n="int")
     def method_subscript(self, space, n):
-        if 1 <= n <= len(self.regexp.indexgroup):
+        if n == 0:
+            start, end = self.ctx.match_start, self.ctx.match_end
+        elif 1 <= n <= len(self.regexp.indexgroup):
             start, end = self.get_span(n)
-            return space.newstr_fromstr(self.ctx._string[start:end])
         else:
             return space.w_nil
+        return space.newstr_fromstr(self.ctx._string[start:end])
+
+    @classdef.method("size")
+    def method_size(self, space):
+        return space.newint(len(self.regexp.indexgroup))
+
+    @classdef.method("pre_match")
+    def method_pre_match(self, space):
+        return space.newstr_fromstr(self.ctx._string[:self.ctx.match_start])
+
+    @classdef.method("post_match")
+    def method_post_match(self, space):
+        return space.newstr_fromstr(self.ctx._string[self.ctx.match_end:])
