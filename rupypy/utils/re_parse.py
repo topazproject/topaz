@@ -6,12 +6,13 @@ from pypy.rlib.rsre.rsre_core import (AT_BEGINNING, AT_BEGINNING_STRING,
 
 from rupypy.utils.re_consts import (LITERAL, BRANCH, CALL, SUBPATTERN,
     REPEAT, MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY, AT,
-    SUCCESS, NEGATE)
+    SUCCESS, NEGATE, ASSERT_NOT)
 
 
 PATTERN_ENDERS = "|)"
 SPECIAL_CHARS = ".\\[{()*+?^$|"
 REPEAT_CHARS = "*+?{"
+ASSERT_CHARS = "=!<"
 
 ESCAPES = {
     r"\a": (LITERAL, ord("\a")),
@@ -295,7 +296,28 @@ def _parse(source, state):
             name = None
             condgroup = None
             if source.match("?"):
-                raise NotImplementedError("sre_parse:L528")
+                if source.match(":"):
+                    group = 2
+                elif source.match("#"):
+                    raise NotImplementedError("sre_parse:L572")
+                elif source.next in ASSERT_CHARS:
+                    c = source.get()
+                    dir = 1
+                    if c == "<":
+                        if source.next not in LOOK_BEHIND_ASSERTION_CHARS:
+                            raise RegexpError("syntax error")
+                        dir = -1
+                        c = source.get()
+                    p = _parse_sub(source, state)
+                    if not source.match(")"):
+                        raise RegexpError("unbalanced paranthesis")
+                    if c == "=":
+                        subpattern.append((ASSERT, (dir, p)))
+                    else:
+                        subpattern.append((ASSERT_NOT, (dir, p)))
+                    continue
+                else:
+                    raise NotImplementedError("sre_parse:L597")
             if group:
                 if group == 2:
                     group = None

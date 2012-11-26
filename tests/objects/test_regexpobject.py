@@ -21,6 +21,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /([^)]+)?/
         /cy|m/
         /[\\-]/
+        /(?!a)/
         """)
 
     def test_match_operator(self, space):

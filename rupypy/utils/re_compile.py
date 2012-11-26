@@ -4,7 +4,7 @@ from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
     OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL,
     OPCODE_REPEAT_ONE, OPCODE_CHARSET, OPCODE_NEGATE, OPCODE_REPEAT,
-    OPCODE_MAX_UNTIL)
+    OPCODE_MAX_UNTIL, OPCODE_ASSERT_NOT)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
@@ -162,8 +162,21 @@ def _compile(code, pattern, flags):
                 code.append((av[0] - 1) * 2 + 1)
         elif op in [SUCCESS, FAILURE]:
             raise NotImplementedError(op, "sre_compile:L106")
-        elif op in [ASSERT, ASSERT_NOT]:
+        elif op == ASSERT:
             raise NotImplementedError(op, "sre_compile:L108")
+        elif op == ASSERT_NOT:
+            code.append(OPCODE_ASSERT_NOT)
+            skip = len(code)
+            code.append(0)
+            if av[0] >= 0:
+                code.append(0)
+            else:
+                lo, hi = av[1].getwidth()
+                assert lo == hi
+                code.append(lo)
+            _compile(code, av[1].data, flags)
+            code.append(OPCODE_SUCCESS)
+            code[skip] = len(code) - skip
         elif op == CALL:
             raise NotImplementedError(op, "sre_compile:L121")
         elif op == AT:
