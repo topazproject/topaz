@@ -157,7 +157,7 @@ def _parse_sub(source, state, nested=True):
     while True:
         prefix = None
         for item in items:
-            if not item:
+            if not item or not item.data:
                 break
             if prefix is None:
                 prefix = item.data[0]
