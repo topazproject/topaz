@@ -44,3 +44,4 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_set_match_data_wrong_type(self, space):
         with self.raises(space, "TypeError"):
             space.execute("$~ = 12")
+        space.execute("$~ = nil")

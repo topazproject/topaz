@@ -38,7 +38,8 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _set_regexp_match(space, w_match):
-        if not space.is_kind_of(w_match, space.getclassfor(W_MatchDataObject)):
+        if (w_match is not space.w_nil and
+            not space.is_kind_of(w_match, space.getclassfor(W_MatchDataObject))):
             raise space.error(space.w_TypeError, "wrong argument type %s (expected MatchData)" % space.getclass(w_match).name)
         space.getexecutioncontext().regexp_match_cell.set(None, 0, w_match)
 
