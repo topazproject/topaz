@@ -1,6 +1,7 @@
 import sys
 
-from pypy.rlib.rsre.rsre_core import AT_BEGINNING, AT_END
+from pypy.rlib.rsre.rsre_core import (AT_BEGINNING, AT_BEGINNING_STRING,
+    AT_END, AT_BOUNDARY, AT_NON_BOUNDARY)
 
 from rupypy.utils.re_consts import (LITERAL, BRANCH, CALL, SUBPATTERN,
     REPEAT, MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY, AT,
@@ -11,6 +12,29 @@ PATTERN_ENDERS = "|)"
 SPECIAL_CHARS = ".\\[{()*+?^$|"
 REPEAT_CHARS = "*+?{"
 
+ESCAPES = {
+    r"\a": (LITERAL, ord("\a")),
+    r"\b": (LITERAL, ord("\b")),
+    r"\f": (LITERAL, ord("\f")),
+    r"\n": (LITERAL, ord("\n")),
+    r"\r": (LITERAL, ord("\r")),
+    r"\t": (LITERAL, ord("\t")),
+    r"\v": (LITERAL, ord("\v")),
+    r"\\": (LITERAL, ord("\\"))
+}
+
+CATEGORIES = {
+    r"\A": (AT, AT_BEGINNING_STRING),
+    r"\b": (AT, AT_BOUNDARY),
+    r"\B": (AT, AT_NON_BOUNDARY),
+    # r"\d": (IN, [(CATEGORY, CATEGORY_DIGIT)]),
+    # r"\D": (IN, [(CATEGORY, CATEGORY_NOT_DIGIT)]),
+    # r"\s": (IN, [(CATEGORY, CATEGORY_SPACE)]),
+    # r"\S": (IN, [(CATEGORY, CATEGORY_NOT_SPACE)]),
+    # r"\w": (IN, [(CATEGORY, CATEGORY_WORD)]),
+    # r"\W": (IN, [(CATEGORY, CATEGORY_NOT_WORD)]),
+    # r"\Z": (AT, AT_END_STRING),
+}
 
 class RegexpError(Exception):
     pass
@@ -300,6 +324,23 @@ def _parse(source, state):
         else:
             raise RegexpError("parser error")
     return subpattern
+
+
+def _escape(source, escape, state):
+    if escape in CATEGORIES:
+        return CATEGORIES[escape]
+    if escape in ESCAPES:
+        return ESCAPES[escape]
+    c = escape[1:2]
+    if c == "x":
+        raise NotImplementedError("sre_parse:L268")
+    elif c == "0":
+        raise NotImplementedError("sre_parse:L275")
+    elif c.isdigit():
+        raise NotImplementedError("sre_parse:L281")
+    if len(escape) == 2:
+        return LITERAL, ord(c)
+    raise RegexpError("bogus escape: %r" % escape)
 
 
 def parse(source, flags):
