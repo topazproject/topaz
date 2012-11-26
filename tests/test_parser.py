@@ -848,6 +848,9 @@ class TestParser(BaseRuPyPyTest):
         assert space.parse('""') == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString(""))
         ]))
+        assert space.parse("'\\'<>'") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("'<>"))
+        ]))
 
     def test_escape_character(self, space):
         string = lambda content: ast.Main(ast.Block([
