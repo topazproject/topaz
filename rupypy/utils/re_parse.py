@@ -125,8 +125,36 @@ def _parse_sub(source, state, nested=True):
 
     if len(items) == 1:
         return items[0]
+
+    subpattern = SubPattern(state)
+    while True:
+        prefix = None
+        for item in items:
+            if not item:
+                break
+            if prefix is None:
+                prefix = item.data[0]
+            elif item.data[0] != prefix:
+                break
+        else:
+            for item in items:
+                del item[0]
+            subpattern.append(prefix)
+            continue
+        break
+
+    for item in items:
+        if len(item.data) != 1 or item.data[0][0] != LITERAL:
+            break
     else:
-        raise NotImplementedError("sre_parse:L321")
+        charset = []
+        for item in items:
+            charset.append(item.data[0])
+        subpattern.append((IN, charset))
+        return subpattern
+
+    subpattern.append((BRANCH, (None, items)))
+    return subpattern
 
 
 def _parse(source, state):

@@ -9,6 +9,7 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_compile_regexps(self, space):
         space.execute("""
         /^/
+        /(a|b)/
         """)
 
     def test_match_operator(self, space):

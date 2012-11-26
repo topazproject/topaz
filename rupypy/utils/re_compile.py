@@ -1,12 +1,13 @@
 from pypy.rlib.rsre.rsre_char import SRE_INFO_PREFIX, SRE_INFO_LITERAL
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
-    OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT)
+    OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
+    OPCODE_RANGE, OPCODE_FAILURE)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
 from rupypy.utils.re_consts import (FLAG_IGNORECASE, FLAG_DOTALL, LITERAL,
     SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT, MAX_REPEAT,
-    SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT)
+    SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT, NEGATE, RANGE)
 
 
 def _compile_info(code, pattern, flags):
@@ -33,7 +34,7 @@ def _compile_info(code, pattern, flags):
         if not prefix and pattern.data:
             op, av = pattern.data[0]
             if op == SUBPATTERN:
-                op, av = av[1][0]
+                op, av = av[1].data[0]
                 if op == LITERAL:
                     charset.append((op, av))
                 elif op == BRANCH:
@@ -108,7 +109,12 @@ def _compile(code, pattern, flags):
         elif op == NOT_LITERAL:
             raise NotImplementedError(op, "sre_compile:L42")
         elif op == IN:
-            raise NotImplementedError(op, "sre_compile:L48")
+            assert not flags & FLAG_IGNORECASE
+            code.append(OPCODE_IN)
+            skip = len(code)
+            code.append(0)
+            _compile_charset(code, av, flags)
+            code[skip] = len(code) - skip
         elif op == ANY:
             if flags & FLAG_DOTALL:
                 code.append(OPCODE_ANY_ALL)
@@ -136,6 +142,72 @@ def _compile(code, pattern, flags):
             code.append(av)
         else:
             raise NotImplementedError(op, "sre_compile:L135")
+
+
+def _compile_charset(code, charset, flags):
+    for op, av in _optimize_charset(charset):
+        if op == NEGATE:
+            code.append(OPCODE_NEGATE)
+            pass
+        elif op == LITERAL:
+            code.append(OPCODE_LITERAL)
+            code.append(av)
+        elif op == RANGE:
+            code.append(OPCODE_RANGE)
+            code.append(av[0])
+            code.append(av[1])
+        elif op == CHARSET:
+            code.append(OPCODE_CHARSET)
+            code.extend(av)
+        elif op == BIGCHARSET:
+            code.append(OPCODE_BIGCHARSET)
+            code.extend(av)
+        elif op == CATEGORY:
+            raise NotImplementedError(op, av, "sre_compile:L196")
+        else:
+            raise SystemError("Unsupport opcode for set: %d" % op)
+    code.append(OPCODE_FAILURE)
+
+
+def _optimize_charset(charset):
+    out = []
+    charmap = [False] * 256
+    for op, av in charset:
+        if op == NEGATE:
+            out.append((NEGATE, av))
+        elif op == LITERAL:
+            charmap[av] = True
+        elif op == RANGE:
+            for i in range(av[0], av[1] + 1):
+                charmap[i] = True
+        elif op == CATEGORY:
+            return charset
+    i = p = n = 0
+    runs = []
+    for c in charmap:
+        if c:
+            if p == 0:
+                p = i
+            n += 1
+        elif n:
+            runs.append((p, n))
+            n = 0
+        i += 1
+    if n:
+        runs.append((p, n))
+    if len(runs) <= 2:
+        for p, n in runs:
+            if n == 1:
+                out.append((LITERAL, p))
+            else:
+                out.append((RANGE, (p, p + n - 1)))
+        if len(out) < len(charset):
+            return out
+    else:
+        data = _mk_bitmap(charmap)
+        out.append((CHARSET, data))
+        return out
+    return charset
 
 
 def _code(p, flags):
