@@ -13,6 +13,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /(ab|ac)/
         /(ms|min)/
         /$/
+        /[^f]/
         """)
 
     def test_match_operator(self, space):

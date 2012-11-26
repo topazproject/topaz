@@ -2,7 +2,7 @@ from pypy.rlib.rsre.rsre_char import (SRE_INFO_PREFIX, SRE_INFO_LITERAL,
     SRE_INFO_CHARSET)
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
-    OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH)
+    OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
@@ -108,7 +108,10 @@ def _compile(code, pattern, flags):
             code.append(OPCODE_LITERAL)
             code.append(av)
         elif op == NOT_LITERAL:
-            raise NotImplementedError(op, "sre_compile:L42")
+            # TODO: sre_compile:L43
+            assert not flags & FLAG_IGNORECASE
+            code.append(OPCODE_NOT_LITERAL)
+            code.append(av)
         elif op == IN:
             assert not flags & FLAG_IGNORECASE
             code.append(OPCODE_IN)
