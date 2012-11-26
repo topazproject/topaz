@@ -3,13 +3,13 @@ from pypy.rlib.rsre.rsre_char import (SRE_INFO_PREFIX, SRE_INFO_LITERAL,
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
     OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL,
-    OPCODE_REPEAT_ONE)
+    OPCODE_REPEAT_ONE, OPCODE_CHARSET)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
 from rupypy.utils.re_consts import (FLAG_IGNORECASE, FLAG_DOTALL, LITERAL,
     SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT, MAX_REPEAT,
-    SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT, NEGATE, RANGE)
+    SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT, NEGATE, RANGE, CHARSET)
 
 
 def _compile_info(code, pattern, flags):
@@ -239,6 +239,21 @@ def _optimize_charset(charset):
         out.append((CHARSET, data))
         return out
     return charset
+
+
+def _mk_bitmap(bits):
+    data = []
+    m = 1
+    v = 0
+    for c in bits:
+        if c:
+            v += m
+        m += m
+        if m > MAXUNICODE:
+            data.append(v)
+            m = 1
+            v = 0
+    return data
 
 
 def _simple(av):
