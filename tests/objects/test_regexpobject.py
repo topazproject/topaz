@@ -17,6 +17,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /[a]+/
         /\\(/
         /[()#:]/
+        /[^()#:]/
         """)
 
     def test_match_operator(self, space):

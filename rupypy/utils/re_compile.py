@@ -3,7 +3,7 @@ from pypy.rlib.rsre.rsre_char import (SRE_INFO_PREFIX, SRE_INFO_LITERAL,
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
     OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL,
-    OPCODE_REPEAT_ONE, OPCODE_CHARSET)
+    OPCODE_REPEAT_ONE, OPCODE_CHARSET, OPCODE_NEGATE)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
