@@ -58,7 +58,7 @@ def _compile_info(code, pattern, flags):
                 for p in av[1]:
                     if not p:
                         break
-                    op, av = p[0]
+                    op, av = p.data[0]
                     if op == LITERAL:
                         c.append((op, av))
                     else:
