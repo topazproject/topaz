@@ -1,3 +1,4 @@
+import string
 import sys
 
 from pypy.rlib.rsre.rsre_core import (AT_BEGINNING, AT_BEGINNING_STRING,
@@ -324,6 +325,23 @@ def _parse(source, state):
         else:
             raise RegexpError("parser error")
     return subpattern
+
+
+def _class_escape(source, escape):
+    if escape in ESCAPES:
+        return ESCAPES[escape]
+    if escape in CATEGORIES:
+        return CATEGORIES[escape]
+    c = escape[1:2]
+    if c == "x":
+        raise NotImplementedError("sre_parse:L236")
+    elif c in string.octdigits:
+        raise NotImplementedError("sre_parse:L244")
+    elif c.isdigit():
+        raise NotImplementedError("sre_parse:L250")
+    if len(escape) == 2:
+        return LITERAL, ord(c)
+    raise RegexpError("bogus escape: %r" % escape)
 
 
 def _escape(source, escape, state):

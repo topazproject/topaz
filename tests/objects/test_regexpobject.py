@@ -20,6 +20,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /[^()#:]/
         /([^)]+)?/
         /cy|m/
+        /[\\-]/
         """)
 
     def test_match_operator(self, space):
