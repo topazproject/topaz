@@ -3,7 +3,7 @@ import sys
 from pypy.rlib.rsre.rsre_core import AT_BEGINNING, AT_END
 
 from rupypy.utils.re_consts import (LITERAL, BRANCH, CALL, SUBPATTERN,
-    MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY, AT,
+    REPEAT, MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY, AT,
     SUCCESS, NEGATE)
 
 
@@ -71,9 +71,11 @@ class Pattern(object):
 
 
 class SubPattern(object):
-    def __init__(self, pattern):
+    def __init__(self, pattern, data=None):
         self.pattern = pattern
-        self.data = []
+        if data is None:
+            data = []
+        self.data = data
 
     def append(self, code):
         self.data.append(code)
@@ -248,17 +250,19 @@ def _parse(source, state):
             else:
                 raise RegexpError("not supported")
             if subpattern:
-                item = subpattern[-1:]
+                item = subpattern.data[-1:]
             else:
                 item = None
             if not item or (len(item) == 1 and item[0][0] == AT):
                 raise RegexpError("nothing to repeat")
-            if item[0][0] in REPEAT_CODES:
+            if item[0][0] in [REPEAT, MIN_REPEAT, MAX_REPEAT]:
                 raise RegexpError("multiple repeat")
+            if item is not None:
+                item = SubPattern(subpattern.pattern, item)
             if source.match("?"):
-                subpattern[-1] = (MIN_REPEAT, (min, max, item))
+                subpattern.data[-1] = (MIN_REPEAT, (min, max, item))
             else:
-                subpattern[-1] = (MAX_REPEAT (min, max, item))
+                subpattern.data[-1] = (MAX_REPEAT, (min, max, item))
         elif c == ".":
             subpattern.append((ANY, None))
         elif c == "(":

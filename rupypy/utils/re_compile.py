@@ -2,7 +2,8 @@ from pypy.rlib.rsre.rsre_char import (SRE_INFO_PREFIX, SRE_INFO_LITERAL,
     SRE_INFO_CHARSET)
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
-    OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL)
+    OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL,
+    OPCODE_REPEAT_ONE)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
@@ -125,7 +126,20 @@ def _compile(code, pattern, flags):
             else:
                 code.append(OPCODE_ANY)
         elif op in [REPEAT, MIN_REPEAT, MAX_REPEAT]:
-            raise NotImplementedError(op, "sre_compile:L64")
+            if _simple(av) and op != REPEAT:
+                if op == MAX_REPEAT:
+                    code.append(OPCODE_REPEAT_ONE)
+                else:
+                    code.append(OPCODE_MIN_REPEAT_ONE)
+                skip = len(code)
+                code.append(0)
+                code.append(av[0])
+                code.append(av[1])
+                _compile(code, av[2].data, flags)
+                code.append(OPCODE_SUCCESS)
+                code[skip] = len(code) - skip
+            else:
+                raise NotImplementedError(op, "sre_compile:L86")
         elif op == SUBPATTERN:
             if av[0]:
                 code.append(OPCODE_MARK)
@@ -225,6 +239,12 @@ def _optimize_charset(charset):
         out.append((CHARSET, data))
         return out
     return charset
+
+
+def _simple(av):
+    lo, hi = av[2].getwidth()
+    assert lo != 0 or hi != MAXREPEAT
+    return lo == hi == 1 and av[2].data[0][0] != SUBPATTERN
 
 
 def _code(p, flags):

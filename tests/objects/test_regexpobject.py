@@ -14,6 +14,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /(ms|min)/
         /$/
         /[^f]/
+        /[a]+/
         """)
 
     def test_match_operator(self, space):
