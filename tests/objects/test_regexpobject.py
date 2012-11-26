@@ -22,6 +22,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /cy|m/
         /[\\-]/
         /(?!a)/
+        /(?=a)/
         """)
 
     def test_match_operator(self, space):
