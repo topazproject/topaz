@@ -1,6 +1,6 @@
 import sys
 
-from pypy.rlib.rsre.rsre_core import AT_BEGINNING
+from pypy.rlib.rsre.rsre_core import AT_BEGINNING, AT_END
 
 from rupypy.utils.re_consts import (LITERAL, BRANCH, CALL, SUBPATTERN,
     MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY, AT,
