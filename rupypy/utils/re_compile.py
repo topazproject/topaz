@@ -3,13 +3,15 @@ from pypy.rlib.rsre.rsre_char import (SRE_INFO_PREFIX, SRE_INFO_LITERAL,
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
     OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL,
-    OPCODE_REPEAT_ONE, OPCODE_CHARSET, OPCODE_NEGATE)
+    OPCODE_REPEAT_ONE, OPCODE_CHARSET, OPCODE_NEGATE, OPCODE_REPEAT,
+    OPCODE_MAX_UNTIL)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
-from rupypy.utils.re_consts import (FLAG_IGNORECASE, FLAG_DOTALL, LITERAL,
-    SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT, MAX_REPEAT,
-    SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT, NEGATE, RANGE, CHARSET)
+from rupypy.utils.re_consts import (FLAG_IGNORECASE, FLAG_DOTALL, MAXREPEAT,
+    LITERAL, SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT,
+    MAX_REPEAT, SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT, NEGATE, RANGE,
+    CHARSET)
 
 
 def _compile_info(code, pattern, flags):
@@ -139,7 +141,17 @@ def _compile(code, pattern, flags):
                 code.append(OPCODE_SUCCESS)
                 code[skip] = len(code) - skip
             else:
-                raise NotImplementedError(op, "sre_compile:L86")
+                code.append(OPCODE_REPEAT)
+                skip = len(code)
+                code.append(0)
+                code.append(av[0])
+                code.append(av[1])
+                _compile(code, av[2].data, flags)
+                code[skip] = len(code) - skip
+                if op == MAX_REPEAT:
+                    code.append(OPCODE_MAX_UNTIL)
+                else:
+                    code.append(OPCODE_MIN_UNTIL)
         elif op == SUBPATTERN:
             if av[0]:
                 code.append(OPCODE_MARK)
