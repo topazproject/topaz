@@ -2,7 +2,7 @@ from pypy.rlib.rsre.rsre_char import (SRE_INFO_PREFIX, SRE_INFO_LITERAL,
     SRE_INFO_CHARSET)
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
-    OPCODE_RANGE, OPCODE_FAILURE)
+    OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
@@ -141,8 +141,21 @@ def _compile(code, pattern, flags):
             code.append(OPCODE_AT)
             assert not flags
             code.append(av)
+        elif op == BRANCH:
+            code.append(OPCODE_BRANCH)
+            tails = []
+            for av in av[1]:
+                skip = len(code)
+                code.append(0)
+                _compile(code, av.data, flags)
+                tails.append(len(code))
+                code.append(0)
+                code[skip] = len(code) - skip
+            code.append(0)
+            for tail in tails:
+                code[tail] = len(code) - tail
         else:
-            raise NotImplementedError(op, "sre_compile:L135")
+            raise NotImplementedError(op, "sre_compile:L150")
 
 
 def _compile_charset(code, charset, flags):
