@@ -138,7 +138,7 @@ def _parse_sub(source, state, nested=True):
                 break
         else:
             for item in items:
-                del item[0]
+                del item.data[0]
             subpattern.append(prefix)
             continue
         break

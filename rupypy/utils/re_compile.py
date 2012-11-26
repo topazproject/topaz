@@ -1,4 +1,5 @@
-from pypy.rlib.rsre.rsre_char import SRE_INFO_PREFIX, SRE_INFO_LITERAL
+from pypy.rlib.rsre.rsre_char import (SRE_INFO_PREFIX, SRE_INFO_LITERAL,
+    SRE_INFO_CHARSET)
 from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
     OPCODE_RANGE, OPCODE_FAILURE)
@@ -72,7 +73,7 @@ def _compile_info(code, pattern, flags):
         if len(prefix) == prefix_skip == len(pattern.data):
             mask += SRE_INFO_LITERAL
     elif charset:
-        mask += INFO_CHARSET
+        mask += SRE_INFO_CHARSET
     code.append(mask)
     if lo < MAXUNICODE:
         code.append(lo)
