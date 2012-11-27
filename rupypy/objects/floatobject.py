@@ -67,6 +67,8 @@ class W_FloatObject(W_NumericObject):
     method_lt = new_bool_op(classdef, "<", operator.lt)
     method_lte = new_bool_op(classdef, "<=", operator.le)
     method_eq = new_bool_op(classdef, "==", operator.eq)
+    method_gt = new_bool_op(classdef, ">", operator.gt)
+    method_gte = new_bool_op(classdef, ">=", operator.ge)
 
     @classdef.method("hash")
     def method_hash(self, space):
