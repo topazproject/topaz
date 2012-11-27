@@ -59,6 +59,19 @@ class TestFloatObject(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
             space.execute("1.0 <= 'a'")
 
+    def test_gt(self, space):
+        assert space.execute("return 1.1 > 1.2") is space.w_false
+        assert space.execute("return 1.2 > 0") is space.w_true
+
+    def test_gte(self, space):
+        assert space.execute("return 1.1 >= 2") is space.w_false
+        assert space.execute("return 1.0 >= 1") is space.w_true
+        assert space.execute("return 1.1 >= 1.1") is space.w_true
+        assert space.execute("return 1.1 >= 0.9") is space.w_true
+        assert space.execute("return 1.0 >= '1.1'") is space.w_false
+        with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
+            space.execute("1.0 >= 'a'")
+
     def test_abs(self, space):
         w_res = space.execute("return -123.534.abs")
         assert space.float_w(w_res) == 123.534
