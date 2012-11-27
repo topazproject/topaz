@@ -4,6 +4,7 @@ from pypy.rlib.debug import check_regular_int
 from pypy.rlib.rarithmetic import ovfcheck
 from pypy.rlib.rbigint import rbigint
 from pypy.rpython.lltypesystem import lltype, rffi
+import math
 
 from rupypy.module import ClassDef
 from rupypy.objects.floatobject import W_FloatObject
@@ -95,6 +96,18 @@ class W_FixnumObject(W_RootObject):
     method_add = new_binop(classdef, "+", operator.add)
     method_sub = new_binop(classdef, "-", operator.sub)
     method_mul = new_binop(classdef, "*", operator.mul)
+
+    @classdef.method("**")
+    def method_raise_to(self, space, w_other):
+        if isinstance(w_other, W_FloatObject):
+            return space.newfloat(math.pow(self.intvalue, space.float_w(w_other)))
+        elif isinstance(w_other, W_FixnumObject):
+            other = space.int_w(w_other)
+            value = int(math.pow(self.intvalue, other))
+            return space.newint(value)
+        else:
+            raise space.error(space.w_TypeError, 
+                "%s can't be coerced into Fixnum" % w_other.classdef.name)
 
     @classdef.method("/", other="int")
     def method_div(self, space, other):
