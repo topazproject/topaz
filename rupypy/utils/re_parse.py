@@ -262,7 +262,7 @@ def _parse(source, state):
                 while source.next.isdigit():
                     lo += source.get()
                 if source.match(","):
-                    while source.next in DIGITS:
+                    while source.next.isdigit():
                         hi += source.get()
                 else:
                     hi = lo
