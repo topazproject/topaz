@@ -23,6 +23,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /[\\-]/
         /(?!a)/
         /(?=a)/
+        /a{1}/
         """)
 
     def test_match_operator(self, space):

@@ -74,6 +74,9 @@ class Tokenizer(object):
             return True
         return False
 
+    def tell(self):
+        return self.idx, self.next
+
 
 class Pattern(object):
     def __init__(self, source, flags):
@@ -256,7 +259,7 @@ def _parse(source, state):
                 here = source.tell()
                 min, max = 0, MAX_REPEAT
                 lo = hi = ""
-                while source.next in DIGITS:
+                while source.next.isdigit():
                     lo += source.get()
                 if source.match(","):
                     while source.next in DIGITS:
