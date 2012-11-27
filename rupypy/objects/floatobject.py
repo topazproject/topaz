@@ -1,6 +1,8 @@
 import operator
+import math
 
 from pypy.rlib.objectmodel import compute_hash
+from pypy.rlib.rfloat import NAN, INFINITY
 
 from rupypy.module import ClassDef
 from rupypy.objects.numericobject import W_NumericObject
@@ -77,3 +79,77 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("abs")
     def method_abs(self, space):
         return space.newfloat(abs(self.floatvalue))
+
+    @classdef.method("**")
+    def method_pow(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_numeric):
+            x = self.floatvalue
+            y = space.float_w(w_other)
+            negate_result = False
+
+            if y == 2.0:
+                return space.newfloat(x * x)
+            elif y == 0.0:
+                return space.newfloat(1.0)
+            elif math.isnan(x):
+                return space.newfloat(x)
+            elif math.isnan(y):
+                if x == 1.0:
+                    return space.newfloat(1.0)
+                elif x < 0.0:
+                    raise NotImplementedError("Complex numbers as results")
+                else:
+                    return space.newfloat(y)
+            elif math.isinf(y):
+                if x == 1.0:
+                    return space.newfloat(1.0)
+                elif x == -1.0:
+                    return space.newfloat(-1.0)
+                elif y > 0.0:
+                    if x > 1.0:
+                        return space.newfloat(INFINITY)
+                    elif x < -1.0:
+                        return space.newfloat(-INFINITY)
+                    else:
+                        return space.newfloat(0.0)
+                elif y < 0.0:
+                    if x < 1.0 and x > 0.0:
+                        return space.newfloat(INFINITY)
+                    elif x > -1.0 and x < 0.0:
+                        return space.newfloat(-INFINITY)
+                    else:
+                        return space.newfloat(0.0)
+            elif math.isinf(x):
+                if y > 0.0:
+                    return space.newfloat(x)
+                else:
+                    raise NotImplementedError("Complex numbers as results")
+            elif x == 0.0 and y < 0.0:
+                return space.newfloat(INFINITY)
+
+            if x < 0.0:
+                x = -x
+                negate_result = math.fmod(abs(y), 2.0) == 1.0
+
+            if x == 1.0:
+                if negate_result:
+                    return space.newfloat(-1.0)
+                else:
+                    return space.newfloat(1.0)
+
+            try:
+                # OverflowError raised in math.pow, but not overflow.pow
+                z = math.pow(x, y)
+            except OverflowError:
+                return space.newfloat(INFINITY)
+            except ValueError:
+                return space.newfloat(NAN)
+
+            if negate_result:
+                z = -z
+            return space.newfloat(z)
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "%s can't be coerced into Float" % space.getclass(w_other).name
+            )
