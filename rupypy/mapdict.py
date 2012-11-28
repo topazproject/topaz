@@ -1,3 +1,5 @@
+import copy
+
 from pypy.rlib import jit
 
 
@@ -20,6 +22,10 @@ class MapTransitionCache(object):
 class BaseNode(object):
     _attrs_ = ()
 
+    def __deepcopy__(self, memo):
+        memo[id(self)] = result = object.__new__(self.__class__)
+        return result
+
     def add_attr(self, space, w_obj, name):
         attr_node = space.fromcache(MapTransitionCache).transition_add_attr(w_obj.map, name, len(w_obj.storage))
         w_obj.map = attr_node
@@ -33,6 +39,11 @@ class ClassNode(BaseNode):
     def __init__(self, klass):
         self.klass = klass
 
+    def __deepcopy__(self, memo):
+        obj = super(ClassNode, self).__deepcopy__(memo)
+        obj.klass = copy.deepcopy(self.klass, memo)
+        return obj
+
     def get_class(self):
         return self.klass
 
@@ -44,6 +55,10 @@ class ClassNode(BaseNode):
 
     def change_class(self, space, w_cls):
         return space.fromcache(MapTransitionCache).get_class_node(w_cls)
+
+    def add_attr(self, space, w_obj, name):
+        w_obj.storage = []
+        return BaseNode.add_attr(self, space, w_obj, name)
 
 
 class AttributeNode(BaseNode):

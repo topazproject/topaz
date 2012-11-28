@@ -13,10 +13,12 @@ class W_RangeObject(W_Object):
         self.w_end = w_end
         self.exclusive = exclusive
 
+    @classdef.method("first")
     @classdef.method("begin")
     def method_begin(self, space):
         return self.w_start
 
+    @classdef.method("last")
     @classdef.method("end")
     def method_end(self, space):
         return self.w_end
@@ -36,5 +38,25 @@ class W_RangeObject(W_Object):
             yield i
             i = i.succ
         end
+    end
+
+    def ===(value)
+        self.include?(value)
+    end
+
+    def include?(value)
+        beg_compare = self.begin <=> value
+        if !beg_compare
+            return false
+        end
+        if beg_compare <= 0
+            end_compare = value <=> self.end
+            if self.exclude_end?
+                return true if end_compare < 0
+            else
+                return true if end_compare <= 0
+            end
+        end
+        return false
     end
     """)

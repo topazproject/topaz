@@ -28,6 +28,16 @@ class TestFloatObject(BaseRuPyPyTest):
         w_res = space.execute("return (-(4.0 + 1.0))")
         assert space.float_w(w_res) == -5.0
 
+    def test_equal(self, space):
+        w_res = space.execute("return 2.3 == 2.3")
+        assert w_res is space.w_true
+        w_res = space.execute("return 2.4 == 2.3")
+        assert w_res is space.w_false
+
+    def test_hashability(self, space):
+        w_res = space.execute("return 1.0.hash == 1.0.hash")
+        assert w_res is space.w_true
+
     def test_to_s(self, space):
         w_res = space.execute("return 1.5.to_s")
         assert space.str_w(w_res) == "1.5"
@@ -35,3 +45,33 @@ class TestFloatObject(BaseRuPyPyTest):
     def test_to_i(self, space):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")
         assert self.unwrap(space, w_res) == [1, 1]
+
+    def test_lt(self, space):
+        assert space.execute("return 1.1 < 1.2") is space.w_true
+        assert space.execute("return 1.2 < 0") is space.w_false
+
+    def test_lte(self, space):
+        assert space.execute("return 1.1 <= 2") is space.w_true
+        assert space.execute("return 1.0 <= 1") is space.w_true
+        assert space.execute("return 1.1 <= 1.1") is space.w_true
+        assert space.execute("return 1.1 <= 0.9") is space.w_false
+        assert space.execute("return 1.0 <= '1.1'") is space.w_true
+        with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
+            space.execute("1.0 <= 'a'")
+
+    def test_gt(self, space):
+        assert space.execute("return 1.1 > 1.2") is space.w_false
+        assert space.execute("return 1.2 > 0") is space.w_true
+
+    def test_gte(self, space):
+        assert space.execute("return 1.1 >= 2") is space.w_false
+        assert space.execute("return 1.0 >= 1") is space.w_true
+        assert space.execute("return 1.1 >= 1.1") is space.w_true
+        assert space.execute("return 1.1 >= 0.9") is space.w_true
+        assert space.execute("return 1.0 >= '1.1'") is space.w_false
+        with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
+            space.execute("1.0 >= 'a'")
+
+    def test_abs(self, space):
+        w_res = space.execute("return -123.534.abs")
+        assert space.float_w(w_res) == 123.534

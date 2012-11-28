@@ -1,3 +1,6 @@
+import copy
+
+from pypy.rlib import jit
 from pypy.rlib.objectmodel import newlist_hint, compute_hash
 from pypy.rlib.rarithmetic import intmask
 from pypy.rlib.rerased import new_static_erasing_pair
@@ -5,6 +8,7 @@ from pypy.rlib.rerased import new_static_erasing_pair
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
 from rupypy.objects.objectobject import W_Object
+from rupypy.utils.formatting import StringFormatter
 
 
 def create_trans_table(source, replacement, inv=False):
@@ -49,6 +53,10 @@ class StringStrategy(object):
     def __init__(self, space):
         pass
 
+    def __deepcopy__(self, memo):
+        memo[id(self)] = result = object.__new__(self.__class__)
+        return result
+
 
 class ConstantStringStrategy(StringStrategy):
     erase, unerase = new_static_erasing_pair("constant")
@@ -81,6 +89,9 @@ class ConstantStringStrategy(StringStrategy):
 
     def extend_into(self, src_storage, dst_storage):
         dst_storage += self.unerase(src_storage)
+
+    def mul(self, space, storage, times):
+        return space.newstr_fromstr(self.unerase(storage) * times)
 
 
 class MutableStringStrategy(StringStrategy):
@@ -127,13 +138,14 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(s.str_storage)
         del storage[:]
 
+    def mul(self, space, storage, times):
+        return space.newstr_fromchars(self.unerase(storage) * times)
+
     def downcase(self, storage):
         storage = self.unerase(storage)
         changed = False
         for i, c in enumerate(storage):
-            # TODO: obscure hack because lower() returns a string, rather than
-            # a char, this should be fixed upstream.
-            new_c = c.lower()[0]
+            new_c = c.lower()
             changed |= (c != new_c)
             storage[i] = new_c
         return changed
@@ -148,11 +160,31 @@ class W_StringObject(W_Object):
         self.str_storage = storage
         self.strategy = strategy
 
+    def __deepcopy__(self, memo):
+        obj = super(W_StringObject, self).__deepcopy__(memo)
+        obj.str_storage = copy.deepcopy(self.str_storage, memo)
+        obj.strategy = copy.deepcopy(self.strategy, memo)
+        return obj
+
     @staticmethod
     def newstr_fromstr(space, strvalue):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase(strvalue)
         return W_StringObject(space, storage, strategy)
+
+    @staticmethod
+    @jit.look_inside_iff(lambda space, strs_w: jit.isconstant(len(strs_w)))
+    def newstr_fromstrs(space, strs_w):
+        total_length = 0
+        for w_item in strs_w:
+            assert isinstance(w_item, W_StringObject)
+            total_length += w_item.length()
+
+        storage = newlist_hint(total_length)
+        for w_item in strs_w:
+            assert isinstance(w_item, W_StringObject)
+            w_item.strategy.extend_into(w_item.str_storage, storage)
+        return space.newstr_fromchars(storage)
 
     @staticmethod
     def newstr_fromchars(space, chars):
@@ -223,6 +255,10 @@ class W_StringObject(W_Object):
     def method_to_s(self, space):
         return self
 
+    @classdef.method("inspect")
+    def method_inspect(self, space):
+        return space.newstr_fromstr('"%s"' % self.str_w(space))
+
     @classdef.method("+")
     def method_plus(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
@@ -231,6 +267,10 @@ class W_StringObject(W_Object):
         s.extend(space, self)
         s.extend(space, w_other)
         return s
+
+    @classdef.method("*", times="int")
+    def method_times(self, space, times):
+        return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
     def method_lshift(self, space, w_other):
@@ -281,6 +321,16 @@ class W_StringObject(W_Object):
     def method_comparator(self, space, w_other):
         return space.send(w_other, space.newsymbol("=~"), [self])
 
+    classdef.app_method("""
+    def eql? other
+        if !other.kind_of?(String)
+            false
+        else
+            self == other
+        end
+    end
+    """)
+
     @classdef.method("freeze")
     def method_freeze(self, space):
         pass
@@ -326,8 +376,16 @@ class W_StringObject(W_Object):
         results = space.str_w(self).split(sep, limit - 1)
         return space.newarray([space.newstr_fromstr(s) for s in results])
 
+    classdef.app_method("""
+    def downcase
+        copy = self.dup
+        copy.downcase!
+        return copy
+    end
+    """)
+
     @classdef.method("downcase!")
-    def method_downcase(self, space):
+    def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
         return self if changed else space.w_nil
@@ -337,15 +395,21 @@ class W_StringObject(W_Object):
         if not 2 <= radix <= 36:
             raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
         s = space.str_w(self)
-        if not s:
-            return space.newint(0)
         i = 0
-        neg = s[i] == "-"
+        while i < len(s):
+            if not s[i].isspace():
+                break
+            i += 1
+        neg = i < len(s) and s[i] == "-"
         if neg:
             i += 1
         val = 0
+        number_seen = False
         while i < len(s):
             c = ord(s[i])
+            if c == ord("_") and number_seen:
+                i += 1
+                continue
             if ord("a") <= c <= ord("z"):
                 digit = c - ord("a") + 10
             elif ord("A") <= c <= ord("Z"):
@@ -356,6 +420,7 @@ class W_StringObject(W_Object):
                 break
             if digit >= radix:
                 break
+            number_seen = True
             val = val * radix + digit
             i += 1
         if neg:
@@ -385,3 +450,18 @@ class W_StringObject(W_Object):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
         return self if new_string else space.w_nil
+
+    classdef.app_method("""
+    def empty?
+        self.length == 0
+    end
+    """)
+
+    @classdef.method("%")
+    def method_mod(self, space, w_arg):
+        if space.is_kind_of(w_arg, space.w_array):
+            args_w = space.listview(w_arg)
+        else:
+            args_w = [w_arg]
+        elements_w = StringFormatter(space.str_w(self), args_w).format(space)
+        return space.newstr_fromstrs(elements_w)

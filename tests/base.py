@@ -4,6 +4,7 @@ import py
 
 from rupypy.error import RubyError
 from rupypy.objects.arrayobject import W_ArrayObject
+from rupypy.objects.bignumobject import W_BignumObject
 from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.intobject import W_FixnumObject
@@ -27,6 +28,8 @@ class BaseRuPyPyTest(object):
     def unwrap(self, space, w_obj):
         if isinstance(w_obj, W_FixnumObject):
             return space.int_w(w_obj)
+        elif isinstance(w_obj, W_BignumObject):
+            return space.bigint_w(w_obj)
         elif isinstance(w_obj, W_FloatObject):
             return space.float_w(w_obj)
         elif isinstance(w_obj, W_TrueObject):

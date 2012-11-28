@@ -22,7 +22,7 @@ class W_RegexpObject(W_Object):
 
     @classdef.method("=~", string="str")
     def method_match(self, space, string):
-        if space.globals.get("$=") is not None and space.is_true(space.globals.get("$=")):
+        if space.globals.get(space, "$=") is not None and space.is_true(space.globals.get(space, "$=")):
             # recompile the regexp
             regexp = re.compile(self.regexp, re.I)
         else:
@@ -31,15 +31,15 @@ class W_RegexpObject(W_Object):
         match = regexp.search(string)
         if match is None:
             for glob in ["$%d" % i for i in xrange(1, 10)] + ["$&", "$+", "$`", "$'", "$~"]:
-                space.globals.set(glob, space.w_nil)
+                space.globals.set(space, glob, space.w_nil)
             return space.w_nil
         else:
             for i in xrange(1, min(regexp.groups + 1, 10)):
-                space.globals.set("$%d" % i, space.newstr_fromstr(match.group(i)))
-            space.globals.set("$&", space.newstr_fromstr(string[match.start():match.end()]))
-            space.globals.set("$+", space.newstr_fromstr(match.group(regexp.groups)))
-            space.globals.set("$`", space.newstr_fromstr(string[0:match.start()]))
-            space.globals.set("$'", space.newstr_fromstr(string[match.end():len(string)]))
+                space.globals.set(space, "$%d" % i, space.newstr_fromstr(match.group(i)))
+            space.globals.set(space, "$&", space.newstr_fromstr(string[match.start():match.end()]))
+            space.globals.set(space, "$+", space.newstr_fromstr(match.group(regexp.groups)))
+            space.globals.set(space, "$`", space.newstr_fromstr(string[0:match.start()]))
+            space.globals.set(space, "$'", space.newstr_fromstr(string[match.end():len(string)]))
         return space.newint(match.start())
 
     @classdef.method("==")

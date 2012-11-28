@@ -1,6 +1,9 @@
+import copy
+
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
+from rupypy.utils.packing.pack import RPacker
 
 
 class W_ArrayObject(W_Object):
@@ -10,6 +13,11 @@ class W_ArrayObject(W_Object):
     def __init__(self, space, items_w):
         W_Object.__init__(self, space)
         self.items_w = items_w
+
+    def __deepcopy__(self, memo):
+        obj = super(W_ArrayObject, self).__deepcopy__(memo)
+        obj.items_w = copy.deepcopy(self.items_w, memo)
+        return obj
 
     def listview(self, space):
         return self.items_w
@@ -65,7 +73,12 @@ class W_ArrayObject(W_Object):
             self.items_w[start] = w_obj
         elif as_range:
             assert end >= 0
-            self.items_w[start:end] = [w_obj]
+            w_converted = space.convert_type(w_obj, space.w_array, 'to_ary', raise_error=False)
+            if w_converted is space.w_nil:
+                rep = [w_obj]
+            else:
+                rep = space.listview(w_converted)
+            self.items_w[start:end] = rep
         else:
             self.items_w[start] = w_obj
         return w_obj
@@ -157,9 +170,7 @@ class W_ArrayObject(W_Object):
     def at idx
         self[idx]
     end
-    """)
 
-    classdef.app_method("""
     def each
         i = 0
         while i < self.length
@@ -167,9 +178,7 @@ class W_ArrayObject(W_Object):
             i += 1
         end
     end
-    """)
 
-    classdef.app_method("""
     def zip ary
         result = []
         self.each_with_index do |obj, idx|
@@ -177,9 +186,7 @@ class W_ArrayObject(W_Object):
         end
         result
     end
-    """)
 
-    classdef.app_method("""
     def product ary
         result = []
         self.each do |obj|
@@ -189,15 +196,11 @@ class W_ArrayObject(W_Object):
         end
         result
     end
-    """)
 
-    classdef.app_method("""
     def compact
         self.select { |each| !each.nil? }
     end
-    """)
 
-    classdef.app_method("""
     def reject!(&block)
         prev_size = self.size
         self.delete_if(&block)
@@ -244,6 +247,16 @@ class W_ArrayObject(W_Object):
                 del self.items_w[pop_size:]
                 return space.newarray(res_w)
 
+    classdef.app_method("""
+    def delete(obj)
+        sz = self.size
+        self.delete_if { |o| o == obj }
+        return obj if sz != self.size
+        return yield if block_given?
+        return nil
+    end
+    """)
+
     @classdef.method("delete_at", idx="int")
     def method_delete_at(self, space, idx):
         if idx >= len(self.items_w):
@@ -251,9 +264,76 @@ class W_ArrayObject(W_Object):
         else:
             return self.items_w.pop(idx)
 
+    classdef.app_method("""
+    def first
+        return self[0]
+    end
+    """)
+
     @classdef.method("last")
     def method_last(self, space):
         if len(self.items_w) == 0:
             return space.w_nil
         else:
             return self.items_w[len(self.items_w) - 1]
+
+    @classdef.method("pack", template="str")
+    def method_pack(self, space, template):
+        result = RPacker(template, space.listview(self)).operate(space)
+        return space.newstr_fromchars(result)
+
+    @classdef.method("to_ary")
+    def method_to_ary(self, space):
+        return self
+
+    @classdef.method("clear")
+    def method_clear(self):
+        del self.items_w[:]
+        return self
+
+    classdef.app_method("""
+    def ==(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.size != other.size
+            return false
+        end
+        self.each_with_index do |x, i|
+            if x != other[i]
+                return false
+            end
+        end
+        return true
+    end
+
+    def eql?(other)
+        if self.equal?(other)
+            return true
+        end
+        if !other.kind_of?(Array)
+            return false
+        end
+        if self.length != other.length
+            return false
+        end
+        self.each_with_index do |x, i|
+            if !x.eql?(other[i])
+                return false
+            end
+        end
+        return true
+    end
+
+    def hash
+        res = 0x345678
+        self.each do |x|
+            # We want to keep this within a fixnum range.
+            res = Topaz.intmask((1000003 * res) ^ x.hash)
+        end
+        return res
+    end
+    """)
