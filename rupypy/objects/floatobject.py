@@ -127,17 +127,18 @@ class W_FloatObject(W_NumericObject):
                         return space.newfloat(-INFINITY)
                     else:
                         return space.newfloat(0.0)
-            elif math.isinf(x):
-                if y > 0.0:
-                    return space.newfloat(x)
-                else:
-                    raise NotImplementedError("Complex numbers as results")
             elif x == 0.0 and y < 0.0:
                 return space.newfloat(INFINITY)
 
             if x < 0.0:
                 x = -x
                 negate_result = math.fmod(abs(y), 2.0) == 1.0
+
+            if math.isinf(x):
+                if y > 0.0:
+                    return space.newfloat(-INFINITY if negate_result else INFINITY)
+                else:
+                    return space.newfloat(-0.0 if negate_result else 0.0)
 
             if x == 1.0:
                 if negate_result:
@@ -149,13 +150,11 @@ class W_FloatObject(W_NumericObject):
                 # OverflowError raised in math.pow, but not overflow.pow
                 z = math.pow(x, y)
             except OverflowError:
-                return space.newfloat(INFINITY)
+                return space.newfloat(-INFINITY if negate_result else INFINITY)
             except ValueError:
                 return space.newfloat(NAN)
 
-            if negate_result:
-                z = -z
-            return space.newfloat(z)
+            return space.newfloat(-z if negate_result else z)
         else:
             raise space.error(
                 space.w_TypeError,
