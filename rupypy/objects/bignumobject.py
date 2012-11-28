@@ -90,7 +90,16 @@ class W_BignumObject(W_IntegerObject):
     @classdef.method("**")
     def method_pow(self, space, w_other):
         if space.getclass(w_other) is space.w_fixnum or space.getclass(w_other) is space.w_bignum:
-            return space.newbigint_fromrbigint(self.bigint.pow(space.bigint_w(w_other), None))
+            exp = space.bigint_w(w_other)
+            negative_exponent = False
+            if exp.sign < 0:
+                negative_exponent = True
+                exp = exp.abs()
+            result = self.bigint.pow(exp, None)
+            if negative_exponent:
+                return space.newfloat(1.0 / result.tofloat())
+            else:
+                return space.newbigint_fromrbigint(result)
         elif space.getclass(w_other) is space.w_float:
             try:
                 return space.send(
