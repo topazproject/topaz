@@ -109,24 +109,12 @@ class W_FloatObject(W_NumericObject):
                 else:
                     return space.newfloat(y)
             elif math.isinf(y):
-                if x == 1.0:
-                    return space.newfloat(1.0)
-                elif x == -1.0:
-                    return space.newfloat(-1.0)
-                elif y > 0.0:
-                    if x > 1.0:
-                        return space.newfloat(INFINITY)
-                    elif x < -1.0:
-                        return space.newfloat(-INFINITY)
-                    else:
-                        return space.newfloat(0.0)
-                elif y < 0.0:
-                    if x < 1.0 and x > 0.0:
-                        return space.newfloat(INFINITY)
-                    elif x > -1.0 and x < 0.0:
-                        return space.newfloat(-INFINITY)
-                    else:
-                        return space.newfloat(0.0)
+                if x == 1.0 or x == -1.0:
+                    return space.newfloat(x)
+                elif x < -1.0 or x > 1.0:
+                    return space.newfloat(INFINITY if y > 0.0 else 0.0)
+                else:
+                    return space.newfloat(0.0 if y > 0.0 else INFINITY)
             elif x == 0.0 and y < 0.0:
                 return space.newfloat(INFINITY)
 
@@ -139,22 +127,17 @@ class W_FloatObject(W_NumericObject):
                     return space.newfloat(-INFINITY if negate_result else INFINITY)
                 else:
                     return space.newfloat(-0.0 if negate_result else 0.0)
-
-            if x == 1.0:
-                if negate_result:
-                    return space.newfloat(-1.0)
-                else:
-                    return space.newfloat(1.0)
-
-            try:
-                # OverflowError raised in math.pow, but not overflow.pow
-                z = math.pow(x, y)
-            except OverflowError:
-                return space.newfloat(-INFINITY if negate_result else INFINITY)
-            except ValueError:
-                return space.newfloat(NAN)
-
-            return space.newfloat(-z if negate_result else z)
+            elif x == 1.0:
+                return space.newfloat(-1.0 if negate_result else 1.0)
+            else:
+                try:
+                    # OverflowError raised in math.pow, but not overflow.pow
+                    z = math.pow(x, y)
+                    return space.newfloat(-z if negate_result else z)
+                except OverflowError:
+                    return space.newfloat(-INFINITY if negate_result else INFINITY)
+                except ValueError:
+                    return space.newfloat(NAN)
         else:
             raise space.error(
                 space.w_TypeError,

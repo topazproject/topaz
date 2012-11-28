@@ -136,7 +136,7 @@ class TestFloatObject(BaseRuPyPyTest):
         w_res = space.execute("return 1.1 ** (1.0 / 0.0)")
         assert self.unwrap(space, w_res) == float('inf')
         w_res = space.execute("return (-1.1) ** (1.0 / 0.0)")
-        assert self.unwrap(space, w_res) == -float('inf')
+        assert self.unwrap(space, w_res) == float('inf')
         w_res = space.execute("return (-0.1) ** (1.0 / 0.0)")
         assert self.unwrap(space, w_res) == -0.0
         w_res = space.execute("return 0.1 ** (1.0 / 0.0)")
@@ -144,8 +144,8 @@ class TestFloatObject(BaseRuPyPyTest):
         w_res = space.execute("return 0.1 ** (-1.0 / 0.0)")
         assert self.unwrap(space, w_res) == float('inf')
         w_res = space.execute("return (-0.1) ** (-1.0 / 0.0)")
-        assert self.unwrap(space, w_res) == -float('inf')
+        assert self.unwrap(space, w_res) == float('inf')
         w_res = space.execute("return (-2) ** (-1.0 / 0.0)")
-        assert self.unwrap(space, w_res) == -0.0
+        assert self.unwrap(space, w_res) == 0.0
         w_res = space.execute("return 2 ** (-1.0 / 0.0)")
         assert self.unwrap(space, w_res) == 0.0
