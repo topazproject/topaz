@@ -2,6 +2,7 @@ from rupypy.utils.re import re_rffi as re
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 
+
 class W_RegexpObject(W_Object):
     classdef = ClassDef("Regexp", W_Object.classdef)
 
