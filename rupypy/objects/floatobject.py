@@ -55,7 +55,15 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("/", other="float")
     def method_div(self, space, other):
-        return space.newfloat(self.floatvalue / other)
+        if other == 0.0:
+            if self.floatvalue == 0.0:
+                return space.newfloat(NAN)
+            elif self.floatvalue < 0.0:
+                return space.newfloat(-INFINITY)
+            else:
+                return space.newfloat(INFINITY)
+        else:
+            return space.newfloat(self.floatvalue / other)
 
     def new_bool_op(classdef, name, func):
         @classdef.method(name)
