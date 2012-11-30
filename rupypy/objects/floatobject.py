@@ -133,11 +133,11 @@ class W_FloatObject(W_NumericObject):
                 try:
                     # OverflowError raised in math.pow, but not overflow.pow
                     z = math.pow(x, y)
-                    return space.newfloat(-z if negate_result else z)
                 except OverflowError:
                     return space.newfloat(-INFINITY if negate_result else INFINITY)
                 except ValueError:
                     return space.newfloat(NAN)
+                return space.newfloat(-z if negate_result else z)
         else:
             raise space.error(
                 space.w_TypeError,

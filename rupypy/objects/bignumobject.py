@@ -102,13 +102,14 @@ class W_BignumObject(W_IntegerObject):
                 return space.newbigint_fromrbigint(result)
         elif space.getclass(w_other) is space.w_float:
             try:
-                return space.send(
-                    space.newfloat(space.float_w(self)),
-                    space.newsymbol("**"),
-                    [w_other]
-                )
+                float_value = space.float_w(self)
             except OverflowError:
                 return space.newfloat(INFINITY)
+            return space.send(
+                space.newfloat(float_value),
+                space.newsymbol("**"),
+                [w_other]
+            )
         else:
             raise space.error(
                 space.w_TypeError,
