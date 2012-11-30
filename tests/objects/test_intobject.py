@@ -207,3 +207,15 @@ class TestFixnumObject(BaseRuPyPyTest):
             raise NotImplementedError(sys.maxint)
         w_res = space.execute("return 1.size")
         assert space.int_w(w_res) == expected
+
+    def test_pow(self, space):
+        w_res = space.execute("return 2 ** 6")
+        assert self.unwrap(space, w_res) == 64
+        w_res = space.execute("return 2 ** -6")
+        assert self.unwrap(space, w_res) == 1.0 / 64
+        w_res = space.execute("return 4 ** 0.5")
+        assert self.unwrap(space, w_res) == 2.0
+        w_res = space.execute("return 4 ** -0.5")
+        assert self.unwrap(space, w_res) == 0.5
+        with self.raises(space, "TypeError", "String can't be coerced into Fixnum"):
+            space.execute("2 ** 'hallo'")

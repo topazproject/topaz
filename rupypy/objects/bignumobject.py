@@ -1,4 +1,5 @@
 from pypy.rlib.rbigint import rbigint
+from pypy.rlib.rfloat import INFINITY
 
 from rupypy.module import ClassDef
 from rupypy.objects.integerobject import W_IntegerObject
@@ -24,6 +25,9 @@ class W_BignumObject(W_IntegerObject):
 
     def bigint_w(self, space):
         return self.bigint
+
+    def float_w(self, space):
+        return self.bigint.tofloat()
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -81,4 +85,33 @@ class W_BignumObject(W_IntegerObject):
         else:
             raise space.error(space.w_TypeError,
                 "can't coerce %s to Bignum" % space.getclass(w_other).name
+            )
+
+    @classdef.method("**")
+    def method_pow(self, space, w_other):
+        if space.getclass(w_other) is space.w_fixnum or space.getclass(w_other) is space.w_bignum:
+            exp = space.bigint_w(w_other)
+            negative_exponent = False
+            if exp.sign < 0:
+                negative_exponent = True
+                exp = exp.abs()
+            result = self.bigint.pow(exp, None)
+            if negative_exponent:
+                return space.newfloat(1.0 / result.tofloat())
+            else:
+                return space.newbigint_fromrbigint(result)
+        elif space.getclass(w_other) is space.w_float:
+            try:
+                float_value = space.float_w(self)
+            except OverflowError:
+                return space.newfloat(INFINITY)
+            return space.send(
+                space.newfloat(float_value),
+                space.newsymbol("**"),
+                [w_other]
+            )
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "%s can't be coerced into Bignum" % space.getclass(w_other).name
             )

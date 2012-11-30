@@ -96,6 +96,47 @@ class W_FixnumObject(W_RootObject):
     method_sub = new_binop(classdef, "-", operator.sub)
     method_mul = new_binop(classdef, "*", operator.mul)
 
+    @classdef.method("**")
+    def method_pow(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            return self.method_pow_int_impl(space, w_other)
+        elif space.getclass(w_other) is space.w_float:
+            return space.send(
+                space.newfloat(float(self.intvalue)), space.newsymbol("**"), [w_other]
+            )
+        elif space.getclass(w_other) is space.w_bignum:
+            return space.send(
+                space.newbigint_fromint(self.intvalue), space.newsymbol("**"),
+                [w_other]
+            )
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "%s can't be coerced into Fixnum" % space.getclass(w_other).name
+            )
+
+    def method_pow_int_impl(self, space, w_other):
+        exp = space.int_w(w_other)
+        temp = self.intvalue
+        if exp > 0:
+            ix = 1
+            try:
+                while exp > 0:
+                    if exp & 1:
+                        ix = ovfcheck(ix * temp)
+                    exp >>= 1
+                    if exp == 0:
+                        break
+                    temp = ovfcheck(temp * temp)
+            except OverflowError:
+                return space.send(
+                    space.newbigint_fromint(self.intvalue), space.newsymbol("**"),
+                    [space.newint(exp)]
+                )
+            return space.newint(ix)
+        else:
+            return space.send(space.newfloat(float(temp)), space.newsymbol("**"), [w_other])
+
     @classdef.method("/", other="int")
     def method_div(self, space, other):
         try:
