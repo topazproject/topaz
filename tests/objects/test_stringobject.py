@@ -98,6 +98,12 @@ class TestStringObject(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 0
 
+    def test_match(self, space):
+        w_res = space.execute("return 'abc' =~ 1")
+        assert w_res == space.w_nil
+        w_res = space.execute("return 'abc' =~ /abc/")
+        assert space.int_w(w_res) == 0
+
     def test_eqlp(self, space):
         w_res = space.execute("return 'abc'.eql? 2")
         assert w_res is space.w_false

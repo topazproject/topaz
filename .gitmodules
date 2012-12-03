@@ -1,0 +1,3 @@
+[submodule "rupypy/utils/re/onig"]
+	path = rupypy/utils/re/onig
+	url = https://github.com/sunaku/onig-5.9.2.git

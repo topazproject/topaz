@@ -145,6 +145,7 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
+            self.getclassfor(W_RegexpObject),
             self.getclassfor(W_MethodObject),
             self.getclassfor(W_UnboundMethodObject),
 
