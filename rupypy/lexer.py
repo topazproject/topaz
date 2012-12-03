@@ -100,7 +100,9 @@ class Lexer(object):
     def current_pos(self):
         return SourcePosition(self.idx, self.lineno, self.columno)
 
-    def newline(self):
+    def newline(self, ch):
+        if ch == "\r" and self.peek() == "\n":
+            self.read()
         self.lineno += 1
         self.columno = 1
 
@@ -133,11 +135,11 @@ class Lexer(object):
                 continue
             elif ch == "#":
                 self.comment(ch)
-            elif ch == "\n":
+            elif ch in "\r\n":
                 space_seen = True
-                self.newline()
+                self.newline(ch)
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
-                    self.add(ch)
+                    self.add("\n")
                     self.command_start = True
                     self.state = self.EXPR_BEG
                     yield self.emit("LITERAL_NEWLINE")
@@ -225,8 +227,8 @@ class Lexer(object):
                     yield token
             elif ch == "\\":
                 ch2 = self.read()
-                if ch2 == "\n":
-                    self.newline()
+                if ch2 in "\r\n":
+                    self.newline(ch2)
                     space_seen = True
                     continue
                 raise NotImplementedError
@@ -341,7 +343,7 @@ class Lexer(object):
     def comment(self, ch):
         while True:
             ch = self.read()
-            if ch == self.EOF or ch == "\n":
+            if ch == self.EOF or ch in "\r\n":
                 self.unread()
                 break
 
@@ -467,8 +469,8 @@ class Lexer(object):
         last_line = StringBuilder()
         while True:
             ch = self.read()
-            if ch == "\n":
-                self.newline()
+            if ch in "\r\n":
+                self.newline(ch)
                 break
             elif ch == self.EOF:
                 self.unread()
@@ -841,8 +843,8 @@ class Lexer(object):
             return ["\x1b"]
         elif c == "s":
             return [" "]
-        elif c == "\n":
-            self.newline()
+        elif c in "\r\n":
+            self.newline(c)
             return ["\n"]
         elif c == "u":
             raise NotImplementedError("UTF-8 escape not implemented")
@@ -1141,8 +1143,8 @@ class StringTerm(BaseStringTerm):
         space_seen = False
         if self.is_qwords and ch.isspace():
             while ch.isspace():
-                if ch == "\n":
-                    self.lexer.newline()
+                if ch in "\r\n":
+                    self.lexer.newline(ch)
                 ch = self.lexer.read()
             space_seen = True
 
@@ -1179,7 +1181,7 @@ class StringTerm(BaseStringTerm):
                     break
                 self.lexer.add(ch)
                 self.nest -= 1
-            elif self.expand and ch == "#" and self.lexer.peek() != "\n":
+            elif self.expand and ch == "#" and self.lexer.peek() not in "\r\n":
                 ch2 = self.lexer.read()
 
                 if ch2 in ["$", "@", "{"]:
@@ -1268,14 +1270,14 @@ class HeredocTerm(BaseStringTerm):
 
         while True:
             ch = self.lexer.read()
-            if ch == "\n":
-                self.lexer.newline()
-                self.lexer.add(ch)
+            if ch in "\r\n":
+                self.lexer.newline(ch)
+                self.lexer.add("\n")
                 self.start_of_line = True
                 return self.lexer.emit("STRING_CONTENT")
             elif ch == self.lexer.EOF:
                 self.lexer.error()
-            elif self.expand and ch == "#" and self.lexer.peek() != "\n":
+            elif self.expand and ch == "#" and self.lexer.peek() not in "\r\n":
                 ch2 = self.lexer.read()
 
                 if ch2 in ["$", "@", "{"]:
