@@ -34,6 +34,10 @@ class TestRegexpObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [2, "l", "l", "o", "a", "b", "c", "h", "e", "l", "lloabchel", "l", "he", "lo"]
 
+    def test_match_method(self, space):
+        w_res = space.execute("return /bc/.match('abc').begin(0)")
+        assert space.int_w(w_res) == 1
+
     def test_new_regexp(self, space):
         w_res = space.execute("return Regexp.new('..abc..') == Regexp.compile('..abc..')")
         assert w_res is space.w_true

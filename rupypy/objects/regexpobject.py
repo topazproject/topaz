@@ -133,7 +133,7 @@ class W_RegexpObject(W_Object):
         return space.newstr_fromstr(self.regexp)
 
     @classdef.method("=~", s="str")
-    def method_match(self, space, s):
+    def method_match_operator(self, space, s):
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
         self.get_match_result(space, ctx, matched)
@@ -141,6 +141,12 @@ class W_RegexpObject(W_Object):
             return space.newint(ctx.match_start)
         else:
             return space.w_nil
+
+    @classdef.method("match", s="str")
+    def method_match(self, space, s):
+        ctx = self.make_ctx(s)
+        matched = rsre_core.search_context(ctx)
+        return self.get_match_result(space, ctx, matched)
 
 
 class W_MatchDataObject(W_Object):
@@ -184,6 +190,16 @@ class W_MatchDataObject(W_Object):
         else:
             return space.w_nil
         return space.newstr_fromstr(self.ctx._string[start:end])
+
+    @classdef.method("begin", n="int")
+    def method_begin(self, space, n):
+        if n == 0:
+            start, _ = self.ctx.match_start, self.ctx.match_end
+        elif 1 <= n <= len(self.regexp.indexgroup):
+            start, _ = self.get_span(n)
+        else:
+            raise space.error(space.w_IndexError, "index %d out of matches" % n)
+        return space.newint(start)
 
     @classdef.method("size")
     def method_size(self, space):

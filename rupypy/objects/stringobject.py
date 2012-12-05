@@ -460,6 +460,10 @@ class W_StringObject(W_Object):
             return obj =~ self
         end
     end
+
+    def match(pattern)
+        return Regexp.new(pattern).match(self)
+    end
     """)
 
     @classdef.method("%")
