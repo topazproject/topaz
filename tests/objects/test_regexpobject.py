@@ -29,6 +29,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /abc/i
         /(?<=\d)/
         /(?<foo>.*)/
+        /A++/
         """)
 
     def test_match_operator(self, space):

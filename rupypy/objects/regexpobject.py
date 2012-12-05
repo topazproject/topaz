@@ -3,7 +3,7 @@ from pypy.rlib.rsre import rsre_core
 from rupypy.coerce import Coerce
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
-from rupypy.utils import re_compile
+from rupypy.utils import regexp
 
 
 class W_RegexpObject(W_Object):
@@ -11,7 +11,7 @@ class W_RegexpObject(W_Object):
 
     def __init__(self, space, regexp):
         W_Object.__init__(self, space)
-        self.set_regexp(regexp)
+        self.set_source(regexp)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -84,10 +84,10 @@ class W_RegexpObject(W_Object):
         if self.regexp is None:
             raise space.error(space.w_TypeError, "uninitialized Regexp")
 
-    def set_regexp(self, regexp):
-        if regexp is not None:
-            self.regexp = regexp
-            code, flags, groupindex, indexgroup = re_compile.compile(regexp, 0)
+    def set_source(self, source):
+        if source is not None:
+            self.source = source
+            code, flags, groupindex, indexgroup = regexp.compile(source, 0)
             self.code = code
             self.flags = flags
             self.groupindex = groupindex
@@ -117,9 +117,9 @@ class W_RegexpObject(W_Object):
     @classdef.method("initialize")
     def method_initialize(self, space, w_source):
         if isinstance(w_source, W_RegexpObject):
-            self.set_regexp(w_source.regexp)
+            self.set_source(w_source.source)
         else:
-            self.set_regexp(Coerce.str(space, w_source))
+            self.set_source(Coerce.str(space, w_source))
 
     @classdef.method("==")
     def method_equal(self, space, w_other):
@@ -129,12 +129,12 @@ class W_RegexpObject(W_Object):
             return space.w_false
         self._check_initialized(space)
         w_other._check_initialized(space)
-        return space.newbool(self.regexp == w_other.regexp)
+        return space.newbool(self.source == w_other.source)
 
     @classdef.method("source")
     def method_source(self, space):
         self._check_initialized(space)
-        return space.newstr_fromstr(self.regexp)
+        return space.newstr_fromstr(self.source)
 
     @classdef.method("=~", s="str")
     def method_match_operator(self, space, s):
