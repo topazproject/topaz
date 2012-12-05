@@ -49,3 +49,15 @@ class TestBignumObject(BaseRuPyPyTest):
     def test_to_f(self, space):
         w_res = space.execute("return 18446744073709551628.to_f")
         assert space.float_w(w_res) == 1.8446744073709552e+19
+
+    def test_pow(self, space):
+        w_res = space.execute("return 18446744073709551628 ** 2")
+        assert self.unwrap(space, w_res) == rbigint.fromlong(340282366920938463906096465200797450384)
+        w_res = space.execute("return 18446744073709551628 ** -2")
+        assert self.unwrap(space, w_res) == 1.0 / 340282366920938463906096465200797450384
+        w_res = space.execute("return 18446744073709551628 ** 0.5")
+        assert self.unwrap(space, w_res) == 4294967296.0
+        w_res = space.execute("return 18446744073709551628 ** -0.5")
+        assert self.unwrap(space, w_res) == 2.3283064365386963e-10
+        with self.raises(space, "TypeError", "String can't be coerced into Bignum"):
+            space.execute("18446744073709551628 ** 'hallo'")

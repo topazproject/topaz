@@ -1,3 +1,5 @@
+import math
+
 from ..base import BaseRuPyPyTest
 
 
@@ -59,6 +61,91 @@ class TestFloatObject(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
             space.execute("1.0 <= 'a'")
 
+    def test_gt(self, space):
+        assert space.execute("return 1.1 > 1.2") is space.w_false
+        assert space.execute("return 1.2 > 0") is space.w_true
+
+    def test_gte(self, space):
+        assert space.execute("return 1.1 >= 2") is space.w_false
+        assert space.execute("return 1.0 >= 1") is space.w_true
+        assert space.execute("return 1.1 >= 1.1") is space.w_true
+        assert space.execute("return 1.1 >= 0.9") is space.w_true
+        assert space.execute("return 1.0 >= '1.1'") is space.w_false
+        with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
+            space.execute("1.0 >= 'a'")
+
     def test_abs(self, space):
         w_res = space.execute("return -123.534.abs")
         assert space.float_w(w_res) == 123.534
+
+    def test_nan(self, space):
+        w_res = space.execute("return 0.0 / 0.0")
+        assert math.isnan(self.unwrap(space, w_res))
+
+    def test_infinity(self, space):
+        w_res = space.execute("return 1.0 / 0.0")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return -1.0 / 0.0")
+        assert self.unwrap(space, w_res) == -float('inf')
+
+    def test_pow(self, space):
+        w_res = space.execute("return 1.0 ** 2")
+        assert self.unwrap(space, w_res) == 1.0
+        w_res = space.execute("return 2.0 ** 2")
+        assert self.unwrap(space, w_res) == 4.0
+        w_res = space.execute("return 2.0 ** 0")
+        assert self.unwrap(space, w_res) == 1.0
+        w_res = space.execute("return 4.0 ** 4.0")
+        assert self.unwrap(space, w_res) == 256.0
+        w_res = space.execute("return 0.0 ** (-1.0)")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return (-2.0) ** 2")
+        assert self.unwrap(space, w_res) == 4
+        w_res = space.execute("return (-2.0) ** 3")
+        assert self.unwrap(space, w_res) == -8
+        w_res = space.execute("return (-2.0) ** -2")
+        assert self.unwrap(space, w_res) == 0.25
+        w_res = space.execute("return (-2.0) ** -3")
+        assert self.unwrap(space, w_res) == -0.125
+        with self.raises(space, "TypeError", "String can't be coerced into Bignum"):
+            space.execute("18446744073709551628 ** 'hallo'")
+
+    def test_pow_with_nan(self, space):
+        w_res = space.execute("return (0.0 / 0.0) ** 1")
+        assert math.isnan(self.unwrap(space, w_res))
+        w_res = space.execute("return 1.0 ** (0.0 / 0.0)")
+        assert self.unwrap(space, w_res) == 1.0
+        w_res = space.execute("return 1.0 ** (0.0 / 0.0)")
+        assert self.unwrap(space, w_res) == 1.0
+
+    def test_pow_with_infinity(self, space):
+        w_res = space.execute("return (1.0 / 0.0) ** 10")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return (-1.0 / 0.0) ** 10")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return (-1.0 / 0.0) ** 9")
+        assert self.unwrap(space, w_res) == -float('inf')
+        w_res = space.execute("return (-1.0 / 0.0) ** -10")
+        assert self.unwrap(space, w_res) == 0.0
+        w_res = space.execute("return (-1.0 / 0.0) ** -9")
+        assert self.unwrap(space, w_res) == -0.0
+        w_res = space.execute("return 1.0 ** (1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == 1.0
+        w_res = space.execute("return (-1.0) ** (1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == -1.0
+        w_res = space.execute("return 1.1 ** (1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return (-1.1) ** (1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return (-0.1) ** (1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == -0.0
+        w_res = space.execute("return 0.1 ** (1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == 0.0
+        w_res = space.execute("return 0.1 ** (-1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return (-0.1) ** (-1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == float('inf')
+        w_res = space.execute("return (-2) ** (-1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == 0.0
+        w_res = space.execute("return 2 ** (-1.0 / 0.0)")
+        assert self.unwrap(space, w_res) == 0.0
