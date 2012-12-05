@@ -6,7 +6,7 @@ from pypy.rlib.rsre.rsre_core import (AT_BEGINNING, AT_BEGINNING_STRING,
 
 from rupypy.utils.re_consts import (LITERAL, BRANCH, CALL, SUBPATTERN,
     REPEAT, MIN_REPEAT, MAX_REPEAT, ANY, RANGE, IN, NOT_LITERAL, CATEGORY, AT,
-    SUCCESS, NEGATE, ASSERT, ASSERT_NOT)
+    SUCCESS, NEGATE, ASSERT, ASSERT_NOT, GROUPREF)
 
 
 PATTERN_ENDERS = "|)"
@@ -318,6 +318,18 @@ def _parse(source, state):
                         subpattern.append((ASSERT, (dir, p)))
                     else:
                         subpattern.append((ASSERT_NOT, (dir, p)))
+                    continue
+                elif source.match(">"):
+                    p = _parse(source, state)
+                    if not source.match(")"):
+                        raise RegexpError("unbalanced paranthesis")
+                    # TODO: handle group count
+                    group = state.opengroup()
+                    sub_p = SubPattern(state)
+                    sub_p.append((SUBPATTERN, (group, p)))
+                    state.closegroup(group)
+                    subpattern.append((ASSERT, (1, sub_p)))
+                    subpattern.append((GROUPREF, group))
                     continue
                 else:
                     raise NotImplementedError("sre_parse:L597")

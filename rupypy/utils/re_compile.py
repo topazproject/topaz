@@ -4,14 +4,14 @@ from pypy.rlib.rsre.rsre_core import (OPCODE_SUCCESS, OPCODE_INFO,
     OPCODE_LITERAL, OPCODE_ANY, OPCODE_MARK, OPCODE_AT, OPCODE_IN,
     OPCODE_RANGE, OPCODE_FAILURE, OPCODE_BRANCH, OPCODE_NOT_LITERAL,
     OPCODE_REPEAT_ONE, OPCODE_CHARSET, OPCODE_NEGATE, OPCODE_REPEAT,
-    OPCODE_MAX_UNTIL, OPCODE_ASSERT, OPCODE_ASSERT_NOT)
+    OPCODE_MAX_UNTIL, OPCODE_ASSERT, OPCODE_ASSERT_NOT, OPCODE_GROUPREF)
 from pypy.rlib.runicode import MAXUNICODE
 
 from rupypy.utils import re_parse
 from rupypy.utils.re_consts import (FLAG_IGNORECASE, FLAG_DOTALL, MAXREPEAT,
     LITERAL, SUBPATTERN, BRANCH, IN, NOT_LITERAL, ANY, REPEAT, MIN_REPEAT,
     MAX_REPEAT, SUCCESS, FAILURE, ASSERT, ASSERT_NOT, CALL, AT, NEGATE, RANGE,
-    CHARSET)
+    CHARSET, CATEGORY, GROUPREF)
 
 
 def _compile_info(code, pattern, flags):
@@ -207,8 +207,14 @@ def _compile(code, pattern, flags):
             code.append(0)
             for tail in tails:
                 code[tail] = len(code) - tail
-        else:
+        elif op == CATEGORY:
             raise NotImplementedError(op, "sre_compile:L150")
+        elif op == GROUPREF:
+            assert not flags & FLAG_IGNORECASE
+            code.append(OPCODE_GROUPREF)
+            code.append(av - 1)
+        else:
+            raise NotImplementedError(op, "sre_compile:L162")
 
 
 def _compile_charset(code, charset, flags):

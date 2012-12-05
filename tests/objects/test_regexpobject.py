@@ -49,3 +49,10 @@ class TestRegexpObject(BaseRuPyPyTest):
         with self.raises(space, "TypeError"):
             space.execute("$~ = 12")
         space.execute("$~ = nil")
+
+    def test_atomic_grouping(self, space):
+        w_res = space.execute('return /"(?>.*)"/ =~ (\'"Quote"\')')
+        assert w_res is space.w_nil
+
+        w_res = space.execute('return /"(?>[A-Za-z]*)"/ =~ \'"Quote"\'')
+        assert space.int_w(w_res) == 0
