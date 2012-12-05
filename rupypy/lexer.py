@@ -1216,6 +1216,18 @@ class StringTerm(BaseStringTerm):
             self.is_end = True
             return self.lexer.emit("LITERAL_SPACE")
         if self.is_regexp:
+            flags = ""
+            while True:
+                ch = self.lexer.read()
+                if ch == self.lexer.EOF or not ch.isalpha():
+                    self.lexer.unread()
+                    break
+                elif ch in "ixmonesju":
+                    if ch not in flags:
+                        flags += ch
+                        self.lexer.add(ch)
+                else:
+                    self.lexer.error("unknown regexp option - %s" % ch)
             return self.lexer.emit("REGEXP_END")
         return self.lexer.emit("STRING_END")
 
