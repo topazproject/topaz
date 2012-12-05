@@ -13,6 +13,7 @@ PATTERN_ENDERS = "|)"
 SPECIAL_CHARS = ".\\[{()*+?^$|"
 REPEAT_CHARS = "*+?{"
 ASSERT_CHARS = "=!<"
+LOOK_BEHIND_ASSERTION_CHARS = "=!"
 
 ESCAPES = {
     r"\a": (LITERAL, ord("\a")),

@@ -27,6 +27,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /a{2,3}/
         /foo(?#comment)bar/
         /abc/i
+        /(?<=\d)/
         """)
 
     def test_match_operator(self, space):
