@@ -312,20 +312,29 @@ def _parse(source, state):
                     continue
                 elif source.next in ASSERT_CHARS:
                     c = source.get()
-                    dir = 1
-                    if c == "<":
-                        if source.next not in LOOK_BEHIND_ASSERTION_CHARS:
-                            raise RegexpError("syntax error")
-                        dir = -1
-                        c = source.get()
-                    p = _parse_sub(source, state)
-                    if not source.match(")"):
-                        raise RegexpError("unbalanced paranthesis")
-                    if c == "=":
-                        subpattern.append((ASSERT, (dir, p)))
+                    if c == "<" and source.next not in LOOK_BEHIND_ASSERTION_CHARS:
+                        name = ""
+                        while True:
+                            c = source.get()
+                            if c is None:
+                                raise RegexpError("unterminated name")
+                            if c == ">":
+                                break
+                        name += c
+                        group = 1
                     else:
-                        subpattern.append((ASSERT_NOT, (dir, p)))
-                    continue
+                        dir = 1
+                        if c == "<":
+                            dir = -1
+                            c = source.get()
+                        p = _parse_sub(source, state)
+                        if not source.match(")"):
+                            raise RegexpError("unbalanced paranthesis")
+                        if c == "=":
+                            subpattern.append((ASSERT, (dir, p)))
+                        else:
+                            subpattern.append((ASSERT_NOT, (dir, p)))
+                        continue
                 elif source.match(">"):
                     p = _parse(source, state)
                     if not source.match(")"):
