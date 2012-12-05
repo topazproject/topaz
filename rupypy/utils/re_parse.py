@@ -302,7 +302,13 @@ def _parse(source, state):
                 if source.match(":"):
                     group = 2
                 elif source.match("#"):
-                    raise NotImplementedError("sre_parse:L572")
+                    while True:
+                        if source.next is None or source.next == ")":
+                            break
+                        source.get()
+                    if not source.match(")"):
+                        raise RegexpError("unbalanced paranthesis")
+                    continue
                 elif source.next in ASSERT_CHARS:
                     c = source.get()
                     dir = 1
