@@ -1,5 +1,6 @@
 from pypy.rlib.rsre import rsre_core
 
+from rupypy.coerce import Coerce
 from rupypy.module import ClassDef
 from rupypy.objects.objectobject import W_Object
 from rupypy.utils import re_compile
@@ -113,9 +114,12 @@ class W_RegexpObject(W_Object):
     def method_compile(self, space, args_w):
         return space.send(self, space.newsymbol("new"), args_w)
 
-    @classdef.method("initialize", source="str")
-    def method_initialize(self, space, source):
-        self.set_regexp(source)
+    @classdef.method("initialize")
+    def method_initialize(self, space, w_source):
+        if isinstance(w_source, W_RegexpObject):
+            self.set_regexp(w_source.regexp)
+        else:
+            self.set_regexp(Coerce.str(space, w_source))
 
     @classdef.method("==")
     def method_equal(self, space, w_other):

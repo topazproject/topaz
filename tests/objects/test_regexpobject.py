@@ -41,6 +41,8 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_new_regexp(self, space):
         w_res = space.execute("return Regexp.new('..abc..') == Regexp.compile('..abc..')")
         assert w_res is space.w_true
+        w_res = space.execute("return Regexp.new(/abc/).source")
+        assert space.str_w(w_res) == "abc"
 
     def test_size(self, space):
         w_res = space.execute("""
