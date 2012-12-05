@@ -459,12 +459,7 @@ class Parser(object):
 
     @pg.production("stmt : UNDEF undef_list")
     def stmt_undef(self, p):
-        """
-        kUNDEF undef_list {
-                    $$ = $2;
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Undef(p[1].getastlist(), p[0].getsourcepos().lineno))
 
     @pg.production("stmt : stmt IF_MOD expr_value")
     def stmt_ifmod(self, p):
@@ -1000,12 +995,7 @@ class Parser(object):
 
     @pg.production("undef_list : fitem")
     def undef_list_fitem(self, p):
-        """
-        fitem {
-                    $$ = support.newUndef($1.getPosition(), $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list(p[0])
 
     @pg.production("undef_list : undef_list LITERAL_COMMA fitem")
     def undef_list_undef_list(self, p):

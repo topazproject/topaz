@@ -1909,3 +1909,17 @@ class TestCompiler(object):
         RAISE_BREAK
         RETURN
         """)
+
+    def test_undef(self, space):
+        self.assert_compiles(space, """
+        undef to_s
+        10
+        """, """
+        LOAD_SCOPE
+        LOAD_CONST 0
+        SEND 1 1
+        DISCARD_TOP
+
+        LOAD_CONST 2
+        RETURN
+        """)

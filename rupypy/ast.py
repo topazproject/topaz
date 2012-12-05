@@ -455,6 +455,27 @@ class Alias(BaseStatement):
             ctx.emit(consts.DISCARD_TOP)
 
 
+class Undef(BaseStatement):
+    def __init__(self, undef_list, lineno):
+        BaseStatement.__init__(self, lineno)
+        self.undef_list = undef_list
+
+    def compile(self, ctx):
+        first = True
+        for undef in self.undef_list:
+            if not first:
+                ctx.emit(consts.DISCARD_TOP)
+            Send(
+                Scope(self.lineno),
+                "undef_method",
+                [undef],
+                None,
+                self.lineno
+            ).compile(ctx)
+        if not self.dont_pop:
+            ctx.emit(consts.DISCARD_TOP)
+
+
 class Defined(Node):
     def __init__(self, node, lineno):
         Node.__init__(self, lineno)

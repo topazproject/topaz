@@ -2319,6 +2319,18 @@ HERE
             ast.Break(ast.Array([ast.ConstantInt(3), ast.ConstantInt(4)]))
         ]))
 
+    def test_undef(self, space):
+        r = space.parse("""
+        class X
+            undef to_s
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Class(ast.Scope(2), "X", None, ast.Block([
+                ast.Undef([ast.ConstantSymbol("to_s")], 3)
+            ])))
+        ]))
+
     def test_custom_lineno(self, space):
         with self.raises(space, "SyntaxError", "line 1"):
             assert space.parse("[]{}[]")
