@@ -32,6 +32,10 @@ class FirstSetError(Exception):
     pass
 
 
+class RegexpError(Exception):
+    pass
+
+
 class Source(object):
     def __init__(self, s):
         self.pos = 0
