@@ -226,6 +226,9 @@ class ZeroWidthBase(RegexpBase):
     def has_simple_start(self):
         return False
 
+    def get_firstset(self):
+        return {None: None}
+
 
 class StartOfString(ZeroWidthBase):
     def compile(self, ctx):
@@ -683,6 +686,25 @@ def _parse_set_item(source, info):
     return Character(ord(ch))
 
 
+def _compile_firstset(info, fs):
+    if not fs or None in fs:
+        return []
+    members = {}
+    for i in fs:
+        if i.case_insensitive:
+            if isinstance(i, Character):
+                if _is_cased(info, i.value):
+                    return []
+            elif isinstance(i, SetBase):
+                return []
+        members[i.with_flags(case_insensitive=False)] = None
+    fs = SetUnion(info, list(members), zerowidth=True)
+    fs = fs.optimize(info, in_set=True)
+    ctx = CompilerContext()
+    fs.compile(ctx)
+    return ctx.build()
+
+
 def compile(pattern, flags=0):
     global_flags = flags
     while True:
@@ -713,7 +735,6 @@ def compile(pattern, flags=0):
         # Get the first set, if possible.
         try:
             fs_code = _compile_firstset(info, parsed.get_firstset())
-            fs_code = _flatten_code(fs_code)
             code = fs_code + code
         except FirstSetError:
             pass
