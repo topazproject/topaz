@@ -1,6 +1,6 @@
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
-    OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH)
+    OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE, OPCODE_JUMP)
 
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
@@ -258,6 +258,13 @@ class Range(RegexpBase):
     def optimize(self, info, in_set=False):
         return self
 
+    def can_be_affix(self):
+        return True
+
+    def compile(self, ctx):
+        ctx.emit(OPCODE_RANGE)
+        ctx.emit(self.lower)
+        ctx.emit(self.upper)
 
 class Sequence(RegexpBase):
     def __init__(self, items):
@@ -571,7 +578,8 @@ class SetUnion(SetBase):
         return SetUnion(self.info, items)
 
     def compile(self, ctx):
-        raise NotImplementedError
+        # XXX: this is wrong, and under optimized!
+        Branch(self.items).optimize(self.info).compile(ctx)
 
 
 
