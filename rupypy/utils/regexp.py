@@ -4,6 +4,7 @@ from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
 
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
+MULTI_LINE = 1 << 2
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
@@ -191,6 +192,9 @@ class Any(RegexpBase):
     def optimize(self, info):
         return self
 
+    def has_simple_start(self):
+        return True
+
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY)
 
@@ -296,6 +300,9 @@ class Group(RegexpBase):
 
     def optimize(self, info):
         return Group(self.info, self.group, self.subpattern.optimize(info))
+
+    def has_simple_start(self):
+        return self.subpattern.has_simple_start()
 
     def compile(self, ctx):
         ctx.emit(OPCODE_MARK)
@@ -537,7 +544,7 @@ def _parse_paren(source, info):
     saved_flags = info.flags
     saved_ignore = source.ignore_space
     try:
-        subpattern
+        subpattern = _parse_pattern(source, info)
     finally:
         source.ignore_space = saved_ignore
         info.flags = saved_flags
@@ -678,4 +685,4 @@ def compile(pattern, flags=0):
             pass
 
     index_group = dict([(v, n) for n, v in info.group_index.iteritems()])
-    return code, info.flags, info.group_index, index_group
+    return code, info.flags, info.group_count, info.group_index, index_group

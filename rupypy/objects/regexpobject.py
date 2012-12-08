@@ -81,15 +81,16 @@ class W_RegexpObject(W_Object):
             return space.send(w_match, space.newsymbol("post_match"))
 
     def _check_initialized(self, space):
-        if self.regexp is None:
+        if self.source is None:
             raise space.error(space.w_TypeError, "uninitialized Regexp")
 
     def set_source(self, source):
         if source is not None:
             self.source = source
-            code, flags, groupindex, indexgroup = regexp.compile(source, 0)
+            code, flags, groupcount, groupindex, indexgroup = regexp.compile(source, 0)
             self.code = code
             self.flags = flags
+            self.groupcount = groupcount
             self.groupindex = groupindex
             self.indexgroup = indexgroup
 
@@ -164,7 +165,7 @@ class W_MatchDataObject(W_Object):
 
     def flatten_marks(self):
         if self._flatten_cache is None:
-            self._flatten_cache = self._build_flattened_marks(self.ctx, len(self.regexp.indexgroup))
+            self._flatten_cache = self._build_flattened_marks(self.ctx, self.regexp.groupcount)
         return self._flatten_cache
 
     def _build_flattened_marks(self, ctx, num_groups):
@@ -189,7 +190,7 @@ class W_MatchDataObject(W_Object):
     def method_subscript(self, space, n):
         if n == 0:
             start, end = self.ctx.match_start, self.ctx.match_end
-        elif 1 <= n <= len(self.regexp.indexgroup):
+        elif 1 <= n <= self.regexp.groupcount:
             start, end = self.get_span(n)
         else:
             return space.w_nil
@@ -199,7 +200,7 @@ class W_MatchDataObject(W_Object):
     def method_begin(self, space, n):
         if n == 0:
             start, _ = self.ctx.match_start, self.ctx.match_end
-        elif 1 <= n <= len(self.regexp.indexgroup):
+        elif 1 <= n <= self.regexp.groupcount:
             start, _ = self.get_span(n)
         else:
             raise space.error(space.w_IndexError, "index %d out of matches" % n)
@@ -207,7 +208,7 @@ class W_MatchDataObject(W_Object):
 
     @classdef.method("size")
     def method_size(self, space):
-        return space.newint(len(self.regexp.indexgroup))
+        return space.newint(self.regexp.groupcount + 1)
 
     @classdef.method("pre_match")
     def method_pre_match(self, space):
