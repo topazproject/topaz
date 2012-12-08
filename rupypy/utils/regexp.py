@@ -187,9 +187,12 @@ class RegexpBase(object):
 
 
 class Character(RegexpBase):
-    def __init__(self, value, case_insensitive=False, positive=True):
-        RegexpBase.__init__(self, case_insensitive=case_insensitive, positive=positive)
+    def __init__(self, value, case_insensitive=False, positive=True, zerowidth=False):
+        RegexpBase.__init__(self, case_insensitive=case_insensitive, positive=positive, zerowidth=zerowidth)
         self.value = value
+
+    def rebuild(self, positive, case_insensitive, zerowidth):
+        return Character(self.value, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
 
     def fix_groups(self):
         pass
@@ -202,6 +205,9 @@ class Character(RegexpBase):
 
     def can_be_affix(self):
         return True
+
+    def get_firstset(self):
+        return {self: None}
 
     def compile(self, ctx):
         ctx.emit(OPCODE_LITERAL_IGNORE if self.case_insensitive else OPCODE_LITERAL)
@@ -287,6 +293,16 @@ class Sequence(RegexpBase):
 
     def has_simple_start(self):
         return self.items and self.items[0].has_simple_start()
+
+    def get_firstset(self):
+        fs = {}
+        for item in self.items:
+            fs.update(item.get_firstset())
+            if None not in fs:
+                return fs
+            del fs[None]
+        fs[None] = None
+        return fs
 
     def compile(self, ctx):
         for item in self.items:
@@ -435,6 +451,15 @@ class Branch(RegexpBase):
             sequence = prefix + branches + suffix
         return make_sequence(sequence)
 
+    def has_simple_start(self):
+        return False
+
+    def get_firstset(self):
+        fs = {}
+        for b in self.branches:
+            fs.update(b.get_firstset())
+        return fs or {None: None}
+
     def compile(self, ctx):
         ctx.emit(OPCODE_BRANCH)
         tail = []
@@ -520,6 +545,9 @@ class Group(RegexpBase):
     def has_simple_start(self):
         return self.subpattern.has_simple_start()
 
+    def get_firstset(self):
+        return self.subpattern.get_firstset()
+
     def compile(self, ctx):
         ctx.emit(OPCODE_MARK)
         ctx.emit((self.group - 1) * 2)
@@ -548,8 +576,8 @@ class RefGroup(RegexpBase):
 
 
 class SetBase(RegexpBase):
-    def __init__(self, info, items):
-        RegexpBase.__init__(self)
+    def __init__(self, info, items, zerowidth=False):
+        RegexpBase.__init__(self, zerowidth=zerowidth)
         self.info = info
         self.items = items
 
@@ -558,6 +586,9 @@ class SetBase(RegexpBase):
 
     def fix_groups(self):
         pass
+
+    def get_firstset(self):
+        return {self: None}
 
 
 class SetUnion(SetBase):
@@ -573,14 +604,13 @@ class SetUnion(SetBase):
             return items[0].with_flags(
                 positive=item.positive == self.positive,
                 case_insensitive=self.case_insensitive,
-                rzerowidth=self.zerowidth
+                zerowidth=self.zerowidth
             ).optimize(info, in_set=in_set)
         return SetUnion(self.info, items)
 
     def compile(self, ctx):
         # XXX: this is wrong, and under optimized!
-        Branch(self.items).optimize(self.info).compile(ctx)
-
+        Branch(self.items).compile(ctx)
 
 
 def make_character(info, value, in_set=False):
