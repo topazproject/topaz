@@ -1,6 +1,6 @@
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
-    OPCODE_GROUPREF)
+    OPCODE_GROUPREF, OPCODE_AT)
 
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
@@ -8,11 +8,28 @@ MULTI_LINE = 1 << 2
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
+AT_BEGINNING = 0
+AT_BEGINNING_LINE = 1
+AT_BEGINNING_STRING = 2
+AT_BOUNDARY = 3
+AT_NON_BOUNDARY = 4
+AT_END = 5
+AT_END_LINE = 6
+AT_END_STRING = 7
+AT_LOC_BOUNDARY = 8
+AT_LOC_NON_BOUNDARY = 9
+AT_UNI_BOUNDARY = 10
+AT_UNI_NON_BOUNDARY = 11
+
 
 class UnscopedFlagSet(Exception):
     def __init__(self, global_flags):
         Exception.__init__(self)
         self.global_flags = global_flags
+
+
+class FirstSetError(Exception):
+    pass
 
 
 class Source(object):
@@ -197,6 +214,23 @@ class Any(RegexpBase):
 
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY)
+
+
+class ZeroWidthBase(RegexpBase):
+    def fix_groups(self):
+        pass
+
+    def optimize(self, info, in_set=False):
+        return self
+
+    def has_simple_start(self):
+        return False
+
+
+class StartOfString(ZeroWidthBase):
+    def compile(self, ctx):
+        ctx.emit(OPCODE_AT)
+        ctx.emit(AT_BEGINNING_STRING)
 
 
 class Range(RegexpBase):
