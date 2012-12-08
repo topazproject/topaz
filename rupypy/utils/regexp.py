@@ -1,6 +1,6 @@
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
-    OPCODE_GROUPREF, OPCODE_AT)
+    OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH)
 
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
@@ -168,6 +168,8 @@ class Counts(object):
 
 
 class RegexpBase(object):
+    _attrs_ = ["positive", "case_insensitive", "zerowidth"]
+
     def __init__(self, positive=True, case_insensitive=False, zerowidth=False):
         self.positive = positive
         self.case_insensitive = case_insensitive
@@ -192,10 +194,13 @@ class Character(RegexpBase):
     def fix_groups(self):
         pass
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         return self
 
     def has_simple_start(self):
+        return True
+
+    def can_be_affix(self):
         return True
 
     def compile(self, ctx):
@@ -240,6 +245,10 @@ class StartOfString(ZeroWidthBase):
         ctx.emit(AT_BEGINNING_STRING)
 
 
+class Property(RegexpBase):
+    pass
+
+
 class Range(RegexpBase):
     def __init__(self, lower, upper):
         RegexpBase.__init__(self)
@@ -275,6 +284,165 @@ class Sequence(RegexpBase):
     def compile(self, ctx):
         for item in self.items:
             item.compile(ctx)
+
+
+class Branch(RegexpBase):
+    def __init__(self, branches):
+        RegexpBase.__init__(self)
+        self.branches = branches
+
+    def fix_groups(self):
+        for b in self.branches:
+            b.fix_groups()
+
+    def _flatten_branches(self, info, branches):
+        new_branches = []
+        for b in branches:
+            b = b.optimize(info)
+            if isinstance(b, Branch):
+                new_branches.extend(b.branches)
+            else:
+                new_branches.append(b)
+        return new_branches
+
+    def _split_common_prefix(self, info, branches):
+        alternatives = []
+        for b in branches:
+            if isinstance(b, Sequence):
+                alternatives.append(b.items)
+            else:
+                alternatives.append([b])
+        max_count = min([len(a) for a in alternatives])
+        prefix = alternatives[0]
+        pos = 0
+        end_pos = max_count
+        while (pos < end_pos and prefix[pos].can_be_affix() and
+            all([a[pos] == prefix[pos] for a in alternatives])):
+            pos += 1
+        if pos == 0:
+            return [], branches
+        new_branches = []
+        for a in alternatives:
+            new_branches.append(make_sequence(a[pos:]))
+        return prefix[:pos], new_branches
+
+    def _split_common_suffix(self, info, branches):
+        alternatives = []
+        for b in branches:
+            if isinstance(b, Sequence):
+                alternatives.append(b.items)
+            else:
+                alternatives.append([b])
+        max_count = min([len(a) for a in alternatives])
+        suffix = alternatives[0]
+        pos = -1
+        end_pos = -1 - max_count
+        while (pos > end_pos and suffix[pos].can_be_affix() and
+            all([a[pos] == suffix[pos] for a in alternatives])):
+            pos -= 1
+        count = -1 - pos
+        if count == 0:
+            return [], branches
+        new_branches = []
+        for a in alternatives:
+            new_branches.append(make_sequence(a[:-count]))
+        return suffix[-count:], new_branches
+
+    def _is_simple_character(self, c):
+        return isinstance(c, Character) and c.positive and not c.case_insensitive
+
+    def _flush_char_prefix(self, info, prefixed, order, new_branches):
+        if not prefixed:
+            return
+        for value, branches in sorted(prefixed.items(), key=lambda pair: order[pair[0]]):
+            if len(branches) == 1:
+                new_branches.append(make_sequence(branches[0]))
+            else:
+                subbranches = []
+                optional = False
+                for b in branches:
+                    if len(b) > 1:
+                        subbranches.append(make_sequence(b[1:]))
+                    elif not optional:
+                        subbranches.append(Sequence())
+                        optional = True
+                sequence = Sequence([Character(value), Branch(subbranches)])
+                new_branches.append(sequence.optimize(info))
+        prefixed.clear()
+        order.clear()
+
+    def _merge_common_prefixes(self, info, branches):
+        prefixed = {}
+        order = {}
+        new_branches = []
+        for b in branches:
+            if self._is_simple_character(b):
+                prefixed.setdefault(b.value, []).append([b])
+                order.setdefault(b.value, len(order))
+            elif isinstance(b, Sequence) and b.items and self._is_simple_character(b.items[0]):
+                prefixed.setdefault(b.items[0].value, []).append(b.items)
+                order.setdefault(b.items[0].value, len(order))
+            else:
+                self._flush_char_prefix(info, prefixed, order, new_branches)
+                new_branches.append(b)
+        self._flush_char_prefix(info, prefixed, order, new_branches)
+        return new_branches
+
+    def _flush_set_members(self, info, items, case_insensitive, new_branches):
+        if not items:
+            return
+        if len(items) == 1:
+            item = list(items)[0]
+        else:
+            item = SetUnion(info, list(items)).optimize(info)
+        new_branches.append(item.with_flags(case_insensitive=case_insensitive))
+        items.clear()
+
+    def _reduce_to_set(self, info, branches):
+        new_branches = []
+        items = {}
+        case_insensitive = False
+        for b in branches:
+            if isinstance(b, (Character, Property, SetBase)):
+                if b.case_insensitive != case_insensitive:
+                    self._flush_set_members(info, items, case_insensitive, new_branches)
+                    case_insensitive = b.case_insensitive
+                items[b.with_flags(case_insensitive=False)] = False
+            else:
+                self._flush_set_members(info, items, case_insensitive, new_branches)
+                new_branches.append(b)
+        self._flush_set_members(info, items, case_insensitive, new_branches)
+        return new_branches
+
+    def optimize(self, info):
+        branches = self._flatten_branches(info, self.branches)
+
+        prefix, branches = self._split_common_prefix(info, branches)
+        suffix, branches = self._split_common_suffix(info, branches)
+
+        branches = self._merge_common_prefixes(info, branches)
+        branches = self._reduce_to_set(info, branches)
+        if branches:
+            sequence = prefix + [Branch(branches)] + suffix
+        else:
+            sequence = prefix + branches + suffix
+        return make_sequence(sequence)
+
+    def compile(self, ctx):
+        ctx.emit(OPCODE_BRANCH)
+        tail = []
+        for b in self.branches:
+            pos = ctx.tell()
+            ctx.emit(0)
+            b.compile(ctx)
+            ctx.emit(OPCODE_JUMP)
+            tail.append(ctx.tell())
+            ctx.emit(0)
+            ctx.patch(pos, ctx.tell() - pos)
+        ctx.emit(0)
+        for t in tail:
+            ctx.patch(t, ctx.tell() - t)
+
 
 
 class GreedyRepeat(RegexpBase):
