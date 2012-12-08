@@ -146,14 +146,26 @@ class Counts(object):
 
 
 class RegexpBase(object):
-    pass
+    def __init__(self, positive=True, case_insensitive=False, zerowidth=False):
+        self.positive = positive
+        self.case_insensitive = case_insensitive
+        self.zerowidth = zerowidth
+
+    def with_flags(self, positive=None, case_insensitive=None, zerowidth=None):
+        positive = positive if positive is not None else self.positive
+        case_insensitive = case_insensitive if case_insensitive is not None else self.case_insensitive
+        zerowidth = zerowidth if zerowidth is not None else self.zerowidth
+        if (positive == self.positive and
+            case_insensitive == self.case_insensitive and
+            zerowidth == self.zerowidth):
+            return self
+        return self.rebuild(positive, case_insensitive, zerowidth)
 
 
 class Character(RegexpBase):
-    def __init__(self, value, case_insensitive):
-        RegexpBase.__init__(self)
+    def __init__(self, value, case_insensitive=False, positive=True):
+        RegexpBase.__init__(self, case_insensitive=case_insensitive, positive=positive)
         self.value = value
-        self.case_insensitive = case_insensitive
 
     def fix_groups(self):
         pass
@@ -181,6 +193,16 @@ class Any(RegexpBase):
 
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY)
+
+
+class Range(RegexpBase):
+    def __init__(self, lower, upper):
+        RegexpBase.__init__(self)
+        self.lower = lower
+        self.upper = upper
+
+    def optimize(self, info, in_set=False):
+        return self
 
 
 class Sequence(RegexpBase):
@@ -240,10 +262,9 @@ class GreedyRepeat(RegexpBase):
 
 class LookAround(RegexpBase):
     def __init__(self, subpattern, behind, positive):
-        RegexpBase.__init__(self)
+        RegexpBase.__init__(self, positive=positive)
         self.subpattern = subpattern
         self.behind = behind
-        self.positive = positive
 
     def fix_groups(self):
         self.subpattern.fix_groups()
@@ -286,10 +307,9 @@ class Group(RegexpBase):
 
 class RefGroup(RegexpBase):
     def __init__(self, info, group, case_insensitive=False):
-        RegexpBase.__init__(self)
+        RegexpBase.__init__(self, case_insensitive=case_insensitive)
         self.info = info
         self.group = group
-        self.case_insensitive = case_insensitive
 
     def fix_groups(self):
         if not 1 <= self.group <= self.info.group_count:
@@ -302,6 +322,41 @@ class RefGroup(RegexpBase):
         assert not self.case_insensitive
         ctx.emit(OPCODE_GROUPREF)
         ctx.emit(self.group - 1)
+
+
+class SetBase(RegexpBase):
+    def __init__(self, info, items):
+        RegexpBase.__init__(self)
+        self.info = info
+        self.items = items
+
+    def is_empty(self):
+        return False
+
+    def fix_groups(self):
+        pass
+
+
+class SetUnion(SetBase):
+    def optimize(self, info, in_set=False):
+        items = []
+        for item in self.items:
+            item = item.optimize(info, in_set=True)
+            if isinstance(item, SetUnion) and item.positive:
+                items.extend(item.items)
+            else:
+                items.append(item)
+        if len(items) == 1:
+            return items[0].with_flags(
+                positive=item.positive == self.positive,
+                case_insensitive=self.case_insensitive,
+                rzerowidth=self.zerowidth
+            ).optimize(info, in_set=in_set)
+        return SetUnion(self.info, items)
+
+    def compile(self, ctx):
+        raise NotImplementedError
+
 
 
 def make_character(info, value, in_set=False):
@@ -501,6 +556,90 @@ def _parse_atomic(source, info):
         info.flags = saved_flags
     source.expect(")")
     return make_atomic(info, subpattern)
+
+
+def _parse_set(source, info):
+    saved_ignore = source.ignore_space
+    source.ignore_space = False
+    negate = source.match("^")
+    try:
+        item = _parse_set_intersect(source, info)
+        source.expect("]")
+    finally:
+        source.ignore_space = saved_ignore
+
+    if negate:
+        items = item.with_flags(positive=not item.positive)
+    return item.with_flags(case_insensitive=info.flags & IGNORE_CASE)
+
+
+def _parse_set_intersect(source, info):
+    items = [_parse_set_implicit_union(source, info)]
+    while source.match("&&"):
+        items.append(_parse_set_implicit_union(source, info))
+
+    if len(items) == 1:
+        return items[0]
+    return SetIntersection(info, items)
+
+
+def _parse_set_implicit_union(source, info):
+    items = [_parse_set_member(source, info)]
+    while True:
+        here = source.pos
+        if source.match("]"):
+            source.pos = here
+            break
+        if source.match("&&"):
+            source.pos = here
+            break
+        items.append(_parse_set_member(source, info))
+    if len(items) == 1:
+        return items[0]
+    return SetUnion(info, items)
+
+
+def _parse_set_member(source, info):
+    start = _parse_set_item(source, info)
+    if (not isinstance(start, Character) or not start.positive or
+        not source.match("-")):
+        return start
+
+    here = source.pos
+    if source.match("]"):
+        source.pos = here
+        return SetUnion(info, [start, Character(ord("-"))])
+    end = _parse_set_item(source, info)
+    if not isinstance(end, Character) or not end.positive:
+        return SetUnion(info, [start, Character(ord("-")), end])
+    if start.value > end.value:
+        raise RegexpError("bad character range")
+    if start.value == end.value:
+        return start
+    return Range(start.value, end.value)
+
+
+def _parse_set_item(source, info):
+    if source.match("\\"):
+        return _parse_escape(source, info, in_set=True)
+
+    here = source.pos
+    if source.match("[:"):
+        try:
+            return _parse_posix_class(source, info)
+        except ParseError:
+            source.pos = here
+    if source.match("["):
+        negate = source.match("^")
+        item = _parse_set_intersect(source, info)
+        source.expect("]")
+        if negate:
+            item = item.with_flags(positive=not item.positive)
+        return item
+    ch = source.get()
+    if not ch:
+        raise RegexpError("bad set")
+    return Character(ord(ch))
 
 
 def compile(pattern, flags=0):
