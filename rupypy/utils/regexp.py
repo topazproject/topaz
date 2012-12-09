@@ -8,6 +8,8 @@ MULTI_LINE = 1 << 2
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
+HEX_ESCAPES = {"x": 2, "u": 4, "U": 8}
+
 AT_BEGINNING = 0
 AT_BEGINNING_LINE = 1
 AT_BEGINNING_STRING = 2
@@ -560,6 +562,9 @@ class Group(RegexpBase):
     def optimize(self, info):
         return Group(self.info, self.group, self.subpattern.optimize(info))
 
+    def is_empty(self):
+        return False
+
     def has_simple_start(self):
         return self.subpattern.has_simple_start()
 
@@ -594,7 +599,7 @@ class RefGroup(RegexpBase):
 
 
 class SetBase(RegexpBase):
-    def __init__(self, info, items, zerowidth=False):
+    def __init__(self, info, items, positive=True, case_insensitive=False, zerowidth=False):
         RegexpBase.__init__(self, zerowidth=zerowidth)
         self.info = info
         self.items = items
@@ -604,6 +609,9 @@ class SetBase(RegexpBase):
 
     def fix_groups(self):
         pass
+
+    def has_simple_start(self):
+        return True
 
     def get_firstset(self):
         return {self: None}
@@ -625,6 +633,9 @@ class SetUnion(SetBase):
                 zerowidth=self.zerowidth
             ).optimize(info, in_set=in_set)
         return SetUnion(self.info, items)
+
+    def rebuild(self, positive, case_insensitive, zerowidth):
+        return SetUnion(self.info, self.items, positive, case_insensitive, zerowidth).optimize(self.info)
 
     def compile(self, ctx):
         # XXX: this is wrong, and under optimized!
@@ -912,6 +923,53 @@ def _parse_set_item(source, info):
     if not ch:
         raise RegexpError("bad set")
     return Character(ord(ch))
+
+
+def _parse_escape(source, info, in_set):
+    saved_ignore = source.ignore_space
+    source.ignore_space = False
+    ch = source.get()
+    source.ignore_space = saved_ignore
+    if not ch:
+        raise RegexpError("bad escape")
+    if ch in HEX_ESCAPES:
+        return _parse_hex_escape(source, info, HEX_ESCAPES[ch], in_set)
+    elif ch == "g" and not in_set:
+        here = source.pos
+        try:
+            return _parse_group_ref(source, info)
+        except RegexpError:
+            source.pos = here
+        return make_character(info, ord(ch), in_set)
+    elif ch == "G" and not in_set:
+        return SearchAncor()
+    elif ch == "L" and not in_set:
+        return _parse_string_set(source, info)
+    elif ch == "N":
+        return _parse_named_char(source, info, in_set)
+    elif ch in "pP":
+        return _parse_property(source, info, ch == "p", in_set)
+    elif ch == "X" and not in_set:
+        return Grapheme()
+    elif ch.isalpha():
+        if not in_set:
+            if info.flags & WORD:
+                value = WORD_POSITION_ESCAPES.get(ch)
+            else:
+                value = POSITION_ESCAPES.get(ch)
+            if value is not None:
+                return value
+        value = CHARSET_ESCAPES.get(ch)
+        if value is not None:
+            return value
+        value = CHARACTER_ESCAPES.get(ch)
+        if value is not None:
+            return Character(ord(value))
+        return make_character(info, ord(ch), in_set)
+    elif ch.isdigit():
+        return _parse_numeric_escape(source, info, ch, in_set)
+    else:
+        return make_character(info, ord(ch), in_set)
 
 
 def _compile_firstset(info, fs):
