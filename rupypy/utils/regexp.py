@@ -2,7 +2,7 @@ from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
     OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE, OPCODE_JUMP,
-    OPCODE_ASSERT_NOT)
+    OPCODE_ASSERT_NOT, OPCODE_CATEGORY)
 
 
 IGNORE_CASE = 1 << 0
@@ -28,6 +28,25 @@ AT_LOC_BOUNDARY = 8
 AT_LOC_NON_BOUNDARY = 9
 AT_UNI_BOUNDARY = 10
 AT_UNI_NON_BOUNDARY = 11
+
+CATEGORY_DIGIT = 0
+CATEGORY_NOT_DIGIT = 1
+CATEGORY_SPACE = 2
+CATEGORY_NOT_SPACE = 3
+CATEGORY_WORD = 4
+CATEGORY_NOT_WORD = 5
+CATEGORY_LINEBREAK = 6
+CATEGORY_NOT_LINEBREAK = 7
+CATEGORY_LOC_WORD = 8
+CATEGORY_LOC_NOT_WORD = 9
+CATEGORY_UNI_DIGIT = 10
+CATEGORY_UNI_NOT_DIGIT = 11
+CATEGORY_UNI_SPACE = 12
+CATEGORY_UNI_NOT_SPACE = 13
+CATEGORY_UNI_WORD = 14
+CATEGORY_UNI_NOT_WORD = 15
+CATEGORY_UNI_LINEBREAK = 16
+CATEGORY_UNI_NOT_LINEBREAK = 17
 
 
 class UnscopedFlagSet(Exception):
@@ -132,6 +151,7 @@ class Info(object):
         self.used_groups = {}
         self.group_state = {}
         self.group_index = {}
+        self.group_name = {}
         self.named_lists_used = {}
         self.defined_groups = {}
 
@@ -242,6 +262,9 @@ class Any(RegexpBase):
     def has_simple_start(self):
         return True
 
+    def get_firstset(self):
+        raise FirstSetError
+
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY)
 
@@ -273,7 +296,22 @@ class EndOfString(ZeroWidthBase):
 
 
 class Property(RegexpBase):
-    pass
+    def __init__(self, value):
+        RegexpBase.__init__(self)
+        self.value = value
+
+    def getwidth(self):
+        return 1, 1
+
+    def fix_groups(self):
+        pass
+
+    def optimize(self, info, in_set=False):
+        return self
+
+    def compile(self, ctx):
+        ctx.emit(OPCODE_CATEGORY)
+        ctx.emit(self.value)
 
 
 class Range(RegexpBase):
@@ -555,10 +593,15 @@ class LookAround(RegexpBase):
 
     def compile(self, ctx):
         ctx.emit(OPCODE_ASSERT if self.positive else OPCODE_ASSERT_NOT)
-        assert not self.behind
         pos = ctx.tell()
         ctx.emit(0)
-        ctx.emit(0)
+        if self.behind:
+            lo, hi = self.subpattern.getwidth()
+            if lo != hi:
+                raise RegexpError("look-behind requires fixed-width pattern")
+            ctx.emit(lo)
+        else:
+            ctx.emit(0)
         self.subpattern.compile(ctx)
         ctx.emit(OPCODE_SUCCESS)
         ctx.patch(pos, ctx.tell() - pos)
@@ -658,6 +701,12 @@ class SetUnion(SetBase):
         Branch(self.items).compile(ctx)
 
 
+POSITION_ESCAPES = {}
+CHARSET_ESCAPES = {
+    "d": Property(CATEGORY_DIGIT),
+}
+
+
 def make_character(info, value, in_set=False):
     if in_set:
         return Character(value)
@@ -709,16 +758,16 @@ def _parse_item(source, info):
     counts = _parse_quantifier(source, info)
     if counts is not None:
         min_count, max_count = counts.min_count, counts.max_count
-        if source.match("?"):
-            repeat_cls = LazyRepeat
-        elif source.match("+"):
-            repeat_cls = PossessiveRepeat
-        else:
-            repeat_cls = GreedyRepeat
 
         if element.is_empty() or min_count == max_count == 1:
             return element
-        return repeat_cls(element, min_count, max_count)
+
+        if source.match("?"):
+            return LazyRepeat(element, min_count, max_count)
+        elif source.match("+"):
+            return make_atomic(info, GreedyRepeat(element, min_count, max_count))
+        else:
+            return GreedyRepeat(element, min_count, max_count)
     return element
 
 
@@ -1025,16 +1074,16 @@ def _parse_limited_quantifier(source):
 
 
 def _parse_count(source):
-    s = StringBuilder(2)
+    b = StringBuilder(2)
     while True:
         here = source.pos
         ch = source.get()
         if ch.isdigit():
-            s.append(ch)
+            b.append(ch)
         else:
             source.pos = here
             break
-    return int(s.build())
+    return int(b.build())
 
 
 def _parse_comment(source):
@@ -1044,6 +1093,21 @@ def _parse_comment(source):
             break
         elif not ch:
             break
+
+
+def _parse_name(source):
+    b = StringBuilder(5)
+    while True:
+        here = source.pos
+        ch = source.get()
+        if ch in ")>":
+            source.pos = here
+            break
+        elif not ch:
+            break
+        else:
+            b.append(ch)
+    return b.build()
 
 
 def _compile_firstset(info, fs):
