@@ -209,6 +209,9 @@ class Character(RegexpBase):
     def get_firstset(self):
         return {self: None}
 
+    def is_empty(self):
+        return False
+
     def compile(self, ctx):
         ctx.emit(OPCODE_LITERAL_IGNORE if self.case_insensitive else OPCODE_LITERAL)
         ctx.emit(self.value)
@@ -249,6 +252,12 @@ class StartOfString(ZeroWidthBase):
     def compile(self, ctx):
         ctx.emit(OPCODE_AT)
         ctx.emit(AT_BEGINNING_STRING)
+
+
+class EndOfString(ZeroWidthBase):
+    def compile(self, ctx):
+        ctx.emit(OPCODE_AT)
+        ctx.emit(AT_END_STRING)
 
 
 class Property(RegexpBase):
@@ -493,6 +502,15 @@ class GreedyRepeat(RegexpBase):
 
     def is_empty(self):
         return self.subpattern.is_empty()
+
+    def has_simple_start(self):
+        return False
+
+    def get_firstset(self):
+        fs = self.subpattern.get_firstset()
+        if self.min_count == 0:
+            fs[None] = None
+        return fs
 
     def compile(self, ctx):
         ctx.emit(OPCODE_REPEAT)
