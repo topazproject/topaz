@@ -1,8 +1,8 @@
 from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
-    OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE, OPCODE_JUMP,
-    OPCODE_ASSERT_NOT, OPCODE_CATEGORY)
+    OPCODE_MIN_UNTIL, OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE,
+    OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY)
 
 
 IGNORE_CASE = 1 << 0
@@ -535,8 +535,7 @@ class Branch(RegexpBase):
             ctx.patch(t, ctx.tell() - t)
 
 
-
-class GreedyRepeat(RegexpBase):
+class BaseRepeat(RegexpBase):
     def __init__(self, subpattern, min_count, max_count):
         RegexpBase.__init__(self)
         self.subpattern = subpattern
@@ -545,10 +544,6 @@ class GreedyRepeat(RegexpBase):
 
     def fix_groups(self):
         self.subpattern.fix_groups()
-
-    def optimize(self, info):
-        subpattern = self.subpattern.optimize(info)
-        return GreedyRepeat(subpattern, self.min_count, self.max_count)
 
     def is_empty(self):
         return self.subpattern.is_empty()
@@ -570,7 +565,23 @@ class GreedyRepeat(RegexpBase):
         ctx.emit(self.max_count)
         self.subpattern.compile(ctx)
         ctx.patch(pos, ctx.tell() - pos)
-        ctx.emit(OPCODE_MAX_UNTIL)
+        ctx.emit(self.UNTIL_OPCODE)
+
+
+class GreedyRepeat(BaseRepeat):
+    UNTIL_OPCODE = OPCODE_MAX_UNTIL
+
+    def optimize(self, info):
+        subpattern = self.subpattern.optimize(info)
+        return GreedyRepeat(subpattern, self.min_count, self.max_count)
+
+
+class LazyRepeat(BaseRepeat):
+    UNTIL_OPCODE = OPCODE_MIN_UNTIL
+
+    def optimize(self, info):
+        subpattern = self.subpattern.optimize(info)
+        return LazyRepeat(subpattern, self.min_count, self.max_count)
 
 
 class LookAround(RegexpBase):
