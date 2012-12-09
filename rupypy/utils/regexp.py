@@ -1,6 +1,9 @@
+from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
-    OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE, OPCODE_JUMP)
+    OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE, OPCODE_JUMP,
+    OPCODE_ASSERT_NOT)
+
 
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
@@ -9,6 +12,8 @@ MULTI_LINE = 1 << 2
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
 HEX_ESCAPES = {"x": 2, "u": 4, "U": 8}
+
+MAX_REPEAT = 65535
 
 AT_BEGINNING = 0
 AT_BEGINNING_LINE = 1
@@ -35,6 +40,10 @@ class FirstSetError(Exception):
 
 
 class RegexpError(Exception):
+    pass
+
+
+class ParseError(Exception):
     pass
 
 
@@ -164,7 +173,7 @@ class CompilerContext(object):
 
 
 class Counts(object):
-    def __init__(self, min_count, max_count=65535):
+    def __init__(self, min_count, max_count=MAX_REPEAT):
         self.min_count = min_count
         self.max_count = max_count
 
@@ -534,6 +543,12 @@ class LookAround(RegexpBase):
     def fix_groups(self):
         self.subpattern.fix_groups()
 
+    def has_simple_start(self):
+        return False
+
+    def get_firstset(self):
+        raise FirstSetError
+
     def optimize(self, info):
         return LookAround(self.subpattern.optimize(info), self.behind, self.positive)
 
@@ -766,7 +781,7 @@ def _parse_quantifier(source, info):
             except ParseError:
                 pass
         elif source.match("(?#"):
-            parse_comment(source)
+            _parse_comment(source)
             continue
         break
     source.pos = here
@@ -970,6 +985,55 @@ def _parse_escape(source, info, in_set):
         return _parse_numeric_escape(source, info, ch, in_set)
     else:
         return make_character(info, ord(ch), in_set)
+
+
+def _parse_lookaround(source, info, behind, positive):
+    saved_flags = info.flags
+    saved_ignore = source.ignore_space
+    try:
+        subpattern = _parse_pattern(source, info)
+    finally:
+        source.ignore_space = saved_ignore
+        info.flags = saved_flags
+    source.expect(")")
+    return LookAround(subpattern, behind=behind, positive=positive)
+
+
+def _parse_limited_quantifier(source):
+    min_count = _parse_count(source)
+    ch = source.get()
+    if ch == ",":
+        max_count = _parse_count(source)
+        if not source.match("}"):
+            raise ParseError
+        min_count = int(min_count) if min_count else 0
+        max_count = int(max_count) if max_count else MAX_REPEAT
+        if min_count > max_count:
+            raise RegexpError("min repeat gereater than max repeat")
+        if max_count > MAX_REPEAT:
+            raise RegexpError("repeat count too big")
+        return Counts(min_count, max_count)
+    if ch != "}":
+        raise ParseError
+    if not min_count:
+        raise ParseError
+    min_count = int(min_count)
+    if min_count > MAX_REPEAT:
+        raise RegexpError("repeat count too big")
+    return Counts(min_count, min_count)
+
+
+def _parse_count(source):
+    s = StringBuilder(2)
+    while True:
+        here = source.pos
+        ch = source.get()
+        if ch.isdigit():
+            s.append(ch)
+        else:
+            source.pos = here
+            break
+    return int(s.build())
 
 
 def _compile_firstset(info, fs):
