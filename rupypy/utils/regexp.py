@@ -8,6 +8,7 @@ from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
 MULTI_LINE = 1 << 2
+WORD = 1 << 3
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
@@ -1034,6 +1035,15 @@ def _parse_count(source):
             source.pos = here
             break
     return int(s.build())
+
+
+def _parse_comment(source):
+    while True:
+        ch = source.get()
+        if ch == ")":
+            break
+        elif not ch:
+            break
 
 
 def _compile_firstset(info, fs):
