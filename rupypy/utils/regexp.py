@@ -661,6 +661,9 @@ class Group(RegexpBase):
         self.info.defined_groups[self.group] = self
         self.subpattern.fix_groups()
 
+    def can_be_affix(self):
+        return False
+
     def optimize(self, info):
         return Group(self.info, self.group, self.subpattern.optimize(info))
 
@@ -708,6 +711,9 @@ class SetBase(RegexpBase):
 
     def is_empty(self):
         return False
+
+    def can_be_affix(self):
+        return True
 
     def fix_groups(self):
         pass

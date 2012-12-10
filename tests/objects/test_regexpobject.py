@@ -34,6 +34,8 @@ class TestRegexpObject(BaseRuPyPyTest):
         /\\z/
         /[a-z]/
         /\\d+/
+        /([a-z])|b/
+        /[a-zA-z]|[a-z]/
         """)
 
     def test_match_operator(self, space):
