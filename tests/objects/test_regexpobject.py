@@ -39,6 +39,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /(?<foo>a)\\g<foo>/
         /[^a-z]/
         /[a-z&&[^a-c]]/
+        /[a&&[^b]]+/
         """)
 
     def test_match_operator(self, space):

@@ -770,6 +770,9 @@ class SetUnion(SetBase):
 
 
 class SetIntersection(SetBase):
+    def rebuild(self, positive, case_insensitive, zerowidth):
+        return SetIntersection(self.info, self.items, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
+
     def optimize(self, info, in_set=False):
         items = []
         for item in self.items:
