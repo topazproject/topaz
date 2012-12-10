@@ -769,6 +769,29 @@ class SetUnion(SetBase):
         ctx.patch(pos, ctx.tell() - pos)
 
 
+class SetIntersection(SetBase):
+    def optimize(self, info, in_set=False):
+        items = []
+        for item in self.items:
+            item = item.optimize(info, in_set=True)
+            if isinstance(item, SetIntersection) and item.positive:
+                items.extend(item.items)
+            else:
+                items.append(item)
+        if len(items) == 1:
+            return items[0].with_flags(
+                case_insensitive=self.case_insensitive,
+                zerowidth=self.zerowidth,
+            ).optimize(info, in_set)
+        return SetIntersection(info, items)
+
+    def compile(self, ctx):
+        Sequence([
+            LookAround(SetUnion(self.info, [item]), behind=False, positive=True)
+            for item in self.items[:-1]
+        ] + [self.items[-1]]).compile(ctx)
+
+
 POSITION_ESCAPES = {}
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
