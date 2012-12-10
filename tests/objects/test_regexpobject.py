@@ -77,3 +77,7 @@ class TestRegexpObject(BaseRuPyPyTest):
 
         w_res = space.execute('return /"(?>[A-Za-z]*)"/ =~ \'"Quote"\'')
         assert space.int_w(w_res) == 0
+
+    def test_set_intersection(self, space):
+        w_res = space.execute("return /[a-z&&[^a-c]]+/ =~ 'abcdef'")
+        assert space.int_w(w_res) == 3

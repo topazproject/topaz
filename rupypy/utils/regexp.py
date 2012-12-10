@@ -2,7 +2,8 @@ from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
     OPCODE_MIN_UNTIL, OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE,
-    OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN)
+    OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN,
+    OPCODE_NEGATE)
 
 
 IGNORE_CASE = 1 << 0
@@ -372,6 +373,8 @@ class Range(RegexpBase):
         return True
 
     def compile(self, ctx):
+        if not self.positive:
+            ctx.emit(OPCODE_NEGATE)
         ctx.emit(OPCODE_RANGE)
         ctx.emit(self.lower)
         ctx.emit(self.upper)
@@ -792,7 +795,7 @@ class SetIntersection(SetBase):
         Sequence([
             LookAround(SetUnion(self.info, [item]), behind=False, positive=True)
             for item in self.items[:-1]
-        ] + [self.items[-1]]).compile(ctx)
+        ] + [SetUnion(self.info, [self.items[-1]])]).compile(ctx)
 
 
 POSITION_ESCAPES = {}
