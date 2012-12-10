@@ -150,7 +150,7 @@ class Source(object):
 
     def expect(self, substr):
         if not self.match(substr):
-            raise RegexpBase("Missing %s" % substr)
+            raise RegexpError("Missing %s" % substr)
 
 
 class Info(object):
@@ -171,7 +171,7 @@ class Info(object):
     def new_group(self, name=None):
         if name in self.group_index:
             if self.group_index[name] in self.used_groups:
-                raise RegexpBase("duplicate group")
+                raise RegexpError("duplicate group")
         else:
             while True:
                 self.group_count += 1
@@ -187,6 +187,17 @@ class Info(object):
 
     def close_group(self, group):
         self.group_state[group] = self.CLOSED
+
+    def normalize_group(self, name):
+        if name.isdigit():
+            return int(name)
+        else:
+            return self.group_index[name]
+
+    def is_open_group(self, name):
+        group = self.normalize_group(name)
+        return group in self.group_state and self.group_state[group] == self.OPEN
+
 
 
 class CompilerContext(object):
@@ -692,7 +703,7 @@ class RefGroup(RegexpBase):
 
     def fix_groups(self):
         if not 1 <= self.group <= self.info.group_count:
-            raise RegexpBase("unknown group")
+            raise RegexpError("unknown group")
 
     def optimize(self, info):
         return self
@@ -780,6 +791,10 @@ def make_atomic(info, subpattern):
         LookAround(Group(info, group, subpattern), behind=False, positive=True),
         RefGroup(info, group),
     ])
+
+
+def make_ref_group(info, name):
+    return RefGroup(info, name, case_insensitive=info.flags & IGNORE_CASE)
 
 
 def _parse_pattern(source, info):
@@ -1162,6 +1177,15 @@ def _parse_name(source):
         else:
             b.append(ch)
     return b.build()
+
+
+def _parse_group_ref(source, info):
+    source.expect("<")
+    name = _parse_name(source)
+    source.expect(">")
+    if info.is_open_group(name):
+        raise RegexpError("can't refer to an open group")
+    return make_ref_group(info, info.normalize_group(name))
 
 
 def _compile_firstset(info, fs):
