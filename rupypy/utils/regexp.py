@@ -12,7 +12,20 @@ WORD = 1 << 3
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
-HEX_ESCAPES = {"x": 2, "u": 4, "U": 8}
+HEX_ESCAPES = {
+    "x": 2,
+    "u": 4,
+    "U": 8
+}
+CHARACTER_ESCAPES = {
+    "a": "\a",
+    "b": "\b",
+    "f": "\f",
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+    "v": "\v",
+}
 
 MAX_REPEAT = 65535
 
