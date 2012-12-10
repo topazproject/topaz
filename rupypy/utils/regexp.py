@@ -348,10 +348,13 @@ class Property(RegexpBase):
 
 
 class Range(RegexpBase):
-    def __init__(self, lower, upper):
-        RegexpBase.__init__(self)
+    def __init__(self, lower, upper, positive=True, case_insensitive=False, zerowidth=False):
+        RegexpBase.__init__(self, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
         self.lower = lower
         self.upper = upper
+
+    def rebuild(self, positive, case_insensitive, zerowidth):
+        return Range(self.lower, self.upper, positive, case_insensitive, zerowidth)
 
     def fix_groups(self):
         pass
