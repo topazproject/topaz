@@ -2,7 +2,7 @@ from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
     OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
     OPCODE_MIN_UNTIL, OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE,
-    OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY)
+    OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN)
 
 
 IGNORE_CASE = 1 << 0
@@ -708,8 +708,13 @@ class SetUnion(SetBase):
         return SetUnion(self.info, self.items, positive, case_insensitive, zerowidth).optimize(self.info)
 
     def compile(self, ctx):
-        # XXX: this is wrong, and under optimized!
-        Branch(self.items).compile(ctx)
+        ctx.emit(OPCODE_IN)
+        pos = ctx.tell()
+        ctx.emit(0)
+        for item in self.items:
+            item.compile(ctx)
+        ctx.emit(OPCODE_FAILURE)
+        ctx.patch(pos, ctx.tell() - pos)
 
 
 POSITION_ESCAPES = {}
