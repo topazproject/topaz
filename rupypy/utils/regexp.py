@@ -309,12 +309,21 @@ class EndOfString(ZeroWidthBase):
 
 
 class Property(RegexpBase):
-    def __init__(self, value):
-        RegexpBase.__init__(self)
+    def __init__(self, value, positive=True, case_insensitive=False, zerowidth=False):
+        RegexpBase.__init__(self, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
         self.value = value
+
+    def rebuild(self, positive, case_insensitive, zerowidth):
+        return Property(self.value, positive, case_insensitive, zerowidth)
 
     def getwidth(self):
         return 1, 1
+
+    def is_empty(self):
+        return False
+
+    def get_firstset(self):
+        return {self: None}
 
     def fix_groups(self):
         pass
@@ -333,6 +342,15 @@ class Range(RegexpBase):
         self.lower = lower
         self.upper = upper
 
+    def fix_groups(self):
+        pass
+
+    def has_simple_start(self):
+        return False
+
+    def get_firstset(self):
+        raise FirstSetError
+
     def optimize(self, info, in_set=False):
         return self
 
@@ -343,6 +361,7 @@ class Range(RegexpBase):
         ctx.emit(OPCODE_RANGE)
         ctx.emit(self.lower)
         ctx.emit(self.upper)
+
 
 class Sequence(RegexpBase):
     def __init__(self, items):
