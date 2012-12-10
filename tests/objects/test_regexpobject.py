@@ -81,3 +81,10 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_set_intersection(self, space):
         w_res = space.execute("return /[a-z&&[^a-c]]+/ =~ 'abcdef'")
         assert space.int_w(w_res) == 3
+
+    def test_to_a(self, space):
+        w_res = space.execute("""
+        m = /(a)(b)(c)/.match('defabcdef')
+        return m.to_a
+        """)
+        assert self.unwrap(space, w_res) == ["abc", "a", "b", "c"]

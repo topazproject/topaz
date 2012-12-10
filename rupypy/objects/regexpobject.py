@@ -196,6 +196,13 @@ class W_MatchDataObject(W_Object):
             return space.w_nil
         return space.newstr_fromstr(self.ctx._string[start:end])
 
+    @classdef.method("to_a")
+    def method_to_a(self, space):
+        res_w = []
+        for i in xrange(self.regexp.groupcount + 1):
+            res_w.append(space.send(self, space.newsymbol("[]"), [space.newint(i)]))
+        return space.newarray(res_w)
+
     @classdef.method("begin", n="int")
     def method_begin(self, space, n):
         if n == 0:
