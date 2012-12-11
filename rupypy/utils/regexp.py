@@ -553,7 +553,7 @@ class Branch(RegexpBase):
 
         branches = self._merge_common_prefixes(info, branches)
         branches = self._reduce_to_set(info, branches)
-        if branches:
+        if len(branches) > 1:
             sequence = prefix + [Branch(branches)] + suffix
         else:
             sequence = prefix + branches + suffix

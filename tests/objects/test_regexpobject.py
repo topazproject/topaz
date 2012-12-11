@@ -88,3 +88,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         return m.to_a
         """)
         assert self.unwrap(space, w_res) == ["abc", "a", "b", "c"]
+
+    def test_branch(self, space):
+        w_res = space.execute("return /a|b/ =~ 'a'")
+        assert space.int_w(w_res) == 0
