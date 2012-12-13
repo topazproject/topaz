@@ -12,11 +12,6 @@ WORD = 1 << 2
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
-HEX_ESCAPES = {
-    "x": 2,
-    "u": 4,
-    "U": 8
-}
 CHARACTER_ESCAPES = {
     "a": "\a",
     "b": "\b",
@@ -197,7 +192,6 @@ class Info(object):
     def is_open_group(self, name):
         group = self.normalize_group(name)
         return group in self.group_state and self.group_state[group] == self.OPEN
-
 
 
 class CompilerContext(object):
@@ -1025,7 +1019,7 @@ def _parse_set(source, info):
         source.ignore_space = saved_ignore
 
     if negate:
-        items = item.with_flags(positive=not item.positive)
+        item = item.with_flags(positive=not item.positive)
     return item.with_flags(case_insensitive=info.flags & IGNORE_CASE)
 
 
@@ -1105,9 +1099,7 @@ def _parse_escape(source, info, in_set):
     source.ignore_space = saved_ignore
     if not ch:
         raise RegexpError("bad escape")
-    if ch in HEX_ESCAPES:
-        return _parse_hex_escape(source, info, HEX_ESCAPES[ch], in_set)
-    elif ch == "g" and not in_set:
+    if ch == "g" and not in_set:
         here = source.pos
         try:
             return _parse_group_ref(source, info)
