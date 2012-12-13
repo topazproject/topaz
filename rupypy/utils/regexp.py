@@ -174,6 +174,7 @@ class Info(object):
         if name in self.group_index:
             if self.group_index[name] in self.used_groups:
                 raise RegexpError("duplicate group")
+            group = self.group_index[name]
         else:
             while True:
                 self.group_count += 1
