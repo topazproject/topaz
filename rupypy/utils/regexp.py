@@ -138,7 +138,14 @@ class Source(object):
             self.pos = pos
             return True
         else:
-            if not s.startswith(substr, pos):
+            if pos + len(substr) <= len(s):
+                matches = True
+                for i, c in enumerate(substr):
+                    if s[pos + i] != c:
+                        matches = False
+            else:
+                matches = False
+            if not matches:
                 return False
             self.pos = pos + len(substr)
             return True
