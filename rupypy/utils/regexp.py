@@ -1107,7 +1107,7 @@ def _parse_escape(source, info, in_set):
             source.pos = here
         return make_character(info, ord(ch), in_set)
     elif ch == "G" and not in_set:
-        return SearchAncor()
+        return StartOfString()
     elif ch == "L" and not in_set:
         return _parse_string_set(source, info)
     elif ch == "N":
