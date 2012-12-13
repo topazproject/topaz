@@ -8,8 +8,7 @@ from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_LITERAL_IGNORE,
 
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
-MULTI_LINE = 1 << 2
-WORD = 1 << 3
+WORD = 1 << 2
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
