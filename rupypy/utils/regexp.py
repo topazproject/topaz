@@ -1108,14 +1108,8 @@ def _parse_escape(source, info, in_set):
         return make_character(info, ord(ch), in_set)
     elif ch == "G" and not in_set:
         return StartOfString()
-    elif ch == "L" and not in_set:
-        return _parse_string_set(source, info)
-    elif ch == "N":
-        return _parse_named_char(source, info, in_set)
     elif ch in "pP":
         return _parse_property(source, info, ch == "p", in_set)
-    elif ch == "X" and not in_set:
-        return Grapheme()
     elif ch.isalpha():
         if not in_set:
             if info.flags & WORD:
