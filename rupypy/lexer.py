@@ -1228,7 +1228,7 @@ class StringTerm(BaseStringTerm):
                         flags += ch
                         self.lexer.add(ch)
                 else:
-                    self.lexer.error("unknown regexp option - %s" % ch)
+                    self.lexer.error()
             return self.lexer.emit("REGEXP_END")
         return self.lexer.emit("STRING_END")
 
