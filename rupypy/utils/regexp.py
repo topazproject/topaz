@@ -809,6 +809,7 @@ class SetIntersection(SetBase):
 
 
 POSITION_ESCAPES = {}
+WORD_POSITION_ESCAPES = {}
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
 }
