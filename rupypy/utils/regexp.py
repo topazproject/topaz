@@ -341,6 +341,9 @@ class Property(RegexpBase):
     def is_empty(self):
         return False
 
+    def has_simple_start(self):
+        return True
+
     def get_firstset(self):
         return {self: None}
 
@@ -809,6 +812,9 @@ POSITION_ESCAPES = {}
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
 }
+PROPERTIES = {
+    "digit": CATEGORY_DIGIT,
+}
 
 
 def make_character(info, value, in_set=False):
@@ -1211,6 +1217,29 @@ def _parse_group_ref(source, info):
     if info.is_open_group(name):
         raise RegexpError("can't refer to an open group")
     return make_ref_group(info, info.normalize_group(name))
+
+
+def _parse_property(source, info, positive, in_set):
+    here = source.pos
+    if source.match("{"):
+        negate = source.match("^")
+        b = StringBuilder(5)
+        found = False
+        while True:
+            ch = source.get()
+            if ch == "}":
+                found = True
+                break
+            elif not ch:
+                break
+            else:
+                b.append(ch)
+        if found:
+            name = b.build()
+            if name in PROPERTIES:
+                return Property(PROPERTIES[name], positive != negate)
+    source.pos = here
+    return make_character(info, ord(p if positive else "P"), in_set)
 
 
 def _compile_firstset(info, fs):
