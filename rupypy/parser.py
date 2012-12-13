@@ -6,6 +6,7 @@ from rply.token import BaseBox, SourcePosition
 
 from rupypy import ast
 from rupypy.astcompiler import SymbolTable, BlockSymbolTable, SharedScopeSymbolTable
+from rupypy.utils import regexp
 
 
 class Parser(object):
@@ -2305,14 +2306,21 @@ class Parser(object):
 
     @pg.production("regexp : REGEXP_BEG xstring_contents REGEXP_END")
     def regexp(self, p):
+        str_flags = p[2].getstr()
+        flags = 0
+        for f in str_flags:
+            flags |= {
+                "m": regexp.DOT_ALL,
+                "i": regexp.IGNORE_CASE,
+            }[f]
         if p[1] is not None:
             n = p[1].getast()
             if isinstance(n, ast.ConstantString):
-                node = ast.ConstantRegexp(n.strvalue)
+                node = ast.ConstantRegexp(n.strvalue, flags)
             else:
-                node = ast.DynamicRegexp(n)
+                node = ast.DynamicRegexp(n, flags)
         else:
-            node = ast.ConstantRegexp("")
+            node = ast.ConstantRegexp("", flags)
         return BoxAST(node)
 
     @pg.production("words : WORDS_BEG LITERAL_SPACE STRING_END")

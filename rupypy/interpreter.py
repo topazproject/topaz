@@ -343,8 +343,9 @@ class Interpreter(object):
         frame.push(space.w_nil)
 
     def BUILD_REGEXP(self, space, bytecode, frame, pc):
+        w_flags = frame.pop()
         w_string = frame.pop()
-        frame.push(space.newregexp(space.str_w(w_string)))
+        frame.push(space.newregexp(space.str_w(w_string), space.int_w(w_flags)))
 
     def COPY_STRING(self, space, bytecode, frame, pc):
         w_s = frame.pop()

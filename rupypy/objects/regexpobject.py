@@ -9,9 +9,9 @@ from rupypy.utils import regexp
 class W_RegexpObject(W_Object):
     classdef = ClassDef("Regexp", W_Object.classdef)
 
-    def __init__(self, space, regexp):
+    def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
-        self.set_source(regexp)
+        self.set_source(source, flags)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -84,10 +84,10 @@ class W_RegexpObject(W_Object):
         if self.source is None:
             raise space.error(space.w_TypeError, "uninitialized Regexp")
 
-    def set_source(self, source):
+    def set_source(self, source, flags):
         if source is not None:
             self.source = source
-            code, flags, groupcount, groupindex, indexgroup = regexp.compile(source, 0)
+            code, flags, groupcount, groupindex, indexgroup = regexp.compile(source, flags)
             self.code = code
             self.flags = flags
             self.groupcount = groupcount
@@ -109,18 +109,18 @@ class W_RegexpObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
-        return W_RegexpObject(space, None)
+        return W_RegexpObject(space, None, 0)
 
     @classdef.singleton_method("compile")
     def method_compile(self, space, args_w):
         return space.send(self, space.newsymbol("new"), args_w)
 
-    @classdef.method("initialize")
-    def method_initialize(self, space, w_source):
+    @classdef.method("initialize", flags="int")
+    def method_initialize(self, space, w_source, flags=0):
         if isinstance(w_source, W_RegexpObject):
-            self.set_source(w_source.source)
+            self.set_source(w_source.source, w_source.flags)
         else:
-            self.set_source(Coerce.str(space, w_source))
+            self.set_source(Coerce.str(space, w_source), flags)
 
     @classdef.method("==")
     def method_equal(self, space, w_other):

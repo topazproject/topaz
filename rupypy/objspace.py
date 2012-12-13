@@ -303,8 +303,8 @@ class ObjectSpace(object):
     def newrange(self, w_start, w_end, exclusive):
         return W_RangeObject(self, w_start, w_end, exclusive)
 
-    def newregexp(self, regexp):
-        return W_RegexpObject(self, regexp)
+    def newregexp(self, regexp, flags):
+        return W_RegexpObject(self, regexp, flags)
 
     def newmodule(self, name):
         return W_ModuleObject(self, name)

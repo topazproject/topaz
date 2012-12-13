@@ -1436,6 +1436,7 @@ class TestCompiler(object):
         self.assert_compiles(space, "/#{2}/", """
         LOAD_CONST 0
         SEND 1 0
+        LOAD_CONST 2
         BUILD_REGEXP
 
         RETURN

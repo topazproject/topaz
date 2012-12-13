@@ -1,9 +1,9 @@
 from pypy.rlib.rstring import StringBuilder
-from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_SUCCESS,
-    OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_MAX_UNTIL,
-    OPCODE_MIN_UNTIL, OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE,
-    OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN,
-    OPCODE_NEGATE)
+from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_LITERAL_IGNORE,
+    OPCODE_SUCCESS, OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY,
+    OPCODE_ANY_ALL, OPCODE_MAX_UNTIL, OPCODE_MIN_UNTIL, OPCODE_GROUPREF,
+    OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE, OPCODE_JUMP, OPCODE_ASSERT_NOT,
+    OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN, OPCODE_NEGATE)
 
 
 IGNORE_CASE = 1 << 0
@@ -292,6 +292,20 @@ class Any(RegexpBase):
 
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY)
+
+
+class AnyAll(RegexpBase):
+    def fix_groups(self):
+        pass
+
+    def optimize(self, info):
+        return self
+
+    def has_simple_start(self):
+        return True
+
+    def compile(self, ctx):
+        ctx.emit(OPCODE_ANY_ALL)
 
 
 class ZeroWidthBase(RegexpBase):

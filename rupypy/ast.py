@@ -1097,11 +1097,12 @@ class ConstantString(ConstantNode):
 
 
 class ConstantRegexp(ConstantNode):
-    def __init__(self, regexp):
+    def __init__(self, regexp, flags):
         self.regexp = regexp
+        self.flags = flags
 
     def create_const(self, ctx):
-        return ctx.create_const(ctx.space.newregexp(self.regexp))
+        return ctx.create_const(ctx.space.newregexp(self.regexp, self.flags))
 
 
 class ConstantBool(ConstantNode):
@@ -1132,11 +1133,13 @@ class DynamicString(Node):
 
 
 class DynamicRegexp(Node):
-    def __init__(self, dstring):
+    def __init__(self, dstring, flags):
         self.dstring = dstring
+        self.flags = flags
 
     def compile(self, ctx):
         self.dstring.compile(ctx)
+        ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.flags))
         ctx.emit(consts.BUILD_REGEXP)
 
 
