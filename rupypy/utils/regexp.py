@@ -907,15 +907,9 @@ def _parse_element(source, info):
         elif ch == "[":
             return _parse_set(source, info)
         elif ch == "^":
-            if info.flags & MULTI_LINE:
-                return StartOfLine()
-            else:
-                return StartOfString()
+            return StartOfString()
         elif ch == "$":
-            if info.flags & MULTI_LINE:
-                return EndOfLine()
-            else:
-                return EndOfString()
+            return EndOfString()
         elif ch == "{":
             here2 = source.pos
             counts = _parse_quantifier(source, info)
