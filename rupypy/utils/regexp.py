@@ -1235,7 +1235,11 @@ def _parse_property(source, info, positive, in_set):
             if name in PROPERTIES:
                 return Property(PROPERTIES[name], positive != negate)
     source.pos = here
-    return make_character(info, ord(p if positive else "P"), in_set)
+    return make_character(info, ord("p" if positive else "P"), in_set)
+
+
+def _parse_numeric_escape(source, info, ch, in_set):
+    raise NotImplementedError("_parse_numeric_escape")
 
 
 def _compile_firstset(info, fs):
