@@ -973,12 +973,8 @@ def _parse_paren(source, info):
         elif source.match("#"):
             _parse_comment(source)
             return
-        elif source.match("("):
-            return _parse_conditional(source, info)
         elif source.match(">"):
             return _parse_atomic(source, info)
-        elif source.match("|"):
-            return _parse_common(source, info)
         else:
             here = source.pos
             ch = source.get()
