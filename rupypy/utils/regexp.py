@@ -976,15 +976,7 @@ def _parse_paren(source, info):
         elif source.match(">"):
             return _parse_atomic(source, info)
         else:
-            here = source.pos
-            ch = source.get()
-            if ch == "R" or "0" <= ch <= "9":
-                return _parse_call_group(source, info, ch)
-            elif ch == "&":
-                return _parse_call_named_group(source, info)
-            else:
-                source.pos = here
-                return _parse_flags_subpattern(source, info)
+            raise RegexpError("undefined group option")
     group = info.new_group()
     saved_flags = info.flags
     saved_ignore = source.ignore_space
