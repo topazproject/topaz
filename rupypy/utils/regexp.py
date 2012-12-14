@@ -171,6 +171,8 @@ class Info(object):
         self.named_lists_used = {}
         self.defined_groups = {}
 
+        self.group_offsets = []
+
     def new_group(self, name=None):
         if name in self.group_index:
             if self.group_index[name] in self.used_groups:
@@ -189,7 +191,11 @@ class Info(object):
         self.group_state[group] = self.OPEN
         return group
 
-    def close_group(self, group):
+    def close_group(self, group, hidden=False):
+        last_group_offset = self.group_offsets[-1] if self.group_offsets else 0
+        if hidden:
+            last_group_offset += 1
+        self.group_offsets.append(last_group_offset)
         self.group_state[group] = self.CLOSED
 
     def normalize_group(self, name):
@@ -840,7 +846,7 @@ def make_sequence(items):
 
 def make_atomic(info, subpattern):
     group = info.new_group()
-    info.close_group(group)
+    info.close_group(group, hidden=True)
     return Sequence([
         LookAround(Group(info, group, subpattern), behind=False, positive=True),
         RefGroup(info, group),
@@ -1294,4 +1300,4 @@ def compile(pattern, flags=0):
             pass
 
     index_group = dict([(v, n) for n, v in info.group_index.iteritems()])
-    return code, info.flags, info.group_count, info.group_index, index_group
+    return code, info.flags, info.group_count, info.group_index, index_group, info.group_offsets

@@ -87,12 +87,13 @@ class W_RegexpObject(W_Object):
     def set_source(self, source, flags):
         if source is not None:
             self.source = source
-            code, flags, groupcount, groupindex, indexgroup = regexp.compile(source, flags)
+            code, flags, groupcount, groupindex, indexgroup, group_offsets = regexp.compile(source, flags)
             self.code = code
             self.flags = flags
             self.groupcount = groupcount
             self.groupindex = groupindex
             self.indexgroup = indexgroup
+            self.group_offsets = group_offsets
 
     def make_ctx(self, s):
         pos = 0
@@ -177,6 +178,10 @@ class W_MatchDataObject(W_Object):
         self.ctx = ctx
         self._flatten_cache = None
 
+    def size(self):
+        offset = self.regexp.group_offsets[-1] if self.regexp.group_offsets else 0
+        return self.regexp.groupcount + 1 - offset
+
     def flatten_marks(self):
         if self._flatten_cache is None:
             self._flatten_cache = self._build_flattened_marks(self.ctx, self.regexp.groupcount)
@@ -195,6 +200,7 @@ class W_MatchDataObject(W_Object):
         return result
 
     def get_span(self, n):
+        n += self.regexp.group_offsets[n - 1]
         fmarks = self.flatten_marks()
         idx = 2 * (n - 1)
         assert idx >= 0
@@ -213,7 +219,7 @@ class W_MatchDataObject(W_Object):
     @classdef.method("to_a")
     def method_to_a(self, space):
         res_w = []
-        for i in xrange(self.regexp.groupcount + 1):
+        for i in xrange(self.size()):
             res_w.append(space.send(self, space.newsymbol("[]"), [space.newint(i)]))
         return space.newarray(res_w)
 
@@ -229,7 +235,7 @@ class W_MatchDataObject(W_Object):
 
     @classdef.method("size")
     def method_size(self, space):
-        return space.newint(self.regexp.groupcount + 1)
+        return space.newint(self.size())
 
     @classdef.method("pre_match")
     def method_pre_match(self, space):
