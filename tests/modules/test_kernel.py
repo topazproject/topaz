@@ -159,6 +159,13 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [True, False]
 
+    def test_eval(self, space):
+        w_res = space.execute("""
+        a = 4
+        return eval('a + 2')
+        """)
+        assert space.int_w(w_res) == 6
+
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):

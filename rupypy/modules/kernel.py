@@ -42,9 +42,7 @@ class Kernel(Module):
     def puts *args
         $stdout.puts(*args)
     end
-    """)
 
-    moduledef.app_method("""
     def print *args
         $stdout.print(*args)
     end
@@ -272,3 +270,9 @@ class Kernel(Module):
     @moduledef.method("instance_of?")
     def method_instance_of(self, space, w_mod):
         return space.newbool(space.getnonsingletonclass(self) is w_mod)
+
+    @moduledef.method("eval")
+    def method_eval(self, space, w_source):
+        frame = space.getexecutioncontext().gettoprubyframe()
+        w_binding = space.newbinding_fromframe(frame)
+        return space.send(w_binding, space.newsymbol("eval"), [w_source])
