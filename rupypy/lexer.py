@@ -1144,6 +1144,8 @@ class StringTerm(BaseStringTerm):
         if self.is_end:
             return self.lexer.emit("STRING_END")
         ch = self.lexer.read()
+        if ch == self.lexer.EOF:
+            self.lexer.error()
         space_seen = False
         if self.is_qwords and ch.isspace():
             while ch.isspace():

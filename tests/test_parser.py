@@ -1886,6 +1886,10 @@ HERE
         ]))
         assert space.parse('/a/o') == re('a', regexp.ONCE)
 
+    def test_unclosed_regexp(self, space):
+        with self.raises(space, "SyntaxError"):
+            space.parse("%r{abc")
+
     def test_or(self, space):
         assert space.parse("3 || 4") == ast.Main(ast.Block([
             ast.Statement(ast.Or(ast.ConstantInt(3), ast.ConstantInt(4)))
