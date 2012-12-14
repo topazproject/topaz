@@ -1283,9 +1283,6 @@ def compile(pattern, flags=0):
     parsed.fix_groups()
     parsed = parsed.optimize(info)
 
-    # regex.py:510
-    assert not info.named_lists_used
-
     ctx = CompilerContext()
     parsed.compile(ctx)
     ctx.emit(OPCODE_SUCCESS)
