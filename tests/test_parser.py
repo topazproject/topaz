@@ -3,6 +3,7 @@
 from pypy.rlib.rbigint import rbigint
 
 from rupypy import ast
+from rupypy.utils import regexp
 
 from .base import BaseRuPyPyTest
 
@@ -1878,6 +1879,12 @@ HERE
         assert space.parse('%r{#{2}}') == dyn_re(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
         assert space.parse('/#{2}/') == dyn_re(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
         assert space.parse("%r!a!") == re("a")
+
+    def test_regexp_flags(self, space):
+        re = lambda re, flags: ast.Main(ast.Block([
+            ast.Statement(ast.ConstantRegexp(re, flags))
+        ]))
+        assert space.parse('/a/o') == re('a', regexp.ONCE)
 
     def test_or(self, space):
         assert space.parse("3 || 4") == ast.Main(ast.Block([
