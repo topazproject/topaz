@@ -2313,6 +2313,7 @@ class Parser(object):
                 "m": regexp.DOT_ALL,
                 "i": regexp.IGNORE_CASE,
                 "o": regexp.ONCE,
+                "x": regexp.EXTENDED,
             }[f]
         if p[1] is not None:
             n = p[1].getast()

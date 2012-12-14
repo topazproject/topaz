@@ -1225,7 +1225,7 @@ class StringTerm(BaseStringTerm):
                 if ch == self.lexer.EOF or not ch.isalpha():
                     self.lexer.unread()
                     break
-                elif ch in "ixmonesju":
+                elif ch in "ixmo":
                     if ch not in flags:
                         flags += ch
                         self.lexer.add(ch)
