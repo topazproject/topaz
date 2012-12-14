@@ -8,7 +8,7 @@ from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_LITERAL_IGNORE,
 
 IGNORE_CASE = 1 << 0
 DOT_ALL = 1 << 1
-WORD = 1 << 2
+EXTENDED = 1 << 2
 ONCE = 1 << 3
 
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
@@ -818,7 +818,6 @@ class SetIntersection(SetBase):
 
 
 POSITION_ESCAPES = {}
-WORD_POSITION_ESCAPES = {}
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
 }
@@ -1116,10 +1115,7 @@ def _parse_escape(source, info, in_set):
         return _parse_property(source, info, ch == "p", in_set)
     elif ch.isalpha():
         if not in_set:
-            if info.flags & WORD:
-                value = WORD_POSITION_ESCAPES.get(ch)
-            else:
-                value = POSITION_ESCAPES.get(ch)
+            value = POSITION_ESCAPES.get(ch)
             if value is not None:
                 return value
         value = CHARSET_ESCAPES.get(ch)

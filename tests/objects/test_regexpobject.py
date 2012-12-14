@@ -45,6 +45,13 @@ class TestRegexpObject(BaseRuPyPyTest):
         /\\P/
         """)
 
+    def test_to_s(self, space):
+        w_res = space.execute("return /a/.to_s")
+        assert space.str_w(w_res) == "(?-mix:a)"
+
+        w_res = space.execute("return /a/i.to_s")
+        assert space.str_w(w_res) == "(?i-mx:a)"
+
     def test_match_operator(self, space):
         w_res = space.execute("""
         idx = /(l)(l)(o)(a)(b)(c)(h)(e)(l)/ =~ 'helloabchello'

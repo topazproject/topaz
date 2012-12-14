@@ -122,6 +122,20 @@ class W_RegexpObject(W_Object):
         else:
             self.set_source(Coerce.str(space, w_source), flags)
 
+    @classdef.method("to_s")
+    def method_to_s(self, space):
+        flags = missing_flags = ""
+        for c, f in [
+            ("m", regexp.DOT_ALL),
+            ("i", regexp.IGNORE_CASE),
+            ("x", regexp.EXTENDED),
+        ]:
+            if self.flags & f:
+                flags += c
+            else:
+                missing_flags += c
+        return space.newstr_fromstr("(?%s-%s:%s)" % (flags, missing_flags, self.source))
+
     @classdef.method("==")
     def method_equal(self, space, w_other):
         if self is w_other:
