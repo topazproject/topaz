@@ -4,6 +4,7 @@ from pypy.rlib.objectmodel import we_are_translated
 
 from rupypy import consts
 from rupypy.astcompiler import CompilerContext, BlockSymbolTable
+from rupypy.utils.regexp import RegexpError
 
 
 class BaseNode(object):
@@ -1102,7 +1103,11 @@ class ConstantRegexp(ConstantNode):
         self.flags = flags
 
     def create_const(self, ctx):
-        return ctx.create_const(ctx.space.newregexp(self.regexp, self.flags))
+        try:
+            w_regexp = ctx.space.newregexp(self.regexp, self.flags)
+        except RegexpError:
+            raise ctx.space.error(ctx.space.w_SyntaxError)
+        return ctx.create_const(w_regexp)
 
 
 class ConstantBool(ConstantNode):
