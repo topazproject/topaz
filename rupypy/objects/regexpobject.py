@@ -210,7 +210,7 @@ class W_MatchDataObject(W_Object):
     def method_subscript(self, space, n):
         if n == 0:
             start, end = self.ctx.match_start, self.ctx.match_end
-        elif 1 <= n <= self.regexp.groupcount:
+        elif 1 <= n < self.size():
             start, end = self.get_span(n)
         else:
             return space.w_nil
@@ -227,7 +227,7 @@ class W_MatchDataObject(W_Object):
     def method_begin(self, space, n):
         if n == 0:
             start, _ = self.ctx.match_start, self.ctx.match_end
-        elif 1 <= n <= self.regexp.groupcount:
+        elif 1 <= n < self.size():
             start, _ = self.get_span(n)
         else:
             raise space.error(space.w_IndexError, "index %d out of matches" % n)
