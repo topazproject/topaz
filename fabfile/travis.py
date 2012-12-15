@@ -63,7 +63,7 @@ def run_own_tests(env):
 
 
 def run_rubyspec_untranslated(env):
-    run_specs("bin/topaz_untranslated.py", prefix="PYTHONPATH=$PYTHONPATH:{pypy_path}".format(**env))
+    run_specs("bin/topaz_untranslated.py", prefix="PYTHONPATH=$PYTHONPATH:{pypy_path} ".format(**env))
 
 
 def run_translate_tests(env):
@@ -101,7 +101,7 @@ def run_specs(binary, prefix=""):
         "core/true/xor_spec.rb",
     ]
     local("{prefix}../mspec/bin/mspec -t {binary} {spec_files}".format(
-        prefix=" " + prefix if prefix else "",
+        prefix=prefix,
         binary=binary,
         spec_files=" ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests),
     ))
