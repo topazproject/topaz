@@ -1290,7 +1290,7 @@ def _compile_firstset(info, fs):
             elif isinstance(i, SetBase):
                 return []
         members[i.with_flags(case_insensitive=False)] = None
-    fs = SetUnion(info, list(members), zerowidth=True)
+    fs = SetUnion(info, members.keys(), zerowidth=True)
     fs = fs.optimize(info, in_set=True)
     ctx = CompilerContext()
     fs.compile(ctx)
