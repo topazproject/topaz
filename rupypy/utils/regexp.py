@@ -1021,6 +1021,10 @@ def _parse_paren(source, info):
             return
         elif source.match(">"):
             return _parse_atomic(source, info)
+        elif source.match(":"):
+            subpattern = _parse_pattern(source, info)
+            source.expect(")")
+            return subpattern
         else:
             raise RegexpError("undefined group option")
     group = info.new_group()

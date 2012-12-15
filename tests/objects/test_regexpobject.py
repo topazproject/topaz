@@ -112,3 +112,7 @@ class TestRegexpObject(BaseRuPyPyTest):
 
         w_res = space.execute("return /./m =~ '\\n'")
         assert space.int_w(w_res) == 0
+
+    def test_non_capturing_group(self, space):
+        w_res = space.execute("return /(?:foo)(bar)/.match('foobar').to_a")
+        assert self.unwrap(space, w_res) == ["foobar", "bar"]
