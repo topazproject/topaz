@@ -418,9 +418,9 @@ class W_StringObject(W_Object):
 
     def to_bigint(self, s, neg, i, radix):
         val = rbigint.fromint(0)
-        radix = rbigint.fromint(radix)
+        bigint_radix = rbigint.fromint(radix)
         for digit in self._digits(s, i, radix):
-            val = val.mul(radix).add(rbigint.fromint(digit))
+            val = val.mul(bigint_radix).add(rbigint.fromint(digit))
         if neg:
             val = val.neg()
         return val
