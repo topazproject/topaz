@@ -291,7 +291,7 @@ class Any(RegexpBase):
     def fix_groups(self):
         pass
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         return self
 
     def has_simple_start(self):
@@ -308,7 +308,7 @@ class AnyAll(RegexpBase):
     def fix_groups(self):
         pass
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         return self
 
     def has_simple_start(self):
@@ -416,7 +416,7 @@ class Sequence(RegexpBase):
         for item in self.items:
             item.fix_groups()
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         items = []
         for item in self.items:
             item = item.optimize(info)
@@ -572,7 +572,7 @@ class Branch(RegexpBase):
         self._flush_set_members(info, items, case_insensitive, new_branches)
         return new_branches
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         branches = self._flatten_branches(info, self.branches)
 
         prefix, branches = self._split_common_prefix(info, branches)
@@ -647,7 +647,7 @@ class BaseRepeat(RegexpBase):
 class GreedyRepeat(BaseRepeat):
     UNTIL_OPCODE = OPCODE_MAX_UNTIL
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         subpattern = self.subpattern.optimize(info)
         return GreedyRepeat(subpattern, self.min_count, self.max_count)
 
@@ -655,7 +655,7 @@ class GreedyRepeat(BaseRepeat):
 class LazyRepeat(BaseRepeat):
     UNTIL_OPCODE = OPCODE_MIN_UNTIL
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         subpattern = self.subpattern.optimize(info)
         return LazyRepeat(subpattern, self.min_count, self.max_count)
 
@@ -675,7 +675,7 @@ class LookAround(RegexpBase):
     def get_firstset(self):
         raise FirstSetError
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         return LookAround(self.subpattern.optimize(info), self.behind, self.positive)
 
     def compile(self, ctx):
@@ -708,7 +708,7 @@ class Group(RegexpBase):
     def can_be_affix(self):
         return False
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         return Group(self.info, self.group, self.subpattern.optimize(info))
 
     def is_empty(self):
@@ -738,7 +738,7 @@ class RefGroup(RegexpBase):
         if not 1 <= self.group <= self.info.group_count:
             raise RegexpError("unknown group")
 
-    def optimize(self, info):
+    def optimize(self, info, in_set=False):
         return self
 
     def compile(self, ctx):
