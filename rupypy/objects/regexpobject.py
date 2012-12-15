@@ -214,6 +214,8 @@ class W_MatchDataObject(W_Object):
             start, end = self.get_span(n)
         else:
             return space.w_nil
+        assert start >= 0
+        assert end >= 0
         return space.newstr_fromstr(self.ctx._string[start:end])
 
     @classdef.method("to_a")
