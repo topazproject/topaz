@@ -2332,11 +2332,11 @@ class Parser(object):
         if p[1] is not None:
             n = p[1].getast()
             if isinstance(n, ast.ConstantString):
-                node = ast.ConstantRegexp(n.strvalue, flags)
+                node = ast.ConstantRegexp(n.strvalue, flags, p[0].getsourcepos().lineno)
             else:
                 node = ast.DynamicRegexp(n, flags)
         else:
-            node = ast.ConstantRegexp("", flags)
+            node = ast.ConstantRegexp("", flags, p[0].getsourcepos().lineno)
         return BoxAST(node)
 
     @pg.production("words : WORDS_BEG LITERAL_SPACE STRING_END")

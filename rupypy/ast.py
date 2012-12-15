@@ -1098,15 +1098,16 @@ class ConstantString(ConstantNode):
 
 
 class ConstantRegexp(ConstantNode):
-    def __init__(self, regexp, flags):
+    def __init__(self, regexp, flags, lineno):
+        ConstantNode.__init__(self, lineno)
         self.regexp = regexp
         self.flags = flags
 
     def create_const(self, ctx):
         try:
             w_regexp = ctx.space.newregexp(self.regexp, self.flags)
-        except RegexpError:
-            raise ctx.space.error(ctx.space.w_SyntaxError)
+        except RegexpError as e:
+            raise ctx.space.error(ctx.space.w_SyntaxError, "line %d: %s" % (self.lineno, e))
         return ctx.create_const(w_regexp)
 
 

@@ -80,7 +80,7 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Send(ast.ConstantInt(2), "!~", [ast.ConstantInt(3)], None, 1))
         ]))
         assert space.parse("1 =~ /v/") == ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.ConstantInt(1), "=~", [ast.ConstantRegexp("v", 0)], None, 1))
+            ast.Statement(ast.Send(ast.ConstantInt(1), "=~", [ast.ConstantRegexp("v", 0, 1)], None, 1))
         ]))
         assert space.parse("2 & 3 | 5") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Send(ast.ConstantInt(2), "&", [ast.ConstantInt(3)], None, 1), "|", [ast.ConstantInt(5)], None, 1))
@@ -1867,7 +1867,7 @@ HERE
 
     def test_regexp(self, space):
         re = lambda re: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantRegexp(re, 0))
+            ast.Statement(ast.ConstantRegexp(re, 0, 1))
         ]))
         dyn_re = lambda re: ast.Main(ast.Block([
             ast.Statement(ast.DynamicRegexp(re, 0))
@@ -1882,7 +1882,7 @@ HERE
 
     def test_regexp_flags(self, space):
         re = lambda re, flags: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantRegexp(re, flags))
+            ast.Statement(ast.ConstantRegexp(re, flags, 1))
         ]))
         assert space.parse('/a/o') == re('a', regexp.ONCE)
 
@@ -2104,7 +2104,7 @@ HERE
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Case(ast.ConstantInt(0), [
-                ast.When([ast.ConstantRegexp("a", 0)], ast.Nil(), 3)
+                ast.When([ast.ConstantRegexp("a", 0, 3)], ast.Nil(), 3)
             ], ast.Nil()))
         ]))
 
@@ -2152,7 +2152,7 @@ HERE
 
     def test_and_regexp(self, space):
         assert space.parse("3 && /a/") == ast.Main(ast.Block([
-            ast.Statement(ast.And(ast.ConstantInt(3), ast.ConstantRegexp("a", 0)))
+            ast.Statement(ast.And(ast.ConstantInt(3), ast.ConstantRegexp("a", 0, 1)))
         ]))
 
     def test_hash(self, space):
