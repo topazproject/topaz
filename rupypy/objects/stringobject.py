@@ -362,7 +362,7 @@ class W_StringObject(W_Object):
             return space.newstr_fromchars(chars)
 
     @classdef.method("split", limit="int")
-    def method_split(self, space, w_sep=None, limit=-1):
+    def method_split(self, space, w_sep=None, limit=0):
         if w_sep is None or space.is_kind_of(w_sep, space.w_string):
             sep = space.str_w(w_sep) if w_sep else None
             return space.newarray([
@@ -373,7 +373,7 @@ class W_StringObject(W_Object):
             w_string = self
             w_match = space.send(w_sep, space.newsymbol("match"), [w_string])
             while (w_match is not space.w_nil and len(space.str_w(w_string)) > 0
-                   and (limit == -1 or len(results_w) < limit)):
+                   and (limit <= 0 or len(results_w) + 1 < limit)):
                 if space.int_w(space.send(w_match, space.newsymbol("end"), [space.newint(0)])) == 0:
                     string = space.str_w(w_string)
                     results_w.append(space.newstr_fromstr(string[0]))
@@ -384,6 +384,8 @@ class W_StringObject(W_Object):
                 w_match = space.send(w_sep, space.newsymbol("match"), [w_string])
             if len(space.str_w(w_string)) > 0:
                 results_w.append(w_string)
+            if limit < 0 or (w_match is space.w_nil and len(results_w) < limit):
+                results_w.append(space.newstr_fromstr(""))
             return space.newarray(results_w)
         else:
             raise space.error(

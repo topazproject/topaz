@@ -165,12 +165,22 @@ class TestStringObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == ["now's", "", "the", "time"]
         w_res = space.execute('return "1, 2.34,56, 7".split(%r{,\s*})')
         assert self.unwrap(space, w_res) == ["1", "2.34", "56", "7"]
+        w_res = space.execute('return "1, 2.34,56, 7".split(%r{,\s*}, 0)')
+        assert self.unwrap(space, w_res) == ["1", "2.34", "56", "7"]
+        w_res = space.execute('return "1, 2.34,56, 7".split(%r{,\s*}, -1)')
+        assert self.unwrap(space, w_res) == ["1", "2.34", "56", "7", ""]
+        w_res = space.execute('return "1, 2.34,56, 7".split(%r{,\s*}, -2)')
+        assert self.unwrap(space, w_res) == ["1", "2.34", "56", "7", ""]
+        w_res = space.execute('return "1, 2.34,56, 7".split(%r{,\s*}, 4)')
+        assert self.unwrap(space, w_res) == ["1", "2.34", "56", "7"]
+        w_res = space.execute('return "1, 2.34,56, 7".split(%r{,\s*}, 5)')
+        assert self.unwrap(space, w_res) == ["1", "2.34", "56", "7", ""]
+        w_res = space.execute('return "1, 2.34,56, 7".split(%r{,\s*}, 6)')
+        assert self.unwrap(space, w_res) == ["1", "2.34", "56", "7", ""]
         w_res = space.execute('return "hello".split(//)')
         assert self.unwrap(space, w_res) == ["h", "e", "l", "l", "o"]
-        # w_res = space.execute('return "hello".split(//, 3)')
-        # assert self.unwrap(space, w_res) == ["h", "e", "llo"]
-        # w_res = space.execute('return "hi mom".split(%r{\s*})')
-        # assert self.unwrap(space, w_res) == ["h", "i", "m", "o", "m"]
+        w_res = space.execute('return "hello".split(//, 3)')
+        assert self.unwrap(space, w_res) == ["h", "e", "llo"]
 
     def test_dup(self, space):
         w_res = space.execute("""
