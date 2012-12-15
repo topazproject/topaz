@@ -1,3 +1,5 @@
+import sys
+
 from pypy.rlib.listsort import make_timsort_class
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.rstring import StringBuilder
@@ -483,7 +485,9 @@ class Branch(RegexpBase):
                 alternatives.append(b.items)
             else:
                 alternatives.append([b])
-        max_count = min([len(a) for a in alternatives])
+        max_count = sys.maxint
+        for a in alternatives:
+            max_count = min(max_count, len(a))
         prefix = alternatives[0]
         pos = 0
         end_pos = max_count
@@ -504,7 +508,9 @@ class Branch(RegexpBase):
                 alternatives.append(b.items)
             else:
                 alternatives.append([b])
-        max_count = min([len(a) for a in alternatives])
+        max_count = sys.maxint
+        for a in alternatives:
+            max_count = min(max_count, len(a))
         suffix = alternatives[0]
         pos = -1
         end_pos = -1 - max_count
