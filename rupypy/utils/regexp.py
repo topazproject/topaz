@@ -1,3 +1,4 @@
+from pypy.rlib.listsort import make_timsort_class
 from pypy.rlib.objectmodel import specialize
 from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_LITERAL_IGNORE,
@@ -208,6 +209,18 @@ class Info(object):
     def is_open_group(self, name):
         group = self.normalize_group(name)
         return group in self.group_state and self.group_state[group] == self.OPEN
+
+
+BaseSorter = make_timsort_class()
+
+
+class BranchSorter(BaseSorter):
+    def __init__(self, items, order):
+        BaseSorter.__init__(self, items)
+        self.order = order
+
+    def lt(self, a, b):
+        return self.order[a[0]] < self.order[b[0]]
 
 
 class CompilerContext(object):
@@ -512,7 +525,10 @@ class Branch(RegexpBase):
     def _flush_char_prefix(self, info, prefixed, order, new_branches):
         if not prefixed:
             return
-        for value, branches in sorted(prefixed.items(), key=lambda pair: order[pair[0]]):
+        items = prefixed.items()
+        sorter = BranchSorter(items, order)
+        sorter.sort()
+        for value, branches in items:
             if len(branches) == 1:
                 new_branches.append(make_sequence(branches[0]))
             else:
