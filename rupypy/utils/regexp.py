@@ -475,7 +475,7 @@ class Branch(RegexpBase):
         pos = 0
         end_pos = max_count
         while (pos < end_pos and prefix[pos].can_be_affix() and
-            all([a[pos] == prefix[pos] for a in alternatives])):
+            [None for a in alternatives if a[pos] == prefix[pos]]):
             pos += 1
         if pos == 0:
             return [], branches
@@ -496,7 +496,7 @@ class Branch(RegexpBase):
         pos = -1
         end_pos = -1 - max_count
         while (pos > end_pos and suffix[pos].can_be_affix() and
-            all([a[pos] == suffix[pos] for a in alternatives])):
+            [None for a in alternatives if a[pos] == suffix[pos]]):
             pos -= 1
         count = -1 - pos
         if count == 0:
