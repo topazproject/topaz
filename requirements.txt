@@ -1,1 +1,1 @@
--e git+https://github.com/alex/rply#egg=rply
+rply
