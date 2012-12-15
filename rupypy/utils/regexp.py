@@ -559,8 +559,10 @@ class Branch(RegexpBase):
                 prefixed.setdefault(b.value, []).append([b])
                 order.setdefault(b.value, len(order))
             elif isinstance(b, Sequence) and b.items and self._is_simple_character(b.items[0]):
-                prefixed.setdefault(b.items[0].value, []).append(b.items)
-                order.setdefault(b.items[0].value, len(order))
+                item = b.items[0]
+                assert isinstance(item, Character)
+                prefixed.setdefault(item.value, []).append(b.items)
+                order.setdefault(item.value, len(order))
             else:
                 self._flush_char_prefix(info, prefixed, order, new_branches)
                 new_branches.append(b)
