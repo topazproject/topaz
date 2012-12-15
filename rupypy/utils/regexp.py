@@ -542,7 +542,7 @@ class Branch(RegexpBase):
                     if len(b) > 1:
                         subbranches.append(make_sequence(b[1:]))
                     elif not optional:
-                        subbranches.append(Sequence())
+                        subbranches.append(Sequence([]))
                         optional = True
                 sequence = Sequence([Character(value), Branch(subbranches)])
                 new_branches.append(sequence.optimize(info))
