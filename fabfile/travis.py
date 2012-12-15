@@ -109,7 +109,7 @@ def run_docs_tests(env):
 
 TEST_TYPES = {
     "own": Test(run_own_tests, deps=["pytest", "-r requirements.txt"]),
-    "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements"], needs_rubyspec=True),
+    "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
     "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_pypy=False),
 }
