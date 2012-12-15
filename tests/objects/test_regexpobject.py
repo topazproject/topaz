@@ -118,3 +118,7 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_non_capturing_group(self, space):
         w_res = space.execute("return /(?:foo)(bar)/.match('foobar').to_a")
         assert self.unwrap(space, w_res) == ["foobar", "bar"]
+
+    def test_quantify_set(self, space):
+        w_res = space.execute("return /([0-9]){3,5}?/ =~ 'ab12345'")
+        assert space.int_w(w_res) == 2

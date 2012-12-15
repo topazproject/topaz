@@ -778,7 +778,7 @@ class RefGroup(RegexpBase):
 
 class SetBase(RegexpBase):
     def __init__(self, info, items, positive=True, case_insensitive=False, zerowidth=False):
-        RegexpBase.__init__(self, zerowidth=zerowidth)
+        RegexpBase.__init__(self, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
         self.info = info
         self.items = items
 
@@ -807,13 +807,13 @@ class SetUnion(SetBase):
                 items.extend(item.items)
             else:
                 items.append(item)
-        if len(items) == 1:
+        if len(items) == 1 and not isinstance(items[0], Range):
             return items[0].with_flags(
                 positive=items[0].positive == self.positive,
                 case_insensitive=self.case_insensitive,
                 zerowidth=self.zerowidth
             ).optimize(info, in_set=in_set)
-        return SetUnion(self.info, items)
+        return SetUnion(self.info, items, positive=self.positive, case_insensitive=self.case_insensitive, zerowidth=self.zerowidth)
 
     def rebuild(self, positive, case_insensitive, zerowidth):
         return SetUnion(self.info, self.items, positive, case_insensitive, zerowidth).optimize(self.info)
@@ -822,6 +822,8 @@ class SetUnion(SetBase):
         ctx.emit(OPCODE_IN)
         pos = ctx.tell()
         ctx.emit(0)
+        if not self.positive:
+            ctx.emit(OPCODE_NEGATE)
         for item in self.items:
             item.compile(ctx)
         ctx.emit(OPCODE_FAILURE)
@@ -849,9 +851,9 @@ class SetIntersection(SetBase):
 
     def compile(self, ctx):
         Sequence([
-            LookAround(SetUnion(self.info, [item]), behind=False, positive=True)
+            LookAround(item, behind=False, positive=True)
             for item in self.items[:-1]
-        ] + [SetUnion(self.info, [self.items[-1]])]).compile(ctx)
+        ] + [self.items[-1]]).compile(ctx)
 
 
 POSITION_ESCAPES = {}
@@ -1081,14 +1083,11 @@ def _parse_set_implicit_union(source, info):
     items = [_parse_set_member(source, info)]
     while True:
         here = source.pos
-        if source.match("]"):
-            source.pos = here
-            break
-        if source.match("&&"):
+        if source.match("]") or source.match("&&"):
             source.pos = here
             break
         items.append(_parse_set_member(source, info))
-    if len(items) == 1:
+    if len(items) == 1 and not isinstance(items[0], Range):
         return items[0]
     return SetUnion(info, items)
 
