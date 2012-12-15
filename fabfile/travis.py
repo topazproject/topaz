@@ -81,6 +81,8 @@ def run_specs(binary, prefix=""):
         "language/unless_spec.rb",
         "language/yield_spec.rb",
 
+        "language/regexp/grouping_spec.rb",
+
         "core/false/and_spec.rb",
         "core/false/inspect_spec.rb",
         "core/false/or_spec.rb",
