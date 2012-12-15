@@ -1215,7 +1215,7 @@ def _parse_count(source):
         else:
             source.pos = here
             break
-    return int(b.build())
+    return b.build()
 
 
 def _parse_comment(source):

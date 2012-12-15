@@ -43,6 +43,8 @@ class TestRegexpObject(BaseRuPyPyTest):
         /\\G/
         /\\p{digit}/
         /\\P/
+        /a{1,}/
+        /a{,1}/
         """)
 
     def test_to_s(self, space):
