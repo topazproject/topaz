@@ -1121,15 +1121,12 @@ def _parse_escape(source, info, in_set):
         return _parse_property(source, info, ch == "p", in_set)
     elif ch.isalpha():
         if not in_set:
-            value = POSITION_ESCAPES.get(ch)
-            if value is not None:
-                return value
-        value = CHARSET_ESCAPES.get(ch)
-        if value is not None:
-            return value
-        value = CHARACTER_ESCAPES.get(ch)
-        if value is not None:
-            return Character(ord(value))
+            if ch in POSITION_ESCAPES:
+                return POSITION_ESCAPES[ch]
+        if ch in CHARSET_ESCAPES:
+            return CHARSET_ESCAPES[ch]
+        if ch in CHARACTER_ESCAPES:
+            return Character(ord(CHARACTER_ESCAPES[ch]))
         return make_character(info, ord(ch), in_set)
     elif ch.isdigit():
         return _parse_numeric_escape(source, info, ch, in_set)
