@@ -224,7 +224,7 @@ class CompilerContext(object):
         self.data[pos] = value
 
     def build(self):
-        return self.data
+        return self.data[:]
 
 
 class Counts(object):
