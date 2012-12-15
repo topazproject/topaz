@@ -1268,6 +1268,10 @@ def _compile_firstset(info, fs):
     return ctx.build()
 
 
+def _is_cased(info, ch):
+    raise NotImplementedError("_is_cased")
+
+
 def compile(pattern, flags=0):
     global_flags = flags
     while True:
