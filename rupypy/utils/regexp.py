@@ -780,7 +780,7 @@ class SetUnion(SetBase):
                 items.append(item)
         if len(items) == 1:
             return items[0].with_flags(
-                positive=item.positive == self.positive,
+                positive=items[0].positive == self.positive,
                 case_insensitive=self.case_insensitive,
                 zerowidth=self.zerowidth
             ).optimize(info, in_set=in_set)
