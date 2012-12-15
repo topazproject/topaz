@@ -1,3 +1,5 @@
+from pypy.rlib.rbigint import rbigint
+
 from ..base import BaseRuPyPyTest
 
 
@@ -196,6 +198,10 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.int_w(w_res) == 0
         w_res = space.execute("return '   123'.to_i")
         assert space.int_w(w_res) == 123
+
+        w_res = space.execute("return '234124123123123121231231'.to_i")
+        assert space.bigint_w(w_res) == rbigint.fromlong(234124123123123121231231)
+
         with self.raises(space, "ArgumentError"):
             space.execute('"".to_i(1)')
         with self.raises(space, "ArgumentError"):

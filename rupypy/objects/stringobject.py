@@ -2,7 +2,8 @@ import copy
 
 from pypy.rlib import jit
 from pypy.rlib.objectmodel import newlist_hint, compute_hash
-from pypy.rlib.rarithmetic import intmask
+from pypy.rlib.rarithmetic import intmask, ovfcheck
+from pypy.rlib.rbigint import rbigint
 from pypy.rlib.rerased import new_static_erasing_pair
 
 from rupypy.module import ClassDef
@@ -386,20 +387,7 @@ class W_StringObject(W_Object):
         changed = self.strategy.downcase(self.str_storage)
         return self if changed else space.w_nil
 
-    @classdef.method("to_i", radix="int")
-    def method_to_i(self, space, radix=10):
-        if not 2 <= radix <= 36:
-            raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
-        s = space.str_w(self)
-        i = 0
-        while i < len(s):
-            if not s[i].isspace():
-                break
-            i += 1
-        neg = i < len(s) and s[i] == "-"
-        if neg:
-            i += 1
-        val = 0
+    def _digits(self, s, i, radix):
         number_seen = False
         while i < len(s):
             c = ord(s[i])
@@ -417,11 +405,46 @@ class W_StringObject(W_Object):
             if digit >= radix:
                 break
             number_seen = True
-            val = val * radix + digit
+            yield digit
             i += 1
+
+    def to_int(self, s, neg, i, radix):
+        val = 0
+        for digit in self._digits(s, i, radix):
+            val = ovfcheck(val * radix + digit)
         if neg:
             val = -val
-        return space.newint(val)
+        return val
+
+    def to_bigint(self, s, neg, i, radix):
+        val = rbigint.fromint(0)
+        radix = rbigint.fromint(radix)
+        for digit in self._digits(s, i, radix):
+            val = val.mul(radix).add(rbigint.fromint(digit))
+        if neg:
+            val = val.neg()
+        return val
+
+    @classdef.method("to_i", radix="int")
+    def method_to_i(self, space, radix=10):
+        if not 2 <= radix <= 36:
+            raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
+        s = space.str_w(self)
+        i = 0
+        while i < len(s):
+            if not s[i].isspace():
+                break
+            i += 1
+        neg = i < len(s) and s[i] == "-"
+        if neg:
+            i += 1
+        try:
+            value = self.to_int(s, neg, i, radix)
+        except OverflowError:
+            value = self.to_bigint(s, neg, i, radix)
+            return space.newbigint_fromrbigint(value)
+        else:
+            return space.newint(value)
 
     @classdef.method("tr", source="str", replacement="str")
     def method_tr(self, space, source, replacement):
