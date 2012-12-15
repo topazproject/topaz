@@ -145,8 +145,8 @@ class Source(object):
         else:
             if pos + len(substr) <= len(s):
                 matches = True
-                for i, c in enumerate(substr):
-                    if s[pos + i] != c:
+                for i in xrange(len(substr)):
+                    if s[pos + i] != substr[i]:
                         matches = False
             else:
                 matches = False
