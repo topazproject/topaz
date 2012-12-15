@@ -955,13 +955,13 @@ def _parse_element(source, info):
             if counts is not None:
                 raise RegexpError("nothing to repeat")
             source.pos = here2
-            return make_character(info, ord(ch))
+            return make_character(info, ord(ch[0]))
         elif ch in "?*+":
             raise RegexpError("nothing to repeat")
         else:
-            return make_character(info, ord(ch))
+            return make_character(info, ord(ch[0]))
     else:
-        return make_character(info, ord(ch))
+        return make_character(info, ord(ch[0]))
 
 
 def _parse_quantifier(source, info):
@@ -1123,7 +1123,7 @@ def _parse_set_item(source, info):
     ch = source.get()
     if not ch:
         raise RegexpError("bad set")
-    return Character(ord(ch))
+    return Character(ord(ch[0]))
 
 
 def _parse_escape(source, info, in_set):
@@ -1139,7 +1139,7 @@ def _parse_escape(source, info, in_set):
             return _parse_group_ref(source, info)
         except RegexpError:
             source.pos = here
-        return make_character(info, ord(ch), in_set)
+        return make_character(info, ord(ch[0]), in_set)
     elif ch == "G" and not in_set:
         return StartOfString()
     elif ch in "pP":
@@ -1152,11 +1152,11 @@ def _parse_escape(source, info, in_set):
             return CHARSET_ESCAPES[ch]
         if ch in CHARACTER_ESCAPES:
             return Character(ord(CHARACTER_ESCAPES[ch]))
-        return make_character(info, ord(ch), in_set)
+        return make_character(info, ord(ch[0]), in_set)
     elif ch.isdigit():
         return _parse_numeric_escape(source, info, ch, in_set)
     else:
-        return make_character(info, ord(ch), in_set)
+        return make_character(info, ord(ch[0]), in_set)
 
 
 def _parse_lookaround(source, info, behind, positive):
