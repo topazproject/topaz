@@ -516,8 +516,12 @@ class Branch(RegexpBase):
             return [], branches
         new_branches = []
         for a in alternatives:
-            new_branches.append(make_sequence(a[:-count]))
-        return suffix[-count:], new_branches
+            end = len(a) - count
+            assert end >= 0
+            new_branches.append(make_sequence(a[:end]))
+        start = len(suffix) - count
+        assert start >= 0
+        return suffix[start:], new_branches
 
     def _is_simple_character(self, c):
         return isinstance(c, Character) and c.positive and not c.case_insensitive
