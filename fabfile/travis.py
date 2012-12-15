@@ -63,7 +63,7 @@ def run_own_tests(env):
 
 
 def run_rubyspec_untranslated(env):
-    run_specs("bin/topaz_untranslated.py")
+    run_specs("bin/topaz_untranslated.py", prefix="PYTHONPATH=$PYTHONPATH:{pypy_path}".format(**env))
 
 
 def run_translate_tests(env):
@@ -71,7 +71,7 @@ def run_translate_tests(env):
     run_specs("`pwd`/topaz-c")
 
 
-def run_specs(binary):
+def run_specs(binary, prefix=""):
     # TODO: this list is temporary until we have all the machinery necessary to
     # run the full rubyspec directory (including the tagging feature)
     rubyspec_tests = [
@@ -100,8 +100,11 @@ def run_specs(binary):
         "core/true/to_s_spec.rb",
         "core/true/xor_spec.rb",
     ]
-    spec_files = " ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests)
-    local("../mspec/bin/mspec -t {binary} {spec_files}".format(binary=binary, spec_files=spec_files))
+    local("{prefix}../mspec/bin/mspec -t {binary} {spec_files}".format(
+        prefix=" " + prefix if prefix else "",
+        binary=binary,
+        spec_files=" ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests),
+    ))
 
 
 def run_docs_tests(env):
