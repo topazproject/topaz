@@ -62,7 +62,16 @@ def run_own_tests(env):
     local("PYTHONPATH=$PYTHONPATH:{pypy_path} py.test".format(**env))
 
 
+def run_rubyspec_untranslated(env):
+    run_specs("bin/topaz_untranslated.py")
+
+
 def run_translate_tests(env):
+    local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
+    run_specs("`pwd`/topaz-c")
+
+
+def run_specs(binary):
     # TODO: this list is temporary until we have all the machinery necessary to
     # run the full rubyspec directory (including the tagging feature)
     rubyspec_tests = [
@@ -91,11 +100,8 @@ def run_translate_tests(env):
         "core/true/to_s_spec.rb",
         "core/true/xor_spec.rb",
     ]
-    local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targetrupypy.py".format(**env))
     spec_files = " ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests)
-    # TODO: this should be reenabled after we can run mspec unmodified (right
-    # now it requires two small patches)
-    # local("../mspec/bin/mspec -t `pwd`/topaz-c {spec_files}".format(spec_files=spec_files))
+    local("../mspec/bin/mspec -t {binary} {spec_files}".format(binary=binary, spec_files=spec_files))
 
 
 def run_docs_tests(env):
@@ -103,6 +109,7 @@ def run_docs_tests(env):
 
 TEST_TYPES = {
     "own": Test(run_own_tests, deps=["pytest", "-r requirements.txt"]),
+    "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements"], needs_rubyspec=True),
     "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_pypy=False),
 }

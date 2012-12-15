@@ -4,6 +4,7 @@ python:
 env:
     - TEST_TYPE=docs
     - TEST_TYPE=own
+    - TEST_TYPE=rubyspec_untranslated
     - TEST_TYPE=translate
 install:
     - pip install fabric
