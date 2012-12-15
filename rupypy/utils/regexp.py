@@ -427,7 +427,7 @@ class Sequence(RegexpBase):
         return make_sequence(items)
 
     def has_simple_start(self):
-        return self.items and self.items[0].has_simple_start()
+        return bool(self.items) and self.items[0].has_simple_start()
 
     def get_firstset(self):
         fs = {}
