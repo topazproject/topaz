@@ -25,6 +25,7 @@ from rupypy.modules.math import Math
 from rupypy.modules.kernel import Kernel
 from rupypy.modules.objectspace import ObjectSpace as ObjectSpaceModule
 from rupypy.modules.process import Process
+from rupypy.modules.signal import Signal
 from rupypy.modules.topaz import Topaz
 from rupypy.objects.arrayobject import W_ArrayObject
 from rupypy.objects.bignumobject import W_BignumObject
@@ -157,6 +158,7 @@ class ObjectSpace(object):
             self.getmoduleobject(Enumerable.moduledef),
             self.getmoduleobject(Math.moduledef),
             self.getmoduleobject(Process.moduledef),
+            self.getmoduleobject(Signal.moduledef),
             self.getmoduleobject(ObjectSpaceModule.moduledef),
         ]:
             self.set_const(
