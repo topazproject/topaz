@@ -1246,6 +1246,10 @@ def _parse_numeric_escape(source, info, ch, in_set):
     raise NotImplementedError("_parse_numeric_escape")
 
 
+def _parse_posix_class(source, info):
+    raise NotImplementedError("_parse_posix_class")
+
+
 def _compile_firstset(info, fs):
     if not fs or None in fs:
         return []
