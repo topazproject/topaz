@@ -1,3 +1,4 @@
+from pypy.rlib.objectmodel import specialize
 from pypy.rlib.rstring import StringBuilder
 from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_LITERAL_IGNORE,
     OPCODE_SUCCESS, OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY,
@@ -240,6 +241,7 @@ class RegexpBase(object):
         self.case_insensitive = case_insensitive
         self.zerowidth = zerowidth
 
+    @specialize.argtype(1, 2, 3)
     def with_flags(self, positive=None, case_insensitive=None, zerowidth=None):
         positive = positive if positive is not None else self.positive
         case_insensitive = case_insensitive if case_insensitive is not None else self.case_insensitive
