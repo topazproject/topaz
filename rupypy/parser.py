@@ -1381,10 +1381,6 @@ class Parser(object):
     def opt_block_arg(self, p):
         return p[1]
 
-    @pg.production("opt_block_arg : LITERAL_COMMA")
-    def opt_block_arg_comma(self, p):
-        return None
-
     @pg.production("opt_block_arg : none_block_pass")
     def opt_block_arg_none(self, p):
         return p[0]
