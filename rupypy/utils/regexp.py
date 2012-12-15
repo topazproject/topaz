@@ -579,9 +579,9 @@ class Branch(RegexpBase):
         if not items:
             return
         if len(items) == 1:
-            item = list(items)[0]
+            [item] = items.keys()
         else:
-            item = SetUnion(info, list(items)).optimize(info)
+            item = SetUnion(info, items.keys()).optimize(info)
         new_branches.append(item.with_flags(case_insensitive=case_insensitive))
         items.clear()
 
