@@ -555,6 +555,7 @@ class Branch(RegexpBase):
         new_branches = []
         for b in branches:
             if self._is_simple_character(b):
+                assert isinstance(b, Character)
                 prefixed.setdefault(b.value, []).append([b])
                 order.setdefault(b.value, len(order))
             elif isinstance(b, Sequence) and b.items and self._is_simple_character(b.items[0]):
@@ -581,7 +582,7 @@ class Branch(RegexpBase):
         items = {}
         case_insensitive = False
         for b in branches:
-            if isinstance(b, (Character, Property, SetBase)):
+            if isinstance(b, Character) or isinstance(b, Property) or isinstance(b, SetBase):
                 if b.case_insensitive != case_insensitive:
                     self._flush_set_members(info, items, case_insensitive, new_branches)
                     case_insensitive = b.case_insensitive
