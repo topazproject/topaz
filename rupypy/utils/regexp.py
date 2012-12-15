@@ -1299,5 +1299,7 @@ def compile(pattern, flags=0):
         except FirstSetError:
             pass
 
-    index_group = dict([(v, n) for n, v in info.group_index.iteritems()])
+    index_group = {}
+    for n, v in info.group_index.iteritems():
+        index_group[v] = n
     return code, info.flags, info.group_count, info.group_index, index_group, info.group_offsets
