@@ -68,10 +68,6 @@ class UnscopedFlagSet(Exception):
         self.global_flags = global_flags
 
 
-class FirstSetError(Exception):
-    pass
-
-
 class RegexpError(Exception):
     pass
 
@@ -282,14 +278,8 @@ class Character(RegexpBase):
     def optimize(self, info, in_set=False):
         return self
 
-    def has_simple_start(self):
-        return True
-
     def can_be_affix(self):
         return True
-
-    def get_firstset(self):
-        return {self: None}
 
     def is_empty(self):
         return False
@@ -309,12 +299,6 @@ class Any(RegexpBase):
     def optimize(self, info, in_set=False):
         return self
 
-    def has_simple_start(self):
-        return True
-
-    def get_firstset(self):
-        raise FirstSetError
-
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY)
 
@@ -326,9 +310,6 @@ class AnyAll(RegexpBase):
     def optimize(self, info, in_set=False):
         return self
 
-    def has_simple_start(self):
-        return True
-
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY_ALL)
 
@@ -339,12 +320,6 @@ class ZeroWidthBase(RegexpBase):
 
     def optimize(self, info, in_set=False):
         return self
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        return {None: None}
 
 
 class StartOfString(ZeroWidthBase):
@@ -373,12 +348,6 @@ class Property(RegexpBase):
     def is_empty(self):
         return False
 
-    def has_simple_start(self):
-        return True
-
-    def get_firstset(self):
-        return {self: None}
-
     def fix_groups(self):
         pass
 
@@ -401,12 +370,6 @@ class Range(RegexpBase):
 
     def fix_groups(self):
         pass
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        raise FirstSetError
 
     def optimize(self, info, in_set=False):
         return self
@@ -440,19 +403,6 @@ class Sequence(RegexpBase):
             else:
                 items.append(item)
         return make_sequence(items)
-
-    def has_simple_start(self):
-        return bool(self.items) and self.items[0].has_simple_start()
-
-    def get_firstset(self):
-        fs = {}
-        for item in self.items:
-            fs.update(item.get_firstset())
-            if None not in fs:
-                return fs
-            del fs[None]
-        fs[None] = None
-        return fs
 
     def compile(self, ctx):
         for item in self.items:
@@ -615,15 +565,6 @@ class Branch(RegexpBase):
             sequence = prefix + branches + suffix
         return make_sequence(sequence)
 
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        fs = {}
-        for b in self.branches:
-            fs.update(b.get_firstset())
-        return fs or {None: None}
-
     def compile(self, ctx):
         ctx.emit(OPCODE_BRANCH)
         tail = []
@@ -652,15 +593,6 @@ class BaseRepeat(RegexpBase):
 
     def is_empty(self):
         return self.subpattern.is_empty()
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        fs = self.subpattern.get_firstset()
-        if self.min_count == 0:
-            fs[None] = None
-        return fs
 
     def compile(self, ctx):
         ctx.emit(OPCODE_REPEAT)
@@ -697,12 +629,6 @@ class LookAround(RegexpBase):
 
     def fix_groups(self):
         self.subpattern.fix_groups()
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        raise FirstSetError
 
     def optimize(self, info, in_set=False):
         return LookAround(self.subpattern.optimize(info), self.behind, self.positive)
@@ -742,12 +668,6 @@ class Group(RegexpBase):
 
     def is_empty(self):
         return False
-
-    def has_simple_start(self):
-        return self.subpattern.has_simple_start()
-
-    def get_firstset(self):
-        return self.subpattern.get_firstset()
 
     def compile(self, ctx):
         ctx.emit(OPCODE_MARK)
@@ -790,12 +710,6 @@ class SetBase(RegexpBase):
 
     def fix_groups(self):
         pass
-
-    def has_simple_start(self):
-        return True
-
-    def get_firstset(self):
-        return {self: None}
 
 
 class SetUnion(SetBase):
@@ -1281,28 +1195,6 @@ def _parse_posix_class(source, info):
     raise NotImplementedError("_parse_posix_class")
 
 
-def _compile_firstset(info, fs):
-    if not fs or None in fs:
-        return []
-    members = {}
-    for i in fs:
-        if i.case_insensitive:
-            if isinstance(i, Character):
-                if _is_cased(info, i.value):
-                    return []
-            elif isinstance(i, SetBase):
-                return []
-        members[i.with_flags(case_insensitive=False)] = None
-    fs = SetUnion(info, members.keys(), zerowidth=True)
-    fs = fs.optimize(info, in_set=True)
-    ctx = CompilerContext()
-    fs.compile(ctx)
-    return ctx.build()
-
-
-def _is_cased(info, ch):
-    raise NotImplementedError("_is_cased")
-
 
 def compile(pattern, flags=0):
     global_flags = flags
@@ -1326,14 +1218,6 @@ def compile(pattern, flags=0):
     parsed.compile(ctx)
     ctx.emit(OPCODE_SUCCESS)
     code = ctx.build()
-
-    if not parsed.has_simple_start():
-        # Get the first set, if possible.
-        try:
-            fs_code = _compile_firstset(info, parsed.get_firstset())
-            code = fs_code + code
-        except FirstSetError:
-            pass
 
     index_group = {}
     for n, v in info.group_index.iteritems():

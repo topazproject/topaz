@@ -122,3 +122,7 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_quantify_set(self, space):
         w_res = space.execute("return /([0-9]){3,5}?/ =~ 'ab12345'")
         assert space.int_w(w_res) == 2
+
+    def test_quantify(self, space):
+        w_res = space.execute("return /a{2,4}/.match('aaaaaa').to_a")
+        assert self.unwrap(space, w_res) == ["aaaa"]
