@@ -360,9 +360,18 @@ class W_ModuleObject(W_RootObject):
     def method_undef_method(self, space, name):
         w_method = self.find_method(space, name)
         if w_method is None or isinstance(w_method, UndefMethod):
-            raise space.error(
-                space.w_NameError,
+            raise space.error(space.w_NameError,
                 "undefined method `%s' for class `%s'" % (name, self.name)
+            )
+        self.define_method(space, name, UndefMethod(name))
+        return self
+
+    @classdef.method("remove_method", name="symbol")
+    def method_remove_method(self, space, name):
+        w_method = self._find_method_pure(space, name, self.version)
+        if w_method is None or isinstance(w_method, UndefMethod):
+            raise space.error(space.w_NameError,
+                "method `%s' not defined in %s" % (name, self.name)
             )
         self.define_method(space, name, UndefMethod(name))
         return self

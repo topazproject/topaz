@@ -254,12 +254,42 @@ class TestModuleObject(BaseRuPyPyTest):
               undef_method :hello
             end
             """)
+        space.execute("""
+        class A
+          undef_method :==
+        end
+        """)
         with self.raises(space, "NoMethodError", "undefined method `==' for A"):
             space.execute("""
-            class A
-              undef_method :==
-            end
             A.new == 1
+            """)
+
+    def test_remove_method(self, space):
+        space.execute("""
+        class A
+            def foo
+            end
+        end
+        """)
+        space.execute("A.new.foo")
+        space.execute("""
+        class A
+            remove_method :foo
+        end
+        """)
+        with self.raises(space, "NoMethodError"):
+            space.execute("A.new.foo")
+        with self.raises(space, "NameError", "method `foo' not defined in A"):
+            space.execute("""
+            class A
+                remove_method :foo
+            end
+            """)
+        with self.raises(space, "NameError", "method `bar' not defined in A"):
+            space.execute("""
+            class A
+                remove_method :bar
+            end
             """)
 
 
