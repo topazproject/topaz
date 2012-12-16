@@ -4,7 +4,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_RangeObject(W_Object):
-    classdef = ClassDef("Range", W_Object.classdef)
+    classdef = ClassDef("Range", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
 
     def __init__(self, space, w_start, w_end, exclusive):

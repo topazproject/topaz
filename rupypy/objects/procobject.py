@@ -3,7 +3,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_ProcObject(W_Object):
-    classdef = ClassDef("Proc", W_Object.classdef)
+    classdef = ClassDef("Proc", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, block, is_lambda):
         W_Object.__init__(self, space)

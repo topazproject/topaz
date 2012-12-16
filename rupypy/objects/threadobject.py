@@ -5,7 +5,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_ThreadObject(W_Object):
-    classdef = ClassDef("Thread", W_Object.classdef)
+    classdef = ClassDef("Thread", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space):
         W_Object.__init__(self, space)

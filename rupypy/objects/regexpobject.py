@@ -7,7 +7,7 @@ from rupypy.utils import regexp
 
 
 class W_RegexpObject(W_Object):
-    classdef = ClassDef("Regexp", W_Object.classdef)
+    classdef = ClassDef("Regexp", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
@@ -168,9 +168,20 @@ class W_RegexpObject(W_Object):
         matched = rsre_core.search_context(ctx)
         return self.get_match_result(space, ctx, matched)
 
+    @classdef.method("===", s="str")
+    def method_eqeqeq(self, space, s):
+        ctx = self.make_ctx(s)
+        matched = rsre_core.search_context(ctx)
+        self.get_match_result(space, ctx, matched)
+        return space.newbool(matched)
+
+    @classdef.method("casefold?")
+    def method_casefoldp(self, space):
+        return space.newbool(self.flags & regexp.IGNORE_CASE)
+
 
 class W_MatchDataObject(W_Object):
-    classdef = ClassDef("MatchData", W_Object.classdef)
+    classdef = ClassDef("MatchData", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, regexp, ctx):
         W_Object.__init__(self, space)

@@ -44,7 +44,7 @@ class UndefMethod(W_FunctionObject):
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = ["version?", "included_modules?[*]", "klass?"]
 
-    classdef = ClassDef("Module", W_RootObject.classdef)
+    classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
     def __init__(self, space, name):
         self.name = name

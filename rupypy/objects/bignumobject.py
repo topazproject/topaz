@@ -6,7 +6,7 @@ from rupypy.objects.integerobject import W_IntegerObject
 
 
 class W_BignumObject(W_IntegerObject):
-    classdef = ClassDef("Bignum", W_IntegerObject.classdef)
+    classdef = ClassDef("Bignum", W_IntegerObject.classdef, filepath=__file__)
 
     def __init__(self, space, bigint):
         W_IntegerObject.__init__(self, space)
@@ -68,6 +68,15 @@ class W_BignumObject(W_IntegerObject):
     @classdef.method("==", other="bigint")
     def method_eq(self, space, other):
         return space.newbool(self.bigint.eq(other))
+
+    @classdef.method("<=>", other="bigint")
+    def method_comparator(self, space, other):
+        if self.bigint.gt(other):
+            return space.newint(1)
+        elif self.bigint.eq(other):
+            return space.newint(0)
+        elif self.bigint.lt(other):
+            return space.newint(-1)
 
     @classdef.method("hash")
     def method_hash(self, space):

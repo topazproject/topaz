@@ -28,7 +28,7 @@ class W_Root(object):
 class W_BaseObject(W_Root):
     _attrs_ = []
 
-    classdef = ClassDef("BasicObject")
+    classdef = ClassDef("BasicObject", filepath=__file__)
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)
@@ -105,7 +105,7 @@ class W_BaseObject(W_Root):
 class W_RootObject(W_BaseObject):
     _attrs_ = []
 
-    classdef = ClassDef("Object", W_BaseObject.classdef)
+    classdef = ClassDef("Object", W_BaseObject.classdef, filepath=__file__)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):

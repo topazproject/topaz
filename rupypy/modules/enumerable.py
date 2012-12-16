@@ -2,7 +2,7 @@ from rupypy.module import Module, ModuleDef
 
 
 class Enumerable(Module):
-    moduledef = ModuleDef("Enumerable")
+    moduledef = ModuleDef("Enumerable", filepath=__file__)
 
     moduledef.app_method("""
     def map

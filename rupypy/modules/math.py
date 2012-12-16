@@ -6,7 +6,7 @@ from rupypy.module import Module, ModuleDef
 
 
 class Math(Module):
-    moduledef = ModuleDef("Math")
+    moduledef = ModuleDef("Math", filepath=__file__)
 
     @moduledef.setup_module
     def setup_module(space, w_mod):

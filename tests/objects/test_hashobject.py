@@ -124,6 +124,12 @@ class TestHashObject(BaseRuPyPyTest):
         w_res = space.execute("return {:a => 2}.size")
         assert space.int_w(w_res) == 1
 
+    def test_emptyp(self, space):
+        w_res = space.execute("return {}.empty?")
+        assert w_res is space.w_true
+        w_res = space.execute("return {1 => 2}.empty?")
+        assert w_res is space.w_false
+
     def test_equal(self, space):
         w_res = space.execute("return {} == nil")
         assert w_res is space.w_false

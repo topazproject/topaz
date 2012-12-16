@@ -30,6 +30,10 @@ class TestBignumObject(BaseRuPyPyTest):
         w_res = space.execute("return 18446744073709551628 == 18446744073709551629")
         assert w_res is space.w_false
 
+    def test_comparator(self, space):
+        w_res = space.execute("return 18446744073709551628 <=> 2")
+        assert space.int_w(w_res) == 1
+
     def test_hash(self, space):
         w_res = space.execute("return 18446744073709551628.hash == 18446744073709551628.hash")
         assert w_res is space.w_true

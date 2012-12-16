@@ -4,7 +4,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_BindingObject(W_Object):
-    classdef = ClassDef("Binding", W_Object.classdef)
+    classdef = ClassDef("Binding", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, names, cells, w_self, w_scope):
         W_Object.__init__(self, space)

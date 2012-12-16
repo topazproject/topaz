@@ -5,7 +5,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_EnvObject(W_Object):
-    classdef = ClassDef("EnviromentVariables", W_Object.classdef)
+    classdef = ClassDef("EnviromentVariables", W_Object.classdef, filepath=__file__)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):

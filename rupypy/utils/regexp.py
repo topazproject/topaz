@@ -68,10 +68,6 @@ class UnscopedFlagSet(Exception):
         self.global_flags = global_flags
 
 
-class FirstSetError(Exception):
-    pass
-
-
 class RegexpError(Exception):
     pass
 
@@ -243,9 +239,10 @@ class CompilerContext(object):
 
 
 class Counts(object):
-    def __init__(self, min_count, max_count=MAX_REPEAT):
+    def __init__(self, min_count, max_count=MAX_REPEAT, limited_quantifier=False):
         self.min_count = min_count
         self.max_count = max_count
+        self.limited_quantifier = limited_quantifier
 
 
 class RegexpBase(object):
@@ -282,14 +279,8 @@ class Character(RegexpBase):
     def optimize(self, info, in_set=False):
         return self
 
-    def has_simple_start(self):
-        return True
-
     def can_be_affix(self):
         return True
-
-    def get_firstset(self):
-        return {self: None}
 
     def is_empty(self):
         return False
@@ -309,12 +300,6 @@ class Any(RegexpBase):
     def optimize(self, info, in_set=False):
         return self
 
-    def has_simple_start(self):
-        return True
-
-    def get_firstset(self):
-        raise FirstSetError
-
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY)
 
@@ -326,9 +311,6 @@ class AnyAll(RegexpBase):
     def optimize(self, info, in_set=False):
         return self
 
-    def has_simple_start(self):
-        return True
-
     def compile(self, ctx):
         ctx.emit(OPCODE_ANY_ALL)
 
@@ -339,12 +321,6 @@ class ZeroWidthBase(RegexpBase):
 
     def optimize(self, info, in_set=False):
         return self
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        return {None: None}
 
 
 class StartOfString(ZeroWidthBase):
@@ -373,12 +349,6 @@ class Property(RegexpBase):
     def is_empty(self):
         return False
 
-    def has_simple_start(self):
-        return True
-
-    def get_firstset(self):
-        return {self: None}
-
     def fix_groups(self):
         pass
 
@@ -401,12 +371,6 @@ class Range(RegexpBase):
 
     def fix_groups(self):
         pass
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        raise FirstSetError
 
     def optimize(self, info, in_set=False):
         return self
@@ -440,19 +404,6 @@ class Sequence(RegexpBase):
             else:
                 items.append(item)
         return make_sequence(items)
-
-    def has_simple_start(self):
-        return bool(self.items) and self.items[0].has_simple_start()
-
-    def get_firstset(self):
-        fs = {}
-        for item in self.items:
-            fs.update(item.get_firstset())
-            if None not in fs:
-                return fs
-            del fs[None]
-        fs[None] = None
-        return fs
 
     def compile(self, ctx):
         for item in self.items:
@@ -615,15 +566,6 @@ class Branch(RegexpBase):
             sequence = prefix + branches + suffix
         return make_sequence(sequence)
 
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        fs = {}
-        for b in self.branches:
-            fs.update(b.get_firstset())
-        return fs or {None: None}
-
     def compile(self, ctx):
         ctx.emit(OPCODE_BRANCH)
         tail = []
@@ -652,15 +594,6 @@ class BaseRepeat(RegexpBase):
 
     def is_empty(self):
         return self.subpattern.is_empty()
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        fs = self.subpattern.get_firstset()
-        if self.min_count == 0:
-            fs[None] = None
-        return fs
 
     def compile(self, ctx):
         ctx.emit(OPCODE_REPEAT)
@@ -697,12 +630,6 @@ class LookAround(RegexpBase):
 
     def fix_groups(self):
         self.subpattern.fix_groups()
-
-    def has_simple_start(self):
-        return False
-
-    def get_firstset(self):
-        raise FirstSetError
 
     def optimize(self, info, in_set=False):
         return LookAround(self.subpattern.optimize(info), self.behind, self.positive)
@@ -743,12 +670,6 @@ class Group(RegexpBase):
     def is_empty(self):
         return False
 
-    def has_simple_start(self):
-        return self.subpattern.has_simple_start()
-
-    def get_firstset(self):
-        return self.subpattern.get_firstset()
-
     def compile(self, ctx):
         ctx.emit(OPCODE_MARK)
         ctx.emit((self.group - 1) * 2)
@@ -778,7 +699,7 @@ class RefGroup(RegexpBase):
 
 class SetBase(RegexpBase):
     def __init__(self, info, items, positive=True, case_insensitive=False, zerowidth=False):
-        RegexpBase.__init__(self, zerowidth=zerowidth)
+        RegexpBase.__init__(self, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
         self.info = info
         self.items = items
 
@@ -791,12 +712,6 @@ class SetBase(RegexpBase):
     def fix_groups(self):
         pass
 
-    def has_simple_start(self):
-        return True
-
-    def get_firstset(self):
-        return {self: None}
-
 
 class SetUnion(SetBase):
     def optimize(self, info, in_set=False):
@@ -807,13 +722,13 @@ class SetUnion(SetBase):
                 items.extend(item.items)
             else:
                 items.append(item)
-        if len(items) == 1:
+        if len(items) == 1 and not isinstance(items[0], Range):
             return items[0].with_flags(
                 positive=items[0].positive == self.positive,
                 case_insensitive=self.case_insensitive,
                 zerowidth=self.zerowidth
             ).optimize(info, in_set=in_set)
-        return SetUnion(self.info, items)
+        return SetUnion(self.info, items, positive=self.positive, case_insensitive=self.case_insensitive, zerowidth=self.zerowidth)
 
     def rebuild(self, positive, case_insensitive, zerowidth):
         return SetUnion(self.info, self.items, positive, case_insensitive, zerowidth).optimize(self.info)
@@ -822,6 +737,8 @@ class SetUnion(SetBase):
         ctx.emit(OPCODE_IN)
         pos = ctx.tell()
         ctx.emit(0)
+        if not self.positive:
+            ctx.emit(OPCODE_NEGATE)
         for item in self.items:
             item.compile(ctx)
         ctx.emit(OPCODE_FAILURE)
@@ -849,9 +766,9 @@ class SetIntersection(SetBase):
 
     def compile(self, ctx):
         Sequence([
-            LookAround(SetUnion(self.info, [item]), behind=False, positive=True)
+            LookAround(item, behind=False, positive=True)
             for item in self.items[:-1]
-        ] + [SetUnion(self.info, [self.items[-1]])]).compile(ctx)
+        ] + [self.items[-1]]).compile(ctx)
 
 
 POSITION_ESCAPES = {}
@@ -925,7 +842,10 @@ def _parse_item(source, info):
         if source.match("?"):
             return LazyRepeat(element, min_count, max_count)
         elif source.match("+"):
-            return make_atomic(info, GreedyRepeat(element, min_count, max_count))
+            if counts.limited_quantifier:
+                return GreedyRepeat(GreedyRepeat(element, min_count, max_count), 1, MAX_REPEAT)
+            else:
+                return make_atomic(info, GreedyRepeat(element, min_count, max_count))
         else:
             return GreedyRepeat(element, min_count, max_count)
     return element
@@ -1021,6 +941,10 @@ def _parse_paren(source, info):
             return
         elif source.match(">"):
             return _parse_atomic(source, info)
+        elif source.match(":"):
+            subpattern = _parse_pattern(source, info)
+            source.expect(")")
+            return subpattern
         else:
             raise RegexpError("undefined group option")
     group = info.new_group()
@@ -1077,14 +1001,11 @@ def _parse_set_implicit_union(source, info):
     items = [_parse_set_member(source, info)]
     while True:
         here = source.pos
-        if source.match("]"):
-            source.pos = here
-            break
-        if source.match("&&"):
+        if source.match("]") or source.match("&&"):
             source.pos = here
             break
         items.append(_parse_set_member(source, info))
-    if len(items) == 1:
+    if len(items) == 1 and not isinstance(items[0], Range):
         return items[0]
     return SetUnion(info, items)
 
@@ -1190,7 +1111,7 @@ def _parse_limited_quantifier(source):
             raise RegexpError("min repeat gereater than max repeat")
         if max_count > MAX_REPEAT:
             raise RegexpError("repeat count too big")
-        return Counts(min_count, max_count)
+        return Counts(min_count, max_count, limited_quantifier=True)
     if ch != "}":
         raise ParseError
     if not min_count:
@@ -1198,7 +1119,7 @@ def _parse_limited_quantifier(source):
     min_count = int(min_count)
     if min_count > MAX_REPEAT:
         raise RegexpError("repeat count too big")
-    return Counts(min_count, min_count)
+    return Counts(min_count, min_count, limited_quantifier=True)
 
 
 def _parse_count(source):
@@ -1211,7 +1132,7 @@ def _parse_count(source):
         else:
             source.pos = here
             break
-    return int(b.build())
+    return b.build()
 
 
 def _parse_comment(source):
@@ -1278,28 +1199,6 @@ def _parse_posix_class(source, info):
     raise NotImplementedError("_parse_posix_class")
 
 
-def _compile_firstset(info, fs):
-    if not fs or None in fs:
-        return []
-    members = {}
-    for i in fs:
-        if i.case_insensitive:
-            if isinstance(i, Character):
-                if _is_cased(info, i.value):
-                    return []
-            elif isinstance(i, SetBase):
-                return []
-        members[i.with_flags(case_insensitive=False)] = None
-    fs = SetUnion(info, members.keys(), zerowidth=True)
-    fs = fs.optimize(info, in_set=True)
-    ctx = CompilerContext()
-    fs.compile(ctx)
-    return ctx.build()
-
-
-def _is_cased(info, ch):
-    raise NotImplementedError("_is_cased")
-
 
 def compile(pattern, flags=0):
     global_flags = flags
@@ -1323,14 +1222,6 @@ def compile(pattern, flags=0):
     parsed.compile(ctx)
     ctx.emit(OPCODE_SUCCESS)
     code = ctx.build()
-
-    if not parsed.has_simple_start():
-        # Get the first set, if possible.
-        try:
-            fs_code = _compile_firstset(info, parsed.get_firstset())
-            code = fs_code + code
-        except FirstSetError:
-            pass
 
     index_group = {}
     for n, v in info.group_index.iteritems():

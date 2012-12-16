@@ -19,7 +19,7 @@ def create_to_s(classdef):
 
 
 class W_MethodObject(W_Object):
-    classdef = ClassDef("Method", W_Object.classdef)
+    classdef = ClassDef("Method", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, w_owner, w_function, w_receiver):
         W_Object.__init__(self, space)
@@ -60,7 +60,7 @@ class W_MethodObject(W_Object):
 
 
 class W_UnboundMethodObject(W_Object):
-    classdef = ClassDef("UnboundMethod", W_Object.classdef)
+    classdef = ClassDef("UnboundMethod", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, w_owner, w_function):
         W_Object.__init__(self, space)

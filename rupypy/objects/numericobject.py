@@ -4,7 +4,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_NumericObject(W_Object):
-    classdef = ClassDef("Numeric", W_Object.classdef)
+    classdef = ClassDef("Numeric", W_Object.classdef, filepath=__file__)
 
     @staticmethod
     def retry_binop_coercing(space, w_recv, w_arg, binop, raise_error=True):
