@@ -19,3 +19,7 @@ class Math(Module):
     @moduledef.function("sin", value="float")
     def method_sin(self, space, value):
         return space.newfloat(math.sin(value))
+
+    @moduledef.function("sqrt", value="float")
+    def method_sqrt(self, space, value):
+        return space.newfloat(math.sqrt(value))
