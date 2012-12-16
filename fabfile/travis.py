@@ -82,6 +82,7 @@ def run_specs(binary, prefix=""):
         "language/yield_spec.rb",
 
         "language/regexp/grouping_spec.rb",
+        "language/regexp/repetition_spec.rb",
 
         "core/false/and_spec.rb",
         "core/false/inspect_spec.rb",

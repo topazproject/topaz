@@ -126,3 +126,7 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_quantify(self, space):
         w_res = space.execute("return /a{2,4}/.match('aaaaaa').to_a")
         assert self.unwrap(space, w_res) == ["aaaa"]
+
+    def test_repeated_quantification(self, space):
+        w_res = space.execute("return /(A{0,1}+)A/.match('AAA').to_a")
+        assert self.unwrap(space, w_res) == ["AAA", "AA"]

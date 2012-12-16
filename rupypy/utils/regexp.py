@@ -239,9 +239,10 @@ class CompilerContext(object):
 
 
 class Counts(object):
-    def __init__(self, min_count, max_count=MAX_REPEAT):
+    def __init__(self, min_count, max_count=MAX_REPEAT, limited_quantifier=False):
         self.min_count = min_count
         self.max_count = max_count
+        self.limited_quantifier = limited_quantifier
 
 
 class RegexpBase(object):
@@ -841,7 +842,10 @@ def _parse_item(source, info):
         if source.match("?"):
             return LazyRepeat(element, min_count, max_count)
         elif source.match("+"):
-            return make_atomic(info, GreedyRepeat(element, min_count, max_count))
+            if counts.limited_quantifier:
+                return GreedyRepeat(GreedyRepeat(element, min_count, max_count), 1, MAX_REPEAT)
+            else:
+                return make_atomic(info, GreedyRepeat(element, min_count, max_count))
         else:
             return GreedyRepeat(element, min_count, max_count)
     return element
@@ -1107,7 +1111,7 @@ def _parse_limited_quantifier(source):
             raise RegexpError("min repeat gereater than max repeat")
         if max_count > MAX_REPEAT:
             raise RegexpError("repeat count too big")
-        return Counts(min_count, max_count)
+        return Counts(min_count, max_count, limited_quantifier=True)
     if ch != "}":
         raise ParseError
     if not min_count:
@@ -1115,7 +1119,7 @@ def _parse_limited_quantifier(source):
     min_count = int(min_count)
     if min_count > MAX_REPEAT:
         raise RegexpError("repeat count too big")
-    return Counts(min_count, min_count)
+    return Counts(min_count, min_count, limited_quantifier=True)
 
 
 def _parse_count(source):
