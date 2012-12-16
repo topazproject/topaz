@@ -44,6 +44,7 @@ from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
 from rupypy.objects.hashobject import W_HashObject, W_HashIterator
+from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.methodobject import W_MethodObject, W_UnboundMethodObject
 from rupypy.objects.integerobject import W_IntegerObject
@@ -144,6 +145,7 @@ class ObjectSpace(object):
             self.getclassfor(W_FileObject),
             self.getclassfor(W_Dir),
             self.getclassfor(W_EncodingObject),
+            self.getclassfor(W_IntegerObject),
             self.getclassfor(W_RegexpObject),
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
