@@ -136,3 +136,9 @@ class TestRegexpObject(BaseRuPyPyTest):
         assert w_res is space.w_false
         w_res = space.execute("return /a/i.casefold?")
         assert w_res is space.w_true
+
+    def test_eqeqeq(self, space):
+        w_res = space.execute("return /abc/ === 'defabc'")
+        assert w_res is space.w_true
+        w_res = space.execute("return /abc/ === 'ddddddd'")
+        assert w_res is space.w_false
