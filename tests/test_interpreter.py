@@ -1299,6 +1299,20 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 15
 
+    def test_nested_block_return(self, space):
+        w_res = space.execute("""
+        def f
+            [1].each do |x|
+                [x].each do |y|
+                    return y
+                end
+            end
+            3
+        end
+        return f
+        """)
+        assert space.int_w(w_res) == 1
+
     def test_break_block(self, space):
         w_res = space.execute("""
         def f(res, &a)

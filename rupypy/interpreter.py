@@ -296,7 +296,8 @@ class Interpreter(object):
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
         block = W_BlockObject(
-            w_code, frame.w_self, frame.w_scope, frame.lexical_scope, cells, frame.block, self, frame.regexp_match_cell,
+            w_code, frame.w_self, frame.w_scope, frame.lexical_scope, cells,
+            frame.block, frame.parent_interp or self, frame.regexp_match_cell
         )
         frame.push(block)
 
