@@ -84,6 +84,11 @@ def run_specs(binary, prefix=""):
         "language/regexp/grouping_spec.rb",
         "language/regexp/repetition_spec.rb",
 
+        "core/basicobject/ancestors_spec.rb",
+        "core/basicobject/class_spec.rb",
+        "core/basicobject/new_spec.rb",
+        "core/basicobject/superclass_spec.rb",
+
         "core/false/and_spec.rb",
         "core/false/inspect_spec.rb",
         "core/false/or_spec.rb",
