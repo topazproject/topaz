@@ -175,15 +175,21 @@ class W_FileObject(W_IOObject):
 
     @classdef.method("initialize", filename="str")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
+        if w_mode is None:
+            w_mode = space.w_nil
+        if w_perm_or_opt is None:
+            w_perm_or_opt = space.w_nil
+        if w_opt is None:
+            w_opt = space.w_nil
         if isinstance(w_perm_or_opt, W_HashObject):
-            assert w_opt is None
+            assert w_opt is space.w_nil
             perm = 0665
             w_opt = w_perm_or_opt
-        elif w_opt is not None:
+        elif w_opt is not space.w_nil:
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        if w_mode is None:
+        if w_mode is space.w_nil:
             mode = os.O_RDONLY
         elif isinstance(w_mode, W_StringObject):
             mode_str = space.str_w(w_mode)
@@ -206,7 +212,7 @@ class W_FileObject(W_IOObject):
                 )
         else:
             mode = space.int_w(w_mode)
-        if w_perm_or_opt is not None or w_opt is not None:
+        if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
             raise NotImplementedError("options hash or permissions for File.new")
         self.fd = os.open(filename, mode, perm)
         return self
@@ -287,3 +293,31 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("executable?", filename="str")
     def method_executablep(self, space, filename):
         return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
+
+    @classdef.singleton_method("basename", filename="str")
+    def method_executablep(self, space, filename):
+        return space.newstr_fromchars(os.path.basename(filename))
+
+    classdef.app_method("""
+    def self.open(filename, mode="r", perm=nil, opt=nil)
+        f = self.new filename, mode, perm, opt
+        return f unless block_given?
+        begin
+            return yield f
+        ensure
+            f.close
+        end
+    end
+    """)
+
+    @classdef.method("close")
+    def method_close(self, space):
+        os.close(self.fd)
+
+    @classdef.method("closed?")
+    def method_closedp(self, space):
+        try:
+            os.fstat(self.fd)
+        except OSError as e:
+            return space.w_true
+        return space.w_false
