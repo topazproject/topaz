@@ -130,3 +130,9 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_repeated_quantification(self, space):
         w_res = space.execute("return /(A{0,1}+)A/.match('AAA').to_a")
         assert self.unwrap(space, w_res) == ["AAA", "AA"]
+
+    def test_casefoldp(self, space):
+        w_res = space.execute("return /a/.casefold?")
+        assert w_res is space.w_false
+        w_res = space.execute("return /a/i.casefold?")
+        assert w_res is space.w_true

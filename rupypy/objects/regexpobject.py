@@ -168,6 +168,10 @@ class W_RegexpObject(W_Object):
         matched = rsre_core.search_context(ctx)
         return self.get_match_result(space, ctx, matched)
 
+    @classdef.method("casefold?")
+    def method_casefoldp(self, space):
+        return space.newbool(self.flags & regexp.IGNORE_CASE)
+
 
 class W_MatchDataObject(W_Object):
     classdef = ClassDef("MatchData", W_Object.classdef)
