@@ -59,6 +59,10 @@ class W_HashObject(W_Object):
     def method_size(self, space):
         return space.newint(len(self.contents))
 
+    @classdef.method("empty?")
+    def method_emptyp(self, space):
+        return space.newbool(not bool(self.contents))
+
     @classdef.method("delete")
     def method_delete(self, space, w_key):
         return self.contents.pop(w_key, space.w_nil)

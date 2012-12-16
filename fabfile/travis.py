@@ -104,6 +104,8 @@ def run_specs(binary, prefix=""):
         "core/fixnum/to_f_spec.rb",
         "core/fixnum/zero_spec.rb",
 
+        "core/hash/empty_spec.rb",
+
         "core/true/and_spec.rb",
         "core/true/inspect_spec.rb",
         "core/true/or_spec.rb",
