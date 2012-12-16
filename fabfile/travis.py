@@ -106,6 +106,15 @@ def run_specs(binary, prefix=""):
 
         "core/hash/empty_spec.rb",
 
+        "core/nil/and_spec.rb",
+        "core/nil/inspect_spec.rb",
+        "core/nil/nil_spec.rb",
+        "core/nil/or_spec.rb",
+        "core/nil/to_a_spec.rb",
+        "core/nil/to_i_spec.rb",
+        "core/nil/to_s_spec.rb",
+        "core/nil/xor_spec.rb",
+
         "core/true/and_spec.rb",
         "core/true/inspect_spec.rb",
         "core/true/or_spec.rb",
