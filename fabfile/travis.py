@@ -79,6 +79,7 @@ def run_specs(binary, prefix=""):
         "language/array_spec.rb",
         "language/match_spec.rb",
         "language/not_spec.rb",
+        "language/numbers_spec.rb",
         "language/order_spec.rb",
         "language/unless_spec.rb",
         "language/yield_spec.rb",
