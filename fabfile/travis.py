@@ -116,6 +116,7 @@ def run_specs(binary, prefix=""):
         "core/nil/xor_spec.rb",
 
         "core/regexp/casefold_spec.rb",
+        "core/regexp/source_spec.rb",
 
         "core/true/and_spec.rb",
         "core/true/inspect_spec.rb",
