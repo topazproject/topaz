@@ -17,7 +17,7 @@ def clear_gcflag_extra(pending):
 
 
 class ObjectSpace(Module):
-    moduledef = ModuleDef("ObjectSpace")
+    moduledef = ModuleDef("ObjectSpace", filepath=__file__)
 
     @moduledef.function("each_object")
     def method_each_object(self, space, w_mod, block):

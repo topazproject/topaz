@@ -6,7 +6,7 @@ from rupypy.objects.integerobject import W_IntegerObject
 
 
 class W_BignumObject(W_IntegerObject):
-    classdef = ClassDef("Bignum", W_IntegerObject.classdef)
+    classdef = ClassDef("Bignum", W_IntegerObject.classdef, filepath=__file__)
 
     def __init__(self, space, bigint):
         W_IntegerObject.__init__(self, space)

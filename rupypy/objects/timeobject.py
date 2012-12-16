@@ -5,7 +5,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_TimeObject(W_Object):
-    classdef = ClassDef("Time", W_Object.classdef)
+    classdef = ClassDef("Time", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, klass):
         W_Object.__init__(self, space, klass)

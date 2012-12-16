@@ -7,7 +7,7 @@ from rupypy.utils import regexp
 
 
 class W_RegexpObject(W_Object):
-    classdef = ClassDef("Regexp", W_Object.classdef)
+    classdef = ClassDef("Regexp", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
@@ -181,7 +181,7 @@ class W_RegexpObject(W_Object):
 
 
 class W_MatchDataObject(W_Object):
-    classdef = ClassDef("MatchData", W_Object.classdef)
+    classdef = ClassDef("MatchData", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, regexp, ctx):
         W_Object.__init__(self, space)

@@ -11,7 +11,7 @@ from rupypy.objects.numericobject import W_NumericObject
 class W_FloatObject(W_NumericObject):
     _immutable_fields_ = ["floatvalue"]
 
-    classdef = ClassDef("Float", W_NumericObject.classdef)
+    classdef = ClassDef("Float", W_NumericObject.classdef, filepath=__file__)
 
     def __init__(self, space, floatvalue):
         W_NumericObject.__init__(self, space)

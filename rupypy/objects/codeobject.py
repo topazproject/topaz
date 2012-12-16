@@ -10,7 +10,7 @@ class W_CodeObject(W_BaseObject):
         "arg_pos[*]", "defaults[*]", "block_arg_pos", "splat_arg_pos",
     ]
 
-    classdef = ClassDef("Code", W_BaseObject.classdef)
+    classdef = ClassDef("Code", W_BaseObject.classdef, filepath=__file__)
 
     def __init__(self, name, filepath, code, max_stackdepth, consts, args,
                  splat_arg, block_arg, defaults, cellvars, freevars,

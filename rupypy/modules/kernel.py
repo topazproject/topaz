@@ -11,7 +11,7 @@ from rupypy.objects.stringobject import W_StringObject
 
 
 class Kernel(Module):
-    moduledef = ModuleDef("Kernel")
+    moduledef = ModuleDef("Kernel", filepath=__file__)
 
     @moduledef.method("class")
     def function_class(self, space):

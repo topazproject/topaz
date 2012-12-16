@@ -27,7 +27,7 @@ class FixnumStorage(object):
 class W_FixnumObject(W_RootObject):
     _immutable_fields_ = ["intvalue"]
 
-    classdef = ClassDef("Fixnum", W_IntegerObject.classdef)
+    classdef = ClassDef("Fixnum", W_IntegerObject.classdef, filepath=__file__)
 
     def __init__(self, space, intvalue):
         check_regular_int(intvalue)

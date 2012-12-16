@@ -3,7 +3,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_NilObject(W_Object):
-    classdef = ClassDef("NilClass", W_Object.classdef)
+    classdef = ClassDef("NilClass", W_Object.classdef, filepath=__file__)
 
     def is_true(self, space):
         return False

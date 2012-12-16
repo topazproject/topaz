@@ -4,7 +4,7 @@ from rupypy.module import Module, ModuleDef
 
 
 class Topaz(Module):
-    moduledef = ModuleDef("Topaz")
+    moduledef = ModuleDef("Topaz", filepath=__file__)
 
     @moduledef.function("intmask")
     def method_intmask(self, space, w_int):

@@ -2,7 +2,7 @@ from rupypy.module import Module, ModuleDef
 
 
 class Comparable(Module):
-    moduledef = ModuleDef("Comparable")
+    moduledef = ModuleDef("Comparable", filepath=__file__)
 
     moduledef.app_method("""
     def > other

@@ -8,7 +8,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_Dir(W_Object):
-    classdef = ClassDef("Dir", W_Object.classdef)
+    classdef = ClassDef("Dir", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
 
     @classdef.method("initialize", path="str")

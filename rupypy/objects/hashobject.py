@@ -4,7 +4,7 @@ from rupypy.utils.ordereddict import OrderedDict
 
 
 class W_HashObject(W_Object):
-    classdef = ClassDef("Hash", W_Object.classdef)
+    classdef = ClassDef("Hash", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)
@@ -123,7 +123,7 @@ class W_HashObject(W_Object):
 
 
 class W_HashIterator(W_Object):
-    classdef = ClassDef("HashIterator", W_Object.classdef)
+    classdef = ClassDef("HashIterator", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, d):
         W_Object.__init__(self, space)

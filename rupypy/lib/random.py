@@ -5,7 +5,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_RandomObject(W_Object):
-    classdef = ClassDef("Random", W_Object.classdef)
+    classdef = ClassDef("Random", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)

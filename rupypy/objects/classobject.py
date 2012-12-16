@@ -8,7 +8,7 @@ from rupypy.objects.objectobject import W_Object
 class W_ClassObject(W_ModuleObject):
     _immutable_fields_ = ["superclass"]
 
-    classdef = ClassDef("Class", W_ModuleObject.classdef)
+    classdef = ClassDef("Class", W_ModuleObject.classdef, filepath=__file__)
 
     def __init__(self, space, name, superclass, is_singleton=False):
         W_ModuleObject.__init__(self, space, name)

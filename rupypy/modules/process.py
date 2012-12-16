@@ -4,7 +4,7 @@ from rupypy.module import Module, ModuleDef
 
 
 class Process(Module):
-    moduledef = ModuleDef("Process")
+    moduledef = ModuleDef("Process", filepath=__file__)
 
     @moduledef.function("pid")
     def method_pid(self, space):

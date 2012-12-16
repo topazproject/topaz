@@ -7,7 +7,7 @@ from rupypy.utils.packing.pack import RPacker
 
 
 class W_ArrayObject(W_Object):
-    classdef = ClassDef("Array", W_Object.classdef)
+    classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
 
     def __init__(self, space, items_w):

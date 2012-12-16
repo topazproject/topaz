@@ -3,7 +3,7 @@ from rupypy.objects.objectobject import W_Object
 
 
 class W_TrueObject(W_Object):
-    classdef = ClassDef("TrueClass", W_Object.classdef)
+    classdef = ClassDef("TrueClass", W_Object.classdef, filepath=__file__)
 
     def getsingletonclass(self, space):
         return space.getclassfor(W_TrueObject)
@@ -31,7 +31,7 @@ class W_TrueObject(W_Object):
 
 
 class W_FalseObject(W_Object):
-    classdef = ClassDef("FalseClass", W_Object.classdef)
+    classdef = ClassDef("FalseClass", W_Object.classdef, filepath=__file__)
 
     def is_true(self, space):
         return False

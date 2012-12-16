@@ -9,7 +9,7 @@ from rupypy.objects.stringobject import W_StringObject
 
 
 class W_IOObject(W_Object):
-    classdef = ClassDef("IO", W_Object.classdef)
+    classdef = ClassDef("IO", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space):
         W_Object.__init__(self, space)
@@ -148,7 +148,7 @@ class W_IOObject(W_Object):
 
 
 class W_FileObject(W_IOObject):
-    classdef = ClassDef("File", W_IOObject.classdef)
+    classdef = ClassDef("File", W_IOObject.classdef, filepath=__file__)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
