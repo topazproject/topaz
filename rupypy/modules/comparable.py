@@ -26,6 +26,6 @@ class Comparable(Module):
     end
 
     def between? min, max
-        return self > min && self < max
+        return self >= min && self <= max
     end
     """)
