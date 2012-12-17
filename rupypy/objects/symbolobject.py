@@ -30,6 +30,10 @@ class W_SymbolObject(W_Object):
     def method_to_s(self, space):
         return space.newstr_fromstr(self.symbol)
 
+    @classdef.method("inspect")
+    def method_inspect(self, space):
+        return space.newstr_fromstr(":%s" % self.symbol)
+
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
         if not space.is_kind_of(w_other, space.w_symbol):

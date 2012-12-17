@@ -13,6 +13,10 @@ class TestSymbolObject(BaseRuPyPyTest):
         w_res = space.execute("return :foo.to_s")
         assert space.str_w(w_res) == "foo"
 
+    def test_inspect(self, space):
+        w_res = space.execute("return :foo.inspect")
+        assert space.str_w(w_res) == ":foo"
+
     def test_comparator_lt(self, space):
         w_res = space.execute("return :a <=> :b")
         assert space.int_w(w_res) == -1
