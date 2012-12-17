@@ -1256,6 +1256,7 @@ HERE
         assert space.parse(":@@abc") == sym("@@abc")
         assert space.parse(":$abc") == sym("$abc")
         assert space.parse(':"@abc"') == sym("@abc")
+        assert space.parse(':""') == sym("")
         assert space.parse(':"#{2}"') == ast.Main(ast.Block([
             ast.Statement(ast.Symbol(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]), 1))
         ]))
