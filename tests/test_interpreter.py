@@ -712,6 +712,19 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [[5], 4, None]
 
+    def test_splat_assignment(self, space):
+        w_res = space.execute("""
+        class X
+            def to_a
+                return nil
+            end
+        end
+        x = X.new
+        a = *x
+        return a == [x]
+        """)
+        assert w_res is space.w_true
+
     def test_splat_lhs_assignment(self, space):
         w_res = space.execute("""
         a, *b, c = *[1,2]

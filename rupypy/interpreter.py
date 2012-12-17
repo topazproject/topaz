@@ -361,12 +361,14 @@ class Interpreter(object):
             frame.push(w_obj)
         else:
             if space.respond_to(w_obj, space.newsymbol("to_a")):
-                w_obj = space.send(w_obj, space.newsymbol("to_a"))
+                w_res = space.send(w_obj, space.newsymbol("to_a"))
             elif space.respond_to(w_obj, space.newsymbol("to_ary")):
-                w_obj = space.send(w_obj, space.newsymbol("to_ary"))
-            if not isinstance(w_obj, W_ArrayObject):
-                w_obj = space.newarray([w_obj])
-            frame.push(w_obj)
+                w_res = space.send(w_obj, space.newsymbol("to_ary"))
+            else:
+                w_res = space.newarray([w_obj])
+            if not isinstance(w_res, W_ArrayObject):
+                w_res = space.newarray([w_obj])
+            frame.push(w_res)
 
     def COERCE_BLOCK(self, space, bytecode, frame, pc):
         w_block = frame.pop()
