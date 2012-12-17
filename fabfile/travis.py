@@ -81,6 +81,8 @@ def run_specs(binary, prefix=""):
         "language/not_spec.rb",
         "language/numbers_spec.rb",
         "language/order_spec.rb",
+        "language/splat_spec.rb",
+        "language/undef_spec.rb",
         "language/unless_spec.rb",
         "language/yield_spec.rb",
 
