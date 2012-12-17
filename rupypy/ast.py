@@ -584,7 +584,7 @@ class MultiAssignment(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.DUP_TOP)
-        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.COERCE_ARRAY, 0)
         splat_index = self.splat_index()
         if splat_index == -1:
             ctx.emit(consts.UNPACK_SEQUENCE, len(self.targets))
@@ -734,7 +734,7 @@ class Splat(Node):
 
     def compile(self, ctx):
         self.value.compile(ctx)
-        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.COERCE_ARRAY, 1)
 
 
 class SendBlock(Node):

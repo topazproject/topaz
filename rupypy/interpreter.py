@@ -353,10 +353,13 @@ class Interpreter(object):
         assert isinstance(w_s, W_StringObject)
         frame.push(w_s.copy(space))
 
-    def COERCE_ARRAY(self, space, bytecode, frame, pc):
+    def COERCE_ARRAY(self, space, bytecode, frame, pc, nil_is_empty):
         w_obj = frame.pop()
         if w_obj is space.w_nil:
-            frame.push(space.newarray([]))
+            if nil_is_empty:
+                frame.push(space.newarray([]))
+            else:
+                frame.push(space.newarray([space.w_nil]))
         elif isinstance(w_obj, W_ArrayObject):
             frame.push(w_obj)
         else:
