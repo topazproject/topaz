@@ -260,6 +260,11 @@ class TestStringObject(BaseRuPyPyTest):
         assert w_res is space.w_nil
         w_res = space.execute("return 'abc' =~ /abc/")
         assert space.int_w(w_res) == 0
+        w_res = space.execute("""
+        '' =~ /()/
+        return $1
+        """)
+        assert space.str_w(w_res) == ""
 
     def test_match_method(self, space):
         w_res = space.execute("return 'abc'.match('bc').begin 0")

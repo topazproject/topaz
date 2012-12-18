@@ -474,18 +474,16 @@ class W_StringObject(W_Object):
         self.replace(space, new_string)
         return self if new_string else space.w_nil
 
+    @classdef.method("=~")
+    def method_match_operator(self, space, w_obj):
+        if space.is_kind_of(w_obj, space.w_string):
+            raise space.error(space.w_TypeError, "type mismatch: String given")
+        else:
+            return space.send(w_obj, space.newsymbol("=~"), [self])
+
     classdef.app_method("""
     def empty?
         self.length == 0
-    end
-
-    def =~(obj)
-        case obj
-        when String
-            raise TypeError, "type mismatch: String given"
-        else
-            return obj =~ self
-        end
     end
 
     def match(pattern)
