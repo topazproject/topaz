@@ -297,7 +297,7 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("basename", filename="str")
     def method_executablep(self, space, filename):
         i = filename.rfind('/') + 1
-        assert i > 0
+        assert i >= 0
         return space.newstr_fromchars(filename[i:])
 
     classdef.app_method("""
