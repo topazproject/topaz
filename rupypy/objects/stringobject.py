@@ -261,7 +261,11 @@ class W_StringObject(W_Object):
         return space.newstr_fromstr('"%s"' % self.str_w(space))
 
     @classdef.method("+")
-    def method_plus(self, space, w_other):
+    def method_plus(self, space, w_obj):
+        if space.is_kind_of(w_obj, space.w_string):
+            w_other = w_obj
+        else:
+            w_other = space.convert_type(w_obj, space.w_string, "to_str")
         assert isinstance(w_other, W_StringObject)
         total_size = self.length() + w_other.length()
         s = space.newstr_fromchars(newlist_hint(total_size))
