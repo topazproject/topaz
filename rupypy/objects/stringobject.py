@@ -367,7 +367,7 @@ class W_StringObject(W_Object):
         try:
             return rsre_core.search_context(ctx)
         except rsre_core.Error, e:
-            raise space.error(space.w_RuntimeError, space.newstr_fromstr(e.msg))
+            raise space.error(space.w_RuntimeError, e.msg)
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=0):
@@ -398,6 +398,8 @@ class W_StringObject(W_Object):
                         begin, end = w_match.get_span(num)
                         begin += last
                         end += last
+                        assert begin >= 0
+                        assert end >= 0
                         results_w.append(space.newstr_fromstr(string[begin:end]))
                     last = ctx.match_end
                 n += 1
