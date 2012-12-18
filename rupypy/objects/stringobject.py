@@ -396,7 +396,9 @@ class W_StringObject(W_Object):
                     results_w.append(space.newstr_fromstr(string[last:ctx.match_start]))
                     for num in xrange(1, w_match.size(), 1):
                         begin, end = w_match.get_span(num)
-                        results_w.append(space.newstr_fromstr(string[last + begin:last + end]))
+                        begin += last
+                        end += last
+                        results_w.append(space.newstr_fromstr(string[begin:end]))
                     last = ctx.match_end
                 n += 1
                 ctx.reset(last)
