@@ -266,6 +266,7 @@ class W_StringObject(W_Object):
             w_other = w_obj
         else:
             w_other = space.convert_type(w_obj, space.w_string, "to_str")
+        assert isinstance(w_other, W_StringObject)
         total_size = self.length() + w_other.length()
         s = space.newstr_fromchars(newlist_hint(total_size))
         s.extend(space, self)
