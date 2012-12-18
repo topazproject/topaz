@@ -183,6 +183,8 @@ class TestStringObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == ["h", "e", "l", "l", "o"]
         w_res = space.execute('return "hello".split(//, 3)')
         assert self.unwrap(space, w_res) == ["h", "e", "llo"]
+        w_res = space.execute('return "hello".split(/((.)(.))/, 3)')
+        assert self.unwrap(space, w_res) == ["", "he", "h", "e", "", "ll", "l", "l", "o"]
 
     def test_dup(self, space):
         w_res = space.execute("""

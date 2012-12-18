@@ -5,6 +5,7 @@ from pypy.rlib.objectmodel import newlist_hint, compute_hash
 from pypy.rlib.rarithmetic import intmask, ovfcheck
 from pypy.rlib.rbigint import rbigint
 from pypy.rlib.rerased import new_static_erasing_pair
+from pypy.rlib.rsre import rsre_core
 
 from rupypy.module import ClassDef
 from rupypy.modules.comparable import Comparable
@@ -362,6 +363,12 @@ class W_StringObject(W_Object):
             chars += padstr[:pad_len % len(padstr) + 1]
             return space.newstr_fromchars(chars)
 
+    def search_context(self, space, ctx):
+        try:
+            return rsre_core.search_context(ctx)
+        except rsre_core.Error, e:
+            raise space.error(space.w_RuntimeError, space.newstr_fromstr(e.msg))
+
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=0):
         if w_sep is None or space.is_kind_of(w_sep, space.w_string):
@@ -371,23 +378,35 @@ class W_StringObject(W_Object):
             ])
         elif space.is_kind_of(w_sep, space.w_regexp):
             results_w = []
-            w_string = self
-            w_match = space.send(w_sep, space.newsymbol("match"), [w_string])
-            while (w_match is not space.w_nil and len(space.str_w(w_string)) > 0
-                   and (limit <= 0 or len(results_w) + 1 < limit)):
-                if space.int_w(space.send(w_match, space.newsymbol("end"), [space.newint(0)])) == 0:
-                    string = space.str_w(w_string)
-                    results_w.append(space.newstr_fromstr(string[0]))
-                    w_string = space.newstr_fromstr(string[1:])
+            n = 0
+            last = 0
+            string = space.str_w(self)
+            ctx = w_sep.make_ctx(string)
+            w_match = w_sep.get_match_result(space, ctx, True)
+
+            while limit <= 0 or n + 1 < limit:
+                if not self.search_context(space, ctx):
+                    break
+                elif ctx.match_start == ctx.match_end:
+                    if ctx.match_start == ctx.end:
+                        break
+                    results_w.append(space.newstr_fromstr(string[last]))
+                    last = ctx.match_end + 1
                 else:
-                    results_w.append(space.send(w_match, space.newsymbol("pre_match")))
-                    w_string = space.send(w_match, space.newsymbol("post_match"))
-                w_match = space.send(w_sep, space.newsymbol("match"), [w_string])
-            if len(space.str_w(w_string)) > 0:
-                results_w.append(w_string)
-            if limit < 0 or (w_match is space.w_nil and len(results_w) < limit):
+                    results_w.append(space.newstr_fromstr(string[last:ctx.match_start]))
+                    for num in xrange(1, w_match.size(), 1):
+                        begin, end = w_match.get_span(num)
+                        results_w.append(space.newstr_fromstr(string[last + begin:last + end]))
+                    last = ctx.match_end
+                n += 1
+                ctx.reset(last)
+
+            if len(string) > last:
+                results_w.append(space.newstr_fromstr(string[last:]))
+            if limit < 0 or len(results_w) < limit:
                 results_w.append(space.newstr_fromstr(""))
             return space.newarray(results_w)
+
         else:
             raise space.error(
                 space.w_TypeError,
