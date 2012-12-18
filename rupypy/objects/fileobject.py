@@ -312,13 +312,9 @@ class W_FileObject(W_IOObject):
 
     @classdef.method("close")
     def method_close(self, space):
-        os.close(self.fd)
+        self.fd = -1
         return self
 
     @classdef.method("closed?")
     def method_closedp(self, space):
-        try:
-            os.fstat(self.fd)
-        except OSError as e:
-            return space.w_true
-        return space.w_false
+        return space.newbool(self.fd == -1)
