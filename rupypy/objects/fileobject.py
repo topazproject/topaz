@@ -298,7 +298,7 @@ class W_FileObject(W_IOObject):
     def method_executablep(self, space, filename):
         i = filename.rfind('/') + 1
         assert i >= 0
-        return space.newstr_fromchars(filename[i:])
+        return space.newstr_fromstr(filename[i:])
 
     classdef.app_method("""
     def self.open(filename, mode="r", perm=nil, opt=nil)
