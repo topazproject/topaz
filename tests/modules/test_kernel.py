@@ -317,10 +317,10 @@ class TestSetTraceFunc(BaseRuPyPyTest):
         return output
         """)
         assert self.unwrap(space, w_res) == [
-            ["c-return", "-e", 4, "set_trace_func", "Kernel"],
-            ["line", "-e", 6, None, None],
-            ["class", "-e", 6, None, None],
-            ["end", "-e", 7, None, None],
-            ["line", "-e", 9, None, None],
-            ["c-call", "-e", 9, "set_trace_func", "Kernel"]
+            ["c-return", "-e", 3, "set_trace_func", "Kernel"],
+            ["line", "-e", 7, None, None],
+            ["class", "-e", 7, None, None],
+            ["end", "-e", 8, None, None],
+            ["line", "-e", 10, None, None],
+            ["c-call", "-e", 10, "set_trace_func", "Kernel"]
         ]
