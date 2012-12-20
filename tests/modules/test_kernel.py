@@ -299,3 +299,28 @@ class TestExec(BaseRuPyPyTest):
     def test_exec_with_path_search(self, space, capfd):
         out = self.fork_and_wait(space, capfd, "exec 'echo', '$0'")
         assert out == "$0\n"
+
+
+class TestSetTraceFunc(BaseRuPyPyTest):
+    def test_class(self, space):
+        w_res = space.execute("""
+        output = []
+        set_trace_func proc { |event, file, line, id, binding, classname|
+            output << [event, file, line, id, classname]
+        }
+
+        class << self
+        end
+
+        set_trace_func nil
+
+        return output
+        """)
+        assert self.unwrap(space, w_res) == [
+            ["c-return", "-e", 4, "set_trace_func", "Kernel"],
+            ["line", "-e", 6, None, None],
+            ["class", "-e", 6, None, None],
+            ["end", "-e", 7, None, None],
+            ["line", "-e", 9, None, None],
+            ["c-call", "-e", 9, "set_trace_func", "Kernel"]
+        ]

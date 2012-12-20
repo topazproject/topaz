@@ -14,6 +14,10 @@ class ExecutionContext(object):
         self.topframeref = jit.vref_None
         self.last_instr_ref = None
         self.regexp_match_cell = None
+        self.w_trace_proc = None
+
+    def settraceproc(self, w_proc):
+        self.w_trace_proc = w_proc
 
     def enter(self, frame):
         frame.backref = self.topframeref

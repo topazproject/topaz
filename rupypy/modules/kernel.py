@@ -7,6 +7,7 @@ from rupypy.error import RubyError
 from rupypy.module import Module, ModuleDef
 from rupypy.modules.process import Process
 from rupypy.objects.exceptionobject import W_ExceptionObject
+from rupypy.objects.procobject import W_ProcObject
 from rupypy.objects.stringobject import W_StringObject
 
 
@@ -276,3 +277,11 @@ class Kernel(Module):
         frame = space.getexecutioncontext().gettoprubyframe()
         w_binding = space.newbinding_fromframe(frame)
         return space.send(w_binding, space.newsymbol("eval"), [w_source])
+
+    @moduledef.method("set_trace_func")
+    def method_set_trace_func(self, space, w_proc):
+        if w_proc is space.w_nil:
+            w_proc = None
+        else:
+            assert isinstance(w_proc, W_ProcObject)
+        space.getexecutioncontext().settraceproc(w_proc)
