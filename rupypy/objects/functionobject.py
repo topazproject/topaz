@@ -60,6 +60,7 @@ class W_BuiltinFunction(W_FunctionObject):
     def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
         ec = space.getexecutioncontext()
+        ec.invoke_trace_proc(space, "c-call", self.name, self.w_class.name)
         with ec.visit_frame(frame):
             w_res = self.func(w_receiver, space, args_w, block)
         ec.invoke_trace_proc(space, "c-return", self.name, self.w_class.name)
