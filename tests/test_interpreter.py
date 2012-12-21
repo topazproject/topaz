@@ -983,6 +983,10 @@ class TestInterpreter(BaseRuPyPyTest):
         return [defined?((a ||= 2)), defined?((a &&= 3))]
         """)
         assert self.unwrap(space, w_res) == ["assignment", "assignment"]
+        w_res = space.execute("""
+        return [defined?(3 and false), defined?(false or true)]
+        """)
+        assert self.unwrap(space, w_res) == ["expression", "expression"]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

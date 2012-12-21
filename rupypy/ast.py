@@ -654,6 +654,12 @@ class Or(Node):
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class And(Node):
     def __init__(self, lhs, rhs):
@@ -671,6 +677,12 @@ class And(Node):
         ctx.emit(consts.DISCARD_TOP)
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
+
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
 
 
 class BaseSend(Node):
