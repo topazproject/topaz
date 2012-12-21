@@ -268,7 +268,8 @@ class SingletonClass(Node):
         self.body = body
 
     def compile(self, ctx):
-        Send(self.value, "singleton_class", [], None, self.lineno).compile(ctx)
+        self.value.compile(ctx)
+        ctx.emit(consts.LOAD_SINGLETON_CLASS)
 
         body_ctx = ctx.get_subctx("singletonclass", self)
         self.body.compile(body_ctx)

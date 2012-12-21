@@ -56,6 +56,7 @@ BYTECODES = [
     ("DEFINE_FUNCTION", 0, -2),
     ("ATTACH_FUNCTION", 0, -2),
     ("EVALUATE_CLASS", 0, -1),
+    ("LOAD_SINGLETON_CLASS", 0, 0),
 
     ("SEND", 2, SEND_EFFECT),
     ("SEND_BLOCK", 2, SEND_EFFECT),

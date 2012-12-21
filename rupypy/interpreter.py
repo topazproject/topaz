@@ -442,6 +442,10 @@ class Interpreter(object):
 
         frame.push(w_res)
 
+    def LOAD_SINGLETON_CLASS(self, space, bytecode, frame, pc):
+        w_obj = frame.pop()
+        frame.push(space.getsingletonclass(w_obj))
+
     @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = frame.popitemsreverse(num_args)

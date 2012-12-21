@@ -506,8 +506,8 @@ class TestCompiler(object):
         end
         """, """
         LOAD_SELF
-        SEND 0 0
-        LOAD_CONST 1
+        LOAD_SINGLETON_CLASS
+        LOAD_CONST 0
         EVALUATE_CLASS
 
         RETURN
