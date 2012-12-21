@@ -1094,6 +1094,12 @@ class ConstantNode(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, self.create_const(ctx))
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class ConstantInt(ConstantNode):
     def __init__(self, intvalue):
@@ -1184,6 +1190,12 @@ class DynamicString(Node):
                 ctx.emit(consts.SEND, ctx.create_symbol_const("to_s"), 0)
         if len(self.strvalues) != 1:
             ctx.emit(consts.BUILD_STRING, len(self.strvalues))
+
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
 
 
 class DynamicRegexp(Node):

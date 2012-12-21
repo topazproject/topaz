@@ -987,6 +987,10 @@ class TestInterpreter(BaseRuPyPyTest):
         return [defined?(3 and false), defined?(false or true)]
         """)
         assert self.unwrap(space, w_res) == ["expression", "expression"]
+        w_res = space.execute("""
+        return [defined?('abc'), defined?("abc#{42}")]
+        """)
+        assert self.unwrap(space, w_res) == ["expression", "expression"]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
