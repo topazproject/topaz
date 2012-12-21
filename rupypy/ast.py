@@ -268,16 +268,17 @@ class SingletonClass(Node):
         self.body = body
 
     def compile(self, ctx):
-        self.value.compile(ctx)
-        ctx.emit(consts.LOAD_SINGLETON_CLASS)
+        with ctx.set_lineno(self.lineno):
+            self.value.compile(ctx)
+            ctx.emit(consts.LOAD_SINGLETON_CLASS)
 
-        body_ctx = ctx.get_subctx("singletonclass", self)
-        self.body.compile(body_ctx)
-        body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None, None)
+            body_ctx = ctx.get_subctx("singletonclass", self)
+            self.body.compile(body_ctx)
+            body_ctx.emit(consts.RETURN)
+            bytecode = body_ctx.create_bytecode([], [], None, None)
 
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
-        ctx.emit(consts.EVALUATE_CLASS)
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+            ctx.emit(consts.EVALUATE_CLASS)
 
 
 class Module(Node):

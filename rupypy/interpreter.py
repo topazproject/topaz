@@ -23,7 +23,7 @@ def get_printable_location(pc, bytecode, block_bytecode):
 
 class Interpreter(object):
     jitdriver = jit.JitDriver(
-        greens=["pc", "bytecode", "block_bytecode"],
+        greens=["pc", "bytecode", "block_bytecode", "w_trace_proc"],
         reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
@@ -43,8 +43,13 @@ class Interpreter(object):
                     self.jitdriver.jit_merge_point(
                         self=self, bytecode=bytecode, frame=frame, pc=pc,
                         block_bytecode=self.get_block_bytecode(frame.block),
+                        w_trace_proc=space.getexecutioncontext().gettraceproc(),
                     )
+                    prev_instr = frame.last_instr
                     frame.last_instr = pc
+                    if (space.getexecutioncontext().hastraceproc() and
+                        bytecode.lineno_table[pc] != bytecode.lineno_table[prev_instr]):
+                        space.getexecutioncontext().invoke_trace_proc(space, "line", None, None, frame=frame)
                     # Why do we wrap the PC in an object? The JIT has store
                     # sinking, but when it encounters a guard it usually performs
                     # all pending stores, *execpt* if the value is a virtual, then
@@ -138,6 +143,7 @@ class Interpreter(object):
             self.jitdriver.can_enter_jit(
                 self=self, bytecode=bytecode, frame=frame, pc=target_pc,
                 block_bytecode=self.get_block_bytecode(frame.block),
+                w_trace_proc=space.getexecutioncontext().gettraceproc()
             )
         return target_pc
 
