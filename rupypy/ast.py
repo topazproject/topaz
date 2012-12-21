@@ -51,6 +51,12 @@ class Block(Node):
         for idx, stmt in enumerate(self.stmts):
             stmt.compile(ctx)
 
+    def compile_receiver(self, ctx):
+        self.stmts[-1].compile_receiver(ctx)
+
+    def compile_defined(self, ctx):
+        self.stmts[-1].compile_defined(ctx)
+
 
 class BaseStatement(Node):
     dont_pop = False
@@ -64,6 +70,12 @@ class Statement(BaseStatement):
         self.expr.compile(ctx)
         if not self.dont_pop:
             ctx.emit(consts.DISCARD_TOP)
+
+    def compile_receiver(self, ctx):
+        self.expr.compile_receiver(ctx)
+
+    def compile_defined(self, ctx):
+        self.expr.compile_defined(ctx)
 
 
 class If(Node):
