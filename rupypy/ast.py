@@ -563,6 +563,12 @@ class OrEqual(Node):
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
+
 
 class AndEqual(Node):
     def __init__(self, target, value):
@@ -586,6 +592,12 @@ class AndEqual(Node):
         self.value.compile(ctx)
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
+
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
 
 
 class MultiAssignment(Node):
