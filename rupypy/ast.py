@@ -533,6 +533,12 @@ class AugmentedAssignment(Node):
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper), 1)
         self.target.compile_store(ctx)
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
+
 
 class OrEqual(Node):
     def __init__(self, target, value):
