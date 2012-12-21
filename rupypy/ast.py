@@ -1089,6 +1089,12 @@ class Range(Node):
         else:
             ctx.emit(consts.BUILD_RANGE)
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class ConstantNode(Node):
     def compile(self, ctx):
