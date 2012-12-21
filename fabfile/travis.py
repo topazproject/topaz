@@ -13,7 +13,7 @@ class Test(object):
         self.needs_rubyspec = needs_rubyspec
 
     def install_deps(self):
-        local("pip install {}".format(" ".join(self.deps)))
+        local("pip install --use-mirrors {}".format(" ".join(self.deps)))
 
     def download_pypy(self):
         local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
