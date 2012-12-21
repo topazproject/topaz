@@ -1060,6 +1060,12 @@ class Array(Node):
         for i in xrange(n_components - 1):
             ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class Hash(Node):
     def __init__(self, items):
