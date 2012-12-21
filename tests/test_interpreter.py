@@ -971,6 +971,10 @@ class TestInterpreter(BaseRuPyPyTest):
         return defined?((1; a))
         """)
         assert space.str_w(w_res) == "local-variable"
+        w_res = space.execute("""
+        return defined?((a, b = 3))
+        """)
+        assert space.str_w(w_res) == "assignment"
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

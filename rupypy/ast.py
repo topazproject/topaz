@@ -612,6 +612,12 @@ class MultiAssignment(Node):
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
+
 
 class Or(Node):
     def __init__(self, lhs, rhs):
