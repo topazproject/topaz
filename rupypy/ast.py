@@ -1208,6 +1208,12 @@ class DynamicRegexp(Node):
         ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.flags))
         ctx.emit(consts.BUILD_REGEXP)
 
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class Symbol(Node):
     def __init__(self, value, lineno):
