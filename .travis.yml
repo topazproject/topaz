@@ -7,7 +7,7 @@ env:
     - TEST_TYPE=rubyspec_untranslated
     - TEST_TYPE=translate
 install:
-    - pip install fabric
+    - pip install --use-mirrors fabric
     - fab travis.install_requirements
 script: fab travis.run_tests
 notifications:
