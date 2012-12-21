@@ -442,10 +442,12 @@ class Interpreter(object):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
+        space.getexecutioncontext().invoke_trace_proc(space, "class", None, None, frame=frame)
         sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 
+        space.getexecutioncontext().invoke_trace_proc(space, "end", None, None, frame=frame)
         frame.push(w_res)
 
     def LOAD_SINGLETON_CLASS(self, space, bytecode, frame, pc):
