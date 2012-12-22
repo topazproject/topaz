@@ -1003,6 +1003,10 @@ class TestInterpreter(BaseRuPyPyTest):
         return defined?([1, 2, 3])
         """)
         assert space.str_w(w_res) == "expression"
+        w_res = space.execute("""
+        return defined?({1 => 2})
+        """)
+        assert space.str_w(w_res) == "expression"
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

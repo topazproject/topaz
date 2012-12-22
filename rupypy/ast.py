@@ -1049,6 +1049,9 @@ class Hash(Node):
             ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), 2)
             ctx.emit(consts.DISCARD_TOP)
 
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class Range(Node):
     def __init__(self, start, stop, exclusive):
