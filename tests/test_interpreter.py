@@ -1007,6 +1007,11 @@ class TestInterpreter(BaseRuPyPyTest):
         return defined?({1 => 2})
         """)
         assert space.str_w(w_res) == "expression"
+        w_res = space.execute("""
+        $abc = 3
+        return [defined?($abc), defined?($abd)]
+        """)
+        assert self.unwrap(space, w_res) == ["global-variable", None]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

@@ -35,6 +35,7 @@ BYTECODES = [
 
     ("LOAD_GLOBAL", 1, +1),
     ("STORE_GLOBAL", 1, 0),
+    ("DEFINED_GLOBAL", 1, +1),
 
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
     ("BUILD_STRING", 1, ARRAY_EFFECT),

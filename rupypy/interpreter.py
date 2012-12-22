@@ -260,6 +260,13 @@ class Interpreter(object):
         w_value = frame.peek()
         space.globals.set(space, name, w_value)
 
+    def DEFINED_GLOBAL(self, space, bytecode, frame, pc, idx):
+        name = space.symbol_w(bytecode.consts_w[idx])
+        if space.globals.get(space, name) is not None:
+            frame.push(space.newstr_fromstr("global-variable"))
+        else:
+            frame.push(space.w_nil)
+
     @jit.unroll_safe
     def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)

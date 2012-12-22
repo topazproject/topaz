@@ -965,6 +965,9 @@ class Global(Node):
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_GLOBAL, ctx.create_symbol_const(self.name))
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_GLOBAL, ctx.create_symbol_const(self.name))
+
 
 class InstanceVariable(Node):
     def __init__(self, name):
