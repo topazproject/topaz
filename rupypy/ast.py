@@ -709,12 +709,17 @@ class BaseSend(Node):
     def compile_store(self, ctx):
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.method + "="), 1)
 
+    def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
+        ctx.emit(self.defined, self.method_name_const(ctx))
+
 
 class Send(BaseSend):
     send = consts.SEND
     send_block = consts.SEND_BLOCK
     send_splat = consts.SEND_SPLAT
     send_block_splat = consts.SEND_BLOCK_SPLAT
+    defined = consts.DEFINED_METHOD
 
     def __init__(self, receiver, method, args, block_arg, lineno):
         BaseSend.__init__(self, receiver, args, block_arg, lineno)
@@ -723,14 +728,11 @@ class Send(BaseSend):
     def method_name_const(self, ctx):
         return ctx.create_symbol_const(self.method)
 
-    def compile_defined(self, ctx):
-        self.compile_receiver(ctx)
-        ctx.emit(consts.DEFINED_METHOD, self.method_name_const(ctx))
-
 
 class Super(BaseSend):
     send = consts.SEND_SUPER
     send_splat = consts.SEND_SUPER_SPLAT
+    defined = consts.DEFINED_SUPER
 
     def __init__(self, args, block_arg, lineno):
         BaseSend.__init__(self, Self(lineno), args, block_arg, lineno)
@@ -819,11 +821,18 @@ class AutoSuper(Node):
         for name in ctx.symtable.arguments:
             ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(name))
 
+        ctx.emit(consts.SEND_SUPER, self.method_name_const(ctx), len(ctx.symtable.arguments))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
+        ctx.emit(consts.DEFINED_SUPER, self.method_name_const(ctx))
+
+    def method_name_const(self, ctx):
         if ctx.code_name == "<main>":
             name = ctx.create_const(ctx.space.w_nil)
         else:
             name = ctx.create_symbol_const(ctx.code_name)
-        ctx.emit(consts.SEND_SUPER, name, len(ctx.symtable.arguments))
+        return name
 
 
 class Subscript(Node):

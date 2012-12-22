@@ -512,6 +512,14 @@ class Interpreter(object):
         w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
+    def DEFINED_SUPER(self, space, bytecode, frame, pc, meth_idx):
+        w_obj = frame.pop()
+        name = space.symbol_w(bytecode.consts_w[meth_idx])
+        if space.getclass(w_obj).find_method_super(space, name) is not None:
+            frame.push(space.newstr_fromstr("super"))
+        else:
+            frame.push(space.w_nil)
+
     def SETUP_LOOP(self, space, bytecode, frame, pc, target_pc):
         frame.lastblock = LoopBlock(target_pc, frame.lastblock, frame.stackpos)
 

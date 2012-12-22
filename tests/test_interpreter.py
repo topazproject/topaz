@@ -1030,6 +1030,22 @@ class TestInterpreter(BaseRuPyPyTest):
         return [f, f(&:a)]
         """)
         assert self.unwrap(space, w_res) == [None, "yield"]
+        w_res = space.execute("""
+        class B
+            def a
+            end
+        end
+        class C < B
+            def a
+                defined?(super)
+            end
+            def b
+                defined?(super())
+            end
+        end
+        return [C.new.a, C.new.b]
+        """)
+        assert self.unwrap(space, w_res) == ["super", None]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
