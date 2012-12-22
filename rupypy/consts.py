@@ -84,10 +84,12 @@ BYTECODES = [
     ("ROT_TWO", 0, 0),
     ("ROT_THREE", 0, 0),
 
-    ("RETURN", 0, -1),
-    ("RAISE_RETURN", 0, -1),
     ("YIELD", 1, ARRAY_EFFECT),
     ("YIELD_SPLAT", 0, 0),
+    ("DEFINED_YIELD", 0, +1),
+
+    ("RETURN", 0, -1),
+    ("RAISE_RETURN", 0, -1),
     ("CONTINUE_LOOP", 1, -1),
     ("BREAK_LOOP", 0, -1),
     ("RAISE_BREAK", 0, -1),

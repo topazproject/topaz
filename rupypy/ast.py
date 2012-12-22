@@ -443,6 +443,9 @@ class Yield(Node):
                 return True
         return False
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_YIELD)
+
 
 class Alias(BaseStatement):
     def __init__(self, new_name, old_name, lineno):

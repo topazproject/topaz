@@ -1022,6 +1022,14 @@ class TestInterpreter(BaseRuPyPyTest):
         return A.new.m
         """)
         assert self.unwrap(space, w_res) == ["class variable", None]
+        w_res = space.execute("""
+        def f
+            defined?(yield)
+        end
+
+        return [f, f(&:a)]
+        """)
+        assert self.unwrap(space, w_res) == [None, "yield"]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

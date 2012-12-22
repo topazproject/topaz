@@ -612,6 +612,12 @@ class Interpreter(object):
         w_res = space.invoke_block(frame.block, space.listview(w_args))
         frame.push(w_res)
 
+    def DEFINED_YIELD(self, space, bytecode, frame, pc):
+        if frame.block is not None:
+            frame.push(space.newstr_fromstr("yield"))
+        else:
+            frame.push(space.w_nil)
+
     def CONTINUE_LOOP(self, space, bytecode, frame, pc, target_pc):
         frame.pop()
         return frame.unrollstack_and_jump(space, ContinueLoop(target_pc))
