@@ -51,9 +51,6 @@ class Block(Node):
         for idx, stmt in enumerate(self.stmts):
             stmt.compile(ctx)
 
-    def compile_receiver(self, ctx):
-        return self.stmts[-1].compile_receiver(ctx)
-
     def compile_defined(self, ctx):
         self.stmts[-1].compile_defined(ctx)
 
@@ -70,9 +67,6 @@ class Statement(BaseStatement):
         self.expr.compile(ctx)
         if not self.dont_pop:
             ctx.emit(consts.DISCARD_TOP)
-
-    def compile_receiver(self, ctx):
-        return self.expr.compile_receiver(ctx)
 
     def compile_defined(self, ctx):
         self.expr.compile_defined(ctx)
@@ -495,7 +489,6 @@ class Defined(Node):
         self.node = node
 
     def compile(self, ctx):
-        self.node.compile_receiver(ctx)
         self.node.compile_defined(ctx)
 
 
@@ -508,9 +501,6 @@ class Assignment(Node):
         self.target.compile_receiver(ctx)
         self.value.compile(ctx)
         self.target.compile_store(ctx)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)
@@ -532,9 +522,6 @@ class AugmentedAssignment(Node):
         self.value.compile(ctx)
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper), 1)
         self.target.compile_store(ctx)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)
@@ -563,9 +550,6 @@ class OrEqual(Node):
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)
 
@@ -592,9 +576,6 @@ class AndEqual(Node):
         self.value.compile(ctx)
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)
@@ -630,9 +611,6 @@ class MultiAssignment(Node):
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)
 
@@ -654,9 +632,6 @@ class Or(Node):
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)
 
@@ -677,9 +652,6 @@ class And(Node):
         ctx.emit(consts.DISCARD_TOP)
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)
@@ -749,6 +721,7 @@ class Send(BaseSend):
         return ctx.create_symbol_const(self.method)
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_METHOD, self.method_name_const(ctx))
 
 
@@ -910,6 +883,7 @@ class Constant(Node):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
 
 
@@ -944,9 +918,6 @@ class LookupConstant(Node):
 class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("self").compile(ctx)
@@ -1014,6 +985,7 @@ class InstanceVariable(Node):
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 
@@ -1060,9 +1032,6 @@ class Array(Node):
         for i in xrange(n_components - 1):
             ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)
 
@@ -1095,9 +1064,6 @@ class Range(Node):
         else:
             ctx.emit(consts.BUILD_RANGE)
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)
 
@@ -1105,9 +1071,6 @@ class Range(Node):
 class ConstantNode(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, self.create_const(ctx))
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)
@@ -1184,9 +1147,6 @@ class ConstantBool(ConstantNode):
     def create_const(self, ctx):
         return ctx.create_const(ctx.space.newbool(self.boolval))
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("true" if self.boolval else "false").compile(ctx)
 
@@ -1203,9 +1163,6 @@ class DynamicString(Node):
         if len(self.strvalues) != 1:
             ctx.emit(consts.BUILD_STRING, len(self.strvalues))
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)
 
@@ -1219,9 +1176,6 @@ class DynamicRegexp(Node):
         self.dstring.compile(ctx)
         ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.flags))
         ctx.emit(consts.BUILD_REGEXP)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)
@@ -1239,9 +1193,6 @@ class Symbol(Node):
 class Nil(BaseNode):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("nil").compile(ctx)
