@@ -32,6 +32,7 @@ BYTECODES = [
 
     ("LOAD_CLASS_VAR", 1, 0),
     ("STORE_CLASS_VAR", 1, -1),
+    ("DEFINED_CLASS_VAR", 1, 0),
 
     ("LOAD_GLOBAL", 1, +1),
     ("STORE_GLOBAL", 1, 0),

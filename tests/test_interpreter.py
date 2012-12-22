@@ -1012,6 +1012,16 @@ class TestInterpreter(BaseRuPyPyTest):
         return [defined?($abc), defined?($abd)]
         """)
         assert self.unwrap(space, w_res) == ["global-variable", None]
+        w_res = space.execute("""
+        class A
+            @@abc = 3
+            def m
+                return [defined?(@@abc), defined?(@@abd)]
+            end
+        end
+        return A.new.m
+        """)
+        assert self.unwrap(space, w_res) == ["class variable", None]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

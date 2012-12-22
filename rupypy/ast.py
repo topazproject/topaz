@@ -1012,6 +1012,10 @@ class ClassVariable(Node):
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_CLASS_VAR, ctx.create_symbol_const(self.name))
 
+    def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
+        ctx.emit(consts.DEFINED_CLASS_VAR, ctx.create_symbol_const(self.name))
+
 
 class Array(Node):
     def __init__(self, items):

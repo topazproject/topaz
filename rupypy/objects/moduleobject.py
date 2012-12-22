@@ -344,6 +344,10 @@ class W_ModuleObject(W_RootObject):
             )
         return w_res
 
+    @classdef.method("class_variable_defined?", name="symbol")
+    def method_class_variable_definedp(self, space, name):
+        return space.newbool(self.find_class_var(space, name) is not None)
+
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):
         return space.newbool(self.find_method(space, name) is not None)

@@ -250,6 +250,14 @@ class Interpreter(object):
         space.set_class_var(w_module, name, w_value)
         frame.push(w_value)
 
+    def DEFINED_CLASS_VAR(self, space, bytecode, frame, pc, idx):
+        w_name = bytecode.consts_w[idx]
+        w_obj = frame.pop()
+        if space.is_true(space.send(w_obj, space.newsymbol("class_variable_defined?"), [w_name])):
+            frame.push(space.newstr_fromstr("class variable"))
+        else:
+            frame.push(space.w_nil)
+
     def LOAD_GLOBAL(self, space, bytecode, frame, pc, idx):
         name = space.symbol_w(bytecode.consts_w[idx])
         w_value = space.globals.get(space, name) or space.w_nil
