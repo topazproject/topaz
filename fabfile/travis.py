@@ -17,8 +17,7 @@ class Test(object):
 
     def download_pypy(self):
         local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
-        local("bunzip2 `pwd`/../pypy.tar.bz2")
-        local("tar -xf `pwd`/../pypy.tar -C `pwd`/../")
+        local("tar -xf `pwd`/../pypy.tar.bz2 -C `pwd`/../")
         [path_name] = glob.glob("../pypy-pypy*")
         path_name = os.path.abspath(path_name)
         with open("pypy_marker", "w") as f:
