@@ -2110,7 +2110,7 @@ class Parser(object):
 
     @pg.production("do_block : DO_BLOCK push_block_scope opt_block_param compstmt END")
     def do_block(self, p):
-        box = self.new_send_block(p[1], p[3])
+        box = self.new_send_block(p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 

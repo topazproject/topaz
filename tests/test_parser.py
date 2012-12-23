@@ -1182,6 +1182,14 @@ HERE
             ast.Statement(ast.Send(ast.Send(ast.Self(2), "f", [ast.Nil()], ast.SendBlock([], None, ast.Nil()), 2), "foo", [ast.Nil()], None, 3))
         ]))
 
+        r = space.parse("""
+        run [] do |n|
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(2), "run", [ast.Array([])], ast.SendBlock([ast.Argument("n")], None, ast.Nil()), 2))
+        ]))
+
         with self.raises(space, "SyntaxError"):
             space.parse("""
             Mod::Const do end
