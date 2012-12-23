@@ -17,7 +17,7 @@ from rupypy.objects.stringobject import W_StringObject
 from rupypy.scope import StaticScope
 
 
-def get_printable_location(pc, bytecode, block_bytecode):
+def get_printable_location(pc, bytecode, block_bytecode, w_trace_proc):
     return "%s at %s" % (bytecode.name, consts.BYTECODE_NAMES[ord(bytecode.code[pc])])
 
 
