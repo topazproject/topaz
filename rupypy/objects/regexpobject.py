@@ -246,6 +246,17 @@ class W_MatchDataObject(W_Object):
             raise space.error(space.w_IndexError, "index %d out of matches" % n)
         return space.newint(start)
 
+    @classdef.method("end", n="int")
+    def method_end(self, space, n):
+        if n == 0:
+            _, end = self.ctx.match_start, self.ctx.match_end
+        elif 1 <= n < self.size():
+            _, end = self.get_span(n)
+        else:
+            raise space.error(space.w_IndexError, "index %d out of matches" % n)
+        return space.newint(end)
+
+    @classdef.method("length")
     @classdef.method("size")
     def method_size(self, space):
         return space.newint(self.size())
