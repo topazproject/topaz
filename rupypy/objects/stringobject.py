@@ -386,7 +386,7 @@ class W_StringObject(W_Object):
             last = 0
             string = space.str_w(self)
             ctx = w_sep.make_ctx(string)
-            w_match = w_sep.get_match_result(space, ctx, True)
+            w_match = w_sep.get_match_result(space, ctx, found=True)
 
             while limit <= 0 or n + 1 < limit:
                 if not self.search_context(space, ctx):
