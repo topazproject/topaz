@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 
-import py
+import pytest
 
 from rupypy.error import RubyError
 from rupypy.objects.arrayobject import W_ArrayObject
@@ -16,7 +16,7 @@ from rupypy.objects.symbolobject import W_SymbolObject
 class BaseRuPyPyTest(object):
     @contextmanager
     def raises(self, space, exc_name, msg=None):
-        with py.test.raises(RubyError) as exc:
+        with pytest.raises(RubyError) as exc:
             yield
         assert space.getclass(exc.value.w_value).name == exc_name
         if msg is not None:

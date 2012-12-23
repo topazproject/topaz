@@ -1,11 +1,11 @@
 import math
 
-import py
+import pytest
 
+from rupypy.modules.kernel import Kernel
 from rupypy.objects.boolobject import W_TrueObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.objectobject import W_Object, W_BaseObject
-from rupypy.modules.kernel import Kernel
 
 from .base import BaseRuPyPyTest
 
@@ -838,7 +838,7 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ['A', 'A']
 
-    @py.test.mark.xfail
+    @pytest.mark.xfail
     def test_class_variable_access_has_static_scope(self, space):
         with self.raises(space, "NameError"):
             w_res = space.execute("""

@@ -1,5 +1,6 @@
 import os
 import stat
+
 import pytest
 
 from rupypy.objects.fileobject import W_FileObject, W_IOObject

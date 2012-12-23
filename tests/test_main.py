@@ -1,7 +1,7 @@
 import os
 import platform
 
-import py
+import pytest
 
 from rupypy.main import _entry_point
 
@@ -109,7 +109,7 @@ class TestMain(object):
             "\tfrom {}:1:in `<main>'",
         ])
 
-    @py.test.mark.xfail
+    @pytest.mark.xfail
     def test_traceback_default_arg(self, space, tmpdir, capfd):
         self.assert_traceback(space, tmpdir, capfd, """
         def f(a=1 / 0)
