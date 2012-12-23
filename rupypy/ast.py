@@ -63,7 +63,8 @@ class Statement(BaseStatement):
     def compile(self, ctx):
         self.expr.compile(ctx)
         if not self.dont_pop:
-            ctx.emit(consts.DISCARD_TOP)
+            with ctx.set_lineno(ctx.last_lineno):
+                ctx.emit(consts.DISCARD_TOP)
 
 
 class If(Node):

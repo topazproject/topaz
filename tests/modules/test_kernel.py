@@ -320,7 +320,7 @@ class TestSetTraceFunc(BaseRuPyPyTest):
             ["c-return", "-e", 3, "set_trace_func", "Kernel"],
             ["line", "-e", 7, None, None],
             ["class", "-e", 7, None, None],
-            ["end", "-e", 8, None, None],
+            ["end", "-e", 7, None, None],
             ["line", "-e", 10, None, None],
             ["c-call", "-e", 10, "set_trace_func", "Kernel"]
         ]
