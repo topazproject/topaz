@@ -23,7 +23,7 @@ def get_printable_location(pc, bytecode, block_bytecode):
 
 class Interpreter(object):
     jitdriver = jit.JitDriver(
-        greens=["pc", "bytecode", "block_bytecode"],
+        greens=["pc", "bytecode", "block_bytecode", "w_trace_proc"],
         reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
@@ -43,8 +43,13 @@ class Interpreter(object):
                     self.jitdriver.jit_merge_point(
                         self=self, bytecode=bytecode, frame=frame, pc=pc,
                         block_bytecode=self.get_block_bytecode(frame.block),
+                        w_trace_proc=space.getexecutioncontext().gettraceproc(),
                     )
+                    prev_instr = frame.last_instr
                     frame.last_instr = pc
+                    if (space.getexecutioncontext().hastraceproc() and
+                        bytecode.lineno_table[pc] != bytecode.lineno_table[prev_instr]):
+                        space.getexecutioncontext().invoke_trace_proc(space, "line", None, None, frame=frame)
                     # Why do we wrap the PC in an object? The JIT has store
                     # sinking, but when it encounters a guard it usually performs
                     # all pending stores, *execpt* if the value is a virtual, then
@@ -138,6 +143,7 @@ class Interpreter(object):
             self.jitdriver.can_enter_jit(
                 self=self, bytecode=bytecode, frame=frame, pc=target_pc,
                 block_bytecode=self.get_block_bytecode(frame.block),
+                w_trace_proc=space.getexecutioncontext().gettraceproc()
             )
         return target_pc
 
@@ -451,11 +457,17 @@ class Interpreter(object):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
+        space.getexecutioncontext().invoke_trace_proc(space, "class", None, None, frame=frame)
         sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 
+        space.getexecutioncontext().invoke_trace_proc(space, "end", None, None, frame=frame)
         frame.push(w_res)
+
+    def LOAD_SINGLETON_CLASS(self, space, bytecode, frame, pc):
+        w_obj = frame.pop()
+        frame.push(space.getsingletonclass(w_obj))
 
     @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):

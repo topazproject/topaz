@@ -66,7 +66,8 @@ class Statement(BaseStatement):
     def compile(self, ctx):
         self.expr.compile(ctx)
         if not self.dont_pop:
-            ctx.emit(consts.DISCARD_TOP)
+            with ctx.set_lineno(ctx.last_lineno):
+                ctx.emit(consts.DISCARD_TOP)
 
     def compile_defined(self, ctx):
         self.expr.compile_defined(ctx)
@@ -274,15 +275,17 @@ class SingletonClass(Node):
         self.body = body
 
     def compile(self, ctx):
-        Send(self.value, "singleton_class", [], None, self.lineno).compile(ctx)
+        with ctx.set_lineno(self.lineno):
+            self.value.compile(ctx)
+            ctx.emit(consts.LOAD_SINGLETON_CLASS)
 
-        body_ctx = ctx.get_subctx("singletonclass", self)
-        self.body.compile(body_ctx)
-        body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None, None)
+            body_ctx = ctx.get_subctx("singletonclass", self)
+            self.body.compile(body_ctx)
+            body_ctx.emit(consts.RETURN)
+            bytecode = body_ctx.create_bytecode([], [], None, None)
 
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
-        ctx.emit(consts.EVALUATE_CLASS)
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+            ctx.emit(consts.EVALUATE_CLASS)
 
 
 class Module(Node):

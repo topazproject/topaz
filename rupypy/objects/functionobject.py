@@ -7,12 +7,14 @@ from rupypy.objects.objectobject import W_BaseObject
 class W_FunctionObject(W_BaseObject):
     _immutable_fields_ = ["name"]
 
-    def __init__(self, name):
+    def __init__(self, name, w_class=None):
         self.name = name
+        self.w_class = w_class
 
     def __deepcopy__(self, memo):
         obj = super(W_FunctionObject, self).__deepcopy__(memo)
         obj.name = self.name
+        obj.w_class = copy.deepcopy(self.w_class, memo)
         return obj
 
 
@@ -46,8 +48,8 @@ class W_UserFunction(W_FunctionObject):
 class W_BuiltinFunction(W_FunctionObject):
     _immutable_fields_ = ["func"]
 
-    def __init__(self, name, func):
-        W_FunctionObject.__init__(self, name)
+    def __init__(self, name, w_class, func):
+        W_FunctionObject.__init__(self, name, w_class)
         self.func = func
 
     def __deepcopy__(self, memo):
@@ -57,5 +59,9 @@ class W_BuiltinFunction(W_FunctionObject):
 
     def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
-        with space.getexecutioncontext().visit_frame(frame):
-            return self.func(w_receiver, space, args_w, block)
+        ec = space.getexecutioncontext()
+        ec.invoke_trace_proc(space, "c-call", self.name, self.w_class.name)
+        with ec.visit_frame(frame):
+            w_res = self.func(w_receiver, space, args_w, block)
+        ec.invoke_trace_proc(space, "c-return", self.name, self.w_class.name)
+        return w_res
