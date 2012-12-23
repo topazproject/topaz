@@ -65,6 +65,26 @@ class TestRegexpObject(BaseRuPyPyTest):
         w_res = space.execute("return /bc/.match('abc').begin(0)")
         assert space.int_w(w_res) == 1
 
+    def test_match_begin(self, space):
+        w_res = space.execute("return /a(bc(de))/.match(' abcde').begin(0)")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return /a(bc(de))/.match(' abcde').begin(1)")
+        assert space.int_w(w_res) == 2
+        w_res = space.execute("return /a(bc(de))/.match(' abcde').begin(2)")
+        assert space.int_w(w_res) == 4
+        with self.raises(space, "IndexError", "index 3 out of matches"):
+            space.execute("return /a(bc(de))/.match(' abcde').begin(3)")
+
+    def test_match_end(self, space):
+        w_res = space.execute("return /a(bc(de))f/.match(' abcdef').end(0)")
+        assert space.int_w(w_res) == 7
+        w_res = space.execute("return /a(bc(de))f/.match(' abcdef').end(1)")
+        assert space.int_w(w_res) == 6
+        w_res = space.execute("return /a(bc(de))f/.match(' abcdef').end(2)")
+        assert space.int_w(w_res) == 6
+        with self.raises(space, "IndexError", "index 3 out of matches"):
+            space.execute("return /a(bc(de))/.match(' abcde').end(3)")
+
     def test_new_regexp(self, space):
         w_res = space.execute("return Regexp.new('..abc..') == Regexp.compile('..abc..')")
         assert w_res is space.w_true
