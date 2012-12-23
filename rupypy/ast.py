@@ -51,6 +51,9 @@ class Block(Node):
         for idx, stmt in enumerate(self.stmts):
             stmt.compile(ctx)
 
+    def compile_defined(self, ctx):
+        self.stmts[-1].compile_defined(ctx)
+
 
 class BaseStatement(Node):
     dont_pop = False
@@ -63,7 +66,11 @@ class Statement(BaseStatement):
     def compile(self, ctx):
         self.expr.compile(ctx)
         if not self.dont_pop:
-            ctx.emit(consts.DISCARD_TOP)
+            with ctx.set_lineno(ctx.last_lineno):
+                ctx.emit(consts.DISCARD_TOP)
+
+    def compile_defined(self, ctx):
+        self.expr.compile_defined(ctx)
 
 
 class If(Node):
@@ -268,15 +275,17 @@ class SingletonClass(Node):
         self.body = body
 
     def compile(self, ctx):
-        Send(self.value, "singleton_class", [], None, self.lineno).compile(ctx)
+        with ctx.set_lineno(self.lineno):
+            self.value.compile(ctx)
+            ctx.emit(consts.LOAD_SINGLETON_CLASS)
 
-        body_ctx = ctx.get_subctx("singletonclass", self)
-        self.body.compile(body_ctx)
-        body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None, None)
+            body_ctx = ctx.get_subctx("singletonclass", self)
+            self.body.compile(body_ctx)
+            body_ctx.emit(consts.RETURN)
+            bytecode = body_ctx.create_bytecode([], [], None, None)
 
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
-        ctx.emit(consts.EVALUATE_CLASS)
+            ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+            ctx.emit(consts.EVALUATE_CLASS)
 
 
 class Module(Node):
@@ -437,6 +446,9 @@ class Yield(Node):
                 return True
         return False
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_YIELD)
+
 
 class Alias(BaseStatement):
     def __init__(self, new_name, old_name, lineno):
@@ -483,7 +495,6 @@ class Defined(Node):
         self.node = node
 
     def compile(self, ctx):
-        self.node.compile_receiver(ctx)
         self.node.compile_defined(ctx)
 
 
@@ -496,9 +507,6 @@ class Assignment(Node):
         self.target.compile_receiver(ctx)
         self.value.compile(ctx)
         self.target.compile_store(ctx)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)
@@ -520,6 +528,9 @@ class AugmentedAssignment(Node):
         self.value.compile(ctx)
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.oper), 1)
         self.target.compile_store(ctx)
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
 
 
 class OrEqual(Node):
@@ -545,6 +556,9 @@ class OrEqual(Node):
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
 
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
+
 
 class AndEqual(Node):
     def __init__(self, target, value):
@@ -569,6 +583,9 @@ class AndEqual(Node):
         ctx.use_next_block(end)
         self.target.compile_store(ctx)
 
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
+
 
 class MultiAssignment(Node):
     def __init__(self, targets, value):
@@ -584,7 +601,7 @@ class MultiAssignment(Node):
     def compile(self, ctx):
         self.value.compile(ctx)
         ctx.emit(consts.DUP_TOP)
-        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.COERCE_ARRAY, 0)
         splat_index = self.splat_index()
         if splat_index == -1:
             ctx.emit(consts.UNPACK_SEQUENCE, len(self.targets))
@@ -599,6 +616,9 @@ class MultiAssignment(Node):
                 ctx.emit(consts.ROT_THREE)
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
+
+    def compile_defined(self, ctx):
+        ConstantString("assignment").compile(ctx)
 
 
 class Or(Node):
@@ -618,6 +638,9 @@ class Or(Node):
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
 
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class And(Node):
     def __init__(self, lhs, rhs):
@@ -635,6 +658,9 @@ class And(Node):
         ctx.emit(consts.DISCARD_TOP)
         self.rhs.compile(ctx)
         ctx.use_next_block(end)
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
 
 
 class BaseSend(Node):
@@ -686,12 +712,17 @@ class BaseSend(Node):
     def compile_store(self, ctx):
         ctx.emit(consts.SEND, ctx.create_symbol_const(self.method + "="), 1)
 
+    def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
+        ctx.emit(self.defined, self.method_name_const(ctx))
+
 
 class Send(BaseSend):
     send = consts.SEND
     send_block = consts.SEND_BLOCK
     send_splat = consts.SEND_SPLAT
     send_block_splat = consts.SEND_BLOCK_SPLAT
+    defined = consts.DEFINED_METHOD
 
     def __init__(self, receiver, method, args, block_arg, lineno):
         BaseSend.__init__(self, receiver, args, block_arg, lineno)
@@ -700,13 +731,11 @@ class Send(BaseSend):
     def method_name_const(self, ctx):
         return ctx.create_symbol_const(self.method)
 
-    def compile_defined(self, ctx):
-        ctx.emit(consts.DEFINED_METHOD, self.method_name_const(ctx))
-
 
 class Super(BaseSend):
     send = consts.SEND_SUPER
     send_splat = consts.SEND_SUPER_SPLAT
+    defined = consts.DEFINED_SUPER
 
     def __init__(self, args, block_arg, lineno):
         BaseSend.__init__(self, Self(lineno), args, block_arg, lineno)
@@ -734,7 +763,7 @@ class Splat(Node):
 
     def compile(self, ctx):
         self.value.compile(ctx)
-        ctx.emit(consts.COERCE_ARRAY)
+        ctx.emit(consts.COERCE_ARRAY, 1)
 
 
 class SendBlock(Node):
@@ -795,11 +824,18 @@ class AutoSuper(Node):
         for name in ctx.symtable.arguments:
             ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(name))
 
+        ctx.emit(consts.SEND_SUPER, self.method_name_const(ctx), len(ctx.symtable.arguments))
+
+    def compile_defined(self, ctx):
+        ctx.emit(consts.LOAD_SELF)
+        ctx.emit(consts.DEFINED_SUPER, self.method_name_const(ctx))
+
+    def method_name_const(self, ctx):
         if ctx.code_name == "<main>":
             name = ctx.create_const(ctx.space.w_nil)
         else:
             name = ctx.create_symbol_const(ctx.code_name)
-        ctx.emit(consts.SEND_SUPER, name, len(ctx.symtable.arguments))
+        return name
 
 
 class Subscript(Node):
@@ -862,6 +898,7 @@ class Constant(Node):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_LOCAL_CONSTANT, ctx.create_symbol_const(self.name))
 
 
@@ -896,9 +933,6 @@ class LookupConstant(Node):
 class Self(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("self").compile(ctx)
@@ -946,6 +980,9 @@ class Global(Node):
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_GLOBAL, ctx.create_symbol_const(self.name))
 
+    def compile_defined(self, ctx):
+        ctx.emit(consts.DEFINED_GLOBAL, ctx.create_symbol_const(self.name))
+
 
 class InstanceVariable(Node):
     def __init__(self, name):
@@ -966,6 +1003,7 @@ class InstanceVariable(Node):
         ctx.emit(consts.STORE_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_INSTANCE_VAR, ctx.create_symbol_const(self.name))
 
 
@@ -988,6 +1026,10 @@ class ClassVariable(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.STORE_CLASS_VAR, ctx.create_symbol_const(self.name))
+
+    def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
+        ctx.emit(consts.DEFINED_CLASS_VAR, ctx.create_symbol_const(self.name))
 
 
 class Array(Node):
@@ -1012,6 +1054,9 @@ class Array(Node):
         for i in xrange(n_components - 1):
             ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
 
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class Hash(Node):
     def __init__(self, items):
@@ -1025,6 +1070,9 @@ class Hash(Node):
             v.compile(ctx)
             ctx.emit(consts.SEND, ctx.create_symbol_const("[]="), 2)
             ctx.emit(consts.DISCARD_TOP)
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
 
 
 class Range(Node):
@@ -1041,10 +1089,16 @@ class Range(Node):
         else:
             ctx.emit(consts.BUILD_RANGE)
 
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class ConstantNode(Node):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, self.create_const(ctx))
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
 
 
 class ConstantInt(ConstantNode):
@@ -1118,9 +1172,6 @@ class ConstantBool(ConstantNode):
     def create_const(self, ctx):
         return ctx.create_const(ctx.space.newbool(self.boolval))
 
-    def compile_receiver(self, ctx):
-        return 0
-
     def compile_defined(self, ctx):
         ConstantString("true" if self.boolval else "false").compile(ctx)
 
@@ -1137,6 +1188,9 @@ class DynamicString(Node):
         if len(self.strvalues) != 1:
             ctx.emit(consts.BUILD_STRING, len(self.strvalues))
 
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class DynamicRegexp(Node):
     def __init__(self, dstring, flags):
@@ -1147,6 +1201,9 @@ class DynamicRegexp(Node):
         self.dstring.compile(ctx)
         ctx.emit(consts.LOAD_CONST, ctx.create_int_const(self.flags))
         ctx.emit(consts.BUILD_REGEXP)
+
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
 
 
 class Symbol(Node):
@@ -1161,9 +1218,6 @@ class Symbol(Node):
 class Nil(BaseNode):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_nil))
-
-    def compile_receiver(self, ctx):
-        return 0
 
     def compile_defined(self, ctx):
         ConstantString("nil").compile(ctx)

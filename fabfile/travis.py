@@ -13,7 +13,7 @@ class Test(object):
         self.needs_rubyspec = needs_rubyspec
 
     def install_deps(self):
-        local("pip install {}".format(" ".join(self.deps)))
+        local("pip install --use-mirrors {}".format(" ".join(self.deps)))
 
     def download_pypy(self):
         local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
@@ -76,13 +76,21 @@ def run_specs(binary, prefix=""):
     # run the full rubyspec directory (including the tagging feature)
     rubyspec_tests = [
         "language/and_spec.rb",
+        "language/array_spec.rb",
+        "language/match_spec.rb",
         "language/not_spec.rb",
+        "language/numbers_spec.rb",
         "language/order_spec.rb",
+        "language/splat_spec.rb",
+        "language/undef_spec.rb",
         "language/unless_spec.rb",
         "language/yield_spec.rb",
 
         "language/regexp/grouping_spec.rb",
         "language/regexp/repetition_spec.rb",
+
+        "core/array/array_spec.rb",
+        "core/array/empty_spec.rb",
 
         "core/basicobject/ancestors_spec.rb",
         "core/basicobject/class_spec.rb",

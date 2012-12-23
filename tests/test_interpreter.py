@@ -712,6 +712,24 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [[5], 4, None]
 
+    def test_splat_assignment(self, space):
+        w_res = space.execute("""
+        class X
+            def to_a
+                return nil
+            end
+        end
+        x = X.new
+        a = *x
+        return a == [x]
+        """)
+        assert w_res is space.w_true
+        w_res = space.execute("""
+        *a = nil
+        return a
+        """)
+        assert self.unwrap(space, w_res) == [None]
+
     def test_splat_lhs_assignment(self, space):
         w_res = space.execute("""
         a, *b, c = *[1,2]
@@ -948,6 +966,86 @@ class TestInterpreter(BaseRuPyPyTest):
         return defined?(a)
         """)
         assert space.str_w(w_res) == "local-variable"
+        w_res = space.execute("""
+        a = 3
+        return defined?((1; a))
+        """)
+        assert space.str_w(w_res) == "local-variable"
+        w_res = space.execute("""
+        return defined?((a, b = 3))
+        """)
+        assert space.str_w(w_res) == "assignment"
+        w_res = space.execute("""
+        return defined?((a += 2))
+        """)
+        assert space.str_w(w_res) == "assignment"
+        w_res = space.execute("""
+        return [defined?((a ||= 2)), defined?((a &&= 3))]
+        """)
+        assert self.unwrap(space, w_res) == ["assignment", "assignment"]
+        w_res = space.execute("""
+        return [defined?(3 and false), defined?(false or true)]
+        """)
+        assert self.unwrap(space, w_res) == ["expression", "expression"]
+        w_res = space.execute("""
+        return [defined?('abc'), defined?("abc#{42}")]
+        """)
+        assert self.unwrap(space, w_res) == ["expression", "expression"]
+        w_res = space.execute("""
+        return [defined?(/abc/), defined?(/abc#{42}/)]
+        """)
+        assert self.unwrap(space, w_res) == ["expression", "expression"]
+        w_res = space.execute("""
+        return defined?(1..2)
+        """)
+        assert space.str_w(w_res) == "expression"
+        w_res = space.execute("""
+        return defined?([1, 2, 3])
+        """)
+        assert space.str_w(w_res) == "expression"
+        w_res = space.execute("""
+        return defined?({1 => 2})
+        """)
+        assert space.str_w(w_res) == "expression"
+        w_res = space.execute("""
+        $abc = 3
+        return [defined?($abc), defined?($abd)]
+        """)
+        assert self.unwrap(space, w_res) == ["global-variable", None]
+        w_res = space.execute("""
+        class A
+            @@abc = 3
+            def m
+                return [defined?(@@abc), defined?(@@abd)]
+            end
+        end
+        return A.new.m
+        """)
+        assert self.unwrap(space, w_res) == ["class variable", None]
+        w_res = space.execute("""
+        def f
+            defined?(yield)
+        end
+
+        return [f, f(&:a)]
+        """)
+        assert self.unwrap(space, w_res) == [None, "yield"]
+        w_res = space.execute("""
+        class B
+            def a
+            end
+        end
+        class C < B
+            def a
+                defined?(super)
+            end
+            def b
+                defined?(super())
+            end
+        end
+        return [C.new.a, C.new.b]
+        """)
+        assert self.unwrap(space, w_res) == ["super", None]
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
@@ -1298,6 +1396,20 @@ class TestBlocks(BaseRuPyPyTest):
         return g
         """)
         assert space.int_w(w_res) == 15
+
+    def test_nested_block_return(self, space):
+        w_res = space.execute("""
+        def f
+            [1].each do |x|
+                [x].each do |y|
+                    return y
+                end
+            end
+            3
+        end
+        return f
+        """)
+        assert space.int_w(w_res) == 1
 
     def test_break_block(self, space):
         w_res = space.execute("""

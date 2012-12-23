@@ -260,7 +260,7 @@ class TestCompiler(object):
         self.assert_compiled(bc.consts_w[0], """
         LOAD_DEREF 0
         DUP_TOP
-        COERCE_ARRAY
+        COERCE_ARRAY 0
         UNPACK_SEQUENCE_SPLAT 3 1
 
         STORE_DEREF 1
@@ -319,7 +319,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         LOAD_CONST 2
         BUILD_ARRAY 2
-        COERCE_ARRAY
+        COERCE_ARRAY 1
         SEND 3 1
 
         RETURN
@@ -506,8 +506,8 @@ class TestCompiler(object):
         end
         """, """
         LOAD_SELF
-        SEND 0 0
-        LOAD_CONST 1
+        LOAD_SINGLETON_CLASS
+        LOAD_CONST 0
         EVALUATE_CLASS
 
         RETURN
@@ -611,7 +611,7 @@ class TestCompiler(object):
         YIELD 2
         DISCARD_TOP
         LOAD_DEREF 0
-        COERCE_ARRAY
+        COERCE_ARRAY 1
         YIELD_SPLAT
         RETURN
         """)
@@ -1285,14 +1285,14 @@ class TestCompiler(object):
         """, """
         LOAD_SELF
         LOAD_CONST 0
-        COERCE_ARRAY
+        COERCE_ARRAY 1
         LOAD_CONST 1
         BUILD_ARRAY 1
         LOAD_CONST 2
         BUILD_ARRAY 1
         LOAD_SELF
         SEND 3 0
-        COERCE_ARRAY
+        COERCE_ARRAY 1
         SEND 4 1
         SEND 4 1
         SEND 4 1
@@ -1308,7 +1308,7 @@ class TestCompiler(object):
         LOAD_SELF
         LOAD_SELF
         SEND 0 0
-        COERCE_ARRAY
+        COERCE_ARRAY 1
         LOAD_CONST 1
         BUILD_BLOCK 0
         SEND_BLOCK_SPLAT 2
@@ -1671,7 +1671,7 @@ class TestCompiler(object):
 
         LOAD_CONST 1
         DUP_TOP
-        COERCE_ARRAY
+        COERCE_ARRAY 0
         UNPACK_SEQUENCE 4
 
         LOAD_DEREF 3
@@ -1709,7 +1709,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         BUILD_ARRAY 3
         DUP_TOP
-        COERCE_ARRAY
+        COERCE_ARRAY 0
         UNPACK_SEQUENCE_SPLAT 3 1
 
         STORE_DEREF 0
@@ -1730,7 +1730,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_ARRAY 2
         DUP_TOP
-        COERCE_ARRAY
+        COERCE_ARRAY 0
         UNPACK_SEQUENCE_SPLAT 1 0
         DISCARD_TOP
 

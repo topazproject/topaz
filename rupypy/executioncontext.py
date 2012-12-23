@@ -10,10 +10,40 @@ class IntegerWrapper(object):
 
 
 class ExecutionContext(object):
+    _immutable_fields_ = ["w_trace_proc?"]
+
     def __init__(self):
         self.topframeref = jit.vref_None
         self.last_instr_ref = None
         self.regexp_match_cell = None
+        self.w_trace_proc = None
+        self.in_trace_proc = False
+
+    def settraceproc(self, w_proc):
+        self.w_trace_proc = w_proc
+
+    def gettraceproc(self):
+        return self.w_trace_proc
+
+    def hastraceproc(self):
+        return self.w_trace_proc is not None and not self.in_trace_proc
+
+    def invoke_trace_proc(self, space, event, scope_id, classname, frame=None):
+        if self.hastraceproc():
+            self.in_trace_proc = True
+            try:
+                if frame is None:
+                    frame = self.gettoprubyframe()
+                space.send(self.w_trace_proc, space.newsymbol("call"), [
+                    space.newstr_fromstr(event),
+                    space.newstr_fromstr(frame.bytecode.filepath),
+                    space.newint(frame.bytecode.lineno_table[frame.last_instr]),
+                    space.newstr_fromstr(scope_id) if scope_id is not None else space.w_nil,
+                    space.newbinding_fromframe(frame),
+                    space.newstr_fromstr(classname) if classname is not None else space.w_nil,
+                ])
+            finally:
+                self.in_trace_proc = False
 
     def enter(self, frame):
         frame.backref = self.topframeref

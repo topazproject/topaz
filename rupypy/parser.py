@@ -2473,7 +2473,10 @@ class Parser(object):
 
     @pg.production("dsym : SYMBEG xstring_contents STRING_END")
     def dsym(self, p):
-        node = p[1].getast()
+        box = p[1]
+        if box is None:
+            return BoxAST(ast.ConstantSymbol(""))
+        node = box.getast()
         if isinstance(node, ast.ConstantString):
             return BoxAST(ast.ConstantSymbol(node.strvalue))
         else:

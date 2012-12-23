@@ -32,9 +32,11 @@ BYTECODES = [
 
     ("LOAD_CLASS_VAR", 1, 0),
     ("STORE_CLASS_VAR", 1, -1),
+    ("DEFINED_CLASS_VAR", 1, 0),
 
     ("LOAD_GLOBAL", 1, +1),
     ("STORE_GLOBAL", 1, 0),
+    ("DEFINED_GLOBAL", 1, +1),
 
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
     ("BUILD_STRING", 1, ARRAY_EFFECT),
@@ -48,7 +50,7 @@ BYTECODES = [
     ("BUILD_REGEXP", 0, -1),
 
     ("COPY_STRING", 0, 0),
-    ("COERCE_ARRAY", 0, 0),
+    ("COERCE_ARRAY", 1, 0),
     ("COERCE_BLOCK", 0, 0),
     ("UNPACK_SEQUENCE", 1, UNPACK_EFFECT),
     ("UNPACK_SEQUENCE_SPLAT", 2, UNPACK_EFFECT),
@@ -56,6 +58,7 @@ BYTECODES = [
     ("DEFINE_FUNCTION", 0, -2),
     ("ATTACH_FUNCTION", 0, -2),
     ("EVALUATE_CLASS", 0, -1),
+    ("LOAD_SINGLETON_CLASS", 0, 0),
 
     ("SEND", 2, SEND_EFFECT),
     ("SEND_BLOCK", 2, SEND_EFFECT),
@@ -65,6 +68,7 @@ BYTECODES = [
 
     ("SEND_SUPER", 2, SEND_EFFECT),
     ("SEND_SUPER_SPLAT", 1, -1),
+    ("DEFINED_SUPER", 1, 0),
 
     ("SETUP_LOOP", 1, 0),
     ("SETUP_EXCEPT", 1, 0),
@@ -82,10 +86,12 @@ BYTECODES = [
     ("ROT_TWO", 0, 0),
     ("ROT_THREE", 0, 0),
 
-    ("RETURN", 0, -1),
-    ("RAISE_RETURN", 0, -1),
     ("YIELD", 1, ARRAY_EFFECT),
     ("YIELD_SPLAT", 0, 0),
+    ("DEFINED_YIELD", 0, +1),
+
+    ("RETURN", 0, -1),
+    ("RAISE_RETURN", 0, -1),
     ("CONTINUE_LOOP", 1, -1),
     ("BREAK_LOOP", 0, -1),
     ("RAISE_BREAK", 0, -1),

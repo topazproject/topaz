@@ -90,6 +90,7 @@ class CompilerContext(object):
         self.consts = []
         self.const_positions = {}
         self.current_lineno = -1
+        self.last_lineno = -1
 
         self.current_block = self.first_block = self.new_block()
         self.frame_blocks = []
@@ -225,6 +226,7 @@ class CompilerContext(object):
     def emit(self, opcode, arg0=-1, arg1=-1):
         instr = Instruction(opcode, arg0, arg1, self.current_lineno)
         self.current_block.instrs.append(instr)
+        self.last_lineno = self.current_lineno
 
     def emit_jump(self, opcode, target):
         instr = Instruction(opcode, 0, -1, self.current_lineno)

@@ -25,6 +25,7 @@ class Frame(BaseFrame):
         self.bytecode = bytecode
         self.localsstack_w = [None] * (len(bytecode.cellvars) + bytecode.max_stackdepth)
         self.stackpos = len(bytecode.cellvars)
+        self.last_instr = 0
         self.cells = [LocalCell() for _ in bytecode.cellvars] + [None] * len(bytecode.freevars)
         self.regexp_match_cell = regexp_match_cell
         self.w_self = w_self

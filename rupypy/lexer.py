@@ -372,6 +372,7 @@ class Lexer(object):
         self.add(ch)
         first_zero = ch == "0"
         is_hex = False
+        is_octal = False
         symbol = "INTEGER"
         while True:
             ch = self.read()
@@ -383,6 +384,11 @@ class Lexer(object):
                 if ch.upper() != "D":
                     self.add(ch.upper())
                 is_hex = ch.upper() == "X"
+                is_octal = ch.upper() == "O"
+            elif first_zero and ch.isdigit():
+                is_octal = True
+                self.add("O")
+                self.add(ch)
             elif ch == ".":
                 if not self.peek().isdigit():
                     yield self.emit(symbol)
@@ -391,6 +397,8 @@ class Lexer(object):
                 self.add(ch)
                 symbol = "FLOAT"
             elif ch.isdigit() or (is_hex and ch.upper() in "ABCDEF"):
+                if is_octal and ch > "7":
+                    self.error()
                 self.add(ch)
             elif ch == "_":
                 if not (self.peek().isdigit() or (is_hex and self.peek().upper() in "ABCDEF")):
