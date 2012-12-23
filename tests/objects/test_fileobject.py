@@ -1,5 +1,6 @@
 import os
 import stat
+import pytest
 
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 
@@ -178,6 +179,48 @@ class TestFile(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) is True
         w_res = space.execute("return File.directory?('%s')" % tmpdir.join("t.rb"))
         assert self.unwrap(space, w_res) is False
+
+    def test_open(self, space, tmpdir):
+        contents = "foo\nbar\nbaz\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+
+        w_res = space.execute("""
+        File.open('%s') { |f| return f, f.read }
+        """ % f)
+        w_file, w_string = space.listview(w_res)
+        assert space.str_w(w_string) == contents
+        with pytest.raises(OSError):
+            # fd should be inaccessible
+            os.fstat(w_file.fd)
+
+    def test_close(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("")
+        w_res = space.execute("""
+        f = File.new('%s')
+        f.close
+        return f
+        """ % f)
+        with pytest.raises(OSError):
+            # fd should be inaccessible
+            os.fstat(w_res.fd)
+
+    def test_closedp(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("")
+        w_res = space.execute("""
+        f = File.new('%s')
+        opened = f.closed?
+        f.close
+        return opened, f.closed?
+        """ % f)
+        assert self.unwrap(space, w_res) == [False, True]
+
+    def test_basename(self, space):
+        assert space.str_w(space.execute("return File.basename('ab')")) == "ab"
+        assert space.str_w(space.execute("return File.basename('/ab')")) == "ab"
+        assert space.str_w(space.execute("return File.basename('/foo/bar/ab')")) == "ab"
 
 
 class TestExpandPath(BaseRuPyPyTest):
