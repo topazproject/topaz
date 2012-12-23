@@ -838,7 +838,6 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ['A', 'A']
 
-    @pytest.mark.xfail
     def test_class_variable_access_has_static_scope(self, space):
         with self.raises(space, "NameError"):
             w_res = space.execute("""
@@ -850,7 +849,7 @@ class TestInterpreter(BaseRuPyPyTest):
             class B < A;
               @@foo = "b"
             end
-            bb = B.new.get
+            B.new.get
             """)
 
     def test_ancestors(self, space):

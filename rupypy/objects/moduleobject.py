@@ -6,6 +6,7 @@ from rupypy.celldict import CellDict, VersionTag
 from rupypy.module import ClassDef
 from rupypy.objects.functionobject import W_FunctionObject
 from rupypy.objects.objectobject import W_RootObject
+from rupypy.scope import StaticScope
 
 
 class AttributeReader(W_FunctionObject):
@@ -321,9 +322,9 @@ class W_ModuleObject(W_RootObject):
                 lineno = space.int_w(w_lineno)
             else:
                 lineno = 1
-            return space.execute(string, self, self, filename, lineno)
+            return space.execute(string, self, lexical_scope=StaticScope(self, None), filepath=filename, initial_lineno=lineno)
         else:
-            space.invoke_block(block.copy(w_self=self, w_scope=self), [])
+            space.invoke_block(block.copy(w_self=self, lexical_scope=StaticScope(self, None)), [])
 
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):

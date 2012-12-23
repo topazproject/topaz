@@ -1,4 +1,5 @@
 from rupypy.gateway import WrapperGenerator
+from rupypy.scope import StaticScope
 from rupypy.utils.cache import Cache
 
 
@@ -120,7 +121,11 @@ class ClassCache(Cache):
             w_class.define_method(self.space, name, W_BuiltinFunction(name, w_class, func))
 
         for source in classdef.app_methods:
-            self.space.execute(source, w_self=w_class, w_scope=w_class, filepath=classdef.filepath)
+            self.space.execute(source,
+                w_self=w_class,
+                lexical_scope=StaticScope(w_class, None),
+                filepath=classdef.filepath
+            )
 
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ClassObject).generate_wrapper()
@@ -145,7 +150,11 @@ class ModuleCache(Cache):
             func = WrapperGenerator(name, method, argspec, W_BaseObject).generate_wrapper()
             w_mod.define_method(self.space, name, W_BuiltinFunction(name, w_mod, func))
         for source in moduledef.app_methods:
-            self.space.execute(source, w_self=w_mod, w_scope=w_mod, filepath=moduledef.filepath)
+            self.space.execute(source,
+                w_self=w_mod,
+                lexical_scope=StaticScope(w_mod, None),
+                filepath=moduledef.filepath
+            )
         for name, (method, argspec) in moduledef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
             w_mod.attach_method(self.space, name, W_BuiltinFunction(name, w_mod, func))

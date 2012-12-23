@@ -234,10 +234,10 @@ class ObjectSpace(object):
             astnode.compile(ctx)
         return ctx.create_bytecode([], [], None, None)
 
-    def execute(self, source, w_self=None, w_scope=None, filepath="-e",
+    def execute(self, source, w_self=None, lexical_scope=None, filepath="-e",
                 initial_lineno=1):
         bc = self.compile(source, filepath, initial_lineno=initial_lineno)
-        frame = self.create_frame(bc, w_self=w_self, w_scope=w_scope)
+        frame = self.create_frame(bc, w_self=w_self, lexical_scope=lexical_scope)
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
@@ -248,16 +248,14 @@ class ObjectSpace(object):
             self._executioncontext = ExecutionContext()
         return self._executioncontext
 
-    def create_frame(self, bc, w_self=None, w_scope=None, lexical_scope=None,
-        block=None, parent_interp=None, regexp_match_cell=None):
+    def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
+                     parent_interp=None, regexp_match_cell=None):
 
         if w_self is None:
             w_self = self.w_top_self
-        if w_scope is None:
-            w_scope = self.w_object
         if regexp_match_cell is None:
             regexp_match_cell = ClosureCell(None)
-        return Frame(jit.promote(bc), w_self, w_scope, lexical_scope, block, parent_interp, regexp_match_cell)
+        return Frame(jit.promote(bc), w_self, lexical_scope, block, parent_interp, regexp_match_cell)
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -341,7 +339,7 @@ class ObjectSpace(object):
         cells = [None] * len(frame.cells)
         for i in xrange(len(frame.cells)):
             cells[i] = frame.cells[i].upgrade_to_closure(frame, i)
-        return W_BindingObject(self, names, cells, frame.w_self, frame.w_scope)
+        return W_BindingObject(self, names, cells, frame.w_self, frame.lexical_scope)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
@@ -474,9 +472,9 @@ class ObjectSpace(object):
     def invoke_block(self, block, args_w):
         bc = block.bytecode
         frame = self.create_frame(
-            bc, w_self=block.w_self, w_scope=block.w_scope,
-            lexical_scope=block.lexical_scope, block=block.block,
-            parent_interp=block.parent_interp, regexp_match_cell=block.regexp_match_cell,
+            bc, w_self=block.w_self, lexical_scope=block.lexical_scope,
+            block=block.block, parent_interp=block.parent_interp,
+            regexp_match_cell=block.regexp_match_cell,
         )
         if (len(args_w) == 1 and
             isinstance(args_w[0], W_ArrayObject) and len(bc.arg_pos) >= 2):

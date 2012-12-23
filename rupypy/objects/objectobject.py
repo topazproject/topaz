@@ -5,6 +5,7 @@ from pypy.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
 from rupypy.mapdict import MapTransitionCache
 from rupypy.module import ClassDef
+from rupypy.scope import StaticScope
 
 
 class ObjectMetaclass(type):
@@ -97,9 +98,9 @@ class W_BaseObject(W_Root):
                 lineno = space.int_w(w_lineno)
             else:
                 lineno = 1
-            return space.execute(string, self, space.getclass(self), filename, lineno)
+            return space.execute(string, self, StaticScope(space.getclass(self), None), filename, lineno)
         else:
-            return space.invoke_block(block.copy(w_self=self, w_scope=space.getclass(self)), [])
+            return space.invoke_block(block.copy(w_self=self), [])
 
 
 class W_RootObject(W_BaseObject):

@@ -27,6 +27,25 @@ class TestBaseObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["dummy", 123]
 
+    def test_instance_eval_scope(self, space):
+        w_res = space.execute("""
+        module M
+            C = proc {
+                class X
+                end
+                X
+            }
+        end
+
+        class T
+        end
+
+        t = T.new
+        return t.instance_eval(&M::C).name
+        """)
+        # TODO: this shoudl really be M::X
+        assert space.str_w(w_res) == "X"
+
     def test___id__(self, space):
         w_res = space.execute("return BasicObject.new.__id__")
         assert isinstance(w_res, W_FixnumObject)

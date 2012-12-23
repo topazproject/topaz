@@ -153,7 +153,10 @@ class Interpreter(object):
         frame.push(w_self)
 
     def LOAD_SCOPE(self, space, bytecode, frame, pc):
-        frame.push(jit.promote(frame.w_scope))
+        if frame.lexical_scope is not None:
+            frame.push(frame.lexical_scope.w_mod)
+        else:
+            frame.push(space.w_object)
 
     def LOAD_CODE(self, space, bytecode, frame, pc):
         frame.push(bytecode)
@@ -317,8 +320,8 @@ class Interpreter(object):
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
         block = W_BlockObject(
-            w_code, frame.w_self, frame.w_scope, frame.lexical_scope, cells,
-            frame.block, frame.parent_interp or self, frame.regexp_match_cell
+            w_code, frame.w_self, frame.lexical_scope, cells, frame.block,
+            frame.parent_interp or self, frame.regexp_match_cell
         )
         frame.push(block)
 
@@ -358,7 +361,7 @@ class Interpreter(object):
             raise space.error(space.w_TypeError, "%s is not a module" % name)
 
         assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_mod, w_mod, StaticScope(w_mod, frame.lexical_scope))
+        sub_frame = space.create_frame(w_bytecode, w_mod, StaticScope(w_mod, frame.lexical_scope))
         with space.getexecutioncontext().visit_frame(sub_frame):
             space.execute_frame(sub_frame, w_bytecode)
 
@@ -458,7 +461,7 @@ class Interpreter(object):
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
         space.getexecutioncontext().invoke_trace_proc(space, "class", None, None, frame=frame)
-        sub_frame = space.create_frame(w_bytecode, w_cls, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
+        sub_frame = space.create_frame(w_bytecode, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 
@@ -515,13 +518,13 @@ class Interpreter(object):
     def SEND_SUPER(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()
-        w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
     def SEND_SUPER_SPLAT(self, space, bytecode, frame, pc, meth_idx):
         args_w = space.listview(frame.pop())
         w_receiver = frame.pop()
-        w_res = space.send_super(frame.w_scope, w_receiver, bytecode.consts_w[meth_idx], args_w)
+        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
     def DEFINED_SUPER(self, space, bytecode, frame, pc, meth_idx):

@@ -36,7 +36,6 @@ class W_UserFunction(W_FunctionObject):
         frame = space.create_frame(
             self.bytecode,
             w_self=w_receiver,
-            w_scope=space.getscope(w_receiver),
             lexical_scope=self.lexical_scope,
             block=block,
         )
