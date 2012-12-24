@@ -48,7 +48,7 @@ class W_ExceptionObject(W_Object):
 
     @classdef.method("message")
     def method_message(self, space):
-        return space.newstr_fromstr(self.msg)
+        return space.send(self, space.newsymbol("to_s"))
 
     @classdef.method("backtrace")
     def method_backtrace(self, space):

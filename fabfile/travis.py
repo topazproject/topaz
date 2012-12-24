@@ -102,6 +102,8 @@ def run_specs(binary, prefix=""):
 
         "core/comparable/between_spec.rb",
 
+        "core/exception/message_spec.rb",
+
         "core/false/and_spec.rb",
         "core/false/inspect_spec.rb",
         "core/false/or_spec.rb",
