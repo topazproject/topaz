@@ -258,11 +258,11 @@ class W_ArrayObject(W_Object):
                 return space.newarray(res_w)
 
     classdef.app_method("""
-    def delete(obj)
+    def delete(obj, &block)
         sz = self.size
         self.delete_if { |o| o == obj }
         return obj if sz != self.size
-        return yield if block_given?
+        return yield if block
         return nil
     end
     """)

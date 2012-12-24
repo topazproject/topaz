@@ -301,9 +301,9 @@ class W_FileObject(W_IOObject):
         return space.newstr_fromstr(filename[i:])
 
     classdef.app_method("""
-    def self.open(filename, mode="r", perm=nil, opt=nil)
+    def self.open(filename, mode="r", perm=nil, opt=nil, &block)
         f = self.new filename, mode, perm, opt
-        return f unless block_given?
+        return f unless block
         begin
             return yield f
         ensure
