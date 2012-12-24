@@ -668,16 +668,18 @@ class Return(Exception):
         self.w_value = w_value
 
 
-class RaiseReturn(Exception):
+class RaiseFlow(Exception):
     def __init__(self, parent_interp, w_value):
         self.parent_interp = parent_interp
         self.w_value = w_value
 
 
-class RaiseBreak(Exception):
-    def __init__(self, parent_interp, w_value):
-        self.parent_interp = parent_interp
-        self.w_value = w_value
+class RaiseReturn(RaiseFlow):
+    pass
+
+
+class RaiseBreak(RaiseFlow):
+    pass
 
 
 class SuspendedUnroller(W_Root):

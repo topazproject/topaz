@@ -13,7 +13,20 @@ class W_ProcObject(W_Object):
     @classdef.method("[]")
     @classdef.method("call")
     def method_call(self, space, args_w):
-        return space.invoke_block(self.block, args_w)
+        from rupypy.interpreter import RaiseReturn, RaiseBreak
+
+        try:
+            return space.invoke_block(self.block, args_w)
+        except RaiseReturn as e:
+            if self.is_lambda:
+                return e.w_value
+            else:
+                raise
+        except RaiseBreak as e:
+            if self.is_lambda:
+                return e.w_value
+            else:
+                raise space.error(space.w_LocalJumpError, "break from proc-closure")
 
     @classdef.method("lambda?")
     def method_lambda(self, space):
