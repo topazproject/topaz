@@ -181,3 +181,18 @@ class W_StopIteration(W_IndexError):
 class W_LocalJumpError(W_StandardError):
     classdef = ClassDef("LocalJumpError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
+
+
+class W_IOError(W_StandardError):
+    classdef = ClassDef("IOError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
+class W_RegexpError(W_StandardError):
+    classdef = ClassDef("RegexpError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
+class W_ThreadError(W_StandardError):
+    classdef = ClassDef("ThreadError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)

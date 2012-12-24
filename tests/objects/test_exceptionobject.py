@@ -12,6 +12,10 @@ class TestExceptionObject(BaseRuPyPyTest):
         NameError
         StandardError
         LocalJumpError
+        IOError
+        IndexError
+        RegexpError
+        ThreadError
         """)
 
     def test_new(self, space):

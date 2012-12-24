@@ -39,7 +39,8 @@ from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_StopIteration,
-    W_NotImplementedError, W_RangeError, W_LocalJumpError)
+    W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
+    W_RegexpError, W_ThreadError)
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
 from rupypy.objects.functionobject import W_UserFunction
@@ -47,7 +48,6 @@ from rupypy.objects.hashobject import W_HashObject, W_HashIterator
 from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.intobject import W_FixnumObject
 from rupypy.objects.methodobject import W_MethodObject, W_UnboundMethodObject
-from rupypy.objects.integerobject import W_IntegerObject
 from rupypy.objects.moduleobject import W_ModuleObject
 from rupypy.objects.nilobject import W_NilObject
 from rupypy.objects.numericobject import W_NumericObject
@@ -135,7 +135,7 @@ class ObjectSpace(object):
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
             self.w_RuntimeError, self.w_SystemCallError, self.w_LoadError,
             self.w_StopIteration, self.w_SyntaxError, self.w_NameError,
-            self.w_StandardError, self.w_LocalJumpError,
+            self.w_StandardError, self.w_LocalJumpError, self.w_IndexError,
 
             self.w_kernel, self.w_topaz,
 
@@ -156,6 +156,9 @@ class ObjectSpace(object):
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
+            self.getclassfor(W_IOError),
+            self.getclassfor(W_RegexpError),
+            self.getclassfor(W_ThreadError),
 
             self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),
