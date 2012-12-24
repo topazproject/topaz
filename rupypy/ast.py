@@ -131,11 +131,11 @@ class Next(BaseStatement):
 
     def compile(self, ctx):
         self.expr.compile(ctx)
-        if isinstance(ctx.symtable, BlockSymbolTable):
-            ctx.emit(consts.RETURN)
-        elif ctx.in_frame_block(ctx.F_BLOCK_LOOP):
+        if ctx.in_frame_block(ctx.F_BLOCK_LOOP):
             block = ctx.find_frame_block(ctx.F_BLOCK_LOOP)
             ctx.emit_jump(consts.CONTINUE_LOOP, block)
+        elif isinstance(ctx.symtable, BlockSymbolTable):
+            ctx.emit(consts.RETURN)
         else:
             raise NotImplementedError
 

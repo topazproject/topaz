@@ -1096,6 +1096,22 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3]
 
+    def test_next_loop_block(self, space):
+        w_res = space.execute("""
+        a = []
+        2.times {
+            i = 0
+            while i < 3
+                i += 1
+                a << i
+                next
+                raise "abc"
+            end
+        }
+        return a
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 1, 2, 3]
+
     def test_break_loop(self, space):
         w_res = space.execute("""
         res = []
