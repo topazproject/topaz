@@ -9,6 +9,12 @@ class TestClassObject(object):
         w_res = space.execute("return 1.class.class.to_s")
         assert space.str_w(w_res) == "Class"
 
+    def test_class_new(self, space):
+        w_res = space.execute("return Class.new.superclass.name")
+        assert space.str_w(w_res) == "Object"
+        w_res = space.execute("return Class.new(String).superclass.name")
+        assert space.str_w(w_res) == "String"
+
     def test_new(self, space):
         w_res = space.execute("""
         class X

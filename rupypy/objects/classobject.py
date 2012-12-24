@@ -65,6 +65,18 @@ class W_ClassObject(W_ModuleObject):
             ary += self.superclass.ancestors(include_singleton)
         return ary
 
+    @classdef.singleton_method("allocate")
+    def singleton_method_allocate(self, space, w_superclass=None):
+        if w_superclass is not None:
+            assert isinstance(w_superclass, W_ClassObject)
+        else:
+            w_superclass = space.w_object
+        return space.newclass("", w_superclass)
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, args_w):
+        pass
+
     @classdef.method("new")
     def method_new(self, space, args_w, block):
         w_obj = space.send(self, space.newsymbol("allocate"), args_w, block)

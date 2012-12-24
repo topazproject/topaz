@@ -98,6 +98,8 @@ def run_specs(binary, prefix=""):
         "core/basicobject/new_spec.rb",
         "core/basicobject/superclass_spec.rb",
 
+        "core/class/superclass_spec.rb",
+
         "core/comparable/between_spec.rb",
 
         "core/false/and_spec.rb",
