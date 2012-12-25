@@ -1847,6 +1847,17 @@ class TestCompiler(object):
         RETURN
         """)
 
+        self.assert_compiles(space, """
+        super { 3 }
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        SEND_SUPER_BLOCK 1 1
+
+        RETURN
+        """)
+
     def test_next_block(self, space):
         bc = self.assert_compiles(space, """
         f {

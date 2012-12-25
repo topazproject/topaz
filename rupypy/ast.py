@@ -821,12 +821,23 @@ class BlockArgument(Node):
 
 
 class AutoSuper(Node):
+    def __init__(self, block, lineno):
+        Node.__init__(self, lineno)
+        self.block = block
+
     def compile(self, ctx):
         ctx.emit(consts.LOAD_SELF)
         for name in ctx.symtable.arguments:
             ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(name))
+        if self.block is not None:
+            self.block.compile(ctx)
 
-        ctx.emit(consts.SEND_SUPER, self.method_name_const(ctx), len(ctx.symtable.arguments))
+        symbol = self.method_name_const(ctx)
+        num_args = len(ctx.symtable.arguments)
+        if self.block is not None:
+            ctx.emit(consts.SEND_SUPER_BLOCK, symbol, num_args + 1)
+        else:
+            ctx.emit(consts.SEND_SUPER, symbol, num_args)
 
     def compile_defined(self, ctx):
         ctx.emit(consts.LOAD_SELF)

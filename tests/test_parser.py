@@ -2310,7 +2310,7 @@ HERE
 
     def test_super(self, space):
         assert space.parse("super") == ast.Main(ast.Block([
-            ast.Statement(ast.AutoSuper(1))
+            ast.Statement(ast.AutoSuper(None, 1))
         ]))
         assert space.parse("super(nil)") == ast.Main(ast.Block([
             ast.Statement(ast.Super([ast.Nil()], None, 1))

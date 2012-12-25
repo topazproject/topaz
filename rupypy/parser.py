@@ -137,8 +137,11 @@ class Parser(object):
         return BoxAST(ast.SendBlock(args, splat, block))
 
     def combine_send_block(self, send_box, block_box):
-        send = send_box.getast(ast.BaseSend)
+        send = send_box.getast()
         block = block_box.getast()
+        if isinstance(send, ast.AutoSuper):
+            return BoxAST(ast.AutoSuper(block, send.lineno))
+        assert isinstance(send, ast.BaseSend)
         if send.block_arg is not None:
             raise self.error("Both block arg and actual block given.")
         if isinstance(send, ast.Send):
@@ -2196,7 +2199,7 @@ class Parser(object):
 
     @pg.production("method_call : SUPER")
     def method_call_super(self, p):
-        return BoxAST(ast.AutoSuper(p[0].getsourcepos().lineno))
+        return BoxAST(ast.AutoSuper(None, p[0].getsourcepos().lineno))
 
     @pg.production("method_call : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def method_call_primary_value_lbracket_opt_call_args_rbracket(self, p):
