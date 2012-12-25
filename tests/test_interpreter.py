@@ -1108,6 +1108,16 @@ class TestInterpreter(BaseRuPyPyTest):
         return C.new.f
         """)
         assert space.int_w(w_res) == 14
+        w_res = space.execute("""
+        class D < A
+            def f a
+                super
+            end
+        end
+
+        return D.new.f(3) { 12 }
+        """)
+        assert space.int_w(w_res) == 15
 
     def test_next_loop(self, space):
         w_res = space.execute("""

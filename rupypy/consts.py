@@ -12,6 +12,7 @@ UNPACK_EFFECT = 0xFC
 BYTECODES = [
     ("LOAD_SELF", 0, +1),
     ("LOAD_SCOPE", 0, +1),
+    ("LOAD_BLOCK", 0, +1),
     ("LOAD_CODE", 0, +1),
     ("LOAD_CONST", 1, +1),
 
@@ -66,7 +67,6 @@ BYTECODES = [
     ("SEND_BLOCK_SPLAT", 1, -2),
     ("DEFINED_METHOD", 1, 0),
 
-    ("SEND_SUPER", 2, SEND_EFFECT),
     ("SEND_SUPER_BLOCK", 2, SEND_EFFECT),
     ("SEND_SUPER_SPLAT", 1, -1),
     ("SEND_SUPER_BLOCK_SPLAT", 1, -2),

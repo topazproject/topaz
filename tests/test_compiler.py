@@ -1782,7 +1782,8 @@ class TestCompiler(object):
         super
         """, """
         LOAD_SELF
-        SEND_SUPER 0 0
+        LOAD_BLOCK
+        SEND_SUPER_BLOCK 0 1
 
         RETURN
         """)
@@ -1807,7 +1808,8 @@ class TestCompiler(object):
         LOAD_DEREF 0
         LOAD_DEREF 1
         LOAD_DEREF 2
-        SEND_SUPER 0 3
+        LOAD_BLOCK
+        SEND_SUPER_BLOCK 0 4
         RETURN
         """)
         assert space.str_w(bc.consts_w[1].consts_w[0]) == "f"
@@ -1819,7 +1821,8 @@ class TestCompiler(object):
         LOAD_CONST 0
         LOAD_CONST 1
         LOAD_CONST 2
-        SEND_SUPER 3 3
+        LOAD_BLOCK
+        SEND_SUPER_BLOCK 3 4
 
         RETURN
         """)
