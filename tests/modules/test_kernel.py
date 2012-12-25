@@ -272,6 +272,19 @@ class TestRequire(BaseRuPyPyTest):
         """)
         assert space.float_w(w_res) == 1.1
 
+    def test_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        loop {
+            i += 1
+            res << i
+            break if i == 3
+        }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+
 
 class TestExec(BaseRuPyPyTest):
     def fork_and_wait(self, space, capfd, code):

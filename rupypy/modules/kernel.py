@@ -263,6 +263,15 @@ class Kernel(Module):
         else:
             return space.convert_type(w_arg, space.w_float, "to_f")
 
+    moduledef.app_method("""
+    def loop
+        while true
+            yield
+        end
+        return nil
+    end
+    """)
+
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")
     def method_is_kind_ofp(self, space, w_mod):
