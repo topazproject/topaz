@@ -1447,6 +1447,30 @@ class TestBlocks(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 3]
 
+    def test_break_nested_block(self, space):
+        w_res = space.execute("""
+        def f
+            yield
+        end
+
+        return f {
+            a = []
+            3.times do |i|
+                begin
+                    a << :begin
+                    next if i == 0
+                    break if i == 2
+                    a << :begin_end
+                ensure
+                    a << :ensure
+                end
+                a << :after
+            end
+            a
+        }
+        """)
+        assert self.unwrap(space, w_res) == ["begin", "ensure", "begin", "begin_end", "ensure", "after", "begin", "ensure"]
+
     def test_break_block_frame_exited(self, space):
         w_res = space.execute("""
         def create_block

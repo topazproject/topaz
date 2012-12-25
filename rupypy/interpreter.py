@@ -66,6 +66,8 @@ class Interpreter(object):
                         pc = self.handle_raise_break(space, pc, frame, bytecode, e)
             except RaiseReturn as e:
                 if e.parent_interp is self:
+                    if frame.parent_interp:
+                        raise RaiseReturn(frame.parent_interp, e.w_value)
                     return e.w_value
                 raise
             except Return as e:
@@ -321,7 +323,7 @@ class Interpreter(object):
         assert isinstance(w_code, W_CodeObject)
         block = W_BlockObject(
             w_code, frame.w_self, frame.lexical_scope, cells, frame.block,
-            frame.parent_interp or self, frame.regexp_match_cell
+            self, frame.regexp_match_cell
         )
         frame.push(block)
 
