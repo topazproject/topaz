@@ -155,6 +155,8 @@ class Parser(object):
                 block,
                 send.lineno,
             )
+        else:
+            raise SystemError
         return BoxAST(node)
 
     def _array_or_node(self, box):
