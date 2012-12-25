@@ -137,17 +137,25 @@ class Parser(object):
         return BoxAST(ast.SendBlock(args, splat, block))
 
     def combine_send_block(self, send_box, block_box):
-        send = send_box.getast(ast.Send)
+        send = send_box.getast(ast.BaseSend)
         block = block_box.getast()
         if send.block_arg is not None:
             raise self.error("Both block arg and actual block given.")
-        return BoxAST(ast.Send(
-            send.receiver,
-            send.method,
-            send.args,
-            block,
-            send.lineno
-        ))
+        if isinstance(send, ast.Send):
+            node = ast.Send(
+                send.receiver,
+                send.method,
+                send.args,
+                block,
+                send.lineno
+            )
+        elif isinstance(send, ast.Super):
+            node = ast.Super(
+                send.args,
+                block,
+                send.lineno,
+            )
+        return BoxAST(node)
 
     def _array_or_node(self, box):
         args = box.getcallargs()

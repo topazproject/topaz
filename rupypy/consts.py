@@ -67,7 +67,9 @@ BYTECODES = [
     ("DEFINED_METHOD", 1, 0),
 
     ("SEND_SUPER", 2, SEND_EFFECT),
+    ("SEND_SUPER_BLOCK", 2, SEND_EFFECT),
     ("SEND_SUPER_SPLAT", 1, -1),
+    ("SEND_SUPER_BLOCK_SPLAT", 1, -2),
     ("DEFINED_SUPER", 1, 0),
 
     ("SETUP_LOOP", 1, 0),

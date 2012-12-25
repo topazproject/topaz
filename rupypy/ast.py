@@ -734,7 +734,9 @@ class Send(BaseSend):
 
 class Super(BaseSend):
     send = consts.SEND_SUPER
+    send_block = consts.SEND_SUPER_BLOCK
     send_splat = consts.SEND_SUPER_SPLAT
+    send_block_splat = consts.SEND_SUPER_BLOCK_SPLAT
     defined = consts.DEFINED_SUPER
 
     def __init__(self, args, block_arg, lineno):

@@ -1081,6 +1081,34 @@ class TestInterpreter(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 2]
 
+    def test_super_block(self, space):
+        w_res = space.execute("""
+        class A
+            def f a
+                a + yield
+            end
+        end
+
+        class B < A
+            def f
+                super(2) { 5 }
+            end
+        end
+
+        return B.new.f
+        """)
+        assert space.int_w(w_res) == 7
+        w_res = space.execute("""
+        class C < A
+            def f
+                super(*[2]) { 12 }
+            end
+        end
+
+        return C.new.f
+        """)
+        assert space.int_w(w_res) == 14
+
     def test_next_loop(self, space):
         w_res = space.execute("""
         res = []
