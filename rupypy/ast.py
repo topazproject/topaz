@@ -831,34 +831,6 @@ class LoadBlock(BaseNode):
         ctx.emit(consts.LOAD_BLOCK)
 
 
-class AutoSuper(Node):
-    def __init__(self, block, lineno):
-        Node.__init__(self, lineno)
-        self.block = block
-
-    def compile(self, ctx):
-        ctx.emit(consts.LOAD_SELF)
-        for name in ctx.symtable.arguments:
-            ctx.emit(consts.LOAD_DEREF, ctx.symtable.get_cell_num(name))
-        block = self.block or LoadBlock()
-        block.compile(ctx)
-
-        symbol = self.method_name_const(ctx)
-        num_args = len(ctx.symtable.arguments)
-        ctx.emit(consts.SEND_SUPER_BLOCK, symbol, num_args + 1)
-
-    def compile_defined(self, ctx):
-        ctx.emit(consts.LOAD_SELF)
-        ctx.emit(consts.DEFINED_SUPER, self.method_name_const(ctx))
-
-    def method_name_const(self, ctx):
-        if ctx.code_name == "<main>":
-            name = ctx.create_const(ctx.space.w_nil)
-        else:
-            name = ctx.create_symbol_const(ctx.code_name)
-        return name
-
-
 class Subscript(Node):
     def __init__(self, target, args, lineno):
         Node.__init__(self, lineno)

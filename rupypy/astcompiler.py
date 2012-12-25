@@ -6,6 +6,10 @@ class BaseSymbolTable(object):
     FREEVAR = 0
     CELLVAR = 1
 
+    NORMAL_ARG = 0
+    SPLAT_ARG = 1
+    BLOCK_ARG = 2
+
     def __init__(self, parent_symtable=None):
         self.parent_symtable = parent_symtable
         self.subscopes = {}
@@ -20,8 +24,8 @@ class BaseSymbolTable(object):
     def get_subscope(self, node):
         return self.subscopes[node]
 
-    def declare_argument(self, name):
-        self.arguments.append(name)
+    def declare_argument(self, name, tp=NORMAL_ARG):
+        self.arguments.append((name, tp))
         self.declare_local(name)
 
     def declare_local(self, name):
