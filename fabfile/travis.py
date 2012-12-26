@@ -92,6 +92,8 @@ def run_specs(binary, prefix=""):
 
         "core/array/array_spec.rb",
         "core/array/empty_spec.rb",
+        "core/array/length_spec.rb",
+        "core/array/size_spec.rb",
 
         "core/basicobject/ancestors_spec.rb",
         "core/basicobject/class_spec.rb",
@@ -119,6 +121,8 @@ def run_specs(binary, prefix=""):
         "core/fixnum/zero_spec.rb",
 
         "core/hash/empty_spec.rb",
+        "core/hash/length_spec.rb",
+        "core/hash/size_spec.rb",
 
         "core/nil/and_spec.rb",
         "core/nil/inspect_spec.rb",
