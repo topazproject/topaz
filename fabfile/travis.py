@@ -90,6 +90,7 @@ def run_specs(binary, prefix=""):
         "language/regexp/grouping_spec.rb",
         "language/regexp/repetition_spec.rb",
 
+        "core/array/allocate_spec.rb",
         "core/array/array_spec.rb",
         "core/array/empty_spec.rb",
         "core/array/length_spec.rb",
