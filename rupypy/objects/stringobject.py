@@ -82,8 +82,8 @@ class ConstantStringStrategy(StringStrategy):
     def hash(self, storage):
         return compute_hash(self.unerase(storage))
 
-    def copy(self, space, storage):
-        return W_StringObject(space, storage, self)
+    def copy(self, storage):
+        return storage
 
     def to_mutable(self, space, s):
         s.strategy = strategy = space.fromcache(MutableStringStrategy)
@@ -127,8 +127,8 @@ class MutableStringStrategy(StringStrategy):
         x ^= length
         return intmask(x)
 
-    def copy(self, space, storage):
-        return W_StringObject(space, storage, self)
+    def copy(self, storage):
+        return self.erase(self.unerase(storage)[:])
 
     def to_mutable(self, space, s):
         pass
@@ -204,7 +204,7 @@ class W_StringObject(W_Object):
         return self.strategy.length(self.str_storage)
 
     def copy(self, space):
-        return self.strategy.copy(space, self.str_storage)
+        return W_StringObject(space, self.strategy.copy(self.str_storage), self.strategy)
 
     def replace(self, space, chars):
         strategy = space.fromcache(MutableStringStrategy)
@@ -251,6 +251,17 @@ class W_StringObject(W_Object):
                 new_string.append(repl)
 
         return new_string if change_made else None
+
+    @classdef.singleton_method("allocate")
+    def singleton_method_allocate(self, space):
+        return space.newstr_fromstr("")
+
+    @classdef.method("initialize_copy")
+    def method_initialize_copy(self, space, w_other):
+        assert isinstance(w_other, W_StringObject)
+        self.strategy = w_other.strategy
+        self.str_storage = w_other.strategy.copy(w_other.str_storage)
+        return self
 
     @classdef.method("to_str")
     @classdef.method("to_s")
@@ -336,10 +347,6 @@ class W_StringObject(W_Object):
     @classdef.method("freeze")
     def method_freeze(self, space):
         pass
-
-    @classdef.method("dup")
-    def method_dup(self, space):
-        return self.copy(space)
 
     @classdef.method("to_sym")
     @classdef.method("intern")

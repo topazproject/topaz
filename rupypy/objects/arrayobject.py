@@ -22,6 +22,17 @@ class W_ArrayObject(W_Object):
     def listview(self, space):
         return self.items_w
 
+    @classdef.singleton_method("allocate")
+    def singleton_method_allocate(self, space):
+        return space.newarray([])
+
+    @classdef.method("initialize_copy")
+    def method_initialize_copy(self, space, w_other):
+        assert isinstance(w_other, W_ArrayObject)
+        del self.items_w[:]
+        self.items_w.extend(w_other.items_w)
+        return self
+
     classdef.app_method("""
     def to_s()
         result = "["
@@ -171,10 +182,6 @@ class W_ArrayObject(W_Object):
             space.str_w(space.send(w_o, space.newsymbol("to_s")))
             for w_o in self.items_w
         ]))
-
-    @classdef.method("dup")
-    def method_dup(self, space):
-        return space.newarray(self.items_w[:])
 
     classdef.app_method("""
     def at idx

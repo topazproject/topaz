@@ -203,3 +203,7 @@ class W_Object(W_RootObject):
         if idx == -1:
             idx = self.map.add_attr(space, self, name)
         self.storage[idx] = w_value
+
+    def copy_instance_vars(self, space, w_other):
+        assert isinstance(w_other, W_Object)
+        w_other.map.copy_attrs(space, w_other, self)

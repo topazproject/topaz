@@ -60,6 +60,9 @@ class ClassNode(BaseNode):
         w_obj.storage = []
         return BaseNode.add_attr(self, space, w_obj, name)
 
+    def copy_attrs(self, space, w_obj, w_target):
+        pass
+
 
 class AttributeNode(BaseNode):
     _immutable_fields_ = ["prev", "name", "pos"]
@@ -90,3 +93,7 @@ class AttributeNode(BaseNode):
     def change_class(self, space, w_cls):
         prev = self.prev.change_class(space, w_cls)
         return space.fromcache(MapTransitionCache).transition_add_attr(prev, self.name, self.pos)
+
+    def copy_attrs(self, space, w_obj, w_target):
+        self.prev.copy_attrs(space, w_obj, w_target)
+        w_target.set_instance_var(space, self.name, w_obj.storage[self.pos])
