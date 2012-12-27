@@ -64,19 +64,27 @@ class TestDir(BaseRuPyPyTest):
         Dir.chdir('%s')
         return Dir['*']
         """ % str(tmpdir))
-        assert self.unwrap(space, w_res) == ["sub1", "sub2"]
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1", "sub2"]
         w_res = space.execute("""
         Dir.chdir('%s')
         return Dir['**/*']
         """ % str(tmpdir))
-        assert self.unwrap(space, w_res) == ["sub1/sub1content1", "sub1/sub1content2", "sub2/sub2content1", "sub2/sub2content2", "sub1", "sub2"]
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1/sub1content1", "sub1/sub1content2", "sub2/sub2content1", "sub2/sub2content2", "sub1", "sub2"]
         w_res = space.execute("""
         Dir.chdir('%s')
         return Dir['**/*{1con}*']
         """ % str(tmpdir))
-        assert self.unwrap(space, w_res) == ["sub1/sub1content1", "sub1/sub1content2"]
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1/sub1content1", "sub1/sub1content2"]
         w_res = space.execute("""
         Dir.chdir('%s')
         return Dir['**/sub[1]content[12]']
         """ % str(tmpdir))
-        assert self.unwrap(space, w_res) == ["sub1/sub1content1", "sub1/sub1content2"]
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1/sub1content1", "sub1/sub1content2"]
