@@ -330,6 +330,34 @@ class TestArrayObject(BaseRuPyPyTest):
         w_res = space.execute("return {[1, 2, 3] => 5}[[1, 2]]")
         assert w_res is space.w_nil
 
+    def test_sort(self, space):
+        w_res = space.execute("""
+        a = [3, 2, 1]
+        b = a.sort
+        return a.object_id == b.object_id, a, b
+        """)
+        assert self.unwrap(space, w_res) == [False, [3, 2, 1], [1, 2, 3]]
+        w_res = space.execute("""
+        a = [3, 2, 1]
+        b = a.sort!
+        return a.object_id == b.object_id, a, b
+        """)
+        assert self.unwrap(space, w_res) == [True, [1, 2, 3], [1, 2, 3]]
+        w_res = space.execute("""
+        a = [1, 2, 3]
+        b = a.sort { |a, b| -a <=> -b }
+        return a.object_id == b.object_id, a, b
+        """)
+        assert self.unwrap(space, w_res) == [False, [1, 2, 3], [3, 2, 1]]
+        w_res = space.execute("""
+        a = [1, 2, 3]
+        b = a.sort! { |a, b| -a <=> -b }
+        return a.object_id == b.object_id, a, b
+        """)
+        assert self.unwrap(space, w_res) == [True, [3, 2, 1], [3, 2, 1]]
+        with self.raises(space, "ArgumentError", "comparison of Array with Object failed"):
+            space.execute("[Object.new, []].sort")
+
 
 class TestArrayPack(BaseRuPyPyTest):
     def test_garbage_format(self, space):
