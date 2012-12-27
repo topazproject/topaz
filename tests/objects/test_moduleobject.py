@@ -159,6 +159,21 @@ class TestModuleObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [1, 2]
 
+    def test_attr_writer(self, space):
+        w_res = space.execute("""
+        class X
+          attr_writer :foo, :bar
+          def ivars
+            return @foo, @bar
+          end
+        end
+        x = X.new
+        x.foo = 1
+        x.bar = 2
+        return x.ivars
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
+
     def test_attr(self, space):
         space.execute("""
         class X
