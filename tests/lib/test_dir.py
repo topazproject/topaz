@@ -52,3 +52,31 @@ class TestDir(BaseRuPyPyTest):
         """)
 
         assert space.str_w(w_res) == os.path.realpath(str(tmpdir))
+
+    def test_glob(self, space, tmpdir):
+        sub1 = tmpdir.mkdir("sub1")
+        sub2 = tmpdir.mkdir("sub2")
+        sub1.join("sub1content1").write("")
+        sub1.join("sub1content2").write("")
+        sub2.join("sub2content1").write("")
+        sub2.join("sub2content2").write("")
+        w_res = space.execute("""
+        Dir.chdir('%s')
+        return Dir['*']
+        """ % str(tmpdir))
+        assert self.unwrap(space, w_res) == ["sub1", "sub2"]
+        w_res = space.execute("""
+        Dir.chdir('%s')
+        return Dir['**/*']
+        """ % str(tmpdir))
+        assert self.unwrap(space, w_res) == ["sub1/sub1content1", "sub1/sub1content2", "sub2/sub2content1", "sub2/sub2content2", "sub1", "sub2"]
+        w_res = space.execute("""
+        Dir.chdir('%s')
+        return Dir['**/*{1con}*']
+        """ % str(tmpdir))
+        assert self.unwrap(space, w_res) == ["sub1/sub1content1", "sub1/sub1content2"]
+        w_res = space.execute("""
+        Dir.chdir('%s')
+        return Dir['**/sub[1]content[12]']
+        """ % str(tmpdir))
+        assert self.unwrap(space, w_res) == ["sub1/sub1content1", "sub1/sub1content2"]
