@@ -553,4 +553,4 @@ class W_StringObject(W_Object):
 
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
-        return space.newbool(space.str_w(self).find(substr) >= 0)
+        return space.newbool(substr in space.str_w(self))
