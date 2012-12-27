@@ -70,5 +70,8 @@ class W_Dir(W_Object):
             self.dirp = dirp
         filename, errno = readdir(self.dirp)
         if not filename:
-            raise space.error(space.w_SystemCallError, "readdir failed", [space.newint(errno)])
+            if errno == 0:
+                return space.w_nil
+            else:
+                raise space.error(space.w_SystemCallError, "readdir failed", [space.newint(errno)])
         return space.newstr_fromstr(filename)
