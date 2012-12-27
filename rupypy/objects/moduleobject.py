@@ -237,15 +237,19 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("attr_accessor")
     def method_attr_accessor(self, space, args_w):
         self.method_attr_reader(space, args_w)
-        for w_arg in args_w:
-            varname = space.symbol_w(w_arg)
-            self.define_method(space, varname + "=", AttributeWriter("@" + varname))
+        self.method_attr_writer(space, args_w)
 
     @classdef.method("attr_reader")
     def method_attr_reader(self, space, args_w):
         for w_arg in args_w:
             varname = space.symbol_w(w_arg)
             self.define_method(space, varname, AttributeReader("@" + varname))
+
+    @classdef.method("attr_writer")
+    def method_attr_writer(self, space, args_w):
+        for w_arg in args_w:
+            varname = space.symbol_w(w_arg)
+            self.define_method(space, varname + "=", AttributeWriter("@" + varname))
 
     @classdef.method("attr")
     def method_attr(self, space, args_w):
