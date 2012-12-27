@@ -1,9 +1,31 @@
 import copy
 
+from pypy.rlib.listsort import TimSort
+
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
 from rupypy.utils.packing.pack import RPacker
+
+
+class RubySorter(TimSort):
+    def __init__(self, space, list, listlength=None, sortblock=None):
+        TimSort.__init__(self, list, listlength=listlength)
+        self.space = space
+        self.sortblock = sortblock
+
+    def lt(self, a, b):
+        if self.sortblock is None:
+            w_cmp_res = self.space.send(a, self.space.newsymbol("<=>"), [b])
+        else:
+            w_cmp_res = self.space.invoke_block(self.sortblock, [a, b])
+        if w_cmp_res is self.space.w_nil:
+            raise self.space.error(
+                self.space.w_ArgumentError,
+                "comparison of %s with %s failed" % (self.space.getclass(a).name, self.space.getclass(b).name)
+            )
+        else:
+            return self.space.int_w(w_cmp_res) < 0
 
 
 class W_ArrayObject(W_Object):
@@ -308,7 +330,16 @@ class W_ArrayObject(W_Object):
         del self.items_w[:]
         return self
 
+    @classdef.method("sort!")
+    def method_sort(self, space, block):
+        RubySorter(space, self.items_w, sortblock=block).sort()
+        return self
+
     classdef.app_method("""
+    def sort(&block)
+        dup.sort!(&block)
+    end
+
     def ==(other)
         if self.equal?(other)
             return true

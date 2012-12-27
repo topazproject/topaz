@@ -75,6 +75,13 @@ class W_BaseObject(W_Root):
     def method_eq(self, space, w_other):
         return space.newbool(self is w_other)
 
+    @classdef.method("<=>")
+    def method_cmp(self, space, w_other):
+        if w_other is self:
+            return space.newint(0)
+        else:
+            return space.w_nil
+
     @classdef.method("!")
     def method_not(self, space):
         return space.newbool(not space.is_true(self))
