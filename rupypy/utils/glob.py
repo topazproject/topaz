@@ -283,8 +283,11 @@ class Glob:
 
         if lbrace > -1 and rbrace > -1:
             pos = lbrace
+            assert lbrace >= 0 # XXX: why does the translator need this?
             front = pattern[0:lbrace]
-            back = pattern[rbrace + 1:len(pattern)]
+            backstart = rbrace + 1
+            assert backstart >= 0
+            back = pattern[backstart:len(pattern)]
 
             while pos < rbrace:
                 nest = 0
