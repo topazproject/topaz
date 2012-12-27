@@ -48,6 +48,7 @@ else:
         os_closedir(dirp)
 
     def readdir(dirp):
+        rposix.set_errno(0)
         direntp = os_readdir(dirp)
         if not direntp:
             return (None, rposix.get_errno())
