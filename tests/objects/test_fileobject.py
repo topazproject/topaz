@@ -121,6 +121,15 @@ class TestFile(BaseRuPyPyTest):
     def test_fnm_syscase(self, space):
         space.execute("File::FNM_SYSCASE")
 
+    def test_fnm_dotmatch(self, space):
+        space.execute("File::FNM_DOTMATCH")
+
+    def test_fnm_pathname(self, space):
+        space.execute("File::FNM_PATHNAME")
+
+    def test_fnm_noescape(self, space):
+        space.execute("File::FNM_NOESCAPE")
+
     def test_new_simple(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
         f = tmpdir.join("file.txt")
