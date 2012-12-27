@@ -45,6 +45,7 @@ class TestRegexpObject(BaseRuPyPyTest):
         /\\P/
         /a{1,}/
         /a{,1}/
+        /(?:abc)?/
         """)
 
     def test_to_s(self, space):
