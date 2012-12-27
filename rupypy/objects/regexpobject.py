@@ -95,8 +95,8 @@ class W_RegexpObject(W_Object):
             self.indexgroup = indexgroup
             self.group_offsets = group_offsets
 
-    def make_ctx(self, s):
-        pos = 0
+    def make_ctx(self, s, offset=0):
+        pos = offset
         endpos = len(s)
         return rsre_core.StrMatchContext(self.code, s, pos, endpos, self.flags)
 

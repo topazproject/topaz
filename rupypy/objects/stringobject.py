@@ -385,8 +385,7 @@ class W_StringObject(W_Object):
         if space.is_kind_of(w_sub, space.w_string):
             return space.newint(space.str_w(self).find(space.str_w(w_sub), offset))
         elif space.is_kind_of(w_sub, space.w_regexp):
-            ctx = w_sub.make_ctx(space.str_w(self))
-            ctx.reset(offset)
+            ctx = w_sub.make_ctx(space.str_w(self), offset=offset)
             if self.search_context(space, ctx):
                 return space.newint(ctx.match_start)
             else:
