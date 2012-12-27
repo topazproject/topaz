@@ -550,3 +550,10 @@ class W_StringObject(W_Object):
             args_w = [w_arg]
         elements_w = StringFormatter(space.str_w(self), args_w).format(space)
         return space.newstr_fromstrs(elements_w)
+
+    @classdef.method("getbyte", pos="int")
+    def method_getbyte(self, space, pos):
+        if pos >= self.length() or pos < -self.length():
+            return space.w_nil
+        ch = self.strategy.getitem(self.str_storage, pos % self.length())
+        return space.newint(ord(ch))
