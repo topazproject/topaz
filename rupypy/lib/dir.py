@@ -5,11 +5,16 @@ from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
+from rupypy.utils.ll_dir import opendir, readdir, closedir
 
 
 class W_Dir(W_Object):
     classdef = ClassDef("Dir", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
+
+    def __del__(self):
+        if self.dirp:
+            closedir(self.dirp)
 
     @classdef.method("initialize", path="str")
     def method_initialize(self, space, path):
@@ -23,6 +28,7 @@ class W_Dir(W_Object):
         if msg:
             raise space.error(space.w_SystemCallError, msg, [w_errno])
         self.path = path
+        self.dirp = None
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -54,3 +60,15 @@ class W_Dir(W_Object):
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
+
+    @classdef.method("read")
+    def method_read(self, space, args_w):
+        if not self.dirp:
+            dirp, errno = opendir(self.path)
+            if not dirp:
+                raise space.error(space.w_SystemCallError, "opendir failed", [space.newint(errno)])
+            self.dirp = dirp
+        filename, errno = readdir(self.dirp)
+        if not filename:
+            raise space.error(space.w_SystemCallError, "readdir failed", [space.newint(errno)])
+        return space.newstr_fromstr(filename)
