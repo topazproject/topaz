@@ -277,7 +277,7 @@ class Glob:
                     break
 
                 if char == "\\" and escape:
-                    escapes = true
+                    escapes = True
                     i += 1
                 i += 1
 
