@@ -263,7 +263,9 @@ class W_MatchDataObject(W_Object):
 
     @classdef.method("pre_match")
     def method_pre_match(self, space):
-        return space.newstr_fromstr(self.ctx._string[:self.ctx.match_start])
+        stop = self.ctx.match_start
+        assert stop > 0
+        return space.newstr_fromstr(self.ctx._string[:stop])
 
     @classdef.method("post_match")
     def method_post_match(self, space):
