@@ -252,6 +252,14 @@ class TestObjectObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [False, True, False]
 
+    def test_cmp(self, space):
+        w_res = space.execute("""
+        a = Object.new
+        b = Object.new
+        return a <=> a, a <=> b
+        """)
+        assert self.unwrap(space, w_res) == [0, None]
+
 
 class TestMapDict(BaseRuPyPyTest):
     def test_simple_attr(self, space):

@@ -158,9 +158,15 @@ class W_FileObject(W_IOObject):
         else:
             w_alt_seperator = space.w_nil
             w_fnm_syscase = space.newint(0)
+        w_fnm_noescape = space.newint(0x01)
+        w_fnm_pathname = space.newint(0x02)
+        w_fnm_dotmatch = space.newint(0x04)
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
         space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
+        space.set_const(w_cls, "FNM_NOESCAPE", w_fnm_noescape)
+        space.set_const(w_cls, "FNM_PATHNAME", w_fnm_pathname)
+        space.set_const(w_cls, "FNM_DOTMATCH", w_fnm_dotmatch)
         space.set_const(w_cls, "RDONLY", space.newint(os.O_RDONLY))
         space.set_const(w_cls, "WRONLY", space.newint(os.O_WRONLY))
         space.set_const(w_cls, "RDWR", space.newint(os.O_RDWR))

@@ -380,6 +380,24 @@ class W_StringObject(W_Object):
         except rsre_core.Error, e:
             raise space.error(space.w_RuntimeError, e.msg)
 
+    @classdef.method("index", offset="int")
+    def method_index(self, space, w_sub, offset=0):
+        if offset < 0 or offset >= self.length():
+            return space.w_nil
+        elif space.is_kind_of(w_sub, space.w_string):
+            return space.newint(space.str_w(self).find(space.str_w(w_sub), offset))
+        elif space.is_kind_of(w_sub, space.w_regexp):
+            ctx = w_sub.make_ctx(space.str_w(self), offset=offset)
+            if self.search_context(space, ctx):
+                return space.newint(ctx.match_start)
+            else:
+                return space.newint(-1)
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "type mismatch: %s given" % space.getclass(w_sub).name
+            )
+
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=0):
         if w_sep is None or space.is_kind_of(w_sep, space.w_string):
@@ -550,3 +568,16 @@ class W_StringObject(W_Object):
             args_w = [w_arg]
         elements_w = StringFormatter(space.str_w(self), args_w).format(space)
         return space.newstr_fromstrs(elements_w)
+
+    @classdef.method("getbyte", pos="int")
+    def method_getbyte(self, space, pos):
+        if pos >= self.length() or pos < -self.length():
+            return space.w_nil
+        if pos < 0:
+            pos += self.length()
+        ch = self.strategy.getitem(self.str_storage, pos)
+        return space.newint(ord(ch))
+
+    @classdef.method("include?", substr="str")
+    def method_includep(self, space, substr):
+        return space.newbool(substr in space.str_w(self))
