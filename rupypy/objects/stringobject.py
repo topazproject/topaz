@@ -551,6 +551,15 @@ class W_StringObject(W_Object):
         elements_w = StringFormatter(space.str_w(self), args_w).format(space)
         return space.newstr_fromstrs(elements_w)
 
+    @classdef.method("getbyte", pos="int")
+    def method_getbyte(self, space, pos):
+        if pos >= self.length() or pos < -self.length():
+            return space.w_nil
+        if pos < 0:
+            pos += self.length()
+        ch = self.strategy.getitem(self.str_storage, pos)
+        return space.newint(ord(ch))
+
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
         return space.newbool(substr in space.str_w(self))
