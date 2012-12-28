@@ -382,7 +382,9 @@ class W_StringObject(W_Object):
 
     @classdef.method("index", offset="int")
     def method_index(self, space, w_sub, offset=0):
-        if space.is_kind_of(w_sub, space.w_string):
+        if offset < 0 or offset >= self.length():
+            return space.w_nil
+        elif space.is_kind_of(w_sub, space.w_string):
             return space.newint(space.str_w(self).find(space.str_w(w_sub), offset))
         elif space.is_kind_of(w_sub, space.w_regexp):
             ctx = w_sub.make_ctx(space.str_w(self), offset=offset)
