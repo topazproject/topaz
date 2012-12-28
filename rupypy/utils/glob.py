@@ -17,6 +17,16 @@ def regexp_match(re, string, _flags=0):
 
 
 class Glob(object):
+    def __init__(self, matches=None):
+        self._matches = matches or []
+
+    def matches(self):
+        for match in self._matches:
+            yield match
+
+    def append_match(self, match):
+        self._matches.append(match)
+
     def path_split(self, string):
         start = 0
         ret = []
@@ -89,27 +99,18 @@ class Glob(object):
             last = RootDirectory(last, flags)
         return last
 
-    def run(self, node, matches=None):
-        if matches is None:
-            matches = []
-        env = Environment(matches)
-        node.call(env, None)
-        return env.matches
+    def run(self, node):
+        node.call(self, None)
 
-    def glob(self, pattern, flags, matches=None):
-        if matches is None:
-            matches = []
-
+    def glob(self, pattern, flags):
         if "{" in pattern:
             patterns = self.compile(pattern, flags)
             for node in patterns:
-                self.run(node, matches)
+                self.run(node)
         else:
             node = self.single_compile(pattern, flags)
             if node:
-                return self.run(node, matches)
-            else:
-                return matches
+                self.run(node)
 
     def compile(self, pattern, flags=0, patterns=None):
         if patterns is None:
@@ -200,36 +201,36 @@ class ConstantDirectory(Node):
         Node.__init__(self, nxt, flags)
         self.dir = dir
 
-    def call(self, env, path):
+    def call(self, glob, path):
         full = self.path_join(path, self.dir)
-        self.next.call(env, full)
+        self.next.call(glob, full)
 
 
 class ConstantEntry(Node):
-    def call(self, env, parent):
+    def call(self, glob, parent):
         path = self.path_join(parent, self.name)
         if os.path.exists(path):
-            env.matches.append(path)
+            glob.append_match(path)
 
 
 class RootDirectory(Node):
-    def call(self, env, path):
-        self.next.call(env, "/")
+    def call(self, glob, path):
+        self.next.call(glob, "/")
 
 
 class RecursiveDirectories(Node):
-    def call(self, env, start):
+    def call(self, glob, start):
         if not (start and os.path.exists(start)):
             return
-        self.call_with_stack(env, start, [start])
+        self.call_with_stack(glob, start, [start])
 
     def allow_dots(self):
         return self.flags & FNM_DOTMATCH != 0
 
-    def call_with_stack(self, env, start, stack):
+    def call_with_stack(self, glob, start, stack):
         old_sep = self.next.get_separator()
         self.next.set_separator(self.separator)
-        self.next.call(env, start)
+        self.next.call(glob, start)
         self.next.set_separator(old_sep)
 
         while stack:
@@ -239,22 +240,22 @@ class RecursiveDirectories(Node):
                     full = self.path_join(path, ent)
                     if os.path.isdir(full) and (self.allow_dots() or ent[0] != "."):
                         stack.append(full)
-                        self.next.call(env, full)
+                        self.next.call(glob, full)
             except OSError:
                 # ignore listing errors
                 next
 
 
 class StartRecursiveDirectories(RecursiveDirectories):
-    def call(self, env, start):
+    def call(self, glob, start):
         if start:
             raise "invalid usage"
         stack = []
         for ent in os.listdir("."):
             if os.path.isdir(ent) and (self.allow_dots() or ent[0] != "."):
                 stack.append(ent)
-                self.next.call(env, ent)
-        self.call_with_stack(env, start, stack)
+                self.next.call(glob, ent)
+        self.call_with_stack(glob, start, stack)
 
 
 class Match(Node):
@@ -271,7 +272,7 @@ class DirectoryMatch(Match):
         Match.__init__(self, nxt, flags, glob)
         self.glob.replace("**", "*")
 
-    def call(self, env, path):
+    def call(self, glob, path):
         if path and not os.path.exists(path):
             return
 
@@ -279,11 +280,11 @@ class DirectoryMatch(Match):
             if self.ismatch(ent):
                 full = self.path_join(path, ent)
                 if os.path.isdir(full):
-                    self.next.call(env, full)
+                    self.next.call(glob, full)
 
 
 class EntryMatch(Match):
-    def call(self, env, path):
+    def call(self, glob, path):
         if path and not os.path.exists(path + "/."):
             return
 
@@ -294,18 +295,10 @@ class EntryMatch(Match):
 
         for ent in entries:
             if self.ismatch(ent):
-                env.matches.append(self.path_join(path, ent))
+                glob.append_match(self.path_join(path, ent))
 
 
 class DirectoriesOnly(Node):
-    def call(self, env, path):
+    def call(self, glob, path):
         if path and os.path.exists(path + "/."):
-            env.matches.append(path + "/")
-
-
-class Environment(object):
-    def __init__(self, matches=None):
-        if matches is None:
-            self.matches = []
-        else:
-            self.matches = matches
+            glob.append_match(path + "/")

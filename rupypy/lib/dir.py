@@ -71,7 +71,6 @@ class W_Dir(W_Object):
         else:
             patterns_w = [w_pattern]
 
-        matches = []
         glob = Glob()
 
         for w_pat in patterns_w:
@@ -81,13 +80,13 @@ class W_Dir(W_Object):
                 pattern = space.str_w(space.convert_type(w_pat, space.w_string, "to_str"))
             if len(patterns_w) == 1:
                 for pat in pattern.split("\0"):
-                    glob.glob(pat, flags, matches)
+                    glob.glob(pat, flags)
             else:
-                glob.glob(pattern, flags, matches)
+                glob.glob(pattern, flags)
 
         if block:
-            for match in matches:
+            for match in glob.matches():
                 space.invoke_block(block, [space.newstr_fromstr(match)])
             return space.w_nil
         else:
-            return space.newarray([space.newstr_fromstr(s) for s in matches])
+            return space.newarray([space.newstr_fromstr(s) for s in glob.matches()])
