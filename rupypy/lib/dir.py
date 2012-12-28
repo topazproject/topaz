@@ -50,10 +50,8 @@ class W_Dir(W_Object):
 
     @classdef.singleton_method("delete", path="path")
     def method_delete(self, space, path):
-        if not path:
-            raise error_for_oserror(space, errno=errno.ENOENT)
         try:
-            os.rmdir(path)
+            os.rmdir(path if path else "")
         except OSError as e:
             raise error_for_oserror(space, exc=e)
         return space.newint(0)
