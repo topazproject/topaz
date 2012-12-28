@@ -201,6 +201,10 @@ class ConstantDirectory(Node):
 
 
 class ConstantEntry(Node):
+    def __init__(self, nxt, flags, name):
+        Node.__init__(self, nxt, flags)
+        self.name = name
+
     def call(self, glob, parent):
         path = self.path_join(parent, self.name)
         if os.path.exists(path):
