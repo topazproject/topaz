@@ -96,10 +96,9 @@ class W_RegexpObject(W_Object):
             self.group_offsets = group_offsets
 
     def make_ctx(self, s, offset=0):
-        pos = offset
+        assert offset >= 0
         endpos = len(s)
-        assert pos >= 0
-        return rsre_core.StrMatchContext(self.code, s, pos, endpos, self.flags)
+        return rsre_core.StrMatchContext(self.code, s, offset, endpos, self.flags)
 
     def get_match_result(self, space, ctx, found):
         if found:
