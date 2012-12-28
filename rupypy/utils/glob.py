@@ -3,11 +3,9 @@ import os
 
 from pypy.rlib.rsre import rsre_core
 
+from rupypy.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
 from rupypy.utils import regexp
 
-
-FNM_NOESCAPE = 0x1
-FNM_DOTMATCH = 0x4
 
 def regexp_match(re, string, _flags=0):
     pos = 0
