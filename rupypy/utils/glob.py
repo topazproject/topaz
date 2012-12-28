@@ -230,14 +230,14 @@ class RecursiveDirectories(Node):
         while stack:
             path = stack.pop()
             try:
-                for ent in os.listdir(path):
-                    full = self.path_join(path, ent)
-                    if os.path.isdir(full) and (self.allow_dots() or ent[0] != "."):
-                        stack.append(full)
-                        self.next.call(glob, full)
+                entries = os.listdir(path)
             except OSError:
-                # ignore listing errors
                 next
+            for ent in entries:
+                full = self.path_join(path, ent)
+                if os.path.isdir(full) and (self.allow_dots() or ent[0] != "."):
+                    stack.append(full)
+                    self.next.call(glob, full)
 
 
 class StartRecursiveDirectories(RecursiveDirectories):
