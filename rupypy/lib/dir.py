@@ -1,7 +1,4 @@
-import errno
 import os
-
-from pypy.rpython.lltypesystem import lltype
 
 from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
@@ -27,9 +24,9 @@ class W_Dir(W_Object):
         self.path = path
         try:
             self.dirp = opendir(path)
-            self.open = True
         except OSError as e:
             raise error_for_oserror(space, e)
+        self.open = True
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):

@@ -62,7 +62,7 @@ class TestDir(BaseRuPyPyTest):
         w_res = space.execute("""
         d = Dir.new('%s')
         return [d.read, d.read, d.read, d.read, d.read]
-        """ % str(d))
+        """ % d)
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == [None, ".", "..", "content", "content2"]
@@ -73,10 +73,10 @@ class TestDir(BaseRuPyPyTest):
             d = Dir.new('%s')
             d.close
             d.close
-            """ % str(tmpdir))
+            """ % tmpdir)
         with self.raises(space, "IOError", "closed directory"):
             space.execute("""
             d = Dir.new('%s')
             d.close
             d.read
-            """ % str(tmpdir))
+            """ % tmpdir)

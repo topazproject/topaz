@@ -1,9 +1,8 @@
 import sys
 
-from pypy.rpython.lltypesystem import rffi
-from pypy.rpython.lltypesystem import lltype
-from pypy.rpython.tool import rffi_platform as platform
 from pypy.rlib import rposix
+from pypy.rpython.lltypesystem import rffi, lltype
+from pypy.rpython.tool import rffi_platform as platform
 from pypy.translator.tool.cbuild import ExternalCompilationInfo
 
 
@@ -12,13 +11,15 @@ if sys.platform.startswith('win'):
         raise NotImplementedError("directory operations on windows")
     readdir = closedir = opendir
 else:
-    compilation_info = ExternalCompilationInfo(
-        includes = ['sys/types.h', 'dirent.h']
+    eci = ExternalCompilationInfo(
+        includes=['sys/types.h', 'dirent.h']
     )
+
     class CConfig:
-        _compilation_info_ = compilation_info
-        DIRENT = platform.Struct('struct dirent',
-                                 [('d_name', lltype.FixedSizeArray(rffi.CHAR, 1))])
+        _compilation_info_ = eci
+        DIRENT = platform.Struct('struct dirent', [
+            ('d_name', lltype.FixedSizeArray(rffi.CHAR, 1))
+        ])
     config = platform.configure(CConfig)
     DIRP = rffi.COpaquePtr('DIR')
     DIRENT = config['DIRENT']
@@ -26,15 +27,21 @@ else:
 
     # XXX macro=True is hack to make sure we get the correct kind of
     # dirent struct (which depends on defines)
-    os_opendir = rffi.llexternal('opendir', [rffi.CCHARP], DIRP,
-                                 compilation_info=compilation_info,
-                                 macro=True)
-    os_readdir = rffi.llexternal('readdir', [DIRP], DIRENTP,
-                                 compilation_info=compilation_info,
-                                 macro=True)
-    os_closedir = rffi.llexternal('closedir', [DIRP], rffi.INT,
-                                  compilation_info=compilation_info,
-                                  macro=True)
+    os_opendir = rffi.llexternal('opendir',
+        [rffi.CCHARP], DIRP,
+        compilation_info=eci,
+        macro=True
+    )
+    os_readdir = rffi.llexternal('readdir',
+        [DIRP], DIRENTP,
+        compilation_info=eci,
+        macro=True
+    )
+    os_closedir = rffi.llexternal('closedir',
+        [DIRP], rffi.INT,
+        compilation_info=eci,
+        macro=True
+    )
 
     def opendir(path):
         dirp = os_opendir(path)
