@@ -296,6 +296,11 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'abc'.match('bc').begin 0")
         assert space.int_w(w_res) == 1
 
+    def test_includep(self, space):
+        assert space.execute("return 'abc'.include? 'ab'") is space.w_true
+        assert space.execute("return 'abc'.include? 'bc'") is space.w_true
+        assert space.execute("return 'abc'.include? 'cd'") is space.w_false
+
 
 class TestStringMod(object):
     def test_s(self, space):

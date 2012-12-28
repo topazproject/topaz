@@ -550,3 +550,7 @@ class W_StringObject(W_Object):
             args_w = [w_arg]
         elements_w = StringFormatter(space.str_w(self), args_w).format(space)
         return space.newstr_fromstrs(elements_w)
+
+    @classdef.method("include?", substr="str")
+    def method_includep(self, space, substr):
+        return space.newbool(substr in space.str_w(self))
