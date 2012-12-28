@@ -141,6 +141,17 @@ class TestFile(BaseRuPyPyTest):
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
         assert isinstance(w_res, W_FileObject)
 
+        w_res = space.execute("""
+        path = '%s%snonexist2'
+        f = File.new(path, 'w')
+        f.puts "first"
+        f = File.new(path, 'a')
+        f.puts "second"
+        f = File.new(path, 'r')
+        return f.read
+        """ % (tmpdir.dirname, os.sep))
+        assert space.str_w(w_res) == "first\nsecond\n"
+
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
         assert space.str_w(w_res) == "/abc/bin"
