@@ -68,7 +68,7 @@ class Glob(object):
                 last = EntryMatch(None, flags, file)
 
         while parts:
-            last.set_separator(parts.pop())
+            last.separator = parts.pop()
             dir = parts.pop()
             if dir == "**":
                 if parts:
@@ -179,13 +179,7 @@ class Node(object):
     def __init__(self, nxt, flags):
         self.flags = flags
         self.next = nxt
-        self.separator = None
-
-    def set_separator(self, value):
-        self.separator = value
-
-    def get_separator(self):
-        return self.separator or "/"
+        self.separator = "/"
 
     def path_join(self, parent, ent):
         if not parent:
@@ -193,7 +187,7 @@ class Node(object):
         if parent == "/":
             return "/" + ent
         else:
-            return parent + self.get_separator() + ent
+            return parent + self.separator + ent
 
 
 class ConstantDirectory(Node):
@@ -228,10 +222,10 @@ class RecursiveDirectories(Node):
         return self.flags & FNM_DOTMATCH != 0
 
     def call_with_stack(self, glob, start, stack):
-        old_sep = self.next.get_separator()
-        self.next.set_separator(self.separator)
+        old_sep = self.next.separator
+        self.next.separator = self.separator
         self.next.call(glob, start)
-        self.next.set_separator(old_sep)
+        self.next.separator = old_sep
 
         while stack:
             path = stack.pop()
