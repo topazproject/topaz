@@ -58,7 +58,7 @@ class Glob:
 
     class RecursiveDirectories(Node):
         def call(self, env, start):
-            if not os.path.exists(start):
+            if not (start and os.path.exists(start)):
                 return
             self.call_with_stack(env, start, [start])
 
