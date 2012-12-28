@@ -28,7 +28,7 @@ class W_Dir(W_Object):
         try:
             self.dirp = opendir(path)
         except OSError as e:
-            raise error_for_oserror(space, exc=e)
+            raise error_for_oserror(space, e)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -57,7 +57,7 @@ class W_Dir(W_Object):
         try:
             os.rmdir(path if path else "")
         except OSError as e:
-            raise error_for_oserror(space, exc=e)
+            raise error_for_oserror(space, e)
         return space.newint(0)
 
     @classdef.method("read")
@@ -66,8 +66,8 @@ class W_Dir(W_Object):
         try:
             filename = readdir(self.dirp)
         except OSError as e:
-            raise error_for_oserror(space, exc=e)
-        if not filename:
+            raise error_for_oserror(space, e)
+        if filename is None:
             return space.w_nil
         else:
             return space.newstr_fromstr(filename)
