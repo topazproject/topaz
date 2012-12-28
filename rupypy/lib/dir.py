@@ -1,6 +1,8 @@
 import errno
 import os
 
+from pypy.rpython.lltypesystem import lltype
+
 from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
