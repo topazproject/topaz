@@ -241,15 +241,13 @@ class RecursiveDirectories(Node):
 
 
 class StartRecursiveDirectories(RecursiveDirectories):
-    def call(self, glob, start):
-        if start:
-            raise "invalid usage"
+    def call(self, glob, _):
         stack = []
         for ent in os.listdir("."):
             if os.path.isdir(ent) and (self.allow_dots() or ent[0] != "."):
                 stack.append(ent)
                 self.next.call(glob, ent)
-        self.call_with_stack(glob, start, stack)
+        self.call_with_stack(glob, None, stack)
 
 
 class Match(Node):
