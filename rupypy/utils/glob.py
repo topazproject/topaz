@@ -232,7 +232,7 @@ class RecursiveDirectories(Node):
             try:
                 entries = os.listdir(path)
             except OSError:
-                next
+                continue
             for ent in entries:
                 full = self.path_join(path, ent)
                 if os.path.isdir(full) and (self.allow_dots() or ent[0] != "."):
