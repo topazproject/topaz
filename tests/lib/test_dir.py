@@ -61,29 +61,33 @@ class TestDir(BaseRuPyPyTest):
         sub2.join("sub2content1").write("")
         sub2.join("sub2content2").write("")
         w_res = space.execute("""
-        Dir.chdir('%s')
-        return Dir['*']
+        Dir.chdir('%s') do
+            return Dir['*']
+        end
         """ % str(tmpdir))
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1", "sub2"]
         w_res = space.execute("""
-        Dir.chdir('%s')
-        return Dir['**/*']
+        Dir.chdir('%s') do
+            return Dir['**/*']
+        end
         """ % str(tmpdir))
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1", "sub1/sub1content1", "sub1/sub1content2", "sub2", "sub2/sub2content1", "sub2/sub2content2"]
         w_res = space.execute("""
-        Dir.chdir('%s')
-        return Dir['**/*{1con}*']
+        Dir.chdir('%s') do
+            return Dir['**/*{1con}*']
+        end
         """ % str(tmpdir))
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1/sub1content1", "sub1/sub1content2"]
         w_res = space.execute("""
-        Dir.chdir('%s')
-        return Dir['**/sub[1]content[12]']
+        Dir.chdir('%s') do
+            return Dir['**/sub[1]content[12]']
+        end
         """ % str(tmpdir))
         res = self.unwrap(space, w_res)
         res.sort()
