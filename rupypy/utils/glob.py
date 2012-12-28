@@ -1,4 +1,3 @@
-import copy
 import fnmatch
 import os
 
@@ -67,9 +66,10 @@ class Glob:
             return self.flags & FNM_DOTMATCH != 0
 
         def call_with_stack(self, env, start, stack):
-            switched = copy.copy(self.next)
-            switched.set_separator(self.separator)
-            switched.call(env, start)
+            old_sep = self.next.get_separator()
+            self.next.set_separator(self.separator)
+            self.next.call(env, start)
+            self.next.set_separator(old_sep)
 
             while stack:
                 path = stack.pop()
