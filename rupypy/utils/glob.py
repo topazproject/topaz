@@ -9,158 +9,19 @@ from rupypy.utils import regexp
 FNM_NOESCAPE = 0x1
 FNM_DOTMATCH = 0x4
 
+def regexp_match(re, string, _flags=0):
+    pos = 0
+    endpos = len(string)
+    code, flags, _, _, _, _ = regexp.compile(re, _flags)
+    return rsre_core.StrMatchContext(code, string, pos, endpos, flags)
 
-class Glob:
-    class Node:
-        def __init__(self, nxt, flags):
-            self.flags = flags
-            self.next = nxt
-            self.separator = None
 
-        def set_separator(self, value):
-            self.separator = value
-
-        def get_separator(self):
-            return self.separator or "/"
-
-        def path_join(self, parent, ent):
-            if not parent:
-                return ent
-            if parent == "/":
-                return "/" + ent
-            else:
-                return parent + self.get_separator() + ent
-
-    class ConstantDirectory(Node):
-        def __init__(self, nxt, flags, dir):
-            Glob.Node.__init__(self, nxt, flags)
-            self.dir = dir
-
-        def call(self, env, path):
-            full = self.path_join(path, self.dir)
-            self.next.call(env, full)
-
-    class ConstantEntry(Node):
-        def __init__(self, nxt, flags, name, suffixes):
-            Glob.ConstantEntry.__init__(self, nxt, flags, name)
-            self.suffixes = suffixes
-
-        def call(self, env, parent):
-            stem = self.path_join(parent, self.name)
-            for s in self.suffixes:
-                path = stem + s
-                if os.path.exists(path):
-                    env.matches.append(path)
-
-    class RootDirectory(Node):
-        def call(self, env, path):
-            self.next.call(env, "/")
-
-    class RecursiveDirectories(Node):
-        def call(self, env, start):
-            if not (start and os.path.exists(start)):
-                return
-            self.call_with_stack(env, start, [start])
-
-        def allow_dots(self):
-            return self.flags & FNM_DOTMATCH != 0
-
-        def call_with_stack(self, env, start, stack):
-            old_sep = self.next.get_separator()
-            self.next.set_separator(self.separator)
-            self.next.call(env, start)
-            self.next.set_separator(old_sep)
-
-            while stack:
-                path = stack.pop()
-                try:
-                    for ent in os.listdir(path):
-                        full = self.path_join(path, ent)
-                        if os.path.isdir(full) and (self.allow_dots() or ent[0] != "."):
-                            stack.append(full)
-                            self.next.call(env, full)
-                except OSError:
-                    # ignore listing errors
-                    next
-
-    class StartRecursiveDirectories(RecursiveDirectories):
-        def call(self, env, start):
-            if start:
-                raise "invalid usage"
-            stack = []
-            for ent in os.listdir("."):
-                if os.path.isdir(ent) and (self.allow_dots() or ent[0] != "."):
-                    stack.append(ent)
-                    self.next.call(env, ent)
-            self.call_with_stack(env, start, stack)
-
-    class Match(Node):
-        def __init__(self, nxt, flags, glob):
-            Glob.Node.__init__(self, nxt, flags)
-            self.glob = glob
-
-        def ismatch(self, string):
-            return fnmatch.fnmatch(string, self.glob)
-
-    class DirectoryMatch(Match):
-        def __init__(self, nxt, flags, glob):
-            Glob.Match.__init__(self, nxt, flags, glob)
-            self.glob.replace("**", "*")
-
-        def call(self, env, path):
-            if path and not os.path.exists(path):
-                return
-
-            for ent in os.listdir(path if path else "."):
-                if self.ismatch(ent):
-                    full = self.path_join(path, ent)
-                    if os.path.isdir(full):
-                        self.next.call(env, full)
-
-    class EntryMatch(Match):
-        def __init__(self, nxt, flags, globs, suffixes):
-            Glob.Match.__init__(self, nxt, flags, globs)
-            self.suffixes = suffixes
-
-        def call(self, env, path):
-            if path and not os.path.exists(path + "/."):
-                return
-
-            try:
-                entries = os.listdir(path if path else ".")
-            except OSError:
-                return
-
-            for f in entries:
-                for suffix in self.suffixes:
-                    ent = f + suffix
-                    if self.ismatch(ent):
-                        env.matches.append(self.path_join(path, ent))
-
-    class DirectoriesOnly(Node):
-        def call(self, env, path):
-            if path and os.path.exists(path + "/."):
-                env.matches.append(path + "/")
-
-    class Environment:
-        def __init__(self, matches=None):
-            if matches is None:
-                self.matches = []
-            else:
-                self.matches = matches
-
-    @staticmethod
-    def regexp_match(re, string, _flags=0):
-        pos = 0
-        endpos = len(string)
-        code, flags, _, _, _, _ = regexp.compile(re, _flags)
-        return rsre_core.StrMatchContext(code, string, pos, endpos, flags)
-
+class Glob(object):
     def path_split(self, string):
         start = 0
         ret = []
         last_match = None
-        ctx = Glob.regexp_match("/+", string)
+        ctx = regexp_match("/+", string)
 
         last_end = 0
         while rsre_core.search_context(ctx):
@@ -187,32 +48,32 @@ class Glob:
         parts = self.path_split(glob)
 
         if glob[-1] == "/":
-            last = Glob.DirectoriesOnly(None, flags)
+            last = DirectoriesOnly(None, flags)
         else:
             file = parts.pop()
-            ctx = Glob.regexp_match("^[a-zA-Z0-9._]+$", file)
+            ctx = regexp_match("^[a-zA-Z0-9._]+$", file)
             if suffixes is None:
                 suffixes = [""]
             if rsre_core.search_context(ctx):
-                last = Glob.ConstantEntry(None, flags, file, suffixes)
+                last = ConstantEntry(None, flags, file, suffixes)
             else:
-                last = Glob.EntryMatch(None, flags, file, suffixes)
+                last = EntryMatch(None, flags, file, suffixes)
 
         while parts:
             last.set_separator(parts.pop())
             dir = parts.pop()
             if dir == "**":
                 if parts:
-                    last = Glob.RecursiveDirectories(last, flags)
+                    last = RecursiveDirectories(last, flags)
                 else:
-                    last = Glob.StartRecursiveDirectories(last, flags)
+                    last = StartRecursiveDirectories(last, flags)
             else:
                 pattern = "^[^\*\?\]]+"
-                ctx = Glob.regexp_match(pattern, dir)
+                ctx = regexp_match(pattern, dir)
                 if rsre_core.search_context(ctx):
                     partidx = len(parts) - 2
                     assert partidx >= 0
-                    ctx = Glob.regexp_match(pattern, parts[partidx])
+                    ctx = regexp_match(pattern, parts[partidx])
 
                     while rsre_core.search_context(ctx):
                         next_sep = parts.pop()
@@ -221,19 +82,19 @@ class Glob:
 
                         partidx = len(parts) - 2
                         assert partidx >= 0
-                        ctx = Glob.regexp_match(pattern, parts[partidx])
-                    last = Glob.ConstantDirectory(last, flags, dir)
+                        ctx = regexp_match(pattern, parts[partidx])
+                    last = ConstantDirectory(last, flags, dir)
                 elif len(dir) > 0:
-                    last = Glob.DirectoryMatch(last, flags, dir)
+                    last = DirectoryMatch(last, flags, dir)
 
         if glob[0] == "/":
-            last = Glob.RootDirectory(last, flags)
+            last = RootDirectory(last, flags)
         return last
 
     def run(self, node, matches=None):
         if matches is None:
             matches = []
-        env = Glob.Environment(matches)
+        env = Environment(matches)
         node.call(env, None)
         return env.matches
 
@@ -313,3 +174,152 @@ class Glob:
             if node:
                 patterns.append(node)
         return patterns
+
+
+class Node(object):
+    def __init__(self, nxt, flags):
+        self.flags = flags
+        self.next = nxt
+        self.separator = None
+
+    def set_separator(self, value):
+        self.separator = value
+
+    def get_separator(self):
+        return self.separator or "/"
+
+    def path_join(self, parent, ent):
+        if not parent:
+            return ent
+        if parent == "/":
+            return "/" + ent
+        else:
+            return parent + self.get_separator() + ent
+
+
+class ConstantDirectory(Node):
+    def __init__(self, nxt, flags, dir):
+        Node.__init__(self, nxt, flags)
+        self.dir = dir
+
+    def call(self, env, path):
+        full = self.path_join(path, self.dir)
+        self.next.call(env, full)
+
+
+class ConstantEntry(Node):
+    def __init__(self, nxt, flags, name, suffixes):
+        ConstantEntry.__init__(self, nxt, flags, name)
+        self.suffixes = suffixes
+
+    def call(self, env, parent):
+        stem = self.path_join(parent, self.name)
+        for s in self.suffixes:
+            path = stem + s
+            if os.path.exists(path):
+                env.matches.append(path)
+
+
+class RootDirectory(Node):
+    def call(self, env, path):
+        self.next.call(env, "/")
+
+
+class RecursiveDirectories(Node):
+    def call(self, env, start):
+        if not (start and os.path.exists(start)):
+            return
+        self.call_with_stack(env, start, [start])
+
+    def allow_dots(self):
+        return self.flags & FNM_DOTMATCH != 0
+
+    def call_with_stack(self, env, start, stack):
+        old_sep = self.next.get_separator()
+        self.next.set_separator(self.separator)
+        self.next.call(env, start)
+        self.next.set_separator(old_sep)
+
+        while stack:
+            path = stack.pop()
+            try:
+                for ent in os.listdir(path):
+                    full = self.path_join(path, ent)
+                    if os.path.isdir(full) and (self.allow_dots() or ent[0] != "."):
+                        stack.append(full)
+                        self.next.call(env, full)
+            except OSError:
+                # ignore listing errors
+                next
+
+
+class StartRecursiveDirectories(RecursiveDirectories):
+    def call(self, env, start):
+        if start:
+            raise "invalid usage"
+        stack = []
+        for ent in os.listdir("."):
+            if os.path.isdir(ent) and (self.allow_dots() or ent[0] != "."):
+                stack.append(ent)
+                self.next.call(env, ent)
+        self.call_with_stack(env, start, stack)
+
+
+class Match(Node):
+    def __init__(self, nxt, flags, glob):
+        Node.__init__(self, nxt, flags)
+        self.glob = glob
+
+    def ismatch(self, string):
+        return fnmatch.fnmatch(string, self.glob)
+
+
+class DirectoryMatch(Match):
+    def __init__(self, nxt, flags, glob):
+        Match.__init__(self, nxt, flags, glob)
+        self.glob.replace("**", "*")
+
+    def call(self, env, path):
+        if path and not os.path.exists(path):
+            return
+
+        for ent in os.listdir(path if path else "."):
+            if self.ismatch(ent):
+                full = self.path_join(path, ent)
+                if os.path.isdir(full):
+                    self.next.call(env, full)
+
+
+class EntryMatch(Match):
+    def __init__(self, nxt, flags, globs, suffixes):
+        Match.__init__(self, nxt, flags, globs)
+        self.suffixes = suffixes
+
+    def call(self, env, path):
+        if path and not os.path.exists(path + "/."):
+            return
+
+        try:
+            entries = os.listdir(path if path else ".")
+        except OSError:
+            return
+
+        for f in entries:
+            for suffix in self.suffixes:
+                ent = f + suffix
+                if self.ismatch(ent):
+                    env.matches.append(self.path_join(path, ent))
+
+
+class DirectoriesOnly(Node):
+    def call(self, env, path):
+        if path and os.path.exists(path + "/."):
+            env.matches.append(path + "/")
+
+
+class Environment(object):
+    def __init__(self, matches=None):
+        if matches is None:
+            self.matches = []
+        else:
+            self.matches = matches
