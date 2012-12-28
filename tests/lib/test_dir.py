@@ -73,7 +73,7 @@ class TestDir(BaseRuPyPyTest):
         """ % str(tmpdir))
         res = self.unwrap(space, w_res)
         res.sort()
-        assert res == ["sub1/sub1content1", "sub1/sub1content2", "sub2/sub2content1", "sub2/sub2content2", "sub1", "sub2"]
+        assert res == ["sub1", "sub1/sub1content1", "sub1/sub1content2", "sub2", "sub2/sub2content1", "sub2/sub2content2"]
         w_res = space.execute("""
         Dir.chdir('%s')
         return Dir['**/*{1con}*']
