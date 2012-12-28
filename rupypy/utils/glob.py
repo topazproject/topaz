@@ -44,7 +44,7 @@ class Glob(object):
 
         return ret
 
-    def single_compile(self, glob, flags=0, suffixes=None):
+    def single_compile(self, glob, flags=0):
         parts = self.path_split(glob)
 
         if glob[-1] == "/":
@@ -52,12 +52,10 @@ class Glob(object):
         else:
             file = parts.pop()
             ctx = regexp_match("^[a-zA-Z0-9._]+$", file)
-            if suffixes is None:
-                suffixes = [""]
             if rsre_core.search_context(ctx):
-                last = ConstantEntry(None, flags, file, suffixes)
+                last = ConstantEntry(None, flags, file)
             else:
-                last = EntryMatch(None, flags, file, suffixes)
+                last = EntryMatch(None, flags, file)
 
         while parts:
             last.set_separator(parts.pop())
@@ -208,16 +206,10 @@ class ConstantDirectory(Node):
 
 
 class ConstantEntry(Node):
-    def __init__(self, nxt, flags, name, suffixes):
-        ConstantEntry.__init__(self, nxt, flags, name)
-        self.suffixes = suffixes
-
     def call(self, env, parent):
-        stem = self.path_join(parent, self.name)
-        for s in self.suffixes:
-            path = stem + s
-            if os.path.exists(path):
-                env.matches.append(path)
+        path = self.path_join(parent, self.name)
+        if os.path.exists(path):
+            env.matches.append(path)
 
 
 class RootDirectory(Node):
@@ -291,10 +283,6 @@ class DirectoryMatch(Match):
 
 
 class EntryMatch(Match):
-    def __init__(self, nxt, flags, globs, suffixes):
-        Match.__init__(self, nxt, flags, globs)
-        self.suffixes = suffixes
-
     def call(self, env, path):
         if path and not os.path.exists(path + "/."):
             return
@@ -304,11 +292,9 @@ class EntryMatch(Match):
         except OSError:
             return
 
-        for f in entries:
-            for suffix in self.suffixes:
-                ent = f + suffix
-                if self.ismatch(ent):
-                    env.matches.append(self.path_join(path, ent))
+        for ent in entries:
+            if self.ismatch(ent):
+                env.matches.append(self.path_join(path, ent))
 
 
 class DirectoriesOnly(Node):
