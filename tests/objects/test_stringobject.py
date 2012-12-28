@@ -150,6 +150,22 @@ class TestStringObject(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError", "zero width padding"):
             space.execute("'hi'.ljust(10, '')")
 
+    def test_index(self, space):
+        w_res = space.execute("return 'abc'.index 'a'")
+        assert space.int_w(w_res) == 0
+        w_res = space.execute("return 'abc'.index 'bc'")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return 'aba'.index 'a', 1")
+        assert space.int_w(w_res) == 2
+        w_res = space.execute("return 'aba'.index 'c', 1")
+        assert space.int_w(w_res) == -1
+        w_res = space.execute("return 'aba'.index /ba/")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return 'aba'.index /xyz/")
+        assert space.int_w(w_res) == -1
+        with self.raises(space, "TypeError", "type mismatch: Fixnum given"):
+            space.execute("'a b c'.index 12")
+
     def test_split(self, space):
         w_res = space.execute("return 'a b c'.split")
         assert self.unwrap(space, w_res) == ["a", "b", "c"]
