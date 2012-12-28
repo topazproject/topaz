@@ -17,10 +17,12 @@ else:
     )
     class CConfig:
         _compilation_info_ = compilation_info
+        DIR = platform.Struct('DIR', [])
         DIRENT = platform.Struct('struct dirent',
                                  [('d_name', lltype.FixedSizeArray(rffi.CHAR, 1))])
-    DIRP = rffi.COpaquePtr('DIR')
     config = platform.configure(CConfig)
+    DIR = config['DIR']
+    DIRP = lltype.Ptr(DIR)
     DIRENT = config['DIRENT']
     DIRENTP = lltype.Ptr(DIRENT)
 

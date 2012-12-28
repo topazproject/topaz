@@ -66,3 +66,17 @@ class TestDir(BaseRuPyPyTest):
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == [None, ".", "..", "content", "content2"]
+
+    def test_close(self, space, tmpdir):
+        with self.raises(space, "IOError", "closed directory"):
+            space.execute("""
+            d = Dir.new('%s')
+            d.close
+            d.close
+            """ % str(tmpdir))
+        with self.raises(space, "IOError", "closed directory"):
+            space.execute("""
+            d = Dir.new('%s')
+            d.close
+            d.read
+            """ % str(tmpdir))
