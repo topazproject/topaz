@@ -24,7 +24,6 @@ def print_traceback(space, w_exc):
 
 
 def error_for_oserror(space, exc):
-    assert isinstance(exc, OSError)
     return space.error(
         space.w_SystemCallError,
         os.strerror(exc.errno),

@@ -52,3 +52,31 @@ class TestDir(BaseRuPyPyTest):
         """)
 
         assert space.str_w(w_res) == os.path.realpath(str(tmpdir))
+
+    def test_read(self, space, tmpdir):
+        d = tmpdir.mkdir("sub")
+        f = d.join("content")
+        f.write("hello")
+        f = d.join("content2")
+        f.write("hello")
+        w_res = space.execute("""
+        d = Dir.new('%s')
+        return [d.read, d.read, d.read, d.read, d.read]
+        """ % str(d))
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == [None, ".", "..", "content", "content2"]
+
+    def test_close(self, space, tmpdir):
+        with self.raises(space, "IOError", "closed directory"):
+            space.execute("""
+            d = Dir.new('%s')
+            d.close
+            d.close
+            """ % str(tmpdir))
+        with self.raises(space, "IOError", "closed directory"):
+            space.execute("""
+            d = Dir.new('%s')
+            d.close
+            d.read
+            """ % str(tmpdir))
