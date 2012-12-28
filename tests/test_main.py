@@ -126,6 +126,15 @@ class TestMain(object):
         out, err = capfd.readouterr()
         assert out == "topaz\n"
 
+    def test_ruby_description(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts RUBY_DESCRIPTION")
+        out1, err1 = capfd.readouterr()
+        self.run(space, tmpdir, """
+        puts "#{RUBY_ENGINE} (ruby-#{RUBY_VERSION}p#{RUBY_PATCHLEVEL}) [#{RUBY_PLATFORM}]"
+        """)
+        out2, err2 = capfd.readouterr()
+        assert out1 == out2
+
     def test_system_exit(self, space, tmpdir):
         self.run(space, tmpdir, "raise SystemExit", 0)
         self.run(space, tmpdir, "raise SystemExit.new('exit', 1)", 1)
