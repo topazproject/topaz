@@ -253,18 +253,18 @@ class StartRecursiveDirectories(RecursiveDirectories):
 
 
 class Match(Node):
-    def __init__(self, nxt, flags, glob):
+    def __init__(self, nxt, flags, glob_pattern):
         Node.__init__(self, nxt, flags)
-        self.glob = glob
+        self.glob_pattern = glob_pattern
 
     def ismatch(self, string):
-        return fnmatch.fnmatch(string, self.glob)
+        return fnmatch.fnmatch(string, self.glob_pattern)
 
 
 class DirectoryMatch(Match):
-    def __init__(self, nxt, flags, glob):
-        Match.__init__(self, nxt, flags, glob)
-        self.glob.replace("**", "*")
+    def __init__(self, nxt, flags, glob_pattern):
+        Match.__init__(self, nxt, flags, glob_pattern)
+        self.glob_pattern.replace("**", "*")
 
     def call(self, glob, path):
         if path and not os.path.exists(path):
