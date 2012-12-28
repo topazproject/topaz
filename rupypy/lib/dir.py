@@ -7,7 +7,7 @@ from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
-from rupypy.utils.ll_dir import opendir, readdir, closedir, DIR
+from rupypy.utils.ll_dir import opendir, readdir, closedir
 
 
 class W_Dir(W_Object):
@@ -15,11 +15,11 @@ class W_Dir(W_Object):
     classdef.include_module(Enumerable)
 
     def __del__(self):
-        if self.dirp != lltype.nullptr(DIR):
+        if self.open:
             closedir(self.dirp)
 
     def ensure_open(self, space):
-        if self.dirp == lltype.nullptr(DIR):
+        if not self.open:
             raise space.error(space.w_IOError, "closed directory")
 
     @classdef.method("initialize", path="str")
@@ -27,6 +27,7 @@ class W_Dir(W_Object):
         self.path = path
         try:
             self.dirp = opendir(path)
+            self.open = True
         except OSError as e:
             raise error_for_oserror(space, e)
 
@@ -76,5 +77,5 @@ class W_Dir(W_Object):
     def method_close(self, space):
         self.ensure_open(space)
         closedir(self.dirp)
-        self.dirp = lltype.nullptr(DIR)
+        self.open = False
         return space.w_nil
