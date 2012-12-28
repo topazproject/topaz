@@ -391,6 +391,12 @@ class Sequence(RegexpBase):
         RegexpBase.__init__(self)
         self.items = items
 
+    def is_empty(self):
+        for item in self.items:
+            if not item.is_empty():
+                return False
+        return True
+
     def fix_groups(self):
         for item in self.items:
             item.fix_groups()

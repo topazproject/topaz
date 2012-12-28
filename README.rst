@@ -14,7 +14,7 @@ To run the tests::
 
     $ py.test
 
-To translate, first make sure the PyPy soruce is on your ``PYTHONPATH``, then
+To translate, first make sure the PyPy source is on your ``PYTHONPATH``, then
 run::
 
     $ /path/to/pypy/src/pypy/translator/goal/translate.py -Ojit targetrupypy.py

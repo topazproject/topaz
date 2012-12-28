@@ -310,6 +310,11 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'abc'.getbyte -4")
         assert w_res is space.w_nil
 
+    def test_includep(self, space):
+        assert space.execute("return 'abc'.include? 'ab'") is space.w_true
+        assert space.execute("return 'abc'.include? 'bc'") is space.w_true
+        assert space.execute("return 'abc'.include? 'cd'") is space.w_false
+
 
 class TestStringMod(object):
     def test_s(self, space):
