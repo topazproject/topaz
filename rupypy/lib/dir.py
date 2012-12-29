@@ -4,6 +4,7 @@ from rupypy.error import error_for_oserror
 from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
+from rupypy.utils.glob import Glob
 from rupypy.utils.ll_dir import opendir, readdir, closedir
 
 
@@ -57,6 +58,40 @@ class W_Dir(W_Object):
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
+
+    @classdef.singleton_method("[]")
+    def method_subscript(self, space, args_w):
+        if len(args_w) == 1:
+            return space.send(self, space.newsymbol("glob"), args_w)
+        else:
+            return space.send(self, space.newsymbol("glob"), [space.newarray(args_w)])
+
+    @classdef.singleton_method("glob", flags="int")
+    def method_glob(self, space, w_pattern, flags=0, block=None):
+        if space.is_kind_of(w_pattern, space.w_array):
+            patterns_w = space.listview(w_pattern)
+        else:
+            patterns_w = [w_pattern]
+
+        glob = Glob()
+
+        for w_pat in patterns_w:
+            if space.is_kind_of(w_pat, space.w_string):
+                pattern = space.str_w(w_pat)
+            else:
+                pattern = space.str_w(space.convert_type(w_pat, space.w_string, "to_str"))
+            if len(patterns_w) == 1:
+                for pat in pattern.split("\0"):
+                    glob.glob(pat, flags)
+            else:
+                glob.glob(pattern, flags)
+
+        if block:
+            for match in glob.matches():
+                space.invoke_block(block, [space.newstr_fromstr(match)])
+            return space.w_nil
+        else:
+            return space.newarray([space.newstr_fromstr(s) for s in glob.matches()])
 
     @classdef.method("read")
     def method_read(self, space, args_w):

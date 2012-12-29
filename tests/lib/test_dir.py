@@ -53,6 +53,46 @@ class TestDir(BaseRuPyPyTest):
 
         assert space.str_w(w_res) == os.path.realpath(str(tmpdir))
 
+    def test_glob(self, space, tmpdir):
+        sub1 = tmpdir.mkdir("sub1")
+        sub2 = tmpdir.mkdir("sub2")
+        sub1.join("sub1content1").ensure()
+        sub1.join("sub1content2").ensure()
+        sub2.join("sub2content1").ensure()
+        sub2.join("sub2content2").ensure()
+        w_res = space.execute("""
+        Dir.chdir('%s') do
+            return Dir['*']
+        end
+        """ % tmpdir)
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1", "sub2"]
+        w_res = space.execute("""
+        Dir.chdir('%s') do
+            return Dir['**/*']
+        end
+        """ % tmpdir)
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1", "sub1/sub1content1", "sub1/sub1content2", "sub2", "sub2/sub2content1", "sub2/sub2content2"]
+        w_res = space.execute("""
+        Dir.chdir('%s') do
+            return Dir['**/*{1con}*']
+        end
+        """ % tmpdir)
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1/sub1content1", "sub1/sub1content2"]
+        w_res = space.execute("""
+        Dir.chdir('%s') do
+            return Dir['**/sub[1]content[12]']
+        end
+        """ % tmpdir)
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == ["sub1/sub1content1", "sub1/sub1content2"]
+
     def test_read(self, space, tmpdir):
         d = tmpdir.mkdir("sub")
         f = d.join("content")
