@@ -19,8 +19,7 @@ class Glob(object):
         self._matches = matches or []
 
     def matches(self):
-        for match in self._matches:
-            yield match
+        return self._matches
 
     def append_match(self, match):
         self._matches.append(match)
@@ -139,13 +138,10 @@ class Glob(object):
                     i += 1
                 i += 1
 
-        if lbrace > -1 and rbrace > -1:
+        if lbrace >= 0 and rbrace >= 0:
             pos = lbrace
-            assert lbrace >= 0 # XXX: why does the translator need this?
             front = pattern[0:lbrace]
-            backstart = rbrace + 1
-            assert backstart >= 0
-            back = pattern[backstart:len(pattern)]
+            back = pattern[rbrace + 1:len(pattern)]
 
             while pos < rbrace:
                 nest = 0
@@ -243,7 +239,7 @@ class RecursiveDirectories(Node):
 
 
 class StartRecursiveDirectories(RecursiveDirectories):
-    def call(self, glob, _):
+    def call(self, glob, start):
         stack = []
         for ent in os.listdir("."):
             if os.path.isdir(ent) and (self.allow_dots() or ent[0] != "."):

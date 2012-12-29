@@ -56,15 +56,15 @@ class TestDir(BaseRuPyPyTest):
     def test_glob(self, space, tmpdir):
         sub1 = tmpdir.mkdir("sub1")
         sub2 = tmpdir.mkdir("sub2")
-        sub1.join("sub1content1").write("")
-        sub1.join("sub1content2").write("")
-        sub2.join("sub2content1").write("")
-        sub2.join("sub2content2").write("")
+        sub1.join("sub1content1").ensure()
+        sub1.join("sub1content2").ensure()
+        sub2.join("sub2content1").ensure()
+        sub2.join("sub2content2").ensure()
         w_res = space.execute("""
         Dir.chdir('%s') do
             return Dir['*']
         end
-        """ % str(tmpdir))
+        """ % tmpdir)
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1", "sub2"]
@@ -72,7 +72,7 @@ class TestDir(BaseRuPyPyTest):
         Dir.chdir('%s') do
             return Dir['**/*']
         end
-        """ % str(tmpdir))
+        """ % tmpdir)
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1", "sub1/sub1content1", "sub1/sub1content2", "sub2", "sub2/sub2content1", "sub2/sub2content2"]
@@ -80,7 +80,7 @@ class TestDir(BaseRuPyPyTest):
         Dir.chdir('%s') do
             return Dir['**/*{1con}*']
         end
-        """ % str(tmpdir))
+        """ % tmpdir)
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1/sub1content1", "sub1/sub1content2"]
@@ -88,7 +88,7 @@ class TestDir(BaseRuPyPyTest):
         Dir.chdir('%s') do
             return Dir['**/sub[1]content[12]']
         end
-        """ % str(tmpdir))
+        """ % tmpdir)
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1/sub1content1", "sub1/sub1content2"]
