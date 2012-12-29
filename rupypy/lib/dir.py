@@ -1,4 +1,3 @@
-import errno
 import os
 
 from rupypy.error import error_for_oserror
@@ -6,24 +5,29 @@ from rupypy.module import ClassDef
 from rupypy.modules.enumerable import Enumerable
 from rupypy.objects.objectobject import W_Object
 from rupypy.utils.glob import Glob
+from rupypy.utils.ll_dir import opendir, readdir, closedir
 
 
 class W_Dir(W_Object):
     classdef = ClassDef("Dir", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
 
+    def __del__(self):
+        if self.open:
+            closedir(self.dirp)
+
+    def ensure_open(self, space):
+        if not self.open:
+            raise space.error(space.w_IOError, "closed directory")
+
     @classdef.method("initialize", path="str")
     def method_initialize(self, space, path):
-        msg = None
-        if not os.path.exists(path):
-            msg = "No such file or directory - %s" % path
-            w_errno = space.newint(errno.ENOENT)
-        elif not os.path.isdir(path):
-            msg = "Not a directory - %s" % path
-            w_errno = space.newint(errno.ENOTDIR)
-        if msg:
-            raise space.error(space.w_SystemCallError, msg, [w_errno])
         self.path = path
+        try:
+            self.dirp = opendir(path)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        self.open = True
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -49,9 +53,8 @@ class W_Dir(W_Object):
 
     @classdef.singleton_method("delete", path="path")
     def method_delete(self, space, path):
-        assert path
         try:
-            os.rmdir(path)
+            os.rmdir(path if path else "")
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
@@ -90,3 +93,22 @@ class W_Dir(W_Object):
             return space.w_nil
         else:
             return space.newarray([space.newstr_fromstr(s) for s in glob.matches()])
+
+    @classdef.method("read")
+    def method_read(self, space, args_w):
+        self.ensure_open(space)
+        try:
+            filename = readdir(self.dirp)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        if filename is None:
+            return space.w_nil
+        else:
+            return space.newstr_fromstr(filename)
+
+    @classdef.method("close")
+    def method_close(self, space):
+        self.ensure_open(space)
+        closedir(self.dirp)
+        self.open = False
+        return space.w_nil

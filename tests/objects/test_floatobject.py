@@ -149,3 +149,22 @@ class TestFloatObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == 0.0
         w_res = space.execute("return 2 ** (-1.0 / 0.0)")
         assert self.unwrap(space, w_res) == 0.0
+
+        w_res = space.execute("return 1 <=> 2")
+        assert space.int_w(w_res) == -1
+
+    def test_comparator_eq(self, space):
+        w_res = space.execute("return 1.0 <=> 1.0")
+        assert space.int_w(w_res) == 0
+
+    def test_comparator_gt(self, space):
+        w_res = space.execute("return 2.0 <=> 1.0")
+        assert space.int_w(w_res) == 1
+
+    def test_comparator_int(self, space):
+        w_res = space.execute("return 1.1 <=> 1")
+        assert space.int_w(w_res) == 1
+
+    def test_comparator_other_type(self, space):
+        w_res = space.execute("return 1.0 <=> '1'")
+        assert w_res is space.w_nil

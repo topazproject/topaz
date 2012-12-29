@@ -80,6 +80,20 @@ class W_FloatObject(W_NumericObject):
     method_gt = new_bool_op(classdef, ">", operator.gt)
     method_gte = new_bool_op(classdef, ">=", operator.ge)
 
+    @classdef.method("<=>")
+    def method_comparator(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_numeric):
+            other = space.float_w(w_other)
+            if self.floatvalue < other:
+                return space.newint(-1)
+            elif self.floatvalue == other:
+                return space.newint(0)
+            elif self.floatvalue > other:
+                return space.newint(1)
+            return space.newint(1)
+        else:
+            return space.w_nil
+
     @classdef.method("hash")
     def method_hash(self, space):
         return space.newint(compute_hash(self.floatvalue))

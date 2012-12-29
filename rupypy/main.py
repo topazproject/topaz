@@ -53,7 +53,7 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
     space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
-    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(platform))
+    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
     if verbose:
         os.write(1, "%s\n" % description)

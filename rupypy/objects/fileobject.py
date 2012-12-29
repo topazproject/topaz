@@ -213,7 +213,7 @@ class W_FileObject(W_IOObject):
             elif mode_str == "w":
                 mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
             elif mode_str == "a":
-                mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+                mode = os.O_WRONLY | os.O_CREAT | os.O_APPEND
             else:
                 raise space.error(space.w_ArgumentError,
                     "invalid access mode %s" % mode_str
