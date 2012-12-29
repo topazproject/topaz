@@ -19,6 +19,8 @@ class ExecutionContext(object):
         self.w_trace_proc = None
         self.in_trace_proc = False
 
+        self.fiber_thread = None
+
     def settraceproc(self, w_proc):
         self.w_trace_proc = w_proc
 
