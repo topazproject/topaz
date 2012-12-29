@@ -1,7 +1,7 @@
-import fnmatch
 import os
 
 from pypy.rlib.rsre import rsre_core
+from pypy.rlib.rstring import StringBuilder
 
 from rupypy.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
 from rupypy.utils import regexp
@@ -255,17 +255,63 @@ class StartRecursiveDirectories(RecursiveDirectories):
 class Match(Node):
     def __init__(self, nxt, flags, glob_pattern):
         Node.__init__(self, nxt, flags)
-        self.glob_pattern = glob_pattern
+        self.regexp = self.translate(glob_pattern, flags)
+
+    # Copied from stdlib, but rpython and uses StringBuilder instead of string concat
+    def translate(self, pattern, flags):
+        pattern = os.path.normcase(pattern)
+        i = 0
+        n = len(pattern)
+        res = StringBuilder(n)
+        res.append("^")
+        while i < n:
+            c = pattern[i]
+            i += 1
+            if c == "*":
+                res.append(".*")
+                if i < n and pattern[i] == "*": # skip second `*' in directory wildcards
+                    i += 1
+            elif c == "?":
+                res.append(".")
+            elif c == "[":
+                j = i
+                if j < n and pattern[j] == "!":
+                    j += 1
+                if j < n and pattern[j] == "]":
+                    j += 1
+                while j < n and pattern[j] != "]":
+                    j += 1
+                if j >= n:
+                    res.append("\\[")
+                else:
+                    res.append("[")
+                    if pattern[i] == "!":
+                        res.append("^")
+                        i += 1
+                    elif pattern[i] == "^":
+                        res.append("\\^")
+                        i += 1
+                    for ch in pattern[i:j]:
+                        if ch == "\\":
+                            res.append("\\\\")
+                        else:
+                            res.append(ch)
+                    res.append("]")
+                    i = j + 1
+            else:
+                if not c.isalnum():
+                    res.append("\\")
+                res.append(c)
+        res.append("$")
+        return res.build()
 
     def ismatch(self, string):
-        return fnmatch.fnmatch(string, self.glob_pattern)
+        string = os.path.normcase(string)
+        ctx = regexp_match(self.regexp, string)
+        return rsre_core.search_context(ctx)
 
 
 class DirectoryMatch(Match):
-    def __init__(self, nxt, flags, glob_pattern):
-        Match.__init__(self, nxt, flags, glob_pattern)
-        self.glob_pattern.replace("**", "*")
-
     def call(self, glob, path):
         if path and not os.path.exists(path):
             return
