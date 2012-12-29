@@ -61,9 +61,8 @@ class W_Dir(W_Object):
 
     @classdef.singleton_method("[]")
     def method_subscript(self, space, args_w):
-        patterns = []
         if len(args_w) == 1:
-            return space.send(self, space.newsymbol("glob"), [args_w[0]])
+            return space.send(self, space.newsymbol("glob"), args_w)
         else:
             return space.send(self, space.newsymbol("glob"), [space.newarray(args_w)])
 

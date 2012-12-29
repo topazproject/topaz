@@ -25,9 +25,7 @@ class Glob(object):
         self._matches.append(match)
 
     def path_split(self, string):
-        start = 0
         ret = []
-        last_match = None
         ctx = regexp_match("/+", string)
 
         last_end = 0
@@ -116,7 +114,6 @@ class Glob(object):
         escape = flags & FNM_NOESCAPE == 0
         rbrace = -1
         lbrace = -1
-        escapes = False
 
         i = pattern.find("{")
         if i > -1:
@@ -134,13 +131,13 @@ class Glob(object):
                     break
 
                 if char == "\\" and escape:
-                    escapes = True
+                    escape = True
                     i += 1
                 i += 1
 
         if lbrace >= 0 and rbrace >= 0:
             pos = lbrace
-            front = pattern[0:lbrace]
+            front = pattern[:lbrace]
             back = pattern[rbrace + 1:len(pattern)]
 
             while pos < rbrace:
@@ -265,7 +262,8 @@ class Match(Node):
             i += 1
             if c == "*":
                 res.append(".*")
-                if i < n and pattern[i] == "*": # skip second `*' in directory wildcards
+                # skip second `*' in directory wildcards
+                if i < n and pattern[i] == "*":
                     i += 1
             elif c == "?":
                 res.append(".")
