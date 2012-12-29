@@ -314,3 +314,24 @@ class Kernel(Module):
         else:
             assert isinstance(w_proc, W_ProcObject)
         space.getexecutioncontext().settraceproc(w_proc)
+
+    def new_flag(moduledef, setter, getter, remover):
+        @moduledef.method(setter)
+        def setter_method(self, space):
+            self.set_flag(space, getter)
+            return self
+        @moduledef.method(getter)
+        def getter_method(self, space):
+            return space.newbool(self.get_flag(space, getter))
+
+        if remover is None:
+            return (setter_method, getter_method)
+        else:
+            @moduledef.method(remover)
+            def remover_method(self, space):
+                self.unset_flag(space, getter)
+                return self
+            return (setter_method, getter_method, remover_method)
+    method_untrust, method_untrusted, method_trust = new_flag(moduledef, "untrust", "untrusted?", "trust")
+    method_taint, method_tainted, method_untaint = new_flag(moduledef, "taint", "tainted?", "untaint")
+    method_freeze, method_frozen = new_flag(moduledef, "freeze", "frozen?", None)

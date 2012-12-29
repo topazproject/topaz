@@ -181,6 +181,7 @@ class W_Object(W_RootObject):
             klass = space.getclassfor(self.__class__)
         self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
         self.storage = None
+        self.flags = None
 
     def __deepcopy__(self, memo):
         obj = super(W_Object, self).__deepcopy__(memo)
@@ -214,3 +215,26 @@ class W_Object(W_RootObject):
     def copy_instance_vars(self, space, w_other):
         assert isinstance(w_other, W_Object)
         w_other.map.copy_attrs(space, w_other, self)
+
+    def get_flag(self, space, name):
+        idx = jit.promote(self.map).find_flag(space, name)
+        if idx == -1:
+            return False
+        return self.flags[idx]
+
+    def set_flag(self, space, name):
+        idx = jit.promote(self.map).find_flag(space, name)
+        if idx == -1:
+            self.map.add_flag(space, self, name)
+        else:
+            self.flags[idx] = True
+
+    def unset_flag(self, space, name):
+        idx = jit.promote(self.map).find_flag(space, name)
+        if idx != -1:
+            # Flags are by default unset, no need to add if unsetting
+            self.flags[idx] = False
+
+    def copy_flags(self, space, w_other):
+        assert isinstance(w_other, W_Object)
+        w_other.map.copy_flags(space, w_other, self)
