@@ -204,9 +204,9 @@ class W_Object(W_RootObject):
         w_cls = jit.promote(self.map).get_class()
         assert not w_cls.is_singleton
         w_copy = space.newclass(w_cls.name, w_cls, is_singleton=True)
-        w_copy.methods_w = w_other.methods_w
-        w_copy.constants_w = w_other.constants_w
-        w_copy.included_modules = w_other.included_modules
+        w_copy.methods_w = w_other.methods_w.copy()
+        w_copy.constants_w = w_other.constants_w.copy()
+        w_copy.included_modules = w_other.included_modules[:]
         self.map = self.map.change_class(space, w_copy)
         return w_cls
 
