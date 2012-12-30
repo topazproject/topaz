@@ -6,6 +6,31 @@ from rupypy.objects.objectobject import W_Object
 from rupypy.utils import regexp
 
 
+escape_table = [chr(i) for i in xrange(256)]
+escape_table[9]   = '\\t'
+escape_table[10]  = '\\n'
+escape_table[11]  = '\\v'
+escape_table[12]  = '\\f'
+escape_table[13]  = '\\r'
+escape_table[32]  = '\\ '
+escape_table[35]  = '\\#'
+escape_table[36]  = '\\$'
+escape_table[40]  = '\\('
+escape_table[41]  = '\\)'
+escape_table[42]  = '\\*'
+escape_table[43]  = '\\+'
+escape_table[45]  = '\\-'
+escape_table[46]  = '\\.'
+escape_table[63]  = '\\?'
+escape_table[91]  = '\\['
+escape_table[92]  = '\\\\'
+escape_table[93]  = '\\]'
+escape_table[94]  = '\\^'
+escape_table[123] = '\\{'
+escape_table[124] = '\\|'
+escape_table[125] = '\\}'
+
+
 class W_RegexpObject(W_Object):
     classdef = ClassDef("Regexp", W_Object.classdef, filepath=__file__)
 
@@ -178,6 +203,13 @@ class W_RegexpObject(W_Object):
     @classdef.method("casefold?")
     def method_casefoldp(self, space):
         return space.newbool(self.flags & regexp.IGNORE_CASE)
+
+    @classdef.singleton_method("escape", string="str")
+    def method_escape(self, space, string):
+        result = []
+        for ch in string:
+            result += escape_table[ord(ch)]
+        return space.newstr_fromchars(result)
 
 
 class W_MatchDataObject(W_Object):
