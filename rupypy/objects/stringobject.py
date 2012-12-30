@@ -156,11 +156,13 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         if len(storage) == 0:
             return
-        elif newline is not None and len(newline) <= len(storage):
+        elif newline is not None and len(storage) >= len(newline):
             for i in xrange(len(newline) - 1, -1, -1):
                 if newline[i] != storage[len(storage) - len(newline) + i]:
                     return
-            del storage[len(storage) - len(newline):len(storage)]
+            start = len(storage) - len(newline)
+            assert start >= 0
+            del storage[start:len(storage)]
         elif newline is None:
             ch = storage[-1]
             i = len(storage) - 1
@@ -168,7 +170,11 @@ class MutableStringStrategy(StringStrategy):
                 i -= 1
                 ch = storage[i]
             if i < len(storage) - 1:
-                del storage[i + 1:len(storage)]
+                i += 1
+                if i > 0:
+                    del storage[i:len(storage)]
+                else:
+                    del storage[:]
 
 
 class W_StringObject(W_Object):
