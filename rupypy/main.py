@@ -55,6 +55,8 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
+    space.execute("require 'fileutils'")
+
     if verbose:
         os.write(1, "%s\n" % description)
 
