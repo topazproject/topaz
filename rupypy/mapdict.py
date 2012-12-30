@@ -83,7 +83,7 @@ class ClassNode(BaseNode):
         pass
 
 
-class AttributeNode(BaseNode):
+class StorageNode(BaseNode):
     _immutable_fields_ = ["prev", "name", "pos"]
 
     def __init__(self, prev, name, pos):
@@ -95,6 +95,8 @@ class AttributeNode(BaseNode):
     def get_class(self):
         return self.prev.get_class()
 
+
+class AttributeNode(StorageNode):
     @jit.elidable
     def find_attr(self, space, name):
         if name == self.name:
@@ -125,7 +127,7 @@ class AttributeNode(BaseNode):
         self.prev.copy_flags(space, w_obj, w_target)
 
 
-class FlagNode(AttributeNode):
+class FlagNode(StorageNode):
     @jit.elidable
     def find_attr(self, space, name):
         return self.prev.find_attr(space, name)
