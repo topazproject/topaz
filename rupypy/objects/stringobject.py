@@ -615,38 +615,32 @@ class W_StringObject(W_Object):
         if replacement is not None and "\\" in replacement:
             replacement_parts = [s for s in replacement.split("\\") if s]
 
-        if replacement_parts is not None:
-            substition_method = self.gsub_regexp_subst_string
-        elif replacement is not None:
-            substition_method = self.gsub_regexp_string
-        elif block:
-            substition_method = self.gsub_regexp_block
 
         while pos < len(string) and self.search_context(space, ctx):
             result.extend(string[pos:ctx.match_start])
-            result.extend(substition_method(
-                space,
-                replacement=(replacement_parts if replacement_parts else replacement),
-                block=block,
-                match=w_matchdata,
-                pos=pos
-            ))
+            if replacement_parts is not None:
+                result.extend(self.gsub_regexp_subst_string(
+                        space, replacement_parts, w_matchdata, pos
+                ))
+            elif replacement is not None:
+                result.extend(replacement)
+            elif block:
+                result.extend(self.gsub_regexp_block(space, block, w_matchdata))
+            else:
+                raise NotImplementedError
             pos = ctx.match_end
             ctx.reset(pos)
         result.extend(string[pos:len(string)])
 
-    def gsub_regexp_string(self, space, replacement=None, block=None, match=None, pos=0):
-        return replacement
-
-    def gsub_regexp_subst_string(self, space, replacement=None, block=None, match=None, pos=0):
+    def gsub_regexp_subst_string(self, space, parts_w, w_match, pos=0):
         result = []
         string = space.str_w(self)
-        result.extend(replacement[0])
-        for s in replacement[1:len(replacement)]:
+        result.extend(parts_w[0])
+        for s in parts_w[1:len(parts_w)]:
             if s[0].isdigit():
                 group = int(s[0])
-                if group < match.size():
-                    begin, end = match.get_span(group)
+                if group < w_match.size():
+                    begin, end = w_match.get_span(group)
                     begin += pos
                     end += pos
                     assert begin >= 0
@@ -657,9 +651,9 @@ class W_StringObject(W_Object):
                 result.extend(s)
         return result
 
-    def gsub_regexp_block(self, space, replacement=None, block=None, match=None, pos=0):
-        w_match = space.send(match, space.newsymbol("[]"), [space.newint(0)])
-        return self.gsub_yield_block(space, w_match, block)
+    def gsub_regexp_block(self, space, block, w_match):
+        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        return self.gsub_yield_block(space, w_arg, block)
 
     def gsub_string(self, space, w_pattern, replacement, block, result):
         pos = 0
@@ -672,7 +666,7 @@ class W_StringObject(W_Object):
                 if replacement is not None:
                     result.extend(replacement)
                 elif block:
-                    result.extent(self.gsub_yield_block(space, w_pattern, block))
+                    result.extend(self.gsub_yield_block(space, w_pattern, block))
                 pos += idx + len(pattern)
             else:
                 break
