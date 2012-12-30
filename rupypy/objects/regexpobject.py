@@ -6,6 +6,31 @@ from rupypy.objects.objectobject import W_Object
 from rupypy.utils import regexp
 
 
+RE_ESCAPE_TABLE = [chr(i) for i in xrange(256)]
+RE_ESCAPE_TABLE[ord("\t")] = "\\t"
+RE_ESCAPE_TABLE[ord("\n")] = "\\n"
+RE_ESCAPE_TABLE[ord("\v")] = "\\v"
+RE_ESCAPE_TABLE[ord("\f")] = "\\f"
+RE_ESCAPE_TABLE[ord("\r")] = "\\r"
+RE_ESCAPE_TABLE[ord(" ")] = "\\ "
+RE_ESCAPE_TABLE[ord("#")] = "\\#"
+RE_ESCAPE_TABLE[ord("$")] = "\\$"
+RE_ESCAPE_TABLE[ord("(")] = "\\("
+RE_ESCAPE_TABLE[ord(")")] = "\\)"
+RE_ESCAPE_TABLE[ord("*")] = "\\*"
+RE_ESCAPE_TABLE[ord("+")] = "\\+"
+RE_ESCAPE_TABLE[ord("-")] = "\\-"
+RE_ESCAPE_TABLE[ord(".")] = "\\."
+RE_ESCAPE_TABLE[ord("?")] = "\\?"
+RE_ESCAPE_TABLE[ord("[")] = "\\["
+RE_ESCAPE_TABLE[ord("\\")] = "\\\\"
+RE_ESCAPE_TABLE[ord("]")] = "\\]"
+RE_ESCAPE_TABLE[ord("^")] = "\\^"
+RE_ESCAPE_TABLE[ord("{")] = "\\{"
+RE_ESCAPE_TABLE[ord("|")] = "\\|"
+RE_ESCAPE_TABLE[ord("}")] = "\\}"
+
+
 class W_RegexpObject(W_Object):
     classdef = ClassDef("Regexp", W_Object.classdef, filepath=__file__)
 
@@ -179,6 +204,13 @@ class W_RegexpObject(W_Object):
     def method_casefoldp(self, space):
         return space.newbool(self.flags & regexp.IGNORE_CASE)
 
+    @classdef.singleton_method("escape", string="str")
+    def method_escape(self, space, string):
+        result = []
+        for ch in string:
+            result += RE_ESCAPE_TABLE[ord(ch)]
+        return space.newstr_fromchars(result)
+
 
 class W_MatchDataObject(W_Object):
     classdef = ClassDef("MatchData", W_Object.classdef, filepath=__file__)
@@ -225,9 +257,10 @@ class W_MatchDataObject(W_Object):
             start, end = self.get_span(n)
         else:
             return space.w_nil
-        assert start >= 0
-        assert end >= 0
-        return space.newstr_fromstr(self.ctx._string[start:end])
+        if 0 <= start <= end:
+            return space.newstr_fromstr(self.ctx._string[start:end])
+        else:
+            return space.w_nil
 
     @classdef.method("to_a")
     def method_to_a(self, space):
@@ -235,6 +268,13 @@ class W_MatchDataObject(W_Object):
         for i in xrange(self.size()):
             res_w.append(space.send(self, space.newsymbol("[]"), [space.newint(i)]))
         return space.newarray(res_w)
+
+    classdef.app_method("""
+    def values_at(*args)
+        ary = self.to_a
+        args.map { |n| ary[n] }
+    end
+    """)
 
     @classdef.method("begin", n="int")
     def method_begin(self, space, n):

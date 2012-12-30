@@ -326,6 +326,15 @@ class TestStringObject(BaseRuPyPyTest):
         w_res = space.execute("return 'abc'.getbyte -4")
         assert w_res is space.w_nil
 
+    def test_chomp(self, space):
+        assert space.str_w(space.execute('return "hello".chomp')) == "hello"
+        assert space.str_w(space.execute('return "hello\\n".chomp')) == "hello"
+        assert space.str_w(space.execute('return "hello\\r\\n".chomp')) == "hello"
+        assert space.str_w(space.execute('return "hello\\n\\r".chomp')) == "hello"
+        assert space.str_w(space.execute('return "hello\\r".chomp')) == "hello"
+        assert space.str_w(space.execute('return "hello \\n there".chomp')) == "hello \n there"
+        assert space.str_w(space.execute('return "hello".chomp("llo")')) == "he"
+
     def test_includep(self, space):
         assert space.execute("return 'abc'.include? 'ab'") is space.w_true
         assert space.execute("return 'abc'.include? 'bc'") is space.w_true

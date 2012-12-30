@@ -125,6 +125,13 @@ class TestRegexpObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["abc", "a", "b", "c"]
 
+    def test_values_at(self, space):
+        w_res = space.execute("""
+        m = /(.)(.)(\d+)(\d)/.match("THX1138: The Movie")
+        return m.values_at(0, 2, -2)
+        """)
+        assert self.unwrap(space, w_res) == ["HX1138", "X", "113"]
+
     def test_branch(self, space):
         w_res = space.execute("return /a|b/ =~ 'a'")
         assert space.int_w(w_res) == 0
@@ -139,6 +146,14 @@ class TestRegexpObject(BaseRuPyPyTest):
     def test_non_capturing_group(self, space):
         w_res = space.execute("return /(?:foo)(bar)/.match('foobar').to_a")
         assert self.unwrap(space, w_res) == ["foobar", "bar"]
+
+    def test_optional_group(self, space):
+        w_res = space.execute("return /(foo)?(bar)?/.match('foobar')[1]")
+        assert self.unwrap(space, w_res) == "foo"
+        w_res = space.execute("return /(foo)?(bar)?/.match('foobar')[2]")
+        assert self.unwrap(space, w_res) == "bar"
+        w_res = space.execute("return /(foo)?(bar)?/.match('foo')[2]")
+        assert self.unwrap(space, w_res) == None
 
     def test_quantify_set(self, space):
         w_res = space.execute("return /([0-9]){3,5}?/ =~ 'ab12345'")
@@ -163,3 +178,9 @@ class TestRegexpObject(BaseRuPyPyTest):
         assert w_res is space.w_true
         w_res = space.execute("return /abc/ === 'ddddddd'")
         assert w_res is space.w_false
+
+    def test_escape(self, space):
+        w_res = space.execute("""
+        return Regexp.escape("y1_'\t\n\v\f\r \#$()*+-.?[\\\\]^{|}")
+        """)
+        assert space.str_w(w_res) == "y1_'\\t\\n\\v\\f\\r\\ \\#\\$\\(\\)\\*\\+\\-\\.\\?\\[\\\\\\]\\^\\{\\|\\}"

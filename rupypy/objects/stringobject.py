@@ -152,6 +152,30 @@ class MutableStringStrategy(StringStrategy):
             storage[i] = new_c
         return changed
 
+    def chomp(self, storage, newline=None):
+        storage = self.unerase(storage)
+        if len(storage) == 0:
+            return
+        elif newline is not None and len(storage) >= len(newline):
+            for i in xrange(len(newline) - 1, -1, -1):
+                if newline[i] != storage[len(storage) - len(newline) + i]:
+                    return
+            start = len(storage) - len(newline)
+            assert start >= 0
+            del storage[start:]
+        elif newline is None:
+            ch = storage[-1]
+            i = len(storage) - 1
+            while i >= 0 and ch in "\n\r":
+                i -= 1
+                ch = storage[i]
+            if i < len(storage) - 1:
+                i += 1
+                if i > 0:
+                    del storage[i:]
+                else:
+                    del storage[:]
+
 
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
@@ -581,3 +605,22 @@ class W_StringObject(W_Object):
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
         return space.newbool(substr in space.str_w(self))
+
+    @classdef.method("chomp!")
+    def method_chomp_i(self, space, w_newline=None):
+        if w_newline is None:
+            newline = space.globals.get(space, "$/")
+        if w_newline is space.w_nil:
+            return self
+        newline = space.str_w(space.convert_type(w_newline, space.w_string, "to_str"))
+        if newline in "\n\r":
+            newline = None
+        self.strategy.to_mutable(space, self)
+        self.strategy.chomp(self.str_storage, newline)
+        return self
+
+    classdef.app_method("""
+    def chomp(sep=$/)
+        self.dup.chomp!(sep)
+    end
+    """)
