@@ -147,6 +147,14 @@ class TestRegexpObject(BaseRuPyPyTest):
         w_res = space.execute("return /(?:foo)(bar)/.match('foobar').to_a")
         assert self.unwrap(space, w_res) == ["foobar", "bar"]
 
+    def test_optional_group(self, space):
+        w_res = space.execute("return /(foo)?(bar)?/.match('foobar')[1]")
+        assert self.unwrap(space, w_res) == "foo"
+        w_res = space.execute("return /(foo)?(bar)?/.match('foobar')[2]")
+        assert self.unwrap(space, w_res) == "bar"
+        w_res = space.execute("return /(foo)?(bar)?/.match('foo')[2]")
+        assert self.unwrap(space, w_res) == None
+
     def test_quantify_set(self, space):
         w_res = space.execute("return /([0-9]){3,5}?/ =~ 'ab12345'")
         assert space.int_w(w_res) == 2
