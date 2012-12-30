@@ -162,7 +162,7 @@ class MutableStringStrategy(StringStrategy):
                     return
             start = len(storage) - len(newline)
             assert start >= 0
-            del storage[start:len(storage)]
+            del storage[start:]
         elif newline is None:
             ch = storage[-1]
             i = len(storage) - 1
@@ -172,7 +172,7 @@ class MutableStringStrategy(StringStrategy):
             if i < len(storage) - 1:
                 i += 1
                 if i > 0:
-                    del storage[i:len(storage)]
+                    del storage[i:]
                 else:
                     del storage[:]
 
