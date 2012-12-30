@@ -225,9 +225,10 @@ class W_MatchDataObject(W_Object):
             start, end = self.get_span(n)
         else:
             return space.w_nil
-        assert start >= 0
-        assert end >= 0
-        return space.newstr_fromstr(self.ctx._string[start:end])
+        if 0 <= start <= end:
+            return space.newstr_fromstr(self.ctx._string[start:end])
+        else:
+            return space.w_nil
 
     @classdef.method("to_a")
     def method_to_a(self, space):
