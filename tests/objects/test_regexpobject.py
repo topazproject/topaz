@@ -125,6 +125,13 @@ class TestRegexpObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == ["abc", "a", "b", "c"]
 
+    def test_values_at(self, space):
+        w_res = space.execute("""
+        m = /(.)(.)(\d+)(\d)/.match("THX1138: The Movie")
+        return m.values_at(0, 2, -2)
+        """)
+        assert self.unwrap(space, w_res) == ["HX1138", "X", "113"]
+
     def test_branch(self, space):
         w_res = space.execute("return /a|b/ =~ 'a'")
         assert space.int_w(w_res) == 0
