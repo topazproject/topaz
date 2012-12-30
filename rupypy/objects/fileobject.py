@@ -153,7 +153,7 @@ class W_IOObject(W_Object):
         return space.w_nil
 
     classdef.app_method("""
-    def each_line(sep=$/, limit=nil, &block)
+    def each_line(sep=$/, limit=nil)
         if sep.is_a?(Fixnum) && limit.nil?
             limit = sep
             sep = $/
