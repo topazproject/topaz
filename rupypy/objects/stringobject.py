@@ -586,7 +586,6 @@ class W_StringObject(W_Object):
     def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
         if w_replacement is None and block is None:
             raise NotImplementedError("gsub enumerator")
-
         if w_replacement:
             if space.is_kind_of(w_replacement, space.w_hash):
                 raise NotImplementedError("gsub with Hash replacement")
@@ -594,77 +593,97 @@ class W_StringObject(W_Object):
         else:
             replacement = None
 
-        if space.is_kind_of(w_pattern, space.w_string):
-            pos = 0
-            pattern = space.str_w(w_pattern)
-            string = space.str_w(self)
-            result = []
-            while pos + len(pattern) < len(string):
-                idx = string.find(pattern, pos)
-                if idx >= 0:
-                    result.extend(string[pos:idx])
-                    if replacement is None:
-                        w_block_replacement = space.send(
-                            space.invoke_block(block, [w_pattern]),
-                            space.newsymbol("to_s")
-                        )
-                        result.extend(space.str_w(
-                            space.convert_type(w_block_replacement, space.w_string, "to_str")
-                        ))
-                    else:
-                        result.extend(replacement)
-                    pos = idx + len(pattern)
-                else:
-                    result.extend(string[pos:len(string)])
-                    break
-            return space.newstr_fromchars(result)
-        elif space.is_kind_of(w_pattern, space.w_regexp):
-            pos = 0
-            string = space.str_w(self)
-            ctx = w_pattern.make_ctx(string)
-            w_match = w_pattern.get_match_result(space, ctx, found=True)
-            result = []
-            if replacement is not None and "\\" in replacement:
-                replacement_parts = [s for s in replacement.split("\\") if s]
-            else:
-                replacement_parts = [replacement]
-            while pos < len(string):
-                if self.search_context(space, ctx):
-                    idx = ctx.match_start
-                    result.extend(string[pos:idx])
-                    if replacement is None:
-                        w_block_replacement = space.send(
-                            space.invoke_block(
-                                block,
-                                [space.newstr_fromstr(string[ctx.match_start:ctx.match_end])]
-                            ),
-                            space.newsymbol("to_s")
-                        )
-                        result.extend(space.str_w(
-                            space.convert_type(w_block_replacement, space.w_string, "to_str")
-                        ))
-                    else:
-                        for s in replacement_parts:
-                            if s[0].isdigit():
-                                group = int(s[0])
-                                if group < w_match.size():
-                                    begin, end = w_match.get_span(group)
-                                    begin += pos
-                                    end += pos
-                                    assert begin >= 0
-                                    assert end >= 0
-                                    result.extend(string[begin:end])
-                                result.extend(s[1:len(s)])
-                            else:
-                                result.extend(s)
-                    pos = ctx.match_end
-                    ctx.reset(pos)
-                else:
-                    result.extend(string[pos:len(string)])
-                    break
-            return space.newstr_fromchars(result)
+        result = []
+        if space.is_kind_of(w_pattern, space.w_regexp):
+            self.gsub_regexp(space, w_pattern, replacement, block, result)
+        elif space.is_kind_of(w_pattern, space.w_string):
+            self.gsub_string(space, w_pattern, replacement, block, result)
         else:
             raise space.error(
                 space.w_TypeError,
                 "wrong argument type %s (expected Regexp)" % space.getclass(w_replacement).name
             )
+        return space.newstr_fromchars(result)
+
+    def gsub_regexp(self, space, w_pattern, replacement, block, result):
+        pos = 0
+        string = space.str_w(self)
+        ctx = w_pattern.make_ctx(string)
+
+        w_matchdata = w_pattern.get_match_result(space, ctx, found=True)
+        replacement_parts = None
+        if replacement is not None and "\\" in replacement:
+            replacement_parts = [s for s in replacement.split("\\") if s]
+
+        if replacement_parts is not None:
+            substition_method = self.gsub_regexp_subst_string
+        elif replacement is not None:
+            substition_method = self.gsub_regexp_string
+        elif block:
+            substition_method = self.gsub_regexp_block
+
+        while pos < len(string) and self.search_context(space, ctx):
+            result.extend(string[pos:ctx.match_start])
+            result.extend(substition_method(
+                space,
+                replacement=(replacement_parts if replacement_parts else replacement),
+                block=block,
+                match=w_matchdata,
+                pos=pos
+            ))
+            pos = ctx.match_end
+            ctx.reset(pos)
+        result.extend(string[pos:len(string)])
+
+    def gsub_regexp_string(self, space, replacement=None, block=None, match=None, pos=0):
+        return replacement
+
+    def gsub_regexp_subst_string(self, space, replacement=None, block=None, match=None, pos=0):
+        result = []
+        string = space.str_w(self)
+        result.extend(replacement[0])
+        for s in replacement[1:len(replacement)]:
+            if s[0].isdigit():
+                group = int(s[0])
+                if group < match.size():
+                    begin, end = match.get_span(group)
+                    begin += pos
+                    end += pos
+                    assert begin >= 0
+                    assert end >= 0
+                    result.extend(string[begin:end])
+                result.extend(s[1:len(s)])
+            else:
+                result.extend(s)
+        return result
+
+    def gsub_regexp_block(self, space, replacement=None, block=None, match=None, pos=0):
+        w_match = space.send(match, space.newsymbol("[]"), [space.newint(0)])
+        return self.gsub_yield_block(space, w_match, block)
+
+    def gsub_string(self, space, w_pattern, replacement, block, result):
+        pos = 0
+        string = space.str_w(self)
+        pattern = space.str_w(w_pattern)
+        while pos + len(pattern) < len(string):
+            idx = string.find(pattern, pos)
+            if idx >= 0:
+                result.extend(string[pos:idx])
+                if replacement is not None:
+                    result.extend(replacement)
+                elif block:
+                    result.extent(self.gsub_yield_block(space, w_pattern, block))
+                pos += idx + len(pattern)
+            else:
+                break
+        result.extend(string[pos:len(string)])
+
+    def gsub_yield_block(self, space, w_match, block):
+        return space.str_w(space.convert_type(
+                space.send(
+                    space.invoke_block(block, [w_match]),
+                    space.newsymbol("to_s")
+                ),
+                space.w_string,
+                "to_str"
+        ))
