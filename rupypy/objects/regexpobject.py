@@ -208,7 +208,7 @@ class W_RegexpObject(W_Object):
     def method_escape(self, space, string):
         result = []
         for ch in string:
-            result.extend(escape_table[ord(ch)])
+            result += escape_table[ord(ch)]
         return space.newstr_fromchars(result)
 
 
