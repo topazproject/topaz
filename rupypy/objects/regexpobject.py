@@ -6,29 +6,29 @@ from rupypy.objects.objectobject import W_Object
 from rupypy.utils import regexp
 
 
-escape_table = [chr(i) for i in xrange(256)]
-escape_table[9]   = '\\t'
-escape_table[10]  = '\\n'
-escape_table[11]  = '\\v'
-escape_table[12]  = '\\f'
-escape_table[13]  = '\\r'
-escape_table[32]  = '\\ '
-escape_table[35]  = '\\#'
-escape_table[36]  = '\\$'
-escape_table[40]  = '\\('
-escape_table[41]  = '\\)'
-escape_table[42]  = '\\*'
-escape_table[43]  = '\\+'
-escape_table[45]  = '\\-'
-escape_table[46]  = '\\.'
-escape_table[63]  = '\\?'
-escape_table[91]  = '\\['
-escape_table[92]  = '\\\\'
-escape_table[93]  = '\\]'
-escape_table[94]  = '\\^'
-escape_table[123] = '\\{'
-escape_table[124] = '\\|'
-escape_table[125] = '\\}'
+RE_ESCAPE_TABLE = [chr(i) for i in xrange(256)]
+RE_ESCAPE_TABLE[ord("\t")] = "\\t"
+RE_ESCAPE_TABLE[ord("\n")] = "\\n"
+RE_ESCAPE_TABLE[ord("\v")] = "\\v"
+RE_ESCAPE_TABLE[ord("\f")] = "\\f"
+RE_ESCAPE_TABLE[ord("\r")] = "\\r"
+RE_ESCAPE_TABLE[ord(" ")] = "\\ "
+RE_ESCAPE_TABLE[ord("#")] = "\\#"
+RE_ESCAPE_TABLE[ord("$")] = "\\$"
+RE_ESCAPE_TABLE[ord("(")] = "\\("
+RE_ESCAPE_TABLE[ord(")")] = "\\)"
+RE_ESCAPE_TABLE[ord("*")] = "\\*"
+RE_ESCAPE_TABLE[ord("+")] = "\\+"
+RE_ESCAPE_TABLE[ord("-")] = "\\-"
+RE_ESCAPE_TABLE[ord(".")] = "\\."
+RE_ESCAPE_TABLE[ord("?")] = "\\?"
+RE_ESCAPE_TABLE[ord("[")] = "\\["
+RE_ESCAPE_TABLE[ord("\\")] = "\\\\"
+RE_ESCAPE_TABLE[ord("]")] = "\\]"
+RE_ESCAPE_TABLE[ord("^")] = "\\^"
+RE_ESCAPE_TABLE[ord("{")] = "\\{"
+RE_ESCAPE_TABLE[ord("|")] = "\\|"
+RE_ESCAPE_TABLE[ord("}")] = "\\}"
 
 
 class W_RegexpObject(W_Object):
@@ -208,7 +208,7 @@ class W_RegexpObject(W_Object):
     def method_escape(self, space, string):
         result = []
         for ch in string:
-            result += escape_table[ord(ch)]
+            result += RE_ESCAPE_TABLE[ord(ch)]
         return space.newstr_fromchars(result)
 
 
