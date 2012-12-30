@@ -617,25 +617,25 @@ class W_StringObject(W_Object):
 
 
         while pos < len(string) and self.search_context(space, ctx):
-            result.extend(string[pos:ctx.match_start])
+            result += string[pos:ctx.match_start]
             if replacement_parts is not None:
-                result.extend(self.gsub_regexp_subst_string(
+                result += (self.gsub_regexp_subst_string(
                         space, replacement_parts, w_matchdata, pos
                 ))
             elif replacement is not None:
-                result.extend(replacement)
+                result += replacement
             elif block:
-                result.extend(self.gsub_regexp_block(space, block, w_matchdata))
+                result += self.gsub_regexp_block(space, block, w_matchdata)
             else:
                 raise NotImplementedError
             pos = ctx.match_end
             ctx.reset(pos)
-        result.extend(string[pos:len(string)])
+        result += string[pos:len(string)]
 
     def gsub_regexp_subst_string(self, space, parts_w, w_match, pos=0):
         result = []
         string = space.str_w(self)
-        result.extend(parts_w[0])
+        result += parts_w[0]
         for s in parts_w[1:len(parts_w)]:
             if s[0].isdigit():
                 group = int(s[0])
@@ -645,10 +645,10 @@ class W_StringObject(W_Object):
                     end += pos
                     assert begin >= 0
                     assert end >= 0
-                    result.extend(string[begin:end])
-                result.extend(s[1:len(s)])
+                    result += string[begin:end]
+                result += s[1:len(s)]
             else:
-                result.extend(s)
+                result += s
         return result
 
     def gsub_regexp_block(self, space, block, w_match):
@@ -662,15 +662,15 @@ class W_StringObject(W_Object):
         while pos + len(pattern) < len(string):
             idx = string.find(pattern, pos)
             if idx >= 0:
-                result.extend(string[pos:idx])
+                result += string[pos:idx]
                 if replacement is not None:
-                    result.extend(replacement)
+                    result += replacement
                 elif block:
-                    result.extend(self.gsub_yield_block(space, w_pattern, block))
+                    result += self.gsub_yield_block(space, w_pattern, block)
                 pos += idx + len(pattern)
             else:
                 break
-        result.extend(string[pos:len(string)])
+        result += string[pos:len(string)]
 
     def gsub_yield_block(self, space, w_match, block):
         return space.str_w(space.convert_type(
