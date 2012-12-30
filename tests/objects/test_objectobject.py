@@ -105,6 +105,9 @@ class TestBaseObject(BaseRuPyPyTest):
             end
         end
 
+        module B
+        end
+
         a = A.new
         a.singleton_class.class_eval do
             def a
@@ -112,10 +115,11 @@ class TestBaseObject(BaseRuPyPyTest):
             end
         end
         a.a = a.b = 3
+        a.singleton_class.class_eval("include B")
         b = a.dup
-        return a.a, b.a, b.b, $dup_ran
+        return a.a, b.a, b.b, $dup_ran, a.singleton_class.ancestors == b.singleton_class.ancestors
         """)
-        assert self.unwrap(space, w_res) == [10, 3, 3, True]
+        assert self.unwrap(space, w_res) == [10, 3, 3, True, False]
 
     def test_clone(self, space):
         w_res = space.execute("""
@@ -126,6 +130,9 @@ class TestBaseObject(BaseRuPyPyTest):
             end
         end
 
+        module B
+        end
+
         a = A.new
         a.singleton_class.class_eval do
             def a
@@ -133,10 +140,11 @@ class TestBaseObject(BaseRuPyPyTest):
             end
         end
         a.a = a.b = 3
+        a.singleton_class.class_eval("include B")
         b = a.clone
-        return a.a, b.a, b.b, $copy_ran
+        return a.a, b.a, b.b, $copy_ran, a.singleton_class.ancestors == b.singleton_class.ancestors
         """)
-        assert self.unwrap(space, w_res) == [10, 10, 3, True]
+        assert self.unwrap(space, w_res) == [10, 10, 3, True, True]
 
 
 class TestObjectObject(BaseRuPyPyTest):
