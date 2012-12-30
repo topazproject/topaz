@@ -338,7 +338,7 @@ class Kernel(Module):
             return self
         @moduledef.method(getter)
         def getter_method(self, space):
-            return space.newbool(self.get_flag(space, getter))
+            return self.get_flag(space, getter)
 
         if remover is None:
             return (setter_method, getter_method)

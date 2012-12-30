@@ -37,9 +37,9 @@ class BaseNode(object):
         return attr_node.pos
 
     def add_flag(self, space, w_obj, name):
-        flag_node = space.fromcache(MapTransitionCache).transition_add_flag(w_obj.map, name, len(w_obj.objectflags))
+        flag_node = space.fromcache(MapTransitionCache).transition_add_flag(w_obj.map, name, len(w_obj.storage))
         w_obj.map = flag_node
-        w_obj.objectflags.append(True)
+        w_obj.storage.append(space.w_true)
 
 
 class ClassNode(BaseNode):
@@ -73,7 +73,7 @@ class ClassNode(BaseNode):
         return BaseNode.add_attr(self, space, w_obj, name)
 
     def add_flag(self, space, w_obj, name):
-        w_obj.objectflags = []
+        w_obj.storage = []
         BaseNode.add_flag(self, space, w_obj, name)
 
     def copy_attrs(self, space, w_obj, w_target):
@@ -150,6 +150,6 @@ class FlagNode(AttributeNode):
 
     def copy_flags(self, space, w_obj, w_target):
         self.prev.copy_flags(space, w_obj, w_target)
-        if w_obj.objectflags[self.pos]:
+        if w_obj.storage[self.pos] is space.w_true:
             # Only copy flags that are still set
             w_target.set_flag(space, self.name)
