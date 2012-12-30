@@ -163,3 +163,9 @@ class TestRegexpObject(BaseRuPyPyTest):
         assert w_res is space.w_true
         w_res = space.execute("return /abc/ === 'ddddddd'")
         assert w_res is space.w_false
+
+    def test_escape(self, space):
+        w_res = space.execute("""
+        return Regexp.escape("y1_'\t\n\v\f\r \#$()*+-.?[\\\\]^{|}")
+        """)
+        assert space.str_w(w_res) == "y1_'\\t\\n\\v\\f\\r\\ \\#\\$\\(\\)\\*\\+\\-\\.\\?\\[\\\\\\]\\^\\{\\|\\}"
