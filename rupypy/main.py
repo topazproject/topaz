@@ -11,12 +11,20 @@ from rupypy.objspace import ObjectSpace
 
 
 @specialize.memo()
-def getspace():
-    return ObjectSpace()
+def getspace(config):
+    return ObjectSpace(config)
 
 
-def entry_point(argv):
-    return _entry_point(getspace(), argv)
+def get_topaz_config_options():
+    return {
+        "translation.continuation": True,
+    }
+
+
+def create_entry_point(config):
+    def entry_point(argv):
+        return _entry_point(getspace(config), argv)
+    return entry_point
 
 
 def _entry_point(space, argv):

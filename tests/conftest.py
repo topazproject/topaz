@@ -1,9 +1,12 @@
 import copy
 
+from pypy.config.translationoption import get_combined_translation_config
+
 
 def pytest_funcarg__space(request):
     # Inside the function so various intitialization stuff isn't seen until
     # coverage is setup.
+    from rupypy.main import get_topaz_config_options
     from rupypy.objspace import ObjectSpace
 
     # Building a space is exceptionally expensive, so we create one once, and
@@ -11,7 +14,9 @@ def pytest_funcarg__space(request):
     # (at the time of writing about 1/3 of total test time), but significantly
     # less so than building a new space.
     space = request.cached_setup(
-        setup=ObjectSpace,
+        setup=lambda: ObjectSpace(get_combined_translation_config(
+            overrides=get_topaz_config_options(),
+        )),
         scope="session",
     )
     return copy.deepcopy(space)

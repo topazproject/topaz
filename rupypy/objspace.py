@@ -73,7 +73,9 @@ class SpaceCache(Cache):
 
 
 class ObjectSpace(object):
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
+
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
         self._executioncontext = None
