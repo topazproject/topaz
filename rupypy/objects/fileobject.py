@@ -201,9 +201,11 @@ class W_FileObject(W_IOObject):
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         if sys.platform == "win32":
+            w_binary = space.newint(os.O_BINARY)
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
         else:
+            w_binary = space.newint(0)
             w_alt_seperator = space.w_nil
             w_fnm_syscase = space.newint(0)
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
@@ -212,6 +214,7 @@ class W_FileObject(W_IOObject):
         space.set_const(w_cls, "FNM_NOESCAPE", space.newint(FNM_NOESCAPE))
         space.set_const(w_cls, "FNM_PATHNAME", space.newint(FNM_PATHNAME))
         space.set_const(w_cls, "FNM_DOTMATCH", space.newint(FNM_DOTMATCH))
+        space.set_const(w_cls, "BINARY", w_binary)
         space.set_const(w_cls, "RDONLY", space.newint(os.O_RDONLY))
         space.set_const(w_cls, "WRONLY", space.newint(os.O_WRONLY))
         space.set_const(w_cls, "RDWR", space.newint(os.O_RDWR))
@@ -244,23 +247,32 @@ class W_FileObject(W_IOObject):
             mode = os.O_RDONLY
         elif isinstance(w_mode, W_StringObject):
             mode_str = space.str_w(w_mode)
+            mode = 0
+            invalid_error = space.error(space.w_ArgumentError,"invalid access mode %s" % mode_str)
+            major_mode_seen = False
 
-            if "+" in mode_str:
-                mode = os.O_RDWR
-                if "w" in mode_str:
-                    mode |= os.O_CREAT | os.O_TRUNC
-                elif "a" in mode_str:
-                    mode |= os.O_CREAT | os.O_APPEND
-            elif mode_str == "r":
-                mode = os.O_RDONLY
-            elif mode_str == "w":
-                mode = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-            elif mode_str == "a":
-                mode = os.O_WRONLY | os.O_CREAT | os.O_APPEND
-            else:
-                raise space.error(space.w_ArgumentError,
-                    "invalid access mode %s" % mode_str
-                )
+            for ch in mode_str:
+                if ch == "b":
+                    if sys.platform == "win32":
+                        mode |= os.O_BINARY
+                elif ch == "+":
+                    mode |= os.O_RDWR
+                elif ch == "r":
+                    if major_mode_seen:
+                        raise invalid_error
+                    major_mode_seen = True
+                    mode |= os.O_RDONLY
+                elif ch in "aw":
+                    if major_mode_seen:
+                        raise invalid_error
+                    major_mode_seen = True
+                    mode |= os.O_WRONLY | os.O_CREAT
+                    if ch == "w":
+                        mode |= os.O_TRUNC
+                    else:
+                        mode |= os.O_APPEND
+                else:
+                    raise invalid_error
         else:
             mode = space.int_w(w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
