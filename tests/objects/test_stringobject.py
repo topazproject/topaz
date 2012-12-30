@@ -331,6 +331,24 @@ class TestStringObject(BaseRuPyPyTest):
         assert space.execute("return 'abc'.include? 'bc'") is space.w_true
         assert space.execute("return 'abc'.include? 'cd'") is space.w_false
 
+    def test_gsub(self, space):
+        w_res = space.execute("""
+        return 'hello'.gsub("he", "ha")
+        """)
+        assert space.str_w(w_res) == "hallo"
+        w_res = space.execute("""
+        return 'hello'.gsub(/(.)/, "ha")
+        """)
+        assert space.str_w(w_res) == "hahahahaha"
+        w_res = space.execute("""
+        return 'hello'.gsub(/(.)/, "ha\\\\1ho")
+        """)
+        assert space.str_w(w_res) == "hahhohaehohalhohalhohaoho"
+        w_res = space.execute("""
+        return 'hello'.gsub(/(.)/) { |e| e + "1" }
+        """)
+        assert space.str_w(w_res) == "h1e1l1l1o1"
+
 
 class TestStringMod(object):
     def test_s(self, space):

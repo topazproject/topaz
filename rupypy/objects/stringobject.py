@@ -581,3 +581,90 @@ class W_StringObject(W_Object):
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
         return space.newbool(substr in space.str_w(self))
+
+    @classdef.method("gsub")
+    def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
+        if w_replacement is None and block is None:
+            raise NotImplementedError("gsub enumerator")
+
+        if w_replacement:
+            if space.is_kind_of(w_replacement, space.w_hash):
+                raise NotImplementedError("gsub with Hash replacement")
+            replacement = space.str_w(space.convert_type(w_replacement, space.w_string, "to_str"))
+        else:
+            replacement = None
+
+        if space.is_kind_of(w_pattern, space.w_string):
+            pos = 0
+            pattern = space.str_w(w_pattern)
+            string = space.str_w(self)
+            result = []
+            while pos + len(pattern) < len(string):
+                idx = string.find(pattern, pos)
+                if idx >= 0:
+                    result.extend(string[pos:idx])
+                    if replacement is None:
+                        w_block_replacement = space.send(
+                            space.invoke_block(block, [w_pattern]),
+                            space.newsymbol("to_s")
+                        )
+                        result.extend(space.str_w(
+                            space.convert_type(w_block_replacement, space.w_string, "to_str")
+                        ))
+                    else:
+                        result.extend(replacement)
+                    pos = idx + len(pattern)
+                else:
+                    result.extend(string[pos:len(string)])
+                    break
+            return space.newstr_fromchars(result)
+        elif space.is_kind_of(w_pattern, space.w_regexp):
+            pos = 0
+            string = space.str_w(self)
+            ctx = w_pattern.make_ctx(string)
+            w_match = w_pattern.get_match_result(space, ctx, found=True)
+            result = []
+            if replacement is not None and "\\" in replacement:
+                replacement_parts = [s for s in replacement.split("\\") if s]
+            else:
+                replacement_parts = [replacement]
+            while pos < len(string):
+                if self.search_context(space, ctx):
+                    idx = ctx.match_start
+                    result.extend(string[pos:idx])
+                    if replacement is None:
+                        w_block_replacement = space.send(
+                            space.invoke_block(
+                                block,
+                                [space.newstr_fromstr(string[ctx.match_start:ctx.match_end])]
+                            ),
+                            space.newsymbol("to_s")
+                        )
+                        result.extend(space.str_w(
+                            space.convert_type(w_block_replacement, space.w_string, "to_str")
+                        ))
+                    else:
+                        for s in replacement_parts:
+                            if s[0].isdigit():
+                                group = int(s[0])
+                                if group < w_match.size():
+                                    begin, end = w_match.get_span(group)
+                                    begin += pos
+                                    end += pos
+                                    assert begin >= 0
+                                    assert end >= 0
+                                    result.extend(string[begin:end])
+                                result.extend(s[1:len(s)])
+                            else:
+                                result.extend(s)
+                    pos = ctx.match_end
+                    ctx.reset(pos)
+                else:
+                    result.extend(string[pos:len(string)])
+                    break
+            return space.newstr_fromchars(result)
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Regexp)" % space.getclass(w_replacement).name
+            )
