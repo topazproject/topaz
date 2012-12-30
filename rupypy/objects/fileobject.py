@@ -39,6 +39,7 @@ class W_IOObject(W_Object):
         w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
         space.globals.set(space, "$stdout", w_stdout)
         space.globals.set(space, "$>", w_stdout)
+        space.globals.set(space, "$/", space.newstr_fromstr("\n"))
         space.set_const(space.w_object, "STDOUT", w_stdout)
 
         w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
