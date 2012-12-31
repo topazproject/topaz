@@ -92,6 +92,10 @@ class W_HashObject(W_Object):
         end
     end
     alias each_pair each
+
+    def each_key
+        each { |k, v| yield k }
+    end
     """)
 
     @classdef.method("key?")
