@@ -166,6 +166,50 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 6
 
+    def test_trust(self, space):
+        w_res = space.execute("return 'a'.untrusted?")
+        assert self.unwrap(space, w_res) == False
+        w_res = space.execute("""
+        a = 'a'
+        a.untrust
+        return a.untrusted?, a.dup.untrusted?, a.clone.untrusted?
+        """)
+        assert self.unwrap(space, w_res) == [True, True, True]
+        w_res = space.execute("""
+        a = 'a'
+        a.untrust
+        a.trust
+        return a.untrusted?, a.dup.untrusted?, a.clone.untrusted?
+        """)
+        assert self.unwrap(space, w_res) == [False, False, False]
+
+    def test_taint(self, space):
+        w_res = space.execute("return 'a'.tainted?")
+        assert self.unwrap(space, w_res) == False
+        w_res = space.execute("""
+        a = 'a'
+        a.taint
+        return a.tainted?, a.dup.tainted?, a.clone.tainted?
+        """)
+        assert self.unwrap(space, w_res) == [True, True, True]
+        w_res = space.execute("""
+        a = 'a'
+        a.taint
+        a.untaint
+        return a.tainted?, a.dup.tainted?, a.clone.tainted?
+        """)
+        assert self.unwrap(space, w_res) == [False, False, False]
+
+    def test_freeze(self, space):
+        w_res = space.execute("return 'a'.frozen?")
+        assert self.unwrap(space, w_res) == False
+        w_res = space.execute("""
+        a = 'a'
+        a.freeze
+        return a.frozen?, a.dup.frozen?, a.clone.frozen?
+        """)
+        assert self.unwrap(space, w_res) == [True, False, True]
+
 
 class TestRequire(BaseRuPyPyTest):
     def test_simple(self, space, tmpdir):
