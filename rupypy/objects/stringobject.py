@@ -368,10 +368,6 @@ class W_StringObject(W_Object):
     end
     """)
 
-    @classdef.method("freeze")
-    def method_freeze(self, space):
-        pass
-
     @classdef.method("to_sym")
     @classdef.method("intern")
     def method_to_sym(self, space):
