@@ -983,6 +983,7 @@ class Lexer(object):
 
             ch2 = self.read()
             if ch2 == "]":
+                self.add(ch)
                 self.add(ch2)
                 ch3 = self.read()
                 if ch3 == "=":
