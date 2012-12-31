@@ -205,7 +205,9 @@ class W_Object(W_RootObject):
         w_copy = space.newclass(w_cls.name, w_cls, is_singleton=True)
         w_copy.methods_w.update(w_other.methods_w)
         w_copy.constants_w.update(w_other.constants_w)
-        w_copy.included_modules[:0] = w_other.included_modules[:]
+        for i in xrange(len(w_other.included_modules) - 1, -1, -1):
+            w_copy.included_modules.insert(0, w_other.included_modules[i])
+
         self.map = self.map.change_class(space, w_copy)
         return w_cls
 
