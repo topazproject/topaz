@@ -358,6 +358,12 @@ class TestArrayObject(BaseRuPyPyTest):
         with self.raises(space, "ArgumentError", "comparison of Array with Object failed"):
             space.execute("[Object.new, []].sort")
 
+    def test_multiply(self, space):
+        w_res = space.execute("return [ 1, 2, 3 ] * 3")
+        assert self.unwrap(space, w_res) == [ 1, 2, 3, 1, 2, 3, 1, 2, 3 ]
+        w_res = space.execute("return [ 1, 2, 3 ] * ','")
+        assert self.unwrap(space, w_res) == "1,2,3"
+
 
 class TestArrayPack(BaseRuPyPyTest):
     def test_garbage_format(self, space):

@@ -384,4 +384,25 @@ class W_ArrayObject(W_Object):
         end
         return res
     end
+
+    def *(arg)
+        return join(arg) if arg.respond_to? :to_str
+
+        # MRI error cases
+        argcls = arg.class
+        begin
+            arg = arg.to_int
+        rescue Exception
+            raise TypeError, "can't convert #{argcls} into Fixnum"
+        end
+        raise TypeError, "can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)" if arg.class != Fixnum
+        raise ArgumentError, "Count cannot be negative" if arg < 0
+
+        return [] if arg == 0
+        result = self.dup
+        for i in 1...arg do
+            result.concat(self)
+        end
+        result
+    end
     """)
