@@ -740,6 +740,14 @@ class TestParser(BaseRuPyPyTest):
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
         ]))
 
+        assert space.parse("def []; end") == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "[]", [], None, None, ast.Nil()))
+        ]))
+
+        assert space.parse("def []=; end") == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "[]=", [], None, None, ast.Nil()))
+        ]))
+
         assert space.parse("def f(a, b) a + b end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b")], None, None, ast.Block([
                 ast.Statement(ast.Send(ast.Variable("a", 1),  "+", [ast.Variable("b", 1)], None, 1))
