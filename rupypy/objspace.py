@@ -40,7 +40,7 @@ from rupypy.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
-    W_RegexpError, W_ThreadError)
+    W_RegexpError, W_ThreadError, W_FiberError)
 from rupypy.objects.fiberobject import W_FiberObject
 from rupypy.objects.fileobject import W_FileObject, W_IOObject
 from rupypy.objects.floatobject import W_FloatObject
@@ -164,6 +164,7 @@ class ObjectSpace(object):
             self.getclassfor(W_StandardError),
             self.getclassfor(W_RegexpError),
             self.getclassfor(W_ThreadError),
+            self.getclassfor(W_FiberError),
 
             self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),
