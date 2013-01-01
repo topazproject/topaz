@@ -337,7 +337,7 @@ class TestMapDict(BaseRuPyPyTest):
             space.getclassfor(W_MethodObject)
         ]
         with self.raises(space, "NameError"):
-            space.execute("return Object.new.method(:undefined_stuff)")
+            space.execute("Object.new.method(:undefined_stuff)")
         w_res = space.execute("""
         class A; def to_str; "to_s"; end; end
         return 'aaa'.method(A.new).class

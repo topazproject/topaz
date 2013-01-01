@@ -149,15 +149,13 @@ class TestFile(BaseRuPyPyTest):
         assert isinstance(w_res, W_FileObject)
 
         with self.raises(space, "ArgumentError", "invalid access mode rw"):
-            space.execute("return File.new('%s', 'rw')" % f)
+            space.execute("File.new('%s', 'rw')" % f)
         with self.raises(space, "ArgumentError", "invalid access mode wa"):
-            space.execute("return File.new('%s', 'wa')" % f)
+            space.execute("File.new('%s', 'wa')" % f)
         with self.raises(space, "ArgumentError", "invalid access mode rw+"):
-            space.execute("return File.new('%s', 'rw+')" % f)
+            space.execute("File.new('%s', 'rw+')" % f)
         with self.raises(space, "ArgumentError", "invalid access mode ra"):
-            space.execute("return File.new('%s', 'ra')" % f)
-
-        assert isinstance(w_res, W_FileObject)
+            space.execute("File.new('%s', 'ra')" % f)
 
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
         assert isinstance(w_res, W_FileObject)

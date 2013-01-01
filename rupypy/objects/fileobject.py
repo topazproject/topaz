@@ -250,7 +250,9 @@ class W_FileObject(W_IOObject):
         elif isinstance(w_mode, W_StringObject):
             mode_str = space.str_w(w_mode)
             mode = 0
-            invalid_error = space.error(space.w_ArgumentError,"invalid access mode %s" % mode_str)
+            invalid_error = space.error(space.w_ArgumentError,
+                "invalid access mode %s" % mode_str
+            )
             major_mode_seen = False
 
             for ch in mode_str:
