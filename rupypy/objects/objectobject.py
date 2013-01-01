@@ -134,7 +134,7 @@ class W_RootObject(W_BaseObject):
     @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.any_to_s(self)
+        return space.newstr_fromstr(space.any_to_s(self))
 
     @classdef.method("===")
     def method_eqeqeq(self, space, w_other):

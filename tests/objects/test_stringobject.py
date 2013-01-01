@@ -357,6 +357,23 @@ class TestStringObject(BaseRuPyPyTest):
         return 'hello'.gsub(/(.)/) { |e| e + "1" }
         """)
         assert space.str_w(w_res) == "h1e1l1l1o1"
+        w_res = space.execute("""
+        return 'hello'.gsub('e') { |e| e + "1" }
+        """)
+        assert space.str_w(w_res) == "he1llo"
+        w_res = space.execute("""
+        return 'hello'.gsub(/[eo]/, 'e' => 3, 'o' => '*')
+        """)
+        assert space.str_w(w_res) == "h3ll*"
+        w_res = space.execute("""
+        return 'hello'.gsub("e", 'e' => 3, 'o' => '*')
+        """)
+        assert space.str_w(w_res) == "h3llo"
+        w_res = space.execute("""
+        replacements = [1, 2]
+        return 'helloo'.gsub("l", Hash.new { |h, k| replacements.pop() })
+        """)
+        assert space.str_w(w_res) == "he21oo"
 
 
 class TestStringMod(object):

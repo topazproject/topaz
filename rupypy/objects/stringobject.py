@@ -684,7 +684,7 @@ class W_StringObject(W_Object):
 
     def gsub_regexp_hash(self, space, w_hash, w_match):
         w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
-        return gsub_lookup_hash(space, w_hash, w_arg)
+        return self.gsub_lookup_hash(space, w_hash, w_arg)
 
     def gsub_string(self, space, w_pattern, replacement, w_hash, block, result):
         pos = 0
@@ -700,27 +700,28 @@ class W_StringObject(W_Object):
                     result += self.gsub_yield_block(space, block, w_pattern)
                 elif w_hash:
                     result += self.gsub_lookup_hash(space, w_hash, w_pattern)
-                pos += idx + len(pattern)
+                pos = idx + len(pattern)
             else:
                 break
         result += string[pos:]
 
     def gsub_yield_block(self, space, block, w_matchstr):
-        return self.gsub_replacement_to_s(space.invoke_block(block, [w_matchstr]))
+        w_value = space.invoke_block(block, [w_matchstr])
+        return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_lookup_hash(self, space, w_hash, w_matchstr):
         w_value = space.send(w_hash, space.newsymbol("[]"), [w_matchstr])
-        return self.gsub_replacement_to_s(w_value)
+        return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_replacement_to_s(self, space, w_replacement):
-        if space.is_kind_of(w_result, space.w_string):
-            return w_result
+        if space.is_kind_of(w_replacement, space.w_string):
+            return space.str_w(w_replacement)
         else:
-            w_result = space.send(w_result, space.newsymbol("to_s"))
-            if space.is_kind_of(w_result, space.w_string):
-                return w_result
+            w_replacement = space.send(w_replacement, space.newsymbol("to_s"))
+            if space.is_kind_of(w_replacement, space.w_string):
+                return space.str_w(w_replacement)
             else:
-                return space.any_to_s(w_result)
+                return space.any_to_s(w_replacement)
 
     @classdef.method("chomp!")
     def method_chomp_i(self, space, w_newline=None):
