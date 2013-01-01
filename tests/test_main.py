@@ -90,6 +90,13 @@ class TestMain(object):
             "\tfrom {}:6:in `<main>'",
         ])
 
+    def test_syntax_error(self, space, tmpdir, capfd):
+        self.assert_traceback(space, tmpdir, capfd, """
+        while do
+        """, [
+            "{}: line 2 (SyntaxError)",
+        ])
+
     def test_traceback_load_const(self, space, tmpdir, capfd):
         self.assert_traceback(space, tmpdir, capfd, """
         UnknownConst

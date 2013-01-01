@@ -85,6 +85,6 @@ def _entry_point(space, argv):
             status = 1
     space.run_exit_handlers()
     if w_exit_error is not None:
-        print_traceback(space, w_exit_error)
+        print_traceback(space, w_exit_error, path)
 
     return status

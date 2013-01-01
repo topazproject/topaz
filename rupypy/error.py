@@ -9,17 +9,19 @@ class RubyError(Exception):
         return "<RubyError: %s>" % self.w_value
 
 
-def format_traceback(space, exc):
+def format_traceback(space, exc, top_filepath):
     w_bt = space.send(exc, space.newsymbol("backtrace"))
-    assert space.getclass(w_bt) is space.w_array
     bt_w = space.listview(w_bt)
-    yield "%s: %s (%s)\n" % (space.str_w(bt_w[0]), exc.msg, space.getclass(exc).name)
-    for w_line in bt_w[1:]:
-        yield "\tfrom %s\n" % space.str_w(w_line)
+    if bt_w:
+        yield "%s: %s (%s)\n" % (space.str_w(bt_w[0]), exc.msg, space.getclass(exc).name)
+        for w_line in bt_w[1:]:
+            yield "\tfrom %s\n" % space.str_w(w_line)
+    else:
+        yield "%s: %s (%s)\n" % (top_filepath, exc.msg, space.getclass(exc).name)
 
 
-def print_traceback(space, w_exc):
-    for line in format_traceback(space, w_exc):
+def print_traceback(space, w_exc, top_filepath=None):
+    for line in format_traceback(space, w_exc, top_filepath):
         os.write(2, line)
 
 
