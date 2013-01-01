@@ -12,10 +12,7 @@ class Coerce(object):
             if w_str is space.w_nil:
                 w_inspect_str = space.send(w_obj, space.newsymbol("inspect"))
                 if not space.is_kind_of(w_inspect_str, space.w_string):
-                    inspect_str = "#<%s:0x%x>" % (
-                        space.getclass(w_obj).name,
-                        space.int_w(space.send(w_obj, space.newsymbol("__id__")))
-                    )
+                    inspect_str = space.any_to_s(w_obj)
                 else:
                     inspect_str = space.str_w(w_inspect_str)
                 raise space.error(space.w_TypeError, "%s is not a symbol" % inspect_str)
