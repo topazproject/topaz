@@ -111,6 +111,8 @@ class TestFile(BaseRuPyPyTest):
         assert space.int_w(space.execute("return File::CREAT")) == os.O_CREAT
         assert space.int_w(space.execute("return File::EXCL")) == os.O_EXCL
         assert space.int_w(space.execute("return File::TRUNC")) == os.O_TRUNC
+        w_res = space.execute("return File::BINARY")
+        assert space.int_w(w_res) == (os.O_BINARY if hasattr(os, "O_BINARY") else 0)
 
     def test_separator(self, space):
         space.execute("File::SEPARATOR")
@@ -137,6 +139,23 @@ class TestFile(BaseRuPyPyTest):
 
         w_res = space.execute("return File.new('%s')" % f)
         assert isinstance(w_res, W_FileObject)
+        w_res = space.execute("return File.new('%s', 'r')" % f)
+        assert isinstance(w_res, W_FileObject)
+        w_res = space.execute("return File.new('%s', 'rb')" % f)
+        assert isinstance(w_res, W_FileObject)
+        w_res = space.execute("return File.new('%s', 'r+')" % f)
+        assert isinstance(w_res, W_FileObject)
+        w_res = space.execute("return File.new('%s', 'rb+')" % f)
+        assert isinstance(w_res, W_FileObject)
+
+        with self.raises(space, "ArgumentError", "invalid access mode rw"):
+            space.execute("File.new('%s', 'rw')" % f)
+        with self.raises(space, "ArgumentError", "invalid access mode wa"):
+            space.execute("File.new('%s', 'wa')" % f)
+        with self.raises(space, "ArgumentError", "invalid access mode rw+"):
+            space.execute("File.new('%s', 'rw+')" % f)
+        with self.raises(space, "ArgumentError", "invalid access mode ra"):
+            space.execute("File.new('%s', 'ra')" % f)
 
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
         assert isinstance(w_res, W_FileObject)

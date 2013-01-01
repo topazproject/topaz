@@ -99,15 +99,52 @@ class TestBaseObject(BaseRuPyPyTest):
     def test_dup(self, space):
         w_res = space.execute("""
         class A
-            attr_accessor :a
+            attr_accessor :a, :b
+            def initialize_dup(o)
+                $dup_ran = true
+            end
+        end
+
+        module B
         end
 
         a = A.new
-        a.a = 3
+        a.singleton_class.class_eval do
+            def a
+               10
+            end
+        end
+        a.a = a.b = 3
+        a.singleton_class.class_eval("include B")
         b = a.dup
-        return b.a
+        return a.a, b.a, b.b, $dup_ran, a.singleton_class.ancestors == b.singleton_class.ancestors
         """)
-        assert space.int_w(w_res) == 3
+        assert self.unwrap(space, w_res) == [10, 3, 3, True, False]
+
+    def test_clone(self, space):
+        w_res = space.execute("""
+        class A
+            attr_accessor :a, :b
+            def initialize_clone(o)
+                $copy_ran = true
+            end
+        end
+
+        module B
+        end
+
+        a = A.new
+        a.singleton_class.class_eval do
+            def a
+               10
+            end
+        end
+        a.a = a.b = 3
+        a.singleton_class.class_eval("include B")
+        b = a.clone
+        return a.a, b.a, b.b, $copy_ran, a.singleton_class.ancestors == b.singleton_class.ancestors
+        """)
+        assert self.unwrap(space, w_res) == [10, 10, 3, True, True]
 
 
 class TestObjectObject(BaseRuPyPyTest):
@@ -300,7 +337,7 @@ class TestMapDict(BaseRuPyPyTest):
             space.getclassfor(W_MethodObject)
         ]
         with self.raises(space, "NameError"):
-            space.execute("return Object.new.method(:undefined_stuff)")
+            space.execute("Object.new.method(:undefined_stuff)")
         w_res = space.execute("""
         class A; def to_str; "to_s"; end; end
         return 'aaa'.method(A.new).class

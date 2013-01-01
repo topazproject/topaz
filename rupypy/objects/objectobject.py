@@ -134,10 +134,7 @@ class W_RootObject(W_BaseObject):
     @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr_fromstr("#<%s:0x%x>" % (
-            space.str_w(space.send(space.getclass(self), space.newsymbol("name"))),
-            space.int_w(space.send(self, space.newsymbol("__id__")))
-        ))
+        return space.newstr_fromstr(space.any_to_s(self))
 
     @classdef.method("===")
     def method_eqeqeq(self, space, w_other):
@@ -199,6 +196,18 @@ class W_Object(W_RootObject):
         self.map = self.map.change_class(space, w_cls)
         return w_cls
 
+    def copy_singletonclass(self, space, w_other):
+        w_cls = jit.promote(self.map).get_class()
+        assert not w_cls.is_singleton
+        w_copy = space.newclass(w_cls.name, w_cls, is_singleton=True)
+        w_copy.methods_w.update(w_other.methods_w)
+        w_copy.constants_w.update(w_other.constants_w)
+        w_copy.included_modules = w_copy.included_modules + w_other.included_modules
+        w_copy.mutated()
+
+        self.map = self.map.change_class(space, w_copy)
+        return w_cls
+
     def find_instance_var(self, space, name):
         idx = jit.promote(self.map).find_attr(space, name)
         if idx == -1:
@@ -214,3 +223,26 @@ class W_Object(W_RootObject):
     def copy_instance_vars(self, space, w_other):
         assert isinstance(w_other, W_Object)
         w_other.map.copy_attrs(space, w_other, self)
+
+    def get_flag(self, space, name):
+        idx = jit.promote(self.map).find_flag(space, name)
+        if idx == -1:
+            return space.w_false
+        return self.storage[idx]
+
+    def set_flag(self, space, name):
+        idx = jit.promote(self.map).find_flag(space, name)
+        if idx == -1:
+            self.map.add_flag(space, self, name)
+        else:
+            self.storage[idx] = space.w_true
+
+    def unset_flag(self, space, name):
+        idx = jit.promote(self.map).find_flag(space, name)
+        if idx != -1:
+            # Flags are by default unset, no need to add if unsetting
+            self.storage[idx] = space.w_false
+
+    def copy_flags(self, space, w_other):
+        assert isinstance(w_other, W_Object)
+        w_other.map.copy_flags(space, w_other, self)
