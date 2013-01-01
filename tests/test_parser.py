@@ -1278,6 +1278,12 @@ HERE
         ]))
         assert space.parse("%s{foo bar}") == sym("foo bar")
 
+    def test_do_symbol(self, space):
+        r = space.parse("f :do")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantSymbol("do")], None, 1)),
+        ]))
+
     def test_range(self, space):
         assert space.parse("2..3") == ast.Main(ast.Block([
             ast.Statement(ast.Range(ast.ConstantInt(2), ast.ConstantInt(3), False))
