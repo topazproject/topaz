@@ -36,6 +36,8 @@ class W_FiberObject(W_Object):
             parent_interp=self.w_block.parent_interp,
             regexp_match_cell=self.w_block.regexp_match_cell,
         )
+        for idx, cell in enumerate(self.w_block.cells):
+            self.bottomframe.cells[len(self.w_block.bytecode.cellvars) + idx] = cell
         global_state.origin = self
         global_state.space = space
         h = sthread.new(new_stacklet_callback)

@@ -15,3 +15,12 @@ class TestFiberObject(BaseRuPyPyTest):
         return f.resume
         """)
         assert space.int_w(w_res) == 2
+
+    def test_closure(self, space):
+        w_res = space.execute("""
+        a = 2
+        f = Fiber.new { a = 5 }
+        f.resume
+        return a
+        """)
+        assert space.int_w(w_res) == 5
