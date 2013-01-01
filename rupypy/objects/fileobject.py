@@ -11,6 +11,10 @@ from rupypy.objects.stringobject import W_StringObject
 FNM_NOESCAPE = 0x01
 FNM_PATHNAME = 0x02
 FNM_DOTMATCH = 0x04
+if sys.platform == "win32":
+    O_BINARY = os.O_BINARY
+else:
+    O_BINARY = 0
 
 
 class W_IOObject(W_Object):
@@ -201,11 +205,9 @@ class W_FileObject(W_IOObject):
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         if sys.platform == "win32":
-            w_binary = space.newint(os.O_BINARY)
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
         else:
-            w_binary = space.newint(0)
             w_alt_seperator = space.w_nil
             w_fnm_syscase = space.newint(0)
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
@@ -214,7 +216,7 @@ class W_FileObject(W_IOObject):
         space.set_const(w_cls, "FNM_NOESCAPE", space.newint(FNM_NOESCAPE))
         space.set_const(w_cls, "FNM_PATHNAME", space.newint(FNM_PATHNAME))
         space.set_const(w_cls, "FNM_DOTMATCH", space.newint(FNM_DOTMATCH))
-        space.set_const(w_cls, "BINARY", w_binary)
+        space.set_const(w_cls, "BINARY", space.newint(O_BINARY))
         space.set_const(w_cls, "RDONLY", space.newint(os.O_RDONLY))
         space.set_const(w_cls, "WRONLY", space.newint(os.O_WRONLY))
         space.set_const(w_cls, "RDWR", space.newint(os.O_RDWR))
@@ -253,8 +255,7 @@ class W_FileObject(W_IOObject):
 
             for ch in mode_str:
                 if ch == "b":
-                    if sys.platform == "win32":
-                        mode |= os.O_BINARY
+                    mode |= O_BINARY
                 elif ch == "+":
                     mode |= os.O_RDWR
                 elif ch == "r":
