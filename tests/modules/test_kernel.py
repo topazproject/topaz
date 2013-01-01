@@ -166,6 +166,38 @@ class TestKernel(BaseRuPyPyTest):
         """)
         assert space.int_w(w_res) == 6
 
+    def test_responds_to(self, space):
+        w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
+        assert self.unwrap(space, w_res) == [False, True]
+
+    def test_Float(self, space):
+        assert space.float_w(space.execute("return Float(1)")) == 1.0
+        assert space.float_w(space.execute("return Float(1.1)")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1')")) == 1.1
+        assert space.float_w(space.execute("return Float('1.1e10')")) == 11000000000.0
+        with self.raises(space, "TypeError"):
+            space.execute("Float(nil)")
+        with self.raises(space, "ArgumentError"):
+            space.execute("Float('a')")
+        w_res = space.execute("""
+        class A; def to_f; 1.1; end; end
+        return Float(A.new)
+        """)
+        assert space.float_w(w_res) == 1.1
+
+    def test_loop(self, space):
+        w_res = space.execute("""
+        res = []
+        i = 0
+        loop {
+            i += 1
+            res << i
+            break if i == 3
+        }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+
     def test_trust(self, space):
         w_res = space.execute("return 'a'.untrusted?")
         assert self.unwrap(space, w_res) == False
@@ -297,37 +329,17 @@ class TestRequire(BaseRuPyPyTest):
         """ % (f, f, f))
         assert space.int_w(w_res) == 3
 
-    def test_responds_to(self, space):
-        w_res = space.execute("return [4.respond_to?(:foo_bar), nil.respond_to?(:object_id)]")
-        assert self.unwrap(space, w_res) == [False, True]
-
-    def test_Float(self, space):
-        assert space.float_w(space.execute("return Float(1)")) == 1.0
-        assert space.float_w(space.execute("return Float(1.1)")) == 1.1
-        assert space.float_w(space.execute("return Float('1.1')")) == 1.1
-        assert space.float_w(space.execute("return Float('1.1e10')")) == 11000000000.0
-        with self.raises(space, "TypeError"):
-            space.execute("Float(nil)")
-        with self.raises(space, "ArgumentError"):
-            space.execute("Float('a')")
-        w_res = space.execute("""
-        class A; def to_f; 1.1; end; end
-        return Float(A.new)
+    def test_no_ext_on_path(self, space, tmpdir):
+        f = tmpdir.join("t.txt")
+        f.write("""
+        @a = 5
         """)
-        assert space.float_w(w_res) == 1.1
 
-    def test_loop(self, space):
         w_res = space.execute("""
-        res = []
-        i = 0
-        loop {
-            i += 1
-            res << i
-            break if i == 3
-        }
-        return res
-        """)
-        assert self.unwrap(space, w_res) == [1, 2, 3]
+        require '%s'
+        return @a
+        """ % f)
+        assert space.int_w(w_res) == 5
 
 
 class TestExec(BaseRuPyPyTest):
