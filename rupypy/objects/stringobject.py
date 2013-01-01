@@ -610,18 +610,22 @@ class W_StringObject(W_Object):
     def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
         if w_replacement is None and block is None:
             raise NotImplementedError("gsub enumerator")
+
+        w_hash = None
+        replacement = None
         if w_replacement:
-            if space.is_kind_of(w_replacement, space.w_hash):
-                raise NotImplementedError("gsub with Hash replacement")
-            replacement = space.str_w(space.convert_type(w_replacement, space.w_string, "to_str"))
-        else:
-            replacement = None
+            w_hash = space.convert_type(w_replacement, space.w_hash, "to_hash", raise_error=False)
+            if w_hash is space.w_nil:
+                w_hash = None
+                replacement = space.str_w(
+                    space.convert_type(w_replacement, space.w_string, "to_str")
+                )
 
         result = []
         if space.is_kind_of(w_pattern, space.w_regexp):
-            self.gsub_regexp(space, w_pattern, replacement, block, result)
+            self.gsub_regexp(space, w_pattern, replacement, w_hash, block, result)
         elif space.is_kind_of(w_pattern, space.w_string):
-            self.gsub_string(space, w_pattern, replacement, block, result)
+            self.gsub_string(space, w_pattern, replacement, w_hash, block, result)
         else:
             raise space.error(
                 space.w_TypeError,
@@ -629,7 +633,7 @@ class W_StringObject(W_Object):
             )
         return space.newstr_fromchars(result)
 
-    def gsub_regexp(self, space, w_pattern, replacement, block, result):
+    def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, result):
         pos = 0
         string = space.str_w(self)
         ctx = w_pattern.make_ctx(string)
@@ -649,8 +653,8 @@ class W_StringObject(W_Object):
                 result += replacement
             elif block:
                 result += self.gsub_regexp_block(space, block, w_matchdata)
-            else:
-                raise NotImplementedError
+            elif w_hash:
+                result += self.gsub_regexp_hash(space, w_hash, w_matchdata)
             pos = ctx.match_end
             ctx.reset(pos)
         result += string[pos:]
@@ -676,9 +680,13 @@ class W_StringObject(W_Object):
 
     def gsub_regexp_block(self, space, block, w_match):
         w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
-        return self.gsub_yield_block(space, w_arg, block)
+        return self.gsub_yield_block(space, block, w_arg)
 
-    def gsub_string(self, space, w_pattern, replacement, block, result):
+    def gsub_regexp_hash(self, space, w_hash, w_match):
+        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        return gsub_lookup_hash(space, w_hash, w_arg)
+
+    def gsub_string(self, space, w_pattern, replacement, w_hash, block, result):
         pos = 0
         string = space.str_w(self)
         pattern = space.str_w(w_pattern)
@@ -689,23 +697,30 @@ class W_StringObject(W_Object):
                 if replacement is not None:
                     result += replacement
                 elif block:
-                    result += self.gsub_yield_block(space, w_pattern, block)
-                else:
-                    raise NotImplementedError
+                    result += self.gsub_yield_block(space, block, w_pattern)
+                elif w_hash:
+                    result += self.gsub_lookup_hash(space, w_hash, w_pattern)
                 pos += idx + len(pattern)
             else:
                 break
         result += string[pos:]
 
-    def gsub_yield_block(self, space, w_match, block):
-        return space.str_w(space.convert_type(
-                space.send(
-                    space.invoke_block(block, [w_match]),
-                    space.newsymbol("to_s")
-                ),
-                space.w_string,
-                "to_str"
-        ))
+    def gsub_yield_block(self, space, block, w_matchstr):
+        return self.gsub_replacement_to_s(space.invoke_block(block, [w_matchstr]))
+
+    def gsub_lookup_hash(self, space, w_hash, w_matchstr):
+        w_value = space.send(w_hash, space.newsymbol("[]"), [w_matchstr])
+        return self.gsub_replacement_to_s(w_value)
+
+    def gsub_replacement_to_s(self, space, w_replacement):
+        if space.is_kind_of(w_result, space.w_string):
+            return w_result
+        else:
+            w_result = space.send(w_result, space.newsymbol("to_s"))
+            if space.is_kind_of(w_result, space.w_string):
+                return w_result
+            else:
+                return space.any_to_s(w_result)
 
     @classdef.method("chomp!")
     def method_chomp_i(self, space, w_newline=None):
