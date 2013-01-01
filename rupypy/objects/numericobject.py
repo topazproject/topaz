@@ -62,4 +62,8 @@ class W_NumericObject(W_Object):
     def to_int
         self.to_i
     end
+
+    def abs
+        self < 0 ? -self : self
+    end
     """)

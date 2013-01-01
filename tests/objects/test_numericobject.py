@@ -48,3 +48,9 @@ class TestNumericObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [1.1, 1.0]
         w_res = space.execute("return 1.coerce('2')")
         assert self.unwrap(space, w_res) == [2.0, 1.0]
+
+    def test_abs(self, space):
+        w_res = space.execute("return 1.abs, -1.abs")
+        assert self.unwrap(space, w_res) == [1, 1]
+        w_res = space.execute("return 1.1.abs, -1.1.abs")
+        assert self.unwrap(space, w_res) == [1.1, 1.1]

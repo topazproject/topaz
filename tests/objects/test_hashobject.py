@@ -92,6 +92,17 @@ class TestHashObject(BaseRuPyPyTest):
         """)
         assert self.unwrap(space, w_res) == [3, 5, 3, "a"]
 
+    def test_each_key(self, space):
+        w_res = space.execute("""
+        x = {2 => 3, "four" => 5, 3 => 2}
+        result = []
+        x.each_key do |k|
+            result << k
+        end
+        return result
+        """)
+        assert self.unwrap(space, w_res) == [2, "four", 3]
+
     def test_each(self, space):
         w_res = space.execute("""
         x = {2 => 3, "four" => 5, 3 => 2}

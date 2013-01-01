@@ -134,6 +134,10 @@ def run_specs(binary, prefix=""):
         "core/nil/to_s_spec.rb",
         "core/nil/xor_spec.rb",
 
+        "core/object/clone_spec.rb",
+        "core/object/dup_spec.rb",
+        "core/object/match_spec.rb",
+
         "core/process/pid_spec.rb",
 
         "core/regexp/casefold_spec.rb",
