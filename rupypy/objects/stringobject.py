@@ -621,19 +621,18 @@ class W_StringObject(W_Object):
                     space.convert_type(w_replacement, space.w_string, "to_str")
                 )
 
-        result = []
         if space.is_kind_of(w_pattern, space.w_regexp):
-            self.gsub_regexp(space, w_pattern, replacement, w_hash, block, result)
+            return self.gsub_regexp(space, w_pattern, replacement, w_hash, block)
         elif space.is_kind_of(w_pattern, space.w_string):
-            self.gsub_string(space, w_pattern, replacement, w_hash, block, result)
+            return self.gsub_string(space, w_pattern, replacement, w_hash, block)
         else:
             raise space.error(
                 space.w_TypeError,
                 "wrong argument type %s (expected Regexp)" % space.getclass(w_replacement).name
             )
-        return space.newstr_fromchars(result)
 
-    def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, result):
+    def gsub_regexp(self, space, w_pattern, replacement, w_hash, block):
+        result = []
         pos = 0
         string = space.str_w(self)
         ctx = w_pattern.make_ctx(string)
@@ -658,6 +657,7 @@ class W_StringObject(W_Object):
             pos = ctx.match_end
             ctx.reset(pos)
         result += string[pos:]
+        return space.newstr_fromchars(result)
 
     def gsub_regexp_subst_string(self, space, parts_w, w_match, pos=0):
         result = []
@@ -686,7 +686,8 @@ class W_StringObject(W_Object):
         w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
         return self.gsub_lookup_hash(space, w_hash, w_arg)
 
-    def gsub_string(self, space, w_pattern, replacement, w_hash, block, result):
+    def gsub_string(self, space, w_pattern, replacement, w_hash, block):
+        result = []
         pos = 0
         string = space.str_w(self)
         pattern = space.str_w(w_pattern)
@@ -704,6 +705,7 @@ class W_StringObject(W_Object):
             else:
                 break
         result += string[pos:]
+        return space.newstr_fromchars(result)
 
     def gsub_yield_block(self, space, block, w_matchstr):
         w_value = space.invoke_block(block, [w_matchstr])
