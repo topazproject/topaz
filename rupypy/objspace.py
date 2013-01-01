@@ -585,3 +585,9 @@ class ObjectSpace(object):
             )
         else:
             return w_res
+
+    def any_to_s(self, w_obj):
+        return "#<%s:0x%x>" % (
+                self.str_w(self.send(self.getclass(w_obj), self.newsymbol("name"))),
+                self.int_w(self.send(w_obj, self.newsymbol("__id__")))
+        )
