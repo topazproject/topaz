@@ -118,6 +118,9 @@ def run_specs(binary, prefix=""):
         "core/false/to_s_spec.rb",
         "core/false/xor_spec.rb",
 
+        "core/fiber/new_spec.rb",
+        "core/fiber/yield_spec.rb",
+
         "core/fixnum/comparison_spec.rb",
         "core/fixnum/even_spec.rb",
         "core/fixnum/hash_spec.rb",
