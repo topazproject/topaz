@@ -24,3 +24,10 @@ class TestFiberObject(BaseRuPyPyTest):
         return a
         """)
         assert space.int_w(w_res) == 5
+
+    def test_exception(self, space):
+        space.execute("""
+        $f = Fiber.new { 1 / 0 }
+        """)
+        with self.raises(space, "ZeroDivisionError"):
+            space.execute("$f.resume")

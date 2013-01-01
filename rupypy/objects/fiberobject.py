@@ -58,6 +58,7 @@ class GlobalState(object):
         self.origin = None
         self.destination = None
         self.w_result = None
+        self.propagate_exception = None
         self.space = None
 # This makes me sad.
 global_state = GlobalState()
@@ -70,7 +71,10 @@ def new_stacklet_callback(h, arg):
     global_state.clear()
 
     with self.sthread.ec.visit_frame(self.bottomframe):
-        global_state.w_result = space.execute_frame(self.bottomframe, self.w_block.bytecode)
+        try:
+            global_state.w_result = space.execute_frame(self.bottomframe, self.w_block.bytecode)
+        except Exception as e:
+            global_state.propagate_exception = e
 
     self.sthread.ec.topframeref = jit.vref_None
     global_state.origin = self
@@ -94,9 +98,14 @@ def post_switch(sthread, h):
 
 
 def get_result():
-    w_result = global_state.w_result
-    global_state.w_result = None
-    return w_result
+    if global_state.propagate_exception:
+        e = global_state.propagate_exception
+        global_state.propagate_exception = None
+        raise e
+    else:
+        w_result = global_state.w_result
+        global_state.w_result = None
+        return w_result
 
 
 def workaround_disable_jit(sthread):
