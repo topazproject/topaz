@@ -291,7 +291,7 @@ class Lexer(object):
             else:
                 self.state = keyword.state
 
-            if keyword.normal_token == "DO":
+            if state != self.EXPR_FNAME and keyword.normal_token == "DO":
                 return self.emit_do(state)
 
             if state in [self.EXPR_BEG, self.EXPR_VALUE]:
