@@ -157,7 +157,7 @@ def run_specs(binary, prefix=""):
         "core/true/to_s_spec.rb",
         "core/true/xor_spec.rb",
     ]
-    local("{prefix}../mspec/bin/mspec -t {binary} --format=dotted {spec_files}".format(
+    local("{prefix}../mspec/bin/mspec -t {binary} --config=topaz.mspec --format=dotted {spec_files}".format(
         prefix=prefix,
         binary=binary,
         spec_files=" ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests),
