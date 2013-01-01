@@ -605,7 +605,7 @@ class W_StringObject(W_Object):
     @classdef.method("chomp!")
     def method_chomp_i(self, space, w_newline=None):
         if w_newline is None:
-            newline = space.globals.get(space, "$/")
+            w_newline = space.globals.get(space, "$/")
         if w_newline is space.w_nil:
             return self
         newline = space.str_w(space.convert_type(w_newline, space.w_string, "to_str"))
