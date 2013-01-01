@@ -639,7 +639,6 @@ class W_StringObject(W_Object):
         if replacement is not None and "\\" in replacement:
             replacement_parts = [s for s in replacement.split("\\") if s]
 
-
         while pos < len(string) and self.search_context(space, ctx):
             result += string[pos:ctx.match_start]
             if replacement_parts is not None:
@@ -654,13 +653,13 @@ class W_StringObject(W_Object):
                 raise NotImplementedError
             pos = ctx.match_end
             ctx.reset(pos)
-        result += string[pos:len(string)]
+        result += string[pos:]
 
     def gsub_regexp_subst_string(self, space, parts_w, w_match, pos=0):
         result = []
         string = space.str_w(self)
         result += parts_w[0]
-        for s in parts_w[1:len(parts_w)]:
+        for s in parts_w[1:]:
             if s[0].isdigit():
                 group = int(s[0])
                 if group < w_match.size():
@@ -670,7 +669,7 @@ class W_StringObject(W_Object):
                     assert begin >= 0
                     assert end >= 0
                     result += string[begin:end]
-                result += s[1:len(s)]
+                result += s[1:]
             else:
                 result += s
         return result
@@ -691,10 +690,12 @@ class W_StringObject(W_Object):
                     result += replacement
                 elif block:
                     result += self.gsub_yield_block(space, w_pattern, block)
+                else:
+                    raise NotImplementedError
                 pos += idx + len(pattern)
             else:
                 break
-        result += string[pos:len(string)]
+        result += string[pos:]
 
     def gsub_yield_block(self, space, w_match, block):
         return space.str_w(space.convert_type(
