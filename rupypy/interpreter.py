@@ -514,6 +514,7 @@ class Interpreter(object):
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
+    @jit.unroll_safe
     def SEND_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
         w_block = frame.pop()
         arrays_w = frame.popitemsreverse(num_args - 1)
@@ -546,6 +547,7 @@ class Interpreter(object):
         w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
+    @jit.unroll_safe
     def SEND_SUPER_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
         w_block = frame.pop()
         arrays_w = frame.popitemsreverse(num_args - 1)
@@ -661,6 +663,7 @@ class Interpreter(object):
         w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
+    @jit.unroll_safe
     def YIELD_SPLAT(self, space, bytecode, frame, pc, num_args):
         if frame.block is None:
             raise space.error(space.w_LocalJumpError, "no block given (yield)")
