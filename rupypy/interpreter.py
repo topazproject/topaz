@@ -546,12 +546,6 @@ class Interpreter(object):
         w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
-    def SEND_SUPER_SPLAT(self, space, bytecode, frame, pc, meth_idx):
-        args_w = space.listview(frame.pop())
-        w_receiver = frame.pop()
-        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w)
-        frame.push(w_res)
-
     def SEND_SUPER_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
         w_block = frame.pop()
         arrays_w = frame.popitemsreverse(num_args - 1)

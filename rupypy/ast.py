@@ -734,7 +734,6 @@ class Send(BaseSend):
 
 class Super(BaseSend):
     send_block = consts.SEND_SUPER_BLOCK
-    send_splat = consts.SEND_SUPER_SPLAT
     send_block_splat = consts.SEND_SUPER_BLOCK_SPLAT
     defined = consts.DEFINED_SUPER
 
