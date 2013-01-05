@@ -294,6 +294,14 @@ class Interpreter(object):
         items_w = frame.popitemsreverse(n_items)
         frame.push(space.newarray(items_w))
 
+    @jit.unroll_safe
+    def BUILD_ARRAY_SPLAT(self, space, bytecode, frame, pc, n_items):
+        arrays_w = frame.popitemsreverse(n_items)
+        items_w = []
+        for w_array in arrays_w:
+            items_w.extend(space.listview(w_array))
+        frame.push(space.newarray(items_w))
+
     def BUILD_STRING(self, space, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)
         frame.push(space.newstr_fromstrs(items_w))
@@ -496,15 +504,22 @@ class Interpreter(object):
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
-    def SEND_SPLAT(self, space, bytecode, frame, pc, meth_idx):
-        args_w = space.listview(frame.pop())
+    @jit.unroll_safe
+    def SEND_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
+        arrays_w = frame.popitemsreverse(num_args)
+        args_w = []
+        for w_array in arrays_w:
+            args_w.extend(space.listview(w_array))
         w_receiver = frame.pop()
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
-    def SEND_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx):
+    def SEND_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
         w_block = frame.pop()
-        args_w = space.listview(frame.pop())
+        arrays_w = frame.popitemsreverse(num_args - 1)
+        args_w = []
+        for w_array in arrays_w:
+            args_w.extend(space.listview(w_array))
         w_receiver = frame.pop()
         if w_block is space.w_nil:
             w_block = None
@@ -537,9 +552,12 @@ class Interpreter(object):
         w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
-    def SEND_SUPER_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx):
+    def SEND_SUPER_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
         w_block = frame.pop()
-        args_w = space.listview(frame.pop())
+        arrays_w = frame.popitemsreverse(num_args - 1)
+        args_w = []
+        for w_array in arrays_w:
+            args_w.extend(space.listview(w_array))
         w_receiver = frame.pop()
         if w_block is space.w_nil:
             w_block = None
@@ -649,7 +667,7 @@ class Interpreter(object):
         w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
-    def YIELD_SPLAT(self, space, bytecode, frame, pc):
+    def YIELD_SPLAT(self, space, bytecode, frame, pc, num_args):
         if frame.block is None:
             raise space.error(space.w_LocalJumpError, "no block given (yield)")
         w_args = frame.pop()

@@ -432,9 +432,7 @@ class Yield(Node):
                     arg.compile(ctx)
                     if not isinstance(arg, Splat):
                         ctx.emit(consts.BUILD_ARRAY, 1)
-                for i in range(len(self.args) - 1):
-                    ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
-                ctx.emit(consts.YIELD_SPLAT)
+                ctx.emit(consts.YIELD_SPLAT, len(self.args))
             else:
                 for arg in self.args:
                     arg.compile(ctx)
@@ -678,8 +676,6 @@ class BaseSend(Node):
                     arg.compile(ctx)
                     if not isinstance(arg, Splat):
                         ctx.emit(consts.BUILD_ARRAY, 1)
-                for i in range(len(self.args) - 1):
-                    ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
             else:
                 for arg in self.args:
                     arg.compile(ctx)
@@ -689,9 +685,9 @@ class BaseSend(Node):
 
             symbol = self.method_name_const(ctx)
             if self.is_splat() and block is not None:
-                ctx.emit(self.send_block_splat, symbol)
+                ctx.emit(self.send_block_splat, symbol, len(self.args) + 1)
             elif self.is_splat():
-                ctx.emit(self.send_splat, symbol)
+                ctx.emit(self.send_splat, symbol, len(self.args))
             elif block is not None:
                 ctx.emit(self.send_block, symbol, len(self.args) + 1)
             else:
@@ -856,12 +852,12 @@ class Subscript(Node):
         return 2
 
     def compile_load(self, ctx):
-        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]"))
+        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]"), 1)
 
     def compile_store(self, ctx):
         ctx.emit(consts.BUILD_ARRAY, 1)
         ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
-        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="))
+        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="), 1)
 
     def is_splat(self):
         for arg in self.args:
@@ -1044,8 +1040,8 @@ class Array(Node):
         if n_items or not n_components:
             ctx.emit(consts.BUILD_ARRAY, n_items)
             n_components += 1
-        for i in xrange(n_components - 1):
-            ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+        if n_components != 1:
+            ctx.emit(consts.BUILD_ARRAY_SPLAT, n_components)
 
     def compile_defined(self, ctx):
         ConstantString("expression").compile(ctx)

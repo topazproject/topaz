@@ -320,7 +320,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         BUILD_ARRAY 2
         COERCE_ARRAY 1
-        SEND 3 1
+        BUILD_ARRAY_SPLAT 2
 
         RETURN
         """)
@@ -612,7 +612,7 @@ class TestCompiler(object):
         DISCARD_TOP
         LOAD_DEREF 0
         COERCE_ARRAY 1
-        YIELD_SPLAT
+        YIELD_SPLAT 1
         RETURN
         """)
 
@@ -1293,10 +1293,7 @@ class TestCompiler(object):
         LOAD_SELF
         SEND 3 0
         COERCE_ARRAY 1
-        SEND 4 1
-        SEND 4 1
-        SEND 4 1
-        SEND_SPLAT 5
+        SEND_SPLAT 4 4
 
         RETURN
         """)
@@ -1311,7 +1308,7 @@ class TestCompiler(object):
         COERCE_ARRAY 1
         LOAD_CONST 1
         BUILD_BLOCK 0
-        SEND_BLOCK_SPLAT 2
+        SEND_BLOCK_SPLAT 2 2
 
         RETURN
         """)
@@ -1488,7 +1485,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_ARRAY 1
         SEND 2 1
-        SEND_SPLAT 3
+        SEND_SPLAT 3 1
 
         RETURN
         """)
@@ -1497,12 +1494,12 @@ class TestCompiler(object):
         LOAD_CONST 0
         BUILD_ARRAY 1
         DUP_TWO
-        SEND_SPLAT 1
+        SEND_SPLAT 1 1
         LOAD_CONST 2
         SEND 3 1
         BUILD_ARRAY 1
         SEND 3 1
-        SEND_SPLAT 4
+        SEND_SPLAT 4 1
 
         RETURN
         """)
@@ -1686,7 +1683,7 @@ class TestCompiler(object):
         ROT_THREE
         BUILD_ARRAY 1
         SEND 4 1
-        SEND_SPLAT 5
+        SEND_SPLAT 5 1
         DISCARD_TOP
 
         LOAD_DEREF 1
@@ -1845,7 +1842,7 @@ class TestCompiler(object):
         COERCE_ARRAY 1
         LOAD_CONST 1
         COERCE_BLOCK
-        SEND_SUPER_BLOCK_SPLAT 2
+        SEND_SUPER_BLOCK_SPLAT 2 2
 
         RETURN
         """)
@@ -1881,9 +1878,8 @@ class TestCompiler(object):
         BUILD_ARRAY 1
         LOAD_DEREF 1
         COERCE_ARRAY 1
-        SEND 0 1
         LOAD_BLOCK
-        SEND_SUPER_BLOCK_SPLAT 1
+        SEND_SUPER_BLOCK_SPLAT 0 3
         RETURN
         """)
 

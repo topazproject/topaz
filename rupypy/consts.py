@@ -40,6 +40,7 @@ BYTECODES = [
     ("DEFINED_GLOBAL", 1, +1),
 
     ("BUILD_ARRAY", 1, ARRAY_EFFECT),
+    ("BUILD_ARRAY_SPLAT", 1, ARRAY_EFFECT),
     ("BUILD_STRING", 1, ARRAY_EFFECT),
     ("BUILD_HASH", 0, +1),
     ("BUILD_RANGE", 0, -1),
@@ -63,13 +64,13 @@ BYTECODES = [
 
     ("SEND", 2, SEND_EFFECT),
     ("SEND_BLOCK", 2, SEND_EFFECT),
-    ("SEND_SPLAT", 1, -1),
-    ("SEND_BLOCK_SPLAT", 1, -2),
+    ("SEND_SPLAT", 2, SEND_EFFECT),
+    ("SEND_BLOCK_SPLAT", 2, SEND_EFFECT),
     ("DEFINED_METHOD", 1, 0),
 
     ("SEND_SUPER_BLOCK", 2, SEND_EFFECT),
-    ("SEND_SUPER_SPLAT", 1, -1),
-    ("SEND_SUPER_BLOCK_SPLAT", 1, -2),
+    ("SEND_SUPER_SPLAT", 2, SEND_EFFECT),
+    ("SEND_SUPER_BLOCK_SPLAT", 2, SEND_EFFECT),
     ("DEFINED_SUPER", 1, 0),
 
     ("SETUP_LOOP", 1, 0),
@@ -89,7 +90,7 @@ BYTECODES = [
     ("ROT_THREE", 0, 0),
 
     ("YIELD", 1, ARRAY_EFFECT),
-    ("YIELD_SPLAT", 0, 0),
+    ("YIELD_SPLAT", 1, SEND_EFFECT),
     ("DEFINED_YIELD", 0, +1),
 
     ("RETURN", 0, -1),

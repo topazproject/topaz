@@ -228,6 +228,12 @@ class CompilerContext(object):
         self.use_block(block)
 
     def emit(self, opcode, arg0=-1, arg1=-1):
+        num_args = 0
+        if arg0 != -1:
+            num_args += 1
+            if arg1 != -1:
+                num_args += 1
+        assert num_args == consts.BYTECODE_NUM_ARGS[opcode]
         instr = Instruction(opcode, arg0, arg1, self.current_lineno)
         self.current_block.instrs.append(instr)
         self.last_lineno = self.current_lineno
