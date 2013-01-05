@@ -1564,6 +1564,13 @@ class TestBlocks(BaseRuPyPyTest):
         return f(3, 5) { |a, b| a + b }
         """)
         assert space.int_w(w_res) == 8
+        w_res = space.execute("""
+        def f
+            yield 3, *[4, 5]
+        end
+        return f() { |a, b, c| a * b + c}
+        """)
+        assert space.int_w(w_res) == 17
 
 
 class TestExceptions(BaseRuPyPyTest):

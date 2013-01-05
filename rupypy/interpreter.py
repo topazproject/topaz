@@ -670,8 +670,11 @@ class Interpreter(object):
     def YIELD_SPLAT(self, space, bytecode, frame, pc, num_args):
         if frame.block is None:
             raise space.error(space.w_LocalJumpError, "no block given (yield)")
-        w_args = frame.pop()
-        w_res = space.invoke_block(frame.block, space.listview(w_args))
+        arrays_w = frame.popitemsreverse(num_args)
+        args_w = []
+        for w_array in arrays_w:
+            args_w.extend(space.listview(w_array))
+        w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
     def DEFINED_YIELD(self, space, bytecode, frame, pc):
