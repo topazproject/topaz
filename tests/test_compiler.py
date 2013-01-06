@@ -1484,8 +1484,7 @@ class TestCompiler(object):
         BUILD_ARRAY 1
         LOAD_CONST 1
         BUILD_ARRAY 1
-        SEND 2 1
-        SEND_SPLAT 3 1
+        SEND_SPLAT 2 2
 
         RETURN
         """)
@@ -1498,8 +1497,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         SEND 3 1
         BUILD_ARRAY 1
-        SEND 3 1
-        SEND_SPLAT 4 1
+        SEND_SPLAT 4 2
 
         RETURN
         """)
@@ -1682,13 +1680,12 @@ class TestCompiler(object):
         ROT_THREE
         ROT_THREE
         BUILD_ARRAY 1
-        SEND 4 1
-        SEND_SPLAT 5 1
+        SEND_SPLAT 4 2
         DISCARD_TOP
 
         LOAD_DEREF 1
         ROT_TWO
-        STORE_CONSTANT 6
+        STORE_CONSTANT 5
         DISCARD_TOP
 
         STORE_DEREF 0

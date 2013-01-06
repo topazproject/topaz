@@ -855,8 +855,7 @@ class Subscript(Node):
 
     def compile_store(self, ctx):
         ctx.emit(consts.BUILD_ARRAY, 1)
-        ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
-        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="), 1)
+        ctx.emit(consts.SEND_SPLAT, ctx.create_symbol_const("[]="), 2)
 
     def is_splat(self):
         for arg in self.args:
