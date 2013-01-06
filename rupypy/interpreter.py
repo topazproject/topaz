@@ -84,7 +84,7 @@ class Interpreter(object):
                     pc = self.run_instr(space, name, consts.BYTECODE_NUM_ARGS[i], bytecode, frame, pc)
                     break
             else:
-                raise NotImplementedError
+                raise SystemError
         else:
             pc = self.run_instr(space, consts.BYTECODE_NAMES[instr], consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
         return pc
@@ -697,9 +697,6 @@ class Interpreter(object):
             raise RaiseBreak(frame.parent_interp, w_value)
         unroller = RaiseBreakValue(frame.parent_interp, w_value)
         return block.handle(space, frame, unroller)
-
-    def UNREACHABLE(self, space, bytecode, frame, pc):
-        raise Exception
 
 
 class Return(Exception):
