@@ -842,8 +842,8 @@ class Subscript(Node):
                 arg.compile(ctx)
                 if not isinstance(arg, Splat):
                     ctx.emit(consts.BUILD_ARRAY, 1)
-            for i in range(len(self.args) - 1):
-                ctx.emit(consts.SEND, ctx.create_symbol_const("+"), 1)
+            if len(self.args) != 1:
+                ctx.emit(consts.BUILD_ARRAY_SPLAT, len(self.args))
         else:
             for arg in self.args:
                 arg.compile(ctx)
