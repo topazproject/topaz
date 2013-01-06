@@ -289,7 +289,6 @@ class Interpreter(object):
         else:
             frame.push(space.w_nil)
 
-    @jit.unroll_safe
     def BUILD_ARRAY(self, space, bytecode, frame, pc, n_items):
         items_w = frame.popitemsreverse(n_items)
         frame.push(space.newarray(items_w))
@@ -468,7 +467,6 @@ class Interpreter(object):
         w_obj.attach_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
-    @jit.unroll_safe
     def EVALUATE_CLASS(self, space, bytecode, frame, pc):
         w_bytecode = frame.pop()
         w_cls = frame.pop()
@@ -485,14 +483,12 @@ class Interpreter(object):
         w_obj = frame.pop()
         frame.push(space.getsingletonclass(w_obj))
 
-    @jit.unroll_safe
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
         args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
-    @jit.unroll_safe
     def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
         w_block = frame.pop()
         args_w = frame.popitemsreverse(num_args - 1)
