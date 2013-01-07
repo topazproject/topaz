@@ -9,6 +9,9 @@ from .base import BaseRuPyPyTest
 
 
 class TestParser(BaseRuPyPyTest):
+    def test_empty(self, space):
+        assert space.parse("") == ast.Main(ast.Nil())
+
     def test_int_constant(self, space):
         assert space.parse("1") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantInt(1))
