@@ -42,3 +42,7 @@ class TestSymbolObject(BaseRuPyPyTest):
         w_res = space.execute("return :x, :x.to_sym")
         s1, s2 = self.unwrap(space, w_res)
         assert s1 == s2 == "x"
+
+    def test_to_proc(self, space):
+        w_res = space.execute("return :+.to_proc.call(2, 3)")
+        assert space.int_w(w_res) == 5
