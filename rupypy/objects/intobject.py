@@ -259,6 +259,15 @@ class W_FixnumObject(W_RootObject):
         end
     end
 
+    def upto(n)
+        i = self
+        while i <= n
+            yield i
+            i += 1
+        end
+        self
+    end
+
     def zero?
         self == 0
     end
