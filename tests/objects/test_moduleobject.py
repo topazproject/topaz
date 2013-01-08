@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestModuleObject(BaseRuPyPyTest):
+class TestModuleObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Module")
 

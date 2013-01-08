@@ -1,9 +1,9 @@
 import os
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestEnvObject(BaseRuPyPyTest):
+class TestEnvObject(BaseTopazTest):
     def test_get(self, space, monkeypatch):
         monkeypatch.setenv("ABC", "12")
         w_res = space.execute("return ENV['ABC']")

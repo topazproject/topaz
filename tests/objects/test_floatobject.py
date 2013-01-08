@@ -1,9 +1,9 @@
 import math
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestFloatObject(BaseRuPyPyTest):
+class TestFloatObject(BaseTopazTest):
     def test_add(self, space):
         w_res = space.execute("return 1.0 + 2.9")
         assert space.float_w(w_res) == 3.9

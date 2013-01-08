@@ -1,9 +1,9 @@
 import os
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestDir(BaseRuPyPyTest):
+class TestDir(BaseTopazTest):
     def test_name(self, space):
         space.execute("Dir")
 

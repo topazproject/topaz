@@ -1,9 +1,9 @@
-from rupypy.celldict import CellDict, Cell, GlobalsDict
+from topaz.celldict import CellDict, Cell, GlobalsDict
 
-from .base import BaseRuPyPyTest
+from .base import BaseTopazTest
 
 
-class TestCellDict(BaseRuPyPyTest):
+class TestCellDict(BaseTopazTest):
     def test_single_set(self, space):
         c = CellDict()
         v = c.version

@@ -1,9 +1,9 @@
-from rupypy.objects.exceptionobject import W_TypeError
+from topaz.objects.exceptionobject import W_TypeError
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestExceptionObject(BaseRuPyPyTest):
+class TestExceptionObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("""
         Exception

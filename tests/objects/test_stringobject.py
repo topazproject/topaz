@@ -1,9 +1,9 @@
 from pypy.rlib.rbigint import rbigint
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestStringObject(BaseRuPyPyTest):
+class TestStringObject(BaseTopazTest):
     def test_lshift(self, space):
         w_res = space.execute('return "abc" << "def" << "ghi"')
         assert space.str_w(w_res) == "abcdefghi"

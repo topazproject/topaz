@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestProcObject(BaseRuPyPyTest):
+class TestProcObject(BaseTopazTest):
     def test_new(self, space):
         w_res = space.execute("""
         p = Proc.new { foo }

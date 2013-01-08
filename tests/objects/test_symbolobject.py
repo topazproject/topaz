@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestSymbolObject(BaseRuPyPyTest):
+class TestSymbolObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Symbol")
 

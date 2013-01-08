@@ -1,9 +1,9 @@
 import math
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestMath(BaseRuPyPyTest):
+class TestMath(BaseTopazTest):
     def test_pi(self, space):
         w_res = space.execute("return Math::PI")
         assert space.float_w(w_res) == math.pi

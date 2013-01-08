@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestRegexpObject(BaseRuPyPyTest):
+class TestRegexpObject(BaseTopazTest):
     def test_source(self, space):
         w_res = space.execute("return /abc/.source")
         assert space.str_w(w_res) == "abc"

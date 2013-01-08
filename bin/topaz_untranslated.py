@@ -5,4 +5,4 @@ import sys
 
 
 if __name__ == "__main__":
-    os.execv(sys.executable, [sys.executable] + ["-m", "rupypy"] + sys.argv[1:])
+    os.execv(sys.executable, [sys.executable] + ["-m", "topaz"] + sys.argv[1:])

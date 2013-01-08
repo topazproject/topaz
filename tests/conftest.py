@@ -4,7 +4,7 @@ import copy
 def pytest_funcarg__space(request):
     # Inside the function so various intitialization stuff isn't seen until
     # coverage is setup.
-    from rupypy.objspace import ObjectSpace
+    from topaz.objspace import ObjectSpace
 
     # Building a space is exceptionally expensive, so we create one once, and
     # then just deepcopy it.  Note that deepcopying is still fairly expensive

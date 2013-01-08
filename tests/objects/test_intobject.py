@@ -3,10 +3,10 @@ import sys
 from pypy.rlib.rarithmetic import LONG_BIT
 from pypy.rlib.rbigint import rbigint
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestFixnumObject(BaseRuPyPyTest):
+class TestFixnumObject(BaseTopazTest):
     def test_addition(self, space):
         w_res = space.execute("return 1 + 2")
         assert space.int_w(w_res) == 3

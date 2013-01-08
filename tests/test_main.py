@@ -3,12 +3,12 @@ import platform
 
 import pytest
 
-from rupypy.main import _entry_point
+from topaz.main import _entry_point
 
 
 class TestMain(object):
     def run(self, space, tmpdir, source=None, status=0, ruby_args=[], argv=[]):
-        args = ["rupypy"]
+        args = ["topaz"]
         args += ruby_args
         if source is not None:
             f = tmpdir.join("test.rb")

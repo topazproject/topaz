@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestHashObject(BaseRuPyPyTest):
+class TestHashObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Hash")
 

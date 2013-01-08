@@ -1,9 +1,9 @@
-from rupypy.objects.methodobject import W_MethodObject, W_UnboundMethodObject
+from topaz.objects.methodobject import W_MethodObject, W_UnboundMethodObject
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestMethodObject(BaseRuPyPyTest):
+class TestMethodObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Method")
 
@@ -61,7 +61,7 @@ class TestMethodObject(BaseRuPyPyTest):
             """)
 
 
-class TestUnboundObject(BaseRuPyPyTest):
+class TestUnboundObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("UnboundMethod")
 

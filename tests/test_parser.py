@@ -2,13 +2,13 @@
 
 from pypy.rlib.rbigint import rbigint
 
-from rupypy import ast
-from rupypy.utils import regexp
+from topaz import ast
+from topaz.utils import regexp
 
-from .base import BaseRuPyPyTest
+from .base import BaseTopazTest
 
 
-class TestParser(BaseRuPyPyTest):
+class TestParser(BaseTopazTest):
     def test_empty(self, space):
         assert space.parse("") == ast.Main(ast.Nil())
 

@@ -1,9 +1,9 @@
-from rupypy.lib.random import W_RandomObject
+from topaz.lib.random import W_RandomObject
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestRandomObject(BaseRuPyPyTest):
+class TestRandomObject(BaseTopazTest):
     def test_new(self, space):
         w_res = space.execute("return Random.new")
         assert isinstance(w_res, W_RandomObject)

@@ -1,4 +1,4 @@
-from rupypy import consts
+from topaz import consts
 
 
 class TestCompiler(object):

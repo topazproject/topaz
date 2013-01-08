@@ -2,10 +2,10 @@ import os
 
 import pytest
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestKernel(BaseRuPyPyTest):
+class TestKernel(BaseTopazTest):
     def test_puts_nil(self, space, capfd):
         space.execute("puts nil")
         out, err = capfd.readouterr()
@@ -243,7 +243,7 @@ class TestKernel(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [True, False, True]
 
 
-class TestRequire(BaseRuPyPyTest):
+class TestRequire(BaseTopazTest):
     def test_simple(self, space, tmpdir):
         f = tmpdir.join("t.rb")
         f.write("""
@@ -342,7 +342,7 @@ class TestRequire(BaseRuPyPyTest):
         assert space.int_w(w_res) == 5
 
 
-class TestExec(BaseRuPyPyTest):
+class TestExec(BaseTopazTest):
     def fork_and_wait(self, space, capfd, code):
         cpid = os.fork()
         if cpid == 0:
@@ -370,7 +370,7 @@ class TestExec(BaseRuPyPyTest):
         assert out == "$0\n"
 
 
-class TestSetTraceFunc(BaseRuPyPyTest):
+class TestSetTraceFunc(BaseTopazTest):
     def test_class(self, space):
         w_res = space.execute("""
         output = []

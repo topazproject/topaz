@@ -2,10 +2,10 @@
 
 import struct
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestArrayObject(BaseRuPyPyTest):
+class TestArrayObject(BaseTopazTest):
     def test_to_s(self, space):
         w_res = space.execute("return [].to_s")
         assert space.str_w(w_res) == "[]"
@@ -365,7 +365,7 @@ class TestArrayObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == "1,2,3"
 
 
-class TestArrayPack(BaseRuPyPyTest):
+class TestArrayPack(BaseTopazTest):
     def test_garbage_format(self, space):
         assert space.str_w(space.execute("return [].pack ''")) == ""
         assert space.str_w(space.execute("return [].pack 'yy'")) == ""
