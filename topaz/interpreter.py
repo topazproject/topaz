@@ -36,44 +36,46 @@ class Interpreter(object):
         return block.bytecode if block is not None else None
 
     def interpret(self, space, frame, bytecode):
-        pc = 0
         try:
-            try:
-                while True:
-                    self.jitdriver.jit_merge_point(
-                        self=self, bytecode=bytecode, frame=frame, pc=pc,
-                        block_bytecode=self.get_block_bytecode(frame.block),
-                        w_trace_proc=space.getexecutioncontext().gettraceproc(),
-                    )
-                    prev_instr = frame.last_instr
-                    frame.last_instr = pc
-                    if (space.getexecutioncontext().hastraceproc() and
-                        bytecode.lineno_table[pc] != bytecode.lineno_table[prev_instr]):
-                        space.getexecutioncontext().invoke_trace_proc(space, "line", None, None, frame=frame)
-                    # Why do we wrap the PC in an object? The JIT has store
-                    # sinking, but when it encounters a guard it usually performs
-                    # all pending stores, *execpt* if the value is a virtual, then
-                    # it doesn't, so we make this store be of a virtual, in order
-                    # to ensure the JIT sinks the store.
-                    space.getexecutioncontext().last_instr_ref = IntegerWrapper(pc)
-                    try:
-                        pc = self.handle_bytecode(space, pc, frame, bytecode)
-                    except RubyError as e:
-                        pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
-                    except RaiseReturn as e:
-                        pc = self.handle_raise_return(space, pc, frame, bytecode, e)
-                    except RaiseBreak as e:
-                        pc = self.handle_raise_break(space, pc, frame, bytecode, e)
-            except RaiseReturn as e:
-                if e.parent_interp is self:
-                    if frame.parent_interp:
-                        raise RaiseReturn(frame.parent_interp, e.w_value)
-                    return e.w_value
-                raise
-            except Return as e:
+            return self._interpret(space, frame, bytecode)
+        except RaiseReturn as e:
+            if e.parent_interp is self:
+                if frame.parent_interp:
+                    raise RaiseReturn(frame.parent_interp, e.w_value)
                 return e.w_value
+            raise
+        except Return as e:
+            return e.w_value
         finally:
             self.finished = True
+
+    def _interpret(self, space, frame, bytecode):
+        pc = 0
+        while True:
+            self.jitdriver.jit_merge_point(
+                self=self, bytecode=bytecode, frame=frame, pc=pc,
+                block_bytecode=self.get_block_bytecode(frame.block),
+                w_trace_proc=space.getexecutioncontext().gettraceproc(),
+            )
+            prev_instr = frame.last_instr
+            frame.last_instr = pc
+            if (space.getexecutioncontext().hastraceproc() and
+                bytecode.lineno_table[pc] != bytecode.lineno_table[prev_instr]):
+                space.getexecutioncontext().invoke_trace_proc(space, "line", None, None, frame=frame)
+            # Why do we wrap the PC in an object? The JIT has store
+            # sinking, but when it encounters a guard it usually performs
+            # all pending stores, *execpt* if the value is a virtual, then
+            # it doesn't, so we make this store be of a virtual, in order
+            # to ensure the JIT sinks the store.
+            space.getexecutioncontext().last_instr_ref = IntegerWrapper(pc)
+            try:
+                pc = self.handle_bytecode(space, pc, frame, bytecode)
+            except RubyError as e:
+                pc = self.handle_ruby_error(space, pc, frame, bytecode, e)
+            except RaiseReturn as e:
+                pc = self.handle_raise_return(space, pc, frame, bytecode, e)
+            except RaiseBreak as e:
+                pc = self.handle_raise_break(space, pc, frame, bytecode, e)
 
     def handle_bytecode(self, space, pc, frame, bytecode):
         instr = ord(bytecode.code[pc])
