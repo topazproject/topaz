@@ -8,4 +8,5 @@ Authors
 * Curt Micol
 * Charles Oliver Nutter
 * Greg Price
+* Armin Rigo
 * Robin Schreiber
