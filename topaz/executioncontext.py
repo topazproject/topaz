@@ -5,6 +5,8 @@ from topaz.frame import Frame
 
 
 class IntegerWrapper(object):
+    _immutable_fields_ = ["value"]
+
     def __init__(self, value):
         self.value = value
 
