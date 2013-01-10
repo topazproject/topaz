@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestFiberObject(BaseRuPyPyTest):
+class TestFiberObject(BaseTopazTest):
     def test_new(self, space):
         space.execute("""
         Fiber.new { }
@@ -31,3 +31,21 @@ class TestFiberObject(BaseRuPyPyTest):
         """)
         with self.raises(space, "ZeroDivisionError"):
             space.execute("$f.resume")
+
+    def test_yield(self, space):
+        w_res = space.execute("""
+        r = []
+        f = Fiber.new {
+            r << 1
+            Fiber.yield 3
+            r << 2
+        }
+        r << "a"
+        res = f.resume
+        r << res
+        r << "b"
+        f.resume
+        r << "c"
+        return r
+        """)
+        assert self.unwrap(space, w_res) == ["a", 1, 3, "b", 2, "c"]

@@ -1,8 +1,16 @@
 from pypy.rlib import jit
 from pypy.rlib.rstacklet import StackletThread
 
-from rupypy.module import ClassDef
-from rupypy.objects.objectobject import W_Object
+from topaz.module import ClassDef
+from topaz.objects.objectobject import W_Object
+
+
+class State(object):
+    def __init__(self, space):
+        self.current = None
+
+    def get_current(self):
+        return self.current
 
 
 class W_FiberObject(W_Object):
@@ -16,14 +24,17 @@ class W_FiberObject(W_Object):
     def singleton_method_allocate(self, space):
         return W_FiberObject(space, self)
 
+    @classdef.singleton_method("yield")
+    def singleton_method_yield(self, space, args_w):
+        current = space.fromcache(State).get_current()
+        space.getexecutioncontext().fiber_thread.switch(current.h)
+        return post_switch(space.getexecutioncontext().fiber_thread, current.h)
+
     @classdef.method("initialize")
     def method_initialize(self, space, block):
         if block is None:
             raise space.error(space.w_ArgumentError)
         self.w_block = block
-
-    @classdef.method("resume")
-    def method_resume(self, space, args_w):
         ec = space.getexecutioncontext()
         sthread = ec.fiber_thread
         if not sthread:
@@ -38,8 +49,14 @@ class W_FiberObject(W_Object):
         )
         for idx, cell in enumerate(self.w_block.cells):
             self.bottomframe.cells[len(self.w_block.bytecode.cellvars) + idx] = cell
+
+    @classdef.method("resume")
+    def method_resume(self, space, args_w):
+        ec = space.getexecutioncontext()
+        sthread = ec.fiber_thread
         global_state.origin = self
         global_state.space = space
+        workaround_disable_jit(sthread)
         h = sthread.new(new_stacklet_callback)
         return post_switch(sthread, h)
 
@@ -69,6 +86,7 @@ def new_stacklet_callback(h, arg):
     space = global_state.space
     self.h = h
     global_state.clear()
+    space.fromcache(State).current = self
 
     with self.sthread.ec.visit_frame(self.bottomframe):
         try:
