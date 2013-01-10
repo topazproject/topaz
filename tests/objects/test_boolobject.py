@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestTrueObject(BaseRuPyPyTest):
+class TestTrueObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("TrueClass")
 
@@ -43,7 +43,7 @@ class TestTrueObject(BaseRuPyPyTest):
         assert w_res is space.w_true
 
 
-class TestFalseObject(BaseRuPyPyTest):
+class TestFalseObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("FalseClass")
 

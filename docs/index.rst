@@ -1,8 +1,8 @@
-Welcome to RuPyPy
+Welcome to Topaz
 =================
 
-RuPyPy is a high performance implementation of the Ruby programming language,
-written in Python on top of `PyPy`_.
+Topaz is a high performance implementation of the Ruby programming language,
+written in Python on top of `RPython`_ (the toolchain that powers PyPy).
 
 .. toctree::
    :maxdepth: 1
@@ -11,4 +11,4 @@ written in Python on top of `PyPy`_.
 
 
 
-.. _`PyPy`: http://pypy.org
+.. _`RPython`: http://pypy.org

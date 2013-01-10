@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestRangeObject(BaseRuPyPyTest):
+class TestRangeObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Range")
 

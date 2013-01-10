@@ -3,10 +3,10 @@ import sys
 from pypy.rlib.rarithmetic import LONG_BIT
 from pypy.rlib.rbigint import rbigint
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestFixnumObject(BaseRuPyPyTest):
+class TestFixnumObject(BaseTopazTest):
     def test_addition(self, space):
         w_res = space.execute("return 1 + 2")
         assert space.int_w(w_res) == 3
@@ -120,7 +120,17 @@ class TestFixnumObject(BaseRuPyPyTest):
         end
         return res
         """)
-        assert [space.int_w(w_x) for w_x in space.listview(w_res)] == [0, 1, 2]
+        assert self.unwrap(space, w_res) == [0, 1, 2]
+
+    def test_upto(self, space):
+        w_res = space.execute("""
+        res = []
+        3.upto(6) do |x|
+            res << x
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [3, 4, 5, 6]
 
     def test_comparator_lt(self, space):
         w_res = space.execute("return 1 <=> 2")

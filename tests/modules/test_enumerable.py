@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestEnumberable(BaseRuPyPyTest):
+class TestEnumberable(BaseTopazTest):
     def test_inject(self, space):
         w_res = space.execute("""
         return (5..10).inject(1) do |prod, n|

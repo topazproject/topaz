@@ -6,8 +6,8 @@ from pypy.config.translationoption import get_combined_translation_config
 def pytest_funcarg__space(request):
     # Inside the function so various intitialization stuff isn't seen until
     # coverage is setup.
-    from rupypy.main import get_topaz_config_options
-    from rupypy.objspace import ObjectSpace
+    from topaz.main import get_topaz_config_options
+    from topaz.objspace import ObjectSpace
 
     # Building a space is exceptionally expensive, so we create one once, and
     # then just deepcopy it.  Note that deepcopying is still fairly expensive

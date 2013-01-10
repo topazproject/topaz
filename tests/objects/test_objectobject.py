@@ -1,10 +1,10 @@
-from rupypy.objects.intobject import W_FixnumObject
-from rupypy.objects.methodobject import W_MethodObject
+from topaz.objects.intobject import W_FixnumObject
+from topaz.objects.methodobject import W_MethodObject
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestBaseObject(BaseRuPyPyTest):
+class TestBaseObject(BaseTopazTest):
     def test_instance_eval(self, space):
         w_res = space.execute("""
         class X; end
@@ -147,7 +147,7 @@ class TestBaseObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [10, 10, 3, True, True]
 
 
-class TestObjectObject(BaseRuPyPyTest):
+class TestObjectObject(BaseTopazTest):
     def test_class(self, space):
         w_res = space.execute("return 1.class")
         assert w_res is space.w_fixnum
@@ -298,7 +298,7 @@ class TestObjectObject(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [0, None]
 
 
-class TestMapDict(BaseRuPyPyTest):
+class TestMapDict(BaseTopazTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""
         class X

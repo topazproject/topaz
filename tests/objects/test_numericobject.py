@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestNumericObject(BaseRuPyPyTest):
+class TestNumericObject(BaseTopazTest):
     def test_to_int(self, space):
         w_res = space.execute("""
         class A < Numeric

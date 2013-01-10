@@ -1,6 +1,6 @@
 from pypy.rpython.test.test_llinterp import interpret
 
-from rupypy.utils.ordereddict import OrderedDict
+from topaz.utils.ordereddict import OrderedDict
 
 
 class Runner(object):

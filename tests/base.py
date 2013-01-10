@@ -2,18 +2,18 @@ from contextlib import contextmanager
 
 import pytest
 
-from rupypy.error import RubyError
-from rupypy.objects.arrayobject import W_ArrayObject
-from rupypy.objects.bignumobject import W_BignumObject
-from rupypy.objects.boolobject import W_TrueObject, W_FalseObject
-from rupypy.objects.floatobject import W_FloatObject
-from rupypy.objects.intobject import W_FixnumObject
-from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.stringobject import W_StringObject
-from rupypy.objects.symbolobject import W_SymbolObject
+from topaz.error import RubyError
+from topaz.objects.arrayobject import W_ArrayObject
+from topaz.objects.bignumobject import W_BignumObject
+from topaz.objects.boolobject import W_TrueObject, W_FalseObject
+from topaz.objects.floatobject import W_FloatObject
+from topaz.objects.intobject import W_FixnumObject
+from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.stringobject import W_StringObject
+from topaz.objects.symbolobject import W_SymbolObject
 
 
-class BaseRuPyPyTest(object):
+class BaseTopazTest(object):
     @contextmanager
     def raises(self, space, exc_name, msg=None):
         with pytest.raises(RubyError) as exc:

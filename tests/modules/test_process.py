@@ -1,9 +1,9 @@
 import os
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestProcess(BaseRuPyPyTest):
+class TestProcess(BaseTopazTest):
     def test_pid(self, space):
         w_res = space.execute("return Process.pid")
         assert space.int_w(w_res) == os.getpid()

@@ -3,12 +3,12 @@ import stat
 
 import pytest
 
-from rupypy.objects.fileobject import W_FileObject, W_IOObject
+from topaz.objects.fileobject import W_FileObject, W_IOObject
 
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestIO(BaseRuPyPyTest):
+class TestIO(BaseTopazTest):
     def test_new_from_file(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
         f = tmpdir.join("file.txt")
@@ -102,7 +102,7 @@ class TestIO(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == [None, None]
 
 
-class TestFile(BaseRuPyPyTest):
+class TestFile(BaseTopazTest):
     def test_access_flags(self, space):
         assert space.int_w(space.execute("return File::RDONLY")) == os.O_RDONLY
         assert space.int_w(space.execute("return File::WRONLY")) == os.O_WRONLY
@@ -292,7 +292,7 @@ class TestFile(BaseRuPyPyTest):
         assert space.str_w(space.execute("return File.basename('/foo/bar/ab')")) == "ab"
 
 
-class TestExpandPath(BaseRuPyPyTest):
+class TestExpandPath(BaseTopazTest):
     def test_expand_to_absolute(self, space):
         w_res = space.execute("""
         return [File.expand_path(""), File.expand_path("a"), File.expand_path("a", nil)]
@@ -322,7 +322,7 @@ class TestExpandPath(BaseRuPyPyTest):
         assert self.unwrap(space, w_res) == os.path.join(os.environ["HOME"], "a")
 
 
-class TestDirname(BaseRuPyPyTest):
+class TestDirname(BaseTopazTest):
     def test_simple(self, space):
         w_res = space.execute("""
         return [

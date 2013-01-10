@@ -1,7 +1,7 @@
-from ..base import BaseRuPyPyTest
+from ..base import BaseTopazTest
 
 
-class TestNilObject(BaseRuPyPyTest):
+class TestNilObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("NilClass")
 

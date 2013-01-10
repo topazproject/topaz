@@ -2,15 +2,15 @@ import math
 
 import pytest
 
-from rupypy.modules.kernel import Kernel
-from rupypy.objects.boolobject import W_TrueObject
-from rupypy.objects.moduleobject import W_ModuleObject
-from rupypy.objects.objectobject import W_Object, W_BaseObject
+from topaz.modules.kernel import Kernel
+from topaz.objects.boolobject import W_TrueObject
+from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.objectobject import W_Object, W_BaseObject
 
-from .base import BaseRuPyPyTest
+from .base import BaseTopazTest
 
 
-class TestInterpreter(BaseRuPyPyTest):
+class TestInterpreter(BaseTopazTest):
     def test_add(self, space):
         space.execute("1 + 1")
 
@@ -1306,7 +1306,7 @@ class TestInterpreter(BaseRuPyPyTest):
         assert w_res is space.w_bignum
 
 
-class TestBlocks(BaseRuPyPyTest):
+class TestBlocks(BaseTopazTest):
     def test_self(self, space):
         w_res = space.execute("""
         class X
@@ -1564,9 +1564,16 @@ class TestBlocks(BaseRuPyPyTest):
         return f(3, 5) { |a, b| a + b }
         """)
         assert space.int_w(w_res) == 8
+        w_res = space.execute("""
+        def f
+            yield 3, *[4, 5]
+        end
+        return f() { |a, b, c| a * b + c}
+        """)
+        assert space.int_w(w_res) == 17
 
 
-class TestExceptions(BaseRuPyPyTest):
+class TestExceptions(BaseTopazTest):
     def test_simple(self, space):
         w_res = space.execute("""
         return begin
