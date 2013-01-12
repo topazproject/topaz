@@ -230,6 +230,14 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("return 1.size")
         assert space.int_w(w_res) == expected
 
+    def test_chr(self, space):
+        w_res = space.execute("return 65.chr")
+        assert self.unwrap(space, w_res) == "A"
+        with self.raises(space, "RangeError", "256 out of char range"):
+            space.execute("256.chr")
+        with self.raises(space, "RangeError", "-1 out of char range"):
+            space.execute("-1.chr")
+
     def test_pow(self, space):
         w_res = space.execute("return 2 ** 6")
         assert self.unwrap(space, w_res) == 64
