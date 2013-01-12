@@ -489,3 +489,16 @@ class TestArrayPack(BaseTopazTest):
             space.execute("[].pack 'f'")
         with self.raises(space, "RangeError", "pack length too big"):
             space.execute("[].pack 'a18446744073709551617'")
+
+    def test_max(self, space):
+        w_res = space.execute("""
+        a = %w(albatross dog horse)
+        return a.max
+        """)
+        assert self.unwrap(space, w_res) == "horse"
+        w_res = space.execute("""
+        a = %w(albatross dog horse)
+        return a.max { |a, b| a.length <=> b.length }
+        """)
+        assert self.unwrap(space, w_res) == "albatross"
+        assert space.execute("[].max") is space.w_nil
