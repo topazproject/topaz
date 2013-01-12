@@ -86,6 +86,8 @@ class W_FixnumObject(W_RootObject):
                     )
                 else:
                     return space.newint(value)
+            elif space.is_kind_of(w_other, space.w_bignum):
+                return space.send(space.newbigint_fromint(self.intvalue), space.newsymbol(name), [w_other])
             elif space.is_kind_of(w_other, space.w_float):
                 return space.newfloat(func(self.intvalue, space.float_w(w_other)))
             else:

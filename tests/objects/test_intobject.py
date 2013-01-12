@@ -18,6 +18,10 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("return (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3))")
         assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * 3)
 
+    def test_addition_bigint(self, space):
+        w_res = space.execute("return 2 + %d" % (sys.maxint + 1))
+        assert self.unwrap(space, w_res) == rbigint.fromlong(sys.maxint + 3)
+
     def test_multiplication(self, space):
         w_res = space.execute("return 2 * 3")
         assert space.int_w(w_res) == 6
@@ -25,6 +29,10 @@ class TestFixnumObject(BaseTopazTest):
     def test_multiplication_ovf(self, space):
         w_res = space.execute("return (2 << (0.size * 8 - 3)) * (2 << (0.size * 8 - 3))")
         assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) ** 2)
+
+    def test_multiplication_bigint(self, space):
+        w_res = space.execute("return 1 * %d" % (sys.maxint + 1))
+        assert self.unwrap(space, w_res) == rbigint.fromlong(sys.maxint + 1)
 
     def test_subtraction(self, space):
         w_res = space.execute("return 2 - 3")
@@ -36,6 +44,10 @@ class TestFixnumObject(BaseTopazTest):
     def test_subtraction_ovf(self, space):
         w_res = space.execute("return 0 - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3))")
         assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * -3)
+
+    def test_substraction_bigint(self, space):
+        w_res = space.execute("return 1 - %d" % (sys.maxint + 1))
+        assert self.unwrap(space, w_res) == rbigint.fromlong(1 - sys.maxint - 1)
 
     def test_division(self, space):
         w_res = space.execute("return 3 / 5")
