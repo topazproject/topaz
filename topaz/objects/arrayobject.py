@@ -409,7 +409,7 @@ class W_ArrayObject(W_Object):
     def max(&block)
         max = self[0]
         self.each do |e|
-            max = e if (block ? block[max, e] : max <=> e) < 0
+            max = e if (block ? block.call(max, e) : max <=> e) < 0
         end
         max
     end
