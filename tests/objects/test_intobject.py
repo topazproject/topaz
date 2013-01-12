@@ -94,6 +94,8 @@ class TestFixnumObject(BaseTopazTest):
     def test_less(self, space):
         w_res = space.execute("return 1 < 2")
         assert w_res is space.w_true
+        w_res = space.execute("return 1 < 1.2")
+        assert w_res is space.w_true
 
     def test_less_equal(self, space):
         assert space.execute("return 1 <= 2") is space.w_true
