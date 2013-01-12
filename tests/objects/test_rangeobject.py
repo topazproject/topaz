@@ -13,6 +13,22 @@ class TestRangeObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [5, 10, 15]
 
+    def test_float_iteration(self, space):
+        w_res = space.execute("""
+        return (1..3.2).map do |x|
+            x
+        end
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+        w_res = space.execute("""
+        return (1...3.2).map do |x|
+            x
+        end
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+        with self.raises(space, "TypeError", "can't iterate from Float"):
+            space.execute("(1.1..2).each { }")
+
     def test_starting_point_always_returned(self, space):
         w_res = space.execute("""
         return (1..1).map do |x|
