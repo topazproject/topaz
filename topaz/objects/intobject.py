@@ -287,4 +287,15 @@ class W_FixnumObject(W_RootObject):
     def __id__
         self * 2 + 1
     end
+
+    def step(limit, step=1)
+        idx = self
+        if limit.is_a?(Float) or step.is_a?(Float)
+            idx = idx.to_f
+        end
+        while idx <= limit do
+            yield idx
+            idx += step
+        end
+    end
     """)

@@ -229,3 +229,29 @@ class TestFixnumObject(BaseTopazTest):
         assert self.unwrap(space, w_res) == 0.5
         with self.raises(space, "TypeError", "String can't be coerced into Fixnum"):
             space.execute("2 ** 'hallo'")
+
+    def test_step(self, space):
+        w_res = space.execute("""
+        res = []
+        1.step(4) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4]
+        w_res = space.execute("""
+        res = []
+        1.step(4.1) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1.0, 2.0, 3.0, 4.0]
+        w_res = space.execute("""
+        res = []
+        1.step(10, 2) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 3, 5, 7, 9]
+        w_res = space.execute("""
+        res = []
+        1.step(2, 0.6) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1.0, 1.6]
