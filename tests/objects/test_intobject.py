@@ -65,6 +65,12 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("return 12 ^ 15")
         assert space.int_w(w_res) == 3
 
+    def test_or(self, space):
+        w_res = space.execute("return 16 | 7")
+        assert space.int_w(w_res) == 23
+        w_res = space.execute("return 7 | 3")
+        assert space.int_w(w_res) == 7
+
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
         assert w_res is space.w_true
