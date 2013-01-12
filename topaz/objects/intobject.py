@@ -190,26 +190,21 @@ class W_FixnumObject(W_RootObject):
     def method_ne(self, space, w_other):
         return space.newbool(space.send(self, space.newsymbol("=="), [w_other]) is space.w_false)
 
-    @classdef.method("<", other="int")
-    def method_lt(self, space, other):
-        return space.newbool(self.intvalue < other)
-
-    @classdef.method(">", other="int")
-    def method_gt(self, space, other):
-        return space.newbool(self.intvalue > other)
-
-    @classdef.method("<=")
-    def method_lte(self, space, w_other):
-        if isinstance(w_other, W_FloatObject):
-            return space.newbool(self.intvalue <= space.float_w(w_other))
-        elif isinstance(w_other, W_FixnumObject):
-            return space.newbool(self.intvalue <= w_other.intvalue)
-        else:
-            return W_NumericObject.retry_binop_coercing(space, self, w_other, "<=", raise_error=True)
-
-    @classdef.method(">=", other="int")
-    def method_gte(self, space, other):
-        return space.newbool(self.intvalue >= other)
+    def new_bool_op(classdef, name, func):
+        @classdef.method(name)
+        def method(self, space, w_other):
+            if space.is_kind_of(w_other, space.w_float):
+                return space.newbool(func(self.intvalue, space.float_w(w_other)))
+            elif space.is_kind_of(w_other, space.w_fixnum):
+                return space.newbool(func(self.intvalue, space.int_w(w_other)))
+            else:
+                return W_NumericObject.retry_binop_coercing(space, self, w_other, name, raise_error=True)
+        method.__name__ = "method_%s" % func.__name__
+        return method
+    method_lt = new_bool_op(classdef, "<", operator.lt)
+    method_lte = new_bool_op(classdef, "<=", operator.le)
+    method_gt = new_bool_op(classdef, ">", operator.gt)
+    method_gte = new_bool_op(classdef, ">=", operator.ge)
 
     @classdef.method("-@")
     def method_neg(self, space):
