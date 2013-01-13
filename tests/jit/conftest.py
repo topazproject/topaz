@@ -6,6 +6,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--topaz",
         dest="topaz",
+        default=None,
         help="Path to a compiled topaz binary"
     )
 
