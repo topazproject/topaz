@@ -4,7 +4,6 @@ from pypy.rlib.objectmodel import we_are_translated, specialize
 
 from topaz import consts
 from topaz.error import RubyError
-from topaz.executioncontext import IntegerWrapper
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.blockobject import W_BlockObject
 from topaz.objects.classobject import W_ClassObject
@@ -62,12 +61,6 @@ class Interpreter(object):
         if (space.getexecutioncontext().hastraceproc() and
             bytecode.lineno_table[pc] != bytecode.lineno_table[prev_instr]):
             space.getexecutioncontext().invoke_trace_proc(space, "line", None, None, frame=frame)
-        # Why do we wrap the PC in an object? The JIT has store
-        # sinking, but when it encounters a guard it usually performs
-        # all pending stores, *execpt* if the value is a virtual, then
-        # it doesn't, so we make this store be of a virtual, in order
-        # to ensure the JIT sinks the store.
-        space.getexecutioncontext().last_instr_ref = IntegerWrapper(pc)
         try:
             pc = self.handle_bytecode(space, pc, frame, bytecode)
         except RubyError as e:
@@ -182,6 +175,7 @@ class Interpreter(object):
         frame.push(frame.cells[idx].upgrade_to_closure(frame, idx))
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         w_scope = frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
@@ -189,6 +183,7 @@ class Interpreter(object):
         frame.push(w_obj)
 
     def STORE_CONSTANT(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
         w_value = frame.pop()
@@ -197,6 +192,7 @@ class Interpreter(object):
         frame.push(w_value)
 
     def DEFINED_CONSTANT(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_scope = frame.pop()
         if space.is_true(space.send(w_scope, space.newsymbol("const_defined?"), [w_name])):
@@ -205,6 +201,7 @@ class Interpreter(object):
             frame.push(space.w_nil)
 
     def LOAD_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
@@ -212,6 +209,7 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def DEFINED_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         frame.pop()
         scope = jit.promote(frame.lexical_scope)
@@ -241,6 +239,7 @@ class Interpreter(object):
         frame.push(w_value)
 
     def DEFINED_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
         if space.is_true(space.send(w_obj, space.newsymbol("instance_variable_defined?"), [w_name])):
@@ -268,6 +267,7 @@ class Interpreter(object):
         frame.push(w_value)
 
     def DEFINED_CLASS_VAR(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
         if space.is_true(space.send(w_obj, space.newsymbol("class_variable_defined?"), [w_name])):
@@ -276,11 +276,13 @@ class Interpreter(object):
             frame.push(space.w_nil)
 
     def LOAD_GLOBAL(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         name = space.symbol_w(bytecode.consts_w[idx])
         w_value = space.globals.get(space, name) or space.w_nil
         frame.push(w_value)
 
     def STORE_GLOBAL(self, space, bytecode, frame, pc, idx):
+        space.getexecutioncontext().last_instr = pc
         name = space.symbol_w(bytecode.consts_w[idx])
         w_value = frame.peek()
         space.globals.set(space, name, w_value)
@@ -341,6 +343,7 @@ class Interpreter(object):
         frame.push(block)
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):
+        space.getexecutioncontext().last_instr = pc
         superclass = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
@@ -363,6 +366,7 @@ class Interpreter(object):
         frame.push(w_cls)
 
     def BUILD_MODULE(self, space, bytecode, frame, pc):
+        space.getexecutioncontext().last_instr = pc
         w_bytecode = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
@@ -402,6 +406,7 @@ class Interpreter(object):
         elif isinstance(w_obj, W_ArrayObject):
             frame.push(w_obj)
         else:
+            space.getexecutioncontext().last_instr = pc
             if space.respond_to(w_obj, space.newsymbol("to_a")):
                 w_res = space.send(w_obj, space.newsymbol("to_a"))
             elif space.respond_to(w_obj, space.newsymbol("to_ary")):
@@ -419,6 +424,7 @@ class Interpreter(object):
         elif isinstance(w_block, W_ProcObject):
             frame.push(w_block.block)
         elif space.respond_to(w_block, space.newsymbol("to_proc")):
+            space.getexecutioncontext().last_instr = pc
             # Proc implements to_proc, too, but MRI doesn't call it
             w_res = space.convert_type(w_block, space.w_proc, "to_proc")
             assert isinstance(w_res, W_ProcObject)
@@ -471,6 +477,7 @@ class Interpreter(object):
         frame.push(space.w_nil)
 
     def EVALUATE_CLASS(self, space, bytecode, frame, pc):
+        space.getexecutioncontext().last_instr = pc
         w_bytecode = frame.pop()
         w_cls = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
@@ -487,12 +494,14 @@ class Interpreter(object):
         frame.push(space.getsingletonclass(w_obj))
 
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
+        space.getexecutioncontext().last_instr = pc
         args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)
 
     def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
+        space.getexecutioncontext().last_instr = pc
         w_block = frame.pop()
         args_w = frame.popitemsreverse(num_args - 1)
         w_receiver = frame.pop()
@@ -505,6 +514,7 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def SEND_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
+        space.getexecutioncontext().last_instr = pc
         arrays_w = frame.popitemsreverse(num_args)
         args_w = []
         for w_array in arrays_w:
@@ -515,6 +525,7 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def SEND_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
+        space.getexecutioncontext().last_instr = pc
         w_block = frame.pop()
         arrays_w = frame.popitemsreverse(num_args - 1)
         args_w = []
@@ -529,6 +540,7 @@ class Interpreter(object):
         frame.push(w_res)
 
     def DEFINED_METHOD(self, space, bytecode, frame, pc, meth_idx):
+        space.getexecutioncontext().last_instr = pc
         w_obj = frame.pop()
         if space.respond_to(w_obj, bytecode.consts_w[meth_idx]):
             frame.push(space.newstr_fromstr("method"))
@@ -536,6 +548,7 @@ class Interpreter(object):
             frame.push(space.w_nil)
 
     def SEND_SUPER_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
+        space.getexecutioncontext().last_instr = pc
         w_block = frame.pop()
         args_w = frame.popitemsreverse(num_args - 1)
         w_receiver = frame.pop()
@@ -548,6 +561,7 @@ class Interpreter(object):
 
     @jit.unroll_safe
     def SEND_SUPER_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
+        space.getexecutioncontext().last_instr = pc
         w_block = frame.pop()
         arrays_w = frame.popitemsreverse(num_args - 1)
         args_w = []
@@ -562,6 +576,7 @@ class Interpreter(object):
         frame.push(w_res)
 
     def DEFINED_SUPER(self, space, bytecode, frame, pc, meth_idx):
+        space.getexecutioncontext().last_instr = pc
         w_obj = frame.pop()
         name = space.symbol_w(bytecode.consts_w[meth_idx])
         if space.getclass(w_obj).find_method_super(space, name) is not None:
@@ -656,6 +671,7 @@ class Interpreter(object):
     def YIELD(self, space, bytecode, frame, pc, n_args):
         if frame.block is None:
             raise space.error(space.w_LocalJumpError, "no block given (yield)")
+        space.getexecutioncontext().last_instr = pc
         args_w = [None] * n_args
         for i in xrange(n_args - 1, -1, -1):
             args_w[i] = frame.pop()
@@ -666,6 +682,7 @@ class Interpreter(object):
     def YIELD_SPLAT(self, space, bytecode, frame, pc, num_args):
         if frame.block is None:
             raise space.error(space.w_LocalJumpError, "no block given (yield)")
+        space.getexecutioncontext().last_instr = pc
         arrays_w = frame.popitemsreverse(num_args)
         args_w = []
         for w_array in arrays_w:
