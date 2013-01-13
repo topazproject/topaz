@@ -1,0 +1,2 @@
+class BaseJITTest(object):
+    pass
