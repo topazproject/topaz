@@ -21,3 +21,6 @@ class BaseJITTest(object):
         traces = [SimpleParser.parse_from_input(t) for t in data]
         traces = storage.reconnect_loops(traces)
         return traces
+
+    def matches(self, trace, expected):
+        pass
