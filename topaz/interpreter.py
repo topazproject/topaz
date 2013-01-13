@@ -698,6 +698,8 @@ class Interpreter(object):
 
 
 class Return(Exception):
+    _immutable_fields_ = ["w_value"]
+
     def __init__(self, w_value):
         self.w_value = w_value
 
