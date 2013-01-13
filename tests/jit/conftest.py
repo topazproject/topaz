@@ -1,3 +1,6 @@
+import py
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("Topaz JIT tests")
     group.addoption(
@@ -8,4 +11,4 @@ def pytest_addoption(parser):
 
 
 def pytest_funcarg__topaz(request):
-    return request.config.getvalueorskip("topaz")
+    return py.path.local(request.config.getvalueorskip("topaz"))
