@@ -9,7 +9,7 @@ class TestBasic(BaseJITTest):
             i += 1
         end
         """)
-        assert self.matches(traces[0].loop, """
+        self.assert_matches(traces[0].loop, """
         label(p0, p1, p3, p4, p5, p6, p9, i37, p19, p28, p29, descr=TargetToken(4309991544))
         debug_merge_point(0, 0, '<main> at LOAD_DEREF')
         guard_not_invalidated(descr=<Guard10>)

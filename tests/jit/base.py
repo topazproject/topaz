@@ -22,13 +22,13 @@ class BaseJITTest(object):
         traces = storage.reconnect_loops(traces)
         return [Trace(t) for t in traces]
 
-    def matches(self, trace, expected):
+    def assert_matches(self, trace, expected):
         expected_lines = [
             line.strip()
             for line in expected.splitlines()
             if line and not line.isspace()
         ]
-        return map(str, trace) == expected_lines
+        assert map(str, trace) == expected_lines
 
 
 class Trace(object):
