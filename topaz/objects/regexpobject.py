@@ -31,12 +31,27 @@ RE_ESCAPE_TABLE[ord("|")] = "\\|"
 RE_ESCAPE_TABLE[ord("}")] = "\\}"
 
 
+class RegexpCache(object):
+    # TODO: this should use an LRU cache, and be elidable for the JIT.
+    def __init__(self, space):
+        self._contents = {}
+
+    def contains(self, pattern, flags):
+        return (pattern, flags) in self._contents
+
+    def get(self, pattern, flags):
+        return self._contents[pattern, flags]
+
+    def set(self, pattern, flags, compiled_regexp):
+        self._contents[pattern, flags] = compiled_regexp
+
+
 class W_RegexpObject(W_Object):
     classdef = ClassDef("Regexp", W_Object.classdef, filepath=__file__)
 
     def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
-        self.set_source(source, flags)
+        self.set_source(space, source, flags)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -109,10 +124,11 @@ class W_RegexpObject(W_Object):
         if self.source is None:
             raise space.error(space.w_TypeError, "uninitialized Regexp")
 
-    def set_source(self, source, flags):
+    def set_source(self, space, source, flags):
         if source is not None:
+            cache = space.fromcache(RegexpCache)
             self.source = source
-            code, flags, groupcount, groupindex, indexgroup, group_offsets = regexp.compile(source, flags)
+            code, flags, groupcount, groupindex, indexgroup, group_offsets = regexp.compile(cache, source, flags)
             self.code = code
             self.flags = flags
             self.groupcount = groupcount
@@ -144,9 +160,9 @@ class W_RegexpObject(W_Object):
     @classdef.method("initialize", flags="int")
     def method_initialize(self, space, w_source, flags=0):
         if isinstance(w_source, W_RegexpObject):
-            self.set_source(w_source.source, w_source.flags)
+            self.set_source(space, w_source.source, w_source.flags)
         else:
-            self.set_source(Coerce.str(space, w_source), flags)
+            self.set_source(space, Coerce.str(space, w_source), flags)
 
     @classdef.method("to_s")
     def method_to_s(self, space):

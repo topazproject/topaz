@@ -10,7 +10,8 @@ from topaz.utils import regexp
 def regexp_match(re, string, _flags=0):
     pos = 0
     endpos = len(string)
-    code, flags, _, _, _, _ = regexp.compile(re, _flags)
+    # TODO: string a cache through here so this goes through the regexp cache
+    code, flags, _, _, _, _ = regexp._compile_no_cache(re, _flags)
     return rsre_core.StrMatchContext(code, string, pos, endpos, flags)
 
 

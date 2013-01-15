@@ -1205,8 +1205,7 @@ def _parse_posix_class(source, info):
     raise NotImplementedError("_parse_posix_class")
 
 
-
-def compile(pattern, flags=0):
+def _compile_no_cache(pattern, flags):
     global_flags = flags
     while True:
         source = Source(pattern)
@@ -1233,3 +1232,9 @@ def compile(pattern, flags=0):
     for n, v in info.group_index.iteritems():
         index_group[v] = n
     return code, info.flags, info.group_count, info.group_index, index_group, info.group_offsets
+
+
+def compile(cache, pattern, flags=0):
+    if not cache.contains(pattern, flags):
+        cache.set(pattern, flags, _compile_no_cache(pattern, flags))
+    return cache.get(pattern, flags)
