@@ -1,5 +1,6 @@
 import subprocess
 
+from pypy.jit.tool import oparser
 from pypy.tool import logparser
 from pypy.tool.jitlogparser.parser import SimpleParser
 from pypy.tool.jitlogparser.storage import LoopStorage
@@ -28,7 +29,9 @@ class BaseJITTest(object):
             for line in expected.splitlines()
             if line and not line.isspace()
         ]
-        assert map(str, trace) == expected_lines
+        parser = oparser.OpParser(None, None, {}, "lltype", None, invent_fail_descr=None)
+        expected_ops = [parser.parse_next_op(l) for l in expected_lines]
+        assert trace == expected_ops
 
 
 class Trace(object):
