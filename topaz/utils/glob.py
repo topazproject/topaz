@@ -312,7 +312,7 @@ class DirectoryMatch(Match):
             return
 
         for ent in os.listdir(path if path else "."):
-            if self.ismatch(ent):
+            if self.ismatch(glob.cache, ent):
                 full = self.path_join(path, ent)
                 if os.path.isdir(full):
                     self.next.call(glob, full)
