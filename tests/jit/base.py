@@ -46,7 +46,6 @@ class BaseJITTest(object):
             elif arg != expected_arg and expected_arg not in aliases.viewvalues():
                 aliases[arg] = arg = expected_arg
             assert arg == expected_arg
-        assert op.descr == expected.descr or (op.descr.startswith("TargetToken") and expected.descr.startswith("TargetToken"))
 
 
 class Parser(oparser.OpParser):
