@@ -1,6 +1,6 @@
 import copy
 
-from pypy.rlib import jit, debug
+from pypy.rlib import jit
 
 
 NUM_DIGITS = 4
@@ -52,7 +52,6 @@ class BaseNode(object):
                 for i, w_value in enumerate(w_obj.storage):
                     new_storage[i] = w_value
             w_obj.storage = new_storage
-            debug.make_sure_not_resized(w_obj.storage)
 
     def add_attr(self, space, w_obj, name):
         attr_node = space.fromcache(MapTransitionCache).transition_add_attr(w_obj.map, name, self.length())
