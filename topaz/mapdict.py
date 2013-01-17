@@ -40,6 +40,7 @@ class BaseNode(object):
     def size_estimate(self):
         return self._size_estimate >> NUM_DIGITS
 
+    @jit.unroll_safe
     def update_storage_size(self, w_obj, node):
         if not jit.we_are_jitted():
             size_est = (self._size_estimate + node.size_estimate() - self.size_estimate())
