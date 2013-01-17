@@ -29,7 +29,7 @@ class MapTransitionCache(object):
 
 
 class BaseNode(object):
-    _attrs_ = ("_size_estimate")
+    _attrs_ = ["_size_estimate"]
     _size_estimate = 0
 
     def __deepcopy__(self, memo):

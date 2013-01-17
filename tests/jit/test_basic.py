@@ -41,14 +41,14 @@ class TestBasic(BaseJITTest):
         self.assert_matches(traces[0].loop, """
         label(p0, p1, p3, p4, p5, p6, p9, p42, p31, p32, p24, descr=TargetToken(140148740726904))
         debug_merge_point(0, 0, '<main> at LOAD_SELF')
-        guard_not_invalidated(descr=<Guard10>) [p1, p0, p3, p4, p5, p6, p9]
+        guard_not_invalidated(descr=<Guard10>)
         debug_merge_point(0, 0, '<main> at LOAD_INSTANCE_VAR')
         debug_merge_point(0, 0, '<main> at LOAD_CONST')
         debug_merge_point(0, 0, '<main> at SEND')
         i44 = force_token()
         i45 = getfield_gc_pure(p42, descr=<FieldS topaz.objects.intobject.W_FixnumObject.inst_intvalue 8>)
         i46 = int_lt(i45, 10000)
-        guard_true(i46, descr=<Guard11>) [p1, p0, p3, p4, p5, p6, p9, p31, p32, i44]
+        guard_true(i46, descr=<Guard11>)
         debug_merge_point(0, 0, '<main> at JUMP_IF_FALSE')
         debug_merge_point(0, 0, '<main> at LOAD_SELF')
         debug_merge_point(0, 0, '<main> at DUP_TOP')

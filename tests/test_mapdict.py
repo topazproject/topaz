@@ -3,7 +3,7 @@ from topaz.mapdict import ClassNode
 from .base import BaseTopazTest
 
 
-class MockObject(object):
+class FakeObject(object):
     storage = None
 
     def __init__(self, map):
