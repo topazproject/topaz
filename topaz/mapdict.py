@@ -50,8 +50,7 @@ class BaseNode(object):
             # note that node.size_estimate() is always at least node.length()
             new_storage = [None] * node.size_estimate()
             if w_obj.storage:
-                for i, w_value in enumerate(w_obj.storage):
-                    new_storage[i] = w_value
+                new_storage[:len(w_obj.storage)] = w_obj.storage
             w_obj.storage = new_storage
 
     def add_attr(self, space, w_obj, name):

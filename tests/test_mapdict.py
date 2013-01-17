@@ -17,7 +17,7 @@ class TestMapDict(BaseTopazTest):
             assert class_node.size_estimate() == 0
 
             for j in range(1000):
-                w_obj = MockObject(class_node)
+                w_obj = FakeObject(class_node)
                 for a in "abcdefghij"[:i]:
                     w_obj.map.add_attr(space, w_obj, a)
             assert class_node.size_estimate() == i
@@ -28,10 +28,10 @@ class TestMapDict(BaseTopazTest):
             assert class_node.size_estimate() == 0
 
             for j in range(1000):
-                w_obj = MockObject(class_node)
+                w_obj = FakeObject(class_node)
                 for a in "abcdefghij"[:i]:
                     w_obj.map.add_attr(space, w_obj, a)
-                w_obj = MockObject(class_node)
+                w_obj = FakeObject(class_node)
                 for a in "klmnopqars":
                     w_obj.map.add_attr(space, w_obj, a)
             assert class_node.size_estimate() in [(i + 10) // 2, (i + 11) // 2]
