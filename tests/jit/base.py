@@ -1,8 +1,9 @@
 import subprocess
 
+from pypy.jit.metainterp.resoperation import opname
 from pypy.jit.tool import oparser
 from pypy.tool import logparser
-from pypy.tool.jitlogparser.parser import SimpleParser
+from pypy.tool.jitlogparser.parser import SimpleParser, Op
 from pypy.tool.jitlogparser.storage import LoopStorage
 
 
@@ -29,9 +30,36 @@ class BaseJITTest(object):
             for line in expected.splitlines()
             if line and not line.isspace()
         ]
-        parser = oparser.OpParser(None, None, {}, "lltype", None, invent_fail_descr=None)
+        parser = Parser(None, None, {}, "lltype", None, invent_fail_descr=None, nonstrict=True)
         expected_ops = [parser.parse_next_op(l) for l in expected_lines]
-        assert trace == expected_ops
+        aliases = {}
+        assert len(trace) == len(expected_ops)
+        for op, expected in zip(trace, expected_ops):
+            self._assert_ops_equal(aliases, op, expected)
+
+    def _assert_ops_equal(self, aliases, op, expected):
+        assert op.name == expected.name
+        assert len(op.args) == len(expected.args)
+        for arg, expected_arg in zip(op.args, expected.args):
+            if arg in aliases:
+                arg = aliases[arg]
+            elif arg != expected_arg and expected_arg not in aliases.viewvalues():
+                aliases[arg] = arg = expected_arg
+            assert arg == expected_arg
+        assert op.descr == expected.descr or (op.descr.startswith("TargetToken") and expected.descr.startswith("TargetToken"))
+
+
+class Parser(oparser.OpParser):
+    def get_descr(self, poss_descr, allow_invent):
+        if poss_descr.startswith(("TargetToken", "<Guard")):
+            return poss_descr
+        return super(Parser, self).get_descr(poss_descr, allow_invent)
+
+    def getvar(self, arg):
+        return arg
+
+    def create_op(self, opnum, args, res, descr):
+        return Op(opname[opnum].lower(), args, res, descr)
 
 
 class Trace(object):
