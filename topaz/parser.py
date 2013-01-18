@@ -2166,7 +2166,7 @@ class Parser(object):
                     $$ = support.new_call($1, $3, $4, null);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("method_call : primary_value COLON2 operation3")
     def method_call_primary_value_colon_operation(self, p):
