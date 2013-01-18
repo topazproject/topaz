@@ -911,7 +911,10 @@ class TestParser(BaseTopazTest):
         assert space.parse('?\\12') == string("\n")
         assert space.parse('"\\12"') == string("\n")
         assert space.parse('?\\012') == string("\n")
-        assert space.parse('"\\342\\234\\224"') == string("✔")
+        assert space.parse('"\\342\\234\\224"') == string(u"✔".encode("utf-8"))
+        assert space.parse('"\u2603"') == string(u"\u2603".encode("utf-8"))
+        assert space.parse('?\u2603') == string(u"\u2603".encode("utf-8"))
+        assert space.parse('"\uffff"') == string(u"\uffff".encode("utf-8"))
 
     def test_dynamic_string(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
