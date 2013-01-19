@@ -131,7 +131,7 @@ class W_RegexpObject(W_Object):
             try:
                 code, flags, groupcount, groupindex, indexgroup, group_offsets = regexp.compile(cache, source, flags)
             except regexp.RegexpError as e:
-                raise space.error(space.w_SyntaxError, e.message)
+                raise space.error(space.w_SyntaxError, str(e))
             self.code = code
             self.flags = flags
             self.groupcount = groupcount
