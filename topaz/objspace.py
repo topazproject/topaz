@@ -473,7 +473,7 @@ class ObjectSpace(object):
         return w_obj.is_kind_of(self, w_cls)
 
     @jit.unroll_safe
-    def invoke_block(self, block, args_w):
+    def invoke_block(self, block, args_w, block_arg=None):
         bc = block.bytecode
         frame = self.create_frame(
             bc, w_self=block.w_self, lexical_scope=block.lexical_scope,
@@ -485,8 +485,8 @@ class ObjectSpace(object):
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
-        if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1:
-            frame.handle_block_args(self, bc, args_w, None)
+        if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
+            frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell

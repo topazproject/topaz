@@ -133,8 +133,9 @@ class Parser(object):
     def new_send_block(self, params, body):
         args = params.getargs() if params is not None else []
         splat = params.getsplatarg() if params is not None else None
+        block_arg = params.getblockarg() if params is not None else None
         block = ast.Block(body.getastlist()) if body is not None else ast.Nil()
-        return BoxAST(ast.SendBlock(args, splat, block))
+        return BoxAST(ast.SendBlock(args, splat, block_arg, block))
 
     def combine_send_block(self, send_box, block_box):
         send = send_box.getast(ast.BaseSend)
@@ -1642,7 +1643,7 @@ class Parser(object):
 
         stmts = p[7].getastlist() if p[7] is not None else []
         stmts = [ast.Statement(asgn)] + stmts
-        block = ast.SendBlock([arg], None, ast.Block(stmts))
+        block = ast.SendBlock([arg], None, None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
         return BoxAST(ast.Send(p[4].getast(), "each", [], block, lineno))
@@ -2030,7 +2031,7 @@ class Parser(object):
                     $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(block_arg=p[0])
 
     @pg.production("opt_block_param : none")
     def opt_block_param_none(self, p):
