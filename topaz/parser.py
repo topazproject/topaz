@@ -1923,7 +1923,11 @@ class Parser(object):
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            splat_arg=p[4],
+            block_arg=p[5]
+        )
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -1932,7 +1936,11 @@ class Parser(object):
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            splat_arg=p[4],
+            block_arg=p[5]
+        )
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_opt_f_block_arg(self, p):
@@ -1941,7 +1949,7 @@ class Parser(object):
                     $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(self._new_list(p[0].getastlist() + p[2].getastlist()), None, p[3])
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2000,7 +2008,7 @@ class Parser(object):
                     $$ = support.new_args(support.getPosition($1), null, $1, null, null, $2);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(p[0], None, p[1])
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2789,7 +2797,8 @@ class Parser(object):
                     $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
                 }
         """
-        raise NotImplementedError(p)
+        self.lexer.symtable.declare_argument(p[0].getstr())
+        return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
 
     @pg.production("f_block_optarg : f_block_opt")
     def f_block_optarg_f_block_opt(self, p):
@@ -2798,7 +2807,7 @@ class Parser(object):
                     $$ = new BlockNode($1.getPosition()).add($1);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_list(p[0])
 
     @pg.production("f_block_optarg : f_block_optarg LITERAL_COMMA f_block_opt")
     def f_block_optarg(self, p):

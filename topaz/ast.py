@@ -777,15 +777,23 @@ class SendBlock(Node):
         self.block = block
 
     def compile(self, ctx):
-        block_ctx = ctx.get_subctx("block in %s" % ctx.code_name, self)
+        name = "block in %s" % ctx.code_name
+        block_ctx = ctx.get_subctx(name, self)
         for name, kind in block_ctx.symtable.cells.iteritems():
             if kind == block_ctx.symtable.CELLVAR:
                 block_ctx.symtable.get_cell_num(name)
         block_args = []
+        defaults = []
         for arg in self.block_args:
             assert isinstance(arg, Argument)
             block_args.append(arg.name)
             block_ctx.symtable.get_cell_num(arg.name)
+            if arg.defl is not None:
+                arg_ctx = CompilerContext(ctx.space, name, block_ctx.symtable, ctx.filepath)
+                arg.defl.compile(arg_ctx)
+                arg_ctx.emit(consts.RETURN)
+                bc = arg_ctx.create_bytecode([], [], None, None)
+                defaults.append(bc)
         if self.splat_arg is not None:
             block_ctx.symtable.get_cell_num(self.splat_arg)
         if self.block_arg is not None:
@@ -799,7 +807,7 @@ class SendBlock(Node):
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, self.block_arg)
+        bc = block_ctx.create_bytecode(block_args, defaults, self.splat_arg, self.block_arg)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)

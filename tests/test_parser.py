@@ -1249,6 +1249,21 @@ HERE
         assert space.parse("f { |&s| }") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, "s", ast.Nil()), 1))
         ]))
+        assert space.parse("f { |b=1| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([ast.Argument("b", ast.ConstantInt(1))], None, None, ast.Nil()), 1))
+        ]))
+        assert space.parse("f { |b=1, &s| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([ast.Argument("b", ast.ConstantInt(1))], None, "s", ast.Nil()), 1))
+        ]))
+        assert space.parse("f { |x, b=1| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([ast.Argument("x"), ast.Argument("b", ast.ConstantInt(1))], None, None, ast.Nil()), 1))
+        ]))
+        assert space.parse("f { |x, b=1, &s| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([ast.Argument("x"), ast.Argument("b", ast.ConstantInt(1))], None, "s", ast.Nil()), 1))
+        ]))
+        assert space.parse("f { |x, b=1, *a, &s| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([ast.Argument("x"), ast.Argument("b", ast.ConstantInt(1))], "a", "s", ast.Nil()), 1))
+        ]))
 
     def test_yield(self, space):
         assert space.parse("yield") == ast.Main(ast.Block([

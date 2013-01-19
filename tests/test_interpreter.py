@@ -413,6 +413,35 @@ class TestInterpreter(BaseTopazTest):
         block.call { |x| 2 * x }
         return res
         """)
+        assert self.unwrap(space, w_res) == [2, 4, 6]
+
+    def test_send_block_with_opt_args(self, space):
+        w_res = space.execute("""
+        res = []
+        block = proc { |b='b'| res << b }
+        block.call('a')
+        block.call
+        return res
+        """)
+        assert self.unwrap(space, w_res) == ['a', 'b']
+        w_res = space.execute("""
+        res = []
+        [1, 2, 3].each do |x, y="y"|
+            res << x << y
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 'y', 2, 'y', 3, 'y']
+        w_res = space.execute("""
+        res = []
+        block = proc do |x, y="y", *rest, &block|
+            res << x << y << rest
+            block.call(res)
+        end
+        block.call(1) { |res| res << "block called" }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 'y', [], "block called"]
 
     def test_yield(self, space):
         w_res = space.execute("""
