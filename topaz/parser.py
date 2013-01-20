@@ -536,7 +536,7 @@ class Parser(object):
     @pg.production("stmt : mlhs LITERAL_EQUAL command_call")
     def stmt_mlhs_equal_command_call(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getastlist(),
+            p[0].getast(),
             p[2].getast()
         ))
 
@@ -597,14 +597,14 @@ class Parser(object):
     @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
     def stmt_mlhs_equal_arg_value(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getastlist(),
+            p[0].getast(),
             p[2].getast()
         ))
 
     @pg.production("stmt : mlhs LITERAL_EQUAL mrhs")
     def stmt_mlhs_equal_mrhs(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getastlist(),
+            p[0].getast(),
             ast.Array(p[2].getastlist()),
         ))
 
@@ -771,15 +771,20 @@ class Parser(object):
 
     @pg.production("mlhs_basic : mlhs_head mlhs_item")
     def mlhs_basic_mlhs_head_mlhs_item(self, p):
-        return self.append_to_list(p[0], p[1])
+        p[0].append(p[1].getast())
+        return p[0]
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node")
     def mlhs_basic_mlhs_head_star_node(self, p):
-        return self.append_to_list(p[0], self.new_splat(p[2]))
+        p[0].append(self.new_splat(p[2]).getast())
+        return p[0]
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
-        return self._new_list(self.append_to_list(p[0], self.new_splat(p[2])).getastlist() + p[4].getastlist())
+        p[0].append(self.new_splat(p[2]).getast())
+        for node in p[4].getastlist():
+            p[0].append(node)
+        return p[0]
 
     @pg.production("mlhs_basic : mlhs_head STAR")
     def mlhs_basic_mlhs_head_star(self, p):
@@ -788,7 +793,8 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
                 }
         """
-        raise NotImplementedError(p)
+        p[0].append(ast.Splat(None))
+        return p[0]
 
     @pg.production("mlhs_basic : mlhs_head STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_comma_post(self, p):
@@ -797,19 +803,25 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $4);
                 }
         """
-        raise NotImplementedError(p)
+        p[0].append(ast.Splat(None))
+        for node in p[3].getastlist():
+            p[0].append(node)
+        return p[0]
 
     @pg.production("mlhs_basic : STAR mlhs_node")
     def mlhs_basic_star_mlhs_node(self, p):
-        return self.new_list(self.new_splat(p[1]))
+        return BoxAssignableList(self.new_splat(p[1]).getast())
 
     @pg.production("mlhs_basic : STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_mlhs_node_comma_post(self, p):
-        return self._new_list([self.new_splat(p[1]).getast()] + p[3].getastlist())
+        box = BoxAssignableList(self.new_splat(p[1]).getast())
+        for node in p[3].getastlist():
+            box.append(node)
+        return box
 
     @pg.production("mlhs_basic : STAR")
     def mlhs_basic_star(self, p):
-        return self._new_list([ast.Splat(None)])
+        return BoxAssignableList(ast.Splat(None))
 
     @pg.production("mlhs_basic : STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_comma_post(self, p):
@@ -830,11 +842,12 @@ class Parser(object):
 
     @pg.production("mlhs_head : mlhs_item LITERAL_COMMA")
     def mlhs_head_item(self, p):
-        return self.new_list(p[0])
+        return BoxAssignableList(p[0].getast())
 
     @pg.production("mlhs_head : mlhs_head mlhs_item LITERAL_COMMA")
     def mlhs_head_head_item(self, p):
-        return self.append_to_list(p[0], p[1])
+        p[0].append(p[1].getast())
+        return p[0]
 
     @pg.production("mlhs_post : mlhs_item")
     def mlhs_post_item(self, p):
@@ -1635,8 +1648,8 @@ class Parser(object):
         target = ast.Variable(arg.name, lineno)
         if isinstance(for_vars, BoxAST):
             asgn = ast.Assignment(for_vars.getast(), target)
-        elif isinstance(for_vars, BoxASTList):
-            asgn = ast.MultiAssignment(for_vars.getastlist(), target)
+        elif isinstance(for_vars, BoxAssignableList):
+            asgn = ast.MultiAssignment(for_vars.getast(), target)
         else:
             raise SystemError
 
@@ -1810,7 +1823,7 @@ class Parser(object):
                      $$ = support.assignable($1, NilImplicitNode.NIL);
                 }
         """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("f_marg : LPAREN f_margs rparen")
     def f_marg_paren(self, p):
@@ -1823,7 +1836,9 @@ class Parser(object):
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
         """
-        raise NotImplementedError(p)
+        box = BoxAssignableList(p[0].getast())
+        self.lexer.symtable.declare_local(box.getargument().name)
+        return box
 
     @pg.production("f_marg_list : f_marg_list LITERAL_COMMA f_marg")
     def f_marg_list(self, p):
@@ -1832,7 +1847,8 @@ class Parser(object):
                     $$ = $1.add($3);
                 }
         """
-        raise NotImplementedError(p)
+        p[0].append(p[2].getast())
+        return p[0]
 
     @pg.production("f_margs : f_marg_list")
     def f_margs_f_marg_list(self, p):
@@ -1841,7 +1857,7 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
                 }
         """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg")
     def f_margs_f_marg_list_comma_star_f_norm_Arg(self, p):
@@ -3054,6 +3070,22 @@ class BoxStrTerm(BaseBox):
 
     def getstrterm(self):
         return self.str_term
+
+
+class BoxAssignableList(BaseBox):
+    def __init__(self, arg):
+        self.vars = [arg]
+        self.argument = ast.Argument("1")
+
+    def append(self, arg):
+        self.vars.append(arg)
+
+    def getargument(self):
+        return self.argument
+
+    def getast(self):
+        return ast.MultiAssignable(self.vars)
+
 
 class BoxForVars(BaseBox):
     def __init__(self, for_var):
