@@ -228,6 +228,11 @@ class TestParser(BaseTopazTest):
         with self.raises(space, "SyntaxError"):
             space.parse("2.to_s(:base => 5, 3)")
 
+    def test_colon_send(self, space):
+        assert space.parse("CallerSpecs::recurse(2)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Constant("CallerSpecs", 1), "recurse", [ast.ConstantInt(2)], None, 1))
+        ]))
+
     def test_assignment(self, space):
         assert space.parse("a = 3") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Variable("a", 1), ast.ConstantInt(3)))
