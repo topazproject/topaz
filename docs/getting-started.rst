@@ -45,4 +45,12 @@ Wait a bit (you'll see fractals printing, and some progress indicators). On a
 recent machine it'll take about ten minutes. And then you'll have a ``topaz``
 binary in `bin/`.
 
+You can also run Topaz without compiling, on top of Python::
+
+    $ python -mtopaz -e "puts 'hello world'"
+    Hello world
+
+Note that this is extremely slow, and should never be used for benchmarking,
+only for testing.
+
 .. _virtualenv: http://www.virtualenv.org/
