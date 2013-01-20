@@ -7,6 +7,7 @@ written in Python on top of `RPython`_ (the toolchain that powers PyPy).
 .. toctree::
    :maxdepth: 1
 
+   getting-started
    contributing
 
 
