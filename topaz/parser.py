@@ -2375,7 +2375,7 @@ class Parser(object):
                      $$ = new ZArrayNode($1.getPosition());
                 }
         """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Array([]))
 
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
     def qwords_qword_list(self, p):
