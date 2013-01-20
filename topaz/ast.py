@@ -596,7 +596,7 @@ class MultiAssignable(Node):
         return -1
 
     def compile_receiver(self, ctx):
-        pass
+        return 0
 
     def compile_store(self, ctx):
         ctx.emit(consts.DUP_TOP)

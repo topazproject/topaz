@@ -82,11 +82,7 @@ class Parser(object):
             self.lexer.symtable.declare_write(node.name)
         return box
 
-    def arg_to_variable(self, box):
-        if isinstance(box, BoxAST):
-            node = box.getast()
-        else:
-            node = box
+    def _arg_to_variable(self, node):
         if isinstance(node, ast.Argument):
             self.lexer.symtable.declare_local(node.name)
             return ast.Variable(node.name, -1)
@@ -95,11 +91,14 @@ class Parser(object):
         else:
             raise SystemError
 
+    def arg_to_variable(self, box):
+        return self._arg_to_variable(box.getast())
+
     def args_to_variables(self, listbox):
         astlist = listbox.getastlist()
         variables = [None] * len(astlist)
         for i, node in enumerate(astlist):
-            variables[i] = self.arg_to_variable(node)
+            variables[i] = self._arg_to_variable(node)
         return variables
 
     def new_binary_call(self, lhs, op, rhs):
@@ -566,7 +565,7 @@ class Parser(object):
     @pg.production("stmt : mlhs LITERAL_EQUAL command_call")
     def stmt_mlhs_equal_command_call(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getast(),
+            p[0].getassignment(),
             p[2].getast()
         ))
 
@@ -627,14 +626,14 @@ class Parser(object):
     @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
     def stmt_mlhs_equal_arg_value(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getast(),
+            p[0].getassignment(),
             p[2].getast()
         ))
 
     @pg.production("stmt : mlhs LITERAL_EQUAL mrhs")
     def stmt_mlhs_equal_mrhs(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getast(),
+            p[0].getassignment(),
             ast.Array(p[2].getastlist()),
         ))
 
@@ -840,18 +839,15 @@ class Parser(object):
 
     @pg.production("mlhs_basic : STAR mlhs_node")
     def mlhs_basic_star_mlhs_node(self, p):
-        return BoxAssignableList(self.new_splat(p[1]).getast())
+        return BoxAssignableList([self.new_splat(p[1]).getast()])
 
     @pg.production("mlhs_basic : STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_mlhs_node_comma_post(self, p):
-        box = BoxAssignableList(self.new_splat(p[1]).getast())
-        for node in p[3].getastlist():
-            box.append(node)
-        return box
+        return BoxAssignableList([self.new_splat(p[1]).getast()] + p[3].getastlist())
 
     @pg.production("mlhs_basic : STAR")
     def mlhs_basic_star(self, p):
-        return BoxAssignableList(ast.Splat(None))
+        return BoxAssignableList([ast.Splat(None)])
 
     @pg.production("mlhs_basic : STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_comma_post(self, p):
@@ -868,11 +864,11 @@ class Parser(object):
 
     @pg.production("mlhs_item : LPAREN mlhs_inner rparen")
     def mlhs_item_paren(self, p):
-        return p[1]
+        return BoxAST(p[1].getassignment())
 
     @pg.production("mlhs_head : mlhs_item LITERAL_COMMA")
     def mlhs_head_item(self, p):
-        return BoxAssignableList(p[0].getast())
+        return BoxAssignableList([p[0].getast()])
 
     @pg.production("mlhs_head : mlhs_head mlhs_item LITERAL_COMMA")
     def mlhs_head_head_item(self, p):
@@ -1679,7 +1675,7 @@ class Parser(object):
         if isinstance(for_vars, BoxAST):
             asgn = ast.Assignment(for_vars.getast(), target)
         elif isinstance(for_vars, BoxAssignableList):
-            asgn = ast.MultiAssignment(for_vars.getast(), target)
+            asgn = ast.MultiAssignment(for_vars.getassignment(), target)
         else:
             raise SystemError
 
@@ -1857,7 +1853,7 @@ class Parser(object):
 
     @pg.production("f_marg : LPAREN f_margs rparen")
     def f_marg_paren(self, p):
-        return p[1]
+        return BoxAST(p[1].getassignment())
 
     @pg.production("f_marg_list : f_marg")
     def f_marg_list_f_marg(self, p):
@@ -1907,7 +1903,7 @@ class Parser(object):
         box = BoxAssignableList(self.args_to_variables(p[0]))
         box.append(ast.Splat(self.arg_to_variable(p[3])))
         for node in p[5].getastlist():
-            box.append(self.arg_to_variable(node))
+            box.append(self._arg_to_variable(node))
         return box
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR")
@@ -1931,7 +1927,7 @@ class Parser(object):
         box = BoxAssignableList(self.args_to_variables(p[0]))
         box.append(ast.Splat(None))
         for node in p[4].getastlist():
-            box.append(self.arg_to_variable(node))
+            box.append(self._arg_to_variable(node))
         return box
 
     @pg.production("f_margs : STAR f_norm_arg")
@@ -1941,7 +1937,7 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), null);
                 }
         """
-        return BoxAssignableList(ast.Splat(self.arg_to_variable(p[1])))
+        return BoxAssignableList([ast.Splat(self.arg_to_variable(p[1]))])
 
     @pg.production("f_margs : STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_star_f_norm_arg_comma_f_marg_list(self, p):
@@ -1950,9 +1946,9 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), $4);
                 }
         """
-        box = BoxAssignableList(ast.Splat(self.arg_to_variable(p[1])))
+        box = BoxAssignableList([ast.Splat(self.arg_to_variable(p[1]))])
         for node in p[3].getastlist():
-            box.append(self.arg_to_variable(node))
+            box.append(self._arg_to_variable(node))
         return box
 
     @pg.production("f_margs : STAR")
@@ -1962,7 +1958,7 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
                 }
         """
-        return BoxAssignableList(ast.Splat(None))
+        return BoxAssignableList([ast.Splat(None)])
 
     @pg.production("f_margs : STAR LITERAL_COMMA f_marg_list")
     def f_margs_star_comma_f_marg_list(self, p):
@@ -1971,9 +1967,9 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
                 }
         """
-        box = BoxAssignableList(ast.Splat(None))
+        box = BoxAssignableList([ast.Splat(None)])
         for node in p[2].getastlist():
-            box.append(self.arg_to_variable(node))
+            box.append(self._arg_to_variable(node))
         return box
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
@@ -2826,7 +2822,7 @@ class Parser(object):
             $$->nd_next = $2;*/
                 }
         """
-        return p[1]
+        return BoxAST(p[1].getassignment())
 
     @pg.production("f_arg : f_arg_item")
     def f_arg_f_arg_item(self, p):
@@ -3118,16 +3114,13 @@ class BoxStrTerm(BaseBox):
 
 
 class BoxAssignableList(BaseBox):
-    def __init__(self, arg):
-        if isinstance(arg, list):
-            self.vars = arg
-        else:
-            self.vars = [arg]
+    def __init__(self, vars):
+        self.vars = vars
 
     def append(self, arg):
         self.vars.append(arg)
 
-    def getast(self):
+    def getassignment(self):
         return ast.MultiAssignable(self.vars)
 
 
