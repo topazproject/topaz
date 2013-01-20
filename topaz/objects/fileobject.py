@@ -134,12 +134,12 @@ class W_IOObject(W_Object):
                 args_w.append(w_last)
         w_sep = space.globals.get(space, "$,")
         if w_sep:
-            sep = space.str_w(w_sep)
+            sep = space.str_w(space.send(w_sep, space.newsymbol("to_s")))
         else:
             sep = ""
         w_end = space.globals.get(space, "$\\")
         if w_end:
-            end = space.str_w(w_end)
+            end = space.str_w(space.send(w_end, space.newsymbol("to_s")))
         else:
             end = ""
         strings = [space.str_w(space.send(w_arg, space.newsymbol("to_s"))) for w_arg in args_w]
