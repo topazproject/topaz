@@ -2370,11 +2370,6 @@ class Parser(object):
 
     @pg.production("qwords : QWORDS_BEG LITERAL_SPACE STRING_END")
     def qwords_space(self, p):
-        """
-        tQWORDS_BEG ' ' tSTRING_END {
-                     $$ = new ZArrayNode($1.getPosition());
-                }
-        """
         return BoxAST(ast.Array([]))
 
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
