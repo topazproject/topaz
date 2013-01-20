@@ -420,6 +420,15 @@ class W_FileObject(W_IOObject):
         assert i >= 0
         return space.newstr_fromstr(filename[i:])
 
+    @classdef.singleton_method("umask", mask="int")
+    def method_umask(self, space, mask=-1):
+        if mask >= 0:
+            return space.newint(os.umask(mask))
+        else:
+            current_umask = os.umask(0)
+            os.umask(current_umask)
+            return space.newint(current_umask)
+
     classdef.app_method("""
     def self.open(filename, mode="r", perm=nil, opt=nil, &block)
         f = self.new filename, mode, perm, opt
