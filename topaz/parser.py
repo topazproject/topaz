@@ -82,6 +82,26 @@ class Parser(object):
             self.lexer.symtable.declare_write(node.name)
         return box
 
+    def arg_to_variable(self, box):
+        if isinstance(box, BoxAST):
+            node = box.getast()
+        else:
+            node = box
+        if isinstance(node, ast.Argument):
+            self.lexer.symtable.declare_local(node.name)
+            return ast.Variable(node.name, -1)
+        elif isinstance(node, ast.MultiAssignable):
+            return node
+        else:
+            raise SystemError
+
+    def args_to_variables(self, listbox):
+        astlist = listbox.getastlist()
+        variables = [None] * len(astlist)
+        for i, node in enumerate(astlist):
+            variables[i] = self.arg_to_variable(node)
+        return variables
+
     def new_binary_call(self, lhs, op, rhs):
         return self._new_call(lhs.getast(), op, [rhs.getast()], None)
 
@@ -130,10 +150,20 @@ class Parser(object):
     def append_call_arg(self, box_arg, box):
         return self._new_call_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
 
-    def new_send_block(self, params, body):
+    def new_send_block(self, lineno, params, body):
+        stmts = body.getastlist() if body is not None else []
         args = params.getargs() if params is not None else []
         splat = params.getsplatarg() if params is not None else None
-        block = ast.Block(body.getastlist()) if body is not None else ast.Nil()
+
+        for idx, arg in enumerate(args):
+            if isinstance(arg, ast.MultiAssignable):
+                new_arg = ast.Argument(str(idx))
+                asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, lineno))
+                args[idx] = new_arg
+                self.lexer.symtable.declare_argument(new_arg.name)
+                stmts.insert(0, ast.Statement(asgn))
+
+        block = ast.Block(stmts) if stmts else ast.Nil()
         return BoxAST(ast.SendBlock(args, splat, block))
 
     def combine_send_block(self, send_box, block_box):
@@ -691,7 +721,7 @@ class Parser(object):
 
     @pg.production("cmd_brace_block : LBRACE_ARG push_block_scope opt_block_param compstmt RCURLY")
     def cmd_brace_block(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
@@ -1836,9 +1866,7 @@ class Parser(object):
                     $$ = support.newArrayNode($1.getPosition(), $1);
                 }
         """
-        box = BoxAssignableList(p[0].getast())
-        self.lexer.symtable.declare_local(box.getargument().name)
-        return box
+        return self.new_list(p[0])
 
     @pg.production("f_marg_list : f_marg_list LITERAL_COMMA f_marg")
     def f_marg_list(self, p):
@@ -1847,8 +1875,7 @@ class Parser(object):
                     $$ = $1.add($3);
                 }
         """
-        p[0].append(p[2].getast())
-        return p[0]
+        return self.append_to_list(p[0], p[2])
 
     @pg.production("f_margs : f_marg_list")
     def f_margs_f_marg_list(self, p):
@@ -1857,7 +1884,7 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
                 }
         """
-        return p[0]
+        return BoxAssignableList(self.args_to_variables(p[0]))
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg")
     def f_margs_f_marg_list_comma_star_f_norm_Arg(self, p):
@@ -1866,7 +1893,9 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), null);
                 }
         """
-        raise NotImplementedError(p)
+        box = BoxAssignableList(self.args_to_variables(p[0]))
+        box.append(ast.Splat(self.arg_to_variable(p[3])))
+        return box
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_f_norm_arg_comm_f_marg_list(self, p):
@@ -1875,7 +1904,11 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), $6);
                 }
         """
-        raise NotImplementedError(p)
+        box = BoxAssignableList(self.args_to_variables(p[0]))
+        box.append(ast.Splat(self.arg_to_variable(p[3])))
+        for node in p[5].getastlist():
+            box.append(self.arg_to_variable(node))
+        return box
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR")
     def f_margs_f_marg_list_comma_star(self, p):
@@ -1884,7 +1917,9 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
                 }
         """
-        raise NotImplementedError(p)
+        box = BoxAssignableList(self.args_to_variables(p[0]))
+        box.append(ast.Splat(None))
+        return box
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_comma_f_marg_list(self, p):
@@ -1893,7 +1928,11 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $5);
                 }
         """
-        raise NotImplementedError(p)
+        box = BoxAssignableList(self.args_to_variables(p[0]))
+        box.append(ast.Splat(None))
+        for node in p[4].getastlist():
+            box.append(self.arg_to_variable(node))
+        return box
 
     @pg.production("f_margs : STAR f_norm_arg")
     def f_margs_star_f_norm_arg(self, p):
@@ -1902,7 +1941,7 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), null);
                 }
         """
-        raise NotImplementedError(p)
+        return BoxAssignableList(ast.Splat(self.arg_to_variable(p[1])))
 
     @pg.production("f_margs : STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_star_f_norm_arg_comma_f_marg_list(self, p):
@@ -1911,7 +1950,10 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), $4);
                 }
         """
-        raise NotImplementedError(p)
+        box = BoxAssignableList(ast.Splat(self.arg_to_variable(p[1])))
+        for node in p[3].getastlist():
+            box.append(self.arg_to_variable(node))
+        return box
 
     @pg.production("f_margs : STAR")
     def f_margs_star(self, p):
@@ -1920,7 +1962,7 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
                 }
         """
-        raise NotImplementedError(p)
+        return BoxAssignableList(ast.Splat(None))
 
     @pg.production("f_margs : STAR LITERAL_COMMA f_marg_list")
     def f_margs_star_comma_f_marg_list(self, p):
@@ -1929,7 +1971,10 @@ class Parser(object):
                     $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
                 }
         """
-        raise NotImplementedError(p)
+        box = BoxAssignableList(ast.Splat(None))
+        for node in p[2].getastlist():
+            box.append(self.arg_to_variable(node))
+        return box
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2136,7 +2181,7 @@ class Parser(object):
 
     @pg.production("do_block : DO_BLOCK push_block_scope opt_block_param compstmt END")
     def do_block(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
@@ -2229,13 +2274,13 @@ class Parser(object):
 
     @pg.production("brace_block : LCURLY push_block_scope opt_block_param compstmt RCURLY")
     def brace_block_curly(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
     @pg.production("brace_block : DO push_block_scope opt_block_param compstmt END")
     def brace_block_do(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
@@ -2781,7 +2826,7 @@ class Parser(object):
             $$->nd_next = $2;*/
                 }
         """
-        raise NotImplementedError(p)
+        return p[1]
 
     @pg.production("f_arg : f_arg_item")
     def f_arg_f_arg_item(self, p):
@@ -3074,14 +3119,13 @@ class BoxStrTerm(BaseBox):
 
 class BoxAssignableList(BaseBox):
     def __init__(self, arg):
-        self.vars = [arg]
-        self.argument = ast.Argument("1")
+        if isinstance(arg, list):
+            self.vars = arg
+        else:
+            self.vars = [arg]
 
     def append(self, arg):
         self.vars.append(arg)
-
-    def getargument(self):
-        return self.argument
 
     def getast(self):
         return ast.MultiAssignable(self.vars)

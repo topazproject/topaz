@@ -1584,6 +1584,22 @@ class TestBlocks(BaseTopazTest):
         """)
         assert space.int_w(w_res) == 17
 
+    def test_destructuring_arg_block(self, space):
+        w_res = space.execute("""
+        res = []
+        hash = {1 => [2, [3, "ignored", 4]]}
+        ky, a, b, c, d = nil, nil, nil, nil, nil
+        hash.each_pair do |ky, (a, (b, *c, d))|
+          res << ky << a << b << c << d
+        end
+        res << ky << a << b << c << d
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [
+            1, 2, 3, ["ignored"], 4,
+            None, None, None, None, None
+        ]
+
 
 class TestExceptions(BaseTopazTest):
     def test_simple(self, space):
