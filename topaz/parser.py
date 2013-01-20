@@ -2015,11 +2015,6 @@ class Parser(object):
 
     @pg.production("block_param : f_block_arg")
     def block_param_f_block_arg(self, p):
-        """
-        f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
-                }
-        """
         return self.new_args(block_arg=p[0])
 
     @pg.production("opt_block_param : none")
