@@ -2146,11 +2146,6 @@ class Parser(object):
 
     @pg.production("method_call : primary_value COLON2 operation2 paren_args")
     def method_call_primary_value_colon_operation_paren_args(self, p):
-        """
-        primary_value tCOLON2 operation2 paren_args {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
         return self.new_call(p[0], p[2], p[3])
 
     @pg.production("method_call : primary_value COLON2 operation3")
