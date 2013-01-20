@@ -1486,17 +1486,6 @@ class Parser(object):
 
     @pg.production("primary : LBRACK aref_args RBRACK")
     def primary_array(self, p):
-        """
-        tLBRACK aref_args tRBRACK {
-                    ISourcePosition position = $1.getPosition();
-                    if ($2 == null) {
-                        $$ = new ZArrayNode(position); /* zero length array */
-                    } else {
-                        $$ = $2;
-                        $<ISourcePositionHolder>$.setPosition(position);
-                    }
-                }
-        """
         if p[1] is None:
             items = []
         else:
@@ -2301,23 +2290,10 @@ class Parser(object):
 
     @pg.production("strings : string")
     def strings(self, p):
-        """
-        string {
-                    $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
-                }
-        """
-        # TODO: understand this logic
         return p[0]
 
     @pg.production("string : CHAR")
     def string_char(self, p):
-        """
-        tCHAR {
-                    ByteList aChar = ByteList.create((String) $1.getValue());
-                    aChar.setEncoding(lexer.getEncoding());
-                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
-                }
-        """
         # TODO: encoding
         return BoxAST(ast.ConstantString(p[0].getstr()))
 
