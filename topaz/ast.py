@@ -585,10 +585,9 @@ class AndEqual(Node):
         ConstantString("assignment").compile(ctx)
 
 
-class MultiAssignment(Node):
-    def __init__(self, targets, value):
+class MultiAssignable(Node):
+    def __init__(self, targets):
         self.targets = targets
-        self.value = value
 
     def splat_index(self):
         for i, node in enumerate(self.targets):
@@ -596,8 +595,10 @@ class MultiAssignment(Node):
                 return i
         return -1
 
-    def compile(self, ctx):
-        self.value.compile(ctx)
+    def compile_receiver(self, ctx):
+        pass
+
+    def compile_store(self, ctx):
         ctx.emit(consts.DUP_TOP)
         ctx.emit(consts.COERCE_ARRAY, 0)
         splat_index = self.splat_index()
@@ -614,6 +615,16 @@ class MultiAssignment(Node):
                 ctx.emit(consts.ROT_THREE)
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
+
+
+class MultiAssignment(Node):
+    def __init__(self, assignable, value):
+        self.assignable = assignable
+        self.value = value
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        self.assignable.compile_store(ctx)
 
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)

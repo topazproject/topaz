@@ -752,6 +752,18 @@ class TestInterpreter(BaseTopazTest):
         """)
         assert space.int_w(w_res) == 3
 
+    def test_destructuring_assignment(self, space):
+        w_res = space.execute("""
+        (a, b, (c, d, *e)) = [1, 2, [3, 4]]
+        return a, b, c, d, e
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4, []]
+        w_res = space.execute("""
+        a, *b, (c, (d, *, e), ) = 1, 2, 3, [4, [5, "ignored", "ignored", 6], 7]
+        return a, b, c, d, e
+        """)
+        assert self.unwrap(space, w_res) == [1, [2, 3], 4, 5, 6]
+
     def test_minus(self, space):
         w_res = space.execute("""
         def a(x)
