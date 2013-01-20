@@ -1005,6 +1005,9 @@ class TestParser(BaseTopazTest):
         assert space.parse("f %q[/]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantString("/")], None, 1)),
         ]))
+        assert space.parse("%w[]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([]))
+        ]))
 
     def test_heredoc(self, space):
         const_heredoc = lambda s: ast.Main(ast.Block([
