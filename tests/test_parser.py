@@ -57,7 +57,7 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.ConstantFloat(0.001))
         ]))
         assert space.parse("1e+3") == ast.Main(ast.Block([
-                    ast.Statement(ast.ConstantFloat(1000.0))
+            ast.Statement(ast.ConstantFloat(1000.0))
         ]))
         assert space.parse("-1.2") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(-1.2))
