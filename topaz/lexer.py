@@ -1,6 +1,6 @@
 import string
 
-from pypy.rlib.rstring import StringBuilder
+from rpython.rlib.rstring import StringBuilder
 
 from rply import Token
 from rply.token import SourcePosition

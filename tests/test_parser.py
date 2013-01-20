@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.rbigint import rbigint
 
 from topaz import ast
 from topaz.utils import regexp

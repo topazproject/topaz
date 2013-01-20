@@ -1,14 +1,14 @@
 import operator
 from collections import OrderedDict as PyOrderedDict
 
-from pypy.annotation import model
-from pypy.annotation.bookkeeper import getbookkeeper
-from pypy.rlib.objectmodel import hlinvoke
-from pypy.rlib.rarithmetic import r_uint, intmask, LONG_BIT
-from pypy.rpython.extregistry import ExtRegistryEntry
-from pypy.rpython.lltypesystem import lltype
-from pypy.rpython.rmodel import Repr, IteratorRepr, externalvsinternal
-from pypy.tool.pairtype import pairtype
+from rpython.annotator import model
+from rpython.annotator.bookkeeper import getbookkeeper
+from rpython.rlib.objectmodel import hlinvoke
+from rpython.rlib.rarithmetic import r_uint, intmask, LONG_BIT
+from rpython.rtyper.extregistry import ExtRegistryEntry
+from rpython.rtyper.lltypesystem import lltype
+from rpython.rtyper.rmodel import Repr, IteratorRepr, externalvsinternal
+from rpython.tool.pairtype import pairtype
 
 
 MARKER = object()

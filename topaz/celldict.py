@@ -1,6 +1,6 @@
 import copy
 
-from pypy.rlib import jit
+from rpython.rlib import jit
 
 from topaz.objects.objectobject import W_Root
 

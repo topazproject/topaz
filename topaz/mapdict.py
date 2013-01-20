@@ -1,6 +1,6 @@
 import copy
 
-from pypy.rlib import jit
+from rpython.rlib import jit
 
 
 NUM_DIGITS = 4

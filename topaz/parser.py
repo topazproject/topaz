@@ -1,5 +1,5 @@
-from pypy.rlib.objectmodel import specialize
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rbigint import rbigint
 
 from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
