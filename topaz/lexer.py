@@ -537,6 +537,7 @@ class Lexer(object):
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
+            self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
         elif self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
             self.state = self.EXPR_BEG

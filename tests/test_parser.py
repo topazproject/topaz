@@ -1365,6 +1365,10 @@ HERE
             ast.Statement(ast.AugmentedAssignment(">>", ast.Variable("x", 1), ast.ConstantInt(3)))
         ]))
 
+        assert space.parse("@a += []") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("+", ast.InstanceVariable("@a"), ast.Array([])))
+        ]))
+
     def test_block_result(self, space):
         r = space.parse("""
         [].inject(0) do |s, x|
