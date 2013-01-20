@@ -1214,11 +1214,6 @@ class Parser(object):
 
     @pg.production("arg : UMINUS_NUM INTEGER POW arg")
     def arg_uminus_num_integer_pow_arg(self, p):
-        """
-        tUMINUS_NUM tINTEGER tPOW arg {
-                    $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
-                }
-        """
         lineno = p[0].getsourcepos().lineno
         return BoxAST(ast.Send(
             self.new_binary_call(BoxAST(self._parse_int(p[1])), p[2], p[3]).getast(),
