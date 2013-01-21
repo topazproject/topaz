@@ -1,4 +1,4 @@
-from pypy.rlib.rsre import rsre_core
+from rpython.rlib.rsre import rsre_core
 
 from topaz.coerce import Coerce
 from topaz.module import ClassDef

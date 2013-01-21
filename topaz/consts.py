@@ -1,6 +1,6 @@
 import sys
 
-from pypy.rlib.unroll import unrolling_iterable
+from rpython.rlib.unroll import unrolling_iterable
 
 
 SEND_EFFECT = 0xFF

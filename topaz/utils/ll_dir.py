@@ -1,9 +1,9 @@
 import sys
 
-from pypy.rlib import rposix
-from pypy.rpython.lltypesystem import rffi, lltype
-from pypy.rpython.tool import rffi_platform as platform
-from pypy.translator.tool.cbuild import ExternalCompilationInfo
+from rpython.rlib import rposix
+from rpython.rtyper.lltypesystem import rffi, lltype
+from rpython.rtyper.tool import rffi_platform as platform
+from rpython.translator.tool.cbuild import ExternalCompilationInfo
 
 
 if sys.platform.startswith('win'):

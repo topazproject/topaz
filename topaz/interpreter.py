@@ -1,6 +1,6 @@
-from pypy.rlib import jit
-from pypy.rlib.debug import check_nonneg
-from pypy.rlib.objectmodel import we_are_translated, specialize
+from rpython.rlib import jit
+from rpython.rlib.debug import check_nonneg
+from rpython.rlib.objectmodel import we_are_translated, specialize
 
 from topaz import consts
 from topaz.error import RubyError

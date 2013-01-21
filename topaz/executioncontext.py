@@ -1,4 +1,4 @@
-from pypy.rlib import jit
+from rpython.rlib import jit
 
 from topaz.error import RubyError
 from topaz.frame import Frame

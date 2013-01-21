@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pypy.rlib.objectmodel import we_are_translated
+from rpython.rlib.objectmodel import we_are_translated
 
 from topaz import consts
 from topaz.astcompiler import CompilerContext, BlockSymbolTable
@@ -770,9 +770,10 @@ class Splat(Node):
 
 
 class SendBlock(Node):
-    def __init__(self, block_args, splat_arg, block):
+    def __init__(self, block_args, splat_arg, block_arg, block):
         self.block_args = block_args
         self.splat_arg = splat_arg
+        self.block_arg = block_arg
         self.block = block
 
     def compile(self, ctx):
@@ -787,6 +788,8 @@ class SendBlock(Node):
             block_ctx.symtable.get_cell_num(arg.name)
         if self.splat_arg is not None:
             block_ctx.symtable.get_cell_num(self.splat_arg)
+        if self.block_arg is not None:
+            block_ctx.symtable.get_cell_num(self.block_arg)
 
         for name in ctx.symtable.cells:
             if (name not in block_ctx.symtable.cell_numbers and
@@ -796,7 +799,7 @@ class SendBlock(Node):
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, None)
+        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, self.block_arg)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)

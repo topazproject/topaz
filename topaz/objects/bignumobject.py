@@ -1,5 +1,5 @@
-from pypy.rlib.rbigint import rbigint
-from pypy.rlib.rfloat import INFINITY
+from rpython.rlib.rbigint import rbigint
+from rpython.rlib.rfloat import INFINITY
 
 from topaz.module import ClassDef
 from topaz.objects.integerobject import W_IntegerObject
