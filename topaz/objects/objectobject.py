@@ -1,7 +1,7 @@
 import copy
 
-from pypy.rlib import jit
-from pypy.rlib.objectmodel import compute_unique_id, compute_identity_hash
+from rpython.rlib import jit
+from rpython.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
 from topaz.mapdict import MapTransitionCache
 from topaz.module import ClassDef
