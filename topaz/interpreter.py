@@ -389,7 +389,11 @@ class Interpreter(object):
     def BUILD_REGEXP(self, space, bytecode, frame, pc):
         w_flags = frame.pop()
         w_string = frame.pop()
-        frame.push(space.newregexp(space.str_w(w_string), space.int_w(w_flags)))
+        try:
+            w_regexp = space.newregexp(space.str_w(w_string), space.int_w(w_flags))
+        except regexp.RegexpError as e:
+            raise space.error(space.w_RegexpError, str(e))
+        frame.push(w_regexp)
 
     def COPY_STRING(self, space, bytecode, frame, pc):
         w_s = frame.pop()

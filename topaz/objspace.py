@@ -114,6 +114,7 @@ class ObjectSpace(object):
         self.w_IOError = self.getclassfor(W_IOError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
+        self.w_RegexpError = self.getclassfor(W_RegexpError)
         self.w_RuntimeError = self.getclassfor(W_RuntimeError)
         self.w_StandardError = self.getclassfor(W_StandardError)
         self.w_StopIteration = self.getclassfor(W_StopIteration)
@@ -134,10 +135,10 @@ class ObjectSpace(object):
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
-            self.w_RuntimeError, self.w_SystemCallError, self.w_LoadError,
-            self.w_StopIteration, self.w_SyntaxError, self.w_NameError,
-            self.w_StandardError, self.w_LocalJumpError, self.w_IndexError,
-            self.w_IOError,
+            self.w_RegexpError, self.w_RuntimeError, self.w_SystemCallError,
+            self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
+            self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
+            self.w_IndexError, self.w_IOError,
 
             self.w_kernel, self.w_topaz,
 
@@ -158,7 +159,6 @@ class ObjectSpace(object):
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
-            self.getclassfor(W_RegexpError),
             self.getclassfor(W_ThreadError),
 
             self.getmoduleobject(Comparable.moduledef),
