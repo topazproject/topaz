@@ -2156,11 +2156,11 @@ class Parser(object):
 
     @pg.production("method_call : primary_value DOT paren_args")
     def method_call_primary_value_dot_paren_args(self, p):
-        return self.new_call(p[0], Token("call", "call", p[1].getsourcepos()), p[2])
+        return self.new_call(p[0], self.new_token(p[1], "call", "call"), p[2])
 
     @pg.production("method_call : primary_value COLON2 paren_args")
     def method_call_primary_value_colon_paren_args(self, p):
-        return self.new_call(p[0], Token("call", "call", p[1].getsourcepos()), p[2])
+        return self.new_call(p[0], self.new_token(p[1], "call", "call"), p[2])
 
     @pg.production("method_call : SUPER paren_args")
     def method_call_super_paren_args(self, p):
