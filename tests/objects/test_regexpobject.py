@@ -48,13 +48,9 @@ class TestRegexpObject(BaseTopazTest):
         /(?:abc)?/
         """)
 
-    def test_regexp_errors(self, space):
+    def test_regexp_syntax_errors(self, space):
         with self.raises(space, "SyntaxError"):
             space.execute("/(?~)/")
-        with self.raises(space, "RegexpError"):
-            space.execute("Regexp.compile '?~'")
-        with self.raises(space, "RegexpError"):
-            space.execute("Regexp.new '?~'")
         with self.raises(space, "RegexpError"):
             space.execute("""
             r = "(?~)"
@@ -69,6 +65,10 @@ class TestRegexpObject(BaseTopazTest):
             r = "(?~)"
             /#{r}/
             """)
+
+    def test_regexp_compile_errors(self, space):
+        with self.raises(space, "RegexpError"):
+            space.execute("Regexp.compile '?~'")
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp
@@ -76,6 +76,10 @@ class TestRegexpObject(BaseTopazTest):
             end
             Regexp.compile "(?~)"
             """)
+
+    def test_regexp_new_errors(self, space):
+        with self.raises(space, "RegexpError"):
+            space.execute("Regexp.new '?~'")
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp

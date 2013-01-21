@@ -14,6 +14,7 @@ from topaz.objects.objectobject import W_Root
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.scope import StaticScope
+from topaz.utils.regexp import RegexpError
 
 
 def get_printable_location(pc, bytecode, block_bytecode, w_trace_proc):
@@ -391,7 +392,7 @@ class Interpreter(object):
         w_string = frame.pop()
         try:
             w_regexp = space.newregexp(space.str_w(w_string), space.int_w(w_flags))
-        except regexp.RegexpError as e:
+        except RegexpError as e:
             raise space.error(space.w_RegexpError, str(e))
         frame.push(w_regexp)
 
