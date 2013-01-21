@@ -1,4 +1,4 @@
-from pypy.rpython.test.test_llinterp import interpret
+from rpython.rtyper.test.test_llinterp import interpret
 
 from topaz.utils.ordereddict import OrderedDict
 

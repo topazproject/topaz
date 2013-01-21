@@ -402,6 +402,18 @@ class TestInterpreter(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [2, 4, 6]
 
+    def test_send_block_with_block_arg(self, space):
+        w_res = space.execute("""
+        res = []
+        block = proc do |&b|
+            [1, 2, 3].each do |x|
+                res << b.call(x)
+            end
+        end
+        block.call { |x| 2 * x }
+        return res
+        """)
+
     def test_yield(self, space):
         w_res = space.execute("""
         class X

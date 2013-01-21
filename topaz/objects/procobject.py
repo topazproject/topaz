@@ -12,11 +12,11 @@ class W_ProcObject(W_Object):
 
     @classdef.method("[]")
     @classdef.method("call")
-    def method_call(self, space, args_w):
+    def method_call(self, space, args_w, block):
         from topaz.interpreter import RaiseReturn, RaiseBreak
 
         try:
-            return space.invoke_block(self.block, args_w)
+            return space.invoke_block(self.block, args_w, block_arg=block)
         except RaiseReturn as e:
             if self.is_lambda:
                 return e.w_value

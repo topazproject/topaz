@@ -1,10 +1,12 @@
 import subprocess
 
-from pypy.jit.metainterp.resoperation import opname
-from pypy.jit.tool import oparser
-from pypy.tool import logparser
+# TODO:
 from pypy.tool.jitlogparser.parser import SimpleParser, Op
 from pypy.tool.jitlogparser.storage import LoopStorage
+
+from rpython.jit.metainterp.resoperation import opname
+from rpython.jit.tool import oparser
+from rpython.tool import logparser
 
 
 class BaseJITTest(object):

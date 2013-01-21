@@ -1,7 +1,7 @@
 import sys
 
-from pypy.rlib.rarithmetic import LONG_BIT
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.rarithmetic import LONG_BIT
+from rpython.rlib.rbigint import rbigint
 
 from ..base import BaseTopazTest
 

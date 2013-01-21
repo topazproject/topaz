@@ -1,4 +1,4 @@
-from pypy.rlib.rrandom import Random
+from rpython.rlib.rrandom import Random
 
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object

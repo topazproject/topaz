@@ -1,6 +1,6 @@
 import copy
 
-from pypy.rlib import jit
+from rpython.rlib import jit
 
 from topaz.celldict import CellDict, VersionTag
 from topaz.module import ClassDef
