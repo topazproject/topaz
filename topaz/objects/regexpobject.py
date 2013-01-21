@@ -167,6 +167,7 @@ class W_RegexpObject(W_Object):
                 self.set_source(space, Coerce.str(space, w_source), flags)
             except regexp.RegexpError as e:
                 raise space.error(space.w_RegexpError, str(e))
+        return self
 
     @classdef.method("to_s")
     def method_to_s(self, space):
