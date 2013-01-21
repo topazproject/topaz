@@ -22,6 +22,14 @@ class TestEnvObject(BaseTopazTest):
         """)
         assert space.str_w(w_res) == os.environ["ZZZZ"] == "/home/newhome"
 
+    def test_null_bytes(self, space):
+        with self.raises(space, "ArgumentError", "bad environment variable name"):
+            space.execute("""ENV["\\0"]""")
+        with self.raises(space, "ArgumentError", "bad environment variable name"):
+            space.execute("""ENV["\\0"] = "1" """)
+        with self.raises(space, "ArgumentError", "bad environment variable value"):
+            space.execute("""ENV["1"] = "\\0" """)
+
     def test_class(self, space):
         w_res = space.execute("return ENV.class")
         assert w_res is space.w_object
