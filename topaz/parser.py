@@ -1989,11 +1989,6 @@ class Parser(object):
 
     @pg.production("block_param : f_block_optarg opt_f_block_arg")
     def block_param_f_block_optarg_opt_f_block_arg(self, p):
-        """
-        f_block_optarg opt_f_block_arg {
-                    $$ = support.new_args(support.getPosition($1), null, $1, null, null, $2);
-                }
-        """
         return self.new_args(p[0], None, p[1])
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
@@ -2749,22 +2744,11 @@ class Parser(object):
 
     @pg.production("f_block_opt : IDENTIFIER LITERAL_EQUAL primary_value")
     def f_block_opt(self, p):
-        """
-        tIDENTIFIER '=' primary_value {
-                    support.arg_var(support.formal_argument($1));
-                    $$ = new OptArgNode($1.getPosition(), support.assignable($1, $3));
-                }
-        """
         self.lexer.symtable.declare_argument(p[0].getstr())
         return BoxAST(ast.Argument(p[0].getstr(), p[2].getast()))
 
     @pg.production("f_block_optarg : f_block_opt")
     def f_block_optarg_f_block_opt(self, p):
-        """
-        f_block_opt {
-                    $$ = new BlockNode($1.getPosition()).add($1);
-                }
-        """
         return self.new_list(p[0])
 
     @pg.production("f_block_optarg : f_block_optarg LITERAL_COMMA f_block_opt")
