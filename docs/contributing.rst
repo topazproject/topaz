@@ -34,3 +34,16 @@ Writing a patch
 We welcome patches of all sorts to Topaz, whether it's to the docs or the code.
 You can send us patches by forking our repository on Github and then sending a
 pull request.
+
+Running the tests
+~~~~~~~~~~~~~~~~~
+
+One thing you should know when writing a patch for Topaz, is that all changes
+need tests (or a really good reason why they don't). You can run our test suite
+by installing `py.test` (`pip install pytest`)::
+
+    $ py.test
+
+This will run all the tests. In general you do not need to compile Topaz when
+working on a patch, all changes should be testable directly, and the buildbot
+will verify for every pull request that it compiles and tests pass.

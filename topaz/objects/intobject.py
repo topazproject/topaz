@@ -1,9 +1,9 @@
 import operator
 
-from pypy.rlib.debug import check_regular_int
-from pypy.rlib.rarithmetic import ovfcheck
-from pypy.rlib.rbigint import rbigint
-from pypy.rpython.lltypesystem import lltype, rffi
+from rpython.rlib.debug import check_regular_int
+from rpython.rlib.rarithmetic import ovfcheck
+from rpython.rlib.rbigint import rbigint
+from rpython.rtyper.lltypesystem import lltype, rffi
 
 from topaz.module import ClassDef
 from topaz.objects.floatobject import W_FloatObject

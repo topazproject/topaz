@@ -1,8 +1,8 @@
 import operator
 import math
 
-from pypy.rlib.objectmodel import compute_hash
-from pypy.rlib.rfloat import NAN, INFINITY
+from rpython.rlib.objectmodel import compute_hash
+from rpython.rlib.rfloat import NAN, INFINITY
 
 from topaz.module import ClassDef
 from topaz.objects.numericobject import W_NumericObject

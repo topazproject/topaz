@@ -1,6 +1,6 @@
 import copy
 
-from pypy.rlib.listsort import TimSort
+from rpython.rlib.listsort import TimSort
 
 from topaz.module import ClassDef
 from topaz.modules.enumerable import Enumerable
