@@ -1976,12 +1976,7 @@ class Parser(object):
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
-        """
-        f_block_optarg ',' f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args(support.getPosition($1), null, $1, $3, null, $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(p[0], splat_arg=p[2], block_arg=p[3])
 
     @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
@@ -2774,12 +2769,7 @@ class Parser(object):
 
     @pg.production("f_block_optarg : f_block_optarg LITERAL_COMMA f_block_opt")
     def f_block_optarg(self, p):
-        """
-        f_block_optarg ',' f_block_opt {
-                    $$ = support.appendToBlock($1, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], p[2])
 
     @pg.production("f_optarg : f_opt")
     def f_optarg_f_opt(self, p):
