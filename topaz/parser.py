@@ -2174,21 +2174,11 @@ class Parser(object):
 
     @pg.production("method_call : primary_value DOT paren_args")
     def method_call_primary_value_dot_paren_args(self, p):
-        """
-        primary_value tDOT paren_args {
-                    $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], Token("call", "call", p[1].getsourcepos()), p[2])
 
     @pg.production("method_call : primary_value COLON2 paren_args")
     def method_call_primary_value_colon_paren_args(self, p):
-        """
-        primary_value tCOLON2 paren_args {
-                    $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], Token("call", "call", p[1].getsourcepos()), p[2])
 
     @pg.production("method_call : SUPER paren_args")
     def method_call_super_paren_args(self, p):
