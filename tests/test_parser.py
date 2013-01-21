@@ -1348,12 +1348,12 @@ HERE
                 )])
             ), 1)),
         ]))
-        assert space.parse("f { |a, (x, (*, y, z)), d=1, *r, &b| }") == ast.Main(ast.Block([
+        assert space.parse("f { |a, (x, (*, y, z)), d, *r, &b| }") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
                 [
                     ast.Argument("a"),
                     ast.Argument("1"),
-                    ast.Argument("d", ast.ConstantInt(1))
+                    ast.Argument("d")
                 ],
                 "r",
                 "b",
