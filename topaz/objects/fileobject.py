@@ -1,6 +1,7 @@
 import os
 import sys
 
+from topaz.coerce import Coerce
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
@@ -295,8 +296,8 @@ class W_FileObject(W_IOObject):
         assert idx >= 0
         return space.newstr_fromstr(path[:idx])
 
-    @classdef.singleton_method("expand_path", path="path", dir="path")
-    def method_expand_path(self, space, path, dir=None):
+    @classdef.singleton_method("expand_path", path="path")
+    def method_expand_path(self, space, path, w_dir=None):
         if path and path[0] == "~":
             if len(path) >= 2 and path[1] == "/":
                 path = os.environ["HOME"] + path[1:]
@@ -305,8 +306,8 @@ class W_FileObject(W_IOObject):
             else:
                 raise NotImplementedError
         elif not path or path[0] != "/":
-            if dir is not None:
-                dir = space.str_w(W_FileObject.method_expand_path(self, space, dir))
+            if w_dir is not None and w_dir is not space.w_nil:
+                dir = space.str_w(space.send(self, space.newsymbol("expand_path"), [w_dir]))
             else:
                 dir = os.getcwd()
 
@@ -343,24 +344,24 @@ class W_FileObject(W_IOObject):
             result += string
         return space.newstr_fromchars(result)
 
-    @classdef.singleton_method("exists?", filename="str")
-    @classdef.singleton_method("exist?", filename="str")
+    @classdef.singleton_method("exists?", filename="path")
+    @classdef.singleton_method("exist?", filename="path")
     def method_existp(self, space, filename):
         return space.newbool(os.path.exists(filename))
 
-    @classdef.singleton_method("file?", filename="str")
+    @classdef.singleton_method("file?", filename="path")
     def method_filep(self, space, filename):
         return space.newbool(os.path.isfile(filename))
 
-    @classdef.singleton_method("directory?", filename="str")
+    @classdef.singleton_method("directory?", filename="path")
     def method_directoryp(self, space, filename):
         return space.newbool(os.path.isdir(filename))
 
-    @classdef.singleton_method("executable?", filename="str")
+    @classdef.singleton_method("executable?", filename="path")
     def method_executablep(self, space, filename):
         return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
 
-    @classdef.singleton_method("basename", filename="str")
+    @classdef.singleton_method("basename", filename="path")
     def method_basename(self, space, filename):
         i = filename.rfind('/') + 1
         assert i >= 0

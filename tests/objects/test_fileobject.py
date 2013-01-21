@@ -311,6 +311,8 @@ class TestExpandPath(BaseTopazTest):
             os.path.join(os.getcwd(), "a"),
             os.path.join(os.getcwd(), "a"),
         ]
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute("""return File.expand_path(".\\0.")""")
 
     def test_covert_to_absolute_using_provided_base(self, space):
         w_res = space.execute("""return File.expand_path("", "/tmp")""")
@@ -321,6 +323,8 @@ class TestExpandPath(BaseTopazTest):
         assert self.unwrap(space, w_res) == "/tmp/a"
         w_res = space.execute("""return File.expand_path(".", "/")""")
         assert self.unwrap(space, w_res) == "/"
+        w_res = space.execute("""return File.expand_path(".", nil)""")
+        assert self.unwrap(space, w_res) == os.getcwd()
 
     def test_home_expansion(self, space):
         w_res = space.execute("""return File.expand_path("~")""")
