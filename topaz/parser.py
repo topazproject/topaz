@@ -60,6 +60,18 @@ class Parser(object):
             node = ast.Statement(node)
         return BoxAST(node)
 
+    def new_assignable_list(self, boxes):
+        return self._new_assignable_list([box.getast() for box in boxes])
+
+    def _new_assignable_list(self, nodes):
+        return BoxAssignableList(nodes)
+
+    def append_to_assignable_list(self, box_list, box):
+        return self._append_to_assignable_list(box_list.getvars(), [box.getast()])
+
+    def _append_to_assignable_list(self, vars, nodes):
+        return BoxAssignableList(vars + nodes)
+
     def new_augmented_assignment(self, op, lhs, rhs):
         op = op.getstr()[:-1]
         target = lhs.getast()
@@ -801,54 +813,36 @@ class Parser(object):
 
     @pg.production("mlhs_basic : mlhs_head mlhs_item")
     def mlhs_basic_mlhs_head_mlhs_item(self, p):
-        p[0].append(p[1].getast())
-        return p[0]
+        return self.append_to_assignable_list(p[0], p[1])
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node")
     def mlhs_basic_mlhs_head_star_node(self, p):
-        p[0].append(self.new_splat(p[2]).getast())
-        return p[0]
+        return self.append_to_assignable_list(p[0], self.new_splat(p[2]))
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
-        p[0].append(self.new_splat(p[2]).getast())
-        for node in p[4].getastlist():
-            p[0].append(node)
-        return p[0]
+        box = self.append_to_assignable_list(p[0], self.new_splat(p[2]))
+        return self._append_to_assignable_list(box.getvars(), p[4].getastlist())
 
     @pg.production("mlhs_basic : mlhs_head STAR")
     def mlhs_basic_mlhs_head_star(self, p):
-        """
-        mlhs_head tSTAR {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
-                }
-        """
-        p[0].append(ast.Splat(None))
-        return p[0]
+        return self._append_to_assignable_list(p[0].getvars(), [ast.Splat(None)])
 
     @pg.production("mlhs_basic : mlhs_head STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_comma_post(self, p):
-        """
-        mlhs_head tSTAR ',' mlhs_post {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $4);
-                }
-        """
-        p[0].append(ast.Splat(None))
-        for node in p[3].getastlist():
-            p[0].append(node)
-        return p[0]
+        return self._append_to_assignable_list(p[0].getvars(), [ast.Splat(None)] + p[3].getastlist())
 
     @pg.production("mlhs_basic : STAR mlhs_node")
     def mlhs_basic_star_mlhs_node(self, p):
-        return BoxAssignableList([self.new_splat(p[1]).getast()])
+        return self.new_assignable_list([self.new_splat(p[1])])
 
     @pg.production("mlhs_basic : STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_mlhs_node_comma_post(self, p):
-        return BoxAssignableList([self.new_splat(p[1]).getast()] + p[3].getastlist())
+        return self._new_assignable_list([self.new_splat(p[1]).getast()] + p[3].getastlist())
 
     @pg.production("mlhs_basic : STAR")
     def mlhs_basic_star(self, p):
-        return BoxAssignableList([ast.Splat(None)])
+        return self._new_assignable_list([ast.Splat(None)])
 
     @pg.production("mlhs_basic : STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_comma_post(self, p):
@@ -869,12 +863,11 @@ class Parser(object):
 
     @pg.production("mlhs_head : mlhs_item LITERAL_COMMA")
     def mlhs_head_item(self, p):
-        return BoxAssignableList([p[0].getast()])
+        return self.new_assignable_list([p[0]])
 
     @pg.production("mlhs_head : mlhs_head mlhs_item LITERAL_COMMA")
     def mlhs_head_head_item(self, p):
-        p[0].append(p[1].getast())
-        return p[0]
+        return self.append_to_assignable_list(p[0], p[1])
 
     @pg.production("mlhs_post : mlhs_item")
     def mlhs_post_item(self, p):
@@ -1836,11 +1829,6 @@ class Parser(object):
 
     @pg.production("f_marg : f_norm_arg")
     def f_marg_f_norm_arg(self, p):
-        """
-        f_norm_arg {
-                     $$ = support.assignable($1, NilImplicitNode.NIL);
-                }
-        """
         return p[0]
 
     @pg.production("f_marg : LPAREN f_margs rparen")
@@ -1849,120 +1837,61 @@ class Parser(object):
 
     @pg.production("f_marg_list : f_marg")
     def f_marg_list_f_marg(self, p):
-        """
-        f_marg {
-                    $$ = support.newArrayNode($1.getPosition(), $1);
-                }
-        """
         return self.new_list(p[0])
 
     @pg.production("f_marg_list : f_marg_list LITERAL_COMMA f_marg")
     def f_marg_list(self, p):
-        """
-        f_marg_list ',' f_marg {
-                    $$ = $1.add($3);
-                }
-        """
         return self.append_to_list(p[0], p[2])
 
     @pg.production("f_margs : f_marg_list")
     def f_margs_f_marg_list(self, p):
-        """
-        f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
-                }
-        """
-        return BoxAssignableList(self.args_to_variables(p[0]))
+        return self._new_assignable_list(self.args_to_variables(p[0]))
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg")
     def f_margs_f_marg_list_comma_star_f_norm_Arg(self, p):
-        """
-        f_marg_list ',' tSTAR f_norm_arg {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), null);
-                }
-        """
-        box = BoxAssignableList(self.args_to_variables(p[0]))
-        box.append(ast.Splat(self.arg_to_variable(p[3])))
-        return box
+        return self._new_assignable_list(self.args_to_variables(p[0]) + [ast.Splat(self.arg_to_variable(p[3]))])
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_f_norm_arg_comm_f_marg_list(self, p):
-        """
-        f_marg_list ',' tSTAR f_norm_arg ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), $6);
-                }
-        """
-        box = BoxAssignableList(self.args_to_variables(p[0]))
-        box.append(ast.Splat(self.arg_to_variable(p[3])))
-        for node in p[5].getastlist():
-            box.append(self._arg_to_variable(node))
-        return box
+        return self._new_assignable_list(
+            self.args_to_variables(p[0]) +
+            [ast.Splat(self.arg_to_variable(p[3]))] +
+            [self._arg_to_variable(node) for node in p[5].getastlist()]
+        )
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR")
     def f_margs_f_marg_list_comma_star(self, p):
-        """
-        f_marg_list ',' tSTAR {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
-                }
-        """
-        box = BoxAssignableList(self.args_to_variables(p[0]))
-        box.append(ast.Splat(None))
-        return box
+        return self._new_assignable_list(self.args_to_variables(p[0]) + [ast.Splat(None)])
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_comma_f_marg_list(self, p):
-        """
-        f_marg_list ',' tSTAR ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $5);
-                }
-        """
-        box = BoxAssignableList(self.args_to_variables(p[0]))
-        box.append(ast.Splat(None))
-        for node in p[4].getastlist():
-            box.append(self._arg_to_variable(node))
-        return box
+        return self._new_assignable_list(
+            self.args_to_variables(p[0]) +
+            [ast.Splat(None)] +
+            [self._arg_to_variable(node) for node in p[4].getastlist()]
+        )
 
     @pg.production("f_margs : STAR f_norm_arg")
     def f_margs_star_f_norm_arg(self, p):
-        """
-        tSTAR f_norm_arg {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), null);
-                }
-        """
-        return BoxAssignableList([ast.Splat(self.arg_to_variable(p[1]))])
+        return self._new_assignable_list([ast.Splat(self.arg_to_variable(p[1]))])
 
     @pg.production("f_margs : STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_star_f_norm_arg_comma_f_marg_list(self, p):
-        """
-        tSTAR f_norm_arg ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), $4);
-                }
-        """
-        box = BoxAssignableList([ast.Splat(self.arg_to_variable(p[1]))])
-        for node in p[3].getastlist():
-            box.append(self._arg_to_variable(node))
-        return box
+        return self._new_assignable_list(
+            [ast.Splat(self.arg_to_variable(p[1]))] +
+            [self._arg_to_variable(node) for node in p[3].getastlist()]
+        )
 
     @pg.production("f_margs : STAR")
     def f_margs_star(self, p):
-        """
-        tSTAR {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
-                }
-        """
-        return BoxAssignableList([ast.Splat(None)])
+        return self._new_assignable_list([ast.Splat(None)])
 
     @pg.production("f_margs : STAR LITERAL_COMMA f_marg_list")
     def f_margs_star_comma_f_marg_list(self, p):
-        """
-        tSTAR ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
-                }
-        """
-        box = BoxAssignableList([ast.Splat(None)])
-        for node in p[2].getastlist():
-            box.append(self._arg_to_variable(node))
-        return box
+        return self._new_assignable_list(
+            [ast.Splat(None)] +
+            [self._arg_to_variable(node) for node in p[2].getastlist()]
+        )
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -3081,11 +3010,11 @@ class BoxAssignableList(BaseBox):
     def __init__(self, vars):
         self.vars = vars
 
-    def append(self, arg):
-        self.vars.append(arg)
-
     def getassignment(self):
         return ast.MultiAssignable(self.vars)
+
+    def getvars(self):
+        return self.vars
 
 
 class BoxForVars(BaseBox):
