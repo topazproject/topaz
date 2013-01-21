@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pypy.rlib import rgc
+from rpython.rlib import rgc
 
 from topaz.module import Module, ModuleDef
 from topaz.objects.objectobject import W_BaseObject

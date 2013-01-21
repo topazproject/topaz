@@ -1,4 +1,4 @@
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.rbigint import rbigint
 
 from ..base import BaseTopazTest
 

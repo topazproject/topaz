@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pypy.rlib.objectmodel import we_are_translated
+from rpython.rlib.objectmodel import we_are_translated
 
 from topaz import consts
 from topaz.astcompiler import CompilerContext, BlockSymbolTable

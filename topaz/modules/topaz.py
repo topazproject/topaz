@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pypy.rlib.rarithmetic import intmask
+from rpython.rlib.rarithmetic import intmask
 
 from topaz.module import Module, ModuleDef
 

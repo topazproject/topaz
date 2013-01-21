@@ -2,9 +2,9 @@ from __future__ import absolute_import
 
 import os
 
-from pypy.rlib import jit
-from pypy.rlib.objectmodel import specialize
-from pypy.tool.cache import Cache
+from rpython.rlib import jit
+from rpython.rlib.cache import Cache
+from rpython.rlib.objectmodel import specialize
 
 from rply.errors import ParsingError
 

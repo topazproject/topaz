@@ -1,4 +1,4 @@
-from pypy.rlib import rgc
+from rpython.rlib import rgc
 
 
 class TestObjectSpace(object):

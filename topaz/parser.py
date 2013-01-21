@@ -1,5 +1,5 @@
-from pypy.rlib.objectmodel import specialize
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rbigint import rbigint
 
 from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
@@ -1214,12 +1214,14 @@ class Parser(object):
 
     @pg.production("arg : UMINUS_NUM INTEGER POW arg")
     def arg_uminus_num_integer_pow_arg(self, p):
-        """
-        tUMINUS_NUM tINTEGER tPOW arg {
-                    $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[0].getsourcepos().lineno
+        return BoxAST(ast.Send(
+            self.new_binary_call(BoxAST(self._parse_int(p[1])), p[2], p[3]).getast(),
+            "-@",
+            [],
+            None,
+            lineno
+        ))
 
     @pg.production("arg : UMINUS_NUM FLOAT POW arg")
     def arg_uminus_num_float_pow_arg(self, p):
@@ -1487,17 +1489,6 @@ class Parser(object):
 
     @pg.production("primary : LBRACK aref_args RBRACK")
     def primary_array(self, p):
-        """
-        tLBRACK aref_args tRBRACK {
-                    ISourcePosition position = $1.getPosition();
-                    if ($2 == null) {
-                        $$ = new ZArrayNode(position); /* zero length array */
-                    } else {
-                        $$ = $2;
-                        $<ISourcePositionHolder>$.setPosition(position);
-                    }
-                }
-        """
         if p[1] is None:
             items = []
         else:
@@ -2034,11 +2025,6 @@ class Parser(object):
 
     @pg.production("block_param : f_block_arg")
     def block_param_f_block_arg(self, p):
-        """
-        f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
-                }
-        """
         return self.new_args(block_arg=p[0])
 
     @pg.production("opt_block_param : none")
@@ -2170,12 +2156,7 @@ class Parser(object):
 
     @pg.production("method_call : primary_value COLON2 operation2 paren_args")
     def method_call_primary_value_colon_operation_paren_args(self, p):
-        """
-        primary_value tCOLON2 operation2 paren_args {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("method_call : primary_value COLON2 operation3")
     def method_call_primary_value_colon_operation(self, p):
@@ -2310,23 +2291,10 @@ class Parser(object):
 
     @pg.production("strings : string")
     def strings(self, p):
-        """
-        string {
-                    $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
-                }
-        """
-        # TODO: understand this logic
         return p[0]
 
     @pg.production("string : CHAR")
     def string_char(self, p):
-        """
-        tCHAR {
-                    ByteList aChar = ByteList.create((String) $1.getValue());
-                    aChar.setEncoding(lexer.getEncoding());
-                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
-                }
-        """
         # TODO: encoding
         return BoxAST(ast.ConstantString(p[0].getstr()))
 
@@ -2403,12 +2371,7 @@ class Parser(object):
 
     @pg.production("qwords : QWORDS_BEG LITERAL_SPACE STRING_END")
     def qwords_space(self, p):
-        """
-        tQWORDS_BEG ' ' tSTRING_END {
-                     $$ = new ZArrayNode($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Array([]))
 
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
     def qwords_qword_list(self, p):

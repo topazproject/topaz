@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.rbigint import rbigint
 
 from topaz import ast
 from topaz.utils import regexp
@@ -55,6 +55,9 @@ class TestParser(BaseTopazTest):
         ]))
         assert space.parse("1e-3") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(0.001))
+        ]))
+        assert space.parse("1e+3") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantFloat(1000.0))
         ]))
         assert space.parse("-1.2") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantFloat(-1.2))
@@ -127,6 +130,15 @@ class TestParser(BaseTopazTest):
         ]))
         assert space.parse("1 ** 2") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(1), "**", [ast.ConstantInt(2)], None, 1))
+        ]))
+        assert space.parse("-1**2") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(
+                ast.Send(ast.ConstantInt(1), "**", [ast.ConstantInt(2)], None, 1),
+                "-@",
+                [],
+                None,
+                1
+            ))
         ]))
 
     def test_multi_term_expr(self, space):
@@ -227,6 +239,11 @@ class TestParser(BaseTopazTest):
 
         with self.raises(space, "SyntaxError"):
             space.parse("2.to_s(:base => 5, 3)")
+
+    def test_colon_send(self, space):
+        assert space.parse("CallerSpecs::recurse(2)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Constant("CallerSpecs", 1), "recurse", [ast.ConstantInt(2)], None, 1))
+        ]))
 
     def test_assignment(self, space):
         assert space.parse("a = 3") == ast.Main(ast.Block([
@@ -911,7 +928,10 @@ class TestParser(BaseTopazTest):
         assert space.parse('?\\12') == string("\n")
         assert space.parse('"\\12"') == string("\n")
         assert space.parse('?\\012') == string("\n")
-        assert space.parse('"\\342\\234\\224"') == string("✔")
+        assert space.parse('"\\342\\234\\224"') == string(u"✔".encode("utf-8"))
+        assert space.parse('"\u2603"') == string(u"\u2603".encode("utf-8"))
+        assert space.parse('?\u2603') == string(u"\u2603".encode("utf-8"))
+        assert space.parse('"\uffff"') == string(u"\uffff".encode("utf-8"))
 
     def test_dynamic_string(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
@@ -1004,6 +1024,9 @@ class TestParser(BaseTopazTest):
 
         assert space.parse("f %q[/]") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.ConstantString("/")], None, 1)),
+        ]))
+        assert space.parse("%w[]") == ast.Main(ast.Block([
+            ast.Statement(ast.Array([]))
         ]))
 
     def test_heredoc(self, space):
@@ -1381,6 +1404,10 @@ HERE
 
         assert space.parse("x >>= 3") == ast.Main(ast.Block([
             ast.Statement(ast.AugmentedAssignment(">>", ast.Variable("x", 1), ast.ConstantInt(3)))
+        ]))
+
+        assert space.parse("@a += []") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("+", ast.InstanceVariable("@a"), ast.Array([])))
         ]))
 
     def test_block_result(self, space):
@@ -1858,6 +1885,7 @@ HERE
         assert space.parse("$`") == simple_global("$`")
         assert space.parse("$'") == simple_global("$'")
         assert space.parse("$+") == simple_global("$+")
+        assert space.parse("$,") == simple_global("$,")
 
     def test_comments(self, space):
         r = space.parse("""

@@ -1,4 +1,4 @@
-from pypy.rlib.objectmodel import specialize
+from rpython.rlib.objectmodel import specialize
 
 
 class Cache(object):
