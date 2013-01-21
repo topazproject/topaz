@@ -1273,6 +1273,26 @@ HERE
             ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, "s", ast.Nil()), 1))
         ]))
 
+    def test_parens_call(self, space):
+        assert space.parse("blk.(1, 2)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(
+                ast.Send(ast.Self(1), "blk", [], None, 1),
+                "call",
+                [ast.ConstantInt(1), ast.ConstantInt(2)],
+                None,
+                1
+            ))
+        ]))
+        assert space.parse("blk::(1, 2)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(
+                ast.Send(ast.Self(1), "blk", [], None, 1),
+                "call",
+                [ast.ConstantInt(1), ast.ConstantInt(2)],
+                None,
+                1
+            ))
+        ]))
+
     def test_yield(self, space):
         assert space.parse("yield") == ast.Main(ast.Block([
             ast.Statement(ast.Yield([], 1))
