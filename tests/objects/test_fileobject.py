@@ -77,6 +77,15 @@ class TestIO(BaseTopazTest):
         out, err = capfd.readouterr()
         assert out == "foo:bar:baz\nlastprint\n"
 
+    def test_non_string_print_globals(self, space, capfd):
+        space.globals.set(space, "$,", space.w_nil)
+        space.globals.set(space, "$\\", space.w_nil)
+        space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
+        space.globals.set(space, "$_", space.w_nil)
+        space.execute('IO.new(1, "w").print')
+        out, err = capfd.readouterr()
+        assert out == "foobarbaz"
+
     def test_puts(self, space, capfd):
         space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
         out, err = capfd.readouterr()

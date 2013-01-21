@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import os
 
-from pypy.rlib.rstring import assert_str0
-from pypy.rlib.streamio import open_file_as_stream
+from rpython.rlib.rstring import assert_str0
+from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.error import RubyError
 from topaz.module import Module, ModuleDef
