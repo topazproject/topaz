@@ -46,6 +46,8 @@ class Coerce(object):
 
     @staticmethod
     def path(space, w_obj):
-        if w_obj is space.w_nil:
-            return None
-        return space.str_w(w_obj)
+        string = Coerce.str(space, w_obj)
+        if '\0' in string:
+            raise space.error(space.w_ArgumentError, "string contains null byte")
+        else:
+            return string
