@@ -17,6 +17,8 @@ class W_EnvObject(W_Object):
 
     @classdef.method("[]", key="str")
     def method_subscript(self, space, key):
+        if "\0" in key:
+            raise space.error(space.w_ArgumentError, "bad environment variable name")
         try:
             val = os.environ[key]
         except KeyError:
@@ -25,5 +27,9 @@ class W_EnvObject(W_Object):
 
     @classdef.method("[]=", key="str", value="str")
     def method_subscript_assign(self, space, key, value):
+        if "\0" in key:
+            raise space.error(space.w_ArgumentError, "bad environment variable name")
+        if "\0" in value:
+            raise space.error(space.w_ArgumentError, "bad environment variable value")
         os.environ[key] = value
         return space.newstr_fromstr(value)
