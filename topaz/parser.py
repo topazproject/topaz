@@ -2689,22 +2689,6 @@ class Parser(object):
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
     def f_arg_item_paren(self, p):
-        """
-        tLPAREN f_margs rparen {
-                    $$ = $2;
-                    /*          {
-            ID tid = internal_id();
-            arg_var(tid);
-            if (dyna_in_block()) {
-                $2->nd_value = NEW_DVAR(tid);
-            }
-            else {
-                $2->nd_value = NEW_LVAR(tid);
-            }
-            $$ = NEW_ARGS_AUX(tid, 1);
-            $$->nd_next = $2;*/
-                }
-        """
         return BoxAST(p[1].getassignment())
 
     @pg.production("f_arg : f_arg_item")
