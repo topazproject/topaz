@@ -335,6 +335,15 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(space.execute('return "hello \\n there".chomp')) == "hello \n there"
         assert space.str_w(space.execute('return "hello".chomp("llo")')) == "he"
 
+    def test_reverse(self, space):
+        assert space.str_w(space.execute('return "stressed".reverse')) == "desserts"
+        w_res = space.execute("""
+        a = "stressed"
+        a.reverse!
+        return a, a.reverse
+        """)
+        assert self.unwrap(space, w_res) == ["desserts", "stressed"]
+
     def test_includep(self, space):
         assert space.execute("return 'abc'.include? 'ab'") is space.w_true
         assert space.execute("return 'abc'.include? 'bc'") is space.w_true
