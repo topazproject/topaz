@@ -1,6 +1,7 @@
 import string
 
-from pypy.rlib.rstring import StringBuilder
+from rpython.rlib.rstring import StringBuilder
+from rpython.rlib.runicode import unicode_encode_utf_8
 
 from rply import Token
 from rply.token import SourcePosition
@@ -406,7 +407,7 @@ class Lexer(object):
             elif ch.upper() == "E":
                 symbol = "FLOAT"
                 self.add(ch.upper())
-                if self.peek() == "-":
+                if self.peek() in "-+":
                     self.add(self.read())
             else:
                 yield self.emit(symbol)
@@ -499,7 +500,7 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\!\"~&`'+/":
+        if ch in "$>:?\\!\"~&`'+/,":
             self.add(ch)
             yield self.emit("GVAR")
         else:
@@ -537,6 +538,7 @@ class Lexer(object):
         ch2 = self.read()
         if ch2 == "=":
             self.add(ch2)
+            self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
         elif self.is_beg() or (self.is_arg() and space_seen and not ch2.isspace()):
             self.state = self.EXPR_BEG
@@ -859,7 +861,14 @@ class Lexer(object):
             self.newline(c)
             return ["\n"]
         elif c == "u":
-            raise NotImplementedError("UTF-8 escape not implemented")
+            utf_escape = [None] * 4
+            for i in xrange(4):
+                ch = self.read()
+                if ch not in string.hexdigits:
+                    self.error()
+                utf_escape[i] = ch
+            utf_codepoint = int("".join(utf_escape), 16)
+            return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
         elif c == "x":
             hex_escape = self.read()
             if not hex_escape in string.hexdigits:

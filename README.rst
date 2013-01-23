@@ -17,7 +17,7 @@ To run the tests::
 To translate, first make sure the PyPy source is on your ``PYTHONPATH``, then
 run::
 
-    $ /path/to/pypy/src/pypy/translator/goal/translate.py -Ojit targettopaz.py
+    $ /path/to/pypy/src/rpython/translator/goal/translate.py -Ojit targettopaz.py
 
 This will compile Topaz with a JIT, it'll take 5-10 minutes.
 

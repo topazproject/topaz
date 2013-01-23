@@ -164,3 +164,11 @@ class TestMain(object):
             "{}:5:in `/': divided by 0 (ZeroDivisionError)".format(f),
             "\tfrom {}:5:in `<main>'".format(f),
         ]
+
+    def test_program_global(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, None, ruby_args=["-e", "puts $0"])
+        out1, err1 = capfd.readouterr()
+        assert out1 == "-e\n"
+        f = self.run(space, tmpdir, "puts $0")
+        out2, err2 = capfd.readouterr()
+        assert out2 == "{}\n".format(f)

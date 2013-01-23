@@ -1,5 +1,5 @@
-from pypy.rlib.objectmodel import specialize
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rbigint import rbigint
 
 from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
@@ -60,6 +60,18 @@ class Parser(object):
             node = ast.Statement(node)
         return BoxAST(node)
 
+    def new_assignable_list(self, boxes):
+        return self._new_assignable_list([box.getast() for box in boxes])
+
+    def _new_assignable_list(self, nodes):
+        return BoxAssignableList(nodes)
+
+    def append_to_assignable_list(self, box_list, box):
+        return self._append_to_assignable_list(box_list.getvars(), [box.getast()])
+
+    def _append_to_assignable_list(self, vars, nodes):
+        return BoxAssignableList(vars + nodes)
+
     def new_augmented_assignment(self, op, lhs, rhs):
         op = op.getstr()[:-1]
         target = lhs.getast()
@@ -81,6 +93,25 @@ class Parser(object):
         elif isinstance(node, ast.Variable):
             self.lexer.symtable.declare_write(node.name)
         return box
+
+    def _arg_to_variable(self, node):
+        if isinstance(node, ast.Argument):
+            self.lexer.symtable.declare_local(node.name)
+            return ast.Variable(node.name, -1)
+        elif isinstance(node, ast.MultiAssignable):
+            return node
+        else:
+            raise SystemError
+
+    def arg_to_variable(self, box):
+        return self._arg_to_variable(box.getast())
+
+    def args_to_variables(self, listbox):
+        astlist = listbox.getastlist()
+        variables = [None] * len(astlist)
+        for i, node in enumerate(astlist):
+            variables[i] = self._arg_to_variable(node)
+        return variables
 
     def new_binary_call(self, lhs, op, rhs):
         return self._new_call(lhs.getast(), op, [rhs.getast()], None)
@@ -130,11 +161,22 @@ class Parser(object):
     def append_call_arg(self, box_arg, box):
         return self._new_call_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
 
-    def new_send_block(self, params, body):
+    def new_send_block(self, lineno, params, body):
+        stmts = body.getastlist() if body is not None else []
         args = params.getargs() if params is not None else []
         splat = params.getsplatarg() if params is not None else None
-        block = ast.Block(body.getastlist()) if body is not None else ast.Nil()
-        return BoxAST(ast.SendBlock(args, splat, block))
+        block_arg = params.getblockarg() if params is not None else None
+
+        for idx, arg in enumerate(args):
+            if isinstance(arg, ast.MultiAssignable):
+                new_arg = ast.Argument(str(idx))
+                asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, lineno))
+                args[idx] = new_arg
+                self.lexer.symtable.declare_argument(new_arg.name)
+                stmts.insert(0, ast.Statement(asgn))
+
+        block = ast.Block(stmts) if stmts else ast.Nil()
+        return BoxAST(ast.SendBlock(args, splat, block_arg, block))
 
     def combine_send_block(self, send_box, block_box):
         send = send_box.getast(ast.BaseSend)
@@ -536,7 +578,7 @@ class Parser(object):
     @pg.production("stmt : mlhs LITERAL_EQUAL command_call")
     def stmt_mlhs_equal_command_call(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getastlist(),
+            p[0].getassignment(),
             p[2].getast()
         ))
 
@@ -597,14 +639,14 @@ class Parser(object):
     @pg.production("stmt : mlhs LITERAL_EQUAL arg_value")
     def stmt_mlhs_equal_arg_value(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getastlist(),
+            p[0].getassignment(),
             p[2].getast()
         ))
 
     @pg.production("stmt : mlhs LITERAL_EQUAL mrhs")
     def stmt_mlhs_equal_mrhs(self, p):
         return self._new_stmt(ast.MultiAssignment(
-            p[0].getastlist(),
+            p[0].getassignment(),
             ast.Array(p[2].getastlist()),
         ))
 
@@ -691,7 +733,7 @@ class Parser(object):
 
     @pg.production("cmd_brace_block : LBRACE_ARG push_block_scope opt_block_param compstmt RCURLY")
     def cmd_brace_block(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
@@ -771,45 +813,36 @@ class Parser(object):
 
     @pg.production("mlhs_basic : mlhs_head mlhs_item")
     def mlhs_basic_mlhs_head_mlhs_item(self, p):
-        return self.append_to_list(p[0], p[1])
+        return self.append_to_assignable_list(p[0], p[1])
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node")
     def mlhs_basic_mlhs_head_star_node(self, p):
-        return self.append_to_list(p[0], self.new_splat(p[2]))
+        return self.append_to_assignable_list(p[0], self.new_splat(p[2]))
 
     @pg.production("mlhs_basic : mlhs_head STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_node_comma_post(self, p):
-        return self._new_list(self.append_to_list(p[0], self.new_splat(p[2])).getastlist() + p[4].getastlist())
+        box = self.append_to_assignable_list(p[0], self.new_splat(p[2]))
+        return self._append_to_assignable_list(box.getvars(), p[4].getastlist())
 
     @pg.production("mlhs_basic : mlhs_head STAR")
     def mlhs_basic_mlhs_head_star(self, p):
-        """
-        mlhs_head tSTAR {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._append_to_assignable_list(p[0].getvars(), [ast.Splat(None)])
 
     @pg.production("mlhs_basic : mlhs_head STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_mlhs_head_star_comma_post(self, p):
-        """
-        mlhs_head tSTAR ',' mlhs_post {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._append_to_assignable_list(p[0].getvars(), [ast.Splat(None)] + p[3].getastlist())
 
     @pg.production("mlhs_basic : STAR mlhs_node")
     def mlhs_basic_star_mlhs_node(self, p):
-        return self.new_list(self.new_splat(p[1]))
+        return self.new_assignable_list([self.new_splat(p[1])])
 
     @pg.production("mlhs_basic : STAR mlhs_node LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_mlhs_node_comma_post(self, p):
-        return self._new_list([self.new_splat(p[1]).getast()] + p[3].getastlist())
+        return self._new_assignable_list([self.new_splat(p[1]).getast()] + p[3].getastlist())
 
     @pg.production("mlhs_basic : STAR")
     def mlhs_basic_star(self, p):
-        return self._new_list([ast.Splat(None)])
+        return self._new_assignable_list([ast.Splat(None)])
 
     @pg.production("mlhs_basic : STAR LITERAL_COMMA mlhs_post")
     def mlhs_basic_star_comma_post(self, p):
@@ -826,15 +859,15 @@ class Parser(object):
 
     @pg.production("mlhs_item : LPAREN mlhs_inner rparen")
     def mlhs_item_paren(self, p):
-        return p[1]
+        return BoxAST(p[1].getassignment())
 
     @pg.production("mlhs_head : mlhs_item LITERAL_COMMA")
     def mlhs_head_item(self, p):
-        return self.new_list(p[0])
+        return self.new_assignable_list([p[0]])
 
     @pg.production("mlhs_head : mlhs_head mlhs_item LITERAL_COMMA")
     def mlhs_head_head_item(self, p):
-        return self.append_to_list(p[0], p[1])
+        return self.append_to_assignable_list(p[0], p[1])
 
     @pg.production("mlhs_post : mlhs_item")
     def mlhs_post_item(self, p):
@@ -1213,12 +1246,14 @@ class Parser(object):
 
     @pg.production("arg : UMINUS_NUM INTEGER POW arg")
     def arg_uminus_num_integer_pow_arg(self, p):
-        """
-        tUMINUS_NUM tINTEGER tPOW arg {
-                    $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[0].getsourcepos().lineno
+        return BoxAST(ast.Send(
+            self.new_binary_call(BoxAST(self._parse_int(p[1])), p[2], p[3]).getast(),
+            "-@",
+            [],
+            None,
+            lineno
+        ))
 
     @pg.production("arg : UMINUS_NUM FLOAT POW arg")
     def arg_uminus_num_float_pow_arg(self, p):
@@ -1486,17 +1521,6 @@ class Parser(object):
 
     @pg.production("primary : LBRACK aref_args RBRACK")
     def primary_array(self, p):
-        """
-        tLBRACK aref_args tRBRACK {
-                    ISourcePosition position = $1.getPosition();
-                    if ($2 == null) {
-                        $$ = new ZArrayNode(position); /* zero length array */
-                    } else {
-                        $$ = $2;
-                        $<ISourcePositionHolder>$.setPosition(position);
-                    }
-                }
-        """
         if p[1] is None:
             items = []
         else:
@@ -1635,14 +1659,14 @@ class Parser(object):
         target = ast.Variable(arg.name, lineno)
         if isinstance(for_vars, BoxAST):
             asgn = ast.Assignment(for_vars.getast(), target)
-        elif isinstance(for_vars, BoxASTList):
-            asgn = ast.MultiAssignment(for_vars.getastlist(), target)
+        elif isinstance(for_vars, BoxAssignableList):
+            asgn = ast.MultiAssignment(for_vars.getassignment(), target)
         else:
             raise SystemError
 
         stmts = p[7].getastlist() if p[7] is not None else []
         stmts = [ast.Statement(asgn)] + stmts
-        block = ast.SendBlock([arg], None, ast.Block(stmts))
+        block = ast.SendBlock([arg], None, None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
         return BoxAST(ast.Send(p[4].getast(), "each", [], block, lineno))
@@ -1805,115 +1829,69 @@ class Parser(object):
 
     @pg.production("f_marg : f_norm_arg")
     def f_marg_f_norm_arg(self, p):
-        """
-        f_norm_arg {
-                     $$ = support.assignable($1, NilImplicitNode.NIL);
-                }
-        """
-        raise NotImplementedError(p)
+        return p[0]
 
     @pg.production("f_marg : LPAREN f_margs rparen")
     def f_marg_paren(self, p):
-        return p[1]
+        return BoxAST(p[1].getassignment())
 
     @pg.production("f_marg_list : f_marg")
     def f_marg_list_f_marg(self, p):
-        """
-        f_marg {
-                    $$ = support.newArrayNode($1.getPosition(), $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_list(p[0])
 
     @pg.production("f_marg_list : f_marg_list LITERAL_COMMA f_marg")
     def f_marg_list(self, p):
-        """
-        f_marg_list ',' f_marg {
-                    $$ = $1.add($3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.append_to_list(p[0], p[2])
 
     @pg.production("f_margs : f_marg_list")
     def f_margs_f_marg_list(self, p):
-        """
-        f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list(self.args_to_variables(p[0]))
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg")
     def f_margs_f_marg_list_comma_star_f_norm_Arg(self, p):
-        """
-        f_marg_list ',' tSTAR f_norm_arg {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list(self.args_to_variables(p[0]) + [ast.Splat(self.arg_to_variable(p[3]))])
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_f_norm_arg_comm_f_marg_list(self, p):
-        """
-        f_marg_list ',' tSTAR f_norm_arg ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, support.assignable($4, null), $6);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list(
+            self.args_to_variables(p[0]) +
+            [ast.Splat(self.arg_to_variable(p[3]))] +
+            [self._arg_to_variable(node) for node in p[5].getastlist()]
+        )
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR")
     def f_margs_f_marg_list_comma_star(self, p):
-        """
-        f_marg_list ',' tSTAR {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list(self.args_to_variables(p[0]) + [ast.Splat(None)])
 
     @pg.production("f_margs : f_marg_list LITERAL_COMMA STAR LITERAL_COMMA f_marg_list")
     def f_margs_f_marg_list_comma_star_comma_f_marg_list(self, p):
-        """
-        f_marg_list ',' tSTAR ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), $1, new StarNode(lexer.getPosition()), $5);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list(
+            self.args_to_variables(p[0]) +
+            [ast.Splat(None)] +
+            [self._arg_to_variable(node) for node in p[4].getastlist()]
+        )
 
     @pg.production("f_margs : STAR f_norm_arg")
     def f_margs_star_f_norm_arg(self, p):
-        """
-        tSTAR f_norm_arg {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list([ast.Splat(self.arg_to_variable(p[1]))])
 
     @pg.production("f_margs : STAR f_norm_arg LITERAL_COMMA f_marg_list")
     def f_margs_star_f_norm_arg_comma_f_marg_list(self, p):
-        """
-        tSTAR f_norm_arg ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, support.assignable($2, null), $4);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list(
+            [ast.Splat(self.arg_to_variable(p[1]))] +
+            [self._arg_to_variable(node) for node in p[3].getastlist()]
+        )
 
     @pg.production("f_margs : STAR")
     def f_margs_star(self, p):
-        """
-        tSTAR {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, new StarNode(lexer.getPosition()), null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list([ast.Splat(None)])
 
     @pg.production("f_margs : STAR LITERAL_COMMA f_marg_list")
     def f_margs_star_comma_f_marg_list(self, p):
-        """
-        tSTAR ',' f_marg_list {
-                    $$ = new MultipleAsgn19Node($1.getPosition(), null, null, $3);
-                }
-        """
-        raise NotImplementedError(p)
+        return self._new_assignable_list(
+            [ast.Splat(None)] +
+            [self._arg_to_variable(node) for node in p[2].getastlist()]
+        )
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
@@ -2025,12 +2003,7 @@ class Parser(object):
 
     @pg.production("block_param : f_block_arg")
     def block_param_f_block_arg(self, p):
-        """
-        f_block_arg {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, $1);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args(block_arg=p[0])
 
     @pg.production("opt_block_param : none")
     def opt_block_param_none(self, p):
@@ -2120,7 +2093,7 @@ class Parser(object):
 
     @pg.production("do_block : DO_BLOCK push_block_scope opt_block_param compstmt END")
     def do_block(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
@@ -2161,12 +2134,7 @@ class Parser(object):
 
     @pg.production("method_call : primary_value COLON2 operation2 paren_args")
     def method_call_primary_value_colon_operation_paren_args(self, p):
-        """
-        primary_value tCOLON2 operation2 paren_args {
-                    $$ = support.new_call($1, $3, $4, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], p[3])
 
     @pg.production("method_call : primary_value COLON2 operation3")
     def method_call_primary_value_colon_operation(self, p):
@@ -2174,21 +2142,11 @@ class Parser(object):
 
     @pg.production("method_call : primary_value DOT paren_args")
     def method_call_primary_value_dot_paren_args(self, p):
-        """
-        primary_value tDOT paren_args {
-                    $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], self.new_token(p[1], "call", "call"), p[2])
 
     @pg.production("method_call : primary_value COLON2 paren_args")
     def method_call_primary_value_colon_paren_args(self, p):
-        """
-        primary_value tCOLON2 paren_args {
-                    $$ = support.new_call($1, new Token("call", $1.getPosition()), $3, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], self.new_token(p[1], "call", "call"), p[2])
 
     @pg.production("method_call : SUPER paren_args")
     def method_call_super_paren_args(self, p):
@@ -2213,13 +2171,13 @@ class Parser(object):
 
     @pg.production("brace_block : LCURLY push_block_scope opt_block_param compstmt RCURLY")
     def brace_block_curly(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
     @pg.production("brace_block : DO push_block_scope opt_block_param compstmt END")
     def brace_block_do(self, p):
-        box = self.new_send_block(p[2], p[3])
+        box = self.new_send_block(p[0].getsourcepos().lineno, p[2], p[3])
         self.save_and_pop_scope(box.getast())
         return box
 
@@ -2301,23 +2259,10 @@ class Parser(object):
 
     @pg.production("strings : string")
     def strings(self, p):
-        """
-        string {
-                    $$ = $1 instanceof EvStrNode ? new DStrNode($1.getPosition(), lexer.getEncoding()).add($1) : $1;
-                }
-        """
-        # TODO: understand this logic
         return p[0]
 
     @pg.production("string : CHAR")
     def string_char(self, p):
-        """
-        tCHAR {
-                    ByteList aChar = ByteList.create((String) $1.getValue());
-                    aChar.setEncoding(lexer.getEncoding());
-                    $$ = lexer.createStrNode($<Token>0.getPosition(), aChar, 0);
-                }
-        """
         # TODO: encoding
         return BoxAST(ast.ConstantString(p[0].getstr()))
 
@@ -2394,12 +2339,7 @@ class Parser(object):
 
     @pg.production("qwords : QWORDS_BEG LITERAL_SPACE STRING_END")
     def qwords_space(self, p):
-        """
-        tQWORDS_BEG ' ' tSTRING_END {
-                     $$ = new ZArrayNode($1.getPosition());
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(ast.Array([]))
 
     @pg.production("qwords : QWORDS_BEG qword_list STRING_END")
     def qwords_qword_list(self, p):
@@ -2749,23 +2689,7 @@ class Parser(object):
 
     @pg.production("f_arg_item : LPAREN f_margs rparen")
     def f_arg_item_paren(self, p):
-        """
-        tLPAREN f_margs rparen {
-                    $$ = $2;
-                    /*          {
-            ID tid = internal_id();
-            arg_var(tid);
-            if (dyna_in_block()) {
-                $2->nd_value = NEW_DVAR(tid);
-            }
-            else {
-                $2->nd_value = NEW_LVAR(tid);
-            }
-            $$ = NEW_ARGS_AUX(tid, 1);
-            $$->nd_next = $2;*/
-                }
-        """
-        raise NotImplementedError(p)
+        return BoxAST(p[1].getassignment())
 
     @pg.production("f_arg : f_arg_item")
     def f_arg_f_arg_item(self, p):
@@ -3054,6 +2978,18 @@ class BoxStrTerm(BaseBox):
 
     def getstrterm(self):
         return self.str_term
+
+
+class BoxAssignableList(BaseBox):
+    def __init__(self, vars):
+        self.vars = vars
+
+    def getassignment(self):
+        return ast.MultiAssignable(self.vars)
+
+    def getvars(self):
+        return self.vars
+
 
 class BoxForVars(BaseBox):
     def __init__(self, for_var):

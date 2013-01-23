@@ -1,4 +1,4 @@
-from pypy.rpython.lltypesystem import rffi
+from rpython.rtyper.lltypesystem import rffi
 
 
 def make_string_packer(padding=" ", nullterminated=False):

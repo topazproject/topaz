@@ -1,9 +1,9 @@
 import operator
 
-from pypy.rlib.debug import check_regular_int
-from pypy.rlib.rarithmetic import ovfcheck
-from pypy.rlib.rbigint import rbigint
-from pypy.rpython.lltypesystem import lltype, rffi
+from rpython.rlib.debug import check_regular_int
+from rpython.rlib.rarithmetic import ovfcheck
+from rpython.rlib.rbigint import rbigint
+from rpython.rtyper.lltypesystem import lltype, rffi
 
 from topaz.module import ClassDef
 from topaz.objects.floatobject import W_FloatObject
@@ -86,6 +86,8 @@ class W_FixnumObject(W_RootObject):
                     )
                 else:
                     return space.newint(value)
+            elif space.is_kind_of(w_other, space.w_bignum):
+                return space.send(space.newbigint_fromint(self.intvalue), space.newsymbol(name), [w_other])
             elif space.is_kind_of(w_other, space.w_float):
                 return space.newfloat(func(self.intvalue, space.float_w(w_other)))
             else:
@@ -171,6 +173,10 @@ class W_FixnumObject(W_RootObject):
     def method_xor(self, space, other):
         return space.newint(self.intvalue ^ other)
 
+    @classdef.method("|", other="int")
+    def method_or(self, space, other):
+        return space.newint(self.intvalue | other)
+
     @classdef.method("==")
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_FixnumObject):
@@ -184,26 +190,21 @@ class W_FixnumObject(W_RootObject):
     def method_ne(self, space, w_other):
         return space.newbool(space.send(self, space.newsymbol("=="), [w_other]) is space.w_false)
 
-    @classdef.method("<", other="int")
-    def method_lt(self, space, other):
-        return space.newbool(self.intvalue < other)
-
-    @classdef.method(">", other="int")
-    def method_gt(self, space, other):
-        return space.newbool(self.intvalue > other)
-
-    @classdef.method("<=")
-    def method_lte(self, space, w_other):
-        if isinstance(w_other, W_FloatObject):
-            return space.newbool(self.intvalue <= space.float_w(w_other))
-        elif isinstance(w_other, W_FixnumObject):
-            return space.newbool(self.intvalue <= w_other.intvalue)
-        else:
-            return W_NumericObject.retry_binop_coercing(space, self, w_other, "<=", raise_error=True)
-
-    @classdef.method(">=", other="int")
-    def method_gte(self, space, other):
-        return space.newbool(self.intvalue >= other)
+    def new_bool_op(classdef, name, func):
+        @classdef.method(name)
+        def method(self, space, w_other):
+            if space.is_kind_of(w_other, space.w_float):
+                return space.newbool(func(self.intvalue, space.float_w(w_other)))
+            elif space.is_kind_of(w_other, space.w_fixnum):
+                return space.newbool(func(self.intvalue, space.int_w(w_other)))
+            else:
+                return W_NumericObject.retry_binop_coercing(space, self, w_other, name, raise_error=True)
+        method.__name__ = "method_%s" % func.__name__
+        return method
+    method_lt = new_bool_op(classdef, "<", operator.lt)
+    method_lte = new_bool_op(classdef, "<=", operator.le)
+    method_gt = new_bool_op(classdef, ">", operator.gt)
+    method_gte = new_bool_op(classdef, ">=", operator.ge)
 
     @classdef.method("-@")
     def method_neg(self, space):
@@ -241,6 +242,13 @@ class W_FixnumObject(W_RootObject):
             return space.newarray([w_other, self])
         else:
             return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
+
+    @classdef.method('chr')
+    def method_chr(self, space):
+        if self.intvalue > 255 or self.intvalue < 0:
+            raise space.error(space.w_RangeError, "%d out of char range" % self.intvalue)
+        else:
+            return space.newstr_fromstr(chr(self.intvalue))
 
     classdef.app_method("""
     def next
@@ -286,5 +294,16 @@ class W_FixnumObject(W_RootObject):
 
     def __id__
         self * 2 + 1
+    end
+
+    def step(limit, step=1)
+        idx = self
+        if limit.is_a?(Float) or step.is_a?(Float)
+            idx = idx.to_f
+        end
+        while idx <= limit do
+            yield idx
+            idx += step
+        end
     end
     """)

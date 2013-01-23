@@ -4,6 +4,7 @@ from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
+from topaz.objects.regexpobject import RegexpCache
 from topaz.utils.glob import Glob
 from topaz.utils.ll_dir import opendir, readdir, closedir
 
@@ -73,7 +74,7 @@ class W_Dir(W_Object):
         else:
             patterns_w = [w_pattern]
 
-        glob = Glob()
+        glob = Glob(space.fromcache(RegexpCache))
 
         for w_pat in patterns_w:
             if space.is_kind_of(w_pat, space.w_string):

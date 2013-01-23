@@ -6,21 +6,21 @@ from fabric.context_managers import lcd
 
 
 class Test(object):
-    def __init__(self, func, deps=[], needs_pypy=True, needs_rubyspec=False):
+    def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False):
         self.func = func
         self.deps = deps
-        self.needs_pypy = needs_pypy
+        self.needs_rpython = needs_rpython
         self.needs_rubyspec = needs_rubyspec
 
     def install_deps(self):
         local("pip install --use-mirrors {}".format(" ".join(self.deps)))
 
-    def download_pypy(self):
+    def download_rpython(self):
         local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
         local("tar -xf `pwd`/../pypy.tar.bz2 -C `pwd`/../")
         [path_name] = glob.glob("../pypy-pypy*")
         path_name = os.path.abspath(path_name)
-        with open("pypy_marker", "w") as f:
+        with open("rpython_marker", "w") as f:
             f.write(path_name)
 
     def download_mspec(self):
@@ -33,9 +33,9 @@ class Test(object):
 
     def run_tests(self):
         env = {}
-        if self.needs_pypy:
-            with open("pypy_marker") as f:
-                env["pypy_path"] = f.read()
+        if self.needs_rpython:
+            with open("rpython_marker") as f:
+                env["rpython_path"] = f.read()
         self.func(env)
 
 
@@ -44,8 +44,8 @@ def install_requirements():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     if t.deps:
         t.install_deps()
-    if t.needs_pypy:
-        t.download_pypy()
+    if t.needs_rpython:
+        t.download_rpython()
     if t.needs_rubyspec:
         t.download_mspec()
         t.download_rubyspec()
@@ -58,16 +58,17 @@ def run_tests():
 
 
 def run_own_tests(env):
-    local("PYTHONPATH=$PYTHONPATH:{pypy_path} py.test".format(**env))
+    local("PYTHONPATH=$PYTHONPATH:{rpython_path} py.test".format(**env))
 
 
 def run_rubyspec_untranslated(env):
-    run_specs("bin/topaz_untranslated.py", prefix="PYTHONPATH=$PYTHONPATH:{pypy_path} ".format(**env))
+    run_specs("bin/topaz_untranslated.py", prefix="PYTHONPATH=$PYTHONPATH:{rpython_path} ".format(**env))
 
 
 def run_translate_tests(env):
-    local("PYTHONPATH={pypy_path}:$PYTHONPATH python {pypy_path}/pypy/translator/goal/translate.py --batch -Ojit targettopaz.py".format(**env))
+    local("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/translator/goal/translate.py --batch -Ojit targettopaz.py".format(**env))
     run_specs("`pwd`/topaz-c")
+    local("PYTHONPATH={rpython_path}:$PYTHONPATH py.test --topaz=topaz-c tests/jit/".format(**env))
 
 
 def run_specs(binary, prefix=""):
@@ -167,5 +168,5 @@ TEST_TYPES = {
     "own": Test(run_own_tests, deps=["pytest", "-r requirements.txt"]),
     "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
     "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True),
-    "docs": Test(run_docs_tests, deps=["sphinx"], needs_pypy=False),
+    "docs": Test(run_docs_tests, deps=["sphinx"], needs_rpython=False),
 }

@@ -2,9 +2,9 @@ from __future__ import absolute_import
 
 import os
 
-from pypy.rlib import jit
-from pypy.rlib.objectmodel import specialize
-from pypy.tool.cache import Cache
+from rpython.rlib import jit
+from rpython.rlib.cache import Cache
+from rpython.rlib.objectmodel import specialize
 
 from rply.errors import ParsingError
 
@@ -114,6 +114,7 @@ class ObjectSpace(object):
         self.w_IOError = self.getclassfor(W_IOError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
+        self.w_RegexpError = self.getclassfor(W_RegexpError)
         self.w_RuntimeError = self.getclassfor(W_RuntimeError)
         self.w_StandardError = self.getclassfor(W_StandardError)
         self.w_StopIteration = self.getclassfor(W_StopIteration)
@@ -134,10 +135,10 @@ class ObjectSpace(object):
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
-            self.w_RuntimeError, self.w_SystemCallError, self.w_LoadError,
-            self.w_StopIteration, self.w_SyntaxError, self.w_NameError,
-            self.w_StandardError, self.w_LocalJumpError, self.w_IndexError,
-            self.w_IOError,
+            self.w_RegexpError, self.w_RuntimeError, self.w_SystemCallError,
+            self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
+            self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
+            self.w_IndexError, self.w_IOError,
 
             self.w_kernel, self.w_topaz,
 
@@ -158,7 +159,6 @@ class ObjectSpace(object):
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
-            self.getclassfor(W_RegexpError),
             self.getclassfor(W_ThreadError),
 
             self.getmoduleobject(Comparable.moduledef),
@@ -473,7 +473,7 @@ class ObjectSpace(object):
         return w_obj.is_kind_of(self, w_cls)
 
     @jit.unroll_safe
-    def invoke_block(self, block, args_w):
+    def invoke_block(self, block, args_w, block_arg=None):
         bc = block.bytecode
         frame = self.create_frame(
             bc, w_self=block.w_self, lexical_scope=block.lexical_scope,
@@ -485,8 +485,8 @@ class ObjectSpace(object):
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)
             args_w = w_arg.items_w
-        if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1:
-            frame.handle_block_args(self, bc, args_w, None)
+        if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
+            frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
         for idx, cell in enumerate(block.cells):
             frame.cells[len(bc.cellvars) + idx] = cell

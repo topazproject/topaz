@@ -1,6 +1,6 @@
 import copy
 
-from pypy.rlib import jit
+from rpython.rlib import jit
 
 from topaz.celldict import CellDict, VersionTag
 from topaz.module import ClassDef
@@ -43,7 +43,7 @@ class UndefMethod(W_FunctionObject):
 
 
 class W_ModuleObject(W_RootObject):
-    _immutable_fields_ = ["version?", "included_modules?[*]", "klass?"]
+    _immutable_fields_ = ["version?", "included_modules?[*]", "klass?", "name?"]
 
     classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
@@ -177,13 +177,16 @@ class W_ModuleObject(W_RootObject):
         else:
             return self.included_modules[:]
 
+    @jit.unroll_safe
     def is_ancestor_of(self, w_cls):
-        if self is w_cls or self in w_cls.included_modules:
+        if self is w_cls:
             return True
-        elif w_cls.superclass is not None:
+        for w_mod in w_cls.included_modules:
+            if self is w_mod:
+                return True
+        if w_cls.superclass is not None:
             return self.is_ancestor_of(w_cls.superclass)
-        else:
-            return False
+        return False
 
     def include_module(self, space, w_mod):
         assert isinstance(w_mod, W_ModuleObject)

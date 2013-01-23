@@ -402,6 +402,18 @@ class TestInterpreter(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [2, 4, 6]
 
+    def test_send_block_with_block_arg(self, space):
+        w_res = space.execute("""
+        res = []
+        block = proc do |&b|
+            [1, 2, 3].each do |x|
+                res << b.call(x)
+            end
+        end
+        block.call { |x| 2 * x }
+        return res
+        """)
+
     def test_yield(self, space):
         w_res = space.execute("""
         class X
@@ -751,6 +763,18 @@ class TestInterpreter(BaseTopazTest):
         return a
         """)
         assert space.int_w(w_res) == 3
+
+    def test_destructuring_assignment(self, space):
+        w_res = space.execute("""
+        (a, b, (c, d, *e)) = [1, 2, [3, 4]]
+        return a, b, c, d, e
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4, []]
+        w_res = space.execute("""
+        a, *b, (c, (d, *, e), ) = 1, 2, 3, [4, [5, "ignored", "ignored", 6], 7]
+        return a, b, c, d, e
+        """)
+        assert self.unwrap(space, w_res) == [1, [2, 3], 4, 5, 6]
 
     def test_minus(self, space):
         w_res = space.execute("""
@@ -1571,6 +1595,22 @@ class TestBlocks(BaseTopazTest):
         return f() { |a, b, c| a * b + c}
         """)
         assert space.int_w(w_res) == 17
+
+    def test_destructuring_arg_block(self, space):
+        w_res = space.execute("""
+        res = []
+        hash = {1 => [2, [3, "ignored", 4]]}
+        ky, a, b, c, d = nil, nil, nil, nil, nil
+        hash.each_pair do |ky, (a, (b, *c, d))|
+          res << ky << a << b << c << d
+        end
+        res << ky << a << b << c << d
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [
+            1, 2, 3, ["ignored"], 4,
+            None, None, None, None, None
+        ]
 
 
 class TestExceptions(BaseTopazTest):

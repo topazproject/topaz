@@ -1,6 +1,6 @@
-from pypy.rlib import jit
-from pypy.rlib.rfloat import formatd
-from pypy.rlib.unroll import unrolling_iterable
+from rpython.rlib import jit
+from rpython.rlib.rfloat import formatd
+from rpython.rlib.unroll import unrolling_iterable
 
 
 FORMAT_CHARS = unrolling_iterable([

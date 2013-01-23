@@ -1,4 +1,4 @@
-from pypy.rlib.rstruct.ieee import float_pack
+from rpython.rlib.rstruct.ieee import float_pack
 
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.intobject import W_FixnumObject

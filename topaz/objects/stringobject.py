@@ -1,11 +1,11 @@
 import copy
 
-from pypy.rlib import jit
-from pypy.rlib.objectmodel import newlist_hint, compute_hash
-from pypy.rlib.rarithmetic import intmask, ovfcheck
-from pypy.rlib.rbigint import rbigint
-from pypy.rlib.rerased import new_static_erasing_pair
-from pypy.rlib.rsre import rsre_core
+from rpython.rlib import jit
+from rpython.rlib.objectmodel import newlist_hint, compute_hash
+from rpython.rlib.rarithmetic import intmask, ovfcheck
+from rpython.rlib.rbigint import rbigint
+from rpython.rlib.rerased import new_static_erasing_pair
+from rpython.rlib.rsre import rsre_core
 
 from topaz.module import ClassDef
 from topaz.modules.comparable import Comparable

@@ -1,9 +1,9 @@
 import sys
 
-from pypy.rlib.listsort import make_timsort_class
-from pypy.rlib.objectmodel import specialize
-from pypy.rlib.rstring import StringBuilder
-from pypy.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_LITERAL_IGNORE,
+from rpython.rlib.listsort import make_timsort_class
+from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rstring import StringBuilder
+from rpython.rlib.rsre.rsre_core import (OPCODE_LITERAL, OPCODE_LITERAL_IGNORE,
     OPCODE_SUCCESS, OPCODE_ASSERT, OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY,
     OPCODE_ANY_ALL, OPCODE_MAX_UNTIL, OPCODE_MIN_UNTIL, OPCODE_GROUPREF,
     OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE, OPCODE_JUMP, OPCODE_ASSERT_NOT,
@@ -1205,8 +1205,7 @@ def _parse_posix_class(source, info):
     raise NotImplementedError("_parse_posix_class")
 
 
-
-def compile(pattern, flags=0):
+def _compile_no_cache(pattern, flags):
     global_flags = flags
     while True:
         source = Source(pattern)
@@ -1233,3 +1232,9 @@ def compile(pattern, flags=0):
     for n, v in info.group_index.iteritems():
         index_group[v] = n
     return code, info.flags, info.group_count, info.group_index, index_group, info.group_offsets
+
+
+def compile(cache, pattern, flags=0):
+    if not cache.contains(pattern, flags):
+        cache.set(pattern, flags, _compile_no_cache(pattern, flags))
+    return cache.get(pattern, flags)

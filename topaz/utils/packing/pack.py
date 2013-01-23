@@ -1,5 +1,5 @@
-from pypy.rlib.rarithmetic import ovfcheck
-from pypy.rlib.rstruct.nativefmttable import native_is_bigendian
+from rpython.rlib.rarithmetic import ovfcheck
+from rpython.rlib.rstruct.nativefmttable import native_is_bigendian
 
 from topaz.utils.packing.floatpacking import make_float_packer
 from topaz.utils.packing.intpacking import make_int_packer
