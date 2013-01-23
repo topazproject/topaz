@@ -143,6 +143,10 @@ class MutableStringStrategy(StringStrategy):
     def mul(self, space, storage, times):
         return space.newstr_fromchars(self.unerase(storage) * times)
 
+    def reverse(self, storage):
+        storage = self.unerase(storage)
+        storage.reverse()
+
     def downcase(self, storage):
         storage = self.unerase(storage)
         changed = False
@@ -738,4 +742,14 @@ class W_StringObject(W_Object):
     def chomp(sep=$/)
         self.dup.chomp!(sep)
     end
+
+    def reverse
+        self.dup.reverse!
+    end
     """)
+
+    @classdef.method("reverse!")
+    def method_reverse_i(self, space):
+        self.strategy.to_mutable(space, self)
+        self.strategy.reverse(self.str_storage)
+        return self
