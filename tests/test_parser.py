@@ -259,12 +259,12 @@ class TestParser(BaseTopazTest):
     def test_multi_assignment(self, space):
         assert space.parse("a.x, b[:idx], c::Const, d = 3") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "x", [], None, 1),
                     ast.Subscript(ast.Send(ast.Self(1), "b", [], None, 1), [ast.ConstantSymbol("idx")], 1),
                     ast.LookupConstant(ast.Send(ast.Self(1), "c", [], None, 1), "Const", 1),
                     ast.Variable("d", 1),
-                ],
+                ]),
                 ast.ConstantInt(3)
             ))
         ]))
@@ -273,25 +273,80 @@ class TestParser(BaseTopazTest):
         ]))
         assert space.parse("a, b = split 2") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Variable("a", 1),
                     ast.Variable("b", 1),
-                ],
+                ]),
                 ast.Send(ast.Self(1), "split", [ast.ConstantInt(2)], None, 1)
             ))
         ]))
-
         with self.raises(space, "SyntaxError"):
             space.parse("a, b += 3")
+        assert space.parse("a, * = 1, 2") == ast.Main(ast.Block([
+            ast.Statement(ast.MultiAssignment(
+                ast.MultiAssignable([
+                    ast.Variable("a", 1),
+                    ast.Splat(None)
+                ]),
+                ast.Array([
+                    ast.ConstantInt(1),
+                    ast.ConstantInt(2)
+                ])
+            ))
+        ]))
+        assert space.parse("a, *, b = 1, 2, 3, 4") == ast.Main(ast.Block([
+            ast.Statement(ast.MultiAssignment(
+                ast.MultiAssignable([
+                    ast.Variable("a", 1),
+                    ast.Splat(None),
+                    ast.Variable("b", 1)
+                ]),
+                ast.Array([
+                    ast.ConstantInt(1),
+                    ast.ConstantInt(2),
+                    ast.ConstantInt(3),
+                    ast.ConstantInt(4)
+                ])
+            ))
+        ]))
+        assert space.parse("a, *b, (c, (d, e, *), ) = 1, 2, 3, [4, [5, 6], 7]") == ast.Main(ast.Block([
+            ast.Statement(ast.MultiAssignment(
+                ast.MultiAssignable([
+                    ast.Variable("a", 1),
+                    ast.Splat(ast.Variable("b", 1)),
+                    ast.MultiAssignable([
+                        ast.Variable("c", 1),
+                        ast.MultiAssignable([
+                            ast.Variable("d", 1),
+                            ast.Variable("e", 1),
+                            ast.Splat(None)
+                        ]),
+                    ]),
+                ]),
+                ast.Array([
+                    ast.ConstantInt(1),
+                    ast.ConstantInt(2),
+                    ast.ConstantInt(3),
+                    ast.Array([
+                        ast.ConstantInt(4),
+                        ast.Array([
+                            ast.ConstantInt(5),
+                            ast.ConstantInt(6)
+                        ]),
+                        ast.ConstantInt(7)
+                    ])
+                ])
+            ))
+        ]))
 
     def test_splat_rhs_assignment(self, space):
         assert space.parse("a,b,c = *[1,2,3]") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Variable("a", 1),
                     ast.Variable("b", 1),
                     ast.Variable("c", 1),
-                ],
+                ]),
                 ast.Array([ast.Splat(ast.Array(
                     [
                         ast.ConstantInt(1),
@@ -339,11 +394,11 @@ class TestParser(BaseTopazTest):
     def test_splat_lhs_assignment(self, space):
         assert space.parse("a,*b,c = *[1,2]") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Variable("a", 1),
                     ast.Splat(ast.Variable("b", 1)),
                     ast.Variable("c", 1),
-                ],
+                ]),
                 ast.Array([ast.Splat(ast.Array(
                     [
                         ast.ConstantInt(1),
@@ -354,49 +409,49 @@ class TestParser(BaseTopazTest):
         ]))
         assert space.parse("a, *b, c = 1") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Variable("a", 1),
                     ast.Splat(ast.Variable("b", 1)),
                     ast.Variable("c", 1),
-                ],
+                ]),
                 ast.ConstantInt(1),
             ))
         ]))
         assert space.parse("*b,c = 1") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Splat(ast.Variable("b", 1)),
                     ast.Variable("c", 1),
-                ],
+                ]),
                 ast.ConstantInt(1),
             ))
         ]))
         assert space.parse("b,*c = 1") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Variable("b", 1),
                     ast.Splat(ast.Variable("c", 1)),
-                ],
+                ]),
                 ast.ConstantInt(1),
             ))
         ]))
         assert space.parse("*c = 1") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [
+                ast.MultiAssignable([
                     ast.Splat(ast.Variable("c", 1)),
-                ],
+                ]),
                 ast.ConstantInt(1),
             ))
         ]))
         assert space.parse("* = 1") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [ast.Splat(None)],
+                ast.MultiAssignable([ast.Splat(None)]),
                 ast.ConstantInt(1),
             ))
         ]))
         assert space.parse("a, = 3, 4") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
-                [ast.Variable("a", 1)],
+                ast.MultiAssignable([ast.Variable("a", 1)]),
                 ast.Array([ast.ConstantInt(3), ast.ConstantInt(4)]),
             ))
         ]))
@@ -571,7 +626,10 @@ class TestParser(BaseTopazTest):
         assert space.parse("for i, in []; end") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Array([]), "each", [], ast.SendBlock(
                 [ast.Argument("0")], None, None, ast.Block([
-                    ast.Statement(ast.MultiAssignment([ast.Variable("i", 1)], ast.Variable("0", 1)))
+                    ast.Statement(ast.MultiAssignment(
+                        ast.MultiAssignable([ast.Variable("i", 1)]),
+                        ast.Variable("0", 1)
+                    ))
             ])), 1))
         ]))
 
@@ -606,11 +664,11 @@ class TestParser(BaseTopazTest):
                 ast.SendBlock(
                     [ast.Argument("0")], None, None, ast.Block([
                         ast.Statement(ast.MultiAssignment(
-                            [
+                            ast.MultiAssignable([
                                 ast.InstanceVariable("@a"),
                                 ast.Splat(ast.Variable("b", 2)),
                                 ast.Global("$c")
-                            ],
+                            ]),
                             ast.Variable("0", 2)
                         ))
                     ])
@@ -1271,6 +1329,48 @@ HERE
         ]))
         assert space.parse("f { |&s| }") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock([], None, "s", ast.Nil()), 1))
+        ]))
+        assert space.parse("f { |a, (x, y)| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [
+                    ast.Argument("a"),
+                    ast.Argument("1"),
+                ],
+                None, None,
+                ast.Block([ast.Statement(
+                    ast.MultiAssignment(
+                        ast.MultiAssignable([
+                            ast.Variable("x", -1),
+                            ast.Variable("y", -1),
+                        ]),
+                        ast.Variable("1", 1)
+                    )
+                )])
+            ), 1)),
+        ]))
+        assert space.parse("f { |a, (x, (*, y, z)), d, *r, &b| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [
+                    ast.Argument("a"),
+                    ast.Argument("1"),
+                    ast.Argument("d")
+                ],
+                "r",
+                "b",
+                ast.Block([ast.Statement(
+                    ast.MultiAssignment(
+                        ast.MultiAssignable([
+                            ast.Variable("x", -1),
+                            ast.MultiAssignable([
+                                ast.Splat(None),
+                                ast.Variable("y", -1),
+                                ast.Variable("z", -1)
+                            ])
+                        ]),
+                        ast.Variable("1", 1)
+                    )
+                )])
+            ), 1)),
         ]))
 
     def test_parens_call(self, space):
