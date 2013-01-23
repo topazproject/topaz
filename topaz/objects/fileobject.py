@@ -388,3 +388,8 @@ class W_FileObject(W_IOObject):
     @classdef.method("closed?")
     def method_closedp(self, space):
         return space.newbool(self.fd == -1)
+
+    @classdef.method("truncate", length="int")
+    def method_truncate(self, space, length):
+        os.ftruncate(self.fd, length)
+        return space.newint(0)
