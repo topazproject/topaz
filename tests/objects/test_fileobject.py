@@ -300,6 +300,16 @@ class TestFile(BaseTopazTest):
         assert space.str_w(space.execute("return File.basename('/ab')")) == "ab"
         assert space.str_w(space.execute("return File.basename('/foo/bar/ab')")) == "ab"
 
+    def test_truncate(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("content")
+        w_res = space.execute("""
+        f = File.new('%s', "r+")
+        f.truncate(3)
+        return f.read
+        """ % f)
+        assert self.unwrap(space, w_res) == "con"
+
 
 class TestExpandPath(BaseTopazTest):
     def test_expand_to_absolute(self, space):
