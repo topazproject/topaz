@@ -77,6 +77,15 @@ class TestIO(BaseTopazTest):
         out, err = capfd.readouterr()
         assert out == "foo:bar:baz\nlastprint\n"
 
+    def test_non_string_print_globals(self, space, capfd):
+        space.globals.set(space, "$,", space.w_nil)
+        space.globals.set(space, "$\\", space.w_nil)
+        space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
+        space.globals.set(space, "$_", space.w_nil)
+        space.execute('IO.new(1, "w").print')
+        out, err = capfd.readouterr()
+        assert out == "foobarbaz"
+
     def test_puts(self, space, capfd):
         space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
         out, err = capfd.readouterr()
@@ -302,6 +311,8 @@ class TestExpandPath(BaseTopazTest):
             os.path.join(os.getcwd(), "a"),
             os.path.join(os.getcwd(), "a"),
         ]
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute("""return File.expand_path(".\\0.")""")
 
     def test_covert_to_absolute_using_provided_base(self, space):
         w_res = space.execute("""return File.expand_path("", "/tmp")""")
@@ -312,6 +323,8 @@ class TestExpandPath(BaseTopazTest):
         assert self.unwrap(space, w_res) == "/tmp/a"
         w_res = space.execute("""return File.expand_path(".", "/")""")
         assert self.unwrap(space, w_res) == "/"
+        w_res = space.execute("""return File.expand_path(".", nil)""")
+        assert self.unwrap(space, w_res) == os.getcwd()
 
     def test_home_expansion(self, space):
         w_res = space.execute("""return File.expand_path("~")""")

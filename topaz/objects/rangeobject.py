@@ -29,14 +29,15 @@ class W_RangeObject(W_Object):
 
     classdef.app_method("""
     def each
+        unless self.begin.is_a? Integer
+            raise TypeError, "can't iterate from Float"
+        end
         i = self.begin
         lim = self.end
-        if !self.exclude_end?
-            lim = lim.succ
-        end
+        lim += 0.1 unless self.exclude_end?
         while i < lim
             yield i
-            i = i.succ
+            i += 1
         end
     end
 

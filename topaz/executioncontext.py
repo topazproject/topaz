@@ -1,14 +1,7 @@
-from pypy.rlib import jit
+from rpython.rlib import jit
 
 from topaz.error import RubyError
 from topaz.frame import Frame
-
-
-class IntegerWrapper(object):
-    _immutable_fields_ = ["value"]
-
-    def __init__(self, value):
-        self.value = value
 
 
 class ExecutionContext(object):
@@ -16,7 +9,7 @@ class ExecutionContext(object):
 
     def __init__(self):
         self.topframeref = jit.vref_None
-        self.last_instr_ref = None
+        self.last_instr = -1
         self.regexp_match_cell = None
         self.w_trace_proc = None
         self.in_trace_proc = False
@@ -51,9 +44,9 @@ class ExecutionContext(object):
 
     def enter(self, frame):
         frame.backref = self.topframeref
-        if self.last_instr_ref is not None:
-            frame.back_last_instr = self.last_instr_ref.value
-            self.last_instr_ref = None
+        if self.last_instr != -1:
+            frame.back_last_instr = self.last_instr
+            self.last_instr = -1
         self.topframeref = jit.virtual_ref(frame)
         if isinstance(frame, Frame):
             self.regexp_match_cell = frame.regexp_match_cell

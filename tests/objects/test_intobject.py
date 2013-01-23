@@ -1,7 +1,7 @@
 import sys
 
-from pypy.rlib.rarithmetic import LONG_BIT
-from pypy.rlib.rbigint import rbigint
+from rpython.rlib.rarithmetic import LONG_BIT
+from rpython.rlib.rbigint import rbigint
 
 from ..base import BaseTopazTest
 
@@ -18,6 +18,10 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("return (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3)) + (2 << (0.size * 8 - 3))")
         assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * 3)
 
+    def test_addition_bigint(self, space):
+        w_res = space.execute("return 2 + %d" % (sys.maxint + 1))
+        assert self.unwrap(space, w_res) == rbigint.fromlong(sys.maxint + 3)
+
     def test_multiplication(self, space):
         w_res = space.execute("return 2 * 3")
         assert space.int_w(w_res) == 6
@@ -25,6 +29,10 @@ class TestFixnumObject(BaseTopazTest):
     def test_multiplication_ovf(self, space):
         w_res = space.execute("return (2 << (0.size * 8 - 3)) * (2 << (0.size * 8 - 3))")
         assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) ** 2)
+
+    def test_multiplication_bigint(self, space):
+        w_res = space.execute("return 1 * %d" % (sys.maxint + 1))
+        assert self.unwrap(space, w_res) == rbigint.fromlong(sys.maxint + 1)
 
     def test_subtraction(self, space):
         w_res = space.execute("return 2 - 3")
@@ -36,6 +44,10 @@ class TestFixnumObject(BaseTopazTest):
     def test_subtraction_ovf(self, space):
         w_res = space.execute("return 0 - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3)) - (2 << (0.size * 8 - 3))")
         assert space.bigint_w(w_res) == rbigint.fromlong((2 << (LONG_BIT - 3)) * -3)
+
+    def test_substraction_bigint(self, space):
+        w_res = space.execute("return 1 - %d" % (sys.maxint + 1))
+        assert self.unwrap(space, w_res) == rbigint.fromlong(1 - sys.maxint - 1)
 
     def test_division(self, space):
         w_res = space.execute("return 3 / 5")
@@ -65,6 +77,12 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("return 12 ^ 15")
         assert space.int_w(w_res) == 3
 
+    def test_or(self, space):
+        w_res = space.execute("return 16 | 7")
+        assert space.int_w(w_res) == 23
+        w_res = space.execute("return 7 | 3")
+        assert space.int_w(w_res) == 7
+
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
         assert w_res is space.w_true
@@ -93,6 +111,8 @@ class TestFixnumObject(BaseTopazTest):
 
     def test_less(self, space):
         w_res = space.execute("return 1 < 2")
+        assert w_res is space.w_true
+        w_res = space.execute("return 1 < 1.2")
         assert w_res is space.w_true
 
     def test_less_equal(self, space):
@@ -218,6 +238,14 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("return 1.size")
         assert space.int_w(w_res) == expected
 
+    def test_chr(self, space):
+        w_res = space.execute("return 65.chr")
+        assert self.unwrap(space, w_res) == "A"
+        with self.raises(space, "RangeError", "256 out of char range"):
+            space.execute("256.chr")
+        with self.raises(space, "RangeError", "-1 out of char range"):
+            space.execute("-1.chr")
+
     def test_pow(self, space):
         w_res = space.execute("return 2 ** 6")
         assert self.unwrap(space, w_res) == 64
@@ -229,3 +257,29 @@ class TestFixnumObject(BaseTopazTest):
         assert self.unwrap(space, w_res) == 0.5
         with self.raises(space, "TypeError", "String can't be coerced into Fixnum"):
             space.execute("2 ** 'hallo'")
+
+    def test_step(self, space):
+        w_res = space.execute("""
+        res = []
+        1.step(4) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4]
+        w_res = space.execute("""
+        res = []
+        1.step(4.1) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1.0, 2.0, 3.0, 4.0]
+        w_res = space.execute("""
+        res = []
+        1.step(10, 2) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 3, 5, 7, 9]
+        w_res = space.execute("""
+        res = []
+        1.step(2, 0.6) { |i| res << i }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1.0, 1.6]

@@ -92,6 +92,12 @@ class TestDir(BaseTopazTest):
         res = self.unwrap(space, w_res)
         res.sort()
         assert res == ["sub1/sub1content1", "sub1/sub1content2"]
+        w_res = space.execute("""
+        Dir.chdir('%s') do
+            return Dir['%s/']
+        end
+        """ % (tmpdir, tmpdir.join("..")))
+        assert self.unwrap(space, w_res) == [str(tmpdir.join("..")) + "/"]
 
     def test_read(self, space, tmpdir):
         d = tmpdir.mkdir("sub")

@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import os
 
-from pypy.rlib.rstring import assert_str0
-from pypy.rlib.streamio import open_file_as_stream
+from rpython.rlib.rstring import assert_str0
+from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.error import RubyError
 from topaz.module import Module, ModuleDef
@@ -248,8 +248,8 @@ class Kernel(Module):
     def method_instance_variable_definedp(self, space, name):
         return space.newbool(self.find_instance_var(space, name) is not None)
 
-    @moduledef.method("respond_to?")
-    def method_respond_top(self, space, w_name):
+    @moduledef.method("respond_to?", include_private="bool")
+    def method_respond_top(self, space, w_name, include_private=False):
         return space.newbool(space.respond_to(self, w_name))
 
     @moduledef.method("dup")

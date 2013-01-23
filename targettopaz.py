@@ -1,4 +1,4 @@
-from pypy.jit.codewriter.policy import JitPolicy
+from rpython.jit.codewriter.policy import JitPolicy
 
 from topaz.main import create_entry_point, get_topaz_config_options
 

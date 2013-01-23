@@ -1,21 +1,22 @@
 import os
 
-from pypy.rlib.rsre import rsre_core
-from pypy.rlib.rstring import StringBuilder
+from rpython.rlib.rsre import rsre_core
+from rpython.rlib.rstring import StringBuilder
 
 from topaz.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
 from topaz.utils import regexp
 
 
-def regexp_match(re, string, _flags=0):
+def regexp_match(cache, re, string):
     pos = 0
     endpos = len(string)
-    code, flags, _, _, _, _ = regexp.compile(re, _flags)
+    code, flags, _, _, _, _ = regexp.compile(cache, re)
     return rsre_core.StrMatchContext(code, string, pos, endpos, flags)
 
 
 class Glob(object):
-    def __init__(self, matches=None):
+    def __init__(self, cache, matches=None):
+        self.cache = cache
         self._matches = matches or []
 
     def matches(self):
@@ -26,7 +27,7 @@ class Glob(object):
 
     def path_split(self, string):
         ret = []
-        ctx = regexp_match("/+", string)
+        ctx = regexp_match(self.cache, "/+", string)
 
         last_end = 0
         while rsre_core.search_context(ctx):
@@ -56,7 +57,7 @@ class Glob(object):
             last = DirectoriesOnly(None, flags)
         else:
             file = parts.pop()
-            ctx = regexp_match("^[a-zA-Z0-9._]+$", file)
+            ctx = regexp_match(self.cache, r"^[a-zA-Z0-9._]+$", file)
             if rsre_core.search_context(ctx):
                 last = ConstantEntry(None, flags, file)
             else:
@@ -71,12 +72,12 @@ class Glob(object):
                 else:
                     last = StartRecursiveDirectories(last, flags)
             else:
-                pattern = "^[^\*\?\]]+"
-                ctx = regexp_match(pattern, dir)
+                pattern = r"^[^\*\?\]]+"
+                ctx = regexp_match(self.cache, pattern, dir)
                 if rsre_core.search_context(ctx):
                     partidx = len(parts) - 2
                     assert partidx >= 0
-                    ctx = regexp_match(pattern, parts[partidx])
+                    ctx = regexp_match(self.cache, pattern, parts[partidx])
 
                     while rsre_core.search_context(ctx):
                         next_sep = parts.pop()
@@ -85,7 +86,7 @@ class Glob(object):
 
                         partidx = len(parts) - 2
                         assert partidx >= 0
-                        ctx = regexp_match(pattern, parts[partidx])
+                        ctx = regexp_match(self.cache, pattern, parts[partidx])
                     last = ConstantDirectory(last, flags, dir)
                 elif len(dir) > 0:
                     last = DirectoryMatch(last, flags, dir)
@@ -299,9 +300,9 @@ class Match(Node):
         res.append("$")
         return res.build()
 
-    def ismatch(self, string):
+    def ismatch(self, cache, string):
         string = os.path.normcase(string)
-        ctx = regexp_match(self.regexp, string)
+        ctx = regexp_match(cache, self.regexp, string)
         return rsre_core.search_context(ctx)
 
 
@@ -311,7 +312,7 @@ class DirectoryMatch(Match):
             return
 
         for ent in os.listdir(path if path else "."):
-            if self.ismatch(ent):
+            if self.ismatch(glob.cache, ent):
                 full = self.path_join(path, ent)
                 if os.path.isdir(full):
                     self.next.call(glob, full)
@@ -328,7 +329,7 @@ class EntryMatch(Match):
             return
 
         for ent in entries:
-            if self.ismatch(ent):
+            if self.ismatch(glob.cache, ent):
                 glob.append_match(self.path_join(path, ent))
 
 

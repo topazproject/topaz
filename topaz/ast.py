@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pypy.rlib.objectmodel import we_are_translated
+from rpython.rlib.objectmodel import we_are_translated
 
 from topaz import consts
 from topaz.astcompiler import CompilerContext, BlockSymbolTable
@@ -585,10 +585,9 @@ class AndEqual(Node):
         ConstantString("assignment").compile(ctx)
 
 
-class MultiAssignment(Node):
-    def __init__(self, targets, value):
+class MultiAssignable(Node):
+    def __init__(self, targets):
         self.targets = targets
-        self.value = value
 
     def splat_index(self):
         for i, node in enumerate(self.targets):
@@ -596,8 +595,10 @@ class MultiAssignment(Node):
                 return i
         return -1
 
-    def compile(self, ctx):
-        self.value.compile(ctx)
+    def compile_receiver(self, ctx):
+        return 0
+
+    def compile_store(self, ctx):
         ctx.emit(consts.DUP_TOP)
         ctx.emit(consts.COERCE_ARRAY, 0)
         splat_index = self.splat_index()
@@ -614,6 +615,16 @@ class MultiAssignment(Node):
                 ctx.emit(consts.ROT_THREE)
             target.compile_store(ctx)
             ctx.emit(consts.DISCARD_TOP)
+
+
+class MultiAssignment(Node):
+    def __init__(self, assignable, value):
+        self.assignable = assignable
+        self.value = value
+
+    def compile(self, ctx):
+        self.value.compile(ctx)
+        self.assignable.compile_store(ctx)
 
     def compile_defined(self, ctx):
         ConstantString("assignment").compile(ctx)
@@ -770,9 +781,10 @@ class Splat(Node):
 
 
 class SendBlock(Node):
-    def __init__(self, block_args, splat_arg, block):
+    def __init__(self, block_args, splat_arg, block_arg, block):
         self.block_args = block_args
         self.splat_arg = splat_arg
+        self.block_arg = block_arg
         self.block = block
 
     def compile(self, ctx):
@@ -787,6 +799,8 @@ class SendBlock(Node):
             block_ctx.symtable.get_cell_num(arg.name)
         if self.splat_arg is not None:
             block_ctx.symtable.get_cell_num(self.splat_arg)
+        if self.block_arg is not None:
+            block_ctx.symtable.get_cell_num(self.block_arg)
 
         for name in ctx.symtable.cells:
             if (name not in block_ctx.symtable.cell_numbers and
@@ -796,7 +810,7 @@ class SendBlock(Node):
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, None)
+        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, self.block_arg)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)

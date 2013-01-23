@@ -1,4 +1,4 @@
-from pypy.rlib import jit
+from rpython.rlib import jit
 
 from topaz.closure import LocalCell
 
@@ -127,7 +127,7 @@ class Frame(BaseFrame):
         if prev_frame is None:
             instr = self.last_instr
         else:
-            instr = prev_frame.back_last_instr
+            instr = prev_frame.back_last_instr - 1
         return self.bytecode.lineno_table[instr]
 
     def get_code_name(self):

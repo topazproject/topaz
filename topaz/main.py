@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import os
 
-from pypy.rlib.objectmodel import specialize
-from pypy.rlib.streamio import open_file_as_stream
+from rpython.rlib.objectmodel import specialize
+from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
@@ -80,6 +80,7 @@ def _entry_point(space, argv):
     else:
         raise NotImplementedError("reading script from stdin")
 
+    space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
     w_exit_error = None
     try:

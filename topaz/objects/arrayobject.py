@@ -1,6 +1,6 @@
 import copy
 
-from pypy.rlib.listsort import TimSort
+from rpython.rlib.listsort import TimSort
 
 from topaz.module import ClassDef
 from topaz.modules.enumerable import Enumerable
@@ -404,5 +404,13 @@ class W_ArrayObject(W_Object):
             result.concat(self)
         end
         result
+    end
+
+    def max(&block)
+        max = self[0]
+        self.each do |e|
+            max = e if (block ? block.call(max, e) : max <=> e) < 0
+        end
+        max
     end
     """)

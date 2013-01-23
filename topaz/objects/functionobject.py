@@ -5,7 +5,7 @@ from topaz.objects.objectobject import W_BaseObject
 
 
 class W_FunctionObject(W_BaseObject):
-    _immutable_fields_ = ["name"]
+    _immutable_fields_ = ["name", "w_class"]
 
     def __init__(self, name, w_class=None):
         self.name = name
