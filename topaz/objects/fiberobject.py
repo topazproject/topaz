@@ -1,5 +1,5 @@
-from pypy.rlib import jit
-from pypy.rlib.rstacklet import StackletThread
+from rpython.rlib import jit
+from rpython.rlib.rstacklet import StackletThread
 
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object

@@ -1,6 +1,6 @@
 import copy
 
-from pypy.config.translationoption import get_combined_translation_config
+from rpython.config.translationoption import get_combined_translation_config
 
 
 def pytest_funcarg__space(request):
