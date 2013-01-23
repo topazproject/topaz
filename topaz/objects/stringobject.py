@@ -744,7 +744,7 @@ class W_StringObject(W_Object):
     end
 
     def reverse
-        self.dup.reverse
+        self.dup.reverse!
     end
     """)
 
