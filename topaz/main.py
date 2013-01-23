@@ -72,6 +72,7 @@ def _entry_point(space, argv):
     else:
         raise NotImplementedError("reading script from stdin")
 
+    space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
     w_exit_error = None
     try:
