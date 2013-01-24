@@ -124,7 +124,7 @@ class W_IOObject(W_Object):
 
     @classdef.method("flush")
     def method_flush(self, space):
-        # We have no internal buffers to flush!
+        os.fsync(self.fd)
         return self
 
     @classdef.method("print")
