@@ -777,11 +777,11 @@ class SendBlock(Node):
         self.block = block
 
     def compile(self, ctx):
-        name = "block in %s" % ctx.code_name
-        block_ctx = ctx.get_subctx(name, self)
-        for name, kind in block_ctx.symtable.cells.iteritems():
+        blockname = "block in %s" % ctx.code_name
+        block_ctx = ctx.get_subctx(blockname, self)
+        for cellname, kind in block_ctx.symtable.cells.iteritems():
             if kind == block_ctx.symtable.CELLVAR:
-                block_ctx.symtable.get_cell_num(name)
+                block_ctx.symtable.get_cell_num(cellname)
         block_args = []
         defaults = []
         for arg in self.block_args:
@@ -789,7 +789,7 @@ class SendBlock(Node):
             block_args.append(arg.name)
             block_ctx.symtable.get_cell_num(arg.name)
             if arg.defl is not None:
-                arg_ctx = CompilerContext(ctx.space, name, block_ctx.symtable, ctx.filepath)
+                arg_ctx = CompilerContext(ctx.space, blockname, block_ctx.symtable, ctx.filepath)
                 arg.defl.compile(arg_ctx)
                 arg_ctx.emit(consts.RETURN)
                 bc = arg_ctx.create_bytecode([], [], None, None)
