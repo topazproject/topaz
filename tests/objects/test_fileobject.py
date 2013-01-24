@@ -9,6 +9,11 @@ from ..base import BaseTopazTest
 
 
 class TestIO(BaseTopazTest):
+    def test_constants(self, space):
+        assert space.int_w(space.execute("return IO::SEEK_CUR")) == os.SEEK_CUR
+        assert space.int_w(space.execute("return IO::SEEK_END")) == os.SEEK_END
+        assert space.int_w(space.execute("return IO::SEEK_SET")) == os.SEEK_SET
+
     def test_new_from_file(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
         f = tmpdir.join("file.txt")
@@ -109,6 +114,37 @@ class TestIO(BaseTopazTest):
         assert out == "STDOUT\n$stdout\n$>\n"
         assert err == "STDERR\n$stderr\n"
         assert self.unwrap(space, w_res) == [None, None]
+
+    def test_rewind(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("content")
+        w_res = space.execute("""
+        f = File.new('%s', "r+")
+        c = f.read
+        f.rewind
+        return c, f.read
+        """ % f)
+        assert self.unwrap(space, w_res) == ["content", "content"]
+
+    def test_seek(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("content")
+        w_res = space.execute("""
+        res = []
+        f = File.new('%s', "r+")
+        f.seek(2, IO::SEEK_SET)
+        res << f.read
+        f.seek(2)
+        res << f.read
+        f.seek(-3, IO::SEEK_CUR)
+        res << f.read
+        f.seek(-2, IO::SEEK_END)
+        res << f.read
+        return res
+        """ % f)
+        assert self.unwrap(space, w_res) == [
+            "ntent", "ntent", "ent", "nt"
+        ]
 
 
 class TestFile(BaseTopazTest):

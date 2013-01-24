@@ -51,6 +51,10 @@ class W_IOObject(W_Object):
         space.globals.set(space, "$stderr", w_stderr)
         space.set_const(space.w_object, "STDERR", w_stderr)
 
+        space.set_const(w_cls, "SEEK_CUR", space.newint(os.SEEK_CUR))
+        space.set_const(w_cls, "SEEK_END", space.newint(os.SEEK_END))
+        space.set_const(w_cls, "SEEK_SET", space.newint(os.SEEK_SET))
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_IOObject(space)
@@ -126,6 +130,16 @@ class W_IOObject(W_Object):
     def method_flush(self, space):
         # We have no internal buffers to flush!
         return self
+
+    @classdef.method("seek", amount="int", whence="int")
+    def method_seek(self, space, amount, whence=os.SEEK_SET):
+        os.lseek(self.fd, amount, whence)
+        return space.newint(0)
+
+    @classdef.method("rewind")
+    def method_rewind(self, space):
+        os.lseek(self.fd, 0, os.SEEK_SET)
+        return space.newint(0)
 
     @classdef.method("print")
     def method_print(self, space, args_w):
