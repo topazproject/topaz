@@ -358,9 +358,8 @@ class ObjectSpace(object):
         return w_obj.symbol_w(self)
 
     def str_w(self, w_obj):
-        string = w_obj.str_w(self)
-        assert string is not None
-        return string
+        """Unpacks a string object as an rstr."""
+        return w_obj.str_w(self)
 
     def listview(self, w_obj):
         return w_obj.listview(self)
