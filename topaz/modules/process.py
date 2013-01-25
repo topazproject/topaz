@@ -15,3 +15,14 @@ class Process(Module):
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
         raise space.error(space.w_SystemExit, "exit", [space.newint(status)])
+
+    @moduledef.function("fork")
+    def method_fork(self, space, block):
+        pid = os.fork()
+        if pid == 0:
+            if block is not None:
+                space.invoke_block(block, [])
+                exit(0)
+            else:
+                return space.w_nil
+        return space.newint(pid)
