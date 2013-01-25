@@ -179,6 +179,23 @@ class W_IOObject(W_Object):
                 os.write(self.fd, "\n")
         return space.w_nil
 
+    @classdef.singleton_method("pipe")
+    def method_pipe(self, space, block=None):
+        r, w = os.pipe()
+        pipes_w = [
+            space.send(self, space.newsymbol("new"), [space.newint(r)]),
+            space.send(self, space.newsymbol("new"), [space.newint(w)])
+        ]
+        if block is not None:
+            try:
+                return space.invoke_block(block, pipes_w)
+            finally:
+                for pipe_w in pipes_w:
+                    if not space.is_true(space.send(pipe_w, space.newsymbol("closed?"))):
+                        space.send(pipe_w, space.newsymbol("close"))
+        else:
+            return space.newarray(pipes_w)
+
     classdef.app_method("""
     def each_line(sep=$/, limit=nil)
         if sep.is_a?(Fixnum) && limit.nil?
@@ -220,6 +237,17 @@ class W_IOObject(W_Object):
         self
     end
     """)
+
+    @classdef.method("close")
+    def method_close(self, space):
+        self.ensure_not_closed(space)
+        os.close(self.fd)
+        self.fd = -1
+        return self
+
+    @classdef.method("closed?")
+    def method_closedp(self, space):
+        return space.newbool(self.fd == -1)
 
 
 class W_FileObject(W_IOObject):
@@ -400,17 +428,6 @@ class W_FileObject(W_IOObject):
         end
     end
     """)
-
-    @classdef.method("close")
-    def method_close(self, space):
-        self.ensure_not_closed(space)
-        os.close(self.fd)
-        self.fd = -1
-        return self
-
-    @classdef.method("closed?")
-    def method_closedp(self, space):
-        return space.newbool(self.fd == -1)
 
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):
