@@ -180,14 +180,14 @@ class W_IOObject(W_Object):
         return space.w_nil
 
     classdef.app_method("""
-    def self.popen(cmd, mode='r', opts={})
+    def self.popen(cmd, mode='r', opts={}, &block)
         r, w = IO.pipe
         if mode != 'r' && mode != 'w'
             raise NotImplementedError, "mode #{mode} for IO.popen"
         end
 
         pid = fork do
-            if mode == 'r'
+            if mode == 'w'
                 r.close
                 $stdout.reopen(w)
             else
@@ -197,9 +197,16 @@ class W_IOObject(W_Object):
             exec *cmd
         end
 
-        res = mode == 'r' ? r : w
+        if mode == 'r'
+            res = r
+            w.close
+        else
+            res = w
+            r.close
+        end
+
         res.instance_variable_set("@pid", pid)
-        return res
+        block ? yield(res) : res
     end
 
     def pid
@@ -212,14 +219,34 @@ class W_IOObject(W_Object):
         if self.fd >= 0:
             os.close(self.fd)
         if space.is_kind_of(w_io_or_path, space.getclassfor(W_IOObject)):
-            assert isinstance(W_IOObject)
-            os.fdopen(w_io_or_path.fd)
+            assert isinstance(w_io_or_path, W_IOObject)
+            self.fd = w_io_or_path.fd
         else:
             args = [w_io_or_path] if w_mode is None else [w_io_or_path, w_mode]
             w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
             assert isinstance(w_io, W_IOObject)
             self.fd = w_io.fd
         return self
+
+    @classdef.singleton_method("pipe")
+    def method_pipe(self, space, block=None):
+        r, w = os.pipe()
+        pipes_w = [
+            space.send(self, space.newsymbol("new"), [space.newint(r)]),
+            space.send(self, space.newsymbol("new"), [space.newint(w)])
+        ]
+        if block is not None:
+            space.invoke_block(block, pipes_w)
+            try:
+                os.close(r)
+            except OSError:
+                pass
+            try:
+                os.close(w)
+            except OSError:
+                pass
+        else:
+            return space.newarray(pipes_w)
 
     classdef.app_method("""
     def each_line(sep=$/, limit=nil)
@@ -262,6 +289,18 @@ class W_IOObject(W_Object):
         self
     end
     """)
+
+    @classdef.method("close")
+    def method_close(self, space):
+        self.ensure_not_closed(space)
+        os.close(self.fd)
+        self.fd = -1
+        return self
+
+    @classdef.method("closed?")
+    def method_closedp(self, space):
+        return space.newbool(self.fd == -1)
+
 
 
 class W_FileObject(W_IOObject):
@@ -442,17 +481,6 @@ class W_FileObject(W_IOObject):
         end
     end
     """)
-
-    @classdef.method("close")
-    def method_close(self, space):
-        self.ensure_not_closed(space)
-        os.close(self.fd)
-        self.fd = -1
-        return self
-
-    @classdef.method("closed?")
-    def method_closedp(self, space):
-        return space.newbool(self.fd == -1)
 
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):
