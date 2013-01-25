@@ -37,10 +37,27 @@ class TestIO(BaseTopazTest):
         assert out == content
         content = "foo\n"
 
+        fd = os.dup(1)
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = IO.new(%d, "w")
+            io.close
+            io.write("")
+            """ % fd)
+        fd = os.dup(1)
+
     def test_push(self, space, capfd):
         space.execute('return IO.new(1, "w") << "hello" << "world"')
         out, err = capfd.readouterr()
         assert out == "helloworld"
+
+        fd = os.dup(1)
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = IO.new(%d, "w")
+            io.close
+            io << ""
+            """ % fd)
 
     def test_read(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
@@ -63,10 +80,24 @@ class TestIO(BaseTopazTest):
         with self.raises(space, "ArgumentError"):
             space.execute("File.new('%s').read(-1)" % f)
 
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s')
+            io.close
+            io.read
+            """ % f)
+
     def test_simple_print(self, space, capfd):
         space.execute('IO.new(1, "w").print("foo")')
         out, err = capfd.readouterr()
         assert out == "foo"
+        fd = os.dup(1)
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = IO.new(%d, "w")
+            io.close
+            io.print ""
+            """ % fd)
 
     def test_multi_print(self, space, capfd):
         space.execute('IO.new(1, "w").print("This", "is", 100, "percent")')
@@ -95,11 +126,25 @@ class TestIO(BaseTopazTest):
         space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
         out, err = capfd.readouterr()
         assert out == "This\nis\n100\npercent\n"
+        fd = os.dup(1)
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = IO.new(%d, "w")
+            io.close
+            io.puts ""
+            """ % fd)
 
     def test_flush(self, space, capfd):
         space.execute("IO.new(1, 'w').flush.puts('String')")
         out, err = capfd.readouterr()
         assert out == "String\n"
+        fd = os.dup(1)
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = IO.new(%d, "w")
+            io.close
+            io.flush
+            """ % fd)
 
     def test_globals(self, space, capfd):
         w_res = space.execute("""
@@ -125,6 +170,12 @@ class TestIO(BaseTopazTest):
         return c, f.read
         """ % f)
         assert self.unwrap(space, w_res) == ["content", "content"]
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s')
+            io.close
+            io.rewind
+            """ % f)
 
     def test_seek(self, space, tmpdir):
         f = tmpdir.join("file.txt")
@@ -145,6 +196,12 @@ class TestIO(BaseTopazTest):
         assert self.unwrap(space, w_res) == [
             "ntent", "ntent", "ent", "nt"
         ]
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s')
+            io.close
+            io.seek 2
+            """ % f)
 
     def test_pipe(self, space):
         w_res = space.execute("""
