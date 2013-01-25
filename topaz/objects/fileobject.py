@@ -89,6 +89,7 @@ class W_IOObject(W_Object):
 
     @classdef.method("read")
     def method_read(self, space, w_length=None, w_str=None):
+        self.ensure_not_closed(space)
         if w_length:
             length = space.int_w(w_length)
             if length < 0:
@@ -136,17 +137,19 @@ class W_IOObject(W_Object):
 
     @classdef.method("flush")
     def method_flush(self, space):
+        # We have no internal buffers to flush!
         self.ensure_not_closed(space)
-        os.fsync(self.fd)
         return self
 
     @classdef.method("seek", amount="int", whence="int")
     def method_seek(self, space, amount, whence=os.SEEK_SET):
+        self.ensure_not_closed(space)
         os.lseek(self.fd, amount, whence)
         return space.newint(0)
 
     @classdef.method("rewind")
     def method_rewind(self, space):
+        self.ensure_not_closed(space)
         os.lseek(self.fd, 0, os.SEEK_SET)
         return space.newint(0)
 
