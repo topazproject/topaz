@@ -1895,11 +1895,6 @@ class Parser(object):
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
-        """
-        f_arg ',' f_block_optarg ',' f_rest_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, $5, null, $6);
-                }
-        """
         return self.new_args(
             args=self._new_list(p[0].getastlist() + p[2].getastlist()),
             splat_arg=p[4],
@@ -1908,11 +1903,6 @@ class Parser(object):
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
-        """
-        f_arg ',' f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
-                }
-        """
         return self.new_args(
             args=self._new_list(p[0].getastlist() + p[2].getastlist()),
             splat_arg=p[4],
@@ -1921,11 +1911,6 @@ class Parser(object):
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg opt_f_block_arg")
     def block_param_f_arg_comma_f_block_optarg_opt_f_block_arg(self, p):
-        """
-        f_arg ',' f_block_optarg opt_f_block_arg {
-                    $$ = support.new_args($1.getPosition(), $1, $3, null, null, $4);
-                }
-        """
         return self.new_args(self._new_list(p[0].getastlist() + p[2].getastlist()), None, p[3])
 
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
