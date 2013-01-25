@@ -202,6 +202,7 @@ class W_IOObject(W_Object):
                     raise space.error(space.w_ArgumentError, "wrong number of arguments")
                 else:
                     env = {}
+                    assert isinstance(w_env_or_executable, W_HashObject)
                     for w_key, w_value in w_env_or_executable.contents.iteritems():
                         env[Coerce.str(space, w_key)] = Coerce.str(space, w_value)
                     cmds_w.pop(0)
@@ -221,7 +222,7 @@ class W_IOObject(W_Object):
             if len(cmds_w) > 1:
                 w_opt_opts = cmds_w[-1]
                 if space.is_kind_of(w_opt_opts, space.w_hash):
-                    raise NotImplementedError("additional options in IO#popen")
+                    raise NotImplementedError("additional options in IO.popen")
                 cmds_w.pop()
             args = [argv0] + [Coerce.str(space, w_str) for w_str in cmds_w]
         else:
@@ -234,7 +235,7 @@ class W_IOObject(W_Object):
         else:
             w_mode = space.convert_type(w_mode, space.w_string, "to_str", raise_error=False)
             if w_mode is space.w_nil:
-                raise NotImplementedError("Non-string mode definitions in IO#popen")
+                raise NotImplementedError("Non-string mode definitions in IO.popen")
             mode = space.str_w(w_mode)
 
         fileno = -1
@@ -245,7 +246,7 @@ class W_IOObject(W_Object):
             p = Popen(args, env=env, executable=executable, stdin=PIPE)
             fileno = p.stdin.fileno()
         else:
-            raise NotImplementedError("Non pure-read or pure-write pipes for IO#popen")
+            raise NotImplementedError("Non pure-read or pure-write pipes for IO.popen")
 
         w_io = space.send(self, space.newsymbol("new"), [space.newint(fileno)])
         if block is not None:
