@@ -9,6 +9,11 @@ from ..base import BaseTopazTest
 
 
 class TestIO(BaseTopazTest):
+    def test_constants(self, space):
+        assert space.int_w(space.execute("return IO::SEEK_CUR")) == os.SEEK_CUR
+        assert space.int_w(space.execute("return IO::SEEK_END")) == os.SEEK_END
+        assert space.int_w(space.execute("return IO::SEEK_SET")) == os.SEEK_SET
+
     def test_new_from_file(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
         f = tmpdir.join("file.txt")
@@ -109,6 +114,37 @@ class TestIO(BaseTopazTest):
         assert out == "STDOUT\n$stdout\n$>\n"
         assert err == "STDERR\n$stderr\n"
         assert self.unwrap(space, w_res) == [None, None]
+
+    def test_rewind(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("content")
+        w_res = space.execute("""
+        f = File.new('%s', "r+")
+        c = f.read
+        f.rewind
+        return c, f.read
+        """ % f)
+        assert self.unwrap(space, w_res) == ["content", "content"]
+
+    def test_seek(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("content")
+        w_res = space.execute("""
+        res = []
+        f = File.new('%s', "r+")
+        f.seek(2, IO::SEEK_SET)
+        res << f.read
+        f.seek(2)
+        res << f.read
+        f.seek(-3, IO::SEEK_CUR)
+        res << f.read
+        f.seek(-2, IO::SEEK_END)
+        res << f.read
+        return res
+        """ % f)
+        assert self.unwrap(space, w_res) == [
+            "ntent", "ntent", "ent", "nt"
+        ]
 
 
 class TestFile(BaseTopazTest):
@@ -300,6 +336,16 @@ class TestFile(BaseTopazTest):
         assert space.str_w(space.execute("return File.basename('/ab')")) == "ab"
         assert space.str_w(space.execute("return File.basename('/foo/bar/ab')")) == "ab"
 
+    def test_truncate(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("content")
+        w_res = space.execute("""
+        f = File.new('%s', "r+")
+        f.truncate(3)
+        return f.read
+        """ % f)
+        assert self.unwrap(space, w_res) == "con"
+
 
 class TestExpandPath(BaseTopazTest):
     def test_expand_to_absolute(self, space):
@@ -311,6 +357,8 @@ class TestExpandPath(BaseTopazTest):
             os.path.join(os.getcwd(), "a"),
             os.path.join(os.getcwd(), "a"),
         ]
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute("""return File.expand_path(".\\0.")""")
 
     def test_covert_to_absolute_using_provided_base(self, space):
         w_res = space.execute("""return File.expand_path("", "/tmp")""")
@@ -321,6 +369,8 @@ class TestExpandPath(BaseTopazTest):
         assert self.unwrap(space, w_res) == "/tmp/a"
         w_res = space.execute("""return File.expand_path(".", "/")""")
         assert self.unwrap(space, w_res) == "/"
+        w_res = space.execute("""return File.expand_path(".", nil)""")
+        assert self.unwrap(space, w_res) == os.getcwd()
 
     def test_home_expansion(self, space):
         w_res = space.execute("""return File.expand_path("~")""")

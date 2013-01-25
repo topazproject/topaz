@@ -1,6 +1,7 @@
 import os
 import sys
 
+from topaz.coerce import Coerce
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
@@ -49,6 +50,10 @@ class W_IOObject(W_Object):
         w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
         space.globals.set(space, "$stderr", w_stderr)
         space.set_const(space.w_object, "STDERR", w_stderr)
+
+        space.set_const(w_cls, "SEEK_CUR", space.newint(os.SEEK_CUR))
+        space.set_const(w_cls, "SEEK_END", space.newint(os.SEEK_END))
+        space.set_const(w_cls, "SEEK_SET", space.newint(os.SEEK_SET))
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
@@ -125,6 +130,16 @@ class W_IOObject(W_Object):
     def method_flush(self, space):
         # We have no internal buffers to flush!
         return self
+
+    @classdef.method("seek", amount="int", whence="int")
+    def method_seek(self, space, amount, whence=os.SEEK_SET):
+        os.lseek(self.fd, amount, whence)
+        return space.newint(0)
+
+    @classdef.method("rewind")
+    def method_rewind(self, space):
+        os.lseek(self.fd, 0, os.SEEK_SET)
+        return space.newint(0)
 
     @classdef.method("print")
     def method_print(self, space, args_w):
@@ -295,8 +310,8 @@ class W_FileObject(W_IOObject):
         assert idx >= 0
         return space.newstr_fromstr(path[:idx])
 
-    @classdef.singleton_method("expand_path", path="path", dir="path")
-    def method_expand_path(self, space, path, dir=None):
+    @classdef.singleton_method("expand_path", path="path")
+    def method_expand_path(self, space, path, w_dir=None):
         if path and path[0] == "~":
             if len(path) >= 2 and path[1] == "/":
                 path = os.environ["HOME"] + path[1:]
@@ -305,8 +320,8 @@ class W_FileObject(W_IOObject):
             else:
                 raise NotImplementedError
         elif not path or path[0] != "/":
-            if dir is not None:
-                dir = space.str_w(W_FileObject.method_expand_path(self, space, dir))
+            if w_dir is not None and w_dir is not space.w_nil:
+                dir = space.str_w(space.send(self, space.newsymbol("expand_path"), [w_dir]))
             else:
                 dir = os.getcwd()
 
@@ -343,24 +358,24 @@ class W_FileObject(W_IOObject):
             result += string
         return space.newstr_fromchars(result)
 
-    @classdef.singleton_method("exists?", filename="str")
-    @classdef.singleton_method("exist?", filename="str")
+    @classdef.singleton_method("exists?", filename="path")
+    @classdef.singleton_method("exist?", filename="path")
     def method_existp(self, space, filename):
         return space.newbool(os.path.exists(filename))
 
-    @classdef.singleton_method("file?", filename="str")
+    @classdef.singleton_method("file?", filename="path")
     def method_filep(self, space, filename):
         return space.newbool(os.path.isfile(filename))
 
-    @classdef.singleton_method("directory?", filename="str")
+    @classdef.singleton_method("directory?", filename="path")
     def method_directoryp(self, space, filename):
         return space.newbool(os.path.isdir(filename))
 
-    @classdef.singleton_method("executable?", filename="str")
+    @classdef.singleton_method("executable?", filename="path")
     def method_executablep(self, space, filename):
         return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
 
-    @classdef.singleton_method("basename", filename="str")
+    @classdef.singleton_method("basename", filename="path")
     def method_basename(self, space, filename):
         i = filename.rfind('/') + 1
         assert i >= 0
@@ -387,3 +402,8 @@ class W_FileObject(W_IOObject):
     @classdef.method("closed?")
     def method_closedp(self, space):
         return space.newbool(self.fd == -1)
+
+    @classdef.method("truncate", length="int")
+    def method_truncate(self, space, length):
+        os.ftruncate(self.fd, length)
+        return space.newint(0)

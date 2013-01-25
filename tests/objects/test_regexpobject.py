@@ -48,6 +48,46 @@ class TestRegexpObject(BaseTopazTest):
         /(?:abc)?/
         """)
 
+    def test_regexp_syntax_errors(self, space):
+        with self.raises(space, "SyntaxError"):
+            space.execute("/(?~)/")
+        with self.raises(space, "RegexpError"):
+            space.execute("""
+            r = "(?~)"
+            /#{r}/
+            """)
+        with self.raises(space, "RegexpError"):
+            space.execute("""
+            class Regexp
+                def self.new(*args); /foo/; end
+                def self.compile(*args); /foo/; end
+            end
+            r = "(?~)"
+            /#{r}/
+            """)
+
+    def test_regexp_compile_errors(self, space):
+        with self.raises(space, "RegexpError"):
+            space.execute("Regexp.compile '?~'")
+        with self.raises(space, "RegexpError"):
+            space.execute("""
+            class Regexp
+                def self.new(*args); /foo/; end
+            end
+            Regexp.compile "(?~)"
+            """)
+
+    def test_regexp_new_errors(self, space):
+        with self.raises(space, "RegexpError"):
+            space.execute("Regexp.new '?~'")
+        with self.raises(space, "RegexpError"):
+            space.execute("""
+            class Regexp
+                def self.compile(*args); /foo/; end
+            end
+            Regexp.new "(?~)"
+            """)
+
     def test_to_s(self, space):
         w_res = space.execute("return /a/.to_s")
         assert space.str_w(w_res) == "(?-mix:a)"

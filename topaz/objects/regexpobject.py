@@ -155,14 +155,19 @@ class W_RegexpObject(W_Object):
 
     @classdef.singleton_method("compile")
     def method_compile(self, space, args_w):
-        return space.send(self, space.newsymbol("new"), args_w)
+        w_obj = space.send(self, space.newsymbol("allocate"), args_w)
+        return space.send(w_obj, space.newsymbol("initialize"), args_w)
 
     @classdef.method("initialize", flags="int")
     def method_initialize(self, space, w_source, flags=0):
         if isinstance(w_source, W_RegexpObject):
             self.set_source(space, w_source.source, w_source.flags)
         else:
-            self.set_source(space, Coerce.str(space, w_source), flags)
+            try:
+                self.set_source(space, Coerce.str(space, w_source), flags)
+            except regexp.RegexpError as e:
+                raise space.error(space.w_RegexpError, str(e))
+        return self
 
     @classdef.method("to_s")
     def method_to_s(self, space):
