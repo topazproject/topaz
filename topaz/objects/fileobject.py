@@ -39,6 +39,9 @@ class W_IOObject(W_Object):
         if self.fd < 0:
             raise space.error(space.w_IOError, "closed stream")
 
+    def getfd(self):
+        return self.fd
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
@@ -222,9 +225,9 @@ class W_IOObject(W_Object):
         assert isinstance(w_io, W_IOObject)
         if self.fd >= 0:
             os.close(self.fd)
-            self.fd = os.dup2(w_io.fd, self.fd)
+            os.dup2(w_io.getfd(), self.fd)
         else:
-            self.fd = os.dup(w_io.fd)
+            self.fd = os.dup(w_io.getfd())
         return self
 
     @classdef.singleton_method("pipe")
