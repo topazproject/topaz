@@ -10,8 +10,8 @@ Using Topaz
 -----------
 
 To get started with Topaz, you can download a binary or
-:ref:`build topaz yourself<building-topaz>`. Once you've got a ``topaz`` binary
-you can run it directly, just like you would any other Ruby::
+:ref:`build topaz yourself <building-topaz>`. Once you've got a ``topaz``
+binary you can run it directly, just like you would any other Ruby::
 
     $ ./bin/topaz -e "puts 'hello world'"
     hello world
