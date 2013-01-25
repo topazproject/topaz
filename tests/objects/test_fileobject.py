@@ -30,17 +30,33 @@ class TestIO(BaseTopazTest):
         w_res = space.execute("return IO.new(1)")
         assert isinstance(w_res, W_IOObject)
 
-    def test_write(self, space, capfd):
+    def test_write(self, space, capfd, tmpdir):
         content = "foo\n"
         space.execute('return IO.new(1, "w").write("%s")' % content)
         out, err = capfd.readouterr()
         assert out == content
         content = "foo\n"
 
-    def test_push(self, space, capfd):
+        f = tmpdir.join("file.txt")
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s', "w")
+            io.close
+            io.write("")
+            """ % f)
+
+    def test_push(self, space, capfd, tmpdir):
         space.execute('return IO.new(1, "w") << "hello" << "world"')
         out, err = capfd.readouterr()
         assert out == "helloworld"
+
+        f = tmpdir.join("file.txt")
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s', "w")
+            io.close
+            io << ""
+            """ % f)
 
     def test_read(self, space, tmpdir):
         contents = "foo\nbar\nbaz\n"
@@ -63,10 +79,25 @@ class TestIO(BaseTopazTest):
         with self.raises(space, "ArgumentError"):
             space.execute("File.new('%s').read(-1)" % f)
 
-    def test_simple_print(self, space, capfd):
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s')
+            io.close
+            io.read
+            """ % f)
+
+    def test_simple_print(self, space, capfd, tmpdir):
         space.execute('IO.new(1, "w").print("foo")')
         out, err = capfd.readouterr()
         assert out == "foo"
+
+        f = tmpdir.join("file.txt")
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s', "w")
+            io.close
+            io.print ""
+            """ % f)
 
     def test_multi_print(self, space, capfd):
         space.execute('IO.new(1, "w").print("This", "is", 100, "percent")')
@@ -91,15 +122,31 @@ class TestIO(BaseTopazTest):
         out, err = capfd.readouterr()
         assert out == "foobarbaz"
 
-    def test_puts(self, space, capfd):
+    def test_puts(self, space, capfd, tmpdir):
         space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
         out, err = capfd.readouterr()
         assert out == "This\nis\n100\npercent\n"
 
-    def test_flush(self, space, capfd):
+        f = tmpdir.join("file.txt")
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s', "w")
+            io.close
+            io.puts ""
+            """ % f)
+
+    def test_flush(self, space, capfd, tmpdir):
         space.execute("IO.new(1, 'w').flush.puts('String')")
         out, err = capfd.readouterr()
         assert out == "String\n"
+
+        f = tmpdir.join("file.txt")
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s', "w")
+            io.close
+            io.flush
+            """ % f)
 
     def test_globals(self, space, capfd):
         w_res = space.execute("""
@@ -125,6 +172,12 @@ class TestIO(BaseTopazTest):
         return c, f.read
         """ % f)
         assert self.unwrap(space, w_res) == ["content", "content"]
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s')
+            io.close
+            io.rewind
+            """ % f)
 
     def test_seek(self, space, tmpdir):
         f = tmpdir.join("file.txt")
@@ -145,6 +198,12 @@ class TestIO(BaseTopazTest):
         assert self.unwrap(space, w_res) == [
             "ntent", "ntent", "ent", "nt"
         ]
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            io = File.new('%s')
+            io.close
+            io.seek 2
+            """ % f)
 
     def test_pipe(self, space):
         w_res = space.execute("""
