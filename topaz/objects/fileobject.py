@@ -86,6 +86,7 @@ class W_IOObject(W_Object):
 
     @classdef.method("read")
     def method_read(self, space, w_length=None, w_str=None):
+        self.ensure_not_closed(space)
         if w_length:
             length = space.int_w(w_length)
             if length < 0:
