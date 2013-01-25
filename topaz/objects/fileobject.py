@@ -187,7 +187,7 @@ class W_IOObject(W_Object):
         end
 
         pid = fork do
-            if mode == 'w'
+            if mode == 'r'
                 r.close
                 $stdout.reopen(w)
             else
@@ -215,17 +215,16 @@ class W_IOObject(W_Object):
     """)
 
     @classdef.method("reopen")
-    def method_reopen(self, space, w_io_or_path, w_mode=None):
+    def method_reopen(self, space, w_io, w_mode=None):
+        if not space.is_kind_of(w_io, space.getclassfor(W_IOObject)):
+            args = [w_io] if w_mode is None else [w_io, w_mode]
+            w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
+        assert isinstance(w_io, W_IOObject)
         if self.fd >= 0:
             os.close(self.fd)
-        if space.is_kind_of(w_io_or_path, space.getclassfor(W_IOObject)):
-            assert isinstance(w_io_or_path, W_IOObject)
-            self.fd = w_io_or_path.fd
+            self.fd = os.dup2(w_io.fd, self.fd)
         else:
-            args = [w_io_or_path] if w_mode is None else [w_io_or_path, w_mode]
-            w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
-            assert isinstance(w_io, W_IOObject)
-            self.fd = w_io.fd
+            self.fd = os.dup(w_io.fd)
         return self
 
     @classdef.singleton_method("pipe")
