@@ -238,15 +238,12 @@ class W_IOObject(W_Object):
             space.send(self, space.newsymbol("new"), [space.newint(w)])
         ]
         if block is not None:
-            space.invoke_block(block, pipes_w)
             try:
-                os.close(r)
-            except OSError:
-                pass
-            try:
-                os.close(w)
-            except OSError:
-                pass
+                return space.invoke_block(block, pipes_w)
+            finally:
+                for pipe_w in pipes_w:
+                    if not space.is_true(space.send(pipe_w, space.newsymbol("closed?"))):
+                        space.send(pipe_w, space.newsymbol("close"))
         else:
             return space.newarray(pipes_w)
 
