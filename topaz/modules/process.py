@@ -22,7 +22,7 @@ class Process(Module):
         if pid == 0:
             if block is not None:
                 space.invoke_block(block, [])
-                exit(0)
+                space.send(self, space.newsymbol("exit"))
             else:
                 return space.w_nil
         return space.newint(pid)
