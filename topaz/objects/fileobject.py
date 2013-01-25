@@ -35,6 +35,10 @@ class W_IOObject(W_Object):
         obj.fd = self.fd
         return obj
 
+    def ensure_not_closed(self, space):
+        if self.fd < 0:
+            raise space.error(space.w_IOError, "closed stream")
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
@@ -118,17 +122,20 @@ class W_IOObject(W_Object):
 
     @classdef.method("write")
     def method_write(self, space, w_str):
+        self.ensure_not_closed(space)
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
         bytes_written = os.write(self.fd, string)
         return space.newint(bytes_written)
 
     @classdef.method("flush")
     def method_flush(self, space):
+        self.ensure_not_closed(space)
         os.fsync(self.fd)
         return self
 
     @classdef.method("print")
     def method_print(self, space, args_w):
+        self.ensure_not_closed(space)
         if not args_w:
             w_last = space.globals.get(space, "$_")
             if w_last is not None:
@@ -150,6 +157,7 @@ class W_IOObject(W_Object):
 
     @classdef.method("puts")
     def method_puts(self, space, args_w):
+        self.ensure_not_closed(space)
         for w_arg in args_w:
             string = space.str_w(space.send(w_arg, space.newsymbol("to_s")))
             os.write(self.fd, string)
@@ -381,6 +389,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.method("close")
     def method_close(self, space):
+        self.ensure_not_closed(space)
         os.close(self.fd)
         self.fd = -1
         return self
@@ -391,5 +400,6 @@ class W_FileObject(W_IOObject):
 
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):
+        self.ensure_not_closed(space)
         os.ftruncate(self.fd, length)
         return space.newint(0)
