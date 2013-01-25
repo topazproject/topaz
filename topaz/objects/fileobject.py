@@ -1,6 +1,5 @@
 import os
 import sys
-from subprocess import Popen, PIPE
 
 from topaz.coerce import Coerce
 from topaz.module import ClassDef
@@ -180,70 +179,16 @@ class W_IOObject(W_Object):
                 os.write(self.fd, "\n")
         return space.w_nil
 
-    @classdef.singleton_method("popen")
-    def method_popen(self, space, w_cmd, w_mode=None, w_opt=None, block=None):
-        w_cmds = space.convert_type(w_cmd, space.w_array, "to_ary", raise_error=False)
-
+    @classdef.singleton_method("popen", cmd="str", mode="str")
+    def method_popen(self, space, cmd, mode, w_opt=None, block=None):
         if w_opt is not None:
-            raise NotImplementedError("additional options in IO#popen")
+            raise NotImplementedError("additional options in IO.popen")
 
-        args = []
-        env = None
-        executable = None
-
-        if w_cmds is not space.w_nil:
-            cmds_w = space.listview(w_cmds)
-            if not cmds_w:
-                raise space.error(space.w_ArgumentError, "wrong number of arguments")
-
-            w_env_or_executable = cmds_w[0]
-            if space.is_kind_of(w_env_or_executable, space.w_hash):
-                if len(cmds_w) < 2:
-                    raise space.error(space.w_ArgumentError, "wrong number of arguments")
-                else:
-                    env = {}
-                    for w_key, w_value in w_env_or_executable.contents.iteritems():
-                        env[Coerce.str(space, w_key)] = Coerce.str(space, w_value)
-                    cmds_w.pop(0)
-
-            w_executable = cmds_w[0]
-            if space.is_kind_of(w_executable, space.w_array):
-                executable_w = space.listview(w_executable)
-                if len(executable_w) != 2:
-                    raise space.error(space.w_ArgumentError, "wrong first argument")
-                else:
-                    executable, argv0 = [Coerce.str(space, w_str) for w_str in executable_w]
-            else:
-                executable = Coerce.str(space, w_executable)
-                argv0 = executable
-            cmds_w.pop(0)
-
-            if len(cmds_w) > 1:
-                w_opt_opts = cmds_w[-1]
-                if space.is_kind_of(w_opt_opts, space.w_hash):
-                    raise NotImplementedError("additional options in IO#popen")
-                cmds_w.pop()
-            args = [argv0] + [Coerce.str(space, w_str) for w_str in cmds_w]
-        else:
-            cmd = Coerce.str(space, w_cmd)
-            shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
-            args = [shell, "-c", cmd]
-
-        if w_mode is None:
-            mode = "r"
-        else:
-            w_mode = space.convert_type(w_mode, space.w_string, "to_str", raise_error=False)
-            if w_mode is space.w_nil:
-                raise NotImplementedError("Non-string mode definitions in IO#popen")
-            mode = space.str_w(w_mode)
-
-        fileno = -1
+        stdin, stdout = os.popen2(cmd, "b")
         if mode == "r":
-            p = Popen(args, env=env, executable=executable, stdout=PIPE)
-            fileno = p.stdout.fileno()
+            fileno = stdout.fileno()
         elif mode == "w":
-            p = Popen(args, env=env, executable=executable, stdin=PIPE)
-            fileno = p.stdin.fileno()
+            fileno = stdin.fileno()
         else:
             raise NotImplementedError("Non pure-read or pure-write pipes for IO#popen")
 
