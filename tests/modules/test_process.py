@@ -27,3 +27,21 @@ class TestProcess(BaseTopazTest):
         end
         """)
         assert self.unwrap(space, w_res) == [False, 1]
+
+    def test_fork(self, space, capfd, monkeypatch):
+        # monkeypatch.setattr(os, "fork", lambda: 0)
+        w_res = space.execute("""
+        begin
+            return Process.fork do
+                puts "child"
+            end
+        rescue SystemExit => e
+            puts "child exit"
+            return nil
+        end
+        """)
+        if w_res is space.w_nil: # Child
+            out, err = capfd.readouterr()
+            assert out == "child\nchild exit\n"
+        else:
+            assert isinstance(self.unwrap(space, w_res), int)
