@@ -182,6 +182,23 @@ class W_IOObject(W_Object):
                 os.write(self.fd, "\n")
         return space.w_nil
 
+    @classdef.singleton_method("pipe")
+    def method_pipe(self, space, block=None):
+        r, w = os.pipe()
+        pipes_w = [
+            space.send(self, space.newsymbol("new"), [space.newint(r)]),
+            space.send(self, space.newsymbol("new"), [space.newint(w)])
+        ]
+        if block is not None:
+            try:
+                return space.invoke_block(block, pipes_w)
+            finally:
+                for pipe_w in pipes_w:
+                    if not space.is_true(space.send(pipe_w, space.newsymbol("closed?"))):
+                        space.send(pipe_w, space.newsymbol("close"))
+        else:
+            return space.newarray(pipes_w)
+
     classdef.app_method("""
     def self.popen(cmd, mode='r', opts={}, &block)
         r, w = IO.pipe
@@ -299,7 +316,6 @@ class W_IOObject(W_Object):
     @classdef.method("closed?")
     def method_closedp(self, space):
         return space.newbool(self.fd == -1)
-
 
 
 class W_FileObject(W_IOObject):
