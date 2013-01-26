@@ -198,6 +198,15 @@ class W_ModuleObject(W_RootObject):
         self.descendants.append(w_mod)
         space.send(self, space.newsymbol("included"), [w_mod])
 
+    def extend_object(self, space, w_obj, w_mod):
+        if w_mod not in self.ancestors():
+            self.included_modules = [w_mod] + self.included_modules
+            w_mod.extended(space, w_obj, self)
+
+    def extended(self, space, w_obj, w_mod):
+        self.descendants.append(w_mod)
+        space.send(self, space.newsymbol("extended"), [w_obj])
+
     def inherited(self, space, w_mod):
         self.descendants.append(w_mod)
         if not space.bootstrap:
@@ -292,6 +301,10 @@ class W_ModuleObject(W_RootObject):
         pass
 
     @classdef.method("included")
+    def method_included(self, space, w_mod):
+        pass
+
+    @classdef.method("extended")
     def method_included(self, space, w_mod):
         pass
 
