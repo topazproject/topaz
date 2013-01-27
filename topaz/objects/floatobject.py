@@ -1,5 +1,6 @@
 import operator
 import math
+import sys
 
 from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rfloat import NAN, INFINITY
@@ -24,6 +25,11 @@ class W_FloatObject(W_NumericObject):
 
     def float_w(self, space):
         return self.floatvalue
+
+    @classdef.setup_class
+    def setup_class(cls, space, w_cls):
+        space.set_const(w_cls, "MAX", space.newfloat(sys.float_info.max))
+        space.set_const(w_cls, "MIN", space.newfloat(sys.float_info.min))
 
     @classdef.method("to_s")
     def method_to_s(self, space):
