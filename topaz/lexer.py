@@ -503,6 +503,10 @@ class Lexer(object):
         if ch in "$>:?\\!\"~&`'+/,":
             self.add(ch)
             yield self.emit("GVAR")
+        elif ch == "-" and self.peek().isalnum():
+            self.add(ch)
+            self.add(self.read())
+            yield self.emit("GVAR")
         else:
             self.unread()
             while True:

@@ -1462,6 +1462,7 @@ HERE
         assert space.parse("%s{foo bar}") == sym("foo bar")
         assert space.parse(":-@") == sym("-@")
         assert space.parse(":+@") == sym("+@")
+        assert space.parse(":$-w") == sym("$-w")
 
     def test_do_symbol(self, space):
         r = space.parse("f :do")
@@ -2027,6 +2028,7 @@ HERE
         assert space.parse("$'") == simple_global("$'")
         assert space.parse("$+") == simple_global("$+")
         assert space.parse("$,") == simple_global("$,")
+        assert space.parse("$-w") == simple_global("$-w")
 
     def test_comments(self, space):
         r = space.parse("""
