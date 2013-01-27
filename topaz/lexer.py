@@ -536,7 +536,15 @@ class Lexer(object):
     def plus(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
-        if ch2 == "=":
+        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]:
+            self.state = self.EXPR_ARG
+            if ch2 == "@":
+                self.add(ch2)
+                yield self.emit("UPLUS")
+            else:
+                self.unread()
+                yield self.emit("PLUS")
+        elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")

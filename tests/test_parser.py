@@ -1460,6 +1460,8 @@ HERE
             ast.Statement(ast.Symbol(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]), 1))
         ]))
         assert space.parse("%s{foo bar}") == sym("foo bar")
+        assert space.parse(":-@") == sym("-@")
+        assert space.parse(":+@") == sym("+@")
 
     def test_do_symbol(self, space):
         r = space.parse("f :do")
