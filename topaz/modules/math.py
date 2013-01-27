@@ -27,4 +27,7 @@ class Math(Module):
 
     @moduledef.function("log", value="float", base="float")
     def method_log(self, space, value, base=math.e):
-        return space.newfloat(math.log(value, base))
+        if base == math.e:
+            return space.newfloat(math.log(value))
+        else:
+            return space.newfloat(math.log(value) / math.log(base))

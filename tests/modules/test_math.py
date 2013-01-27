@@ -21,5 +21,5 @@ class TestMath(BaseTopazTest):
         assert space.float_w(w_res) == math.e
 
     def test_log(self, space):
-        w_res = space.execute("return [Math.log(4, 10), Math.log(28)]")
-        assert self.unwrap(space, w_res) == [math.log(4, 10), math.log(28)]
+        w_res = space.execute("return [Math.log(4, 10), Math.log(28), Math.log(3, 4)]")
+        assert self.unwrap(space, w_res) == [math.log(4, 10), math.log(28), math.log(3, 4)]
