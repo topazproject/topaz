@@ -503,6 +503,10 @@ class Lexer(object):
         if ch in "$>:?\\!\"~&`'+/,":
             self.add(ch)
             yield self.emit("GVAR")
+        elif ch == "-" and self.peek().isalnum():
+            self.add(ch)
+            self.add(self.read())
+            yield self.emit("GVAR")
         else:
             self.unread()
             while True:
@@ -536,7 +540,15 @@ class Lexer(object):
     def plus(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
-        if ch2 == "=":
+        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]:
+            self.state = self.EXPR_ARG
+            if ch2 == "@":
+                self.add(ch2)
+                yield self.emit("UPLUS")
+            else:
+                self.unread()
+                yield self.emit("PLUS")
+        elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
