@@ -991,6 +991,7 @@ class TestParser(BaseTopazTest):
         assert space.parse('?\u2603') == string(u"\u2603".encode("utf-8"))
         assert space.parse('"\uffff"') == string(u"\uffff".encode("utf-8"))
         assert space.parse('"\u{ff}"') == string(u"\u00ff".encode("utf-8"))
+        assert space.parse('"\u{3042 3044 3046 3048}"') == string(u"\u3042\u3044\u3046\u3048".encode("utf-8"))
         with self.raises(space, "SyntaxError", "line 1 (invalid Unicode escape)"):
             space.parse('"\u123x"')
         with self.raises(space, "SyntaxError", "line 1 (unterminated Unicode escape)"):

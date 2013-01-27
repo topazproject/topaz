@@ -862,26 +862,11 @@ class Lexer(object):
             self.newline(c)
             return ["\n"]
         elif c == "u":
-            utf_escape = []
             ch = self.peek()
-            opening_bracket = (ch == "{")
-            if opening_bracket:
+            brace_seen = (ch == "{")
+            if brace_seen:
                 self.read()
-            i = 0
-            while opening_bracket or i < 4:
-                ch = self.read()
-                if ch not in string.hexdigits:
-                    break
-                utf_escape.append(ch)
-                i += 1
-            if opening_bracket and not ch == "}":
-                self.error("unterminated Unicode escape")
-            elif not opening_bracket and len(utf_escape) != 4:
-                self.error("invalid Unicode escape")
-            utf_codepoint = int("".join(utf_escape), 16)
-            if utf_codepoint > 101111:
-                self.error("invalid Unicode codepoint (too large)")
-            return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
+            return self.read_utf_escape(brace_seen=brace_seen, character_escape=character_escape)
         elif c == "x":
             hex_escape = self.read()
             if not hex_escape in string.hexdigits:
@@ -950,6 +935,34 @@ class Lexer(object):
                     [c] = c
                 return [chr(ord(c) & 0x9f)]
         return [c]
+
+    def read_utf_escape(self, brace_seen=False, character_escape=False):
+        chars = []
+        utf_escape = []
+        if not brace_seen:
+            for i in xrange(4):
+                ch = self.read()
+                if ch not in string.hexdigits:
+                    self.error("invalid Unicode escape")
+                utf_escape.append(ch)
+        else:
+            i = 0
+            while True:
+                ch = self.read()
+                if ch not in string.hexdigits:
+                    break
+                utf_escape.append(ch)
+                i += 1
+            if not ch == "}":
+                if ch == " " and not character_escape:
+                    chars = self.read_utf_escape(brace_seen=True, character_escape=False)
+                else:
+                    self.error("unterminated Unicode escape")
+
+        utf_codepoint = int("".join(utf_escape), 16)
+        if utf_codepoint > 0x101111:
+            self.error("invalid Unicode codepoint (too large)")
+        return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")] + chars
 
     def colon(self, ch, space_seen):
         ch2 = self.read()
