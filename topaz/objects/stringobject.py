@@ -422,6 +422,39 @@ class W_StringObject(W_Object):
                 "type mismatch: %s given" % space.getclass(w_sub).name
             )
 
+    @classdef.method("rindex", end="int")
+    def method_rindex(self, space, w_sub, end=0):
+        if -end > self.length():
+            return space.w_nil
+
+        if end >= 0:
+            end = self.length()
+        else:
+            end = self.length() + end
+            assert end >= 0
+        idx = -1
+
+        if space.is_kind_of(w_sub, space.w_string):
+            idx = space.str_w(self).rfind(space.str_w(w_sub), 0, end + 1)
+        elif space.is_kind_of(w_sub, space.w_regexp):
+            ctx = w_sub.make_ctx(space.str_w(self))
+            idx = -1
+            while self.search_context(space, ctx):
+                if ctx.match_start > end:
+                    break
+                else:
+                    idx = ctx.match_start
+                ctx.reset(idx + 1)
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "type mismatch: %s given" % space.getclass(w_sub).name
+            )
+        if idx < 0:
+            return space.w_nil
+        else:
+            return space.newint(idx)
+
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=0):
         if w_sep is None or space.is_kind_of(w_sep, space.w_string):
