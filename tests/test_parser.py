@@ -990,6 +990,13 @@ class TestParser(BaseTopazTest):
         assert space.parse('"\u2603"') == string(u"\u2603".encode("utf-8"))
         assert space.parse('?\u2603') == string(u"\u2603".encode("utf-8"))
         assert space.parse('"\uffff"') == string(u"\uffff".encode("utf-8"))
+        assert space.parse('"\u{ff}"') == string(u"\u00ff".encode("utf-8"))
+        with self.raises(space, "SyntaxError", "line 1 (invalid Unicode escape)"):
+            space.parse('"\u123x"')
+        with self.raises(space, "SyntaxError", "line 1 (unterminated Unicode escape)"):
+            space.parse('"\u{123x}"')
+        with self.raises(space, "SyntaxError", "line 1 (invalid Unicode codepoint (too large))"):
+            space.parse('"\u{110000}"')
 
     def test_dynamic_string(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([

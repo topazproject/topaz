@@ -8,8 +8,9 @@ from rply.token import SourcePosition
 
 
 class LexerError(Exception):
-    def __init__(self, pos):
+    def __init__(self, pos, msg = None):
         self.pos = pos
+        self.msg = "" if msg is None else msg
 
 
 class Keyword(object):
@@ -113,8 +114,8 @@ class Lexer(object):
         self.clear()
         return Token(token, value, self.current_pos())
 
-    def error(self):
-        raise LexerError(self.current_pos())
+    def error(self, msg=None):
+        raise LexerError(self.current_pos(), msg)
 
     def tokenize(self):
         space_seen = False
@@ -861,13 +862,25 @@ class Lexer(object):
             self.newline(c)
             return ["\n"]
         elif c == "u":
-            utf_escape = [None] * 4
-            for i in xrange(4):
+            utf_escape = []
+            ch = self.peek()
+            opening_bracket = (ch == "{")
+            if opening_bracket:
+                self.read()
+            i = 0
+            while opening_bracket or i < 4:
                 ch = self.read()
                 if ch not in string.hexdigits:
-                    self.error()
-                utf_escape[i] = ch
+                    break
+                utf_escape.append(ch)
+                i += 1
+            if opening_bracket and not ch == "}":
+                self.error("unterminated Unicode escape")
+            elif not opening_bracket and len(utf_escape) != 4:
+                self.error("invalid Unicode escape")
             utf_codepoint = int("".join(utf_escape), 16)
+            if utf_codepoint > 101111:
+                self.error("invalid Unicode codepoint (too large)")
             return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
         elif c == "x":
             hex_escape = self.read()
