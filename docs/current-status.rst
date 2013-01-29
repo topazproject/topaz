@@ -1,6 +1,8 @@
 Current Status
 ==============
 
+Topaz implements Ruby 1.9.3.
+
 At present, Topaz is believed to be mostly-stable, but not tested in the real
 world, and extremely incomplete. We do not yet consider Topaz to be production
 ready (but it gets closer every day!).
