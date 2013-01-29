@@ -424,16 +424,11 @@ class W_StringObject(W_Object):
 
     @classdef.method("rindex", end="int")
     def method_rindex(self, space, w_sub, end=0):
-        if -end > self.length():
+        end += self.length()
+        if end < 0:
             return space.w_nil
 
-        if end >= 0:
-            end = self.length()
-        else:
-            end = self.length() + end
-            assert end >= 0
         idx = -1
-
         if space.is_kind_of(w_sub, space.w_string):
             idx = space.str_w(self).rfind(space.str_w(w_sub), 0, end + 1)
         elif space.is_kind_of(w_sub, space.w_regexp):
