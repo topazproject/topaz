@@ -937,32 +937,53 @@ class Lexer(object):
         return [c]
 
     def read_utf_escape(self, brace_seen=False, character_escape=False):
-        chars = []
-        utf_escape = []
         if not brace_seen:
+            utf_escape = []
             for i in xrange(4):
                 ch = self.read()
                 if ch not in string.hexdigits:
                     self.error("invalid Unicode escape")
                 utf_escape.append(ch)
-        else:
-            i = 0
-            while True:
-                ch = self.read()
-                if ch not in string.hexdigits:
-                    break
-                utf_escape.append(ch)
-                i += 1
+            return self.encode_utf_escape(utf_escape)
+        elif character_escape:
+            ch = self.read()
+            if not ch in string.hexdigits:
+                self.error("invalid Unicode escape")
+            res = self.read_delimited_utf_escape(ch)
+            ch = self.read()
             if not ch == "}":
-                if ch == " " and not character_escape:
-                    chars = self.read_utf_escape(brace_seen=True, character_escape=False)
+                self.error("unterminated Unicode escape")
+            return res
+        else:
+            chars = []
+            ch = self.read()
+            while ch in string.hexdigits:
+                chars += self.read_delimited_utf_escape(ch)
+                ch = self.read()
+                if ch.isspace():
+                    ch = self.read()
                 else:
-                    self.error("unterminated Unicode escape")
+                    break
+            if not chars:
+                self.error("invalid Unicode escape")
+            if not ch == "}":
+                self.error("unterminated Unicode escape")
+            return chars
 
+    def read_delimited_utf_escape(self, ch):
+        utf_escape = [ch]
+        ch = self.read()
+        while ch in string.hexdigits:
+            utf_escape.append(ch)
+            ch = self.read()
+        self.unread()
+        return self.encode_utf_escape(utf_escape)
+
+    def encode_utf_escape(self, utf_escape):
         utf_codepoint = int("".join(utf_escape), 16)
         if utf_codepoint > 0x101111:
             self.error("invalid Unicode codepoint (too large)")
-        return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")] + chars
+        return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
 
     def colon(self, ch, space_seen):
         ch2 = self.read()
