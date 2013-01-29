@@ -129,7 +129,7 @@ class W_RootObject(W_BaseObject):
 
     @classdef.method("extend")
     def method_extend(self, space, w_mod):
-        if space.getnonsingletonclass(w_mod) is not space.w_module:
+        if not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             raise space.error(
                 space.w_TypeError,
                 "wrong argument type %s (expected Module)" % space.getclass(w_mod).name

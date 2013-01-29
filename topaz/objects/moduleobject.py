@@ -196,7 +196,8 @@ class W_ModuleObject(W_RootObject):
 
     def included(self, space, w_mod):
         self.descendants.append(w_mod)
-        space.send(self, space.newsymbol("included"), [w_mod])
+        if space.respond_to(self, space.newsymbol("included")):
+            space.send(self, space.newsymbol("included"), [w_mod])
 
     def extend_object(self, space, w_obj, w_mod):
         if w_mod not in self.ancestors():
@@ -205,12 +206,8 @@ class W_ModuleObject(W_RootObject):
 
     def extended(self, space, w_obj, w_mod):
         self.descendants.append(w_mod)
-        space.send(self, space.newsymbol("extended"), [w_obj])
-
-    def inherited(self, space, w_mod):
-        self.descendants.append(w_mod)
-        if not space.bootstrap:
-            space.send(self, space.newsymbol("inherited"), [w_mod])
+        if space.respond_to(self, space.newsymbol("extended")):
+            space.send(self, space.newsymbol("extended"), [w_obj])
 
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
@@ -296,16 +293,14 @@ class W_ModuleObject(W_RootObject):
     def method_ancestors(self, space):
         return space.newarray(self.ancestors(include_singleton=False))
 
-    @classdef.method("inherited")
-    def method_inherited(self, space, w_mod):
-        pass
-
     @classdef.method("included")
     def method_included(self, space, w_mod):
+        # TODO: should be private
         pass
 
     @classdef.method("extended")
     def method_included(self, space, w_mod):
+        # TODO: should be private
         pass
 
     @classdef.method("name")
