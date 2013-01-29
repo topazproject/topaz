@@ -321,9 +321,9 @@ class TestObjectObject(BaseTopazTest):
             space.execute("Object.new.extend Class.new")
         w_res = space.execute("""
         class A; end
-        class MyModule; end
+        class MyModule < Module; end
         B = MyModule.new
-        B.class_eval do
+        B.instance_eval do
             def self.extended(base)
                 $res = "extended in: #{base.class.name}"
             end
