@@ -16,8 +16,7 @@ To run the tests::
 
     $ py.test
 
-To translate, first make sure the PyPy source is on your ``PYTHONPATH``, then
-run::
+To translate run::
 
     $ /path/to/pypy/src/rpython/bin/rpython -Ojit targettopaz.py
 
