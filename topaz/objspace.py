@@ -227,7 +227,7 @@ class ObjectSpace(object):
         except ParsingError as e:
             raise self.error(self.w_SyntaxError, "line %d" % e.getsourcepos().lineno)
         except LexerError as e:
-            raise self.error(self.w_SyntaxError, "line %d" % e.pos.lineno)
+            raise self.error(self.w_SyntaxError, "line %d (%s)" % (e.pos.lineno, e.msg))
 
     def compile(self, source, filepath, initial_lineno=1, symtable=None):
         if symtable is None:

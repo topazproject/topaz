@@ -8,8 +8,9 @@ from rply.token import SourcePosition
 
 
 class LexerError(Exception):
-    def __init__(self, pos):
+    def __init__(self, pos, msg = None):
         self.pos = pos
+        self.msg = "" if msg is None else msg
 
 
 class Keyword(object):
@@ -113,8 +114,8 @@ class Lexer(object):
         self.clear()
         return Token(token, value, self.current_pos())
 
-    def error(self):
-        raise LexerError(self.current_pos())
+    def error(self, msg=None):
+        raise LexerError(self.current_pos(), msg)
 
     def tokenize(self):
         space_seen = False
@@ -873,14 +874,11 @@ class Lexer(object):
             self.newline(c)
             return ["\n"]
         elif c == "u":
-            utf_escape = [None] * 4
-            for i in xrange(4):
-                ch = self.read()
-                if ch not in string.hexdigits:
-                    self.error()
-                utf_escape[i] = ch
-            utf_codepoint = int("".join(utf_escape), 16)
-            return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
+            ch = self.peek()
+            brace_seen = (ch == "{")
+            if brace_seen:
+                self.read()
+            return self.read_utf_escape(brace_seen=brace_seen, character_escape=character_escape)
         elif c == "x":
             hex_escape = self.read()
             if not hex_escape in string.hexdigits:
@@ -949,6 +947,55 @@ class Lexer(object):
                     [c] = c
                 return [chr(ord(c) & 0x9f)]
         return [c]
+
+    def read_utf_escape(self, brace_seen=False, character_escape=False):
+        if not brace_seen:
+            utf_escape = []
+            for i in xrange(4):
+                ch = self.read()
+                if ch not in string.hexdigits:
+                    self.error("invalid Unicode escape")
+                utf_escape.append(ch)
+            return self.encode_utf_escape(utf_escape)
+        elif character_escape:
+            ch = self.read()
+            if not ch in string.hexdigits:
+                self.error("invalid Unicode escape")
+            res = self.read_delimited_utf_escape(ch)
+            ch = self.read()
+            if not ch == "}":
+                self.error("unterminated Unicode escape")
+            return res
+        else:
+            chars = []
+            ch = self.read()
+            while ch in string.hexdigits:
+                chars += self.read_delimited_utf_escape(ch)
+                ch = self.read()
+                if ch.isspace():
+                    ch = self.read()
+                else:
+                    break
+            if not chars:
+                self.error("invalid Unicode escape")
+            if not ch == "}":
+                self.error("unterminated Unicode escape")
+            return chars
+
+    def read_delimited_utf_escape(self, ch):
+        utf_escape = [ch]
+        ch = self.read()
+        while ch in string.hexdigits:
+            utf_escape.append(ch)
+            ch = self.read()
+        self.unread()
+        return self.encode_utf_escape(utf_escape)
+
+    def encode_utf_escape(self, utf_escape):
+        utf_codepoint = int("".join(utf_escape), 16)
+        if utf_codepoint > 0x101111:
+            self.error("invalid Unicode codepoint (too large)")
+        return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
 
     def colon(self, ch, space_seen):
         ch2 = self.read()
