@@ -8,7 +8,7 @@ from rply.token import SourcePosition
 
 
 class LexerError(Exception):
-    def __init__(self, pos, msg = None):
+    def __init__(self, pos, msg=None):
         self.pos = pos
         self.msg = "" if msg is None else msg
 
@@ -963,7 +963,7 @@ class Lexer(object):
                 self.error("invalid Unicode escape")
             res = self.read_delimited_utf_escape(ch)
             ch = self.read()
-            if not ch == "}":
+            if ch != "}":
                 self.error("unterminated Unicode escape")
             return res
         else:
@@ -978,7 +978,7 @@ class Lexer(object):
                     break
             if not chars:
                 self.error("invalid Unicode escape")
-            if not ch == "}":
+            if ch != "}":
                 self.error("unterminated Unicode escape")
             return chars
 
