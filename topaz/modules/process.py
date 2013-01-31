@@ -1,8 +1,17 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
 from topaz.module import Module, ModuleDef
+
+
+if sys.platform.startswith("win"):
+    def geteuid():
+        return 0 # MRI behaviour on windows
+else:
+    def geteuid():
+        return os.geteuid()
 
 
 class Process(Module):
@@ -10,7 +19,7 @@ class Process(Module):
 
     @moduledef.function("euid")
     def method_euid(self, space):
-        return space.newint(os.geteuid())
+        return space.newint(geteuid())
 
     @moduledef.function("pid")
     def method_pid(self, space):

@@ -7,15 +7,12 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
+from topaz.utils.ll_file import O_BINARY, ftruncate, isdir
 
 
 FNM_NOESCAPE = 0x01
 FNM_PATHNAME = 0x02
 FNM_DOTMATCH = 0x04
-if sys.platform == "win32":
-    O_BINARY = os.O_BINARY
-else:
-    O_BINARY = 0
 
 
 class W_IOObject(W_Object):
@@ -408,7 +405,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("directory?", filename="path")
     def method_directoryp(self, space, filename):
-        return space.newbool(os.path.isdir(filename))
+        return space.newbool(isdir(filename))
 
     @classdef.singleton_method("executable?", filename="path")
     def method_executablep(self, space, filename):
@@ -435,5 +432,5 @@ class W_FileObject(W_IOObject):
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):
         self.ensure_not_closed(space)
-        os.ftruncate(self.fd, length)
+        ftruncate(self.fd, length)
         return space.newint(0)

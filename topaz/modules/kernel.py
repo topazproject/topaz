@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import os
 
 from rpython.rlib.rstring import assert_str0
-from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.error import RubyError
 from topaz.module import Module, ModuleDef
@@ -74,11 +73,19 @@ class Kernel(Module):
         if not os.path.exists(assert_str0(path)):
             raise space.error(space.w_LoadError, orig_path)
 
-        f = open_file_as_stream(path)
+        fd = -1
         try:
-            contents = f.readall()
+            fd = os.open(path, os.O_RDONLY, 0665)
+            content_bytes = []
+            while True:
+                current_read = os.read(fd, 8192)
+                if len(current_read) == 0:
+                    break
+                content_bytes += current_read
+            contents = "".join(content_bytes)
         finally:
-            f.close()
+            if fd > 2:
+                os.close(fd)
 
         space.execute(contents, filepath=path)
 

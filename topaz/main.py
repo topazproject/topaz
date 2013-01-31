@@ -2,12 +2,20 @@ from __future__ import absolute_import
 
 import os
 
+from rpython.rlib.rarithmetic import is_emulated_long
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.streamio import open_file_as_stream
+from rpython.translator.platform import platform as rpython_platform
 
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
+
+
+if rpython_platform.name in ["msvc", "mingw32"]:
+    system = "Windows"
+    cpu = "x86_64" if is_emulated_long else "i686"
+else:
+    system, _, _, _, cpu = os.uname()
 
 
 @specialize.memo()
@@ -43,7 +51,6 @@ def _entry_point(space, argv):
         idx += 1
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
-    system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
     engine = "topaz"
     version = "1.9.3"
@@ -62,11 +69,19 @@ def _entry_point(space, argv):
         source = "\n".join(exprs)
         path = "-e"
     elif path is not None:
-        f = open_file_as_stream(path)
+        fd = -1
         try:
-            source = f.readall()
+            fd = os.open(path, os.O_RDONLY, 0665)
+            content_bytes = []
+            while True:
+                current_read = os.read(fd, 8192)
+                if len(current_read) == 0:
+                    break
+                content_bytes += current_read
+            source = "".join(content_bytes)
         finally:
-            f.close()
+            if fd > 2:
+                os.close(fd)
     elif verbose:
         return 0
     else:
