@@ -10,6 +10,9 @@ class W_ProcObject(W_Object):
         self.block = block
         self.is_lambda = is_lambda
 
+    def get_block(self):
+        return self.block
+
     @classdef.method("[]")
     @classdef.method("call")
     def method_call(self, space, args_w, block):
