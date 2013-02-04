@@ -297,6 +297,42 @@ class TestObjectObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [0, None]
 
+    def test_extend(self, space):
+        w_res = space.execute("""
+        $res = []
+        class A; end
+        module B
+            def self.extended(base)
+                $res << "extended in: #{base.class.name}"
+            end
+            def self.included(base)
+                $res << "included in: #{base.class.name}"
+            end
+        end
+        A.new.extend B
+        A.send :include, B
+        A.extend B
+        return $res
+        """)
+        assert self.unwrap(space, w_res) == ["extended in: A", "included in: Class", "extended in: Class"]
+        with self.raises(space, "TypeError", "wrong argument type Fixnum (expected Module)"):
+            space.execute("Object.new.extend 1")
+        with self.raises(space, "TypeError", "wrong argument type Class (expected Module)"):
+            space.execute("Object.new.extend Class.new")
+        w_res = space.execute("""
+        class A; end
+        class MyModule < Module; end
+        B = MyModule.new
+        B.instance_eval do
+            def self.extended(base)
+                $res = "extended in: #{base.class.name}"
+            end
+        end
+        A.new.extend B
+        return $res
+        """)
+        assert self.unwrap(space, w_res) == "extended in: A"
+
 
 class TestMapDict(BaseTopazTest):
     def test_simple_attr(self, space):
