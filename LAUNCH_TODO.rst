@@ -5,5 +5,4 @@ Stuff to do before public launch
 * Website
 * Blog post
 * Public mailing list
-* Anything in the github issue tracker marked for launch
 * Binaries (with nightly builds preferably)
