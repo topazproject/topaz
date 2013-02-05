@@ -1,9 +1,16 @@
 import math
+import sys
 
 from ..base import BaseTopazTest
 
 
 class TestFloatObject(BaseTopazTest):
+    def test_max(self, space):
+        assert space.float_w(space.execute("return Float::MAX")) == sys.float_info.max
+
+    def test_min(self, space):
+        assert space.float_w(space.execute("return Float::MIN")) == sys.float_info.min
+
     def test_add(self, space):
         w_res = space.execute("return 1.0 + 2.9")
         assert space.float_w(w_res) == 3.9

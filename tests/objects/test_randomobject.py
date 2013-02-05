@@ -1,4 +1,4 @@
-from topaz.lib.random import W_RandomObject
+from topaz.objects.randomobject import W_RandomObject
 
 from ..base import BaseTopazTest
 

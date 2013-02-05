@@ -484,7 +484,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("basename", filename="path")
     def method_basename(self, space, filename):
-        i = filename.rfind('/') + 1
+        i = filename.rfind("/") + 1
         assert i >= 0
         return space.newstr_fromstr(filename[i:])
 

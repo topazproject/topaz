@@ -10,6 +10,7 @@ install:
     - pip install --use-mirrors fabric
     - fab travis.install_requirements
 script: fab travis.run_tests
+after_script: fab travis.build_release
 notifications:
     email: false
     irc: "irc.freenode.org#topaz"

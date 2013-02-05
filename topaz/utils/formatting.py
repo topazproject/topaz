@@ -31,7 +31,7 @@ class StringFormatter(object):
             i += 1
             width = 0
             while self.fmt[i].isdigit():
-                width = width * 10 + (ord(self.fmt[i]) - ord('0'))
+                width = width * 10 + (ord(self.fmt[i]) - ord("0"))
                 i += 1
             format_char = self.fmt[i]
             w_item = self.items_w[self.item_index]

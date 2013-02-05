@@ -16,8 +16,6 @@ from topaz.executioncontext import ExecutionContext
 from topaz.frame import Frame
 from topaz.interpreter import Interpreter
 from topaz.lexer import LexerError, Lexer
-from topaz.lib.dir import W_Dir
-from topaz.lib.random import W_RandomObject
 from topaz.module import ClassCache, ModuleCache
 from topaz.modules.comparable import Comparable
 from topaz.modules.enumerable import Enumerable
@@ -33,6 +31,7 @@ from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.boolobject import W_TrueObject, W_FalseObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.codeobject import W_CodeObject
+from topaz.objects.dirobject import W_DirObject
 from topaz.objects.encodingobject import W_EncodingObject
 from topaz.objects.envobject import W_EnvObject
 from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
@@ -53,6 +52,7 @@ from topaz.objects.nilobject import W_NilObject
 from topaz.objects.numericobject import W_NumericObject
 from topaz.objects.objectobject import W_Object, W_BaseObject
 from topaz.objects.procobject import W_ProcObject
+from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.rangeobject import W_RangeObject
 from topaz.objects.regexpobject import W_RegexpObject
 from topaz.objects.stringobject import W_StringObject
@@ -148,7 +148,7 @@ class ObjectSpace(object):
             self.getclassfor(W_RangeObject),
             self.getclassfor(W_IOObject),
             self.getclassfor(W_FileObject),
-            self.getclassfor(W_Dir),
+            self.getclassfor(W_DirObject),
             self.getclassfor(W_EncodingObject),
             self.getclassfor(W_IntegerObject),
             self.getclassfor(W_RandomObject),
@@ -227,7 +227,7 @@ class ObjectSpace(object):
         except ParsingError as e:
             raise self.error(self.w_SyntaxError, "line %d" % e.getsourcepos().lineno)
         except LexerError as e:
-            raise self.error(self.w_SyntaxError, "line %d" % e.pos.lineno)
+            raise self.error(self.w_SyntaxError, "line %d (%s)" % (e.pos.lineno, e.msg))
 
     def compile(self, source, filepath, initial_lineno=1, symtable=None):
         if symtable is None:

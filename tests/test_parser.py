@@ -990,6 +990,21 @@ class TestParser(BaseTopazTest):
         assert space.parse('"\u2603"') == string(u"\u2603".encode("utf-8"))
         assert space.parse('?\u2603') == string(u"\u2603".encode("utf-8"))
         assert space.parse('"\uffff"') == string(u"\uffff".encode("utf-8"))
+        assert space.parse('"\u{ff}"') == string(u"\u00ff".encode("utf-8"))
+        assert space.parse('?\u{ff}') == string(u"\u00ff".encode("utf-8"))
+        assert space.parse('"\u{3042 3044 3046 3048}"') == string(u"\u3042\u3044\u3046\u3048".encode("utf-8"))
+        with self.raises(space, "SyntaxError", "line 1 (invalid Unicode escape)"):
+            space.parse('"\u123x"')
+        with self.raises(space, "SyntaxError", "line 1 (invalid Unicode escape)"):
+            space.parse('"\u{}"')
+        with self.raises(space, "SyntaxError", "line 1 (invalid Unicode escape)"):
+            space.parse('"\u{ 3042}"')
+        with self.raises(space, "SyntaxError", "line 1 (unterminated Unicode escape)"):
+            space.parse('"\u{123x}"')
+        with self.raises(space, "SyntaxError", "line 1 (unterminated Unicode escape)"):
+            space.parse('?\u{3042 3044}')
+        with self.raises(space, "SyntaxError", "line 1 (invalid Unicode codepoint (too large))"):
+            space.parse('"\u{110000}"')
 
     def test_dynamic_string(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
@@ -1460,6 +1475,9 @@ HERE
             ast.Statement(ast.Symbol(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]), 1))
         ]))
         assert space.parse("%s{foo bar}") == sym("foo bar")
+        assert space.parse(":-@") == sym("-@")
+        assert space.parse(":+@") == sym("+@")
+        assert space.parse(":$-w") == sym("$-w")
 
     def test_do_symbol(self, space):
         r = space.parse("f :do")
@@ -2025,6 +2043,7 @@ HERE
         assert space.parse("$'") == simple_global("$'")
         assert space.parse("$+") == simple_global("$+")
         assert space.parse("$,") == simple_global("$,")
+        assert space.parse("$-w") == simple_global("$-w")
 
     def test_comments(self, space):
         r = space.parse("""

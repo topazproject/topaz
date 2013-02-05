@@ -106,7 +106,7 @@ class W_ArrayObject(W_Object):
             self.items_w[start] = w_obj
         elif as_range:
             assert end >= 0
-            w_converted = space.convert_type(w_obj, space.w_array, 'to_ary', raise_error=False)
+            w_converted = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
             if w_converted is space.w_nil:
                 rep_w = [w_obj]
             else:

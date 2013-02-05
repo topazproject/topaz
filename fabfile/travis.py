@@ -6,11 +6,13 @@ from fabric.context_managers import lcd
 
 
 class Test(object):
-    def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False):
+    def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False,
+                 builds_release=False):
         self.func = func
         self.deps = deps
         self.needs_rpython = needs_rpython
         self.needs_rubyspec = needs_rubyspec
+        self.builds_release = builds_release
 
     def install_deps(self):
         local("pip install --use-mirrors {}".format(" ".join(self.deps)))
@@ -38,6 +40,10 @@ class Test(object):
                 env["rpython_path"] = f.read()
         self.func(env)
 
+    def build_release(self):
+        local("python topaz/tools/make_release.py topaz.tar")
+        # TODO: the part where we upload it somewhere.
+
 
 @task
 def install_requirements():
@@ -57,6 +63,13 @@ def run_tests():
     t.run_tests()
 
 
+@task
+def build_release():
+    t = TEST_TYPES[os.environ["TEST_TYPE"]]
+    if t.builds_release:
+        t.build_release()
+
+
 def run_own_tests(env):
     local("PYTHONPATH=$PYTHONPATH:{rpython_path} py.test".format(**env))
 
@@ -66,7 +79,7 @@ def run_rubyspec_untranslated(env):
 
 
 def run_translate_tests(env):
-    local("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/translator/goal/translate.py --batch -Ojit targettopaz.py".format(**env))
+    local("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch -Ojit targettopaz.py".format(**env))
     run_specs("`pwd`/bin/topaz")
     local("PYTHONPATH={rpython_path}:$PYTHONPATH py.test --topaz=bin/topaz tests/jit/".format(**env))
 
@@ -167,6 +180,6 @@ def run_docs_tests(env):
 TEST_TYPES = {
     "own": Test(run_own_tests, deps=["pytest", "-r requirements.txt"]),
     "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
-    "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True),
+    "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True, builds_release=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_rpython=False),
 }
