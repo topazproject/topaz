@@ -33,7 +33,7 @@ the missing features.
 
 This is just the beginning of Topaz, there's much work to be done. If you'd
 like to get involved you can find all the source code on `Github`_. The
-documentation on `ReadTheDocs`_. There's a mailing list and ``#topaz`` on
+documentation on `ReadTheDocs`_. There's a `mailing list`_ and ``#topaz`` on
 Freenode IRC to chat. I look forward to seeing you there.
 
 There are innumerable people I'd like to thank for helping out on this project,
@@ -68,3 +68,4 @@ I look forward to seeing you around Topaz.
 .. _`PyPy`: http://pypy.org/
 .. _`Github`: https://github.com/topazproject/topaz
 .. _`ReadTheDocs`: http://topaz.readthedocs.org/
+.. _`mailing list`:
