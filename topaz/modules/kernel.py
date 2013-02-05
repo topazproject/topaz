@@ -365,9 +365,9 @@ class Kernel(Module):
     method_taint, method_tainted, method_untaint = new_flag(moduledef, "taint", "tainted?", "untaint")
     method_freeze, method_frozen = new_flag(moduledef, "freeze", "frozen?", None)
 
-    classdef.app_method("""
+    moduledef.app_method("""
     def `(cmd)
-        cmd = cmd.to_str if cmd.respond_to(:to_str)
+        cmd = cmd.to_str if cmd.respond_to?(:to_str)
         raise TypeError, "can't convert #{cmd.class} into String" unless cmd.is_a?(String)
         IO.popen(cmd) { |r| r.read }
     end

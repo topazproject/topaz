@@ -244,7 +244,7 @@ class TestKernel(BaseTopazTest):
 
     def test_backtick(self, space):
         w_res = space.execute("return `echo 10`")
-        assert self.unwrap(space, w_res) == "10"
+        assert self.unwrap(space, w_res) == "10\n"
 
 
 class TestRequire(BaseTopazTest):
