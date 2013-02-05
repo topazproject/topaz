@@ -346,7 +346,10 @@ class TestExec(BaseTopazTest):
     def fork_and_wait(self, space, capfd, code):
         cpid = os.fork()
         if cpid == 0:
-            space.execute(code)
+            try:
+                space.execute(code)
+            finally:
+                os._exit(0)
         else:
             os.waitpid(cpid, 0)
             out, err = capfd.readouterr()
