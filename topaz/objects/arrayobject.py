@@ -336,6 +336,34 @@ class W_ArrayObject(W_Object):
         return self
 
     classdef.app_method("""
+    def flatten!(level = -1)
+        list = []
+
+        recursion_guard = Thread.current["recursion_guard"] || []
+        if recursion_guard.include? self
+            raise ArgumentError, "tried to flatten recursive array"
+        end
+        Thread.current["recursion_guard"] = recursion_guard << self
+
+        self.each do |item|
+            if level == 0
+                list << item
+            elsif item.respond_to?(:to_ary) && (ary = item.to_ary).is_a?(Array)
+                list += ary.flatten(level - 1)
+            else
+                list << item
+            end
+        end
+        self.clear
+        self.concat list
+    ensure
+        Thread.current["recursion_guard"].clear
+    end
+
+    def flatten(level = -1)
+        dup.flatten!(level)
+    end
+
     def sort(&block)
         dup.sort!(&block)
     end

@@ -364,6 +364,22 @@ class TestArrayObject(BaseTopazTest):
         w_res = space.execute("return [ 1, 2, 3 ] * ','")
         assert self.unwrap(space, w_res) == "1,2,3"
 
+    def test_flatten(self, space):
+        w_res = space.execute("""
+        s = [ 1, 2, 3 ]
+        t = [ 4, 5, 6, [7, 8] ]
+        a = [ s, t, 9, 10 ]
+        return a.flatten
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        w_res = space.execute("return [ 1, 2, [3, [4, 5] ] ].flatten(1)")
+        assert self.unwrap(space, w_res) == [1, 2, 3, [4, 5]]
+        with self.raises(space, "ArgumentError", "tried to flatten recursive array"):
+            space.execute("""
+            a = [0,1,2,3]
+            a[0] = a
+            a.flatten
+            """)
 
 class TestArrayPack(BaseTopazTest):
     def test_garbage_format(self, space):
