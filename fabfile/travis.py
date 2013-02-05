@@ -6,11 +6,13 @@ from fabric.context_managers import lcd
 
 
 class Test(object):
-    def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False):
+    def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False,
+                 builds_release=False):
         self.func = func
         self.deps = deps
         self.needs_rpython = needs_rpython
         self.needs_rubyspec = needs_rubyspec
+        self.builds_release = builds_release
 
     def install_deps(self):
         local("pip install --use-mirrors {}".format(" ".join(self.deps)))
@@ -38,6 +40,10 @@ class Test(object):
                 env["rpython_path"] = f.read()
         self.func(env)
 
+    def build_release(self):
+        local("python topaz/tool/make_release.py topaz.tar")
+        # TODO: the part where we upload it somewhere.
+
 
 @task
 def install_requirements():
@@ -55,6 +61,13 @@ def install_requirements():
 def run_tests():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     t.run_tests()
+
+
+@task
+def build_release():
+    t = TEST_TYPES[os.environ["TEST_TYPES"]]
+    if t.builds_release:
+        t.build_release()
 
 
 def run_own_tests(env):
