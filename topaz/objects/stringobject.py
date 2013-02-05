@@ -424,7 +424,10 @@ class W_StringObject(W_Object):
 
     @classdef.method("rindex", end="int")
     def method_rindex(self, space, w_sub, end=0):
-        end += self.length()
+        if end < 0:
+            end += self.length()
+        else:
+            end = self.length()
         if end < 0:
             return space.w_nil
 
