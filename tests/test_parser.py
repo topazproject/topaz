@@ -899,6 +899,25 @@ class TestParser(BaseTopazTest):
             end
             """)
 
+        assert space.parse("def f(*a,b,&blk); end") == ast.Main(ast.Block([
+            ast.Statement(ast.Function(
+                None,
+                "f",
+                [],
+                "2",
+                "blk",
+                ast.Block([ast.Statement(
+                    ast.MultiAssignment(
+                        ast.MultiAssignable([
+                            ast.Splat(ast.Variable("a", -1)),
+                            ast.Variable("b", -1),
+                        ]),
+                        ast.Variable("2", -1)
+                    )
+                )])
+            ))
+        ]))
+
     def test_def_names(self, space):
         def test_name(s):
             r = space.parse("""

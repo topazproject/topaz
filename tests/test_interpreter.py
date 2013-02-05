@@ -177,6 +177,27 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("return Object.f(5, -2)")
         assert space.int_w(w_res) == 3
 
+    def test_splat_first_in_def_function(self, space):
+        w_res = space.execute("""
+        def self.f(*a, b, c, &blk)
+            a << b << c << blk.call
+        end
+        return f(2, 3, 'b', 'c') do
+            "blk"
+        end
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, 'b', 'c', 'blk']
+
+        w_res = space.execute("""
+        def f(*a, b, c, &blk)
+            a << b << c << blk.call
+        end
+        return f(2, 3, 'b', 'c') do
+            "blk"
+        end
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, 'b', 'c', 'blk']
+
     def test_interpreter(self, space):
         w_res = space.execute('return "abc"')
         assert space.str_w(w_res) == "abc"
