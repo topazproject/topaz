@@ -41,7 +41,7 @@ class Test(object):
         self.func(env)
 
     def build_release(self):
-        local("python topaz/tool/make_release.py topaz.tar")
+        local("python topaz/tools/make_release.py topaz.tar")
         # TODO: the part where we upload it somewhere.
 
 
