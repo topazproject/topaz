@@ -10,3 +10,4 @@ Stuff to do before public launch
     manually or write a web app to post/display them.
   * Make the LOAD_PATH relative to run location, fallback to compile location
 * Remove source key from .travis.yml
+* Put docs on readthedocs
