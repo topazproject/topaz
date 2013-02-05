@@ -39,6 +39,9 @@ class W_IOObject(W_Object):
         if self.fd < 0:
             raise space.error(space.w_IOError, "closed stream")
 
+    def getfd(self):
+        return self.fd
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
@@ -198,6 +201,54 @@ class W_IOObject(W_Object):
                         space.send(pipe_w, space.newsymbol("close"))
         else:
             return space.newarray(pipes_w)
+
+    classdef.app_method("""
+    def self.popen(cmd, mode='r', opts={}, &block)
+        r, w = IO.pipe
+        if mode != 'r' && mode != 'w'
+            raise NotImplementedError, "mode #{mode} for IO.popen"
+        end
+
+        pid = fork do
+            if mode == 'r'
+                r.close
+                $stdout.reopen(w)
+            else
+                w.close
+                $stdin.reopen(r)
+            end
+            exec *cmd
+        end
+
+        if mode == 'r'
+            res = r
+            w.close
+        else
+            res = w
+            r.close
+        end
+
+        res.instance_variable_set("@pid", pid)
+        block ? yield(res) : res
+    end
+
+    def pid
+        @pid
+    end
+    """)
+
+    @classdef.method("reopen")
+    def method_reopen(self, space, w_io, w_mode=None):
+        if not space.is_kind_of(w_io, space.getclassfor(W_IOObject)):
+            args = [w_io] if w_mode is None else [w_io, w_mode]
+            w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
+        assert isinstance(w_io, W_IOObject)
+        if self.fd >= 0:
+            os.close(self.fd)
+            os.dup2(w_io.getfd(), self.fd)
+        else:
+            self.fd = os.dup(w_io.getfd())
+        return self
 
     classdef.app_method("""
     def each_line(sep=$/, limit=nil)
