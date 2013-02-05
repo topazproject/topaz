@@ -936,7 +936,7 @@ class Lexer(object):
                 self.error()
             c = self.read()
             if c == "?":
-                return ['\177']
+                return ["\177"]
             elif c == self.EOF:
                 self.error()
             else:
@@ -1198,7 +1198,7 @@ class Lexer(object):
             self.state = self.EXPR_FNAME
             yield self.emit("SYMBEG")
         else:
-            raise NotImplementedError('%' + ch)
+            raise NotImplementedError("%" + ch)
 
 
 class BaseStringTerm(object):

@@ -295,7 +295,7 @@ class Kernel(Module):
         elif space.is_kind_of(w_arg, space.w_float):
             return space.newfloat(space.float_w(w_arg))
         elif space.is_kind_of(w_arg, space.w_string):
-            string = space.str_w(w_arg).strip(' ')
+            string = space.str_w(w_arg).strip(" ")
             try:
                 return space.newfloat(float(string))
             except ValueError:
