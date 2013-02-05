@@ -166,6 +166,32 @@ class TestStringObject(BaseTopazTest):
         with self.raises(space, "TypeError", "type mismatch: Fixnum given"):
             space.execute("'a b c'.index 12")
 
+    def test_rindex(self, space):
+        w_res = space.execute('"hello".rindex("e")')
+        assert space.int_w(w_res) == 1
+        w_res = space.execute('"hello".rindex("l")')
+        assert space.int_w(w_res) == 3
+        w_res = space.execute('"hello".rindex("l", -3)')
+        assert space.int_w(w_res) == 2
+        w_res = space.execute('"hello".rindex("h", -5)')
+        assert space.int_w(w_res) == 0
+        w_res = space.execute('"hello".rindex(/[aeiou]/, -2)')
+        assert space.int_w(w_res) == 1
+        w_res = space.execute('"hello".rindex(/[aeiou]/, 0)')
+        assert space.int_w(w_res) == 4
+        w_res = space.execute('"hello".rindex(/[aeiou]/, 10)')
+        assert space.int_w(w_res) == 4
+        w_res = space.execute('"hello".rindex(/[aeiou]/, -1)')
+        assert space.int_w(w_res) == 4
+        w_res = space.execute('"hello".rindex(/[aeiou]/, -10)')
+        assert w_res is space.w_nil
+        w_res = space.execute('"hello".rindex(/[x]/)')
+        assert w_res is space.w_nil
+        w_res = space.execute('"hello".rindex("x")')
+        assert w_res is space.w_nil
+        with self.raises(space, "TypeError", "type mismatch: Fixnum given"):
+            space.execute('"hello".rindex(123)')
+
     def test_split(self, space):
         w_res = space.execute("return 'a b c'.split")
         assert self.unwrap(space, w_res) == ["a", "b", "c"]
