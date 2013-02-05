@@ -65,7 +65,7 @@ def run_tests():
 
 @task
 def build_release():
-    t = TEST_TYPES[os.environ["TEST_TYPES"]]
+    t = TEST_TYPES[os.environ["TEST_TYPE"]]
     if t.builds_release:
         t.build_release()
 
