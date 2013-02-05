@@ -180,6 +180,54 @@ class MutableStringStrategy(StringStrategy):
                 else:
                     del storage[:]
 
+    def succ(self, storage):
+        storage = self.unerase(storage)
+        if len(storage) == 0:
+            return
+
+        carry = ""
+        last_alnum = 0
+        start = len(storage) - 1
+
+        while start >= 0:
+            ch = storage[start]
+            if ch.isalnum():
+                carry = "\0"
+                if ch == "9":
+                    carry = "1"
+                    storage[start] = "0"
+                elif ch == "z":
+                    carry = "a"
+                    storage[start] = "a"
+                elif ch == "Z":
+                    carry = "A"
+                    storage[start] = "A"
+                else:
+                    storage[start] = chr(ord(ch) + 1)
+
+                if carry == "\0":
+                    break
+                last_alnum = start
+            start -= 1
+
+        if not carry:
+            start = len(storage) - 1
+            carry = "\1"
+
+            while start >= 0:
+                ch = storage[start]
+                if ord(ch) >= 255:
+                    storage[start] = "\0"
+                else:
+                    storage[start] = chr(ord(ch) + 1)
+                    break
+                start -= 1
+
+        if start < 0:
+            last_alnum_ch = storage[last_alnum]
+            storage[last_alnum] = carry
+            storage.insert(last_alnum + 1, last_alnum_ch)
+
 
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
@@ -746,10 +794,22 @@ class W_StringObject(W_Object):
     def reverse
         self.dup.reverse!
     end
+
+    def succ
+        self.dup.succ!
+    end
+    alias next succ
     """)
 
     @classdef.method("reverse!")
     def method_reverse_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.reverse(self.str_storage)
+        return self
+
+    @classdef.method("next!")
+    @classdef.method("succ!")
+    def method_succ_i(self, space):
+        self.strategy.to_mutable(space, self)
+        self.strategy.succ(self.str_storage)
         return self
