@@ -68,4 +68,4 @@ I look forward to seeing you around Topaz.
 .. _`PyPy`: http://pypy.org/
 .. _`Github`: https://github.com/topazproject/topaz
 .. _`ReadTheDocs`: http://topaz.readthedocs.org/
-.. _`mailing list`:
+.. _`mailing list`: https://groups.google.com/forum/#!forum/topazproject

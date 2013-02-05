@@ -10,7 +10,7 @@ You can find Topaz all over the web:
 * IRC: ``#topaz`` on ``irc.freenode.net``
 * `@topazproject`_ on Twitter
 
-.. _`Mailing list`:
+.. _`Mailing list`: https://groups.google.com/forum/#!forum/topazproject
 .. _`Source code`: https://github.com/topazproject/topaz
 .. _`Issue tracker`: https://github.com/topazproject/topaz/issues
 .. _`Documentation`: http://topaz.readthedocs.org/
