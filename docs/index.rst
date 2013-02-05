@@ -11,6 +11,7 @@ written in Python on top of `RPython`_ (the toolchain that powers PyPy).
    current-status
    contributing
    code-of-conduct
+   blog/index
 
 
 
