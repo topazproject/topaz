@@ -250,23 +250,6 @@ class W_IOObject(W_Object):
             self.fd = os.dup(w_io.getfd())
         return self
 
-    @classdef.singleton_method("pipe")
-    def method_pipe(self, space, block=None):
-        r, w = os.pipe()
-        pipes_w = [
-            space.send(self, space.newsymbol("new"), [space.newint(r)]),
-            space.send(self, space.newsymbol("new"), [space.newint(w)])
-        ]
-        if block is not None:
-            try:
-                return space.invoke_block(block, pipes_w)
-            finally:
-                for pipe_w in pipes_w:
-                    if not space.is_true(space.send(pipe_w, space.newsymbol("closed?"))):
-                        space.send(pipe_w, space.newsymbol("close"))
-        else:
-            return space.newarray(pipes_w)
-
     classdef.app_method("""
     def each_line(sep=$/, limit=nil)
         if sep.is_a?(Fixnum) && limit.nil?
