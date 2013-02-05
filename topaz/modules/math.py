@@ -11,6 +11,7 @@ class Math(Module):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         space.set_const(w_mod, "PI", space.newfloat(math.pi))
+        space.set_const(w_mod, "E", space.newfloat(math.e))
 
     @moduledef.function("exp", value="float")
     def method_exp(self, space, value):
@@ -23,3 +24,10 @@ class Math(Module):
     @moduledef.function("sqrt", value="float")
     def method_sqrt(self, space, value):
         return space.newfloat(math.sqrt(value))
+
+    @moduledef.function("log", value="float", base="float")
+    def method_log(self, space, value, base=math.e):
+        if base == math.e:
+            return space.newfloat(math.log(value))
+        else:
+            return space.newfloat(math.log(value) / math.log(base))

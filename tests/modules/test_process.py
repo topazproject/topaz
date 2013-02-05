@@ -4,6 +4,10 @@ from ..base import BaseTopazTest
 
 
 class TestProcess(BaseTopazTest):
+    def test_euid(self, space):
+        w_res = space.execute("return Process.euid")
+        assert space.int_w(w_res) == os.geteuid()
+
     def test_pid(self, space):
         w_res = space.execute("return Process.pid")
         assert space.int_w(w_res) == os.getpid()

@@ -65,6 +65,11 @@ class W_ClassObject(W_ModuleObject):
             ary += self.superclass.ancestors(include_singleton)
         return ary
 
+    def inherited(self, space, w_mod):
+        self.descendants.append(w_mod)
+        if not space.bootstrap and space.respond_to(self, space.newsymbol("inherited")):
+            space.send(self, space.newsymbol("inherited"), [w_mod])
+
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_superclass=None):
         if w_superclass is not None:
@@ -90,3 +95,8 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("superclass")
     def method_superclass(self, space):
         return self.superclass if self.superclass is not None else space.w_nil
+
+    classdef.app_method("""
+    def inherited(amodule); end
+    private :inherited
+    """)
