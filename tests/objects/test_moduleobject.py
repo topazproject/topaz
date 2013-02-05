@@ -44,6 +44,19 @@ class TestModuleObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_define_method(self, space):
+        w_res = space.execute("""
+        class X
+            a = 10
+            define_method :add do
+                self.b + a
+            end
+            def b; 5; end
+        end
+        return X.new.add
+        """)
+        assert self.unwrap(space, w_res) == 15
+
     def test_singleton_class(self, space):
         w_res = space.execute("""
         class X; end
