@@ -9,3 +9,4 @@ Stuff to do before public launch
   * Make the LOAD_PATH relative to run location, fallback to compile location
 * Remove source key from .travis.yml
 * Put docs on readthedocs
+* Delete this file
