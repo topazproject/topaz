@@ -1,4 +1,5 @@
 import copy
+import string
 
 from rpython.rlib import jit
 from rpython.rlib.objectmodel import newlist_hint, compute_hash
@@ -191,7 +192,7 @@ class MutableStringStrategy(StringStrategy):
 
         while start >= 0:
             ch = storage[start]
-            if ch.isalnum():
+            if ch in string.letters or ch in string.digits:
                 carry = "\0"
                 if ch == "9":
                     carry = "1"
