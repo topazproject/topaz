@@ -29,7 +29,7 @@ If you want to try it out right now, you can grab a nightly build, or
 The major goal for the next several months is going to be completeness: adding
 more features of Ruby, more builtin classes, more standard library modules, and
 generally getting to a point where real people can run real applications under
-Topaz (the holy grain, of course, being running Rails). One feature of
+Topaz (the holy grail, of course, being running Rails). One feature of
 particular note is ``FFI``, once we have this people will begin to be able to
 run and develop applications that interact with C libraries (such as database
 bindings).
