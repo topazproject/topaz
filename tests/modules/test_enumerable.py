@@ -3,19 +3,20 @@ from ..base import BaseTopazTest
 
 class TestEnumberable(BaseTopazTest):
     def test_inject(self, space):
-        w_res = space.execute("""
-        return (5..10).inject(1) do |prod, n|
-            prod * n
-        end
-        """)
-        assert space.int_w(w_res) == 151200
+        for method in ['reduce', 'inject']:
+            w_res = space.execute("""
+            return (5..10).%s(1) do |prod, n|
+                prod * n
+            end
+            """ % method)
+            assert space.int_w(w_res) == 151200
 
-        w_res = space.execute("""
-        return (1..10).inject(0) do |sum, n|
-            sum + n
-        end
-        """)
-        assert space.int_w(w_res) == 55
+            w_res = space.execute("""
+            return (1..10).%s(0) do |sum, n|
+                sum + n
+            end
+            """ % method)
+            assert space.int_w(w_res) == 55
 
     def test_each_with_index(self, space):
         w_res = space.execute("""
