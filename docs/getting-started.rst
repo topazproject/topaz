@@ -29,7 +29,7 @@ Building Topaz
 
 Before you build Topaz, there's a few things you'll need:
 
-* A checkout of the topaz repository: `git clone http://github.com/topaz/topaz`
+* A checkout of the topaz repository: `git clone http://github.com/topazproject/topaz`
 * A recent checkout of the PyPy repository:
   `hg clone https://bitbucket.org/pypy/pypy`
 * RPly: `pip install -r requirements.txt`
