@@ -188,11 +188,7 @@ class ObjectSpace(object):
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
 
-        self.w_load_path = self.newarray([
-            self.newstr_fromstr(os.path.abspath(
-                os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
-            ))
-        ])
+        self.w_load_path = self.newarray([])
         self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
         self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
@@ -228,8 +224,6 @@ class ObjectSpace(object):
                 break
 
         self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
-        self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
-        self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
     @specialize.memo()
     def fromcache(self, key):
