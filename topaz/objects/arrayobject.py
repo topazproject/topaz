@@ -164,6 +164,7 @@ class W_ArrayObject(W_Object):
     @classdef.method("concat")
     def method_concat(self, space, w_ary):
         space.check_frozen(self)
+        w_ary = space.convert_type(w_ary, space.w_array, "to_ary")
         self.items_w += space.listview(w_ary)
         return self
 
