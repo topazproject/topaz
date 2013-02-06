@@ -25,6 +25,7 @@ If you want to try it out right now, you can grab a nightly build, or
 * `OS X 64-bit`_
 * `Linux 32-bit`_
 * `Linux 64-bit`_
+* `Windows 32-bit`_
 
 The major goal for the next several months is going to be completeness: adding
 more features of Ruby, more builtin classes, more standard library modules, and
@@ -76,6 +77,7 @@ I look forward to seeing you around Topaz.
 .. _`OS X 64-bit`: http://builds.topazruby.com/topaz-osx64-242eebe5ce38a6c9808ccecaa46bfa427d53e2d4.tar.bz2
 .. _`Linux 32-bit`: http://builds.topazruby.com/topaz-linux32-04ab1983cf39127e0d8ed4efdbdccbe819eb2992.tar.bz2
 .. _`Linux 64-bit`: http://builds.topazruby.com/topaz-linux64-04ab1983cf39127e0d8ed4efdbdccbe819eb2992.tar.bz2
+.. _`Windows 32-bit`: http://builds.topazruby.com/topaz-msvc-i386-51466ba4ab8a921527de436da15f467c2b503fc5.tar
 .. _`Github`: https://github.com/topazproject/topaz
 .. _`ReadTheDocs`: http://topaz.readthedocs.org/
 .. _`mailing list`: https://groups.google.com/forum/#!forum/topazproject
