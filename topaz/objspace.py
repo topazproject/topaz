@@ -194,6 +194,7 @@ class ObjectSpace(object):
 
         self.w_main_thread = W_ThreadObject(self)
 
+        self.w_load_path = self.newarray([])
         # TODO: this should really go in a better place.
         self.execute("""
         def self.include *mods
@@ -205,16 +206,19 @@ class ObjectSpace(object):
         return True
 
     def setup(self, executable):
+        """
+        Performs runtime setup.
+        """
         path = rpath.rabspath(executable)
         # Fallback to a path relative to the compiled location.
-        lib_path = rpath.rabspath(os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby"))
+        lib_path = rpath.rabspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
             if os.path.isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
                 break
 
-        self.w_load_path = self.newarray([self.newstr_fromstr(lib_path)])
+        self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
         self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
         self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
