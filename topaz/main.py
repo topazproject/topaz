@@ -15,7 +15,7 @@ def getspace():
     return ObjectSpace()
 
 
-def entry_point(executable, argv):
+def entry_point(argv):
     space = getspace()
     space.setup(argv[0])
     return _entry_point(space, argv)

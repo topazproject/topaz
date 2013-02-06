@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
-from rpython.rlib import jit
+import os
+
+from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
 
@@ -196,6 +198,8 @@ class ObjectSpace(object):
 
         self.w_main_thread = W_ThreadObject(self)
 
+        self.w_load_path = self.newarray([])
+        self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
         # TODO: this should really go in a better place.
         self.execute("""
         def self.include *mods
@@ -209,6 +213,23 @@ class ObjectSpace(object):
 
     def _freeze_(self):
         return True
+
+    def setup(self, executable):
+        """
+        Performs runtime setup.
+        """
+        path = rpath.rabspath(executable)
+        # Fallback to a path relative to the compiled location.
+        lib_path = self.base_lib_path
+        while path:
+            path = rpath.rabspath(os.path.join(path, os.path.pardir))
+            if os.path.isdir(os.path.join(path, "lib-ruby")):
+                lib_path = os.path.join(path, "lib-ruby")
+                break
+
+        self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
+        self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
+        self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
     @specialize.memo()
     def fromcache(self, key):
