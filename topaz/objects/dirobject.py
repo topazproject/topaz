@@ -35,6 +35,7 @@ class W_DirObject(W_Object):
         return W_DirObject(space)
 
     @classdef.singleton_method("pwd")
+    @classdef.singleton_method("getwd")
     def method_pwd(self, space):
         return space.newstr_fromstr(os.getcwd())
 
