@@ -67,7 +67,7 @@ class RPacker(object):
         repetitions = 0
         while end < len(self.fmt) and self.fmt[end].isdigit():
             try:
-                repetitions = ovfcheck(repetitions * 10 + (ord(self.fmt[end]) - ord('0')))
+                repetitions = ovfcheck(repetitions * 10 + (ord(self.fmt[end]) - ord("0")))
             except OverflowError:
                 raise space.error(space.w_RangeError, "pack length too big")
             end += 1
@@ -166,32 +166,32 @@ def make_pack_operators():
     ops[ord("n")] = ops[ord("S") + BE_offset]
     ops[ord("v")] = ops[ord("S") + LE_offset]
 
-    # ops[ord('U')] # pack UTF-8 sequence
-    # ops[ord('w')] # BER-compressed integer
+    # ops[ord("U")] # pack UTF-8 sequence
+    # ops[ord("w")] # BER-compressed integer
 
-    ops[ord('f')] = ops[ord('F')] = make_float_packer(size=4, bigendian=native_is_bigendian)
-    ops[ord('d')] = ops[ord('D')] = make_float_packer(size=8, bigendian=native_is_bigendian)
-    ops[ord('E')] = make_float_packer(size=8, bigendian=False)
-    ops[ord('e')] = make_float_packer(size=4, bigendian=False)
-    ops[ord('G')] = make_float_packer(size=8, bigendian=True)
-    ops[ord('g')] = make_float_packer(size=4, bigendian=True)
+    ops[ord("f")] = ops[ord("F")] = make_float_packer(size=4, bigendian=native_is_bigendian)
+    ops[ord("d")] = ops[ord("D")] = make_float_packer(size=8, bigendian=native_is_bigendian)
+    ops[ord("E")] = make_float_packer(size=8, bigendian=False)
+    ops[ord("e")] = make_float_packer(size=4, bigendian=False)
+    ops[ord("G")] = make_float_packer(size=8, bigendian=True)
+    ops[ord("g")] = make_float_packer(size=4, bigendian=True)
 
-    ops[ord('A')] = make_string_packer(padding=" ")
-    ops[ord('a')] = ops[ord('Z')] = make_string_packer(padding="\0")
-    ops[ord('Z') - 1] = make_string_packer(nullterminated=True)
+    ops[ord("A")] = make_string_packer(padding=" ")
+    ops[ord("a")] = ops[ord("Z")] = make_string_packer(padding="\0")
+    ops[ord("Z") - 1] = make_string_packer(nullterminated=True)
 
-    # ops[ord('B')] # bitstring (msb first)
-    # ops[ord('b')] # bitstring (lsb first)
-    # ops[ord('H')] # hexstring (high first)
-    # ops[ord('h')] # hexstring (low first)
-    # ops[ord('u')] # UU-encoding
-    # ops[ord('M')] # MIME-encoding
-    # ops[ord('m')] # base64-encoding
-    ops[ord('P')] = ops[ord('p')] = pack_pointer
+    # ops[ord("B")] # bitstring (msb first)
+    # ops[ord("b")] # bitstring (lsb first)
+    # ops[ord("H")] # hexstring (high first)
+    # ops[ord("h")] # hexstring (low first)
+    # ops[ord("u")] # UU-encoding
+    # ops[ord("M")] # MIME-encoding
+    # ops[ord("m")] # base64-encoding
+    ops[ord("P")] = ops[ord("p")] = pack_pointer
 
-    ops[ord('@')] = pack_move_to
-    ops[ord('X')] = pack_back_up
-    ops[ord('x')] = pack_padding
+    ops[ord("@")] = pack_move_to
+    ops[ord("X")] = pack_back_up
+    ops[ord("x")] = pack_padding
 
     return ops
 

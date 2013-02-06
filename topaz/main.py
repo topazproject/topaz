@@ -24,7 +24,9 @@ def getspace():
 
 
 def entry_point(argv):
-    return _entry_point(getspace(), argv)
+    space = getspace()
+    space.setup(argv[0])
+    return _entry_point(space, argv)
 
 
 def _entry_point(space, argv):

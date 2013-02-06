@@ -166,6 +166,32 @@ class TestStringObject(BaseTopazTest):
         with self.raises(space, "TypeError", "type mismatch: Fixnum given"):
             space.execute("'a b c'.index 12")
 
+    def test_rindex(self, space):
+        w_res = space.execute('"hello".rindex("e")')
+        assert space.int_w(w_res) == 1
+        w_res = space.execute('"hello".rindex("l")')
+        assert space.int_w(w_res) == 3
+        w_res = space.execute('"hello".rindex("l", -3)')
+        assert space.int_w(w_res) == 2
+        w_res = space.execute('"hello".rindex("h", -5)')
+        assert space.int_w(w_res) == 0
+        w_res = space.execute('"hello".rindex(/[aeiou]/, -2)')
+        assert space.int_w(w_res) == 1
+        w_res = space.execute('"hello".rindex(/[aeiou]/, 0)')
+        assert space.int_w(w_res) == 4
+        w_res = space.execute('"hello".rindex(/[aeiou]/, 10)')
+        assert space.int_w(w_res) == 4
+        w_res = space.execute('"hello".rindex(/[aeiou]/, -1)')
+        assert space.int_w(w_res) == 4
+        w_res = space.execute('"hello".rindex(/[aeiou]/, -10)')
+        assert w_res is space.w_nil
+        w_res = space.execute('"hello".rindex(/[x]/)')
+        assert w_res is space.w_nil
+        w_res = space.execute('"hello".rindex("x")')
+        assert w_res is space.w_nil
+        with self.raises(space, "TypeError", "type mismatch: Fixnum given"):
+            space.execute('"hello".rindex(123)')
+
     def test_split(self, space):
         w_res = space.execute("return 'a b c'.split")
         assert self.unwrap(space, w_res) == ["a", "b", "c"]
@@ -383,6 +409,18 @@ class TestStringObject(BaseTopazTest):
         return 'helloo'.gsub("l", Hash.new { |h, k| replacements.pop() })
         """)
         assert space.str_w(w_res) == "he21oo"
+
+    def test_succ(self, space):
+        w_res = space.execute('return "abcd".succ')
+        assert space.str_w(w_res) == "abce"
+        w_res = space.execute('return "THX1138".succ')
+        assert space.str_w(w_res) == "THX1139"
+        w_res = space.execute('return "<<koala>>".succ')
+        assert space.str_w(w_res) == "<<koalb>>"
+        w_res = space.execute('return "ZZZ9999".succ')
+        assert space.str_w(w_res) == "AAAA0000"
+        w_res = space.execute('return "***".succ')
+        assert space.str_w(w_res) == "**+"
 
 
 class TestStringMod(object):
