@@ -377,6 +377,11 @@ class ObjectSpace(object):
     def listview(self, w_obj):
         return w_obj.listview(self)
 
+    def check_frozen(self, w_obj):
+        if w_obj.get_flag(self, "frozen?").is_true(self):
+            raise self.error(self.w_RuntimeError, "can't modify frozen object")
+
+
     # Methods for implementing the language semantics.
 
     def is_true(self, w_obj):
