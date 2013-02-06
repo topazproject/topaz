@@ -273,7 +273,6 @@ class TestRequire(BaseTopazTest):
         assert space.int_w(w_res) == -9
 
     def test_load_path(self, space, tmpdir):
-        space.setup(__file__)
         f = tmpdir.join("t.rb")
         f.write("""
         def t(a, b)
@@ -289,7 +288,6 @@ class TestRequire(BaseTopazTest):
         assert space.int_w(w_res) == -3
 
     def test_stdlib_default_load_path(self, space):
-        space.setup(__file__)
         w_res = space.execute("""
         return require 'prettyprint'
         """)

@@ -13,7 +13,6 @@ from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
 from topaz.error import RubyError, print_traceback
 from topaz.executioncontext import ExecutionContext
-from topaz import initpath
 from topaz.frame import Frame
 from topaz.interpreter import Interpreter
 from topaz.lexer import LexerError, Lexer
@@ -184,13 +183,18 @@ class ObjectSpace(object):
                 w_cls
             )
 
-        self.globals.define_virtual("$:", lambda space : space.globals.get('$LOAD_PATH'))
-        self.globals.set(self, "$LOAD_PATH", self.newarray([]))
-
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
+
+        self.w_load_path = self.newarray([
+            self.newstr_fromstr(os.path.abspath(
+                os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
+            ))
+        ])
+        self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
+        self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
         self.w_loaded_features = self.newarray([])
         self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
@@ -206,10 +210,6 @@ class ObjectSpace(object):
             Object.include *mods
         end
         """)
-
-    def setup(self, executable):
-        self.globals.set(self, '$LOAD_PATH', self.newarray([
-            self.newstr_fromstr(initpath.find(executable))]))
 
     def _freeze_(self):
         return True
