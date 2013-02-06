@@ -34,7 +34,8 @@ Before you build Topaz, there's a few things you'll need:
   ``hg clone https://bitbucket.org/pypy/pypy``
 * RPly: ``pip install -r requirements.txt``
 
-We recommend installing ``PyPy`` and ``RPly`` into a `virtualenv`_.
+Build pypy by following the `instructions for your platform`_ before
+building topaz. We recommend installing ``PyPy`` and ``RPly`` into a `virtualenv`_.
 
 Once everything is setup (make sure ``rpython`` is on your ``PYTHONPATH``), you
 can compile Topaz::
@@ -54,3 +55,4 @@ Note that this is extremely slow, and should never be used for benchmarking,
 only for testing.
 
 .. _virtualenv: http://www.virtualenv.org/
+.. _instructions for your platform: http://pypy.org/download.html#building-from-source
