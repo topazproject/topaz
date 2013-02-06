@@ -195,6 +195,7 @@ class ObjectSpace(object):
         self.w_main_thread = W_ThreadObject(self)
 
         self.w_load_path = self.newarray([])
+        self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
         # TODO: this should really go in a better place.
         self.execute("""
         def self.include *mods
@@ -211,7 +212,7 @@ class ObjectSpace(object):
         """
         path = rpath.rabspath(executable)
         # Fallback to a path relative to the compiled location.
-        lib_path = rpath.rabspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
+        lib_path = self.base_lib_path
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
             if os.path.isdir(os.path.join(path, "lib-ruby")):
