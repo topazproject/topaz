@@ -137,7 +137,8 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("+")
     def method_add(self, space, w_other):
-        assert isinstance(w_other, W_ArrayObject)
+        if not isinstance(w_other, W_ArrayObject):
+            w_other = space.send(w_other, space.newsymbol("to_ary"))
         return space.newarray(self.items_w + w_other.items_w)
 
     classdef.app_method("""

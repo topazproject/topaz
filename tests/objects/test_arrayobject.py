@@ -84,6 +84,8 @@ class TestArrayObject(BaseTopazTest):
     def test_plus(self, space):
         w_res = space.execute("return [1, 2] + [3]")
         assert self.unwrap(space, w_res) == [1, 2, 3]
+        with self.raises(space, "NoMethodError", "undefined method `to_ary' for Symbol"):
+            space.execute("[1, 2] + :not_an_array")
 
     def test_minus(self, space):
         w_res = space.execute("return [1, 1, 2, '3'] - [1, '3']")
