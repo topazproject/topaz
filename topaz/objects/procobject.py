@@ -10,6 +10,9 @@ class W_ProcObject(W_Object):
         self.block = block
         self.is_lambda = is_lambda
 
+    def get_block(self):
+        return self.block
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w, block):
         return W_ProcObject(space, block, False)
