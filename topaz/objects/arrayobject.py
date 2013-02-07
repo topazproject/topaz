@@ -48,6 +48,10 @@ class W_ArrayObject(W_Object):
     def singleton_method_allocate(self, space):
         return space.newarray([])
 
+    @classdef.singleton_method("[]")
+    def singleton_method_subscript(self, space, args_w):
+        return space.newarray(args_w)
+
     @classdef.method("initialize_copy")
     def method_initialize_copy(self, space, w_other):
         assert isinstance(w_other, W_ArrayObject)
