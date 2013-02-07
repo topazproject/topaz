@@ -58,6 +58,6 @@ class Coerce(object):
     @staticmethod
     def array(space, w_obj):
         if space.is_kind_of(w_obj, space.w_array):
-            return w_obj
+            return space.listview(w_obj)
         else:
             return space.convert_type(w_obj, space.w_array, "to_ary")
