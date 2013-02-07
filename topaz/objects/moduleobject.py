@@ -50,8 +50,8 @@ class DefineMethodBlock(W_FunctionObject):
         self.block = block
 
     def call(self, space, w_obj, args_w, block):
-        block = self.block.copy(w_self=w_obj)
-        return space.invoke_block(block, args_w, block)
+        method_block = self.block.copy(w_self=w_obj)
+        return space.invoke_block(method_block, args_w, block)
 
 
 class DefineMethodMethod(W_FunctionObject):
