@@ -137,7 +137,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("+", other="array")
     def method_add(self, space, other):
-        return space.newarray(self.items_w + other.items_w)
+        return space.newarray(self.items_w + other.listview(space))
 
     classdef.app_method("""
     def -(other)
