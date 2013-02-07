@@ -38,7 +38,7 @@ class TestMain(object):
         assert not err
 
     def test_expr(self, space, tmpdir, capfd):
-        self.run(space, tmpdir, None, ruby_args=['-e', 'puts 5', '-e', 'puts 6'])
+        self.run(space, tmpdir, None, ruby_args=["-e", "puts 5", "-e", "puts 6"])
         out, err = capfd.readouterr()
         assert out == "5\n6\n"
 
@@ -172,3 +172,8 @@ class TestMain(object):
         f = self.run(space, tmpdir, "puts $0")
         out2, err2 = capfd.readouterr()
         assert out2 == "{}\n".format(f)
+
+    def test_non_existent_file(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, None, ruby_args=[str(tmpdir.join("t.rb"))], status=1)
+        out, err = capfd.readouterr()
+        assert err == "No such file or directory -- %s (LoadError)\n" % tmpdir.join("t.rb")

@@ -8,7 +8,7 @@ PROJECT_ROOT = os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.p
 
 def main(argv):
     target = argv[0]
-    t = tarfile.open(target, mode="w")
+    t = tarfile.open(target, mode="w:bz2")
     for name in [
         "bin/topaz",
         "lib-ruby",

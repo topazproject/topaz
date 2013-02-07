@@ -1,4 +1,5 @@
 import copy
+import string
 
 from rpython.rlib import jit
 from rpython.rlib.objectmodel import newlist_hint, compute_hash
@@ -179,6 +180,55 @@ class MutableStringStrategy(StringStrategy):
                     del storage[i:]
                 else:
                     del storage[:]
+
+    def succ(self, storage):
+        storage = self.unerase(storage)
+        if len(storage) == 0:
+            return
+
+        carry = "\0"
+        has_alnums = False
+        last_alnum = 0
+        start = len(storage) - 1
+
+        while start >= 0:
+            ch = storage[start]
+            if ch in string.letters or ch in string.digits:
+                has_alnums = True
+                if ch == "9":
+                    carry = "1"
+                    storage[start] = "0"
+                elif ch == "z":
+                    carry = "a"
+                    storage[start] = "a"
+                elif ch == "Z":
+                    carry = "A"
+                    storage[start] = "A"
+                else:
+                    storage[start] = chr(ord(ch) + 1)
+
+                if carry == "\0":
+                    break
+                last_alnum = start
+            start -= 1
+
+        if not has_alnums:
+            start = len(storage) - 1
+            carry = "\1"
+
+            while start >= 0:
+                ch = storage[start]
+                if ord(ch) >= 255:
+                    storage[start] = "\0"
+                else:
+                    storage[start] = chr(ord(ch) + 1)
+                    break
+                start -= 1
+
+        if start < 0:
+            last_alnum_ch = storage[last_alnum]
+            storage[last_alnum] = carry
+            storage.insert(last_alnum + 1, last_alnum_ch)
 
 
 class W_StringObject(W_Object):
@@ -421,6 +471,37 @@ class W_StringObject(W_Object):
                 space.w_TypeError,
                 "type mismatch: %s given" % space.getclass(w_sub).name
             )
+
+    @classdef.method("rindex", end="int")
+    def method_rindex(self, space, w_sub, end=0):
+        if end < 0:
+            end += self.length()
+        else:
+            end = self.length()
+        if end < 0:
+            return space.w_nil
+
+        idx = -1
+        if space.is_kind_of(w_sub, space.w_string):
+            idx = space.str_w(self).rfind(space.str_w(w_sub), 0, end + 1)
+        elif space.is_kind_of(w_sub, space.w_regexp):
+            ctx = w_sub.make_ctx(space.str_w(self))
+            idx = -1
+            while self.search_context(space, ctx):
+                if ctx.match_start > end:
+                    break
+                else:
+                    idx = ctx.match_start
+                ctx.reset(idx + 1)
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "type mismatch: %s given" % space.getclass(w_sub).name
+            )
+        if idx < 0:
+            return space.w_nil
+        else:
+            return space.newint(idx)
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=0):
@@ -746,10 +827,22 @@ class W_StringObject(W_Object):
     def reverse
         self.dup.reverse!
     end
+
+    def succ
+        self.dup.succ!
+    end
+    alias next succ
     """)
 
     @classdef.method("reverse!")
     def method_reverse_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.reverse(self.str_storage)
+        return self
+
+    @classdef.method("next!")
+    @classdef.method("succ!")
+    def method_succ_i(self, space):
+        self.strategy.to_mutable(space, self)
+        self.strategy.succ(self.str_storage)
         return self

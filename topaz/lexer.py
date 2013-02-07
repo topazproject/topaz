@@ -362,7 +362,7 @@ class Lexer(object):
                 self.add(ch)
                 yield self.emit_identifier(command_state, "FID")
                 break
-            elif ch.isalnum() or ch == "_":
+            elif ch.isalnum() or ch == "_" or ord(ch) > 127:
                 self.add(ch)
             else:
                 self.unread()
