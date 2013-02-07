@@ -502,3 +502,7 @@ class TestArrayPack(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == "albatross"
         assert space.execute("[].max") is space.w_nil
+
+    def test_singleton_subscript(self, space):
+        w_res = space.execute("return Array[6, -1]")
+        assert self.unwrap(space, w_res) == [6, -1]
