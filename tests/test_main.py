@@ -176,4 +176,4 @@ class TestMain(object):
     def test_non_existent_file(self, space, tmpdir, capfd):
         self.run(space, tmpdir, None, ruby_args=[str(tmpdir.join("t.rb"))], status=1)
         out, err = capfd.readouterr()
-        assert err == "No such file or directory -- %s (LoadError)" % tmpdir.join("t.rb")
+        assert err == "No such file or directory -- %s (LoadError)\n" % tmpdir.join("t.rb")
