@@ -135,11 +135,9 @@ class W_ArrayObject(W_Object):
     def method_emptyp(self, space):
         return space.newbool(len(self.items_w) == 0)
 
-    @classdef.method("+")
-    def method_add(self, space, w_other):
-        if not isinstance(w_other, W_ArrayObject):
-            w_other = space.send(w_other, space.newsymbol("to_ary"))
-        return space.newarray(self.items_w + w_other.items_w)
+    @classdef.method("+", other="array")
+    def method_add(self, space, other):
+        return space.newarray(self.items_w + other.items_w)
 
     classdef.app_method("""
     def -(other)
