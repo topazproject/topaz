@@ -847,6 +847,21 @@ class TestParser(BaseTopazTest):
             ])))
         ]))
 
+        r = space.parse("""
+        def f(a)
+        \tputs a
+        \tputs a
+        \tputs a
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [ast.Argument("a")], None, None, ast.Block([
+                ast.Statement(ast.Send(ast.Self(3), "puts", [ast.Variable("a", 3)], None, 3)),
+                ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("a", 4)], None, 4)),
+                ast.Statement(ast.Send(ast.Self(5), "puts", [ast.Variable("a", 5)], None, 5)),
+            ])))
+        ]))
+
         assert space.parse("x = def f() end") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Variable("x", 1), ast.Function(None, "f", [], None, None, ast.Nil())))
         ]))
@@ -1188,6 +1203,21 @@ HERE
             def f()
                 2
             end
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Class(ast.Scope(2), "X", None, ast.Block([
+                ast.Statement(ast.Function(None, "f", [], None, None, ast.Block([
+                    ast.Statement(ast.ConstantInt(2))
+                ])))
+            ])))
+        ]))
+
+        r = space.parse("""
+        class X
+        \tdef f()
+        \t\t2
+        \tend
         end
         """)
         assert r == ast.Main(ast.Block([
