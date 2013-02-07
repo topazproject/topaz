@@ -32,9 +32,9 @@ Before you build Topaz, there's a few things you'll need:
 * A checkout of the topaz repository: ``git clone http://github.com/topazproject/topaz``
 * A recent checkout of the PyPy repository:
   ``hg clone https://bitbucket.org/pypy/pypy``
-* RPly: ``pip install -r requirements.txt``
+* Other dependencies: ``pip install -r requirements.txt``
 
-We recommend installing ``PyPy`` and ``RPly`` into a `virtualenv`_.
+We recommend installing ``PyPy`` and other dependencies into a `virtualenv`_.
 
 Once everything is setup (make sure ``rpython`` is on your ``PYTHONPATH``), you
 can compile Topaz::
