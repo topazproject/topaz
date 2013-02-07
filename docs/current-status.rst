@@ -19,5 +19,7 @@ The following is a list of known missing features:
 * No ``call/cc``.
 * No method visibility (``private``).
 * Many builtin methods are missing.
+* No flip-flop support.
+* No support for ``if /regex/``.
 
 Remember, :doc:`you can help </contributing>`!

@@ -10,6 +10,8 @@ class TestDir(BaseTopazTest):
     def test_pwd(self, space):
         w_res = space.execute("return Dir.pwd")
         assert space.str_w(w_res) == os.getcwd()
+        w_res = space.execute("return Dir.getwd")
+        assert space.str_w(w_res) == os.getcwd()
 
     def test_new(self, space, tmpdir):
         d = tmpdir.mkdir("sub")

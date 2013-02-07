@@ -16,7 +16,9 @@ def getspace():
 
 
 def entry_point(argv):
-    return _entry_point(getspace(), argv)
+    space = getspace()
+    space.setup(argv[0])
+    return _entry_point(space, argv)
 
 
 def _entry_point(space, argv):
@@ -62,7 +64,11 @@ def _entry_point(space, argv):
         source = "\n".join(exprs)
         path = "-e"
     elif path is not None:
-        f = open_file_as_stream(path)
+        try:
+            f = open_file_as_stream(path)
+        except OSError as e:
+            os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
+            return 1
         try:
             source = f.readall()
         finally:

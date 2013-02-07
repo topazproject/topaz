@@ -1478,6 +1478,8 @@ HERE
         assert space.parse(":-@") == sym("-@")
         assert space.parse(":+@") == sym("+@")
         assert space.parse(":$-w") == sym("$-w")
+        assert space.parse(u":åäö".encode("utf-8")) == sym(u"åäö".encode("utf-8"))
+        assert space.parse(u":８ ９ ＡＢＣ".encode("utf-8")) == sym(u"８ ９ ＡＢＣ".encode("utf-8"))
 
     def test_do_symbol(self, space):
         r = space.parse("f :do")

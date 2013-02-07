@@ -17,6 +17,14 @@ class TestEnumberable(BaseTopazTest):
         """)
         assert space.int_w(w_res) == 55
 
+    def test_reduce(self, space):
+        w_res = space.execute("""
+        return [1, 2, 4, 8].reduce(0) do |accum, cur|
+            accum + cur
+        end
+        """)
+        assert space.int_w(w_res) == 15
+
     def test_each_with_index(self, space):
         w_res = space.execute("""
         result = []

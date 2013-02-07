@@ -43,3 +43,12 @@ class TestProcObject(BaseTopazTest):
             space.execute("""
             proc { break }.call
             """)
+
+    def test_binding(self, space):
+        w_res = space.execute("""
+        def f(a)
+            return proc {}
+        end
+        return f(2).binding.eval("a")
+        """)
+        assert space.int_w(w_res) == 2
