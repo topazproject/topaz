@@ -133,7 +133,7 @@ class Lexer(object):
             ch = self.read()
             if ch == self.EOF:
                 break
-            if ch == " ":
+            if ch in " \t":
                 space_seen = True
                 continue
             elif ch == "#":
