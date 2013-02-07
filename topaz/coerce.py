@@ -60,4 +60,4 @@ class Coerce(object):
         if space.is_kind_of(w_obj, space.w_array):
             return space.newarray(w_obj.items_w)
         else:
-            w_str = space.convert_type(w_obj, space.w_array, "to_ary")
+            return space.convert_type(w_obj, space.w_array, "to_ary")
