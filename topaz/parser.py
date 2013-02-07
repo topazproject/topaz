@@ -2951,7 +2951,7 @@ class BoxArgs(BaseBox):
             if isinstance(block, ast.Nil):
                 return ast.Block([prebody])
             else:
-                block.stmts.insert(0, prebody)
+                block.insert(prebody)
                 return block
         else:
             return block

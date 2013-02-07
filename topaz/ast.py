@@ -47,6 +47,9 @@ class Block(Node):
 
         self.stmts = stmts
 
+    def insert(self, stmt):
+        self.stmts.insert(0, stmt)
+
     def compile(self, ctx):
         for idx, stmt in enumerate(self.stmts):
             stmt.compile(ctx)
