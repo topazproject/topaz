@@ -358,6 +358,12 @@ class ObjectSpace(object):
             cells[i] = frame.cells[i].upgrade_to_closure(frame, i)
         return W_BindingObject(self, names, cells, frame.w_self, frame.lexical_scope)
 
+    @jit.unroll_safe
+    def newbinding_fromblock(self, block):
+        names = block.bytecode.cellvars + block.bytecode.freevars
+        cells = block.cells[:]
+        return W_BindingObject(self, names, cells, block.w_self, block.lexical_scope)
+
     def int_w(self, w_obj):
         return w_obj.int_w(self)
 
