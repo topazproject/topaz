@@ -29,14 +29,14 @@ Building Topaz
 
 Before you build topaz, you should:
 
-* have virtualenv and virtualenvwrapper installed; otherwise:
+* Have virtualenv and virtualenvwrapper installed; otherwise:
   ``pip install virtualenv virtualenvwrapper``
-* check out the topaz repository: ``git clone http://github.com/topazproject/topaz``
-* check out the PyPy repository: ``hg clone https://bitbucket.org/pypy/pypy``
-* make a topaz virtualenv: ``mkvirtualenv topaz``
-* cd to dir you checked topaz out to and install the its requirements:
+* Check out the topaz repository: ``git clone http://github.com/topazproject/topaz``
+* Check out the PyPy repository: ``hg clone https://bitbucket.org/pypy/pypy``
+* Make a topaz virtualenv: ``mkvirtualenv topaz``
+* cd to the dir you checked topaz out to and install the its requirements:
   ``pip install -r requirements.txt``
-* add the directory containing your pypy checkout to your python environment:
+* Add the directory containing your pypy checkout to your python environment:
   ``add2virtualenv path/to/pypy``
 
 Once everything is set up, you can compile Topaz::
