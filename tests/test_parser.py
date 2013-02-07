@@ -463,6 +463,11 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.Send(ast.Self(1), "a", [], None, 1))
         ]))
 
+    def test_tab_indentation(self, space):
+        assert space.parse("\ta") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "a", [], None, 1))
+        ]))
+
     def test_if_statement(self, space):
         res = lambda lineno: ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
