@@ -27,17 +27,19 @@ missing features. If you do please :doc:`report them </contributing>`!
 Building Topaz
 --------------
 
-Before you build Topaz, there's a few things you'll need:
+Before you build topaz, you should:
 
-* A checkout of the topaz repository: ``git clone http://github.com/topazproject/topaz``
-* A recent checkout of the PyPy repository:
-  ``hg clone https://bitbucket.org/pypy/pypy``
-* Other dependencies: ``pip install -r requirements.txt``
+* Have virtualenv and virtualenvwrapper installed; otherwise:
+  ``pip install virtualenv virtualenvwrapper``
+* Check out the topaz repository: ``git clone http://github.com/topazproject/topaz``
+* Check out the PyPy repository: ``hg clone https://bitbucket.org/pypy/pypy``
+* Make a topaz virtualenv: ``mkvirtualenv topaz``
+* cd to the dir you checked topaz out to and install the its requirements:
+  ``pip install -r requirements.txt``
+* Add the directory containing your pypy checkout to your python environment:
+  ``add2virtualenv path/to/pypy``
 
-We recommend installing ``PyPy`` and other dependencies into a `virtualenv`_.
-
-Once everything is setup (make sure ``rpython`` is on your ``PYTHONPATH``), you
-can compile Topaz::
+Once everything is set up, you can compile Topaz::
 
     $ python path/to/pypy/rpython/bin/rpython -Ojit targettopaz.py
 
