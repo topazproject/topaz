@@ -94,7 +94,9 @@ class Source(object):
                 elif s[pos].isspace():
                     pos += 1
                 elif s[pos] == "#":
-                    pos = s.index("\n", pos)
+                    pos = s.find("\n", pos)
+                    if pos < 0:
+                        pos = len(s)
                 else:
                     break
         return pos >= len(s)
@@ -109,7 +111,9 @@ class Source(object):
                 elif s[pos].isspace():
                     pos += 1
                 elif s[pos] == "#":
-                    pos = s.index("\n", pos)
+                    pos = s.find("\n", pos)
+                    if pos < 0:
+                        pos = len(s)
                 else:
                     break
         try:
@@ -135,7 +139,9 @@ class Source(object):
                     elif s[pos].isspace():
                         pos += 1
                     elif s[pos] == "#":
-                        pos = s.index("\n", pos)
+                        pos = s.find("\n", pos)
+                        if pos < 0:
+                            pos = len(s)
                     else:
                         break
 
