@@ -29,15 +29,25 @@ class W_RangeObject(W_Object):
 
     classdef.app_method("""
     def each
-        unless self.begin.is_a? Integer
-            raise TypeError, "can't iterate from Float"
-        end
-        i = self.begin
-        lim = self.end
-        lim += 0.1 unless self.exclude_end?
-        while i < lim
-            yield i
-            i += 1
+        if self.begin.is_a? Symbol
+            self.begin.to_s.upto(self.end.to_s, self.exclude_end?) do |s|
+                yield s
+            end
+        elsif !(self.begin.respond_to? :succ)
+            raise TypeError, "can't iterate from #{self.begin.class}"
+        else
+            i = self.begin
+            if self.exclude_end?
+                while (i <=> self.end) < 0 do
+                    yield i
+                    i = i.succ
+                end
+            else
+                while (i <=> self.end) <= 0 do
+                    yield i
+                    i = i.succ
+                end
+            end
         end
     end
 
