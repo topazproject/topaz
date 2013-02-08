@@ -421,6 +421,21 @@ class TestFile(BaseTopazTest):
         """ % f)
         assert self.unwrap(space, w_res) == "con"
 
+    def test_get_umask(self, space, monkeypatch):
+        monkeypatch.setattr(os, "umask", lambda mask: 2)
+        w_res = space.execute("return File.umask")
+        assert space.int_w(w_res) == 2
+
+    def test_set_umask(self, space, monkeypatch):
+        self.umask = 2
+        def mock_umask(mask):
+            current = self.umask
+            self.umask = mask
+            return current
+        monkeypatch.setattr(os, "umask", mock_umask)
+        w_res = space.execute("return File.umask(10), File.umask")
+        assert self.unwrap(space, w_res) == [2, 10]
+
 
 class TestExpandPath(BaseTopazTest):
     def test_expand_to_absolute(self, space):
