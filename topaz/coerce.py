@@ -60,4 +60,4 @@ class Coerce(object):
         if space.is_kind_of(w_obj, space.w_array):
             return space.listview(w_obj)
         else:
-            return space.convert_type(w_obj, space.w_array, "to_ary")
+            return space.listview(space.convert_type(w_obj, space.w_array, "to_ary"))
