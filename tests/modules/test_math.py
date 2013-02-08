@@ -22,4 +22,5 @@ class TestMath(BaseTopazTest):
 
     def test_log(self, space):
         w_res = space.execute("return [Math.log(4, 10), Math.log(28), Math.log(3, 4)]")
-        assert self.unwrap(space, w_res) == [math.log(4, 10), math.log(28), math.log(3, 4)]
+        expected = [math.log(4, 10), math.log(28), math.log(3, 4)]
+        assert all([abs(r - e) < 1e-15 for r, e in zip(self.unwrap(space, w_res), expected)])
