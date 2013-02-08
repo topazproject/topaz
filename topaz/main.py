@@ -36,6 +36,8 @@ def _entry_point(space, argv):
                 os.write(2, "no code specified for -e (RuntimeError)\n")
                 return 1
             exprs.append(argv[idx])
+        elif arg.startswith("-e"):
+            exprs.append(arg[2:])
         else:
             break
         idx += 1
