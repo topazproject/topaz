@@ -243,6 +243,12 @@ class W_IOObject(W_Object):
         end
         self
     end
+
+    def readlines(sep=$/, limit=nil)
+        lines = []
+        each_line(sep, limit) { |line| lines << line }
+        return lines
+    end
     """)
 
     @classdef.method("close")
