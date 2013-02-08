@@ -427,10 +427,10 @@ class TestFile(BaseTopazTest):
         assert space.int_w(w_res) == 2
 
     def test_set_umask(self, space, monkeypatch):
-        self.umask = 2
+        umask = [2]
+
         def mock_umask(mask):
-            current = self.umask
-            self.umask = mask
+            [current], umask[0] = umask, mask
             return current
         monkeypatch.setattr(os, "umask", mock_umask)
         w_res = space.execute("return File.umask(10), File.umask")
