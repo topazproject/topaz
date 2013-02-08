@@ -54,3 +54,10 @@ class Coerce(object):
             raise space.error(space.w_ArgumentError, "string contains null byte")
         else:
             return assert_str0(string)
+
+    @staticmethod
+    def array(space, w_obj):
+        if space.is_kind_of(w_obj, space.w_array):
+            return space.listview(w_obj)
+        else:
+            return space.listview(space.convert_type(w_obj, space.w_array, "to_ary"))
