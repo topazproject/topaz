@@ -38,9 +38,12 @@ class TestMain(object):
         assert not err
 
     def test_expr(self, space, tmpdir, capfd):
-        self.run(space, tmpdir, None, ruby_args=["-e", "puts 5", "-e", "puts 6"])
+        self.run(space, tmpdir, None, ruby_args=["-e", "puts 'hi'"])
         out, err = capfd.readouterr()
-        assert out == "5\n6\n"
+        assert out == "hi\n"
+        self.run(space, tmpdir, None, ruby_args=["-eputs 'hi'"])
+        out, err = capfd.readouterr()
+        assert out == "hi\n"
 
     def test___FILE__(self, space, tmpdir, capfd):
         f = self.run(space, tmpdir, "puts __FILE__")

@@ -33,6 +33,8 @@ def _entry_point(space, argv):
         elif arg == "-e":
             idx += 1
             exprs.append(argv[idx])
+        elif arg.startswith("-e"):
+            exprs.append(arg[2:])
         else:
             break
         idx += 1
