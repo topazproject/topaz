@@ -32,6 +32,9 @@ def _entry_point(space, argv):
             verbose = True
         elif arg == "-e":
             idx += 1
+            if idx == len(argv):
+                os.write(2, "no code specified for -e (RuntimeError)\n")
+                return 1
             exprs.append(argv[idx])
         else:
             break
