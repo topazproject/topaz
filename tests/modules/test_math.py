@@ -4,6 +4,9 @@ from ..base import BaseTopazTest
 
 
 class TestMath(BaseTopazTest):
+    def compare_float_lists(self, result, expected):
+        assert all([abs(r - e) < 1e-15 for r, e in zip(result, expected)])
+
     def test_pi(self, space):
         w_res = space.execute("return Math::PI")
         assert space.float_w(w_res) == math.pi
@@ -22,5 +25,4 @@ class TestMath(BaseTopazTest):
 
     def test_log(self, space):
         w_res = space.execute("return [Math.log(4, 10), Math.log(28), Math.log(3, 4)]")
-        expected = [math.log(4, 10), math.log(28), math.log(3, 4)]
-        assert all([abs(r - e) < 1e-15 for r, e in zip(self.unwrap(space, w_res), expected)])
+        self.compare_float_lists(self.unwrap(space, w_res), [math.log(4, 10), math.log(28), math.log(3, 4)])
