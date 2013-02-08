@@ -178,7 +178,7 @@ def run_docs_tests(env):
     local("sphinx-build -W -b html docs/ docs/_build/")
 
 TEST_TYPES = {
-    "own": Test(run_own_tests, deps=["pytest", "-r requirements.txt"]),
+    "own": Test(run_own_tests, deps=["-r requirements.txt"]),
     "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
     "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True, builds_release=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_rpython=False),

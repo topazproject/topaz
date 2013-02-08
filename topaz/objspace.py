@@ -105,6 +105,8 @@ class ObjectSpace(object):
         self.w_string = self.getclassfor(W_StringObject)
         self.w_regexp = self.getclassfor(W_RegexpObject)
         self.w_hash = self.getclassfor(W_HashObject)
+        self.w_method = self.getclassfor(W_MethodObject)
+        self.w_unbound_method = self.getclassfor(W_UnboundMethodObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_LocalJumpError = self.getclassfor(W_LocalJumpError)
@@ -131,7 +133,7 @@ class ObjectSpace(object):
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
             self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
             self.w_symbol, self.w_class, self.w_module, self.w_hash,
-            self.w_regexp,
+            self.w_regexp, self.w_method, self.w_unbound_method,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -154,8 +156,6 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
-            self.getclassfor(W_MethodObject),
-            self.getclassfor(W_UnboundMethodObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
@@ -187,6 +187,10 @@ class ObjectSpace(object):
         # are defined
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
+
+        self.w_load_path = self.newarray([])
+        self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
+        self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
         self.w_loaded_features = self.newarray([])
         self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
@@ -220,8 +224,6 @@ class ObjectSpace(object):
                 break
 
         self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
-        self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
-        self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
     @specialize.memo()
     def fromcache(self, key):
@@ -355,6 +357,12 @@ class ObjectSpace(object):
         for i in xrange(len(frame.cells)):
             cells[i] = frame.cells[i].upgrade_to_closure(frame, i)
         return W_BindingObject(self, names, cells, frame.w_self, frame.lexical_scope)
+
+    @jit.unroll_safe
+    def newbinding_fromblock(self, block):
+        names = block.bytecode.cellvars + block.bytecode.freevars
+        cells = block.cells[:]
+        return W_BindingObject(self, names, cells, block.w_self, block.lexical_scope)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)

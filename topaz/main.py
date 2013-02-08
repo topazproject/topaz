@@ -74,6 +74,10 @@ def _entry_point(space, argv):
         fd = -1
         try:
             fd = os.open(path, os.O_RDONLY, 0665)
+        except OSError as e:
+            os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
+            return 1
+        try:
             content_bytes = []
             while True:
                 current_read = os.read(fd, 8192)
