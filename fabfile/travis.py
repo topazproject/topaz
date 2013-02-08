@@ -112,6 +112,7 @@ def run_specs(binary, prefix=""):
         "core/array/empty_spec.rb",
         "core/array/frozen_spec.rb",
         "core/array/length_spec.rb",
+        "core/array/plus_spec.rb",
         "core/array/size_spec.rb",
 
         "core/basicobject/ancestors_spec.rb",
