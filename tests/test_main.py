@@ -38,9 +38,9 @@ class TestMain(object):
         assert not err
 
     def test_expr(self, space, tmpdir, capfd):
-        self.run(space, tmpdir, None, ruby_args=["-e", "puts 'hi'"])
+        self.run(space, tmpdir, None, ruby_args=["-e", "puts 5", "-e", "puts 6"])
         out, err = capfd.readouterr()
-        assert out == "hi\n"
+        assert out == "5\n6\n"
         self.run(space, tmpdir, None, ruby_args=["-eputs 'hi'"])
         out, err = capfd.readouterr()
         assert out == "hi\n"
