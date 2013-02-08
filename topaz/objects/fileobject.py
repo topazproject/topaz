@@ -211,6 +211,10 @@ class W_IOObject(W_Object):
             return self
         end
 
+        if limit == 0
+            raise ArgumentError.new("invalid limit: 0 for each_line")
+        end
+
         rest = ""
         nxt = read(8192)
         need_read = false
