@@ -241,9 +241,9 @@ class W_IOObject(W_Object):
     end
 
     def readlines(sep=$/, limit=nil)
-        array = []
-        each_line(sep, limit) { |line| array << line }
-        return array
+        lines = []
+        each_line(sep, limit) { |line| lines << line }
+        return lines
     end
     """)
 
