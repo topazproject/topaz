@@ -320,6 +320,11 @@ class TestFile(BaseTopazTest):
         """ % f)
         assert self.unwrap(space, w_res) == ["01\n0", "2\n0", "\n04\n"]
 
+        with self.raises(space, "ArgumentError", "invalid limit: 0 for each_line"):
+            w_res = space.execute("""
+            File.new('%s').each_line(0) { |l| }
+            """ % f)
+
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
         assert space.str_w(w_res) == "/abc/bin"
