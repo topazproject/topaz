@@ -1,7 +1,6 @@
 import os
 import sys
 
-from topaz.coerce import Coerce
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
