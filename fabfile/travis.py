@@ -48,7 +48,7 @@ class Test(object):
         if (os.environ["TRAVIS_BRANCH"] == "master" and
             os.environ["TRAVIS_REPO_SLUG"] == "topazproject/topaz"):
 
-            width = struct.calcsize("P")
+            width = struct.calcsize("P") * 8
             if "linux" in sys.platform:
                 platform = "linux{}".format(width)
             elif "darwin" in sys.platform:
