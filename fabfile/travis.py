@@ -1,5 +1,7 @@
 import glob
 import os
+import struct
+import sys
 
 from fabric.api import task, local
 from fabric.context_managers import lcd
@@ -46,7 +48,15 @@ class Test(object):
         if (os.environ["TRAVIS_BRANCH"] == "master" and
             os.environ["TRAVIS_REPO_SLUG"] == "topazproject/topaz"):
 
-            platform = "linux32"
+            width = struct.calcsize("P")
+            if "linux" in sys.platform:
+                platform = "linux{}".format(width)
+            elif "darwin" in sys.platform:
+                platform = "osx{}".format(width)
+            elif "win" in sys.platform:
+                platform = "windows{}".format(width)
+            else:
+                raise ValueError("Don't recognize platform: {!r}".format(sys.platform))
             build_name = "topaz-{platform}-{sha1}.tar.gz".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
             local("python topaz/tools/make_release.py {}".format(build_name))
             with open(build_name) as f:
