@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.streamio import open_file_as_stream
+from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
@@ -81,7 +81,8 @@ def _entry_point(space, argv):
     elif verbose:
         return 0
     else:
-        raise NotImplementedError("reading script from stdin")
+        source = fdopen_as_stream(0, "r").readall()
+        path = "-"
 
     space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
