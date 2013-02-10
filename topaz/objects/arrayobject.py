@@ -3,6 +3,7 @@ import copy
 from rpython.rlib.listsort import TimSort
 
 from topaz.module import ClassDef
+from topaz.module import check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.packing.pack import RPacker
@@ -162,8 +163,8 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("concat")
+    @check_frozen()
     def method_concat(self, space, w_ary):
-        space.check_frozen(self)
         w_ary = space.convert_type(w_ary, space.w_array, "to_ary")
         self.items_w += space.listview(w_ary)
         return self

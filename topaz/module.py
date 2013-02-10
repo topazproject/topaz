@@ -1,3 +1,5 @@
+import functools
+
 from topaz.gateway import WrapperGenerator
 from topaz.scope import StaticScope
 from topaz.utils.cache import Cache
@@ -101,6 +103,20 @@ class ModuleDef(object):
         self.setup_module_func = func
         return func
 
+def check_frozen(param="self"):
+    def inner(func):
+        obj_idx = func.__code__.co_varnames.index(param)
+        @functools.wraps(func)
+        def wrapper(*args):
+            space = args[1]
+            w_obj = args[obj_idx]
+            if w_obj.get_flag(space, "frozen?").is_true(space):
+                klass = space.getclass(w_obj)
+                raise space.error(space.w_RuntimeError, "can't modify frozen %s" % klass.name)
+            return func(*args)
+        wrapper.__topaz_args__ = func.__code__.co_varnames
+        return wrapper
+    return inner
 
 class ClassCache(Cache):
     def _build(self, classdef):
@@ -163,3 +179,4 @@ class ModuleCache(Cache):
             moduledef.setup_module_func(self.space, w_mod)
 
         yield w_mod
+
