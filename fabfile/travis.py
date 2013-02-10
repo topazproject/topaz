@@ -141,6 +141,7 @@ def run_specs(binary, prefix=""):
         "core/array/frozen_spec.rb",
         "core/array/length_spec.rb",
         "core/array/plus_spec.rb",
+        "core/array/push_spec.rb",
         "core/array/shift_spec.rb",
         "core/array/size_spec.rb",
         "core/array/to_ary_spec.rb",

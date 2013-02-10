@@ -168,6 +168,7 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("push")
+    @check_frozen()
     def method_push(self, space, args_w):
         self.items_w.extend(args_w)
         return self
