@@ -13,4 +13,4 @@ Examples of contributions include:
 Extensive contribution guidelines are available in the repository at
 ``docs/contributing.rst``, or online at:
 
-https://docs.topazruby.com/en/latest/contributing/
+http://docs.topazruby.com/en/latest/contributing/
