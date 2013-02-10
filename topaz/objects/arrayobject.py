@@ -156,6 +156,7 @@ class W_ArrayObject(W_Object):
     """)
 
     @classdef.method("<<")
+    @check_frozen()
     def method_lshift(self, space, w_obj):
         self.items_w.append(w_obj)
         return self

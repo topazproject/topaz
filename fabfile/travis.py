@@ -132,6 +132,7 @@ def run_specs(binary, prefix=""):
         "language/regexp/repetition_spec.rb",
 
         "core/array/allocate_spec.rb",
+        "core/array/append_spec.rb",
         "core/array/array_spec.rb",
         "core/array/at_spec.rb",
         "core/array/clear_spec.rb",
