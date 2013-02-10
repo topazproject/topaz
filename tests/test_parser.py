@@ -2197,6 +2197,9 @@ HERE
         assert space.parse("f not(3)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.Send(ast.ConstantInt(3), "!", [], None, 1)], None, 1))
         ]))
+        assert space.parse("not()") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Nil(), "!", [], None, 1))
+        ]))
 
     def test_inline_if(self, space):
         assert space.parse("return 5 if 3") == ast.Main(ast.Block([

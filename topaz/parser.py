@@ -1563,12 +1563,7 @@ class Parser(object):
 
     @pg.production("primary : NOT LPAREN2 rparen")
     def primary_not_paren(self, p):
-        """
-        kNOT tLPAREN2 rparen {
-                    $$ = support.getOperatorCallNode(NilImplicitNode.NIL, "!");
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(BoxAST(ast.Nil()), self.new_token(p[0], "!", "!"), None)
 
     @pg.production("primary : operation brace_block")
     def primary_operation_brace_block(self, p):
