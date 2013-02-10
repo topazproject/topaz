@@ -171,6 +171,7 @@ def run_specs(binary, prefix=""):
         "core/hash/empty_spec.rb",
         "core/hash/length_spec.rb",
         "core/hash/size_spec.rb",
+        "core/hash/to_hash_spec.rb",
 
         "core/nil/and_spec.rb",
         "core/nil/inspect_spec.rb",
