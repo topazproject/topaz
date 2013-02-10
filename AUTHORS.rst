@@ -13,3 +13,4 @@ Authors
 * Greg Price
 * Armin Rigo
 * Robin Schreiber
+* Bill Mill
