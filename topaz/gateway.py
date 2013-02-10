@@ -26,7 +26,12 @@ class WrapperGenerator(object):
 
         self.arg_count = 0
 
-        for i, argname in enumerate(code.co_varnames[:code.co_argcount]):
+        if hasattr(self.func, "__topaz_args__"):
+            args = self.func.__topaz_args__
+        else:
+            args = code.co_varnames[:code.co_argcount]
+
+        for i, argname in enumerate(args):
             if argname in self.argspec or argname.startswith("w_"):
                 if argname.startswith("w_"):
                     coerce_code = "args_w[{:d}]".format(self.arg_count)
@@ -65,7 +70,7 @@ class WrapperGenerator(object):
             "Coerce": Coerce,
             "defaults": self.func.__defaults__ or [],
             "argcount": self.arg_count,
-            "takes_args_w": "args_w" in code.co_varnames[:code.co_argcount],
+            "takes_args_w": "args_w" in args,
         }
         exec source in namespace
         return namespace[self.func.__name__]
