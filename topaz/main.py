@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.streamio import open_file_as_stream
+from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
@@ -32,7 +32,12 @@ def _entry_point(space, argv):
             verbose = True
         elif arg == "-e":
             idx += 1
+            if idx == len(argv):
+                os.write(2, "no code specified for -e (RuntimeError)\n")
+                return 1
             exprs.append(argv[idx])
+        elif arg.startswith("-e"):
+            exprs.append(arg[2:])
         else:
             break
         idx += 1
@@ -64,7 +69,11 @@ def _entry_point(space, argv):
         source = "\n".join(exprs)
         path = "-e"
     elif path is not None:
-        f = open_file_as_stream(path)
+        try:
+            f = open_file_as_stream(path)
+        except OSError as e:
+            os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
+            return 1
         try:
             source = f.readall()
         finally:
@@ -72,7 +81,8 @@ def _entry_point(space, argv):
     elif verbose:
         return 0
     else:
-        raise NotImplementedError("reading script from stdin")
+        source = fdopen_as_stream(0, "r").readall()
+        path = "-"
 
     space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
