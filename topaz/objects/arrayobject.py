@@ -172,6 +172,7 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("shift")
+    @check_frozen()
     def method_shift(self, space, w_n=None):
         if w_n is None:
             if self.items_w:

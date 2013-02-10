@@ -13,9 +13,14 @@ class WrapperGenerator(object):
         self.self_cls = self_cls
 
     def generate_wrapper(self):
-        code = self.func.__code__
-        if self.func.__defaults__ is not None:
-            defaults = self.func.__defaults__
+        if hasattr(self.func, "__wraps__"):
+            wrapped_func = self.func.__wraps__
+        else:
+            wrapped_func = self.func
+
+        code = wrapped_func.__code__
+        if wrapped_func.__defaults__ is not None:
+            defaults = wrapped_func.__defaults__
             default_start = code.co_argcount - len(defaults)
         else:
             defaults = []
@@ -24,10 +29,7 @@ class WrapperGenerator(object):
         self_cls = self.self_cls
         func = self.func
 
-        if hasattr(self.func, "__topaz_args__"):
-            argnames = self.func.__topaz_args__
-        else:
-            argnames = code.co_varnames[:code.co_argcount]
+        argnames = code.co_varnames[:code.co_argcount]
         argcount = 0
         for arg in argnames:
             argcount += arg.startswith("w_") or arg in argspec

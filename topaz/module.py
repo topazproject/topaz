@@ -118,7 +118,7 @@ def check_frozen(param="self"):
                 klass = space.getclass(w_obj)
                 raise space.error(space.w_RuntimeError, "can't modify frozen %s" % klass.name)
             return func(*args)
-        wrapper.__topaz_args__ = code.co_varnames[:code.co_argcount]
+        wrapper.__wraps__ = func
         return wrapper
     return inner
 
