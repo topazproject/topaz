@@ -160,11 +160,10 @@ class W_ArrayObject(W_Object):
         self.items_w.append(w_obj)
         return self
 
-    @classdef.method("concat")
+    @classdef.method("concat", other="array")
     @check_frozen()
-    def method_concat(self, space, w_ary):
-        w_ary = space.convert_type(w_ary, space.w_array, "to_ary")
-        self.items_w += space.listview(w_ary)
+    def method_concat(self, space, other):
+        self.items_w += other
         return self
 
     @classdef.method("push")
