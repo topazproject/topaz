@@ -70,7 +70,7 @@ class WrapperGenerator(object):
             "Coerce": Coerce,
             "defaults": self.func.__defaults__ or [],
             "argcount": self.arg_count,
-            "takes_args_w": "args_w" in code.co_varnames[:code.co_argcount],
+            "takes_args_w": "args_w" in args,
         }
         exec source in namespace
         return namespace[self.func.__name__]

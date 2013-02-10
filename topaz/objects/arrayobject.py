@@ -2,8 +2,7 @@ import copy
 
 from rpython.rlib.listsort import TimSort
 
-from topaz.module import ClassDef
-from topaz.module import check_frozen
+from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.packing.pack import RPacker

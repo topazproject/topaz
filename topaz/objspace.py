@@ -377,7 +377,6 @@ class ObjectSpace(object):
     def listview(self, w_obj):
         return w_obj.listview(self)
 
-
     # Methods for implementing the language semantics.
 
     def is_true(self, w_obj):
