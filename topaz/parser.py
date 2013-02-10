@@ -1261,12 +1261,14 @@ class Parser(object):
 
     @pg.production("arg : UMINUS_NUM FLOAT POW arg")
     def arg_uminus_num_float_pow_arg(self, p):
-        """
-        tUMINUS_NUM tFLOAT tPOW arg {
-                    $$ = support.getOperatorCallNode(support.getOperatorCallNode($2, "**", $4, lexer.getPosition()), "-@");
-                }
-        """
-        raise NotImplementedError(p)
+        lineno = p[0].getsourcepos().lineno
+        return BoxAST(ast.Send(
+            self.new_binary_call(BoxAST(ast.ConstantFloat(float(p[1].getstr()))), p[2], p[3]).getast(),
+            "-@",
+            [],
+            None,
+            lineno
+        ))
 
     @pg.production("arg : UPLUS arg")
     def arg_uplus_arg(self, p):

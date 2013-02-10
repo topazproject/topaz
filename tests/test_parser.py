@@ -140,6 +140,15 @@ class TestParser(BaseTopazTest):
                 1
             ))
         ]))
+        assert space.parse("-1.0**2") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(
+                ast.Send(ast.ConstantFloat(1.0), "**", [ast.ConstantInt(2)], None, 1),
+                "-@",
+                [],
+                None,
+                1
+            ))
+        ]))
 
     def test_multi_term_expr(self, space):
         assert space.parse("1 + 2 * 3") == ast.Main(ast.Block([
