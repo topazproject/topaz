@@ -181,4 +181,3 @@ class ModuleCache(Cache):
             moduledef.setup_module_func(self.space, w_mod)
 
         yield w_mod
-
