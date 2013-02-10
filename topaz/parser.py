@@ -167,13 +167,17 @@ class Parser(object):
         splat = params.getsplatarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
 
+        extra_stmts = []
         for idx, arg in enumerate(args):
             if isinstance(arg, ast.MultiAssignable):
                 new_arg = ast.Argument(str(idx))
                 asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, lineno))
                 args[idx] = new_arg
                 self.lexer.symtable.declare_argument(new_arg.name)
-                stmts.insert(0, ast.Statement(asgn))
+                extra_stmts.append(ast.Statement(asgn))
+
+        extra_stmts.reverse()
+        stmts = extra_stmts + stmts
 
         block = ast.Block(stmts) if stmts else ast.Nil()
         return BoxAST(ast.SendBlock(args, splat, block_arg, block))
@@ -2955,9 +2959,10 @@ class BoxArgs(BaseBox):
             prebody = ast.Statement(ast.MultiAssignment(self.args[0], ast.Variable("2", -1)))
             if isinstance(block, ast.Nil):
                 return ast.Block([prebody])
+            elif isinstance(block, ast.Block):
+                return ast.Block([prebody] + block.stmts)
             else:
-                block.insert(prebody)
-                return block
+                raise SystemError
         else:
             return block
 
