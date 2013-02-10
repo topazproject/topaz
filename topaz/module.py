@@ -103,22 +103,25 @@ class ModuleDef(object):
         self.setup_module_func = func
         return func
 
+
 def check_frozen(param="self"):
     def inner(func):
         code = func.__code__
         space_idx = code.co_varnames.index("space")
         obj_idx = code.co_varnames.index(param)
+
         @functools.wraps(func)
         def wrapper(*args):
             space = args[space_idx]
             w_obj = args[obj_idx]
-            if w_obj.get_flag(space, "frozen?").is_true(space):
+            if space.is_true(w_obj.get_flag(space, "frozen?")):
                 klass = space.getclass(w_obj)
                 raise space.error(space.w_RuntimeError, "can't modify frozen %s" % klass.name)
             return func(*args)
         wrapper.__topaz_args__ = code.co_varnames[:code.co_argcount]
         return wrapper
     return inner
+
 
 class ClassCache(Cache):
     def _build(self, classdef):
