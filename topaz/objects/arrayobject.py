@@ -330,7 +330,8 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("clear")
-    def method_clear(self):
+    @check_frozen()
+    def method_clear(self, space):
         del self.items_w[:]
         return self
 
