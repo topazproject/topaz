@@ -1,6 +1,8 @@
 import os
 import sys
 
+from rpython.rlib import jit
+
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
@@ -172,6 +174,7 @@ class W_IOObject(W_Object):
         return space.w_nil
 
     @classdef.method("puts")
+    @jit.look_inside_iff(lambda self, space, args_w: jit.isconstant(len(args_w)))
     def method_puts(self, space, args_w):
         self.ensure_not_closed(space)
         for w_arg in args_w:
