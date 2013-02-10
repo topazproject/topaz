@@ -1427,6 +1427,11 @@ HERE
             ), 1)),
         ]))
 
+    def test_lambda(self, space):
+        assert space.parse("->{}") == ast.Main(ast.Block([
+            ast.Statement(ast.Lambda(ast.SendBlock([], None, None, ast.Nil())))
+        ]))
+
     def test_parens_call(self, space):
         assert space.parse("blk.(1, 2)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(

@@ -1578,7 +1578,7 @@ class Parser(object):
 
     @pg.production("primary : LAMBDA lambda")
     def primary_lambda(self, p):
-        return p[0]
+        return p[1]
 
     @pg.production("primary : IF expr_value then compstmt if_tail END")
     def primary_if(self, p):
@@ -2043,20 +2043,25 @@ class Parser(object):
     def bvar_f_bad_arg(self, p):
         return None
 
-    @pg.production("lambda : f_larglist lambda_body")
+    @pg.production("lambda : PRE_LAMBDA f_larglist lambda_body")
     def lambda_prod(self, p):
-        """
-        /* none */  {
-                    support.pushBlockScope();
-                    $$ = lexer.getLeftParenBegin();
-                    lexer.setLeftParenBegin(lexer.incrementParenNest());
-                } f_larglist lambda_body {
-                    $$ = new LambdaNode($2.getPosition(), $2, $3, support.getCurrentScope());
-                    support.popCurrentScope();
-                    lexer.setLeftParenBegin($<Integer>1);
-                }
-        """
-        raise NotImplementedError(p)
+        self.lexer.left_paren_begin = p[0].getint()
+        node = ast.SendBlock(
+            p[1].getargs(),
+            p[1].getsplatarg(),
+            p[1].getblockarg(),
+            ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
+        )
+        self.save_and_pop_scope(node)
+        return BoxAST(ast.Lambda(node))
+
+    @pg.production("PRE_LAMBDA :")
+    def pre_lambda(self, p):
+        self.push_block_scope()
+        left_paren_begin = self.lexer.left_paren_begin
+        self.lexer.paren_nest += 1
+        self.lexer.left_paren_begin = self.lexer.paren_nest
+        return BoxInt(left_paren_begin)
 
     @pg.production("f_larglist : LPAREN2 f_args opt_bv_decl RPAREN")
     def f_larglist_parens(self, p):

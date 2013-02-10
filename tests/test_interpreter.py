@@ -1358,6 +1358,10 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("return 18446744073709551628.class")
         assert w_res is space.w_bignum
 
+    def test_lambda(self, space):
+        w_res = space.execute("return ->{ 1 + 1 }.call")
+        assert space.int_w(w_res) == 2
+
 
 class TestBlocks(BaseTopazTest):
     def test_self(self, space):
