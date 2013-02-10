@@ -1,3 +1,5 @@
+import pytest
+
 from ..base import BaseTopazTest
 
 
@@ -66,6 +68,7 @@ class TestRangeObject(BaseTopazTest):
 
         assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
 
+    @pytest.mark.xfail
     def test_range_symbols(self, space):
         w_res = space.execute("""
         return (:a..:e).map do |x|
