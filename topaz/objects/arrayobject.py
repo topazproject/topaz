@@ -189,6 +189,7 @@ class W_ArrayObject(W_Object):
         return space.newarray(items_w)
 
     @classdef.method("unshift")
+    @check_frozen()
     def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):
             w_obj = args_w[i]

@@ -145,6 +145,7 @@ def run_specs(binary, prefix=""):
         "core/array/shift_spec.rb",
         "core/array/size_spec.rb",
         "core/array/to_ary_spec.rb",
+        "core/array/unshift_spec.rb",
 
         "core/basicobject/ancestors_spec.rb",
         "core/basicobject/class_spec.rb",
