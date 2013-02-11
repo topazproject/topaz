@@ -1980,3 +1980,11 @@ class TestCompiler(object):
         LOAD_CONST 2
         RETURN
         """)
+
+    def test_lambda(self, space):
+        self.assert_compiles(space, "->{}", """
+        LOAD_CONST 0
+        BUILD_BLOCK 0
+        BUILD_LAMBDA
+        RETURN
+        """)

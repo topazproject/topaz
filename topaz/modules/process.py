@@ -29,4 +29,5 @@ class Process(Module):
                 space.send(self, space.newsymbol("exit"))
             else:
                 return space.w_nil
-        return space.newint(pid)
+        else:
+            return space.newint(pid)

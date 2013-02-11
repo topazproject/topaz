@@ -1,18 +1,22 @@
 import glob
 import os
+import struct
+import sys
 
 from fabric.api import task, local
 from fabric.context_managers import lcd
 
+import requests
+
 
 class Test(object):
     def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False,
-                 builds_release=False):
+                 create_build=False):
         self.func = func
         self.deps = deps
         self.needs_rpython = needs_rpython
         self.needs_rubyspec = needs_rubyspec
-        self.builds_release = builds_release
+        self.create_build = create_build
 
     def install_deps(self):
         local("pip install --use-mirrors {}".format(" ".join(self.deps)))
@@ -40,9 +44,29 @@ class Test(object):
                 env["rpython_path"] = f.read()
         self.func(env)
 
-    def build_release(self):
-        local("python topaz/tools/make_release.py topaz.tar")
-        # TODO: the part where we upload it somewhere.
+    def upload_build(self):
+        if (os.environ["TRAVIS_BRANCH"] == "master" and
+            "BUILD_SECRET" in os.environ):
+
+            width = struct.calcsize("P") * 8
+            if "linux" in sys.platform:
+                platform = "linux{}".format(width)
+            elif "darwin" in sys.platform:
+                platform = "osx{}".format(width)
+            elif "win" in sys.platform:
+                platform = "windows{}".format(width)
+            else:
+                raise ValueError("Don't recognize platform: {!r}".format(sys.platform))
+            build_name = "topaz-{platform}-{sha1}.tar.gz".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
+            local("python topaz/tools/make_release.py {}".format(build_name))
+            with open(build_name) as f:
+                response = requests.post("http://www.topazruby.com/builds/create/", {
+                    "build_secret": os.environ["BUILD_SECRET"],
+                    "sha1": os.environ["TRAVIS_COMMIT"],
+                    "platform": platform,
+                    "success": "true",
+                }, files={"build": (build_name, f)})
+                response.raise_for_status()
 
 
 @task
@@ -64,10 +88,10 @@ def run_tests():
 
 
 @task
-def build_release():
+def upload_build():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
-    if t.builds_release:
-        t.build_release()
+    if t.create_build:
+        t.upload_build()
 
 
 def run_own_tests(env):
@@ -107,12 +131,20 @@ def run_specs(binary, prefix=""):
         "language/regexp/repetition_spec.rb",
 
         "core/array/allocate_spec.rb",
+        "core/array/append_spec.rb",
         "core/array/array_spec.rb",
         "core/array/at_spec.rb",
+        "core/array/clear_spec.rb",
+        "core/array/concat_spec.rb",
         "core/array/empty_spec.rb",
         "core/array/frozen_spec.rb",
         "core/array/length_spec.rb",
+        "core/array/plus_spec.rb",
+        "core/array/push_spec.rb",
+        "core/array/shift_spec.rb",
         "core/array/size_spec.rb",
+        "core/array/to_ary_spec.rb",
+        "core/array/unshift_spec.rb",
 
         "core/basicobject/ancestors_spec.rb",
         "core/basicobject/class_spec.rb",
@@ -139,9 +171,11 @@ def run_specs(binary, prefix=""):
         "core/fixnum/to_f_spec.rb",
         "core/fixnum/zero_spec.rb",
 
+        "core/hash/allocate_spec.rb",
         "core/hash/empty_spec.rb",
         "core/hash/length_spec.rb",
         "core/hash/size_spec.rb",
+        "core/hash/to_hash_spec.rb",
 
         "core/nil/and_spec.rb",
         "core/nil/inspect_spec.rb",
@@ -178,8 +212,8 @@ def run_docs_tests(env):
     local("sphinx-build -W -b html docs/ docs/_build/")
 
 TEST_TYPES = {
-    "own": Test(run_own_tests, deps=["pytest", "-r requirements.txt"]),
+    "own": Test(run_own_tests, deps=["-r requirements.txt"]),
     "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
-    "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True, builds_release=True),
+    "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True, create_build=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_rpython=False),
 }

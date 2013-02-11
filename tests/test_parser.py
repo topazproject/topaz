@@ -140,6 +140,15 @@ class TestParser(BaseTopazTest):
                 1
             ))
         ]))
+        assert space.parse("-1.0**2") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(
+                ast.Send(ast.ConstantFloat(1.0), "**", [ast.ConstantInt(2)], None, 1),
+                "-@",
+                [],
+                None,
+                1
+            ))
+        ]))
 
     def test_multi_term_expr(self, space):
         assert space.parse("1 + 2 * 3") == ast.Main(ast.Block([
@@ -460,6 +469,11 @@ class TestParser(BaseTopazTest):
 
     def test_load_variable(self, space):
         assert space.parse("a") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "a", [], None, 1))
+        ]))
+
+    def test_tab_indentation(self, space):
+        assert space.parse("\ta") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "a", [], None, 1))
         ]))
 
@@ -898,6 +912,25 @@ class TestParser(BaseTopazTest):
                 b
             end
             """)
+
+        assert space.parse("def f(*a,b,&blk); end") == ast.Main(ast.Block([
+            ast.Statement(ast.Function(
+                None,
+                "f",
+                [],
+                "2",
+                "blk",
+                ast.Block([ast.Statement(
+                    ast.MultiAssignment(
+                        ast.MultiAssignable([
+                            ast.Splat(ast.Variable("a", -1)),
+                            ast.Variable("b", -1),
+                        ]),
+                        ast.Variable("2", -1)
+                    )
+                )])
+            ))
+        ]))
 
     def test_def_names(self, space):
         def test_name(s):
@@ -1422,6 +1455,11 @@ HERE
             ), 1)),
         ]))
 
+    def test_lambda(self, space):
+        assert space.parse("->{}") == ast.Main(ast.Block([
+            ast.Statement(ast.Lambda(ast.SendBlock([], None, None, ast.Nil())))
+        ]))
+
     def test_parens_call(self, space):
         assert space.parse("blk.(1, 2)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(
@@ -1478,6 +1516,8 @@ HERE
         assert space.parse(":-@") == sym("-@")
         assert space.parse(":+@") == sym("+@")
         assert space.parse(":$-w") == sym("$-w")
+        assert space.parse(u":åäö".encode("utf-8")) == sym(u"åäö".encode("utf-8"))
+        assert space.parse(u":８ ９ ＡＢＣ".encode("utf-8")) == sym(u"８ ９ ＡＢＣ".encode("utf-8"))
 
     def test_do_symbol(self, space):
         r = space.parse("f :do")
@@ -2156,6 +2196,9 @@ HERE
         ]))
         assert space.parse("f not(3)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "f", [ast.Send(ast.ConstantInt(3), "!", [], None, 1)], None, 1))
+        ]))
+        assert space.parse("not()") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Nil(), "!", [], None, 1))
         ]))
 
     def test_inline_if(self, space):

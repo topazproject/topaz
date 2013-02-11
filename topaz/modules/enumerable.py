@@ -22,6 +22,8 @@ class Enumerable(Module):
         memo
     end
 
+    alias reduce inject
+
     def each_with_index
         i = 0
         self.each do |obj|

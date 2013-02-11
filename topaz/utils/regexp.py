@@ -89,10 +89,14 @@ class Source(object):
 
         if self.ignore_space:
             while True:
-                if s[pos].isspace():
+                if pos >= len(s):
+                    break
+                elif s[pos].isspace():
                     pos += 1
                 elif s[pos] == "#":
-                    pos = s.index("\n", pos)
+                    pos = s.find("\n", pos)
+                    if pos < 0:
+                        pos = len(s)
                 else:
                     break
         return pos >= len(s)
@@ -102,10 +106,14 @@ class Source(object):
         pos = self.pos
         if self.ignore_space:
             while True:
-                if s[pos].isspace():
+                if pos >= len(s):
+                    return ""
+                elif s[pos].isspace():
                     pos += 1
                 elif s[pos] == "#":
-                    pos = s.index("\n", pos)
+                    pos = s.find("\n", pos)
+                    if pos < 0:
+                        pos = len(s)
                 else:
                     break
         try:
@@ -126,10 +134,14 @@ class Source(object):
         if self.ignore_space:
             for c in substr:
                 while True:
-                    if s[pos].isspace():
+                    if pos >= len(s):
+                        return False
+                    elif s[pos].isspace():
                         pos += 1
                     elif s[pos] == "#":
-                        pos = s.index("\n", pos)
+                        pos = s.find("\n", pos)
+                        if pos < 0:
+                            pos = len(s)
                     else:
                         break
 
@@ -1209,6 +1221,8 @@ def _compile_no_cache(pattern, flags):
     global_flags = flags
     while True:
         source = Source(pattern)
+        if flags & EXTENDED:
+            source.ignore_space = True
         info = Info(flags)
         try:
             parsed = _parse_pattern(source, info)

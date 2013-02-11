@@ -2,7 +2,7 @@ import copy
 
 from rpython.rlib.listsort import TimSort
 
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.packing.pack import RPacker
@@ -47,6 +47,10 @@ class W_ArrayObject(W_Object):
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space):
         return space.newarray([])
+
+    @classdef.singleton_method("[]")
+    def singleton_method_subscript(self, space, args_w):
+        return space.newarray(args_w)
 
     @classdef.method("initialize_copy")
     def method_initialize_copy(self, space, w_other):
@@ -135,10 +139,9 @@ class W_ArrayObject(W_Object):
     def method_emptyp(self, space):
         return space.newbool(len(self.items_w) == 0)
 
-    @classdef.method("+")
-    def method_add(self, space, w_other):
-        assert isinstance(w_other, W_ArrayObject)
-        return space.newarray(self.items_w + w_other.items_w)
+    @classdef.method("+", other="array")
+    def method_add(self, space, other):
+        return space.newarray(self.items_w + other)
 
     classdef.app_method("""
     def -(other)
@@ -153,21 +156,25 @@ class W_ArrayObject(W_Object):
     """)
 
     @classdef.method("<<")
+    @check_frozen()
     def method_lshift(self, space, w_obj):
         self.items_w.append(w_obj)
         return self
 
-    @classdef.method("concat")
-    def method_concat(self, space, w_ary):
-        self.items_w += space.listview(w_ary)
+    @classdef.method("concat", other="array")
+    @check_frozen()
+    def method_concat(self, space, other):
+        self.items_w += other
         return self
 
     @classdef.method("push")
+    @check_frozen()
     def method_push(self, space, args_w):
         self.items_w.extend(args_w)
         return self
 
     @classdef.method("shift")
+    @check_frozen()
     def method_shift(self, space, w_n=None):
         if w_n is None:
             if self.items_w:
@@ -182,6 +189,7 @@ class W_ArrayObject(W_Object):
         return space.newarray(items_w)
 
     @classdef.method("unshift")
+    @check_frozen()
     def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):
             w_obj = args_w[i]
@@ -326,7 +334,8 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("clear")
-    def method_clear(self):
+    @check_frozen()
+    def method_clear(self, space):
         del self.items_w[:]
         return self
 

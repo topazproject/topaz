@@ -343,6 +343,11 @@ class Interpreter(object):
         )
         frame.push(block)
 
+    def BUILD_LAMBDA(self, space, bytecode, frame, pc):
+        block = frame.pop()
+        assert isinstance(block, W_BlockObject)
+        frame.push(space.newproc(block, is_lambda=True))
+
     def BUILD_CLASS(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc
         superclass = frame.pop()

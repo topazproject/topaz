@@ -40,10 +40,16 @@ Running the tests
 
 One thing you should know when writing a patch for Topaz, is that all changes
 need tests (or a really good reason why they don't). You can run our test suite
-by installing `py.test` (`pip install pytest`)::
+by installing ``py.test`` (``pip install -r requirements.txt``)::
 
     $ py.test
 
 This will run all the tests. In general you do not need to compile Topaz when
 working on a patch, all changes should be testable directly, and the buildbot
 will verify for every pull request that it compiles and tests pass.
+
+Adding yourself to the authors file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When you submit your first patch, add your name to the ``AUTHORS.rst`` file,
+you've earned it!
