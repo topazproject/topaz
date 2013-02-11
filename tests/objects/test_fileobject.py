@@ -278,6 +278,8 @@ class TestFile(BaseTopazTest):
             space.execute("File.new('%s', 'rw+')" % f)
         with self.raises(space, "ArgumentError", "invalid access mode ra"):
             space.execute("File.new('%s', 'ra')" % f)
+        with self.raises(space, "SystemCallError"):
+            space.execute("File.new('%s', 1)" % tmpdir.join("non-existant"))
 
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
         assert isinstance(w_res, W_FileObject)
