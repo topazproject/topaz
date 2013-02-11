@@ -267,6 +267,8 @@ class TestFile(BaseTopazTest):
         assert isinstance(w_res, W_FileObject)
         w_res = space.execute("return File.new('%s', 'rb+')" % f)
         assert isinstance(w_res, W_FileObject)
+        w_res = space.execute("return File.new('%s', 'a+')" % f)
+        assert isinstance(w_res, W_FileObject)
 
         with self.raises(space, "ArgumentError", "invalid access mode rw"):
             space.execute("File.new('%s', 'rw')" % f)

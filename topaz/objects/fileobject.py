@@ -320,28 +320,40 @@ class W_FileObject(W_IOObject):
                 "invalid access mode %s" % mode_str
             )
             major_mode_seen = False
+            readable = writeable = append = False
 
             for ch in mode_str:
                 if ch == "b":
                     mode |= O_BINARY
                 elif ch == "+":
-                    mode |= os.O_RDWR
+                    readable = writeable = True
                 elif ch == "r":
                     if major_mode_seen:
                         raise invalid_error
                     major_mode_seen = True
-                    mode |= os.O_RDONLY
-                elif ch in "aw":
+                    readable = True
+                elif ch == "a":
                     if major_mode_seen:
                         raise invalid_error
                     major_mode_seen = True
-                    mode |= os.O_WRONLY | os.O_CREAT
-                    if ch == "w":
-                        mode |= os.O_TRUNC
-                    else:
-                        mode |= os.O_APPEND
+                    mode |= os.O_CREAT
+                    append = writeable = True
+                elif ch == "w":
+                    if major_mode_seen:
+                        raise invalid_error
+                    major_mode_seen = True
+                    mode |= os.O_TRUNC | os.O_CREAT
+                    writeable = True
                 else:
                     raise invalid_error
+            if readable and writeable:
+                mode |= os.O_RDWR
+            elif readable:
+                mode |= os.O_RDONLY
+            elif writeable:
+                mode |= os.O_WRONLY
+            if append:
+                mode |= os.O_APPEND
         else:
             mode = space.int_w(w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
