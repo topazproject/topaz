@@ -36,18 +36,23 @@ class ClosureCell(BaseCell):
         return self
 
 
-class IntCell(BaseCell):
+class IntCell(ClosureCell):
     def __init__(self, intvalue):
+        self.w_value = None
         self.intvalue = intvalue
 
     def get(self, space, frame, pos):
-        return space.newint(self.intvalue)
+        if not self.w_value:
+            return space.newint(self.intvalue)
+        else:
+            return self.w_value
 
     def set(self, space, frame, pos, w_value):
         if isinstance(w_value, W_FixnumObject):
             self.intvalue = space.int_w(w_value)
+            self.w_value = None
         else:
-            frame.cells[pos] = ClosureCell(w_value)
+            self.w_value = w_value
 
     def upgrade_to_closure(self, space, frame, pos):
         return self
