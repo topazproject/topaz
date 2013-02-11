@@ -75,7 +75,7 @@ class TestRangeObject(BaseTopazTest):
         w_res = space.execute("""
         a = []
         (:a..:e).each do |x|
-            a << x; a<< x.class
+            a << x
         end
         a
         """)
