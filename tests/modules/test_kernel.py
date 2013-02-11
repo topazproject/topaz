@@ -201,12 +201,18 @@ class TestKernel(BaseTopazTest):
 
     def test_sleep(self, space):
         now = time.time()
+        w_res = space.execute("return sleep 0.001")
+        assert self.unwrap(space, w_res) >= 0.001
+        w_res = space.execute("return sleep 0.002")
+        assert self.unwrap(space, w_res) >= 0.002
         w_res = space.execute("""
-        first = sleep 0.001
-        second = sleep 0.002
-        return first, second
+        begin
+          sleep 0.003, 0.004
+        rescue => e
+          return e.class.name
+        end
         """)
-        assert self.unwrap(space, w_res) == [0.001, 0.002]
+        assert self.unwrap(space, w_res) == "ArgumentError"
         assert time.time() - now >= 0.003
 
     def test_trust(self, space):
