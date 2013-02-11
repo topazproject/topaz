@@ -331,8 +331,16 @@ class W_StringObject(W_Object):
         return new_string if change_made else None
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space):
+    def singleton_method_allocate(self, space, w_s=None):
         return space.newstr_fromstr("")
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, w_s=None):
+        if w_s is not None:
+            w_s = space.convert_type(w_s, space.w_string, "to_str")
+            assert isinstance(w_s, W_StringObject)
+            self.strategy = w_s.strategy
+            self.str_storage = w_s.strategy.copy(w_s.str_storage)
 
     @classdef.method("initialize_copy")
     def method_initialize_copy(self, space, w_other):

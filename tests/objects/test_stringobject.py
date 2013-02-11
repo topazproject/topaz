@@ -4,6 +4,12 @@ from ..base import BaseTopazTest
 
 
 class TestStringObject(BaseTopazTest):
+    def test_new(self, space):
+        w_res = space.execute("return String.new('abc')")
+        assert space.str_w(w_res) == "abc"
+        w_res = space.execute("return String.new")
+        assert space.str_w(w_res) == ""
+
     def test_lshift(self, space):
         w_res = space.execute('return "abc" << "def" << "ghi"')
         assert space.str_w(w_res) == "abcdefghi"
