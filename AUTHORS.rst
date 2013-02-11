@@ -8,6 +8,7 @@ Authors
 * Magnus Holm
 * Curt Micol
 * Charles Oliver Nutter
+* Thomas Pelletier
 * Greg Price
 * Armin Rigo
 * Robin Schreiber
