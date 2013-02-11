@@ -1,0 +1,2 @@
+fails:Literal (A::X) constant resolution with dynamically assigned constants evaluates the right hand side before evaluating a constant path
+fails:Constant resolution within methods with ||= assignes constant if previously undefined

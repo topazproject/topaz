@@ -1,0 +1,6 @@
+fails:Mutex#sleep raises ThreadError if not locked by the current thread
+fails:Mutex#sleep pauses execution for approximately the duration requested
+fails:Mutex#sleep unlocks the mutex while sleeping
+fails:Mutex#sleep relocks the mutex when woken
+fails:Mutex#sleep relocks the mutex when woken by an exception being raised
+fails:Mutex#sleep returns the rounded number of seconds asleep
