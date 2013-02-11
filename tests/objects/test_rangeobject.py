@@ -1,5 +1,7 @@
 import pytest
 
+from topaz.objects.symbolobject import W_SymbolObject
+
 from ..base import BaseTopazTest
 
 
@@ -80,4 +82,5 @@ class TestRangeObject(BaseTopazTest):
         a
         """)
 
-        assert self.unwrap(space, w_res) == [':a', ':b', ':c', ':d', ':e']
+        assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
+        assert all(isinstance(s, W_SymbolObject) for s in space.listview(w_res))
