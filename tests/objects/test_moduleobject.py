@@ -44,6 +44,32 @@ class TestModuleObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_define_method_with_block(self, space):
+        w_res = space.execute("""
+        class X
+            a = 10
+            define_method :add do
+                self.b + a
+            end
+            sub = proc { a - self.b }
+            define_method :sub, sub
+            def b; 5; end
+        end
+        return X.new.add, X.new.sub
+        """)
+        assert self.unwrap(space, w_res) == [15, 5]
+
+    def test_define_method_with_method(self, space):
+        w_res = space.execute("""
+        class X
+            def a; 10; end
+            define_method :x, instance_method(:a).bind(self.new)
+            define_method :y, instance_method(:a)
+        end
+        return X.new.x, X.new.y
+        """)
+        assert self.unwrap(space, w_res) == [10, 10]
+
     def test_singleton_class(self, space):
         w_res = space.execute("""
         class X; end

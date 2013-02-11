@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import os
 
-from rpython.rlib import jit
+from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
 
@@ -105,6 +105,8 @@ class ObjectSpace(object):
         self.w_string = self.getclassfor(W_StringObject)
         self.w_regexp = self.getclassfor(W_RegexpObject)
         self.w_hash = self.getclassfor(W_HashObject)
+        self.w_method = self.getclassfor(W_MethodObject)
+        self.w_unbound_method = self.getclassfor(W_UnboundMethodObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_LocalJumpError = self.getclassfor(W_LocalJumpError)
@@ -131,7 +133,7 @@ class ObjectSpace(object):
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
             self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
             self.w_symbol, self.w_class, self.w_module, self.w_hash,
-            self.w_regexp,
+            self.w_regexp, self.w_method, self.w_unbound_method,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -154,8 +156,6 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
-            self.getclassfor(W_MethodObject),
-            self.getclassfor(W_UnboundMethodObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_StandardError),
@@ -188,11 +188,7 @@ class ObjectSpace(object):
         self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
         self.bootstrap = False
 
-        self.w_load_path = self.newarray([
-            self.newstr_fromstr(os.path.abspath(
-                os.path.join(os.path.dirname(__file__), os.path.pardir, "lib-ruby")
-            ))
-        ])
+        self.w_load_path = self.newarray([])
         self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
         self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
@@ -202,6 +198,8 @@ class ObjectSpace(object):
 
         self.w_main_thread = W_ThreadObject(self)
 
+        self.w_load_path = self.newarray([])
+        self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
         # TODO: this should really go in a better place.
         self.execute("""
         def self.include *mods
@@ -211,6 +209,21 @@ class ObjectSpace(object):
 
     def _freeze_(self):
         return True
+
+    def setup(self, executable):
+        """
+        Performs runtime setup.
+        """
+        path = rpath.rabspath(executable)
+        # Fallback to a path relative to the compiled location.
+        lib_path = self.base_lib_path
+        while path:
+            path = rpath.rabspath(os.path.join(path, os.path.pardir))
+            if os.path.isdir(os.path.join(path, "lib-ruby")):
+                lib_path = os.path.join(path, "lib-ruby")
+                break
+
+        self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
 
     @specialize.memo()
     def fromcache(self, key):
@@ -225,7 +238,12 @@ class ObjectSpace(object):
         try:
             return parser.parse().getast()
         except ParsingError as e:
-            raise self.error(self.w_SyntaxError, "line %d" % e.getsourcepos().lineno)
+            source_pos = e.getsourcepos()
+            if source_pos is not None:
+                msg = "line %d" % source_pos.lineno
+            else:
+                msg = ""
+            raise self.error(self.w_SyntaxError, msg)
         except LexerError as e:
             raise self.error(self.w_SyntaxError, "line %d (%s)" % (e.pos.lineno, e.msg))
 
@@ -344,6 +362,12 @@ class ObjectSpace(object):
         for i in xrange(len(frame.cells)):
             cells[i] = frame.cells[i].upgrade_to_closure(frame, i)
         return W_BindingObject(self, names, cells, frame.w_self, frame.lexical_scope)
+
+    @jit.unroll_safe
+    def newbinding_fromblock(self, block):
+        names = block.bytecode.cellvars + block.bytecode.freevars
+        cells = block.cells[:]
+        return W_BindingObject(self, names, cells, block.w_self, block.lexical_scope)
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)

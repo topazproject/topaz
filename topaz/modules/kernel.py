@@ -226,6 +226,14 @@ class Kernel(Module):
                 argv0 = shell
             os.execv(shell, [argv0, "-c", cmd])
 
+    @moduledef.function("fork")
+    def method_fork(self, space, block):
+        return space.send(
+            space.getmoduleobject(Process.moduledef),
+            space.newsymbol("fork"),
+            block=block
+        )
+
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):
         w_proc = space.newproc(block)

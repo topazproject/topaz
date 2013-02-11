@@ -267,6 +267,8 @@ class TestFile(BaseTopazTest):
         assert isinstance(w_res, W_FileObject)
         w_res = space.execute("return File.new('%s', 'rb+')" % f)
         assert isinstance(w_res, W_FileObject)
+        w_res = space.execute("return File.new('%s', 'a+')" % f)
+        assert isinstance(w_res, W_FileObject)
 
         with self.raises(space, "ArgumentError", "invalid access mode rw"):
             space.execute("File.new('%s', 'rw')" % f)
@@ -276,6 +278,8 @@ class TestFile(BaseTopazTest):
             space.execute("File.new('%s', 'rw+')" % f)
         with self.raises(space, "ArgumentError", "invalid access mode ra"):
             space.execute("File.new('%s', 'ra')" % f)
+        with self.raises(space, "SystemCallError"):
+            space.execute("File.new('%s', 1)" % tmpdir.join("non-existant"))
 
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
         assert isinstance(w_res, W_FileObject)
@@ -290,6 +294,22 @@ class TestFile(BaseTopazTest):
         return f.read
         """ % (tmpdir.dirname, os.sep))
         assert space.str_w(w_res) == "first\nsecond\n"
+
+    def test_readlines(self, space, tmpdir):
+        contents = "01\n02\n03\n04\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+        w_res = space.execute("return File.new('%s').readlines()" % f)
+        assert self.unwrap(space, w_res) == ["01", "02", "03", "04", ""]
+
+        w_res = space.execute("return File.new('%s').readlines('3')" % f)
+        assert self.unwrap(space, w_res) == ["01\n02\n0", "\n04\n"]
+
+        w_res = space.execute("return File.new('%s').readlines(1)" % f)
+        assert self.unwrap(space, w_res) == ["0", "1", "0", "2", "0", "3", "0", "4", ""]
+
+        w_res = space.execute("return File.new('%s').readlines('3', 4)" % f)
+        assert self.unwrap(space, w_res) == ["01\n0", "2\n0", "\n04\n"]
 
     def test_each_line(self, space, tmpdir):
         contents = "01\n02\n03\n04\n"
@@ -319,6 +339,11 @@ class TestFile(BaseTopazTest):
         return r
         """ % f)
         assert self.unwrap(space, w_res) == ["01\n0", "2\n0", "\n04\n"]
+
+        with self.raises(space, "ArgumentError", "invalid limit: 0 for each_line"):
+            w_res = space.execute("""
+            File.new('%s').each_line(0) { |l| }
+            """ % f)
 
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
@@ -420,6 +445,21 @@ class TestFile(BaseTopazTest):
         return f.read
         """ % f)
         assert self.unwrap(space, w_res) == "con"
+
+    def test_get_umask(self, space, monkeypatch):
+        monkeypatch.setattr(os, "umask", lambda mask: 2)
+        w_res = space.execute("return File.umask")
+        assert space.int_w(w_res) == 2
+
+    def test_set_umask(self, space, monkeypatch):
+        umask = [2]
+
+        def mock_umask(mask):
+            [current], umask[0] = umask, mask
+            return current
+        monkeypatch.setattr(os, "umask", mock_umask)
+        w_res = space.execute("return File.umask(10), File.umask")
+        assert self.unwrap(space, w_res) == [2, 10]
 
 
 class TestExpandPath(BaseTopazTest):
