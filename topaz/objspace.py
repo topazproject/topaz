@@ -360,7 +360,7 @@ class ObjectSpace(object):
         names = frame.bytecode.cellvars + frame.bytecode.freevars
         cells = [None] * len(frame.cells)
         for i in xrange(len(frame.cells)):
-            cells[i] = frame.cells[i].upgrade_to_closure(frame, i)
+            cells[i] = frame.cells[i].upgrade_to_closure(self, frame, i)
         return W_BindingObject(self, names, cells, frame.w_self, frame.lexical_scope)
 
     @jit.unroll_safe
