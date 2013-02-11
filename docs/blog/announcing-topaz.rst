@@ -19,10 +19,18 @@ However, it does have nearly every element of Ruby, including classes, blocks,
 many builtin types, all sorts of method calls, and much much more. We don't yet
 consider it stable, but it's getting closer every day.
 
+If you want to try it out right now, you can grab a nightly build, or
+:doc:`build it yourself </getting-started>`:
+
+* `OS X 64-bit`_
+* `Linux 32-bit`_
+* `Linux 64-bit`_
+* `Windows 32-bit`_
+
 The major goal for the next several months is going to be completeness: adding
 more features of Ruby, more builtin classes, more standard library modules, and
 generally getting to a point where real people can run real applications under
-Topaz (the holy grain, of course, being running Rails). One feature of
+Topaz (the holy grail, of course, being running Rails). One feature of
 particular note is ``FFI``, once we have this people will begin to be able to
 run and develop applications that interact with C libraries (such as database
 bindings).
@@ -66,6 +74,10 @@ Thank you,
 I look forward to seeing you around Topaz.
 
 .. _`PyPy`: http://pypy.org/
+.. _`OS X 64-bit`: http://builds.topazruby.com/topaz-osx64-242eebe5ce38a6c9808ccecaa46bfa427d53e2d4.tar.bz2
+.. _`Linux 32-bit`: http://builds.topazruby.com/topaz-linux32-04ab1983cf39127e0d8ed4efdbdccbe819eb2992.tar.bz2
+.. _`Linux 64-bit`: http://builds.topazruby.com/topaz-linux64-04ab1983cf39127e0d8ed4efdbdccbe819eb2992.tar.bz2
+.. _`Windows 32-bit`: http://builds.topazruby.com/topaz-msvc-i386-51466ba4ab8a921527de436da15f467c2b503fc5.tar
 .. _`Github`: https://github.com/topazproject/topaz
 .. _`ReadTheDocs`: http://topaz.readthedocs.org/
-.. _`mailing list`:
+.. _`mailing list`: https://groups.google.com/forum/#!forum/topazproject

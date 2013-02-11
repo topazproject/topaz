@@ -224,3 +224,7 @@ class TestRegexpObject(BaseTopazTest):
         return Regexp.escape("y1_'\t\n\v\f\r \#$()*+-.?[\\\\]^{|}")
         """)
         assert space.str_w(w_res) == "y1_'\\t\\n\\v\\f\\r\\ \\#\\$\\(\\)\\*\\+\\-\\.\\?\\[\\\\\\]\\^\\{\\|\\}"
+
+    def test_ignore_whitespace(self, space):
+        w_res = space.execute("return /\d \d/x =~ '12'")
+        assert space.int_w(w_res) == 0
