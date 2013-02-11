@@ -62,17 +62,22 @@ class TestRangeObject(BaseTopazTest):
 
     def test_range_chars(self, space):
         w_res = space.execute("""
-        return ('a'..'e').map do |x|
-            x
-        end""")
+        a = []
+        ('a'..'e').each do |x|
+            a << x
+        end
+        a
+        """)
 
         assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
 
-    @pytest.mark.xfail
     def test_range_symbols(self, space):
         w_res = space.execute("""
-        return (:a..:e).map do |x|
-            x
-        end""")
+        a = []
+        (:a..:e).each do |x|
+            a << x; a<< x.class
+        end
+        a
+        """)
 
         assert self.unwrap(space, w_res) == [':a', ':b', ':c', ':d', ':e']
