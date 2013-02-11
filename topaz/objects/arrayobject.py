@@ -305,6 +305,7 @@ class W_ArrayObject(W_Object):
     """)
 
     @classdef.method("delete_at", idx="int")
+    @check_frozen()
     def method_delete_at(self, space, idx):
         if idx < 0:
             idx = len(self.items_w) + idx
