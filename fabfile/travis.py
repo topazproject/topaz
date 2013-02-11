@@ -46,7 +46,6 @@ class Test(object):
 
     def upload_build(self):
         if (os.environ["TRAVIS_BRANCH"] == "master" and
-            os.environ["TRAVIS_REPO_SLUG"] == "topazproject/topaz" and
             "BUILD_SECRET" in os.environ):
 
             width = struct.calcsize("P") * 8
