@@ -288,7 +288,11 @@ class Kernel(Module):
         return w_dup
 
     @moduledef.method("sleep")
-    def method_sleep(self, space, w_arg):
+    def method_sleep(self, space, args_w):
+        if not args_w:
+            while True:
+                time.sleep(1)
+        w_arg = args_w[0]
         val = space.newfloat(space.float_w(w_arg))
         time.sleep(val.float_w(space))
         return val
