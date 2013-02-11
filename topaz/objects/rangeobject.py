@@ -29,6 +29,9 @@ class W_RangeObject(W_Object):
 
     classdef.app_method("""
     def each
+        #should return an enumerator, but currently Object#enum_for isn't implemented
+        raise "NotImplementedError" if !block_given?
+
         if self.begin.is_a?(Symbol) && self.end.is_a?(Symbol)
             i = self.begin.to_s
             ends = self.end.to_s
