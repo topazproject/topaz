@@ -1,0 +1,7 @@
+fails:Kernel#require is a private method
+fails:Kernel#require (path resolution) loads an absolute path
+fails:Kernel#require (path resolution) loads a non-canonical absolute path
+fails:Kernel#require (path resolution) loads a file defining many methods
+fails:Kernel#require (path resolution) raises a LoadError if the file does not exist
+fails:Kernel#require
+fails:Kernel.require

@@ -1,0 +1,1 @@
+fails:NilClass#to_f does not cause NilClass to be coerced to Float

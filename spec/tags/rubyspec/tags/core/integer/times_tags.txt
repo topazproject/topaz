@@ -1,0 +1,4 @@
+fails:Integer#times returns self
+fails:Integer#times executes a nested while loop containing a break expression
+fails:Integer#times executes a nested #times
+fails:Integer#times returns an Enumerator
