@@ -288,15 +288,10 @@ class Kernel(Module):
         return w_dup
 
     @moduledef.method("sleep")
-    def method_sleep(self, space, args_w):
-        if len(args_w) > 1:
-            raise space.error(space.w_ArgumentError,
-                "wrong number of arguments (%d for 0..1)" % len(args_w)
-            )
-        if not args_w:
+    def method_sleep(self, space, w_arg=None):
+        if not w_arg:
             while True:
                 time.sleep(1)
-        w_arg = args_w[0]
         start = time.time()
         time.sleep(space.float_w(w_arg))
         return space.newfloat(time.time() - start)
