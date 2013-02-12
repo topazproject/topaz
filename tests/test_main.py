@@ -71,6 +71,43 @@ class TestMain(object):
         [version] = out.splitlines()
         assert version.startswith("topaz")
 
+    def test_load_path(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f1 = d.join("dog.rb")
+        f1.write("""
+        require "canine-behaviors"
+
+        class Dog
+          include CanineBehaviors
+
+          def bark
+            "woof"
+          end
+        end
+        """)
+        f2 = d.join("canine-behaviors.rb")
+        f2.write("""
+        module CanineBehaviors
+          def howl
+            "awooooo"
+          end
+        end
+        """)
+
+        self.run(space, tmpdir, """
+        require "dog"
+        puts Dog.new.bark
+        """, ruby_args=["-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "woof"
+
+        self.run(space, tmpdir, """
+        require "dog"
+        puts Dog.new.howl
+        """, ruby_args=["-I%s" % d])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "awooooo"
+
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
         ARGV.each_with_index do |arg, i|

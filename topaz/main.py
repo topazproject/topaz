@@ -38,6 +38,11 @@ def _entry_point(space, argv):
             exprs.append(argv[idx])
         elif arg.startswith("-e"):
             exprs.append(arg[2:])
+        elif arg == "-I":
+            idx += 1
+            space.w_load_path.method_lshift(space, space.newstr_fromstr(argv[idx]))
+        elif arg.startswith("-I"):
+            space.w_load_path.method_lshift(space, space.newstr_fromstr(arg[2:]))
         else:
             break
         idx += 1
