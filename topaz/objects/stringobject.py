@@ -7,6 +7,7 @@ from rpython.rlib.rarithmetic import intmask, ovfcheck
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
+from rpython.rlib.rstring import split
 
 from topaz.module import ClassDef
 from topaz.modules.comparable import Comparable
@@ -516,7 +517,7 @@ class W_StringObject(W_Object):
         if w_sep is None or space.is_kind_of(w_sep, space.w_string):
             sep = space.str_w(w_sep) if w_sep else None
             return space.newarray([
-                space.newstr_fromstr(s) for s in space.str_w(self).split(sep, limit - 1)
+                space.newstr_fromstr(s) for s in split(space.str_w(self), sep, limit - 1)
             ])
         elif space.is_kind_of(w_sep, space.w_regexp):
             results_w = []
