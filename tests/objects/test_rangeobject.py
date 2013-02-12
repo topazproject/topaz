@@ -60,7 +60,7 @@ class TestRangeObject(BaseTopazTest):
         w_res = space.execute("return (1..10).last")
         assert space.int_w(w_res) == 10
 
-    def test_range_chars(self, space):
+    def test_range_each_chars(self, space):
         w_res = space.execute("""
         a = []
         ('a'..'e').each do |x|
@@ -71,7 +71,7 @@ class TestRangeObject(BaseTopazTest):
 
         assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
 
-    def test_range_symbols(self, space):
+    def test_range_each_symbols(self, space):
         w_res = space.execute("""
         a = []
         (:a..:e).each do |x|
