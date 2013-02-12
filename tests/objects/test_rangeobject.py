@@ -82,3 +82,7 @@ class TestRangeObject(BaseTopazTest):
 
         assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
         assert all(isinstance(s, W_SymbolObject) for s in space.listview(w_res))
+
+    def test_range_each_with_block(self, space):
+        with self.raises(space, "NotImplementedError", "Object#enum_for"):
+            space.execute("(1..2).each")
