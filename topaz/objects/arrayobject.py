@@ -254,6 +254,10 @@ class W_ArrayObject(W_Object):
         self.select { |each| !each.nil? }
     end
 
+    def compact!
+        reject! { |obj| obj.nil? }
+    end
+
     def reject!(&block)
         prev_size = self.size
         self.delete_if(&block)
@@ -264,6 +268,7 @@ class W_ArrayObject(W_Object):
 
     classdef.app_method("""
     def delete_if
+        raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
         i = 0
         c = 0
         sz = self.size

@@ -135,6 +135,7 @@ def run_specs(binary, prefix=""):
         "core/array/array_spec.rb",
         "core/array/at_spec.rb",
         "core/array/clear_spec.rb",
+        "core/array/compact_spec.rb",
         "core/array/concat_spec.rb",
         "core/array/delete_at_spec.rb",
         "core/array/empty_spec.rb",
