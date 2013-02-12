@@ -361,7 +361,7 @@ class W_ArrayObject(W_Object):
                 if level == 0
                     list << item
                 elsif ary = Array.try_convert(item)
-                    list += ary.flatten(level - 1)
+                    list.concat(ary.flatten(level - 1))
                 else
                     list << item
                 end
