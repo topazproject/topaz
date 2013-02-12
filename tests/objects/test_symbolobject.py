@@ -1,3 +1,5 @@
+from topaz.objects.symbolobject import W_SymbolObject
+
 from ..base import BaseTopazTest
 
 
@@ -46,3 +48,20 @@ class TestSymbolObject(BaseTopazTest):
     def test_to_proc(self, space):
         w_res = space.execute("return :+.to_proc.call(2, 3)")
         assert space.int_w(w_res) == 5
+
+    def test_succ(self, space):
+        w_res = space.execute('return :abcd.succ')
+        assert space.str_w(w_res) == "abce"
+        assert isinstance(w_res, W_SymbolObject)
+        w_res = space.execute('return :THX1138.succ')
+        assert space.str_w(w_res) == "THX1139"
+        assert isinstance(w_res, W_SymbolObject)
+        w_res = space.execute('return :"<<koala>>".succ')
+        assert space.str_w(w_res) == "<<koalb>>"
+        assert isinstance(w_res, W_SymbolObject)
+        w_res = space.execute('return :"ZZZ9999".succ')
+        assert space.str_w(w_res) == "AAAA0000"
+        assert isinstance(w_res, W_SymbolObject)
+        w_res = space.execute('return :"***".succ')
+        assert space.str_w(w_res) == "**+"
+        assert isinstance(w_res, W_SymbolObject)
