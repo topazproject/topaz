@@ -46,3 +46,15 @@ class TestSymbolObject(BaseTopazTest):
     def test_to_proc(self, space):
         w_res = space.execute("return :+.to_proc.call(2, 3)")
         assert space.int_w(w_res) == 5
+
+    def test_succ(self, space):
+        w_res = space.execute('return :abcd.succ')
+        assert space.symbol_w(w_res) == "abce"
+        w_res = space.execute('return :THX1138.succ')
+        assert space.symbol_w(w_res) == "THX1139"
+        w_res = space.execute('return :"<<koala>>".succ')
+        assert space.symbol_w(w_res) == "<<koalb>>"
+        w_res = space.execute('return :"ZZZ9999".succ')
+        assert space.symbol_w(w_res) == "AAAA0000"
+        w_res = space.execute('return :"***".succ')
+        assert space.symbol_w(w_res) == "**+"
