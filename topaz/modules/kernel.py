@@ -289,9 +289,8 @@ class Kernel(Module):
 
     @moduledef.method("sleep")
     def method_sleep(self, space, w_arg=None):
-        if not w_arg:
-            while True:
-                time.sleep(1)
+        if w_arg is None:
+            raise NotImplementedError
         start = time.time()
         time.sleep(space.float_w(w_arg))
         return space.newfloat(time.time() - start)
