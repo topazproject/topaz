@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import time
 
 from rpython.rlib.rstring import assert_str0
 from rpython.rlib.streamio import open_file_as_stream
@@ -285,6 +286,14 @@ class Kernel(Module):
         w_dup.copy_singletonclass(space, space.getsingletonclass(self))
         space.send(w_dup, space.newsymbol("initialize_clone"), [self])
         return w_dup
+
+    @moduledef.method("sleep")
+    def method_sleep(self, space, w_duration=None):
+        if w_duration is None:
+            raise space.error(space.w_NotImplementedError)
+        start = time.time()
+        time.sleep(space.float_w(w_duration))
+        return space.newfloat(time.time() - start)
 
     @moduledef.method("initialize_clone")
     @moduledef.method("initialize_dup")
