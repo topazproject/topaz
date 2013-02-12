@@ -32,21 +32,7 @@ class W_RangeObject(W_Object):
         #should return an enumerator, but currently Object#enum_for isn't implemented
         raise "NotImplementedError" if !block
 
-        if self.begin.is_a?(Symbol) && self.end.is_a?(Symbol)
-            i = self.begin.to_s
-            ends = self.end.to_s
-            if self.exclude_end?
-                while (i <=> ends) < 0 do
-                    yield i.to_sym
-                    i = i.succ
-                end
-            else
-                while (i <=> ends) <= 0 do
-                    yield i.to_sym
-                    i = i.succ
-                end
-            end
-        elsif !(self.begin.respond_to? :succ)
+        if !(self.begin.respond_to? :succ)
             raise TypeError, "can't iterate from #{self.begin.class}"
         else
             i = self.begin
