@@ -55,4 +55,9 @@ class W_SymbolObject(W_Object):
     def to_sym
         self
     end
+
+    def succ
+        self.to_s.succ.to_sym
+    end
+    #alias next succ
     """)
