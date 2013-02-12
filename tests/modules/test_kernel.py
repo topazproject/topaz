@@ -202,12 +202,12 @@ class TestKernel(BaseTopazTest):
     def test_sleep(self, space):
         now = time.time()
         w_res = space.execute("return sleep 0.001")
-        assert space.float_w(w_res) >= 0.001
+        assert space.int_w(w_res) == 0
         assert time.time() - now >= 0.001
 
         now = time.time()
         w_res = space.execute("return sleep 0.002")
-        assert space.float_w(w_res) >= 0.002
+        assert space.int_w(w_res) == 0
         assert time.time() - now >= 0.002
 
     def test_trust(self, space):

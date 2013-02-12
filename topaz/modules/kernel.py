@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import time
 
+from rpython.rlib.rfloat import round_double
 from rpython.rlib.rstring import assert_str0
 from rpython.rlib.streamio import open_file_as_stream
 
@@ -293,7 +294,7 @@ class Kernel(Module):
             raise space.error(space.w_NotImplementedError)
         start = time.time()
         time.sleep(space.float_w(w_duration))
-        return space.newfloat(time.time() - start)
+        return space.newint(int(round_double(time.time() - start, 0)))
 
     @moduledef.method("initialize_clone")
     @moduledef.method("initialize_dup")
