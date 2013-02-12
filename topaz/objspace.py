@@ -140,7 +140,7 @@ class ObjectSpace(object):
             self.w_RegexpError, self.w_RuntimeError, self.w_SystemCallError,
             self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
-            self.w_IndexError, self.w_IOError,
+            self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
 
             self.w_kernel, self.w_topaz,
 
