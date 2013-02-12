@@ -40,9 +40,11 @@ def _entry_point(space, argv):
             exprs.append(arg[2:])
         elif arg == "-I":
             idx += 1
-            space.w_load_path.method_lshift(space, space.newstr_fromstr(argv[idx]))
+            for path_entry in argv[idx].split(os.pathsep):
+                space.w_load_path.method_lshift(space, space.newstr_fromstr(path_entry))
         elif arg.startswith("-I"):
-            space.w_load_path.method_lshift(space, space.newstr_fromstr(arg[2:]))
+            for path_entry in arg[2:].split(os.pathsep):
+                space.w_load_path.method_lshift(space, space.newstr_fromstr(path_entry))
         else:
             break
         idx += 1

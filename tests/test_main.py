@@ -72,7 +72,9 @@ class TestMain(object):
         assert version.startswith("topaz")
 
     def test_load_path(self, space, tmpdir, capfd):
+        orig_load_path = space.w_load_path.listview(space)[:]
         d = tmpdir.mkdir("sub")
+        d2 = tmpdir.mkdir("sub2")
         f1 = d.join("dog.rb")
         f1.write("""
         require "canine-behaviors"
@@ -85,7 +87,7 @@ class TestMain(object):
           end
         end
         """)
-        f2 = d.join("canine-behaviors.rb")
+        f2 = d2.join("canine-behaviors.rb")
         f2.write("""
         module CanineBehaviors
           def howl
@@ -97,16 +99,27 @@ class TestMain(object):
         self.run(space, tmpdir, """
         require "dog"
         puts Dog.new.bark
-        """, ruby_args=["-I", str(d)])
+        """, ruby_args=["-I", str(d), "-I", str(d2)])
         out, _ = capfd.readouterr()
         assert out.strip() == "woof"
+        space.w_load_path.listview(space)[:] = orig_load_path
 
         self.run(space, tmpdir, """
         require "dog"
         puts Dog.new.howl
-        """, ruby_args=["-I%s" % d])
+        """, ruby_args=["-I%s" % d, "-I%s" % d2])
         out, _ = capfd.readouterr()
         assert out.strip() == "awooooo"
+        space.w_load_path.listview(space)[:] = orig_load_path
+
+        self.run(space, tmpdir, """
+        require "dog"
+        d = Dog.new
+        puts "#{d.bark}, #{d.bark}, #{d.howl}"
+        """, ruby_args=["-I%s:%s" % (d, d2)])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "woof, woof, awooooo"
+        space.w_load_path.listview(space)[:] = orig_load_path
 
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
