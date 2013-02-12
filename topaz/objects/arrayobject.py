@@ -213,6 +213,12 @@ class W_ArrayObject(W_Object):
             for w_o in self.items_w
         ]))
 
+    @classdef.singleton_method("try_convert")
+    def method_try_convert(self, space, w_obj):
+        if not space.is_kind_of(w_obj, space.w_array):
+            w_obj = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
+        return w_obj
+
     classdef.app_method("""
     def at idx
         self[idx]
@@ -348,6 +354,31 @@ class W_ArrayObject(W_Object):
         return self
 
     classdef.app_method("""
+    def flatten(level = -1)
+        list = []
+        recursion = Thread.current.recursion_guard(self) do
+            self.each do |item|
+                if level == 0
+                    list << item
+                elsif ary = Array.try_convert(item)
+                    list += ary.flatten(level - 1)
+                else
+                    list << item
+                end
+            end
+            return list
+        end
+        if recursion
+            raise ArgumentError, "tried to flatten recursive array"
+        end
+    end
+
+    def flatten!(level = -1)
+        list = self.flatten(level)
+        self.clear
+        return self.concat list
+    end
+
     def sort(&block)
         dup.sort!(&block)
     end
