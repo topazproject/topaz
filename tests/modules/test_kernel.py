@@ -202,12 +202,13 @@ class TestKernel(BaseTopazTest):
     def test_sleep(self, space):
         now = time.time()
         w_res = space.execute("return sleep 0.001")
-        assert self.unwrap(space, w_res) >= 0.001
+        assert space.float_w(w_res) >= 0.001
+        assert time.time() - now >= 0.001
+
+        now = time.time()
         w_res = space.execute("return sleep 0.002")
-        assert self.unwrap(space, w_res) >= 0.002
-        assert time.time() - now >= 0.003
-        with self.raises(space, "NotImplementedError"):
-            space.execute("sleep")
+        assert space.float_w(w_res) >= 0.002
+        assert time.time() - now >= 0.002
 
     def test_trust(self, space):
         w_res = space.execute("return 'a'.untrusted?")
