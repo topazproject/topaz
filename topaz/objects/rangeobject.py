@@ -29,7 +29,7 @@ class W_RangeObject(W_Object):
 
     classdef.app_method("""
     def each(&block)
-        raise NotImplementedError("Object#enum_for") if !block
+        raise NotImplementedError, "Object#enum_for" if !block
 
         if !(self.begin.respond_to? :succ)
             raise TypeError, "can't iterate from #{self.begin.class}"
