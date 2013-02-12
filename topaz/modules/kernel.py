@@ -288,11 +288,11 @@ class Kernel(Module):
         return w_dup
 
     @moduledef.method("sleep")
-    def method_sleep(self, space, w_arg=None):
-        if w_arg is None:
-            raise NotImplementedError
+    def method_sleep(self, space, w_duration=None):
+        if w_duration is None:
+            raise space.error(space.w_NotImplementedError)
         start = time.time()
-        time.sleep(space.float_w(w_arg))
+        time.sleep(space.float_w(w_duration))
         return space.newfloat(time.time() - start)
 
     @moduledef.method("initialize_clone")
