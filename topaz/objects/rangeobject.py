@@ -29,7 +29,7 @@ class W_RangeObject(W_Object):
 
     classdef.app_method("""
     def each(&block)
-        #should return an enumerator, but currently Object#enum_for isn't implemented
+        # should return an enumerator, but currently Object#enum_for isn't implemented
         raise "NotImplementedError" if !block
 
         if !(self.begin.respond_to? :succ)
