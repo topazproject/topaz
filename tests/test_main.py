@@ -83,6 +83,11 @@ class TestMain(object):
             assert flag in flags
             assert len(flags[flag]) > 0
 
+    def test_stop_consuming_args(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "--help -e"
+
     def test_load_path_multiple_args(self, space, tmpdir, capfd):
         d = tmpdir.mkdir("sub")
         f1 = d.join("f.rb")
