@@ -157,6 +157,18 @@ class MutableStringStrategy(StringStrategy):
             storage[i] = new_c
         return changed
 
+    def capitalize(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i,c in enumerate(storage):
+            if i == 0:
+                new_c = c.upper()
+            else:
+                new_c = c.lower()
+            changed |= (c != new_c)
+            storage[i] = new_c
+        return changed
+
     def chomp(self, storage, newline=None):
         storage = self.unerase(storage)
         if len(storage) == 0:
@@ -571,6 +583,20 @@ class W_StringObject(W_Object):
     def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
+        return self if changed else space.w_nil
+
+    classdef.app_method("""
+    def capitalize
+        copy = self.dup
+        copy.capitalize!
+        return copy
+    end
+    """)
+
+    @classdef.method("capitalize!")
+    def method_capitalize_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.capitalize(self.str_storage)
         return self if changed else space.w_nil
 
     def _digits(self, s, i, radix):
