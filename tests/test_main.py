@@ -71,6 +71,18 @@ class TestMain(object):
         [version] = out.splitlines()
         assert version.startswith("topaz")
 
+    def test_help(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-h"])
+        out, _ = capfd.readouterr()
+        usage = out.splitlines()
+        flags = dict(
+            (line[:18].strip(), line[19:].strip()) for line in usage[1:]
+        )
+        assert usage[0].strip() == "Usage: topaz [switches] [--] [programfile] [arguments]"
+        for flag in ("-v", "-e 'command'", "-Idirectory"):
+            assert flag in flags
+            assert len(flags[flag]) > 0
+
     def test_load_path_multiple_args(self, space, tmpdir, capfd):
         d = tmpdir.mkdir("sub")
         f1 = d.join("f.rb")
