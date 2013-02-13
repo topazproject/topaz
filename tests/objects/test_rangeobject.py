@@ -1,3 +1,5 @@
+from topaz.objects.symbolobject import W_SymbolObject
+
 from ..base import BaseTopazTest
 
 
@@ -57,3 +59,39 @@ class TestRangeObject(BaseTopazTest):
     def test_last(self, space):
         w_res = space.execute("return (1..10).last")
         assert space.int_w(w_res) == 10
+
+    def test_range_each_chars(self, space):
+        w_res = space.execute("""
+        a = []
+        ('a'..'e').each do |x|
+            a << x
+        end
+        a
+        """)
+
+        assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
+
+    def test_range_each_symbols(self, space):
+        w_res = space.execute("""
+        a = []
+        (:a..:e).each do |x|
+            a << x
+        end
+        a
+        """)
+
+        assert self.unwrap(space, w_res) == ['a', 'b', 'c', 'd', 'e']
+        assert all(isinstance(s, W_SymbolObject) for s in space.listview(w_res))
+
+    def test_range_each_with_block(self, space):
+        with self.raises(space, "NotImplementedError", "Object#enum_for"):
+            space.execute("(1..2).each")
+
+    def test_range_each_returns_self(self, space):
+        w_res = space.execute("""
+        a = []
+        ((1..2).each { }).each { |x| a << x }
+        a
+        """)
+
+        assert self.unwrap(space, w_res) == [1, 2]
