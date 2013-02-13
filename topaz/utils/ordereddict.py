@@ -60,6 +60,9 @@ class OrderedDict(object):
     def update(self, d):
         self.contents.update(d.contents)
 
+    def clear(self):
+        self.contents.clear()
+
 
 class DictKey(object):
     def __init__(self, d, key):
