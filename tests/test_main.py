@@ -71,6 +71,71 @@ class TestMain(object):
         [version] = out.splitlines()
         assert version.startswith("topaz")
 
+    def test_load_path_multiple_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f1 = d.join("soup.rb")
+        f1.write("""
+        class Soup
+          def needs?(utensil)
+            utensil == :spoon
+          end
+        end
+        """)
+        self.run(space, tmpdir, """
+        require "soup"
+        puts Soup.new.needs?(:spoon)
+        """, ruby_args=["-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
+    def test_load_path_joined_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f1 = d.join("hat.rb")
+        f1.write("""
+        class Hat
+          def tip(n_times, &block)
+            n_times.times { block.call(:evening) }
+          end
+        end
+        """)
+        self.run(space, tmpdir, """
+        require "hat"
+        Hat.new.tip(3) { |response| puts response }
+        """, ruby_args=["-I%s" % d])
+        out, _ = capfd.readouterr()
+        assert out.strip().split() == ["evening", "evening", "evening"]
+
+    def test_load_path_path_separated(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        d2 = tmpdir.mkdir("sub2")
+        f1 = d.join("dog.rb")
+        f1.write("""
+        require "canine-behaviors"
+
+        class Dog
+          include CanineBehaviors
+
+          def bark
+            "woof"
+          end
+        end
+        """)
+        f2 = d2.join("canine-behaviors.rb")
+        f2.write("""
+        module CanineBehaviors
+          def howl
+            "awooooo"
+          end
+        end
+        """)
+        self.run(space, tmpdir, """
+        require "dog"
+        d = Dog.new
+        puts "#{d.bark}, #{d.bark}, #{d.howl}"
+        """, ruby_args=["-I%s:%s" % (d, d2)])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "woof, woof, awooooo"
+
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
         ARGV.each_with_index do |arg, i|

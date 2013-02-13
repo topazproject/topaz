@@ -25,6 +25,7 @@ def _entry_point(space, argv):
     verbose = False
     path = None
     exprs = []
+    load_path_entries = []
     idx = 1
     while idx < len(argv):
         arg = argv[idx]
@@ -38,6 +39,11 @@ def _entry_point(space, argv):
             exprs.append(argv[idx])
         elif arg.startswith("-e"):
             exprs.append(arg[2:])
+        elif arg == "-I":
+            idx += 1
+            load_path_entries += argv[idx].split(os.pathsep)
+        elif arg.startswith("-I"):
+            load_path_entries += arg[2:].split(os.pathsep)
         else:
             break
         idx += 1
@@ -48,6 +54,12 @@ def _entry_point(space, argv):
     while idx < len(argv):
         argv_w.append(space.newstr_fromstr(argv[idx]))
         idx += 1
+    for path_entry in load_path_entries:
+        space.send(
+            space.w_load_path,
+            space.newsymbol("<<"),
+            [space.newstr_fromstr(path_entry)]
+        )
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
     system, _, _, _, cpu = os.uname()
