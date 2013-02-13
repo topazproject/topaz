@@ -59,6 +59,13 @@ class W_ArrayObject(W_Object):
         self.items_w.extend(w_other.items_w)
         return self
 
+    @classdef.method("replace", other="array")
+    @check_frozen()
+    def method_replace(self, space, other):
+        del self.items_w[:]
+        self.items_w.extend(other)
+        return self
+
     classdef.app_method("""
     def to_s()
         result = "["
