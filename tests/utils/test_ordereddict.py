@@ -241,6 +241,16 @@ class BaseTestOrderedDict(object):
         assert self.update(3) == 5
         assert self.update(22) == 4
 
+    @runner.func
+    def clear():
+        o = OrderedDict()
+        o[3] = 4
+        o.clear()
+        return len(o.keys())
+
+    def test_clear(self):
+        assert self.clear() == 0
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):

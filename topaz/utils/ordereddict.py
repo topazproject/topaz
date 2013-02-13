@@ -143,6 +143,9 @@ class SomeOrderedDict(model.SomeObject):
         assert isinstance(s_dict, SomeOrderedDict)
         self.dictdef.union(s_dict.dictdef)
 
+    def method_clear(self):
+        pass
+
 
 class SomeOrderedDictIterator(model.SomeObject):
     def __init__(self, d):
@@ -318,6 +321,10 @@ class OrderedDictRepr(Repr):
     def rtype_method_update(self, hop):
         [v_dict, v_other] = hop.inputargs(self, self)
         return hop.gendirectcall(LLOrderedDict.ll_update, v_dict, v_other)
+
+    def rtype_method_clear(self, hop):
+        [v_dict] = hop.inputargs(self)
+        return hop.gendirectcall(LLOrderedDict.ll_clear, v_dict)
 
 
 class OrderedDictIteratorRepr(IteratorRepr):
@@ -679,6 +686,14 @@ class LLOrderedDict(object):
             entry = other.entries[idx]
             i = LLOrderedDict.ll_lookup(d, entry.key, other.entries.hash(idx))
             LLOrderedDict.ll_setitem_lookup_done(d, entry.key, entry.value, other.entries.hash(idx), i)
+            idx = entry.next
+
+    @staticmethod
+    def ll_clear(d):
+        idx = d.first_entry
+        while idx != -1:
+            entry = d.entries[idx]
+            LLOrderedDict._ll_del(d, idx)
             idx = entry.next
 
     @staticmethod
