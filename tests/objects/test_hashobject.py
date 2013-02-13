@@ -70,9 +70,10 @@ class TestHashObject(BaseTopazTest):
     def test_clear(self, space):
         w_res = space.execute("""
         x = {2 => 3}
-        return x.clear[2]
+        x.clear
+        return x.keys
         """)
-        assert w_res is space.w_nil
+        assert self.unwrap(space, w_res) == []
 
     def test_lookup_eql(self, space):
         w_res = space.execute("return {1 => 2}[1.0]")
