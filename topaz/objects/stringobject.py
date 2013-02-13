@@ -160,7 +160,7 @@ class MutableStringStrategy(StringStrategy):
     def capitalize(self, storage):
         storage = self.unerase(storage)
         changed = False
-        for i,c in enumerate(storage):
+        for i, c in enumerate(storage):
             if i == 0:
                 new_c = c.upper()
             else:
