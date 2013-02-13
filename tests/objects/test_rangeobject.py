@@ -79,3 +79,10 @@ class TestRangeObject(BaseTopazTest):
         a
         """)
         assert self.unwrap(space, w_res) == ["a", "b", "c", "d", "e"]
+
+    def test_each_returns_self(self, space):
+        w_res = space.execute("""
+        r = (1...3)
+        return r.each {}.equal?(r)
+        """)
+        assert w_res is space.w_true
