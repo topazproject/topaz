@@ -74,19 +74,12 @@ class TestMain(object):
     def test_help(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-h"])
         out, _ = capfd.readouterr()
-        usage = out.splitlines()
-        flags = dict(
-            (line[:18].strip(), line[19:].strip()) for line in usage[1:]
-        )
-        assert usage[0].strip() == "Usage: topaz [switches] [--] [programfile] [arguments]"
-        for flag in ("-v", "-e 'command'", "-Idirectory"):
-            assert flag in flags
-            assert len(flags[flag]) > 0
+        assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
 
     def test_stop_consuming_args(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
         out, _ = capfd.readouterr()
-        assert out.strip() == "--help -e"
+        assert out == "--help -e" + os.linesep
 
     def test_load_path_multiple_args(self, space, tmpdir, capfd):
         d = tmpdir.mkdir("sub")
