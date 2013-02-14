@@ -10,7 +10,7 @@ from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
 
 
-usage = os.linesep.join([
+USAGE = "\n".join([
     """Usage: topaz [switches] [--] [programfile] [arguments]""",
 #   """  -0[octal]       specify record separator (\0, if no argument)""",
 #   """  -a              autosplit mode with -n or -p (splits $_ into $F)""",
@@ -59,7 +59,7 @@ def _entry_point(space, argv):
     while idx < len(argv):
         arg = argv[idx]
         if arg == "-h" or arg == "--help":
-            os.write(1, usage)
+            os.write(1, USAGE)
             return 0
         elif arg == "-v":
             verbose = True
