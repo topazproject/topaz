@@ -96,6 +96,13 @@ class W_HashObject(W_Object):
         w_key, w_value = self.contents.popitem()
         return space.newarray([w_key, w_value])
 
+    @classdef.method("replace")
+    @check_frozen()
+    def method_replace(self, space, w_hash):
+        self.contents.clear()
+        self.contents.update(w_hash.contents)
+        return self
+
     @classdef.method("keys")
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
