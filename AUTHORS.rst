@@ -14,3 +14,4 @@ Authors
 * Greg Price
 * Armin Rigo
 * Robin Schreiber
+* Gosha Arinich

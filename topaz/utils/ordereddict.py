@@ -57,6 +57,9 @@ class OrderedDict(object):
         else:
             return self.contents.pop(self._key(key), default)
 
+    def clear(self):
+        self.contents.clear()
+
     def update(self, d):
         self.contents.update(d.contents)
 
