@@ -51,6 +51,7 @@ class W_HashObject(W_Object):
         except KeyError:
             return space.send(self, space.newsymbol("default"), [w_key])
 
+    @classdef.method("store")
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
         self.contents[w_key] = w_value
