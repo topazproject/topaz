@@ -723,6 +723,13 @@ class W_StringObject(W_Object):
 
     @classdef.method("gsub")
     def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
+        return self.gsub_main(space, w_pattern, w_replacement, block, False)
+
+    @classdef.method("sub")
+    def method_sub(self, space, w_pattern, w_replacement=None, block=None):
+        return self.gsub_main(space, w_pattern, w_replacement, block, True)
+
+    def gsub_main(self, space, w_pattern, w_replacement, block, first_only):
         if w_replacement is None and block is None:
             raise NotImplementedError("gsub enumerator")
 
@@ -737,16 +744,16 @@ class W_StringObject(W_Object):
                 )
 
         if space.is_kind_of(w_pattern, space.w_regexp):
-            return self.gsub_regexp(space, w_pattern, replacement, w_hash, block)
+            return self.gsub_regexp(space, w_pattern, replacement, w_hash, block, first_only)
         elif space.is_kind_of(w_pattern, space.w_string):
-            return self.gsub_string(space, w_pattern, replacement, w_hash, block)
+            return self.gsub_string(space, w_pattern, replacement, w_hash, block, first_only)
         else:
             raise space.error(
                 space.w_TypeError,
                 "wrong argument type %s (expected Regexp)" % space.getclass(w_replacement).name
             )
 
-    def gsub_regexp(self, space, w_pattern, replacement, w_hash, block):
+    def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, first_only):
         result = []
         pos = 0
         string = space.str_w(self)
@@ -771,6 +778,8 @@ class W_StringObject(W_Object):
                 result += self.gsub_regexp_hash(space, w_hash, w_matchdata)
             pos = ctx.match_end
             ctx.reset(pos)
+            if first_only:
+                break
         result += string[pos:]
         return space.newstr_fromchars(result)
 
@@ -801,7 +810,7 @@ class W_StringObject(W_Object):
         w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
         return self.gsub_lookup_hash(space, w_hash, w_arg)
 
-    def gsub_string(self, space, w_pattern, replacement, w_hash, block):
+    def gsub_string(self, space, w_pattern, replacement, w_hash, block, first_only):
         result = []
         pos = 0
         string = space.str_w(self)
@@ -818,6 +827,8 @@ class W_StringObject(W_Object):
                     result += self.gsub_lookup_hash(space, w_hash, w_pattern)
                 pos = idx + len(pattern)
             else:
+                break
+            if first_only:
                 break
         result += string[pos:]
         return space.newstr_fromchars(result)
