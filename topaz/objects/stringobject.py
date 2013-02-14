@@ -460,7 +460,6 @@ class W_StringObject(W_Object):
             return self.copy(space)
         else:
             pad_len = integer - self.length() - 1
-            assert pad_len >= 0
             chars = []
             chars += space.str_w(self)
             for i in xrange(pad_len / len(padstr)):
@@ -476,7 +475,6 @@ class W_StringObject(W_Object):
             return self.copy(space)
         else:
             pad_len = integer - self.length() - 1
-            assert pad_len >= 0
             chars = []
             for i in xrange(pad_len / len(padstr)):
                 chars += padstr
