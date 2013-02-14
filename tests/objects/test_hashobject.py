@@ -167,3 +167,13 @@ class TestHashObject(BaseTopazTest):
         return h == h
         """)
         assert w_res is space.w_true
+
+    def test_shift(self, space):
+        w_res = space.execute("return {}.shift")
+        assert w_res is space.w_nil
+        w_res = space.execute("return {3 => 4}.shift")
+        assert self.unwrap(space, w_res) == [3, 4]
+
+    def test_dup(self, space):
+        w_res = space.execute("return {2 => 4}.dup.length")
+        assert space.int_w(w_res) == 1

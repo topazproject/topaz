@@ -37,6 +37,13 @@ class W_HashObject(W_Object):
         if block is not None:
             self.default_proc = block
 
+    @classdef.method("initialize_copy")
+    def method_initialize_copy(self, space, w_other):
+        assert isinstance(w_other, W_HashObject)
+        self.contents.clear()
+        self.contents.update(w_other.contents)
+        return self
+
     @classdef.method("default")
     def method_default(self, space, w_key=None):
         if self.default_proc is not None:
@@ -80,6 +87,14 @@ class W_HashObject(W_Object):
     def method_clear(self, space):
         self.contents.clear()
         return self
+
+    @classdef.method("shift")
+    @check_frozen()
+    def method_shift(self, space):
+        if not self.contents:
+            return space.send(self, space.newsymbol("default"))
+        w_key, w_value = self.contents.popitem()
+        return space.newarray([w_key, w_value])
 
     @classdef.method("keys")
     def method_keys(self, space):

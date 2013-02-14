@@ -251,6 +251,33 @@ class BaseTestOrderedDict(object):
     def test_clear(self):
         assert self.clear() == 0
 
+    @runner.func
+    def truthy(n):
+        o = OrderedDict()
+        if n:
+            o[n] = n
+        return bool(o)
+
+    def test_truthiness(self):
+        assert self.truthy(3)
+        assert not self.truthy(0)
+
+    @runner.func
+    def popitem(n):
+        o = OrderedDict()
+        if n:
+            o[n] = n
+        try:
+            key, val = o.popitem()
+        except KeyError:
+            return 400
+        else:
+            return key * 10 + val
+
+    def test_popitem(self):
+        assert self.popitem(0) == 400
+        assert self.popitem(4) == 44
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):

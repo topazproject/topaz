@@ -57,6 +57,12 @@ class OrderedDict(object):
         else:
             return self.contents.pop(self._key(key), default)
 
+    def popitem(self):
+        if not self:
+            raise KeyError
+        k, v = self.contents.popitem()
+        return k.key, v
+
     def update(self, d):
         self.contents.update(d.contents)
 
@@ -138,6 +144,14 @@ class SomeOrderedDict(model.SomeObject):
         if s_default is not None:
             self.dictdef.generalize_value(s_default)
         return self.dictdef.read_value()
+
+    def method_popitem(self):
+        s_key = self.dictdef.read_key()
+        s_value = self.dictdef.read_value()
+        if (isinstance(s_key, model.SomeImpossibleValue) or
+            isinstance(s_value, model.SomeImpossibleValue)):
+            return model.s_ImpossibleValue
+        return model.SomeTuple((s_key, s_value))
 
     def method_update(self, s_dict):
         assert isinstance(s_dict, SomeOrderedDict)
@@ -317,6 +331,12 @@ class OrderedDictRepr(Repr):
         hop.exception_is_here()
         v_res = hop.gendirectcall(target, *v_args)
         return self.recast_value(hop, v_res)
+
+    def rtype_method_popitem(self, hop):
+        hop.exception_is_here()
+        [v_dict] = hop.inputargs(self)
+        c_TP = hop.inputconst(lltype.Void, hop.r_result.lowleveltype)
+        return hop.gendirectcall(LLOrderedDict.ll_popitem, c_TP, v_dict)
 
     def rtype_method_update(self, hop):
         [v_dict, v_other] = hop.inputargs(self, self)
@@ -678,6 +698,20 @@ class LLOrderedDict(object):
             return LLOrderedDict.ll_pop(d, key)
         except KeyError:
             return default
+
+    @staticmethod
+    def ll_popitem(RESTYPE, d):
+        if not d.num_items:
+            raise KeyError
+        entry = d.entries[d.first_entry]
+
+        r = lltype.malloc(RESTYPE.TO)
+        r.item0 = LLOrderedDict.recast(RESTYPE.TO.item0, entry.key)
+        r.item1 = LLOrderedDict.recast(RESTYPE.TO.item1, entry.value)
+
+        LLOrderedDict._ll_del(d, d.first_entry)
+
+        return r
 
     @staticmethod
     def ll_update(d, other):
