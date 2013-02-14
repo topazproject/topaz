@@ -171,15 +171,17 @@ class MutableStringStrategy(StringStrategy):
 
     def chomp(self, storage, newline=None):
         storage = self.unerase(storage)
+        changed = False
         if len(storage) == 0:
-            return
+            return changed
         elif newline is not None and len(storage) >= len(newline):
             for i in xrange(len(newline) - 1, -1, -1):
                 if newline[i] != storage[len(storage) - len(newline) + i]:
-                    return
+                    return changed
             start = len(storage) - len(newline)
             assert start >= 0
             del storage[start:]
+            changed = True
         elif newline is None:
             ch = storage[-1]
             i = len(storage) - 1
@@ -190,8 +192,11 @@ class MutableStringStrategy(StringStrategy):
                 i += 1
                 if i > 0:
                     del storage[i:]
+                    changed = True
                 else:
                     del storage[:]
+                    changed = True
+        return changed
 
     def succ(self, storage):
         storage = self.unerase(storage)
@@ -850,12 +855,14 @@ class W_StringObject(W_Object):
         if newline in "\n\r":
             newline = None
         self.strategy.to_mutable(space, self)
-        self.strategy.chomp(self.str_storage, newline)
-        return self
+        changed = self.strategy.chomp(self.str_storage, newline)
+        return self if changed else space.w_nil
 
     classdef.app_method("""
     def chomp(sep=$/)
-        self.dup.chomp!(sep)
+        copy = self.dup
+        copy.chomp!(sep)
+        return copy
     end
 
     def reverse
