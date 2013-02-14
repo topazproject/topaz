@@ -56,9 +56,9 @@ class W_HashObject(W_Object):
         try:
             return self.contents[w_key]
         except KeyError:
-            if w_value:
+            if w_value is not None:
                 return w_value
-            elif block:
+            elif block is not None:
                 return space.invoke_block(block, [w_key])
             else:
                 raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, space.newsymbol("inspect")))
