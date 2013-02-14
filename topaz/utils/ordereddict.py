@@ -60,6 +60,9 @@ class OrderedDict(object):
     def update(self, d):
         self.contents.update(d.contents)
 
+    def clear(self):
+        self.contents.clear()
+
 
 class DictKey(object):
     def __init__(self, d, key):
@@ -139,6 +142,9 @@ class SomeOrderedDict(model.SomeObject):
     def method_update(self, s_dict):
         assert isinstance(s_dict, SomeOrderedDict)
         self.dictdef.union(s_dict.dictdef)
+
+    def method_clear(self):
+        pass
 
 
 class SomeOrderedDictIterator(model.SomeObject):
@@ -315,6 +321,10 @@ class OrderedDictRepr(Repr):
     def rtype_method_update(self, hop):
         [v_dict, v_other] = hop.inputargs(self, self)
         return hop.gendirectcall(LLOrderedDict.ll_update, v_dict, v_other)
+
+    def rtype_method_clear(self, hop):
+        [v_dict] = hop.inputargs(self)
+        return hop.gendirectcall(LLOrderedDict.ll_clear, v_dict)
 
 
 class OrderedDictIteratorRepr(IteratorRepr):
@@ -677,6 +687,17 @@ class LLOrderedDict(object):
             i = LLOrderedDict.ll_lookup(d, entry.key, other.entries.hash(idx))
             LLOrderedDict.ll_setitem_lookup_done(d, entry.key, entry.value, other.entries.hash(idx), i)
             idx = entry.next
+
+    @staticmethod
+    def ll_clear(d):
+        if (len(d.entries) == LLOrderedDict.INIT_SIZE and
+            d.resize_counter == LLOrderedDict.INIT_SIZE * 2):
+            return
+        d.entries = lltype.malloc(lltype.typeOf(d.entries).TO, LLOrderedDict.INIT_SIZE, zero=True)
+        d.num_items = 0
+        d.first_entry = -1
+        d.last_entry = -1
+        d.resize_counter = LLOrderedDict.INIT_SIZE * 2
 
     @staticmethod
     def ll_newdictiter(ITER, d):

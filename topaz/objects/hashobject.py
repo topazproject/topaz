@@ -73,6 +73,12 @@ class W_HashObject(W_Object):
             w_res = space.w_nil
         return w_res
 
+    @classdef.method("clear")
+    @check_frozen()
+    def method_clear(self, space):
+        self.contents.clear()
+        return self
+
     @classdef.method("keys")
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
