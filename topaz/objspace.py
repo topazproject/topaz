@@ -140,7 +140,7 @@ class ObjectSpace(object):
             self.w_RegexpError, self.w_RuntimeError, self.w_SystemCallError,
             self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
-            self.w_IndexError, self.w_IOError,
+            self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
 
             self.w_kernel, self.w_topaz,
 
@@ -512,8 +512,8 @@ class ObjectSpace(object):
         if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
-        for idx, cell in enumerate(block.cells):
-            frame.cells[len(bc.cellvars) + idx] = cell
+        for i in xrange(len(bc.freevars)):
+            frame.cells[len(bc.cellvars) + i] = block.cells[i]
 
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)

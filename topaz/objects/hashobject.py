@@ -1,4 +1,4 @@
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from topaz.objects.objectobject import W_Object
 from topaz.utils.ordereddict import OrderedDict
 
@@ -64,8 +64,14 @@ class W_HashObject(W_Object):
         return space.newbool(not bool(self.contents))
 
     @classdef.method("delete")
-    def method_delete(self, space, w_key):
-        return self.contents.pop(w_key, space.w_nil)
+    @check_frozen()
+    def method_delete(self, space, w_key, block):
+        w_res = self.contents.pop(w_key, None)
+        if w_res is None:
+            if block:
+                return space.invoke_block(block, [w_key])
+            w_res = space.w_nil
+        return w_res
 
     @classdef.method("keys")
     def method_keys(self, space):

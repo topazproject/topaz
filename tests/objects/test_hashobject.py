@@ -78,6 +78,10 @@ class TestHashObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [3, [4], None]
 
+    def test_delete_with_block(self, space):
+        w_res = space.execute("return {}.delete(3) { |a| a }")
+        assert space.int_w(w_res) == 3
+
     def test_keys(self, space):
         w_res = space.execute("""
         x = {2 => 3, "four" => 5, 1 => 3, '1' => 'a'}

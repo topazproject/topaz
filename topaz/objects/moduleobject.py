@@ -310,9 +310,11 @@ class W_ModuleObject(W_RootObject):
         else:
             self.method_attr_reader(space, args_w)
 
-    @classdef.method("module_function", name="symbol")
-    def method_module_function(self, space, name):
-        self.attach_method(space, name, self._find_method_pure(space, name, self.version))
+    @classdef.method("module_function")
+    def method_module_function(self, space, args_w):
+        for w_arg in args_w:
+            name = space.symbol_w(w_arg)
+            self.attach_method(space, name, self._find_method_pure(space, name, self.version))
 
     @classdef.method("private_class_method")
     def method_private_class_method(self, space, w_name):

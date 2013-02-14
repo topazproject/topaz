@@ -240,6 +240,9 @@ class TestFile(BaseTopazTest):
     def test_alt_separator(self, space):
         space.execute("File::ALT_SEPARATOR")
 
+    def test_path_separator(self, space):
+        space.execute("File::PATH_SEPARATOR")
+
     def test_fnm_syscase(self, space):
         space.execute("File::FNM_SYSCASE")
 

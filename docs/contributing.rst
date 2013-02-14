@@ -35,6 +35,13 @@ We welcome patches of all sorts to Topaz, whether it's to the docs or the code.
 You can send us patches by forking our repository on Github and then sending a
 pull request.
 
+Getting a copy of the repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First things first, you'll need to grab a copy of the repository::
+
+    $ git clone git://github.com/topazproject/topaz.git
+
 Running the tests
 ~~~~~~~~~~~~~~~~~
 

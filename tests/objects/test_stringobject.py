@@ -295,6 +295,21 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute("return '123'.downcase!")
         assert self.unwrap(space, w_res) is None
 
+    def test_capitalize(self, space):
+        w_res = space.execute("""
+        a = "123ABC"
+        a.capitalize!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "123abc"
+
+        w_res = space.execute("return 'hello'.capitalize")
+        assert self.unwrap(space, w_res) == "Hello"
+        w_res = space.execute("return 'HELLO'.capitalize")
+        assert self.unwrap(space, w_res) == "Hello"
+        w_res = space.execute("return '123'.capitalize!")
+        assert self.unwrap(space, w_res) is None
+
     def test_tr(self, space):
         w_res = space.execute("return 'hello'.tr('el', 'ip')")
         assert space.str_w(w_res) == "hippo"
