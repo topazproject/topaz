@@ -51,6 +51,18 @@ class W_HashObject(W_Object):
         except KeyError:
             return space.send(self, space.newsymbol("default"), [w_key])
 
+    @classdef.method("fetch")
+    def method_fetch(self, space, w_key, w_value=None, block=None):
+        try:
+            return self.contents[w_key]
+        except KeyError:
+            if w_value:
+                return w_value
+            elif block:
+                return space.invoke_block(block, [w_key])
+            else:
+                raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, space.newsymbol("inspect")))
+
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
         self.contents[w_key] = w_value
