@@ -15,3 +15,4 @@ Authors
 * Armin Rigo
 * Robin Schreiber
 * Jeremy Thurgood
+* Gosha Arinich

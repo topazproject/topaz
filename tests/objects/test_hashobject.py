@@ -16,6 +16,21 @@ class TestHashObject(BaseTopazTest):
         w_res = space.execute("return Hash[{2 => 3}][2]")
         assert space.int_w(w_res) == 3
 
+    def test_subscript_create_hash_with_array(self, space):
+        w_res = space.execute("""
+        ary = [['a', 1], ['b', 2]]
+        return Hash[ary].keys
+        """)
+        assert self.unwrap(space, w_res) == ['a', 'b']
+
+    def test_subscript_create_hash_with_splat(self, space):
+        w_res = space.execute("return Hash['a', 1, 'b', 2].keys")
+        assert self.unwrap(space, w_res) == ['a', 'b']
+
+    def test_subscript_create_hash_with_splat_odd(self, space):
+        with self.raises(space, "ArgumentError"):
+            space.execute("Hash['a', 1, 'b']")
+
     def test_default_value(self, space):
         w_res = space.execute("""
         x = Hash.new 5

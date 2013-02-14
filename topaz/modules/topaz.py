@@ -21,6 +21,6 @@ class Topaz(Module):
 class W_Topaz_Type(W_Object):
     classdef = ClassDef("Type", W_Object.classdef, filepath=__file__)
 
-    @classdef.singleton_method("convert_type", method="symbol", raise_errors="bool")
+    @classdef.singleton_method("convert_type", w_cls="class", method="symbol", raise_errors="bool")
     def method_convert_type(self, space, w_obj, w_cls, method, raise_errors):
         return space.convert_type(w_obj, w_cls, method, raise_errors)
