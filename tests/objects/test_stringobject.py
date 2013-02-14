@@ -295,6 +295,20 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute("return '123'.swapcase!")
         assert w_res is space.w_nil
 
+    def test_upcase(self, space):
+        w_res = space.execute("""
+        a = "AbC123aBc"
+        a.upcase!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "ABC123ABC"
+
+        w_res = space.execute("return 'AbC123aBc'.upcase")
+        assert self.unwrap(space, w_res) == "ABC123ABC"
+
+        w_res = space.execute("return '123'.upcase!")
+        assert w_res is space.w_nil
+
     def test_downcase(self, space):
         w_res = space.execute("""
         a = "AbC123aBc"
