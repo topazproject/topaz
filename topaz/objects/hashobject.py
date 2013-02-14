@@ -73,6 +73,18 @@ class W_HashObject(W_Object):
             w_res = space.w_nil
         return w_res
 
+    classdef.app_method("""
+    def delete_if(&block)
+        raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+
+        each do |key, value|
+            delete(key) if yield(key, value)
+        end
+
+        self
+    end
+    """)
+
     @classdef.method("keys")
     def method_keys(self, space):
         return space.newarray(self.contents.keys())
