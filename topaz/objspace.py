@@ -24,7 +24,7 @@ from topaz.modules.kernel import Kernel
 from topaz.modules.objectspace import ObjectSpace as ObjectSpaceModule
 from topaz.modules.process import Process
 from topaz.modules.signal import Signal
-from topaz.modules.topaz import Topaz
+from topaz.modules.topaz import Topaz, W_Topaz_Type
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.bignumobject import W_BignumObject
 from topaz.objects.bindingobject import W_BindingObject
@@ -69,7 +69,6 @@ class SpaceCache(Cache):
 
     def _build(self, obj):
         return obj(self.space)
-
 
 class ObjectSpace(object):
     def __init__(self):
@@ -176,6 +175,7 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.getclassfor(W_EnvObject), self.getclassfor(W_HashIterator),
+            self.getclassfor(W_Topaz_Type)
         ]:
             self.set_const(
                 self.w_topaz,
