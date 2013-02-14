@@ -693,7 +693,6 @@ class LLOrderedDict(object):
         if (len(d.entries) == LLOrderedDict.INIT_SIZE and
             d.resize_counter == LLOrderedDict.INIT_SIZE * 2):
             return
-        old_entries = d.entries
         d.entries = lltype.malloc(lltype.typeOf(d.entries).TO, LLOrderedDict.INIT_SIZE, zero=True)
         d.num_items = 0
         d.first_entry = -1
