@@ -24,9 +24,6 @@ class TestModuleObject(BaseTopazTest):
             end
             module_function :f, :g
         end
-        module Foo
-          module_function
-        end
         class X
             include Mod
             def mathf
