@@ -52,11 +52,12 @@ class W_ArrayObject(W_Object):
     def singleton_method_subscript(self, space, args_w):
         return space.newarray(args_w)
 
-    @classdef.method("initialize_copy")
-    def method_initialize_copy(self, space, w_other):
-        assert isinstance(w_other, W_ArrayObject)
+    @classdef.method("initialize_copy", other_w="array")
+    @classdef.method("replace", other_w="array")
+    @check_frozen()
+    def method_replace(self, space, other_w):
         del self.items_w[:]
-        self.items_w.extend(w_other.items_w)
+        self.items_w.extend(other_w)
         return self
 
     classdef.app_method("""
