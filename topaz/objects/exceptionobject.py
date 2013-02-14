@@ -173,6 +173,11 @@ class W_IndexError(W_StandardError):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_KeyError(W_IndexError):
+    classdef = ClassDef("KeyError", W_IndexError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_StopIteration(W_IndexError):
     classdef = ClassDef("StopIteration", W_IndexError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
