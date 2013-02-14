@@ -381,6 +381,10 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(space.execute('return "hello\\r".chomp')) == "hello"
         assert space.str_w(space.execute('return "hello \\n there".chomp')) == "hello \n there"
         assert space.str_w(space.execute('return "hello".chomp("llo")')) == "he"
+        w_res = space.execute('return "hello".chomp!')
+        assert self.unwrap(space, w_res) is None
+        w_res = space.execute('return "".chomp!')
+        assert self.unwrap(space, w_res) is None
 
     def test_reverse(self, space):
         assert space.str_w(space.execute('return "stressed".reverse')) == "desserts"
