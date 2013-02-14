@@ -228,6 +228,14 @@ class BaseTestOrderedDict(object):
         assert self.pop_keyerror(3) == 4
         assert self.pop_keyerror(12) == 500
 
+    def test_clear(self):
+        o = OrderedDict()
+        o[1] = 12
+        o[2] = 3
+        o.clear()
+
+        assert len(o) == 0
+
     @runner.func
     def update(n):
         o = OrderedDict()
