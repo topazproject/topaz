@@ -2,6 +2,7 @@ import copy
 
 from rpython.rlib.listsort import TimSort
 
+from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
@@ -332,9 +333,10 @@ class W_ArrayObject(W_Object):
     end
     """)
 
-    @classdef.method("last", count="int")
-    def method_last(self, space, count=None):
-        if count is not None:
+    @classdef.method("last")
+    def method_last(self, space, w_count=None):
+        if w_count is not None:
+            count = Coerce.int(space, w_count)
             if count < 0:
                 raise space.error(space.w_ArgumentError, "negative array size")
             start = len(self.items_w) - count
