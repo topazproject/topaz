@@ -281,6 +281,20 @@ class TestStringObject(BaseTopazTest):
         with self.raises(space, "ArgumentError"):
             space.execute('"".to_i(37)')
 
+    def test_upcase(self, space):
+        w_res = space.execute("""
+        a = "AbC123aBc"
+        a.upcase!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "ABC123ABC"
+
+        w_res = space.execute("return 'AbC123aBc'.upcase")
+        assert self.unwrap(space, w_res) == "ABC123ABC"
+
+        w_res = space.execute("return '123'.upcase!")
+        assert self.unwrap(space, w_res) is None
+
     def test_downcase(self, space):
         w_res = space.execute("""
         a = "AbC123aBc"
