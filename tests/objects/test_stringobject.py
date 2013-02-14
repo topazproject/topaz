@@ -382,6 +382,16 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(space.execute('return "hello \\n there".chomp')) == "hello \n there"
         assert space.str_w(space.execute('return "hello".chomp("llo")')) == "he"
 
+    def test_chop(self, space):
+        assert space.str_w(space.execute('return "string\\r\\n".chop')) == "string"
+        assert space.str_w(space.execute('return "string\\n\\r".chop')) == "string\n"
+        assert space.str_w(space.execute('return "string\\n".chop')) == "string"
+        assert space.str_w(space.execute('return "string".chop')) == "strin"
+        assert space.str_w(space.execute('return "x".chop.chop')) == ""
+        assert space.str_w(space.execute('return "string".chop!')) == "strin"
+        w_res = space.execute("return ''.chop!")
+        assert self.unwrap(space, w_res) is None
+
     def test_reverse(self, space):
         assert space.str_w(space.execute('return "stressed".reverse')) == "desserts"
         w_res = space.execute("""

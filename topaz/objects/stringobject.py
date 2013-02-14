@@ -193,6 +193,17 @@ class MutableStringStrategy(StringStrategy):
                 else:
                     del storage[:]
 
+    def chop(self, storage):
+        storage = self.unerase(storage)
+        if len(storage) == 0:
+            return False
+        elif storage[-1] == "\n" and storage[-2] == "\r":
+            del storage[-2:]
+            return True
+        else:
+            del storage[-1]
+            return True
+
     def succ(self, storage):
         storage = self.unerase(storage)
         if len(storage) == 0:
@@ -853,9 +864,21 @@ class W_StringObject(W_Object):
         self.strategy.chomp(self.str_storage, newline)
         return self
 
+    @classdef.method("chop!")
+    def method_chop_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.chop(self.str_storage)
+        return self if changed else space.w_nil
+
     classdef.app_method("""
     def chomp(sep=$/)
         self.dup.chomp!(sep)
+    end
+
+    def chop
+        copy = self.dup
+        copy.chop!
+        return copy
     end
 
     def reverse
