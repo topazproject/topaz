@@ -79,6 +79,22 @@ class TestHashObject(BaseTopazTest):
         w_res = space.execute("return {1 => 2}[1.0]")
         assert w_res is space.w_nil
 
+    def test_fetch_existing(self, space):
+        w_res = space.execute("return {'a' => 1}.fetch('a')")
+        assert self.unwrap(space, w_res) == 1
+
+    def test_fetch_non_existing_with_value(self, space):
+        w_res = space.execute("return {}.fetch('a', 1)")
+        assert self.unwrap(space, w_res) == 1
+
+    def test_fetch_non_existing_with_block(self, space):
+        w_res = space.execute("return {}.fetch('a') { 1 }")
+        assert self.unwrap(space, w_res) == 1
+
+    def test_fetch_non_existing_with_no_value_and_no_block(self, space):
+        with self.raises(space, "KeyError"):
+            space.execute("return {}.fetch('a')")
+
     def test_delete(self, space):
         w_res = space.execute("""
         x = {2 => 3, 4 => 5}
