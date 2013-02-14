@@ -156,6 +156,27 @@ class TestStringObject(BaseTopazTest):
         with self.raises(space, "ArgumentError", "zero width padding"):
             space.execute("'hi'.ljust(10, '')")
 
+    def test_rjust(self, space):
+        w_res = space.execute("""
+        a = 'hi'
+        return a, a.rjust(1)
+        """)
+        w_original, w_adjusted = space.listview(w_res)
+        assert w_original is not w_adjusted
+        assert space.str_w(w_adjusted) == space.str_w(w_original)
+
+        w_res = space.execute("return 'a'.rjust(3)")
+        assert space.str_w(w_res) == "  a"
+
+        w_res = space.execute("return 'a'.rjust(3, 'l')")
+        assert space.str_w(w_res) == "lla"
+
+        w_res = space.execute("return 'a'.rjust(5, '-_*')")
+        assert space.str_w(w_res) == "-_*-a"
+
+        with self.raises(space, "ArgumentError", "zero width padding"):
+            space.execute("'hi'.rjust(10, '')")
+
     def test_index(self, space):
         w_res = space.execute("return 'abc'.index 'a'")
         assert space.int_w(w_res) == 0
