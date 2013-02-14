@@ -690,8 +690,7 @@ class LLOrderedDict(object):
 
     @staticmethod
     def ll_clear(d):
-        if (len(d.entries) == LLOrderedDict.INIT_SIZE and
-            d.resize_counter == LLOrderedDict.INIT_SIZE * 2):
+        if d.num_items == 0:
             return
         d.entries = lltype.malloc(lltype.typeOf(d.entries).TO, LLOrderedDict.INIT_SIZE, zero=True)
         d.num_items = 0
