@@ -79,7 +79,7 @@ class TestMain(object):
     def test_stop_consuming_args(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
         out, _ = capfd.readouterr()
-        assert out == "--help -e" + os.linesep
+        assert out == "--help -e\n"
 
     def test_load_path_multiple_args(self, space, tmpdir, capfd):
         d = tmpdir.mkdir("sub")
