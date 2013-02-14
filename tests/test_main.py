@@ -71,6 +71,16 @@ class TestMain(object):
         [version] = out.splitlines()
         assert version.startswith("topaz")
 
+    def test_help(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-h"])
+        out, _ = capfd.readouterr()
+        assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
+
+    def test_stop_consuming_args(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
+        out, _ = capfd.readouterr()
+        assert out == "--help -e" + os.linesep
+
     def test_load_path_multiple_args(self, space, tmpdir, capfd):
         d = tmpdir.mkdir("sub")
         f1 = d.join("f.rb")
