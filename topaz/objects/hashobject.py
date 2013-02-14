@@ -1,10 +1,12 @@
 from topaz.module import ClassDef, check_frozen
+from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.ordereddict import OrderedDict
 
 
 class W_HashObject(W_Object):
     classdef = ClassDef("Hash", W_Object.classdef, filepath=__file__)
+    classdef.include_module(Enumerable)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)
