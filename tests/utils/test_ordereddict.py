@@ -246,7 +246,7 @@ class BaseTestOrderedDict(object):
         o = OrderedDict()
         o[3] = 4
         o.clear()
-        return len(o.keys())
+        return len(o)
 
     def test_clear(self):
         assert self.clear() == 0

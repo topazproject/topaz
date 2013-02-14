@@ -690,11 +690,15 @@ class LLOrderedDict(object):
 
     @staticmethod
     def ll_clear(d):
-        idx = d.first_entry
-        while idx != -1:
-            entry = d.entries[idx]
-            LLOrderedDict._ll_del(d, idx)
-            idx = entry.next
+        if (len(d.entries) == LLOrderedDict.INIT_SIZE and
+            d.resize_counter == LLOrderedDict.INIT_SIZE * 2):
+            return
+        old_entries = d.entries
+        d.entries = lltype.malloc(lltype.typeOf(d.entries).TO, LLOrderedDict.INIT_SIZE, zero=True)
+        d.num_items = 0
+        d.first_entry = -1
+        d.last_entry = -1
+        d.resize_counter = LLOrderedDict.INIT_SIZE * 2
 
     @staticmethod
     def ll_newdictiter(ITER, d):
