@@ -332,8 +332,16 @@ class W_ArrayObject(W_Object):
     end
     """)
 
-    @classdef.method("last")
-    def method_last(self, space):
+    @classdef.method("last", count="int")
+    def method_last(self, space, count=None):
+        if count is not None:
+            if count < 0:
+                raise space.error(space.w_ArgumentError, "negative array size")
+            start = len(self.items_w) - count
+            if start < 0:
+                start = 0
+            return space.newarray(self.items_w[start:])
+
         if len(self.items_w) == 0:
             return space.w_nil
         else:
