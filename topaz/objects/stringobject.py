@@ -7,6 +7,7 @@ from rpython.rlib.rarithmetic import intmask, ovfcheck
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
+from rpython.rlib.rstring import split
 
 from topaz.module import ClassDef
 from topaz.modules.comparable import Comparable
@@ -557,10 +558,32 @@ class W_StringObject(W_Object):
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=0):
-        if w_sep is None or space.is_kind_of(w_sep, space.w_string):
-            sep = space.str_w(w_sep) if w_sep else None
+        if w_sep is None:
+            res_w = []
+            i = 0
+            limit -= 1
+            s = space.str_w(self)
+            while True:
+                while i < len(s):
+                    if not s[i].isspace():
+                        break
+                    i += 1
+                else:
+                    break
+                if limit == 0:
+                    j = len(s)
+                else:
+                    j = i + 1
+                    while j < len(s) and not s[j].isspace():
+                        j += 1
+                    limit -= 1
+                res_w.append(space.newstr_fromstr(s[i:j]))
+                i = j + 1
+            return space.newarray(res_w)
+        elif space.is_kind_of(w_sep, space.w_string):
+            sep = space.str_w(w_sep)
             return space.newarray([
-                space.newstr_fromstr(s) for s in space.str_w(self).split(sep, limit - 1)
+                space.newstr_fromstr(s) for s in split(space.str_w(self), sep, limit - 1)
             ])
         elif space.is_kind_of(w_sep, space.w_regexp):
             results_w = []
