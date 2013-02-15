@@ -1,0 +1,1 @@
+fails:String#include? with String ignores subclass differences

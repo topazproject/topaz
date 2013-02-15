@@ -1,0 +1,2 @@
+fails:Enumerable#to_a passes through the values yielded by #each_with_index
+fails:Enumerable#to_a passes arguments to each

@@ -1,0 +1,8 @@
+fails:Rational#round rounds and integer to itself by default
+fails:Rational#round returns an integer when it rounds to a whole integer
+fails:Rational#round rounds a rational number to the nearest whole integer by default
+fails:Rational#round rounds negative numbers away from zero
+fails:Rational#round rounds to the given precision
+fails:Rational#round rounds to the given precision with a negative precision
+fails:Rational#round doesn't alter the value if the precision is too great
+fails:Rational#round doesn't fail when rounding to an absurdly large positive precision

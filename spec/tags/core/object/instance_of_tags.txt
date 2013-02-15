@@ -1,0 +1,2 @@
+fails:Object##instance_of? returns true if given class is object's class
+fails:Object##instance_of? raises a TypeError if given an object that is not a Class nor a Module

@@ -1,0 +1,4 @@
+fails:Integer#next returns the next larger positive Bignum
+fails:Integer#next returns the next larger negative Bignum
+fails:Integer#next overflows a Fixnum to a Bignum
+fails:Integer#next underflows a Bignum to a Fixnum

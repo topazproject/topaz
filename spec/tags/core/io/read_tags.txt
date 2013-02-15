@@ -1,0 +1,45 @@
+fails:IO.read reads the contents of a file
+fails:IO.read calls #to_path on non-String arguments
+fails:IO.read accepts an empty options Hash
+fails:IO.read accepts a length, offset, and empty options Hash
+fails:IO.read raises an IOError if the options Hash specifies write mode
+fails:IO.read raises an IOError if the options Hash specifies append only mode
+fails:IO.read reads the file if the options Hash includes read mode
+fails:IO.read reads the file if the options Hash includes read/write mode
+fails:IO.read reads the file if the options Hash includes read/write append mode
+fails:IO.read treats second nil argument as no length limit
+fails:IO.read treats third nil argument as 0
+fails:IO.read reads the contents of a file up to a certain size when specified
+fails:IO.read reads the contents of a file from an offset of a specific size when specified
+fails:IO.read returns nil at end-of-file when length is passed
+fails:IO.read raises an Errno::ENOENT when the requested file does not exist
+fails:IO.read raises a TypeError when not passed a String type
+fails:IO.read raises an ArgumentError when not passed a valid length
+fails:IO.read raises an Errno::EINVAL when not passed a valid offset
+fails:IO.read from a pipe runs the rest as a subprocess and returns the standard output
+fails:IO.read from a pipe opens a pipe to a fork if the rest is -
+fails:IO.read from a pipe reads only the specified number of bytes requested
+fails:IO.read from a pipe raises Errno::ESPIPE if passed an offset
+fails:IO.read on an empty file returns nil when length is passed
+fails:IO.read on an empty file returns an empty string when no length is passed
+fails:IO#read can be read from consecutively
+fails:IO#read clears the output buffer if there is nothing to read
+fails:IO#read consumes zero bytes when reading zero bytes
+fails:IO#read is at end-of-file when everything has been read
+fails:IO#read reads the contents of a file
+fails:IO#read places the specified number of bytes in the buffer
+fails:IO#read expands the buffer when too small
+fails:IO#read overwrites the buffer
+fails:IO#read truncates the buffer when too big
+fails:IO#read returns the given buffer
+fails:IO#read coerces the second argument to string and uses it as a buffer
+fails:IO#read returns an empty string at end-of-file
+fails:IO#read reads the contents of a file when more bytes are specified
+fails:IO#read returns an empty string when the current pos is bigger than the content size
+fails:IO#read returns nil at end-of-file with a length
+fails:IO#read with length argument returns nil when the current pos is bigger than the content size
+fails:IO#read raises IOError on closed stream
+fails:IO#read with encodings ignores unicode encoding
+fails:IO#read with 1.9 encodings strips the BOM when given 'rb:utf-7-bom' as the mode
+fails:IO#read with large data reads all the data at once
+fails:IO#read with large data reads only the requested number of bytes
