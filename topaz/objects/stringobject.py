@@ -723,11 +723,11 @@ class W_StringObject(W_Object):
 
     @classdef.method("gsub")
     def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
-        return self.gsub_main(space, w_pattern, w_replacement, block, False)
+        return self.gsub_main(space, w_pattern, w_replacement, block, first_only=False)
 
     @classdef.method("sub")
     def method_sub(self, space, w_pattern, w_replacement=None, block=None):
-        return self.gsub_main(space, w_pattern, w_replacement, block, True)
+        return self.gsub_main(space, w_pattern, w_replacement, block, first_only=True)
 
     def gsub_main(self, space, w_pattern, w_replacement, block, first_only):
         if w_replacement is None and block is None:
