@@ -77,7 +77,7 @@ class RPacker(object):
             repetitions = 1
         return (repetitions, end - 1)
 
-    @jit.look_inside_iff(lambda self, space: jit.isconstant(self.fmt))
+    @jit.unroll_safe
     def interpret(self, space):
         idx = 0
         indices = []
