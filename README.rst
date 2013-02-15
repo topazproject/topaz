@@ -1,6 +1,10 @@
 Topaz
 =====
 
+
+.. image:: https://travis-ci.org/topazproject/topaz.png?branch=master
+        :target: https://travis-ci.org/topazproject/topaz
+
 An implementation of the Ruby programming language, in Python, using the
 RPython VM toolchain. Its goals are simplicity of implementation and
 performance.
