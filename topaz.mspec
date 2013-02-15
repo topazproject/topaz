@@ -2,7 +2,6 @@ class MSpecScript
   Topaz = File.expand_path(File.dirname(__FILE__))
   Rubyspec = File.expand_path("../../rubyspec", __FILE__)
 
-  set :target, "bin/topaz"
   set :xtags, ["fails"]
 
   core = ["#{Rubyspec}/core/",
