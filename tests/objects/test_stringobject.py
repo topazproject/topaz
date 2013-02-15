@@ -293,7 +293,7 @@ class TestStringObject(BaseTopazTest):
         assert self.unwrap(space, w_res) == "abc123abc"
 
         w_res = space.execute("return '123'.downcase!")
-        assert self.unwrap(space, w_res) is None
+        assert w_res is space.w_nil
 
     def test_capitalize(self, space):
         w_res = space.execute("""
@@ -308,7 +308,7 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute("return 'HELLO'.capitalize")
         assert self.unwrap(space, w_res) == "Hello"
         w_res = space.execute("return '123'.capitalize!")
-        assert self.unwrap(space, w_res) is None
+        assert w_res is space.w_nil
 
     def test_tr(self, space):
         w_res = space.execute("return 'hello'.tr('el', 'ip')")
@@ -382,9 +382,9 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(space.execute('return "hello \\n there".chomp')) == "hello \n there"
         assert space.str_w(space.execute('return "hello".chomp("llo")')) == "he"
         w_res = space.execute('return "hello".chomp!')
-        assert self.unwrap(space, w_res) is None
+        assert w_res is space.w_nil
         w_res = space.execute('return "".chomp!')
-        assert self.unwrap(space, w_res) is None
+        assert w_res is space.w_nil
 
     def test_chop(self, space):
         assert space.str_w(space.execute('return "string\\r\\n".chop')) == "string"
@@ -394,7 +394,7 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(space.execute('return "x".chop.chop')) == ""
         assert space.str_w(space.execute('return "string".chop!')) == "strin"
         w_res = space.execute("return ''.chop!")
-        assert self.unwrap(space, w_res) is None
+        assert w_res is space.w_nil
 
     def test_reverse(self, space):
         assert space.str_w(space.execute('return "stressed".reverse')) == "desserts"
