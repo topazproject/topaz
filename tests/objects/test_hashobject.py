@@ -67,9 +67,33 @@ class TestHashObject(BaseTopazTest):
         """)
         assert w_res is space.w_nil
 
+    def test_clear(self, space):
+        w_res = space.execute("""
+        x = {2 => 3}
+        x.clear
+        return x.keys
+        """)
+        assert self.unwrap(space, w_res) == []
+
     def test_lookup_eql(self, space):
         w_res = space.execute("return {1 => 2}[1.0]")
         assert w_res is space.w_nil
+
+    def test_fetch_existing(self, space):
+        w_res = space.execute("return {'a' => 1}.fetch('a')")
+        assert self.unwrap(space, w_res) == 1
+
+    def test_fetch_non_existing_with_value(self, space):
+        w_res = space.execute("return {}.fetch('a', 1)")
+        assert self.unwrap(space, w_res) == 1
+
+    def test_fetch_non_existing_with_block(self, space):
+        w_res = space.execute("return {}.fetch('a') { 1 }")
+        assert self.unwrap(space, w_res) == 1
+
+    def test_fetch_non_existing_with_no_value_and_no_block(self, space):
+        with self.raises(space, "KeyError"):
+            space.execute("return {}.fetch('a')")
 
     def test_delete(self, space):
         w_res = space.execute("""
@@ -77,6 +101,14 @@ class TestHashObject(BaseTopazTest):
         return [x.delete(2), x.keys, x.delete(123)]
         """)
         assert self.unwrap(space, w_res) == [3, [4], None]
+
+    def test_delete_with_block(self, space):
+        w_res = space.execute("return {}.delete(3) { |a| a }")
+        assert space.int_w(w_res) == 3
+
+    def test_replace(self, space):
+        w_res = space.execute("return {}.replace({'a' => 1}).keys")
+        assert self.unwrap(space, w_res) == ['a']
 
     def test_keys(self, space):
         w_res = space.execute("""
@@ -155,3 +187,13 @@ class TestHashObject(BaseTopazTest):
         return h == h
         """)
         assert w_res is space.w_true
+
+    def test_shift(self, space):
+        w_res = space.execute("return {}.shift")
+        assert w_res is space.w_nil
+        w_res = space.execute("return {3 => 4}.shift")
+        assert self.unwrap(space, w_res) == [3, 4]
+
+    def test_dup(self, space):
+        w_res = space.execute("return {2 => 4}.dup.length")
+        assert space.int_w(w_res) == 1
