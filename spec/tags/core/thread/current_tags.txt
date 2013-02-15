@@ -1,0 +1,1 @@
+fails:Thread.current returns the current thread

@@ -1,0 +1,6 @@
+fails:Module#const_set sets the constant specified by a String or Symbol to the given value
+fails:Module#const_set returns the value set
+fails:Module#const_set sets the name of an anonymous module
+fails:Module#const_set raises a NameError if the name contains non-alphabetic characters except '_'
+fails:Module#const_set calls #to_str to convert the given name to a String
+fails:Module#const_set raises a TypeError if conversion to a String by calling #to_str fails

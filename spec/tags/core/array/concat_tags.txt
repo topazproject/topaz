@@ -1,0 +1,5 @@
+fails:tries to convert the passed argument to an Array using #to_ary
+fails:Array#concat does not call #to_ary on Array subclasses
+fails:Array#concat raises a RuntimeError when Array is frozen and modification occurs
+fails:Array#concat raises a RuntimeError when Array is frozen and no modification occurs
+fails: 
