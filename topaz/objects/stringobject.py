@@ -190,12 +190,11 @@ class MutableStringStrategy(StringStrategy):
                 ch = storage[i]
             if i < len(storage) - 1:
                 i += 1
+                changed = True
                 if i > 0:
                     del storage[i:]
-                    changed = True
                 else:
                     del storage[:]
-                    changed = True
         return changed
 
     def succ(self, storage):
