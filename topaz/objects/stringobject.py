@@ -148,6 +148,22 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         storage.reverse()
 
+    def swapcase(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i, c in enumerate(storage):
+            # uppercase letters
+            if ord("A") <= ord(c) <= ord("Z"):
+                new_c = c.lower()
+            # lowercase letters
+            elif ord("a") <= ord(c) <= ord("z"):
+                new_c = c.upper()
+            else:
+                new_c = c
+            changed |= (c != new_c)
+            storage[i] = new_c
+        return changed
+
     def downcase(self, storage):
         storage = self.unerase(storage)
         changed = False
@@ -585,6 +601,20 @@ class W_StringObject(W_Object):
                 space.w_TypeError,
                 "wrong argument type %s (expected Regexp)" % space.getclass(w_sep).name
             )
+
+    classdef.app_method("""
+    def swapcase
+        copy = self.dup
+        copy.swapcase!
+        return copy
+    end
+    """)
+
+    @classdef.method("swapcase!")
+    def method_swapcase_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.swapcase(self.str_storage)
+        return self if changed else space.w_nil
 
     classdef.app_method("""
     def downcase
