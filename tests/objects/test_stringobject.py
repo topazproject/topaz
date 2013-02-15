@@ -426,9 +426,9 @@ class TestStringObject(BaseTopazTest):
 
     def test_gsub(self, space):
         w_res = space.execute("""
-        return 'hello'.gsub("he", "ha")
+        return 'hello hello'.gsub("he", "ha")
         """)
-        assert space.str_w(w_res) == "hallo"
+        assert space.str_w(w_res) == "hallo hallo"
         w_res = space.execute("""
         return 'hello'.gsub(/(.)/, "ha")
         """)
@@ -458,6 +458,41 @@ class TestStringObject(BaseTopazTest):
         return 'helloo'.gsub("l", Hash.new { |h, k| replacements.pop() })
         """)
         assert space.str_w(w_res) == "he21oo"
+
+    def test_sub(self, space):
+        w_res = space.execute("""
+        return 'hello hello'.sub("he", "ha")
+        """)
+        assert space.str_w(w_res) == "hallo hello"
+        w_res = space.execute("""
+        return 'hello'.sub(/(.)/, "ha")
+        """)
+        assert space.str_w(w_res) == "haello"
+        w_res = space.execute("""
+        return 'hello'.sub(/(.)/, "ha\\\\1ho")
+        """)
+        assert space.str_w(w_res) == "hahhoello"
+        w_res = space.execute("""
+        return 'hello'.sub(/(.)/) { |e| e + "1" }
+        """)
+        assert space.str_w(w_res) == "h1ello"
+        w_res = space.execute("""
+        return 'hello'.sub('l') { |e| e + "1" }
+        """)
+        assert space.str_w(w_res) == "hel1lo"
+        w_res = space.execute("""
+        return 'hello'.sub(/[eo]/, 'e' => 3, 'o' => '*')
+        """)
+        assert space.str_w(w_res) == "h3llo"
+        w_res = space.execute("""
+        return 'hello'.sub("e", 'e' => 3, 'o' => '*')
+        """)
+        assert space.str_w(w_res) == "h3llo"
+        w_res = space.execute("""
+        replacements = [1, 2]
+        return 'helloo'.sub("l", Hash.new { |h, k| replacements.pop() })
+        """)
+        assert space.str_w(w_res) == "he2loo"
 
     def test_succ(self, space):
         w_res = space.execute('return "abcd".succ')
