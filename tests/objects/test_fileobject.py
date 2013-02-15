@@ -267,6 +267,21 @@ class TestIO(BaseTopazTest):
         """ % (f, f))
         assert self.unwrap(space, w_res) == [content, content, ""]
 
+    def test_reopen_path(self, space, tmpdir):
+        content = "This is line one"
+        f = tmpdir.join("testfile")
+        f.write(content + "\n")
+        w_res = space.execute("""
+        res = []
+        f = File.new("%s")
+        res << f.readlines[0]
+        f.reopen("%s")
+        res << f.readlines[0]
+        res << f.readlines[0]
+        return res
+        """ % (f, f))
+        assert self.unwrap(space, w_res) == [content, content, ""]
+
 
 class TestFile(BaseTopazTest):
     def test_access_flags(self, space):
