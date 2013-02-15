@@ -286,6 +286,23 @@ class TestIO(BaseTopazTest):
         with self.raises(space, "TypeError", "can't convert Fixnum into String"):
             w_res = space.execute("$stderr.reopen(12)")
 
+    def test_popen_read(self, space):
+        w_res = space.execute("""
+        io = IO.popen("echo foo", "r")
+        return io.pid.is_a?(Fixnum), io.read
+        """)
+        assert self.unwrap(space, w_res) == [True, "foo\n"]
+
+    @pytest.mark.xfail
+    def test_popen_write(self, space, capfd):
+        w_res = space.execute("""
+        IO.popen("cat", "w") do |io|
+          io.write 'foo\n'
+        end
+        """)
+        out, err = capfd.readouterr()
+        assert out == "foo\n"
+
 
 class TestFile(BaseTopazTest):
     def test_access_flags(self, space):
