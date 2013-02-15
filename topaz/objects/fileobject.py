@@ -241,16 +241,19 @@ class W_IOObject(W_Object):
     """)
 
     @classdef.method("reopen")
-    def method_reopen(self, space, w_io, w_mode=None):
-        if not space.is_kind_of(w_io, space.getclassfor(W_IOObject)):
-            args = [w_io] if w_mode is None else [w_io, w_mode]
+    def method_reopen(self, space, w_arg, w_mode=None):
+        self.ensure_not_closed(space)
+        w_io = space.convert_type(w_arg, space.w_io, "to_io", raise_error=False)
+        if w_io is space.w_nil:
+            args = [w_arg] if w_mode is None else [w_arg, w_mode]
             w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
         assert isinstance(w_io, W_IOObject)
-        if self.fd >= 0:
-            os.close(self.fd)
-            os.dup2(w_io.getfd(), self.fd)
-        else:
-            self.fd = os.dup(w_io.getfd())
+        os.close(self.fd)
+        os.dup2(w_io.getfd(), self.fd)
+        return self
+
+    @classdef.method("to_io")
+    def method_to_io(self):
         return self
 
     classdef.app_method("""
