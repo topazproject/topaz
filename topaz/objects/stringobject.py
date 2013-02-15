@@ -152,15 +152,14 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         changed = False
         for i, c in enumerate(storage):
-            # uppercase letters
             if ord("A") <= ord(c) <= ord("Z"):
                 new_c = c.lower()
-            # lowercase letters
+                changed = True
             elif ord("a") <= ord(c) <= ord("z"):
                 new_c = c.upper()
+                changed = True
             else:
                 new_c = c
-            changed |= (c != new_c)
             storage[i] = new_c
         return changed
 

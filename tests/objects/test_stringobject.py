@@ -293,7 +293,7 @@ class TestStringObject(BaseTopazTest):
         assert self.unwrap(space, w_res) == "aBc123AbC"
 
         w_res = space.execute("return '123'.swapcase!")
-        assert self.unwrap(space, w_res) is None
+        assert w_res is space.w_nil
 
     def test_downcase(self, space):
         w_res = space.execute("""
