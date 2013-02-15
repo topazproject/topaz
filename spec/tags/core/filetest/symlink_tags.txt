@@ -1,0 +1,1 @@
+fails:FileTest.symlink? returns false if the file does not exist

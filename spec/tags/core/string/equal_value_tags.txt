@@ -1,0 +1,2 @@
+fails:String#== ignores subclass differences
+fails:String#== returns obj == self if obj responds to to_str

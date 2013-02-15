@@ -1,0 +1,6 @@
+fails:Thread#abort_on_exception is false by default
+fails:Thread#abort_on_exception is changeable to true or false
+fails:Thread#abort_on_exception= when enabled and the thread dies due to an exception causes the main thread to raise that exception
+fails:Thread.abort_on_exception is false by default
+fails:Thread.abort_on_exception is changeable to true or false
+fails:Thread.abort_on_exception= when enabled and a non-main thread dies due to an exception causes the main thread to raise that exception

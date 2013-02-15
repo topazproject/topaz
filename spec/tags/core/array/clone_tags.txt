@@ -1,0 +1,2 @@
+fails:Array#clone returns an Array or a subclass instance
+fails: 

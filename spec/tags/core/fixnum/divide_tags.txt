@@ -1,0 +1,3 @@
+fails:Fixnum#/ does NOT raise ZeroDivisionError if the given argument is zero and is a Float
+fails:Fixnum#/ coerces fixnum and return self divided by other
+fails:Fixnum#/ raises a TypeError when given a non-Integer

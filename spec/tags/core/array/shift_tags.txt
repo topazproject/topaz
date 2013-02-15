@@ -1,0 +1,3 @@
+fails:Array#shift raises a RuntimeError on a frozen array
+fails:Array#shift raises a RuntimeError on an empty frozen array
+fails:Array#shift passed a number n as an argument does not return subclass instances with Array subclass

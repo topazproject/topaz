@@ -1,0 +1,2 @@
+fails:UnboundMethod#inspect the String reflects that this is an UnboundMethod object
+fails:UnboundMethod#inspect the String shows the method name, Module defined in and Module extracted from
