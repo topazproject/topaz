@@ -34,7 +34,7 @@ USAGE = "\n".join([
 #   """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
 #   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
 #   """  --copyright     print the copyright""",
-#   """  --version       print the version""",
+    """  --version       print the version""",
     ""
 ])
 
@@ -51,71 +51,178 @@ def entry_point(argv):
 
 
 def _entry_point(space, argv):
-    verbose = False
-    path = None
-    exprs = []
-    load_path_entries = []
-    idx = 1
-    while idx < len(argv):
-        arg = argv[idx]
-        if arg == "-h" or arg == "--help":
-            os.write(1, USAGE)
-            return 0
-        elif arg == "-v":
-            verbose = True
-        elif arg == "-e":
-            idx += 1
-            if idx == len(argv):
-                os.write(2, "no code specified for -e (RuntimeError)\n")
-                return 1
-            exprs.append(argv[idx])
-        elif arg.startswith("-e"):
-            exprs.append(arg[2:])
-        elif arg == "-I":
-            idx += 1
-            load_path_entries += argv[idx].split(os.pathsep)
-        elif arg.startswith("-I"):
-            load_path_entries += arg[2:].split(os.pathsep)
-        elif arg == "--":
-            idx += 1
-            break
-        else:
-            break
-        idx += 1
-    if idx < len(argv) and not exprs:
-        path = argv[idx]
-        idx += 1
-    argv_w = []
-    while idx < len(argv):
-        argv_w.append(space.newstr_fromstr(argv[idx]))
-        idx += 1
-    for path_entry in load_path_entries:
-        space.send(
-            space.w_load_path,
-            space.newsymbol("<<"),
-            [space.newstr_fromstr(path_entry)]
-        )
-    space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
+    try:
+        cmdline = parse_command_line(space, argv[1:])
+    except CommandLineError, e:
+        print_error(str(e))
+        return 1
+    except SpaceSystemExit, e:
+        return 0
+    cmdline["space"] = space
+    setup_load_path(**cmdline)
+    return run_command_line(**cmdline)
 
+
+def version_info():
     system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
     engine = "topaz"
     version = "1.9.3"
     patchlevel = 125
     description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
-    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
-    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
-    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
-    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
-    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
+    return {
+        "engine":      engine,
+        "version":     version,
+        "patchlevel":  patchlevel,
+        "platform":    platform,
+        "description": description,
+    }
+
+
+def handle_argument(c, options, iterargv, iterarg=iter(())):
+    function, funcarg, errmsg = cmdline_options[c]
+
+    if funcarg is Ellipsis:
+        remaining = list(iterarg)
+        if remaining:
+            funcarg = ''.join(remaining)
+        else:
+            try:
+                funcarg = iterargv.next()
+            except StopIteration:
+                if len(c) == 1:
+                    c = '-' + c
+                raise CommandLineError('%s %s (RuntimeError)' % (errmsg, c))
+
+    return function(options, funcarg, iterargv)
+
+
+class CommandLineError(Exception):
+    pass
+
+
+class SpaceSystemExit(Exception):
+    pass
+
+
+def print_help(*args):
+    os.write(1, USAGE)
+    raise SpaceSystemExit
+
+
+def print_version(*args):
+    os.write(1, "%s\n" % version_info()["description"])
+    raise SpaceSystemExit
+
+
+def print_error(msg):
+    os.write(2, "topaz: %s\n" % msg)
+
+
+def simple_option(options, name, iterargv):
+    options[name] += 1
+
+
+def e_option(options, runcmd, iterargv):
+    options["exprs"].append(runcmd)
+
+
+def I_option(options, load_path_option, iterargv):
+    for entry in load_path_option.split(os.pathsep):
+        options["load_path_entries"].append(entry)
+
+
+def end_options(options, _, iterargv):
+    return list(iterargv)
+
+
+cmdline_options = {
+    "v":         (simple_option, "verbose", None),
+    "h":         (print_help,    None,     None),
+    "--help":    (print_help,    None,     None),
+    "e":         (e_option,      Ellipsis, "no code specified for"),
+    "I":         (I_option,      Ellipsis, None),
+    "--version": (print_version, None,     None),
+    "--":        (end_options,   None,     None),
+    }
+
+
+default_options = dict.fromkeys(
+    ("verbose",
+    "exprs",
+    "run_stdin",
+    "load_path_entries"), 0)
+
+
+def parse_command_line(space, argv):
+    options = default_options.copy()
+    options["load_path_entries"] = []
+    options["exprs"] = []
+
+    iterargv = iter(argv)
+    argv = None
+    for arg in iterargv:
+        if len(arg) < 2 or arg[0] != '-':
+            argv = [arg] + list(iterargv)
+        elif arg in cmdline_options:
+            argv = handle_argument(arg, options, iterargv)
+        else:
+            iterarg = iter(arg)
+            iterarg.next()
+            for c in iterarg:
+                if c not in cmdline_options:
+                    raise CommandLineError(
+                        'invalid option -%s  (-h will show valid options) (RuntimeError)' % (c,)
+                    )
+                argv = handle_argument(c, options, iterargv, iterarg)
+
+    if not argv:
+        argv = ['']
+        options["run_stdin"] = True
+    elif argv[0] == '-':
+        options["run_stdin"] = True
+
+    options["ruby_argv"] = argv
+
+    return options
+
+
+def setup_load_path(space, load_path_entries, **extra):
+    for path_entry in load_path_entries:
+        space.send(
+            space.w_load_path,
+            space.newsymbol("<<"),
+            [space.newstr_fromstr(path_entry)]
+        )
+
+
+def run_command_line(space,
+                     verbose,
+                     exprs,
+                     run_stdin,
+                     ruby_argv,
+                     **ignored):
+    source = ""
+
+    vinfo = version_info()
+    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(vinfo["engine"]))
+    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(vinfo["version"]))
+    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(vinfo["patchlevel"]))
+    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(vinfo["platform"]))
+    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(vinfo["description"]))
 
     if verbose:
-        os.write(1, "%s\n" % description)
+        os.write(1, "%s\n" % vinfo["description"])
 
     if exprs:
         source = "\n".join(exprs)
         path = "-e"
-    elif path is not None:
+    elif run_stdin:
+        source = fdopen_as_stream(0, "r").readall()
+        path = "-"
+    else:
+        path = ruby_argv[0]
+        ruby_argv[:] = ruby_argv[1:]
         try:
             f = open_file_as_stream(path)
         except OSError as e:
@@ -125,12 +232,17 @@ def _entry_point(space, argv):
             source = f.readall()
         finally:
             f.close()
-    elif verbose:
-        return 0
-    else:
-        source = fdopen_as_stream(0, "r").readall()
-        path = "-"
 
+    argv_w = space.newarray([])
+    for arg in ruby_argv:
+        space.send(argv_w, space.newsymbol("<<"), [space.newstr_fromstr(arg)])
+    space.set_const(space.w_object, "ARGV", argv_w)
+
+    status = run_toplevel(space, path, source)
+    return status
+
+
+def run_toplevel(space, path, source):
     space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
     w_exit_error = None
