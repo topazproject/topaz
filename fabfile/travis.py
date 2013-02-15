@@ -140,6 +140,7 @@ def run_specs(binary, prefix=""):
         "core/array/delete_at_spec.rb",
         "core/array/empty_spec.rb",
         "core/array/frozen_spec.rb",
+        "core/array/last_spec.rb",
         "core/array/length_spec.rb",
         "core/array/plus_spec.rb",
         "core/array/push_spec.rb",
