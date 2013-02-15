@@ -71,6 +71,61 @@ class TestMain(object):
         [version] = out.splitlines()
         assert version.startswith("topaz")
 
+    def test_help(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-h"])
+        out, _ = capfd.readouterr()
+        assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
+
+    def test_stop_consuming_args(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
+        out, _ = capfd.readouterr()
+        assert out == "--help -e\n"
+
+    def test_load_path_multiple_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f1 = d.join("f.rb")
+        f1.write("""
+        Const = 5
+        """)
+        self.run(space, tmpdir, """
+        require "f"
+        puts Const
+        """, ruby_args=["-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out == "5\n"
+
+    def test_load_path_joined_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f1 = d.join("f.rb")
+        f1.write("""
+        Const = 10
+        """)
+        self.run(space, tmpdir, """
+        require "f"
+        puts Const
+        """, ruby_args=["-I%s" % d])
+        out, _ = capfd.readouterr()
+        assert out == "10\n"
+
+    def test_load_path_path_separated(self, space, tmpdir, capfd):
+        d1 = tmpdir.mkdir("sub")
+        d2 = tmpdir.mkdir("sub2")
+        f1 = d1.join("f1.rb")
+        f1.write("""
+        Const1 = 20
+        """)
+        f2 = d2.join("f2.rb")
+        f2.write("""
+        require "f1"
+        Const2 = 3
+        """)
+        self.run(space, tmpdir, """
+        require "f2"
+        puts Const1 + Const2
+        """, ruby_args=["-I%s:%s" % (d1, d2)])
+        out, _ = capfd.readouterr()
+        assert out == "23\n"
+
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
         ARGV.each_with_index do |arg, i|

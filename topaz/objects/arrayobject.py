@@ -2,6 +2,7 @@ import copy
 
 from rpython.rlib.listsort import TimSort
 
+from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
@@ -52,11 +53,12 @@ class W_ArrayObject(W_Object):
     def singleton_method_subscript(self, space, args_w):
         return space.newarray(args_w)
 
-    @classdef.method("initialize_copy")
-    def method_initialize_copy(self, space, w_other):
-        assert isinstance(w_other, W_ArrayObject)
+    @classdef.method("initialize_copy", other_w="array")
+    @classdef.method("replace", other_w="array")
+    @check_frozen()
+    def method_replace(self, space, other_w):
         del self.items_w[:]
-        self.items_w.extend(w_other.items_w)
+        self.items_w.extend(other_w)
         return self
 
     classdef.app_method("""
@@ -213,6 +215,12 @@ class W_ArrayObject(W_Object):
             for w_o in self.items_w
         ]))
 
+    @classdef.singleton_method("try_convert")
+    def method_try_convert(self, space, w_obj):
+        if not space.is_kind_of(w_obj, space.w_array):
+            w_obj = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
+        return w_obj
+
     classdef.app_method("""
     def at idx
         self[idx]
@@ -248,6 +256,10 @@ class W_ArrayObject(W_Object):
         self.select { |each| !each.nil? }
     end
 
+    def compact!
+        reject! { |obj| obj.nil? }
+    end
+
     def reject!(&block)
         prev_size = self.size
         self.delete_if(&block)
@@ -258,6 +270,7 @@ class W_ArrayObject(W_Object):
 
     classdef.app_method("""
     def delete_if
+        raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
         i = 0
         c = 0
         sz = self.size
@@ -305,8 +318,11 @@ class W_ArrayObject(W_Object):
     """)
 
     @classdef.method("delete_at", idx="int")
+    @check_frozen()
     def method_delete_at(self, space, idx):
-        if idx >= len(self.items_w):
+        if idx < 0:
+            idx += len(self.items_w)
+        if idx < 0 or idx >= len(self.items_w):
             return space.w_nil
         else:
             return self.items_w.pop(idx)
@@ -318,7 +334,16 @@ class W_ArrayObject(W_Object):
     """)
 
     @classdef.method("last")
-    def method_last(self, space):
+    def method_last(self, space, w_count=None):
+        if w_count is not None:
+            count = Coerce.int(space, w_count)
+            if count < 0:
+                raise space.error(space.w_ArgumentError, "negative array size")
+            start = len(self.items_w) - count
+            if start < 0:
+                start = 0
+            return space.newarray(self.items_w[start:])
+
         if len(self.items_w) == 0:
             return space.w_nil
         else:
@@ -345,6 +370,31 @@ class W_ArrayObject(W_Object):
         return self
 
     classdef.app_method("""
+    def flatten(level = -1)
+        list = []
+        recursion = Thread.current.recursion_guard(self) do
+            self.each do |item|
+                if level == 0
+                    list << item
+                elsif ary = Array.try_convert(item)
+                    list.concat(ary.flatten(level - 1))
+                else
+                    list << item
+                end
+            end
+            return list
+        end
+        if recursion
+            raise ArgumentError, "tried to flatten recursive array"
+        end
+    end
+
+    def flatten!(level = -1)
+        list = self.flatten(level)
+        self.clear
+        return self.concat list
+    end
+
     def sort(&block)
         dup.sort!(&block)
     end

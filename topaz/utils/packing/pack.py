@@ -1,3 +1,4 @@
+from rpython.rlib import jit
 from rpython.rlib.rarithmetic import ovfcheck
 from rpython.rlib.rstruct.nativefmttable import native_is_bigendian
 
@@ -76,6 +77,7 @@ class RPacker(object):
             repetitions = 1
         return (repetitions, end - 1)
 
+    @jit.unroll_safe
     def interpret(self, space):
         idx = 0
         indices = []
@@ -112,6 +114,7 @@ class RPacker(object):
             idx += 1
         return indices
 
+    @jit.look_inside_iff(lambda self, space: jit.isconstant(self.fmt))
     def operate(self, space):
         indices = self.interpret(space)
         for idx, reps in indices:

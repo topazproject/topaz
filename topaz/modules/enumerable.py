@@ -15,6 +15,8 @@ class Enumerable(Module):
         result
     end
 
+    alias collect map
+
     def inject memo
         self.each do |x|
             memo = (yield memo, x)

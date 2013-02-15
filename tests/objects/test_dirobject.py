@@ -33,6 +33,10 @@ class TestDir(BaseTopazTest):
         with self.raises(space, "SystemCallError"):
             space.execute("Dir.delete('%s')" % d)
 
+    def test_mkdir(self, space, tmpdir):
+        space.execute("Dir.mkdir(File.join('%s', 'madedir'))" % tmpdir)
+        assert tmpdir.join("madedir").check()
+
     def test_chdir(self, space, tmpdir, monkeypatch):
         w_res = space.execute("""
         dirs = []
