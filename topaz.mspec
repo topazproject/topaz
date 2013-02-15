@@ -193,7 +193,7 @@ class MSpecScript
              "^#{Rubyspec}/library/zlib/"]
 
   set :tags_patterns, [
-      [%r(#{Rubyspec}), "#{Topaz}/spec/tags"],
+      [/#{Rubyspec}/, "#{Topaz}/spec/tags"],
       [/_spec.rb$/, '_tags.txt']
   ]
 
