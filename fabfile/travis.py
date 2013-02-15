@@ -88,6 +88,16 @@ def run_tests():
 
 
 @task
+def tag_specs(files=""):
+    local("../mspec/bin/mspec tag -t %s -f spec --config=topaz.mspec %s" % ("`pwd`/bin/topaz", files))
+
+
+@task
+def untag_specs(files=""):
+    local("../mspec/bin/mspec tag --del fails -t %s -f spec --config=topaz.mspec %s" % ("`pwd`/bin/topaz", files))
+
+
+@task
 def upload_build():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     if t.create_build:
