@@ -63,6 +63,7 @@ class W_HashObject(W_Object):
             else:
                 raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, space.newsymbol("inspect")))
 
+    @classdef.method("store")
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
         self.contents[w_key] = w_value
