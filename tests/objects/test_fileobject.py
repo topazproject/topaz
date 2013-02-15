@@ -221,6 +221,52 @@ class TestIO(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [True, True, True, False]
 
+    def test_to_io(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("")
+        w_res = space.execute("""
+        f = File.new('%s')
+        return f.object_id == f.to_io.object_id
+        """ % f)
+        assert w_res == space.w_true
+
+    def test_reopen_stderr_in_stdout(self, space, monkeypatch):
+        res = []
+        monkeypatch.setattr(os, "dup2", lambda old, new: res.append((old, new)))
+        w_res = space.execute("$stdout.reopen($stderr)")
+        assert res == [(2, 1)]
+
+    def test_reopen_stdout_in_closed_io(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write('')
+        with self.raises(space, "IOError", "closed stream"):
+            w_res = space.execute("""
+            f = File.new('%s')
+            f.close
+            f.reopen($stdout)
+            """ % f)
+
+    def test_reopen(self, space, tmpdir):
+        content = "This is line one"
+        f = tmpdir.join("testfile")
+        f.write(content + "\n")
+        w_res = space.execute("""
+        res = []
+        class A
+          def to_io
+            File.new("%s")
+          end
+        end
+        f1 = A.new
+        f2 = File.new("%s")
+        res << f2.readlines[0]
+        f2.reopen(f1)
+        res << f2.readlines[0]
+        res << f2.readlines[0]
+        return res
+        """ % (f, f))
+        assert self.unwrap(space, w_res) == [content, content, ""]
+
 
 class TestFile(BaseTopazTest):
     def test_access_flags(self, space):
