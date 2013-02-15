@@ -216,8 +216,10 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         if len(storage) == 0:
             return False
-        elif storage[-1] == "\n" and storage[-2] == "\r":
-            del storage[-2:]
+        elif storage[-1] == "\n" and len(storage) >= 2 and storage[-2] == "\r":
+            idx = len(storage) - 2
+            assert idx >= 0
+            del storage[idx:]
             return True
         else:
             del storage[-1]
