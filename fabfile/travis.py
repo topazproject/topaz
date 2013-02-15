@@ -111,8 +111,7 @@ def run_translate_tests(env):
 def run_specs(binary, prefix=""):
     local("{prefix}../mspec/bin/mspec -t {binary} --format=dotted --config={prefix}topaz.mspec".format(
         prefix=prefix,
-        binary=binary,
-        spec_files=" ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests),
+        binary=binary
     ))
 
 
