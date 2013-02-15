@@ -282,6 +282,10 @@ class TestIO(BaseTopazTest):
         """ % (f, f))
         assert self.unwrap(space, w_res) == [content, content, ""]
 
+    def test_reopen_with_invalid_arg(self, space):
+        with self.raises(space, "TypeError", "can't convert Fixnum into String"):
+            w_res = space.execute("$stderr.reopen(12)")
+
 
 class TestFile(BaseTopazTest):
     def test_access_flags(self, space):
