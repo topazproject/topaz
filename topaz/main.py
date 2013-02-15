@@ -52,15 +52,14 @@ def entry_point(argv):
 
 def _entry_point(space, argv):
     try:
-        cmdline = parse_command_line(space, argv[1:])
+        ruby_main_opts = parse_command_line(space, argv[1:])
     except CommandLineError, e:
         print_error(str(e))
         return 1
     except SpaceSystemExit, e:
         return 0
-    cmdline["space"] = space
-    setup_load_path(**cmdline)
-    return run_command_line(**cmdline)
+    setup_load_path(space, ruby_main_opts.load_path_entries)
+    return run_command_line(space, ruby_main_opts)
 
 
 def version_info():
@@ -73,19 +72,22 @@ def version_info():
     return {
         "engine":      engine,
         "version":     version,
-        "patchlevel":  patchlevel,
+        "patchlevel":  str(patchlevel),
         "platform":    platform,
         "description": description,
     }
 
 
-def handle_argument(c, options, iterargv, iterarg=iter(())):
-    function, funcarg, errmsg = cmdline_options[c]
+def handle_argument(c, options, iterargv, iterarg):
+    function, has_funcarg, errmsg = ruby_main_opts_handlers[c]
 
-    if funcarg is Ellipsis:
-        remaining = list(iterarg)
-        if remaining:
-            funcarg = ''.join(remaining)
+    funcarg = ""
+    if has_funcarg:
+        remaining = []
+        for arg in iterarg:
+            remaining.append(arg)
+        if len(remaining) > 0:
+            funcarg = "".join(remaining)
         else:
             try:
                 funcarg = iterargv.next()
@@ -119,58 +121,64 @@ def print_error(msg):
     os.write(2, "topaz: %s\n" % msg)
 
 
-def simple_option(options, name, iterargv):
-    options[name] += 1
+def v_option(options, _, iterargv):
+    options.verbose = True
 
 
 def e_option(options, runcmd, iterargv):
-    options["exprs"].append(runcmd)
+    options.exprs.append(runcmd)
 
 
 def I_option(options, load_path_option, iterargv):
     for entry in load_path_option.split(os.pathsep):
-        options["load_path_entries"].append(entry)
+        options.load_path_entries.append(entry)
 
 
 def end_options(options, _, iterargv):
-    return list(iterargv)
+    consumed = []
+    for arg in iterargv:
+        consumed.append(arg)
+    return consumed
 
 
-cmdline_options = {
-    "v":         (simple_option, "verbose", None),
-    "h":         (print_help,    None,     None),
-    "--help":    (print_help,    None,     None),
-    "e":         (e_option,      Ellipsis, "no code specified for"),
-    "I":         (I_option,      Ellipsis, None),
-    "--version": (print_version, None,     None),
-    "--":        (end_options,   None,     None),
-    }
+ruby_main_opts_handlers = {
+    "v":         (v_option,      False, ""),
+    "h":         (print_help,    False, ""),
+    "--help":    (print_help,    False, ""),
+    "e":         (e_option,      True,  "no code specified for"),
+    "I":         (I_option,      True,  ""),
+    "--version": (print_version, False, ""),
+    "--":        (end_options,   False, ""),
+}
 
 
-default_options = dict.fromkeys(
-    ("verbose",
-    "exprs",
-    "run_stdin",
-    "load_path_entries"), 0)
+class RubyMainOptions(object):
+    def __init__(self):
+        self.verbose = False
+        self.exprs = []
+        self.run_stdin = False
+        self.load_path_entries = []
+        self.ruby_argv = []
 
 
 def parse_command_line(space, argv):
-    options = default_options.copy()
-    options["load_path_entries"] = []
-    options["exprs"] = []
+    options = RubyMainOptions()
 
     iterargv = iter(argv)
     argv = None
     for arg in iterargv:
         if len(arg) < 2 or arg[0] != '-':
-            argv = [arg] + list(iterargv)
-        elif arg in cmdline_options:
-            argv = handle_argument(arg, options, iterargv)
+            consumed = []
+            for remaining in iterargv:
+                consumed.append(remaining)
+            argv = [arg] + consumed
+        elif arg in ruby_main_opts_handlers:
+            argv = handle_argument(arg, options, iterargv, iter(''))
         else:
             iterarg = iter(arg)
             iterarg.next()
             for c in iterarg:
-                if c not in cmdline_options:
+                if c not in ruby_main_opts_handlers:
                     raise CommandLineError(
                         'invalid option -%s  (-h will show valid options) (RuntimeError)' % (c,)
                     )
@@ -178,16 +186,16 @@ def parse_command_line(space, argv):
 
     if not argv:
         argv = ['']
-        options["run_stdin"] = True
+        options.run_stdin = True
     elif argv[0] == '-':
-        options["run_stdin"] = True
+        options.run_stdin = True
 
-    options["ruby_argv"] = argv
+    options.ruby_argv = argv
 
     return options
 
 
-def setup_load_path(space, load_path_entries, **extra):
+def setup_load_path(space, load_path_entries):
     for path_entry in load_path_entries:
         space.send(
             space.w_load_path,
@@ -196,33 +204,28 @@ def setup_load_path(space, load_path_entries, **extra):
         )
 
 
-def run_command_line(space,
-                     verbose,
-                     exprs,
-                     run_stdin,
-                     ruby_argv,
-                     **ignored):
+def run_command_line(space, ruby_main_opts):
     source = ""
 
     vinfo = version_info()
     space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(vinfo["engine"]))
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(vinfo["version"]))
-    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(vinfo["patchlevel"]))
+    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(int(vinfo["patchlevel"])))
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(vinfo["platform"]))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(vinfo["description"]))
 
-    if verbose:
+    if ruby_main_opts.verbose:
         os.write(1, "%s\n" % vinfo["description"])
 
-    if exprs:
-        source = "\n".join(exprs)
+    if ruby_main_opts.exprs:
+        source = "\n".join(ruby_main_opts.exprs)
         path = "-e"
-    elif run_stdin:
+    elif ruby_main_opts.run_stdin:
         source = fdopen_as_stream(0, "r").readall()
         path = "-"
     else:
-        path = ruby_argv[0]
-        ruby_argv[:] = ruby_argv[1:]
+        path = ruby_main_opts.ruby_argv[0]
+        ruby_main_opts.ruby_argv = ruby_main_opts.ruby_argv[1:]
         try:
             f = open_file_as_stream(path)
         except OSError as e:
@@ -234,7 +237,7 @@ def run_command_line(space,
             f.close()
 
     argv_w = space.newarray([])
-    for arg in ruby_argv:
+    for arg in ruby_main_opts.ruby_argv:
         space.send(argv_w, space.newsymbol("<<"), [space.newstr_fromstr(arg)])
     space.set_const(space.w_object, "ARGV", argv_w)
 
