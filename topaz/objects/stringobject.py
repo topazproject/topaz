@@ -173,6 +173,15 @@ class MutableStringStrategy(StringStrategy):
             storage[i] = new_c
         return changed
 
+    def upcase(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i, c in enumerate(storage):
+            new_c = c.upper()
+            changed |= (c != new_c)
+            storage[i] = new_c
+        return changed
+
     def capitalize(self, storage):
         storage = self.unerase(storage)
         changed = False
@@ -638,6 +647,20 @@ class W_StringObject(W_Object):
     def method_swapcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.swapcase(self.str_storage)
+        return self if changed else space.w_nil
+
+    classdef.app_method("""
+    def upcase
+        copy = self.dup
+        copy.upcase!
+        return copy
+    end
+    """)
+
+    @classdef.method("upcase!")
+    def method_upcase_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.upcase(self.str_storage)
         return self if changed else space.w_nil
 
     classdef.app_method("""
