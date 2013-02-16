@@ -252,6 +252,12 @@ class W_IOObject(W_Object):
         each_line(sep, limit) { |line| lines << line }
         return lines
     end
+
+    def self.readlines(name, *args)
+        File.open(name) do |f|
+            return f.readlines(*args)
+        end
+    end
     """)
 
     @classdef.method("close")

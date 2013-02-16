@@ -221,6 +221,11 @@ class TestIO(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [True, True, True, False]
 
+    def test_singleton_readlines(self, space, tmpdir):
+        tmpdir.join("x.txt").write("abc")
+        w_res = space.execute("return IO.readlines('%s')" % tmpdir.join("x.txt"))
+        assert self.unwrap(space, w_res) == ["abc"]
+
 
 class TestFile(BaseTopazTest):
     def test_access_flags(self, space):
