@@ -4,7 +4,7 @@ import sys
 from rpython.rlib import jit
 
 from topaz.coerce import Coerce
-from topaz.error import RubyError, error_for_oserror
+from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
