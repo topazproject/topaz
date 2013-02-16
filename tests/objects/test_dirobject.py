@@ -36,6 +36,7 @@ class TestDir(BaseTopazTest):
     def test_mkdir(self, space, tmpdir):
         space.execute("Dir.mkdir(File.join('%s', 'madedir'))" % tmpdir)
         assert tmpdir.join("madedir").check()
+        assert os.stat(str(tmpdir.join("madedir"))).st_mode & 0100 == 0100
 
     def test_chdir(self, space, tmpdir, monkeypatch):
         w_res = space.execute("""
