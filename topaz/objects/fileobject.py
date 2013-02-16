@@ -4,7 +4,7 @@ import sys
 from rpython.rlib import jit
 
 from topaz.coerce import Coerce
-from topaz.error import error_for_oserror
+from topaz.error import RubyError, error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
@@ -442,9 +442,14 @@ class W_FileObject(W_IOObject):
                     W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
                 )
             else:
-                string = space.str_w(w_arg)
-            if string == "":
-                result += sep
+                w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
+                if w_string is space.w_nil:
+                    w_string = space.convert_type(w_arg, space.w_string, "to_str")
+                string = space.str_w(w_string)
+
+            if string == "" and len(args_w) > 1:
+                if (not result) or result[-1] != sep:
+                    result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()

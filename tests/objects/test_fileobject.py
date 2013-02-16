@@ -368,6 +368,20 @@ class TestFile(BaseTopazTest):
         assert space.str_w(w_res) == "abc/def/ghi"
         w_res = space.execute("return File.join('a', '//', 'b', '/', 'd', '/')")
         assert space.str_w(w_res) == "a//b/d/"
+        w_res = space.execute("return File.join('a', '')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/', '')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a', '/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/', '/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('')")
+        assert space.str_w(w_res) == ""
+        w_res = space.execute("return File.join([])")
+        assert space.str_w(w_res) == ""
 
     def test_existp(self, space, tmpdir):
         f = tmpdir.join("test.rb")
