@@ -4,10 +4,9 @@ import struct
 import sys
 
 from fabric.api import task, local
+from fabric.context_managers import lcd
 
 import requests
-
-from fabfile.specs import download_rubyspec, download_mspec
 
 
 class Test(object):
@@ -29,6 +28,16 @@ class Test(object):
         path_name = os.path.abspath(path_name)
         with open("rpython_marker", "w") as f:
             f.write(path_name)
+
+    def download_mspec(self):
+        if not os.path.isdir("../mspec"):
+            with lcd(".."):
+                local("git clone --depth=100 --quiet https://github.com/rubyspec/mspec")
+
+    def download_rubyspec(self):
+        if not os.path.isdir("../rubyspec"):
+            with lcd(".."):
+                local("git clone --depth=100 --quiet https://github.com/rubyspec/rubyspec")
 
     def run_tests(self):
         env = {}
@@ -70,14 +79,24 @@ def install_requirements():
     if t.needs_rpython:
         t.download_rpython()
     if t.needs_rubyspec:
-        download_mspec()
-        download_rubyspec()
+        t.download_mspec()
+        t.download_rubyspec()
 
 
 @task
 def run_tests():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     t.run_tests()
+
+
+@task
+def tag_specs(files=""):
+    local("../mspec/bin/mspec tag -t %s -f spec --config=topaz.mspec %s" % ("`pwd`/bin/topaz", files))
+
+
+@task
+def untag_specs(files=""):
+    local("../mspec/bin/mspec tag --del fails -t %s -f spec --config=topaz.mspec %s" % ("`pwd`/bin/topaz", files))
 
 
 @task
@@ -102,7 +121,7 @@ def run_translate_tests(env):
 
 
 def run_specs(binary, prefix=""):
-    local("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
+    local("{prefix}../mspec/bin/mspec -t {binary} --format=dotted --config=topaz.mspec".format(
         prefix=prefix,
         binary=binary
     ))
