@@ -3,6 +3,7 @@ import sys
 
 from rpython.rlib import jit
 
+from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
@@ -310,6 +311,16 @@ class W_FileObject(W_IOObject):
         except OSError:
             return space.w_nil
         return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
+
+    @classdef.singleton_method("delete")
+    def singleton_method_delete(self, space, args_w):
+        for w_path in args_w:
+            path = Coerce.path(space, w_path)
+            try:
+                os.unlink(path)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+        return space.newint(len(args_w))
 
     @classdef.method("initialize", filename="str")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):

@@ -472,12 +472,18 @@ class TestFile(BaseTopazTest):
     def test_size_p(self, space, tmpdir):
         w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
         assert w_res is space.w_nil
-        tmpdir.join("x.txt").check()
+        tmpdir.join("x.txt").ensure()
         w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
         assert w_res is space.w_nil
         tmpdir.join("x.txt").write("abc")
         w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
         assert space.int_w(w_res) == 3
+
+    def test_delete(self, space, tmpdir):
+        tmpdir.join("t.txt").ensure()
+        w_res = space.execute("return File.delete('%s')" % tmpdir.join("t.txt"))
+        assert space.int_w(w_res) == 1
+        assert not tmpdir.join("t.txt").check()
 
 
 class TestExpandPath(BaseTopazTest):
