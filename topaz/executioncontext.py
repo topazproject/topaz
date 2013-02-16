@@ -101,11 +101,13 @@ class _RecursionGuardContextManager(object):
         self.w_obj = w_obj
 
     def __enter__(self):
+        self.added = False
         if self.w_obj in self.ec.recursive_objects:
             return True
         self.ec.recursive_objects[self.w_obj] = None
+        self.added = True
         return False
 
     def __exit__(self, exc_type, exc_value, tb):
-        if self.w_obj in self.ec.recursive_objects:
+        if self.added:
             del self.ec.recursive_objects[self.w_obj]
