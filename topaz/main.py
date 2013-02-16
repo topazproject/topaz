@@ -86,7 +86,13 @@ def _parse_argv(space, argv):
         if arg == "-h" or arg == "--help":
             raise ShortCircuitError(USAGE)
         elif arg == "--version":
-            raise ShortCircuitError("%s\n" % space.str_w(space.execute("RUBY_DESCRIPTION")))
+            raise ShortCircuitError("%s\n" % space.str_w(
+                    space.send(
+                        space.w_object,
+                        space.newsymbol("const_get"),
+                        [space.newstr_fromstr("RUBY_DESCRIPTION")]
+                    )
+                ))
         elif arg == "-v":
             verbose = True
         elif arg == "-e":
@@ -137,7 +143,13 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
     if verbose:
-        os.write(1, "%s\n" % space.str_w(space.execute("RUBY_DESCRIPTION")))
+        os.write(1, "%s\n" % space.str_w(
+            space.send(
+                space.w_object,
+                space.newsymbol("const_get"),
+                [space.newstr_fromstr("RUBY_DESCRIPTION")]
+            )
+        ))
 
     if exprs:
         source = "\n".join(exprs)
