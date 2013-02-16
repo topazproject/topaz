@@ -303,6 +303,14 @@ class W_FileObject(W_IOObject):
     def method_allocate(self, space, args_w):
         return W_FileObject(space)
 
+    @classdef.singleton_method("size?", name="path")
+    def singleton_method_size_p(self, space, name):
+        try:
+            stat = os.stat(name)
+        except OSError:
+            return space.w_nil
+        return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
+
     @classdef.method("initialize", filename="str")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
         if w_mode is None:

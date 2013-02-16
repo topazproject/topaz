@@ -469,6 +469,16 @@ class TestFile(BaseTopazTest):
         w_res = space.execute("return File.umask(10), File.umask")
         assert self.unwrap(space, w_res) == [2, 10]
 
+    def test_size_p(self, space, tmpdir):
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert w_res is space.w_nil
+        tmpdir.join("x.txt").check()
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert w_res is space.w_nil
+        tmpdir.join("x.txt").write("abc")
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert space.int_w(w_res) == 3
+
 
 class TestExpandPath(BaseTopazTest):
     def test_expand_to_absolute(self, space):
