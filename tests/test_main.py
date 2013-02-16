@@ -135,6 +135,16 @@ class TestMain(object):
         out, _ = capfd.readouterr()
         assert out == "23\n"
 
+    def test_require_multiple_args(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "pp 9", ruby_args=["-r", "pp"])
+        out, _ = capfd.readouterr()
+        assert out == "9\n"
+
+    def test_require_joined_args(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "pp 7", ruby_args=["-rpp"])
+        out, _ = capfd.readouterr()
+        assert out == "7\n"
+
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
         ARGV.each_with_index do |arg, i|
