@@ -60,20 +60,6 @@ class ShortCircuitError(Exception):
         self.message = message
 
 
-def _add_ruby_constants(space):
-    system, _, _, _, cpu = os.uname()
-    platform = "%s-%s" % (cpu, system.lower())
-    engine = "topaz"
-    version = "1.9.3"
-    patchlevel = 125
-    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
-    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
-    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
-    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
-    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
-    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
-
-
 def _parse_argv(space, argv):
     verbose = False
     path = None
@@ -124,7 +110,17 @@ def _parse_argv(space, argv):
 
 
 def _entry_point(space, argv):
-    _add_ruby_constants(space)
+    system, _, _, _, cpu = os.uname()
+    platform = "%s-%s" % (cpu, system.lower())
+    engine = "topaz"
+    version = "1.9.3"
+    patchlevel = 125
+    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
+    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
+    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
+    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
+    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
+    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
     try:
         verbose, path, exprs, load_path_entries, argv_w = _parse_argv(space, argv)
     except ShortCircuitError as e:
