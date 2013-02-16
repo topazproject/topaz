@@ -438,11 +438,12 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                # We flatten to protect against recursive arrays.
-                space.send(w_arg, space.newsymbol("flatten"))
-                string = space.str_w(
-                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
-                )
+                with space.getexecutioncontext().recursion_guard(w_arg) as recursive:
+                    if recursive:
+                        raise space.error(space.w_ArgumentError, "tried to flatten recursive array")
+                    string = space.str_w(
+                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                    )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
                 if w_string is space.w_nil:
