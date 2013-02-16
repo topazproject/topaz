@@ -83,6 +83,11 @@ If you implemented a new feature, and want to untag the specs that now pass::
 
     $ fab specs.untag:files=../rubyspec/path/to/failing_spec.rb
 
+And finally, during development, you may find it useful to run the
+specs untranslated:
+
+    $ fab specs.run:translated=False,files=../rubyspec/core/array/new_spec.rb
+
 Adding yourself to the authors file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
