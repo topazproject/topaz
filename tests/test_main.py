@@ -76,6 +76,12 @@ class TestMain(object):
         out, _ = capfd.readouterr()
         assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
 
+    def test_version(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["--version"])
+        out, _ = capfd.readouterr()
+        less_platform = " ".join(out.splitlines()[0].split()[:-1])
+        assert less_platform == "topaz (ruby-1.9.3p125)"
+
     def test_stop_consuming_args(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
         out, _ = capfd.readouterr()
