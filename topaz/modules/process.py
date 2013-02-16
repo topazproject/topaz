@@ -26,7 +26,7 @@ class Process(Module):
             pid, status = os.waitpid(-1, 0)
             status = os.WEXITSTATUS(status)
             st = space.execute(
-                "return Process::Status.new %i, %i" % (pid, status))
+                "return Process::Status.new %r, %r" % (pid, status))
             space.globals.set(space, "$?", st)
             return space.newint(pid)
         except OSError as ex:
