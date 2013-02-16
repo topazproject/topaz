@@ -24,14 +24,13 @@ class Rubyspecs(Test):
         self.mspec("tag --del fails -g fails -f spec %s" % self.options)
 
 
-def generate_task(taskname):
-    def task(files="", options="", translated=True):
+def generate_spectask(taskname):
+    def spectask(files="", options="", translated=True):
         runner = Rubyspecs(files, options, translated=(translated != "False"))
         getattr(runner, taskname)()
-    task.__name__ = taskname
-    return task
+    spectask.__name__ = taskname
+    globals()[taskname] = task(spectask)
 
 
 for taskname in ["run", "tag", "untag"]:
-    taskfun = generate_task(taskname)
-    globals()[taskfun.__name__] = task(taskfun)
+    generate_spectask(taskname)
