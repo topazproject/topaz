@@ -139,13 +139,7 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
     if verbose:
-        os.write(1, "%s\n" % space.str_w(
-            space.send(
-                space.w_object,
-                space.newsymbol("const_get"),
-                [space.newstr_fromstr("RUBY_DESCRIPTION")]
-            )
-        ))
+        os.write(1, "%s\n" % description)
 
     if exprs:
         source = "\n".join(exprs)
