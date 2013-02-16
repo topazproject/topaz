@@ -11,12 +11,10 @@ class W_ThreadObject(W_Object):
         W_Object.__init__(self, space)
         # TODO: This should be a map dict.
         self.local_storage = {}
-        self.recursive_objects = {}
 
     def __deepcopy__(self, memo):
         obj = super(W_ThreadObject, self).__deepcopy__(memo)
         obj.local_storage = copy.deepcopy(self.local_storage, memo)
-        obj.recursive_objects = {}
         return obj
 
     @classdef.singleton_method("current")

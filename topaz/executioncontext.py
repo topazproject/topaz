@@ -99,9 +99,9 @@ class _RecursionGuardContextManager(object):
     def __init__(self, ec, w_obj):
         self.ec = ec
         self.w_obj = w_obj
+        self.added = False
 
     def __enter__(self):
-        self.added = False
         if self.w_obj in self.ec.recursive_objects:
             return True
         self.ec.recursive_objects[self.w_obj] = None
