@@ -55,8 +55,7 @@ class TestProcess(BaseTopazTest):
         for code in [0, 1, 173]:
             pid = os.fork()
             if pid == 0:
-                os.execvp("python",
-                        ["python", "-c", "import sys; sys.exit(%i)" % code])
+                os._exit(code)
             else:
                 w_res = space.execute("return Process.wait")
                 assert space.int_w(w_res) == pid
