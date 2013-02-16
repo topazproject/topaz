@@ -50,3 +50,16 @@ class TestProcess(BaseTopazTest):
         end
         """)
         assert space.int_w(w_res) == 200
+
+    def test_wait(self, space):
+        for code in [0, 1, 173]:
+            pid = os.fork()
+            if pid == 0:
+                os.execvp("python",
+                        ["python", "-c", "import sys; sys.exit(%i)" % code])
+            else:
+                w_res = space.execute("return Process.wait")
+                assert space.int_w(w_res) == pid
+                w_res = space.execute("return $?")
+                status = space.send(w_res, space.newsymbol("to_i"), [])
+                assert space.int_w(status) == code
