@@ -52,20 +52,20 @@ def entry_point(argv):
 
 def _entry_point(space, argv):
     try:
-        options = _parse_argv(space, argv)
+        verbose, path, exprs, load_path_entries, argv_w = _parse_argv(space, argv)
     except ShortCircuitError:
         return 0
     except CommandLineError as e:
         os.write(2, "%s\n" % e)
         return 1
 
-    for path_entry in options.load_path_entries:
+    for path_entry in load_path_entries:
         space.send(
             space.w_load_path,
             space.newsymbol("<<"),
             [space.newstr_fromstr(path_entry)]
         )
-    space.set_const(space.w_object, "ARGV", space.newarray(options.argv_w))
+    space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
     system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
@@ -79,33 +79,33 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
-    if options.verbose:
+    if verbose:
         os.write(1, "%s\n" % description)
 
-    if options.exprs:
-        source = "\n".join(options.exprs)
-        options.path = "-e"
-    elif options.path is not None:
+    if exprs:
+        source = "\n".join(exprs)
+        path = "-e"
+    elif path is not None:
         try:
-            f = open_file_as_stream(options.path)
+            f = open_file_as_stream(path)
         except OSError as e:
-            os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), options.path))
+            os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
             return 1
         try:
             source = f.readall()
         finally:
             f.close()
-    elif options.verbose:
+    elif verbose:
         return 0
     else:
         source = fdopen_as_stream(0, "r").readall()
-        options.path = "-"
+        path = "-"
 
-    space.globals.set(space, "$0", space.newstr_fromstr(options.path))
+    space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
     w_exit_error = None
     try:
-        space.execute(source, filepath=options.path)
+        space.execute(source, filepath=path)
     except RubyError as e:
         w_exc = e.w_value
         if isinstance(w_exc, W_SystemExit):
@@ -115,18 +115,9 @@ def _entry_point(space, argv):
             status = 1
     space.run_exit_handlers()
     if w_exit_error is not None:
-        print_traceback(space, w_exit_error, options.path)
+        print_traceback(space, w_exit_error, path)
 
     return status
-
-
-class Options(object):
-    def __init__(self):
-        self.verbose = False
-        self.path = None
-        self.exprs = []
-        self.load_path_entries = []
-        self.argv_w = []
 
 
 class CommandLineError(Exception):
@@ -138,7 +129,11 @@ class ShortCircuitError(Exception):
 
 
 def _parse_argv(space, argv):
-    options = Options()
+    verbose = False
+    path = None
+    exprs = []
+    load_path_entries = []
+    argv_w = []
     idx = 1
     while idx < len(argv):
         arg = argv[idx]
@@ -146,30 +141,30 @@ def _parse_argv(space, argv):
             os.write(1, USAGE)
             raise ShortCircuitError
         elif arg == "-v":
-            options.verbose = True
+            verbose = True
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
                 raise CommandLineError("no code specified for -e (RuntimeError)")
-            options.exprs.append(argv[idx])
+            exprs.append(argv[idx])
         elif arg.startswith("-e"):
-            options.exprs.append(arg[2:])
+            exprs.append(arg[2:])
         elif arg == "-I":
             idx += 1
-            options.load_path_entries += argv[idx].split(os.pathsep)
+            load_path_entries += argv[idx].split(os.pathsep)
         elif arg.startswith("-I"):
-            options.load_path_entries += arg[2:].split(os.pathsep)
+            load_path_entries += arg[2:].split(os.pathsep)
         elif arg == "--":
             idx += 1
             break
         else:
             break
         idx += 1
-    if idx < len(argv) and not options.exprs:
-        options.path = argv[idx]
+    if idx < len(argv) and not exprs:
+        path = argv[idx]
         idx += 1
     while idx < len(argv):
-        options.argv_w.append(space.newstr_fromstr(argv[idx]))
+        argv_w.append(space.newstr_fromstr(argv[idx]))
         idx += 1
 
-    return options
+    return verbose, path, exprs, load_path_entries, argv_w
