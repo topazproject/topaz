@@ -25,7 +25,7 @@ USAGE = "\n".join([
 #   """  -l              enable line ending processing""",
 #   """  -n              assume 'while gets(); ... end' loop around your script""",
 #   """  -p              assume loop like -n but print line also like sed""",
-#   """  -rlibrary       require the library, before executing your script""",
+    """  -rlibrary       require the library, before executing your script""",
 #   """  -s              enable some switch parsing for switches after script name""",
 #   """  -S              look for the script using PATH environment variable""",
 #   """  -T[level=1]     turn on tainting checks""",
@@ -64,6 +64,7 @@ def _parse_argv(space, argv):
     verbose = False
     path = None
     exprs = []
+    reqs = []
     load_path_entries = []
     argv_w = []
     idx = 1
@@ -93,6 +94,11 @@ def _parse_argv(space, argv):
             load_path_entries += argv[idx].split(os.pathsep)
         elif arg.startswith("-I"):
             load_path_entries += arg[2:].split(os.pathsep)
+        elif arg == "-r":
+            idx += 1
+            reqs.append(argv[idx])
+        elif arg.startswith("-r"):
+            reqs.append(arg[2:])
         elif arg == "--":
             idx += 1
             break
@@ -106,7 +112,7 @@ def _parse_argv(space, argv):
         argv_w.append(space.newstr_fromstr(argv[idx]))
         idx += 1
 
-    return verbose, path, exprs, load_path_entries, argv_w
+    return verbose, path, exprs, reqs, load_path_entries, argv_w
 
 
 def _entry_point(space, argv):
@@ -123,7 +129,7 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
     try:
-        verbose, path, exprs, load_path_entries, argv_w = _parse_argv(space, argv)
+        verbose, path, exprs, reqs, load_path_entries, argv_w = _parse_argv(space, argv)
     except ShortCircuitError as e:
         os.write(1, e.message)
         return 0
@@ -137,6 +143,13 @@ def _entry_point(space, argv):
             space.newsymbol("<<"),
             [space.newstr_fromstr(path_entry)]
         )
+    for required_lib in reqs:
+        space.send(
+            space.w_kernel,
+            space.newsymbol("require"),
+            [space.newstr_fromstr(required_lib)]
+        )
+
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
     if verbose:
