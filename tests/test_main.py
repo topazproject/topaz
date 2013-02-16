@@ -136,12 +136,22 @@ class TestMain(object):
         assert out == "23\n"
 
     def test_require_multiple_args(self, space, tmpdir, capfd):
-        self.run(space, tmpdir, "pp 9", ruby_args=["-r", "pp"])
+        d = tmpdir.mkdir("sub")
+        f = d.join("zyx.rb")
+        f.write("""
+        Zyx = 9
+        """)
+        self.run(space, tmpdir, "puts Zyx", ruby_args=["-r", "zyx", "-I", str(d)])
         out, _ = capfd.readouterr()
         assert out == "9\n"
 
     def test_require_joined_args(self, space, tmpdir, capfd):
-        self.run(space, tmpdir, "pp 7", ruby_args=["-rpp"])
+        d = tmpdir.mkdir("sub")
+        f = d.join("zyx.rb")
+        f.write("""
+        Zyx = 7
+        """)
+        self.run(space, tmpdir, "puts Zyx", ruby_args=["-rzyx", "-I", str(d)])
         out, _ = capfd.readouterr()
         assert out == "7\n"
 
