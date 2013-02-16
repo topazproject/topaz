@@ -443,6 +443,8 @@ class W_FileObject(W_IOObject):
                 )
             else:
                 string = space.str_w(w_arg)
+            if string == "":
+                result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()
