@@ -30,12 +30,14 @@ class Test(object):
             f.write(path_name)
 
     def download_mspec(self):
-        with lcd(".."):
-            local("git clone --depth=100 --quiet https://github.com/rubyspec/mspec")
+        if not os.path.isdir("../mspec"):
+            with lcd(".."):
+                local("git clone --depth=100 --quiet https://github.com/rubyspec/mspec")
 
     def download_rubyspec(self):
-        with lcd(".."):
-            local("git clone --depth=100 --quiet https://github.com/rubyspec/rubyspec")
+        if not os.path.isdir("../rubyspec"):
+            with lcd(".."):
+                local("git clone --depth=100 --quiet https://github.com/rubyspec/rubyspec")
 
     def run_tests(self):
         env = {}
@@ -119,7 +121,7 @@ def run_translate_tests(env):
 
 
 def run_specs(binary, prefix=""):
-    local("{prefix}../mspec/bin/mspec -t {binary} --format=dotted --config=topaz.mspec".format(
+    local("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
         prefix=prefix,
         binary=binary
     ))
