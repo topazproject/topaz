@@ -2,11 +2,15 @@ from __future__ import absolute_import
 
 import os
 
-from topaz.module import Module, ModuleDef
-
+from topaz.module import Module, ModuleDef, ClassDef
+from topaz.objects.objectobject import W_Object
 
 class Process(Module):
     moduledef = ModuleDef("Process", filepath=__file__)
+
+    @moduledef.setup_module
+    def setup_module(space, w_mod):
+        space.set_const(w_mod, "Status", space.w_process_status)
 
     @moduledef.function("euid")
     def method_euid(self, space):
@@ -25,8 +29,9 @@ class Process(Module):
         try:
             pid, status = os.waitpid(-1, 0)
             status = os.WEXITSTATUS(status)
-            st = space.execute(
-                "return Process::Status.new %r, %r" % (pid, status))
+            st = space.send(space.w_process_status,
+                space.newsymbol("new"),
+                [space.newint(pid), space.newint(status)])
             space.globals.set(space, "$?", st)
             return space.newint(pid)
         except OSError as ex:
@@ -52,19 +57,20 @@ class Process(Module):
         else:
             return space.newint(pid)
 
-    moduledef.app_method("""
-    class Status
-      def initialize(pid, exitstatus)
-        @pid = pid
-        @exitstatus = exitstatus
-      end
+class W_ProcessStatusObject(W_Object):
+    classdef = ClassDef("Status", W_Object.classdef, filepath=__file__)
 
-      def to_i
-        @exitstatus
-      end
+    classdef.app_method("""
+    def initialize(pid, exitstatus)
+      @pid = pid
+      @exitstatus = exitstatus
+    end
 
-      def pid
-        @pid
-      end
+    def to_i
+      @exitstatus
+    end
+
+    def pid
+      @pid
     end
     """)

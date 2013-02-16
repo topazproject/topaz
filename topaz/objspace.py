@@ -52,6 +52,7 @@ from topaz.objects.nilobject import W_NilObject
 from topaz.objects.numericobject import W_NumericObject
 from topaz.objects.objectobject import W_Object, W_BaseObject
 from topaz.objects.procobject import W_ProcObject
+from topaz.modules.process import W_ProcessStatusObject
 from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.rangeobject import W_RangeObject
 from topaz.objects.regexpobject import W_RegexpObject
@@ -106,6 +107,7 @@ class ObjectSpace(object):
         self.w_regexp = self.getclassfor(W_RegexpObject)
         self.w_hash = self.getclassfor(W_HashObject)
         self.w_method = self.getclassfor(W_MethodObject)
+        self.w_process_status = self.getclassfor(W_ProcessStatusObject)
         self.w_unbound_method = self.getclassfor(W_UnboundMethodObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
