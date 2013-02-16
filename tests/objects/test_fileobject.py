@@ -356,6 +356,8 @@ class TestFile(BaseTopazTest):
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
         assert space.str_w(w_res) == "/abc/bin"
+        w_res = space.execute("return File.join('', 'abc', 'bin')")
+        assert space.str_w(w_res) == "/abc/bin"
         w_res = space.execute("return File.join")
         assert space.str_w(w_res) == ""
         w_res = space.execute("return File.join('abc')")
