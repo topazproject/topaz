@@ -4,14 +4,16 @@ import struct
 import sys
 
 from fabric.api import task, local
-from fabric.context_managers import lcd
 
 import requests
 
+from .base import BaseTest
 
-class Test(object):
+
+class Test(BaseTest):
     def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False,
                  create_build=False):
+        super(Test, self).__init__()
         self.func = func
         self.deps = deps
         self.needs_rpython = needs_rpython
@@ -28,16 +30,6 @@ class Test(object):
         path_name = os.path.abspath(path_name)
         with open("rpython_marker", "w") as f:
             f.write(path_name)
-
-    def download_mspec(self):
-        if not os.path.isdir("../mspec"):
-            with lcd(".."):
-                local("git clone --depth=100 --quiet https://github.com/rubyspec/mspec")
-
-    def download_rubyspec(self):
-        if not os.path.isdir("../rubyspec"):
-            with lcd(".."):
-                local("git clone --depth=100 --quiet https://github.com/rubyspec/rubyspec")
 
     def run_tests(self):
         env = {}

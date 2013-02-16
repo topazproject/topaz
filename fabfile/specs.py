@@ -1,10 +1,11 @@
 from fabric.api import task, local
 
-from fabfile.travis import Test
+from .base import BaseTest
 
 
-class Rubyspecs(Test):
+class Rubyspecs(BaseTest):
     def __init__(self, files, options, translated=True):
+        super(Rubyspecs, self).__init__()
         self.exe = "`pwd`/bin/%s" % ("topaz" if translated else "topaz_untranslated.py")
         self.files = files
         self.options = options
@@ -29,8 +30,9 @@ def generate_spectask(taskname):
         runner = Rubyspecs(files, options, translated=(translated != "False"))
         getattr(runner, taskname)()
     spectask.__name__ = taskname
-    globals()[taskname] = task(spectask)
+    return task(spectask)
 
 
-for taskname in ["run", "tag", "untag"]:
-    generate_spectask(taskname)
+run = generate_spectask("run")
+tag = generate_spectask("tag")
+untag = generate_spectask("untag")
