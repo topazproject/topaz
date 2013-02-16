@@ -197,6 +197,10 @@ class ObjectSpace(object):
         self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
         self.globals.define_virtual('$"', lambda space: space.w_loaded_features)
 
+        self.w_child_status = self.newarray([])
+        self.globals.define_virtual("$?",
+                lambda space: self.send(space.w_child_status, self.newsymbol("first"), []))
+
         self.w_main_thread = W_ThreadObject(self)
 
         self.w_load_path = self.newarray([])
@@ -210,6 +214,11 @@ class ObjectSpace(object):
 
     def _freeze_(self):
         return True
+
+    def set_child_status(self, status):
+        self.send(self.w_child_status, self.newsymbol("clear"), [])
+        self.send(self.w_child_status, self.newsymbol("<<"),
+                [self.newint(status)])
 
     def setup(self, executable):
         """
