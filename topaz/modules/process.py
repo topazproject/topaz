@@ -16,6 +16,12 @@ class Process(Module):
     def method_pid(self, space):
         return space.newint(os.getpid())
 
+    @moduledef.function("wait")
+    def method_wait(self, space):
+        pid, status = os.waitpid(-1, 0)
+        space.set_child_status(os.WEXITSTATUS(status))
+        return space.newint(pid)
+
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
         raise space.error(space.w_SystemExit, "exit", [space.newint(status)])
