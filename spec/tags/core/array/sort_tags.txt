@@ -1,0 +1,12 @@
+fails:Array#sort sorts reverse-sorted Arrays
+fails:Array#sort sorts Arrays that consist entirely of equal elements
+fails:Array#sort properly handles recursive arrays
+fails:Array#sort does not call #<=> on contained objects when invoked with a block
+fails:Array#sort does not call #<=> on elements when invoked with a block even if Array is large (Rubinius #412)
+fails:compares values returned by block with 0
+fails:Array#sort does not return subclass instance on Array subclasses
+fails:Array#sort! sorts array in place using block value if a block given
+fails:Array#sort! properly handles recursive arrays
+fails:Array#sort! does not call #<=> on contained objects when invoked with a block
+fails:Array#sort! does not call #<=> on elements when invoked with a block even if Array is large (Rubinius #412)
+fails:Array#sort! raises a RuntimeError on a frozen array

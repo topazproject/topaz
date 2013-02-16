@@ -2,15 +2,21 @@ language: python
 python:
     - "2.7"
 env:
-    - TEST_TYPE=docs
-    - TEST_TYPE=own
-    - TEST_TYPE=rubyspec_untranslated
-    - TEST_TYPE=translate
+    global:
+        - secure: "VTXK/Lmi8DCoKIvg82QwlBtudV1XIRYjQbREew/ysCuvTlfp1mouZgvQQW8g\nYFNS3Ah1KTDD2qC0iZiYa7pvghlzP43M2VYr3iUxrRfiDEEIMX0jw3/n1+Sr\nWRdywivNMHhfYsEzEorW3mlwq3OmbBf4EG/UgX8c23GmW7MnwcQ="
+    matrix:
+        - TEST_TYPE=docs
+        - TEST_TYPE=own
+        - TEST_TYPE=translate
+#         - TEST_TYPE=rubyspec_untranslated
+# matrix:
+#     allow_failures:
+#         - env: TEST_TYPE=rubyspec_untranslated
 install:
-    - pip install --use-mirrors fabric
+    - pip install --use-mirrors fabric requests
     - fab travis.install_requirements
 script: fab travis.run_tests
-after_script: fab travis.build_release
+after_success: fab travis.upload_build
 notifications:
     email: false
     irc: "irc.freenode.org#topaz"

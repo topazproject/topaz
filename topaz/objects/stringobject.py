@@ -7,6 +7,7 @@ from rpython.rlib.rarithmetic import intmask, ovfcheck
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
+from rpython.rlib.rstring import split
 
 from topaz.module import ClassDef
 from topaz.modules.comparable import Comparable
@@ -148,6 +149,21 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         storage.reverse()
 
+    def swapcase(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i, c in enumerate(storage):
+            if ord("A") <= ord(c) <= ord("Z"):
+                new_c = c.lower()
+                changed = True
+            elif ord("a") <= ord(c) <= ord("z"):
+                new_c = c.upper()
+                changed = True
+            else:
+                new_c = c
+            storage[i] = new_c
+        return changed
+
     def downcase(self, storage):
         storage = self.unerase(storage)
         changed = False
@@ -157,17 +173,40 @@ class MutableStringStrategy(StringStrategy):
             storage[i] = new_c
         return changed
 
+    def upcase(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i, c in enumerate(storage):
+            new_c = c.upper()
+            changed |= (c != new_c)
+            storage[i] = new_c
+        return changed
+
+    def capitalize(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i, c in enumerate(storage):
+            if i == 0:
+                new_c = c.upper()
+            else:
+                new_c = c.lower()
+            changed |= (c != new_c)
+            storage[i] = new_c
+        return changed
+
     def chomp(self, storage, newline=None):
         storage = self.unerase(storage)
+        changed = False
         if len(storage) == 0:
-            return
+            return changed
         elif newline is not None and len(storage) >= len(newline):
             for i in xrange(len(newline) - 1, -1, -1):
                 if newline[i] != storage[len(storage) - len(newline) + i]:
-                    return
+                    return changed
             start = len(storage) - len(newline)
             assert start >= 0
             del storage[start:]
+            changed = True
         elif newline is None:
             ch = storage[-1]
             i = len(storage) - 1
@@ -176,10 +215,25 @@ class MutableStringStrategy(StringStrategy):
                 ch = storage[i]
             if i < len(storage) - 1:
                 i += 1
+                changed = True
                 if i > 0:
                     del storage[i:]
                 else:
                     del storage[:]
+        return changed
+
+    def chop(self, storage):
+        storage = self.unerase(storage)
+        if len(storage) == 0:
+            return False
+        elif storage[-1] == "\n" and len(storage) >= 2 and storage[-2] == "\r":
+            idx = len(storage) - 2
+            assert idx >= 0
+            del storage[idx:]
+            return True
+        else:
+            del storage[-1]
+            return True
 
     def succ(self, storage):
         storage = self.unerase(storage)
@@ -331,8 +385,16 @@ class W_StringObject(W_Object):
         return new_string if change_made else None
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space):
+    def singleton_method_allocate(self, space, w_s=None):
         return space.newstr_fromstr("")
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, w_s=None):
+        if w_s is not None:
+            w_s = space.convert_type(w_s, space.w_string, "to_str")
+            assert isinstance(w_s, W_StringObject)
+            self.strategy = w_s.strategy
+            self.str_storage = w_s.strategy.copy(w_s.str_storage)
 
     @classdef.method("initialize_copy")
     def method_initialize_copy(self, space, w_other):
@@ -505,10 +567,32 @@ class W_StringObject(W_Object):
 
     @classdef.method("split", limit="int")
     def method_split(self, space, w_sep=None, limit=0):
-        if w_sep is None or space.is_kind_of(w_sep, space.w_string):
-            sep = space.str_w(w_sep) if w_sep else None
+        if w_sep is None:
+            res_w = []
+            i = 0
+            limit -= 1
+            s = space.str_w(self)
+            while True:
+                while i < len(s):
+                    if not s[i].isspace():
+                        break
+                    i += 1
+                else:
+                    break
+                if limit == 0:
+                    j = len(s)
+                else:
+                    j = i + 1
+                    while j < len(s) and not s[j].isspace():
+                        j += 1
+                    limit -= 1
+                res_w.append(space.newstr_fromstr(s[i:j]))
+                i = j + 1
+            return space.newarray(res_w)
+        elif space.is_kind_of(w_sep, space.w_string):
+            sep = space.str_w(w_sep)
             return space.newarray([
-                space.newstr_fromstr(s) for s in space.str_w(self).split(sep, limit - 1)
+                space.newstr_fromstr(s) for s in split(space.str_w(self), sep, limit - 1)
             ])
         elif space.is_kind_of(w_sep, space.w_regexp):
             results_w = []
@@ -552,6 +636,34 @@ class W_StringObject(W_Object):
             )
 
     classdef.app_method("""
+    def swapcase
+        copy = self.dup
+        copy.swapcase!
+        return copy
+    end
+    """)
+
+    @classdef.method("swapcase!")
+    def method_swapcase_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.swapcase(self.str_storage)
+        return self if changed else space.w_nil
+
+    classdef.app_method("""
+    def upcase
+        copy = self.dup
+        copy.upcase!
+        return copy
+    end
+    """)
+
+    @classdef.method("upcase!")
+    def method_upcase_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.upcase(self.str_storage)
+        return self if changed else space.w_nil
+
+    classdef.app_method("""
     def downcase
         copy = self.dup
         copy.downcase!
@@ -563,6 +675,20 @@ class W_StringObject(W_Object):
     def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
+        return self if changed else space.w_nil
+
+    classdef.app_method("""
+    def capitalize
+        copy = self.dup
+        copy.capitalize!
+        return copy
+    end
+    """)
+
+    @classdef.method("capitalize!")
+    def method_capitalize_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.capitalize(self.str_storage)
         return self if changed else space.w_nil
 
     def _digits(self, s, i, radix):
@@ -689,6 +815,13 @@ class W_StringObject(W_Object):
 
     @classdef.method("gsub")
     def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
+        return self.gsub_main(space, w_pattern, w_replacement, block, first_only=False)
+
+    @classdef.method("sub")
+    def method_sub(self, space, w_pattern, w_replacement=None, block=None):
+        return self.gsub_main(space, w_pattern, w_replacement, block, first_only=True)
+
+    def gsub_main(self, space, w_pattern, w_replacement, block, first_only):
         if w_replacement is None and block is None:
             raise NotImplementedError("gsub enumerator")
 
@@ -703,16 +836,16 @@ class W_StringObject(W_Object):
                 )
 
         if space.is_kind_of(w_pattern, space.w_regexp):
-            return self.gsub_regexp(space, w_pattern, replacement, w_hash, block)
+            return self.gsub_regexp(space, w_pattern, replacement, w_hash, block, first_only)
         elif space.is_kind_of(w_pattern, space.w_string):
-            return self.gsub_string(space, w_pattern, replacement, w_hash, block)
+            return self.gsub_string(space, w_pattern, replacement, w_hash, block, first_only)
         else:
             raise space.error(
                 space.w_TypeError,
                 "wrong argument type %s (expected Regexp)" % space.getclass(w_replacement).name
             )
 
-    def gsub_regexp(self, space, w_pattern, replacement, w_hash, block):
+    def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, first_only):
         result = []
         pos = 0
         string = space.str_w(self)
@@ -737,6 +870,8 @@ class W_StringObject(W_Object):
                 result += self.gsub_regexp_hash(space, w_hash, w_matchdata)
             pos = ctx.match_end
             ctx.reset(pos)
+            if first_only:
+                break
         result += string[pos:]
         return space.newstr_fromchars(result)
 
@@ -767,7 +902,7 @@ class W_StringObject(W_Object):
         w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
         return self.gsub_lookup_hash(space, w_hash, w_arg)
 
-    def gsub_string(self, space, w_pattern, replacement, w_hash, block):
+    def gsub_string(self, space, w_pattern, replacement, w_hash, block, first_only):
         result = []
         pos = 0
         string = space.str_w(self)
@@ -784,6 +919,8 @@ class W_StringObject(W_Object):
                     result += self.gsub_lookup_hash(space, w_hash, w_pattern)
                 pos = idx + len(pattern)
             else:
+                break
+            if first_only:
                 break
         result += string[pos:]
         return space.newstr_fromchars(result)
@@ -816,12 +953,26 @@ class W_StringObject(W_Object):
         if newline in "\n\r":
             newline = None
         self.strategy.to_mutable(space, self)
-        self.strategy.chomp(self.str_storage, newline)
-        return self
+        changed = self.strategy.chomp(self.str_storage, newline)
+        return self if changed else space.w_nil
+
+    @classdef.method("chop!")
+    def method_chop_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.chop(self.str_storage)
+        return self if changed else space.w_nil
 
     classdef.app_method("""
     def chomp(sep=$/)
-        self.dup.chomp!(sep)
+        copy = self.dup
+        copy.chomp!(sep)
+        return copy
+    end
+
+    def chop
+        copy = self.dup
+        copy.chop!
+        return copy
     end
 
     def reverse

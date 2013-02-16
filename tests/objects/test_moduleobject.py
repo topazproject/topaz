@@ -19,17 +19,23 @@ class TestModuleObject(BaseTopazTest):
             def f
                 3
             end
-            module_function :f
+            def g
+                4
+            end
+            module_function :f, :g
         end
         class X
             include Mod
-            def meth
+            def mathf
                 f + 2
             end
+            def mathg
+                g + 2
+            end
         end
-        return [Mod.f, X.new.meth]
+        return [Mod.f, X.new.mathf, X.new.mathg]
         """)
-        assert self.unwrap(space, w_res) == [3, 5]
+        assert self.unwrap(space, w_res) == [3, 5, 6]
 
     def test_alias_method(self, space):
         w_res = space.execute("""

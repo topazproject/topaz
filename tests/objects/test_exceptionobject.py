@@ -16,6 +16,7 @@ class TestExceptionObject(BaseTopazTest):
         IndexError
         RegexpError
         ThreadError
+        NotImplementedError
         """)
 
     def test_new(self, space):

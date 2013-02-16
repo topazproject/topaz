@@ -84,6 +84,17 @@ class TestArrayObject(BaseTopazTest):
     def test_plus(self, space):
         w_res = space.execute("return [1, 2] + [3]")
         assert self.unwrap(space, w_res) == [1, 2, 3]
+        with self.raises(space, "TypeError", "can't convert Symbol into Array"):
+            space.execute("[1, 2] + :not_an_array")
+        w_res = space.execute("""
+        class NotAnArray
+          def to_ary
+            [8, 7]
+          end
+        end
+        return [9] + NotAnArray.new
+        """)
+        assert self.unwrap(space, w_res) == [9, 8, 7]
 
     def test_minus(self, space):
         w_res = space.execute("return [1, 1, 2, '3'] - [1, '3']")
@@ -364,6 +375,22 @@ class TestArrayObject(BaseTopazTest):
         w_res = space.execute("return [ 1, 2, 3 ] * ','")
         assert self.unwrap(space, w_res) == "1,2,3"
 
+    def test_flatten(self, space):
+        w_res = space.execute("""
+        s = [ 1, 2, 3 ]
+        t = [ 4, 5, 6, [7, 8] ]
+        a = [ s, t, 9, 10 ]
+        return a.flatten
+        """)
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        w_res = space.execute("return [ 1, 2, [3, [4, 5] ] ].flatten(1)")
+        assert self.unwrap(space, w_res) == [1, 2, 3, [4, 5]]
+        with self.raises(space, "ArgumentError", "tried to flatten recursive array"):
+            space.execute("""
+            a = [0,1,2,3]
+            a[0] = a
+            a.flatten
+            """)
 
 class TestArrayPack(BaseTopazTest):
     def test_garbage_format(self, space):

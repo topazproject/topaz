@@ -9,7 +9,7 @@ Welcome to Topaz! There are two places to get started :ref:`using-topaz` and
 Using Topaz
 -----------
 
-To get started with Topaz, you can download a binary or
+To get started with Topaz, you can `download a binary`_ or
 :ref:`build topaz yourself <building-topaz>`. Once you've got a ``topaz``
 binary you can run it directly, just like you would any other Ruby::
 
@@ -53,4 +53,5 @@ You can also run Topaz without compiling, on top of Python::
 Note that this is extremely slow, and should never be used for benchmarking,
 only for testing.
 
-.. _virtualenv: http://www.virtualenv.org/
+.. _`download a binary`: http://www.topazruby.com/builds/
+.. _`virtualenv`: http://www.virtualenv.org/

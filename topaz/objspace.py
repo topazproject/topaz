@@ -37,7 +37,7 @@ from topaz.objects.envobject import W_EnvObject
 from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
-    W_SystemCallError, W_NameError, W_IndexError, W_StopIteration,
+    W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
     W_RegexpError, W_ThreadError)
 from topaz.objects.fileobject import W_FileObject, W_IOObject
@@ -113,6 +113,7 @@ class ObjectSpace(object):
         self.w_NameError = self.getclassfor(W_NameError)
         self.w_NotImplementedError = self.getclassfor(W_NotImplementedError)
         self.w_IndexError = self.getclassfor(W_IndexError)
+        self.w_KeyError = self.getclassfor(W_KeyError)
         self.w_IOError = self.getclassfor(W_IOError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
@@ -140,7 +141,7 @@ class ObjectSpace(object):
             self.w_RegexpError, self.w_RuntimeError, self.w_SystemCallError,
             self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
-            self.w_IndexError, self.w_IOError,
+            self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
 
             self.w_kernel, self.w_topaz,
 
@@ -238,7 +239,12 @@ class ObjectSpace(object):
         try:
             return parser.parse().getast()
         except ParsingError as e:
-            raise self.error(self.w_SyntaxError, "line %d" % e.getsourcepos().lineno)
+            source_pos = e.getsourcepos()
+            if source_pos is not None:
+                msg = "line %d" % source_pos.lineno
+            else:
+                msg = ""
+            raise self.error(self.w_SyntaxError, msg)
         except LexerError as e:
             raise self.error(self.w_SyntaxError, "line %d (%s)" % (e.pos.lineno, e.msg))
 
@@ -507,8 +513,8 @@ class ObjectSpace(object):
         if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
-        for idx, cell in enumerate(block.cells):
-            frame.cells[len(bc.cellvars) + idx] = cell
+        for i in xrange(len(bc.freevars)):
+            frame.cells[len(bc.cellvars) + i] = block.cells[i]
 
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)

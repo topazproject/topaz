@@ -1,0 +1,1 @@
+fails:Object#object_id returns a different value for two Bignum literals

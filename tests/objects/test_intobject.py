@@ -66,6 +66,8 @@ class TestFixnumObject(BaseTopazTest):
     def test_left_shift_ovf(self, space):
         w_res = space.execute("return 4 << 90")
         assert space.bigint_w(w_res) == rbigint.fromlong(4951760157141521099596496896)
+        w_res = space.execute("return %d << 2" % sys.maxint)
+        assert self.unwrap(space, w_res) == rbigint.fromlong(sys.maxint << 2)
         w_res = space.execute("return 4 << -90")
         assert space.int_w(w_res) == 0
 

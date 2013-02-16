@@ -28,17 +28,27 @@ class W_RangeObject(W_Object):
         return space.newbool(self.exclusive)
 
     classdef.app_method("""
-    def each
-        unless self.begin.is_a? Integer
-            raise TypeError, "can't iterate from Float"
+    def each(&block)
+        raise NotImplementedError, "Object#enum_for" if !block
+
+        if !(self.begin.respond_to? :succ)
+            raise TypeError, "can't iterate from #{self.begin.class}"
+        else
+            i = self.begin
+            if self.exclude_end?
+                while (i <=> self.end) < 0 do
+                    yield i
+                    i = i.succ
+                end
+            else
+                while (i <=> self.end) <= 0 do
+                    yield i
+                    i = i.succ
+                end
+            end
         end
-        i = self.begin
-        lim = self.end
-        lim += 0.1 unless self.exclude_end?
-        while i < lim
-            yield i
-            i += 1
-        end
+
+        self
     end
 
     def ===(value)

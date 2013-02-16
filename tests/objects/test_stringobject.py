@@ -4,6 +4,12 @@ from ..base import BaseTopazTest
 
 
 class TestStringObject(BaseTopazTest):
+    def test_new(self, space):
+        w_res = space.execute("return String.new('abc')")
+        assert space.str_w(w_res) == "abc"
+        w_res = space.execute("return String.new")
+        assert space.str_w(w_res) == ""
+
     def test_lshift(self, space):
         w_res = space.execute('return "abc" << "def" << "ghi"')
         assert space.str_w(w_res) == "abcdefghi"
@@ -275,6 +281,34 @@ class TestStringObject(BaseTopazTest):
         with self.raises(space, "ArgumentError"):
             space.execute('"".to_i(37)')
 
+    def test_swapcase(self, space):
+        w_res = space.execute("""
+        a = "AbC123aBc"
+        a.swapcase!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "aBc123AbC"
+
+        w_res = space.execute("return 'AbC123aBc'.swapcase")
+        assert self.unwrap(space, w_res) == "aBc123AbC"
+
+        w_res = space.execute("return '123'.swapcase!")
+        assert w_res is space.w_nil
+
+    def test_upcase(self, space):
+        w_res = space.execute("""
+        a = "AbC123aBc"
+        a.upcase!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "ABC123ABC"
+
+        w_res = space.execute("return 'AbC123aBc'.upcase")
+        assert self.unwrap(space, w_res) == "ABC123ABC"
+
+        w_res = space.execute("return '123'.upcase!")
+        assert w_res is space.w_nil
+
     def test_downcase(self, space):
         w_res = space.execute("""
         a = "AbC123aBc"
@@ -287,7 +321,22 @@ class TestStringObject(BaseTopazTest):
         assert self.unwrap(space, w_res) == "abc123abc"
 
         w_res = space.execute("return '123'.downcase!")
-        assert self.unwrap(space, w_res) is None
+        assert w_res is space.w_nil
+
+    def test_capitalize(self, space):
+        w_res = space.execute("""
+        a = "123ABC"
+        a.capitalize!
+        return a
+        """)
+        assert self.unwrap(space, w_res) == "123abc"
+
+        w_res = space.execute("return 'hello'.capitalize")
+        assert self.unwrap(space, w_res) == "Hello"
+        w_res = space.execute("return 'HELLO'.capitalize")
+        assert self.unwrap(space, w_res) == "Hello"
+        w_res = space.execute("return '123'.capitalize!")
+        assert w_res is space.w_nil
 
     def test_tr(self, space):
         w_res = space.execute("return 'hello'.tr('el', 'ip')")
@@ -360,6 +409,20 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(space.execute('return "hello\\r".chomp')) == "hello"
         assert space.str_w(space.execute('return "hello \\n there".chomp')) == "hello \n there"
         assert space.str_w(space.execute('return "hello".chomp("llo")')) == "he"
+        w_res = space.execute('return "hello".chomp!')
+        assert w_res is space.w_nil
+        w_res = space.execute('return "".chomp!')
+        assert w_res is space.w_nil
+
+    def test_chop(self, space):
+        assert space.str_w(space.execute('return "string\\r\\n".chop')) == "string"
+        assert space.str_w(space.execute('return "string\\n\\r".chop')) == "string\n"
+        assert space.str_w(space.execute('return "string\\n".chop')) == "string"
+        assert space.str_w(space.execute('return "string".chop')) == "strin"
+        assert space.str_w(space.execute('return "x".chop.chop')) == ""
+        assert space.str_w(space.execute('return "string".chop!')) == "strin"
+        w_res = space.execute("return ''.chop!")
+        assert w_res is space.w_nil
 
     def test_reverse(self, space):
         assert space.str_w(space.execute('return "stressed".reverse')) == "desserts"
@@ -377,9 +440,9 @@ class TestStringObject(BaseTopazTest):
 
     def test_gsub(self, space):
         w_res = space.execute("""
-        return 'hello'.gsub("he", "ha")
+        return 'hello hello'.gsub("he", "ha")
         """)
-        assert space.str_w(w_res) == "hallo"
+        assert space.str_w(w_res) == "hallo hallo"
         w_res = space.execute("""
         return 'hello'.gsub(/(.)/, "ha")
         """)
@@ -409,6 +472,41 @@ class TestStringObject(BaseTopazTest):
         return 'helloo'.gsub("l", Hash.new { |h, k| replacements.pop() })
         """)
         assert space.str_w(w_res) == "he21oo"
+
+    def test_sub(self, space):
+        w_res = space.execute("""
+        return 'hello hello'.sub("he", "ha")
+        """)
+        assert space.str_w(w_res) == "hallo hello"
+        w_res = space.execute("""
+        return 'hello'.sub(/(.)/, "ha")
+        """)
+        assert space.str_w(w_res) == "haello"
+        w_res = space.execute("""
+        return 'hello'.sub(/(.)/, "ha\\\\1ho")
+        """)
+        assert space.str_w(w_res) == "hahhoello"
+        w_res = space.execute("""
+        return 'hello'.sub(/(.)/) { |e| e + "1" }
+        """)
+        assert space.str_w(w_res) == "h1ello"
+        w_res = space.execute("""
+        return 'hello'.sub('l') { |e| e + "1" }
+        """)
+        assert space.str_w(w_res) == "hel1lo"
+        w_res = space.execute("""
+        return 'hello'.sub(/[eo]/, 'e' => 3, 'o' => '*')
+        """)
+        assert space.str_w(w_res) == "h3llo"
+        w_res = space.execute("""
+        return 'hello'.sub("e", 'e' => 3, 'o' => '*')
+        """)
+        assert space.str_w(w_res) == "h3llo"
+        w_res = space.execute("""
+        replacements = [1, 2]
+        return 'helloo'.sub("l", Hash.new { |h, k| replacements.pop() })
+        """)
+        assert space.str_w(w_res) == "he2loo"
 
     def test_succ(self, space):
         w_res = space.execute('return "abcd".succ')

@@ -1,10 +1,12 @@
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
+from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.ordereddict import OrderedDict
 
 
 class W_HashObject(W_Object):
     classdef = ClassDef("Hash", W_Object.classdef, filepath=__file__)
+    classdef.include_module(Enumerable)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)
@@ -49,6 +51,19 @@ class W_HashObject(W_Object):
         except KeyError:
             return space.send(self, space.newsymbol("default"), [w_key])
 
+    @classdef.method("fetch")
+    def method_fetch(self, space, w_key, w_value=None, block=None):
+        try:
+            return self.contents[w_key]
+        except KeyError:
+            if w_value is not None:
+                return w_value
+            elif block is not None:
+                return space.invoke_block(block, [w_key])
+            else:
+                raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, space.newsymbol("inspect")))
+
+    @classdef.method("store")
     @classdef.method("[]=")
     def method_subscript_assign(self, w_key, w_value):
         self.contents[w_key] = w_value
@@ -64,8 +79,37 @@ class W_HashObject(W_Object):
         return space.newbool(not bool(self.contents))
 
     @classdef.method("delete")
-    def method_delete(self, space, w_key):
-        return self.contents.pop(w_key, space.w_nil)
+    @check_frozen()
+    def method_delete(self, space, w_key, block):
+        w_res = self.contents.pop(w_key, None)
+        if w_res is None:
+            if block:
+                return space.invoke_block(block, [w_key])
+            w_res = space.w_nil
+        return w_res
+
+    @classdef.method("clear")
+    @check_frozen()
+    def method_clear(self, space):
+        self.contents.clear()
+        return self
+
+    @classdef.method("shift")
+    @check_frozen()
+    def method_shift(self, space):
+        if not self.contents:
+            return space.send(self, space.newsymbol("default"))
+        w_key, w_value = self.contents.popitem()
+        return space.newarray([w_key, w_value])
+
+    @classdef.method("initialize_copy")
+    @classdef.method("replace")
+    @check_frozen()
+    def method_replace(self, space, w_hash):
+        assert isinstance(w_hash, W_HashObject)
+        self.contents.clear()
+        self.contents.update(w_hash.contents)
+        return self
 
     @classdef.method("keys")
     def method_keys(self, space):

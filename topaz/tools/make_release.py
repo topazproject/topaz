@@ -10,7 +10,7 @@ def main(argv):
     target = argv[0]
     t = tarfile.open(target, mode="w:bz2")
     for name in [
-        "bin/topaz",
+        "bin/topaz.exe" if sys.platform == "win32" else "bin/topaz",
         "lib-ruby",
         "AUTHORS.rst",
         "LICENSE",

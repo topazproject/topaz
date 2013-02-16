@@ -27,6 +27,7 @@ class Interpreter(object):
         reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
+        check_untranslated=False
     )
 
     def __init__(self):
@@ -342,6 +343,11 @@ class Interpreter(object):
             self, frame.regexp_match_cell
         )
         frame.push(block)
+
+    def BUILD_LAMBDA(self, space, bytecode, frame, pc):
+        block = frame.pop()
+        assert isinstance(block, W_BlockObject)
+        frame.push(space.newproc(block, is_lambda=True))
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc

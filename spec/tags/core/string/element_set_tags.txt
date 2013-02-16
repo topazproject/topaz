@@ -1,0 +1,24 @@
+fails:String#[]= with String replaces the char at idx with other_str
+fails:String#[]= with String taints self if other_str is tainted
+fails:String#[]= with String raises an IndexError without changing self if idx is outside of self
+fails:String#[]= with String allows assignment to the zero'th element of an empty String
+fails:String#[]= with String raises IndexError if the string index doesn't match a position in the string
+fails:String#[]= with String raises a RuntimeError when self is frozen
+fails:String#[]= with String calls to_int on index
+fails:String#[]= with String calls #to_str to convert other to a String
+fails:String#[]= with String raises a TypeError if other_str can't be converted to a String
+fails:String#[]= matching with a Regexp replaces the matched text with the rhs
+fails:String#[]= matching with a Regexp raises IndexError if the regexp index doesn't match a position in the string
+fails:String#[]= matching with a Regexp with 3 arguments uses the 2nd of 3 arguments as which capture should be replaced
+fails:String#[]= matching with a Regexp with 3 arguments allows the specified capture to be negative and count from the end
+fails:String#[]= matching with a Regexp with 3 arguments raises IndexError if the specified capture isn't available
+fails:String#[]= with index, count starts at idx and overwrites count characters before inserting the rest of other_str
+fails:String#[]= with index, count counts negative idx values from end of the string
+fails:String#[]= with index, count overwrites and deletes characters if count is more than the length of other_str
+fails:String#[]= with index, count deletes characters if other_str is an empty string
+fails:String#[]= with index, count deletes characters up to the maximum length of the existing string
+fails:String#[]= with index, count appends other_str to the end of the string if idx == the length of the string
+fails:String#[]= with index, count taints self if other_str is tainted
+fails:String#[]= with index, count raises an IndexError if |idx| is greater than the length of the string
+fails:String#[]= with index, count raises an IndexError if count < 0
+fails:String#[]= with index, count raises a TypeError if other_str is a type other than String

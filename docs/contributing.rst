@@ -35,6 +35,13 @@ We welcome patches of all sorts to Topaz, whether it's to the docs or the code.
 You can send us patches by forking our repository on Github and then sending a
 pull request.
 
+Getting a copy of the repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First things first, you'll need to grab a copy of the repository::
+
+    $ git clone git://github.com/topazproject/topaz.git
+
 Running the tests
 ~~~~~~~~~~~~~~~~~
 
@@ -47,3 +54,9 @@ by installing ``py.test`` (``pip install -r requirements.txt``)::
 This will run all the tests. In general you do not need to compile Topaz when
 working on a patch, all changes should be testable directly, and the buildbot
 will verify for every pull request that it compiles and tests pass.
+
+Adding yourself to the authors file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When you submit your first patch, add your name to the ``AUTHORS.rst`` file,
+you've earned it!
