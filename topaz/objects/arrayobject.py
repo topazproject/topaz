@@ -266,6 +266,14 @@ class W_ArrayObject(W_Object):
         return nil if prev_size == self.size
         self
     end
+
+    def assoc(key)
+        detect { |arr| arr.is_a?(Array) && arr[0] == key }
+    end
+
+    def rassoc(value)
+        detect { |arr| arr.is_a?(Array) && arr[1] == value }
+    end
     """)
 
     classdef.app_method("""
