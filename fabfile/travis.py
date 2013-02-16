@@ -89,12 +89,12 @@ def run_tests():
 
 @task
 def tag_specs(files=""):
-    local("../mspec/bin/mspec tag -t %s -f spec --config=topaz.mspec %s" % ("`pwd`/bin/topaz", files))
+    local("../mspec/bin/mspec tag -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
 
 
 @task
 def untag_specs(files=""):
-    local("../mspec/bin/mspec tag --del fails -t %s -f spec --config=topaz.mspec %s" % ("`pwd`/bin/topaz", files))
+    local("../mspec/bin/mspec tag --del fails -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
 
 
 @task
