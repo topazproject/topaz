@@ -34,7 +34,7 @@ USAGE = "\n".join([
 #   """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
 #   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
 #   """  --copyright     print the copyright""",
-#   """  --version       print the version""",
+    """  --version       print the version""",
     ""
 ])
 
@@ -71,6 +71,14 @@ def _parse_argv(space, argv):
         arg = argv[idx]
         if arg == "-h" or arg == "--help":
             raise ShortCircuitError(USAGE)
+        elif arg == "--version":
+            raise ShortCircuitError("%s\n" % space.str_w(
+                    space.send(
+                        space.w_object,
+                        space.newsymbol("const_get"),
+                        [space.newstr_fromstr("RUBY_DESCRIPTION")]
+                    )
+                ))
         elif arg == "-v":
             verbose = True
         elif arg == "-e":
@@ -102,6 +110,18 @@ def _parse_argv(space, argv):
 
 
 def _entry_point(space, argv):
+    system, _, _, _, cpu = os.uname()
+    platform = "%s-%s" % (cpu, system.lower())
+    engine = "topaz"
+    version = "1.9.3"
+    patchlevel = 125
+    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
+    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
+    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
+    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
+    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
+    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
+
     try:
         verbose, path, exprs, load_path_entries, argv_w = _parse_argv(space, argv)
     except ShortCircuitError as e:
@@ -118,18 +138,6 @@ def _entry_point(space, argv):
             [space.newstr_fromstr(path_entry)]
         )
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
-
-    system, _, _, _, cpu = os.uname()
-    platform = "%s-%s" % (cpu, system.lower())
-    engine = "topaz"
-    version = "1.9.3"
-    patchlevel = 125
-    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
-    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
-    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
-    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
-    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
-    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
     if verbose:
         os.write(1, "%s\n" % description)
