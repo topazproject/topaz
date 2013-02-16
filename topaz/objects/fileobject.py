@@ -438,11 +438,21 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                string = space.str_w(
-                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
-                )
+                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                    if in_recursion:
+                        raise space.error(space.w_ArgumentError, "recursive array")
+                    string = space.str_w(
+                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                    )
             else:
-                string = space.str_w(w_arg)
+                w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
+                if w_string is space.w_nil:
+                    w_string = space.convert_type(w_arg, space.w_string, "to_str")
+                string = space.str_w(w_string)
+
+            if string == "" and len(args_w) > 1:
+                if (not result) or result[-1] != sep:
+                    result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()
