@@ -121,6 +121,7 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
+
     try:
         verbose, path, exprs, load_path_entries, argv_w = _parse_argv(space, argv)
     except ShortCircuitError as e:
