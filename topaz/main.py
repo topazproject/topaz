@@ -50,24 +50,33 @@ def entry_point(argv):
     return _entry_point(space, argv)
 
 
-def _entry_point(space, argv):
+class CommandLineError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+class ShortCircuitError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+def _parse_argv(space, argv):
     verbose = False
     path = None
     exprs = []
     load_path_entries = []
+    argv_w = []
     idx = 1
     while idx < len(argv):
         arg = argv[idx]
         if arg == "-h" or arg == "--help":
-            os.write(1, USAGE)
-            return 0
+            raise ShortCircuitError(USAGE)
         elif arg == "-v":
             verbose = True
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
-                os.write(2, "no code specified for -e (RuntimeError)\n")
-                return 1
+                raise CommandLineError("no code specified for -e (RuntimeError)\n")
             exprs.append(argv[idx])
         elif arg.startswith("-e"):
             exprs.append(arg[2:])
@@ -85,10 +94,23 @@ def _entry_point(space, argv):
     if idx < len(argv) and not exprs:
         path = argv[idx]
         idx += 1
-    argv_w = []
     while idx < len(argv):
         argv_w.append(space.newstr_fromstr(argv[idx]))
         idx += 1
+
+    return verbose, path, exprs, load_path_entries, argv_w
+
+
+def _entry_point(space, argv):
+    try:
+        verbose, path, exprs, load_path_entries, argv_w = _parse_argv(space, argv)
+    except ShortCircuitError as e:
+        os.write(1, e.message)
+        return 0
+    except CommandLineError as e:
+        os.write(2, e.message)
+        return 1
+
     for path_entry in load_path_entries:
         space.send(
             space.w_load_path,
