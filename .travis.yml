@@ -8,10 +8,10 @@ env:
         - TEST_TYPE=docs
         - TEST_TYPE=own
         - TEST_TYPE=translate
-        - TEST_TYPE=rubyspec_untranslated
-matrix:
-    allow_failures:
-        - env: TEST_TYPE=rubyspec_untranslated
+#         - TEST_TYPE=rubyspec_untranslated
+# matrix:
+#     allow_failures:
+#         - env: TEST_TYPE=rubyspec_untranslated
 install:
     - pip install --use-mirrors fabric requests
     - fab travis.install_requirements
