@@ -438,6 +438,8 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
+                # We flatten to protect against recursive arrays.
+                space.send(w_arg, space.newsymbol("flatten"))
                 string = space.str_w(
                     W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
                 )
