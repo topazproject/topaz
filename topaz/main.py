@@ -60,21 +60,18 @@ class ShortCircuitError(Exception):
         self.message = message
 
 
-@specialize.memo()
-def _version_info():
+def _add_ruby_constants(space):
     system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
     engine = "topaz"
     version = "1.9.3"
     patchlevel = 125
     description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
-    return {
-        "engine": engine,
-        "version": version,
-        "patchlevel": str(patchlevel),
-        "platform": platform,
-        "description": description,
-        }
+    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
+    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
+    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
+    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
+    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
 
 def _parse_argv(space, argv):
@@ -89,7 +86,7 @@ def _parse_argv(space, argv):
         if arg == "-h" or arg == "--help":
             raise ShortCircuitError(USAGE)
         elif arg == "--version":
-            raise ShortCircuitError("%s\n" % _version_info()["description"])
+            raise ShortCircuitError("%s\n" % space.str_w(space.execute("RUBY_DESCRIPTION")))
         elif arg == "-v":
             verbose = True
         elif arg == "-e":
@@ -121,6 +118,7 @@ def _parse_argv(space, argv):
 
 
 def _entry_point(space, argv):
+    _add_ruby_constants(space)
     try:
         verbose, path, exprs, load_path_entries, argv_w = _parse_argv(space, argv)
     except ShortCircuitError as e:
@@ -138,15 +136,8 @@ def _entry_point(space, argv):
         )
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
-    vinfo = _version_info()
-    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(vinfo["engine"]))
-    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(vinfo["version"]))
-    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(int(vinfo["patchlevel"])))
-    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(vinfo["platform"]))
-    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(vinfo["description"]))
-
     if verbose:
-        os.write(1, "%s\n" % vinfo["description"])
+        os.write(1, "%s\n" % space.str_w(space.execute("RUBY_DESCRIPTION")))
 
     if exprs:
         source = "\n".join(exprs)
