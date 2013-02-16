@@ -43,7 +43,7 @@ class Process(Module):
 
     @moduledef.function("exit!", status="int")
     def method_exit_bang(self, space, status=0):
-        raise os._exit(status)
+        os._exit(status)
 
     @moduledef.function("fork")
     def method_fork(self, space, block):
