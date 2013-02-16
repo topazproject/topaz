@@ -10,6 +10,7 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
+from topaz.system import WINDOWS
 from topaz.utils.ll_file import O_BINARY, ftruncate, isdir
 
 
@@ -275,7 +276,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        if sys.platform == "win32":
+        if WINDOWS:
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
         else:

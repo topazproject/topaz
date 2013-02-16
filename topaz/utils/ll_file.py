@@ -6,8 +6,9 @@ from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.tool import rffi_platform as platform
 from rpython.translator.tool.cbuild import ExternalCompilationInfo
 
+from topaz.system import WINDOWS
 
-if sys.platform.startswith("win"):
+if WINDOWS:
     O_BINARY = os.O_BINARY
 
     eci = ExternalCompilationInfo(includes=['windows.h'])
@@ -23,16 +24,11 @@ if sys.platform.startswith("win"):
     def ftruncate(fd, size):
         _chsize(fd, size)
 
-    def isdir(path):
-        try:
-            st = os.stat(path)
-        except os.error:
-            return False
-        return stat.S_ISDIR(st.st_mode)
+    # This imports the definition of isdir that uses stat. On Windows
+    # this is replaced in the path module with a version that isn't
+    # RPython
+    from genericpath import isdir
 else:
     O_BINARY = 0
-    def ftruncate(fd, size):
-        os.ftruncate(fd, size)
-
-    def isdir(path):
-        return os.path.isdir(path)
+    ftruncate = os.ftruncate
+    isdir = os.path.isdir

@@ -8,11 +8,11 @@ from rpython.rlib.objectmodel import specialize
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
-from topaz.globals import WINDOWS
+from topaz.system import WINDOWS, IS64BIT
 
 if WINDOWS:
     system = "Windows"
-    cpu = "x86_64" if is_emulated_long else "i686"
+    cpu = "x86_64" if IS64BIT else "i686"
 else:
     system, _, _, _, cpu = os.uname()
 

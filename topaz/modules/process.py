@@ -4,14 +4,13 @@ import os
 import sys
 
 from topaz.module import Module, ModuleDef
+from topaz.system import WINDOWS
 
-
-if sys.platform.startswith("win"):
+if WINDOWS:
     def geteuid():
         return 0 # MRI behaviour on windows
 else:
-    def geteuid():
-        return os.geteuid()
+    geteuid = os.geteuid
 
 
 class Process(Module):
