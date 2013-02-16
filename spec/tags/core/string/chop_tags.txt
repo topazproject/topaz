@@ -1,5 +1,4 @@
 fails:String#chop returns a new string with the last character removed
-fails:String#chop removes both characters if the string ends with \r\n
 fails:String#chop returns an empty string when applied to an empty string
 fails:String#chop returns a new string when applied to an empty string
 fails:String#chop taints result when self is tainted
