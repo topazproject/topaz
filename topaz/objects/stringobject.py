@@ -284,15 +284,6 @@ class MutableStringStrategy(StringStrategy):
             storage[last_alnum] = carry
             storage.insert(last_alnum + 1, last_alnum_ch)
 
-    def insert(self, storage, index, other):
-        storage = self.unerase(storage)
-        if index < 0:
-            index = len(storage) + index + 1
-        assert index >= 0
-        for char in other:
-            storage.insert(index, char)
-            index += 1
-
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
     classdef.include_module(Comparable)
@@ -1015,5 +1006,13 @@ class W_StringObject(W_Object):
                     "index %d out of string" % index
                   )
         self.strategy.to_mutable(space, self)
-        self.strategy.insert(self.str_storage, index, other)
+        strategy = self.strategy
+        assert isinstance(strategy, MutableStringStrategy)
+        storage = strategy.unerase(self.str_storage)
+        if index < 0:
+            index = len(storage) + index + 1
+        assert index >= 0
+        for char in other:
+            storage.insert(index, char)
+            index += 1
         return self
