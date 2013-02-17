@@ -42,7 +42,9 @@ class ClassDef(object):
     def app_method(self, source):
         self.app_methods.append(source)
 
-    def singleton_method(self, name, **argspec):
+    def singleton_method(self, __name, **argspec):
+        name = __name
+
         def adder(func):
             if isinstance(func, staticmethod):
                 func = func.__func__

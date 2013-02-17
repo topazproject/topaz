@@ -1,0 +1,3 @@
+fails:SystemCallError.new
+fails:SystemCallError#errno returns nil when no errno given
+fails:SystemCallError#message

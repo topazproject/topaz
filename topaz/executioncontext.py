@@ -13,6 +13,7 @@ class ExecutionContext(object):
         self.regexp_match_cell = None
         self.w_trace_proc = None
         self.in_trace_proc = False
+        self.recursive_objects = {}
 
     def settraceproc(self, w_proc):
         self.w_trace_proc = w_proc
@@ -73,6 +74,9 @@ class ExecutionContext(object):
             frame = frame.backref()
         return frame
 
+    def recursion_guard(self, w_obj):
+        return _RecursionGuardContextManager(self, w_obj)
+
 
 class _VisitFrameContextManager(object):
     def __init__(self, ec, frame):
@@ -89,3 +93,21 @@ class _VisitFrameContextManager(object):
                 exc_value.w_value.frame = self.frame
 
         self.ec.leave(self.frame, exc_value is not None, self.original_regexp_match_cell)
+
+
+class _RecursionGuardContextManager(object):
+    def __init__(self, ec, w_obj):
+        self.ec = ec
+        self.w_obj = w_obj
+        self.added = False
+
+    def __enter__(self):
+        if self.w_obj in self.ec.recursive_objects:
+            return True
+        self.ec.recursive_objects[self.w_obj] = None
+        self.added = True
+        return False
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if self.added:
+            del self.ec.recursive_objects[self.w_obj]

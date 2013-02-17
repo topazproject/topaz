@@ -1,0 +1,4 @@
+fails:raises a TypeError when passed a Float
+fails:calls #to_int to convert an object to an Integer
+fails:raises a TypeError if #to_int does not return an Integer
+fails:raises a TypeError if the object does not respond to #to_int

@@ -4,14 +4,16 @@ import struct
 import sys
 
 from fabric.api import task, local
-from fabric.context_managers import lcd
 
 import requests
 
+from .base import BaseTest
 
-class Test(object):
+
+class Test(BaseTest):
     def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False,
                  create_build=False):
+        super(Test, self).__init__()
         self.func = func
         self.deps = deps
         self.needs_rpython = needs_rpython
@@ -22,20 +24,12 @@ class Test(object):
         local("pip install --use-mirrors {}".format(" ".join(self.deps)))
 
     def download_rpython(self):
-        local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
+        local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2 || wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
         local("tar -xf `pwd`/../pypy.tar.bz2 -C `pwd`/../")
         [path_name] = glob.glob("../pypy-pypy*")
         path_name = os.path.abspath(path_name)
         with open("rpython_marker", "w") as f:
             f.write(path_name)
-
-    def download_mspec(self):
-        with lcd(".."):
-            local("git clone --depth=100 --quiet https://github.com/rubyspec/mspec")
-
-    def download_rubyspec(self):
-        with lcd(".."):
-            local("git clone --depth=100 --quiet https://github.com/rubyspec/rubyspec")
 
     def run_tests(self):
         env = {}
@@ -88,6 +82,16 @@ def run_tests():
 
 
 @task
+def tag_specs(files=""):
+    local("../mspec/bin/mspec tag -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
+
+
+@task
+def untag_specs(files=""):
+    local("../mspec/bin/mspec tag --del fails -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
+
+
+@task
 def upload_build():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     if t.create_build:
@@ -109,108 +113,9 @@ def run_translate_tests(env):
 
 
 def run_specs(binary, prefix=""):
-    # TODO: this list is temporary until we have all the machinery necessary to
-    # run the full rubyspec directory (including the tagging feature)
-    rubyspec_tests = [
-        "language/and_spec.rb",
-        "language/array_spec.rb",
-        "language/class_variable_spec.rb",
-        "language/match_spec.rb",
-        "language/metaclass_spec.rb",
-        "language/module_spec.rb",
-        "language/next_spec.rb",
-        "language/not_spec.rb",
-        "language/numbers_spec.rb",
-        "language/order_spec.rb",
-        "language/splat_spec.rb",
-        "language/undef_spec.rb",
-        "language/unless_spec.rb",
-        "language/yield_spec.rb",
-
-        "language/regexp/grouping_spec.rb",
-        "language/regexp/repetition_spec.rb",
-
-        "core/array/allocate_spec.rb",
-        "core/array/append_spec.rb",
-        "core/array/array_spec.rb",
-        "core/array/at_spec.rb",
-        "core/array/clear_spec.rb",
-        "core/array/compact_spec.rb",
-        "core/array/concat_spec.rb",
-        "core/array/delete_at_spec.rb",
-        "core/array/empty_spec.rb",
-        "core/array/frozen_spec.rb",
-        "core/array/length_spec.rb",
-        "core/array/plus_spec.rb",
-        "core/array/push_spec.rb",
-        "core/array/replace_spec.rb",
-        "core/array/shift_spec.rb",
-        "core/array/size_spec.rb",
-        "core/array/to_ary_spec.rb",
-        "core/array/unshift_spec.rb",
-
-        "core/basicobject/ancestors_spec.rb",
-        "core/basicobject/class_spec.rb",
-        "core/basicobject/new_spec.rb",
-        "core/basicobject/superclass_spec.rb",
-
-        "core/class/superclass_spec.rb",
-
-        "core/comparable/between_spec.rb",
-
-        "core/exception/message_spec.rb",
-        "core/exception/standard_error_spec.rb",
-
-        "core/false/and_spec.rb",
-        "core/false/inspect_spec.rb",
-        "core/false/or_spec.rb",
-        "core/false/to_s_spec.rb",
-        "core/false/xor_spec.rb",
-
-        "core/fixnum/comparison_spec.rb",
-        "core/fixnum/even_spec.rb",
-        "core/fixnum/hash_spec.rb",
-        "core/fixnum/odd_spec.rb",
-        "core/fixnum/to_f_spec.rb",
-        "core/fixnum/zero_spec.rb",
-
-        "core/hash/allocate_spec.rb",
-        "core/hash/delete_spec.rb",
-        "core/hash/empty_spec.rb",
-        "core/hash/keys_spec.rb",
-        "core/hash/length_spec.rb",
-        "core/hash/size_spec.rb",
-        "core/hash/to_hash_spec.rb",
-        "core/hash/values_spec.rb",
-
-        "core/nil/and_spec.rb",
-        "core/nil/inspect_spec.rb",
-        "core/nil/nil_spec.rb",
-        "core/nil/or_spec.rb",
-        "core/nil/to_a_spec.rb",
-        "core/nil/to_i_spec.rb",
-        "core/nil/to_s_spec.rb",
-        "core/nil/xor_spec.rb",
-
-        "core/object/clone_spec.rb",
-        "core/object/dup_spec.rb",
-        "core/object/match_spec.rb",
-
-        "core/process/pid_spec.rb",
-
-        "core/regexp/casefold_spec.rb",
-        "core/regexp/source_spec.rb",
-
-        "core/true/and_spec.rb",
-        "core/true/inspect_spec.rb",
-        "core/true/or_spec.rb",
-        "core/true/to_s_spec.rb",
-        "core/true/xor_spec.rb",
-    ]
-    local("{prefix}../mspec/bin/mspec -t {binary} --format=dotted {spec_files}".format(
+    local("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
         prefix=prefix,
-        binary=binary,
-        spec_files=" ".join(os.path.join("../rubyspec", p) for p in rubyspec_tests),
+        binary=binary
     ))
 
 

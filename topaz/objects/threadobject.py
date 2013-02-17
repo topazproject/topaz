@@ -11,12 +11,10 @@ class W_ThreadObject(W_Object):
         W_Object.__init__(self, space)
         # TODO: This should be a map dict.
         self.local_storage = {}
-        self.recursive_objects = {}
 
     def __deepcopy__(self, memo):
         obj = super(W_ThreadObject, self).__deepcopy__(memo)
         obj.local_storage = copy.deepcopy(self.local_storage, memo)
-        obj.recursive_objects = {}
         return obj
 
     @classdef.singleton_method("current")
@@ -36,11 +34,8 @@ class W_ThreadObject(W_Object):
     def method_recursion_guard(self, space, w_obj, block):
         """Detects recursion. If there is none, yield
         and return false. Else return true"""
-        if w_obj in self.recursive_objects:
-            return space.w_true
-        self.recursive_objects[w_obj] = None
-        try:
+        with space.getexecutioncontext().recursion_guard(w_obj) as in_recursion:
+            if in_recursion:
+                return space.w_true
             space.invoke_block(block, [])
-        finally:
-            del self.recursive_objects[w_obj]
         return space.w_false

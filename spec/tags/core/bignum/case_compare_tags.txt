@@ -1,0 +1,4 @@
+fails:returns true if self has the same value as the given argument
+fails:calls 'other == self' if the given argument is not an Integer
+fails:returns the result of 'other == self' as a boolean
+

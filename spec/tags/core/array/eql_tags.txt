@@ -1,0 +1,4 @@
+fails:handles well recursive arrays
+fails:Array#eql? does not call #to_ary on Array subclasses
+fails:Array#eql? ignores array class differences
+fails:Array#eql? 

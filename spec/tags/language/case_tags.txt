@@ -1,0 +1,3 @@
+fails:The 'case'-construct expands arrays to lists of values
+fails:The 'case'-construct takes an expanded array in addition to a list of values
+fails:The 'case'-construct takes multiple expanded arrays
