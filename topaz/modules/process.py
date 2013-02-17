@@ -26,8 +26,12 @@ class Process(Module):
 
     @moduledef.function("wait")
     def method_wait(self, space):
+        return space.send(self, space.newsymbol("waitpid"), [])
+
+    @moduledef.function("waitpid", pid="int")
+    def method_waitpid(self, space, pid=-1):
         try:
-            pid, status = os.waitpid(-1, 0)
+            pid, status = os.waitpid(pid, 0)
             status = os.WEXITSTATUS(status)
             st = space.send(space.w_process_status,
                 space.newsymbol("new"),
