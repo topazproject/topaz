@@ -493,3 +493,40 @@ class W_ArrayObject(W_Object):
         max
     end
     """)
+
+    @classdef.method("uniq!")
+    @check_frozen()
+    def method_uniq_i(self, space, block=None):
+        seen = {}
+        old_len = len(self.items_w)
+        i = 0
+        while i < len(self.items_w):
+            item_w = self.items_w[i]
+            if block is not None:
+                item_w = space.invoke_block(block, (item_w,))
+            if self._already_seen_item(space, item_w, seen):
+                del self.items_w[i]
+            else:
+                i += 1
+        if i == old_len:
+            return space.w_nil
+        return self
+
+    def _already_seen_item(self, space, item_w, seen):
+        hashval = space.hash_w(item_w)
+        if hashval in seen:
+            for seen_item_w in seen[hashval]:
+                if space.eq_w(item_w, seen_item_w):
+                    return True
+            seen[hashval].append(item_w)
+        else:
+            seen[hashval] = [item_w]
+        return False
+
+    classdef.app_method("""
+    def uniq(&block)
+        arr = self.dup
+        arr.uniq!(&block)
+        return arr
+    end
+    """)
