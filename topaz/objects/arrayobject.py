@@ -495,36 +495,38 @@ class W_ArrayObject(W_Object):
     end
     """)
 
-    @classdef.method("uniq!")
-    @check_frozen()
-    def method_uniq_i(self, space, block=None):
-        seen = {}
-        old_len = len(self.items_w)
-        i = 0
-        while i < len(self.items_w):
-            item_w = self.items_w[i]
-            if block is not None:
-                item_w = space.invoke_block(block, [item_w])
-            if self._already_seen_item(space, item_w, seen):
-                del self.items_w[i]
-            else:
-                i += 1
-        if i == old_len:
-            return space.w_nil
-        return self
-
-    def _already_seen_item(self, space, item_w, seen):
-        hashval = space.hash_w(item_w)
-        if hashval in seen:
-            for seen_item_w in seen[hashval]:
-                if space.eq_w(item_w, seen_item_w):
-                    return True
-            seen[hashval].append(item_w)
-        else:
-            seen[hashval] = [item_w]
-        return False
-
     classdef.app_method("""
+    def uniq!(&block)
+        raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+        seen = {}
+        old_len = self.length
+        i = 0
+        while i < self.length do
+            item = self[i]
+            item = yield(item) if block
+            if _already_seen_item(item, seen)
+                self.delete_at(i)
+            else
+                i += 1
+            end
+        end
+        return self if i != old_len else nil
+    end
+
+    # TODO: Make this private once we have private methods
+    def _already_seen_item(item, seen)
+        hashval = item.hash
+        if seen.include? hashval
+            seen[hashval].each do |seen_item|
+                return true if item == seen_item
+            end
+            seen[hashval] << item
+        else
+            seen[hashval] = [item]
+        end
+        return false
+    end
+
     def uniq(&block)
         arr = self.dup
         arr.uniq!(&block)
