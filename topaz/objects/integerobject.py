@@ -8,3 +8,13 @@ class W_IntegerObject(W_NumericObject):
     @classdef.method("to_i")
     def method_to_i(self, space):
         return self
+
+    classdef.app_method("""
+    def downto(limit)
+        current = self
+        while current >= limit
+            yield current
+            current -= 1
+        end
+    end
+    """)
