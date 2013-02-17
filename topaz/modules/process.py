@@ -79,6 +79,8 @@ class W_ProcessStatusObject(W_Object):
       @exitstatus
     end
 
+    alias exitstatus to_i
+
     def pid
       @pid
     end
