@@ -284,6 +284,13 @@ class MutableStringStrategy(StringStrategy):
             storage[last_alnum] = carry
             storage.insert(last_alnum + 1, last_alnum_ch)
 
+    def insert(self, storage, index, other):
+        storage = self.unerase(storage)
+        if index < 0:
+            index = len(storage) + index + 1
+        for char in other:
+            storage.insert(index, char)
+            index += 1
 
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
@@ -996,4 +1003,13 @@ class W_StringObject(W_Object):
     def method_succ_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.succ(self.str_storage)
+        return self
+
+    @classdef.method("insert", index="int", other="str")
+    def method_insert(self, space, index, other):
+        if index > self.length() or index < -1 - self.length():
+            raise space.error(space.w_IndexError,
+                    "index %d is out string" % index)
+        self.strategy.to_mutable(space, self)
+        self.strategy.insert(self.str_storage, index, other)
         return self
