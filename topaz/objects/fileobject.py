@@ -312,6 +312,7 @@ class W_FileObject(W_IOObject):
             return space.w_nil
         return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
 
+    @classdef.singleton_method("unlink")
     @classdef.singleton_method("delete")
     def singleton_method_delete(self, space, args_w):
         for w_path in args_w:
