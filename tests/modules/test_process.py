@@ -62,3 +62,36 @@ class TestProcess(BaseTopazTest):
                 w_res = space.execute("return $?")
                 status = space.send(w_res, space.newsymbol("to_i"), [])
                 assert space.int_w(status) == code
+
+    def test_waitpid(self, space):
+        for code in [0, 1, 173]:
+            pid = os.fork()
+            if pid == 0:
+                os._exit(code)
+            else:
+                w_res = space.execute("return Process.waitpid %i" % pid)
+                assert space.int_w(w_res) == pid
+                w_res = space.execute("return $?")
+                status = space.send(w_res, space.newsymbol("to_i"), [])
+                assert space.int_w(status) == code
+
+    def test_waitpid2(self, space):
+        for code in [0, 1, 173]:
+            pid = os.fork()
+            if pid == 0:
+                os._exit(code)
+            else:
+                w_res = space.execute("return Process.waitpid2 %i" % pid)
+                returned_pid, returned_code = space.listview(w_res)
+                assert space.int_w(returned_pid) == pid
+                code_to_i = space.send(returned_code, space.newsymbol("to_i"), [])
+                assert space.int_w(code_to_i) == code
+
+    def test_exit_bang(self, space):
+        for code in [0, 1, 173]:
+            pid = os.fork()
+            if pid == 0:
+                space.execute("Process.exit! %i" % code)
+            else:
+                _, returned_code = os.waitpid(pid, 0)
+                assert os.WEXITSTATUS(returned_code) == code
