@@ -1,3 +1,5 @@
 rply
 # Only a test requirement
 pytest
+fabric
+requests
