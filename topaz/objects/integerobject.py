@@ -10,7 +10,8 @@ class W_IntegerObject(W_NumericObject):
         return self
 
     classdef.app_method("""
-    def downto(limit)
+    def downto(limit, &block)
+        raise NotImplementedError, "Object#enum_for" if !block
         current = self
         while current >= limit
             yield current
