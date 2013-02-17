@@ -41,6 +41,11 @@ class Process(Module):
         except OSError as ex:
             raise space.error(space.w_SystemCallError, str(ex))
 
+    @moduledef.function("waitpid2", pid="int")
+    def method_waitpid2(self, space, pid=-1):
+        pid = space.send(self, space.newsymbol("waitpid"), [space.newint(pid)])
+        return space.newarray([pid, space.globals.get(space, "$?")])
+
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
         raise space.error(space.w_SystemExit, "exit", [space.newint(status)])
