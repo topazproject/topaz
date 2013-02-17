@@ -1009,8 +1009,10 @@ class W_StringObject(W_Object):
     @classdef.method("insert", index="int", other="str")
     def method_insert(self, space, index, other):
         if index > self.length() or index < -1 - self.length():
-            raise space.error(space.w_IndexError,
-                    "index %d is out string" % index)
+            raise space.error(
+                    space.w_IndexError,
+                    "index %d out of string" % index
+                  )
         self.strategy.to_mutable(space, self)
         self.strategy.insert(self.str_storage, index, other)
         return self
