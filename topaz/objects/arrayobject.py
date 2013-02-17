@@ -76,6 +76,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("at")
     @classdef.method("[]")
+    @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):
         start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
         if nil:
@@ -131,6 +132,29 @@ class W_ArrayObject(W_Object):
         else:
             self.items_w[start] = w_obj
         return w_obj
+
+    @classdef.method("slice!")
+    @check_frozen()
+    def method_slice_i(self, space, w_idx, w_count=None):
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+
+        if as_range and end - start == 0:
+            return space.newarray([])
+
+        if start < 0 or start >= len(self.items_w):
+            return space.w_nil
+
+        if as_range:
+            start = min(max(start, 0), len(self.items_w))
+            end = min(max(end, 0), len(self.items_w))
+            delta = (end - start)
+            w_items = self.items_w[start:start + delta]
+            del self.items_w[start:start + delta]
+            return space.newarray(w_items)
+        else:
+            w_item = self.items_w[start]
+            del self.items_w[start]
+            return w_item
 
     @classdef.method("size")
     @classdef.method("length")
