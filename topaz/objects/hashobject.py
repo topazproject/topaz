@@ -170,14 +170,24 @@ class W_HashObject(W_Object):
 
     def merge!(other)
         other = other.to_hash unless other.kind_of? Hash
-        other.each do |key, val|
-            self[key] = val
+        if block_given?
+            other.each do |key, val|
+                if has_key? key
+                    self[key] = yield key, self[key], val
+                else
+                    self[key] = val
+                end
+            end
+        else
+            other.each do |key, val|
+                self[key] = val
+            end
         end
         self
     end
 
-    def merge(other)
-        dup.merge! other
+    def merge(other, &block)
+        dup.merge! other, &block
     end
     """)
 
