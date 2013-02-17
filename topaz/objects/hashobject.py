@@ -167,6 +167,28 @@ class W_HashObject(W_Object):
         end
         return true
     end
+
+    def merge!(other, &block)
+        other = other.to_hash unless other.kind_of? Hash
+        if block
+            other.each do |key, val|
+                if has_key? key
+                    self[key] = block.call key, self[key], val
+                else
+                    self[key] = val
+                end
+            end
+        else
+            other.each do |key, val|
+                self[key] = val
+            end
+        end
+        self
+    end
+
+    def merge(other, &block)
+        dup.merge! other, &block
+    end
     """)
 
 
