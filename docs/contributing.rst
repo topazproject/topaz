@@ -46,8 +46,11 @@ Running the tests
 ~~~~~~~~~~~~~~~~~
 
 One thing you should know when writing a patch for Topaz, is that all changes
-need tests (or a really good reason why they don't). You can run our test suite
-by installing ``py.test`` (``pip install -r requirements.txt``)::
+need tests (or a really good reason why they don't). You should first check whether
+you can find a Rubyspec that previously failed and now passes with your patch.
+If you do, see below for how to untag it. If there is no Rubyspec that now works,
+you need to write a test for our test suite. You can run our test suite by
+installing ``py.test`` (``pip install -r requirements.txt``)::
 
     $ py.test
 
