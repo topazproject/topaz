@@ -144,6 +144,7 @@ class W_ArrayObject(W_Object):
             start = min(max(start, 0), len(self.items_w))
             end = min(max(end, 0), len(self.items_w))
             delta = (end - start)
+            assert delta >= 0
             w_items = self.items_w[start:start + delta]
             del self.items_w[start:start + delta]
             return space.newarray(w_items)
@@ -503,7 +504,7 @@ class W_ArrayObject(W_Object):
         while i < len(self.items_w):
             item_w = self.items_w[i]
             if block is not None:
-                item_w = space.invoke_block(block, (item_w,))
+                item_w = space.invoke_block(block, [item_w])
             if self._already_seen_item(space, item_w, seen):
                 del self.items_w[i]
             else:
