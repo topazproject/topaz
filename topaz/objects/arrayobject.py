@@ -138,13 +138,9 @@ class W_ArrayObject(W_Object):
     def method_slice_i(self, space, w_idx, w_count=None):
         start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
-        if as_range and end - start == 0:
-            return space.newarray([])
-
-        if start < 0 or start >= len(self.items_w):
+        if nil:
             return space.w_nil
-
-        if as_range:
+        elif as_range:
             start = min(max(start, 0), len(self.items_w))
             end = min(max(end, 0), len(self.items_w))
             delta = (end - start)
