@@ -167,6 +167,18 @@ class W_HashObject(W_Object):
         end
         return true
     end
+
+    def merge!(other)
+        other = other.to_hash unless other.kind_of? Hash
+        other.each do |key, val|
+            self[key] = val
+        end
+        self
+    end
+
+    def merge(other)
+        dup.merge! other
+    end
     """)
 
 
