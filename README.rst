@@ -9,13 +9,9 @@ An implementation of the Ruby programming language, in Python, using the
 RPython VM toolchain. Its goals are simplicity of implementation and
 performance.
 
-You'll need to have `RPly`_ and `py.test`_ installed.  You can get them with
-``pip install -r requirements.txt``. Finally make sure you have a recent
-checkout of `PyPy`_ and have it on your ``PYTHONPATH``.
-
-.. _`RPly`: https://github.com/alex/rply
-.. _`py.test`: http://pytest.org/
-.. _`PyPy`: https://bitbucket.org/pypy/pypy
+You'll need to have a few dependencies installed. You can get them with ``pip
+install -r requirements.txt``. Finally make sure you have a recent checkout of
+`PyPy`_ and have it on your ``PYTHONPATH``.
 
 To run the tests::
 
