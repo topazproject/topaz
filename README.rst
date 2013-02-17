@@ -9,7 +9,7 @@ An implementation of the Ruby programming language, in Python, using the
 RPython VM toolchain. Its goals are simplicity of implementation and
 performance.
 
-You'll need to have a fell dependencies installed. You can get them with ``pip
+You'll need to have a few dependencies installed. You can get them with ``pip
 install -r requirements.txt``. Finally make sure you have a recent checkout of
 `PyPy`_ and have it on your ``PYTHONPATH``.
 
