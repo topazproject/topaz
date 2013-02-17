@@ -168,12 +168,12 @@ class W_HashObject(W_Object):
         return true
     end
 
-    def merge!(other)
+    def merge!(other, &block)
         other = other.to_hash unless other.kind_of? Hash
-        if block_given?
+        if block
             other.each do |key, val|
                 if has_key? key
-                    self[key] = yield key, self[key], val
+                    self[key] = block.call key, self[key], val
                 else
                     self[key] = val
                 end
