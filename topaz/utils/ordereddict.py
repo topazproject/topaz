@@ -74,12 +74,15 @@ class DictKey(object):
     def __init__(self, d, key):
         self.d = d
         self.key = key
+        self.hash = None
 
     def __eq__(self, other):
         return self.d.eq_func(self.key, other.key)
 
     def __hash__(self):
-        return self.d.hash_func(self.key)
+        if self.hash is None:
+            self.hash = self.d.hash_func(self.key)
+        return self.hash
 
 
 class OrderedDictEntry(ExtRegistryEntry):

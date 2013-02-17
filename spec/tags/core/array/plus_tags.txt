@@ -1,0 +1,3 @@
+fails:tries to convert the passed argument to an Array using #to_ary
+fails:Array#+ does return subclass instances with Array subclasses
+fails:Array#+ does not call to_ary on array subclasses

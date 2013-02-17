@@ -1,0 +1,3 @@
+fails:duplicates both the class and the singleton class
+fails:retains an included module in the ancestor chain for the singleton class
+fails:Class#dup

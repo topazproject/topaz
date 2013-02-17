@@ -221,6 +221,11 @@ class TestIO(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [True, True, True, False]
 
+    def test_singleton_readlines(self, space, tmpdir):
+        tmpdir.join("x.txt").write("abc")
+        w_res = space.execute("return IO.readlines('%s')" % tmpdir.join("x.txt"))
+        assert self.unwrap(space, w_res) == ["abc"]
+
     def test_to_io(self, space, tmpdir):
         f = tmpdir.join("file.txt")
         f.write("")
@@ -433,6 +438,8 @@ class TestFile(BaseTopazTest):
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
         assert space.str_w(w_res) == "/abc/bin"
+        w_res = space.execute("return File.join('', 'abc', 'bin')")
+        assert space.str_w(w_res) == "/abc/bin"
         w_res = space.execute("return File.join")
         assert space.str_w(w_res) == ""
         w_res = space.execute("return File.join('abc')")
@@ -443,6 +450,20 @@ class TestFile(BaseTopazTest):
         assert space.str_w(w_res) == "abc/def/ghi"
         w_res = space.execute("return File.join('a', '//', 'b', '/', 'd', '/')")
         assert space.str_w(w_res) == "a//b/d/"
+        w_res = space.execute("return File.join('a', '')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/', '')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a', '/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/', '/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('')")
+        assert space.str_w(w_res) == ""
+        w_res = space.execute("return File.join([])")
+        assert space.str_w(w_res) == ""
 
     def test_existp(self, space, tmpdir):
         f = tmpdir.join("test.rb")
@@ -545,6 +566,22 @@ class TestFile(BaseTopazTest):
         monkeypatch.setattr(os, "umask", mock_umask)
         w_res = space.execute("return File.umask(10), File.umask")
         assert self.unwrap(space, w_res) == [2, 10]
+
+    def test_size_p(self, space, tmpdir):
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert w_res is space.w_nil
+        tmpdir.join("x.txt").ensure()
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert w_res is space.w_nil
+        tmpdir.join("x.txt").write("abc")
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert space.int_w(w_res) == 3
+
+    def test_delete(self, space, tmpdir):
+        tmpdir.join("t.txt").ensure()
+        w_res = space.execute("return File.delete('%s')" % tmpdir.join("t.txt"))
+        assert space.int_w(w_res) == 1
+        assert not tmpdir.join("t.txt").check()
 
 
 class TestExpandPath(BaseTopazTest):

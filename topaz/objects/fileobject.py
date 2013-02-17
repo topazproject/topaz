@@ -3,6 +3,7 @@ import sys
 
 from rpython.rlib import jit
 
+from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
@@ -306,6 +307,12 @@ class W_IOObject(W_Object):
         each_line(sep, limit) { |line| lines << line }
         return lines
     end
+
+    def self.readlines(name, *args)
+        File.open(name) do |f|
+            return f.readlines(*args)
+        end
+    end
     """)
 
     @classdef.method("close")
@@ -350,6 +357,24 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_FileObject(space)
+
+    @classdef.singleton_method("size?", name="path")
+    def singleton_method_size_p(self, space, name):
+        try:
+            stat = os.stat(name)
+        except OSError:
+            return space.w_nil
+        return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
+
+    @classdef.singleton_method("delete")
+    def singleton_method_delete(self, space, args_w):
+        for w_path in args_w:
+            path = Coerce.path(space, w_path)
+            try:
+                os.unlink(path)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+        return space.newint(len(args_w))
 
     @classdef.method("initialize", filename="str")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
@@ -467,11 +492,21 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                string = space.str_w(
-                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
-                )
+                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                    if in_recursion:
+                        raise space.error(space.w_ArgumentError, "recursive array")
+                    string = space.str_w(
+                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                    )
             else:
-                string = space.str_w(w_arg)
+                w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
+                if w_string is space.w_nil:
+                    w_string = space.convert_type(w_arg, space.w_string, "to_str")
+                string = space.str_w(w_string)
+
+            if string == "" and len(args_w) > 1:
+                if (not result) or result[-1] != sep:
+                    result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()
