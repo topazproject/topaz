@@ -61,10 +61,12 @@ will verify for every pull request that it compiles and tests pass.
 Running Rubyspecs
 ~~~~~~~~~~~~~~~~~
 
-To run Rubyspecs, you can use the provided ``fab`` tasks. The rubyspec
-and mspec repositories have to be checked out next to your topaz
-repository, the spec tasks will clone them for you if they aren't
-already there.
+To run Rubyspecs, you can use the provided ``fab`` tasks. To get ``fab`` you
+must have Fabric (http://fabfile.org) installed. The rubyspec and mspec
+repositories have to be checked out next to your topaz repository, the spec
+tasks will clone them for you if they aren't already there.
+
+.. _`Fabric`: http://fabfile.org
 
 To just run all specs that should pass::
 
