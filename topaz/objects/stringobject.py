@@ -9,7 +9,7 @@ from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
 from rpython.rlib.rstring import split
 
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.formatting import StringFormatter
@@ -1007,6 +1007,7 @@ class W_StringObject(W_Object):
         return self
 
     @classdef.method("insert", index="int", other="str")
+    @check_frozen()
     def method_insert(self, space, index, other):
         if index > self.length() or index < -1 - self.length():
             raise space.error(
