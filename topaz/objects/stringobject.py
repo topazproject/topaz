@@ -288,6 +288,7 @@ class MutableStringStrategy(StringStrategy):
         storage = self.unerase(storage)
         if index < 0:
             index = len(storage) + index + 1
+        assert index >= 0
         for char in other:
             storage.insert(index, char)
             index += 1
