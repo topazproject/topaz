@@ -19,17 +19,23 @@ class TestModuleObject(BaseTopazTest):
             def f
                 3
             end
-            module_function :f
+            def g
+                4
+            end
+            module_function :f, :g
         end
         class X
             include Mod
-            def meth
+            def mathf
                 f + 2
             end
+            def mathg
+                g + 2
+            end
         end
-        return [Mod.f, X.new.meth]
+        return [Mod.f, X.new.mathf, X.new.mathg]
         """)
-        assert self.unwrap(space, w_res) == [3, 5]
+        assert self.unwrap(space, w_res) == [3, 5, 6]
 
     def test_alias_method(self, space):
         w_res = space.execute("""
@@ -43,6 +49,32 @@ class TestModuleObject(BaseTopazTest):
         return X.new.g
         """)
         assert self.unwrap(space, w_res) == 3
+
+    def test_define_method_with_block(self, space):
+        w_res = space.execute("""
+        class X
+            a = 10
+            define_method :add do
+                self.b + a
+            end
+            sub = proc { a - self.b }
+            define_method :sub, sub
+            def b; 5; end
+        end
+        return X.new.add, X.new.sub
+        """)
+        assert self.unwrap(space, w_res) == [15, 5]
+
+    def test_define_method_with_method(self, space):
+        w_res = space.execute("""
+        class X
+            def a; 10; end
+            define_method :x, instance_method(:a).bind(self.new)
+            define_method :y, instance_method(:a)
+        end
+        return X.new.x, X.new.y
+        """)
+        assert self.unwrap(space, w_res) == [10, 10]
 
     def test_singleton_class(self, space):
         w_res = space.execute("""

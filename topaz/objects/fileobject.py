@@ -1,7 +1,10 @@
 import os
 import sys
 
+from rpython.rlib import jit
+
 from topaz.coerce import Coerce
+from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
@@ -176,6 +179,7 @@ class W_IOObject(W_Object):
         return space.w_nil
 
     @classdef.method("puts")
+    @jit.look_inside_iff(lambda self, space, args_w: jit.isconstant(len(args_w)))
     def method_puts(self, space, args_w):
         self.ensure_not_closed(space)
         for w_arg in args_w:
@@ -279,6 +283,10 @@ class W_IOObject(W_Object):
             return self
         end
 
+        if limit == 0
+            raise ArgumentError.new("invalid limit: 0 for each_line")
+        end
+
         rest = ""
         nxt = read(8192)
         need_read = false
@@ -307,6 +315,18 @@ class W_IOObject(W_Object):
         end
         self
     end
+
+    def readlines(sep=$/, limit=nil)
+        lines = []
+        each_line(sep, limit) { |line| lines << line }
+        return lines
+    end
+
+    def self.readlines(name, *args)
+        File.open(name) do |f|
+            return f.readlines(*args)
+        end
+    end
     """)
 
     @classdef.method("close")
@@ -334,6 +354,7 @@ class W_FileObject(W_IOObject):
             w_fnm_syscase = space.newint(0)
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
+        space.set_const(w_cls, "PATH_SEPARATOR", space.newstr_fromstr(os.pathsep))
         space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
         space.set_const(w_cls, "FNM_NOESCAPE", space.newint(FNM_NOESCAPE))
         space.set_const(w_cls, "FNM_PATHNAME", space.newint(FNM_PATHNAME))
@@ -350,6 +371,24 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_FileObject(space)
+
+    @classdef.singleton_method("size?", name="path")
+    def singleton_method_size_p(self, space, name):
+        try:
+            stat = os.stat(name)
+        except OSError:
+            return space.w_nil
+        return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
+
+    @classdef.singleton_method("delete")
+    def singleton_method_delete(self, space, args_w):
+        for w_path in args_w:
+            path = Coerce.path(space, w_path)
+            try:
+                os.unlink(path)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+        return space.newint(len(args_w))
 
     @classdef.method("initialize", filename="str")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
@@ -376,33 +415,48 @@ class W_FileObject(W_IOObject):
                 "invalid access mode %s" % mode_str
             )
             major_mode_seen = False
+            readable = writeable = append = False
 
             for ch in mode_str:
                 if ch == "b":
                     mode |= O_BINARY
                 elif ch == "+":
-                    mode |= os.O_RDWR
+                    readable = writeable = True
                 elif ch == "r":
                     if major_mode_seen:
                         raise invalid_error
                     major_mode_seen = True
-                    mode |= os.O_RDONLY
-                elif ch in "aw":
+                    readable = True
+                elif ch == "a":
                     if major_mode_seen:
                         raise invalid_error
                     major_mode_seen = True
-                    mode |= os.O_WRONLY | os.O_CREAT
-                    if ch == "w":
-                        mode |= os.O_TRUNC
-                    else:
-                        mode |= os.O_APPEND
+                    mode |= os.O_CREAT
+                    append = writeable = True
+                elif ch == "w":
+                    if major_mode_seen:
+                        raise invalid_error
+                    major_mode_seen = True
+                    mode |= os.O_TRUNC | os.O_CREAT
+                    writeable = True
                 else:
                     raise invalid_error
+            if readable and writeable:
+                mode |= os.O_RDWR
+            elif readable:
+                mode |= os.O_RDONLY
+            elif writeable:
+                mode |= os.O_WRONLY
+            if append:
+                mode |= os.O_APPEND
         else:
             mode = space.int_w(w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
             raise NotImplementedError("options hash or permissions for File.new")
-        self.fd = os.open(filename, mode, perm)
+        try:
+            self.fd = os.open(filename, mode, perm)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         return self
 
     @classdef.singleton_method("dirname", path="path")
@@ -452,11 +506,21 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                string = space.str_w(
-                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
-                )
+                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                    if in_recursion:
+                        raise space.error(space.w_ArgumentError, "recursive array")
+                    string = space.str_w(
+                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                    )
             else:
-                string = space.str_w(w_arg)
+                w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
+                if w_string is space.w_nil:
+                    w_string = space.convert_type(w_arg, space.w_string, "to_str")
+                string = space.str_w(w_string)
+
+            if string == "" and len(args_w) > 1:
+                if (not result) or result[-1] != sep:
+                    result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()
@@ -484,9 +548,18 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("basename", filename="path")
     def method_basename(self, space, filename):
-        i = filename.rfind('/') + 1
+        i = filename.rfind("/") + 1
         assert i >= 0
         return space.newstr_fromstr(filename[i:])
+
+    @classdef.singleton_method("umask", mask="int")
+    def method_umask(self, space, mask=-1):
+        if mask >= 0:
+            return space.newint(os.umask(mask))
+        else:
+            current_umask = os.umask(0)
+            os.umask(current_umask)
+            return space.newint(current_umask)
 
     classdef.app_method("""
     def self.open(filename, mode="r", perm=nil, opt=nil, &block)

@@ -1,0 +1,2 @@
+fails:Bignum#coerce coerces other to a Bignum and returns [other, self] when passed a Fixnum
+fails:Bignum#coerce returns [other, self] when passed a Bignum

@@ -1,7 +1,8 @@
 import operator
 
 from rpython.rlib.debug import check_regular_int
-from rpython.rlib.rarithmetic import ovfcheck
+from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rarithmetic import ovfcheck, LONG_BIT
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import lltype, rffi
 
@@ -154,6 +155,11 @@ class W_FixnumObject(W_RootObject):
     def method_left_shift(self, space, other):
         if other < 0:
             return space.newint(self.intvalue >> -other)
+        elif other > LONG_BIT:
+            return space.send(
+                space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
+                [space.newint(other)]
+            )
         else:
             try:
                 value = ovfcheck(self.intvalue << other)
@@ -219,6 +225,7 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.w_nil
 
+    @specialize.argtype(2)
     def comparator(self, space, other):
         if self.intvalue < other:
             return -1
@@ -243,7 +250,7 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
 
-    @classdef.method('chr')
+    @classdef.method("chr")
     def method_chr(self, space):
         if self.intvalue > 255 or self.intvalue < 0:
             raise space.error(space.w_RangeError, "%d out of char range" % self.intvalue)

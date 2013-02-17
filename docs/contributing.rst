@@ -35,15 +35,61 @@ We welcome patches of all sorts to Topaz, whether it's to the docs or the code.
 You can send us patches by forking our repository on Github and then sending a
 pull request.
 
+Getting a copy of the repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First things first, you'll need to grab a copy of the repository::
+
+    $ git clone git://github.com/topazproject/topaz.git
+
 Running the tests
 ~~~~~~~~~~~~~~~~~
 
 One thing you should know when writing a patch for Topaz, is that all changes
 need tests (or a really good reason why they don't). You can run our test suite
-by installing `py.test` (`pip install pytest`)::
+by installing ``py.test`` (``pip install -r requirements.txt``)::
 
     $ py.test
 
 This will run all the tests. In general you do not need to compile Topaz when
 working on a patch, all changes should be testable directly, and the buildbot
 will verify for every pull request that it compiles and tests pass.
+
+Running Rubyspecs
+~~~~~~~~~~~~~~~~~
+
+To run Rubyspecs, you can use the provided ``fab`` tasks. The rubyspec
+and mspec repositories have to be checked out next to your topaz
+repository, the spec tasks will clone them for you if they aren't
+already there.
+
+To just run all specs that should pass::
+
+    $ fab specs.run
+
+You can also pass additional options, or run just a subset of the specs::
+
+    $ fab specs.run:options="-V --format dotted",files=../rubyspec/core/array
+
+If you encounter failures that you need to tag::
+
+    $ fab specs.tag:files=../rubyspec/path/to/failing_spec.rb
+
+Not that you cannot tag specs that fail or error during load or setup,
+to skip those you have to add them to the list of skipped specs in
+``topaz.mspec``.
+
+If you implemented a new feature, and want to untag the specs that now pass::
+
+    $ fab specs.untag:files=../rubyspec/path/to/failing_spec.rb
+
+And finally, during development, you may find it useful to run the
+specs untranslated::
+
+    $ fab specs.run:translated=False,files=../rubyspec/core/array/new_spec.rb
+
+Adding yourself to the authors file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When you submit your first patch, add your name to the ``AUTHORS.rst`` file,
+you've earned it!

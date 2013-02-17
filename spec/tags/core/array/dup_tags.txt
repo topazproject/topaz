@@ -1,0 +1,2 @@
+fails:Array#dup returns an Array or a subclass instance
+fails:Array#dup 

@@ -29,3 +29,13 @@ class W_ThreadObject(W_Object):
     def method_subscript_assign(self, space, key, w_value):
         self.local_storage[key] = w_value
         return w_value
+
+    @classdef.method("recursion_guard")
+    def method_recursion_guard(self, space, w_obj, block):
+        """Detects recursion. If there is none, yield
+        and return false. Else return true"""
+        with space.getexecutioncontext().recursion_guard(w_obj) as in_recursion:
+            if in_recursion:
+                return space.w_true
+            space.invoke_block(block, [])
+        return space.w_false

@@ -6,38 +6,38 @@ from rpython.rtyper.tool import rffi_platform as platform
 from rpython.translator.tool.cbuild import ExternalCompilationInfo
 
 
-if sys.platform.startswith('win'):
+if sys.platform.startswith("win"):
     def opendir(_):
         raise NotImplementedError("directory operations on windows")
     readdir = closedir = opendir
 else:
     eci = ExternalCompilationInfo(
-        includes=['sys/types.h', 'dirent.h']
+        includes=["sys/types.h", "dirent.h"]
     )
 
     class CConfig:
         _compilation_info_ = eci
-        DIRENT = platform.Struct('struct dirent', [
-            ('d_name', lltype.FixedSizeArray(rffi.CHAR, 1))
+        DIRENT = platform.Struct("struct dirent", [
+            ("d_name", lltype.FixedSizeArray(rffi.CHAR, 1))
         ])
     config = platform.configure(CConfig)
-    DIRP = rffi.COpaquePtr('DIR')
-    DIRENT = config['DIRENT']
+    DIRP = rffi.COpaquePtr("DIR")
+    DIRENT = config["DIRENT"]
     DIRENTP = lltype.Ptr(DIRENT)
 
     # XXX macro=True is hack to make sure we get the correct kind of
     # dirent struct (which depends on defines)
-    os_opendir = rffi.llexternal('opendir',
+    os_opendir = rffi.llexternal("opendir",
         [rffi.CCHARP], DIRP,
         compilation_info=eci,
         macro=True
     )
-    os_readdir = rffi.llexternal('readdir',
+    os_readdir = rffi.llexternal("readdir",
         [DIRP], DIRENTP,
         compilation_info=eci,
         macro=True
     )
-    os_closedir = rffi.llexternal('closedir',
+    os_closedir = rffi.llexternal("closedir",
         [DIRP], rffi.INT,
         compilation_info=eci,
         macro=True

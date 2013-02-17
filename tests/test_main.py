@@ -38,9 +38,18 @@ class TestMain(object):
         assert not err
 
     def test_expr(self, space, tmpdir, capfd):
-        self.run(space, tmpdir, None, ruby_args=['-e', 'puts 5', '-e', 'puts 6'])
+        self.run(space, tmpdir, None, ruby_args=["-e", "puts 5", "-e", "puts 6"])
         out, err = capfd.readouterr()
         assert out == "5\n6\n"
+        self.run(space, tmpdir, None, ruby_args=["-eputs 'hi'"])
+        out, err = capfd.readouterr()
+        assert out == "hi\n"
+
+    def test_no_expr(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, None, ruby_args=["-e"], status=1)
+        out, err = capfd.readouterr()
+        assert err == u"no code specified for -e (RuntimeError)\n"
+        assert out == ""
 
     def test___FILE__(self, space, tmpdir, capfd):
         f = self.run(space, tmpdir, "puts __FILE__")
@@ -61,6 +70,90 @@ class TestMain(object):
         out, err = capfd.readouterr()
         [version] = out.splitlines()
         assert version.startswith("topaz")
+
+    def test_help(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-h"])
+        out, _ = capfd.readouterr()
+        assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
+
+    def test_version(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["--version"])
+        out, _ = capfd.readouterr()
+        [version] = out.splitlines()
+        assert version.startswith("topaz")
+        assert "1.9.3" in version
+        assert os.uname()[4] in version
+        assert platform.system().lower() in version
+
+    def test_stop_consuming_args(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
+        out, _ = capfd.readouterr()
+        assert out == "--help -e\n"
+
+    def test_load_path_multiple_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f1 = d.join("f.rb")
+        f1.write("""
+        Const = 5
+        """)
+        self.run(space, tmpdir, """
+        require "f"
+        puts Const
+        """, ruby_args=["-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out == "5\n"
+
+    def test_load_path_joined_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f1 = d.join("f.rb")
+        f1.write("""
+        Const = 10
+        """)
+        self.run(space, tmpdir, """
+        require "f"
+        puts Const
+        """, ruby_args=["-I%s" % d])
+        out, _ = capfd.readouterr()
+        assert out == "10\n"
+
+    def test_load_path_path_separated(self, space, tmpdir, capfd):
+        d1 = tmpdir.mkdir("sub")
+        d2 = tmpdir.mkdir("sub2")
+        f1 = d1.join("f1.rb")
+        f1.write("""
+        Const1 = 20
+        """)
+        f2 = d2.join("f2.rb")
+        f2.write("""
+        require "f1"
+        Const2 = 3
+        """)
+        self.run(space, tmpdir, """
+        require "f2"
+        puts Const1 + Const2
+        """, ruby_args=["-I%s:%s" % (d1, d2)])
+        out, _ = capfd.readouterr()
+        assert out == "23\n"
+
+    def test_require_multiple_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f = d.join("zyx.rb")
+        f.write("""
+        Zyx = 9
+        """)
+        self.run(space, tmpdir, "puts Zyx", ruby_args=["-r", "zyx", "-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out == "9\n"
+
+    def test_require_joined_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f = d.join("zyx.rb")
+        f.write("""
+        Zyx = 7
+        """)
+        self.run(space, tmpdir, "puts Zyx", ruby_args=["-rzyx", "-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out == "7\n"
 
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
@@ -172,3 +265,8 @@ class TestMain(object):
         f = self.run(space, tmpdir, "puts $0")
         out2, err2 = capfd.readouterr()
         assert out2 == "{}\n".format(f)
+
+    def test_non_existent_file(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, None, ruby_args=[str(tmpdir.join("t.rb"))], status=1)
+        out, err = capfd.readouterr()
+        assert err == "No such file or directory -- %s (LoadError)\n" % tmpdir.join("t.rb")

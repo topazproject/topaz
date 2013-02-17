@@ -1,0 +1,6 @@
+fails:Array#join returns a string formed by concatenating each element.to_str separated by separator
+fails:Array#join uses the same separator with nested arrays
+fails:Array#join returns a US-ASCII string for an empty Array
+fails:Array#join returns a string formed by concatenating each String element separated by $,
+fails:Array#join attempts coercion via #to_str first
+fails:Array#join

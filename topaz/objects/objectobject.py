@@ -129,7 +129,16 @@ class W_RootObject(W_BaseObject):
 
     @classdef.method("extend")
     def method_extend(self, space, w_mod):
-        self.getsingletonclass(space).method_include(space, w_mod)
+        if not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
+            if space.is_kind_of(w_mod, space.w_class):
+                name = "Class"
+            else:
+                name = space.getclass(w_mod).name
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Module)" % name
+            )
+        self.getsingletonclass(space).extend_object(space, self, w_mod)
 
     @classdef.method("inspect")
     @classdef.method("to_s")

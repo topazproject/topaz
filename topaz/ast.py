@@ -366,6 +366,15 @@ class Argument(Node):
         self.defl = defl
 
 
+class Lambda(Node):
+    def __init__(self, block):
+        self.block = block
+
+    def compile(self, ctx):
+        self.block.compile(ctx)
+        ctx.emit(consts.BUILD_LAMBDA)
+
+
 class Case(Node):
     def __init__(self, cond, whens, elsebody):
         self.cond = cond

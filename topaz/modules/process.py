@@ -8,6 +8,10 @@ from topaz.module import Module, ModuleDef
 class Process(Module):
     moduledef = ModuleDef("Process", filepath=__file__)
 
+    @moduledef.function("euid")
+    def method_euid(self, space):
+        return space.newint(os.geteuid())
+
     @moduledef.function("pid")
     def method_pid(self, space):
         return space.newint(os.getpid())
@@ -25,4 +29,5 @@ class Process(Module):
                 space.send(self, space.newsymbol("exit"))
             else:
                 return space.w_nil
-        return space.newint(pid)
+        else:
+            return space.newint(pid)

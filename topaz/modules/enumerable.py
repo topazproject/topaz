@@ -15,12 +15,16 @@ class Enumerable(Module):
         result
     end
 
+    alias collect map
+
     def inject memo
         self.each do |x|
             memo = (yield memo, x)
         end
         memo
     end
+
+    alias reduce inject
 
     def each_with_index
         i = 0
