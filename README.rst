@@ -13,6 +13,8 @@ You'll need to have a few dependencies installed. You can get them with ``pip
 install -r requirements.txt``. Finally make sure you have a recent checkout of
 `PyPy`_ and have it on your ``PYTHONPATH``.
 
+.. _`PyPy`: https://bitbucket.org/pypy/pypy
+
 To run the tests::
 
     $ py.test
