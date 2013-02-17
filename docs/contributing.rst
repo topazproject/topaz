@@ -66,8 +66,6 @@ must have `Fabric`_ installed. The rubyspec and mspec
 repositories have to be checked out next to your topaz repository, the spec
 tasks will clone them for you if they aren't already there.
 
-.. _`Fabric`: http://fabfile.org
-
 To just run all specs that should pass::
 
     $ fab specs.run
@@ -98,3 +96,6 @@ Adding yourself to the authors file
 
 When you submit your first patch, add your name to the ``AUTHORS.rst`` file,
 you've earned it!
+
+
+.. _`Fabric`: http://fabfile.org
