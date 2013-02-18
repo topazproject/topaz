@@ -202,8 +202,6 @@ class ObjectSpace(object):
         self.w_load_path = self.newarray([])
         self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
 
-        self.load_kernel(os.path.join(os.path.join(self.base_lib_path, os.path.pardir), "lib-topaz"))
-
         # TODO: this should really go in a better place.
         self.execute("""
         def self.include *mods
@@ -228,15 +226,15 @@ class ObjectSpace(object):
                 lib_path = os.path.join(path, "lib-ruby")
                 kernel_path = os.path.join(path, "lib-topaz")
                 break
-
         self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
+        self.load_kernel(kernel_path)
 
     def load_kernel(self, kernel_path):
-        for lib in ["array.rb", "class.rb", "comparable.rb", "enumerable.rb",
-                    "file.rb", "fixnum.rb", "hash.rb", "integer.rb",
-                    "io.rb" , "kernel.rb", "match_data.rb", "numeric.rb",
-                    "range.rb", "string.rb", "symbol.rb"]:
-            self.send(self.w_kernel, self.newsymbol("load"), [self.newstr_fromstr(os.path.join(kernel_path, lib))])
+        self.send(
+            self.w_kernel,
+            self.newsymbol("load"),
+            [self.newstr_fromstr(os.path.join(kernel_path, "bootstrap.rb"))]
+        )
 
     @specialize.memo()
     def fromcache(self, key):
