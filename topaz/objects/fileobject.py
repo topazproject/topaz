@@ -211,11 +211,12 @@ class W_IOObject(W_Object):
     @classdef.method("stat")
     def method_stat(self, space):
         try:
-            stat_obj = W_FileStatObject(space)
-            stat_obj.set_stat(os.fstat(self.fd))
-            return stat_obj
+            stat_val = os.fstat(self.fd)
         except OSError as e:
             raise error_for_oserror(space, e)
+            stat_obj = W_FileStatObject(space)
+            stat_obj.set_stat(stat_val)
+            return stat_obj
 
 
 class W_FileObject(W_IOObject):
@@ -254,10 +255,10 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("size?", name="path")
     def singleton_method_size_p(self, space, name):
         try:
-            stat = os.stat(name)
+            stat_val = os.stat(name)
         except OSError:
             return space.w_nil
-        return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
+        return space.w_nil if stat.st_size == 0 else space.newint(stat_val.st_size)
 
     @classdef.singleton_method("unlink")
     @classdef.singleton_method("delete")
@@ -474,20 +475,22 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("stat", filename="path")
     def singleton_method_stat(self, space, filename):
         try:
-            stat_obj = W_FileStatObject(space)
-            stat_obj.set_stat(os.stat(filename))
-            return stat_obj
+            stat_val = os.stat(filename)
         except OSError as e:
             raise error_for_oserror(space, e)
+        stat_obj = W_FileStatObject(space)
+        stat_obj.set_stat(stat_val)
+        return stat_obj
 
     @classdef.singleton_method("lstat", filename="path")
     def singleton_method_lstat(self, space, filename):
         try:
-            stat_obj = W_FileStatObject(space)
-            stat_obj.set_stat(os.lstat(filename))
-            return stat_obj
+            stat_val = os.lstat(filename)
         except OSError as e:
             raise error_for_oserror(space, e)
+        stat_obj = W_FileStatObject(space)
+        stat_obj.set_stat(stat_val)
+        return stat_obj
 
     @classdef.singleton_method("symlink", old_name="path", new_name="path")
     def singleton_method_symlink(self, space, old_name, new_name):
