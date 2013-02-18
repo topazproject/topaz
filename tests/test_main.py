@@ -157,11 +157,7 @@ class TestMain(object):
 
     def test_search_path(self, space, tmpdir, capfd, monkeypatch):
         f = tmpdir.join("a")
-        f.write("""
-        #!/usr/bin/env ruby
-        puts 17
-        """)
-        os.chmod(str(f), 0700)
+        f.write("puts 17")
         monkeypatch.setenv("PATH", "%s:%s" % (tmpdir, os.environ["PATH"]))
         self.run(space, tmpdir, ruby_args=["-S", "a"])
         out, _ = capfd.readouterr()
