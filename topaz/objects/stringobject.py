@@ -9,7 +9,7 @@ from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
 from rpython.rlib.rstring import split
 
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.formatting import StringFormatter
@@ -283,6 +283,12 @@ class MutableStringStrategy(StringStrategy):
             last_alnum_ch = storage[last_alnum]
             storage[last_alnum] = carry
             storage.insert(last_alnum + 1, last_alnum_ch)
+
+    def insert(self, storage, idx, other):
+        storage = self.unerase(storage)
+        for char in other:
+            storage.insert(idx, char)
+            idx += 1
 
 
 class W_StringObject(W_Object):
@@ -921,4 +927,17 @@ class W_StringObject(W_Object):
     def method_succ_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.succ(self.str_storage)
+        return self
+
+    @classdef.method("insert", index="int", other="str")
+    @check_frozen()
+    def method_insert(self, space, index, other):
+        if index < 0:
+            index += self.length() + 1
+        if not 0 <= index <= self.length():
+            raise space.error(space.w_IndexError,
+                "index %d out of string" % index
+            )
+        self.strategy.to_mutable(space, self)
+        self.strategy.insert(self.str_storage, index, other)
         return self
