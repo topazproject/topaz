@@ -251,6 +251,16 @@ class TestIO(BaseTopazTest):
             f.reopen($stdout)
             """ % f)
 
+    def test_reopen_closed_io(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write('')
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            f = File.new('%s')
+            f.close
+            $stderr.reopen(f)
+            """ % f)
+
     def test_reopen(self, space, tmpdir):
         content = "This is line one"
         f = tmpdir.join("testfile")

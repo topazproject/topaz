@@ -249,6 +249,7 @@ class W_IOObject(W_Object):
             args = [w_arg] if w_mode is None else [w_arg, w_mode]
             w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
         assert isinstance(w_io, W_IOObject)
+        w_io.ensure_not_closed(space)
         os.close(self.fd)
         os.dup2(w_io.getfd(), self.fd)
         return self
