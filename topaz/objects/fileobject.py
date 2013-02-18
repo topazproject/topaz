@@ -497,12 +497,6 @@ class W_FileObject(W_IOObject):
             raise error_for_oserror(space, e)
         return space.newint(0)
 
-    classdef.app_method("""
-    def zero?
-        return self.size == 0
-    end
-    """)
-
 
 class W_FileStatObject(W_Object):
     classdef = ClassDef("Stat", W_Object.classdef, filepath=__file__)
@@ -600,13 +594,6 @@ class W_FileStatObject(W_Object):
     def method_size(self, space):
         return space.newint(self.stat.st_size)
 
-    classdef.app_method("""
-    def size?
-        return nil if self.size == 0
-        self.size
-    end
-    """)
-
     @classdef.method("socket?")
     def method_socketp(self, space):
         return space.newbool(stat.S_ISSOCK(self.stat.st_mode))
@@ -634,9 +621,3 @@ class W_FileStatObject(W_Object):
         if stat.S_IMODE(self.stat.st_mode) & stat.S_IWOTH:
             return self.method_mode(space)
         return space.w_nil
-
-    classdef.app_method("""
-    def zero?
-        return self.size == 0
-    end
-    """)

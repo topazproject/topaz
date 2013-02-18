@@ -8,4 +8,23 @@ class File < IO
       f.close
     end
   end
+
+  def zero?
+    self.size == 0
+  end
+end
+
+
+class File::Stat
+  def size?
+    if self.size == 0
+      nil
+    else
+      self.size
+    end
+  end
+
+  def zero?
+    self.size == 0
+  end
 end
