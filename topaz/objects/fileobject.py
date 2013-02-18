@@ -1,6 +1,7 @@
 import os
 import sys
 import stat
+import functools
 
 from rpython.rlib import jit
 
@@ -258,7 +259,7 @@ class W_FileObject(W_IOObject):
             stat_val = os.stat(name)
         except OSError:
             return space.w_nil
-        return space.w_nil if stat.st_size == 0 else space.newint(stat_val.st_size)
+        return space.w_nil if stat_val.st_size == 0 else space.newint(stat_val.st_size)
 
     @classdef.singleton_method("unlink")
     @classdef.singleton_method("delete")
@@ -501,11 +502,35 @@ class W_FileObject(W_IOObject):
         return space.newint(0)
 
 
+def check_initialized(param="self"):
+    def inner(func):
+        code = func.__code__
+        space_idx = code.co_varnames.index("space")
+        obj_idx = code.co_varnames.index(param)
+
+        @functools.wraps(func)
+        def wrapper(*args):
+            space = args[space_idx]
+            w_obj = args[obj_idx]
+            if not w_obj.is_initialized:
+                klass = space.getclass(w_obj)
+                raise space.error(space.w_RuntimeError, "uninitialized %s" % klass.name)
+            return func(*args)
+        wrapper.__wraps__ = func
+        return wrapper
+    return inner
+
+
 class W_FileStatObject(W_Object):
     classdef = ClassDef("Stat", W_Object.classdef, filepath=__file__)
 
+    def __init__(self, space):
+        W_Object.__init__(self, space)
+        self.is_initialized = False
+
     def set_stat(self, stat):
         self.stat = stat
+        self.is_initialized = True
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_args):
@@ -519,34 +544,42 @@ class W_FileStatObject(W_Object):
             raise error_for_oserror(space, e)
 
     @classdef.method("blksize")
+    @check_initialized()
     def method_blksize(self, space):
         return space.newint(self.stat.st_blksize)
 
     @classdef.method("blockdev?")
+    @check_initialized()
     def method_blockdevp(self, space):
         return space.newbool(stat.S_ISBLK(self.stat.st_mode))
 
     @classdef.method("blocks")
+    @check_initialized()
     def method_blocks(self, space):
         return space.newint(self.stat.st_blocks)
 
     @classdef.method("chardev?")
+    @check_initialized()
     def method_chardevp(self, space):
         return space.newbool(stat.S_ISCHR(self.stat.st_mode))
 
     @classdef.method("dev")
+    @check_initialized()
     def method_dev(self, space):
         return space.newint(self.stat.st_dev)
 
     @classdef.method("directory?")
+    @check_initialized()
     def method_directoryp(self, space):
         return space.newbool(stat.S_ISDIR(self.stat.st_mode))
 
     @classdef.method("file?")
+    @check_initialized()
     def method_filep(self, space):
         return space.newbool(stat.S_ISREG(self.stat.st_mode))
 
     @classdef.method("ftype")
+    @check_initialized()
     def method_ftype(self, space):
         if stat.S_ISREG(self.stat.st_mode):
             return space.newstr_fromstr("file")
@@ -566,60 +599,74 @@ class W_FileStatObject(W_Object):
             return space.newstr_fromstr("unknown")
 
     @classdef.method("gid")
+    @check_initialized()
     def method_gid(self, space):
         return space.newint(self.stat.st_gid)
 
     @classdef.method("ino")
+    @check_initialized()
     def method_ino(self, space):
         return space.newint(self.stat.st_ino)
 
     @classdef.method("mode")
+    @check_initialized()
     def method_mode(self, space):
         return space.newint(self.stat.st_mode)
 
     @classdef.method("nlink")
+    @check_initialized()
     def method_nlink(self, space):
         return space.newint(self.stat.st_nlink)
 
     @classdef.method("rdev")
+    @check_initialized()
     def method_rdev(self, space):
         return space.newint(self.stat.st_rdev)
 
     @classdef.method("setgid?")
+    @check_initialized()
     def method_setgidp(self, space):
         return space.newbool(stat.S_IMODE(self.stat.st_mode) & stat.S_ISGID)
 
     @classdef.method("setuid?")
+    @check_initialized()
     def method_setuidp(self, space):
         return space.newbool(stat.S_IMODE(self.stat.st_mode) & stat.S_ISUID)
 
     @classdef.method("size")
+    @check_initialized()
     def method_size(self, space):
         return space.newint(self.stat.st_size)
 
     @classdef.method("socket?")
+    @check_initialized()
     def method_socketp(self, space):
         return space.newbool(stat.S_ISSOCK(self.stat.st_mode))
 
     @classdef.method("sticky?")
+    @check_initialized()
     def method_stickyp(self, space):
         return space.newbool(stat.S_IMODE(self.stat.st_mode) & stat.S_ISVTX)
 
     @classdef.method("symlink?")
+    @check_initialized()
     def method_symlinkp(self, space):
         return space.newbool(stat.S_ISLNK(self.stat.st_mode))
 
     @classdef.method("uid")
+    @check_initialized()
     def method_uid(self, space):
         return space.newint(self.stat.st_uid)
 
     @classdef.method("world_readable?")
+    @check_initialized()
     def method_world_readablep(self, space):
         if stat.S_IMODE(self.stat.st_mode) & stat.S_IROTH:
             return self.method_mode(space)
         return space.w_nil
 
     @classdef.method("world_writable?")
+    @check_initialized()
     def method_world_writablep(self, space):
         if stat.S_IMODE(self.stat.st_mode) & stat.S_IWOTH:
             return self.method_mode(space)
