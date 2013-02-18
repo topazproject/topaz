@@ -51,6 +51,10 @@ class Kernel(Module):
     def print *args
         $stdout.print(*args)
     end
+
+    def p *args
+        args.each { |arg| $stdout.print(arg.inspect + "\n") }
+    end
     """)
 
     @staticmethod
