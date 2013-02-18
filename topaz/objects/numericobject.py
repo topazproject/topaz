@@ -53,17 +53,3 @@ class W_NumericObject(W_Object):
             return space.newarray([w_other, self])
         else:
             return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
-
-    classdef.app_method("""
-    def eql? other
-        self.class.equal?(other.class) && self == other
-    end
-
-    def to_int
-        self.to_i
-    end
-
-    def abs
-        self < 0 ? -self : self
-    end
-    """)
