@@ -290,13 +290,6 @@ class W_MatchDataObject(W_Object):
             res_w.append(space.send(self, space.newsymbol("[]"), [space.newint(i)]))
         return space.newarray(res_w)
 
-    classdef.app_method("""
-    def values_at(*args)
-        ary = self.to_a
-        args.map { |n| ary[n] }
-    end
-    """)
-
     @classdef.method("begin", n="int")
     def method_begin(self, space, n):
         if n == 0:
