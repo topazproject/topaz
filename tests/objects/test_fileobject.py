@@ -230,8 +230,8 @@ class TestIO(BaseTopazTest):
         f = tmpdir.join("file.txt")
         f.write("")
         w_res = space.execute("""
-        f = File.new('%s')
-        return f.object_id == f.to_io.object_id
+        f = File.new '%s'
+        return f.eql? f.to_io
         """ % f)
         assert w_res == space.w_true
 
@@ -245,7 +245,7 @@ class TestIO(BaseTopazTest):
         f = tmpdir.join("file.txt")
         f.write('')
         with self.raises(space, "IOError", "closed stream"):
-            w_res = space.execute("""
+            space.execute("""
             f = File.new('%s')
             f.close
             f.reopen($stdout)
@@ -289,7 +289,7 @@ class TestIO(BaseTopazTest):
 
     def test_reopen_with_invalid_arg(self, space):
         with self.raises(space, "TypeError", "can't convert Fixnum into String"):
-            w_res = space.execute("$stderr.reopen(12)")
+            space.execute("$stderr.reopen(12)")
 
     def test_popen_read(self, space):
         w_res = space.execute("""
