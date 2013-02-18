@@ -54,6 +54,8 @@ class W_DirObject(W_Object):
             return space.newint(0)
 
     @classdef.singleton_method("delete", path="path")
+    @classdef.singleton_method("rmdir", path="path")
+    @classdef.singleton_method("unlink", path="path")
     def method_delete(self, space, path):
         try:
             os.rmdir(path if path else "")
@@ -121,3 +123,10 @@ class W_DirObject(W_Object):
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
+
+    @classdef.singleton_method("entries", dirname="path")
+    def method_entries(self, space, dirname):
+        try:
+            return space.newarray([space.newstr_fromstr(d) for d in os.listdir(dirname)])
+        except OSError as e:
+            raise error_for_oserror(space, e)
