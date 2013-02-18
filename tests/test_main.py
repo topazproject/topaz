@@ -1,4 +1,5 @@
 import os
+import stat
 import platform
 
 import pytest
@@ -154,6 +155,18 @@ class TestMain(object):
         self.run(space, tmpdir, "puts Zyx", ruby_args=["-rzyx", "-I", str(d)])
         out, _ = capfd.readouterr()
         assert out == "7\n"
+
+    def test_search_path(self, space, tmpdir, capfd, monkeypatch):
+        f = tmpdir.join("a")
+        f.write("""
+        #!/usr/bin/env ruby
+        puts 17
+        """)
+        os.chmod(str(f), 0700)
+        monkeypatch.setenv("PATH", "%s:%s" % (tmpdir, os.environ["PATH"]))
+        self.run(space, tmpdir, ruby_args=["-S", "a"])
+        out, _ = capfd.readouterr()
+        assert out == "17\n"
 
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
