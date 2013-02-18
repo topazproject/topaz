@@ -504,27 +504,14 @@ class W_ArrayObject(W_Object):
         while i < self.length do
             item = self[i]
             item = yield(item) if block
-            if _already_seen_item(item, seen)
+            if seen.include? item
                 self.delete_at(i)
             else
+                seen[item] = nil
                 i += 1
             end
         end
         return self if i != old_len else nil
-    end
-
-    # TODO: Make this private once we have private methods
-    def _already_seen_item(item, seen)
-        hashval = item.hash
-        if seen.include? hashval
-            seen[hashval].each do |seen_item|
-                return true if item == seen_item
-            end
-            seen[hashval] << item
-        else
-            seen[hashval] = [item]
-        end
-        return false
     end
 
     def uniq(&block)
