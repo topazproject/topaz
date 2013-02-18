@@ -474,16 +474,6 @@ class W_StringObject(W_Object):
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
 
-    classdef.app_method("""
-    def eql? other
-        if !other.kind_of?(String)
-            false
-        else
-            self == other
-        end
-    end
-    """)
-
     @classdef.method("to_sym")
     @classdef.method("intern")
     def method_to_sym(self, space):
@@ -635,27 +625,11 @@ class W_StringObject(W_Object):
                 "wrong argument type %s (expected Regexp)" % space.getclass(w_sep).name
             )
 
-    classdef.app_method("""
-    def swapcase
-        copy = self.dup
-        copy.swapcase!
-        return copy
-    end
-    """)
-
     @classdef.method("swapcase!")
     def method_swapcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.swapcase(self.str_storage)
         return self if changed else space.w_nil
-
-    classdef.app_method("""
-    def upcase
-        copy = self.dup
-        copy.upcase!
-        return copy
-    end
-    """)
 
     @classdef.method("upcase!")
     def method_upcase_i(self, space):
@@ -663,27 +637,11 @@ class W_StringObject(W_Object):
         changed = self.strategy.upcase(self.str_storage)
         return self if changed else space.w_nil
 
-    classdef.app_method("""
-    def downcase
-        copy = self.dup
-        copy.downcase!
-        return copy
-    end
-    """)
-
     @classdef.method("downcase!")
     def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
         return self if changed else space.w_nil
-
-    classdef.app_method("""
-    def capitalize
-        copy = self.dup
-        copy.capitalize!
-        return copy
-    end
-    """)
 
     @classdef.method("capitalize!")
     def method_capitalize_i(self, space):
@@ -780,16 +738,6 @@ class W_StringObject(W_Object):
             raise space.error(space.w_TypeError, "type mismatch: String given")
         else:
             return space.send(w_obj, space.newsymbol("=~"), [self])
-
-    classdef.app_method("""
-    def empty?
-        self.length == 0
-    end
-
-    def match(pattern)
-        return Regexp.new(pattern).match(self)
-    end
-    """)
 
     @classdef.method("%")
     def method_mod(self, space, w_arg):
@@ -961,29 +909,6 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chop(self.str_storage)
         return self if changed else space.w_nil
-
-    classdef.app_method("""
-    def chomp(sep=$/)
-        copy = self.dup
-        copy.chomp!(sep)
-        return copy
-    end
-
-    def chop
-        copy = self.dup
-        copy.chop!
-        return copy
-    end
-
-    def reverse
-        self.dup.reverse!
-    end
-
-    def succ
-        self.dup.succ!
-    end
-    alias next succ
-    """)
 
     @classdef.method("reverse!")
     def method_reverse_i(self, space):

@@ -121,13 +121,6 @@ class W_IOObject(W_Object):
         else:
             return w_read_str
 
-    classdef.app_method("""
-    def << s
-        write(s)
-        return self
-    end
-    """)
-
     @classdef.method("write")
     def method_write(self, space, w_str):
         self.ensure_not_closed(space)
@@ -202,64 +195,6 @@ class W_IOObject(W_Object):
                         space.send(pipe_w, space.newsymbol("close"))
         else:
             return space.newarray(pipes_w)
-
-    classdef.app_method("""
-    def each_line(sep=$/, limit=nil)
-        if sep.is_a?(Fixnum) && limit.nil?
-            limit = sep
-            sep = $/
-        end
-
-        if sep.nil?
-            yield(limit ? read(limit) : read)
-            return self
-        end
-
-        if limit == 0
-            raise ArgumentError.new("invalid limit: 0 for each_line")
-        end
-
-        rest = ""
-        nxt = read(8192)
-        need_read = false
-        while nxt || rest
-            if nxt and need_read
-                rest = rest ? rest + nxt : nxt
-                nxt = read(8192)
-                need_read = false
-            end
-
-            line, rest = *rest.split(sep, 2)
-
-            if limit && line.size > limit
-                left = 0
-                right = limit
-                while right < line.size
-                    yield line[left...right]
-                    left, right = right, right + limit
-                end
-                rest = line[right - limit..-1] + sep + (rest || "")
-            elsif rest || nxt.nil?
-                yield line
-            else
-                need_read = true
-            end
-        end
-        self
-    end
-
-    def readlines(sep=$/, limit=nil)
-        lines = []
-        each_line(sep, limit) { |line| lines << line }
-        return lines
-    end
-
-    def self.readlines(name, *args)
-        File.open(name) do |f|
-            return f.readlines(*args)
-        end
-    end
-    """)
 
     @classdef.method("close")
     def method_close(self, space):
@@ -493,18 +428,6 @@ class W_FileObject(W_IOObject):
             current_umask = os.umask(0)
             os.umask(current_umask)
             return space.newint(current_umask)
-
-    classdef.app_method("""
-    def self.open(filename, mode="r", perm=nil, opt=nil, &block)
-        f = self.new filename, mode, perm, opt
-        return f unless block
-        begin
-            return yield f
-        ensure
-            f.close
-        end
-    end
-    """)
 
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):

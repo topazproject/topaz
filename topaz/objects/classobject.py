@@ -95,8 +95,3 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("superclass")
     def method_superclass(self, space):
         return self.superclass if self.superclass is not None else space.w_nil
-
-    classdef.app_method("""
-    def inherited(amodule); end
-    private :inherited
-    """)
