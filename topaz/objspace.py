@@ -218,13 +218,22 @@ class ObjectSpace(object):
         path = rpath.rabspath(executable)
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
+        kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
             if os.path.isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
+                kernel_path = os.path.join(path, "lib-topaz")
                 break
-
         self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
+        self.load_kernel(kernel_path)
+
+    def load_kernel(self, kernel_path):
+        self.send(
+            self.w_kernel,
+            self.newsymbol("load"),
+            [self.newstr_fromstr(os.path.join(kernel_path, "bootstrap.rb"))]
+        )
 
     @specialize.memo()
     def fromcache(self, key):
