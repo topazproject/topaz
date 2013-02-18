@@ -27,7 +27,7 @@ USAGE = "\n".join([
 #   """  -p              assume loop like -n but print line also like sed""",
     """  -rlibrary       require the library, before executing your script""",
 #   """  -s              enable some switch parsing for switches after script name""",
-#   """  -S              look for the script using PATH environment variable""",
+    """  -S              look for the script using PATH environment variable""",
 #   """  -T[level=1]     turn on tainting checks""",
     """  -v              print version number, then turn on verbose mode""",
 #   """  -w              turn warnings on for your script""",
@@ -63,6 +63,7 @@ class ShortCircuitError(Exception):
 def _parse_argv(space, argv):
     verbose = False
     path = None
+    search_path = False
     exprs = []
     reqs = []
     load_path_entries = []
@@ -99,6 +100,8 @@ def _parse_argv(space, argv):
             reqs.append(argv[idx])
         elif arg.startswith("-r"):
             reqs.append(arg[2:])
+        elif arg == "-S":
+            search_path = True
         elif arg == "--":
             idx += 1
             break
@@ -112,7 +115,7 @@ def _parse_argv(space, argv):
         argv_w.append(space.newstr_fromstr(argv[idx]))
         idx += 1
 
-    return verbose, path, exprs, reqs, load_path_entries, argv_w
+    return verbose, path, search_path, exprs, reqs, load_path_entries, argv_w
 
 
 def _entry_point(space, argv):
@@ -129,7 +132,7 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
     try:
-        verbose, path, exprs, reqs, load_path_entries, argv_w = _parse_argv(space, argv)
+        verbose, path, search_path, exprs, reqs, load_path_entries, argv_w = _parse_argv(space, argv)
     except ShortCircuitError as e:
         os.write(1, e.message)
         return 0
@@ -159,6 +162,12 @@ def _entry_point(space, argv):
         source = "\n".join(exprs)
         path = "-e"
     elif path is not None:
+        if search_path:
+            for dirname in os.environ["PATH"].split(os.pathsep):
+                candidate_path = os.sep.join([dirname, path])
+                if os.access(candidate_path, os.R_OK):
+                    path = candidate_path
+                    break
         try:
             f = open_file_as_stream(path)
         except OSError as e:
