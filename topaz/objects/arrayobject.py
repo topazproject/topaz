@@ -509,17 +509,24 @@ class W_ArrayObject(W_Object):
         seen = {}
         old_len = self.length
         i = 0
+        shifted = 0
         while i < self.length do
             item = self[i]
             item = yield(item) if block
             if seen.include? item
-                self.delete_at(i)
+                shifted += 1
             else
                 seen[item] = nil
-                i += 1
+                self[i - shifted] = item if shifted > 0
             end
+            i += 1
         end
-        return self if i != old_len else nil
+        if shifted > 0
+            self.slice!(-shifted, shifted)
+            return self
+        else
+            return nil
+        end
     end
 
     def uniq(&block)
