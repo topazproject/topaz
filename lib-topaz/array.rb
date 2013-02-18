@@ -236,4 +236,8 @@ class Array
     arr.uniq!(&block)
     return arr
   end
+
+  def values_at(*args)
+    args.map { |n| self[n] }
+  end
 end

@@ -324,3 +324,11 @@ class W_MatchDataObject(W_Object):
     @classdef.method("post_match")
     def method_post_match(self, space):
         return space.newstr_fromstr(self.ctx._string[self.ctx.match_end:])
+
+    @classdef.method("values_at")
+    def method_values_at(self, space, args_w):
+        return space.send(
+            space.send(self, space.newsymbol("to_a")),
+            space.newsymbol("values_at"),
+            args_w
+        )
