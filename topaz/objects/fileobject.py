@@ -276,7 +276,9 @@ class W_IOObject(W_Object):
     @classdef.method("stat")
     def method_stat(self, space):
         try:
-            return W_FileStatObject(space, os.fstat(self.fd))
+            stat_obj = W_FileStatObject(space)
+            stat_obj.set_stat(os.fstat(self.fd))
+            return stat_obj
         except OSError as e:
             raise error_for_oserror(space, e)
 
@@ -549,14 +551,18 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("stat", filename="path")
     def singleton_method_stat(self, space, filename):
         try:
-            return W_FileStatObject(space, os.stat(filename))
+            stat_obj = W_FileStatObject(space)
+            stat_obj.set_stat(os.stat(filename))
+            return stat_obj
         except OSError as e:
             raise error_for_oserror(space, e)
 
     @classdef.singleton_method("lstat", filename="path")
     def singleton_method_lstat(self, space, filename):
         try:
-            return W_FileStatObject(space, os.lstat(filename))
+            stat_obj = W_FileStatObject(space)
+            stat_obj.set_stat(os.lstat(filename))
+            return stat_obj
         except OSError as e:
             raise error_for_oserror(space, e)
 
@@ -578,8 +584,7 @@ class W_FileObject(W_IOObject):
 class W_FileStatObject(W_Object):
     classdef = ClassDef("Stat", W_Object.classdef, filepath=__file__)
 
-    def __init__(self, space, stat=None):
-        W_Object.__init__(self, space)
+    def set_stat(self, stat):
         self.stat = stat
 
     @classdef.singleton_method("allocate")
@@ -589,7 +594,7 @@ class W_FileStatObject(W_Object):
     @classdef.method("initialize", filename="path")
     def method_initialize(self, space, filename):
         try:
-            self.stat = os.stat(filename)
+            self.set_stat(os.stat(filename))
         except OSError as e:
             raise error_for_oserror(space, e)
 
