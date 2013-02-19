@@ -61,21 +61,9 @@ class W_ArrayObject(W_Object):
         self.items_w.extend(other_w)
         return self
 
-    classdef.app_method("""
-    def to_s()
-        result = "["
-        self.each_with_index do |obj, i|
-            if i > 0
-                result << ", "
-            end
-            result << obj.to_s
-        end
-        result << "]"
-    end
-    """)
-
     @classdef.method("at")
     @classdef.method("[]")
+    @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):
         start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
         if nil:
@@ -132,6 +120,26 @@ class W_ArrayObject(W_Object):
             self.items_w[start] = w_obj
         return w_obj
 
+    @classdef.method("slice!")
+    @check_frozen()
+    def method_slice_i(self, space, w_idx, w_count=None):
+        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+
+        if nil:
+            return space.w_nil
+        elif as_range:
+            start = min(max(start, 0), len(self.items_w))
+            end = min(max(end, 0), len(self.items_w))
+            delta = (end - start)
+            assert delta >= 0
+            w_items = self.items_w[start:start + delta]
+            del self.items_w[start:start + delta]
+            return space.newarray(w_items)
+        else:
+            w_item = self.items_w[start]
+            del self.items_w[start]
+            return w_item
+
     @classdef.method("size")
     @classdef.method("length")
     def method_length(self, space):
@@ -144,18 +152,6 @@ class W_ArrayObject(W_Object):
     @classdef.method("+", other="array")
     def method_add(self, space, other):
         return space.newarray(self.items_w + other)
-
-    classdef.app_method("""
-    def -(other)
-        res = []
-        self.each do |x|
-            if !other.include?(x)
-                res << x
-            end
-        end
-        res
-    end
-    """)
 
     @classdef.method("<<")
     @check_frozen()
@@ -221,73 +217,6 @@ class W_ArrayObject(W_Object):
             w_obj = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
         return w_obj
 
-    classdef.app_method("""
-    def at idx
-        self[idx]
-    end
-
-    def each
-        i = 0
-        while i < self.length
-            yield self[i]
-            i += 1
-        end
-    end
-
-    def zip ary
-        result = []
-        self.each_with_index do |obj, idx|
-            result << [obj, ary[idx]]
-        end
-        result
-    end
-
-    def product ary
-        result = []
-        self.each do |obj|
-            ary.each do |other|
-                result << [obj, other]
-            end
-        end
-        result
-    end
-
-    def compact
-        self.select { |each| !each.nil? }
-    end
-
-    def compact!
-        reject! { |obj| obj.nil? }
-    end
-
-    def reject!(&block)
-        prev_size = self.size
-        self.delete_if(&block)
-        return nil if prev_size == self.size
-        self
-    end
-    """)
-
-    classdef.app_method("""
-    def delete_if
-        raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
-        i = 0
-        c = 0
-        sz = self.size
-        while i < sz - c
-            item = self[i + c]
-            if yield(item)
-                c += 1
-            else
-                self[i] = item
-                i += 1
-            end
-        end
-        self.pop(c)
-        self
-    end
-    """)
-
     @classdef.method("pop")
     def method_pop(self, space, w_num=None):
         if w_num is None:
@@ -307,16 +236,6 @@ class W_ArrayObject(W_Object):
                 del self.items_w[pop_size:]
                 return space.newarray(res_w)
 
-    classdef.app_method("""
-    def delete(obj, &block)
-        sz = self.size
-        self.delete_if { |o| o == obj }
-        return obj if sz != self.size
-        return yield if block
-        return nil
-    end
-    """)
-
     @classdef.method("delete_at", idx="int")
     @check_frozen()
     def method_delete_at(self, space, idx):
@@ -326,12 +245,6 @@ class W_ArrayObject(W_Object):
             return space.w_nil
         else:
             return self.items_w.pop(idx)
-
-    classdef.app_method("""
-    def first
-        return self[0]
-    end
-    """)
 
     @classdef.method("last")
     def method_last(self, space, w_count=None):
@@ -368,108 +281,3 @@ class W_ArrayObject(W_Object):
     def method_sort(self, space, block):
         RubySorter(space, self.items_w, sortblock=block).sort()
         return self
-
-    classdef.app_method("""
-    def flatten(level = -1)
-        list = []
-        recursion = Thread.current.recursion_guard(self) do
-            self.each do |item|
-                if level == 0
-                    list << item
-                elsif ary = Array.try_convert(item)
-                    list.concat(ary.flatten(level - 1))
-                else
-                    list << item
-                end
-            end
-            return list
-        end
-        if recursion
-            raise ArgumentError, "tried to flatten recursive array"
-        end
-    end
-
-    def flatten!(level = -1)
-        list = self.flatten(level)
-        self.clear
-        return self.concat list
-    end
-
-    def sort(&block)
-        dup.sort!(&block)
-    end
-
-    def ==(other)
-        if self.equal?(other)
-            return true
-        end
-        if !other.kind_of?(Array)
-            return false
-        end
-        if self.size != other.size
-            return false
-        end
-        self.each_with_index do |x, i|
-            if x != other[i]
-                return false
-            end
-        end
-        return true
-    end
-
-    def eql?(other)
-        if self.equal?(other)
-            return true
-        end
-        if !other.kind_of?(Array)
-            return false
-        end
-        if self.length != other.length
-            return false
-        end
-        self.each_with_index do |x, i|
-            if !x.eql?(other[i])
-                return false
-            end
-        end
-        return true
-    end
-
-    def hash
-        res = 0x345678
-        self.each do |x|
-            # We want to keep this within a fixnum range.
-            res = Topaz.intmask((1000003 * res) ^ x.hash)
-        end
-        return res
-    end
-
-    def *(arg)
-        return join(arg) if arg.respond_to? :to_str
-
-        # MRI error cases
-        argcls = arg.class
-        begin
-            arg = arg.to_int
-        rescue Exception
-            raise TypeError, "can't convert #{argcls} into Fixnum"
-        end
-        raise TypeError, "can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)" if arg.class != Fixnum
-        raise ArgumentError, "Count cannot be negative" if arg < 0
-
-        return [] if arg == 0
-        result = self.dup
-        for i in 1...arg do
-            result.concat(self)
-        end
-        result
-    end
-
-    def max(&block)
-        max = self[0]
-        self.each do |e|
-            max = e if (block ? block.call(max, e) : max <=> e) < 0
-        end
-        max
-    end
-    """)

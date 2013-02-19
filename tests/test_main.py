@@ -155,6 +155,14 @@ class TestMain(object):
         out, _ = capfd.readouterr()
         assert out == "7\n"
 
+    def test_search_path(self, space, tmpdir, capfd, monkeypatch):
+        f = tmpdir.join("a")
+        f.write("puts 17")
+        monkeypatch.setenv("PATH", "%s:%s" % (tmpdir, os.environ["PATH"]))
+        self.run(space, tmpdir, ruby_args=["-S", "a"])
+        out, _ = capfd.readouterr()
+        assert out == "17\n"
+
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """
         ARGV.each_with_index do |arg, i|

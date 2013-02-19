@@ -17,6 +17,11 @@ class TestKernel(BaseTopazTest):
         out, err = capfd.readouterr()
         assert out == "13"
 
+    def test_p(self, space, capfd):
+        space.execute("p 1,2,3")
+        out, err = capfd.readouterr()
+        assert out == "1\n2\n3\n"
+
     def test_lambda(self, space):
         w_res = space.execute("""
         l = lambda { |x| 3 }
