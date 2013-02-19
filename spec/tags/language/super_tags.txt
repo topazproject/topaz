@@ -1,0 +1,1 @@
+fails:The super keyword searches class methods

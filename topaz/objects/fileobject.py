@@ -3,6 +3,7 @@ import sys
 
 from rpython.rlib import jit
 
+from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
@@ -123,13 +124,6 @@ class W_IOObject(W_Object):
         else:
             return w_read_str
 
-    classdef.app_method("""
-    def << s
-        write(s)
-        return self
-    end
-    """)
-
     @classdef.method("write")
     def method_write(self, space, w_str):
         self.ensure_not_closed(space)
@@ -205,41 +199,6 @@ class W_IOObject(W_Object):
         else:
             return space.newarray(pipes_w)
 
-    classdef.app_method("""
-    def self.popen(cmd, mode='r', opts={}, &block)
-        r, w = IO.pipe
-        if mode != 'r' && mode != 'w'
-            raise NotImplementedError, "mode #{mode} for IO.popen"
-        end
-
-        pid = fork do
-            if mode == 'r'
-                r.close
-                $stdout.reopen(w)
-            else
-                w.close
-                $stdin.reopen(r)
-            end
-            exec *cmd
-        end
-
-        if mode == 'r'
-            res = r
-            w.close
-        else
-            res = w
-            r.close
-        end
-
-        res.instance_variable_set("@pid", pid)
-        block ? yield(res) : res
-    end
-
-    def pid
-        @pid
-    end
-    """)
-
     @classdef.method("reopen")
     def method_reopen(self, space, w_arg, w_mode=None):
         self.ensure_not_closed(space)
@@ -248,6 +207,7 @@ class W_IOObject(W_Object):
             args = [w_arg] if w_mode is None else [w_arg, w_mode]
             w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
         assert isinstance(w_io, W_IOObject)
+        w_io.ensure_not_closed(space)
         os.close(self.fd)
         os.dup2(w_io.getfd(), self.fd)
         return self
@@ -255,58 +215,6 @@ class W_IOObject(W_Object):
     @classdef.method("to_io")
     def method_to_io(self):
         return self
-
-    classdef.app_method("""
-    def each_line(sep=$/, limit=nil)
-        if sep.is_a?(Fixnum) && limit.nil?
-            limit = sep
-            sep = $/
-        end
-
-        if sep.nil?
-            yield(limit ? read(limit) : read)
-            return self
-        end
-
-        if limit == 0
-            raise ArgumentError.new("invalid limit: 0 for each_line")
-        end
-
-        rest = ""
-        nxt = read(8192)
-        need_read = false
-        while nxt || rest
-            if nxt and need_read
-                rest = rest ? rest + nxt : nxt
-                nxt = read(8192)
-                need_read = false
-            end
-
-            line, rest = *rest.split(sep, 2)
-
-            if limit && line.size > limit
-                left = 0
-                right = limit
-                while right < line.size
-                    yield line[left...right]
-                    left, right = right, right + limit
-                end
-                rest = line[right - limit..-1] + sep + (rest || "")
-            elsif rest || nxt.nil?
-                yield line
-            else
-                need_read = true
-            end
-        end
-        self
-    end
-
-    def readlines(sep=$/, limit=nil)
-        lines = []
-        each_line(sep, limit) { |line| lines << line }
-        return lines
-    end
-    """)
 
     @classdef.method("close")
     def method_close(self, space):
@@ -350,6 +258,25 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_FileObject(space)
+
+    @classdef.singleton_method("size?", name="path")
+    def singleton_method_size_p(self, space, name):
+        try:
+            stat = os.stat(name)
+        except OSError:
+            return space.w_nil
+        return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
+
+    @classdef.singleton_method("unlink")
+    @classdef.singleton_method("delete")
+    def singleton_method_delete(self, space, args_w):
+        for w_path in args_w:
+            path = Coerce.path(space, w_path)
+            try:
+                os.unlink(path)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+        return space.newint(len(args_w))
 
     @classdef.method("initialize", filename="str")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
@@ -467,11 +394,21 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                string = space.str_w(
-                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
-                )
+                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                    if in_recursion:
+                        raise space.error(space.w_ArgumentError, "recursive array")
+                    string = space.str_w(
+                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                    )
             else:
-                string = space.str_w(w_arg)
+                w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
+                if w_string is space.w_nil:
+                    w_string = space.convert_type(w_arg, space.w_string, "to_str")
+                string = space.str_w(w_string)
+
+            if string == "" and len(args_w) > 1:
+                if (not result) or result[-1] != sep:
+                    result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()
@@ -511,18 +448,6 @@ class W_FileObject(W_IOObject):
             current_umask = os.umask(0)
             os.umask(current_umask)
             return space.newint(current_umask)
-
-    classdef.app_method("""
-    def self.open(filename, mode="r", perm=nil, opt=nil, &block)
-        f = self.new filename, mode, perm, opt
-        return f unless block
-        begin
-            return yield f
-        ensure
-            f.close
-        end
-    end
-    """)
 
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):

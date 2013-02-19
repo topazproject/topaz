@@ -43,16 +43,6 @@ class Kernel(Module):
     def function_proc(self, space, block):
         return space.newproc(block, False)
 
-    moduledef.app_method("""
-    def puts *args
-        $stdout.puts(*args)
-    end
-
-    def print *args
-        $stdout.print(*args)
-    end
-    """)
-
     @staticmethod
     def find_feature(space, path):
         assert path is not None
@@ -109,8 +99,6 @@ class Kernel(Module):
         Kernel.load_feature(space, path, orig_path)
         return space.w_true
 
-    moduledef.app_method("alias fail raise")
-
     @moduledef.method("raise")
     def method_raise(self, space, w_str_or_exception=None, w_string=None, w_array=None):
         w_exception = None
@@ -143,28 +131,6 @@ class Kernel(Module):
             )
 
         raise RubyError(w_exc)
-
-    moduledef.app_method("""
-    def Array arg
-        if arg.respond_to? :to_ary
-            arg.to_ary
-        elsif arg.respond_to? :to_a
-            arg.to_a
-        else
-            [arg]
-        end
-    end
-
-    def String arg
-        arg.to_s
-    end
-    module_function :String
-
-    def Integer arg
-        arg.to_i
-    end
-    module_function :Integer
-    """)
 
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
@@ -321,15 +287,6 @@ class Kernel(Module):
         else:
             return space.convert_type(w_arg, space.w_float, "to_f")
 
-    moduledef.app_method("""
-    def loop
-        while true
-            yield
-        end
-        return nil
-    end
-    """)
-
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")
     def method_is_kind_ofp(self, space, w_mod):
@@ -374,11 +331,3 @@ class Kernel(Module):
     method_untrust, method_untrusted, method_trust = new_flag(moduledef, "untrust", "untrusted?", "trust")
     method_taint, method_tainted, method_untaint = new_flag(moduledef, "taint", "tainted?", "untaint")
     method_freeze, method_frozen = new_flag(moduledef, "freeze", "frozen?", None)
-
-    moduledef.app_method("""
-    def `(cmd)
-        cmd = cmd.to_str if cmd.respond_to?(:to_str)
-        raise TypeError, "can't convert #{cmd.class} into String" unless cmd.is_a?(String)
-        IO.popen(cmd) { |r| r.read }
-    end
-    """)

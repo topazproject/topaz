@@ -27,6 +27,7 @@ class Interpreter(object):
         reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
+        check_untranslated=False
     )
 
     def __init__(self):
@@ -167,13 +168,13 @@ class Interpreter(object):
         frame.push(bytecode.consts_w[idx])
 
     def LOAD_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx].get(frame, idx) or space.w_nil)
+        frame.push(frame.cells[idx].get(space, frame, idx) or space.w_nil)
 
     def STORE_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.cells[idx].set(frame, idx, frame.peek())
+        frame.cells[idx].set(space, frame, idx, frame.peek())
 
     def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx].upgrade_to_closure(frame, idx))
+        frame.push(frame.cells[idx].upgrade_to_closure(space, frame, idx))
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
         space.getexecutioncontext().last_instr = pc

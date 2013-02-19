@@ -9,7 +9,7 @@ from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
 from rpython.rlib.rstring import split
 
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.formatting import StringFormatter
@@ -173,6 +173,15 @@ class MutableStringStrategy(StringStrategy):
             storage[i] = new_c
         return changed
 
+    def upcase(self, storage):
+        storage = self.unerase(storage)
+        changed = False
+        for i, c in enumerate(storage):
+            new_c = c.upper()
+            changed |= (c != new_c)
+            storage[i] = new_c
+        return changed
+
     def capitalize(self, storage):
         storage = self.unerase(storage)
         changed = False
@@ -274,6 +283,12 @@ class MutableStringStrategy(StringStrategy):
             last_alnum_ch = storage[last_alnum]
             storage[last_alnum] = carry
             storage.insert(last_alnum + 1, last_alnum_ch)
+
+    def insert(self, storage, idx, other):
+        storage = self.unerase(storage)
+        for char in other:
+            storage.insert(idx, char)
+            idx += 1
 
 
 class W_StringObject(W_Object):
@@ -465,16 +480,6 @@ class W_StringObject(W_Object):
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
 
-    classdef.app_method("""
-    def eql? other
-        if !other.kind_of?(String)
-            false
-        else
-            self == other
-        end
-    end
-    """)
-
     @classdef.method("to_sym")
     @classdef.method("intern")
     def method_to_sym(self, space):
@@ -626,41 +631,23 @@ class W_StringObject(W_Object):
                 "wrong argument type %s (expected Regexp)" % space.getclass(w_sep).name
             )
 
-    classdef.app_method("""
-    def swapcase
-        copy = self.dup
-        copy.swapcase!
-        return copy
-    end
-    """)
-
     @classdef.method("swapcase!")
     def method_swapcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.swapcase(self.str_storage)
         return self if changed else space.w_nil
 
-    classdef.app_method("""
-    def downcase
-        copy = self.dup
-        copy.downcase!
-        return copy
-    end
-    """)
+    @classdef.method("upcase!")
+    def method_upcase_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.upcase(self.str_storage)
+        return self if changed else space.w_nil
 
     @classdef.method("downcase!")
     def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
         return self if changed else space.w_nil
-
-    classdef.app_method("""
-    def capitalize
-        copy = self.dup
-        copy.capitalize!
-        return copy
-    end
-    """)
 
     @classdef.method("capitalize!")
     def method_capitalize_i(self, space):
@@ -757,16 +744,6 @@ class W_StringObject(W_Object):
             raise space.error(space.w_TypeError, "type mismatch: String given")
         else:
             return space.send(w_obj, space.newsymbol("=~"), [self])
-
-    classdef.app_method("""
-    def empty?
-        self.length == 0
-    end
-
-    def match(pattern)
-        return Regexp.new(pattern).match(self)
-    end
-    """)
 
     @classdef.method("%")
     def method_mod(self, space, w_arg):
@@ -939,29 +916,6 @@ class W_StringObject(W_Object):
         changed = self.strategy.chop(self.str_storage)
         return self if changed else space.w_nil
 
-    classdef.app_method("""
-    def chomp(sep=$/)
-        copy = self.dup
-        copy.chomp!(sep)
-        return copy
-    end
-
-    def chop
-        copy = self.dup
-        copy.chop!
-        return copy
-    end
-
-    def reverse
-        self.dup.reverse!
-    end
-
-    def succ
-        self.dup.succ!
-    end
-    alias next succ
-    """)
-
     @classdef.method("reverse!")
     def method_reverse_i(self, space):
         self.strategy.to_mutable(space, self)
@@ -973,4 +927,17 @@ class W_StringObject(W_Object):
     def method_succ_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.succ(self.str_storage)
+        return self
+
+    @classdef.method("insert", index="int", other="str")
+    @check_frozen()
+    def method_insert(self, space, index, other):
+        if index < 0:
+            index += self.length() + 1
+        if not 0 <= index <= self.length():
+            raise space.error(space.w_IndexError,
+                "index %d out of string" % index
+            )
+        self.strategy.to_mutable(space, self)
+        self.strategy.insert(self.str_storage, index, other)
         return self

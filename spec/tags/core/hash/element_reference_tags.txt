@@ -1,0 +1,1 @@
+fails:Hash#[] compares keys with the same #hash value via #eql?

@@ -12,7 +12,6 @@ class ClassDef(object):
         self.name = name
         self.filepath = filepath
         self.methods = {}
-        self.app_methods = []
         self.singleton_methods = {}
         self.includes = []
         self.setup_class_func = None
@@ -39,10 +38,9 @@ class ClassDef(object):
             return func
         return adder
 
-    def app_method(self, source):
-        self.app_methods.append(source)
+    def singleton_method(self, __name, **argspec):
+        name = __name
 
-    def singleton_method(self, name, **argspec):
         def adder(func):
             if isinstance(func, staticmethod):
                 func = func.__func__
@@ -70,7 +68,6 @@ class ModuleDef(object):
         self.name = name
         self.filepath = filepath
         self.methods = {}
-        self.app_methods = []
 
         self.singleton_methods = {}
         self.setup_module_func = None
@@ -85,9 +82,6 @@ class ModuleDef(object):
             self.methods[name] = (func, argspec)
             return func
         return adder
-
-    def app_method(self, source):
-        self.app_methods.append(source)
 
     def function(self, __name, **argspec):
         name = __name
@@ -141,13 +135,6 @@ class ClassCache(Cache):
             func = WrapperGenerator(name, method, argspec, classdef.cls).generate_wrapper()
             w_class.define_method(self.space, name, W_BuiltinFunction(name, w_class, func))
 
-        for source in classdef.app_methods:
-            self.space.execute(source,
-                w_self=w_class,
-                lexical_scope=StaticScope(w_class, None),
-                filepath=classdef.filepath
-            )
-
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ClassObject).generate_wrapper()
             w_class.attach_method(self.space, name, W_BuiltinFunction(name, w_class, func))
@@ -170,12 +157,6 @@ class ModuleCache(Cache):
         for name, (method, argspec) in moduledef.methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_BaseObject).generate_wrapper()
             w_mod.define_method(self.space, name, W_BuiltinFunction(name, w_mod, func))
-        for source in moduledef.app_methods:
-            self.space.execute(source,
-                w_self=w_mod,
-                lexical_scope=StaticScope(w_mod, None),
-                filepath=moduledef.filepath
-            )
         for name, (method, argspec) in moduledef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
             w_mod.attach_method(self.space, name, W_BuiltinFunction(name, w_mod, func))

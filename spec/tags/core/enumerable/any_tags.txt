@@ -1,0 +1,4 @@
+fails:Enumerable#any? always returns false on empty enumeration
+fails:Enumerable#any? with no block gathers whole arrays as elements when each yields multiple
+fails:Enumerable#any? with block gathers initial args as elements when each yields multiple
+fails:Enumerable#any? with block yields multiple arguments when each yields multiple

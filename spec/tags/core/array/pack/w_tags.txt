@@ -1,0 +1,34 @@
+fails:Array#pack with format 'w' taints the output string if the format string is tainted
+fails:ignores whitespace in the format string
+fails:calls #to_str to coerce the directives string
+fails:raises an ArgumentError if there are fewer elements than the format requires
+fails:encodes ASCII values as a Unicode codepoint
+fails:encodes UTF-8 BMP codepoints
+fails:encodes UTF-8 max codepoints
+fails:encodes the number of array elements specified by the count modifier
+fails:encodes all remaining elements when passed the '*' modifier
+fails:calls #to_int to convert the pack argument to an Integer
+fails:raises a TypeError if #to_int does not return an Integer
+fails:ignores NULL bytes between directives
+fails:ignores spaces between directives
+fails:raises a RangeError if passed a negative number
+fails:raises a RangeError if passed a number larger than an unsigned 32-bit integer
+fails:sets the output string to UTF-8 encoding
+fails:encodes an empty string as an empty string
+fails:appends a newline to the end of the encoded string
+fails:encodes one element per directive
+fails:prepends the length of each segment of the input string as the first character (+32) in each line of the output
+fails:encodes 1, 2, or 3 characters in 4 output characters (uuencoding)
+fails:emits a newline after complete groups of count / 3 input characters when passed a count modifier
+fails:implicitly has a count of 45 when passed '*', 0, 1, 2 or no count modifier
+fails:encodes all ascii characters
+fails:calls #to_str to convert an object to a String
+fails:raises a TypeError when #to_str does not return a String
+fails:raises a TypeError when passed nil
+fails:raises a TypeError when passed an Integer
+fails:raises a TypeError when passed true
+fails:raises a TypeError when passed false
+fails:returns an ASCII-8BIT string
+fails:encodes a BER-compressed integer
+fails:raises an ArgumentError when passed a negative value
+fails:returns an empty String if count is zero

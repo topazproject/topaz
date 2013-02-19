@@ -1,0 +1,11 @@
+fails:String#chop returns a new string with the last character removed
+fails:String#chop returns an empty string when applied to an empty string
+fails:String#chop returns a new string when applied to an empty string
+fails:String#chop taints result when self is tainted
+fails:String#chop untrusts result when self is untrusted
+fails:String#chop returns subclass instances when called on a subclass
+fails:String#chop! behaves just like chop, but in-place
+fails:String#chop! returns self if modifications were made
+fails:String#chop! returns nil when called on an empty string
+fails:String#chop! raises a RuntimeError on a frozen instance that is modified
+fails:String#chop! raises a RuntimeError on a frozen instance that would not be modified
