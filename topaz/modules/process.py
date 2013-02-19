@@ -3,14 +3,9 @@ from __future__ import absolute_import
 import os
 
 from topaz.module import Module, ModuleDef, ClassDef
-from topaz.objects.objectobject import W_Object
 
 class Process(Module):
     moduledef = ModuleDef("Process", filepath=__file__)
-
-    @moduledef.setup_module
-    def setup_module(space, w_mod):
-        space.set_const(w_mod, "Status", space.w_process_status)
 
     @moduledef.function("euid")
     def method_euid(self, space):
@@ -33,7 +28,7 @@ class Process(Module):
         try:
             pid, status = os.waitpid(pid, 0)
             status = os.WEXITSTATUS(status)
-            st = space.send(space.w_process_status,
+            st = space.send(space.find_const(self, "Status"),
                 space.newsymbol("new"),
                 [space.newint(pid), space.newint(status)])
             space.globals.set(space, "$?", st)
@@ -65,23 +60,3 @@ class Process(Module):
                 return space.w_nil
         else:
             return space.newint(pid)
-
-class W_ProcessStatusObject(W_Object):
-    classdef = ClassDef("Status", W_Object.classdef, filepath=__file__)
-
-    classdef.app_method("""
-    def initialize(pid, exitstatus)
-      @pid = pid
-      @exitstatus = exitstatus
-    end
-
-    def to_i
-      @exitstatus
-    end
-
-    alias exitstatus to_i
-
-    def pid
-      @pid
-    end
-    """)
