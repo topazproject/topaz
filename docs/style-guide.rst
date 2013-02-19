@@ -131,6 +131,28 @@ Bad:
 
     arr.map {|x|x * 2}
 
+When testing for a block, prefer explicit ``if block`` to ``block_given?``.
+
+Good:
+
+.. sourcecode:: ruby
+
+    def f(&block)
+      if block
+      end
+    end
+
+Bad:
+
+.. sourcecode:: ruby
+
+    def f
+      if block_given?
+      end
+    end
+
+
+
 Hashes and Arrays
 ~~~~~~~~~~~~~~~~~
 
