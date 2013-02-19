@@ -235,12 +235,6 @@ class TestIO(BaseTopazTest):
         """ % f)
         assert w_res == space.w_true
 
-    def test_reopen_stderr_in_stdout(self, space, monkeypatch):
-        res = []
-        monkeypatch.setattr(os, "dup2", lambda old, new: res.append((old, new)))
-        space.execute("$stdout.reopen($stderr)")
-        assert res == [(2, 1)]
-
     def test_reopen_stdout_in_closed_io(self, space, tmpdir):
         f = tmpdir.join("file.txt")
         f.write('')
