@@ -49,11 +49,11 @@ class Coerce(object):
 
     @staticmethod
     def path(space, w_obj):
-        string_w = space.convert_type(w_obj, space.w_string, "to_path", raise_error=False)
-        if string_w is not space.w_nil:
-            string = space.str_w(string_w)
-        else:
-            string = Coerce.str(space, w_obj)
+        w_string = space.convert_type(w_obj, space.w_string, "to_path", raise_error=False)
+        if w_string is space.w_nil:
+            w_string = space.convert_type(w_obj, space.w_string, "to_str")
+        string = space.str_w(w_string)
+
         if "\x00" in string:
             raise space.error(space.w_ArgumentError, "string contains null byte")
         else:
