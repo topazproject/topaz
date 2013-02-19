@@ -45,19 +45,23 @@ class WrapperGenerator(object):
                 )
             args = ()
             arg_count = 0
+            args_w_seen = False
             for i, argname in unrolling_argnames:
                 if argname == "self":
                     assert isinstance(self, self_cls)
                     args += (self,)
                 elif argname == "args_w":
-                    # TODO: this should only include args that aren't already
-                    # processed
-                    args += (args_w,)
+                    if args_w_seen:
+                        raise SystemError("args_w cannot be repeated")
+                    args += (args_w[arg_count:],)
+                    args_w_seen = True
                 elif argname == "block":
                     args += (block,)
                 elif argname == "space":
                     args += (space,)
                 elif argname.startswith("w_") or argname in argspec:
+                    if args_w_seen:
+                        raise SystemError("args_w must be the last argument accepted")
                     if len(args_w) > arg_count:
                         if argname.startswith("w_"):
                             args += (args_w[arg_count],)
