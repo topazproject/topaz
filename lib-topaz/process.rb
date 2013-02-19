@@ -5,7 +5,13 @@ module Process
       @exitstatus = exitstatus
     end
 
-    attr_reader :pid, :exitstatus
+    def pid
+      @pid
+    end
+
+    def exitstatus
+      @exitstatus
+    end
 
     alias to_i exitstatus
   end
