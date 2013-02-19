@@ -59,4 +59,37 @@ class IO
       return f.readlines(*args)
     end
   end
+
+  def self.popen(cmd, mode='r', opts={}, &block)
+    r, w = IO.pipe
+    if mode != 'r' && mode != 'w'
+      raise NotImplementedError, "mode #{mode} for IO.popen"
+    end
+
+    pid = fork do
+      if mode == 'r'
+        r.close
+        $stdout.reopen(w)
+      else
+        w.close
+        $stdin.reopen(r)
+      end
+      exec(*cmd)
+    end
+
+    if mode == 'r'
+      res = r
+      w.close
+    else
+      res = w
+      r.close
+    end
+
+    res.instance_variable_set("@pid", pid)
+    block ? yield(res) : res
+  end
+
+  def pid
+    @pid
+  end
 end
