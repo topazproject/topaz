@@ -39,4 +39,10 @@ module Kernel
     end
     return nil
   end
+
+  def `(cmd)
+    cmd = cmd.to_str if cmd.respond_to?(:to_str)
+    raise TypeError, "can't convert #{cmd.class} into String" unless cmd.is_a?(String)
+    IO.popen(cmd) { |r| r.read }
+  end
 end
