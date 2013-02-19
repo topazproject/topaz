@@ -1,4 +1,6 @@
 module Enumerable
+  Undefined = Object.new
+
   def map
     result = []
     self.each do |x|
@@ -9,11 +11,37 @@ module Enumerable
 
   alias collect map
 
-  def inject memo
-    self.each do |x|
-      memo = (yield memo, x)
+  def inject(initial=Undefined, sym=Undefined, &block)
+    if !block || !sym.equal?(Undefined)
+      if sym.equal?(Undefined)
+        sym = initial
+        initial = Undefined
+      end
+
+      # Do the sym version
+
+      sym = sym.to_sym
+
+      each do |o|
+        if initial.equal?(Undefined)
+          initial = o
+        else
+          initial = initial.__send__(sym, o)
+        end
+      end
+
+      # Block version
+    else
+      each do |o|
+        if initial.equal?(Undefined)
+          initial = o
+        else
+          initial = block.call(initial, o)
+        end
+      end
     end
-    memo
+
+    initial.equal?(Undefined) ? nil : initial
   end
 
   alias reduce inject
