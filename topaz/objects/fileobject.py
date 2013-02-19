@@ -603,12 +603,12 @@ class W_FileStatObject(W_Object):
     def method_ino(self, space):
         return space.newint(self.get_stat(space).st_ino)
 
-    def return_mode(self, space):
+    def get_w_mode(self, space):
         return space.newint(self.get_stat(space).st_mode)
 
     @classdef.method("mode")
     def method_mode(self, space):
-        return self.return_mode(space)
+        return self.get_w_mode(space)
 
     @classdef.method("nlink")
     def method_nlink(self, space):
@@ -649,11 +649,11 @@ class W_FileStatObject(W_Object):
     @classdef.method("world_readable?")
     def method_world_readablep(self, space):
         if stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_IROTH:
-            return self.return_mode(space)
+            return self.get_w_mode(space)
         return space.w_nil
 
     @classdef.method("world_writable?")
     def method_world_writablep(self, space):
         if stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_IWOTH:
-            return self.return_mode(space)
+            return self.get_w_mode(space)
         return space.w_nil
