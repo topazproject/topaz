@@ -121,13 +121,6 @@ class W_IOObject(W_Object):
         else:
             return w_read_str
 
-    classdef.app_method("""
-    def << s
-        write(s)
-        return self
-    end
-    """)
-
     @classdef.method("write")
     def method_write(self, space, w_str):
         self.ensure_not_closed(space)
@@ -203,64 +196,6 @@ class W_IOObject(W_Object):
         else:
             return space.newarray(pipes_w)
 
-    classdef.app_method("""
-    def each_line(sep=$/, limit=nil)
-        if sep.is_a?(Fixnum) && limit.nil?
-            limit = sep
-            sep = $/
-        end
-
-        if sep.nil?
-            yield(limit ? read(limit) : read)
-            return self
-        end
-
-        if limit == 0
-            raise ArgumentError.new("invalid limit: 0 for each_line")
-        end
-
-        rest = ""
-        nxt = read(8192)
-        need_read = false
-        while nxt || rest
-            if nxt and need_read
-                rest = rest ? rest + nxt : nxt
-                nxt = read(8192)
-                need_read = false
-            end
-
-            line, rest = *rest.split(sep, 2)
-
-            if limit && line.size > limit
-                left = 0
-                right = limit
-                while right < line.size
-                    yield line[left...right]
-                    left, right = right, right + limit
-                end
-                rest = line[right - limit..-1] + sep + (rest || "")
-            elsif rest || nxt.nil?
-                yield line
-            else
-                need_read = true
-            end
-        end
-        self
-    end
-
-    def readlines(sep=$/, limit=nil)
-        lines = []
-        each_line(sep, limit) { |line| lines << line }
-        return lines
-    end
-
-    def self.readlines(name, *args)
-        File.open(name) do |f|
-            return f.readlines(*args)
-        end
-    end
-    """)
-
     @classdef.method("close")
     def method_close(self, space):
         self.ensure_not_closed(space)
@@ -312,6 +247,7 @@ class W_FileObject(W_IOObject):
             return space.w_nil
         return space.w_nil if stat.st_size == 0 else space.newint(stat.st_size)
 
+    @classdef.singleton_method("unlink")
     @classdef.singleton_method("delete")
     def singleton_method_delete(self, space, args_w):
         for w_path in args_w:
@@ -438,11 +374,21 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                string = space.str_w(
-                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
-                )
+                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                    if in_recursion:
+                        raise space.error(space.w_ArgumentError, "recursive array")
+                    string = space.str_w(
+                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                    )
             else:
-                string = space.str_w(w_arg)
+                w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
+                if w_string is space.w_nil:
+                    w_string = space.convert_type(w_arg, space.w_string, "to_str")
+                string = space.str_w(w_string)
+
+            if string == "" and len(args_w) > 1:
+                if (not result) or result[-1] != sep:
+                    result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()
@@ -482,18 +428,6 @@ class W_FileObject(W_IOObject):
             current_umask = os.umask(0)
             os.umask(current_umask)
             return space.newint(current_umask)
-
-    classdef.app_method("""
-    def self.open(filename, mode="r", perm=nil, opt=nil, &block)
-        f = self.new filename, mode, perm, opt
-        return f unless block
-        begin
-            return yield f
-        ensure
-            f.close
-        end
-    end
-    """)
 
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):
