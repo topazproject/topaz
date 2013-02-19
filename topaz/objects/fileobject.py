@@ -483,15 +483,13 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("chmod", mode="int")
     def singleton_method_chmod(self, space, mode, args_w):
-        processed = 0
-        for arg_w in args_w[1:]:
+        for arg_w in args_w:
             path = Coerce.path(space, arg_w)
             try:
                 os.chmod(path, mode)
             except OSError as e:
                 raise error_for_oserror(space, e)
-            processed += 1
-        return space.newint(processed)
+        return space.newint(len(args_w))
 
     @classdef.singleton_method("stat", filename="path")
     def singleton_method_stat(self, space, filename):
