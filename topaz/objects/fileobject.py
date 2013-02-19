@@ -215,9 +215,9 @@ class W_IOObject(W_Object):
             stat_val = os.fstat(self.fd)
         except OSError as e:
             raise error_for_oserror(space, e)
-            stat_obj = W_FileStatObject(space)
-            stat_obj.set_stat(stat_val)
-            return stat_obj
+        stat_obj = W_FileStatObject(space)
+        stat_obj.set_stat(stat_val)
+        return stat_obj
 
 
 class W_FileObject(W_IOObject):
@@ -464,13 +464,13 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("chmod", mode="int")
     def singleton_method_chmod(self, space, mode, args_w):
         processed = 0
-        try:
-            for arg_w in args_w[1:]:
-                path = Coerce.path(space, arg_w)
+        for arg_w in args_w[1:]:
+            path = Coerce.path(space, arg_w)
+            try:
                 os.chmod(path, mode)
-                processed += 1
-        except OSError as e:
-            raise error_for_oserror(space, e)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+            processed += 1
         return space.newint(processed)
 
     @classdef.singleton_method("stat", filename="path")
@@ -502,25 +502,6 @@ class W_FileObject(W_IOObject):
         return space.newint(0)
 
 
-def check_initialized(param="self"):
-    def inner(func):
-        code = func.__code__
-        space_idx = code.co_varnames.index("space")
-        obj_idx = code.co_varnames.index(param)
-
-        @functools.wraps(func)
-        def wrapper(*args):
-            space = args[space_idx]
-            w_obj = args[obj_idx]
-            if not w_obj.is_initialized:
-                klass = space.getclass(w_obj)
-                raise space.error(space.w_RuntimeError, "uninitialized %s" % klass.name)
-            return func(*args)
-        wrapper.__wraps__ = func
-        return wrapper
-    return inner
-
-
 class W_FileStatObject(W_Object):
     classdef = ClassDef("Stat", W_Object.classdef, filepath=__file__)
 
@@ -529,8 +510,13 @@ class W_FileStatObject(W_Object):
         self.is_initialized = False
 
     def set_stat(self, stat):
-        self.stat = stat
+        self._stat = stat
         self.is_initialized = True
+
+    def get_stat(self, space):
+        if not self.is_initialized:
+            raise space.error(space.w_RuntimeError, "uninitialized File::Stat")
+        return self._stat
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_args):
@@ -544,130 +530,112 @@ class W_FileStatObject(W_Object):
             raise error_for_oserror(space, e)
 
     @classdef.method("blksize")
-    @check_initialized()
     def method_blksize(self, space):
-        return space.newint(self.stat.st_blksize)
+        return space.newint(self.get_stat(space).st_blksize)
 
     @classdef.method("blockdev?")
-    @check_initialized()
     def method_blockdevp(self, space):
-        return space.newbool(stat.S_ISBLK(self.stat.st_mode))
+        return space.newbool(stat.S_ISBLK(self.get_stat(space).st_mode))
 
     @classdef.method("blocks")
-    @check_initialized()
     def method_blocks(self, space):
-        return space.newint(self.stat.st_blocks)
+        return space.newint(self.get_stat(space).st_blocks)
 
     @classdef.method("chardev?")
-    @check_initialized()
     def method_chardevp(self, space):
-        return space.newbool(stat.S_ISCHR(self.stat.st_mode))
+        return space.newbool(stat.S_ISCHR(self.get_stat(space).st_mode))
 
     @classdef.method("dev")
-    @check_initialized()
     def method_dev(self, space):
-        return space.newint(self.stat.st_dev)
+        return space.newint(self.get_stat(space).st_dev)
 
     @classdef.method("directory?")
-    @check_initialized()
     def method_directoryp(self, space):
-        return space.newbool(stat.S_ISDIR(self.stat.st_mode))
+        return space.newbool(stat.S_ISDIR(self.get_stat(space).st_mode))
 
     @classdef.method("file?")
-    @check_initialized()
     def method_filep(self, space):
-        return space.newbool(stat.S_ISREG(self.stat.st_mode))
+        return space.newbool(stat.S_ISREG(self.get_stat(space).st_mode))
 
     @classdef.method("ftype")
-    @check_initialized()
     def method_ftype(self, space):
-        if stat.S_ISREG(self.stat.st_mode):
+        stat_val = self.get_stat(space)
+        if stat.S_ISREG(stat_val.st_mode):
             return space.newstr_fromstr("file")
-        elif stat.S_ISDIR(self.stat.st_mode):
+        elif stat.S_ISDIR(stat_val.st_mode):
             return space.newstr_fromstr("directory")
-        elif stat.S_ISCHR(self.stat.st_mode):
+        elif stat.S_ISCHR(stat_val.st_mode):
             return space.newstr_fromstr("characterSpecial")
-        elif stat.S_ISBLK(self.stat.st_mode):
+        elif stat.S_ISBLK(stat_val.st_mode):
             return space.newstr_fromstr("blockSpecial")
-        elif stat.S_ISFIFO(self.stat.st_mode):
+        elif stat.S_ISFIFO(stat_val.st_mode):
             return space.newstr_fromstr("fifo")
-        elif stat.S_ISLNK(self.stat.st_mode):
+        elif stat.S_ISLNK(stat_val.st_mode):
             return space.newstr_fromstr("link")
-        elif stat.S_ISSOCK(self.stat.st_mode):
+        elif stat.S_ISSOCK(stat_val.st_mode):
             return space.newstr_fromstr("socket")
         else:
             return space.newstr_fromstr("unknown")
 
     @classdef.method("gid")
-    @check_initialized()
     def method_gid(self, space):
-        return space.newint(self.stat.st_gid)
+        return space.newint(self.get_stat(space).st_gid)
 
     @classdef.method("ino")
-    @check_initialized()
     def method_ino(self, space):
-        return space.newint(self.stat.st_ino)
+        return space.newint(self.get_stat(space).st_ino)
+
+    def return_mode(self, space):
+        return space.newint(self.get_stat(space).st_mode)
 
     @classdef.method("mode")
-    @check_initialized()
     def method_mode(self, space):
-        return space.newint(self.stat.st_mode)
+        return self.return_mode(space)
 
     @classdef.method("nlink")
-    @check_initialized()
     def method_nlink(self, space):
-        return space.newint(self.stat.st_nlink)
+        return space.newint(self.get_stat(space).st_nlink)
 
     @classdef.method("rdev")
-    @check_initialized()
     def method_rdev(self, space):
-        return space.newint(self.stat.st_rdev)
+        return space.newint(self.get_stat(space).st_rdev)
 
     @classdef.method("setgid?")
-    @check_initialized()
     def method_setgidp(self, space):
-        return space.newbool(stat.S_IMODE(self.stat.st_mode) & stat.S_ISGID)
+        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISGID)
 
     @classdef.method("setuid?")
-    @check_initialized()
     def method_setuidp(self, space):
-        return space.newbool(stat.S_IMODE(self.stat.st_mode) & stat.S_ISUID)
+        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISUID)
 
     @classdef.method("size")
-    @check_initialized()
     def method_size(self, space):
-        return space.newint(self.stat.st_size)
+        return space.newint(self.get_stat(space).st_size)
 
     @classdef.method("socket?")
-    @check_initialized()
     def method_socketp(self, space):
-        return space.newbool(stat.S_ISSOCK(self.stat.st_mode))
+        return space.newbool(stat.S_ISSOCK(self.get_stat(space).st_mode))
 
     @classdef.method("sticky?")
-    @check_initialized()
     def method_stickyp(self, space):
-        return space.newbool(stat.S_IMODE(self.stat.st_mode) & stat.S_ISVTX)
+        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISVTX)
 
     @classdef.method("symlink?")
-    @check_initialized()
     def method_symlinkp(self, space):
-        return space.newbool(stat.S_ISLNK(self.stat.st_mode))
+        return space.newbool(stat.S_ISLNK(self.get_stat(space).st_mode))
 
     @classdef.method("uid")
-    @check_initialized()
     def method_uid(self, space):
-        return space.newint(self.stat.st_uid)
+        return space.newint(self.get_stat(space).st_uid)
 
     @classdef.method("world_readable?")
-    @check_initialized()
     def method_world_readablep(self, space):
-        if stat.S_IMODE(self.stat.st_mode) & stat.S_IROTH:
-            return self.method_mode(space)
+        if stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_IROTH:
+            return self.return_mode(space)
         return space.w_nil
 
     @classdef.method("world_writable?")
-    @check_initialized()
     def method_world_writablep(self, space):
-        if stat.S_IMODE(self.stat.st_mode) & stat.S_IWOTH:
-            return self.method_mode(space)
+        if stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_IWOTH:
+            return self.return_mode(space)
         return space.w_nil
