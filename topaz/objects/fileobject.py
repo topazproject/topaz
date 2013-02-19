@@ -44,6 +44,9 @@ class W_IOObject(W_Object):
         if self.fd < 0:
             raise space.error(space.w_IOError, "closed stream")
 
+    def getfd(self):
+        return self.fd
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
@@ -197,6 +200,23 @@ class W_IOObject(W_Object):
                         space.send(pipe_w, space.newsymbol("close"))
         else:
             return space.newarray(pipes_w)
+
+    @classdef.method("reopen")
+    def method_reopen(self, space, w_arg, w_mode=None):
+        self.ensure_not_closed(space)
+        w_io = space.convert_type(w_arg, space.w_io, "to_io", raise_error=False)
+        if w_io is space.w_nil:
+            args = [w_arg] if w_mode is None else [w_arg, w_mode]
+            w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
+        assert isinstance(w_io, W_IOObject)
+        w_io.ensure_not_closed(space)
+        os.close(self.fd)
+        os.dup2(w_io.getfd(), self.fd)
+        return self
+
+    @classdef.method("to_io")
+    def method_to_io(self):
+        return self
 
     @classdef.method("close")
     def method_close(self, space):

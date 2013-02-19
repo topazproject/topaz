@@ -226,6 +226,98 @@ class TestIO(BaseTopazTest):
         w_res = space.execute("return IO.readlines('%s')" % tmpdir.join("x.txt"))
         assert self.unwrap(space, w_res) == ["abc"]
 
+    def test_to_io(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("")
+        w_res = space.execute("""
+        f = File.new '%s'
+        return f.eql? f.to_io
+        """ % f)
+        assert w_res == space.w_true
+
+    def test_reopen_stderr_in_stdout(self, space, monkeypatch):
+        res = []
+        monkeypatch.setattr(os, "dup2", lambda old, new: res.append((old, new)))
+        w_res = space.execute("$stdout.reopen($stderr)")
+        assert res == [(2, 1)]
+
+    def test_reopen_stdout_in_closed_io(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write('')
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            f = File.new('%s')
+            f.close
+            f.reopen($stdout)
+            """ % f)
+
+    def test_reopen_closed_io(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write('')
+        with self.raises(space, "IOError", "closed stream"):
+            space.execute("""
+            f = File.new('%s')
+            f.close
+            $stderr.reopen(f)
+            """ % f)
+
+    def test_reopen(self, space, tmpdir):
+        content = "This is line one"
+        f = tmpdir.join("testfile")
+        f.write(content + "\n")
+        w_res = space.execute("""
+        res = []
+        class A
+          def to_io
+            File.new("%s")
+          end
+        end
+        f1 = A.new
+        f2 = File.new("%s")
+        res << f2.readlines[0]
+        f2.reopen(f1)
+        res << f2.readlines[0]
+        res << f2.readlines[0]
+        return res
+        """ % (f, f))
+        assert self.unwrap(space, w_res) == [content, content, ""]
+
+    def test_reopen_path(self, space, tmpdir):
+        content = "This is line one"
+        f = tmpdir.join("testfile")
+        f.write(content + "\n")
+        w_res = space.execute("""
+        res = []
+        f = File.new("%s")
+        res << f.readlines[0]
+        f.reopen("%s")
+        res << f.readlines[0]
+        res << f.readlines[0]
+        return res
+        """ % (f, f))
+        assert self.unwrap(space, w_res) == [content, content, ""]
+
+    def test_reopen_with_invalid_arg(self, space):
+        with self.raises(space, "TypeError", "can't convert Fixnum into String"):
+            space.execute("$stderr.reopen(12)")
+
+    def test_popen_read(self, space):
+        w_res = space.execute("""
+        io = IO.popen("echo foo", "r")
+        return io.pid.is_a?(Fixnum), io.read
+        """)
+        assert self.unwrap(space, w_res) == [True, "foo\n"]
+
+    @pytest.mark.xfail
+    def test_popen_write(self, space, capfd):
+        w_res = space.execute("""
+        IO.popen("cat", "w") do |io|
+          io.write 'foo\n'
+        end
+        """)
+        out, err = capfd.readouterr()
+        assert out == "foo\n"
+
 
 class TestFile(BaseTopazTest):
     def test_access_flags(self, space):

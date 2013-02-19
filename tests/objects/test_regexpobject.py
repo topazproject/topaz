@@ -177,10 +177,10 @@ class TestRegexpObject(BaseTopazTest):
         assert space.int_w(w_res) == 0
 
     def test_dot(self, space):
-        w_res = space.execute("return /./ =~ '\\n'")
+        w_res = space.execute('return /./ =~ "\\n"')
         assert w_res is space.w_nil
 
-        w_res = space.execute("return /./m =~ '\\n'")
+        w_res = space.execute('return /./m =~ "\\n"')
         assert space.int_w(w_res) == 0
 
     def test_non_capturing_group(self, space):
