@@ -432,8 +432,10 @@ class Lexer(object):
                 yield self.emit("STRING_CONTENT")
                 break
             elif ch == "\\":
-                for ch in self.read_escape(character_escape=True):
-                    self.add(ch)
+                ch2 = self.peek()
+                if ch2 in "\\'":
+                    ch = self.read()
+                self.add(ch)
             else:
                 self.add(ch)
         yield self.emit("STRING_END")
