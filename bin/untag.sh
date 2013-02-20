@@ -79,4 +79,3 @@ if [ -n "$FAILING_FILES" ]; then
     sleep 2
     echo $FAILING_FILES
 fi
-
