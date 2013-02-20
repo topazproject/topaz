@@ -16,28 +16,28 @@ fi
 ### Determine how to run timeout
 if [ -z "$(which timeout 2>/dev/null)" ]; then
     if [ -n "$(which gtimeout 2>/dev/null)" ]; then
-	TIMEOUT="gtimeout -s 9"
+        TIMEOUT="gtimeout -s 9"
     else
-	################################################################################
+        ################################################################################
         # Executes command with a timeout. From
         # http://unix.stackexchange.com/questions/43340/how-to-introduce-timeout-for-shell-scripting
-	#
+        #
         # Params:
         #   $1 timeout in seconds
         #   rest - command
         # Returns 1 if timed out 0 otherwise
-	timeout_func() {
-	    time=$1
+        timeout_func() {
+            time=$1
             # start the command in a subshell to avoid problem with pipes
             # (spawn accepts one command)
-	    command_and_args="${@:2}"
-	    command="/bin/bash -c \"$command_and_args\""
-	    expect -c "set echo \"-noecho\"; set timeout $time; spawn -noecho $command; expect timeout { exit 1 } eof { exit 0 }"
-	    if [ $? = 1 ] ; then
-		echo "Killed after ${time} seconds"
-	    fi
-	}
-	TIMEOUT="timeout_func"
+            command_and_args="${@:2}"
+            command="/bin/bash -c \"$command_and_args\""
+            expect -c "set echo \"-noecho\"; set timeout $time; spawn -noecho $command; expect timeout { exit 1 } eof { exit 0 }"
+            if [ $? = 1 ] ; then
+                echo "Killed after ${time} seconds"
+            fi
+        }
+        TIMEOUT="timeout_func"
     fi
 else
     TIMEOUT="timeout -s 9"
@@ -68,8 +68,8 @@ for i in `find ../rubyspec/core ../rubyspec/command_line ../rubyspec/language -n
     $TIMEOUT 15 bin/topaz ../mspec/bin/mspec tag -t $(pwd)/bin/topaz --add fails "$FILE" | tee output.txt
     grep "1 file, 0 examples, 0 expectations, 0 failures, 1 error" output.txt
     if [ $? -eq 0 ]; then
-	# Specfile had an error during load
-	FAILING_FILES="${FAILING_FILES} ${FILE}"
+        # Specfile had an error during load
+        FAILING_FILES="${FAILING_FILES} ${FILE}"
     fi
     rm -f output.txt
 done
