@@ -55,4 +55,18 @@ class Hash
   def merge(other, &block)
     dup.merge! other, &block
   end
+
+  def assoc(key)
+    each do |k, v|
+      return [k, v] if key == k
+    end
+    nil
+  end
+
+  def rassoc(value)
+    each do |k, v|
+      return [k, v] if value == v
+    end
+    nil
+  end
 end
