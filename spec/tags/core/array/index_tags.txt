@@ -4,3 +4,4 @@ fails:Array#index returns size-1 if only last element == to object
 fails:Array#index returns nil if no element == to object
 fails:Array#index accepts a block instead of an argument
 fails:Array#index ignore the block if there is an argument
+fails:Array#index given no argument and no block produces an Enumerator

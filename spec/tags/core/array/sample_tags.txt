@@ -10,3 +10,10 @@ fails:Array#sample passed a number n as an argument tries to convert n to an Int
 fails:Array#sample passed a number n as an argument returns all values when n >= array size
 fails:Array#sample passed a number n as an argument returns [] for empty arrays or if n <= 0
 fails:Array#sample passed a number n as an argument does not return subclass instances with Array subclass
+fails:Array#sample returns only one element
+fails:Array#sample returns proper array size
+fails:Array#sample attempts coercion via #to_hash
+fails:Array#sample uses default random generator
+fails:Array#sample uses given random generator
+fails:Array#sample uses default random generator and return proper array size
+fails:Array#sample uses given random generator and return proper array size
