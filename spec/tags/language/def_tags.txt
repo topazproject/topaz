@@ -1,0 +1,2 @@
+fails:Defining an 'initialize' method sets the method's visibility to private
+fails:Defining an 'initialize_copy' method sets the method's visibility to private

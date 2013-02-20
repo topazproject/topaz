@@ -2,7 +2,6 @@ fails:String#concat concatenates the given argument to self and returns self
 fails:String#concat converts the given argument to a String using to_str
 fails:String#concat raises a TypeError if the given argument can't be converted to a String
 fails:String#concat raises a RuntimeError when self is frozen
-fails:String#concat works when given a subclass instance
 fails:String#concat taints self if other is tainted
 fails:String#concat untrusts self if other is untrusted
 fails:String#concat with Integer concatencates the argument interpreted as a codepoint

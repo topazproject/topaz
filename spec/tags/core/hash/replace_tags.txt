@@ -1,4 +1,3 @@
-fails:Hash#replace replaces the contents of self with other
 fails:Hash#replace tries to convert the passed argument to a hash using #to_hash
 fails:Hash#replace calls to_hash on hash subclasses
 fails:Hash#replace does not transfer default values

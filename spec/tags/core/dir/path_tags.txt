@@ -1,0 +1,2 @@
+fails:Dir#path returns the path that was supplied to .new or .open
+fails:Dir#path returns the path even when called on a closed Dir instance

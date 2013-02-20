@@ -4,6 +4,4 @@ fails:Array#reject properly handles recursive arrays
 fails:Array#reject does not return subclass instance on Array subclasses
 fails:Array#reject does not retain instance variables
 fails:Array#reject returns an Enumerator if no block given
-fails:Array#reject! raises a RuntimeError on a frozen array
-fails:Array#reject! raises a RuntimeError on an empty frozen array
 fails:Array#reject! returns an Enumerator if no block given

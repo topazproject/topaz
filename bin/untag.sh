@@ -57,7 +57,7 @@ for i in `find spec/tags/ -name "*_tags.txt"`; do
     SPECNAME="${FILE%_tags.txt}"_spec.rb
     SPECPATH="`echo "$SPECNAME" | sed 's#spec/tags/rubyspec/tags/#spec/rubyspec/#'`"
     SPECPATH="`echo "$SPECNAME" | sed 's#spec/tags/#../rubyspec/#'`"
-    $TIMEOUT 15 bin/topaz ../mspec/bin/mspec tag -t $(pwd)/bin/topaz --del fails "$SPECPATH"
+    $TIMEOUT 15 bin/topaz ../mspec/bin/mspec tag -t "${top}/bin/topaz" --config="${top}/topaz.mspec" --del fails "$SPECPATH"
 done
 
 FAILING_FILES=""
@@ -65,7 +65,7 @@ echo "Tagging failing specs"
 sleep 1
 for i in `find ../rubyspec/core ../rubyspec/command_line ../rubyspec/language -name "*_spec.rb"`; do
     FILE="$i"
-    $TIMEOUT 15 bin/topaz ../mspec/bin/mspec tag -t $(pwd)/bin/topaz --add fails "$FILE" | tee output.txt
+    $TIMEOUT 15 bin/topaz ../mspec/bin/mspec tag -t "${top}/bin/topaz" --config="${top}/topaz.mspec" --add fails "$FILE" | tee output.txt
     grep "1 file, 0 examples, 0 expectations, 0 failures, 1 error" output.txt
     if [ $? -eq 0 ]; then
         # Specfile had an error during load
