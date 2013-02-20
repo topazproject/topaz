@@ -1,8 +1,3 @@
-fails:File.expand_path converts a pathname to an absolute pathname
-fails:File.expand_path converts a pathname to an absolute pathname, Ruby-Talk:18512 
-fails:File.expand_path keeps trailing dots on absolute pathname
-fails:File.expand_path converts a pathname to an absolute pathname, using a complete path
-fails:File.expand_path converts a pathname to an absolute pathname, using ~ (home) as base
 fails:File.expand_path expand path with 
 fails:File.expand_path expand_path for commoms unix path  give a full path
 fails:File.expand_path does not replace multiple '/' at the beginning of the path

@@ -175,3 +175,4 @@ fails:String#unpack with format 'l' with modifier '!' ignores NULL bytes between
 fails:String#unpack with format 'l' with modifier '!' ignores spaces between directives
 fails:String#unpack with format 'l' with modifier '!' decodes a long with most significant bit set as a negative number
 fails:String#unpack with format 'L' with modifier '_' ignores spaces between directives
+fails:String#unpack with format 'l' with modifier '>' decodes the remaining ints when passed the '*' modifier after another directive

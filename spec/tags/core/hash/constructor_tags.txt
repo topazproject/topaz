@@ -1,1 +1,2 @@
 fails:Hash.[]
+fails:Hash.[] creates a Hash; values can be provided as the argument list

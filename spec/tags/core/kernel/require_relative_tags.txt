@@ -1,4 +1,3 @@
-fails:Kernel#require_relative needs to be reviewed for spec completeness
 fails:Kernel#require_relative loads a path relative to the current file
 fails:Kernel#require_relative loads a file defining many methods
 fails:Kernel#require_relative raises a LoadError if the file does not exist

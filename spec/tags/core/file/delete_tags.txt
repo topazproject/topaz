@@ -1,2 +1,1 @@
 fails:File.delete raises an Errno::ENOENT when the given file doesn't exist
-fails:File.delete accepts an object that has a #to_path method

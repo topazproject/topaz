@@ -37,11 +37,11 @@ fails:Kernel#load does not add the loaded path to $LOADED_FEATURES
 fails:Kernel#load raises a LoadError if passed a non-extensioned path that does not exist but a .rb extensioned path does exist
 fails:Kernel#load sets the enclosing scope to an anonymous module if passed true for 'wrap'
 fails:Kernel#load (shell expansion) expands a tilde to the HOME environment variable as the path to load
-fails:Kernel.load (path resolution) loads an absolute path
 fails:Kernel.load (path resolution) loads a non-canonical absolute path
-fails:Kernel.load (path resolution) loads a file defining many methods
-fails:Kernel.load (path resolution) raises a LoadError if the file does not exist
 fails:Kernel.load (path resolution)
 fails:Kernel.load loads a non-extensioned file as a Ruby source file
 fails:Kernel.load loads a non .rb extensioned file as a Ruby source file
 fails:Kernel.load
+fails:Kernel.load (path resolution) calls #to_str on non-String objects returned by #to_path
+fails:Kernel.load (path resolution) loads a path with duplicate path separators
+fails:Kernel.load (path resolution) with an unreadable file raises a LoadError

@@ -1,3 +1,2 @@
 fails:Math.exp raises a TypeError if the argument cannot be coerced with Float()
 fails:Math.exp returns NaN given NaN
-fails:Math.exp accepts any argument that can be coerced with Float()

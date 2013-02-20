@@ -1,4 +1,3 @@
-fails:Array#map does not return subclass instance
 fails:Array#map returns an Enumerator when no block given
 fails:Array#map! replaces each element with the value returned by block
 fails:Array#map! returns self

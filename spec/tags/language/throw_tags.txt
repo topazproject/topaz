@@ -7,3 +7,4 @@ fails:The throw keyword unwinds stack from within a method
 fails:The throw keyword unwinds stack from within a lambda
 fails:The throw keyword raises an ArgumentError if outside of scope of a matching catch
 fails:The throw keyword raises a ArgumentError if used to exit a thread
+fails:The throw keyword clears the current exception

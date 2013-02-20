@@ -30,9 +30,13 @@ class MSpecScript
           "^#{Rubyspec}/core/regexp/inspect_spec.rb",
           "^#{Rubyspec}/core/process/detach_spec.rb",
           "^#{Rubyspec}/core/module/",
+          "^#{Rubyspec}/core/gc/profiler/",
           "^#{Rubyspec}/core/object/instance_exec_spec.rb",
           "^#{Rubyspec}/core/method/parameters_spec.rb",
           "^#{Rubyspec}/core/matchdata/names_spec.rb",
+          "^#{Rubyspec}/core/matchdata/begin_spec.rb",
+          "^#{Rubyspec}/core/matchdata/end_spec.rb",
+          "^#{Rubyspec}/core/matchdata/offset_spec.rb",
           "^#{Rubyspec}/core/matchdata/element_reference_spec.rb",
           "^#{Rubyspec}/core/marshal/dump_spec.rb",
           "^#{Rubyspec}/core/marshal/load_spec.rb",
@@ -125,6 +129,7 @@ class MSpecScript
               "^#{Rubyspec}/language/regexp/interpolation_spec.rb",
               "^#{Rubyspec}/language/regexp/modifiers_spec.rb",
               "^#{Rubyspec}/language/BEGIN_spec.rb",
+              "^#{Rubyspec}/language/variables_spec.rb",
               "^#{Rubyspec}/language/alias_spec.rb",
               "^#{Rubyspec}/language/break_spec.rb",
               "^#{Rubyspec}/language/class_spec.rb",
@@ -135,6 +140,8 @@ class MSpecScript
               "^#{Rubyspec}/language/return_spec.rb",
               "^#{Rubyspec}/language/execution_spec.rb",
               "^#{Rubyspec}/language/super_spec.rb"]
+
+  command_line = ["#{Rubyspec}/command_line"]
 
   library = ["#{Rubyspec}/library",
              "^#{Rubyspec}/library/abbrev/abbrev_spec.rb",
@@ -194,5 +201,5 @@ class MSpecScript
       [/_spec.rb$/, '_tags.txt']
   ]
 
-  set :files, core + language + library
+  set :files, core + language + library + command_line
 end

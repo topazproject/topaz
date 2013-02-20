@@ -1,5 +1,3 @@
-fails:IO.popen returns an open IO
-fails:IO.popen reads a read-only pipe
 fails:IO.popen raises IOError when writing a read-only pipe
 fails:IO.popen writes to a write-only pipe
 fails:IO.popen raises IOError when reading a write-only pipe
