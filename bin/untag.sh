@@ -18,8 +18,8 @@ for i in `find ../rubyspec/core/kernel -name "*_spec.rb"`; do
     timeout -s 9 30 bin/topaz ../mspec/bin/mspec tag -t $(pwd)/bin/topaz --add fails "$FILE" | tee output.txt
     grep "1 file, 0 examples, 0 expectations, 0 failures, 1 error" output.txt
     if [ $? -eq 0 ]; then
-	# Specfile had an error during load
-	FAILING_FILES="${FAILING_FILES} $FILE"
+    # Specfile had an error during load
+    FAILING_FILES="${FAILING_FILES} $FILE"
     fi
     rm -f output.txt
 done
