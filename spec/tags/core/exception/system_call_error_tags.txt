@@ -1,3 +1,5 @@
 fails:SystemCallError.new
 fails:SystemCallError#errno returns nil when no errno given
 fails:SystemCallError#message
+fails:SystemCallError.new requires at least one argumentt
+fails:SystemCallError.new accepts single Fixnum argument as errno

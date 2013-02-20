@@ -13,9 +13,3 @@ fails:Array.new with (size, object=nil) raises a TypeError if the size argument 
 fails:Array.new with (size, object=nil) yields the index of the element and sets the element to the value of the block
 fails:Array.new with (size, object=nil) uses the block value instead of using the default value
 fails:Array.new with (size, object=nil) returns the value passed to break
-fails:Array.new with (size, object=nil) raises an ArgumentError if size is negative
-fails:Array.new with no arguments does not use the given block
-fails:Array.new with no arguments returns an empty array
-fails:Array.new raise an ArgumentError if passed 3 or more arguments
-fails:Array.new returns an instance of Array
-

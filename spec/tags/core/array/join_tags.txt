@@ -4,3 +4,5 @@ fails:Array#join returns a US-ASCII string for an empty Array
 fails:Array#join returns a string formed by concatenating each String element separated by $,
 fails:Array#join attempts coercion via #to_str first
 fails:Array#join
+fails:Array#join separates elements with default separator when the passed separator is nil
+fails:Array#join attempts coercion via #to_ary second

@@ -1,5 +1,3 @@
-fails:File.new returns a new File with mode string
-fails:File.new returns a new File with mode num
 fails:File.new returns a new File with modus num and permissions
 fails:File.new creates the file and returns writable descriptor when called with 'w' mode and r-o permissions
 fails:File.new opens the existing file, does not change permissions even when they are specified
