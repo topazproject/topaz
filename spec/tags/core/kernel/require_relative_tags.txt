@@ -19,3 +19,4 @@ fails:Kernel#require_relative ($LOAD_FEATURES) does not store the path if the lo
 fails:Kernel#require_relative ($LOAD_FEATURES) does not load an absolute path that is already stored
 fails:Kernel#require_relative ($LOAD_FEATURES) adds the suffix of the resolved filename
 fails:Kernel#require_relative ($LOAD_FEATURES) loads a path for a file already loaded with a relative path
+fails:Kernel#require_relative raises a LoadError if basepath does not exist
