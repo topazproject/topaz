@@ -10,3 +10,4 @@ fails:String#index with Regexp starts the search at the given offset
 fails:String#index with Regexp starts the search at offset + self.length if offset is negative
 fails:String#index with Regexp returns nil if the substring isn't found
 fails:String#index with Regexp supports \G which matches at the given start offset
+fails:String#index calls #to_str to convert the first argument

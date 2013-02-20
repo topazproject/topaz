@@ -967,6 +967,12 @@ class TestParser(BaseTopazTest):
         assert space.parse('"\n"') == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("\n"))
         ]))
+        assert space.parse('"\\n"') == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("\n"))
+        ]))
+        assert space.parse("'\\n'") == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString("\\n"))
+        ]))
         assert space.parse("?-") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("-"))
         ]))
@@ -975,6 +981,9 @@ class TestParser(BaseTopazTest):
         ]))
         assert space.parse("'\\'<>'") == ast.Main(ast.Block([
             ast.Statement(ast.ConstantString("'<>"))
+        ]))
+        assert space.parse('"\\"<>"') == ast.Main(ast.Block([
+            ast.Statement(ast.ConstantString('"<>'))
         ]))
 
     def test_escape_character(self, space):

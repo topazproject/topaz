@@ -1,0 +1,2 @@
+fails:Dir.[] calls #to_path to convert patterns
+fails:Dir.[] matches non-dotfiles with '*'

@@ -1,0 +1,4 @@
+fails:Method#inspect returns a String containing 'Method'
+fails:Method#inspect returns a String containing the method name
+fails:Method#inspect returns a String containing the Module the method is defined in
+fails:Method#inspect returns a String containing the Module the method is referenced from

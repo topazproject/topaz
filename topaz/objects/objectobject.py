@@ -94,7 +94,7 @@ class W_BaseObject(W_Root):
 
     @classdef.method("__send__", method="str")
     def method_send(self, space, method, args_w, block):
-        return space.send(self, space.newsymbol(method), args_w[1:], block)
+        return space.send(self, space.newsymbol(method), args_w, block)
 
     @classdef.method("instance_eval", string="str", filename="str")
     def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):

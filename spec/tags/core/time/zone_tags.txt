@@ -1,2 +1,3 @@
 fails:Time#zone returns the time zone used for time
 fails:Time#zone returns nil for a Time with a fixed offset
+fails:Time#zone returns UTC when called on a UTC time
