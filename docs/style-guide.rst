@@ -41,20 +41,20 @@ Bad:
     def f a, b
     end
 
-There should not be spaces around the ``=`` for default arguments.
+There should be spaces around the ``=`` for default arguments.
 
 Good:
 
 .. sourcecode:: ruby
 
-    def f(a=nil)
+    def f(a = nil)
     end
 
 Bad:
 
 .. sourcecode:: ruby
 
-    def f(a = nil)
+    def f(a=nil)
     end
 
 Operators
@@ -157,7 +157,8 @@ Hashes and Arrays
 ~~~~~~~~~~~~~~~~~
 
 There should be no spaces around either brackets or braces, spaces should
-always follow commas and go around hash rockets.
+always follow commas and go around hash rockets. Hash rockets should be used
+in preference to "new-style" hashes.
 
 Good:
 
@@ -172,6 +173,7 @@ Bad:
 
     [1,2]
     { :abc=>23 }
+    {abc: 23}
 
 Statements
 ~~~~~~~~~~
