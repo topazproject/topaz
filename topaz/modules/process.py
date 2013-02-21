@@ -20,6 +20,10 @@ class Process(Module):
     def method_exit(self, space, status=0):
         raise space.error(space.w_SystemExit, "exit", [space.newint(status)])
 
+    @moduledef.function("exit!", status="int")
+    def method_exit_bang(self, space, status=0):
+        os._exit(status)
+
     @moduledef.function("fork")
     def method_fork(self, space, block):
         pid = os.fork()
