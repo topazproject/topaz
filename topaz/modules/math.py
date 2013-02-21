@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import math
 
+from rpython.rlib import rfloat
+
 from topaz.module import Module, ModuleDef
 
 
@@ -16,6 +18,12 @@ class Math(Module):
     @moduledef.function("exp", value="float")
     def method_exp(self, space, value):
         return space.newfloat(math.exp(value))
+
+    @moduledef.function("gamma", value="float")
+    def method_gamma(self, space, value):
+        if value == 0.0:
+            return space.newfloat(rfloat.INFINITY)
+        return space.newfloat(math.gamma(value))
 
     @moduledef.function("sin", value="float")
     def method_sin(self, space, value):
