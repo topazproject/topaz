@@ -20,27 +20,17 @@ class Process(Module):
     def method_waitall(self, space):
         raise space.error(space.w_NotImplementedError, "Process.waitall")
 
-    @moduledef.function("wait")
-    def method_wait(self, space):
-        return space.send(self, space.newsymbol("waitpid"), [])
-
     @moduledef.function("waitpid", pid="int")
     def method_waitpid(self, space, pid=-1):
-        try:
-            pid, status = os.waitpid(pid, 0)
-            status = os.WEXITSTATUS(status)
-            st = space.send(space.find_const(self, "Status"),
-                space.newsymbol("new"),
-                [space.newint(pid), space.newint(status)])
-            space.globals.set(space, "$?", st)
-            return space.newint(pid)
-        except OSError as ex:
-            raise space.error(space.w_SystemCallError, str(ex))
-
-    @moduledef.function("waitpid2", pid="int")
-    def method_waitpid2(self, space, pid=-1):
-        pid = space.send(self, space.newsymbol("waitpid"), [space.newint(pid)])
-        return space.newarray([pid, space.globals.get(space, "$?")])
+        pid, status = os.waitpid(pid, 0)
+        status = os.WEXITSTATUS(status)
+        w_status = space.send(
+            space.find_const(self, "Status"),
+            space.newsymbol("new"),
+            [space.newint(pid), space.newint(status)]
+        )
+        space.globals.set(space, "$?", w_status)
+        return space.newint(pid)
 
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):

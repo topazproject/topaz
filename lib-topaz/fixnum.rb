@@ -46,7 +46,7 @@ class Fixnum < Integer
 
   def step(limit, step=1)
     idx = self
-    if limit.is_a?(Float) or step.is_a?(Float)
+    if limit.is_a?(Float) || step.is_a?(Float)
       idx = idx.to_f
     end
     while idx <= limit do
