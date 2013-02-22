@@ -5,6 +5,7 @@ from rpython.rlib.rstring import StringBuilder
 
 from topaz.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
 from topaz.utils import regexp
+from topaz.utils.ordereddict import OrderedDict
 
 
 def regexp_match(cache, re, string):
@@ -41,18 +42,15 @@ def combine_segments(old_segments, suffix, new_segments=[""]):
 class Glob(object):
     def __init__(self, cache, matches=None):
         self.cache = cache
-        self._matches = []
-        self._seen_matches = {}
+        self._matches = OrderedDict()
         for match in (matches or []):
             self.append_match(match)
 
     def matches(self):
-        return self._matches
+        return self._matches.keys()
 
     def append_match(self, match):
-        if match not in self._seen_matches:
-            self._matches.append(match)
-            self._seen_matches[match] = None
+        self._matches[match] = None
 
     def is_constant(self, part, flags):
         special_chars = "?*["
