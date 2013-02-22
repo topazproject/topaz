@@ -1,7 +1,8 @@
-from ..base import BaseTopazTest
-from topaz.utils.glob import Glob
-from topaz.objects.regexpobject import RegexpCache
 from topaz.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
+from topaz.objects.regexpobject import RegexpCache
+from topaz.utils.glob import Glob
+
+from ..base import BaseTopazTest
 
 
 class GlobHelper(object):
