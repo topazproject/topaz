@@ -1,2 +1,0 @@
-fails:Dir.glob calls #to_path to convert patterns
-fails:Dir.glob matches non-dotfiles with '*'

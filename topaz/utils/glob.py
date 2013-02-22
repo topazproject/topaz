@@ -5,6 +5,7 @@ from rpython.rlib.rstring import StringBuilder
 
 from topaz.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
 from topaz.utils import regexp
+from topaz.utils.ordereddict import OrderedDict
 
 
 def regexp_match(cache, re, string):
@@ -14,85 +15,78 @@ def regexp_match(cache, re, string):
     return rsre_core.StrMatchContext(code, string, pos, endpos, flags)
 
 
+def path_split(string):
+    if not string:
+        return [""]
+    parts = []
+    for part in string.split("/"):
+        parts.append("/")
+        if part:
+            parts.append(part)
+    return parts[1:]
+
+
+def combine_segments(old_segments, suffix, new_segments=[""]):
+    segments = []
+    for old_seg in old_segments:
+        for new_seg in new_segments:
+            segments.append(old_seg + suffix + new_seg)
+    return segments
+
+
 class Glob(object):
     def __init__(self, cache, matches=None):
         self.cache = cache
-        self._matches = matches or []
+        self._matches = OrderedDict()
+        for match in (matches or []):
+            self.append_match(match)
 
     def matches(self):
-        return self._matches
+        return self._matches.keys()
 
     def append_match(self, match):
-        self._matches.append(match)
+        self._matches[match] = None
 
-    def path_split(self, string):
-        ret = []
-        ctx = regexp_match(self.cache, "/+", string)
-
-        last_end = 0
-        while rsre_core.search_context(ctx):
-            cur_start, cur_end = ctx.match_start, ctx.match_end
-            assert cur_start >= 0
-            assert cur_end >= cur_start
-            ret.append(string[last_end:cur_start])
-            ret.append(string[cur_start:cur_end])
-            last_end = cur_end
-            ctx.reset(last_end)
-
-        if last_end > 0:
-            ret.append(string[last_end:])
-        else:
-            ret.append(string)
-
-        if ret:
-            while len(ret[-1]) == 0:
-                ret.pop()
-
-        return ret
+    def is_constant(self, part, flags):
+        special_chars = "?*["
+        if not (flags & FNM_NOESCAPE):
+            special_chars += "\\"
+        for ch in part:
+            if ch in special_chars:
+                return False
+        return True
 
     def single_compile(self, glob, flags=0):
-        parts = self.path_split(glob)
+        parts = path_split(glob)
 
-        if glob[-1] == "/":
+        if parts[-1] == "/":
             last = DirectoriesOnly(None, flags)
         else:
             file = parts.pop()
-            ctx = regexp_match(self.cache, r"^[a-zA-Z0-9._]+$", file)
-            if rsre_core.search_context(ctx):
+            if self.is_constant(file, flags):
                 last = ConstantEntry(None, flags, file)
             else:
                 last = EntryMatch(None, flags, file)
 
         while parts:
-            last.separator = parts.pop()
-            dir = parts.pop()
-            if dir == "**":
-                if parts:
-                    last = RecursiveDirectories(last, flags)
-                else:
-                    last = StartRecursiveDirectories(last, flags)
+            sep_parts = []
+            while parts and parts[-1] == "/":
+                sep_parts.append(parts.pop())
+            last.separator = "".join(sep_parts)
+            if not parts:
+                last = RootDirectory(last, flags)
             else:
-                pattern = r"^[^\*\?\]]+"
-                ctx = regexp_match(self.cache, pattern, dir)
-                if rsre_core.search_context(ctx):
-                    partidx = len(parts) - 2
-                    assert partidx >= 0
-                    ctx = regexp_match(self.cache, pattern, parts[partidx])
-
-                    while rsre_core.search_context(ctx):
-                        next_sep = parts.pop()
-                        next_sect = parts.pop()
-                        dir = next_sect + next_sep + dir
-
-                        partidx = len(parts) - 2
-                        assert partidx >= 0
-                        ctx = regexp_match(self.cache, pattern, parts[partidx])
+                dir = parts.pop()
+                if dir == "**":
+                    if parts:
+                        last = RecursiveDirectories(last, flags)
+                    else:
+                        last = StartRecursiveDirectories(last, flags)
+                elif self.is_constant(dir, flags):
                     last = ConstantDirectory(last, flags, dir)
-                elif len(dir) > 0:
+                else:
                     last = DirectoryMatch(last, flags, dir)
 
-        if glob[0] == "/":
-            last = RootDirectory(last, flags)
         return last
 
     def run(self, node):
@@ -108,63 +102,51 @@ class Glob(object):
             if node:
                 self.run(node)
 
-    def compile(self, pattern, flags=0, patterns=None):
-        if patterns is None:
-            patterns = []
+    def process_braces(self, pattern, flags, i=0):
+        should_escape = flags & FNM_NOESCAPE == 0
+        patterns = []
 
-        escape = flags & FNM_NOESCAPE == 0
-        rbrace = -1
-        lbrace = -1
+        escaped = False
+        pattern_start = i
+        segments = [""]
+        while i < len(pattern):
+            ch = pattern[i]
+            if ch == "\\" and should_escape and not escaped:
+                escaped = True
+            elif ch == ",":
+                if escaped:
+                    escaped = False
+                else:
+                    suffix = pattern[pattern_start:i]
+                    patterns.extend(combine_segments(segments, suffix))
+                    segments = [""]
+                    pattern_start = i + 1
+            elif ch == "}":
+                if escaped:
+                    escaped = False
+                else:
+                    suffix = pattern[pattern_start:i]
+                    patterns.extend(combine_segments(segments, suffix))
+                    return i, patterns
+            elif ch == "{":
+                if escaped:
+                    escaped = False
+                else:
+                    suffix = pattern[pattern_start:i]
+                    i, new_segs = self.process_braces(pattern, flags, i + 1)
+                    segments = combine_segments(segments, suffix, new_segs)
+                    pattern_start = i + 1
+            else:
+                escaped = False
+            i += 1
 
-        i = pattern.find("{")
-        if i > -1:
-            nest = 0
-            while i < len(pattern):
-                char = pattern[i]
-                if char == "{":
-                    lbrace = i
-                    nest += 1
-                elif char == "}":
-                    nest -= 1
+        suffix = pattern[pattern_start:]
+        patterns.extend(combine_segments(segments, suffix))
+        return i, patterns
 
-                if nest == 0:
-                    rbrace = i
-                    break
-
-                if char == "\\" and escape:
-                    escape = True
-                    i += 1
-                i += 1
-
-        if lbrace >= 0 and rbrace >= 0:
-            pos = lbrace
-            front = pattern[:lbrace]
-            back = pattern[rbrace + 1:len(pattern)]
-
-            while pos < rbrace:
-                nest = 0
-                pos += 1
-                last = pos
-
-                while pos < rbrace and not (pattern[pos] == "?" and nest == 0):
-                    if pattern[pos] == "{":
-                        nest += 1
-                    elif pattern[pos] == "}":
-                        nest -= 1
-
-                    if pattern[pos] == "\\" and escape:
-                        pos += 1
-                        if pos == rbrace:
-                            break
-                    pos += 1
-
-                brace_pattern = front + pattern[last:pos] + back
-                self.compile(brace_pattern, flags, patterns)
-        else:
-            node = self.single_compile(pattern, flags)
-            if node:
-                patterns.append(node)
-        return patterns
+    def compile(self, pattern, flags=0):
+        i, patterns = self.process_braces(pattern, flags)
+        return [self.single_compile(p) for p in patterns]
 
 
 class Node(object):
@@ -172,6 +154,9 @@ class Node(object):
         self.flags = flags
         self.next = nxt
         self.separator = "/"
+
+    def allow_dots(self):
+        return self.flags & FNM_DOTMATCH != 0
 
     def path_join(self, parent, ent):
         if not parent:
@@ -214,9 +199,6 @@ class RecursiveDirectories(Node):
             return
         self.call_with_stack(glob, start, [start])
 
-    def allow_dots(self):
-        return self.flags & FNM_DOTMATCH != 0
-
     def call_with_stack(self, glob, start, stack):
         old_sep = self.next.separator
         self.next.separator = self.separator
@@ -249,11 +231,13 @@ class StartRecursiveDirectories(RecursiveDirectories):
 class Match(Node):
     def __init__(self, nxt, flags, glob_pattern):
         Node.__init__(self, nxt, flags)
+        self.match_dotfiles = self.allow_dots() or glob_pattern[0] == "."
         self.regexp = self.translate(glob_pattern, flags)
 
-    # Copied from stdlib, but rpython and uses StringBuilder instead of string concat
     def translate(self, pattern, flags):
         pattern = os.path.normcase(pattern)
+        should_escape = flags & FNM_NOESCAPE == 0
+        escaped = False
         i = 0
         n = len(pattern)
         res = StringBuilder(n)
@@ -261,39 +245,58 @@ class Match(Node):
         while i < n:
             c = pattern[i]
             i += 1
-            if c == "*":
-                res.append(".*")
-                # skip second `*' in directory wildcards
-                if i < n and pattern[i] == "*":
-                    i += 1
+            if c == "\\":
+                if should_escape and not escaped:
+                    escaped = True
+                else:
+                    res.append("\\\\")
+                    escaped = False
+            elif c == "*":
+                if escaped:
+                    escaped = False
+                    res.append("\\*")
+                else:
+                    res.append(".*")
+                    # skip second `*' in directory wildcards
+                    if i < n and pattern[i] == "*":
+                        i += 1
             elif c == "?":
-                res.append(".")
+                if escaped:
+                    escaped = False
+                    res.append("\\?")
+                else:
+                    res.append(".")
             elif c == "[":
-                j = i
-                if j < n and pattern[j] == "!":
-                    j += 1
-                if j < n and pattern[j] == "]":
-                    j += 1
-                while j < n and pattern[j] != "]":
-                    j += 1
-                if j >= n:
+                if escaped:
+                    escaped = False
                     res.append("\\[")
                 else:
-                    res.append("[")
-                    if pattern[i] == "!":
-                        res.append("^")
-                        i += 1
-                    elif pattern[i] == "^":
-                        res.append("\\^")
-                        i += 1
-                    for ch in pattern[i:j]:
-                        if ch == "\\":
-                            res.append("\\\\")
-                        else:
-                            res.append(ch)
-                    res.append("]")
-                    i = j + 1
+                    j = i
+                    if j < n and pattern[j] == "^":
+                        j += 1
+                    if j < n and pattern[j] == "]":
+                        j += 1
+                    while j < n and pattern[j] != "]":
+                        j += 1
+                    if j >= n:
+                        res.append("\\[")
+                    else:
+                        res.append("[")
+                        if pattern[i] == "^":
+                            res.append("^")
+                            i += 1
+                        elif pattern[i] == "^":
+                            res.append("\\^")
+                            i += 1
+                        for ch in pattern[i:j]:
+                            if ch == "\\":
+                                res.append("\\\\")
+                            else:
+                                res.append(ch)
+                        res.append("]")
+                        i = j + 1
             else:
+                escaped = False
                 if not c.isalnum():
                     res.append("\\")
                 res.append(c)
@@ -302,6 +305,8 @@ class Match(Node):
 
     def ismatch(self, cache, string):
         string = os.path.normcase(string)
+        if string.startswith(".") and not self.match_dotfiles:
+            return False
         ctx = regexp_match(cache, self.regexp, string)
         return rsre_core.search_context(ctx)
 
@@ -311,7 +316,7 @@ class DirectoryMatch(Match):
         if path and not os.path.exists(path):
             return
 
-        for ent in os.listdir(path if path else "."):
+        for ent in [".", ".."] + os.listdir(path if path else "."):
             if self.ismatch(glob.cache, ent):
                 full = self.path_join(path, ent)
                 if os.path.isdir(full):
@@ -324,7 +329,7 @@ class EntryMatch(Match):
             return
 
         try:
-            entries = os.listdir(path if path else ".")
+            entries = [".", ".."] + os.listdir(path if path else ".")
         except OSError:
             return
 
@@ -336,4 +341,7 @@ class EntryMatch(Match):
 class DirectoriesOnly(Node):
     def call(self, glob, path):
         if path and os.path.exists(path + "/."):
-            glob.append_match(path + "/")
+            if path == "/":
+                glob.append_match("/")
+            else:
+                glob.append_match(path + "/")
