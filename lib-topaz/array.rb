@@ -198,6 +198,10 @@ class Array
     result
   end
 
+  def map!(&block)
+    self.replace(self.map(&block))
+  end
+
   def max(&block)
     max = self[0]
     self.each do |e|
