@@ -80,10 +80,10 @@ class W_DirObject(W_Object):
         glob = Glob(space.fromcache(RegexpCache))
 
         for w_pat in patterns_w:
-            pattern_w = space.convert_type(w_pat, space.w_string, "to_path", raise_error=False)
-            if pattern_w is space.w_nil:
+            w_pat2 = space.convert_type(w_pat, space.w_string, "to_path", raise_error=False)
+            if w_pat2 is space.w_nil:
                 pattern = space.convert_type(w_pat, space.w_string, "to_str")
-            pattern = space.str_w(pattern_w)
+            pattern = space.str_w(w_pat2)
             if len(patterns_w) == 1:
                 for pat in pattern.split("\0"):
                     glob.glob(pat, flags)
