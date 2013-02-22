@@ -25,6 +25,10 @@ class Array
     return self
   end
 
+  def self.[](*args)
+    args.inject(allocate) { |array, arg| array << arg}
+  end
+
   def inspect
     result = "["
     recursion = Thread.current.recursion_guard(self) do

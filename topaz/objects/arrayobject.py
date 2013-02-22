@@ -49,10 +49,6 @@ class W_ArrayObject(W_Object):
     def singleton_method_allocate(self, space, args_w):
         return W_ArrayObject(space, [], self)
 
-    @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, args_w):
-        return space.newarray(args_w)
-
     @classdef.method("initialize_copy", other_w="array")
     @classdef.method("replace", other_w="array")
     @check_frozen()
