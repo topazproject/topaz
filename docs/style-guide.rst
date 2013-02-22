@@ -74,46 +74,6 @@ Bad:
 
     2**31-1
 
-Method calls
-~~~~~~~~~~~~
-
-When calling a method with no arguments, it should be called without
-parenthesis if there are no arguments, and it is a "property" method as opposed
-to a mutating method or the method name ends with ``!``.
-
-There should be no spaces around parenthesis, and spaces around commas.
-
-Good:
-
-.. sourcecode:: ruby
-
-    obj.foo
-    obj.delete!
-    obj.do_a_thing(2)
-
-Bad:
-
-.. sourcecode:: ruby
-
-    obj.foo 2, 3
-    obj.foo(2,3)
-    obj.mutate_some_stuff
-
-
-When calling a method on ``self``, always explicitly use ``self``.
-
-Good:
-
-.. sourcecode:: ruby
-
-    self.foo
-
-Bad:
-
-.. sourcecode:: ruby
-
-    foo
-
 Blocks
 ~~~~~~
 
