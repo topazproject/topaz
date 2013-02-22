@@ -34,7 +34,7 @@ def combine_segments(old_segments, suffix, new_segments=[""]):
     segments = []
     for old_seg in old_segments:
         for new_seg in new_segments:
-            segments.append("".join([old_seg, suffix, new_seg]))
+            segments.append(old_seg + suffix + new_seg)
     return segments
 
 
