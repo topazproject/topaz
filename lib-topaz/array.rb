@@ -1,26 +1,22 @@
 class Array
-  def to_s()
+  def to_s
     result = "["
-    self.each_with_index do |obj, i|
-      if i > 0
-        result << ", "
-      end
-      result << obj.to_s
+    each_with_index do |item, idx|
+      result << ", " if idx > 0
+      result << item.to_s
     end
     result << "]"
   end
 
   def -(other)
-    res = []
-    self.each do |x|
-      if !other.include?(x)
-        res << x
-      end
+    result = []
+    each do |item|
+      result << item if !other.include?(item)
     end
-    res
+    result
   end
 
-  def at idx
+  def at(idx)
     self[idx]
   end
 
@@ -32,100 +28,107 @@ class Array
     end
   end
 
-  def zip ary
+  def zip(other)
     result = []
-    self.each_with_index do |obj, idx|
-      result << [obj, ary[idx]]
+    each_with_index do |item, idx|
+      result << [item, other[idx]]
     end
     result
   end
 
-  def product ary
+  def product(other)
     result = []
-    self.each do |obj|
-      ary.each do |other|
-        result << [obj, other]
+    each do |item1|
+      other.each do |item2|
+        result << [item1, item2]
       end
     end
     result
   end
 
   def compact
-    self.select { |each| !each.nil? }
+    select { |item| !item.nil? }
   end
 
   def compact!
-    reject! { |obj| obj.nil? }
+    reject! { |item| item.nil? }
   end
 
   def reject!(&block)
     prev_size = self.size
-    self.delete_if(&block)
-    return nil if prev_size == self.size
+    delete_if(&block)
+    return nil if prev_size == size
     self
   end
 
   def assoc(key)
-    detect { |arr| arr.is_a?(Array) && arr[0] == key }
+    detect { |item| item.is_a?(Array) && item[0] == key }
   end
 
   def rassoc(value)
-    detect { |arr| arr.is_a?(Array) && arr[1] == value }
+    detect { |item| item.is_a?(Array) && item[1] == value }
   end
 
   def delete_if
+    # TODO: Use check_frozen
     raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
-    i = 0
-    c = 0
-    sz = self.size
-    while i < sz - c
-      item = self[i + c]
+
+    # Current pointer where we're writing
+    idx = 0
+    # Number of elements we've skipped
+    removed = 0
+    # Store the size in a local variable
+    size = self.size
+
+    while idx + removed < size
+      item = self[idx + removed]
+
       if yield(item)
-        c += 1
+        removed += 1
       else
-        self[i] = item
-        i += 1
+        self[idx] = item
+        idx += 1
       end
     end
-    self.pop(c)
+
+    pop(removed)
     self
   end
 
   def delete(obj, &block)
-    sz = self.size
-    self.delete_if { |o| o == obj }
-    return obj if sz != self.size
+    prev_size = self.size
+    delete_if { |item| item == obj }
+    return obj if prev_size != size
     return yield if block
     return nil
   end
 
   def first
-    return self[0]
+    self[0]
   end
 
   def flatten(level = -1)
-    list = []
+    result = []
     recursion = Thread.current.recursion_guard(self) do
-      self.each do |item|
+      each do |obj|
         if level == 0
-          list << item
-        elsif ary = Array.try_convert(item)
-          list.concat(ary.flatten(level - 1))
+          result << item
+        elsif ary = Array.try_convert(obj)
+          result.concat(ary.flatten(level - 1))
         else
-          list << item
+          result << item
         end
       end
-      return list
     end
-    if recursion
-      raise ArgumentError, "tried to flatten recursive array"
-    end
+
+    raise ArgumentError, "tried to flatten recursive array" if recursion
+    result
   end
 
   def flatten!(level = -1)
-    list = self.flatten(level)
-    self.clear
-    return self.concat list
+    result = flatten(level)
+    clear
+    concat(result)
   end
 
   def sort(&block)
@@ -133,53 +136,42 @@ class Array
   end
 
   def ==(other)
-    if self.equal?(other)
-      return true
+    return true  if equal?(other)
+    return false if !other.kind_of?(Array)
+    return false if size != other.size
+
+    each_with_index do |item, idx|
+      return false if item != other[idx]
     end
-    if !other.kind_of?(Array)
-      return false
-    end
-    if self.size != other.size
-      return false
-    end
-    self.each_with_index do |x, i|
-      if x != other[i]
-        return false
-      end
-    end
+
     return true
   end
 
   def eql?(other)
-    if self.equal?(other)
-      return true
+    return true if equal?(other)
+    return false if !other.kind_of?(Array)
+    return false if size != other.size
+
+    each_with_index do |item, idx|
+      return false if !item.eql?(other[idx])
     end
-    if !other.kind_of?(Array)
-      return false
-    end
-    if self.length != other.length
-      return false
-    end
-    self.each_with_index do |x, i|
-      if !x.eql?(other[i])
-        return false
-      end
-    end
+
     return true
   end
 
   def hash
-    res = 0x345678
-    self.each do |x|
+    result = 0x345678
+    each do |item|
       # We want to keep this within a fixnum range.
-      res = Topaz.intmask((1000003 * res) ^ x.hash)
+      result = Topaz.intmask((1000003 * result) ^ item.hash)
     end
-    return res
+    result
   end
 
   def *(arg)
-    return join(arg) if arg.respond_to? :to_str
+    return join(arg) if arg.respond_to?(:to_str)
 
+    # TODO: Use Topaz::Type here
     # MRI error cases
     argcls = arg.class
     begin
@@ -191,53 +183,48 @@ class Array
     raise ArgumentError, "Count cannot be negative" if arg < 0
 
     return [] if arg == 0
+
     result = self.dup
-    for i in 1...arg do
+    1.upto(arg) do
       result.concat(self)
     end
     result
   end
 
+  # TODO: Refactor this into Enumerable
   def max(&block)
     max = self[0]
-    self.each do |e|
-      max = e if (block ? block.call(max, e) : max <=> e) < 0
+    each do |item|
+      cmp = block ? yield(max, item) : max <=> item
+      max = item if cmp < 0
     end
     max
   end
 
   def uniq!(&block)
+    # TODO: Use check_frozen
     raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    prev_size = self.size
     seen = {}
-    old_len = self.length
-    i = 0
-    shifted = 0
-    while i < self.length do
-      item = self[i]
+
+    reject! do |item|
       item = yield(item) if block
-      if seen.include? item
-        shifted += 1
+      if seen.has_key?(item)
+        true
       else
-        seen[item] = nil
-        self[i - shifted] = item if shifted > 0
+        seen[item] = true
+        false
       end
-      i += 1
-    end
-    if shifted > 0
-      self.slice!(-shifted, shifted)
-      return self
-    else
-      return nil
     end
   end
 
   def uniq(&block)
-    arr = self.dup
-    arr.uniq!(&block)
-    return arr
+    result = self.dup
+    result.uniq!(&block)
+    result
   end
 
   def values_at(*args)
-    args.map { |n| self[n] }
+    args.map { |idx| self[idx] }
   end
 end
