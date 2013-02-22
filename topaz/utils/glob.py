@@ -19,16 +19,11 @@ def path_split(string):
     if not string:
         return [""]
     parts = []
-    start = 0
-    for i, ch in enumerate(string):
-        if ch == "/":
-            if start < i:
-                parts.append(string[start:i])
-            parts.append("/")
-            start = i + 1
-    if start < len(string):
-        parts.append(string[start:])
-    return parts
+    for part in string.split("/"):
+        parts.append("/")
+        if part:
+            parts.append(part)
+    return parts[1:]
 
 
 def combine_segments(old_segments, suffix, new_segments=[""]):
