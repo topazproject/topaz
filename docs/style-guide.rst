@@ -4,7 +4,7 @@ Style Guide
 Python
 ------
 
-Python code should follow `PEP 8`, lines should be limited to 79 columns.
+Python code should follow `PEP 8`_, lines should be limited to 79 columns.
 
 Ruby
 ----
