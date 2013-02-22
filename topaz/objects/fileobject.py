@@ -459,10 +459,8 @@ class W_FileObject(W_IOObject):
             other_stat = os.stat(other)
         except OSError:
             return space.w_false
-        if (file_stat.st_dev != other_stat.st_dev or
-                file_stat.st_ino != other_stat.st_ino):
-            return space.w_false
-        return space.w_true
+        return space.newbool(file_stat.st_dev == other_stat.st_dev and
+                file_stat.st_ino == other_stat.st_ino)
 
     @classdef.singleton_method("basename", filename="path")
     def method_basename(self, space, filename):
