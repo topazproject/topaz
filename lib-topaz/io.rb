@@ -23,7 +23,7 @@ class IO
     nxt = read(8192)
     need_read = false
     while nxt || rest
-      if nxt and need_read
+      if nxt && need_read
         rest = rest ? rest + nxt : nxt
         nxt = read(8192)
         need_read = false
