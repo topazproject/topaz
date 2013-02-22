@@ -452,6 +452,18 @@ class W_FileObject(W_IOObject):
     def method_executablep(self, space, filename):
         return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
 
+    @classdef.singleton_method("identical?", file="path", other="path")
+    def method_identicalp(self, space, file, other):
+        try:
+            file_stat = os.stat(file)
+            other_stat = os.stat(other)
+        except OSError:
+            return space.w_false
+        if (file_stat.st_dev != other_stat.st_dev or
+                file_stat.st_ino != other_stat.st_ino):
+            return space.w_false
+        return space.w_true
+
     @classdef.singleton_method("basename", filename="path")
     def method_basename(self, space, filename):
         i = filename.rfind("/") + 1
@@ -515,6 +527,14 @@ class W_FileObject(W_IOObject):
     def singleton_method_symlink(self, space, old_name, new_name):
         try:
             os.symlink(old_name, new_name)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return space.newint(0)
+
+    @classdef.singleton_method("link", old_name="path", new_name="path")
+    def singleton_method_link(self, space, old_name, new_name):
+        try:
+            os.link(old_name, new_name)
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
