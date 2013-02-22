@@ -24,9 +24,9 @@ class GlobHelper(object):
 
 
 def pytest_funcarg__glob_helper(request):
-    space = request.getfuncargvalue('space')
-    tmpdir = request.getfuncargvalue('tmpdir')
-    monkeypatch = request.getfuncargvalue('monkeypatch')
+    space = request.getfuncargvalue("space")
+    tmpdir = request.getfuncargvalue("tmpdir")
+    monkeypatch = request.getfuncargvalue("monkeypatch")
     return GlobHelper(space, tmpdir, monkeypatch)
 
 
