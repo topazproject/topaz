@@ -16,10 +16,6 @@ class Process(Module):
     def method_pid(self, space):
         return space.newint(os.getpid())
 
-    @moduledef.function("waitall")
-    def method_waitall(self, space):
-        raise space.error(space.w_NotImplementedError, "Process.waitall")
-
     @moduledef.function("waitpid", pid="int")
     def method_waitpid(self, space, pid=-1):
         pid, status = os.waitpid(pid, 0)
