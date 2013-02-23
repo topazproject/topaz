@@ -218,6 +218,7 @@ class W_ArrayObject(W_Object):
         return w_obj
 
     @classdef.method("pop")
+    @check_frozen()
     def method_pop(self, space, w_num=None):
         if w_num is None:
             if self.items_w:

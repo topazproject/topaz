@@ -1,3 +1,0 @@
-fails:Array#pop raises a RuntimeError on a frozen array
-fails:Array#pop raises a RuntimeError on an empty frozen array
-fails:Array#pop passed a number n as an argument raises a RuntimeError on a frozen array
