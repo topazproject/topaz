@@ -1,7 +1,6 @@
 import functools
 
 from topaz.gateway import WrapperGenerator
-from topaz.scope import StaticScope
 from topaz.utils.cache import Cache
 
 
