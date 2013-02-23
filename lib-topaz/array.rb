@@ -1,4 +1,31 @@
 class Array
+
+  def initialize(size_or_arr = nil, obj = nil, &block)
+    self.clear
+    if size_or_arr.nil?
+      return self
+    end
+    if obj.nil?
+      if size_or_arr.kind_of?(Array)
+        return self.replace(size_or_arr)
+      elsif size_or_arr.respond_to?(:to_ary)
+        return self.replace(size_or_arr.to_ary)
+      end
+    end
+    if !size_or_arr.respond_to?(:to_int)
+      raise TypeError, "can't convert #{size_or_arr.class} into Integer"
+    end
+    length = size_or_arr.to_int
+    raise ArgumentError, "negative array size" if length < 0
+    if block
+      # TODO: Emit "block supersedes default value argument" warning
+      (0...length).each { |i| self << yield(i) }
+    else
+      self.replace([obj] * length)
+    end
+    return self
+  end
+
   def to_s()
     result = "["
     self.each_with_index do |obj, i|
