@@ -1,11 +1,13 @@
 class Array
   def to_s()
     result = "["
-    self.each_with_index do |obj, i|
-      if i > 0
-        result << ", "
+    Thread.current.recursion_guard(self) do
+      self.each_with_index do |obj, i|
+        if i > 0
+          result << ", "
+        end
+        result << obj.to_s
       end
-      result << obj.to_s
     end
     result << "]"
   end
@@ -142,9 +144,11 @@ class Array
     if self.size != other.size
       return false
     end
-    self.each_with_index do |x, i|
-      if x != other[i]
-        return false
+    Thread.current.recursion_guard(self) do
+      self.each_with_index do |x, i|
+        if x != other[i]
+          return false
+        end
       end
     end
     return true
@@ -160,19 +164,23 @@ class Array
     if self.length != other.length
       return false
     end
-    self.each_with_index do |x, i|
-      if !x.eql?(other[i])
-        return false
+    Thread.current.recursion_guard(self) do
+      self.each_with_index do |x, i|
+        if !x.eql?(other[i])
+          return false
+        end
       end
     end
     return true
   end
 
   def hash
-    res = 0x345678
+    res = 0x345678 + self.length
     self.each do |x|
-      # We want to keep this within a fixnum range.
-      res = Topaz.intmask((1000003 * res) ^ x.hash)
+      if not self.eql?(x)
+        # We want to keep this within a fixnum range.
+        res = Topaz.intmask((1000003 * res) ^ x.hash.to_int)
+      end
     end
     return res
   end
