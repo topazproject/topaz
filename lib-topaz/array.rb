@@ -198,6 +198,12 @@ class Array
     result
   end
 
+  def map!(&block)
+    raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    self.each_with_index { |obj, idx| self[idx] = yield(obj) }
+    self
+  end
+
   def max(&block)
     max = self[0]
     self.each do |e|
