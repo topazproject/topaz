@@ -1,5 +1,4 @@
 class Array
-
   def initialize(size_or_arr = nil, obj = nil, &block)
     self.clear
     if size_or_arr.nil?
@@ -19,9 +18,9 @@ class Array
     raise ArgumentError, "negative array size" if length < 0
     if block
       # TODO: Emit "block supersedes default value argument" warning
-      (0...length).each { |i| self << yield(i) }
+      length.times { |i| self << yield(i) }
     else
-      self.replace([obj] * length)
+      length.times { self << obj }
     end
     return self
   end
