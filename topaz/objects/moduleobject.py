@@ -401,6 +401,21 @@ class W_ModuleObject(W_RootObject):
             )
         return w_res
 
+    @classdef.method("const_set", const="symbol")
+    def method_const_set(self, space, const, w_value):
+        if not 'A' <= const[0] <= 'Z':
+            raise space.error(space.w_NameError,
+                "wrong constant name %s" % const
+            )
+        for i in range(1, len(const)):
+            char = const[i]
+            if not ('A' <= char <= 'Z' or '0' <= char <= '9' or char == '_'):
+                raise space.error(space.w_NameError,
+                    "wrong constant name %s" % const
+                )
+        space.set_const(self, const, w_value)
+        return w_value
+
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):
         return space.newbool(self.find_class_var(space, name) is not None)
