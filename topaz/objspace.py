@@ -437,7 +437,19 @@ class ObjectSpace(object):
             w_res = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
         return w_res
 
+    @jit.elidable
+    def _is_legal_const_name(self, name):
+        for i in range(1, len(name)):
+            char = name[i]
+            if not (char.isalnum() or char == '_'):
+                return False
+        return name[0].isupper()
+
     def set_const(self, module, name, w_value):
+        if not self._is_legal_const_name(name):
+            raise self.error(self.w_NameError,
+                "wrong constant name %s" % name
+            )
         module.set_const(self, name, w_value)
 
     @jit.unroll_safe

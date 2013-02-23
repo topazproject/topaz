@@ -403,16 +403,6 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_set", const="symbol")
     def method_const_set(self, space, const, w_value):
-        if not const[0].isupper():
-            raise space.error(space.w_NameError,
-                "wrong constant name %s" % const
-            )
-        for i in range(1, len(const)):
-            char = const[i]
-            if not (char.isupper() or char.isdigit() or char == '_'):
-                raise space.error(space.w_NameError,
-                    "wrong constant name %s" % const
-                )
         space.set_const(self, const, w_value)
         return w_value
 
