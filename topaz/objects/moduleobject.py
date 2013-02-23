@@ -403,13 +403,13 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_set", const="symbol")
     def method_const_set(self, space, const, w_value):
-        if not 'A' <= const[0] <= 'Z':
+        if not const[0].isupper():
             raise space.error(space.w_NameError,
                 "wrong constant name %s" % const
             )
         for i in range(1, len(const)):
             char = const[i]
-            if not ('A' <= char <= 'Z' or '0' <= char <= '9' or char == '_'):
+            if not (char.isupper() or char.isdigit() or char == '_'):
                 raise space.error(space.w_NameError,
                     "wrong constant name %s" % const
                 )
