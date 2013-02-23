@@ -1,4 +1,0 @@
-fails:properly handles recursive arrays
-fails:raises an ArgumentError when count is negative
-fails:returns nil if self is empty
-fails:returns the last element
