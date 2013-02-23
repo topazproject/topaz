@@ -49,29 +49,6 @@ class W_ArrayObject(W_Object):
     def singleton_method_allocate(self, space, args_w):
         return space.newarray([])
 
-    @classdef.method("initialize")
-    def method_initialize(self, space, w_size_or_arr=None, w_obj=None, block=None):
-        del self.items_w[:]
-        if w_size_or_arr is None:
-            return self
-        if w_obj is None:
-            w_arr = space.convert_type(w_size_or_arr, space.w_array, "to_ary", raise_error=False)
-            if w_arr is not space.w_nil:
-                self.items_w.extend(space.listview(w_arr))
-                return self
-        length = space.int_w(space.convert_type(w_size_or_arr, space.w_fixnum, "to_int"))
-        if length < 0:
-            raise space.error(space.w_ArgumentError, "negative array size")
-        if block:
-            # TODO: Emit "block supersedes default value argument" warning
-            for i in xrange(length):
-                self.items_w.append(space.invoke_block(block, [space.newint(i)]))
-        elif w_obj is not None:
-            self.items_w.extend([w_obj] * length)
-        else:
-            self.items_w.extend([space.w_nil] * length)
-        return self
-
     @classdef.singleton_method("[]")
     def singleton_method_subscript(self, space, args_w):
         return space.newarray(args_w)
