@@ -438,18 +438,21 @@ class ObjectSpace(object):
         return w_res
 
     @jit.elidable
-    def _is_legal_const_name(self, name):
-        for i in range(1, len(name)):
-            char = name[i]
-            if not (char.isalnum() or char == '_' or ord(char) > 127):
-                return False
-        return name[0].isupper()
-
-    def set_const(self, module, name, w_value):
-        if not self._is_legal_const_name(name):
+    def _check_const_name(self, name):
+        valid = name[0].isupper()
+        if valid:
+            for i in range(1, len(name)):
+                ch = name[i]
+                if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
+                    valid = False
+                    break
+        if not valid:
             raise self.error(self.w_NameError,
                 "wrong constant name %s" % name
             )
+
+    def set_const(self, module, name, w_value):
+        self._check_const_name(name)
         module.set_const(self, name, w_value)
 
     @jit.unroll_safe
