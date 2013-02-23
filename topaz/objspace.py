@@ -441,7 +441,7 @@ class ObjectSpace(object):
     def _is_legal_const_name(self, name):
         for i in range(1, len(name)):
             char = name[i]
-            if not (char.isalnum() or char == '_'):
+            if not (char.isalnum() or char == '_' or ord(char) > 127):
                 return False
         return name[0].isupper()
 
