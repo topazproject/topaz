@@ -1,2 +1,0 @@
-fails:properly handles recursive arrays
-fails:returns the number of elements
