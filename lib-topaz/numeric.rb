@@ -1,5 +1,5 @@
 class Numeric
-  def eql? other
+  def eql?(other)
     self.class.equal?(other.class) && self == other
   end
 

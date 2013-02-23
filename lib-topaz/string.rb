@@ -1,5 +1,5 @@
 class String
-  def eql? other
+  def eql?(other)
     if !other.kind_of?(String)
       false
     else
@@ -39,7 +39,7 @@ class String
     return Regexp.new(pattern).match(self)
   end
 
-  def chomp(sep=$/)
+  def chomp(sep = $/)
     copy = self.dup
     copy.chomp!(sep)
     return copy

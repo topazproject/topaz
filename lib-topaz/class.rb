@@ -1,4 +1,5 @@
 class Class < Module
-  def inherited(amodule); end
+  def inherited(amodule)
+  end
   private :inherited
 end

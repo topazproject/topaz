@@ -9,7 +9,7 @@ module Enumerable
 
   alias collect map
 
-  def inject memo
+  def inject(memo)
     self.each do |x|
       memo = (yield memo, x)
     end
@@ -57,7 +57,7 @@ module Enumerable
     false
   end
 
-  def drop n
+  def drop(n)
     raise ArgumentError, 'attempt to drop negative size' if n < 0
     ary = self.to_a
     return [] if n > ary.size

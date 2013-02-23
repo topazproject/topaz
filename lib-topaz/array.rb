@@ -25,7 +25,7 @@ class Array
     return self
   end
 
-  def to_s()
+  def to_s
     result = "["
     self.each_with_index do |obj, i|
       if i > 0
@@ -46,7 +46,7 @@ class Array
     res
   end
 
-  def at idx
+  def at(idx)
     self[idx]
   end
 
@@ -58,7 +58,7 @@ class Array
     end
   end
 
-  def zip ary
+  def zip(ary)
     result = []
     self.each_with_index do |obj, idx|
       result << [obj, ary[idx]]
@@ -66,7 +66,7 @@ class Array
     result
   end
 
-  def product ary
+  def product(ary)
     result = []
     self.each do |obj|
       ary.each do |other|

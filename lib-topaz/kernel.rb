@@ -1,19 +1,19 @@
 module Kernel
-  def puts *args
+  def puts(*args)
     $stdout.puts(*args)
   end
 
-  def print *args
+  def print(*args)
     $stdout.print(*args)
   end
 
-  def p *args
+  def p(*args)
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
   end
 
   alias fail raise
 
-  def Array arg
+  def Array(arg)
     if arg.respond_to? :to_ary
       arg.to_ary
     elsif arg.respond_to? :to_a
@@ -23,12 +23,12 @@ module Kernel
     end
   end
 
-  def String arg
+  def String(arg)
     arg.to_s
   end
   module_function :String
 
-  def Integer arg
+  def Integer(arg)
     arg.to_i
   end
   module_function :Integer

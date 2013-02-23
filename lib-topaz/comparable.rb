@@ -1,25 +1,25 @@
 module Comparable
-  def > other
+  def >(other)
     return (self <=> other) > 0
   end
 
-  def < other
+  def <(other)
     return (self <=> other) < 0
   end
 
-  def >= other
+  def >=(other)
     return !((self <=> other) < 0)
   end
 
-  def <= other
+  def <=(other)
     return !((self <=> other) > 0)
   end
 
-  def == other
+  def ==(other)
     return (self <=> other) == 0
   end
 
-  def between? min, max
+  def between?(min, max)
     return self >= min && self <= max
   end
 end
