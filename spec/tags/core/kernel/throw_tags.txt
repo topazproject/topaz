@@ -1,0 +1,1 @@
+fails:Kernel#throw is a private method

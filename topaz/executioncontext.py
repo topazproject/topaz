@@ -14,6 +14,7 @@ class ExecutionContext(object):
         self.w_trace_proc = None
         self.in_trace_proc = False
         self.recursive_objects = {}
+        self.catch_names = {}
 
     def settraceproc(self, w_proc):
         self.w_trace_proc = w_proc
@@ -77,6 +78,12 @@ class ExecutionContext(object):
     def recursion_guard(self, w_obj):
         return _RecursionGuardContextManager(self, w_obj)
 
+    def catch_block(self, name):
+        return _CatchContextManager(self, name)
+
+    def catching_name(self, name):
+        return name in self.catch_names
+
 
 class _VisitFrameContextManager(object):
     def __init__(self, ec, frame):
@@ -111,3 +118,20 @@ class _RecursionGuardContextManager(object):
     def __exit__(self, exc_type, exc_value, tb):
         if self.added:
             del self.ec.recursive_objects[self.w_obj]
+
+
+class _CatchContextManager(object):
+    def __init__(self, ec, catch_name):
+        self.ec = ec
+        self.catch_name = catch_name
+        self.added = False
+
+    def __enter__(self):
+        if self.catch_name in self.ec.catch_names:
+            return
+        self.ec.catch_names[self.catch_name] = None
+        self.added = True
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if self.added:
+            del self.ec.catch_names[self.catch_name]
