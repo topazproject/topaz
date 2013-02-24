@@ -201,12 +201,6 @@ class ObjectSpace(object):
 
         self.w_load_path = self.newarray([])
         self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
-        # TODO: this should really go in a better place.
-        self.execute("""
-        def self.include *mods
-            Object.include *mods
-        end
-        """)
 
     def _freeze_(self):
         return True
