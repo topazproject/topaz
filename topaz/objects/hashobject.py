@@ -18,17 +18,43 @@ class W_HashObject(W_Object):
     def method_allocate(self, space, args_w):
         return W_HashObject(space, self)
 
-    @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, w_obj=None):
-        if w_obj is None:
-            return W_HashObject(space)
-        w_res = space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
-        if w_res is space.w_nil:
-            raise NotImplementedError
-        assert isinstance(w_res, W_HashObject)
-        result = W_HashObject(space)
-        result.contents.update(w_res.contents)
-        return result
+    classdef.app_method("""
+    def self.[](*args)
+        if args.size == 1
+            obj = args.first
+
+            if hash = Topaz::Type.convert_type(obj, Hash, :to_has, false)
+                return allocate.replace(hash)
+            elsif array = Topaz::Type.convert_type(obj, Array, :to_ary, false)
+                h = new
+                array.each do |arr|
+                    next unless arr.respond_to?(:to_ary)
+                    arr = arr.to_ary
+                    next unless (1..2).include?(arr.size)
+                    h[arr.at(0)] = arr.at(1)
+                end
+                return h
+            end
+        end
+
+        return new if args.empty?
+
+        if args.size.odd?
+            raise ArgumentError, "Expected an even number, got #{args.length}"
+        end
+
+        hash = new
+        i = 0
+        total = args.size
+
+        while i < total
+            hash[args[i]] = args[i+1]
+            i += 2
+        end
+
+        hash
+    end
+    """)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_default=None, block=None):
