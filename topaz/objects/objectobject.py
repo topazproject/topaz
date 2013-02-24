@@ -143,6 +143,8 @@ class W_RootObject(W_BaseObject):
     @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
+        if space.str_w(space.globals.get(space, "$0")) == "-e":
+            return space.newstr_fromstr("main")
         return space.newstr_fromstr(space.any_to_s(self))
 
     @classdef.method("===")
