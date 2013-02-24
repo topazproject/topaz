@@ -157,6 +157,7 @@ def _entry_point(space, argv):
 
     if verbose:
         os.write(1, "%s\n" % description)
+        space.globals.set(space, "$VERBOSE", space.w_true)
 
     if exprs:
         source = "\n".join(exprs)
