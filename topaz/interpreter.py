@@ -144,7 +144,7 @@ class Interpreter(object):
         block = frame.unrollstack(ThrowValue.kind)
         if block is None:
             raise e
-        unroller = ThrowValue(e.parent_interp, e.w_value)
+        unroller = ThrowValue(e.name, e.w_value)
         return block.handle(space, frame, unroller)
 
     def jump(self, space, bytecode, frame, cur_pc, target_pc):
@@ -757,8 +757,7 @@ class RaiseBreak(RaiseFlow):
 
 
 class Throw(RaiseFlow):
-    def __init__(self, parent_interp, name, w_value):
-        self.parent_interp = parent_interp
+    def __init__(self, name, w_value):
         self.name = name
         self.w_value = w_value
 
@@ -826,13 +825,12 @@ class RaiseBreakValue(SuspendedUnroller):
 class ThrowValue(SuspendedUnroller):
     kind = 1 << 6
 
-    def __init__(self, parent_interp, name, w_value):
-        self.parent_interp = parent_interp
+    def __init__(self, name, w_value):
         self.name = name
         self.w_value = w_value
 
     def nomoreblocks(self):
-        raise Throw(self.parent_interp, self.name, self.w_value)
+        raise Throw(self.name, self.w_value)
 
 
 class FrameBlock(object):

@@ -335,13 +335,11 @@ class Kernel(Module):
     @moduledef.method("throw", name="symbol")
     def method_throw(self, space, name, w_value=None):
         from topaz.interpreter import Throw
-        executioncontext = space.getexecutioncontext()
-        if not executioncontext.catching_name(name):
-            raise space.error(space.w_ArgumentError, "uncaught throw :%s" % (name,))
+        if not space.getexecutioncontext().catching_name(name):
+            raise space.error(space.w_ArgumentError, "uncaught throw :%s" % name)
         if w_value is None:
             w_value = space.w_nil
-        frame = executioncontext.gettoprubyframe()
-        raise Throw(frame.parent_interp, name, w_value)
+        raise Throw(name, w_value)
 
     @moduledef.method("catch", name="symbol")
     def method_catch(self, space, name, block):
