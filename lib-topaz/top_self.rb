@@ -4,8 +4,7 @@ class << self
   end
 
   def to_s
-    return "main" if $0 == "-e"
-    super
+    "main"
   end
 
   alias inspect to_s
