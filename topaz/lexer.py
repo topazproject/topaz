@@ -688,6 +688,7 @@ class Lexer(object):
                 yield self.emit("ANDOP")
         elif ch2 == "=":
             self.add(ch2)
+            self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
         else:
             self.unread()
