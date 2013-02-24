@@ -1,2 +1,0 @@
-fails:returns nil and makes no modification if the index is out of range
-fails: 
