@@ -51,7 +51,7 @@ class Test(BaseTest):
                 platform = "windows{}".format(width)
             else:
                 raise ValueError("Don't recognize platform: {!r}".format(sys.platform))
-            build_name = "topaz-{platform}-{sha1}.tar.gz".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
+            build_name = "topaz-{platform}-{sha1}.tar.bz2".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
             local("python topaz/tools/make_release.py {}".format(build_name))
             with open(build_name) as f:
                 response = requests.post("http://www.topazruby.com/builds/create/", {

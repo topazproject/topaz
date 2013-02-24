@@ -12,6 +12,7 @@ def main(argv):
     for name in [
         "bin/topaz.exe" if sys.platform == "win32" else "bin/topaz",
         "lib-ruby",
+        "lib-topaz",
         "AUTHORS.rst",
         "LICENSE",
         "README.rst"
