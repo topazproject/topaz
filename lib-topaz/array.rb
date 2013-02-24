@@ -200,15 +200,33 @@ class Array
     return true
   end
 
-  def hash
-    res = 0x345678 + self.length
-    self.each do |x|
-      if not self.eql?(x)
+  class HashRecursionException < Exception
+  end
+
+  def inner_hash(res)
+    Thread.current.recursion_guard(self) do
+      self.each do |x|
         # We want to keep this within a fixnum range.
         res = Topaz.intmask((1000003 * res) ^ x.hash.to_int)
       end
+      return res
     end
-    return res
+    raise HashRecursionException
+  end
+
+  private :HashRecursionException, :inner_hash
+
+  def hash
+    res = 0x345678 + self.length
+    if Thread.current.in_recursion_guard?
+      return self.inner_hash(res)
+    else
+      begin
+        return self.inner_hash(res)
+      rescue HashRecursionException
+        return res
+      end
+    end
   end
 
   def *(arg)
