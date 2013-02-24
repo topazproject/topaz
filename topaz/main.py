@@ -164,6 +164,13 @@ def _entry_point(space, argv):
     if exprs:
         source = "\n".join(exprs)
         path = "-e"
+        source = """
+        def self.to_s
+          "main"
+        end
+        alias :to_s :inspect
+        %s
+        """ % source
     elif path is not None:
         if search_path:
             for dirname in os.environ["PATH"].split(os.pathsep):
