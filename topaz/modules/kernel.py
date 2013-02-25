@@ -344,10 +344,10 @@ class Kernel(Module):
     @moduledef.method("catch", name="symbol")
     def method_catch(self, space, name, block):
         from topaz.interpreter import Throw
-        try:
-            with space.getexecutioncontext().catch_block(name):
+        with space.getexecutioncontext().catch_block(name):
+            try:
                 return space.invoke_block(block, [])
-        except Throw as e:
-            if e.name == name:
-                return e.w_value
-            raise
+            except Throw as e:
+                if e.name == name:
+                    return e.w_value
+                raise
