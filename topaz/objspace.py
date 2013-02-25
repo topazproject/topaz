@@ -564,7 +564,11 @@ class ObjectSpace(object):
             try:
                 self.send(w_proc, self.newsymbol("call"))
             except RubyError as e:
+                w_exc = e.w_value
+                if isinstance(w_exc, W_SystemExit):
+                    return w_exc.status
                 print_traceback(self, e.w_value)
+        return -1
 
     def subscript_access(self, length, w_idx, w_count):
         inclusive = False

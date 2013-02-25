@@ -189,16 +189,20 @@ def _entry_point(space, argv):
     space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
     w_exit_error = None
+    explicit_status = False
     try:
         space.execute(source, filepath=path)
     except RubyError as e:
+        explicit_status = True
         w_exc = e.w_value
         if isinstance(w_exc, W_SystemExit):
             status = w_exc.status
         else:
             w_exit_error = w_exc
             status = 1
-    space.run_exit_handlers()
+    exit_handler_status = space.run_exit_handlers()
+    if not explicit_status and exit_handler_status != -1:
+        status = exit_handler_status
     if w_exit_error is not None:
         print_traceback(space, w_exit_error, path)
 
