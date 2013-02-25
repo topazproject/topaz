@@ -1,0 +1,8 @@
+fails:Kernel#test is a private method
+fails:Kernel#test returns true when passed ?f if the argument is a regular file
+fails:Kernel#test returns true when passed ?e if the argument is a file
+fails:Kernel#test returns true when passed ?d if the argument is a directory
+fails:Kernel#test returns true when passed ?l if the argument is a symlink
+fails:Kernel#test calls #to_path on second argument when passed ?f and a filename
+fails:Kernel#test calls #to_path on second argument when passed ?e and a filename
+fails:Kernel#test calls #to_path on second argument when passed ?d and a directory

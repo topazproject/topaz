@@ -1,0 +1,2 @@
+fails:Kernel#untrusted? has no effect on immediate values
+fails:Kernel#untrusted? has no effect on immediate values
