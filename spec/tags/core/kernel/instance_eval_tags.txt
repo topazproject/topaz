@@ -1,0 +1,8 @@
+fails:Kernel#instance_eval expects a block with no arguments
+fails:Kernel#instance_eval takes no arguments with a block
+fails:Kernel#instance_eval yields the object to the block
+fails:Kernel#instance_eval only binds the eval to the receiver
+fails:Kernel#instance_eval executes in the context of the receiver
+fails:Kernel#instance_eval sets class variables in the receiver
+fails:Kernel#instance_eval raises a TypeError when defining methods on an immediate
+fails:Kernel#instance_eval raises a TypeError when defining methods on numerics
