@@ -1,5 +1,3 @@
-fails:Kernel#Integer returns a Bignum for a Bignum
-fails:Kernel.Integer returns a Bignum for a Bignum
 fails:Kernel.Integer uncritically return the value of to_int even if it is not an Integer
 fails:Kernel.Integer raises a TypeError when passed nil
 fails:Kernel.Integer returns a Fixnum or Bignum object

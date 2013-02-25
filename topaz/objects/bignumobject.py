@@ -17,6 +17,10 @@ class W_BignumObject(W_IntegerObject):
         return W_BignumObject(space, rbigint.fromint(intvalue))
 
     @staticmethod
+    def newbigint_fromfloat(space, floatvalue):
+        return W_BignumObject(space, rbigint.fromfloat(floatvalue))
+
+    @staticmethod
     def newbigint_fromrbigint(space, bigint):
         return W_BignumObject(space, bigint)
 
