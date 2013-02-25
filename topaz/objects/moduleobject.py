@@ -140,8 +140,15 @@ class W_ModuleObject(W_RootObject):
         self.mutated()
         self.constants_w[name] = w_obj
 
-    @jit.unroll_safe
     def find_const(self, space, name):
+        w_res = self.find_included_const(space, name)
+        if w_res is None:
+            return space.w_object.find_const(space, name)
+        else:
+            return w_res
+
+    @jit.unroll_safe
+    def find_included_const(self, space, name):
         w_res = self.find_local_const(space, name)
         if w_res is None:
             for w_mod in self.included_modules:
