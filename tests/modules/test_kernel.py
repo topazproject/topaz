@@ -88,6 +88,8 @@ class TestKernel(BaseTopazTest):
             end
             raise A.new
             """)
+        with self.raises(space, "RuntimeError"):
+            space.execute("raise")
 
     def test_overriding_raise(self, space):
         w_res = space.execute("""
