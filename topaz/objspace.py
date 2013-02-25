@@ -159,7 +159,6 @@ class ObjectSpace(object):
             self.getclassfor(W_TimeObject),
 
             self.getclassfor(W_ExceptionObject),
-            self.getclassfor(W_StandardError),
             self.getclassfor(W_ThreadError),
 
             self.getmoduleobject(Comparable.moduledef),
