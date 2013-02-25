@@ -64,8 +64,8 @@ def _parse_argv(space, argv):
     verbose = False
     path = None
     search_path = False
-    intern_switches = False
-    interned_switches = []
+    globalize_switches = False
+    globalized_switches = []
     exprs = []
     reqs = []
     load_path_entries = []
@@ -105,7 +105,7 @@ def _parse_argv(space, argv):
         elif arg == "-S":
             search_path = True
         elif arg == "-s":
-            intern_switches = True
+            globalize_switches = True
         elif arg == "--":
             idx += 1
             break
@@ -117,8 +117,8 @@ def _parse_argv(space, argv):
         idx += 1
     while idx < len(argv):
         arg = argv[idx]
-        if intern_switches and arg.startswith("-"):
-            interned_switches.append(arg)
+        if globalize_switches and arg.startswith("-"):
+            globalized_switches.append(arg)
         else:
             argv_w.append(space.newstr_fromstr(arg))
         idx += 1
@@ -127,7 +127,7 @@ def _parse_argv(space, argv):
         verbose,
         path,
         search_path,
-        interned_switches,
+        globalized_switches,
         exprs,
         reqs,
         load_path_entries,
@@ -153,7 +153,7 @@ def _entry_point(space, argv):
             verbose,
             path,
             search_path,
-            interned_switches,
+            globalized_switches,
             exprs,
             reqs,
             load_path_entries,
@@ -212,12 +212,12 @@ def _entry_point(space, argv):
         source = fdopen_as_stream(0, "r").readall()
         path = "-"
 
-    for interned_switch in interned_switches:
+    for globalized_switch in globalized_switches:
         value = None
-        if "=" in interned_switch:
-            interned_switch, value = interned_switch.split("=", 1)
+        if "=" in globalized_switch:
+            globalized_switch, value = globalized_switch.split("=", 1)
 
-        switch_global_var = "$%s" % interned_switch[1:len(interned_switch)].replace("-", "_")
+        switch_global_var = "$%s" % globalized_switch[1:].replace("-", "_")
         if value is None:
             space.globals.set(space, switch_global_var, space.w_true)
         else:
