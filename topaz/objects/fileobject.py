@@ -248,7 +248,7 @@ class W_IOObject(W_Object):
     def method_getc(self, space):
         self.ensure_not_closed(space)
         c = os.read(self.fd, 1)
-        if c == "":
+        if not c:
             return space.w_nil
         return space.newstr_fromstr(c)
 
@@ -261,12 +261,12 @@ class W_IOObject(W_Object):
             raise space.error(space.w_NotImplementedError, "(sep, limit) for IO#readline")
         buf = []
         c = os.read(self.fd, 1)
-        if c == "":
+        if not c:
             raise space.error(space.w_EOFError, "end of file reached")
         while c != "\n":
             buf.append(c)
             c = os.read(self.fd, 1)
-            if c == "":
+            if not c:
                 break
         buf.append(c)
         return space.newstr_fromstr("".join(buf))
