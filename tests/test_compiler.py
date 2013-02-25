@@ -428,7 +428,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_CLASS
         LOAD_CONST 2
-        EVALUATE_CLASS
+        EVALUATE_MODULE
 
         RETURN
         """)
@@ -450,7 +450,7 @@ class TestCompiler(object):
         LOAD_CONST 1
         BUILD_CLASS
         LOAD_CONST 2
-        EVALUATE_CLASS
+        EVALUATE_MODULE
 
         RETURN
         """)
@@ -481,7 +481,7 @@ class TestCompiler(object):
         LOAD_LOCAL_CONSTANT 1
         BUILD_CLASS
         LOAD_CONST 2
-        EVALUATE_CLASS
+        EVALUATE_MODULE
 
         RETURN
         """)
@@ -495,7 +495,7 @@ class TestCompiler(object):
         LOAD_CONST 2
         BUILD_CLASS
         LOAD_CONST 3
-        EVALUATE_CLASS
+        EVALUATE_MODULE
 
         RETURN
         """)
@@ -508,7 +508,7 @@ class TestCompiler(object):
         LOAD_SELF
         LOAD_SINGLETON_CLASS
         LOAD_CONST 0
-        EVALUATE_CLASS
+        EVALUATE_MODULE
 
         RETURN
         """)
@@ -1254,15 +1254,14 @@ class TestCompiler(object):
         """, """
         LOAD_SCOPE
         LOAD_CONST 0
-        LOAD_CONST 1
         BUILD_MODULE
+        LOAD_CONST 1
+        EVALUATE_MODULE
 
         RETURN
         """)
 
         self.assert_compiled(bc.consts_w[1], """
-        LOAD_CONST 0
-        DISCARD_TOP
         LOAD_CONST 0
         RETURN
         """)
@@ -1273,8 +1272,9 @@ class TestCompiler(object):
         """, """
         LOAD_CONST 0
         LOAD_CONST 1
-        LOAD_CONST 2
         BUILD_MODULE
+        LOAD_CONST 2
+        EVALUATE_MODULE
 
         RETURN
         """)
