@@ -49,7 +49,7 @@ BYTECODES = [
     ("BUILD_BLOCK", 1, BLOCK_EFFECT),
     ("BUILD_LAMBDA", 0, 0),
     ("BUILD_CLASS", 0, -2),
-    ("BUILD_MODULE", 0, -2),
+    ("BUILD_MODULE", 0, -1),
     ("BUILD_REGEXP", 0, -1),
 
     ("COPY_STRING", 0, 0),
