@@ -26,7 +26,7 @@ USAGE = "\n".join([
 #   """  -n              assume 'while gets(); ... end' loop around your script""",
 #   """  -p              assume loop like -n but print line also like sed""",
     """  -rlibrary       require the library, before executing your script""",
-#   """  -s              enable some switch parsing for switches after script name""",
+    """  -s              enable some switch parsing for switches after script name""",
     """  -S              look for the script using PATH environment variable""",
 #   """  -T[level=1]     turn on tainting checks""",
     """  -v              print version number, then turn on verbose mode""",
@@ -64,6 +64,8 @@ def _parse_argv(space, argv):
     verbose = False
     path = None
     search_path = False
+    globalize_switches = False
+    globalized_switches = []
     exprs = []
     reqs = []
     load_path_entries = []
@@ -102,6 +104,8 @@ def _parse_argv(space, argv):
             reqs.append(arg[2:])
         elif arg == "-S":
             search_path = True
+        elif arg == "-s":
+            globalize_switches = True
         elif arg == "--":
             idx += 1
             break
@@ -112,10 +116,23 @@ def _parse_argv(space, argv):
         path = argv[idx]
         idx += 1
     while idx < len(argv):
-        argv_w.append(space.newstr_fromstr(argv[idx]))
+        arg = argv[idx]
+        if globalize_switches and arg.startswith("-"):
+            globalized_switches.append(arg)
+        else:
+            argv_w.append(space.newstr_fromstr(arg))
         idx += 1
 
-    return verbose, path, search_path, exprs, reqs, load_path_entries, argv_w
+    return (
+        verbose,
+        path,
+        search_path,
+        globalized_switches,
+        exprs,
+        reqs,
+        load_path_entries,
+        argv_w
+    )
 
 
 def _entry_point(space, argv):
@@ -132,7 +149,16 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
 
     try:
-        verbose, path, search_path, exprs, reqs, load_path_entries, argv_w = _parse_argv(space, argv)
+        (
+            verbose,
+            path,
+            search_path,
+            globalized_switches,
+            exprs,
+            reqs,
+            load_path_entries,
+            argv_w
+        ) = _parse_argv(space, argv)
     except ShortCircuitError as e:
         os.write(1, e.message)
         return 0
@@ -185,6 +211,17 @@ def _entry_point(space, argv):
     else:
         source = fdopen_as_stream(0, "r").readall()
         path = "-"
+
+    for globalized_switch in globalized_switches:
+        value = None
+        if "=" in globalized_switch:
+            globalized_switch, value = globalized_switch.split("=", 1)
+
+        switch_global_var = "$%s" % globalized_switch[1:].replace("-", "_")
+        if value is None:
+            space.globals.set(space, switch_global_var, space.w_true)
+        else:
+            space.globals.set(space, switch_global_var, space.newstr_fromstr(value))
 
     space.globals.set(space, "$0", space.newstr_fromstr(path))
     status = 0
