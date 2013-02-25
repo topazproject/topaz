@@ -47,6 +47,55 @@ class W_IOObject(W_Object):
     def getfd(self):
         return self.fd
 
+    @staticmethod
+    def map_mode(space, w_mode):
+        if w_mode is space.w_nil:
+            mode = os.O_RDONLY
+        elif isinstance(w_mode, W_StringObject):
+            mode_str = space.str_w(w_mode)
+            mode = 0
+            invalid_error = space.error(space.w_ArgumentError,
+                "invalid access mode %s" % mode_str
+            )
+            major_mode_seen = False
+            readable = writeable = append = False
+
+            for ch in mode_str:
+                if ch == "b":
+                    mode |= O_BINARY
+                elif ch == "+":
+                    readable = writeable = True
+                elif ch == "r":
+                    if major_mode_seen:
+                        raise invalid_error
+                    major_mode_seen = True
+                    readable = True
+                elif ch == "a":
+                    if major_mode_seen:
+                        raise invalid_error
+                    major_mode_seen = True
+                    mode |= os.O_CREAT
+                    append = writeable = True
+                elif ch == "w":
+                    if major_mode_seen:
+                        raise invalid_error
+                    major_mode_seen = True
+                    mode |= os.O_TRUNC | os.O_CREAT
+                    writeable = True
+                else:
+                    raise invalid_error
+            if readable and writeable:
+                mode |= os.O_RDWR
+            elif readable:
+                mode |= os.O_RDONLY
+            elif writeable:
+                mode |= os.O_WRONLY
+            if append:
+                mode |= os.O_APPEND
+        else:
+            mode = space.int_w(w_mode)
+        return mode
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
@@ -71,6 +120,17 @@ class W_IOObject(W_Object):
     def method_allocate(self, space, args_w):
         return W_IOObject(space)
 
+    @classdef.singleton_method("sysopen")
+    def method_sysopen(self, space, w_path, w_mode_str_or_int=None, w_perm=None):
+        perm = 0666
+        mode = W_IOObject.map_mode(space, w_mode_str_or_int)
+        if w_perm is not None:
+            perm = space.int_w(w_perm)
+        try:
+            return space.newint(os.open(space.str_w(w_path), os.O_RDONLY, perm))
+        except OSError as e:
+            return error_for_oserror(space, e)
+
     @classdef.method("initialize")
     def method_initialize(self, space, w_fd_or_io, w_mode_str_or_int=None, w_opts=None):
         if isinstance(w_fd_or_io, W_IOObject):
@@ -80,13 +140,13 @@ class W_IOObject(W_Object):
         if isinstance(w_mode_str_or_int, W_StringObject):
             mode = space.str_w(w_mode_str_or_int)
             if ":" in mode:
-                raise NotImplementedError("encoding for IO.new")
+                raise space.error(space.w_NotImplementedError, "encoding for IO.new")
         elif w_mode_str_or_int is None:
             mode = None
         else:
-            raise NotImplementedError("int mode for IO.new")
+            raise space.error(space.w_NotImplementedError, "int mode for IO.new")
         if w_opts is not None:
-            raise NotImplementedError("options hash for IO.new")
+            raise space.error(space.w_NotImplementedError, "options hash for IO.new")
         if mode is None:
             mode = "r"
         self.fd = fd
@@ -183,6 +243,33 @@ class W_IOObject(W_Object):
             if not string.endswith("\n"):
                 os.write(self.fd, "\n")
         return space.w_nil
+
+    @classdef.method("getc")
+    def method_getc(self, space):
+        self.ensure_not_closed(space)
+        c = os.read(self.fd, 1)
+        if c == "":
+            return space.w_nil
+        return space.newstr_fromstr(c)
+
+    @classdef.method("readline")
+    def method_readline(self, space, w_sep_or_limit=None, w_limit=None):
+        self.ensure_not_closed(space)
+        if w_sep_or_limit is not None:
+            raise space.error(space.w_NotImplementedError, "sep or limit for IO#readline")
+        if w_limit is not None:
+            raise space.error(space.w_NotImplementedError, "(sep, limit) for IO#readline")
+        buf = []
+        c = os.read(self.fd, 1)
+        if c == "":
+            raise space.error(space.w_EOFError, "end of file reached")
+        while c != "\n":
+            buf.append(c)
+            c = os.read(self.fd, 1)
+            if c == "":
+                break
+        buf.append(c)
+        return space.newstr_fromstr("".join(buf))
 
     @classdef.singleton_method("pipe")
     def method_pipe(self, space, block=None):
@@ -308,53 +395,9 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        if w_mode is space.w_nil:
-            mode = os.O_RDONLY
-        elif isinstance(w_mode, W_StringObject):
-            mode_str = space.str_w(w_mode)
-            mode = 0
-            invalid_error = space.error(space.w_ArgumentError,
-                "invalid access mode %s" % mode_str
-            )
-            major_mode_seen = False
-            readable = writeable = append = False
-
-            for ch in mode_str:
-                if ch == "b":
-                    mode |= O_BINARY
-                elif ch == "+":
-                    readable = writeable = True
-                elif ch == "r":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    readable = True
-                elif ch == "a":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_CREAT
-                    append = writeable = True
-                elif ch == "w":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_TRUNC | os.O_CREAT
-                    writeable = True
-                else:
-                    raise invalid_error
-            if readable and writeable:
-                mode |= os.O_RDWR
-            elif readable:
-                mode |= os.O_RDONLY
-            elif writeable:
-                mode |= os.O_WRONLY
-            if append:
-                mode |= os.O_APPEND
-        else:
-            mode = space.int_w(w_mode)
+        mode = W_IOObject.map_mode(space, w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
-            raise NotImplementedError("options hash or permissions for File.new")
+            raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
         try:
             self.fd = os.open(filename, mode, perm)
         except OSError as e:

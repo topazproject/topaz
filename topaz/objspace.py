@@ -39,7 +39,7 @@ from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
-    W_RegexpError, W_ThreadError, W_FloatDomainError)
+    W_EOFError, W_RegexpError, W_ThreadError, W_FloatDomainError)
 from topaz.objects.fileobject import W_FileObject, W_IOObject
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.functionobject import W_UserFunction
@@ -116,6 +116,7 @@ class ObjectSpace(object):
         self.w_IndexError = self.getclassfor(W_IndexError)
         self.w_KeyError = self.getclassfor(W_KeyError)
         self.w_IOError = self.getclassfor(W_IOError)
+        self.w_EOFError = self.getclassfor(W_EOFError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
         self.w_FloatDomainError = self.getclassfor(W_FloatDomainError)
