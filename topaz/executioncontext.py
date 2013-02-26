@@ -81,7 +81,7 @@ class ExecutionContext(object):
     def catch_block(self, name):
         return _CatchContextManager(self, name)
 
-    def catching_name(self, name):
+    def is_in_catch_block_for_name(self, name):
         return name in self.catch_names
 
 
@@ -121,6 +121,11 @@ class _RecursionGuardContextManager(object):
 
 
 class _CatchContextManager(object):
+    """This context manager tracks which symbol names we're in catch blocks for
+    so that we can raise an appropriate Ruby exception when app-level code
+    tries to throw a symbol we're catching. When catch blocks for the same
+    symbol are nested, we only care about the outermost one.
+    """
     def __init__(self, ec, catch_name):
         self.ec = ec
         self.catch_name = catch_name
