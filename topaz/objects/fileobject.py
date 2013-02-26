@@ -72,21 +72,22 @@ class W_IOObject(W_Object):
     @classdef.singleton_method("sysopen")
     def method_sysopen(self, space, w_path, w_mode_str_or_int=None, w_perm=None):
         perm = 0666
+        mode = os.O_RDONLY
         if w_mode_str_or_int is not None:
-            mode = map_filemode(space, w_mode_str_or_int)
-        else:
-            mode = os.O_RDONLY
+            mode, err = map_filemode(space, w_mode_str_or_int)
+            if err is not None:
+                raise err
         if w_perm is not None and not isinstance(w_perm, W_NilObject):
             perm = space.int_w(w_perm)
         try:
             path = Coerce.path(space, w_path)
             return space.newint(os.open(path, mode, perm))
         except OSError as e:
-            return error_for_oserror(space, e)
+            raise error_for_oserror(space, e)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_fd_or_io, w_mode_str_or_int=None, w_opts=None):
-        if space.is_kind_of(w_fd_or_io, space.getclassfor(W_IOObject)):
+        if isinstance(w_fd_or_io, W_IOObject):
             fd = w_fd_or_io.fd
         else:
             fd = Coerce.int(space, w_fd_or_io)
@@ -348,7 +349,9 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        mode = map_filemode(space, w_mode)
+        mode, err = map_filemode(space, w_mode)
+        if err is not None:
+            raise err
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
             raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
         try:

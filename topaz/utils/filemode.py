@@ -29,23 +29,23 @@ def map_filemode(space, w_mode):
                 readable = writeable = True
             elif ch == "r":
                 if major_mode_seen:
-                    raise invalid_error
+                    return -1, invalid_error
                 major_mode_seen = True
                 readable = True
             elif ch == "a":
                 if major_mode_seen:
-                    raise invalid_error
+                    return -1, invalid_error
                 major_mode_seen = True
                 mode |= os.O_CREAT
                 append = writeable = True
             elif ch == "w":
                 if major_mode_seen:
-                    raise invalid_error
+                    return -1, invalid_error
                 major_mode_seen = True
                 mode |= os.O_TRUNC | os.O_CREAT
                 writeable = True
             else:
-                raise invalid_error
+                return -1, invalid_error
         if readable and writeable:
             mode |= os.O_RDWR
         elif readable:
@@ -56,4 +56,4 @@ def map_filemode(space, w_mode):
             mode |= os.O_APPEND
     else:
         mode = space.int_w(w_mode)
-    return mode
+    return mode, None
