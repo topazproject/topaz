@@ -10,17 +10,15 @@ from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
+from topaz.objects.nilobject import W_NilObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
+from topaz.utils.filemode import map_filemode, O_BINARY
 
 
 FNM_NOESCAPE = 0x01
 FNM_PATHNAME = 0x02
 FNM_DOTMATCH = 0x04
-if sys.platform == "win32":
-    O_BINARY = os.O_BINARY
-else:
-    O_BINARY = 0
 
 
 class W_IOObject(W_Object):
@@ -46,55 +44,6 @@ class W_IOObject(W_Object):
 
     def getfd(self):
         return self.fd
-
-    @staticmethod
-    def map_mode(space, w_mode):
-        if w_mode is space.w_nil:
-            mode = os.O_RDONLY
-        elif isinstance(w_mode, W_StringObject):
-            mode_str = space.str_w(w_mode)
-            mode = 0
-            invalid_error = space.error(space.w_ArgumentError,
-                "invalid access mode %s" % mode_str
-            )
-            major_mode_seen = False
-            readable = writeable = append = False
-
-            for ch in mode_str:
-                if ch == "b":
-                    mode |= O_BINARY
-                elif ch == "+":
-                    readable = writeable = True
-                elif ch == "r":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    readable = True
-                elif ch == "a":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_CREAT
-                    append = writeable = True
-                elif ch == "w":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_TRUNC | os.O_CREAT
-                    writeable = True
-                else:
-                    raise invalid_error
-            if readable and writeable:
-                mode |= os.O_RDWR
-            elif readable:
-                mode |= os.O_RDONLY
-            elif writeable:
-                mode |= os.O_WRONLY
-            if append:
-                mode |= os.O_APPEND
-        else:
-            mode = space.int_w(w_mode)
-        return mode
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -123,20 +72,24 @@ class W_IOObject(W_Object):
     @classdef.singleton_method("sysopen")
     def method_sysopen(self, space, w_path, w_mode_str_or_int=None, w_perm=None):
         perm = 0666
-        mode = W_IOObject.map_mode(space, w_mode_str_or_int)
-        if w_perm is not None:
+        if w_mode_str_or_int is not None:
+            mode = map_filemode(space, w_mode_str_or_int)
+        else:
+            mode = os.O_RDONLY
+        if w_perm is not None and not isinstance(w_perm, W_NilObject):
             perm = space.int_w(w_perm)
         try:
-            return space.newint(os.open(space.str_w(w_path), os.O_RDONLY, perm))
+            path = Coerce.path(space, w_path)
+            return space.newint(os.open(path, mode, perm))
         except OSError as e:
             return error_for_oserror(space, e)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_fd_or_io, w_mode_str_or_int=None, w_opts=None):
-        if isinstance(w_fd_or_io, W_IOObject):
+        if space.is_kind_of(w_fd_or_io, space.getclassfor(W_IOObject)):
             fd = w_fd_or_io.fd
         else:
-            fd = space.int_w(w_fd_or_io)
+            fd = Coerce.int(space, w_fd_or_io)
         if isinstance(w_mode_str_or_int, W_StringObject):
             mode = space.str_w(w_mode_str_or_int)
             if ":" in mode:
@@ -395,7 +348,7 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        mode = W_IOObject.map_mode(space, w_mode)
+        mode = map_filemode(space, w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
             raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
         try:

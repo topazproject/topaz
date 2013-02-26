@@ -1,4 +1,8 @@
 class IO
+  class << self
+    alias for_fd new
+  end
+
   def <<(s)
     write(s)
     return self
