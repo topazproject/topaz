@@ -562,12 +562,18 @@ class ObjectSpace(object):
         self.exit_handlers_w.append(w_proc)
 
     def run_exit_handlers(self):
+        status = -1
         while self.exit_handlers_w:
             w_proc = self.exit_handlers_w.pop()
             try:
                 self.send(w_proc, self.newsymbol("call"))
             except RubyError as e:
-                print_traceback(self, e.w_value)
+                w_exc = e.w_value
+                if isinstance(w_exc, W_SystemExit):
+                    status = w_exc.status
+                else:
+                    print_traceback(self, e.w_value)
+        return status
 
     def subscript_access(self, length, w_idx, w_count):
         inclusive = False
