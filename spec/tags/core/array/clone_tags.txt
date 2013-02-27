@@ -1,2 +1,2 @@
 fails:Array#clone returns an Array or a subclass instance
-fails: 
+fails:Array#clone copies frozen status from the original

@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from ..base import BaseTopazTest
 
 
@@ -50,3 +52,27 @@ class TestProcess(BaseTopazTest):
         end
         """)
         assert space.int_w(w_res) == 200
+
+    @pytest.mark.parametrize("code", [0, 1, 173])
+    def test_waitpid(self, space, code):
+        pid = os.fork()
+        if pid == 0:
+            os._exit(code)
+        else:
+            w_res = space.execute("return Process.waitpid %i" % pid)
+            assert space.int_w(w_res) == pid
+            w_res = space.execute("return $?")
+            status = space.send(w_res, space.newsymbol("to_i"), [])
+            assert space.int_w(status) == code
+
+    @pytest.mark.parametrize("code", [0, 1, 173])
+    def test_waitpid2(self, space, code):
+        pid = os.fork()
+        if pid == 0:
+            os._exit(code)
+        else:
+            w_res = space.execute("return Process.waitpid2 %i" % pid)
+            [returned_pid, returned_code] = space.listview(w_res)
+            assert space.int_w(returned_pid) == pid
+            code_to_i = space.send(returned_code, space.newsymbol("to_i"), [])
+            assert space.int_w(code_to_i) == code

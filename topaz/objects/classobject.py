@@ -39,7 +39,7 @@ class W_ClassObject(W_ModuleObject):
         return self.klass
 
     def find_const(self, space, name):
-        w_res = W_ModuleObject.find_const(self, space, name)
+        w_res = W_ModuleObject.find_included_const(self, space, name)
         if w_res is None and self.superclass is not None:
             w_res = self.superclass.find_const(space, name)
         return w_res
@@ -95,8 +95,3 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("superclass")
     def method_superclass(self, space):
         return self.superclass if self.superclass is not None else space.w_nil
-
-    classdef.app_method("""
-    def inherited(amodule); end
-    private :inherited
-    """)

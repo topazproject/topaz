@@ -4,14 +4,16 @@ import struct
 import sys
 
 from fabric.api import task, local
-from fabric.context_managers import lcd
 
 import requests
 
+from .base import BaseTest
 
-class Test(object):
+
+class Test(BaseTest):
     def __init__(self, func, deps=[], needs_rpython=True, needs_rubyspec=False,
                  create_build=False):
+        super(Test, self).__init__()
         self.func = func
         self.deps = deps
         self.needs_rpython = needs_rpython
@@ -22,20 +24,12 @@ class Test(object):
         local("pip install --use-mirrors {}".format(" ".join(self.deps)))
 
     def download_rpython(self):
-        local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
+        local("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2 || wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
         local("tar -xf `pwd`/../pypy.tar.bz2 -C `pwd`/../")
         [path_name] = glob.glob("../pypy-pypy*")
         path_name = os.path.abspath(path_name)
         with open("rpython_marker", "w") as f:
             f.write(path_name)
-
-    def download_mspec(self):
-        with lcd(".."):
-            local("git clone --depth=100 --quiet https://github.com/rubyspec/mspec")
-
-    def download_rubyspec(self):
-        with lcd(".."):
-            local("git clone --depth=100 --quiet https://github.com/rubyspec/rubyspec")
 
     def run_tests(self):
         env = {}
@@ -57,7 +51,7 @@ class Test(object):
                 platform = "windows{}".format(width)
             else:
                 raise ValueError("Don't recognize platform: {!r}".format(sys.platform))
-            build_name = "topaz-{platform}-{sha1}.tar.gz".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
+            build_name = "topaz-{platform}-{sha1}.tar.bz2".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
             local("python topaz/tools/make_release.py {}".format(build_name))
             with open(build_name) as f:
                 response = requests.post("http://www.topazruby.com/builds/create/", {
@@ -119,7 +113,7 @@ def run_translate_tests(env):
 
 
 def run_specs(binary, prefix=""):
-    local("{prefix}../mspec/bin/mspec -t {binary} --format=dotted --config=topaz.mspec".format(
+    local("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
         prefix=prefix,
         binary=binary
     ))

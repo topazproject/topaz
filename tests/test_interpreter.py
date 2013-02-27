@@ -1014,6 +1014,19 @@ class TestInterpreter(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == "A"
 
+    def test_module_find_const(self, space):
+        w_res = space.execute("""
+        module M
+          ABC = 1
+        end
+        Object.send :include, M
+        module Y
+          ABC
+        end
+        return Y::ABC
+        """)
+        assert self.unwrap(space, w_res) == 1
+
     def test_defined(self, space):
         w_res = space.execute("return [defined? A, defined? Array]")
         assert self.unwrap(space, w_res) == [None, "constant"]

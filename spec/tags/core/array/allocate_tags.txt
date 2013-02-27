@@ -1,1 +1,1 @@
-fails: 
+fails:Array.allocate does not accept any arguments

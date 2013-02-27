@@ -1,2 +1,3 @@
 fails:String#<=> with String compares individual characters based on their ascii value
-fails:String#<=> with String ignores subclass differences
+fails:String#<=> with String returns 0 if self and other contain identical ASCII-compatible bytes in different encodings
+fails:String#<=> with String does not return 0 if self and other contain identical non-ASCII-compatible bytes in different encodings

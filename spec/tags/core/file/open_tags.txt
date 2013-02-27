@@ -1,1 +1,5 @@
 fails:File.open opens directories
+fails:File.open opens file when call with a block (basic case)
+fails:File.open opens a file with mode string and block
+fails:File.open opens the file when passed mode, num and permissions
+fails:File.open opens a file with mode num and block

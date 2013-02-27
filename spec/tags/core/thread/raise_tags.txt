@@ -12,3 +12,6 @@ fails:Thread#raise on a running thread raise the given argument even when there 
 fails:raises RuntimeError if no exception class is given
 fails:re-raises the rescued exception
 fails:Thread#raise on same thread allows Exception, message, and backtrace parameters
+fails:Thread#raise on a running thread raises a RuntimeError when called with no arguments inside rescue
+fails:Thread#raise on same thread raises a RuntimeError when called with no arguments inside rescue
+fails:Thread#raise on a sleeping thread raises a RuntimeError when called with no arguments inside rescue

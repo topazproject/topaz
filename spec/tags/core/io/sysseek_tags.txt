@@ -1,4 +1,3 @@
-fails:IO#sysseek sets the offset
 fails:IO#sysseek converts arguments to Integers
 fails:IO#sysseek does not accept Bignums that don't fit in a C long
 fails:IO#sysseek raises IOError on closed stream

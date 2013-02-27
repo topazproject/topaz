@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from ..base import BaseTopazTest
 
 
@@ -338,6 +340,15 @@ class TestModuleObject(BaseTopazTest):
                 remove_method :bar
             end
             """)
+
+    def test_const_set(self, space):
+        w_res = space.execute("""
+        m = Module.new
+        m.const_set 'ZzŻżŹź', :utf_8_is_legal
+        last_const = m.constants.last
+        return [last_const, m.const_get(last_const)]
+        """)
+        assert self.unwrap(space, w_res) == ['ZzŻżŹź', 'utf_8_is_legal']
 
 
 class TestMethodVisibility(object):

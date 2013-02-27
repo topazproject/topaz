@@ -1,1 +1,10 @@
-fails:Array#to_s
+fails:Array#to_s calls inspect on its elements and joins the results with commas
+fails:Array#to_s represents a recursive element with '[...]'
+fails:Array#to_s taints the result if the Array is non-empty and tainted
+fails:Array#to_s taints the result if an element is tainted
+fails:Array#to_s untrusts the result if the Array is untrusted
+fails:Array#to_s untrusts the result if an element is untrusted
+fails:Array#to_s returns a US-ASCII string for an empty Array
+fails:Array#to_s copies the ASCII-compatible encoding of the result of inspecting the first element
+fails:Array#to_s copies the ASCII-incompatible encoding of the result of inspecting the first element
+fails:Array#to_s raises if inspecting two elements produces incompatible encodings

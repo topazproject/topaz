@@ -1,4 +1,3 @@
-fails:Ruby character strings backslashes follow the same rules as interpolation
 fails:Ruby character strings uses an internal representation when #to_s doesn't return a String
 fails:Ruby character strings are produced from control character shortcuts
 fails:Ruby character strings Unicode escaping can be done with \u and four hex digits

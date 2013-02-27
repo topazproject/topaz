@@ -76,6 +76,15 @@ class TestMain(object):
         out, _ = capfd.readouterr()
         assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
 
+    def test_version(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["--version"])
+        out, _ = capfd.readouterr()
+        [version] = out.splitlines()
+        assert version.startswith("topaz")
+        assert "1.9.3" in version
+        assert os.uname()[4] in version
+        assert platform.system().lower() in version
+
     def test_stop_consuming_args(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
         out, _ = capfd.readouterr()
@@ -125,6 +134,34 @@ class TestMain(object):
         """, ruby_args=["-I%s:%s" % (d1, d2)])
         out, _ = capfd.readouterr()
         assert out == "23\n"
+
+    def test_require_multiple_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f = d.join("zyx.rb")
+        f.write("""
+        Zyx = 9
+        """)
+        self.run(space, tmpdir, "puts Zyx", ruby_args=["-r", "zyx", "-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out == "9\n"
+
+    def test_require_joined_args(self, space, tmpdir, capfd):
+        d = tmpdir.mkdir("sub")
+        f = d.join("zyx.rb")
+        f.write("""
+        Zyx = 7
+        """)
+        self.run(space, tmpdir, "puts Zyx", ruby_args=["-rzyx", "-I", str(d)])
+        out, _ = capfd.readouterr()
+        assert out == "7\n"
+
+    def test_search_path(self, space, tmpdir, capfd, monkeypatch):
+        f = tmpdir.join("a")
+        f.write("puts 17")
+        monkeypatch.setenv("PATH", "%s:%s" % (tmpdir, os.environ["PATH"]))
+        self.run(space, tmpdir, ruby_args=["-S", "a"])
+        out, _ = capfd.readouterr()
+        assert out == "17\n"
 
     def test_arguments(self, space, tmpdir, capfd):
         self.run(space, tmpdir, """

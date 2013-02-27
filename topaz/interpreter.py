@@ -168,13 +168,13 @@ class Interpreter(object):
         frame.push(bytecode.consts_w[idx])
 
     def LOAD_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx].get(frame, idx) or space.w_nil)
+        frame.push(frame.cells[idx].get(space, frame, idx) or space.w_nil)
 
     def STORE_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.cells[idx].set(frame, idx, frame.peek())
+        frame.cells[idx].set(space, frame, idx, frame.peek())
 
     def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx].upgrade_to_closure(frame, idx))
+        frame.push(frame.cells[idx].upgrade_to_closure(space, frame, idx))
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
         space.getexecutioncontext().last_instr = pc
@@ -374,7 +374,6 @@ class Interpreter(object):
 
     def BUILD_MODULE(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc
-        w_bytecode = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
 
@@ -386,12 +385,7 @@ class Interpreter(object):
         elif not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a module" % name)
 
-        assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_mod, StaticScope(w_mod, frame.lexical_scope))
-        with space.getexecutioncontext().visit_frame(sub_frame):
-            space.execute_frame(sub_frame, w_bytecode)
-
-        frame.push(space.w_nil)
+        frame.push(w_mod)
 
     def BUILD_REGEXP(self, space, bytecode, frame, pc):
         w_flags = frame.pop()
@@ -487,13 +481,15 @@ class Interpreter(object):
         w_obj.attach_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
-    def EVALUATE_CLASS(self, space, bytecode, frame, pc):
+    def EVALUATE_MODULE(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc
         w_bytecode = frame.pop()
-        w_cls = frame.pop()
+        w_mod = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        space.getexecutioncontext().invoke_trace_proc(space, "class", None, None, frame=frame)
-        sub_frame = space.create_frame(w_bytecode, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
+
+        event = "class" if space.is_kind_of(w_mod, space.w_class) else "module"
+        space.getexecutioncontext().invoke_trace_proc(space, event, None, None, frame=frame)
+        sub_frame = space.create_frame(w_bytecode, w_mod, StaticScope(w_mod, frame.lexical_scope), block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 

@@ -1,7 +1,9 @@
 fails:Kernel#require is a private method
-fails:Kernel#require (path resolution) loads an absolute path
 fails:Kernel#require (path resolution) loads a non-canonical absolute path
-fails:Kernel#require (path resolution) loads a file defining many methods
-fails:Kernel#require (path resolution) raises a LoadError if the file does not exist
 fails:Kernel#require
 fails:Kernel.require
+fails:Kernel#require (path resolution) calls #to_str on non-String objects returned by #to_path
+fails:Kernel#require (path resolution) loads a path with duplicate path separators
+fails:Kernel#require (path resolution) with an unreadable file raises a LoadError
+fails:Kernel#require (path resolution) does not load a bare filename unless the current working directory is in $LOAD_PATH
+fails:Kernel#require (path resolution) does not load a relative path unless the current working directory is in $LOAD_PATH

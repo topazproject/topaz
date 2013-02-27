@@ -59,6 +59,8 @@ class W_DirObject(W_Object):
             return space.newint(0)
 
     @classdef.singleton_method("delete", path="path")
+    @classdef.singleton_method("rmdir", path="path")
+    @classdef.singleton_method("unlink", path="path")
     def method_delete(self, space, path):
         try:
             os.rmdir(path if path else "")
@@ -83,10 +85,10 @@ class W_DirObject(W_Object):
         glob = Glob(space.fromcache(RegexpCache))
 
         for w_pat in patterns_w:
-            if space.is_kind_of(w_pat, space.w_string):
-                pattern = space.str_w(w_pat)
-            else:
-                pattern = space.str_w(space.convert_type(w_pat, space.w_string, "to_str"))
+            w_pat2 = space.convert_type(w_pat, space.w_string, "to_path", raise_error=False)
+            if w_pat2 is space.w_nil:
+                pattern = space.convert_type(w_pat, space.w_string, "to_str")
+            pattern = space.str_w(w_pat2)
             if len(patterns_w) == 1:
                 for pat in pattern.split("\0"):
                     glob.glob(pat, flags)
@@ -119,10 +121,17 @@ class W_DirObject(W_Object):
         self.open = False
         return space.w_nil
 
-    @classdef.singleton_method("mkdir", path="path", mask="int")
-    def method_mkdir(self, space, path, mask=0022):
+    @classdef.singleton_method("mkdir", path="path", mode="int")
+    def method_mkdir(self, space, path, mode=0777):
         try:
-            os.mkdir(path, mask)
+            os.mkdir(path, mode)
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
+
+    @classdef.singleton_method("entries", dirname="path")
+    def method_entries(self, space, dirname):
+        try:
+            return space.newarray([space.newstr_fromstr(d) for d in os.listdir(dirname)])
+        except OSError as e:
+            raise error_for_oserror(space, e)

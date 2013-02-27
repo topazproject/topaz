@@ -10,6 +10,7 @@ written in Python on top of `RPython`_ (the toolchain that powers PyPy).
    getting-started
    current-status
    contributing
+   style-guide
    community
    code-of-conduct
    blog/index

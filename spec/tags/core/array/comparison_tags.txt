@@ -6,4 +6,3 @@ fails:Array#<=> returns -1 if the arrays have same length and a pair of correspo
 fails:Array#<=> returns +1 if the arrays have same length and a pair of corresponding elements returns +1 for <=>
 fails:Array#<=> properly handles recursive arrays
 fails:Array#<=> does not call #to_ary on Array subclasses
-fails: 

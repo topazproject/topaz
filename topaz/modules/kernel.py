@@ -42,16 +42,6 @@ class Kernel(Module):
     def function_proc(self, space, block):
         return space.newproc(block, False)
 
-    moduledef.app_method("""
-    def puts *args
-        $stdout.puts(*args)
-    end
-
-    def print *args
-        $stdout.print(*args)
-    end
-    """)
-
     @staticmethod
     def find_feature(space, path):
         assert path is not None
@@ -116,13 +106,11 @@ class Kernel(Module):
         Kernel.load_feature(space, path, orig_path)
         return space.w_true
 
-    moduledef.app_method("alias fail raise")
-
     @moduledef.method("raise")
     def method_raise(self, space, w_str_or_exception=None, w_string=None, w_array=None):
         w_exception = None
         if w_str_or_exception is None:
-            w_exception = space.globals.get(space, "$!")
+            w_exception = space.globals.get(space, "$!") or space.w_nil
             if w_exception is space.w_nil:
                 w_exception = space.w_RuntimeError
         elif isinstance(w_str_or_exception, W_StringObject):
@@ -150,28 +138,6 @@ class Kernel(Module):
             )
 
         raise RubyError(w_exc)
-
-    moduledef.app_method("""
-    def Array arg
-        if arg.respond_to? :to_ary
-            arg.to_ary
-        elsif arg.respond_to? :to_a
-            arg.to_a
-        else
-            [arg]
-        end
-    end
-
-    def String arg
-        arg.to_s
-    end
-    module_function :String
-
-    def Integer arg
-        arg.to_i
-    end
-    module_function :Integer
-    """)
 
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
@@ -327,15 +293,6 @@ class Kernel(Module):
                 raise space.error(space.w_ArgumentError, "invalid value for Float(): %s" % string)
         else:
             return space.convert_type(w_arg, space.w_float, "to_f")
-
-    moduledef.app_method("""
-    def loop
-        while true
-            yield
-        end
-        return nil
-    end
-    """)
 
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")

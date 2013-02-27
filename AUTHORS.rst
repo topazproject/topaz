@@ -2,6 +2,7 @@ Authors
 =======
 
 * Chris Blättermann
+* Michel Boaventura
 * Dan Buch
 * Tim Felgentreff
 * Maciej Fijalkowski

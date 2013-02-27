@@ -1,6 +1,3 @@
-fails:String#sub with pattern, replacement returns a copy of self with all occurrences of pattern replaced with replacement
-fails:String#sub with pattern, replacement ignores a block if supplied
-fails:String#sub with pattern, replacement supports \G which matches at the beginning of the string
 fails:String#sub with pattern, replacement supports /i for ignoring case
 fails:String#sub with pattern, replacement doesn't interpret regexp metacharacters if pattern is a string
 fails:String#sub with pattern, replacement replaces \1 sequences with the regexp's corresponding capture

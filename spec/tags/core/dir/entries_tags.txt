@@ -1,0 +1,2 @@
+fails:Dir.entries returns an Array of filenames in an existing directory including dotfiles
+fails:Dir.entries accepts an options Hash

@@ -123,51 +123,12 @@ class W_HashObject(W_Object):
     def method_to_hash(self, space):
         return self
 
-    classdef.app_method("""
-    def each
-        iter = Topaz::HashIterator.new(self)
-        while true
-            begin
-                key, value = iter.next()
-            rescue StopIteration
-                return
-            end
-            yield key, value
-        end
-    end
-    alias each_pair each
-
-    def each_key
-        each { |k, v| yield k }
-    end
-    """)
-
     @classdef.method("key?")
     @classdef.method("has_key?")
     @classdef.method("member?")
     @classdef.method("include?")
     def method_includep(self, space, w_key):
         return space.newbool(w_key in self.contents)
-
-    classdef.app_method("""
-    def ==(other)
-        if self.equal?(other)
-            return true
-        end
-        if !other.kind_of?(Hash)
-            return false
-        end
-        if self.size != other.size
-            return false
-        end
-        self.each do |key, value|
-            if !other.has_key?(key) || other[key] != value
-                return false
-            end
-        end
-        return true
-    end
-    """)
 
 
 class W_HashIterator(W_Object):

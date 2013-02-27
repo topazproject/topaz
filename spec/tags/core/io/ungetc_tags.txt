@@ -7,3 +7,6 @@ fails:IO#ungetc adjusts the stream position
 fails:IO#ungetc makes subsequent unbuffered operations to raise IOError
 fails:IO#ungetc returns nil when invoked on stream that was not yet read
 fails:IO#ungetc raises IOError on closed stream
+fails:IO#ungetc does not affect the stream and returns nil when passed nil
+fails:IO#ungetc puts one or more characters back in the stream
+fails:IO#ungetc calls #to_str to convert the argument if it is not an Integer

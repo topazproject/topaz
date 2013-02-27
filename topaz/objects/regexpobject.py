@@ -75,19 +75,19 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _get_regexp_match(space):
-        return space.getexecutioncontext().regexp_match_cell.get(None, 0)
+        return space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
 
     @staticmethod
     def _set_regexp_match(space, w_match):
         if (w_match is not space.w_nil and
             not space.is_kind_of(w_match, space.getclassfor(W_MatchDataObject))):
             raise space.error(space.w_TypeError, "wrong argument type %s (expected MatchData)" % space.getclass(w_match).name)
-        space.getexecutioncontext().regexp_match_cell.set(None, 0, w_match)
+        space.getexecutioncontext().regexp_match_cell.set(space, None, 0, w_match)
 
     @staticmethod
     def _create_regexp_match_getter(n):
         def getter(space):
-            w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
+            w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
             if w_match is None:
                 return space.w_nil
             else:
@@ -96,7 +96,7 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _get_last_match(space):
-        w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
+        w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
         if w_match is None:
             return space.w_nil
         else:
@@ -106,7 +106,7 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _get_pre_match(space):
-        w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
+        w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
         if w_match is None:
             return space.w_nil
         else:
@@ -114,7 +114,7 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _get_post_match(space):
-        w_match = space.getexecutioncontext().regexp_match_cell.get(None, 0)
+        w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
         if w_match is None:
             return space.w_nil
         else:
@@ -290,13 +290,6 @@ class W_MatchDataObject(W_Object):
             res_w.append(space.send(self, space.newsymbol("[]"), [space.newint(i)]))
         return space.newarray(res_w)
 
-    classdef.app_method("""
-    def values_at(*args)
-        ary = self.to_a
-        args.map { |n| ary[n] }
-    end
-    """)
-
     @classdef.method("begin", n="int")
     def method_begin(self, space, n):
         if n == 0:
@@ -331,3 +324,11 @@ class W_MatchDataObject(W_Object):
     @classdef.method("post_match")
     def method_post_match(self, space):
         return space.newstr_fromstr(self.ctx._string[self.ctx.match_end:])
+
+    @classdef.method("values_at")
+    def method_values_at(self, space, args_w):
+        return space.send(
+            space.send(self, space.newsymbol("to_a")),
+            space.newsymbol("values_at"),
+            args_w
+        )

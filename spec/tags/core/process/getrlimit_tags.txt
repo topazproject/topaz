@@ -1,0 +1,11 @@
+fails:Process.getrlimit symbol to constant cooercion coerces :AS into RLIMIT_AS
+fails:Process.getrlimit symbol to constant cooercion coerces :CORE into RLIMIT_CORE
+fails:Process.getrlimit symbol to constant cooercion coerces :CPU into RLIMIT_CPU
+fails:Process.getrlimit symbol to constant cooercion coerces :DATA into RLIMIT_DATA
+fails:Process.getrlimit symbol to constant cooercion coerces :FSIZE into RLIMIT_FSIZE
+fails:Process.getrlimit symbol to constant cooercion coerces :NOFILE into RLIMIT_NOFILE
+fails:Process.getrlimit symbol to constant cooercion coerces :STACK into RLIMIT_STACK
+fails:Process.getrlimit symbol to constant cooercion coerces :MEMLOCK into RLIMIT_MEMLOCK
+fails:Process.getrlimit symbol to constant cooercion coerces :NPROC into RLIMIT_NPROC
+fails:Process.getrlimit symbol to constant cooercion coerces :RSS into RLIMIT_RSS
+fails:Process.getrlimit symbol to constant cooercion when passed an unknown resource raises ArgumentError

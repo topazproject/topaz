@@ -32,6 +32,8 @@ Before you build Topaz, there's a few things you'll need:
 * A checkout of the topaz repository: ``git clone http://github.com/topazproject/topaz``
 * A recent checkout of the PyPy repository:
   ``hg clone https://bitbucket.org/pypy/pypy``
+* The libffi development files: e.g. on Debian install with
+  ``sudo apt-get install libffi-dev``
 * Other dependencies: ``pip install -r requirements.txt``
 
 We recommend installing ``PyPy`` and other dependencies into a `virtualenv`_.

@@ -107,6 +107,7 @@ class ObjectSpace(object):
         self.w_hash = self.getclassfor(W_HashObject)
         self.w_method = self.getclassfor(W_MethodObject)
         self.w_unbound_method = self.getclassfor(W_UnboundMethodObject)
+        self.w_io = self.getclassfor(W_IOObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_LocalJumpError = self.getclassfor(W_LocalJumpError)
@@ -134,7 +135,7 @@ class ObjectSpace(object):
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
             self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
             self.w_symbol, self.w_class, self.w_module, self.w_hash,
-            self.w_regexp, self.w_method, self.w_unbound_method,
+            self.w_regexp, self.w_method, self.w_unbound_method, self.w_io,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -149,7 +150,6 @@ class ObjectSpace(object):
             self.getclassfor(W_TrueObject),
             self.getclassfor(W_FalseObject),
             self.getclassfor(W_RangeObject),
-            self.getclassfor(W_IOObject),
             self.getclassfor(W_FileObject),
             self.getclassfor(W_DirObject),
             self.getclassfor(W_EncodingObject),
@@ -159,7 +159,6 @@ class ObjectSpace(object):
             self.getclassfor(W_TimeObject),
 
             self.getclassfor(W_ExceptionObject),
-            self.getclassfor(W_StandardError),
             self.getclassfor(W_ThreadError),
 
             self.getmoduleobject(Comparable.moduledef),
@@ -201,12 +200,6 @@ class ObjectSpace(object):
 
         self.w_load_path = self.newarray([])
         self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
-        # TODO: this should really go in a better place.
-        self.execute("""
-        def self.include *mods
-            Object.include *mods
-        end
-        """)
 
     def _freeze_(self):
         return True
@@ -218,13 +211,22 @@ class ObjectSpace(object):
         path = rpath.rabspath(executable)
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
+        kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
             if os.path.isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
+                kernel_path = os.path.join(path, "lib-topaz")
                 break
-
         self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
+        self.load_kernel(kernel_path)
+
+    def load_kernel(self, kernel_path):
+        self.send(
+            self.w_kernel,
+            self.newsymbol("load"),
+            [self.newstr_fromstr(os.path.join(kernel_path, "bootstrap.rb"))]
+        )
 
     @specialize.memo()
     def fromcache(self, key):
@@ -361,7 +363,7 @@ class ObjectSpace(object):
         names = frame.bytecode.cellvars + frame.bytecode.freevars
         cells = [None] * len(frame.cells)
         for i in xrange(len(frame.cells)):
-            cells[i] = frame.cells[i].upgrade_to_closure(frame, i)
+            cells[i] = frame.cells[i].upgrade_to_closure(self, frame, i)
         return W_BindingObject(self, names, cells, frame.w_self, frame.lexical_scope)
 
     @jit.unroll_safe
@@ -428,7 +430,22 @@ class ObjectSpace(object):
             w_res = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
         return w_res
 
+    @jit.elidable
+    def _check_const_name(self, name):
+        valid = name[0].isupper()
+        if valid:
+            for i in range(1, len(name)):
+                ch = name[i]
+                if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
+                    valid = False
+                    break
+        if not valid:
+            raise self.error(self.w_NameError,
+                "wrong constant name %s" % name
+            )
+
     def set_const(self, module, name, w_value):
+        self._check_const_name(name)
         module.set_const(self, name, w_value)
 
     @jit.unroll_safe
@@ -542,12 +559,18 @@ class ObjectSpace(object):
         self.exit_handlers_w.append(w_proc)
 
     def run_exit_handlers(self):
+        status = -1
         while self.exit_handlers_w:
             w_proc = self.exit_handlers_w.pop()
             try:
                 self.send(w_proc, self.newsymbol("call"))
             except RubyError as e:
-                print_traceback(self, e.w_value)
+                w_exc = e.w_value
+                if isinstance(w_exc, W_SystemExit):
+                    status = w_exc.status
+                else:
+                    print_traceback(self, e.w_value)
+        return status
 
     def subscript_access(self, length, w_idx, w_count):
         inclusive = False

@@ -43,3 +43,12 @@ fails:IO#read with encodings ignores unicode encoding
 fails:IO#read with 1.9 encodings strips the BOM when given 'rb:utf-7-bom' as the mode
 fails:IO#read with large data reads all the data at once
 fails:IO#read with large data reads only the requested number of bytes
+fails:IO#read with $KCODE set to UTF-8 ignores unicode encoding
+fails:IO#read in binary mode does not transcode file contents when Encoding.default_internal is set
+fails:IO#read in binary mode does transcode file contents when an internal encoding is specified
+fails:IO.read with BOM reads a file without a bom
+fails:IO.read with BOM reads a file with a utf-8 bom
+fails:IO.read with BOM reads a file with a utf-16le bom
+fails:IO.read with BOM reads a file with a utf-16be bom
+fails:IO.read with BOM reads a file with a utf-32le bom
+fails:IO.read with BOM reads a file with a utf-32be bom
