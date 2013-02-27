@@ -3,6 +3,8 @@ import math
 import sys
 
 from rpython.rlib.objectmodel import compute_hash
+from rpython.rlib.rarithmetic import ovfcheck_float_to_int
+from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import NAN, INFINITY
 
 from topaz.module import ClassDef
@@ -26,6 +28,9 @@ class W_FloatObject(W_NumericObject):
     def float_w(self, space):
         return self.floatvalue
 
+    def bigint_w(self, space):
+        return rbigint.fromfloat(self.floatvalue)
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.set_const(w_cls, "MAX", space.newfloat(sys.float_info.max))
@@ -41,7 +46,10 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("to_i")
     def method_to_i(self, space):
-        return space.newint(int(self.floatvalue))
+        try:
+            return space.newint(ovfcheck_float_to_int(self.floatvalue))
+        except OverflowError:
+            return space.newbigint_fromfloat(self.floatvalue)
 
     @classdef.method("-@")
     def method_neg(self, space):
