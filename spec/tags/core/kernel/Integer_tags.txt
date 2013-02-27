@@ -1,5 +1,3 @@
-fails:Kernel#Integer returns a Bignum for a Bignum
-fails:Kernel.Integer returns a Bignum for a Bignum
 fails:Kernel.Integer uncritically return the value of to_int even if it is not an Integer
 fails:Kernel.Integer raises a TypeError when passed nil
 fails:Kernel.Integer returns a Fixnum or Bignum object
@@ -182,3 +180,4 @@ fails:Kernel#Integer is a positive decimal number if there's a leading +0d and a
 fails:Kernel#Integer is a negative decimal number if there's a leading -0d and a base of 10
 fails:Kernel#Integer is a private method
 fails:Kernel#Integer raises an ArgumentError if the String ends with a null byte
+fails:Kernel#Integer raises an ArgumentError if the String contains a null byte

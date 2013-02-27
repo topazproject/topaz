@@ -299,6 +299,9 @@ class ObjectSpace(object):
     def newbigint_fromint(self, intvalue):
         return W_BignumObject.newbigint_fromint(self, intvalue)
 
+    def newbigint_fromfloat(self, floatvalue):
+        return W_BignumObject.newbigint_fromfloat(self, floatvalue)
+
     def newbigint_fromrbigint(self, bigint):
         return W_BignumObject.newbigint_fromrbigint(self, bigint)
 
