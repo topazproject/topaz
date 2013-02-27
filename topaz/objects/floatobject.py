@@ -47,7 +47,7 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("to_i")
     def method_to_i(self, space):
         try:
-            return space.newint(ovfcheck_float_to_int(int(self.floatvalue)))
+            return space.newint(ovfcheck_float_to_int(self.floatvalue))
         except OverflowError:
             return space.newbigint_fromfloat(self.floatvalue)
 
