@@ -52,6 +52,14 @@ class IO
     self
   end
 
+  def readline(sep = $/, limit = nil)
+    raise EOFError if closed?
+    each_line(sep, limit) do |line|
+      raise EOFError if line.empty?
+      return line
+    end
+  end
+
   def readlines(sep = $/, limit = nil)
     lines = []
     each_line(sep, limit) { |line| lines << line }

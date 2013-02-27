@@ -74,16 +74,16 @@ class W_IOObject(W_Object):
         perm = 0666
         mode = os.O_RDONLY
         if w_mode_str_or_int is not None:
-            mode, err = map_filemode(space, w_mode_str_or_int)
-            if err is not None:
-                raise err
-        if w_perm is not None and not isinstance(w_perm, W_NilObject):
+            mode = map_filemode(space, w_mode_str_or_int)
+        if w_perm is not None and w_perm is not space.w_nil:
             perm = space.int_w(w_perm)
+        path = Coerce.path(space, w_path)
         try:
-            path = Coerce.path(space, w_path)
-            return space.newint(os.open(path, mode, perm))
+            fd = os.open(path, mode, perm)
         except OSError as e:
             raise error_for_oserror(space, e)
+        else:
+            return space.newint(fd)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_fd_or_io, w_mode_str_or_int=None, w_opts=None):
@@ -205,25 +205,6 @@ class W_IOObject(W_Object):
         if not c:
             return space.w_nil
         return space.newstr_fromstr(c)
-
-    @classdef.method("readline")
-    def method_readline(self, space, w_sep_or_limit=None, w_limit=None):
-        self.ensure_not_closed(space)
-        if w_sep_or_limit is not None:
-            raise space.error(space.w_NotImplementedError, "sep or limit for IO#readline")
-        if w_limit is not None:
-            raise space.error(space.w_NotImplementedError, "(sep, limit) for IO#readline")
-        buf = []
-        c = os.read(self.fd, 1)
-        if not c:
-            raise space.error(space.w_EOFError, "end of file reached")
-        while c != "\n":
-            buf.append(c)
-            c = os.read(self.fd, 1)
-            if not c:
-                break
-        buf.append(c)
-        return space.newstr_fromstr("".join(buf))
 
     @classdef.singleton_method("pipe")
     def method_pipe(self, space, block=None):
@@ -349,9 +330,7 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        mode, err = map_filemode(space, w_mode)
-        if err is not None:
-            raise err
+        mode = map_filemode(space, w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
             raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
         try:
