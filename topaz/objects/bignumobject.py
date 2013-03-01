@@ -53,6 +53,27 @@ class W_BignumObject(W_IntegerObject):
     def method_times(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.mul(other))
 
+    def floordiv(self, space, other):
+        try:
+            result = self.bigint.div(other)
+        except ZeroDivisionError:
+            raise space.error(space.w_ZeroDivisionError, "divided by 0")
+        try:
+            return space.newint(result.toint())
+        except OverflowError:
+            return space.newbigint_fromrbigint(result)
+
+    @classdef.method("/")
+    def method_divide(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            return self.floordiv(space, rbigint.fromint(space.int_w(w_other)))
+        elif space.is_kind_of(w_other, space.w_bignum):
+            return self.floordiv(space, space.bigint_w(w_other))
+        elif space.is_kind_of(w_other, space.w_float):
+            return space.send(space.newfloat(space.float_w(self)), space.newsymbol("/"), [w_other])
+        else:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
+
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.lshift(other))
