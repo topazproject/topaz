@@ -62,6 +62,16 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("return 3 / (1.0 / -0.0)")
         assert space.float_w(w_res) == -0.0
 
+    def test_div(self, space):
+        w_res = space.execute("return 3.div(5)")
+        assert space.int_w(w_res) == 0
+        w_res = space.execute("return 3.div(5.0)")
+        assert space.int_w(w_res) == 0
+        with self.raises(space, "ZeroDivisionError", "divided by 0"):
+            space.execute("return 3.div(0)")
+        with self.raises(space, "FloatDomainError", "NaN"):
+            space.execute("return 3.div(0.0 / 0.0)")
+
     def test_modulo(self, space):
         w_res = space.execute("return 5 % 2")
         assert space.int_w(w_res) == 1

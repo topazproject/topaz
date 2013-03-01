@@ -1,3 +1,4 @@
+import math
 import operator
 
 from rpython.rlib.debug import check_regular_int
@@ -6,6 +7,7 @@ from rpython.rlib.rarithmetic import ovfcheck, LONG_BIT
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import lltype, rffi
 
+from topaz.coerce import Coerce
 from topaz.module import ClassDef
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.integerobject import W_IntegerObject
@@ -99,12 +101,11 @@ class W_FixnumObject(W_RootObject):
     method_sub = new_binop(classdef, "-", operator.sub)
     method_mul = new_binop(classdef, "*", operator.mul)
 
-    @classdef.method("/")
-    def method_divide(self, space, w_other):
+    def divide(self, space, w_other):
         if space.is_kind_of(w_other, space.w_fixnum):
             other = space.int_w(w_other)
             try:
-                space.newint(ovfcheck(self.intvalue / other))
+                return space.newint(self.intvalue / other)
             except ZeroDivisionError:
                 raise space.error(space.w_ZeroDivisionError, "divided by 0")
         elif space.is_kind_of(w_other, space.w_bignum):
@@ -113,6 +114,26 @@ class W_FixnumObject(W_RootObject):
             return space.send(space.newfloat(space.float_w(self)), space.newsymbol("/"), [w_other])
         else:
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
+
+    @classdef.method("/")
+    def method_divide(self, space, w_other):
+        return self.divide(space, w_other)
+
+    @classdef.method("div")
+    def method_div(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_float):
+            w_result = space.newfloat(math.floor(Coerce.float(
+                space,
+                space.send(
+                    space.newfloat(space.float_w(self)),
+                    space.newsymbol("/"),
+                    [w_other]
+                )
+            )))
+        else:
+            w_result = self.divide(space, w_other)
+        return space.newint(Coerce.int(space, w_result))
+
     @classdef.method("**")
     def method_pow(self, space, w_other):
         if space.is_kind_of(w_other, space.w_fixnum):
