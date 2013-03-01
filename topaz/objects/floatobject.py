@@ -38,7 +38,15 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr_fromstr(str(self.floatvalue))
+        if math.isinf(self.floatvalue):
+            if self.floatvalue >= 0:
+                return space.newstr_fromstr("Infinity")
+            else:
+                return space.newstr_fromstr("-Infinity")
+        elif math.isnan(self.floatvalue):
+            return space.newstr_fromstr("NaN")
+        else:
+            return space.newstr_fromstr(str(self.floatvalue))
 
     @classdef.method("to_f")
     def method_to_f(self, space):
