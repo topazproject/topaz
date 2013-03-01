@@ -85,10 +85,12 @@ class W_FloatObject(W_NumericObject):
         if other == 0.0:
             if self.floatvalue == 0.0:
                 return space.newfloat(NAN)
-            elif self.floatvalue < 0.0:
-                return space.newfloat(-INFINITY)
             else:
-                return space.newfloat(INFINITY)
+                inf = math.copysign(INFINITY, other)
+                if self.floatvalue < 0.0:
+                    return space.newfloat(-inf)
+                else:
+                    return space.newfloat(inf)
         else:
             return space.newfloat(self.floatvalue / other)
 
