@@ -38,7 +38,15 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr_fromstr(str(self.floatvalue))
+        if math.isinf(self.floatvalue):
+            if self.floatvalue >= 0:
+                return space.newstr_fromstr("Infinity")
+            else:
+                return space.newstr_fromstr("-Infinity")
+        elif math.isnan(self.floatvalue):
+            return space.newstr_fromstr("NaN")
+        else:
+            return space.newstr_fromstr(str(self.floatvalue))
 
     @classdef.method("to_f")
     def method_to_f(self, space):
@@ -46,6 +54,11 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("to_i")
     def method_to_i(self, space):
+        if math.isnan(self.floatvalue) or math.isinf(self.floatvalue):
+            raise space.error(
+                space.w_FloatDomainError,
+                space.str_w(space.send(self, space.newsymbol("to_s")))
+            )
         try:
             return space.newint(ovfcheck_float_to_int(self.floatvalue))
         except OverflowError:
