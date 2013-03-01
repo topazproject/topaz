@@ -64,6 +64,8 @@ class TestFloatObject(BaseTopazTest):
             space.execute("(0.0 / 0.0).to_i")
         with self.raises(space, "FloatDomainError", "Infinity"):
             space.execute("(1.0 / 0.0).to_i")
+        with self.raises(space, "FloatDomainError", "-Infinity"):
+            space.execute("(-1.0 / 0.0).to_i")
 
     def test_lt(self, space):
         assert space.execute("return 1.1 < 1.2") is space.w_true
