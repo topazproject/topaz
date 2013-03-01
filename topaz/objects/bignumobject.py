@@ -3,6 +3,7 @@ from rpython.rlib.rfloat import INFINITY
 
 from topaz.module import ClassDef
 from topaz.objects.integerobject import W_IntegerObject
+from topaz.objects.numericobject import W_NumericObject
 
 
 class W_BignumObject(W_IntegerObject):
