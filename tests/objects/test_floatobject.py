@@ -50,10 +50,22 @@ class TestFloatObject(BaseTopazTest):
     def test_to_s(self, space):
         w_res = space.execute("return 1.5.to_s")
         assert space.str_w(w_res) == "1.5"
+        w_res = space.execute("return (0.0 / 0.0).to_s")
+        assert space.str_w(w_res) == "NaN"
+        w_res = space.execute("return (1.0 / 0.0).to_s")
+        assert space.str_w(w_res) == "Infinity"
+        w_res = space.execute("return (-1.0 / 0.0).to_s")
+        assert space.str_w(w_res) == "-Infinity"
 
     def test_to_i(self, space):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")
         assert self.unwrap(space, w_res) == [1, 1]
+        with self.raises(space, "FloatDomainError", "NaN"):
+            space.execute("(0.0 / 0.0).to_i")
+        with self.raises(space, "FloatDomainError", "Infinity"):
+            space.execute("(1.0 / 0.0).to_i")
+        with self.raises(space, "FloatDomainError", "-Infinity"):
+            space.execute("(-1.0 / 0.0).to_i")
 
     def test_lt(self, space):
         assert space.execute("return 1.1 < 1.2") is space.w_true
