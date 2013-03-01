@@ -46,6 +46,11 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("to_i")
     def method_to_i(self, space):
+        if math.isnan(self.floatvalue):
+            raise space.error(space.w_FloatDomainError, "NaN")
+        elif math.isinf(self.floatvalue):
+            raise space.error(space.w_FloatDomainError, "Infinity")
+
         try:
             return space.newint(ovfcheck_float_to_int(self.floatvalue))
         except OverflowError:
