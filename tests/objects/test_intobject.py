@@ -1,3 +1,4 @@
+import math
 import sys
 
 from rpython.rlib.rarithmetic import LONG_BIT
@@ -52,6 +53,14 @@ class TestFixnumObject(BaseTopazTest):
     def test_division(self, space):
         w_res = space.execute("return 3 / 5")
         assert space.int_w(w_res) == 0
+        w_res = space.execute("return 3 / 5.0")
+        assert space.float_w(w_res) == 0.6
+        w_res = space.execute("return 3 / (0.0 / 0.0)")
+        assert math.isnan(space.float_w(w_res))
+        w_res = space.execute("return 3 / (1.0 / 0.0)")
+        assert space.float_w(w_res) == 0.0
+        w_res = space.execute("return 3 / (1.0 / -0.0)")
+        assert space.float_w(w_res) == -0.0
 
     def test_modulo(self, space):
         w_res = space.execute("return 5 % 2")
