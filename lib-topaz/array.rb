@@ -163,14 +163,20 @@ class Array
       return true
     end
     if !other.kind_of?(Array)
-      return false
+      if other.respond_to?(:to_ary)
+        return other == self
+      else
+        return false
+      end
     end
     if self.size != other.size
       return false
     end
-    self.each_with_index do |x, i|
-      if x != other[i]
-        return false
+    Thread.current.recursion_guard(self) do
+      self.each_with_index do |x, i|
+        if x != other[i]
+          return false
+        end
       end
     end
     return true
@@ -186,9 +192,11 @@ class Array
     if self.length != other.length
       return false
     end
-    self.each_with_index do |x, i|
-      if !x.eql?(other[i])
-        return false
+    Thread.current.recursion_guard(self) do
+      self.each_with_index do |x, i|
+        if !x.eql?(other[i])
+          return false
+        end
       end
     end
     return true
