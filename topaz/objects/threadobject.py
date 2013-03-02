@@ -32,8 +32,10 @@ class W_ThreadObject(W_Object):
 
     @classdef.method("recursion_guard")
     def method_recursion_guard(self, space, w_obj, block):
-        """Detects recursion. If there is none, yield
-        and return false. Else return true"""
+        """
+        Detects recursion. If there is none, yield and return false. Else
+        return true
+        """
         with space.getexecutioncontext().recursion_guard(w_obj) as in_recursion:
             if in_recursion:
                 return space.w_true
