@@ -1,2 +1,1 @@
-fails:Array.new returns an instance of a subclass
 fails:Array.new with (size, object=nil) raises an ArgumentError if size is too large
