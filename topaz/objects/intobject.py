@@ -101,13 +101,16 @@ class W_FixnumObject(W_RootObject):
     method_sub = new_binop(classdef, "-", operator.sub)
     method_mul = new_binop(classdef, "*", operator.mul)
 
+    def raise_zero_division_error(self, space):
+        raise space.error(space.w_ZeroDivisionError, "divided by 0")
+
     def divide(self, space, w_other):
         if space.is_kind_of(w_other, space.w_fixnum):
             other = space.int_w(w_other)
             try:
                 return space.newint(self.intvalue / other)
             except ZeroDivisionError:
-                raise space.error(space.w_ZeroDivisionError, "divided by 0")
+                self.raise_zero_division_error(space)
         elif space.is_kind_of(w_other, space.w_bignum):
             return space.send(space.newbigint_fromint(self.intvalue), space.newsymbol("/"), [w_other])
         elif space.is_kind_of(w_other, space.w_float):
@@ -122,17 +125,18 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("div")
     def method_div(self, space, w_other):
         if space.is_kind_of(w_other, space.w_float):
-            w_result = space.newfloat(math.floor(Coerce.float(
-                space,
-                space.send(
+            if space.float_w(w_other) == 0.0:
+                self.raise_zero_division_error(space)
+            else:
+                w_float = space.send(
                     space.newfloat(space.float_w(self)),
                     space.newsymbol("/"),
                     [w_other]
                 )
-            )))
+                w_float = space.newfloat(math.floor(Coerce.float(space, w_float)))
+                return space.send(w_float, space.newsymbol("to_i"))
         else:
-            w_result = self.divide(space, w_other)
-        return space.newint(Coerce.int(space, w_result))
+            return self.divide(space, w_other)
 
     @classdef.method("**")
     def method_pow(self, space, w_other):
