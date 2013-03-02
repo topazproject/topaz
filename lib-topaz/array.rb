@@ -157,8 +157,7 @@ class Array
 
   def flatten!(level = -1)
     list = self.flatten(level)
-    self.clear
-    return self.concat list
+    self.replace(list)
   end
 
   def sort(&block)
