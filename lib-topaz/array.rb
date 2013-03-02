@@ -53,6 +53,10 @@ class Array
     res
   end
 
+  def at(idx)
+    self[idx]
+  end
+
   def each
     i = 0
     while i < self.length

@@ -61,7 +61,6 @@ class W_ArrayObject(W_Object):
         self.items_w.extend(other_w)
         return self
 
-    @classdef.method("at")
     @classdef.method("[]")
     @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):
