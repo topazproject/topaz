@@ -209,13 +209,29 @@ class Array
     return true
   end
 
-  def hash
-    res = 0x345678
-    self.each do |x|
-      # We want to keep this within a fixnum range.
-      res = Topaz.intmask((1000003 * res) ^ x.hash)
+  def inner_hash(res)
+    Thread.current.recursion_guard(self) do
+      self.each do |x|
+        # We want to keep this within a fixnum range.
+        res = Topaz.intmask((1000003 * res) ^ x.hash.to_int)
+      end
+      return res
     end
-    return res
+    throw :array_hash_recursion
+  end
+
+  private :inner_hash
+
+  def hash
+    res = 0x345678 + self.length
+    if Thread.current.in_recursion_guard?
+      return self.inner_hash(res)
+    else
+      catch(:array_hash_recursion) do
+        return self.inner_hash(res)
+      end
+      return res
+    end
   end
 
   def *(arg)

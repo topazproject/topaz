@@ -41,3 +41,9 @@ class W_ThreadObject(W_Object):
                 return space.w_true
             space.invoke_block(block, [])
         return space.w_false
+
+    @classdef.method("in_recursion_guard?")
+    def method_in_recursion_guardp(self, space):
+        if space.getexecutioncontext().recursive_objects:
+            return space.w_true
+        return space.w_false
