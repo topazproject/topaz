@@ -36,6 +36,7 @@ class W_FloatObject(W_NumericObject):
         space.set_const(w_cls, "MAX", space.newfloat(sys.float_info.max))
         space.set_const(w_cls, "MIN", space.newfloat(sys.float_info.min))
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         if math.isinf(self.floatvalue):
