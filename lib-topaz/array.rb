@@ -25,16 +25,23 @@ class Array
     return self
   end
 
-  def to_s
+  def inspect
     result = "["
-    self.each_with_index do |obj, i|
-      if i > 0
-        result << ", "
+    recursion = Thread.current.recursion_guard(self) do
+      self.each_with_index do |obj, i|
+        if i > 0
+          result << ", "
+        end
+        result << obj.inspect
       end
-      result << obj.to_s
+    end
+    if recursion
+      result << "..."
     end
     result << "]"
   end
+
+  alias :to_s :inspect
 
   def -(other)
     res = []
