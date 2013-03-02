@@ -54,10 +54,17 @@ class IO
 
   def readline(sep = $/, limit = nil)
     raise IOError, "closed stream" if closed?
-    each_line(sep, limit) do |line|
-      raise EOFError, "end of file reached" if line.empty?
-      return line
+    line_buf = []
+    loop do
+      c = getc
+      break if c.empty?
+      line_buf << c
+      break if c == sep
     end
+    raise EOFError, "end of file reached" if line_buf.empty?
+    line = line_buf.join
+    $_ = line
+    return line
   end
 
   def readlines(sep = $/, limit = nil)
