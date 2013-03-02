@@ -331,3 +331,23 @@ class Kernel(Module):
     method_untrust, method_untrusted, method_trust = new_flag(moduledef, "untrust", "untrusted?", "trust")
     method_taint, method_tainted, method_untaint = new_flag(moduledef, "taint", "tainted?", "untaint")
     method_freeze, method_frozen = new_flag(moduledef, "freeze", "frozen?", None)
+
+    @moduledef.method("throw", name="symbol")
+    def method_throw(self, space, name, w_value=None):
+        from topaz.interpreter import Throw
+        if not space.getexecutioncontext().is_in_catch_block_for_name(name):
+            raise space.error(space.w_ArgumentError, "uncaught throw :%s" % name)
+        if w_value is None:
+            w_value = space.w_nil
+        raise Throw(name, w_value)
+
+    @moduledef.method("catch", name="symbol")
+    def method_catch(self, space, name, block):
+        from topaz.interpreter import Throw
+        with space.getexecutioncontext().catch_block(name):
+            try:
+                return space.invoke_block(block, [])
+            except Throw as e:
+                if e.name == name:
+                    return e.w_value
+                raise

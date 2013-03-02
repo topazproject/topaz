@@ -71,6 +71,8 @@ class Interpreter(object):
             pc = self.handle_raise_return(space, pc, frame, bytecode, e)
         except RaiseBreak as e:
             pc = self.handle_raise_break(space, pc, frame, bytecode, e)
+        except Throw as e:
+            pc = self.handle_throw(space, pc, frame, bytecode, e)
         return pc
 
     def handle_bytecode(self, space, pc, frame, bytecode):
@@ -136,6 +138,13 @@ class Interpreter(object):
         if block is None:
             raise e
         unroller = RaiseBreakValue(e.parent_interp, e.w_value)
+        return block.handle(space, frame, unroller)
+
+    def handle_throw(self, space, pc, frame, bytecode, e):
+        block = frame.unrollstack(ThrowValue.kind)
+        if block is None:
+            raise e
+        unroller = ThrowValue(e.name, e.w_value)
         return block.handle(space, frame, unroller)
 
     def jump(self, space, bytecode, frame, cur_pc, target_pc):
@@ -743,6 +752,12 @@ class RaiseBreak(RaiseFlow):
     pass
 
 
+class Throw(RaiseFlow):
+    def __init__(self, name, w_value):
+        self.name = name
+        self.w_value = w_value
+
+
 class SuspendedUnroller(W_Root):
     pass
 
@@ -801,6 +816,17 @@ class RaiseBreakValue(SuspendedUnroller):
 
     def nomoreblocks(self):
         raise RaiseBreak(self.parent_interp, self.w_value)
+
+
+class ThrowValue(SuspendedUnroller):
+    kind = 1 << 6
+
+    def __init__(self, name, w_value):
+        self.name = name
+        self.w_value = w_value
+
+    def nomoreblocks(self):
+        raise Throw(self.name, self.w_value)
 
 
 class FrameBlock(object):
