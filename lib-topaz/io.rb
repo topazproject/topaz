@@ -53,7 +53,7 @@ class IO
   end
 
   def readline(sep = $/, limit = nil)
-    raise IOError, "closed stream" if closed?
+    raise IOError.new("closed stream") if closed?
     line = ""
     loop do
       c = getc
@@ -61,7 +61,7 @@ class IO
       line << c
       break if c == sep
     end
-    raise EOFError, "end of file reached" if line.empty?
+    raise EOFError.new("end of file reached") if line.empty?
     $_ = line
     return line
   end
