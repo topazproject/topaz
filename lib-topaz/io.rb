@@ -9,10 +9,7 @@ class IO
   end
 
   alias tell pos
-
-  def pos=(i)
-    seek(i)
-  end
+  alias pos= seek
 
   def each_line(sep = $/, limit = nil)
     if sep.is_a?(Fixnum) && limit.nil?
