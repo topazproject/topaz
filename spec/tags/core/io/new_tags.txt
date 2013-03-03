@@ -1,5 +1,3 @@
-fails:IO.new creates an IO instance from a Fixnum argument
-fails:IO.new calls #to_int on an object to convert to a Fixnum
 fails:IO.new accepts a :mode option
 fails:IO.new accepts a mode argument set to nil with a valid :mode option
 fails:IO.new accepts a mode argument with a :mode option set to nil

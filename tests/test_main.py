@@ -71,6 +71,21 @@ class TestMain(object):
         [version] = out.splitlines()
         assert version.startswith("topaz")
 
+    def test_debug_defaults_to_false(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $DEBUG")
+        out, _ = capfd.readouterr()
+        assert out.strip() == "false"
+
+    def test_debug_sets_verbose(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $VERBOSE", ruby_args=["-d"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
+    def test_debug_sets_dash_d(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $-d", ruby_args=["-d"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
     def test_help(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-h"])
         out, _ = capfd.readouterr()

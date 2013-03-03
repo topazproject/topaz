@@ -1,4 +1,8 @@
 class IO
+  class << self
+    alias for_fd new
+  end
+
   def <<(s)
     write(s)
     return self
@@ -46,6 +50,20 @@ class IO
       end
     end
     self
+  end
+
+  def readline(sep = $/, limit = nil)
+    raise IOError.new("closed stream") if closed?
+    line = ""
+    loop do
+      c = getc
+      break if c.empty?
+      line << c
+      break if c == sep
+    end
+    raise EOFError.new("end of file reached") if line.empty?
+    $_ = line
+    return line
   end
 
   def readlines(sep = $/, limit = nil)
