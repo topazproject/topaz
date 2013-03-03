@@ -40,4 +40,16 @@ class Range
     end
     return false
   end
+
+  def ==(other)
+    return true if self.equal?(other)
+    return false unless other.kind_of?(Range)
+
+    return self.exclude_end? == other.exclude_end? &&
+           self.first == other.first &&
+           self.last == other.last
+  end
+
+  alias eql? ==
+ 
 end
