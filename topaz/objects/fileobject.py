@@ -159,6 +159,12 @@ class W_IOObject(W_Object):
         os.lseek(self.fd, amount, whence)
         return space.newint(0)
 
+    @classdef.method("pos")
+    @classdef.method("tell")
+    def method_pos(self, space):
+        self.ensure_not_closed(space)
+        return space.newint(os.lseek(self.fd, 0, os.SEEK_CUR))
+
     @classdef.method("rewind")
     def method_rewind(self, space):
         self.ensure_not_closed(space)
