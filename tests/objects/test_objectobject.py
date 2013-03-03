@@ -231,6 +231,16 @@ class TestObjectObject(BaseTopazTest):
         return obj.to_s == obj.inspect
         """)
         assert w_res == space.w_true
+        w_res = space.execute("""
+        class A
+          def to_s
+            10
+          end
+        end
+        obj = A.new
+        return obj.to_s == obj.inspect
+        """)
+        assert w_res == space.w_true
 
     def test_send(self, space):
         w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
