@@ -12,10 +12,10 @@ class Array
       end
     end
     if !size_or_arr.respond_to?(:to_int)
-      raise TypeError, "can't convert #{size_or_arr.class} into Integer"
+      raise TypeError.new("can't convert #{size_or_arr.class} into Integer")
     end
     length = size_or_arr.to_int
-    raise ArgumentError, "negative array size" if length < 0
+    raise ArgumentError.new("negative array size") if length < 0
     if block
       # TODO: Emit "block supersedes default value argument" warning
       length.times { |i| self << yield(i) }
@@ -107,7 +107,7 @@ class Array
   end
 
   def delete_if
-    raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     i = 0
     c = 0
     sz = self.size
@@ -151,7 +151,7 @@ class Array
       return list
     end
     if recursion
-      raise ArgumentError, "tried to flatten recursive array"
+      raise ArgumentError.new("tried to flatten recursive array")
     end
   end
 
@@ -225,10 +225,10 @@ class Array
     begin
       arg = arg.to_int
     rescue Exception
-      raise TypeError, "can't convert #{argcls} into Fixnum"
+      raise TypeError.new("can't convert #{argcls} into Fixnum")
     end
-    raise TypeError, "can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)" if arg.class != Fixnum
-    raise ArgumentError, "Count cannot be negative" if arg < 0
+    raise TypeError.new("can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)") if arg.class != Fixnum
+    raise ArgumentError.new("Count cannot be negative") if arg < 0
 
     return [] if arg == 0
     result = self.dup
@@ -239,7 +239,7 @@ class Array
   end
 
   def map!(&block)
-    raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     self.each_with_index { |obj, idx| self[idx] = yield(obj) }
     self
   end
@@ -253,7 +253,7 @@ class Array
   end
 
   def uniq!(&block)
-    raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     seen = {}
     old_len = self.length
     i = 0

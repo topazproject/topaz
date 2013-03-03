@@ -58,7 +58,7 @@ module Enumerable
   end
 
   def drop(n)
-    raise ArgumentError, 'attempt to drop negative size' if n < 0
+    raise ArgumentError.new("attempt to drop negative size") if n < 0
     ary = self.to_a
     return [] if n > ary.size
     ary[n...ary.size]

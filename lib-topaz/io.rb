@@ -63,7 +63,7 @@ class IO
   def self.popen(cmd, mode = 'r', opts = {}, &block)
     r, w = IO.pipe
     if mode != 'r' && mode != 'w'
-      raise NotImplementedError, "mode #{mode} for IO.popen"
+      raise NotImplementedError.new("mode #{mode} for IO.popen")
     end
 
     pid = fork do
