@@ -19,15 +19,15 @@ class W_RangeObject(W_Object):
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_start, w_end, w_excl=None):
-      self.w_start = w_start
-      self.w_end = w_end
-      if space.send(w_start, space.newsymbol("<=>"), [w_end]) == space.w_nil:
-        raise space.error(space.w_ArgumentError, "bad value for range" )
+        self.w_start = w_start
+        self.w_end = w_end
+        if space.send(w_start, space.newsymbol("<=>"), [w_end]) == space.w_nil:
+            raise space.error(space.w_ArgumentError, "bad value for range" )
       
-      if w_excl is None:
-         self.exclusive = False
-      else:
-         self.exclusive = space.is_true( w_excl ) 
+        if w_excl is None:
+            self.exclusive = False
+        else:
+           self.exclusive = space.is_true( w_excl ) 
 
     @classdef.method("first")
     @classdef.method("begin")
