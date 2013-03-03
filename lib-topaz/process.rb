@@ -9,7 +9,7 @@ module Process
   end
 
   def self.waitall
-    raise NotImplementedError.new 'Process.waitall'
+    raise NotImplementedError.new("Process.waitall")
   end
 
   class Status

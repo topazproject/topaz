@@ -1,4 +1,8 @@
 class IO
+  class << self
+    alias for_fd new
+  end
+
   def <<(s)
     write(s)
     return self
@@ -48,6 +52,20 @@ class IO
     self
   end
 
+  def readline(sep = $/, limit = nil)
+    raise IOError.new("closed stream") if closed?
+    line = ""
+    loop do
+      c = getc
+      break if c.empty?
+      line << c
+      break if c == sep
+    end
+    raise EOFError.new("end of file reached") if line.empty?
+    $_ = line
+    return line
+  end
+
   def readlines(sep = $/, limit = nil)
     lines = []
     each_line(sep, limit) { |line| lines << line }
@@ -63,7 +81,7 @@ class IO
   def self.popen(cmd, mode = 'r', opts = {}, &block)
     r, w = IO.pipe
     if mode != 'r' && mode != 'w'
-      raise NotImplementedError, "mode #{mode} for IO.popen"
+      raise NotImplementedError.new("mode #{mode} for IO.popen")
     end
 
     pid = fork do
