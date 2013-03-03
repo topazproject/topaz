@@ -73,7 +73,7 @@ class W_FloatObject(W_NumericObject):
                 space.w_FloatDomainError,
                 space.str_w(space.send(self, space.newsymbol("to_s")))
             )
-        return float_to_int_w(space, self.floatvalue)
+        return self.float_to_int_w(space, self.floatvalue)
 
     @classdef.method("-@")
     def method_neg(self, space):
