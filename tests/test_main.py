@@ -86,6 +86,11 @@ class TestMain(object):
         out, _ = capfd.readouterr()
         assert out.strip() == "true"
 
+    def test_warnings_sets_dash_w(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $-w", ruby_args=["-w"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
     def test_help(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-h"])
         out, _ = capfd.readouterr()
