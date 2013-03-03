@@ -13,6 +13,22 @@ class W_RangeObject(W_Object):
         self.w_end = w_end
         self.exclusive = exclusive
 
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, args_w):
+        return W_RangeObject(space , None, None, False)
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, w_start, w_end, w_excl=None):
+      self.w_start = w_start
+      self.w_end = w_end
+      if space.send(w_start, space.newsymbol("<=>"), [w_end]) == space.w_nil:
+        raise space.error(space.w_ArgumentError, "bad value for range" )
+      
+      if w_excl is None:
+         self.exclusive = False
+      else:
+         self.exclusive = space.is_true( w_excl ) 
+
     @classdef.method("first")
     @classdef.method("begin")
     def method_begin(self, space):
