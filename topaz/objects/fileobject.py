@@ -160,10 +160,11 @@ class W_IOObject(W_Object):
         return space.newint(0)
 
     @classdef.method("pos")
-    @classdef.method("tell")
     def method_pos(self, space):
         self.ensure_not_closed(space)
-        return space.newint(os.lseek(self.fd, 0, os.SEEK_CUR))
+        # The explicit conversion to `int` is what fixed translation (???)
+        pos = int(os.lseek(self.fd, 0, os.SEEK_CUR))
+        return space.newint(pos)
 
     @classdef.method("rewind")
     def method_rewind(self, space):

@@ -8,6 +8,8 @@ class IO
     return self
   end
 
+  alias tell pos
+
   def pos=(i)
     seek(i)
   end
