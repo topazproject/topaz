@@ -32,7 +32,7 @@ class W_FloatObject(W_NumericObject):
         return rbigint.fromfloat(self.floatvalue)
 
     @staticmethod
-    def float_to_int_w(space, floatvalue):
+    def float_to_w_int(space, floatvalue):
         try:
             # the extra case makes sure that this method returns
             # bignums for the same numbers as the parser does.
@@ -73,7 +73,7 @@ class W_FloatObject(W_NumericObject):
                 space.w_FloatDomainError,
                 space.str_w(space.send(self, space.newsymbol("to_s")))
             )
-        return self.float_to_int_w(space, self.floatvalue)
+        return self.float_to_w_int(space, self.floatvalue)
 
     @classdef.method("-@")
     def method_neg(self, space):
@@ -200,8 +200,8 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("floor")
     def method_floor(self, space):
-        return self.float_to_int_w(space, math.floor(self.floatvalue))
+        return self.float_to_w_int(space, math.floor(self.floatvalue))
 
     @classdef.method("ceil")
-    def method_floor(self, space):
-        return self.float_to_int_w(space, math.ceil(self.floatvalue))
+    def method_ceil(self, space):
+        return self.float_to_w_int(space, math.ceil(self.floatvalue))
