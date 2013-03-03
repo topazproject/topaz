@@ -208,13 +208,39 @@ class Array
     return true
   end
 
-  def hash
-    res = 0x345678
-    self.each do |x|
-      # We want to keep this within a fixnum range.
-      res = Topaz.intmask((1000003 * res) ^ x.hash)
+  def inner_hash(res)
+    # This is the inner part of the hash value computation where we loop over
+    # our contents. If we find any recursion, we throw :array_hash_recursion to
+    # escape to the top level and ignore any hashing we've done inside the
+    # recursive array.
+    Thread.current.recursion_guard(self) do
+      self.each do |x|
+        # We want to keep this within a fixnum range.
+        res = Topaz.intmask((1000003 * res) ^ x.hash.to_int)
+      end
+      return res
     end
-    return res
+    throw :array_hash_recursion
+  end
+
+  private :inner_hash
+
+  def hash
+    # Arrays of different lengths should hash to different values.
+    res = 0x345678 + self.length
+    # We need to stop calculating the hash value at the top level of a
+    # recursive array so that `a' and `[a]' (which are equal) have the same
+    # hash value. If we're in a recursion guard already, we assume there's
+    # already a suitable catch block higher up the stack. Otherwise we catch
+    # :array_hash_recursion and just return a length-based hash value.
+    if Thread.current.in_recursion_guard?
+      return self.inner_hash(res)
+    else
+      catch(:array_hash_recursion) do
+        return self.inner_hash(res)
+      end
+      return res
+    end
   end
 
   def *(arg)
