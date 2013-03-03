@@ -160,9 +160,9 @@ class W_IOObject(W_Object):
     @classdef.method("pos")
     @classdef.method("tell")
     def method_pos(self, space):
-        # TODO: this currently truncates large values,
-        # switch this to use a Bignum in those cases
         self.ensure_not_closed(space)
+        # TODO: this currently truncates large values, switch this to use a
+        # Bignum in those cases
         return space.newint(int(os.lseek(self.fd, 0, os.SEEK_CUR)))
 
     @classdef.method("rewind")
