@@ -186,19 +186,14 @@ def _entry_point(space, argv):
 
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
 
+    space.globals.set(space, "$VERBOSE", space.newbool(verbose))
     if verbose:
         os.write(1, "%s\n" % description)
-        space.globals.set(space, "$VERBOSE", space.w_true)
-    else:
-        space.globals.set(space, "$VERBOSE", space.w_false)
 
+    space.globals.set(space, "$DEBUG", space.newbool(debug))
+    space.globals.set(space, "$-d", space.newbool(debug))
     if debug:
-        space.globals.set(space, "$DEBUG", space.w_true)
-        space.globals.set(space, "$-d", space.w_true)
         space.globals.set(space, "$VERBOSE", space.w_true)
-    else:
-        space.globals.set(space, "$DEBUG", space.w_false)
-        space.globals.set(space, "$-d", space.w_false)
 
     if exprs:
         source = "\n".join(exprs)
