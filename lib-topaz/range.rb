@@ -49,6 +49,7 @@ class Range
            self.first == other.first &&
            self.last == other.last
   end
-  alias eql?==
+
+  alias eql? ==
  
 end
