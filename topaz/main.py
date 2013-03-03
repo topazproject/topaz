@@ -30,7 +30,7 @@ USAGE = "\n".join([
     """  -S              look for the script using PATH environment variable""",
 #   """  -T[level=1]     turn on tainting checks""",
     """  -v              print version number, then turn on verbose mode""",
-#   """  -w              turn warnings on for your script""",
+    """  -w              turn warnings on for your script""",
 #   """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
 #   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
 #   """  --copyright     print the copyright""",
@@ -63,6 +63,7 @@ class ShortCircuitError(Exception):
 def _parse_argv(space, argv):
     verbose = False
     debug = False
+    warnings = False
     path = None
     search_path = False
     globalize_switches = False
@@ -88,6 +89,8 @@ def _parse_argv(space, argv):
             verbose = True
         elif arg == "-d":
             debug = True
+        elif arg == "-w":
+            warnings = True
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
@@ -129,6 +132,7 @@ def _parse_argv(space, argv):
     return (
         verbose,
         debug,
+        warnings,
         path,
         search_path,
         globalized_switches,
@@ -156,6 +160,7 @@ def _entry_point(space, argv):
         (
             verbose,
             debug,
+            warnings,
             path,
             search_path,
             globalized_switches,
@@ -193,6 +198,10 @@ def _entry_point(space, argv):
     space.globals.set(space, "$DEBUG", space.newbool(debug))
     space.globals.set(space, "$-d", space.newbool(debug))
     if debug:
+        space.globals.set(space, "$VERBOSE", space.w_true)
+
+    space.globals.set(space, "$-w", space.newbool(warnings))
+    if warnings:
         space.globals.set(space, "$VERBOSE", space.w_true)
 
     if exprs:
