@@ -19,6 +19,10 @@ class W_RangeObject(W_Object):
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_start, w_end, w_excl=None):
+        #TODO: should be private
+        if self.w_start is not None or self.w_end is not None:
+            raise space.error(space.w_NameError, "`initialize' called twice")
+
         self.w_start = w_start
         self.w_end = w_end
         if space.send(w_start, space.newsymbol("<=>"), [w_end]) == space.w_nil:
