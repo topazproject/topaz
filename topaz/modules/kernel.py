@@ -99,6 +99,7 @@ class Kernel(Module):
         Kernel.load_feature(space, path, orig_path)
         return space.w_true
 
+    @moduledef.method("fail")
     @moduledef.method("raise")
     def method_raise(self, space, w_str_or_exception=None, w_string=None, w_array=None):
         w_exception = None

@@ -1,7 +1,6 @@
 import os
 import sys
 import stat
-import functools
 
 from rpython.rlib import jit
 
@@ -10,7 +9,6 @@ from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
-from topaz.objects.nilobject import W_NilObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
 from topaz.utils.filemode import map_filemode, O_BINARY

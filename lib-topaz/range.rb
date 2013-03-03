@@ -51,5 +51,4 @@ class Range
   end
 
   alias eql? ==
- 
 end
