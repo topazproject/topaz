@@ -62,7 +62,7 @@ class ShortCircuitError(Exception):
 
 def _parse_argv(space, argv):
     verbose = False
-    debug = True
+    debug = False
     path = None
     search_path = False
     globalize_switches = False
