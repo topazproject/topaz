@@ -16,7 +16,7 @@ USAGE = "\n".join([
 #   """  -a              autosplit mode with -n or -p (splits $_ into $F)""",
 #   """  -c              check syntax only""",
 #   """  -Cdirectory     cd to directory, before executing your script""",
-#   """  -d              set debugging flags (set $DEBUG to true)""",
+    """  -d              set debugging flags (set $DEBUG to true)""",
     """  -e 'command'    one line of script. Several -e's allowed. Omit [programfile]""",
 #   """  -Eex[:in]       specify the default external and internal character encodings""",
 #   """  -Fpattern       split() pattern for autosplit (-a)""",
@@ -62,6 +62,7 @@ class ShortCircuitError(Exception):
 
 def _parse_argv(space, argv):
     verbose = False
+    debug = True
     path = None
     search_path = False
     globalize_switches = False
@@ -85,6 +86,8 @@ def _parse_argv(space, argv):
                 ))
         elif arg == "-v":
             verbose = True
+        elif arg == "-d":
+            debug = True
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
@@ -125,6 +128,7 @@ def _parse_argv(space, argv):
 
     return (
         verbose,
+        debug,
         path,
         search_path,
         globalized_switches,
@@ -151,6 +155,7 @@ def _entry_point(space, argv):
     try:
         (
             verbose,
+            debug,
             path,
             search_path,
             globalized_switches,
@@ -186,6 +191,11 @@ def _entry_point(space, argv):
         space.globals.set(space, "$VERBOSE", space.w_true)
     else:
         space.globals.set(space, "$VERBOSE", space.w_false)
+
+    if debug:
+        space.globals.set(space, "$DEBUG", space.w_true)
+    else:
+        space.globals.set(space, "$DEBUG", space.w_false)
 
     if exprs:
         source = "\n".join(exprs)
