@@ -5,6 +5,7 @@ load_bootstrap = proc do |file|
   load(File.join(lib_topaz, file))
 end
 
+load_bootstrap.call("thread.rb")
 load_bootstrap.call("array.rb")
 load_bootstrap.call("class.rb")
 load_bootstrap.call("comparable.rb")

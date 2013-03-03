@@ -31,13 +31,17 @@ class W_ThreadObject(W_Object):
         return w_value
 
     @classdef.method("recursion_guard")
-    def method_recursion_guard(self, space, w_obj, block):
+    def method_recursion_guard(self, space, w_identifier, w_obj, block):
         """
-        Detects recursion. If there is none, yield and return false. Else
-        return true
+        Calls the block with true if recursion is detected, false otherwise.
+        It is up to the block to decide what to do in either case.
         """
-        with space.getexecutioncontext().recursion_guard(w_obj) as in_recursion:
-            if in_recursion:
-                return space.w_true
-            space.invoke_block(block, [])
+        ec = space.getexecutioncontext()
+        with ec.recursion_guard(w_identifier, w_obj) as in_recursion:
+            return space.invoke_block(block, [space.newbool(in_recursion)])
+
+    @classdef.method("in_recursion_guard?")
+    def method_in_recursion_guardp(self, space, w_identifier):
+        if w_identifier in space.getexecutioncontext().recursive_calls:
+            return space.w_true
         return space.w_false
