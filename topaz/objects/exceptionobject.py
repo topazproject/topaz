@@ -198,6 +198,11 @@ class W_IOError(W_StandardError):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_EOFError(W_IOError):
+    classdef = ClassDef("EOFError", W_IOError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_RegexpError(W_StandardError):
     classdef = ClassDef("RegexpError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
