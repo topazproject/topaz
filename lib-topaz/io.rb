@@ -8,6 +8,10 @@ class IO
     return self
   end
 
+  def pos=(i)
+    seek(i, IO::SEEK_SET)
+  end
+
   def each_line(sep = $/, limit = nil)
     if sep.is_a?(Fixnum) && limit.nil?
       limit = sep

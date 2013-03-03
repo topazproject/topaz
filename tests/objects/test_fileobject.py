@@ -205,6 +205,18 @@ class TestIO(BaseTopazTest):
             io.seek 2
             """ % f)
 
+    def test_pos(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("words in here")
+        w_res = space.execute("""
+        f = File.new('%s', "r+")
+        f.seek(2, IO::SEEK_SET)
+        pos0 = f.pos
+        f.seek(8, IO::SEEK_SET)
+        return pos0, f.pos
+        """ % f)
+        assert self.unwrap(space, w_res) == [2, 8]
+
     def test_pipe(self, space):
         w_res = space.execute("""
         return IO.pipe

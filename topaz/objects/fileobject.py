@@ -157,6 +157,14 @@ class W_IOObject(W_Object):
         os.lseek(self.fd, amount, whence)
         return space.newint(0)
 
+    @classdef.method("pos")
+    @classdef.method("tell")
+    def method_pos(self, space):
+        # TODO: this currently truncates large values,
+        # switch this to use a Bignum in those cases
+        self.ensure_not_closed(space)
+        return space.newint(int(os.lseek(self.fd, 0, os.SEEK_CUR)))
+
     @classdef.method("rewind")
     def method_rewind(self, space):
         self.ensure_not_closed(space)
