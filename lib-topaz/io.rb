@@ -57,7 +57,7 @@ class IO
     line = ""
     loop do
       c = getc
-      break if c.empty?
+      break if c.nil? || c.empty?
       line << c
       break if c == sep
     end
