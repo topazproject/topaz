@@ -8,8 +8,9 @@ class IO
     return self
   end
 
-  alias tell pos
-  alias pos= seek
+  def pos=(i)
+    seek(i, IO::SEEK_SET)
+  end
 
   def each_line(sep = $/, limit = nil)
     if sep.is_a?(Fixnum) && limit.nil?
