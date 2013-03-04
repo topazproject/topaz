@@ -31,7 +31,7 @@ USAGE = "\n".join([
 #   """  -T[level=1]     turn on tainting checks""",
     """  -v              print version number, then turn on verbose mode""",
     """  -w              turn warnings on for your script""",
-#   """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
+    """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
 #   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
 #   """  --copyright     print the copyright""",
     """  --version       print the version""",
@@ -61,9 +61,18 @@ class ShortCircuitError(Exception):
 
 
 def _parse_argv(space, argv):
-    verbose = False
-    debug = False
-    warnings = False
+    flag_globals_w = {
+        "$-v": space.w_false,
+        "$VERBOSE": space.w_false,
+        "$-d": space.w_false,
+        "$DEBUG": space.w_false,
+        "$-w": space.w_false,
+        "$-W": space.newint(1),
+    #   "$-p": space.w_false,
+    #   "$-l": space.w_false,
+    #   "$-a": space.w_false,
+    }
+    warning_level = None
     path = None
     search_path = False
     globalize_switches = False
@@ -86,11 +95,15 @@ def _parse_argv(space, argv):
                     )
                 ))
         elif arg == "-v":
-            verbose = True
+            flag_globals_w["$-v"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
         elif arg == "-d":
-            debug = True
+            flag_globals_w["$-d"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
+            flag_globals_w["$DEBUG"] = space.w_true
         elif arg == "-w":
-            warnings = True
+            flag_globals_w["$-w"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
@@ -108,6 +121,8 @@ def _parse_argv(space, argv):
             reqs.append(argv[idx])
         elif arg.startswith("-r"):
             reqs.append(arg[2:])
+        elif arg.startswith("-W"):
+            warning_level = arg[2:]
         elif arg == "-S":
             search_path = True
         elif arg == "-s":
@@ -129,10 +144,26 @@ def _parse_argv(space, argv):
             argv_w.append(space.newstr_fromstr(arg))
         idx += 1
 
+    if warning_level is not None:
+        warning_level_num = 2 if not warning_level.isdigit() else int(warning_level)
+        if warning_level_num == 0:
+            flag_globals_w["$VERBOSE"] = space.w_nil
+        elif warning_level_num == 1:
+            flag_globals_w["$VERBOSE"] = space.w_false
+        elif warning_level_num >= 2:
+            flag_globals_w["$VERBOSE"] = space.w_true
+        # TODO MRI freaks out about anything higher than -W7, but does so in a
+        # getopt-ish way.  Making the errors work the same way here is going to
+        # take some effort, if we even care...
+        # elif warning_level_num >= 2 and warning_level_num < 8:
+        #     flag_globals_w["$VERBOSE"] = space.w_true
+        # elif warning_level_num > 8:
+        #     raise space.error(space.w_RuntimeError, "invalid option, bla bla bla...")
+
+        flag_globals_w["$-W"] = space.newint(warning_level_num)
+
     return (
-        verbose,
-        debug,
-        warnings,
+        flag_globals_w,
         path,
         search_path,
         globalized_switches,
@@ -158,9 +189,7 @@ def _entry_point(space, argv):
 
     try:
         (
-            verbose,
-            debug,
-            warnings,
+            flag_globals_w,
             path,
             search_path,
             globalized_switches,
@@ -190,19 +219,11 @@ def _entry_point(space, argv):
         )
 
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
-
-    space.globals.set(space, "$VERBOSE", space.newbool(verbose))
-    if verbose:
+    explicitly_verbose = flag_globals_w["$-v"] is space.w_true
+    if explicitly_verbose:
         os.write(1, "%s\n" % description)
-
-    space.globals.set(space, "$DEBUG", space.newbool(debug))
-    space.globals.set(space, "$-d", space.newbool(debug))
-    if debug:
-        space.globals.set(space, "$VERBOSE", space.w_true)
-
-    space.globals.set(space, "$-w", space.newbool(warnings))
-    if warnings:
-        space.globals.set(space, "$VERBOSE", space.w_true)
+    for varname, w_value in flag_globals_w.items():
+        space.globals.set(space, varname, w_value)
 
     if exprs:
         source = "\n".join(exprs)
@@ -223,7 +244,7 @@ def _entry_point(space, argv):
             source = f.readall()
         finally:
             f.close()
-    elif verbose:
+    elif explicitly_verbose:
         return 0
     else:
         source = fdopen_as_stream(0, "r").readall()
@@ -240,7 +261,9 @@ def _entry_point(space, argv):
         else:
             space.globals.set(space, switch_global_var, space.newstr_fromstr(value))
 
-    space.globals.set(space, "$0", space.newstr_fromstr(path))
+    w_program_name = space.newstr_fromstr(path)
+    space.globals.set(space, "$0", w_program_name)
+    space.globals.set(space, "$PROGRAM_NAME", w_program_name)
     status = 0
     w_exit_error = None
     explicit_status = False
