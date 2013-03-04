@@ -401,6 +401,22 @@ class TestFile(BaseTopazTest):
         """ % (tmpdir.dirname, os.sep))
         assert space.str_w(w_res) == "first\nsecond\n"
 
+    def test_readline(self, space, tmpdir):
+        contents = "01\n02\n03\n04\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+        w_res = space.execute("return File.new('%s').readline" % f)
+        assert self.unwrap(space, w_res) == "01\n"
+
+        w_res = space.execute("return File.new('%s').readline('3')" % f)
+        assert self.unwrap(space, w_res) == "01\n02\n03"
+
+        w_res = space.execute("return File.new('%s').readline(1)" % f)
+        assert self.unwrap(space, w_res) == "0"
+
+        w_res = space.execute("return File.new('%s').readline('3', 4)" % f)
+        assert self.unwrap(space, w_res) == "01\n0"
+
     def test_readlines(self, space, tmpdir):
         contents = "01\n02\n03\n04\n"
         f = tmpdir.join("file.txt")
