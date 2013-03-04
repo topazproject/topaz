@@ -164,6 +164,39 @@ class W_ArrayObject(W_Object):
         self.items_w += other
         return self
 
+    # TODO: move idx into @classdef
+    @classdef.method("insert")
+    def method_insert(self, space, w_idx, args_w):
+        idx = space.int_w(w_idx)
+
+        if idx < -len(self.items_w):
+            raise space.error(space.w_IndexError,
+                "index %d too small for array; minimum: %d" % (
+                    idx + 1,
+                    -len(self.items_w)
+                )
+            )
+        elif idx > len(self.items_w):
+            before = self.items_w
+            for i in range(idx - len(self.items_w)):
+                before.append(space.w_nil)
+            after = []
+        elif idx == 0:
+            before = []
+            after = self.items_w
+        elif idx == -1:
+            before = self.items_w
+            after = []
+        elif idx < -1:
+            before = self.items_w[:len(self.items_w) + idx + 1]
+            after = self.items_w[len(self.items_w) + idx + 1:]
+        else:
+            before = self.items_w[:idx]
+            after = self.items_w[idx:]
+
+        self.items_w = before + args_w + after
+        return self
+
     @classdef.method("push")
     @check_frozen()
     def method_push(self, space, args_w):
