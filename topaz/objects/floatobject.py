@@ -5,7 +5,8 @@ import sys
 from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
-from rpython.rlib.rfloat import NAN, INFINITY
+from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
+    NAN, INFINITY)
 
 from topaz.module import ClassDef
 from topaz.objects.numericobject import W_NumericObject
@@ -60,7 +61,7 @@ class W_FloatObject(W_NumericObject):
         elif math.isnan(self.floatvalue):
             return space.newstr_fromstr("NaN")
         else:
-            return space.newstr_fromstr(str(self.floatvalue))
+            return space.newstr_fromstr(formatd(self.floatvalue, "g", DTSF_STR_PRECISION, DTSF_ADD_DOT_0))
 
     @classdef.method("to_f")
     def method_to_f(self, space):
