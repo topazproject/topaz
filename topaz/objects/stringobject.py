@@ -5,6 +5,7 @@ from rpython.rlib import jit
 from rpython.rlib.objectmodel import newlist_hint, compute_hash
 from rpython.rlib.rarithmetic import intmask, ovfcheck
 from rpython.rlib.rbigint import rbigint
+from rpython.rlib import rfloat
 from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
 from rpython.rlib.rstring import split
@@ -713,6 +714,58 @@ class W_StringObject(W_Object):
             return space.newbigint_fromrbigint(value)
         else:
             return space.newint(value)
+
+    @classdef.method("to_f")
+    def method_to_f(self, space):
+        # can't use rstring_to_float here because of rpython?
+
+        value = 0.0
+        precision = False
+        pointer = 0.1
+        negative = False
+        exponent = False
+        multi = 0
+        number = False
+
+        for char in space.str_w(self):
+            c = ord(char)
+            print char, ord(char)
+            if ord("0") <= c <= ord("9"):
+                if exponent:
+                    multi = multi * 10 + c - ord("0")
+                elif precision:
+                    value = value + pointer * (c - ord("0"))
+                    pointer /= 10
+                else:
+                    value = value * 10 + c - ord("0")
+
+                number = True
+            elif c == ord("-"):
+                if value != 0.0:
+                    break
+                negative = not negative
+            elif c == ord("+"):
+                if value != 0.0:
+                    break
+                pass
+            elif c == ord("."):
+                if precision or exponent:
+                    break
+                precision = True
+            elif c == ord("e"):
+                if exponent:
+                    break
+                exponent = True
+            elif char.isspace():
+                if number:
+                    break
+            else:
+                break
+
+        if exponent:
+            value = value * 10 ** multi
+
+        return space.newfloat(value)
 
     @classdef.method("tr", source="str", replacement="str")
     def method_tr(self, space, source, replacement):
