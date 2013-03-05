@@ -240,7 +240,9 @@ def _entry_point(space, argv):
         else:
             space.globals.set(space, switch_global_var, space.newstr_fromstr(value))
 
-    space.globals.set(space, "$0", space.newstr_fromstr(path))
+    w_program_name = space.newstr_fromstr(path)
+    space.globals.set(space, "$0", w_program_name)
+    space.globals.set(space, "$PROGRAM_NAME", w_program_name)
     status = 0
     w_exit_error = None
     explicit_status = False
