@@ -67,10 +67,10 @@ def _parse_argv(space, argv):
         "$-d": space.w_false,
         "$DEBUG": space.w_false,
         "$-w": space.w_false,
-    #   "$-W": space.newint(1),
-    #   "$-p": space.w_false,
-    #   "$-l": space.w_false,
-    #   "$-a": space.w_false,
+        "$-W": space.newint(1),
+        "$-p": space.w_false,
+        "$-l": space.w_false,
+        "$-a": space.w_false,
     }
     path = None
     search_path = False
@@ -198,10 +198,10 @@ def _entry_point(space, argv):
         )
 
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
-    explicitly_verbose = flag_globals_w["$-v"] is space.w_true
+    explicitly_verbose = space.is_true(flag_globals_w["$-v"])
     if explicitly_verbose:
         os.write(1, "%s\n" % description)
-    for varname, w_value in flag_globals_w.items():
+    for varname, w_value in flag_globals_w.iteritems():
         space.globals.set(space, varname, w_value)
 
     if exprs:
