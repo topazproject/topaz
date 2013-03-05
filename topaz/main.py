@@ -33,10 +33,11 @@ USAGE = "\n".join([
     """  -w              turn warnings on for your script""",
     """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
 #   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
-#   """  --copyright     print the copyright""",
+    """  --copyright     print the copyright""",
     """  --version       print the version""",
     ""
 ])
+COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
 
 
 @specialize.memo()
@@ -86,6 +87,8 @@ def _parse_argv(space, argv):
         arg = argv[idx]
         if arg == "-h" or arg == "--help":
             raise ShortCircuitError(USAGE)
+        elif arg == "--copyright":
+            raise ShortCircuitError(COPYRIGHT)
         elif arg == "--version":
             raise ShortCircuitError("%s\n" % space.str_w(
                     space.send(

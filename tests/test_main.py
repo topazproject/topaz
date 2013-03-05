@@ -106,6 +106,13 @@ class TestMain(object):
         out, _ = capfd.readouterr()
         assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
 
+    def test_copyright(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["--copyright"])
+        out, _ = capfd.readouterr()
+        [copyright] = out.splitlines()
+        assert copyright.startswith("topaz")
+        assert "Alex Gaynor" in copyright
+
     def test_version(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["--version"])
         out, _ = capfd.readouterr()
