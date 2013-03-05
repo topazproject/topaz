@@ -31,7 +31,7 @@ USAGE = "\n".join([
 #   """  -T[level=1]     turn on tainting checks""",
     """  -v              print version number, then turn on verbose mode""",
     """  -w              turn warnings on for your script""",
-#   """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
+    """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
 #   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
 #   """  --copyright     print the copyright""",
     """  --version       print the version""",
@@ -72,6 +72,7 @@ def _parse_argv(space, argv):
         "$-l": space.w_false,
         "$-a": space.w_false,
     }
+    warning_level = None
     path = None
     search_path = False
     globalize_switches = False
@@ -120,6 +121,8 @@ def _parse_argv(space, argv):
             reqs.append(argv[idx])
         elif arg.startswith("-r"):
             reqs.append(arg[2:])
+        elif arg.startswith("-W"):
+            warning_level = arg[2:]
         elif arg == "-S":
             search_path = True
         elif arg == "-s":
@@ -140,6 +143,17 @@ def _parse_argv(space, argv):
         else:
             argv_w.append(space.newstr_fromstr(arg))
         idx += 1
+
+    if warning_level is not None:
+        warning_level_num = 2 if not warning_level.isdigit() else int(warning_level)
+        if warning_level_num == 0:
+            flag_globals_w["$VERBOSE"] = space.w_nil
+        elif warning_level_num == 1:
+            flag_globals_w["$VERBOSE"] = space.w_false
+        elif warning_level_num >= 2:
+            flag_globals_w["$VERBOSE"] = space.w_true
+
+        flag_globals_w["$-W"] = space.newint(warning_level_num)
 
     return (
         flag_globals_w,
