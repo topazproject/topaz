@@ -61,9 +61,17 @@ class ShortCircuitError(Exception):
 
 
 def _parse_argv(space, argv):
-    verbose = False
-    debug = False
-    warnings = False
+    flag_globals_w = {
+        "$-v": space.w_false,
+        "$VERBOSE": space.w_false,
+        "$-d": space.w_false,
+        "$DEBUG": space.w_false,
+        "$-w": space.w_false,
+        "$-W": space.newint(1),
+        "$-p": space.w_false,
+        "$-l": space.w_false,
+        "$-a": space.w_false,
+    }
     path = None
     search_path = False
     globalize_switches = False
@@ -86,11 +94,15 @@ def _parse_argv(space, argv):
                     )
                 ))
         elif arg == "-v":
-            verbose = True
+            flag_globals_w["$-v"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
         elif arg == "-d":
-            debug = True
+            flag_globals_w["$-d"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
+            flag_globals_w["$DEBUG"] = space.w_true
         elif arg == "-w":
-            warnings = True
+            flag_globals_w["$-w"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
@@ -130,9 +142,7 @@ def _parse_argv(space, argv):
         idx += 1
 
     return (
-        verbose,
-        debug,
-        warnings,
+        flag_globals_w,
         path,
         search_path,
         globalized_switches,
@@ -158,9 +168,7 @@ def _entry_point(space, argv):
 
     try:
         (
-            verbose,
-            debug,
-            warnings,
+            flag_globals_w,
             path,
             search_path,
             globalized_switches,
@@ -190,19 +198,11 @@ def _entry_point(space, argv):
         )
 
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
-
-    space.globals.set(space, "$VERBOSE", space.newbool(verbose))
-    if verbose:
+    explicitly_verbose = space.is_true(flag_globals_w["$-v"])
+    if explicitly_verbose:
         os.write(1, "%s\n" % description)
-
-    space.globals.set(space, "$DEBUG", space.newbool(debug))
-    space.globals.set(space, "$-d", space.newbool(debug))
-    if debug:
-        space.globals.set(space, "$VERBOSE", space.w_true)
-
-    space.globals.set(space, "$-w", space.newbool(warnings))
-    if warnings:
-        space.globals.set(space, "$VERBOSE", space.w_true)
+    for varname, w_value in flag_globals_w.iteritems():
+        space.globals.set(space, varname, w_value)
 
     if exprs:
         source = "\n".join(exprs)
@@ -223,7 +223,7 @@ def _entry_point(space, argv):
             source = f.readall()
         finally:
             f.close()
-    elif verbose:
+    elif explicitly_verbose:
         return 0
     else:
         source = fdopen_as_stream(0, "r").readall()
