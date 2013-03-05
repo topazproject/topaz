@@ -23,7 +23,7 @@ USAGE = "\n".join([
 #   """  -i[extension]   edit ARGV files in place (make backup if extension supplied)""",
     """  -Idirectory     specify $LOAD_PATH directory (may be used more than once)""",
 #   """  -l              enable line ending processing""",
-#   """  -n              assume 'while gets(); ... end' loop around your script""",
+    """  -n              assume 'while gets(); ... end' loop around your script""",
 #   """  -p              assume loop like -n but print line also like sed""",
     """  -rlibrary       require the library, before executing your script""",
     """  -s              enable some switch parsing for switches after script name""",
@@ -74,6 +74,7 @@ def _parse_argv(space, argv):
         "$-a": space.w_false,
     }
     warning_level = None
+    do_loop = False
     path = None
     search_path = False
     globalize_switches = False
@@ -130,6 +131,8 @@ def _parse_argv(space, argv):
             search_path = True
         elif arg == "-s":
             globalize_switches = True
+        elif arg == "-n":
+            do_loop = True
         elif arg == "--":
             idx += 1
             break
@@ -160,6 +163,7 @@ def _parse_argv(space, argv):
 
     return (
         flag_globals_w,
+        do_loop,
         path,
         search_path,
         globalized_switches,
@@ -186,6 +190,7 @@ def _entry_point(space, argv):
     try:
         (
             flag_globals_w,
+            do_loop,
             path,
             search_path,
             globalized_switches,
@@ -245,6 +250,13 @@ def _entry_point(space, argv):
     else:
         source = fdopen_as_stream(0, "r").readall()
         path = "-"
+
+    if do_loop:
+        source = """
+        while gets
+          %s
+        end
+        """ % source
 
     for globalized_switch in globalized_switches:
         value = None
