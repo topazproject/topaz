@@ -251,13 +251,6 @@ def _entry_point(space, argv):
         source = fdopen_as_stream(0, "r").readall()
         path = "-"
 
-    if do_loop:
-        source = """
-        while gets
-          %s
-        end
-        """ % source
-
     for globalized_switch in globalized_switches:
         value = None
         if "=" in globalized_switch:
@@ -276,7 +269,16 @@ def _entry_point(space, argv):
     w_exit_error = None
     explicit_status = False
     try:
-        space.execute(source, filepath=path)
+        if do_loop:
+            w_gets = space.newsymbol("gets")
+            while True:
+                w_line = space.send(space.w_kernel, w_gets, [])
+                if w_line is space.w_nil:
+                    break
+                space.globals.set(space, "$_", w_line)
+                space.execute(source, filepath=path)
+        else:
+            space.execute(source, filepath=path)
     except RubyError as e:
         explicit_status = True
         w_exc = e.w_value
