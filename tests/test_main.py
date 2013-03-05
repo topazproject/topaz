@@ -298,6 +298,9 @@ class TestMain(object):
         f = self.run(space, tmpdir, "puts $0")
         out2, err2 = capfd.readouterr()
         assert out2 == "{}\n".format(f)
+        f = self.run(space, tmpdir, "puts $PROGRAM_NAME")
+        out3, _ = capfd.readouterr()
+        assert out3 == "{}\n".format(f)
 
     def test_non_existent_file(self, space, tmpdir, capfd):
         self.run(space, tmpdir, None, ruby_args=[str(tmpdir.join("t.rb"))], status=1)
