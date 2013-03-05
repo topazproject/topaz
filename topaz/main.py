@@ -152,13 +152,6 @@ def _parse_argv(space, argv):
             flag_globals_w["$VERBOSE"] = space.w_false
         elif warning_level_num >= 2:
             flag_globals_w["$VERBOSE"] = space.w_true
-        # TODO MRI freaks out about anything higher than -W7, but does so in a
-        # getopt-ish way.  Making the errors work the same way here is going to
-        # take some effort, if we even care...
-        # elif warning_level_num >= 2 and warning_level_num < 8:
-        #     flag_globals_w["$VERBOSE"] = space.w_true
-        # elif warning_level_num > 8:
-        #     raise space.error(space.w_RuntimeError, "invalid option, bla bla bla...")
 
         flag_globals_w["$-W"] = space.newint(warning_level_num)
 
