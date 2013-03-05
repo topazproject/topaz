@@ -8,6 +8,7 @@ from rpython.rlib.objectmodel import specialize
 
 from rply.errors import ParsingError
 
+from topaz import system
 from topaz.astcompiler import CompilerContext, SymbolTable
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
@@ -207,11 +208,23 @@ class ObjectSpace(object):
     def _freeze_(self):
         return True
 
+    def find_executable(self, executable):
+        if os.sep in executable or (system.IS_WINDOWS and ":" in executable):
+            return executable
+        path = os.environ.get("PATH")
+        if path:
+            for dir in path.split(os.pathsep):
+                f = os.path.join(dir, executable)
+                if os.path.isfile(f):
+                    executable = f
+                    break
+        return rpath.rabspath(executable)
+
     def setup(self, executable):
         """
         Performs runtime setup.
         """
-        path = rpath.rabspath(executable)
+        path = rpath.rabspath(self.find_executable(executable))
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
         kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
