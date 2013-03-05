@@ -7,7 +7,7 @@ from rpython.rlib.rfloat import round_double
 from rpython.rlib.rstring import assert_str0
 from rpython.rlib.streamio import open_file_as_stream
 
-from topaz.error import RubyError
+from topaz.error import RubyError, error_for_oserror
 from topaz.module import Module, ModuleDef
 from topaz.modules.process import Process
 from topaz.objects.exceptionobject import W_ExceptionObject
@@ -66,11 +66,14 @@ class Kernel(Module):
         if not os.path.exists(assert_str0(path)):
             raise space.error(space.w_LoadError, orig_path)
 
-        f = open_file_as_stream(path)
         try:
-            contents = f.readall()
-        finally:
-            f.close()
+            f = open_file_as_stream(path)
+            try:
+                contents = f.readall()
+            finally:
+                f.close()
+        except OSError as e:
+            raise error_for_oserror(space, e)
 
         space.execute(contents, filepath=path)
 
