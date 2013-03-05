@@ -15,16 +15,16 @@ class Marshal(Module):
 
     @staticmethod
     def dump(space, w_obj):
-        if isinstance(w_obj, W_FixnumObject):
-            obj = space.int_w(w_obj)
-        elif isinstance(w_obj, W_StringObject):
-            obj = space.str_w(w_obj)
-        elif isinstance(w_obj, W_TrueObject):
+        if isinstance(w_obj, W_TrueObject):
             obj = True
         elif isinstance(w_obj, W_FalseObject):
             obj = False
         elif isinstance(w_obj, W_NilObject):
             obj = None
+        elif isinstance(w_obj, W_FixnumObject):
+            obj = space.int_w(w_obj)
+        elif isinstance(w_obj, W_StringObject):
+            obj = space.str_w(w_obj)
         elif isinstance(w_obj, W_ArrayObject):
             obj = []
             for w_item in w_obj.items_w:
@@ -36,16 +36,16 @@ class Marshal(Module):
 
     @staticmethod
     def load(space, obj):
-        if isinstance(obj, int):
-            return space.newint(obj)
-        elif isinstance(obj, str):
-            return space.newstr_fromstr(obj)
-        elif obj is True:
+        if obj is True:
             return space.w_true
         elif obj is False:
             return space.w_false
         elif obj is None:
             return space.w_nil
+        elif isinstance(obj, int):
+            return space.newint(obj)
+        elif isinstance(obj, str):
+            return space.newstr_fromstr(obj)
         elif isinstance(obj, list):
             array = []
             for item in obj:
@@ -64,25 +64,3 @@ class Marshal(Module):
         dump = space.str_w(w_obj)
         obj = marshal.loads(dump)
         return Marshal.load(space, obj)
-
-
-        #format = dump[0]
-
-        #if format == "i":
-        #    return space.newint(marshal.loads(dump))
-        #elif format == "s":
-        #    return space.newstr_fromstr(marshal.loads(dump))
-        #elif format == "T":
-        #    return space.w_true
-        #elif format == "F":
-        #    return space.w_false
-        #elif format == "N":
-        #    return space.w_nil
-        #elif format == "[":
-        #    array = []
-        #    # wrap each item
-        #    for item in marshal.loads(dump):
-        #        array.append(Marshal.load(space, item))
-        #    return space.newarray(space, array)
-        #else:
-        #    raise NotImplementedError(format)
