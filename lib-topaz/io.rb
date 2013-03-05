@@ -57,6 +57,15 @@ class IO
   end
 
   def readline(sep = $/, limit = nil)
+    line = gets(sep, limit)
+    raise EOFError.new("end of file reached") if line.nil?
+    line
+  end
+
+  def gets(sep = $/, limit = nil)
+    if sep.nil?
+      return read
+    end
     if sep.is_a?(Fixnum) && limit.nil?
       limit = sep
       sep = $/
@@ -69,9 +78,8 @@ class IO
       line << c
       break if c == sep || line.length == limit
     end
-    raise EOFError.new("end of file reached") if line.empty?
     $_ = line
-    return line
+    line.empty? ? nil : line
   end
 
   def readlines(sep = $/, limit = nil)
