@@ -156,14 +156,10 @@ class Lexer(object):
                 for token in self.exclamation(ch):
                     yield token
             elif ch == "=":
-                if self.idx is 1:
-                    ch2 = "\n"
-                else:
-                    ch2 = self.source[self.idx - 2]
-                if self.is_beg() and ch2 in "\n\r":
+                if self.is_beg():
                     self.multi_line_comment()
                 else:
-                  for token in self.equal(ch):
+                    for token in self.equal(ch):
                       yield token
             elif ch == "<":
                 for token in self.less_than(ch, space_seen):
@@ -361,14 +357,10 @@ class Lexer(object):
 
     def multi_line_comment(self):
         while True:
-          ch = self.read()
-          if ch == "=":
-              ch = self.read()
-              if ch == "e":
-                  ch = self.read()
-                  if ch == "n":
-                      ch = self.read()
-                      if ch == "d":
+          if self.read() == "=":
+              if self.read() == "e":
+                  if self.read() == "n":
+                      if self.read() == "d":
                           break
 
     def identifier(self, ch, command_state):
