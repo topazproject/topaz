@@ -72,6 +72,8 @@ class Lexer(object):
         "undef": Keyword("UNDEF", "UNDEF", EXPR_FNAME),
         "next": Keyword("NEXT", "NEXT", EXPR_MID),
         "break": Keyword("BREAK", "BREAK", EXPR_MID),
+        "=begin": Keyword("=BEGIN", "=BEGIN", EXPR_BEG),
+        "=end": Keyword("=END", "=END", EXPR_END)
     }
 
     def __init__(self, source, initial_lineno, symtable):
@@ -154,8 +156,15 @@ class Lexer(object):
                 for token in self.exclamation(ch):
                     yield token
             elif ch == "=":
-                for token in self.equal(ch):
-                    yield token
+                if self.idx is 1:
+                    ch2 = "\n"
+                else:
+                    ch2 = self.source[self.idx - 2]
+                if self.is_beg() and ch2 in "\n\r":
+                    self.multi_line_comment()
+                else:
+                  for token in self.equal(ch):
+                      yield token
             elif ch == "<":
                 for token in self.less_than(ch, space_seen):
                     yield token
@@ -349,6 +358,18 @@ class Lexer(object):
             if ch == self.EOF or ch in "\r\n":
                 self.unread()
                 break
+
+    def multi_line_comment(self):
+        while True:
+          ch = self.read()
+          if ch == "=":
+              ch = self.read()
+              if ch == "e":
+                  ch = self.read()
+                  if ch == "n":
+                      ch = self.read()
+                      if ch == "d":
+                          break
 
     def identifier(self, ch, command_state):
         self.add(ch)
