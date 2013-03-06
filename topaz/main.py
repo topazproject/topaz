@@ -238,7 +238,7 @@ def _entry_point(space, argv):
                     path = candidate_path
                     break
         try:
-            f = open_file_as_stream(path)
+            f = open_file_as_stream(path, buffering=0)
         except OSError as e:
             os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
             return 1
@@ -249,8 +249,11 @@ def _entry_point(space, argv):
     elif explicitly_verbose:
         return 0
     else:
-        source = fdopen_as_stream(0, "r").readall()
-        path = "-"
+        if IS_WINDOWS:
+            raise NotImplementedError("executing from stdin on Windows")
+        else:
+            source = fdopen_as_stream(0, "r").readall()
+            path = "-"
 
     for globalized_switch in globalized_switches:
         value = None
