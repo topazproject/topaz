@@ -270,12 +270,10 @@ def _entry_point(space, argv):
     explicit_status = False
     try:
         if do_loop:
-            w_gets = space.newsymbol("gets")
             while True:
-                w_line = space.send(space.w_kernel, w_gets, [])
+                w_line = space.send(space.w_kernel, space.newsymbol("gets"))
                 if w_line is space.w_nil:
                     break
-                space.globals.set(space, "$_", w_line)
                 space.execute(source, filepath=path)
         else:
             space.execute(source, filepath=path)
