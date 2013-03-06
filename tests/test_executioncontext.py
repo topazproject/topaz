@@ -1,6 +1,6 @@
 class TestExecutionContext(object):
     def test_recursion_guard(self, space):
-        f = object()
+        f = "my_func"
         x = object()
         y = object()
         with space.getexecutioncontext().recursion_guard(f, x) as in_recursion:

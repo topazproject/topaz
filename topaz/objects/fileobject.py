@@ -387,7 +387,7 @@ class W_FileObject(W_IOObject):
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
                 ec = space.getexecutioncontext()
-                with ec.recursion_guard(space.newsymbol("file_singleton_method_join"), w_arg) as in_recursion:
+                with ec.recursion_guard("file_singleton_method_join", w_arg) as in_recursion:
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(

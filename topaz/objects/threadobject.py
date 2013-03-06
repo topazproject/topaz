@@ -37,11 +37,14 @@ class W_ThreadObject(W_Object):
         It is up to the block to decide what to do in either case.
         """
         ec = space.getexecutioncontext()
-        with ec.recursion_guard(w_identifier, w_obj) as in_recursion:
+        identifier = space.str_w(w_identifier)
+        with ec.recursion_guard(identifier, w_obj) as in_recursion:
             return space.invoke_block(block, [space.newbool(in_recursion)])
 
     @classdef.method("in_recursion_guard?")
     def method_in_recursion_guardp(self, space, w_identifier):
-        if w_identifier in space.getexecutioncontext().recursive_calls:
+        ec = space.getexecutioncontext()
+        identifier = space.str_w(w_identifier)
+        if identifier in ec.recursive_calls:
             return space.w_true
         return space.w_false
