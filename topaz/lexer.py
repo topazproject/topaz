@@ -96,6 +96,17 @@ class Lexer(object):
         self.unread()
         return ch
 
+    def was_newline(self):
+      self.unread()
+      if self.idx == 0:
+          self.read()
+          return True
+      else:
+          self.unread()
+          ch2 = self.read()
+          self.read()
+          return ch2 == '\n'
+
     def add(self, ch):
         self.current_value.append(ch)
 
@@ -156,7 +167,7 @@ class Lexer(object):
                 for token in self.exclamation(ch):
                     yield token
             elif ch == "=":
-                if self.is_beg():
+                if self.is_beg() and self.was_newline():
                     self.multi_line_comment()
                 else:
                     for token in self.equal(ch):
@@ -357,11 +368,15 @@ class Lexer(object):
 
     def multi_line_comment(self):
         while True:
-          if self.read() == "=":
-              if self.read() == "e":
-                  if self.read() == "n":
-                      if self.read() == "d":
-                          break
+            ch = self.read()
+            if ch == self.EOF:
+                raise LexerError(self.current_pos(),"embedded document meets end of file")
+            if ch in "\n\r":
+                if self.read() == "=":
+                    if self.read() == "e":
+                        if self.read() == "n":
+                            if self.read() == "d":
+                                break
 
     def identifier(self, ch, command_state):
         self.add(ch)
