@@ -25,6 +25,9 @@ if IS_WINDOWS:
     def ftruncate(fd, size):
         _chsize(fd, size)
 
+    def fchmod(fd, mode):
+        raise NotImplementedError("chmod on windows")
+
     # This imports the definition of isdir that uses stat. On Windows
     # this is replaced in the path module with a version that isn't
     # RPython
@@ -33,3 +36,4 @@ else:
     O_BINARY = 0
     ftruncate = os.ftruncate
     isdir = os.path.isdir
+    fchmod = os.fchmod

@@ -5,6 +5,7 @@ import os
 from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rarithmetic import is_valid_int
 
 from rply.errors import ParsingError
 
@@ -61,6 +62,7 @@ from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.threadobject import W_ThreadObject
 from topaz.objects.timeobject import W_TimeObject
 from topaz.parser import Parser
+from topaz.utils.ll_file import isdir
 
 
 class SpaceCache(Cache):
@@ -230,7 +232,7 @@ class ObjectSpace(object):
         kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
-            if os.path.isdir(os.path.join(path, "lib-ruby")):
+            if isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
                 kernel_path = os.path.join(path, "lib-topaz")
                 break
@@ -320,6 +322,12 @@ class ObjectSpace(object):
 
     def newbigint_fromrbigint(self, bigint):
         return W_BignumObject.newbigint_fromrbigint(self, bigint)
+
+    def newint_or_bigint(self, someinteger):
+        if is_valid_int(someinteger):
+            return self.newint(someinteger)
+        else:
+            return self.newbigint_fromfloat(float(someinteger))
 
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
