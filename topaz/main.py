@@ -8,11 +8,11 @@ from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
-from topaz.system import WINDOWS, IS64BIT
+from topaz.system import IS_WINDOWS, IS_64BIT
 
-if WINDOWS:
+if IS_WINDOWS:
     system = "Windows"
-    cpu = "x86_64" if IS64BIT else "i686"
+    cpu = "x86_64" if IS_64BIT else "i686"
 else:
     system, _, _, _, cpu = os.uname()
 
@@ -23,7 +23,7 @@ USAGE = "\n".join([
 #   """  -a              autosplit mode with -n or -p (splits $_ into $F)""",
 #   """  -c              check syntax only""",
 #   """  -Cdirectory     cd to directory, before executing your script""",
-#   """  -d              set debugging flags (set $DEBUG to true)""",
+    """  -d              set debugging flags (set $DEBUG to true)""",
     """  -e 'command'    one line of script. Several -e's allowed. Omit [programfile]""",
 #   """  -Eex[:in]       specify the default external and internal character encodings""",
 #   """  -Fpattern       split() pattern for autosplit (-a)""",
@@ -37,13 +37,14 @@ USAGE = "\n".join([
     """  -S              look for the script using PATH environment variable""",
 #   """  -T[level=1]     turn on tainting checks""",
     """  -v              print version number, then turn on verbose mode""",
-#   """  -w              turn warnings on for your script""",
-#   """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
+    """  -w              turn warnings on for your script""",
+    """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
 #   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
-#   """  --copyright     print the copyright""",
+    """  --copyright     print the copyright""",
     """  --version       print the version""",
     ""
 ])
+COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
 
 
 @specialize.memo()
@@ -68,7 +69,18 @@ class ShortCircuitError(Exception):
 
 
 def _parse_argv(space, argv):
-    verbose = False
+    flag_globals_w = {
+        "$-v": space.w_false,
+        "$VERBOSE": space.w_false,
+        "$-d": space.w_false,
+        "$DEBUG": space.w_false,
+        "$-w": space.w_false,
+        "$-W": space.newint(1),
+        "$-p": space.w_false,
+        "$-l": space.w_false,
+        "$-a": space.w_false,
+    }
+    warning_level = None
     path = None
     search_path = False
     globalize_switches = False
@@ -82,6 +94,8 @@ def _parse_argv(space, argv):
         arg = argv[idx]
         if arg == "-h" or arg == "--help":
             raise ShortCircuitError(USAGE)
+        elif arg == "--copyright":
+            raise ShortCircuitError(COPYRIGHT)
         elif arg == "--version":
             raise ShortCircuitError("%s\n" % space.str_w(
                     space.send(
@@ -91,7 +105,15 @@ def _parse_argv(space, argv):
                     )
                 ))
         elif arg == "-v":
-            verbose = True
+            flag_globals_w["$-v"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
+        elif arg == "-d":
+            flag_globals_w["$-d"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
+            flag_globals_w["$DEBUG"] = space.w_true
+        elif arg == "-w":
+            flag_globals_w["$-w"] = space.w_true
+            flag_globals_w["$VERBOSE"] = space.w_true
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
@@ -109,6 +131,8 @@ def _parse_argv(space, argv):
             reqs.append(argv[idx])
         elif arg.startswith("-r"):
             reqs.append(arg[2:])
+        elif arg.startswith("-W"):
+            warning_level = arg[2:]
         elif arg == "-S":
             search_path = True
         elif arg == "-s":
@@ -130,8 +154,19 @@ def _parse_argv(space, argv):
             argv_w.append(space.newstr_fromstr(arg))
         idx += 1
 
+    if warning_level is not None:
+        warning_level_num = 2 if not warning_level.isdigit() else int(warning_level)
+        if warning_level_num == 0:
+            flag_globals_w["$VERBOSE"] = space.w_nil
+        elif warning_level_num == 1:
+            flag_globals_w["$VERBOSE"] = space.w_false
+        elif warning_level_num >= 2:
+            flag_globals_w["$VERBOSE"] = space.w_true
+
+        flag_globals_w["$-W"] = space.newint(warning_level_num)
+
     return (
-        verbose,
+        flag_globals_w,
         path,
         search_path,
         globalized_switches,
@@ -156,7 +191,7 @@ def _entry_point(space, argv):
 
     try:
         (
-            verbose,
+            flag_globals_w,
             path,
             search_path,
             globalized_switches,
@@ -186,12 +221,11 @@ def _entry_point(space, argv):
         )
 
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
-
-    if verbose:
+    explicitly_verbose = space.is_true(flag_globals_w["$-v"])
+    if explicitly_verbose:
         os.write(1, "%s\n" % description)
-        space.globals.set(space, "$VERBOSE", space.w_true)
-    else:
-        space.globals.set(space, "$VERBOSE", space.w_false)
+    for varname, w_value in flag_globals_w.iteritems():
+        space.globals.set(space, varname, w_value)
 
     if exprs:
         source = "\n".join(exprs)
@@ -203,24 +237,16 @@ def _entry_point(space, argv):
                 if os.access(candidate_path, os.R_OK):
                     path = candidate_path
                     break
-        fd = -1
         try:
-            fd = os.open(path, os.O_RDONLY, 0665)
+            f = open_file_as_stream(path)
         except OSError as e:
             os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
             return 1
         try:
-            content_bytes = []
-            while True:
-                current_read = os.read(fd, 8192)
-                if len(current_read) == 0:
-                    break
-                content_bytes += current_read
-            source = "".join(content_bytes)
+            source = f.readall()
         finally:
-            if fd > 2:
-                os.close(fd)
-    elif verbose:
+            f.close()
+    elif explicitly_verbose:
         return 0
     else:
         source = fdopen_as_stream(0, "r").readall()
@@ -237,7 +263,9 @@ def _entry_point(space, argv):
         else:
             space.globals.set(space, switch_global_var, space.newstr_fromstr(value))
 
-    space.globals.set(space, "$0", space.newstr_fromstr(path))
+    w_program_name = space.newstr_fromstr(path)
+    space.globals.set(space, "$0", w_program_name)
+    space.globals.set(space, "$PROGRAM_NAME", w_program_name)
     status = 0
     w_exit_error = None
     explicit_status = False

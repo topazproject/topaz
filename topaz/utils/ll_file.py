@@ -6,9 +6,10 @@ from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.tool import rffi_platform as platform
 from rpython.translator.tool.cbuild import ExternalCompilationInfo
 
-from topaz.system import WINDOWS
+from topaz.system import IS_WINDOWS
 
-if WINDOWS:
+
+if IS_WINDOWS:
     O_BINARY = os.O_BINARY
 
     eci = ExternalCompilationInfo(includes=['windows.h'])

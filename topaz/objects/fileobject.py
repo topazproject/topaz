@@ -1,7 +1,6 @@
 import os
 import sys
 import stat
-import functools
 
 from rpython.rlib import jit
 
@@ -12,8 +11,9 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
-from topaz.system import WINDOWS
+from topaz.system import IS_WINDOWS
 from topaz.utils.ll_file import O_BINARY, ftruncate, isdir
+from topaz.utils.filemode import map_filemode
 
 
 FNM_NOESCAPE = 0x01
@@ -69,22 +69,38 @@ class W_IOObject(W_Object):
     def method_allocate(self, space, args_w):
         return W_IOObject(space)
 
+    @classdef.singleton_method("sysopen")
+    def method_sysopen(self, space, w_path, w_mode_str_or_int=None, w_perm=None):
+        perm = 0666
+        mode = os.O_RDONLY
+        if w_mode_str_or_int is not None:
+            mode = map_filemode(space, w_mode_str_or_int)
+        if w_perm is not None and w_perm is not space.w_nil:
+            perm = space.int_w(w_perm)
+        path = Coerce.path(space, w_path)
+        try:
+            fd = os.open(path, mode, perm)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        else:
+            return space.newint(fd)
+
     @classdef.method("initialize")
     def method_initialize(self, space, w_fd_or_io, w_mode_str_or_int=None, w_opts=None):
         if isinstance(w_fd_or_io, W_IOObject):
             fd = w_fd_or_io.fd
         else:
-            fd = space.int_w(w_fd_or_io)
+            fd = Coerce.int(space, w_fd_or_io)
         if isinstance(w_mode_str_or_int, W_StringObject):
             mode = space.str_w(w_mode_str_or_int)
             if ":" in mode:
-                raise NotImplementedError("encoding for IO.new")
+                raise space.error(space.w_NotImplementedError, "encoding for IO.new")
         elif w_mode_str_or_int is None:
             mode = None
         else:
-            raise NotImplementedError("int mode for IO.new")
+            raise space.error(space.w_NotImplementedError, "int mode for IO.new")
         if w_opts is not None:
-            raise NotImplementedError("options hash for IO.new")
+            raise space.error(space.w_NotImplementedError, "options hash for IO.new")
         if mode is None:
             mode = "r"
         self.fd = fd
@@ -143,6 +159,14 @@ class W_IOObject(W_Object):
         os.lseek(self.fd, amount, whence)
         return space.newint(0)
 
+    @classdef.method("pos")
+    @classdef.method("tell")
+    def method_pos(self, space):
+        self.ensure_not_closed(space)
+        # TODO: this currently truncates large values, switch this to use a
+        # Bignum in those cases
+        return space.newint(int(os.lseek(self.fd, 0, os.SEEK_CUR)))
+
     @classdef.method("rewind")
     def method_rewind(self, space):
         self.ensure_not_closed(space)
@@ -181,6 +205,14 @@ class W_IOObject(W_Object):
             if not string.endswith("\n"):
                 os.write(self.fd, "\n")
         return space.w_nil
+
+    @classdef.method("getc")
+    def method_getc(self, space):
+        self.ensure_not_closed(space)
+        c = os.read(self.fd, 1)
+        if not c:
+            return space.w_nil
+        return space.newstr_fromstr(c)
 
     @classdef.singleton_method("pipe")
     def method_pipe(self, space, block=None):
@@ -243,7 +275,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        if WINDOWS:
+        if IS_WINDOWS:
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
         else:
@@ -306,53 +338,9 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        if w_mode is space.w_nil:
-            mode = os.O_RDONLY
-        elif isinstance(w_mode, W_StringObject):
-            mode_str = space.str_w(w_mode)
-            mode = 0
-            invalid_error = space.error(space.w_ArgumentError,
-                "invalid access mode %s" % mode_str
-            )
-            major_mode_seen = False
-            readable = writeable = append = False
-
-            for ch in mode_str:
-                if ch == "b":
-                    mode |= O_BINARY
-                elif ch == "+":
-                    readable = writeable = True
-                elif ch == "r":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    readable = True
-                elif ch == "a":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_CREAT
-                    append = writeable = True
-                elif ch == "w":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_TRUNC | os.O_CREAT
-                    writeable = True
-                else:
-                    raise invalid_error
-            if readable and writeable:
-                mode |= os.O_RDWR
-            elif readable:
-                mode |= os.O_RDONLY
-            elif writeable:
-                mode |= os.O_WRONLY
-            if append:
-                mode |= os.O_APPEND
-        else:
-            mode = space.int_w(w_mode)
+        mode = map_filemode(space, w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
-            raise NotImplementedError("options hash or permissions for File.new")
+            raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
         try:
             self.fd = os.open(filename, mode, perm)
         except OSError as e:

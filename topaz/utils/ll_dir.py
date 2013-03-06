@@ -5,9 +5,10 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rtyper.tool import rffi_platform as platform
 from rpython.translator.tool.cbuild import ExternalCompilationInfo
 
-from topaz.system import WINDOWS
+from topaz.system import IS_WINDOWS
 
-if WINDOWS:
+
+if IS_WINDOWS:
     def opendir(_):
         raise NotImplementedError("directory operations on windows")
     readdir = closedir = opendir

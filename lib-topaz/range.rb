@@ -1,9 +1,9 @@
 class Range
   def each(&block)
-    raise NotImplementedError, "Object#enum_for" if !block
+    raise NotImplementedError.new("Object#enum_for") if !block
 
     if !(self.begin.respond_to? :succ)
-      raise TypeError, "can't iterate from #{self.begin.class}"
+      raise TypeError.new("can't iterate from #{self.begin.class}")
     else
       i = self.begin
       if self.exclude_end?
@@ -40,4 +40,15 @@ class Range
     end
     return false
   end
+
+  def ==(other)
+    return true if self.equal?(other)
+    return false unless other.kind_of?(Range)
+
+    return self.exclude_end? == other.exclude_end? &&
+           self.first == other.first &&
+           self.last == other.last
+  end
+
+  alias eql? ==
 end

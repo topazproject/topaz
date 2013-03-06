@@ -4,9 +4,10 @@ import os
 import sys
 
 from topaz.module import Module, ModuleDef
-from topaz.system import WINDOWS
+from topaz.system import IS_WINDOWS
 
-if WINDOWS:
+
+if IS_WINDOWS:
     def geteuid():
         return 0 # MRI behaviour on windows
 else:

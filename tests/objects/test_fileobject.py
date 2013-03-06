@@ -205,6 +205,18 @@ class TestIO(BaseTopazTest):
             io.seek 2
             """ % f)
 
+    def test_pos(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("words in here")
+        w_res = space.execute("""
+        f = File.new('%s', "r+")
+        f.seek(2, IO::SEEK_SET)
+        pos0 = f.pos
+        f.seek(8, IO::SEEK_SET)
+        return pos0, f.pos
+        """ % f)
+        assert self.unwrap(space, w_res) == [2, 8]
+
     def test_pipe(self, space):
         w_res = space.execute("""
         return IO.pipe
@@ -388,6 +400,22 @@ class TestFile(BaseTopazTest):
         return f.read
         """ % (tmpdir.dirname, os.sep))
         assert space.str_w(w_res) == "first\nsecond\n"
+
+    def test_readline(self, space, tmpdir):
+        contents = "01\n02\n03\n04\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+        w_res = space.execute("return File.new('%s').readline" % f)
+        assert self.unwrap(space, w_res) == "01\n"
+
+        w_res = space.execute("return File.new('%s').readline('3')" % f)
+        assert self.unwrap(space, w_res) == "01\n02\n03"
+
+        w_res = space.execute("return File.new('%s').readline(1)" % f)
+        assert self.unwrap(space, w_res) == "0"
+
+        w_res = space.execute("return File.new('%s').readline('3', 4)" % f)
+        assert self.unwrap(space, w_res) == "01\n0"
 
     def test_readlines(self, space, tmpdir):
         contents = "01\n02\n03\n04\n"

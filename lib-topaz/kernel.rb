@@ -11,8 +11,6 @@ module Kernel
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
   end
 
-  alias fail raise
-
   def Array(arg)
     if arg.respond_to? :to_ary
       arg.to_ary
@@ -42,7 +40,7 @@ module Kernel
 
   def `(cmd)
     cmd = cmd.to_str if cmd.respond_to?(:to_str)
-    raise TypeError, "can't convert #{cmd.class} into String" unless cmd.is_a?(String)
+    raise TypeError.new("can't convert #{cmd.class} into String") unless cmd.is_a?(String)
     IO.popen(cmd) { |r| r.read }
   end
 end
