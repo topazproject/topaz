@@ -270,11 +270,14 @@ def _entry_point(space, argv):
     explicit_status = False
     try:
         if do_loop:
+            bc = space.compile(source, path)
+            frame = space.create_frame(bc)
             while True:
                 w_line = space.send(space.w_kernel, space.newsymbol("gets"))
                 if w_line is space.w_nil:
                     break
-                space.execute(source, filepath=path)
+                with space.getexecutioncontext().visit_frame(frame):
+                    space.execute_frame(frame, bc)
         else:
             space.execute(source, filepath=path)
     except RubyError as e:
