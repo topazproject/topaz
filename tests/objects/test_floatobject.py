@@ -14,8 +14,8 @@ class TestFloatObject(BaseTopazTest):
     def test_infinity(self, space):
         assert space.float_w(space.execute("return Float::INFINITY")) == float("infinity")
 
-    def test_nan(self, space):
-        assert space.float_w(space.execute("return Float::NAN")) == float("nan")
+    def test_nan_constant(self, space):
+        assert math.isnan(space.float_w(space.execute("return Float::NAN")))
 
     def test_add(self, space):
         w_res = space.execute("return 1.0 + 2.9")
