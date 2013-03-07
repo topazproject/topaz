@@ -1,5 +1,5 @@
 rply
 # Only a test requirement
 pytest
-fabric
+-e git+https://github.com/pyinvoke/invoke#egg=invoke
 requests
