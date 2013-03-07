@@ -27,17 +27,16 @@ class Array
 
   def inspect
     result = "["
-    Thread.current.recursion_guard(:array_inspect, self) do |recursion|
-      if recursion
-        result << "..."
-      else
-        self.each_with_index do |obj, i|
-          if i > 0
-            result << ", "
-          end
-          result << obj.inspect
+    recursion = Thread.current.recursion_guard(:array_inspect, self) do
+      self.each_with_index do |obj, i|
+        if i > 0
+          result << ", "
         end
+        result << obj.inspect
       end
+    end
+    if recursion
+      result << "..."
     end
     result << "]"
   end
@@ -139,8 +138,7 @@ class Array
 
   def flatten(level = -1)
     list = []
-    Thread.current.recursion_guard(:array_flatten, self) do |recursion|
-      raise ArgumentError.new("tried to flatten recursive array") if recursion
+    Thread.current.recursion_guard(:array_flatten, self) do
       self.each do |item|
         if level == 0
           list << item
@@ -152,6 +150,7 @@ class Array
       end
       return list
     end
+    raise ArgumentError.new("tried to flatten recursive array")
   end
 
   def flatten!(level = -1)
@@ -177,12 +176,10 @@ class Array
     if self.size != other.size
       return false
     end
-    Thread.current.recursion_guard(:array_equals, self) do |recursion|
-      if !recursion
-        self.each_with_index do |x, i|
-          if x != other[i]
-            return false
-          end
+    Thread.current.recursion_guard(:array_equals, self) do
+      self.each_with_index do |x, i|
+        if x != other[i]
+          return false
         end
       end
     end
@@ -199,12 +196,10 @@ class Array
     if self.length != other.length
       return false
     end
-    Thread.current.recursion_guard(:array_eqlp, self) do |recursion|
-      if !recursion
-        self.each_with_index do |x, i|
-          if !x.eql?(other[i])
-            return false
-          end
+    Thread.current.recursion_guard(:array_eqlp, self) do
+      self.each_with_index do |x, i|
+        if !x.eql?(other[i])
+          return false
         end
       end
     end

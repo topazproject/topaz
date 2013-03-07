@@ -39,7 +39,9 @@ class W_ThreadObject(W_Object):
         ec = space.getexecutioncontext()
         identifier = space.str_w(w_identifier)
         with ec.recursion_guard(identifier, w_obj) as in_recursion:
-            return space.invoke_block(block, [space.newbool(in_recursion)])
+            if not in_recursion:
+                space.invoke_block(block, [])
+            return space.newbool(in_recursion)
 
     @classdef.method("in_recursion_guard?")
     def method_in_recursion_guardp(self, space, w_identifier):

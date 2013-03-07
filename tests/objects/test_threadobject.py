@@ -20,12 +20,11 @@ class TestThreadObject(object):
         w_res = space.execute("""
         def foo(objs, depth = 0)
           obj = objs.shift
-          Thread.current.recursion_guard(:foo, obj) do |recursion|
-            if recursion
-              [depth, obj]
-            else
-              foo(objs, depth + 1)
-            end
+          recursion = Thread.current.recursion_guard(:foo, obj) do
+            return foo(objs, depth + 1)
+          end
+          if recursion
+            return [depth, obj]
           end
         end
         return foo([:a, :b, :c, :a, :d])
@@ -38,16 +37,16 @@ class TestThreadObject(object):
         w_res = space.execute("""
         def foo(objs, depth = 0)
           obj = objs.shift
-          Thread.current.recursion_guard(:foo, obj) do |recursion|
-            return bar(objs, depth + 1) unless recursion
+          Thread.current.recursion_guard(:foo, obj) do
+            return bar(objs, depth + 1)
           end
           return [depth, obj]
         end
 
         def bar(objs, depth)
           obj = objs.shift
-          Thread.current.recursion_guard(:bar, obj) do |recursion|
-            return foo(objs, depth + 1) unless recursion
+          Thread.current.recursion_guard(:bar, obj) do
+            return foo(objs, depth + 1)
           end
           return [depth, obj]
         end
@@ -64,9 +63,9 @@ class TestThreadObject(object):
           obj = objs.shift
           Thread.current.recursion_guard_outer(:foo, obj) do |recursion|
             if recursion
-              [depth, obj]
+              return [depth, obj]
             else
-              foo(objs, depth + 1)
+              return foo(objs, depth + 1)
             end
           end
         end

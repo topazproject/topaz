@@ -8,15 +8,12 @@ class Thread
     throw_symbol = "__recursion_guard_#{identifier}".to_sym
 
     if self.in_recursion_guard?(identifier)
-      self.recursion_guard(identifier, obj) do |recursion|
-        if !recursion
-          yield(false)
-        else
-          throw(throw_symbol)
-        end
+      self.recursion_guard(identifier, obj) do
+        return yield(false)
       end
+      throw(throw_symbol)
     else
-      self.recursion_guard(identifier, obj) do |recursion|
+      self.recursion_guard(identifier, obj) do
         catch(throw_symbol) do
           return yield(false)
         end
