@@ -5,7 +5,8 @@ import sys
 from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
-from rpython.rlib.rfloat import NAN, INFINITY
+from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
+    NAN, INFINITY)
 
 from topaz.module import ClassDef
 from topaz.objects.numericobject import W_NumericObject
@@ -31,11 +32,25 @@ class W_FloatObject(W_NumericObject):
     def bigint_w(self, space):
         return rbigint.fromfloat(self.floatvalue)
 
+    @staticmethod
+    def float_to_w_int(space, floatvalue):
+        try:
+            # the extra case makes sure that this method returns
+            # bignums for the same numbers as the parser does.
+            # this is checked in rubyspecs
+            if floatvalue < 0:
+                return space.newint(-ovfcheck_float_to_int(-floatvalue))
+            else:
+                return space.newint(ovfcheck_float_to_int(floatvalue))
+        except OverflowError:
+            return space.newbigint_fromfloat(floatvalue)
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.set_const(w_cls, "MAX", space.newfloat(sys.float_info.max))
         space.set_const(w_cls, "MIN", space.newfloat(sys.float_info.min))
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         if math.isinf(self.floatvalue):
@@ -46,7 +61,7 @@ class W_FloatObject(W_NumericObject):
         elif math.isnan(self.floatvalue):
             return space.newstr_fromstr("NaN")
         else:
-            return space.newstr_fromstr(str(self.floatvalue))
+            return space.newstr_fromstr(formatd(self.floatvalue, "g", DTSF_STR_PRECISION, DTSF_ADD_DOT_0))
 
     @classdef.method("to_f")
     def method_to_f(self, space):
@@ -59,10 +74,7 @@ class W_FloatObject(W_NumericObject):
                 space.w_FloatDomainError,
                 space.str_w(space.send(self, space.newsymbol("to_s")))
             )
-        try:
-            return space.newint(ovfcheck_float_to_int(self.floatvalue))
-        except OverflowError:
-            return space.newbigint_fromfloat(self.floatvalue)
+        return self.float_to_w_int(space, self.floatvalue)
 
     @classdef.method("-@")
     def method_neg(self, space):
@@ -186,3 +198,11 @@ class W_FloatObject(W_NumericObject):
                 space.w_TypeError,
                 "%s can't be coerced into Float" % space.getclass(w_other).name
             )
+
+    @classdef.method("floor")
+    def method_floor(self, space):
+        return self.float_to_w_int(space, math.floor(self.floatvalue))
+
+    @classdef.method("ceil")
+    def method_ceil(self, space):
+        return self.float_to_w_int(space, math.ceil(self.floatvalue))

@@ -33,8 +33,8 @@ class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
 
-    def __init__(self, space, items_w):
-        W_Object.__init__(self, space)
+    def __init__(self, space, items_w, klass=None):
+        W_Object.__init__(self, space, klass)
         self.items_w = items_w
 
     def __deepcopy__(self, memo):
@@ -47,7 +47,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, args_w):
-        return space.newarray([])
+        return W_ArrayObject(space, [], self)
 
     @classdef.singleton_method("[]")
     def singleton_method_subscript(self, space, args_w):
@@ -61,7 +61,6 @@ class W_ArrayObject(W_Object):
         self.items_w.extend(other_w)
         return self
 
-    @classdef.method("at")
     @classdef.method("[]")
     @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):

@@ -12,10 +12,10 @@ class Array
       end
     end
     if !size_or_arr.respond_to?(:to_int)
-      raise TypeError, "can't convert #{size_or_arr.class} into Integer"
+      raise TypeError.new("can't convert #{size_or_arr.class} into Integer")
     end
     length = size_or_arr.to_int
-    raise ArgumentError, "negative array size" if length < 0
+    raise ArgumentError.new("negative array size") if length < 0
     if block
       # TODO: Emit "block supersedes default value argument" warning
       length.times { |i| self << yield(i) }
@@ -25,16 +25,23 @@ class Array
     return self
   end
 
-  def to_s
+  def inspect
     result = "["
-    self.each_with_index do |obj, i|
-      if i > 0
-        result << ", "
+    recursion = Thread.current.recursion_guard(self) do
+      self.each_with_index do |obj, i|
+        if i > 0
+          result << ", "
+        end
+        result << obj.inspect
       end
-      result << obj.to_s
+    end
+    if recursion
+      result << "..."
     end
     result << "]"
   end
+
+  alias :to_s :inspect
 
   def -(other)
     res = []
@@ -100,7 +107,7 @@ class Array
   end
 
   def delete_if
-    raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     i = 0
     c = 0
     sz = self.size
@@ -144,14 +151,13 @@ class Array
       return list
     end
     if recursion
-      raise ArgumentError, "tried to flatten recursive array"
+      raise ArgumentError.new("tried to flatten recursive array")
     end
   end
 
   def flatten!(level = -1)
     list = self.flatten(level)
-    self.clear
-    return self.concat list
+    self.replace(list)
   end
 
   def sort(&block)
@@ -163,14 +169,20 @@ class Array
       return true
     end
     if !other.kind_of?(Array)
-      return false
+      if other.respond_to?(:to_ary)
+        return other == self
+      else
+        return false
+      end
     end
     if self.size != other.size
       return false
     end
-    self.each_with_index do |x, i|
-      if x != other[i]
-        return false
+    Thread.current.recursion_guard(self) do
+      self.each_with_index do |x, i|
+        if x != other[i]
+          return false
+        end
       end
     end
     return true
@@ -186,9 +198,11 @@ class Array
     if self.length != other.length
       return false
     end
-    self.each_with_index do |x, i|
-      if !x.eql?(other[i])
-        return false
+    Thread.current.recursion_guard(self) do
+      self.each_with_index do |x, i|
+        if !x.eql?(other[i])
+          return false
+        end
       end
     end
     return true
@@ -211,10 +225,10 @@ class Array
     begin
       arg = arg.to_int
     rescue Exception
-      raise TypeError, "can't convert #{argcls} into Fixnum"
+      raise TypeError.new("can't convert #{argcls} into Fixnum")
     end
-    raise TypeError, "can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)" if arg.class != Fixnum
-    raise ArgumentError, "Count cannot be negative" if arg < 0
+    raise TypeError.new("can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)") if arg.class != Fixnum
+    raise ArgumentError.new("Count cannot be negative") if arg < 0
 
     return [] if arg == 0
     result = self.dup
@@ -225,7 +239,7 @@ class Array
   end
 
   def map!(&block)
-    raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     self.each_with_index { |obj, idx| self[idx] = yield(obj) }
     self
   end
@@ -239,7 +253,7 @@ class Array
   end
 
   def uniq!(&block)
-    raise RuntimeError, "can't modify frozen #{self.class}" if frozen?
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     seen = {}
     old_len = self.length
     i = 0
@@ -271,5 +285,10 @@ class Array
 
   def values_at(*args)
     args.map { |n| self[n] }
+  end
+
+  def each_index(&block)
+    0.upto(size - 1, &block)
+    self
   end
 end

@@ -135,6 +135,25 @@ Bad:
     { :abc=>23 }
     {abc: 23}
 
+Exceptions
+~~~~~~~~~~
+
+Exceptions should be raised using ``ExceptionClass.new``, rather than the
+2-argument form of ``raise``. Error messages should be compatible with CRuby
+whenever reasonable.
+
+Good:
+
+.. sourcecode:: ruby
+
+    raise ArgumentError.new("A message")
+
+Bad:
+
+.. sourcecode:: ruby
+
+    raise ArgumentError, "A message"
+
 Statements
 ~~~~~~~~~~
 

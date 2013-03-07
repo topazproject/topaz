@@ -1,3 +1,1 @@
 fails:Range#initialize is private
-fails:Range#initialize raises an ArgumentError if passed without or with only an argument
-fails:Range#initialize raises a NameError if passed with two or three arguments

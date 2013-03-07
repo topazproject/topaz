@@ -119,6 +119,7 @@ class Lexer(object):
 
     def tokenize(self):
         space_seen = False
+        newline_seen = True
         while True:
             if self.str_term is not None:
                 tok = self.str_term.next()
@@ -135,11 +136,12 @@ class Lexer(object):
                 break
             if ch in " \t":
                 space_seen = True
+                newline_seen = False
                 continue
             elif ch == "#":
                 self.comment(ch)
             elif ch in "\r\n":
-                space_seen = True
+                space_seen = newline_seen = True
                 self.newline(ch)
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
                     self.add("\n")
@@ -154,8 +156,12 @@ class Lexer(object):
                 for token in self.exclamation(ch):
                     yield token
             elif ch == "=":
-                for token in self.equal(ch):
-                    yield token
+                if newline_seen:
+                    for token in self.multiline_comment(ch):
+                        yield token
+                else:
+                    for token in self.equal(ch):
+                        yield token
             elif ch == "<":
                 for token in self.less_than(ch, space_seen):
                     yield token
@@ -251,6 +257,7 @@ class Lexer(object):
                 for token in self.identifier(ch, command_state):
                     yield token
             space_seen = False
+            newline_seen = False
 
     def read(self):
         try:
@@ -349,6 +356,29 @@ class Lexer(object):
             if ch == self.EOF or ch in "\r\n":
                 self.unread()
                 break
+
+    def multiline_comment(self, ch):
+        read = 0
+        for ch in "begin":
+            read += 1
+            if self.read() == ch:
+                break
+        else:
+            for i in xrange(read):
+                self.unread()
+            for token in self.equal(ch):
+                yield token
+            return
+        while True:
+            ch = self.read()
+            if ch == self.EOF:
+                self.error("embedded document meets end of file")
+            if ch in "\r\n":
+                if (self.read() == "=" and
+                    self.read() == "e" and
+                    self.read() == "n" and
+                    self.read() == "d"):
+                    break
 
     def identifier(self, ch, command_state):
         self.add(ch)
