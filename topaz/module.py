@@ -62,7 +62,7 @@ class ClassDef(object):
         def method(self, space):
             raise space.error(space.w_NotImplementedError)
 
-    def s_notimplemented(self, name):
+    def singleton_notimplemented(self, name):
         @self.singleton_method(name)
         def method(self, space):
             raise space.error(space.w_NotImplementedError)

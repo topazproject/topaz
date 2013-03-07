@@ -10,12 +10,6 @@ from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
 from topaz.system import IS_WINDOWS, IS_64BIT
 
-if IS_WINDOWS:
-    system = "Windows"
-    cpu = "x86_64" if IS_64BIT else "i686"
-else:
-    system, _, _, _, cpu = os.uname()
-
 
 USAGE = "\n".join([
     """Usage: topaz [switches] [--] [programfile] [arguments]""",
@@ -182,6 +176,11 @@ def _parse_argv(space, argv):
 
 
 def _entry_point(space, argv):
+    if IS_WINDOWS:
+        system = "Windows"
+        cpu = "x86_64" if IS_64BIT else "i686"
+    else:
+        system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
     engine = "topaz"
     version = "1.9.3"
