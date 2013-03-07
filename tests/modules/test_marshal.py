@@ -1,4 +1,5 @@
 from ..base import BaseTopazTest
+import pytest
 
 
 class TestMarshal(BaseTopazTest):
@@ -26,3 +27,13 @@ class TestMarshal(BaseTopazTest):
 
         w_res = space.execute("return Marshal.load(Marshal.dump([1,[2,3],4]))")
         assert self.unwrap(space, w_res) == [1, [2, 3], 4]
+
+    #@pytest.mark.xfail
+    def test_hash(self, space):
+        w_res = space.execute("return Marshal.load(Marshal.dump({1 => 2}))")
+        assert self.unwrap(space, w_res) == {1: 2}
+
+    @pytest.mark.xfail
+    def test_symbol(self, space):
+        w_res = space.execute("return Marshal.load(Marshal.dump(:ab)).inspect")
+        assert self.unwrap(space, w_res) == ":ab"

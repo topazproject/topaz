@@ -5,8 +5,10 @@ from topaz.module import Module, ModuleDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.boolobject import W_TrueObject, W_FalseObject
 from topaz.objects.intobject import W_FixnumObject
+from topaz.objects.hashobject import W_HashObject
 from topaz.objects.nilobject import W_NilObject
 from topaz.objects.stringobject import W_StringObject
+from topaz.objects.symbolobject import W_SymbolObject
 import marshal
 
 
@@ -25,10 +27,17 @@ class Marshal(Module):
             obj = space.int_w(w_obj)
         elif isinstance(w_obj, W_StringObject):
             obj = space.str_w(w_obj)
+        elif isinstance(w_obj, W_SymbolObject):
+            obj = space.symbol_w(w_obj)
         elif isinstance(w_obj, W_ArrayObject):
             obj = []
             for w_item in w_obj.items_w:
                 obj.append(Marshal.dump(space, w_item))
+        elif isinstance(w_obj, W_HashObject):
+            obj = {}
+            for w_key in w_obj.contents.keys():
+                value = Marshal.dump(space, w_obj.contents[w_key])
+                obj[Marshal.dump(space, w_key)] = value
         else:
             raise NotImplementedError(type(w_obj))
 
@@ -45,12 +54,20 @@ class Marshal(Module):
         elif isinstance(obj, int):
             return space.newint(obj)
         elif isinstance(obj, str):
+            # TODO: detect ruby symbols
             return space.newstr_fromstr(obj)
         elif isinstance(obj, list):
             array = []
             for item in obj:
                 array.append(Marshal.load(space, item))
             return space.newarray(array)
+        elif isinstance(obj, dict):
+            w_hash = space.newhash()
+            for key in obj:
+                k = Marshal.load(space, key)
+                v = Marshal.load(space, obj[key])
+                w_hash.method_subscript_assign(k, v)
+            return w_hash
         else:
             raise NotImplementedError(format)
 
