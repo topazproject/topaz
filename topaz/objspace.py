@@ -42,12 +42,13 @@ from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
     W_EOFError, W_RegexpError, W_ThreadError, W_FloatDomainError)
-from topaz.objects.fileobject import W_FileObject, W_IOObject
+from topaz.objects.fileobject import W_FileObject
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.functionobject import W_UserFunction
 from topaz.objects.hashobject import W_HashObject, W_HashIterator
 from topaz.objects.integerobject import W_IntegerObject
 from topaz.objects.intobject import W_FixnumObject
+from topaz.objects.ioobject import W_IOObject
 from topaz.objects.methodobject import W_MethodObject, W_UnboundMethodObject
 from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.nilobject import W_NilObject
