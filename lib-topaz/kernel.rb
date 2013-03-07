@@ -11,8 +11,6 @@ module Kernel
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
   end
 
-  alias fail raise
-
   def Array(arg)
     if arg.respond_to? :to_ary
       arg.to_ary

@@ -141,6 +141,9 @@ class W_RootObject(W_BaseObject):
         self.getsingletonclass(space).extend_object(space, self, w_mod)
 
     @classdef.method("inspect")
+    def method_inspect(self, space):
+        return space.send(self, space.newsymbol("to_s"))
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(space.any_to_s(self))

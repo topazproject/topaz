@@ -289,4 +289,9 @@ class Array
   def values_at(*args)
     args.map { |n| self[n] }
   end
+
+  def each_index(&block)
+    0.upto(size - 1, &block)
+    self
+  end
 end
