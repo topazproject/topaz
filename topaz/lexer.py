@@ -358,7 +358,6 @@ class Lexer(object):
                 break
 
     def multiline_comment(self, ch):
-        read = 0
         for idx, ch in enumerate("begin"):
             if self.read() == ch:
                 break
