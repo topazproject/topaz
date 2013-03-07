@@ -204,8 +204,6 @@ class TestFloatObject(BaseTopazTest):
 
     def test_nan(self, space):
         w_res = space.execute("return 1.0.nan?")
-        assert w_res is space.w_nil
+        assert w_res is space.w_false
         w_res = space.execute("return Float::NAN.nan?")
-        assert space.int_w(w_res) == 1
-        w_res = space.execute("return (-Float::NAN).nan?")
-        assert space.int_w(w_res) == 1
+        assert w_res is space.w_true

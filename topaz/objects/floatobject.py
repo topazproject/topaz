@@ -217,6 +217,4 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("nan?")
     def method_nan(self, space):
-        if math.isnan(self.floatvalue):
-            return space.newint(1)
-        return space.w_nil
+        return space.newbool(math.isnan(self.floatvalue))
