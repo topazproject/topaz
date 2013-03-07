@@ -46,6 +46,12 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return Math.gamma(1000)")
         assert space.float_w(w_res) == float('inf')
 
+        w_res = space.execute("return Math.gamma(0.0)")
+        assert space.float_w(w_res) == float('inf')
+
+        w_res = space.execute("return Math.gamma(-0.0)")
+        assert space.float_w(w_res) == float('-inf')
+
         w_res = space.execute("return Math.gamma(1e1000)") # inf
         assert space.float_w(w_res) == float('inf')
 
