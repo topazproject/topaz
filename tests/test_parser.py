@@ -2121,6 +2121,12 @@ foo bar
         with self.raises(space, 'SyntaxError'):
             space.parse("=begin\nfoo\nbar")
 
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=foo\nbar\n=end")
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=begin\nbar\n=foo")
+
     def test_send_block_argument(self, space):
         r = space.parse("f(&b)")
         assert r == ast.Main(ast.Block([

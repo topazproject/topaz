@@ -72,8 +72,6 @@ class Lexer(object):
         "undef": Keyword("UNDEF", "UNDEF", EXPR_FNAME),
         "next": Keyword("NEXT", "NEXT", EXPR_MID),
         "break": Keyword("BREAK", "BREAK", EXPR_MID),
-        "=begin": Keyword("=BEGIN", "=BEGIN", EXPR_BEG),
-        "=end": Keyword("=END", "=END", EXPR_END)
     }
 
     def __init__(self, source, initial_lineno, symtable):
@@ -95,17 +93,6 @@ class Lexer(object):
         ch = self.read()
         self.unread()
         return ch
-
-    def was_newline(self):
-      self.unread()
-      if self.idx == 0:
-          self.read()
-          return True
-      else:
-          self.unread()
-          ch2 = self.read()
-          self.read()
-          return ch2 == '\n'
 
     def add(self, ch):
         self.current_value.append(ch)
@@ -132,6 +119,9 @@ class Lexer(object):
 
     def tokenize(self):
         space_seen = False
+        simple_space_seen = False
+        newline_seen = False
+        start_file = True
         while True:
             if self.str_term is not None:
                 tok = self.str_term.next()
@@ -148,10 +138,12 @@ class Lexer(object):
                 break
             if ch in " \t":
                 space_seen = True
+                simple_space_seen = True
                 continue
             elif ch == "#":
                 self.comment(ch)
             elif ch in "\r\n":
+                newline_seen = True
                 space_seen = True
                 self.newline(ch)
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
@@ -167,7 +159,7 @@ class Lexer(object):
                 for token in self.exclamation(ch):
                     yield token
             elif ch == "=":
-                if self.is_beg() and self.was_newline():
+                if (newline_seen or start_file) and not simple_space_seen:
                     self.multi_line_comment()
                 else:
                     for token in self.equal(ch):
@@ -267,6 +259,9 @@ class Lexer(object):
                 for token in self.identifier(ch, command_state):
                     yield token
             space_seen = False
+            start_file = False
+            newline_seen = False
+            simple_space_seen = False
 
     def read(self):
         try:
@@ -367,16 +362,24 @@ class Lexer(object):
                 break
 
     def multi_line_comment(self):
-        while True:
-            ch = self.read()
-            if ch == self.EOF:
-                raise LexerError(self.current_pos(),"embedded document meets end of file")
-            if ch in "\n\r":
-                if self.read() == "=":
-                    if self.read() == "e":
-                        if self.read() == "n":
-                            if self.read() == "d":
-                                break
+      equal_begin = ''
+      equal_begin += self.read()
+      equal_begin += self.read()
+      equal_begin += self.read()
+      equal_begin += self.read()
+      equal_begin += self.read()
+      if equal_begin != "begin":
+        self.error("unexpected '='")
+      while True:
+          ch = self.read()
+          if ch == self.EOF:
+              self.error("embedded document meets end of file")
+          if ch in "\n\r":
+              if self.read() == "=":
+                  if self.read() == "e":
+                      if self.read() == "n":
+                          if self.read() == "d":
+                              break
 
     def identifier(self, ch, command_state):
         self.add(ch)
