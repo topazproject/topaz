@@ -4,7 +4,8 @@ import math
 
 from rpython.rlib import rfloat
 
-from topaz.module import Module, ModuleDef
+from topaz.module import Module, ModuleDef, ClassDef
+from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 
 
 class Math(Module):
@@ -14,7 +15,7 @@ class Math(Module):
     def setup_module(space, w_mod):
         space.set_const(w_mod, "PI", space.newfloat(math.pi))
         space.set_const(w_mod, "E", space.newfloat(math.e))
-        space.set_const(w_mod, "DomainError", space.w_DomainError)
+        space.set_const(w_mod, "DomainError", space.getclassfor(W_DomainError))
 
     @moduledef.function("exp", value="float")
     def method_exp(self, space, value):
@@ -40,8 +41,12 @@ class Math(Module):
         try:
             res = rfloat.gamma(value)
         except ValueError:
-            raise space.error(space.w_DomainError, 'Numerical argument is out of domain - "gamma"')
+            raise space.error(space.getclassfor(W_DomainError), 'Numerical argument is out of domain - "gamma"')
         except OverflowError:
             return space.newfloat(float('inf'))
         return space.newfloat(res)
 
+
+class W_DomainError(W_StandardError):
+    classdef = ClassDef("DomainError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
