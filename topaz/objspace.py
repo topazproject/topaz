@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
 from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.rarithmetic import is_valid_int
+from rpython.rlib.rarithmetic import intmask
 
 from rply.errors import ParsingError
 
@@ -324,11 +325,14 @@ class ObjectSpace(object):
     def newbigint_fromrbigint(self, bigint):
         return W_BignumObject.newbigint_fromrbigint(self, bigint)
 
+    @specialize.argtype(1)
     def newint_or_bigint(self, someinteger):
-        if is_valid_int(someinteger):
-            return self.newint(someinteger)
+        if -sys.maxint <= someinteger <= sys.maxint:
+            # The smallest int -sys.maxint - 1 has to be a Bignum,
+            # because parsing gives a Bignum in that case
+            return self.newint(intmask(someinteger))
         else:
-            return self.newbigint_fromfloat(float(someinteger))
+            return self.newbigint_fromrbigint(rbigint.fromrarith_int(someinteger))
 
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
