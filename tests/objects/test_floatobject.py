@@ -200,7 +200,7 @@ class TestFloatObject(BaseTopazTest):
         w_res = space.execute("return Float::INFINITY.infinite?")
         assert space.int_w(w_res) == 1
         w_res = space.execute("return (-Float::INFINITY).infinite?")
-        assert space.int_w(w_res) == 1
+        assert space.int_w(w_res) == -1
 
     def test_nan(self, space):
         w_res = space.execute("return 1.0.nan?")

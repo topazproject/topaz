@@ -212,7 +212,7 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("infinite?")
     def method_infinity(self, space):
         if math.isinf(self.floatvalue):
-            return space.newint(1)
+            return space.newint(int(math.copysign(1, self.floatvalue)))
         return space.w_nil
 
     @classdef.method("nan?")
