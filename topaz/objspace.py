@@ -8,6 +8,7 @@ from rpython.rlib.objectmodel import specialize
 
 from rply.errors import ParsingError
 
+from topaz import system
 from topaz.astcompiler import CompilerContext, SymbolTable
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
@@ -40,12 +41,13 @@ from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
     W_EOFError, W_RegexpError, W_ThreadError, W_FloatDomainError)
-from topaz.objects.fileobject import W_FileObject, W_IOObject
+from topaz.objects.fileobject import W_FileObject
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.functionobject import W_UserFunction
 from topaz.objects.hashobject import W_HashObject, W_HashIterator
 from topaz.objects.integerobject import W_IntegerObject
 from topaz.objects.intobject import W_FixnumObject
+from topaz.objects.ioobject import W_IOObject
 from topaz.objects.methodobject import W_MethodObject, W_UnboundMethodObject
 from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.nilobject import W_NilObject
@@ -207,11 +209,23 @@ class ObjectSpace(object):
     def _freeze_(self):
         return True
 
+    def find_executable(self, executable):
+        if os.sep in executable or (system.IS_WINDOWS and ":" in executable):
+            return executable
+        path = os.environ.get("PATH")
+        if path:
+            for dir in path.split(os.pathsep):
+                f = os.path.join(dir, executable)
+                if os.path.isfile(f):
+                    executable = f
+                    break
+        return rpath.rabspath(executable)
+
     def setup(self, executable):
         """
         Performs runtime setup.
         """
-        path = rpath.rabspath(executable)
+        path = rpath.rabspath(self.find_executable(executable))
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
         kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
