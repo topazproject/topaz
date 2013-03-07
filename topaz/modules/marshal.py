@@ -15,6 +15,11 @@ from topaz.objects.symbolobject import W_SymbolObject
 class Marshal(Module):
     moduledef = ModuleDef("Marshal", filepath=__file__)
 
+    @moduledef.setup_module
+    def setup_module(space, w_mod):
+        space.set_const(w_mod, "MAJOR_VERSION", space.newint(4))
+        space.set_const(w_mod, "MINOR_VERSION", space.newint(8))
+
     @staticmethod
     def dump(space, w_obj):
         bytes = []

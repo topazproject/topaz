@@ -1,8 +1,14 @@
 from ..base import BaseTopazTest
-import pytest
 
 
 class TestMarshal(BaseTopazTest):
+    def test_version_constants(self, space):
+        w_res = space.execute("return Marshal::MAJOR_VERSION")
+        assert space.int_w(w_res) == 4
+
+        w_res = space.execute("return Marshal::MINOR_VERSION")
+        assert space.int_w(w_res) == 8
+
     def test_dump_constants(self, space):
         w_res = space.execute("return Marshal.dump(nil)")
         #assert space.str_w(w_res) == "\x04\b0"
