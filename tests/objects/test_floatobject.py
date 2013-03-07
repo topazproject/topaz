@@ -11,6 +11,12 @@ class TestFloatObject(BaseTopazTest):
     def test_min(self, space):
         assert space.float_w(space.execute("return Float::MIN")) == sys.float_info.min
 
+    def test_infinity(self, space):
+        assert space.float_w(space.execute("return Float::INFINITY")) == float("infinity")
+
+    def test_nan(self, space):
+        assert space.float_w(space.execute("return Float::NAN")) == float("nan")
+
     def test_add(self, space):
         w_res = space.execute("return 1.0 + 2.9")
         assert space.float_w(w_res) == 3.9
@@ -187,3 +193,19 @@ class TestFloatObject(BaseTopazTest):
     def test_comparator_other_type(self, space):
         w_res = space.execute("return 1.0 <=> '1'")
         assert w_res is space.w_nil
+
+    def test_infinite(self, space):
+        w_res = space.execute("return 1.0.infinite?")
+        assert w_res is space.w_nil
+        w_res = space.execute("return Float::INFINITY.infinite?")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return (-Float::INFINITY).infinite?")
+        assert space.int_w(w_res) == 1
+
+    def test_nan(self, space):
+        w_res = space.execute("return 1.0.nan?")
+        assert w_res is space.w_nil
+        w_res = space.execute("return Float::NAN.nan?")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return (-Float::NAN).nan?")
+        assert space.int_w(w_res) == 1
