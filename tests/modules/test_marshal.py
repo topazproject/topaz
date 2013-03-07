@@ -187,13 +187,25 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump(-(2**30))")
         assert space.str_w(w_res) == "040869FC000000C0"
 
-    def no_dump_string(self, space):
-        w_res = space.execute("return Marshal.dump('abc'))")
+    def test_dump_string(self, space):
+        w_res = space.execute("return Marshal.dump('')")
+        assert space.str_w(w_res) == "0408492200063A064554"
+
+        w_res = space.execute("return Marshal.dump('abc')")
         assert space.str_w(w_res) == "0408492208616263063A064554"
 
-    def no_load_string(self, space):
-        w_res = space.execute("return Marshal.load('0408492208616263063a064554')")
-        assert space.str_w(w_res) == "asd"
+        w_res = space.execute("return Marshal.dump('i am a longer string')")
+        assert space.str_w(w_res) == "04084922196920616D2061206C6F6E67657220737472696E67063A064554"
+
+    def test_load_string(self, space):
+        w_res = space.execute("return Marshal.load('0408492200063A064554')")
+        assert space.str_w(w_res) == ""
+
+        w_res = space.execute("return Marshal.load('0408492208616263063A064554')")
+        assert space.str_w(w_res) == "abc"
+
+        w_res = space.execute("return Marshal.load('04084922196920616D2061206C6F6E67657220737472696E67063A064554')")
+        assert space.str_w(w_res) == "i am a longer string"
 
     def no_test_array(self, space):
         w_res = space.execute("return Marshal.load(Marshal.dump([1,2,3]))")

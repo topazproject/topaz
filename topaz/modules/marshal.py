@@ -39,6 +39,17 @@ class Marshal(Module):
             bytes += Marshal.integer2bytes(len(symbol))
             for char in symbol:
                 bytes.append(ord(char))
+        elif isinstance(w_obj, W_StringObject):
+            string = space.str_w(w_obj)
+            bytes.append(0x49)
+            bytes.append(0x22)
+            bytes += Marshal.integer2bytes(len(string))
+            for char in string:
+                bytes.append(ord(char))
+            bytes.append(0x06)
+            # for now work with default encoding
+            bytes += Marshal.dump(space, space.newsymbol("E"))
+            bytes += Marshal.dump(space, space.w_true)
         elif isinstance(w_obj, W_HashObject):
             bytes.append(0x7b)
             bytes += Marshal.integer2bytes(len(w_obj.contents))
@@ -59,7 +70,7 @@ class Marshal(Module):
             return space.w_true
         elif byte == 0x46:
             return space.w_false
-        elif byte == 0x69:  # Integers
+        elif byte == 0x69:  # Integer
             return space.newint(Marshal.bytes2integer(bytes[1:]))
         elif byte == 0x5b:  # Array
             count = Marshal.bytes2integer(bytes[1:])
@@ -71,12 +82,24 @@ class Marshal(Module):
                 array.append(Marshal.load(space, bytes[i + 2:]))
 
             return space.newarray(array)
-        elif byte == 0x3a:
+        elif byte == 0x3a:  # Symbol
             count = Marshal.bytes2integer(bytes[1:])
             chars = []
+            # TODO: this only works for symbols shorter than 123 characters!
             for i in range(2, count + 2):
                 chars.append(chr(bytes[i]))
             return space.newsymbol("".join(chars))
+        elif byte == 0x49:  # IVAR
+            if bytes[1] == 0x22:  # String
+                count = Marshal.bytes2integer(bytes[2:])
+                chars = []
+                # TODO: this only works for symbols shorter than 123 characters!
+                # TODO: take encoding into consideration
+                for i in range(3, count + 3):
+                    chars.append(chr(bytes[i]))
+                return space.newstr_fromstr("".join(chars))
+            else:
+                raise NotImplementedError(bytes[1])
         elif byte == 0x7b:  # Hash
             count = Marshal.bytes2integer(bytes[1:])
             w_hash = space.newhash()
