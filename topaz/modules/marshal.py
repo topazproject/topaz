@@ -1,4 +1,5 @@
 # http://daeken.com/python-marshal-format
+# would it be faster to use integer and shift? certainly yes
 
 from __future__ import absolute_import
 from topaz.module import Module, ModuleDef
@@ -106,21 +107,49 @@ class Marshal(Module):
     # extract integer from marshalled byte array
     @staticmethod
     def bytes2integer(bytes):
-        value = bytes[0]
-        if value == 0:
-            return 0
-        elif value > 127:
-            return value - 251
+        if bytes[0] > 0 and bytes[0] < 6:
+            value = bytes[1]
+            for i in range(2, bytes[0] + 1):
+                value += bytes[i] * 256 ** (i - 1)
+            return value
         else:
-            return value - 5
+            value = bytes[0]
+            if value == 0:
+                return 0
+            elif value > 127:
+                return value - 251
+            else:
+                return value - 5
 
+    # least significant byte first!
     @staticmethod
     def integer2bytes(value):
         bytes = []
-        # TODO: return control byte? like 0x69 for small integers
-        if value < -123 or value > 122:
-            raise NotImplementedError("multi-byte Fixnum")
-        if value > 0:
+        if value < -123:
+            raise NotImplementedError("Negative Integers")
+
+        if value > 2 ** 30 - 1:
+            raise NotImplementedError("Bignum")
+
+        if value > 2 ** 24 - 1:
+            bytes.append(4)
+            bytes.append(value % 256)
+            bytes.append((value >> 8) % 256)
+            bytes.append((value >> 16) % 256)
+            bytes.append((value >> 24) % 256)
+        elif value > 2 ** 16 - 1:
+            bytes.append(3)
+            bytes.append(value % 256)
+            bytes.append((value >> 8) % 256)
+            bytes.append((value >> 16) % 256)
+        elif value > 255:
+            bytes.append(2)
+            bytes.append(value % 256)
+            bytes.append((value >> 8) % 256)
+        elif value > 122:
+            bytes.append(1)
+            bytes.append(value)
+        elif value > 0:
             bytes.append(value + 5)
         elif value < 0:
             bytes.append(251 + value)

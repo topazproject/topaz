@@ -19,12 +19,22 @@ class TestMarshal(BaseTopazTest):
         assert w_res == space.w_nil
 
         w_res = space.execute("return Marshal.load('040854')")
-        assert space.is_true(w_res)
+        assert w_res == space.w_true
 
         w_res = space.execute("return Marshal.load('040846')")
-        assert not space.is_true(w_res)
+        assert w_res == space.w_false
 
-    def test_dump_integer(self, space):
+    def test_constants(self, space):
+        w_res = space.execute("return Marshal.load(Marshal.dump(nil))")
+        assert w_res == space.w_nil
+
+        w_res = space.execute("return Marshal.load(Marshal.dump(true))")
+        assert w_res == space.w_true
+
+        w_res = space.execute("return Marshal.load(Marshal.dump(false))")
+        assert w_res == space.w_false
+
+    def test_dump_tiny_integer(self, space):
         w_res = space.execute("return Marshal.dump(5)")
         assert space.str_w(w_res) == "0408690A"
 
@@ -43,7 +53,7 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump(122)")
         assert space.str_w(w_res) == "0408697F"
 
-    def test_load_integer(self, space):
+    def test_load_tiny_integer(self, space):
         w_res = space.execute("return Marshal.load('0408690A')")
         assert space.int_w(w_res) == 5
 
@@ -107,6 +117,56 @@ class TestMarshal(BaseTopazTest):
 
         w_res = space.execute("return Marshal.load('04087B076906690769086909')")
         assert self.unwrap(space, w_res) == {1: 2, 3: 4}
+
+    def test_dump_integer(self, space):
+        w_res = space.execute("return Marshal.dump(123)")
+        assert space.str_w(w_res) == "040869017B"
+
+        w_res = space.execute("return Marshal.dump(255)")
+        assert space.str_w(w_res) == "04086901FF"
+
+        w_res = space.execute("return Marshal.dump(256)")
+        assert space.str_w(w_res) == "040869020001"
+
+        w_res = space.execute("return Marshal.dump(2**16 - 2)")
+        assert space.str_w(w_res) == "04086902FEFF"
+
+        w_res = space.execute("return Marshal.dump(2**16 - 1)")
+        assert space.str_w(w_res) == "04086902FFFF"
+
+        w_res = space.execute("return Marshal.dump(2**16)")
+        assert space.str_w(w_res) == "04086903000001"
+
+        w_res = space.execute("return Marshal.dump(2**16 + 1)")
+        assert space.str_w(w_res) == "04086903010001"
+
+        w_res = space.execute("return Marshal.dump(2**30 - 1)")
+        assert space.str_w(w_res) == "04086904FFFFFF3F"
+
+    def test_load_integer(self, space):
+        w_res = space.execute("return Marshal.load('040869017B')")
+        assert space.int_w(w_res) == 123
+
+        w_res = space.execute("return Marshal.load('04086901FF')")
+        assert space.int_w(w_res) == 255
+
+        w_res = space.execute("return Marshal.load('040869020001')")
+        assert space.int_w(w_res) == 256
+
+        w_res = space.execute("return Marshal.load('04086902FEFF')")
+        assert space.int_w(w_res) == 2 ** 16 - 2
+
+        w_res = space.execute("return Marshal.load('04086902FFFF')")
+        assert space.int_w(w_res) == 2 ** 16 - 1
+
+        w_res = space.execute("return Marshal.load('04086903000001')")
+        assert space.int_w(w_res) == 2 ** 16
+
+        w_res = space.execute("return Marshal.load('04086903010001')")
+        assert space.int_w(w_res) == 2 ** 16 + 1
+
+        w_res = space.execute("return Marshal.load('04086904FFFFFF3F')")
+        assert space.int_w(w_res) == 2 ** 30 - 1
 
     def no_dump_string(self, space):
         w_res = space.execute("return Marshal.dump('abc'))")
