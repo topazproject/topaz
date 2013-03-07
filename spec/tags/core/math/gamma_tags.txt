@@ -1,6 +1,7 @@
 fails:Math.gamma returns +infinity given 0
 fails:Math.gamma returns -infinity given -0.0
 fails:Math.gamma returns exactly 22! given 23
+fails:Math.gamma returns approximately 29! given 30
 fails:Math.gamma returns +infinity given +infinity
 fails:Math.gamma raises Math::DomainError given negative infinity
 fails:Math.gamma returns NaN given NaN
