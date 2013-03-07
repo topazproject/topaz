@@ -52,7 +52,6 @@ class Marshal(Module):
 
     @staticmethod
     def load(space, bytes):
-        #print "start byte:", bytes
         byte = bytes[0]
         if byte == 0x30:
             return space.w_nil
@@ -60,7 +59,7 @@ class Marshal(Module):
             return space.w_true
         elif byte == 0x46:
             return space.w_false
-        elif byte == 0x69:  # Small Integers
+        elif byte == 0x69:  # Integers
             return space.newint(Marshal.bytes2integer(bytes[1:]))
         elif byte == 0x5b:  # Array
             count = Marshal.bytes2integer(bytes[1:])
@@ -105,6 +104,7 @@ class Marshal(Module):
         return Marshal.load(space, bytes[2:])
 
     # extract integer from marshalled byte array
+    # least significant byte first!
     @staticmethod
     def bytes2integer(bytes):
         if bytes[0] > 0 and bytes[0] < 6:
@@ -125,8 +125,6 @@ class Marshal(Module):
     @staticmethod
     def integer2bytes(value):
         bytes = []
-        if value < -123:
-            raise NotImplementedError("Negative Integers")
 
         if value > 2 ** 30 - 1:
             raise NotImplementedError("Bignum")
@@ -151,8 +149,28 @@ class Marshal(Module):
             bytes.append(value)
         elif value > 0:
             bytes.append(value + 5)
-        elif value < 0:
-            bytes.append(251 + value)
-        else:
+        elif value == 0:
             bytes.append(0)
+        elif value > -124:
+            bytes.append(251 + value)
+        elif value > -257:
+            bytes.append(0xff)
+            bytes.append(256 + value)
+        elif value > -(2 ** 16 + 1):
+            bytes.append(0xfe)
+            bytes.append(value % 256)
+            bytes.append((value >> 8) % 256)
+        elif value > -(2 ** 24 + 1):
+            bytes.append(0xfd)
+            bytes.append(value % 256)
+            bytes.append((value >> 8) % 256)
+            bytes.append((value >> 16) % 256)
+        elif value > -(2 ** 30 + 1):
+            bytes.append(0xfc)
+            bytes.append(value % 256)
+            bytes.append((value >> 8) % 256)
+            bytes.append((value >> 16) % 256)
+            bytes.append((value >> 24) % 256)
+        else:
+            raise NotImplementedError("number too small")
         return bytes

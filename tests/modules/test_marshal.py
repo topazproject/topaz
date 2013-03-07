@@ -168,6 +168,25 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.load('04086904FFFFFF3F')")
         assert space.int_w(w_res) == 2 ** 30 - 1
 
+    def test_dump_negative_integer(self, space):
+        w_res = space.execute("return Marshal.dump(-1)")
+        assert space.str_w(w_res) == "040869FA"
+
+        w_res = space.execute("return Marshal.dump(-123)")
+        assert space.str_w(w_res) == "04086980"
+
+        w_res = space.execute("return Marshal.dump(-124)")
+        assert space.str_w(w_res) == "040869FF84"
+
+        w_res = space.execute("return Marshal.dump(-256)")
+        assert space.str_w(w_res) == "040869FF00"
+
+        w_res = space.execute("return Marshal.dump(-257)")
+        assert space.str_w(w_res) == "040869FEFFFE"
+
+        w_res = space.execute("return Marshal.dump(-(2**30))")
+        assert space.str_w(w_res) == "040869FC000000C0"
+
     def no_dump_string(self, space):
         w_res = space.execute("return Marshal.dump('abc'))")
         assert space.str_w(w_res) == "0408492208616263063A064554"
