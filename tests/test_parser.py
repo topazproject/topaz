@@ -2689,3 +2689,26 @@ b)
             ast.Statement(ast.Array([ast.ConstantString("a\nb")])),
             ast.Statement(ast.Line(4)),
         ]))
+
+    def test_multiline_comments(self, space):
+        r = space.parse("""
+        1 + 1
+=begin
+foo bar
+=end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 2))
+        ]))
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse(" =begin\nfoo\n=end")
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=begin\nfoo\nbar")
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=foo\nbar\n=end")
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=begin\nbar\n=foo")
