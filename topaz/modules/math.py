@@ -42,6 +42,6 @@ class Math(Module):
         except ValueError:
             raise space.error(space.w_DomainError, 'Numerical argument is out of domain - "gamma"')
         except OverflowError:
-            return space.newfloat(float('inf'))
+            res = float('inf')
         return space.newfloat(res)
 
