@@ -149,6 +149,11 @@ class W_FloatDomainError(W_RangeError):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_DomainError(W_StandardError):
+    classdef = ClassDef("DomainError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_RuntimeError(W_StandardError):
     classdef = ClassDef("RuntimeError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
