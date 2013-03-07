@@ -72,11 +72,11 @@ To just run all specs that should pass::
 
 You can also pass additional options, or run just a subset of the specs::
 
-    $ inv specs.run:options="-V --format dotted",files=../rubyspec/core/array
+    $ inv specs.run --options="-V --format dotted" --files=../rubyspec/core/array
 
 If you encounter failures that you need to tag::
 
-    $ inv specs.tag:files=../rubyspec/path/to/failing_spec.rb
+    $ inv specs.tag --files=../rubyspec/path/to/failing_spec.rb
 
 Not that you cannot tag specs that fail or error during load or setup,
 to skip those you have to add them to the list of skipped specs in
@@ -84,12 +84,12 @@ to skip those you have to add them to the list of skipped specs in
 
 If you implemented a new feature, and want to untag the specs that now pass::
 
-    $ inv specs.untag:files=../rubyspec/path/to/failing_spec.rb
+    $ inv specs.untag --files=../rubyspec/path/to/failing_spec.rb
 
 And finally, during development, you may find it useful to run the
 specs untranslated::
 
-    $ inv specs.run:translated=False,files=../rubyspec/core/array/new_spec.rb
+    $ inv specs.run --translated=False --files=../rubyspec/core/array/new_spec.rb
 
 Adding yourself to the authors file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
