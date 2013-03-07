@@ -7,6 +7,9 @@ class TestMath(BaseTopazTest):
     def assert_float_equal(self, result, expected, eps=1e-15):
         assert abs(result - expected) < eps
 
+    def test_domain_error(self, space):
+        space.execute("Math::DomainError")
+
     def test_pi(self, space):
         w_res = space.execute("return Math::PI")
         assert space.float_w(w_res) == math.pi
@@ -52,13 +55,16 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return Math.gamma(-0.0)")
         assert space.float_w(w_res) == float('-inf')
 
-        w_res = space.execute("return Math.gamma(1e1000)") # inf
+        # inf
+        w_res = space.execute("return Math.gamma(1e1000)")
         assert space.float_w(w_res) == float('inf')
 
         with self.raises(space, "DomainError", 'Numerical argument is out of domain - "gamma"'):
             space.execute("""Math.gamma(-1)""")
         with self.raises(space, "DomainError", 'Numerical argument is out of domain - "gamma"'):
-            space.execute("""Math.gamma(-1e1000)""") # -inf
+            # -inf
+            space.execute("""Math.gamma(-1e1000)""")
 
-        w_res = space.execute("return Math.gamma(1e1000 - 1e1000)") # nan
+        # nan
+        w_res = space.execute("return Math.gamma(1e1000 - 1e1000)")
         assert math.isnan(space.float_w(w_res))

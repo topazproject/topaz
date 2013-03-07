@@ -3,6 +3,10 @@ module Kernel
     $stdout.puts(*args)
   end
 
+  def gets(sep = $/, limit = nil)
+    $stdin.gets(sep, limit)
+  end
+
   def print(*args)
     $stdout.print(*args)
   end
