@@ -55,16 +55,13 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return Math.gamma(-0.0)")
         assert space.float_w(w_res) == float('-inf')
 
-        # inf
-        w_res = space.execute("return Math.gamma(1e1000)")
+        w_res = space.execute("return Math.gamma(Float::INFINITY)")
         assert space.float_w(w_res) == float('inf')
 
         with self.raises(space, "DomainError", 'Numerical argument is out of domain - "gamma"'):
             space.execute("""Math.gamma(-1)""")
         with self.raises(space, "DomainError", 'Numerical argument is out of domain - "gamma"'):
-            # -inf
-            space.execute("""Math.gamma(-1e1000)""")
+            space.execute("""Math.gamma(-Float::INFINITY)""")
 
-        # nan
-        w_res = space.execute("return Math.gamma(1e1000 - 1e1000)")
+        w_res = space.execute("return Math.gamma(Float::NAN)")
         assert math.isnan(space.float_w(w_res))
