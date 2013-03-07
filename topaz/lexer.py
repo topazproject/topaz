@@ -119,6 +119,9 @@ class Lexer(object):
 
     def tokenize(self):
         space_seen = False
+        simple_space_seen = False
+        newline_seen = False
+        start_file = True
         while True:
             if self.str_term is not None:
                 tok = self.str_term.next()
@@ -135,10 +138,12 @@ class Lexer(object):
                 break
             if ch in " \t":
                 space_seen = True
+                simple_space_seen = True
                 continue
             elif ch == "#":
                 self.comment(ch)
             elif ch in "\r\n":
+                newline_seen = True
                 space_seen = True
                 self.newline(ch)
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
@@ -154,8 +159,11 @@ class Lexer(object):
                 for token in self.exclamation(ch):
                     yield token
             elif ch == "=":
-                for token in self.equal(ch):
-                    yield token
+                if (newline_seen or start_file) and not simple_space_seen:
+                    self.multi_line_comment()
+                else:
+                    for token in self.equal(ch):
+                      yield token
             elif ch == "<":
                 for token in self.less_than(ch, space_seen):
                     yield token
@@ -251,6 +259,9 @@ class Lexer(object):
                 for token in self.identifier(ch, command_state):
                     yield token
             space_seen = False
+            start_file = False
+            newline_seen = False
+            simple_space_seen = False
 
     def read(self):
         try:
@@ -349,6 +360,26 @@ class Lexer(object):
             if ch == self.EOF or ch in "\r\n":
                 self.unread()
                 break
+
+    def multi_line_comment(self):
+      equal_begin = ''
+      equal_begin += self.read()
+      equal_begin += self.read()
+      equal_begin += self.read()
+      equal_begin += self.read()
+      equal_begin += self.read()
+      if equal_begin != "begin":
+        self.error("unexpected '='")
+      while True:
+          ch = self.read()
+          if ch == self.EOF:
+              self.error("embedded document meets end of file")
+          if ch in "\n\r":
+              if self.read() == "=":
+                  if self.read() == "e":
+                      if self.read() == "n":
+                          if self.read() == "d":
+                              break
 
     def identifier(self, ch, command_state):
         self.add(ch)
