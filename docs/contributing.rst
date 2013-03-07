@@ -61,22 +61,22 @@ will verify for every pull request that it compiles and tests pass.
 Running Rubyspecs
 ~~~~~~~~~~~~~~~~~
 
-To run Rubyspecs, you can use the provided ``fab`` tasks. To get ``fab`` you
-must have `Fabric`_ installed. The rubyspec and mspec
-repositories have to be checked out next to your topaz repository, the spec
-tasks will clone them for you if they aren't already there.
+To run Rubyspecs, you can use the provided `Invoke`_ tasks (executed via the
+``invoke`` or ``inv`` command). The rubyspec and mspec repositories have to be
+checked out next to your topaz repository, the spec tasks will clone them for
+you if they aren't already there.
 
 To just run all specs that should pass::
 
-    $ fab specs.run
+    $ inv specs.run
 
 You can also pass additional options, or run just a subset of the specs::
 
-    $ fab specs.run:options="-V --format dotted",files=../rubyspec/core/array
+    $ inv specs.run:options="-V --format dotted",files=../rubyspec/core/array
 
 If you encounter failures that you need to tag::
 
-    $ fab specs.tag:files=../rubyspec/path/to/failing_spec.rb
+    $ inv specs.tag:files=../rubyspec/path/to/failing_spec.rb
 
 Not that you cannot tag specs that fail or error during load or setup,
 to skip those you have to add them to the list of skipped specs in
@@ -84,12 +84,12 @@ to skip those you have to add them to the list of skipped specs in
 
 If you implemented a new feature, and want to untag the specs that now pass::
 
-    $ fab specs.untag:files=../rubyspec/path/to/failing_spec.rb
+    $ inv specs.untag:files=../rubyspec/path/to/failing_spec.rb
 
 And finally, during development, you may find it useful to run the
 specs untranslated::
 
-    $ fab specs.run:translated=False,files=../rubyspec/core/array/new_spec.rb
+    $ inv specs.run:translated=False,files=../rubyspec/core/array/new_spec.rb
 
 Adding yourself to the authors file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,4 +98,4 @@ When you submit your first patch, add your name to the ``AUTHORS.rst`` file,
 you've earned it!
 
 
-.. _`Fabric`: http://fabfile.org
+.. _`Invoke`: http://pyinvoke.org
