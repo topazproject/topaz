@@ -61,13 +61,10 @@ class TestThreadObject(object):
         w_res = space.execute("""
         def foo(objs, depth = 0)
           obj = objs.shift
-          Thread.current.recursion_guard_outer(:foo, obj) do |recursion|
-            if recursion
-              return [depth, obj]
-            else
-              return foo(objs, depth + 1)
-            end
+          Thread.current.recursion_guard_outer(:foo, obj) do
+            return foo(objs, depth + 1)
           end
+          return [depth, obj]
         end
         return foo([:a, :b, :c, :a, :d])
         """)

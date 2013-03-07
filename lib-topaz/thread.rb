@@ -9,15 +9,17 @@ class Thread
 
     if self.in_recursion_guard?(identifier)
       self.recursion_guard(identifier, obj) do
-        return yield(false)
+        yield
+        return false
       end
       throw(throw_symbol)
     else
       self.recursion_guard(identifier, obj) do
         catch(throw_symbol) do
-          return yield(false)
+          yield
+          return false
         end
-        return yield(true)
+        return true
       end
     end
   end
