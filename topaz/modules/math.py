@@ -41,9 +41,13 @@ class Math(Module):
         try:
             res = rfloat.gamma(value)
         except ValueError:
-            raise space.error(space.getclassfor(W_DomainError), 'Numerical argument is out of domain - "gamma"')
+            if value == 0.0:
+                # produce an infinity with the right sign
+                res = rfloat.copysign(float("inf"), value)
+            else:
+                raise space.error(space.getclassfor(W_DomainError), 'Numerical argument is out of domain - "gamma"')
         except OverflowError:
-            return space.newfloat(float('inf'))
+            res = float('inf')
         return space.newfloat(res)
 
 
