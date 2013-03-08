@@ -3,6 +3,7 @@ Authors
 
 * Chris Blättermann
 * Michel Boaventura
+* Carl Friedrich Bolz
 * Oliver M. Bolzer
 * Dan Buch
 * Tim Felgentreff
