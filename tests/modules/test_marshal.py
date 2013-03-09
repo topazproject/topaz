@@ -94,8 +94,14 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump([nil, true, false])")
         assert space.str_w(w_res) == "\x04\b[\b0TF"
 
+        w_res = space.execute("return Marshal.dump([1,2,3])")
+        assert space.str_w(w_res) == "\x04\b[\x08i\x06i\x07i\x08"
+
         w_res = space.execute("return Marshal.dump([1,[2,3],4])")
         assert space.str_w(w_res) == "\x04\b[\bi\x06[\ai\ai\bi\t"
+
+        w_res = space.execute("return Marshal.dump([:foo, :bar])")
+        assert space.str_w(w_res) == "\x04\b[\a:\bfoo:\bbar"
 
     def test_load_array(self, space):
         #w_res = space.execute("return Marshal.load('\x04\b[\x00')")
@@ -107,6 +113,15 @@ class TestMarshal(BaseTopazTest):
 
         w_res = space.execute("return Marshal.load('\x04\b[\b0TF')")
         assert self.unwrap(space, w_res) == [None, True, False]
+
+        w_res = space.execute("return Marshal.load('\x04\b[\x08i\x06i\x07i\x08')")
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+
+        w_res = space.execute("return Marshal.load('\x04\b[\bi\x06[\ai\ai\bi\t')")
+        assert self.unwrap(space, w_res) == [1, [2, 3], 4]
+
+        w_res = space.execute("return Marshal.load('\x04\b[\a:\bfoo:\bbar')")
+        assert self.unwrap(space, w_res) == ["foo", "bar"]
 
     def test_dump_symbol(self, space):
         w_res = space.execute("return Marshal.dump(:abc)")
@@ -123,6 +138,12 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump({1 => 2, 3 => 4})")
         assert self.unwrap(space, w_res) == "\x04\b{\ai\x06i\ai\bi\t"
 
+        w_res = space.execute("return Marshal.dump({1 => {2 => 3}, 4 => 5})")
+        assert self.unwrap(space, w_res) == "\x04\b{\ai\x06{\x06i\ai\bi\ti\n"
+
+        w_res = space.execute("return Marshal.dump({1234 => {23456 => 3456789}, 4 => 5})")
+        assert self.unwrap(space, w_res) == "\x04\b{\ai\x02\xD2\x04{\x06i\x02\xA0[i\x03\x15\xBF4i\ti\n"
+
     def test_load_hash(self, space):
         #w_res = space.execute("return Marshal.load('\x04\b{\x00')")
         w_res = space.execute("return Marshal.load(Marshal.dump({}))")
@@ -130,6 +151,12 @@ class TestMarshal(BaseTopazTest):
 
         w_res = space.execute("return Marshal.load('\x04\b{\ai\x06i\ai\bi\t')")
         assert self.unwrap(space, w_res) == {1: 2, 3: 4}
+
+        w_res = space.execute("return Marshal.load('\x04\b{\ai\x06{\x06i\ai\bi\ti\n')")
+        assert self.unwrap(space, w_res) == {1: {2: 3}, 4: 5}
+
+        w_res = space.execute("return Marshal.load('\x04\b{\ai\x02\xD2\x04{\x06i\x02\xA0[i\x03\x15\xBF4i\ti\n')")
+        assert self.unwrap(space, w_res) == {1234: {23456: 3456789}, 4: 5}
 
     def test_dump_integer(self, space):
         w_res = space.execute("return Marshal.dump(123)")
@@ -261,12 +288,24 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.load('\x04\bI\"\x19i am a longer string\x06:\x06ET')")
         assert space.str_w(w_res) == "i am a longer string"
 
-    def no_test_array(self, space):
+    def test_array(self, space):
         w_res = space.execute("return Marshal.load(Marshal.dump([1,2,3]))")
         assert self.unwrap(space, w_res) == [1, 2, 3]
 
         w_res = space.execute("return Marshal.load(Marshal.dump([1,[2,3],4]))")
         assert self.unwrap(space, w_res) == [1, [2, 3], 4]
+
+        w_res = space.execute("return Marshal.load(Marshal.dump([130,[2,3],4]))")
+        assert self.unwrap(space, w_res) == [130, [2, 3], 4]
+
+        w_res = space.execute("return Marshal.load(Marshal.dump([-10000,[2,123456],-9000]))")
+        assert self.unwrap(space, w_res) == [-10000, [2, 123456], -9000]
+
+        w_res = space.execute("return Marshal.load(Marshal.dump([:foo, :bar]))")
+        assert self.unwrap(space, w_res) == ["foo", "bar"]
+
+        w_res = space.execute("return Marshal.load(Marshal.dump(['foo', 'bar']))")
+        assert self.unwrap(space, w_res) == ["foo", "bar"]
 
     def test_incompatible_format(self, space):
         with self.raises(

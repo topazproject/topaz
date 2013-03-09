@@ -72,50 +72,55 @@ class Marshal(Module):
     def load(space, bytes):
         byte = bytes[0]
         if byte == 0x30:
-            return space.w_nil
+            return space.w_nil, 1
         elif byte == 0x54:
-            return space.w_true
+            return space.w_true, 1
         elif byte == 0x46:
-            return space.w_false
+            return space.w_false, 1
         elif byte == 0x69:  # Integer
-            return space.newint(Marshal.bytes2integer(bytes[1:]))
+            value, length = Marshal.bytes2integer(bytes[1:])
+            return space.newint(value), length
         elif byte == 0x5b:  # Array
-            count = Marshal.bytes2integer(bytes[1:])
+            count, length = Marshal.bytes2integer(bytes[1:])
             array = []
 
-            # TODO: implement second return value which returns the remaining
-            # items of the byte array, because items have a different length
+            skip = 0
             for i in range(0, count):
-                array.append(Marshal.load(space, bytes[i + 2:]))
+                element, l = Marshal.load(space, bytes[length + skip:])
+                skip += l
+                array.append(element)
 
-            return space.newarray(array)
+            return space.newarray(array), length + skip
         elif byte == 0x3a:  # Symbol
-            count = Marshal.bytes2integer(bytes[1:])
+            count, length = Marshal.bytes2integer(bytes[1:])
             chars = []
             # TODO: this only works for symbols shorter than 123 characters!
             for i in range(2, count + 2):
                 chars.append(chr(bytes[i]))
-            return space.newsymbol("".join(chars))
+            return space.newsymbol("".join(chars)), length + count
         elif byte == 0x49:  # IVAR
             if bytes[1] == 0x22:  # String
-                count = Marshal.bytes2integer(bytes[2:])
+                count, length = Marshal.bytes2integer(bytes[2:])
+                encoding = 6
                 chars = []
                 # TODO: this only works for symbols shorter than 123 characters!
                 # TODO: take encoding into consideration
                 for i in range(3, count + 3):
                     chars.append(chr(bytes[i]))
-                return space.newstr_fromstr("".join(chars))
+                return space.newstr_fromstr("".join(chars)), count + length + encoding
             else:
                 raise NotImplementedError(bytes[1])
         elif byte == 0x7b:  # Hash
-            count = Marshal.bytes2integer(bytes[1:])
+            count, length = Marshal.bytes2integer(bytes[1:])
             w_hash = space.newhash()
-            # TODO: see array
-            for i in range(2, 2 + count * 4, 4):
-                k = Marshal.load(space, bytes[i:])
-                v = Marshal.load(space, bytes[i + 2:])
+            skip = 0
+            for i in range(0, count):
+                k, s = Marshal.load(space, bytes[length + skip:])
+                skip += s
+                v, s = Marshal.load(space, bytes[length + skip:])
+                skip += s
                 w_hash.method_subscript_assign(k, v)
-            return w_hash
+            return w_hash, length + skip
         else:
             raise NotImplementedError(byte)
 
@@ -145,7 +150,7 @@ class Marshal(Module):
                 % (Marshal.MAJOR_VERSION, Marshal.MINOR_VERSION, bytes[0], bytes[1])
             )
 
-        return Marshal.load(space, bytes[2:])
+        return Marshal.load(space, bytes[2:])[0]
 
     # extract integer from marshalled byte array
     # least significant byte first!
@@ -155,20 +160,20 @@ class Marshal(Module):
             value = 256 - bytes[1]
             for i in range(2, 256 - bytes[0] + 1):
                 value += (255 - bytes[i]) * 256 ** (i - 1)
-            return -value
+            return -value, 256 - bytes[0] + 2
         elif bytes[0] > 0 and bytes[0] < 6:
             value = bytes[1]
             for i in range(2, bytes[0] + 1):
                 value += bytes[i] * 256 ** (i - 1)
-            return value
+            return value, bytes[0] + 2
         else:
             value = bytes[0]
             if value == 0:
-                return 0
+                return 0, 2
             elif value > 127:
-                return value - 251
+                return value - 251, 2
             else:
-                return value - 5
+                return value - 5, 2
 
     # least significant byte first!
     @staticmethod
