@@ -636,6 +636,9 @@ class BaseRepeat(RegexpBase):
 class GreedyRepeat(BaseRepeat):
     UNTIL_OPCODE = OPCODE_MAX_UNTIL
 
+    def can_be_affix(self):
+        return True
+
     def optimize(self, info, in_set=False):
         subpattern = self.subpattern.optimize(info)
         return GreedyRepeat(subpattern, self.min_count, self.max_count)

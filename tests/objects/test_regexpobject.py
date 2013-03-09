@@ -48,6 +48,7 @@ class TestRegexpObject(BaseTopazTest):
         /(?:abc)?/
         /(?:a|b)*/
         /.*/m
+        /(.*|.+)/
         """)
 
     def test_regexp_syntax_errors(self, space):
