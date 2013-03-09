@@ -535,5 +535,5 @@ class TestArrayPack(BaseTopazTest):
         assert self.unwrap(space, w_res) == [6, -1]
 
     def test_each(self, space):
-        w_res = space.execute("return [1,2].each{|s| s}")
+        w_res = space.execute("return [1, 2].each { }")
         assert self.unwrap(space, w_res) == [1,2]
