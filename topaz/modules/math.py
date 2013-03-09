@@ -43,11 +43,11 @@ class Math(Module):
         except ValueError:
             if value == 0.0:
                 # produce an infinity with the right sign
-                res = rfloat.copysign(float("inf"), value)
+                res = rfloat.copysign(rfloat.INFINITY, value)
             else:
                 raise space.error(space.getclassfor(W_DomainError), 'Numerical argument is out of domain - "gamma"')
         except OverflowError:
-            res = float('inf')
+            res = rfloat.INFINITY
         return space.newfloat(res)
 
 
