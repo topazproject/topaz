@@ -63,7 +63,7 @@ class Array
       yield self[i]
       i += 1
     end
-    return dup
+    return self
   end
 
   def zip(ary)
