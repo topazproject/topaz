@@ -533,3 +533,7 @@ class TestArrayPack(BaseTopazTest):
     def test_singleton_subscript(self, space):
         w_res = space.execute("return Array[6, -1]")
         assert self.unwrap(space, w_res) == [6, -1]
+
+    def test_each(self, space):
+        w_res = space.execute("return [1,2].each{|s| s}")
+        assert self.unwrap(space, w_res) == [1,2]
