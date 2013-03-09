@@ -437,6 +437,12 @@ class Branch(RegexpBase):
         for b in self.branches:
             b.fix_groups()
 
+    def is_empty(self):
+        for b in self.branches:
+            if not b.is_empty():
+                return False
+        return True
+
     def _flatten_branches(self, info, branches):
         new_branches = []
         for b in branches:
