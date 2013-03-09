@@ -127,9 +127,18 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump(:abc)")
         assert space.str_w(w_res) == "\x04\b:\babc"
 
+        w_res = space.execute("return Marshal.dump(('hello' * 25).to_sym)")
+        assert space.str_w(w_res) == "\x04\b:\x01}hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+
+        w_res = space.execute("return Marshal.dump(('hello' * 100).to_sym)")
+        assert space.str_w(w_res) == "\x04\b:\x02\xF4\x01hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+
     def test_load_symbol(self, space):
         w_res = space.execute("return Marshal.load('\x04\b:\babc')")
         assert space.symbol_w(w_res) == "abc"
+
+        w_res = space.execute("return Marshal.load('\x04\b:\x01}hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello')")
+        assert space.symbol_w(w_res) == "hello" * 25
 
     def test_dump_hash(self, space):
         w_res = space.execute("return Marshal.dump({})")

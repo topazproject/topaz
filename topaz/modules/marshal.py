@@ -94,11 +94,11 @@ class Marshal(Module):
         elif byte == 0x3a:  # Symbol
             count, length = Marshal.bytes2integer(bytes[1:])
             chars = []
-            # TODO: this only works for symbols shorter than 123 characters!
-            for i in range(2, count + 2):
+            for i in range(length, length + count):
                 chars.append(chr(bytes[i]))
             return space.newsymbol("".join(chars)), length + count
         elif byte == 0x49:  # IVAR
+            # TODO: fully interpret IVARS
             if bytes[1] == 0x22:  # String
                 count, length = Marshal.bytes2integer(bytes[2:])
                 encoding = 6
