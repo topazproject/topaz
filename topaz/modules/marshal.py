@@ -121,21 +121,25 @@ class Marshal(Module):
     def method_dump(self, space, w_obj):
         bytes = [4, 8]
         bytes += Marshal.dump(space, w_obj)
-        string = "".join("%02X" % byte for byte in bytes)
+        string = "".join(chr(byte) for byte in bytes)
         return space.newstr_fromstr(string)
 
     @moduledef.function("load")
     def method_load(self, space, w_obj):
         string = space.str_w(w_obj)
-        bytes = [int(string[i:i + 2], 16) for i in range(0, len(string), 2)]
-        #print "loading", string, bytes
+        bytes = [ord(string[i]) for i in range(0, len(string))]
         return Marshal.load(space, bytes[2:])
 
     # extract integer from marshalled byte array
     # least significant byte first!
     @staticmethod
     def bytes2integer(bytes):
-        if bytes[0] > 0 and bytes[0] < 6:
+        if bytes[0] >= 252:
+            value = 256 - bytes[1]
+            for i in range(2, 256 - bytes[0] + 1):
+                value += (255 - bytes[i]) * 256 ** (i - 1)
+            return -value
+        elif bytes[0] > 0 and bytes[0] < 6:
             value = bytes[1]
             for i in range(2, bytes[0] + 1):
                 value += bytes[i] * 256 ** (i - 1)
