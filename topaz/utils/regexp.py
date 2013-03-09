@@ -317,6 +317,9 @@ class Any(RegexpBase):
 
 
 class AnyAll(RegexpBase):
+    def is_empty(self):
+        return False
+
     def fix_groups(self):
         pass
 
@@ -632,6 +635,9 @@ class BaseRepeat(RegexpBase):
 
 class GreedyRepeat(BaseRepeat):
     UNTIL_OPCODE = OPCODE_MAX_UNTIL
+
+    def can_be_affix(self):
+        return True
 
     def optimize(self, info, in_set=False):
         subpattern = self.subpattern.optimize(info)
