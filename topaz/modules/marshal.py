@@ -14,11 +14,13 @@ from topaz.objects.symbolobject import W_SymbolObject
 
 class Marshal(Module):
     moduledef = ModuleDef("Marshal", filepath=__file__)
+    MAJOR_VERSION = 4
+    MINOR_VERSION = 8
 
     @moduledef.setup_module
     def setup_module(space, w_mod):
-        space.set_const(w_mod, "MAJOR_VERSION", space.newint(4))
-        space.set_const(w_mod, "MINOR_VERSION", space.newint(8))
+        space.set_const(w_mod, "MAJOR_VERSION", space.newint(Marshal.MAJOR_VERSION))
+        space.set_const(w_mod, "MINOR_VERSION", space.newint(Marshal.MINOR_VERSION))
 
     @staticmethod
     def dump(space, w_obj):
@@ -126,8 +128,23 @@ class Marshal(Module):
 
     @moduledef.function("load")
     def method_load(self, space, w_obj):
+        # TODO: extend for use with real IO objects
+        if not isinstance(w_obj, W_StringObject):
+            raise space.error(space.w_TypeError, "instance of IO needed")
+
         string = space.str_w(w_obj)
+        if len(string) < 2:
+            raise space.error(space.w_ArgumentError, "marshal data too short")
+
         bytes = [ord(string[i]) for i in range(0, len(string))]
+        if int(bytes[0]) != Marshal.MAJOR_VERSION or int(bytes[1]) != Marshal.MINOR_VERSION:
+            raise space.error(
+                space.w_TypeError,
+                "incompatible marshal file format (can't be read)\n"
+                "format version %s.%s required; %s.%s given"
+                % (Marshal.MAJOR_VERSION, Marshal.MINOR_VERSION, bytes[0], bytes[1])
+            )
+
         return Marshal.load(space, bytes[2:])
 
     # extract integer from marshalled byte array

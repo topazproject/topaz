@@ -269,5 +269,18 @@ class TestMarshal(BaseTopazTest):
         assert self.unwrap(space, w_res) == [1, [2, 3], 4]
 
     def test_incompatible_format(self, space):
-        with self.raises(space, "TypeError"):
+        with self.raises(
+            space,
+            "TypeError",
+            "incompatible marshal file format (can't be read)\n"
+            "format version 4.8 required; 97.115 given"
+        ):
             space.execute("Marshal.load('asd')")
+
+    def test_short_data(self, space):
+        with self.raises(space, "ArgumentError", "marshal data too short"):
+            space.execute("Marshal.load('')")
+
+    def test_parameters(self, space):
+        with self.raises(space, "TypeError", "instance of IO needed"):
+            space.execute("Marshal.load(4)")
