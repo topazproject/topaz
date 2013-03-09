@@ -317,6 +317,9 @@ class Any(RegexpBase):
 
 
 class AnyAll(RegexpBase):
+    def is_empty(self):
+        return False
+
     def fix_groups(self):
         pass
 
