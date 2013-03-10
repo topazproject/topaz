@@ -62,7 +62,7 @@ class String
 
   def upto(max, exclusive = false, &block)
     raise TypeError.new("can't convert #{max.class} into String") unless max.respond_to?(:to_str)
-    return Enumerator.new(self, :upto, max, exclusive) unless block 
+    raise NotImplementedError.new("Object#enum_for") unless block
 
     maximum = max.to_str
     return self if self > maximum
