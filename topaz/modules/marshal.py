@@ -103,9 +103,8 @@ class Marshal(Module):
                 count, length = Marshal.bytes2integer(bytes[2:])
                 encoding = 6
                 chars = []
-                # TODO: this only works for symbols shorter than 123 characters!
                 # TODO: take encoding into consideration
-                for i in range(3, count + 3):
+                for i in range(length + 1, length + count + 1):
                     chars.append(chr(bytes[i]))
                 return space.newstr_fromstr("".join(chars)), count + length + encoding
             else:
