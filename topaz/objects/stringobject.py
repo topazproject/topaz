@@ -414,6 +414,13 @@ class W_StringObject(W_Object):
     def method_to_s(self, space):
         return self
 
+    @classdef.method("ord")
+    def method_ord(self, space):
+        string = space.str_w(self)
+        if len(string) == 0:
+            raise space.error(space.w_ArgumentError, "empty string")
+        return space.newint(ord(string[0]))
+
     @classdef.method("inspect")
     def method_inspect(self, space):
         return space.newstr_fromstr('"%s"' % self.str_w(space))
