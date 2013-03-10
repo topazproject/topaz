@@ -76,6 +76,10 @@ class String
       # ("9" followed by ":" not handled by String#succ)
       if current == "9" && self.length == 1 && maximum.length == 1 then
         current = ":"
+      elsif current == "Z" && self.length == 1 && maximum.length == 1 then
+        current = "["
+      elsif current == "z" && self.length == 1 && maximum.length == 1 then
+        current = "{"
       else
         current = current.succ
       end
