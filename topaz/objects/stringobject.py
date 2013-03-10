@@ -416,10 +416,9 @@ class W_StringObject(W_Object):
 
     @classdef.method("ord")
     def method_ord(self, space):
-        string = space.str_w(self)
-        if len(string) == 0:
+        if self.length() == 0:
             raise space.error(space.w_ArgumentError, "empty string")
-        return space.newint(ord(string[0]))
+        return space.newint(ord(self.strategy.getitem(self.str_storage, 0)))
 
     @classdef.method("inspect")
     def method_inspect(self, space):
