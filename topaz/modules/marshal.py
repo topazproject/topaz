@@ -141,6 +141,7 @@ class Marshal(Module):
         return space.newstr_fromstr(string)
 
     @moduledef.function("load")
+    @moduledef.function("restore")
     def method_load(self, space, w_obj):
         # TODO: extend for use with real IO objects
         if not isinstance(w_obj, W_StringObject):
