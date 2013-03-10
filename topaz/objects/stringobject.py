@@ -1,11 +1,11 @@
 import copy
 import string
+import math
 
 from rpython.rlib import jit
 from rpython.rlib.objectmodel import newlist_hint, compute_hash
 from rpython.rlib.rarithmetic import intmask, ovfcheck
 from rpython.rlib.rbigint import rbigint
-from rpython.rlib import rfloat
 from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
 from rpython.rlib.rstring import split
@@ -763,7 +763,7 @@ class W_StringObject(W_Object):
                 break
 
         if exponent:
-            value = value * 10 ** multi
+            value = value * math.pow(10, multi)
 
         return space.newfloat(value)
 
