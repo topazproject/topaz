@@ -49,6 +49,8 @@ class W_FloatObject(W_NumericObject):
     def setup_class(cls, space, w_cls):
         space.set_const(w_cls, "MAX", space.newfloat(sys.float_info.max))
         space.set_const(w_cls, "MIN", space.newfloat(sys.float_info.min))
+        space.set_const(w_cls, "INFINITY", space.newfloat(INFINITY))
+        space.set_const(w_cls, "NAN", space.newfloat(NAN))
 
     @classdef.method("inspect")
     @classdef.method("to_s")
@@ -206,3 +208,13 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("ceil")
     def method_ceil(self, space):
         return self.float_to_w_int(space, math.ceil(self.floatvalue))
+
+    @classdef.method("infinite?")
+    def method_infinity(self, space):
+        if math.isinf(self.floatvalue):
+            return space.newint(int(math.copysign(1, self.floatvalue)))
+        return space.w_nil
+
+    @classdef.method("nan?")
+    def method_nan(self, space):
+        return space.newbool(math.isnan(self.floatvalue))
