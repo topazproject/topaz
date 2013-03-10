@@ -289,6 +289,22 @@ class TestStringObject(BaseTopazTest):
         with self.raises(space, "ArgumentError"):
             space.execute('"".to_i(37)')
 
+    def test_to_f(self, space):
+        w_res = space.execute('return "123.45".to_f')
+        assert space.float_w(w_res) == 123.45
+
+        w_res = space.execute('return "45.67 degrees".to_f')
+        assert space.float_w(w_res) == 45.67
+
+        w_res = space.execute('return "thx1138".to_f')
+        assert space.float_w(w_res) == 0.0
+
+        w_res = space.execute('return "123.45e1".to_f')
+        assert space.float_w(w_res) == 1234.5
+
+        w_res = space.execute('return "  123.45e1".to_f')
+        assert space.float_w(w_res) == 1234.5
+
     def test_swapcase(self, space):
         w_res = space.execute("""
         a = "AbC123aBc"
