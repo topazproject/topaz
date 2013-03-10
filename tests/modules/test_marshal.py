@@ -94,10 +94,10 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump([nil, true, false])")
         assert space.str_w(w_res) == "\x04\b[\b0TF"
 
-        w_res = space.execute("return Marshal.dump([1,2,3])")
+        w_res = space.execute("return Marshal.dump([1, 2, 3])")
         assert space.str_w(w_res) == "\x04\b[\x08i\x06i\x07i\x08"
 
-        w_res = space.execute("return Marshal.dump([1,[2,3],4])")
+        w_res = space.execute("return Marshal.dump([1, [2, 3], 4])")
         assert space.str_w(w_res) == "\x04\b[\bi\x06[\ai\ai\bi\t"
 
         w_res = space.execute("return Marshal.dump([:foo, :bar])")
@@ -128,16 +128,16 @@ class TestMarshal(BaseTopazTest):
         assert space.str_w(w_res) == "\x04\b:\babc"
 
         w_res = space.execute("return Marshal.dump(('hello' * 25).to_sym)")
-        assert space.str_w(w_res) == "\x04\b:\x01}hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+        assert space.str_w(w_res) == "\x04\b:\x01}" + "hello" * 25
 
         w_res = space.execute("return Marshal.dump(('hello' * 100).to_sym)")
-        assert space.str_w(w_res) == "\x04\b:\x02\xF4\x01hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+        assert space.str_w(w_res) == "\x04\b:\x02\xF4\x01" + "hello" * 100
 
     def test_load_symbol(self, space):
         w_res = space.execute("return Marshal.load('\x04\b:\babc')")
         assert space.symbol_w(w_res) == "abc"
 
-        w_res = space.execute("return Marshal.load('\x04\b:\x01}hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello')")
+        w_res = space.execute("return Marshal.load('\x04\b:\x01}' + 'hello' * 25)")
         assert space.symbol_w(w_res) == "hello" * 25
 
     def test_dump_hash(self, space):
@@ -177,19 +177,19 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump(256)")
         assert space.str_w(w_res) == "\x04\bi\x02\x00\x01"
 
-        w_res = space.execute("return Marshal.dump(2**16 - 2)")
+        w_res = space.execute("return Marshal.dump(2 ** 16 - 2)")
         assert space.str_w(w_res) == "\x04\bi\x02\xFE\xFF"
 
-        w_res = space.execute("return Marshal.dump(2**16 - 1)")
+        w_res = space.execute("return Marshal.dump(2 ** 16 - 1)")
         assert space.str_w(w_res) == "\x04\bi\x02\xFF\xFF"
 
-        w_res = space.execute("return Marshal.dump(2**16)")
+        w_res = space.execute("return Marshal.dump(2 ** 16)")
         assert space.str_w(w_res) == "\x04\bi\x03\x00\x00\x01"
 
-        w_res = space.execute("return Marshal.dump(2**16 + 1)")
+        w_res = space.execute("return Marshal.dump(2 ** 16 + 1)")
         assert space.str_w(w_res) == "\x04\bi\x03\x01\x00\x01"
 
-        w_res = space.execute("return Marshal.dump(2**30 - 1)")
+        w_res = space.execute("return Marshal.dump(2 ** 30 - 1)")
         assert space.str_w(w_res) == "\x04\bi\x04\xFF\xFF\xFF?"
 
         # TODO: test tooo big numbers (they give a warning and inf)
@@ -212,11 +212,11 @@ class TestMarshal(BaseTopazTest):
         assert space.int_w(w_res) == 2 ** 16 - 1
 
         #w_res = space.execute("return Marshal.load('\x04\bi\x03\x00\x00\x01')")
-        w_res = space.execute("return Marshal.load(Marshal.dump(2**16))")
+        w_res = space.execute("return Marshal.load(Marshal.dump(2 ** 16))")
         assert space.int_w(w_res) == 2 ** 16
 
         #w_res = space.execute("return Marshal.load('\x04\bi\x03\x01\x00\x01')")
-        w_res = space.execute("return Marshal.load(Marshal.dump(2**16+1))")
+        w_res = space.execute("return Marshal.load(Marshal.dump(2 ** 16 + 1))")
         assert space.int_w(w_res) == 2 ** 16 + 1
 
         w_res = space.execute("return Marshal.load('\x04\bi\x04\xFF\xFF\xFF?')")
@@ -238,7 +238,7 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump(-257)")
         assert space.str_w(w_res) == "\x04\bi\xFE\xFF\xFE"
 
-        w_res = space.execute("return Marshal.dump(-(2**30))")
+        w_res = space.execute("return Marshal.dump(-(2 ** 30))")
         assert space.str_w(w_res) == "\x04\bi\xFC\x00\x00\x00\xC0"
 
     def test_load_negative_integer(self, space):
@@ -259,21 +259,21 @@ class TestMarshal(BaseTopazTest):
         assert space.int_w(w_res) == -257
 
         #w_res = space.execute("return Marshal.load('\x04\bi\xFE\x00\x00')")
-        w_res = space.execute("return Marshal.load(Marshal.dump(-(2**16)))")
+        w_res = space.execute("return Marshal.load(Marshal.dump(-(2 ** 16)))")
         assert space.int_w(w_res) == -(2 ** 16)
 
         w_res = space.execute("return Marshal.load('\x04\bi\xFD\xFF\xFF\xFE')")
         assert space.int_w(w_res) == -(2 ** 16 + 1)
 
         #w_res = space.execute("return Marshal.load('\x04\bi\xFC\x00\x00\x00')")
-        w_res = space.execute("return Marshal.load(Marshal.dump(-(2**24)))")
+        w_res = space.execute("return Marshal.load(Marshal.dump(-(2 ** 24)))")
         assert space.int_w(w_res) == -(2 ** 24)
 
         w_res = space.execute("return Marshal.load('\x04\bi\xFC\xFF\xFF\xFF\xFE')")
         assert space.int_w(w_res) == -(2 ** 24 + 1)
 
         #w_res = space.execute("return Marshal.load('\x04\bi\xFC\x00\x00\x00\xC0')")
-        w_res = space.execute("return Marshal.load(Marshal.dump(-(2**30)))")
+        w_res = space.execute("return Marshal.load(Marshal.dump(-(2 ** 30)))")
         assert space.int_w(w_res) == -(2 ** 30)
 
     def test_dump_string(self, space):
@@ -298,16 +298,16 @@ class TestMarshal(BaseTopazTest):
         assert space.str_w(w_res) == "i am a longer string"
 
     def test_array(self, space):
-        w_res = space.execute("return Marshal.load(Marshal.dump([1,2,3]))")
+        w_res = space.execute("return Marshal.load(Marshal.dump([1, 2, 3]))")
         assert self.unwrap(space, w_res) == [1, 2, 3]
 
-        w_res = space.execute("return Marshal.load(Marshal.dump([1,[2,3],4]))")
+        w_res = space.execute("return Marshal.load(Marshal.dump([1, [2, 3], 4]))")
         assert self.unwrap(space, w_res) == [1, [2, 3], 4]
 
-        w_res = space.execute("return Marshal.load(Marshal.dump([130,[2,3],4]))")
+        w_res = space.execute("return Marshal.load(Marshal.dump([130, [2, 3], 4]))")
         assert self.unwrap(space, w_res) == [130, [2, 3], 4]
 
-        w_res = space.execute("return Marshal.load(Marshal.dump([-10000,[2,123456],-9000]))")
+        w_res = space.execute("return Marshal.load(Marshal.dump([-10000, [2, 123456], -9000]))")
         assert self.unwrap(space, w_res) == [-10000, [2, 123456], -9000]
 
         w_res = space.execute("return Marshal.load(Marshal.dump([:foo, :bar]))")
