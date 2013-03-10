@@ -64,6 +64,15 @@ module Enumerable
     ary[n...ary.size]
   end
 
+  def drop_while(&block)
+    ary = []
+    dropping = true
+    self.each do |o|
+      ary << o unless dropping &&= yield(o)
+    end
+    ary
+  end
+
   def to_a
     result = []
     self.each do |i|
