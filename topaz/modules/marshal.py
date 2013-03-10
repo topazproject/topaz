@@ -14,6 +14,7 @@ from topaz.objects.ioobject import W_IOObject
 from topaz.objects.floatobject import W_FloatObject
 
 import os  # not nice?
+import math
 
 
 class Marshal(Module):
@@ -209,12 +210,12 @@ class Marshal(Module):
         if bytes[0] >= 252:
             value = 256 - bytes[1]
             for i in range(2, 256 - bytes[0] + 1):
-                value += (255 - bytes[i]) * 256 ** (i - 1)
+                value += (255 - bytes[i]) * int(math.pow(256, i - 1))
             return -value, 256 - bytes[0] + 2
         elif bytes[0] > 0 and bytes[0] < 6:
             value = bytes[1]
             for i in range(2, bytes[0] + 1):
-                value += bytes[i] * 256 ** (i - 1)
+                value += bytes[i] * int(math.pow(256, i - 1))
             return value, bytes[0] + 2
         else:
             value = bytes[0]
