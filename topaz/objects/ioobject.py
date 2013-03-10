@@ -241,6 +241,7 @@ class W_IOObject(W_Object):
     @classdef.method("fileno")
     @classdef.method("to_i")
     def method_to_i(self, space):
+        self.ensure_not_closed(space)
         return space.newint(self.fd)
 
     @classdef.method("close")
