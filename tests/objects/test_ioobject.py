@@ -246,6 +246,27 @@ class TestIO(BaseTopazTest):
         """ % f)
         assert w_res == space.w_true
 
+    def test_to_i(self, space, tmpdir):
+        f1 = tmpdir.join("file1.txt")
+        f1.write("")
+        f2 = tmpdir.join("file2.txt")
+        f2.write("")
+
+        w_res = space.execute("""
+        f1 = File.new '%s'
+        f2 = File.new '%s'
+        return f1.to_i, f2.to_i
+        """ % (f1, f2))
+        fds = self.unwrap(space, w_res)
+        assert fds[0] != fds[1]
+
+        w_res = space.execute("return STDIN.to_i")
+        assert space.int_w(w_res) == 0
+        w_res = space.execute("return STDOUT.to_i")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return STDERR.to_i")
+        assert space.int_w(w_res) == 2
+
     def test_reopen_stdout_in_closed_io(self, space, tmpdir):
         f = tmpdir.join("file.txt")
         f.write('')
