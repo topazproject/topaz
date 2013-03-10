@@ -187,8 +187,10 @@ class W_ArrayObject(W_Object):
             before = self.items_w
             after = []
         elif idx < -1:
-            before = self.items_w[:len(self.items_w) + idx + 1]
-            after = self.items_w[len(self.items_w) + idx + 1:]
+            split_idx = len(self.items_w) + idx + 1
+            assert split_idx > 0
+            before = self.items_w[:split_idx]
+            after = self.items_w[split_idx:]
         else:
             assert idx > 0
             before = self.items_w[:idx]
