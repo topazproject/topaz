@@ -11,6 +11,7 @@ from topaz.objects.nilobject import W_NilObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.ioobject import W_IOObject
+from topaz.objects.floatobject import W_FloatObject
 
 import os  # not nice?
 
@@ -29,6 +30,7 @@ class Marshal(Module):
     IVAR = 0x49
     STRING = 0x22
     HASH = 0x7b
+    FLOAT = 0x66
 
     @moduledef.setup_module
     def setup_module(space, w_mod):
@@ -47,6 +49,21 @@ class Marshal(Module):
         elif isinstance(w_obj, W_FixnumObject):
             bytes.append(Marshal.FIXNUM)
             bytes += Marshal.integer2bytes(space.int_w(w_obj))
+        elif isinstance(w_obj, W_FloatObject):
+            bytes.append(Marshal.FLOAT)
+            raw_value = space.float_w(w_obj)
+            int_value = int(raw_value)
+            float_value = raw_value
+            string = None
+            if raw_value == int_value:
+                float_value = int_value
+            string = repr(float_value)
+            if repr(raw_value) == "-0.0":  # slowing things down
+                string = "-0"
+            length = len(string)
+            bytes += Marshal.integer2bytes(length)
+            for c in string:
+                bytes.append(ord(c))
         elif isinstance(w_obj, W_ArrayObject):
             array = space.listview(w_obj)
             bytes.append(Marshal.ARRAY)
@@ -93,6 +110,13 @@ class Marshal(Module):
         elif byte == Marshal.FIXNUM:
             value, length = Marshal.bytes2integer(bytes[1:])
             return space.newint(value), length
+        elif byte == Marshal.FLOAT:
+            count, length = Marshal.bytes2integer(bytes[1:])
+            chars = []  # rename!
+            for i in range(length, length + count):
+                chars.append(chr(bytes[i]))
+
+            return space.newfloat(float("".join(chars))), length
         elif byte == Marshal.ARRAY:
             count, length = Marshal.bytes2integer(bytes[1:])
             array = []
