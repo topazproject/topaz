@@ -729,7 +729,6 @@ class W_StringObject(W_Object):
 
         for char in space.str_w(self):
             c = ord(char)
-            print char, ord(char)
             if ord("0") <= c <= ord("9"):
                 if exponent:
                     multi = multi * 10 + c - ord("0")
