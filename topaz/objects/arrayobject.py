@@ -164,8 +164,7 @@ class W_ArrayObject(W_Object):
         self.items_w += other
         return self
 
-    # TODO: move idx into @classdef
-    @classdef.method("insert")
+    @classdef.method("insert", w_idx="int")
     def method_insert(self, space, w_idx, args_w):
         idx = space.int_w(w_idx)
 
@@ -191,6 +190,7 @@ class W_ArrayObject(W_Object):
             before = self.items_w[:len(self.items_w) + idx + 1]
             after = self.items_w[len(self.items_w) + idx + 1:]
         else:
+            assert idx > 0
             before = self.items_w[:idx]
             after = self.items_w[idx:]
 
