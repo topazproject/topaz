@@ -332,3 +332,18 @@ class TestMarshal(BaseTopazTest):
     def test_parameters(self, space):
         with self.raises(space, "TypeError", "instance of IO needed"):
             space.execute("Marshal.load(4)")
+
+    def test_io(self, space):
+        w_res = space.execute("""
+        Marshal.dump('hallo', File.new('dmp.tmp', 'wb'))
+        file = File.open('dmp.tmp', 'rb')
+        return Marshal.load(file.read)
+        """)
+        assert space.str_w(w_res) == "hallo"
+
+        w_res = space.execute("""
+        Marshal.dump('hallo', File.new('dmp.tmp', 'wb'))
+        file = File.open('dmp.tmp', 'rb')
+        return Marshal.load(file)
+        """)
+        assert space.str_w(w_res) == "hallo"

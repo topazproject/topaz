@@ -10,6 +10,9 @@ from topaz.objects.hashobject import W_HashObject
 from topaz.objects.nilobject import W_NilObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.objects.symbolobject import W_SymbolObject
+from topaz.objects.ioobject import W_IOObject
+
+import os  # not nice?
 
 
 class Marshal(Module):
@@ -134,20 +137,33 @@ class Marshal(Module):
             raise NotImplementedError(byte)
 
     @moduledef.function("dump")
-    def method_dump(self, space, w_obj):
+    def method_dump(self, space, w_obj, w_io=None):
         bytes = [4, 8]
         bytes += Marshal.dump(space, w_obj)
         string = "".join(chr(byte) for byte in bytes)
-        return space.newstr_fromstr(string)
+
+        if w_io is not None:
+            assert isinstance(w_io, W_IOObject)
+            w_io.ensure_not_closed(space)
+            os.write(w_io.fd, string)
+            return w_io
+        else:
+
+            return space.newstr_fromstr(string)
 
     @moduledef.function("load")
     @moduledef.function("restore")
     def method_load(self, space, w_obj):
-        # TODO: extend for use with real IO objects
-        if not isinstance(w_obj, W_StringObject):
+        string = ""
+
+        if isinstance(w_obj, W_IOObject):
+            w_obj.ensure_not_closed(space)
+            string = os.read(w_obj.fd, os.fstat(w_obj.fd).st_size)
+        elif isinstance(w_obj, W_StringObject):
+            string = space.str_w(w_obj)
+        else:
             raise space.error(space.w_TypeError, "instance of IO needed")
 
-        string = space.str_w(w_obj)
         if len(string) < 2:
             raise space.error(space.w_ArgumentError, "marshal data too short")
 
