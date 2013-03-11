@@ -112,7 +112,7 @@ class TestEnumberable(BaseTopazTest):
         assert self.unwrap(space, w_res) == [3, 4, 5, 0]
 
         w_res = space.execute("""return [1, 2, 3].drop_while { |i| i == 0 } """)
-        assert self.unwrap(space, w_res) == []
+        assert self.unwrap(space, w_res) == [1, 2, 3]
 
         w_res = space.execute("""return [].drop_while { |i| i > 3 }""")
         assert self.unwrap(space, w_res) == []
