@@ -261,6 +261,7 @@ class MutableStringStrategy(StringStrategy):
                     storage[start] = "A"
                 else:
                     storage[start] = chr(ord(ch) + 1)
+                    carry = "\0"
 
                 if carry == "\0":
                     break
@@ -280,7 +281,7 @@ class MutableStringStrategy(StringStrategy):
                     break
                 start -= 1
 
-        if start < 0:
+        if start < 0 and carry != "\0":
             last_alnum_ch = storage[last_alnum]
             storage[last_alnum] = carry
             storage.insert(last_alnum + 1, last_alnum_ch)
