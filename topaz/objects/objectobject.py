@@ -182,7 +182,7 @@ class W_RootObject(W_BaseObject):
         )
 
     @classdef.method("tap")
-    def method_tap(self, space, block = None):
+    def method_tap(self, space, block=None):
         if block is not None:
             space.invoke_block(block, [self])
         return self
