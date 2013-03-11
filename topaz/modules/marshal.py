@@ -165,7 +165,7 @@ class Marshal(Module):
     def method_dump(self, space, w_obj, w_io=None):
         bytes = [4, 8]
         bytes += Marshal.dump(space, w_obj)
-        string = "".join(chr(byte) for byte in bytes)
+        string = "".join([chr(byte) for byte in bytes])
 
         if w_io is not None:
             assert isinstance(w_io, W_IOObject)
