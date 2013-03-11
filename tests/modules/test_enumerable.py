@@ -109,7 +109,7 @@ class TestEnumberable(BaseTopazTest):
 
     def test_drop_while(self, space):
         w_res = space.execute("""return [1, 2, 3, 4, 5, 0].drop_while { |i| i < 3 }""")
-        assert self.unwrap(space, w_res) == [4, 5, 0]
+        assert self.unwrap(space, w_res) == [3, 4, 5, 0]
 
         w_res = space.execute("""return [1, 2, 3].drop_while { |i| i == 0 } """)
         assert self.unwrap(space, w_res) == []
