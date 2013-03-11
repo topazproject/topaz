@@ -153,7 +153,7 @@ class TestEnumberable(BaseTopazTest):
 
     def test_take_while(self, space):
         w_res = space.execute("return (1..10).take_while { |i| i < 4 }")
-        assert w_res == [1, 2, 3]
+        assert space.int_w(w_res) == [1, 2, 3]
         w_res = space.execute("return [].take_while { |i| i == 11 }")
         assert space.int_w(w_res) == []
         w_res = space.execute("return (1..10).take_while { |i| i > 11 }")
@@ -163,7 +163,7 @@ class TestEnumberable(BaseTopazTest):
 
     def test_reject(self, space):
         w_res = space.execute("return [1, 2, 3].reject { |i| i == 3 }")
-        assert w_res == [1, 2]
+        assert space.int_w(w_res) == [1, 2]
         w_res = space.execute("return [].reject { |i| i == 3 }")
         assert space.int_w(w_res) == []
         w_res = space.execute("return (1..10).reject { |i| i > 11 }")
