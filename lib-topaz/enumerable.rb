@@ -68,8 +68,9 @@ module Enumerable
     result = []
     dropping = true
     self.each do |o|
-      unless dropping && dropping = yield(o)
+      unless dropping && yield(o)
         result << o
+        dropping = false
       end
     end
     result
