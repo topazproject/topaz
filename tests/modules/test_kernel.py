@@ -421,6 +421,16 @@ class TestExec(BaseTopazTest):
         out = self.fork_and_wait(space, capfd, "exec 'echo', '$0'")
         assert out == "$0\n"
 
+    def test_exec_with_null_bytes(self, space):
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec "\\0"')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec ["\\0", "none"]')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec ["none", "\\0"]')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec "none", "\\0"')
+
 
 class TestSetTraceFunc(BaseTopazTest):
     def test_class(self, space):
