@@ -10,6 +10,7 @@ Authors
 * Maciej Fijalkowski
 * Alex Gaynor
 * Magnus Holm
+* Konstantin Makarchev
 * Curt Micol
 * Bill Mill
 * Charles Oliver Nutter
@@ -18,4 +19,3 @@ Authors
 * Armin Rigo
 * Robin Schreiber
 * Jeremy Thurgood
-* Konstantin Makarchev
