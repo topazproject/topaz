@@ -1,5 +1,7 @@
 import os
 
+from rpython.rlib.streamio import OS_MODE
+
 from topaz.objects.stringobject import W_StringObject
 from topaz.utils.ll_file import O_BINARY
 
@@ -51,3 +53,28 @@ def map_filemode(space, w_mode):
     else:
         mode = space.int_w(w_mode)
     return mode
+
+
+def decode_filemode(mode):
+    basemode = mode[0]
+    plus = False
+    binary = False
+    text = False
+
+    for c in mode[1:]:
+        if c == '+':
+            plus = True
+        elif c == 'b':
+            binary = True
+        elif c == 't':
+            text = True
+        else:
+            break
+
+    flag = OS_MODE[basemode, plus]
+    flag |= O_BINARY
+
+    reading = basemode == 'r' or plus
+    writing = basemode != 'r' or plus
+
+    return flag, reading, writing, basemode, binary, text

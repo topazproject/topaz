@@ -121,7 +121,6 @@ class ObjectSpace(object):
         self.w_hash = self.getclassfor(W_HashObject)
         self.w_method = self.getclassfor(W_MethodObject)
         self.w_unbound_method = self.getclassfor(W_UnboundMethodObject)
-        self.w_io = self.getclassfor(W_IOObject)
         self.w_NoMethodError = self.getclassfor(W_NoMethodError)
         self.w_ArgumentError = self.getclassfor(W_ArgumentError)
         self.w_LocalJumpError = self.getclassfor(W_LocalJumpError)
@@ -145,6 +144,7 @@ class ObjectSpace(object):
         self.w_SystemStackError = self.getclassfor(W_SystemStackError)
         self.w_TypeError = self.getclassfor(W_TypeError)
         self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
+        self.w_io = self.getclassfor(W_IOObject)
         self.w_kernel = self.getmoduleobject(Kernel.moduledef)
 
         self.w_topaz = self.getmoduleobject(Topaz.moduledef)

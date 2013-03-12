@@ -1,11 +1,29 @@
 import os
 
+from rpython.rlib.streamio import DiskFile, construct_stream_tower
+
 from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
-from topaz.utils.filemode import map_filemode
+from topaz.utils.filemode import map_filemode, decode_filemode
+
+
+def construct_disko_stream_tower(fd, mode, textmode=False, binmode=False,
+                                 buffering=True):
+    # The "textmode", "binmode", and "buffering" flags won't be used at least
+    # until the IO.new options hash support is implemented.
+    os_flags, reading, writing, basemode, binary, text = decode_filemode(mode)
+    diskio_stream = DiskFile(fd)
+    return construct_stream_tower(
+        diskio_stream,
+        1 if buffering else 0,
+        True, # XXX "universal" (applicability??)
+        reading,
+        writing,
+        binary or binmode or not text or not textmode
+    )
 
 
 class W_IOObject(W_Object):
@@ -14,20 +32,36 @@ class W_IOObject(W_Object):
     def __init__(self, space):
         W_Object.__init__(self, space)
         self.fd = -1
+        self.mode = None
+        self.stream = None
+        self.sync = True
 
     def __del__(self):
         # Do not close standard file streams
         if self.fd > 3:
-            os.close(self.fd)
+            self.stream.close()
 
     def __deepcopy__(self, memo):
         obj = super(W_IOObject, self).__deepcopy__(memo)
         obj.fd = self.fd
+        obj.mode = self.mode
+        obj.stream = construct_disko_stream_tower(self.fd, self.mode)
+        obj.sync = self.sync
         return obj
 
     def ensure_not_closed(self, space):
         if self.fd < 0:
             raise space.error(space.w_IOError, "closed stream")
+
+        # XXX HALP XXX This is almost certanly a horrible thing to do, and the
+        # wrong place to do it.  Why are the instance attributes sometimes set
+        # as though `method_initialize` has been called yet other times only as
+        # though `__init__` has been called?
+        if self.stream is None:
+            self.stream = construct_disko_stream_tower(
+                self.fd,
+                self.mode if self.mode is not None else "r"
+            )
 
     def getfd(self):
         return self.fd
@@ -90,7 +124,9 @@ class W_IOObject(W_Object):
             raise space.error(space.w_NotImplementedError, "options hash for IO.new")
         if mode is None:
             mode = "r"
+        self.mode = mode
         self.fd = fd
+        self.stream = construct_disko_stream_tower(fd, mode)
         return self
 
     @classdef.method("read")
@@ -104,22 +140,10 @@ class W_IOObject(W_Object):
                 )
         else:
             length = -1
-        read_bytes = 0
-        read_chunks = []
-        while length < 0 or read_bytes < length:
-            if length > 0:
-                max_read = int(length - read_bytes)
-            else:
-                max_read = 8192
-            current_read = os.read(self.fd, max_read)
-            if len(current_read) == 0:
-                break
-            read_bytes += len(current_read)
-            read_chunks += current_read
-        # Return nil on EOF if length is given
-        if read_bytes == 0:
+        read_bytes = self.stream.read(length)
+        if len(read_bytes) == 0:
             return space.w_nil
-        w_read_str = space.newstr_fromchars(read_chunks)
+        w_read_str = space.newstr_fromstr(read_bytes)
         if w_str is not None:
             w_str.clear(space)
             w_str.extend(space, w_read_str)
@@ -131,19 +155,24 @@ class W_IOObject(W_Object):
     def method_write(self, space, w_str):
         self.ensure_not_closed(space)
         string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
-        bytes_written = os.write(self.fd, string)
-        return space.newint(bytes_written)
+        self.stream.write(string)
+        if self.sync and self.stream.flushable():
+            self.stream.flush()
+        # the rpython streamio API seems to guarantee this is fully written (??)
+        return space.newint(len(string))
 
     @classdef.method("flush")
     def method_flush(self, space):
         # We have no internal buffers to flush!
         self.ensure_not_closed(space)
+        if self.stream.flushable():
+            self.stream.flush()
         return self
 
     @classdef.method("seek", amount="int", whence="int")
     def method_seek(self, space, amount, whence=os.SEEK_SET):
         self.ensure_not_closed(space)
-        os.lseek(self.fd, amount, whence)
+        self.stream.seek(amount, whence)
         return space.newint(0)
 
     @classdef.method("pos")
@@ -152,12 +181,12 @@ class W_IOObject(W_Object):
         self.ensure_not_closed(space)
         # TODO: this currently truncates large values, switch this to use a
         # Bignum in those cases
-        return space.newint(int(os.lseek(self.fd, 0, os.SEEK_CUR)))
+        return space.newint(int(self.stream.tell()))
 
     @classdef.method("rewind")
     def method_rewind(self, space):
         self.ensure_not_closed(space)
-        os.lseek(self.fd, 0, os.SEEK_SET)
+        self.stream.seek(0, os.SEEK_SET)
         return space.newint(0)
 
     @classdef.method("print")
@@ -178,14 +207,16 @@ class W_IOObject(W_Object):
         else:
             end = ""
         strings = [space.str_w(space.send(w_arg, space.newsymbol("to_s"))) for w_arg in args_w]
-        os.write(self.fd, sep.join(strings))
-        os.write(self.fd, end)
+        self.stream.write(sep.join(strings))
+        self.stream.write(end)
+        if self.sync and self.stream.flushable():
+            self.stream.flush()
         return space.w_nil
 
     @classdef.method("getc")
     def method_getc(self, space):
         self.ensure_not_closed(space)
-        c = os.read(self.fd, 1)
+        c = self.stream.read(1)
         if not c:
             return space.w_nil
         return space.newstr_fromstr(c)
@@ -217,7 +248,7 @@ class W_IOObject(W_Object):
             w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
         assert isinstance(w_io, W_IOObject)
         w_io.ensure_not_closed(space)
-        os.close(self.fd)
+        self.stream.close()
         os.dup2(w_io.getfd(), self.fd)
         return self
 
@@ -234,7 +265,7 @@ class W_IOObject(W_Object):
     @classdef.method("close")
     def method_close(self, space):
         self.ensure_not_closed(space)
-        os.close(self.fd)
+        self.stream.close()
         self.fd = -1
         return self
 
