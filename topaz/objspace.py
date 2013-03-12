@@ -4,7 +4,6 @@ import os
 
 from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
-from rpython.rlib.rstring import assert_str0
 from rpython.rlib.objectmodel import specialize
 
 from rply.errors import ParsingError
@@ -414,7 +413,7 @@ class ObjectSpace(object):
         if "\x00" in string:
             raise self.error(self.w_ArgumentError, "string contains null byte")
         else:
-            return assert_str0(string)
+            return string
 
     def listview(self, w_obj):
         return w_obj.listview(self)
