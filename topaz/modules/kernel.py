@@ -6,6 +6,7 @@ import time
 from rpython.rlib.rfloat import round_double
 from rpython.rlib.streamio import open_file_as_stream
 
+from topaz.coerce import Coerce
 from topaz.error import RubyError, error_for_oserror
 from topaz.module import Module, ModuleDef
 from topaz.modules.process import Process
@@ -53,7 +54,7 @@ class Kernel(Module):
         if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
             w_load_path = space.globals.get(space, "$LOAD_PATH")
             for w_base in space.listview(w_load_path):
-                base = space.str_w0(w_base)
+                base = Coerce.path(space, w_base)
                 full = os.path.join(base, path)
                 if os.path.exists(full):
                     path = os.path.join(base, path)

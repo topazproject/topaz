@@ -364,6 +364,15 @@ class TestRequire(BaseTopazTest):
         """ % f)
         assert space.int_w(w_res) == 5
 
+    def test_null_bytes(self, space, tmpdir):
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('require "b\\0"')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute("""
+            $LOAD_PATH.unshift "\\0"
+            require 'pp'
+            """)
+
 
 class TestExec(BaseTopazTest):
     def fork_and_wait(self, space, capfd, code):
