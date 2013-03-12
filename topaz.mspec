@@ -120,7 +120,6 @@ class MSpecScript
               "^#{Rubyspec}/language/regexp/anchors_spec.rb",
               "^#{Rubyspec}/language/send_spec.rb",
               "^#{Rubyspec}/language/constants_spec.rb",
-              "^#{Rubyspec}/language/literal_lambda_spec.rb",
               "^#{Rubyspec}/language/precedence_spec.rb",
               "^#{Rubyspec}/language/predefined_spec.rb",
               "^#{Rubyspec}/language/predefined/data_spec.rb",
