@@ -55,12 +55,17 @@ class Marshal(Module):
             raw_value = space.float_w(w_obj)
             int_value = int(raw_value)
             float_value = raw_value
-            string = None
+            string = ""  # None
+
             if raw_value == int_value:
                 float_value = int_value
-            string = repr(float_value)
-            if repr(raw_value) == "-0.0":  # slowing things down
-                string = "-0"
+                if str(raw_value) == "-0.0":  # slowing things down
+                    string = "-0"
+                else:
+                    string = str(float_value)
+            else:  # encode float
+                string = str(float_value)
+
             length = len(string)
             bytes += Marshal.integer2bytes(length)
             for c in string:
@@ -119,16 +124,16 @@ class Marshal(Module):
 
             return space.newfloat(float("".join(chars))), length
         elif byte == Marshal.ARRAY:
-            count, length = Marshal.bytes2integer(bytes[1:])
-            array = []
+            count, skip = Marshal.bytes2integer(bytes[1:])
 
-            skip = 0
+            array = []
             for i in range(0, count):
-                element, l = Marshal.load(space, bytes[length + skip:])
+                assert skip > 0
+                element, l = Marshal.load(space, bytes[skip:])
                 skip += l
                 array.append(element)
 
-            return space.newarray(array), length + skip
+            return space.newarray(array), skip
         elif byte == Marshal.SYMBOL:
             count, length = Marshal.bytes2integer(bytes[1:])
             chars = []
@@ -148,16 +153,17 @@ class Marshal(Module):
             else:
                 raise NotImplementedError(bytes[1])
         elif byte == Marshal.HASH:
-            count, length = Marshal.bytes2integer(bytes[1:])
+            count, skip = Marshal.bytes2integer(bytes[1:])
             w_hash = space.newhash()
-            skip = 0
             for i in range(0, count):
-                k, s = Marshal.load(space, bytes[length + skip:])
+                assert skip > 0
+                k, s = Marshal.load(space, bytes[skip:])
                 skip += s
-                v, s = Marshal.load(space, bytes[length + skip:])
+                assert skip > 0
+                v, s = Marshal.load(space, bytes[skip:])
                 skip += s
                 w_hash.method_subscript_assign(k, v)
-            return w_hash, length + skip
+            return w_hash, skip
         else:
             raise NotImplementedError(byte)
 
@@ -173,7 +179,6 @@ class Marshal(Module):
             os.write(w_io.fd, string)
             return w_io
         else:
-
             return space.newstr_fromstr(string)
 
     @moduledef.function("load")
@@ -183,7 +188,7 @@ class Marshal(Module):
 
         if isinstance(w_obj, W_IOObject):
             w_obj.ensure_not_closed(space)
-            string = os.read(w_obj.fd, os.fstat(w_obj.fd).st_size)
+            string = os.read(w_obj.fd, int(os.fstat(w_obj.fd).st_size))
         elif isinstance(w_obj, W_StringObject):
             string = space.str_w(w_obj)
         else:
