@@ -57,7 +57,6 @@ class MSpecScript
           "^#{Rubyspec}/core/file/stat/ftype_spec.rb",
           "^#{Rubyspec}/core/file/socket_spec.rb",
           "^#{Rubyspec}/core/file/ftype_spec.rb",
-          "^#{Rubyspec}/core/dir/chdir_spec.rb",
           "^#{Rubyspec}/core/dir/chroot_spec.rb",
           "^#{Rubyspec}/core/dir/close_spec.rb",
           "^#{Rubyspec}/core/dir/delete_spec.rb",
