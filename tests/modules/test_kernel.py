@@ -364,7 +364,7 @@ class TestRequire(BaseTopazTest):
         """ % f)
         assert space.int_w(w_res) == 5
 
-    def test_null_bytes(self, space, tmpdir):
+    def test_null_bytes(self, space):
         with self.raises(space, "ArgumentError", "string contains null byte"):
             space.execute('require "b\\0"')
         with self.raises(space, "ArgumentError", "string contains null byte"):
@@ -372,6 +372,23 @@ class TestRequire(BaseTopazTest):
             $LOAD_PATH.unshift "\\0"
             require 'pp'
             """)
+
+    def test_load_path_element_coerce(self, space, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        $success = true
+        """)
+        w_res = space.execute("""
+        class A
+          def to_path
+            "%s"
+          end
+        end
+        $LOAD_PATH.unshift A.new
+        require 't'
+        return $success
+        """ % tmpdir)
+        assert w_res is space.w_true
 
 
 class TestExec(BaseTopazTest):
