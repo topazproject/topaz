@@ -49,7 +49,7 @@ class Coerce(object):
         w_string = space.convert_type(w_obj, space.w_string, "to_path", raise_error=False)
         if w_string is space.w_nil:
             w_string = space.convert_type(w_obj, space.w_string, "to_str")
-        return space.str_w0(w_string)
+        return space.str0_w(w_string)
 
     @staticmethod
     def array(space, w_obj):

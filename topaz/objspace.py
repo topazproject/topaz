@@ -408,7 +408,7 @@ class ObjectSpace(object):
         """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
 
-    def str_w0(self, w_obj):
+    def str0_w(self, w_obj):
         string = w_obj.str_w(self)
         if "\x00" in string:
             raise self.error(self.w_ArgumentError, "string contains null byte")

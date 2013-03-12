@@ -166,13 +166,13 @@ class Kernel(Module):
         if space.respond_to(args_w[0], space.newsymbol("to_ary")):
             w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
             cmd, argv0 = [
-                space.str_w0(space.convert_type(
+                space.str0_w(space.convert_type(
                     w_e, space.w_string, "to_str"
                 )) for w_e in space.listview(w_cmd)
             ]
         else:
             w_cmd = space.convert_type(args_w[0], space.w_string, "to_str")
-            cmd = space.str_w0(w_cmd)
+            cmd = space.str0_w(w_cmd)
             argv0 = None
 
         if len(args_w) > 1 or argv0 is not None:
@@ -184,7 +184,7 @@ class Kernel(Module):
                     argv0 = cmd
             args = [argv0]
             args += [
-                space.str_w0(space.convert_type(
+                space.str0_w(space.convert_type(
                     w_arg, space.w_string, "to_str"
                 )) for w_arg in args_w[1:]
             ]
