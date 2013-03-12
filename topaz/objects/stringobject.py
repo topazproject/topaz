@@ -724,8 +724,6 @@ class W_StringObject(W_Object):
 
     @classdef.method("to_f")
     def method_to_f(self, space):
-        # can't use rstring_to_float here because of rpython?
-
         value = 0.0
         precision = False
         pointer = 0.1
