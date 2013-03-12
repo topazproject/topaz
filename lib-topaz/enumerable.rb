@@ -41,13 +41,13 @@ module Enumerable
   end
 
   def select(&block)
-    ary = []
+    result = []
     self.each do |o|
       if block.call(o)
-        ary << o
+        result << o
       end
     end
-    ary
+    result
   end
 
   def include?(obj)
@@ -59,9 +59,21 @@ module Enumerable
 
   def drop(n)
     raise ArgumentError.new("attempt to drop negative size") if n < 0
-    ary = self.to_a
-    return [] if n > ary.size
-    ary[n...ary.size]
+    result = self.to_a
+    return [] if n > result.size
+    result[n...result.size]
+  end
+
+  def drop_while(&block)
+    result = []
+    dropping = true
+    self.each do |o|
+      unless dropping && yield(o)
+        result << o
+        dropping = false
+      end
+    end
+    result
   end
 
   def to_a

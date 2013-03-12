@@ -19,3 +19,4 @@ Authors
 * Armin Rigo
 * Robin Schreiber
 * Jeremy Thurgood
+* Ryan Levick
