@@ -63,7 +63,10 @@ class Frame(BaseFrame):
             self._set_arg(space, bytecode.arg_pos[i + len(args_w)], w_value)
 
         if bytecode.splat_arg_pos != -1:
-            splat_args_w = args_w[len(bytecode.arg_pos):]
+            if len(bytecode.arg_pos) > len(args_w):
+                splat_args_w = []
+            else:
+                splat_args_w = args_w[len(bytecode.arg_pos):]
             w_splat_args = space.newarray(splat_args_w)
             self._set_arg(space, bytecode.splat_arg_pos, w_splat_args)
 
