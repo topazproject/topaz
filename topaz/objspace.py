@@ -410,7 +410,11 @@ class ObjectSpace(object):
         return w_obj.str_w(self)
 
     def str_w0(self, w_obj):
-        return assert_str0(w_obj.str_w(self))
+        string = w_obj.str_w(self)
+        if "\x00" in string:
+            raise self.error(self.w_ArgumentError, "string contains null byte")
+        else:
+            return assert_str0(string)
 
     def listview(self, w_obj):
         return w_obj.listview(self)
