@@ -4,7 +4,6 @@ import os
 import time
 
 from rpython.rlib.rfloat import round_double
-from rpython.rlib.rstring import assert_str0
 from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.error import RubyError, error_for_oserror
@@ -54,16 +53,16 @@ class Kernel(Module):
         if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
             w_load_path = space.globals.get(space, "$LOAD_PATH")
             for w_base in space.listview(w_load_path):
-                base = space.str_w(w_base)
+                base = space.str_w0(w_base)
                 full = os.path.join(base, path)
-                if os.path.exists(assert_str0(full)):
+                if os.path.exists(full):
                     path = os.path.join(base, path)
                     break
         return path
 
     @staticmethod
     def load_feature(space, path, orig_path):
-        if not os.path.exists(assert_str0(path)):
+        if not os.path.exists(path):
             raise space.error(space.w_LoadError, orig_path)
 
         try:
@@ -166,13 +165,13 @@ class Kernel(Module):
         if space.respond_to(args_w[0], space.newsymbol("to_ary")):
             w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
             cmd, argv0 = [
-                space.str_w(space.convert_type(
+                space.str_w0(space.convert_type(
                     w_e, space.w_string, "to_str"
                 )) for w_e in space.listview(w_cmd)
             ]
         else:
             w_cmd = space.convert_type(args_w[0], space.w_string, "to_str")
-            cmd = space.str_w(w_cmd)
+            cmd = space.str_w0(w_cmd)
             argv0 = None
 
         if len(args_w) > 1 or argv0 is not None:
@@ -184,7 +183,7 @@ class Kernel(Module):
                     argv0 = cmd
             args = [argv0]
             args += [
-                space.str_w(space.convert_type(
+                space.str_w0(space.convert_type(
                     w_arg, space.w_string, "to_str"
                 )) for w_arg in args_w[1:]
             ]

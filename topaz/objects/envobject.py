@@ -1,5 +1,7 @@
 import os
 
+from rpython.rlib.rstring import assert_str0
+
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 
@@ -20,7 +22,7 @@ class W_EnvObject(W_Object):
         if "\0" in key:
             raise space.error(space.w_ArgumentError, "bad environment variable name")
         try:
-            val = os.environ[key]
+            val = os.environ[assert_str0(key)]
         except KeyError:
             return space.w_nil
         return space.newstr_fromstr(val)
@@ -31,5 +33,5 @@ class W_EnvObject(W_Object):
             raise space.error(space.w_ArgumentError, "bad environment variable name")
         if "\0" in value:
             raise space.error(space.w_ArgumentError, "bad environment variable value")
-        os.environ[key] = value
+        os.environ[assert_str0(key)] = assert_str0(value)
         return space.newstr_fromstr(value)

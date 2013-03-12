@@ -1,5 +1,7 @@
 import os
 
+from rpython.rlib.rstring import assert_str0
+
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.modules.enumerable import Enumerable
@@ -86,9 +88,9 @@ class W_DirObject(W_Object):
             pattern = space.str_w(w_pat2)
             if len(patterns_w) == 1:
                 for pat in pattern.split("\0"):
-                    glob.glob(pat, flags)
+                    glob.glob(assert_str0(pat), flags)
             else:
-                glob.glob(pattern, flags)
+                glob.glob(assert_str0(pattern.split("\0")[0]), flags)
 
         if block:
             for match in glob.matches():

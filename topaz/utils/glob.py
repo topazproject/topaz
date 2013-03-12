@@ -1,7 +1,7 @@
 import os
 
 from rpython.rlib.rsre import rsre_core
-from rpython.rlib.rstring import StringBuilder
+from rpython.rlib.rstring import StringBuilder, assert_str0
 
 from topaz.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
 from topaz.utils import regexp

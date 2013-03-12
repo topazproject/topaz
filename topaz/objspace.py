@@ -4,6 +4,7 @@ import os
 
 from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
+from rpython.rlib.rstring import assert_str0
 from rpython.rlib.objectmodel import specialize
 
 from rply.errors import ParsingError
@@ -407,6 +408,9 @@ class ObjectSpace(object):
     def str_w(self, w_obj):
         """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
+
+    def str_w0(self, w_obj):
+        return assert_str0(w_obj.str_w(self))
 
     def listview(self, w_obj):
         return w_obj.listview(self)
