@@ -152,3 +152,31 @@ class TestEnumberable(BaseTopazTest):
         assert self.unwrap(space, w_res) == [x for x in range(2, 7)]
         w_res = space.execute("return [1,2,3,4,5].collect { |i| i + 1 }")
         assert self.unwrap(space, w_res) == [x for x in range(2, 7)]
+
+    def test_take(self, space):
+        w_res = space.execute("return [1,2,3,4,5].take(2)")
+        assert self.unwrap(space, w_res) == [1, 2]
+        w_res = space.execute("return [1,2,3,4,5].take(0)")
+        assert self.unwrap(space, w_res) == []
+        w_res = space.execute("return [].take(2)")
+        assert self.unwrap(space, w_res) == []
+
+    def test_take_while(self, space):
+        w_res = space.execute("return (1..10).take_while { |i| i < 4 }")
+        assert self.unwrap(space, w_res) == [1, 2, 3]
+        w_res = space.execute("return [].take_while { |i| i == 11 }")
+        assert self.unwrap(space, w_res) == []
+        w_res = space.execute("return (1..10).take_while { |i| i > 11 }")
+        assert self.unwrap(space, w_res) == []
+        w_res = space.execute("return (1..10).take_while { |i| i < 11 }")
+        assert self.unwrap(space, w_res) == [x for x in range(1, 11)]
+
+    def test_reject(self, space):
+        w_res = space.execute("return [1, 2, 3].reject { |i| i == 3 }")
+        assert self.unwrap(space, w_res) == [1, 2]
+        w_res = space.execute("return [].reject { |i| i == 3 }")
+        assert self.unwrap(space, w_res) == []
+        w_res = space.execute("return (1..10).reject { |i| i > 11 }")
+        assert self.unwrap(space, w_res) == [x for x in range(1, 11)]
+        w_res = space.execute("return (1..10).reject { |i| i < 11 }")
+        assert self.unwrap(space, w_res) == []
