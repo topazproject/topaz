@@ -394,19 +394,9 @@ class TestMapDict(BaseTopazTest):
         with self.raises(space, "LocalJumpError"):
             space.execute("1.tap")
 
-        with self.raises(space, "LocalJumpError"):
-            space.execute("'1'.tap")
-
         w_res = space.execute("""
         x = nil
-        1.tap{ |c| x = c }
-        return x
+        res = 1.tap { |c| x = c + 1 }
+        return res, x
         """)
-        assert self.unwrap(space, w_res) == 1
-
-        w_res = space.execute("""
-        x = nil
-        [].tap{ |c| x = c }
-        return x
-        """)
-        assert self.unwrap(space, w_res) == []
+        assert self.unwrap(space, w_res) == [1, 2]
