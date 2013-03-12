@@ -15,14 +15,13 @@ def construct_disko_stream_tower(fd, mode, textmode=False, binmode=False,
     # The "textmode", "binmode", and "buffering" flags won't be used at least
     # until the IO.new options hash support is implemented.
     os_flags, reading, writing, basemode, binary, text = decode_filemode(mode)
-    diskio_stream = DiskFile(fd)
     return construct_stream_tower(
-        diskio_stream,
+        DiskFile(fd),
         1 if buffering else 0,
         True, # XXX "universal" (applicability??)
         reading,
         writing,
-        binary or binmode or not text or not textmode
+        binary or binmode or not text or not textmode # FIXME please. egad.
     )
 
 
@@ -34,7 +33,7 @@ class W_IOObject(W_Object):
         self.fd = -1
         self.mode = None
         self.stream = None
-        self.sync = True
+        self.sync = True # XXX or False?  need to look at MRI more...
 
     def __del__(self):
         # Do not close standard file streams
@@ -45,6 +44,8 @@ class W_IOObject(W_Object):
         obj = super(W_IOObject, self).__deepcopy__(memo)
         obj.fd = self.fd
         obj.mode = self.mode
+        # XXX is the following remotely correct?  if the stream is buffered,
+        # we'd be losing the buffer position, for example...
         obj.stream = construct_disko_stream_tower(self.fd, self.mode)
         obj.sync = self.sync
         return obj
