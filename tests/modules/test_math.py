@@ -2,8 +2,6 @@ import math
 
 from ..base import BaseTopazTest
 
-import pytest
-
 
 class TestMath(BaseTopazTest):
     def assert_float_equal(self, result, expected, eps=1e-15):
