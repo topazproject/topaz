@@ -70,9 +70,9 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return [Math.cosh(0), Math.cosh(1), Math.cosh(123123)]")
         assert self.unwrap(space, w_res) == [1, math.cosh(1), float("inf")]
 
-    def test_erf(self, space):
-        w_res = space.execute("return [Math.erf(0), Math.erf(1), Math.erf(6)]")
-        assert self.unwrap(space, w_res) == [0, math.erf(1), 1]
+    #def test_erf(self, space):
+    #    w_res = space.execute("return [Math.erf(0), Math.erf(1), Math.erf(6)]")
+    #    assert self.unwrap(space, w_res) == [0, math.erf(1), 1]
 
     def test_exp(self, space):
         w_res = space.execute("return [Math.exp(0.0), Math.exp(1)]")

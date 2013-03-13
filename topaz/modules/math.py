@@ -76,13 +76,13 @@ class Math(Module):
             res = rfloat.copysign(rfloat.INFINITY, value)
         return space.newfloat(res)
 
-    @moduledef.function("erf", value="float")
-    def method_erf(self, space, value):
-        return space.newfloat(math.erf(value))
+    #@moduledef.function("erf", value="float")
+    #def method_erf(self, space, value):
+    #    return space.newfloat(math.erf(value))
 
-    @moduledef.function("erfc", value="float")
-    def method_erfc(self, space, value):
-        return space.newfloat(math.erfc(value))
+    #@moduledef.function("erfc", value="float")
+    #def method_erfc(self, space, value):
+    #    return space.newfloat(math.erfc(value))
 
     @moduledef.function("exp", value="float")
     def method_exp(self, space, value):
@@ -93,7 +93,7 @@ class Math(Module):
         res = math.frexp(value)
         frac = space.newfloat(res[0])
         exp = space.newint(res[1])
-        return space.newarray((frac, exp))
+        return space.newarray([frac, exp])
 
     @moduledef.function("gamma", value="float")
     def method_gamma(self, space, value):
@@ -117,9 +117,9 @@ class Math(Module):
     def method_ldexp(self, space, value1, value2):
         return space.newfloat(math.ldexp(value1, value2))
 
-    @moduledef.function("lgamma", value="float")
-    def method_lgamma(self, space, value):
-        return space.newfloat(math.lgamma(value))
+    #@moduledef.function("lgamma", value="float")
+    #def method_lgamma(self, space, value):
+    #    return space.newfloat(math.lgamma(value))
 
     @moduledef.function("log", value="float", base="float")
     def method_log(self, space, value, base=math.e):
