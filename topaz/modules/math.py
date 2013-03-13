@@ -76,20 +76,16 @@ class Math(Module):
             res = rfloat.copysign(rfloat.INFINITY, value)
         return space.newfloat(res)
 
-    # TODO: Math.erf
-
-    # TODO: Math.erfc
-
     @moduledef.function("exp", value="float")
     def method_exp(self, space, value):
         return space.newfloat(math.exp(value))
 
     @moduledef.function("frexp", value="float")
     def method_frexp(self, space, value):
-        res = math.frexp(value)
-        frac = space.newfloat(res[0])
-        exp = space.newint(res[1])
-        return space.newarray([frac, exp])
+        mant, exp = math.frexp(value)
+        w_mant = space.newfloat(mant)
+        w_exp = space.newint(exp)
+        return space.newarray([w_mant, w_exp])
 
     @moduledef.function("gamma", value="float")
     def method_gamma(self, space, value):
@@ -112,8 +108,6 @@ class Math(Module):
     @moduledef.function("ldexp", value1="float", value2="int")
     def method_ldexp(self, space, value1, value2):
         return space.newfloat(math.ldexp(value1, value2))
-
-    # TODO: Math.lgamma
 
     @moduledef.function("log", value="float", base="float")
     def method_log(self, space, value, base=math.e):
