@@ -67,7 +67,7 @@ class Kernel(Module):
             raise space.error(space.w_LoadError, orig_path)
 
         try:
-            f = open_file_as_stream(path)
+            f = open_file_as_stream(path, buffering=0)
             try:
                 contents = f.readall()
             finally:

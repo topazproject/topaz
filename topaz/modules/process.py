@@ -1,8 +1,23 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
 from topaz.module import Module, ModuleDef
+from topaz.system import IS_WINDOWS
+
+
+if IS_WINDOWS:
+    def geteuid():
+        return 0 # MRI behaviour on windows
+    def fork():
+        raise NotImplementedError("fork on windows")
+    def WEXITSTATUS(status):
+        return status
+else:
+    geteuid = os.geteuid
+    fork = os.fork
+    WEXITSTATUS = os.WEXITSTATUS
 
 
 class Process(Module):
@@ -10,7 +25,7 @@ class Process(Module):
 
     @moduledef.function("euid")
     def method_euid(self, space):
-        return space.newint(os.geteuid())
+        return space.newint(geteuid())
 
     @moduledef.function("pid")
     def method_pid(self, space):
@@ -19,7 +34,7 @@ class Process(Module):
     @moduledef.function("waitpid", pid="int")
     def method_waitpid(self, space, pid=-1):
         pid, status = os.waitpid(pid, 0)
-        status = os.WEXITSTATUS(status)
+        status = WEXITSTATUS(status)
         w_status = space.send(
             space.find_const(self, "Status"),
             space.newsymbol("new"),
@@ -38,7 +53,7 @@ class Process(Module):
 
     @moduledef.function("fork")
     def method_fork(self, space, block):
-        pid = os.fork()
+        pid = fork()
         if pid == 0:
             if block is not None:
                 space.invoke_block(block, [])

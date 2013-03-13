@@ -2,6 +2,8 @@ import os
 
 import pytest
 
+from topaz.modules import process
+
 from ..base import BaseTopazTest
 
 
@@ -35,7 +37,7 @@ class TestProcess(BaseTopazTest):
         assert self.unwrap(space, w_res) == [False, 1]
 
     def test_fork(self, space, monkeypatch, capfd):
-        monkeypatch.setattr(os, "fork", lambda: 0)
+        monkeypatch.setattr(process, "fork", lambda: 0)
         with self.raises(space, "SystemExit"):
             space.execute("""
             Process.fork do
@@ -45,7 +47,7 @@ class TestProcess(BaseTopazTest):
         out, err = capfd.readouterr()
         assert err == ""
         assert out == "child\n"
-        monkeypatch.setattr(os, "fork", lambda: 200)
+        monkeypatch.setattr(process, "fork", lambda: 200)
         w_res = space.execute("""
         return Process.fork do
             puts "child"
