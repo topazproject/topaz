@@ -70,10 +70,6 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return [Math.cosh(0), Math.cosh(1), Math.cosh(123123)]")
         assert self.unwrap(space, w_res) == [1, math.cosh(1), float("inf")]
 
-    #def test_erf(self, space):
-    #    w_res = space.execute("return [Math.erf(0), Math.erf(1), Math.erf(6)]")
-    #    assert self.unwrap(space, w_res) == [0, math.erf(1), 1]
-
     def test_exp(self, space):
         w_res = space.execute("return [Math.exp(0.0), Math.exp(1)]")
         assert self.unwrap(space, w_res) == [1, math.exp(1)]
@@ -119,9 +115,6 @@ class TestMath(BaseTopazTest):
     def test_ldexp(self, space):
         w_res = space.execute("return Math.ldexp(Math.frexp(1234)[0], 11)")
         assert self.unwrap(space, w_res) == 1234
-
-    #def test_lgamma(self, space):
-    #
 
     def test_log(self, space):
         with self.raises(space, "DomainError", 'Numerical argument is out of domain - "log"'):
