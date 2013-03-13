@@ -5,6 +5,7 @@ from rpython.rlib.rstring import StringBuilder
 
 from topaz.objects.fileobject import FNM_NOESCAPE, FNM_DOTMATCH
 from topaz.utils import regexp
+from topaz.utils.ll_file import isdir
 from topaz.utils.ordereddict import OrderedDict
 
 
@@ -213,7 +214,7 @@ class RecursiveDirectories(Node):
                 continue
             for ent in entries:
                 full = self.path_join(path, ent)
-                if os.path.isdir(full) and (self.allow_dots() or ent[0] != "."):
+                if isdir(full) and (self.allow_dots() or ent[0] != "."):
                     stack.append(full)
                     self.next.call(glob, full)
 
@@ -222,7 +223,7 @@ class StartRecursiveDirectories(RecursiveDirectories):
     def call(self, glob, start):
         stack = []
         for ent in os.listdir("."):
-            if os.path.isdir(ent) and (self.allow_dots() or ent[0] != "."):
+            if isdir(ent) and (self.allow_dots() or ent[0] != "."):
                 stack.append(ent)
                 self.next.call(glob, ent)
         self.call_with_stack(glob, None, stack)
@@ -319,7 +320,7 @@ class DirectoryMatch(Match):
         for ent in [".", ".."] + os.listdir(path if path else "."):
             if self.ismatch(glob.cache, ent):
                 full = self.path_join(path, ent)
-                if os.path.isdir(full):
+                if isdir(full):
                     self.next.call(glob, full)
 
 

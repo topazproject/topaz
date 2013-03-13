@@ -8,6 +8,7 @@ from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
+from topaz.system import IS_WINDOWS, IS_64BIT
 
 
 USAGE = "\n".join([
@@ -175,7 +176,11 @@ def _parse_argv(space, argv):
 
 
 def _entry_point(space, argv):
-    system, _, _, _, cpu = os.uname()
+    if IS_WINDOWS:
+        system = "Windows"
+        cpu = "x86_64" if IS_64BIT else "i686"
+    else:
+        system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
     engine = "topaz"
     version = "1.9.3"
@@ -237,7 +242,7 @@ def _entry_point(space, argv):
                     path = candidate_path
                     break
         try:
-            f = open_file_as_stream(path)
+            f = open_file_as_stream(path, buffering=0)
         except OSError as e:
             os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
             return 1
@@ -248,8 +253,11 @@ def _entry_point(space, argv):
     elif explicitly_verbose:
         return 0
     else:
-        source = fdopen_as_stream(0, "r").readall()
-        path = "-"
+        if IS_WINDOWS:
+            raise NotImplementedError("executing from stdin on Windows")
+        else:
+            source = fdopen_as_stream(0, "r").readall()
+            path = "-"
 
     for globalized_switch in globalized_switches:
         value = None
