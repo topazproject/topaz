@@ -133,8 +133,12 @@ class Array
     return nil
   end
 
-  def first
-    return self[0]
+  def first(*args)
+    if args.empty?
+      self[0]
+    else
+      take(*args)
+    end
   end
 
   def flatten(level = -1)

@@ -28,7 +28,6 @@ class W_RangeObject(W_Object):
         self.w_end = w_end
         self.exclusive = excl
       
-    @classdef.method("first")
     @classdef.method("begin")
     def method_begin(self, space):
         return self.w_start

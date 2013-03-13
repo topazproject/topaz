@@ -21,6 +21,14 @@ class Range
     self
   end
 
+  def first(*args)
+    if args.empty?
+      self.begin
+    else
+      take(*args)
+    end
+  end
+
   def ===(value)
     self.include?(value)
   end
