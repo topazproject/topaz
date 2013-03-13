@@ -177,6 +177,9 @@ class TestMath(BaseTopazTest):
         assert self.unwrap(space, w_res) == [2, math.sqrt(28)]
 
     def test_tan(self, space):
+        w_res = space.execute("return Math.tan(Float::INFINITY)")
+        assert math.isnan(space.float_w(w_res))
+
         w_res = space.execute("return [Math.tan(0), Math.tan(1)]")
         assert self.unwrap(space, w_res) == [0, math.tan(1)]
 

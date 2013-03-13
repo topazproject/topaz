@@ -6,6 +6,7 @@ from rpython.rlib import rfloat
 
 from topaz.module import Module, ModuleDef, ClassDef
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
+from rpython.rlib.rfloat import NAN
 
 
 class Math(Module):
@@ -167,7 +168,11 @@ class Math(Module):
 
     @moduledef.function("tan", value="float")
     def method_tan(self, space, value):
-        return space.newfloat(math.tan(value))
+        try:
+            res = math.tan(value)
+        except ValueError:
+            res = NAN
+        return space.newfloat(res)
 
     @moduledef.function("tanh", value="float")
     def method_tanh(self, space, value):
