@@ -93,7 +93,7 @@ class W_DirObject(W_Object):
                 for pat in pattern.split("\0"):
                     glob.glob(pat, flags)
             else:
-                glob.glob(pattern, flags)
+                glob.glob(pattern.split("\0")[0], flags)
 
         if block:
             for match in glob.matches():

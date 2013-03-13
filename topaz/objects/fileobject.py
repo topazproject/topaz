@@ -72,7 +72,7 @@ class W_FileObject(W_IOObject):
                 raise error_for_oserror(space, e)
         return space.newint(len(args_w))
 
-    @classdef.method("initialize", filename="str")
+    @classdef.method("initialize", filename="path")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
         if w_mode is None:
             w_mode = space.w_nil

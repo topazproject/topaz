@@ -317,6 +317,9 @@ class Any(RegexpBase):
 
 
 class AnyAll(RegexpBase):
+    def is_empty(self):
+        return False
+
     def fix_groups(self):
         pass
 
@@ -436,6 +439,12 @@ class Branch(RegexpBase):
     def fix_groups(self):
         for b in self.branches:
             b.fix_groups()
+
+    def is_empty(self):
+        for b in self.branches:
+            if not b.is_empty():
+                return False
+        return True
 
     def _flatten_branches(self, info, branches):
         new_branches = []
@@ -626,6 +635,9 @@ class BaseRepeat(RegexpBase):
 
 class GreedyRepeat(BaseRepeat):
     UNTIL_OPCODE = OPCODE_MAX_UNTIL
+
+    def can_be_affix(self):
+        return True
 
     def optimize(self, info, in_set=False):
         subpattern = self.subpattern.optimize(info)

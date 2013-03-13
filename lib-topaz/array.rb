@@ -63,6 +63,7 @@ class Array
       yield self[i]
       i += 1
     end
+    return self
   end
 
   def zip(ary)
@@ -255,10 +256,10 @@ class Array
   def uniq!(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     seen = {}
-    old_len = self.length
+    old_length = self.length
     i = 0
     shifted = 0
-    while i < self.length do
+    while i < old_length do
       item = self[i]
       item = yield(item) if block
       if seen.include? item

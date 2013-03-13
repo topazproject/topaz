@@ -188,7 +188,7 @@ class W_FixnumObject(W_RootObject):
     def method_left_shift(self, space, other):
         if other < 0:
             return space.newint(self.intvalue >> -other)
-        elif other > LONG_BIT:
+        elif other >= LONG_BIT:
             return space.send(
                 space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
                 [space.newint(other)]
