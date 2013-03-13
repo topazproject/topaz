@@ -1,6 +1,3 @@
-# http://daeken.com/python-marshal-format
-# would it be faster to use integer and shift? certainly yes
-
 from __future__ import absolute_import
 from topaz.module import Module, ModuleDef
 from topaz.objects.arrayobject import W_ArrayObject
@@ -13,12 +10,13 @@ from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.ioobject import W_IOObject
 from topaz.objects.floatobject import W_FloatObject
 
-import os  # not nice?
+import os
 import math
 
 
 class Marshal(Module):
     moduledef = ModuleDef("Marshal", filepath=__file__)
+
     MAJOR_VERSION = 4
     MINOR_VERSION = 8
 
@@ -59,6 +57,7 @@ class Marshal(Module):
 
             if raw_value == int_value:
                 float_value = int_value
+                # repr would be more accurate here, but it weirdly does not translate
                 if str(raw_value) == "-0.0":  # slowing things down
                     string = "-0"
                 else:
@@ -90,7 +89,7 @@ class Marshal(Module):
             for char in string:
                 bytes.append(ord(char))
             bytes.append(0x06)
-            # for now work with default encoding
+            # TODO: respect encoding
             bytes += Marshal.dump(space, space.newsymbol("E"))
             bytes += Marshal.dump(space, space.w_true)
         elif isinstance(w_obj, W_HashObject):
@@ -118,7 +117,8 @@ class Marshal(Module):
             return space.newint(value), length
         elif byte == Marshal.FLOAT:
             count, length = Marshal.bytes2integer(bytes[1:])
-            chars = []  # rename!
+
+            chars = []
             for i in range(length, length + count):
                 chars.append(chr(bytes[i]))
 
@@ -136,9 +136,11 @@ class Marshal(Module):
             return space.newarray(array), skip
         elif byte == Marshal.SYMBOL:
             count, length = Marshal.bytes2integer(bytes[1:])
+
             chars = []
             for i in range(length, length + count):
                 chars.append(chr(bytes[i]))
+
             return space.newsymbol("".join(chars)), length + count
         elif byte == Marshal.IVAR:
             # TODO: fully interpret IVARS
@@ -209,7 +211,7 @@ class Marshal(Module):
         return Marshal.load(space, bytes[2:])[0]
 
     # extract integer from marshalled byte array
-    # least significant byte first!
+    # least significant byte first
     @staticmethod
     def bytes2integer(bytes):
         if bytes[0] >= 252:
@@ -231,7 +233,7 @@ class Marshal(Module):
             else:
                 return value - 5, 2
 
-    # least significant byte first!
+    # least significant byte first
     @staticmethod
     def integer2bytes(value):
         bytes = []
