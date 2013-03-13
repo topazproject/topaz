@@ -7,6 +7,7 @@ from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rbigint import rbigint
 
 from rply.errors import ParsingError
 
