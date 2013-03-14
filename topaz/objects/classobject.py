@@ -76,7 +76,7 @@ class W_ClassObject(W_ModuleObject):
             assert isinstance(w_superclass, W_ClassObject)
         else:
             w_superclass = space.w_object
-        return space.newclass("", w_superclass)
+        return space.newclass(None, w_superclass)
 
     @classdef.method("initialize")
     def method_initialize(self, space, args_w):
