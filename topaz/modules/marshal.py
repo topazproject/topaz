@@ -104,8 +104,8 @@ class Marshal(Module):
         return bytes
 
     @staticmethod
-    def load(space, bytes):
-        byte = bytes[0]
+    def load(space, bytes, offset=0):
+        byte = bytes[offset]
         if byte == Marshal.NIL:
             return space.w_nil, 1
         elif byte == Marshal.TRUE:
@@ -113,56 +113,56 @@ class Marshal(Module):
         elif byte == Marshal.FALSE:
             return space.w_false, 1
         elif byte == Marshal.FIXNUM:
-            value, length = Marshal.bytes2integer(bytes[1:])
+            value, length = Marshal.bytes2integer(bytes, offset + 1)
             return space.newint(value), length
         elif byte == Marshal.FLOAT:
-            count, length = Marshal.bytes2integer(bytes[1:])
+            count, length = Marshal.bytes2integer(bytes, offset + 1)
 
             chars = []
             for i in range(length, length + count):
-                chars.append(chr(bytes[i]))
+                chars.append(chr(bytes[offset + i]))
 
             return space.newfloat(float("".join(chars))), length
         elif byte == Marshal.ARRAY:
-            count, skip = Marshal.bytes2integer(bytes[1:])
+            count, skip = Marshal.bytes2integer(bytes, offset + 1)
 
             array = []
             for i in range(0, count):
                 assert skip > 0
-                element, l = Marshal.load(space, bytes[skip:])
+                element, l = Marshal.load(space, bytes, offset + skip)
                 skip += l
                 array.append(element)
 
             return space.newarray(array), skip
         elif byte == Marshal.SYMBOL:
-            count, length = Marshal.bytes2integer(bytes[1:])
+            count, length = Marshal.bytes2integer(bytes, offset + 1)
 
             chars = []
             for i in range(length, length + count):
-                chars.append(chr(bytes[i]))
+                chars.append(chr(bytes[offset + i]))
 
             return space.newsymbol("".join(chars)), length + count
         elif byte == Marshal.IVAR:
             # TODO: fully interpret IVARS
-            if bytes[1] == Marshal.STRING:
-                count, length = Marshal.bytes2integer(bytes[2:])
+            if bytes[offset + 1] == Marshal.STRING:
+                count, length = Marshal.bytes2integer(bytes, offset + 2)
                 encoding = 6
                 chars = []
                 # TODO: take encoding into consideration
                 for i in range(length + 1, length + count + 1):
-                    chars.append(chr(bytes[i]))
+                    chars.append(chr(bytes[offset + i]))
                 return space.newstr_fromstr("".join(chars)), count + length + encoding
             else:
-                raise NotImplementedError(bytes[1])
+                raise NotImplementedError(bytes[offset + 1])
         elif byte == Marshal.HASH:
-            count, skip = Marshal.bytes2integer(bytes[1:])
+            count, skip = Marshal.bytes2integer(bytes, offset + 1)
             w_hash = space.newhash()
             for i in range(0, count):
                 assert skip > 0
-                k, s = Marshal.load(space, bytes[skip:])
+                k, s = Marshal.load(space, bytes, offset + skip)
                 skip += s
                 assert skip > 0
-                v, s = Marshal.load(space, bytes[skip:])
+                v, s = Marshal.load(space, bytes, offset + skip)
                 skip += s
                 w_hash.method_subscript_assign(k, v)
             return w_hash, skip
@@ -208,24 +208,24 @@ class Marshal(Module):
                 % (Marshal.MAJOR_VERSION, Marshal.MINOR_VERSION, bytes[0], bytes[1])
             )
 
-        return Marshal.load(space, bytes[2:])[0]
+        return Marshal.load(space, bytes, 2)[0]
 
     # extract integer from marshalled byte array
     # least significant byte first
     @staticmethod
-    def bytes2integer(bytes):
-        if bytes[0] >= 252:
-            value = 256 - bytes[1]
-            for i in range(2, 256 - bytes[0] + 1):
-                value += (255 - bytes[i]) * int(math.pow(256, i - 1))
-            return -value, 256 - bytes[0] + 2
-        elif bytes[0] > 0 and bytes[0] < 6:
-            value = bytes[1]
-            for i in range(2, bytes[0] + 1):
-                value += bytes[i] * int(math.pow(256, i - 1))
-            return value, bytes[0] + 2
+    def bytes2integer(bytes, offset):
+        if bytes[offset] >= 252:
+            value = 256 - bytes[offset + 1]
+            for i in range(2, 256 - bytes[offset] + 1):
+                value += (255 - bytes[offset + i]) * int(math.pow(256, i - 1))
+            return -value, 256 - bytes[offset] + 2
+        elif bytes[offset] > 0 and bytes[offset] < 6:
+            value = bytes[offset + 1]
+            for i in range(2, bytes[offset] + 1):
+                value += bytes[offset + i] * int(math.pow(256, i - 1))
+            return value, bytes[offset] + 2
         else:
-            value = bytes[0]
+            value = bytes[offset]
             if value == 0:
                 return 0, 2
             elif value > 127:
