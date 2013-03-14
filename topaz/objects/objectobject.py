@@ -65,7 +65,8 @@ class W_BaseObject(W_Root):
     @classdef.method("method_missing")
     def method_method_missing(self, space, w_name, args_w):
         name = space.symbol_w(w_name)
-        class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
+        class_name = space.str_w(space.send(self.getclass(space),
+            space.newsymbol("to_s")))
         raise space.error(space.w_NoMethodError,
             "undefined method `%s' for %s" % (name, class_name)
         )

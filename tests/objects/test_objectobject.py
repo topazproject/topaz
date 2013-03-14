@@ -194,6 +194,20 @@ class TestObjectObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == ["foo", ["bar", 42], None]
 
+    def test_method_missing_raises(self, space):
+        err = "undefined method `does_not_exist' for A"
+        with self.raises(space, "NoMethodError", err):
+            space.execute("""
+            class A; end
+            A.new.does_not_exist
+            """)
+
+        with self.raises(space, "NoMethodError"):
+            space.execute("""
+            class A; end
+            Class.new.does_not_exist
+            """)
+
     def test_instance_variable_get(self, space):
         w_res = space.execute("""
         class Fred
