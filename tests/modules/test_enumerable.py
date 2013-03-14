@@ -2,30 +2,6 @@ from ..base import BaseTopazTest
 
 
 class TestEnumberable(BaseTopazTest):
-    def test_first(self, space):
-        w_res = space.execute("return [1, 2, 3].first")
-        assert self.unwrap(space, w_res) == 1
-        w_res = space.execute("return (3..5).first")
-        assert self.unwrap(space, w_res) == 3
-        w_res = space.execute("return [].first")
-        assert w_res == space.w_nil
-        w_res = space.execute("return [3, 4, 5].first(2)")
-        assert self.unwrap(space, w_res) == [3, 4]
-        w_res = space.execute("return (3..5).first(2)")
-        assert self.unwrap(space, w_res) == [3, 4]
-        w_res = space.execute("""
-        class TestFirst
-          include Enumerable
-          
-          def each(&block)
-            yield 2
-            yield 1
-          end
-        end
-        return TestFirst.new.first
-        """)
-        assert self.unwrap(space, w_res) == 2
-
     def test_inject(self, space):
         w_res = space.execute("""
         return (5..10).inject(1) do |prod, n|
