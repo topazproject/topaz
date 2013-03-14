@@ -260,6 +260,8 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
+        if self.name is None:
+            return space.newstr_fromstr(space.any_to_s(self))
         return space.newstr_fromstr(self.name)
 
     @classdef.method("include")
