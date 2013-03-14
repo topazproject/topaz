@@ -33,8 +33,12 @@ class W_ClassObject(W_ModuleObject):
                 singleton_superclass = space.w_class
             else:
                 singleton_superclass = self.superclass.getsingletonclass(space)
+            if self.name is None:
+                name = None
+            else:
+                name = "#<Class:%s>" % self.name
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, singleton_superclass, is_singleton=True
+                name, singleton_superclass, is_singleton=True
             )
         return self.klass
 

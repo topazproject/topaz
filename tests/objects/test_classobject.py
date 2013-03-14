@@ -1,3 +1,5 @@
+import pytest
+
 class TestClassObject(object):
     def test_name(self, space):
         space.execute("Class")
@@ -13,10 +15,18 @@ class TestClassObject(object):
         w_res = space.execute("return Class.new.to_s")
         assert space.str_w(w_res).startswith("#<Class:0x")
 
+    @pytest.mark.xfail
+    def test_singletonclass_to_s(self, space):
+        w_res = space.execute("Class.new.singleton_class.to_s")
+        assert space.str_w(w_res).startswith("#<Class:#<Class:0x")
+
     def test_anon_class_name(self, space):
         w_res = space.execute("return Class.new.name")
         assert w_res is space.w_nil
 
+    def test_singletonclass_name(self, space):
+        w_res = space.execute("Class.new.singleton_class.name")
+        assert w_res is space.w_nil
 
     def test_class_new(self, space):
         w_res = space.execute("return Class.new.superclass.name")
