@@ -6,6 +6,7 @@ from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
+from topaz.objects.intobject import W_FixnumObject
 from topaz.utils.packing.pack import RPacker
 
 
@@ -165,19 +166,31 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("insert", w_idx="int")
+    @check_frozen()
     def method_insert(self, space, w_idx, args_w):
-        idx = space.int_w(w_idx)
+        if len(args_w) == 0:
+            return self
 
-        if idx < -len(self.items_w):
+        if isinstance(w_idx, W_Object):
+            return
+
+        if isinstance(w_idx, W_FixnumObject):
+            idx = space.int_w(w_idx)
+        else:
+            idx = space.int_w(space.convert_type(w_idx, space.w_fixnum, "to_int"))
+
+        length = len(self.items_w)
+
+        if idx < -length and length > 0:
             raise space.error(space.w_IndexError,
                 "index %d too small for array; minimum: %d" % (
                     idx + 1,
-                    -len(self.items_w)
+                    -length
                 )
             )
-        elif idx > len(self.items_w):
+        elif idx > length:
             before = self.items_w
-            for i in range(idx - len(self.items_w)):
+            for i in range(idx - length):
                 before.append(space.w_nil)
             after = []
         elif idx == 0:
@@ -187,7 +200,7 @@ class W_ArrayObject(W_Object):
             before = self.items_w
             after = []
         elif idx < -1:
-            split_idx = len(self.items_w) + idx + 1
+            split_idx = length + idx + 1
             assert split_idx > 0
             before = self.items_w[:split_idx]
             after = self.items_w[split_idx:]
