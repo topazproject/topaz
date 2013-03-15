@@ -260,9 +260,10 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        if self.name is None:
+        name = self.name
+        if name is None:
             return space.newstr_fromstr(space.any_to_s(self))
-        return space.newstr_fromstr(self.name)
+        return space.newstr_fromstr(name)
 
     @classdef.method("include")
     def method_include(self, space, w_mod):
@@ -353,9 +354,10 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("name")
     def method_name(self, space):
-        if self.name is None:
+        name = self.name
+        if name is None:
             return space.w_nil
-        return space.newstr_fromstr(self.name)
+        return space.newstr_fromstr(name)
 
     @classdef.method("private")
     def method_private(self, space, args_w):

@@ -350,6 +350,7 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromchars(self, chars)
 
     def newstr_fromstr(self, strvalue):
+        assert strvalue is not None
         return W_StringObject.newstr_fromstr(self, strvalue)
 
     def newstr_fromstrs(self, strs_w):
