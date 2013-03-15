@@ -681,3 +681,6 @@ class ObjectSpace(object):
                                  self.newsymbol("name"))),
             self.int_w(self.send(w_obj, self.newsymbol("__id__")))
         )
+
+    def obj_to_s(self, w_obj):
+        return self.str_w(self.send(w_obj, self.newsymbol("to_s")))
