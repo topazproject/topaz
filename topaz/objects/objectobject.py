@@ -134,7 +134,7 @@ class W_RootObject(W_BaseObject):
             if space.is_kind_of(w_mod, space.w_class):
                 name = "Class"
             else:
-                name = space.getclass(w_mod).name
+                name = space.obj_to_s(space.getclass(w_mod))
             raise space.error(
                 space.w_TypeError,
                 "wrong argument type %s (expected Module)" % name

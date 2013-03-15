@@ -23,7 +23,9 @@ class RubySorter(TimSort):
         if w_cmp_res is self.space.w_nil:
             raise self.space.error(
                 self.space.w_ArgumentError,
-                "comparison of %s with %s failed" % (self.space.getclass(a).name, self.space.getclass(b).name)
+                "comparison of %s with %s failed" %
+                (self.space.obj_to_s(self.space.getclass(a)),
+                   self.space.obj_to_s(self.space.getclass(b)))
             )
         else:
             return self.space.int_w(w_cmp_res) < 0

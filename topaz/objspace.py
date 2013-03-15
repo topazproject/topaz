@@ -384,7 +384,8 @@ class ObjectSpace(object):
         if w_function is None:
             raise self.error(
                 self.w_NameError,
-                "undefined method `%s' for class `%s'" % (name, w_cls.name)
+                "undefined method `%s' for class `%s'" % (name,
+                                                          self.obj_to_s(w_cls))
             )
         else:
             return W_UnboundMethodObject(self, w_cls, w_function)
@@ -657,19 +658,21 @@ class ObjectSpace(object):
         except RubyError:
             if not raise_error:
                 return self.w_nil
-            src_cls = self.getclass(w_obj).name
+            src_cls_name = self.obj_to_s(self.getclass(w_obj))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(
-                self.w_TypeError, "can't convert %s into %s" % (src_cls, w_cls.name)
+                self.w_TypeError, "can't convert %s into %s" % (src_cls_name, w_cls_name)
             )
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return self.w_nil
         elif not self.is_kind_of(w_res, w_cls):
-            src_cls = self.getclass(w_obj).name
-            res_cls = self.getclass(w_res).name
+            src_cls = self.obj_to_s(self.getclass(w_obj))
+            res_cls = self.obj_to_s(self.getclass(w_res))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(self.w_TypeError,
                 "can't convert %s to %s (%s#%s gives %s)" % (
-                    src_cls, w_cls.name, src_cls, method, res_cls
+                    src_cls, w_cls_name, src_cls, method, res_cls
                 )
             )
         else:
