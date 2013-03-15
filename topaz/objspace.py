@@ -680,8 +680,7 @@ class ObjectSpace(object):
 
     def any_to_s(self, w_obj):
         return "#<%s:0x%x>" % (
-            self.str_w(self.send(self.getnonsingletonclass(w_obj),
-                                 self.newsymbol("name"))),
+            self.obj_to_s(self.getnonsingletonclass(w_obj)),
             self.int_w(self.send(w_obj, self.newsymbol("__id__")))
         )
 
