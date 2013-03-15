@@ -25,7 +25,7 @@ USAGE = "\n".join([
     """  -Idirectory     specify $LOAD_PATH directory (may be used more than once)""",
 #   """  -l              enable line ending processing""",
     """  -n              assume 'while gets(); ... end' loop around your script""",
-#   """  -p              assume loop like -n but print line also like sed""",
+    """  -p              assume loop like -n but print line also like sed""",
     """  -rlibrary       require the library, before executing your script""",
     """  -s              enable some switch parsing for switches after script name""",
     """  -S              look for the script using PATH environment variable""",
@@ -134,6 +134,9 @@ def _parse_argv(space, argv):
             globalize_switches = True
         elif arg == "-n":
             do_loop = True
+        elif arg == "-p":
+            do_loop = True
+            flag_globals_w["$-p"] = space.w_true
         elif arg == "--":
             idx += 1
             break
@@ -278,6 +281,7 @@ def _entry_point(space, argv):
     explicit_status = False
     try:
         if do_loop:
+            print_after = space.is_true(flag_globals_w["$-p"])
             bc = space.compile(source, path)
             frame = space.create_frame(bc)
             while True:
@@ -285,7 +289,9 @@ def _entry_point(space, argv):
                 if w_line is space.w_nil:
                     break
                 with space.getexecutioncontext().visit_frame(frame):
-                    space.execute_frame(frame, bc)
+                    w_res = space.execute_frame(frame, bc)
+                    if print_after:
+                        space.send(space.w_kernel, space.newsymbol("print"), [w_res])
         else:
             space.execute(source, filepath=path)
     except RubyError as e:
