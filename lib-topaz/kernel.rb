@@ -47,4 +47,18 @@ module Kernel
     raise TypeError.new("can't convert #{cmd.class} into String") unless cmd.is_a?(String)
     IO.popen(cmd) { |r| r.read }
   end
+
+  def rand(max = 0)
+    random = Random.new.rand
+    if max.is_a? Range
+      (max.last - max.first) * random + max.first
+    else
+      max = max.to_int.abs
+      if max.zero?
+        random
+      else
+        (max * random).to_int
+      end
+    end
+  end
 end
