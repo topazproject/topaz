@@ -10,7 +10,7 @@ from topaz.objects.stringobject import W_StringObject
 from topaz.utils.filemode import map_filemode, decode_filemode
 
 
-def construct_disko_stream_tower(fd, mode, textmode=False, binmode=False,
+def construct_diskio_stream_tower(fd, mode, textmode=False, binmode=False,
                                  buffering=True):
     # The "textmode", "binmode", and "buffering" flags won't be used at least
     # until the IO.new options hash support is implemented.
@@ -46,7 +46,7 @@ class W_IOObject(W_Object):
         obj.mode = self.mode
         # XXX is the following remotely correct?  if the stream is buffered,
         # we'd be losing the buffer position, for example...
-        obj.stream = construct_disko_stream_tower(self.fd, self.mode)
+        obj.stream = construct_diskio_stream_tower(self.fd, self.mode)
         obj.sync = self.sync
         return obj
 
@@ -59,7 +59,7 @@ class W_IOObject(W_Object):
         # as though `method_initialize` has been called yet other times only as
         # though `__init__` has been called?
         if self.stream is None:
-            self.stream = construct_disko_stream_tower(
+            self.stream = construct_diskio_stream_tower(
                 self.fd,
                 self.mode if self.mode is not None else "r"
             )
@@ -127,7 +127,7 @@ class W_IOObject(W_Object):
             mode = "r"
         self.mode = mode
         self.fd = fd
-        self.stream = construct_disko_stream_tower(fd, mode)
+        self.stream = construct_diskio_stream_tower(fd, mode)
         return self
 
     @classdef.method("read")
