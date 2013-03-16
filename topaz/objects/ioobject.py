@@ -141,13 +141,10 @@ class W_IOObject(W_Object):
                 )
         else:
             length = -1
-        chunk = self.stream.read(length)
-        read_bytes = len(chunk)
-        read_chunks = [chunk]
-        # Return nil on EOF if length is given
-        if read_bytes == 0:
+        read_str = self.stream.read(length)
+        if not read_str:
             return space.w_nil
-        w_read_str = space.newstr_fromchars(read_chunks)
+        w_read_str = space.newstr_fromstr(read_str)
         if w_str is not None:
             w_str.clear(space)
             w_str.extend(space, w_read_str)
