@@ -85,11 +85,13 @@ class W_ArrayObject(W_Object):
         start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
         if w_count and end < start:
-            raise space.error(space.w_IndexError,
+            raise space.error(
+                space.w_IndexError,
                 "negative length (%d)" % (end - start)
             )
         elif start < 0:
-            raise space.error(space.w_IndexError,
+            raise space.error(
+                space.w_IndexError,
                 "index %d too small for array; minimum: %d" % (
                     start - len(self.items_w),
                     -len(self.items_w)
@@ -171,9 +173,6 @@ class W_ArrayObject(W_Object):
         if len(args_w) == 0:
             return self
 
-        if isinstance(w_idx, W_Object):
-            return
-
         if isinstance(w_idx, W_FixnumObject):
             idx = space.int_w(w_idx)
         else:
@@ -181,8 +180,9 @@ class W_ArrayObject(W_Object):
 
         length = len(self.items_w)
 
-        if idx < -length and length > 0:
-            raise space.error(space.w_IndexError,
+        if idx < -length - 1:
+            raise space.error(
+                space.w_IndexError,
                 "index %d too small for array; minimum: %d" % (
                     idx + 1,
                     -length
@@ -196,12 +196,9 @@ class W_ArrayObject(W_Object):
         elif idx == 0:
             before = []
             after = self.items_w
-        elif idx == -1:
-            before = self.items_w
-            after = []
-        elif idx < -1:
+        elif idx < 0:
             split_idx = length + idx + 1
-            assert split_idx > 0
+            assert split_idx >= 0
             before = self.items_w[:split_idx]
             after = self.items_w[split_idx:]
         else:
@@ -250,7 +247,8 @@ class W_ArrayObject(W_Object):
         elif space.respond_to(w_sep, space.newsymbol("to_str")):
             separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
         else:
-            raise space.error(space.w_TypeError,
+            raise space.error(
+                space.w_TypeError,
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([

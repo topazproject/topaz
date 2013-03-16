@@ -1,3 +1,0 @@
-fails:Array#insert inserts objects after the element at index with negative index
-fails:Array#insert can insert before the first element with a negative index
-fails:Array#insert tries to convert the passed position argument to an Integer using #to_int
