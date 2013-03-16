@@ -2,7 +2,7 @@ module Enumerable
 
   def first(*args)
     if args.empty?
-      self.each{ |e| return e }
+      self.each { |e| return e }
       nil
     else
       take(*args)
