@@ -288,9 +288,9 @@ class TestIO(BaseTopazTest):
             """ % f)
 
     def test_reopen(self, space, tmpdir):
-        content = "This is line one"
+        content = "This is line one\n"
         f = tmpdir.join("testfile")
-        f.write(content + "\n")
+        f.write(content)
         w_res = space.execute("""
         res = []
         class A
@@ -306,12 +306,12 @@ class TestIO(BaseTopazTest):
         res << f2.readlines[0]
         return res
         """ % (f, f))
-        assert self.unwrap(space, w_res) == [content, content, ""]
+        assert self.unwrap(space, w_res) == [content, content, None]
 
     def test_reopen_path(self, space, tmpdir):
-        content = "This is line one"
+        content = "This is line one\n"
         f = tmpdir.join("testfile")
-        f.write(content + "\n")
+        f.write(content)
         w_res = space.execute("""
         res = []
         f = File.new("%s")
@@ -321,7 +321,7 @@ class TestIO(BaseTopazTest):
         res << f.readlines[0]
         return res
         """ % (f, f))
-        assert self.unwrap(space, w_res) == [content, content, ""]
+        assert self.unwrap(space, w_res) == [content, content, None]
 
     def test_reopen_with_invalid_arg(self, space):
         with self.raises(space, "TypeError", "can't convert Fixnum into String"):
