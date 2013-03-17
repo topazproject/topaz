@@ -59,6 +59,12 @@ class Enumerator
     return Array(self.next)
   end
 
+  def with_object(obj, &block)
+    return Enumerator.new(self, :with_object, obj) unless block
+    self.each{ |*v| yield( *v, obj ) }
+    return obj
+  end
+
   class Generator
     def initialize(&block)
       @block = block
