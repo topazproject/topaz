@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import subprocess
 
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
@@ -39,7 +40,7 @@ USAGE = "\n".join([
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
-
+RUBY_REVISION = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip()
 
 @specialize.memo()
 def getspace():
@@ -188,12 +189,13 @@ def _entry_point(space, argv):
     engine = "topaz"
     version = "1.9.3"
     patchlevel = 125
-    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
+    description = "%s (ruby-%sp%d) [%s] (git rev %s)" % (engine, version, patchlevel, platform, RUBY_REVISION)
     space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
     space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
+    space.set_const(space.w_object, "RUBY_REVISION", space.newstr_fromstr(RUBY_REVISION))
 
     try:
         (
