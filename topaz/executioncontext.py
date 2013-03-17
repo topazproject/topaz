@@ -13,7 +13,7 @@ class ExecutionContext(object):
         self.regexp_match_cell = None
         self.w_trace_proc = None
         self.in_trace_proc = False
-        self.recursive_objects = {}
+        self.recursive_calls = {}
         self.catch_names = {}
 
     def settraceproc(self, w_proc):
@@ -75,8 +75,13 @@ class ExecutionContext(object):
             frame = frame.backref()
         return frame
 
-    def recursion_guard(self, w_obj):
-        return _RecursionGuardContextManager(self, w_obj)
+    def recursion_guard(self, func_id, w_obj):
+        # We need independent recursion detection for different blocks of
+        # potentially recursive code so that they don't interfere with each
+        # other and cause false positives. This is only likely to be a problem
+        # if one recursion-guarded function calls another, but we can't
+        # guarantee that won't happen.
+        return _RecursionGuardContextManager(self, func_id, w_obj)
 
     def catch_block(self, name):
         return _CatchContextManager(self, name)
@@ -103,21 +108,27 @@ class _VisitFrameContextManager(object):
 
 
 class _RecursionGuardContextManager(object):
-    def __init__(self, ec, w_obj):
+    def __init__(self, ec, func_id, w_obj):
         self.ec = ec
+        if func_id not in self.ec.recursive_calls:
+            self.ec.recursive_calls[func_id] = {}
+        self.recursive_objects = self.ec.recursive_calls[func_id]
+        self.func_id = func_id
         self.w_obj = w_obj
         self.added = False
 
     def __enter__(self):
-        if self.w_obj in self.ec.recursive_objects:
+        if self.w_obj in self.recursive_objects:
             return True
-        self.ec.recursive_objects[self.w_obj] = None
+        self.recursive_objects[self.w_obj] = None
         self.added = True
         return False
 
     def __exit__(self, exc_type, exc_value, tb):
         if self.added:
-            del self.ec.recursive_objects[self.w_obj]
+            del self.recursive_objects[self.w_obj]
+            if not self.recursive_objects:
+                del self.ec.recursive_calls[self.func_id]
 
 
 class _CatchContextManager(object):
