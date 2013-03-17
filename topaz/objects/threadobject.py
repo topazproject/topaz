@@ -37,7 +37,7 @@ class W_ThreadObject(W_Object):
         It is up to the block to decide what to do in either case.
         """
         ec = space.getexecutioncontext()
-        identifier = space.str_w(w_identifier)
+        identifier = space.symbol_w(w_identifier)
         with ec.recursion_guard(identifier, w_obj) as in_recursion:
             if not in_recursion:
                 space.invoke_block(block, [])
