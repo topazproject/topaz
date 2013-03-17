@@ -14,7 +14,7 @@ env:
 #         - env: TEST_TYPE=rubyspec_untranslated
 install:
     - pip install --use-mirrors requests
-    - pip install -e git+https://github.com/pyinvoke/invoke#egg=invoke
+    - pip install invoke>=0.2.0,<0.3.0
     - invoke travis.install_requirements
 script: invoke travis.run_tests
 after_success: invoke travis.upload_build
