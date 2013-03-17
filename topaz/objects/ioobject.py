@@ -263,6 +263,8 @@ class W_IOObject(W_Object):
             w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
         assert isinstance(w_io, W_IOObject)
         w_io.ensure_not_closed(space)
+        if self.stream.flushable():
+            self.stream.flush()
         self.stream.close()
         os.dup2(w_io.getfd(), self.fd)
         return self
@@ -280,6 +282,8 @@ class W_IOObject(W_Object):
     @classdef.method("close")
     def method_close(self, space):
         self.ensure_not_closed(space)
+        if self.stream.flushable():
+            self.stream.flush()
         self.stream.close()
         self.fd = -1
         return self
