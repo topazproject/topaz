@@ -144,11 +144,12 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                ec = space.getexecutioncontext()
+                with ec.recursion_guard("file_singleton_method_join", w_arg) as in_recursion:
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(
-                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
                     )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
