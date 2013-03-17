@@ -105,7 +105,7 @@ module Enumerable
   alias find detect
 
   def take(n)
-    n = n.to_int
+    n = Topaz.coerce_int(n)
     raise ArgumentError.new("attempt to take negative size") if n < 0
     result = []
     unless n == 0

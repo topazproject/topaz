@@ -15,3 +15,7 @@ class Topaz(Module):
         elif space.is_kind_of(w_int, space.w_bignum):
             bigint = space.bigint_w(w_int)
             return space.newint(intmask(bigint.uintmask()))
+
+    @moduledef.function("coerce_int")
+    def method_coerce_int(self, space, w_obj):
+        return space.convert_type(w_obj, space.w_fixnum, "to_int")
