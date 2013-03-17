@@ -1,5 +1,6 @@
 import os
 import platform
+import subprocess
 
 import pytest
 
