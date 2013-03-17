@@ -25,9 +25,13 @@ class Array
     return self
   end
 
+  def self.[](*args)
+    args.inject(allocate) { |array, arg| array << arg}
+  end
+
   def inspect
     result = "["
-    recursion = Thread.current.recursion_guard(self) do
+    recursion = Thread.current.recursion_guard(:array_inspect, self) do
       self.each_with_index do |obj, i|
         if i > 0
           result << ", "
@@ -63,6 +67,7 @@ class Array
       yield self[i]
       i += 1
     end
+    return self
   end
 
   def zip(ary)
@@ -138,7 +143,7 @@ class Array
 
   def flatten(level = -1)
     list = []
-    recursion = Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_flatten, self) do
       self.each do |item|
         if level == 0
           list << item
@@ -150,9 +155,7 @@ class Array
       end
       return list
     end
-    if recursion
-      raise ArgumentError.new("tried to flatten recursive array")
-    end
+    raise ArgumentError.new("tried to flatten recursive array")
   end
 
   def flatten!(level = -1)
@@ -178,7 +181,7 @@ class Array
     if self.size != other.size
       return false
     end
-    Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_equals, self) do
       self.each_with_index do |x, i|
         if x != other[i]
           return false
@@ -198,7 +201,7 @@ class Array
     if self.length != other.length
       return false
     end
-    Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_eqlp, self) do
       self.each_with_index do |x, i|
         if !x.eql?(other[i])
           return false
@@ -255,10 +258,10 @@ class Array
   def uniq!(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     seen = {}
-    old_len = self.length
+    old_length = self.length
     i = 0
     shifted = 0
-    while i < self.length do
+    while i < old_length do
       item = self[i]
       item = yield(item) if block
       if seen.include? item

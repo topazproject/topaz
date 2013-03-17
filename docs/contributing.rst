@@ -46,11 +46,11 @@ Running the tests
 ~~~~~~~~~~~~~~~~~
 
 One thing you should know when writing a patch for Topaz, is that all changes
-need tests (or a really good reason why they don't). You should first check whether
-you can find a Rubyspec that previously failed and now passes with your patch.
-If you do, see below for how to untag it. If there is no Rubyspec that now works,
-you need to write a test for our test suite. You can run our test suite by
-installing ``py.test`` (``pip install -r requirements.txt``)::
+need tests (or a really good reason why they don't). You should first check
+whether you can find a Rubyspec that previously failed and now passes with your
+patch. If you do, see below for how to untag it. If there is no Rubyspec that
+now works, you need to write a test for our test suite. You can run our test
+suite by installing ``py.test`` (``pip install -r requirements.txt``)::
 
     $ py.test
 
@@ -61,10 +61,17 @@ will verify for every pull request that it compiles and tests pass.
 Running Rubyspecs
 ~~~~~~~~~~~~~~~~~
 
+<<<<<<< HEAD
 To run Rubyspecs, you can use the provided `Invoke`_ tasks (executed via the
 ``invoke`` or ``inv`` command). The rubyspec and mspec repositories have to be
 checked out next to your topaz repository, the spec tasks will clone them for
 you if they aren't already there.
+=======
+To run Rubyspecs, you can use the provided ``fab`` tasks. To get ``fab`` you
+must have `Fabric`_ installed. The `rubyspec`_ and `mspec`_
+repositories have to be checked out next to your topaz repository, the spec
+tasks will clone them for you if they aren't already there.
+>>>>>>> upstream/master
 
 To just run all specs that should pass::
 
@@ -99,3 +106,5 @@ you've earned it!
 
 
 .. _`Invoke`: http://pyinvoke.org
+.. _`rubyspec`: https://github.com/rubyspec/rubyspec
+.. _`mspec`: https://github.com/rubyspec/mspec

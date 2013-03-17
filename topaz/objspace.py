@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
 from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rbigint import rbigint
 
 from rply.errors import ParsingError
 
@@ -62,6 +65,7 @@ from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.threadobject import W_ThreadObject
 from topaz.objects.timeobject import W_TimeObject
 from topaz.parser import Parser
+from topaz.utils.ll_file import isdir
 
 
 class SpaceCache(Cache):
@@ -231,7 +235,7 @@ class ObjectSpace(object):
         kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
-            if os.path.isdir(os.path.join(path, "lib-ruby")):
+            if isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
                 kernel_path = os.path.join(path, "lib-topaz")
                 break
@@ -322,6 +326,15 @@ class ObjectSpace(object):
     def newbigint_fromrbigint(self, bigint):
         return W_BignumObject.newbigint_fromrbigint(self, bigint)
 
+    @specialize.argtype(1)
+    def newint_or_bigint(self, someinteger):
+        if -sys.maxint <= someinteger <= sys.maxint:
+            # The smallest int -sys.maxint - 1 has to be a Bignum,
+            # because parsing gives a Bignum in that case
+            return self.newint(intmask(someinteger))
+        else:
+            return self.newbigint_fromrbigint(rbigint.fromrarith_int(someinteger))
+
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
 
@@ -407,6 +420,13 @@ class ObjectSpace(object):
     def str_w(self, w_obj):
         """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
+
+    def str0_w(self, w_obj):
+        string = w_obj.str_w(self)
+        if "\x00" in string:
+            raise self.error(self.w_ArgumentError, "string contains null byte")
+        else:
+            return string
 
     def listview(self, w_obj):
         return w_obj.listview(self)

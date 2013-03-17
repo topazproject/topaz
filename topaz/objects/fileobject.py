@@ -9,7 +9,10 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.ioobject import W_IOObject
-from topaz.utils.filemode import map_filemode, O_BINARY
+from topaz.objects.stringobject import W_StringObject
+from topaz.system import IS_WINDOWS
+from topaz.utils.ll_file import O_BINARY, ftruncate, isdir, fchmod
+from topaz.utils.filemode import map_filemode
 
 
 FNM_NOESCAPE = 0x01
@@ -22,7 +25,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        if sys.platform == "win32":
+        if IS_WINDOWS:
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
         else:
@@ -56,7 +59,7 @@ class W_FileObject(W_IOObject):
             stat_val = os.stat(name)
         except OSError:
             return space.w_nil
-        return space.w_nil if stat_val.st_size == 0 else space.newint(stat_val.st_size)
+        return space.w_nil if stat_val.st_size == 0 else space.newint_or_bigint(stat_val.st_size)
 
     @classdef.singleton_method("unlink")
     @classdef.singleton_method("delete")
@@ -69,7 +72,7 @@ class W_FileObject(W_IOObject):
                 raise error_for_oserror(space, e)
         return space.newint(len(args_w))
 
-    @classdef.method("initialize", filename="str")
+    @classdef.method("initialize", filename="path")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
         if w_mode is None:
             w_mode = space.w_nil
@@ -141,11 +144,12 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                ec = space.getexecutioncontext()
+                with ec.recursion_guard("file_singleton_method_join", w_arg) as in_recursion:
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(
-                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
                     )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
@@ -175,7 +179,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("directory?", filename="path")
     def method_directoryp(self, space, filename):
-        return space.newbool(os.path.isdir(filename))
+        return space.newbool(isdir(filename))
 
     @classdef.singleton_method("symlink?", filename="path")
     def method_symlinkp(self, space, filename):
@@ -213,13 +217,13 @@ class W_FileObject(W_IOObject):
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):
         self.ensure_not_closed(space)
-        os.ftruncate(self.fd, length)
+        ftruncate(self.fd, length)
         return space.newint(0)
 
     @classdef.method("chmod", mode="int")
     def method_chmod(self, space, mode):
         try:
-            os.fchmod(self.fd, mode)
+            fchmod(self.fd, mode)
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
@@ -254,21 +258,25 @@ class W_FileObject(W_IOObject):
         stat_obj.set_stat(stat_val)
         return stat_obj
 
-    @classdef.singleton_method("symlink", old_name="path", new_name="path")
-    def singleton_method_symlink(self, space, old_name, new_name):
-        try:
-            os.symlink(old_name, new_name)
-        except OSError as e:
-            raise error_for_oserror(space, e)
-        return space.newint(0)
+    if IS_WINDOWS:
+        classdef.s_notimplemented("symlink")
+        classdef.s_notimplemented("link")
+    else:
+        @classdef.singleton_method("symlink", old_name="path", new_name="path")
+        def singleton_method_symlink(self, space, old_name, new_name):
+            try:
+                os.symlink(old_name, new_name)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+            return space.newint(0)
 
-    @classdef.singleton_method("link", old_name="path", new_name="path")
-    def singleton_method_link(self, space, old_name, new_name):
-        try:
-            os.link(old_name, new_name)
-        except OSError as e:
-            raise error_for_oserror(space, e)
-        return space.newint(0)
+        @classdef.singleton_method("link", old_name="path", new_name="path")
+        def singleton_method_link(self, space, old_name, new_name):
+            try:
+                os.link(old_name, new_name)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+            return space.newint(0)
 
 
 class W_FileStatObject(W_Object):
@@ -298,17 +306,32 @@ class W_FileStatObject(W_Object):
         except OSError as e:
             raise error_for_oserror(space, e)
 
-    @classdef.method("blksize")
-    def method_blksize(self, space):
-        return space.newint(self.get_stat(space).st_blksize)
-
     @classdef.method("blockdev?")
     def method_blockdevp(self, space):
         return space.newbool(stat.S_ISBLK(self.get_stat(space).st_mode))
 
-    @classdef.method("blocks")
-    def method_blocks(self, space):
-        return space.newint(self.get_stat(space).st_blocks)
+    if IS_WINDOWS:
+        def unsupported_attr(name, classdef):
+            @classdef.method(name)
+            def method(self, space):
+                return space.w_nil
+            method.__name__ = name
+            return method
+        method_blksize = unsupported_attr("blksize", classdef)
+        method_blocks = unsupported_attr("blocks", classdef)
+        method_rdev = unsupported_attr("rdev", classdef)
+    else:
+        @classdef.method("blksize")
+        def method_blksize(self, space):
+            return space.newint(self.get_stat(space).st_blksize)
+
+        @classdef.method("rdev")
+        def method_rdev(self, space):
+            return space.newint(self.get_stat(space).st_rdev)
+
+        @classdef.method("blocks")
+        def method_blocks(self, space):
+            return space.newint(self.get_stat(space).st_blocks)
 
     @classdef.method("chardev?")
     def method_chardevp(self, space):
@@ -316,7 +339,7 @@ class W_FileStatObject(W_Object):
 
     @classdef.method("dev")
     def method_dev(self, space):
-        return space.newint(self.get_stat(space).st_dev)
+        return space.newint_or_bigint(self.get_stat(space).st_dev)
 
     @classdef.method("directory?")
     def method_directoryp(self, space):
@@ -352,7 +375,7 @@ class W_FileStatObject(W_Object):
 
     @classdef.method("ino")
     def method_ino(self, space):
-        return space.newint(self.get_stat(space).st_ino)
+        return space.newint_or_bigint(self.get_stat(space).st_ino)
 
     def get_w_mode(self, space):
         return space.newint(self.get_stat(space).st_mode)
@@ -365,10 +388,6 @@ class W_FileStatObject(W_Object):
     def method_nlink(self, space):
         return space.newint(self.get_stat(space).st_nlink)
 
-    @classdef.method("rdev")
-    def method_rdev(self, space):
-        return space.newint(self.get_stat(space).st_rdev)
-
     @classdef.method("setgid?")
     def method_setgidp(self, space):
         return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISGID)
@@ -379,7 +398,7 @@ class W_FileStatObject(W_Object):
 
     @classdef.method("size")
     def method_size(self, space):
-        return space.newint(self.get_stat(space).st_size)
+        return space.newint_or_bigint(self.get_stat(space).st_size)
 
     @classdef.method("socket?")
     def method_socketp(self, space):

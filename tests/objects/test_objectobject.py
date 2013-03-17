@@ -389,3 +389,14 @@ class TestMapDict(BaseTopazTest):
         return 'aaa'.method(A.new).class
         """)
         assert self.unwrap(space, w_res) == space.getclassfor(W_MethodObject)
+
+    def test_tap(self, space):
+        with self.raises(space, "LocalJumpError"):
+            space.execute("1.tap")
+
+        w_res = space.execute("""
+        x = nil
+        res = 1.tap { |c| x = c + 1 }
+        return res, x
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]

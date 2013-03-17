@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import subprocess
 
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
@@ -8,6 +9,7 @@ from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
+from topaz.system import IS_WINDOWS, IS_64BIT
 
 
 USAGE = "\n".join([
@@ -23,8 +25,8 @@ USAGE = "\n".join([
 #   """  -i[extension]   edit ARGV files in place (make backup if extension supplied)""",
     """  -Idirectory     specify $LOAD_PATH directory (may be used more than once)""",
 #   """  -l              enable line ending processing""",
-#   """  -n              assume 'while gets(); ... end' loop around your script""",
-#   """  -p              assume loop like -n but print line also like sed""",
+    """  -n              assume 'while gets(); ... end' loop around your script""",
+    """  -p              assume loop like -n but print line also like sed""",
     """  -rlibrary       require the library, before executing your script""",
     """  -s              enable some switch parsing for switches after script name""",
     """  -S              look for the script using PATH environment variable""",
@@ -38,7 +40,7 @@ USAGE = "\n".join([
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
-
+RUBY_REVISION = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip()
 
 @specialize.memo()
 def getspace():
@@ -74,6 +76,7 @@ def _parse_argv(space, argv):
         "$-a": space.w_false,
     }
     warning_level = None
+    do_loop = False
     path = None
     search_path = False
     globalize_switches = False
@@ -130,6 +133,11 @@ def _parse_argv(space, argv):
             search_path = True
         elif arg == "-s":
             globalize_switches = True
+        elif arg == "-n":
+            do_loop = True
+        elif arg == "-p":
+            do_loop = True
+            flag_globals_w["$-p"] = space.w_true
         elif arg == "--":
             idx += 1
             break
@@ -160,6 +168,7 @@ def _parse_argv(space, argv):
 
     return (
         flag_globals_w,
+        do_loop,
         path,
         search_path,
         globalized_switches,
@@ -171,21 +180,27 @@ def _parse_argv(space, argv):
 
 
 def _entry_point(space, argv):
-    system, _, _, _, cpu = os.uname()
+    if IS_WINDOWS:
+        system = "Windows"
+        cpu = "x86_64" if IS_64BIT else "i686"
+    else:
+        system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
     engine = "topaz"
     version = "1.9.3"
     patchlevel = 125
-    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
+    description = "%s (ruby-%sp%d) [%s] (git rev %s)" % (engine, version, patchlevel, platform, RUBY_REVISION)
     space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
     space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
+    space.set_const(space.w_object, "RUBY_REVISION", space.newstr_fromstr(RUBY_REVISION))
 
     try:
         (
             flag_globals_w,
+            do_loop,
             path,
             search_path,
             globalized_switches,
@@ -232,7 +247,7 @@ def _entry_point(space, argv):
                     path = candidate_path
                     break
         try:
-            f = open_file_as_stream(path)
+            f = open_file_as_stream(path, buffering=0)
         except OSError as e:
             os.write(2, "%s -- %s (LoadError)\n" % (os.strerror(e.errno), path))
             return 1
@@ -243,8 +258,11 @@ def _entry_point(space, argv):
     elif explicitly_verbose:
         return 0
     else:
-        source = fdopen_as_stream(0, "r").readall()
-        path = "-"
+        if IS_WINDOWS:
+            raise NotImplementedError("executing from stdin on Windows")
+        else:
+            source = fdopen_as_stream(0, "r").readall()
+            path = "-"
 
     for globalized_switch in globalized_switches:
         value = None
@@ -264,7 +282,20 @@ def _entry_point(space, argv):
     w_exit_error = None
     explicit_status = False
     try:
-        space.execute(source, filepath=path)
+        if do_loop:
+            print_after = space.is_true(flag_globals_w["$-p"])
+            bc = space.compile(source, path)
+            frame = space.create_frame(bc)
+            while True:
+                w_line = space.send(space.w_kernel, space.newsymbol("gets"))
+                if w_line is space.w_nil:
+                    break
+                with space.getexecutioncontext().visit_frame(frame):
+                    w_res = space.execute_frame(frame, bc)
+                    if print_after:
+                        space.send(space.w_kernel, space.newsymbol("print"), [w_res])
+        else:
+            space.execute(source, filepath=path)
     except RubyError as e:
         explicit_status = True
         w_exc = e.w_value

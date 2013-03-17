@@ -10,3 +10,7 @@ def target(driver, args):
 
 def jitpolicy(driver):
     return JitPolicy()
+
+
+def handle_config(config, translateconfig):
+    config.translation.suggest(check_str_without_nul=True)
