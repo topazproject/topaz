@@ -2,12 +2,7 @@ import os
 import sys
 
 from topaz.objects.stringobject import W_StringObject
-
-
-if sys.platform == "win32":
-    O_BINARY = os.O_BINARY
-else:
-    O_BINARY = 0
+from topaz.utils.ll_file import O_BINARY
 
 
 def map_filemode(space, w_mode):

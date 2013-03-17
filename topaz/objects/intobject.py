@@ -13,6 +13,7 @@ from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.integerobject import W_IntegerObject
 from topaz.objects.numericobject import W_NumericObject
 from topaz.objects.objectobject import W_RootObject
+from topaz.system import IS_WINDOWS
 
 
 class FixnumStorage(object):
@@ -187,7 +188,7 @@ class W_FixnumObject(W_RootObject):
     def method_left_shift(self, space, other):
         if other < 0:
             return space.newint(self.intvalue >> -other)
-        elif other > LONG_BIT:
+        elif other >= LONG_BIT:
             return space.send(
                 space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
                 [space.newint(other)]
@@ -271,9 +272,15 @@ class W_FixnumObject(W_RootObject):
     def method_hash(self, space):
         return self
 
-    @classdef.method("size")
-    def method_size(self, space):
-        return space.newint(rffi.sizeof(lltype.typeOf(self.intvalue)))
+    if IS_WINDOWS:
+        @classdef.method("size")
+        def method_size(self, space):
+            # RPython translation is always 32bit on Windows
+            return space.newint(4)
+    else:
+        @classdef.method("size")
+        def method_size(self, space):
+            return space.newint(rffi.sizeof(lltype.typeOf(self.intvalue)))
 
     @classdef.method("coerce")
     def method_coerce(self, space, w_other):
