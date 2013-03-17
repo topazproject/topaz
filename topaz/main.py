@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import subprocess
 
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
