@@ -26,6 +26,10 @@ class IO
     seek(i, IO::SEEK_SET)
   end
 
+  def rewind
+    seek(0, IO::SEEK_SET)
+  end
+
   def each_line(sep = $/, limit = nil)
     sep, limit = get_sep_limit(sep, limit)
     if limit == 0

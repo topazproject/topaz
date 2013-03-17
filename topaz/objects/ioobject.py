@@ -176,6 +176,8 @@ class W_IOObject(W_Object):
     @classdef.method("seek", amount="int", whence="int")
     def method_seek(self, space, amount, whence=os.SEEK_SET):
         self.ensure_not_closed(space)
+        if self.stream.flushable():
+            self.stream.flush()
         self.stream.seek(amount, whence)
         return space.newint(0)
 
@@ -186,12 +188,6 @@ class W_IOObject(W_Object):
         # TODO: this currently truncates large values, switch this to use a
         # Bignum in those cases
         return space.newint(int(self.stream.tell()))
-
-    @classdef.method("rewind")
-    def method_rewind(self, space):
-        self.ensure_not_closed(space)
-        self.stream.seek(0, os.SEEK_SET)
-        return space.newint(0)
 
     @classdef.method("sync")
     def method_sync(self, space):
