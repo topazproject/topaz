@@ -31,7 +31,7 @@ class Array
 
   def inspect
     result = "["
-    recursion = Thread.current.recursion_guard(self) do
+    recursion = Thread.current.recursion_guard(:array_inspect, self) do
       self.each_with_index do |obj, i|
         if i > 0
           result << ", "
@@ -143,7 +143,7 @@ class Array
 
   def flatten(level = -1)
     list = []
-    recursion = Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_flatten, self) do
       self.each do |item|
         if level == 0
           list << item
@@ -155,9 +155,7 @@ class Array
       end
       return list
     end
-    if recursion
-      raise ArgumentError.new("tried to flatten recursive array")
-    end
+    raise ArgumentError.new("tried to flatten recursive array")
   end
 
   def flatten!(level = -1)
@@ -183,7 +181,7 @@ class Array
     if self.size != other.size
       return false
     end
-    Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_equals, self) do
       self.each_with_index do |x, i|
         if x != other[i]
           return false
@@ -203,7 +201,7 @@ class Array
     if self.length != other.length
       return false
     end
-    Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_eqlp, self) do
       self.each_with_index do |x, i|
         if !x.eql?(other[i])
           return false
