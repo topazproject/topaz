@@ -33,9 +33,11 @@ class W_IOObject(W_Object):
         self.fd = -1
         self.mode = None
         self.stream = None
-        self.sync = True # XXX or False?  need to look at MRI more...
+        self.sync = False
 
     def __del__(self):
+        if self.sync and self.stream and self.stream.flushable():
+            self.stream.flush()
         # Do not close standard file streams
         if self.fd > 3:
             self.stream.close()
@@ -128,6 +130,7 @@ class W_IOObject(W_Object):
         self.mode = mode
         self.fd = fd
         self.stream = construct_diskio_stream_tower(fd, mode)
+        self.sync = True if fd == 2 else False
         return self
 
     @classdef.method("read")
@@ -189,6 +192,17 @@ class W_IOObject(W_Object):
         self.ensure_not_closed(space)
         self.stream.seek(0, os.SEEK_SET)
         return space.newint(0)
+
+    @classdef.method("sync")
+    def method_sync(self, space):
+        self.ensure_not_closed(space)
+        return space.newbool(self.sync)
+
+    @classdef.method("sync=", value="bool")
+    def method_sync_assign(self, space, value):
+        self.ensure_not_closed(space)
+        self.sync = value
+        return space.newbool(self.sync)
 
     @classdef.method("print")
     def method_print(self, space, args_w):
