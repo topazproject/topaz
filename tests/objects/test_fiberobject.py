@@ -79,3 +79,10 @@ class TestFiberObject(BaseTopazTest):
         """)
         with self.raises(space, "FiberError", "dead fiber called"):
             space.execute("$f.resume")
+
+    def test_first_resume_block_arguments(self, space):
+        w_res = space.execute("""
+        f = Fiber.new { |x, y| Fiber.yield(x + y) }
+        return f.resume(2, 5)
+        """)
+        assert space.int_w(w_res) == 7

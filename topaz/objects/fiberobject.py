@@ -104,6 +104,7 @@ class W_FiberObject(W_Object):
             global_state.space.fromcache(State).current = self
             topframeref = space.getexecutioncontext().topframeref
             if self.sthread is None:
+                self.bottomframe.handle_block_args(space, self.w_block.bytecode, args_w, self.w_block)
                 sthread = self.get_sthread(space, space.getexecutioncontext())
                 self.sthread = sthread
                 self.h = sthread.new(new_stacklet_callback)
