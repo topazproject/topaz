@@ -33,10 +33,3 @@ class TestEnvObject(BaseTopazTest):
     def test_class(self, space):
         w_res = space.execute("return ENV.class")
         assert w_res is space.w_object
-
-    def test_delete(self, space):
-        space.execute("ENV['ABC'] = '12'")
-        w_res_abc = space.execute("return ENV.delete 'ABC'")
-        w_res_nil = space.execute("return ENV.delete 'FOO'")
-        assert space.str_w(w_res_abc) == "12"
-        assert self.unwrap(space, w_res_nil) is None
