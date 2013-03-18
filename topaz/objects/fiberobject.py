@@ -57,6 +57,10 @@ class W_FiberObject(W_Object):
         space.fromcache(State).current = parent_fiber
 
         topframeref = space.getexecutioncontext().topframeref
+        if len(args_w) == 1:
+            global_state.w_result = args_w[0]
+        else:
+            global_state.w_result = space.newarray(args_w)
         parent_fiber.h = space.getexecutioncontext().fiber_thread.switch(parent_fiber.h)
         assert space.fromcache(State).current is current
         space.getexecutioncontext().topframeref = topframeref
@@ -83,22 +87,22 @@ class W_FiberObject(W_Object):
         if self.parent_fiber is not None:
             raise space.error(space.w_FiberError, "double resume")
 
-        if self.sthread is None:
-            sthread = self.get_sthread(space, space.getexecutioncontext())
-            self.sthread = sthread
-            self.parent_fiber = space.fromcache(State).get_current(space)
-            try:
-                global_state.space = space
-                global_state.space.fromcache(State).current = self
-                topframeref = space.getexecutioncontext().topframeref
+        self.parent_fiber = space.fromcache(State).get_current(space)
+        try:
+            global_state.space = space
+            global_state.space.fromcache(State).current = self
+            topframeref = space.getexecutioncontext().topframeref
+            if self.sthread is None:
+                sthread = self.get_sthread(space, space.getexecutioncontext())
+                self.sthread = sthread
                 self.h = sthread.new(new_stacklet_callback)
-                assert space.fromcache(State).current is self.parent_fiber
-                space.getexecutioncontext().topframeref = topframeref
-                return get_result()
-            finally:
-                self.parent_fiber = None
-        else:
-            XXX
+            else:
+                self.h = self.sthread.switch(self.h)
+            assert space.fromcache(State).current is self.parent_fiber
+            space.getexecutioncontext().topframeref = topframeref
+            return get_result()
+        finally:
+            self.parent_fiber = None
 
 
 class SThread(StackletThread):
