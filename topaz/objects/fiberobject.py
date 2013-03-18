@@ -72,9 +72,10 @@ class W_FiberObject(W_Object):
 
     @classdef.method("resume")
     def method_resume(self, space, args_w):
-        sthread = self.get_sthread(space, space.getexecutioncontext())
-
+        if self.parent_fiber is not None:
+            raise space.error(space.w_FiberError, "double resume")
         if self.sthread is None:
+            sthread = self.get_sthread(space, space.getexecutioncontext())
             self.sthread = sthread
             self.parent_fiber = space.fromcache(State).get_current(space)
             try:

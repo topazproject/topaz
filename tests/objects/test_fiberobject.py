@@ -16,6 +16,15 @@ class TestFiberObject(BaseTopazTest):
         """)
         assert space.int_w(w_res) == 2
 
+    def test_nested_resume(self, space):
+        with self.raises(space, "FiberError", "double resume"):
+            space.execute("""
+            f = Fiber.new {
+                f.resume
+            }
+            f.resume
+            """)
+
     def test_closure(self, space):
         w_res = space.execute("""
         a = 2

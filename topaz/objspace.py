@@ -126,6 +126,7 @@ class ObjectSpace(object):
         self.w_KeyError = self.getclassfor(W_KeyError)
         self.w_IOError = self.getclassfor(W_IOError)
         self.w_EOFError = self.getclassfor(W_EOFError)
+        self.w_FiberError = self.getclassfor(W_FiberError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
         self.w_FloatDomainError = self.getclassfor(W_FloatDomainError)
@@ -154,7 +155,7 @@ class ObjectSpace(object):
             self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
             self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
-            self.w_EOFError, self.w_FloatDomainError,
+            self.w_EOFError, self.w_FloatDomainError, self.w_FiberError,
 
             self.w_kernel, self.w_topaz,
 
@@ -175,7 +176,6 @@ class ObjectSpace(object):
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_ThreadError),
-            self.getclassfor(W_FiberError),
 
             self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),
