@@ -1,7 +1,6 @@
-import itertools
 import os
-import time
 
+from topaz.utils import time
 from topaz.coerce import Coerce
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
@@ -12,13 +11,16 @@ class W_TimeObject(W_Object):
 
     def __init__(self, space, klass):
         W_Object.__init__(self, space, klass)
-        self.epoch_seconds = 0
-        self.struct_time = time.struct_time((0, 0, 0, 0, 0, 0, 0, 0, 0))
+        self.epoch_seconds = 0.0
+        self.struct_time = (0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-    def get_time_struct(self, secs=None):
-        if secs is not None:
-            return time.localtime(secs)
-        return time.localtime()
+    def get_time_struct(self, space, w_secs=None):
+        return time.localtime(space, w_secs)
+
+    @classdef.setup_class
+    def setup_class(cls, space, w_cls):
+        time._init_accept2dyear(space)
+        time._init_timezone(space)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
@@ -33,37 +35,40 @@ class W_TimeObject(W_Object):
     def method_local(self, space, arg0, w_arg1=None, w_arg2=None, w_arg3=None,
                      w_arg4=None, w_arg5=None, w_arg6=None, w_arg7=None,
                      w_arg8=None, w_arg9=None, w_arg10=None):
-        args_w_raw = [
+        args_raw_w = [
             w_arg1, w_arg2, w_arg3, w_arg4, w_arg5, w_arg6, w_arg7, w_arg8,
             w_arg9, w_arg10
         ]
         args_w = [
             w_arg if w_arg is not None and w_arg is not space.w_nil
-                else space.newint(0) for w_arg in args_w_raw
+                else space.newint(0) for w_arg in args_raw_w
         ]
-        args_w_filtered = list(
-            itertools.ifilter(
-                lambda w_arg: w_arg not in (space.w_nil, None),
-                [space.newint(0)] + args_w_raw
-            )
-        )
-        n_args = len(args_w_filtered)
+        args_filtered_w = []
+        for w_arg in [space.newint(0)] + args_raw_w:
+            if w_arg is not None and w_arg is not space.w_nil:
+                args_filtered_w.append(w_arg)
+
+        n_args = len(args_filtered_w)
         if n_args == 9:
             raise space.error(space.w_ArgumentError, "%s for 1..8" % n_args)
         if n_args == 11:
             raise space.error(space.w_ArgumentError, "%s for 1..10" % n_args)
 
+        w_time = W_TimeObject(space, self)
         # this assumes signatures where "year" is first argument
-        w_time = space.send(self, space.newsymbol("new"))
-        month, day, hour, minute, sec = [Coerce.int(space, w_arg) for w_arg in args_w[:5]]
-        w_time.struct_time = time.struct_time((arg0, month, day, hour, minute, sec, 0, 0, 0))
-        w_time.epoch_seconds = time.mktime(w_time.struct_time)
+        month, day, hour, minute, sec = [
+            Coerce.int(space, w_arg) for w_arg in args_w[:5]
+        ]
+        w_time.struct_time = (
+            arg0, month, day, hour, minute, sec, 0, 0, 0
+        )
+        w_time.epoch_seconds = time.mktime(space, w_time.struct_time)
         return w_time
 
     @classdef.method("initialize")
     def method_initialize(self, space):
-        self.struct_time = self.get_time_struct()
-        self.epoch_seconds = time.mktime(self.struct_time)
+        self.struct_time = self.get_time_struct(space)
+        self.epoch_seconds = time.mktime(space, self.struct_time)
 
     @classdef.method("to_f")
     def method_to_f(self, space):
@@ -82,6 +87,4 @@ class W_TimeObject(W_Object):
     @classdef.method("to_s")
     @classdef.method("inspect")
     def method_to_s(self, space):
-        return space.newstr_fromstr(
-            time.strftime('%Y-%m-%d %H:%M:%S %z', self.struct_time)
-        )
+        return time.strftime(space, '%Y-%m-%d %H:%M:%S %z', self.struct_time)
