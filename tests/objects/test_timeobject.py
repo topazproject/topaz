@@ -20,10 +20,10 @@ class TestTimeObject(object):
             time.tzset(space)
 
     def test_now(self, space, monkeypatch):
+        monkeypatch.setattr(time, "time", lambda: 342.1)
         monkeypatch.setattr(os, "environ", UTC_ENV)
-        monkeypatch.setattr(time, "time", lambda: 123.4)
         w_secs = space.execute("return Time.now.to_f")
-        assert space.float_w(w_secs) == 123.4
+        assert space.float_w(w_secs) == 342.1
 
     def test_subtraction(self, space, monkeypatch):
         monkeypatch.setattr(W_TimeObject, "get_time_struct", self.epoch)
