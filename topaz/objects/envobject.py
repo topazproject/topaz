@@ -28,10 +28,10 @@ class W_EnvObject(W_Object):
     @classdef.method("[]=", key="str")
     def method_subscript_assign(self, space, key, w_value):
         if w_value is space.w_nil:
-            # MRI appears to allow setting nils in the ENV hash (weird.)
-            # Proxying `os.environ` may be required, but for now converting
-            # incoming nils to empty string.
-            w_value = space.newstr_fromstr("")
+            # Let's just wait for #521
+            #if key in os.environ:
+                #del os.environ[key]
+            return space.w_nil
         value = space.str_w(w_value)
         if "\0" in key:
             raise space.error(space.w_ArgumentError, "bad environment variable name")
