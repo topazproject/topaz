@@ -36,6 +36,8 @@ class W_EnvObject(W_Object):
 
     @classdef.method("delete", key="str")
     def method_delete(self, space, key):
+        if "\0" in key:
+            raise space.error(space.w_ArgumentError, "bad environment variable name")
         try:
             val = os.environ[key]
         except KeyError:
