@@ -327,7 +327,7 @@ class TestArrayObject(BaseTopazTest):
 
     def test_clear(self, space):
         w_res = space.execute("""
-        a = [1,2,3]
+        a = [1, 2, 3]
         a.clear
         return a
         """)
@@ -387,7 +387,7 @@ class TestArrayObject(BaseTopazTest):
         assert self.unwrap(space, w_res) == [1, 2, 3, [4, 5]]
         with self.raises(space, "ArgumentError", "tried to flatten recursive array"):
             space.execute("""
-            a = [0,1,2,3]
+            a = [0, 1, 2, 3]
             a[0] = a
             a.flatten
             """)
@@ -533,3 +533,7 @@ class TestArrayPack(BaseTopazTest):
     def test_singleton_subscript(self, space):
         w_res = space.execute("return Array[6, -1]")
         assert self.unwrap(space, w_res) == [6, -1]
+
+    def test_each(self, space):
+        w_res = space.execute("return [1, 2].each { }")
+        assert self.unwrap(space, w_res) == [1, 2]

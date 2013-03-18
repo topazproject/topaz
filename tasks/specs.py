@@ -1,4 +1,4 @@
-from fabric.api import task, local
+from invoke import task, run as run_
 
 from .base import BaseTest
 
@@ -13,7 +13,7 @@ class Rubyspecs(BaseTest):
         self.download_rubyspec()
 
     def mspec(self, args):
-        local("../mspec/bin/mspec %s -t %s --config=topaz.mspec %s" % (args, self.exe, self.files))
+        run_("../mspec/bin/mspec %s -t %s --config=topaz.mspec %s" % (args, self.exe, self.files))
 
     def run(self):
         self.mspec("run -G fails %s" % self.options)

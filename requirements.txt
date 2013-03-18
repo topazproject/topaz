@@ -1,5 +1,5 @@
 rply
 # Only a test requirement
 pytest
-fabric
+invoke
 requests

@@ -41,13 +41,13 @@ module Enumerable
   end
 
   def select(&block)
-    ary = []
+    result = []
     self.each do |o|
       if block.call(o)
-        ary << o
+        result << o
       end
     end
-    ary
+    result
   end
 
   def include?(obj)
@@ -56,12 +56,25 @@ module Enumerable
     end
     false
   end
+  alias member? include?
 
   def drop(n)
     raise ArgumentError.new("attempt to drop negative size") if n < 0
-    ary = self.to_a
-    return [] if n > ary.size
-    ary[n...ary.size]
+    result = self.to_a
+    return [] if n > result.size
+    result[n...result.size]
+  end
+
+  def drop_while(&block)
+    result = []
+    dropping = true
+    self.each do |o|
+      unless dropping && yield(o)
+        result << o
+        dropping = false
+      end
+    end
+    result
   end
 
   def to_a
@@ -71,6 +84,7 @@ module Enumerable
     end
     result
   end
+  alias entries to_a
 
   def detect(ifnone = nil, &block)
     self.each do |o|
@@ -79,4 +93,33 @@ module Enumerable
     return ifnone
   end
   alias find detect
+
+  def take(n)
+    raise ArgumentError.new("attempt to take negative size") if n < 0
+    result = []
+    unless n == 0
+      self.each do |o|
+        result << o
+        break if result.size == n
+      end
+    end
+    result
+  end
+
+  def take_while(&block)
+    result = []
+    self.each do |o|
+      break unless yield(o)
+      result << o
+    end
+    result
+  end
+
+  def reject(&block)
+    result = []
+    self.each do |o|
+      result << o unless yield(o)
+    end
+    result
+  end
 end
