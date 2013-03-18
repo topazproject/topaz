@@ -169,12 +169,9 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
-<<<<<<< HEAD
             self.getclassfor(W_MethodObject),
             self.getclassfor(W_UnboundMethodObject),
             self.getclassfor(W_FiberObject),
-=======
->>>>>>> master
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_ThreadError),

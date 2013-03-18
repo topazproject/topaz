@@ -39,7 +39,6 @@ class W_FiberObject(W_Object):
         sthread = ec.fiber_thread
         if not sthread:
             sthread = ec.fiber_thread = SThread(space.config, space.getexecutioncontext())
-        workaround_disable_jit(sthread)
         self.sthread = sthread
         self.bottomframe = space.create_frame(
             self.w_block.bytecode, w_self=self.w_block.w_self,
@@ -56,7 +55,6 @@ class W_FiberObject(W_Object):
         sthread = ec.fiber_thread
         global_state.origin = self
         global_state.space = space
-        workaround_disable_jit(sthread)
         h = sthread.new(new_stacklet_callback)
         return post_switch(sthread, h)
 
@@ -124,8 +122,3 @@ def get_result():
         w_result = global_state.w_result
         global_state.w_result = None
         return w_result
-
-
-def workaround_disable_jit(sthread):
-    # TODO: fill this in.
-    pass
