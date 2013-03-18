@@ -47,6 +47,10 @@ class W_ArrayObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, args_w):
+        if len(args_w):
+            raise space.error(space.w_ArgumentError,
+                "wrong number of arguments(%d for 0)" % len(args_w)
+            )
         return W_ArrayObject(space, [], self)
 
     @classdef.method("initialize_copy", other_w="array")
