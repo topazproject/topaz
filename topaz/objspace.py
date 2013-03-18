@@ -569,11 +569,6 @@ class ObjectSpace(object):
             block=block.block, parent_interp=block.parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
-        if (len(args_w) == 1 and
-            isinstance(args_w[0], W_ArrayObject) and len(bc.arg_pos) >= 2):
-            w_arg = args_w[0]
-            assert isinstance(w_arg, W_ArrayObject)
-            args_w = w_arg.items_w
         if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)

@@ -86,3 +86,10 @@ class TestFiberObject(BaseTopazTest):
         return f.resume(2, 5)
         """)
         assert space.int_w(w_res) == 7
+
+    def test_return_in_block(self, space):
+        space.execute("""
+        $f = Fiber.new { return }
+        """)
+        with self.raises(space, "LocalJumpError", "unexpected return"):
+            space.execute("$f.resume")

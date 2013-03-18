@@ -3,6 +3,7 @@ import copy
 from rpython.rlib import jit
 from rpython.rlib.rstacklet import StackletThread
 
+from topaz.interpreter import RaiseReturn
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 
@@ -148,7 +149,10 @@ def new_stacklet_callback(h, arg):
 
     with self.sthread.ec.visit_frame(self.bottomframe):
         try:
-            global_state.w_result = space.execute_frame(self.bottomframe, self.w_block.bytecode)
+            try:
+                global_state.w_result = space.execute_frame(self.bottomframe, self.w_block.bytecode)
+            except RaiseReturn:
+                raise space.error(space.w_LocalJumpError, "unexpected return")
         except Exception as e:
             global_state.propagate_exception = e
 
