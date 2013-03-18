@@ -382,8 +382,8 @@ def _tm_to_tuple(t):
 
     return time_tuple
 
-def _gettmarg(space, tup, allow_none=True):
-    if tup is None:
+def _gettmarg(space, tup=(), allow_none=True):
+    if not len(tup):
         if not allow_none:
             raise space.error(space.w_TypeError, "tuple expected")
         # default to the current local time
@@ -488,13 +488,13 @@ def ctime(space, w_seconds=None):
 
 # by now w_tup is an optional argument (and not *args)
 # because of the ext. compiler bugs in handling such arguments (*args, **kwds)
-def asctime(space, w_tup=None):
+def asctime(space, tup=()):
     """asctime([tuple]) -> string
 
     Convert a time tuple to a string, e.g. 'Sat Jun 06 16:26:11 1998'.
     When the time tuple is not present, current time as returned by localtime()
     is used."""
-    buf_value = _gettmarg(space, w_tup)
+    buf_value = _gettmarg(space, tup)
     p = c_asctime(buf_value)
     if not p:
         raise space.error(space.w_ArgumentError, "unconvertible time")
@@ -538,7 +538,7 @@ def localtime(space, w_seconds=None):
         raise space.error(space.w_ArgumentError, _get_error_msg())
     return _tm_to_tuple(p)
 
-def mktime(space, tup):
+def mktime(space, tup=()):
     """mktime(tuple) -> floating point number
 
     Convert a time tuple in local time to seconds since the Epoch."""
@@ -572,7 +572,7 @@ if system.IS_POSIX:
         # reset timezone, altzone, daylight and tzname
         _init_timezone(space)
 
-def strftime(space, format, tup=None):
+def strftime(space, format, tup=()):
     """strftime(format[, tuple]) -> string
 
     Convert a time tuple to a string according to a format specification.

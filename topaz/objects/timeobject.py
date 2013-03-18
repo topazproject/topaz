@@ -80,11 +80,13 @@ class W_TimeObject(W_Object):
 
     @classdef.method("asctime")
     def method_asctime(self, space):
-        return space.newstr_fromstr(time.asctime(self.struct_time))
+        return space.newstr_fromstr(time.asctime(space, self.struct_time))
 
     @classdef.method("ctime")
     def method_ctime(self, space):
-        return space.newstr_fromstr(time.ctime(self.epoch_seconds))
+        return space.newstr_fromstr(
+            time.ctime(space, space.newfloat(self.epoch_seconds))
+        )
 
     @classdef.method("strftime", fmt="str")
     def method_strftime(self, space, fmt):
