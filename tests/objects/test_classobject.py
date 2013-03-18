@@ -1,6 +1,8 @@
 import pytest
+from ..base import BaseTopazTest
 
-class TestClassObject(object):
+
+class TestClassObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Class")
 
@@ -26,6 +28,13 @@ class TestClassObject(object):
     def test_anon_class_name(self, space):
         w_res = space.execute("return Class.new.name")
         assert w_res is space.w_nil
+
+    def test_anon_class_method_missing_raises(self, space):
+        with self.raises(space, "NoMethodError"):
+            space.execute("""
+            class A; end
+            Class.new.does_not_exist
+            """)
 
     def test_singletonclass_name(self, space):
         w_res = space.execute("Class.new.singleton_class.name")
