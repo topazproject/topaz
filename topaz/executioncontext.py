@@ -2,12 +2,13 @@ from rpython.rlib import jit
 
 from topaz.error import RubyError
 from topaz.frame import Frame
+from topaz.objects.fiberobject import W_FiberObject
 
 
 class ExecutionContext(object):
     _immutable_fields_ = ["w_trace_proc?"]
 
-    def __init__(self):
+    def __init__(self, space):
         self.topframeref = jit.vref_None
         self.last_instr = -1
         self.regexp_match_cell = None
@@ -17,6 +18,7 @@ class ExecutionContext(object):
         self.catch_names = {}
 
         self.fiber_thread = None
+        self.w_main_fiber = W_FiberObject.build_main_fiber(space, self)
 
     def settraceproc(self, w_proc):
         self.w_trace_proc = w_proc
