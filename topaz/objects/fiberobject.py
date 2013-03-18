@@ -12,7 +12,7 @@ class State(object):
         self.current = None
 
     def get_current(self, space):
-        return self.current or space.getexecutioncontext()
+        return self.current or space.getexecutioncontext().w_main_fiber
 
 
 class W_FiberObject(W_Object):
@@ -53,10 +53,18 @@ class W_FiberObject(W_Object):
     @classdef.singleton_method("yield")
     def singleton_method_yield(self, space, args_w):
         current = space.fromcache(State).get_current(space)
-        space.getexecutioncontext().fiber_thread.switch(current.h)
-        return post_switch(space.getexecutioncontext().fiber_thread, current.h)
+        parent_fiber = current.parent_fiber
+        space.fromcache(State).current = parent_fiber
+
+        topframeref = space.getexecutioncontext().topframeref
+        parent_fiber.h = space.getexecutioncontext().fiber_thread.switch(parent_fiber.h)
+        assert space.fromcache(State).current is current
+        space.getexecutioncontext().topframeref = topframeref
+
+        return get_result()
 
     @classdef.method("initialize")
+    @jit.unroll_safe
     def method_initialize(self, space, block):
         if block is None:
             raise space.error(space.w_ArgumentError)
@@ -74,15 +82,19 @@ class W_FiberObject(W_Object):
     def method_resume(self, space, args_w):
         if self.parent_fiber is not None:
             raise space.error(space.w_FiberError, "double resume")
+
         if self.sthread is None:
             sthread = self.get_sthread(space, space.getexecutioncontext())
             self.sthread = sthread
             self.parent_fiber = space.fromcache(State).get_current(space)
             try:
-                global_state.origin = self
                 global_state.space = space
-                h = sthread.new(new_stacklet_callback)
-                return post_switch(sthread, h)
+                global_state.space.fromcache(State).current = self
+                topframeref = space.getexecutioncontext().topframeref
+                self.h = sthread.new(new_stacklet_callback)
+                assert space.fromcache(State).current is self.parent_fiber
+                space.getexecutioncontext().topframeref = topframeref
+                return get_result()
             finally:
                 self.parent_fiber = None
         else:
@@ -104,8 +116,6 @@ class GlobalState(object):
         self.clear()
 
     def clear(self):
-        self.origin = None
-        self.destination = None
         self.w_result = None
         self.propagate_exception = None
         self.space = None
@@ -114,11 +124,11 @@ global_state = GlobalState()
 
 
 def new_stacklet_callback(h, arg):
-    self = global_state.origin
     space = global_state.space
-    self.h = h
+    self = space.fromcache(State).current
+    origin = self.parent_fiber
+    origin.h = h
     global_state.clear()
-    space.fromcache(State).current = self
 
     with self.sthread.ec.visit_frame(self.bottomframe):
         try:
@@ -126,25 +136,9 @@ def new_stacklet_callback(h, arg):
         except Exception as e:
             global_state.propagate_exception = e
 
-    self.sthread.ec.topframeref = jit.vref_None
-    global_state.origin = self
-    global_state.destination = self
-    return self.h
-
-
-def post_switch(sthread, h):
-    origin = global_state.origin
-    self = global_state.destination
-    global_state.origin = None
-    global_state.destination = None
-    self.h, origin.h = origin.h, h
-
-    current = sthread.ec.topframeref
-    sthread.ec.topframeref = self.bottomframe.backref
-    self.bottomframe.backref = origin.bottomframe.backref
-    origin.bottomframe.backref = current
-
-    return get_result()
+    space.fromcache(State).current = origin
+    global_state.space = space
+    return origin.h
 
 
 def get_result():
