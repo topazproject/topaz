@@ -58,3 +58,7 @@ class TestFiberObject(BaseTopazTest):
         return r
         """)
         assert self.unwrap(space, w_res) == ["a", 1, 3, "b", 2, "c"]
+
+    def test_yield_from_main(self, space):
+        with self.raises(space, "FiberError", "can't yield from root fiber"):
+            space.execute("Fiber.yield")

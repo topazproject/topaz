@@ -33,6 +33,13 @@ class W_FiberObject(W_Object):
         self.sthread = None
         self.parent_fiber = None
 
+    def __deepcopy__(self, memo):
+        obj = super(W_FiberObject, self).__deepcopy__(memo)
+        obj.w_block = copy.deepcopy(self.w_block, memo)
+        obj.sthread = copy.deepcopy(self.sthread, memo)
+        obj.parent_fiber = copy.deepcopy(self.parent_fiber, memo)
+        return obj
+
     @staticmethod
     def build_main_fiber(space, ec):
         w_fiber = W_FiberObject(space)
@@ -54,6 +61,8 @@ class W_FiberObject(W_Object):
     def singleton_method_yield(self, space, args_w):
         current = space.fromcache(State).get_current(space)
         parent_fiber = current.parent_fiber
+        if parent_fiber is None:
+            raise space.error(space.w_FiberError, "can't yield from root fiber")
         space.fromcache(State).current = parent_fiber
 
         topframeref = space.getexecutioncontext().topframeref
