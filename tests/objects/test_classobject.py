@@ -18,7 +18,6 @@ class TestClassObject(object):
         w_res = space.execute("return Class.new.new.to_s")
         assert space.str_w(w_res).startswith("#<#<Class:0x")
 
-
     @pytest.mark.xfail
     def test_singletonclass_to_s(self, space):
         w_res = space.execute("Class.new.singleton_class.to_s")

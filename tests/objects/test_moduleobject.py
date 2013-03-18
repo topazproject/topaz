@@ -370,7 +370,6 @@ class TestModuleObject(BaseTopazTest):
         assert w_res is space.w_nil
 
 
-
 class TestMethodVisibility(object):
     def test_private(self, space):
         space.execute("""
