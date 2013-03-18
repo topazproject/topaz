@@ -71,3 +71,11 @@ class TestFiberObject(BaseTopazTest):
     def test_yield_from_main(self, space):
         with self.raises(space, "FiberError", "can't yield from root fiber"):
             space.execute("Fiber.yield")
+
+    def test_resume_dead_fiber(self, space):
+        space.execute("""
+        $f = Fiber.new {}
+        $f.resume
+        """)
+        with self.raises(space, "FiberError", "dead fiber called"):
+            space.execute("$f.resume")

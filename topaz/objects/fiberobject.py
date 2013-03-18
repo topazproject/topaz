@@ -95,6 +95,8 @@ class W_FiberObject(W_Object):
     def method_resume(self, space, args_w):
         if self.parent_fiber is not None:
             raise space.error(space.w_FiberError, "double resume")
+        if self.sthread is not None and self.sthread.is_empty_handle(self.h):
+            raise space.error(space.w_FiberError, "dead fiber called")
 
         self.parent_fiber = space.fromcache(State).get_current(space)
         try:
