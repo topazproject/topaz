@@ -93,3 +93,10 @@ class TestFiberObject(BaseTopazTest):
         """)
         with self.raises(space, "LocalJumpError", "unexpected return"):
             space.execute("$f.resume")
+
+    def test_break_in_block(self, space):
+        space.execute("""
+        $f = Fiber.new { break }
+        """)
+        with self.raises(space, "LocalJumpError", "break from proc-closure"):
+            space.execute("$f.resume")
