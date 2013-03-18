@@ -46,6 +46,9 @@ class TestRegexpObject(BaseTopazTest):
         /a{1,}/
         /a{,1}/
         /(?:abc)?/
+        /(?:a|b)*/
+        /.*/m
+        /(.*|.+)/
         """)
 
     def test_regexp_syntax_errors(self, space):
@@ -177,10 +180,10 @@ class TestRegexpObject(BaseTopazTest):
         assert space.int_w(w_res) == 0
 
     def test_dot(self, space):
-        w_res = space.execute("return /./ =~ '\\n'")
+        w_res = space.execute('return /./ =~ "\\n"')
         assert w_res is space.w_nil
 
-        w_res = space.execute("return /./m =~ '\\n'")
+        w_res = space.execute('return /./m =~ "\\n"')
         assert space.int_w(w_res) == 0
 
     def test_non_capturing_group(self, space):
@@ -224,3 +227,7 @@ class TestRegexpObject(BaseTopazTest):
         return Regexp.escape("y1_'\t\n\v\f\r \#$()*+-.?[\\\\]^{|}")
         """)
         assert space.str_w(w_res) == "y1_'\\t\\n\\v\\f\\r\\ \\#\\$\\(\\)\\*\\+\\-\\.\\?\\[\\\\\\]\\^\\{\\|\\}"
+
+    def test_ignore_whitespace(self, space):
+        w_res = space.execute("return /\d \d/x =~ '12'")
+        assert space.int_w(w_res) == 0

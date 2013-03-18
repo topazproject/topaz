@@ -144,6 +144,11 @@ class W_RangeError(W_StandardError):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_FloatDomainError(W_RangeError):
+    classdef = ClassDef("FloatDomainError", W_RangeError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_RuntimeError(W_StandardError):
     classdef = ClassDef("RuntimeError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
@@ -173,6 +178,11 @@ class W_IndexError(W_StandardError):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_KeyError(W_IndexError):
+    classdef = ClassDef("KeyError", W_IndexError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_StopIteration(W_IndexError):
     classdef = ClassDef("StopIteration", W_IndexError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
@@ -185,6 +195,11 @@ class W_LocalJumpError(W_StandardError):
 
 class W_IOError(W_StandardError):
     classdef = ClassDef("IOError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
+class W_EOFError(W_IOError):
+    classdef = ClassDef("EOFError", W_IOError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
 
 

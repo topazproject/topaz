@@ -240,12 +240,26 @@ class TryFinally(Node):
             ctx.emit(consts.END_FINALLY)
 
 
-class Class(Node):
-    def __init__(self, scope, name, superclass, body):
+class BaseModule(Node):
+    def __init__(self, scope, name, body):
         self.scope = scope
         self.name = name
-        self.superclass = superclass
         self.body = body
+
+    def compile_body(self, ctx, ctxname):
+        body_ctx = ctx.get_subctx(ctxname, self)
+        self.body.compile(body_ctx)
+        body_ctx.emit(consts.RETURN)
+        bytecode = body_ctx.create_bytecode([], [], None, None)
+
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+        ctx.emit(consts.EVALUATE_MODULE)
+
+
+class Class(BaseModule):
+    def __init__(self, scope, name, superclass, body):
+        BaseModule.__init__(self, scope, name, body)
+        self.superclass = superclass
 
     def compile(self, ctx):
         if self.scope is not None:
@@ -258,17 +272,10 @@ class Class(Node):
         else:
             self.superclass.compile(ctx)
         ctx.emit(consts.BUILD_CLASS)
-
-        body_ctx = ctx.get_subctx("<class:%s>" % self.name, self)
-        self.body.compile(body_ctx)
-        body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None, None)
-
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
-        ctx.emit(consts.EVALUATE_CLASS)
+        self.compile_body(ctx, "<class:%s>" % self.name)
 
 
-class SingletonClass(Node):
+class SingletonClass(BaseModule):
     def __init__(self, value, body, lineno):
         Node.__init__(self, lineno)
         self.value = value
@@ -278,37 +285,17 @@ class SingletonClass(Node):
         with ctx.set_lineno(self.lineno):
             self.value.compile(ctx)
             ctx.emit(consts.LOAD_SINGLETON_CLASS)
+            self.compile_body(ctx, "singletonclass")
 
-            body_ctx = ctx.get_subctx("singletonclass", self)
-            self.body.compile(body_ctx)
-            body_ctx.emit(consts.RETURN)
-            bytecode = body_ctx.create_bytecode([], [], None, None)
-
-            ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
-            ctx.emit(consts.EVALUATE_CLASS)
-
-
-class Module(Node):
-    def __init__(self, scope, name, body):
-        self.scope = scope
-        self.name = name
-        self.body = body
-
+class Module(BaseModule):
     def compile(self, ctx):
-        body_ctx = ctx.get_subctx(self.name, self)
-        self.body.compile(body_ctx)
-        body_ctx.emit(consts.DISCARD_TOP)
-        body_ctx.emit(consts.LOAD_CONST, body_ctx.create_const(body_ctx.space.w_nil))
-        body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None, None)
-
         if self.scope is not None:
             self.scope.compile(ctx)
         else:
             ctx.emit(consts.LOAD_CONST, ctx.create_const(ctx.space.w_object))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.BUILD_MODULE)
+        self.compile_body(ctx, "<module:%s>" % self.name)
 
 
 class Function(Node):
@@ -364,6 +351,15 @@ class Argument(Node):
     def __init__(self, name, defl=None):
         self.name = name
         self.defl = defl
+
+
+class Lambda(Node):
+    def __init__(self, block):
+        self.block = block
+
+    def compile(self, ctx):
+        self.block.compile(ctx)
+        ctx.emit(consts.BUILD_LAMBDA)
 
 
 class Case(Node):
@@ -788,15 +784,23 @@ class SendBlock(Node):
         self.block = block
 
     def compile(self, ctx):
-        block_ctx = ctx.get_subctx("block in %s" % ctx.code_name, self)
-        for name, kind in block_ctx.symtable.cells.iteritems():
+        blockname = "block in %s" % ctx.code_name
+        block_ctx = ctx.get_subctx(blockname, self)
+        for cellname, kind in block_ctx.symtable.cells.iteritems():
             if kind == block_ctx.symtable.CELLVAR:
-                block_ctx.symtable.get_cell_num(name)
+                block_ctx.symtable.get_cell_num(cellname)
         block_args = []
+        defaults = []
         for arg in self.block_args:
             assert isinstance(arg, Argument)
             block_args.append(arg.name)
             block_ctx.symtable.get_cell_num(arg.name)
+            if arg.defl is not None:
+                arg_ctx = CompilerContext(ctx.space, blockname, block_ctx.symtable, ctx.filepath)
+                arg.defl.compile(arg_ctx)
+                arg_ctx.emit(consts.RETURN)
+                bc = arg_ctx.create_bytecode([], [], None, None)
+                defaults.append(bc)
         if self.splat_arg is not None:
             block_ctx.symtable.get_cell_num(self.splat_arg)
         if self.block_arg is not None:
@@ -810,7 +814,7 @@ class SendBlock(Node):
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, [], self.splat_arg, self.block_arg)
+        bc = block_ctx.create_bytecode(block_args, defaults, self.splat_arg, self.block_arg)
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)

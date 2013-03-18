@@ -10,6 +10,13 @@ class W_ProcObject(W_Object):
         self.block = block
         self.is_lambda = is_lambda
 
+    def get_block(self):
+        return self.block
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, args_w, block):
+        return W_ProcObject(space, block, False)
+
     @classdef.method("[]")
     @classdef.method("call")
     def method_call(self, space, args_w, block):
@@ -32,6 +39,6 @@ class W_ProcObject(W_Object):
     def method_lambda(self, space):
         return space.newbool(self.is_lambda)
 
-    @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w, block):
-        return W_ProcObject(space, block, False)
+    @classdef.method("binding")
+    def method_binding(self, space):
+        return space.newbinding_fromblock(self.block)

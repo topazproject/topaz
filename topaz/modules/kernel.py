@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 
 import os
+import time
 
-from rpython.rlib.rstring import assert_str0
+from rpython.rlib.rfloat import round_double
 from rpython.rlib.streamio import open_file_as_stream
 
-from topaz.error import RubyError
+from topaz.coerce import Coerce
+from topaz.error import RubyError, error_for_oserror
 from topaz.module import Module, ModuleDef
 from topaz.modules.process import Process
 from topaz.objects.exceptionobject import W_ExceptionObject
@@ -41,16 +43,6 @@ class Kernel(Module):
     def function_proc(self, space, block):
         return space.newproc(block, False)
 
-    moduledef.app_method("""
-    def puts *args
-        $stdout.puts(*args)
-    end
-
-    def print *args
-        $stdout.print(*args)
-    end
-    """)
-
     @staticmethod
     def find_feature(space, path):
         assert path is not None
@@ -62,23 +54,26 @@ class Kernel(Module):
         if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
             w_load_path = space.globals.get(space, "$LOAD_PATH")
             for w_base in space.listview(w_load_path):
-                base = space.str_w(w_base)
+                base = Coerce.path(space, w_base)
                 full = os.path.join(base, path)
-                if os.path.exists(assert_str0(full)):
+                if os.path.exists(full):
                     path = os.path.join(base, path)
                     break
         return path
 
     @staticmethod
     def load_feature(space, path, orig_path):
-        if not os.path.exists(assert_str0(path)):
+        if not os.path.exists(path):
             raise space.error(space.w_LoadError, orig_path)
 
-        f = open_file_as_stream(path)
         try:
-            contents = f.readall()
-        finally:
-            f.close()
+            f = open_file_as_stream(path, buffering=0)
+            try:
+                contents = f.readall()
+            finally:
+                f.close()
+        except OSError as e:
+            raise error_for_oserror(space, e)
 
         space.execute(contents, filepath=path)
 
@@ -107,13 +102,12 @@ class Kernel(Module):
         Kernel.load_feature(space, path, orig_path)
         return space.w_true
 
-    moduledef.app_method("alias fail raise")
-
+    @moduledef.method("fail")
     @moduledef.method("raise")
     def method_raise(self, space, w_str_or_exception=None, w_string=None, w_array=None):
         w_exception = None
         if w_str_or_exception is None:
-            w_exception = space.globals.get(space, "$!")
+            w_exception = space.globals.get(space, "$!") or space.w_nil
             if w_exception is space.w_nil:
                 w_exception = space.w_RuntimeError
         elif isinstance(w_str_or_exception, W_StringObject):
@@ -141,28 +135,6 @@ class Kernel(Module):
             )
 
         raise RubyError(w_exc)
-
-    moduledef.app_method("""
-    def Array arg
-        if arg.respond_to? :to_ary
-            arg.to_ary
-        elsif arg.respond_to? :to_a
-            arg.to_a
-        else
-            [arg]
-        end
-    end
-
-    def String arg
-        arg.to_s
-    end
-    module_function :String
-
-    def Integer arg
-        arg.to_i
-    end
-    module_function :Integer
-    """)
 
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
@@ -194,13 +166,13 @@ class Kernel(Module):
         if space.respond_to(args_w[0], space.newsymbol("to_ary")):
             w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
             cmd, argv0 = [
-                space.str_w(space.convert_type(
+                space.str0_w(space.convert_type(
                     w_e, space.w_string, "to_str"
                 )) for w_e in space.listview(w_cmd)
             ]
         else:
             w_cmd = space.convert_type(args_w[0], space.w_string, "to_str")
-            cmd = space.str_w(w_cmd)
+            cmd = space.str0_w(w_cmd)
             argv0 = None
 
         if len(args_w) > 1 or argv0 is not None:
@@ -212,7 +184,7 @@ class Kernel(Module):
                     argv0 = cmd
             args = [argv0]
             args += [
-                space.str_w(space.convert_type(
+                space.str0_w(space.convert_type(
                     w_arg, space.w_string, "to_str"
                 )) for w_arg in args_w[1:]
             ]
@@ -225,6 +197,14 @@ class Kernel(Module):
             else:
                 argv0 = shell
             os.execv(shell, [argv0, "-c", cmd])
+
+    @moduledef.function("fork")
+    def method_fork(self, space, block):
+        return space.send(
+            space.getmoduleobject(Process.moduledef),
+            space.newsymbol("fork"),
+            block=block
+        )
 
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):
@@ -278,6 +258,14 @@ class Kernel(Module):
         space.send(w_dup, space.newsymbol("initialize_clone"), [self])
         return w_dup
 
+    @moduledef.method("sleep")
+    def method_sleep(self, space, w_duration=None):
+        if w_duration is None:
+            raise space.error(space.w_NotImplementedError)
+        start = time.time()
+        time.sleep(space.float_w(w_duration))
+        return space.newint(int(round_double(time.time() - start, 0)))
+
     @moduledef.method("initialize_clone")
     @moduledef.method("initialize_dup")
     def method_initialize_dup(self, space, w_other):
@@ -295,22 +283,13 @@ class Kernel(Module):
         elif space.is_kind_of(w_arg, space.w_float):
             return space.newfloat(space.float_w(w_arg))
         elif space.is_kind_of(w_arg, space.w_string):
-            string = space.str_w(w_arg).strip(' ')
+            string = space.str_w(w_arg).strip(" ")
             try:
                 return space.newfloat(float(string))
             except ValueError:
                 raise space.error(space.w_ArgumentError, "invalid value for Float(): %s" % string)
         else:
             return space.convert_type(w_arg, space.w_float, "to_f")
-
-    moduledef.app_method("""
-    def loop
-        while true
-            yield
-        end
-        return nil
-    end
-    """)
 
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")
@@ -340,6 +319,7 @@ class Kernel(Module):
         def setter_method(self, space):
             self.set_flag(space, getter)
             return self
+
         @moduledef.method(getter)
         def getter_method(self, space):
             return self.get_flag(space, getter)
@@ -355,3 +335,23 @@ class Kernel(Module):
     method_untrust, method_untrusted, method_trust = new_flag(moduledef, "untrust", "untrusted?", "trust")
     method_taint, method_tainted, method_untaint = new_flag(moduledef, "taint", "tainted?", "untaint")
     method_freeze, method_frozen = new_flag(moduledef, "freeze", "frozen?", None)
+
+    @moduledef.method("throw", name="symbol")
+    def method_throw(self, space, name, w_value=None):
+        from topaz.interpreter import Throw
+        if not space.getexecutioncontext().is_in_catch_block_for_name(name):
+            raise space.error(space.w_ArgumentError, "uncaught throw :%s" % name)
+        if w_value is None:
+            w_value = space.w_nil
+        raise Throw(name, w_value)
+
+    @moduledef.method("catch", name="symbol")
+    def method_catch(self, space, name, block):
+        from topaz.interpreter import Throw
+        with space.getexecutioncontext().catch_block(name):
+            try:
+                return space.invoke_block(block, [])
+            except Throw as e:
+                if e.name == name:
+                    return e.w_value
+                raise

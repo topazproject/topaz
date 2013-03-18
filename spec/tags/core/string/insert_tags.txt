@@ -1,0 +1,1 @@
+fails:String#insert with index, other taints self if string to insert is tainted

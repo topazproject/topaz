@@ -1,0 +1,3 @@
+fails:Kernel#method returns a method object if we repond_to_missing? method
+fails:Kernel#method changes the method called for super on a target aliased method
+fails:Kernel#method can be called even if we only repond_to_missing? method, true

@@ -13,6 +13,21 @@ class W_RangeObject(W_Object):
         self.w_end = w_end
         self.exclusive = exclusive
 
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space, args_w):
+        return W_RangeObject(space, None, None, False)
+
+    @classdef.method("initialize", excl="bool")
+    def method_initialize(self, space, w_start, w_end, excl=False):
+        if self.w_start is not None or self.w_end is not None:
+            raise space.error(space.w_NameError, "`initialize' called twice")
+        if space.send(w_start, space.newsymbol("<=>"), [w_end]) is space.w_nil:
+            raise space.error(space.w_ArgumentError, "bad value for range" )
+
+        self.w_start = w_start
+        self.w_end = w_end
+        self.exclusive = excl
+      
     @classdef.method("first")
     @classdef.method("begin")
     def method_begin(self, space):
@@ -26,38 +41,3 @@ class W_RangeObject(W_Object):
     @classdef.method("exclude_end?")
     def method_exclude_end(self, space):
         return space.newbool(self.exclusive)
-
-    classdef.app_method("""
-    def each
-        unless self.begin.is_a? Integer
-            raise TypeError, "can't iterate from Float"
-        end
-        i = self.begin
-        lim = self.end
-        lim += 0.1 unless self.exclude_end?
-        while i < lim
-            yield i
-            i += 1
-        end
-    end
-
-    def ===(value)
-        self.include?(value)
-    end
-
-    def include?(value)
-        beg_compare = self.begin <=> value
-        if !beg_compare
-            return false
-        end
-        if beg_compare <= 0
-            end_compare = value <=> self.end
-            if self.exclude_end?
-                return true if end_compare < 0
-            else
-                return true if end_compare <= 0
-            end
-        end
-        return false
-    end
-    """)

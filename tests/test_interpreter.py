@@ -177,6 +177,27 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("return Object.f(5, -2)")
         assert space.int_w(w_res) == 3
 
+    def test_splat_first_in_def_function(self, space):
+        w_res = space.execute("""
+        def self.f(*a, b, c, &blk)
+            a << b << c << blk.call
+        end
+        return f(2, 3, 'b', 'c') do
+            "blk"
+        end
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, 'b', 'c', 'blk']
+
+        w_res = space.execute("""
+        def f(*a, b, c, &blk)
+            a << b << c << blk.call
+        end
+        return f(2, 3, 'b', 'c') do
+            "blk"
+        end
+        """)
+        assert self.unwrap(space, w_res) == [2, 3, 'b', 'c', 'blk']
+
     def test_interpreter(self, space):
         w_res = space.execute('return "abc"')
         assert space.str_w(w_res) == "abc"
@@ -413,6 +434,35 @@ class TestInterpreter(BaseTopazTest):
         block.call { |x| 2 * x }
         return res
         """)
+        assert self.unwrap(space, w_res) == [2, 4, 6]
+
+    def test_send_block_with_opt_args(self, space):
+        w_res = space.execute("""
+        res = []
+        block = proc { |b='b'| res << b }
+        block.call('a')
+        block.call
+        return res
+        """)
+        assert self.unwrap(space, w_res) == ['a', 'b']
+        w_res = space.execute("""
+        res = []
+        [1, 2, 3].each do |x, y="y"|
+            res << x << y
+        end
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 'y', 2, 'y', 3, 'y']
+        w_res = space.execute("""
+        res = []
+        block = proc do |x, y="y", *rest, &block|
+            res << x << y << rest
+            block.call(res)
+        end
+        block.call(1) { |res| res << "block called" }
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [1, 'y', [], "block called"]
 
     def test_yield(self, space):
         w_res = space.execute("""
@@ -964,6 +1014,19 @@ class TestInterpreter(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == "A"
 
+    def test_module_find_const(self, space):
+        w_res = space.execute("""
+        module M
+          ABC = 1
+        end
+        Object.send :include, M
+        module Y
+          ABC
+        end
+        return Y::ABC
+        """)
+        assert self.unwrap(space, w_res) == 1
+
     def test_defined(self, space):
         w_res = space.execute("return [defined? A, defined? Array]")
         assert self.unwrap(space, w_res) == [None, "constant"]
@@ -1328,6 +1391,10 @@ class TestInterpreter(BaseTopazTest):
         assert space.str_w(w_res) == "18446744073709551628"
         w_res = space.execute("return 18446744073709551628.class")
         assert w_res is space.w_bignum
+
+    def test_lambda(self, space):
+        w_res = space.execute("return ->{ 1 + 1 }.call")
+        assert space.int_w(w_res) == 2
 
 
 class TestBlocks(BaseTopazTest):

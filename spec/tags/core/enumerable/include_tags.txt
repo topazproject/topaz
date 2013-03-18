@@ -1,0 +1,1 @@
+fails:Enumerable#include? gathers whole arrays as elements when each yields multiple

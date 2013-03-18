@@ -1,0 +1,2 @@
+fails:Bignum#/ returns self divided by other
+fails:Bignum#/ raises a TypeError when given a non-Integer

@@ -1,0 +1,3 @@
+fails:String.new returns an instance of a subclass
+fails:String.new is called on subclasses
+fails:String.new returns a binary String

@@ -1,9 +1,22 @@
 import math
+import sys
 
 from ..base import BaseTopazTest
 
 
 class TestFloatObject(BaseTopazTest):
+    def test_max(self, space):
+        assert space.float_w(space.execute("return Float::MAX")) == sys.float_info.max
+
+    def test_min(self, space):
+        assert space.float_w(space.execute("return Float::MIN")) == sys.float_info.min
+
+    def test_infinity(self, space):
+        assert space.float_w(space.execute("return Float::INFINITY")) == float("infinity")
+
+    def test_nan_constant(self, space):
+        assert math.isnan(space.float_w(space.execute("return Float::NAN")))
+
     def test_add(self, space):
         w_res = space.execute("return 1.0 + 2.9")
         assert space.float_w(w_res) == 3.9
@@ -43,10 +56,22 @@ class TestFloatObject(BaseTopazTest):
     def test_to_s(self, space):
         w_res = space.execute("return 1.5.to_s")
         assert space.str_w(w_res) == "1.5"
+        w_res = space.execute("return (0.0 / 0.0).to_s")
+        assert space.str_w(w_res) == "NaN"
+        w_res = space.execute("return (1.0 / 0.0).to_s")
+        assert space.str_w(w_res) == "Infinity"
+        w_res = space.execute("return (-1.0 / 0.0).to_s")
+        assert space.str_w(w_res) == "-Infinity"
 
     def test_to_i(self, space):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")
         assert self.unwrap(space, w_res) == [1, 1]
+        with self.raises(space, "FloatDomainError", "NaN"):
+            space.execute("(0.0 / 0.0).to_i")
+        with self.raises(space, "FloatDomainError", "Infinity"):
+            space.execute("(1.0 / 0.0).to_i")
+        with self.raises(space, "FloatDomainError", "-Infinity"):
+            space.execute("(-1.0 / 0.0).to_i")
 
     def test_lt(self, space):
         assert space.execute("return 1.1 < 1.2") is space.w_true
@@ -168,3 +193,17 @@ class TestFloatObject(BaseTopazTest):
     def test_comparator_other_type(self, space):
         w_res = space.execute("return 1.0 <=> '1'")
         assert w_res is space.w_nil
+
+    def test_infinite(self, space):
+        w_res = space.execute("return 1.0.infinite?")
+        assert w_res is space.w_nil
+        w_res = space.execute("return Float::INFINITY.infinite?")
+        assert space.int_w(w_res) == 1
+        w_res = space.execute("return (-Float::INFINITY).infinite?")
+        assert space.int_w(w_res) == -1
+
+    def test_nan(self, space):
+        w_res = space.execute("return 1.0.nan?")
+        assert w_res is space.w_false
+        w_res = space.execute("return Float::NAN.nan?")
+        assert w_res is space.w_true

@@ -8,8 +8,9 @@ from rply.token import SourcePosition
 
 
 class LexerError(Exception):
-    def __init__(self, pos):
+    def __init__(self, pos, msg=None):
         self.pos = pos
+        self.msg = "" if msg is None else msg
 
 
 class Keyword(object):
@@ -113,11 +114,12 @@ class Lexer(object):
         self.clear()
         return Token(token, value, self.current_pos())
 
-    def error(self):
-        raise LexerError(self.current_pos())
+    def error(self, msg=None):
+        raise LexerError(self.current_pos(), msg)
 
     def tokenize(self):
         space_seen = False
+        newline_seen = True
         while True:
             if self.str_term is not None:
                 tok = self.str_term.next()
@@ -132,13 +134,14 @@ class Lexer(object):
             ch = self.read()
             if ch == self.EOF:
                 break
-            if ch == " ":
+            if ch in " \t":
                 space_seen = True
+                newline_seen = False
                 continue
             elif ch == "#":
                 self.comment(ch)
             elif ch in "\r\n":
-                space_seen = True
+                space_seen = newline_seen = True
                 self.newline(ch)
                 if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
                     self.add("\n")
@@ -153,8 +156,12 @@ class Lexer(object):
                 for token in self.exclamation(ch):
                     yield token
             elif ch == "=":
-                for token in self.equal(ch):
-                    yield token
+                if newline_seen:
+                    for token in self.multiline_comment(ch):
+                        yield token
+                else:
+                    for token in self.equal(ch):
+                        yield token
             elif ch == "<":
                 for token in self.less_than(ch, space_seen):
                     yield token
@@ -250,6 +257,7 @@ class Lexer(object):
                 for token in self.identifier(ch, command_state):
                     yield token
             space_seen = False
+            newline_seen = False
 
     def read(self):
         try:
@@ -349,6 +357,29 @@ class Lexer(object):
                 self.unread()
                 break
 
+    def multiline_comment(self, ch):
+        read = 0
+        for ch in "begin":
+            read += 1
+            if self.read() == ch:
+                break
+        else:
+            for i in xrange(read):
+                self.unread()
+            for token in self.equal(ch):
+                yield token
+            return
+        while True:
+            ch = self.read()
+            if ch == self.EOF:
+                self.error("embedded document meets end of file")
+            if ch in "\r\n":
+                if (self.read() == "=" and
+                    self.read() == "e" and
+                    self.read() == "n" and
+                    self.read() == "d"):
+                    break
+
     def identifier(self, ch, command_state):
         self.add(ch)
         while True:
@@ -361,7 +392,7 @@ class Lexer(object):
                 self.add(ch)
                 yield self.emit_identifier(command_state, "FID")
                 break
-            elif ch.isalnum() or ch == "_":
+            elif ch.isalnum() or ch == "_" or ord(ch) > 127:
                 self.add(ch)
             else:
                 self.unread()
@@ -431,8 +462,10 @@ class Lexer(object):
                 yield self.emit("STRING_CONTENT")
                 break
             elif ch == "\\":
-                for ch in self.read_escape(character_escape=True):
-                    self.add(ch)
+                ch2 = self.peek()
+                if ch2 in "\\'":
+                    ch = self.read()
+                self.add(ch)
             else:
                 self.add(ch)
         yield self.emit("STRING_END")
@@ -503,6 +536,10 @@ class Lexer(object):
         if ch in "$>:?\\!\"~&`'+/,":
             self.add(ch)
             yield self.emit("GVAR")
+        elif ch == "-" and self.peek().isalnum():
+            self.add(ch)
+            self.add(self.read())
+            yield self.emit("GVAR")
         else:
             self.unread()
             while True:
@@ -536,7 +573,15 @@ class Lexer(object):
     def plus(self, ch, space_seen):
         self.add(ch)
         ch2 = self.read()
-        if ch2 == "=":
+        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]:
+            self.state = self.EXPR_ARG
+            if ch2 == "@":
+                self.add(ch2)
+                yield self.emit("UPLUS")
+            else:
+                self.unread()
+                yield self.emit("PLUS")
+        elif ch2 == "=":
             self.add(ch2)
             self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
@@ -673,6 +718,7 @@ class Lexer(object):
                 yield self.emit("ANDOP")
         elif ch2 == "=":
             self.add(ch2)
+            self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
         else:
             self.unread()
@@ -861,14 +907,11 @@ class Lexer(object):
             self.newline(c)
             return ["\n"]
         elif c == "u":
-            utf_escape = [None] * 4
-            for i in xrange(4):
-                ch = self.read()
-                if ch not in string.hexdigits:
-                    self.error()
-                utf_escape[i] = ch
-            utf_codepoint = int("".join(utf_escape), 16)
-            return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
+            ch = self.peek()
+            brace_seen = (ch == "{")
+            if brace_seen:
+                self.read()
+            return self.read_utf_escape(brace_seen=brace_seen, character_escape=character_escape)
         elif c == "x":
             hex_escape = self.read()
             if not hex_escape in string.hexdigits:
@@ -926,7 +969,7 @@ class Lexer(object):
                 self.error()
             c = self.read()
             if c == "?":
-                return ['\177']
+                return ["\177"]
             elif c == self.EOF:
                 self.error()
             else:
@@ -937,6 +980,55 @@ class Lexer(object):
                     [c] = c
                 return [chr(ord(c) & 0x9f)]
         return [c]
+
+    def read_utf_escape(self, brace_seen=False, character_escape=False):
+        if not brace_seen:
+            utf_escape = []
+            for i in xrange(4):
+                ch = self.read()
+                if ch not in string.hexdigits:
+                    self.error("invalid Unicode escape")
+                utf_escape.append(ch)
+            return self.encode_utf_escape(utf_escape)
+        elif character_escape:
+            ch = self.read()
+            if not ch in string.hexdigits:
+                self.error("invalid Unicode escape")
+            res = self.read_delimited_utf_escape(ch)
+            ch = self.read()
+            if ch != "}":
+                self.error("unterminated Unicode escape")
+            return res
+        else:
+            chars = []
+            ch = self.read()
+            while ch in string.hexdigits:
+                chars += self.read_delimited_utf_escape(ch)
+                ch = self.read()
+                if ch.isspace():
+                    ch = self.read()
+                else:
+                    break
+            if not chars:
+                self.error("invalid Unicode escape")
+            if ch != "}":
+                self.error("unterminated Unicode escape")
+            return chars
+
+    def read_delimited_utf_escape(self, ch):
+        utf_escape = [ch]
+        ch = self.read()
+        while ch in string.hexdigits:
+            utf_escape.append(ch)
+            ch = self.read()
+        self.unread()
+        return self.encode_utf_escape(utf_escape)
+
+    def encode_utf_escape(self, utf_escape):
+        utf_codepoint = int("".join(utf_escape), 16)
+        if utf_codepoint > 0x101111:
+            self.error("invalid Unicode codepoint (too large)")
+        return [c for c in unicode_encode_utf_8(unichr(utf_codepoint), 1, "ignore")]
 
     def colon(self, ch, space_seen):
         ch2 = self.read()
@@ -1139,7 +1231,7 @@ class Lexer(object):
             self.state = self.EXPR_FNAME
             yield self.emit("SYMBEG")
         else:
-            raise NotImplementedError('%' + ch)
+            raise NotImplementedError("%" + ch)
 
 
 class BaseStringTerm(object):

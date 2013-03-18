@@ -1,0 +1,19 @@
+fails:Array#sample selects a value from the array
+fails:Array#sample returns a distribution of results
+fails:Array#sample returns nil for empty arrays
+fails:Array#sample passed a number n as an argument raises ArgumentError for a negative n
+fails:Array#sample passed a number n as an argument selects values from the array
+fails:Array#sample passed a number n as an argument does not return the same value if the array is unique
+fails:Array#sample passed a number n as an argument may return the same value if the array is not unique
+fails:Array#sample passed a number n as an argument returns a distribution of results
+fails:Array#sample passed a number n as an argument tries to convert n to an Integer using #to_int
+fails:Array#sample passed a number n as an argument returns all values when n >= array size
+fails:Array#sample passed a number n as an argument returns [] for empty arrays or if n <= 0
+fails:Array#sample passed a number n as an argument does not return subclass instances with Array subclass
+fails:Array#sample returns only one element
+fails:Array#sample returns proper array size
+fails:Array#sample attempts coercion via #to_hash
+fails:Array#sample uses default random generator
+fails:Array#sample uses given random generator
+fails:Array#sample uses default random generator and return proper array size
+fails:Array#sample uses given random generator and return proper array size

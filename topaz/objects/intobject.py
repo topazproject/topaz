@@ -1,15 +1,19 @@
+import math
 import operator
 
 from rpython.rlib.debug import check_regular_int
-from rpython.rlib.rarithmetic import ovfcheck
+from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rarithmetic import ovfcheck, LONG_BIT
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import lltype, rffi
 
+from topaz.coerce import Coerce
 from topaz.module import ClassDef
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.integerobject import W_IntegerObject
 from topaz.objects.numericobject import W_NumericObject
 from topaz.objects.objectobject import W_RootObject
+from topaz.system import IS_WINDOWS
 
 
 class FixnumStorage(object):
@@ -98,6 +102,43 @@ class W_FixnumObject(W_RootObject):
     method_sub = new_binop(classdef, "-", operator.sub)
     method_mul = new_binop(classdef, "*", operator.mul)
 
+    def raise_zero_division_error(self, space):
+        raise space.error(space.w_ZeroDivisionError, "divided by 0")
+
+    def divide(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            other = space.int_w(w_other)
+            try:
+                return space.newint(self.intvalue / other)
+            except ZeroDivisionError:
+                self.raise_zero_division_error(space)
+        elif space.is_kind_of(w_other, space.w_bignum):
+            return space.send(space.newbigint_fromint(self.intvalue), space.newsymbol("/"), [w_other])
+        elif space.is_kind_of(w_other, space.w_float):
+            return space.send(space.newfloat(space.float_w(self)), space.newsymbol("/"), [w_other])
+        else:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
+
+    @classdef.method("/")
+    def method_divide(self, space, w_other):
+        return self.divide(space, w_other)
+
+    @classdef.method("div")
+    def method_div(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_float):
+            if space.float_w(w_other) == 0.0:
+                self.raise_zero_division_error(space)
+            else:
+                w_float = space.send(
+                    space.newfloat(space.float_w(self)),
+                    space.newsymbol("/"),
+                    [w_other]
+                )
+                w_float = space.newfloat(math.floor(Coerce.float(space, w_float)))
+                return space.send(w_float, space.newsymbol("to_i"))
+        else:
+            return self.divide(space, w_other)
+
     @classdef.method("**")
     def method_pow(self, space, w_other):
         if space.is_kind_of(w_other, space.w_fixnum):
@@ -139,13 +180,6 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.send(space.newfloat(float(temp)), space.newsymbol("**"), [w_other])
 
-    @classdef.method("/", other="int")
-    def method_div(self, space, other):
-        try:
-            return space.newint(self.intvalue / other)
-        except ZeroDivisionError:
-            raise space.error(space.w_ZeroDivisionError, "divided by 0")
-
     @classdef.method("%", other="int")
     def method_mod(self, space, other):
         return space.newint(self.intvalue % other)
@@ -154,6 +188,11 @@ class W_FixnumObject(W_RootObject):
     def method_left_shift(self, space, other):
         if other < 0:
             return space.newint(self.intvalue >> -other)
+        elif other >= LONG_BIT:
+            return space.send(
+                space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
+                [space.newint(other)]
+            )
         else:
             try:
                 value = ovfcheck(self.intvalue << other)
@@ -219,6 +258,7 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.w_nil
 
+    @specialize.argtype(2)
     def comparator(self, space, other):
         if self.intvalue < other:
             return -1
@@ -232,9 +272,15 @@ class W_FixnumObject(W_RootObject):
     def method_hash(self, space):
         return self
 
-    @classdef.method("size")
-    def method_size(self, space):
-        return space.newint(rffi.sizeof(lltype.typeOf(self.intvalue)))
+    if IS_WINDOWS:
+        @classdef.method("size")
+        def method_size(self, space):
+            # RPython translation is always 32bit on Windows
+            return space.newint(4)
+    else:
+        @classdef.method("size")
+        def method_size(self, space):
+            return space.newint(rffi.sizeof(lltype.typeOf(self.intvalue)))
 
     @classdef.method("coerce")
     def method_coerce(self, space, w_other):
@@ -243,67 +289,9 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
 
-    @classdef.method('chr')
+    @classdef.method("chr")
     def method_chr(self, space):
         if self.intvalue > 255 or self.intvalue < 0:
             raise space.error(space.w_RangeError, "%d out of char range" % self.intvalue)
         else:
             return space.newstr_fromstr(chr(self.intvalue))
-
-    classdef.app_method("""
-    def next
-        succ
-    end
-
-    def succ
-        self + 1
-    end
-
-    def times
-        i = 0
-        while i < self
-            yield i
-            i += 1
-        end
-    end
-
-    def upto(n)
-        i = self
-        while i <= n
-            yield i
-            i += 1
-        end
-        self
-    end
-
-    def zero?
-        self == 0
-    end
-
-    def nonzero?
-        self != 0
-    end
-
-    def even?
-        self % 2 == 0
-    end
-
-    def odd?
-        self % 2 != 0
-    end
-
-    def __id__
-        self * 2 + 1
-    end
-
-    def step(limit, step=1)
-        idx = self
-        if limit.is_a?(Float) or step.is_a?(Float)
-            idx = idx.to_f
-        end
-        while idx <= limit do
-            yield idx
-            idx += step
-        end
-    end
-    """)

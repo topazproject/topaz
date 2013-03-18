@@ -39,7 +39,7 @@ class W_ClassObject(W_ModuleObject):
         return self.klass
 
     def find_const(self, space, name):
-        w_res = W_ModuleObject.find_const(self, space, name)
+        w_res = W_ModuleObject.find_included_const(self, space, name)
         if w_res is None and self.superclass is not None:
             w_res = self.superclass.find_const(space, name)
         return w_res
@@ -64,6 +64,11 @@ class W_ClassObject(W_ModuleObject):
         if self.superclass is not None:
             ary += self.superclass.ancestors(include_singleton)
         return ary
+
+    def inherited(self, space, w_mod):
+        self.descendants.append(w_mod)
+        if not space.bootstrap and space.respond_to(self, space.newsymbol("inherited")):
+            space.send(self, space.newsymbol("inherited"), [w_mod])
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_superclass=None):

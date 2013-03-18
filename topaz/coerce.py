@@ -1,6 +1,3 @@
-from rpython.rlib.rstring import assert_str0
-
-
 class Coerce(object):
     @staticmethod
     def bool(space, w_obj):
@@ -49,8 +46,13 @@ class Coerce(object):
 
     @staticmethod
     def path(space, w_obj):
-        string = Coerce.str(space, w_obj)
-        if "\x00" in string:
-            raise space.error(space.w_ArgumentError, "string contains null byte")
-        else:
-            return assert_str0(string)
+        w_string = space.convert_type(w_obj, space.w_string, "to_path", raise_error=False)
+        if w_string is space.w_nil:
+            w_string = space.convert_type(w_obj, space.w_string, "to_str")
+        return space.str0_w(w_string)
+
+    @staticmethod
+    def array(space, w_obj):
+        if not space.is_kind_of(w_obj, space.w_array):
+            w_obj = space.convert_type(w_obj, space.w_array, "to_ary")
+        return space.listview(w_obj)

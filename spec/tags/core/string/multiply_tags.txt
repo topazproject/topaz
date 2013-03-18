@@ -1,0 +1,2 @@
+fails:String#*
+fails:String#* raises an ArgumentError when given integer is negative

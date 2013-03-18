@@ -1,0 +1,2 @@
+fails:Process.exit raises a SystemExit with the specified boolean status
+fails:Process.exit! exits immediately when called from a thread

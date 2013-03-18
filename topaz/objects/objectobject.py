@@ -94,7 +94,7 @@ class W_BaseObject(W_Root):
 
     @classdef.method("__send__", method="str")
     def method_send(self, space, method, args_w, block):
-        return space.send(self, space.newsymbol(method), args_w[1:], block)
+        return space.send(self, space.newsymbol(method), args_w, block)
 
     @classdef.method("instance_eval", string="str", filename="str")
     def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
@@ -129,9 +129,21 @@ class W_RootObject(W_BaseObject):
 
     @classdef.method("extend")
     def method_extend(self, space, w_mod):
-        self.getsingletonclass(space).method_include(space, w_mod)
+        if not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
+            if space.is_kind_of(w_mod, space.w_class):
+                name = "Class"
+            else:
+                name = space.getclass(w_mod).name
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Module)" % name
+            )
+        self.getsingletonclass(space).extend_object(space, self, w_mod)
 
     @classdef.method("inspect")
+    def method_inspect(self, space):
+        return space.send(self, space.newsymbol("to_s"))
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(space.any_to_s(self))
@@ -168,6 +180,14 @@ class W_RootObject(W_BaseObject):
             space.newsymbol("bind"),
             [self]
         )
+
+    @classdef.method("tap")
+    def method_tap(self, space, block):
+        if block is not None:
+            space.invoke_block(block, [self])
+        else:
+            raise space.error(space.w_LocalJumpError, "no block given")
+        return self
 
 
 class W_Object(W_RootObject):

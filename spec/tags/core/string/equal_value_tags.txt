@@ -1,0 +1,1 @@
+fails:String#== returns obj == self if obj responds to to_str

@@ -1,0 +1,7 @@
+fails:Range#first returns the first count elements if given a count
+fails:Range#first returns an empty array when passed count on an empty range
+fails:Range#first returns an empty array when passed count == 0
+fails:Range#first returns an array containing the first element when passed count == 1
+fails:Range#first returns the entire array when count > length
+fails:Range#first tries to convert the passed argument to an Integer using #to_int
+fails:Range#first raises a TypeError if the passed argument is not numeric

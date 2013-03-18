@@ -27,6 +27,7 @@ class Interpreter(object):
         reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
+        check_untranslated=False
     )
 
     def __init__(self):
@@ -70,6 +71,8 @@ class Interpreter(object):
             pc = self.handle_raise_return(space, pc, frame, bytecode, e)
         except RaiseBreak as e:
             pc = self.handle_raise_break(space, pc, frame, bytecode, e)
+        except Throw as e:
+            pc = self.handle_throw(space, pc, frame, bytecode, e)
         return pc
 
     def handle_bytecode(self, space, pc, frame, bytecode):
@@ -137,6 +140,13 @@ class Interpreter(object):
         unroller = RaiseBreakValue(e.parent_interp, e.w_value)
         return block.handle(space, frame, unroller)
 
+    def handle_throw(self, space, pc, frame, bytecode, e):
+        block = frame.unrollstack(ThrowValue.kind)
+        if block is None:
+            raise e
+        unroller = ThrowValue(e.name, e.w_value)
+        return block.handle(space, frame, unroller)
+
     def jump(self, space, bytecode, frame, cur_pc, target_pc):
         if target_pc < cur_pc:
             self.jitdriver.can_enter_jit(
@@ -167,13 +177,13 @@ class Interpreter(object):
         frame.push(bytecode.consts_w[idx])
 
     def LOAD_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx].get(frame, idx) or space.w_nil)
+        frame.push(frame.cells[idx].get(space, frame, idx) or space.w_nil)
 
     def STORE_DEREF(self, space, bytecode, frame, pc, idx):
-        frame.cells[idx].set(frame, idx, frame.peek())
+        frame.cells[idx].set(space, frame, idx, frame.peek())
 
     def LOAD_CLOSURE(self, space, bytecode, frame, pc, idx):
-        frame.push(frame.cells[idx].upgrade_to_closure(frame, idx))
+        frame.push(frame.cells[idx].upgrade_to_closure(space, frame, idx))
 
     def LOAD_CONSTANT(self, space, bytecode, frame, pc, idx):
         space.getexecutioncontext().last_instr = pc
@@ -343,6 +353,11 @@ class Interpreter(object):
         )
         frame.push(block)
 
+    def BUILD_LAMBDA(self, space, bytecode, frame, pc):
+        block = frame.pop()
+        assert isinstance(block, W_BlockObject)
+        frame.push(space.newproc(block, is_lambda=True))
+
     def BUILD_CLASS(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc
         superclass = frame.pop()
@@ -368,7 +383,6 @@ class Interpreter(object):
 
     def BUILD_MODULE(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc
-        w_bytecode = frame.pop()
         w_name = frame.pop()
         w_scope = frame.pop()
 
@@ -380,12 +394,7 @@ class Interpreter(object):
         elif not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a module" % name)
 
-        assert isinstance(w_bytecode, W_CodeObject)
-        sub_frame = space.create_frame(w_bytecode, w_mod, StaticScope(w_mod, frame.lexical_scope))
-        with space.getexecutioncontext().visit_frame(sub_frame):
-            space.execute_frame(sub_frame, w_bytecode)
-
-        frame.push(space.w_nil)
+        frame.push(w_mod)
 
     def BUILD_REGEXP(self, space, bytecode, frame, pc):
         w_flags = frame.pop()
@@ -481,13 +490,15 @@ class Interpreter(object):
         w_obj.attach_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
-    def EVALUATE_CLASS(self, space, bytecode, frame, pc):
+    def EVALUATE_MODULE(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc
         w_bytecode = frame.pop()
-        w_cls = frame.pop()
+        w_mod = frame.pop()
         assert isinstance(w_bytecode, W_CodeObject)
-        space.getexecutioncontext().invoke_trace_proc(space, "class", None, None, frame=frame)
-        sub_frame = space.create_frame(w_bytecode, w_cls, StaticScope(w_cls, frame.lexical_scope), block=frame.block)
+
+        event = "class" if space.is_kind_of(w_mod, space.w_class) else "module"
+        space.getexecutioncontext().invoke_trace_proc(space, event, None, None, frame=frame)
+        sub_frame = space.create_frame(w_bytecode, w_mod, StaticScope(w_mod, frame.lexical_scope), block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 
@@ -741,6 +752,12 @@ class RaiseBreak(RaiseFlow):
     pass
 
 
+class Throw(RaiseFlow):
+    def __init__(self, name, w_value):
+        self.name = name
+        self.w_value = w_value
+
+
 class SuspendedUnroller(W_Root):
     pass
 
@@ -799,6 +816,17 @@ class RaiseBreakValue(SuspendedUnroller):
 
     def nomoreblocks(self):
         raise RaiseBreak(self.parent_interp, self.w_value)
+
+
+class ThrowValue(SuspendedUnroller):
+    kind = 1 << 6
+
+    def __init__(self, name, w_value):
+        self.name = name
+        self.w_value = w_value
+
+    def nomoreblocks(self):
+        raise Throw(self.name, self.w_value)
 
 
 class FrameBlock(object):

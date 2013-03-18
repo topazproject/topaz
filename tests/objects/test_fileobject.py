@@ -3,112 +3,9 @@ import stat
 
 import pytest
 
-from topaz.objects.fileobject import W_FileObject, W_IOObject
+from topaz.objects.fileobject import W_FileObject
 
 from ..base import BaseTopazTest
-
-
-class TestIO(BaseTopazTest):
-    def test_new_from_file(self, space, tmpdir):
-        contents = "foo\nbar\nbaz\n"
-        f = tmpdir.join("file.txt")
-        f.write(contents)
-
-        w_res = space.execute("""
-        f = File.new('%s')
-        io = IO.new(f)
-        return io.read
-        """ % f)
-        assert space.str_w(w_res) == contents
-
-    def test_new_from_fd(self, space):
-        w_res = space.execute("return IO.new(1)")
-        assert isinstance(w_res, W_IOObject)
-
-    def test_write(self, space, capfd):
-        content = "foo\n"
-        space.execute('return IO.new(1, "w").write("%s")' % content)
-        out, err = capfd.readouterr()
-        assert out == content
-        content = "foo\n"
-
-    def test_push(self, space, capfd):
-        space.execute('return IO.new(1, "w") << "hello" << "world"')
-        out, err = capfd.readouterr()
-        assert out == "helloworld"
-
-    def test_read(self, space, tmpdir):
-        contents = "foo\nbar\nbaz\n"
-        f = tmpdir.join("file.txt")
-        f.write(contents)
-
-        w_res = space.execute("return File.new('%s').read" % f)
-        assert space.str_w(w_res) == contents
-
-        w_res = space.execute("return File.new('%s').read(4)" % f)
-        assert space.str_w(w_res) == contents[:4]
-
-        w_res = space.execute("""
-        a = 'hello world'
-        File.new('%s').read(10, a)
-        return a
-        """ % f)
-        assert space.str_w(w_res) == contents[:10]
-
-        with self.raises(space, "ArgumentError"):
-            space.execute("File.new('%s').read(-1)" % f)
-
-    def test_simple_print(self, space, capfd):
-        space.execute('IO.new(1, "w").print("foo")')
-        out, err = capfd.readouterr()
-        assert out == "foo"
-
-    def test_multi_print(self, space, capfd):
-        space.execute('IO.new(1, "w").print("This", "is", 100, "percent")')
-        out, err = capfd.readouterr()
-        assert out == "Thisis100percent"
-
-    def test_print_globals(self, space, capfd):
-        space.globals.set(space, "$,", space.newstr_fromstr(":"))
-        space.globals.set(space, "$\\", space.newstr_fromstr("\n"))
-        space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
-        space.globals.set(space, "$_", space.newstr_fromstr('lastprint'))
-        space.execute('IO.new(1, "w").print')
-        out, err = capfd.readouterr()
-        assert out == "foo:bar:baz\nlastprint\n"
-
-    def test_non_string_print_globals(self, space, capfd):
-        space.globals.set(space, "$,", space.w_nil)
-        space.globals.set(space, "$\\", space.w_nil)
-        space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
-        space.globals.set(space, "$_", space.w_nil)
-        space.execute('IO.new(1, "w").print')
-        out, err = capfd.readouterr()
-        assert out == "foobarbaz"
-
-    def test_puts(self, space, capfd):
-        space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
-        out, err = capfd.readouterr()
-        assert out == "This\nis\n100\npercent\n"
-
-    def test_flush(self, space, capfd):
-        space.execute("IO.new(1, 'w').flush.puts('String')")
-        out, err = capfd.readouterr()
-        assert out == "String\n"
-
-    def test_globals(self, space, capfd):
-        w_res = space.execute("""
-        STDOUT.puts("STDOUT")
-        $stdout.puts("$stdout")
-        $>.puts("$>")
-        STDERR.puts("STDERR")
-        $stderr.puts("$stderr")
-        return STDIN.read, $stdin.read
-        """)
-        out, err = capfd.readouterr()
-        assert out == "STDOUT\n$stdout\n$>\n"
-        assert err == "STDERR\n$stderr\n"
-        assert self.unwrap(space, w_res) == [None, None]
 
 
 class TestFile(BaseTopazTest):
@@ -128,6 +25,9 @@ class TestFile(BaseTopazTest):
 
     def test_alt_separator(self, space):
         space.execute("File::ALT_SEPARATOR")
+
+    def test_path_separator(self, space):
+        space.execute("File::PATH_SEPARATOR")
 
     def test_fnm_syscase(self, space):
         space.execute("File::FNM_SYSCASE")
@@ -156,6 +56,8 @@ class TestFile(BaseTopazTest):
         assert isinstance(w_res, W_FileObject)
         w_res = space.execute("return File.new('%s', 'rb+')" % f)
         assert isinstance(w_res, W_FileObject)
+        w_res = space.execute("return File.new('%s', 'a+')" % f)
+        assert isinstance(w_res, W_FileObject)
 
         with self.raises(space, "ArgumentError", "invalid access mode rw"):
             space.execute("File.new('%s', 'rw')" % f)
@@ -165,6 +67,8 @@ class TestFile(BaseTopazTest):
             space.execute("File.new('%s', 'rw+')" % f)
         with self.raises(space, "ArgumentError", "invalid access mode ra"):
             space.execute("File.new('%s', 'ra')" % f)
+        with self.raises(space, "SystemCallError"):
+            space.execute("File.new('%s', 1)" % tmpdir.join("non-existant"))
 
         w_res = space.execute("return File.new('%s%snonexist', 'w')" % (tmpdir.dirname, os.sep))
         assert isinstance(w_res, W_FileObject)
@@ -179,6 +83,38 @@ class TestFile(BaseTopazTest):
         return f.read
         """ % (tmpdir.dirname, os.sep))
         assert space.str_w(w_res) == "first\nsecond\n"
+
+    def test_readline(self, space, tmpdir):
+        contents = "01\n02\n03\n04\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+        w_res = space.execute("return File.new('%s').readline" % f)
+        assert self.unwrap(space, w_res) == "01\n"
+
+        w_res = space.execute("return File.new('%s').readline('3')" % f)
+        assert self.unwrap(space, w_res) == "01\n02\n03"
+
+        w_res = space.execute("return File.new('%s').readline(1)" % f)
+        assert self.unwrap(space, w_res) == "0"
+
+        w_res = space.execute("return File.new('%s').readline('3', 4)" % f)
+        assert self.unwrap(space, w_res) == "01\n0"
+
+    def test_readlines(self, space, tmpdir):
+        contents = "01\n02\n03\n04\n"
+        f = tmpdir.join("file.txt")
+        f.write(contents)
+        w_res = space.execute("return File.new('%s').readlines()" % f)
+        assert self.unwrap(space, w_res) == ["01", "02", "03", "04", ""]
+
+        w_res = space.execute("return File.new('%s').readlines('3')" % f)
+        assert self.unwrap(space, w_res) == ["01\n02\n0", "\n04\n"]
+
+        w_res = space.execute("return File.new('%s').readlines(1)" % f)
+        assert self.unwrap(space, w_res) == ["0", "1", "0", "2", "0", "3", "0", "4", ""]
+
+        w_res = space.execute("return File.new('%s').readlines('3', 4)" % f)
+        assert self.unwrap(space, w_res) == ["01\n0", "2\n0", "\n04\n"]
 
     def test_each_line(self, space, tmpdir):
         contents = "01\n02\n03\n04\n"
@@ -209,8 +145,15 @@ class TestFile(BaseTopazTest):
         """ % f)
         assert self.unwrap(space, w_res) == ["01\n0", "2\n0", "\n04\n"]
 
+        with self.raises(space, "ArgumentError", "invalid limit: 0 for each_line"):
+            w_res = space.execute("""
+            File.new('%s').each_line(0) { |l| }
+            """ % f)
+
     def test_join(self, space):
         w_res = space.execute("return File.join('/abc', 'bin')")
+        assert space.str_w(w_res) == "/abc/bin"
+        w_res = space.execute("return File.join('', 'abc', 'bin')")
         assert space.str_w(w_res) == "/abc/bin"
         w_res = space.execute("return File.join")
         assert space.str_w(w_res) == ""
@@ -222,6 +165,20 @@ class TestFile(BaseTopazTest):
         assert space.str_w(w_res) == "abc/def/ghi"
         w_res = space.execute("return File.join('a', '//', 'b', '/', 'd', '/')")
         assert space.str_w(w_res) == "a//b/d/"
+        w_res = space.execute("return File.join('a', '')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/', '')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a', '/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('a/', '/')")
+        assert space.str_w(w_res) == "a/"
+        w_res = space.execute("return File.join('')")
+        assert space.str_w(w_res) == ""
+        w_res = space.execute("return File.join([])")
+        assert space.str_w(w_res) == ""
 
     def test_existp(self, space, tmpdir):
         f = tmpdir.join("test.rb")
@@ -299,6 +256,47 @@ class TestFile(BaseTopazTest):
         assert space.str_w(space.execute("return File.basename('ab')")) == "ab"
         assert space.str_w(space.execute("return File.basename('/ab')")) == "ab"
         assert space.str_w(space.execute("return File.basename('/foo/bar/ab')")) == "ab"
+
+    def test_truncate(self, space, tmpdir):
+        f = tmpdir.join("file.txt")
+        f.write("content")
+        w_res = space.execute("""
+        f = File.new('%s', "r+")
+        f.truncate(3)
+        return f.read
+        """ % f)
+        assert self.unwrap(space, w_res) == "con"
+
+    def test_get_umask(self, space, monkeypatch):
+        monkeypatch.setattr(os, "umask", lambda mask: 2)
+        w_res = space.execute("return File.umask")
+        assert space.int_w(w_res) == 2
+
+    def test_set_umask(self, space, monkeypatch):
+        umask = [2]
+
+        def mock_umask(mask):
+            [current], umask[0] = umask, mask
+            return current
+        monkeypatch.setattr(os, "umask", mock_umask)
+        w_res = space.execute("return File.umask(10), File.umask")
+        assert self.unwrap(space, w_res) == [2, 10]
+
+    def test_size_p(self, space, tmpdir):
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert w_res is space.w_nil
+        tmpdir.join("x.txt").ensure()
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert w_res is space.w_nil
+        tmpdir.join("x.txt").write("abc")
+        w_res = space.execute("return File.size?('%s')" % tmpdir.join("x.txt"))
+        assert space.int_w(w_res) == 3
+
+    def test_delete(self, space, tmpdir):
+        tmpdir.join("t.txt").ensure()
+        w_res = space.execute("return File.delete('%s')" % tmpdir.join("t.txt"))
+        assert space.int_w(w_res) == 1
+        assert not tmpdir.join("t.txt").check()
 
 
 class TestExpandPath(BaseTopazTest):

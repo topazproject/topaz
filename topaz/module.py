@@ -1,5 +1,6 @@
+import functools
+
 from topaz.gateway import WrapperGenerator
-from topaz.scope import StaticScope
 from topaz.utils.cache import Cache
 
 
@@ -10,7 +11,6 @@ class ClassDef(object):
         self.name = name
         self.filepath = filepath
         self.methods = {}
-        self.app_methods = []
         self.singleton_methods = {}
         self.includes = []
         self.setup_class_func = None
@@ -37,10 +37,9 @@ class ClassDef(object):
             return func
         return adder
 
-    def app_method(self, source):
-        self.app_methods.append(source)
+    def singleton_method(self, __name, **argspec):
+        name = __name
 
-    def singleton_method(self, name, **argspec):
         def adder(func):
             if isinstance(func, staticmethod):
                 func = func.__func__
@@ -58,6 +57,16 @@ class ClassDef(object):
             raise space.error(space.w_TypeError, "allocator undefined for %s" % self.name)
         return method_allocate
 
+    def notimplemented(self, name):
+        @self.method(name)
+        def method(self, space):
+            raise space.error(space.w_NotImplementedError)
+
+    def singleton_notimplemented(self, name):
+        @self.singleton_method(name)
+        def method(self, space):
+            raise space.error(space.w_NotImplementedError)
+
 
 class Module(object):
     pass
@@ -68,7 +77,6 @@ class ModuleDef(object):
         self.name = name
         self.filepath = filepath
         self.methods = {}
-        self.app_methods = []
 
         self.singleton_methods = {}
         self.setup_module_func = None
@@ -84,9 +92,6 @@ class ModuleDef(object):
             return func
         return adder
 
-    def app_method(self, source):
-        self.app_methods.append(source)
-
     def function(self, __name, **argspec):
         name = __name
 
@@ -100,6 +105,25 @@ class ModuleDef(object):
     def setup_module(self, func):
         self.setup_module_func = func
         return func
+
+
+def check_frozen(param="self"):
+    def inner(func):
+        code = func.__code__
+        space_idx = code.co_varnames.index("space")
+        obj_idx = code.co_varnames.index(param)
+
+        @functools.wraps(func)
+        def wrapper(*args):
+            space = args[space_idx]
+            w_obj = args[obj_idx]
+            if space.is_true(w_obj.get_flag(space, "frozen?")):
+                klass = space.getclass(w_obj)
+                raise space.error(space.w_RuntimeError, "can't modify frozen %s" % klass.name)
+            return func(*args)
+        wrapper.__wraps__ = func
+        return wrapper
+    return inner
 
 
 class ClassCache(Cache):
@@ -119,13 +143,6 @@ class ClassCache(Cache):
         for name, (method, argspec) in classdef.methods.iteritems():
             func = WrapperGenerator(name, method, argspec, classdef.cls).generate_wrapper()
             w_class.define_method(self.space, name, W_BuiltinFunction(name, w_class, func))
-
-        for source in classdef.app_methods:
-            self.space.execute(source,
-                w_self=w_class,
-                lexical_scope=StaticScope(w_class, None),
-                filepath=classdef.filepath
-            )
 
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ClassObject).generate_wrapper()
@@ -149,12 +166,6 @@ class ModuleCache(Cache):
         for name, (method, argspec) in moduledef.methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_BaseObject).generate_wrapper()
             w_mod.define_method(self.space, name, W_BuiltinFunction(name, w_mod, func))
-        for source in moduledef.app_methods:
-            self.space.execute(source,
-                w_self=w_mod,
-                lexical_scope=StaticScope(w_mod, None),
-                filepath=moduledef.filepath
-            )
         for name, (method, argspec) in moduledef.singleton_methods.iteritems():
             func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
             w_mod.attach_method(self.space, name, W_BuiltinFunction(name, w_mod, func))

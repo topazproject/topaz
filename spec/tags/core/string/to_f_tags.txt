@@ -1,0 +1,4 @@
+fails:String#to_f allows for varying case
+fails:String#to_f allows for varying signs
+fails:String#to_f allows for underscores, even in the decimal side
+fails:String#to_f takes an optional sign

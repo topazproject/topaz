@@ -1,203 +1,23 @@
 import os
 import sys
+import stat
 
 from topaz.coerce import Coerce
+from topaz.error import error_for_oserror
 from topaz.module import ClassDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
+from topaz.objects.ioobject import W_IOObject
 from topaz.objects.stringobject import W_StringObject
+from topaz.system import IS_WINDOWS
+from topaz.utils.ll_file import O_BINARY, ftruncate, isdir, fchmod
+from topaz.utils.filemode import map_filemode
 
 
 FNM_NOESCAPE = 0x01
 FNM_PATHNAME = 0x02
 FNM_DOTMATCH = 0x04
-if sys.platform == "win32":
-    O_BINARY = os.O_BINARY
-else:
-    O_BINARY = 0
-
-
-class W_IOObject(W_Object):
-    classdef = ClassDef("IO", W_Object.classdef, filepath=__file__)
-
-    def __init__(self, space):
-        W_Object.__init__(self, space)
-        self.fd = -1
-
-    def __del__(self):
-        # Do not close standard file streams
-        if self.fd > 3:
-            os.close(self.fd)
-
-    def __deepcopy__(self, memo):
-        obj = super(W_IOObject, self).__deepcopy__(memo)
-        obj.fd = self.fd
-        return obj
-
-    @classdef.setup_class
-    def setup_class(cls, space, w_cls):
-        w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
-        space.globals.set(space, "$stdin", w_stdin)
-        space.set_const(space.w_object, "STDIN", w_stdin)
-
-        w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
-        space.globals.set(space, "$stdout", w_stdout)
-        space.globals.set(space, "$>", w_stdout)
-        space.globals.set(space, "$/", space.newstr_fromstr("\n"))
-        space.set_const(space.w_object, "STDOUT", w_stdout)
-
-        w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
-        space.globals.set(space, "$stderr", w_stderr)
-        space.set_const(space.w_object, "STDERR", w_stderr)
-
-    @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
-        return W_IOObject(space)
-
-    @classdef.method("initialize")
-    def method_initialize(self, space, w_fd_or_io, w_mode_str_or_int=None, w_opts=None):
-        if isinstance(w_fd_or_io, W_IOObject):
-            fd = w_fd_or_io.fd
-        else:
-            fd = space.int_w(w_fd_or_io)
-        if isinstance(w_mode_str_or_int, W_StringObject):
-            mode = space.str_w(w_mode_str_or_int)
-            if ":" in mode:
-                raise NotImplementedError("encoding for IO.new")
-        elif w_mode_str_or_int is None:
-            mode = None
-        else:
-            raise NotImplementedError("int mode for IO.new")
-        if w_opts is not None:
-            raise NotImplementedError("options hash for IO.new")
-        if mode is None:
-            mode = "r"
-        self.fd = fd
-        return self
-
-    @classdef.method("read")
-    def method_read(self, space, w_length=None, w_str=None):
-        if w_length:
-            length = space.int_w(w_length)
-            if length < 0:
-                raise space.error(space.w_ArgumentError,
-                    "negative length %d given" % length
-                )
-        else:
-            length = -1
-        read_bytes = 0
-        read_chunks = []
-        while length < 0 or read_bytes < length:
-            if length > 0:
-                max_read = int(length - read_bytes)
-            else:
-                max_read = 8192
-            current_read = os.read(self.fd, max_read)
-            if len(current_read) == 0:
-                break
-            read_bytes += len(current_read)
-            read_chunks += current_read
-        # Return nil on EOF if length is given
-        if read_bytes == 0:
-            return space.w_nil
-        w_read_str = space.newstr_fromchars(read_chunks)
-        if w_str is not None:
-            w_str.clear(space)
-            w_str.extend(space, w_read_str)
-            return w_str
-        else:
-            return w_read_str
-
-    classdef.app_method("""
-    def << s
-        write(s)
-        return self
-    end
-    """)
-
-    @classdef.method("write")
-    def method_write(self, space, w_str):
-        string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
-        bytes_written = os.write(self.fd, string)
-        return space.newint(bytes_written)
-
-    @classdef.method("flush")
-    def method_flush(self, space):
-        # We have no internal buffers to flush!
-        return self
-
-    @classdef.method("print")
-    def method_print(self, space, args_w):
-        if not args_w:
-            w_last = space.globals.get(space, "$_")
-            if w_last is not None:
-                args_w.append(w_last)
-        w_sep = space.globals.get(space, "$,")
-        if w_sep:
-            sep = space.str_w(space.send(w_sep, space.newsymbol("to_s")))
-        else:
-            sep = ""
-        w_end = space.globals.get(space, "$\\")
-        if w_end:
-            end = space.str_w(space.send(w_end, space.newsymbol("to_s")))
-        else:
-            end = ""
-        strings = [space.str_w(space.send(w_arg, space.newsymbol("to_s"))) for w_arg in args_w]
-        os.write(self.fd, sep.join(strings))
-        os.write(self.fd, end)
-        return space.w_nil
-
-    @classdef.method("puts")
-    def method_puts(self, space, args_w):
-        for w_arg in args_w:
-            string = space.str_w(space.send(w_arg, space.newsymbol("to_s")))
-            os.write(self.fd, string)
-            if not string.endswith("\n"):
-                os.write(self.fd, "\n")
-        return space.w_nil
-
-    classdef.app_method("""
-    def each_line(sep=$/, limit=nil)
-        if sep.is_a?(Fixnum) && limit.nil?
-            limit = sep
-            sep = $/
-        end
-
-        if sep.nil?
-            yield(limit ? read(limit) : read)
-            return self
-        end
-
-        rest = ""
-        nxt = read(8192)
-        need_read = false
-        while nxt || rest
-            if nxt and need_read
-                rest = rest ? rest + nxt : nxt
-                nxt = read(8192)
-                need_read = false
-            end
-
-            line, rest = *rest.split(sep, 2)
-
-            if limit && line.size > limit
-                left = 0
-                right = limit
-                while right < line.size
-                    yield line[left...right]
-                    left, right = right, right + limit
-                end
-                rest = line[right - limit..-1] + sep + (rest || "")
-            elsif rest || nxt.nil?
-                yield line
-            else
-                need_read = true
-            end
-        end
-        self
-    end
-    """)
 
 
 class W_FileObject(W_IOObject):
@@ -205,7 +25,7 @@ class W_FileObject(W_IOObject):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        if sys.platform == "win32":
+        if IS_WINDOWS:
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
         else:
@@ -213,6 +33,7 @@ class W_FileObject(W_IOObject):
             w_fnm_syscase = space.newint(0)
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
+        space.set_const(w_cls, "PATH_SEPARATOR", space.newstr_fromstr(os.pathsep))
         space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
         space.set_const(w_cls, "FNM_NOESCAPE", space.newint(FNM_NOESCAPE))
         space.set_const(w_cls, "FNM_PATHNAME", space.newint(FNM_PATHNAME))
@@ -226,11 +47,32 @@ class W_FileObject(W_IOObject):
         space.set_const(w_cls, "EXCL", space.newint(os.O_EXCL))
         space.set_const(w_cls, "TRUNC", space.newint(os.O_TRUNC))
 
+        space.set_const(w_cls, "Stat", space.getclassfor(W_FileStatObject))
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w):
         return W_FileObject(space)
 
-    @classdef.method("initialize", filename="str")
+    @classdef.singleton_method("size?", name="path")
+    def singleton_method_size_p(self, space, name):
+        try:
+            stat_val = os.stat(name)
+        except OSError:
+            return space.w_nil
+        return space.w_nil if stat_val.st_size == 0 else space.newint_or_bigint(stat_val.st_size)
+
+    @classdef.singleton_method("unlink")
+    @classdef.singleton_method("delete")
+    def singleton_method_delete(self, space, args_w):
+        for w_path in args_w:
+            path = Coerce.path(space, w_path)
+            try:
+                os.unlink(path)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+        return space.newint(len(args_w))
+
+    @classdef.method("initialize", filename="path")
     def method_initialize(self, space, filename, w_mode=None, w_perm_or_opt=None, w_opt=None):
         if w_mode is None:
             w_mode = space.w_nil
@@ -246,42 +88,13 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        if w_mode is space.w_nil:
-            mode = os.O_RDONLY
-        elif isinstance(w_mode, W_StringObject):
-            mode_str = space.str_w(w_mode)
-            mode = 0
-            invalid_error = space.error(space.w_ArgumentError,
-                "invalid access mode %s" % mode_str
-            )
-            major_mode_seen = False
-
-            for ch in mode_str:
-                if ch == "b":
-                    mode |= O_BINARY
-                elif ch == "+":
-                    mode |= os.O_RDWR
-                elif ch == "r":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_RDONLY
-                elif ch in "aw":
-                    if major_mode_seen:
-                        raise invalid_error
-                    major_mode_seen = True
-                    mode |= os.O_WRONLY | os.O_CREAT
-                    if ch == "w":
-                        mode |= os.O_TRUNC
-                    else:
-                        mode |= os.O_APPEND
-                else:
-                    raise invalid_error
-        else:
-            mode = space.int_w(w_mode)
+        mode = map_filemode(space, w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
-            raise NotImplementedError("options hash or permissions for File.new")
-        self.fd = os.open(filename, mode, perm)
+            raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
+        try:
+            self.fd = os.open(filename, mode, perm)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         return self
 
     @classdef.singleton_method("dirname", path="path")
@@ -331,11 +144,22 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                string = space.str_w(
-                    W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
-                )
+                ec = space.getexecutioncontext()
+                with ec.recursion_guard("file_singleton_method_join", w_arg) as in_recursion:
+                    if in_recursion:
+                        raise space.error(space.w_ArgumentError, "recursive array")
+                    string = space.str_w(
+                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
+                    )
             else:
-                string = space.str_w(w_arg)
+                w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
+                if w_string is space.w_nil:
+                    w_string = space.convert_type(w_arg, space.w_string, "to_str")
+                string = space.str_w(w_string)
+
+            if string == "" and len(args_w) > 1:
+                if (not result) or result[-1] != sep:
+                    result += sep
             if string.startswith(sep):
                 while result and result[-1] == sep:
                     result.pop()
@@ -355,36 +179,251 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("directory?", filename="path")
     def method_directoryp(self, space, filename):
-        return space.newbool(os.path.isdir(filename))
+        return space.newbool(isdir(filename))
+
+    @classdef.singleton_method("symlink?", filename="path")
+    def method_symlinkp(self, space, filename):
+        return space.newbool(os.path.islink(filename))
 
     @classdef.singleton_method("executable?", filename="path")
     def method_executablep(self, space, filename):
         return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
 
+    @classdef.singleton_method("identical?", file="path", other="path")
+    def method_identicalp(self, space, file, other):
+        try:
+            file_stat = os.stat(file)
+            other_stat = os.stat(other)
+        except OSError:
+            return space.w_false
+        return space.newbool(file_stat.st_dev == other_stat.st_dev and
+                file_stat.st_ino == other_stat.st_ino)
+
     @classdef.singleton_method("basename", filename="path")
     def method_basename(self, space, filename):
-        i = filename.rfind('/') + 1
+        i = filename.rfind("/") + 1
         assert i >= 0
         return space.newstr_fromstr(filename[i:])
 
-    classdef.app_method("""
-    def self.open(filename, mode="r", perm=nil, opt=nil, &block)
-        f = self.new filename, mode, perm, opt
-        return f unless block
-        begin
-            return yield f
-        ensure
-            f.close
-        end
-    end
-    """)
+    @classdef.singleton_method("umask", mask="int")
+    def method_umask(self, space, mask=-1):
+        if mask >= 0:
+            return space.newint(os.umask(mask))
+        else:
+            current_umask = os.umask(0)
+            os.umask(current_umask)
+            return space.newint(current_umask)
 
-    @classdef.method("close")
-    def method_close(self, space):
-        os.close(self.fd)
-        self.fd = -1
-        return self
+    @classdef.method("truncate", length="int")
+    def method_truncate(self, space, length):
+        self.ensure_not_closed(space)
+        ftruncate(self.fd, length)
+        return space.newint(0)
 
-    @classdef.method("closed?")
-    def method_closedp(self, space):
-        return space.newbool(self.fd == -1)
+    @classdef.method("chmod", mode="int")
+    def method_chmod(self, space, mode):
+        try:
+            fchmod(self.fd, mode)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return space.newint(0)
+
+    @classdef.singleton_method("chmod", mode="int")
+    def singleton_method_chmod(self, space, mode, args_w):
+        for arg_w in args_w:
+            path = Coerce.path(space, arg_w)
+            try:
+                os.chmod(path, mode)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+        return space.newint(len(args_w))
+
+    @classdef.singleton_method("stat", filename="path")
+    def singleton_method_stat(self, space, filename):
+        try:
+            stat_val = os.stat(filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        stat_obj = W_FileStatObject(space)
+        stat_obj.set_stat(stat_val)
+        return stat_obj
+
+    @classdef.singleton_method("lstat", filename="path")
+    def singleton_method_lstat(self, space, filename):
+        try:
+            stat_val = os.lstat(filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        stat_obj = W_FileStatObject(space)
+        stat_obj.set_stat(stat_val)
+        return stat_obj
+
+    if IS_WINDOWS:
+        classdef.s_notimplemented("symlink")
+        classdef.s_notimplemented("link")
+    else:
+        @classdef.singleton_method("symlink", old_name="path", new_name="path")
+        def singleton_method_symlink(self, space, old_name, new_name):
+            try:
+                os.symlink(old_name, new_name)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+            return space.newint(0)
+
+        @classdef.singleton_method("link", old_name="path", new_name="path")
+        def singleton_method_link(self, space, old_name, new_name):
+            try:
+                os.link(old_name, new_name)
+            except OSError as e:
+                raise error_for_oserror(space, e)
+            return space.newint(0)
+
+
+class W_FileStatObject(W_Object):
+    classdef = ClassDef("Stat", W_Object.classdef, filepath=__file__)
+
+    def __init__(self, space):
+        W_Object.__init__(self, space)
+        self.is_initialized = False
+
+    def set_stat(self, stat):
+        self._stat = stat
+        self.is_initialized = True
+
+    def get_stat(self, space):
+        if not self.is_initialized:
+            raise space.error(space.w_RuntimeError, "uninitialized File::Stat")
+        return self._stat
+
+    @classdef.singleton_method("allocate")
+    def singleton_method_allocate(self, space, w_args):
+        return W_FileStatObject(space)
+
+    @classdef.method("initialize", filename="path")
+    def method_initialize(self, space, filename):
+        try:
+            self.set_stat(os.stat(filename))
+        except OSError as e:
+            raise error_for_oserror(space, e)
+
+    @classdef.method("blockdev?")
+    def method_blockdevp(self, space):
+        return space.newbool(stat.S_ISBLK(self.get_stat(space).st_mode))
+
+    if IS_WINDOWS:
+        def unsupported_attr(name, classdef):
+            @classdef.method(name)
+            def method(self, space):
+                return space.w_nil
+            method.__name__ = name
+            return method
+        method_blksize = unsupported_attr("blksize", classdef)
+        method_blocks = unsupported_attr("blocks", classdef)
+        method_rdev = unsupported_attr("rdev", classdef)
+    else:
+        @classdef.method("blksize")
+        def method_blksize(self, space):
+            return space.newint(self.get_stat(space).st_blksize)
+
+        @classdef.method("rdev")
+        def method_rdev(self, space):
+            return space.newint(self.get_stat(space).st_rdev)
+
+        @classdef.method("blocks")
+        def method_blocks(self, space):
+            return space.newint(self.get_stat(space).st_blocks)
+
+    @classdef.method("chardev?")
+    def method_chardevp(self, space):
+        return space.newbool(stat.S_ISCHR(self.get_stat(space).st_mode))
+
+    @classdef.method("dev")
+    def method_dev(self, space):
+        return space.newint_or_bigint(self.get_stat(space).st_dev)
+
+    @classdef.method("directory?")
+    def method_directoryp(self, space):
+        return space.newbool(stat.S_ISDIR(self.get_stat(space).st_mode))
+
+    @classdef.method("file?")
+    def method_filep(self, space):
+        return space.newbool(stat.S_ISREG(self.get_stat(space).st_mode))
+
+    @classdef.method("ftype")
+    def method_ftype(self, space):
+        stat_val = self.get_stat(space)
+        if stat.S_ISREG(stat_val.st_mode):
+            return space.newstr_fromstr("file")
+        elif stat.S_ISDIR(stat_val.st_mode):
+            return space.newstr_fromstr("directory")
+        elif stat.S_ISCHR(stat_val.st_mode):
+            return space.newstr_fromstr("characterSpecial")
+        elif stat.S_ISBLK(stat_val.st_mode):
+            return space.newstr_fromstr("blockSpecial")
+        elif stat.S_ISFIFO(stat_val.st_mode):
+            return space.newstr_fromstr("fifo")
+        elif stat.S_ISLNK(stat_val.st_mode):
+            return space.newstr_fromstr("link")
+        elif stat.S_ISSOCK(stat_val.st_mode):
+            return space.newstr_fromstr("socket")
+        else:
+            return space.newstr_fromstr("unknown")
+
+    @classdef.method("gid")
+    def method_gid(self, space):
+        return space.newint(self.get_stat(space).st_gid)
+
+    @classdef.method("ino")
+    def method_ino(self, space):
+        return space.newint_or_bigint(self.get_stat(space).st_ino)
+
+    def get_w_mode(self, space):
+        return space.newint(self.get_stat(space).st_mode)
+
+    @classdef.method("mode")
+    def method_mode(self, space):
+        return self.get_w_mode(space)
+
+    @classdef.method("nlink")
+    def method_nlink(self, space):
+        return space.newint(self.get_stat(space).st_nlink)
+
+    @classdef.method("setgid?")
+    def method_setgidp(self, space):
+        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISGID)
+
+    @classdef.method("setuid?")
+    def method_setuidp(self, space):
+        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISUID)
+
+    @classdef.method("size")
+    def method_size(self, space):
+        return space.newint_or_bigint(self.get_stat(space).st_size)
+
+    @classdef.method("socket?")
+    def method_socketp(self, space):
+        return space.newbool(stat.S_ISSOCK(self.get_stat(space).st_mode))
+
+    @classdef.method("sticky?")
+    def method_stickyp(self, space):
+        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISVTX)
+
+    @classdef.method("symlink?")
+    def method_symlinkp(self, space):
+        return space.newbool(stat.S_ISLNK(self.get_stat(space).st_mode))
+
+    @classdef.method("uid")
+    def method_uid(self, space):
+        return space.newint(self.get_stat(space).st_uid)
+
+    @classdef.method("world_readable?")
+    def method_world_readablep(self, space):
+        if stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_IROTH:
+            return self.get_w_mode(space)
+        return space.w_nil
+
+    @classdef.method("world_writable?")
+    def method_world_writablep(self, space):
+        if stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_IWOTH:
+            return self.get_w_mode(space)
+        return space.w_nil

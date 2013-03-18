@@ -1,4 +1,5 @@
 import os
+import time
 
 import pytest
 
@@ -15,6 +16,11 @@ class TestKernel(BaseTopazTest):
         space.execute("print 1, 3")
         out, err = capfd.readouterr()
         assert out == "13"
+
+    def test_p(self, space, capfd):
+        space.execute("p 1,2,3")
+        out, err = capfd.readouterr()
+        assert out == "1\n2\n3\n"
 
     def test_lambda(self, space):
         w_res = space.execute("""
@@ -82,6 +88,8 @@ class TestKernel(BaseTopazTest):
             end
             raise A.new
             """)
+        with self.raises(space, "RuntimeError"):
+            space.execute("raise")
 
     def test_overriding_raise(self, space):
         w_res = space.execute("""
@@ -198,6 +206,17 @@ class TestKernel(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3]
 
+    def test_sleep(self, space):
+        now = time.time()
+        w_res = space.execute("return sleep 0.001")
+        assert space.int_w(w_res) == 0
+        assert time.time() - now >= 0.001
+
+        now = time.time()
+        w_res = space.execute("return sleep 0.002")
+        assert space.int_w(w_res) == 0
+        assert time.time() - now >= 0.002
+
     def test_trust(self, space):
         w_res = space.execute("return 'a'.untrusted?")
         assert self.unwrap(space, w_res) == False
@@ -241,6 +260,10 @@ class TestKernel(BaseTopazTest):
         return a.frozen?, a.dup.frozen?, a.clone.frozen?
         """)
         assert self.unwrap(space, w_res) == [True, False, True]
+
+    def test_backtick(self, space):
+        w_res = space.execute("return `echo 10`")
+        assert self.unwrap(space, w_res) == "10\n"
 
 
 class TestRequire(BaseTopazTest):
@@ -341,12 +364,41 @@ class TestRequire(BaseTopazTest):
         """ % f)
         assert space.int_w(w_res) == 5
 
+    def test_null_bytes(self, space):
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('require "b\\0"')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute("""
+            $LOAD_PATH.unshift "\\0"
+            require 'pp'
+            """)
+
+    def test_load_path_element_coerce(self, space, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        $success = true
+        """)
+        w_res = space.execute("""
+        class A
+          def to_path
+            "%s"
+          end
+        end
+        $LOAD_PATH.unshift A.new
+        require 't'
+        return $success
+        """ % tmpdir)
+        assert w_res is space.w_true
+
 
 class TestExec(BaseTopazTest):
     def fork_and_wait(self, space, capfd, code):
         cpid = os.fork()
         if cpid == 0:
-            space.execute(code)
+            try:
+                space.execute(code)
+            finally:
+                os._exit(0)
         else:
             os.waitpid(cpid, 0)
             out, err = capfd.readouterr()
@@ -368,6 +420,16 @@ class TestExec(BaseTopazTest):
     def test_exec_with_path_search(self, space, capfd):
         out = self.fork_and_wait(space, capfd, "exec 'echo', '$0'")
         assert out == "$0\n"
+
+    def test_exec_with_null_bytes(self, space):
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec "\\0"')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec ["\\0", "none"]')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec ["none", "\\0"]')
+        with self.raises(space, "ArgumentError", "string contains null byte"):
+            space.execute('exec "none", "\\0"')
 
 
 class TestSetTraceFunc(BaseTopazTest):
