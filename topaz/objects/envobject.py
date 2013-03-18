@@ -33,3 +33,16 @@ class W_EnvObject(W_Object):
             raise space.error(space.w_ArgumentError, "bad environment variable value")
         os.environ[key] = value
         return space.newstr_fromstr(value)
+
+    @classdef.method("delete", key="str")
+    def method_delete(self, space, key, block=None):
+        if "\0" in key:
+            raise space.error(space.w_ArgumentError, "bad environment variable name")
+        try:
+            val = os.environ[key]
+        except KeyError:
+            if block is not None:
+                space.invoke_block(block, [space.newstr_fromstr(key)])
+            return space.w_nil
+        del os.environ[key]
+        return space.newstr_fromstr(val)
