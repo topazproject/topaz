@@ -12,7 +12,7 @@ class W_TimeObject(W_Object):
     def __init__(self, space, klass):
         W_Object.__init__(self, space, klass)
         self.epoch_seconds = 0.0
-        self.struct_time = (0, 0, 0, 0, 0, 0, 0, 0, 0)
+        self.struct_time = (1970, 1, 1, 0, 0, 0, 0, 0, 0)
 
     def get_time_struct(self, space, w_secs=None):
         return time.localtime(space, w_secs)
@@ -60,7 +60,15 @@ class W_TimeObject(W_Object):
             Coerce.int(space, w_arg) for w_arg in args_w[:5]
         ]
         w_time.struct_time = (
-            arg0, month, day, hour, minute, sec, 0, 0, 0
+            arg0,                       # tm_year
+            1 if month == 0 else month, # tm_mon
+            1 if day == 0 else day,     # tm_mday
+            hour,                       # tm_hour
+            minute,                     # tm_min
+            sec,                        # tm_sec
+            0,                          # tm_wday
+            0,                          # tm_yday
+            0                           # tm_isdst
         )
         w_time.epoch_seconds = time.mktime(space, w_time.struct_time)
         return w_time
