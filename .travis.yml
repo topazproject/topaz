@@ -13,8 +13,7 @@ env:
 #     allow_failures:
 #         - env: TEST_TYPE=rubyspec_untranslated
 install:
-    - pip install --use-mirrors requests
-    - pip install invoke
+    - pip install --use-mirrors requests invoke
     - invoke travis.install_requirements
 script: invoke travis.run_tests
 after_success: invoke travis.upload_build
