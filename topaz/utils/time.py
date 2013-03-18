@@ -304,7 +304,7 @@ def _get_error_msg():
     errno = rposix.get_errno()
     return os.strerror(errno)
 
-if sys.platform != 'win32':
+if not system.IS_WINDOWS:
     def sleep(space, secs):
         if secs < 0:
             raise space.error(space.w_IOError,
@@ -457,14 +457,7 @@ def _gettmarg(space, tup, allow_none=True):
 
     return glob_buf
 
-def time(space):
-    """time() -> floating point number
-
-    Return the current time in seconds since the Epoch.
-    Fractions of a second may be present if the system clock provides them."""
-
-    secs = pytime.time()
-    return space.newfloat(secs)
+time = pytime.time
 
 ## if system.IS_WINDOWS:
 ##     class PCCache:
@@ -473,14 +466,7 @@ def time(space):
 ##     pccache.divisor = 0.0
 ##     pccache.ctrStart = 0
 
-def clock(space):
-    """clock() -> floating point number
-
-    Return the CPU time or real time since the start of the process or since
-    the first call to clock().  This has as much precision as the system
-    records."""
-
-    return space.newfloat(pytime.clock())
+clock = pytime.clock
 
 def ctime(space, w_seconds=None):
     """ctime([seconds]) -> string
@@ -498,7 +484,7 @@ def ctime(space, w_seconds=None):
     if not p:
         raise space.error(space.w_ArgumentError, "unconvertible time")
 
-    return space.newstr_fromstr(rffi.charp2str(p)[:-1]) # get rid of new line
+    return rffi.charp2str(p)[:-1] # get rid of new line
 
 # by now w_tup is an optional argument (and not *args)
 # because of the ext. compiler bugs in handling such arguments (*args, **kwds)
@@ -513,7 +499,7 @@ def asctime(space, w_tup=None):
     if not p:
         raise space.error(space.w_ArgumentError, "unconvertible time")
 
-    return space.newstr_fromstr(rffi.charp2str(p)[:-1]) # get rid of new line
+    return rffi.charp2str(p)[:-1] # get rid of new line
 
 def gmtime(space, w_seconds=None):
     """gmtime([seconds]) -> (tm_year, tm_mon, tm_day, tm_hour, tm_min,
@@ -638,8 +624,7 @@ def strftime(space, format, tup=None):
                 # More likely, the format yields an empty result,
                 # e.g. an empty format, or %Z when the timezone
                 # is unknown.
-                result = rffi.charp2strn(outbuf, intmask(buflen))
-                return space.newstr_fromstr(result)
+                return rffi.charp2strn(outbuf, intmask(buflen))
         finally:
             lltype.free(outbuf, flavor='raw')
         i += i

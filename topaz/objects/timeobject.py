@@ -75,8 +75,20 @@ class W_TimeObject(W_Object):
 
     @classdef.method("initialize")
     def method_initialize(self, space):
-        self.struct_time = self.get_time_struct(space)
-        self.epoch_seconds = time.mktime(space, self.struct_time)
+        self.epoch_seconds = time.time()
+        self.struct_time = self.get_time_struct(space, space.newfloat(self.epoch_seconds))
+
+    @classdef.method("asctime")
+    def method_asctime(self, space):
+        return space.newstr_fromstr(time.asctime(self.struct_time))
+
+    @classdef.method("ctime")
+    def method_ctime(self, space):
+        return space.newstr_fromstr(time.ctime(self.epoch_seconds))
+
+    @classdef.method("strftime", fmt="str")
+    def method_strftime(self, space, fmt):
+        return space.newstr_fromstr(time.strftime(space, fmt, self.struct_time))
 
     @classdef.method("to_f")
     def method_to_f(self, space):
@@ -95,4 +107,10 @@ class W_TimeObject(W_Object):
     @classdef.method("to_s")
     @classdef.method("inspect")
     def method_to_s(self, space):
-        return time.strftime(space, '%Y-%m-%d %H:%M:%S %z', self.struct_time)
+        return space.newstr_fromstr(
+            time.strftime(space, '%Y-%m-%d %H:%M:%S %z', self.struct_time)
+        )
+
+    @classdef.method("to_i")
+    def method_to_i(self, space):
+        return space.newint(int(self.epoch_seconds))

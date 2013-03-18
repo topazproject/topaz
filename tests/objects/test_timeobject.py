@@ -21,9 +21,9 @@ class TestTimeObject(object):
 
     def test_now(self, space, monkeypatch):
         monkeypatch.setattr(os, "environ", UTC_ENV)
-        monkeypatch.setattr(W_TimeObject, "get_time_struct", self.epoch)
+        monkeypatch.setattr(time, "time", lambda: 123.4)
         w_secs = space.execute("return Time.now.to_f")
-        assert space.float_w(w_secs) == 0.0
+        assert space.float_w(w_secs) == 123.4
 
     def test_subtraction(self, space, monkeypatch):
         monkeypatch.setattr(W_TimeObject, "get_time_struct", self.epoch)
