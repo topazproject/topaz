@@ -1,2 +1,1 @@
 fails:Math.sin raises a TypeError if the argument cannot be coerced with Float()
-fails:Math.sin returns NaN given NaN

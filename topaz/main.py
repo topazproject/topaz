@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import subprocess
 
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
@@ -25,7 +26,7 @@ USAGE = "\n".join([
     """  -Idirectory     specify $LOAD_PATH directory (may be used more than once)""",
 #   """  -l              enable line ending processing""",
     """  -n              assume 'while gets(); ... end' loop around your script""",
-#   """  -p              assume loop like -n but print line also like sed""",
+    """  -p              assume loop like -n but print line also like sed""",
     """  -rlibrary       require the library, before executing your script""",
     """  -s              enable some switch parsing for switches after script name""",
     """  -S              look for the script using PATH environment variable""",
@@ -39,7 +40,7 @@ USAGE = "\n".join([
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
-
+RUBY_REVISION = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip()
 
 @specialize.memo()
 def getspace():
@@ -134,6 +135,9 @@ def _parse_argv(space, argv):
             globalize_switches = True
         elif arg == "-n":
             do_loop = True
+        elif arg == "-p":
+            do_loop = True
+            flag_globals_w["$-p"] = space.w_true
         elif arg == "--":
             idx += 1
             break
@@ -185,12 +189,13 @@ def _entry_point(space, argv):
     engine = "topaz"
     version = "1.9.3"
     patchlevel = 125
-    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
+    description = "%s (ruby-%sp%d) [%s] (git rev %s)" % (engine, version, patchlevel, platform, RUBY_REVISION)
     space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
     space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
+    space.set_const(space.w_object, "RUBY_REVISION", space.newstr_fromstr(RUBY_REVISION))
 
     try:
         (
@@ -278,6 +283,7 @@ def _entry_point(space, argv):
     explicit_status = False
     try:
         if do_loop:
+            print_after = space.is_true(flag_globals_w["$-p"])
             bc = space.compile(source, path)
             frame = space.create_frame(bc)
             while True:
@@ -285,7 +291,9 @@ def _entry_point(space, argv):
                 if w_line is space.w_nil:
                     break
                 with space.getexecutioncontext().visit_frame(frame):
-                    space.execute_frame(frame, bc)
+                    w_res = space.execute_frame(frame, bc)
+                    if print_after:
+                        space.send(space.w_kernel, space.newsymbol("print"), [w_res])
         else:
             space.execute(source, filepath=path)
     except RubyError as e:
