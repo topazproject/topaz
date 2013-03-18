@@ -1,5 +1,5 @@
 rply
 # Only a test requirement
 pytest
-invoke>=0.2.0,<0.3.0
+invoke
 requests
