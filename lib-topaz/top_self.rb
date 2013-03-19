@@ -1,3 +1,5 @@
+TOPLEVEL_BINDING = binding unless defined?(TOPLEVEL_BINDING)
+
 class << self
   def include(*mods)
     Object.include(*mods)

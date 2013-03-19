@@ -284,8 +284,6 @@ class ObjectSpace(object):
                 initial_lineno=1):
         bc = self.compile(source, filepath, initial_lineno=initial_lineno)
         frame = self.create_frame(bc, w_self=w_self, lexical_scope=lexical_scope)
-        self.set_const(self.w_object, "TOPLEVEL_BINDING",
-                       self.newbinding_fromframe(frame))
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
