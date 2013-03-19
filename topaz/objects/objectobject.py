@@ -65,7 +65,8 @@ class W_BaseObject(W_Root):
     @classdef.method("method_missing")
     def method_method_missing(self, space, w_name, args_w):
         name = space.symbol_w(w_name)
-        class_name = space.str_w(space.send(self.getclass(space), space.newsymbol("name")))
+        class_name = space.str_w(space.send(self.getclass(space),
+            space.newsymbol("to_s")))
         raise space.error(space.w_NoMethodError,
             "undefined method `%s' for %s" % (name, class_name)
         )
@@ -133,7 +134,7 @@ class W_RootObject(W_BaseObject):
             if space.is_kind_of(w_mod, space.w_class):
                 name = "Class"
             else:
-                name = space.getclass(w_mod).name
+                name = space.obj_to_s(space.getclass(w_mod))
             raise space.error(
                 space.w_TypeError,
                 "wrong argument type %s (expected Module)" % name
@@ -180,6 +181,14 @@ class W_RootObject(W_BaseObject):
             space.newsymbol("bind"),
             [self]
         )
+
+    @classdef.method("tap")
+    def method_tap(self, space, block):
+        if block is not None:
+            space.invoke_block(block, [self])
+        else:
+            raise space.error(space.w_LocalJumpError, "no block given")
+        return self
 
 
 class W_Object(W_RootObject):

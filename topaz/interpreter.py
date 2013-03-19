@@ -264,8 +264,9 @@ class Interpreter(object):
         assert isinstance(w_module, W_ModuleObject)
         w_value = space.find_class_var(w_module, name)
         if w_value is None:
+            module_name = space.obj_to_s(w_module)
             raise space.error(space.w_NameError,
-                "uninitialized class variable %s in %s" % (name, w_module.name)
+                "uninitialized class variable %s in %s" % (name, module_name)
             )
         frame.push(w_value)
 
@@ -370,8 +371,9 @@ class Interpreter(object):
             if superclass is space.w_nil:
                 superclass = space.w_object
             if not space.is_kind_of(superclass, space.w_class):
+                cls_name = space.obj_to_s(space.getclass(superclass))
                 raise space.error(space.w_TypeError,
-                    "wrong argument type %s (expected Class)" % space.getclass(superclass).name
+                    "wrong argument type %s (expected Class)" % cls_name
                 )
             assert isinstance(superclass, W_ClassObject)
             w_cls = space.newclass(name, superclass)

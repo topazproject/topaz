@@ -12,7 +12,7 @@ def make_float_packer(size, bigendian):
             w_item = packer.args_w[i]
             if not (isinstance(w_item, W_FloatObject) or isinstance(w_item, W_FixnumObject)):
                 raise space.error(space.w_TypeError,
-                    "can't convert %s into Float" % space.getclass(w_item).name
+                    "can't convert %s into Float" % space.obj_to_s(space.getclass(w_item))
                 )
             doubleval = space.float_w(w_item)
             l = ["\0"] * size

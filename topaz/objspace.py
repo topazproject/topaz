@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
 from rpython.rlib import jit, rpath
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
+from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rbigint import rbigint
 
 from rply.errors import ParsingError
 
@@ -63,6 +66,7 @@ from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.threadobject import W_ThreadObject
 from topaz.objects.timeobject import W_TimeObject
 from topaz.parser import Parser
+from topaz.utils.ll_file import isdir
 
 
 class SpaceCache(Cache):
@@ -233,7 +237,7 @@ class ObjectSpace(object):
         kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
-            if os.path.isdir(os.path.join(path, "lib-ruby")):
+            if isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
                 kernel_path = os.path.join(path, "lib-topaz")
                 break
@@ -324,6 +328,15 @@ class ObjectSpace(object):
     def newbigint_fromrbigint(self, bigint):
         return W_BignumObject.newbigint_fromrbigint(self, bigint)
 
+    @specialize.argtype(1)
+    def newint_or_bigint(self, someinteger):
+        if -sys.maxint <= someinteger <= sys.maxint:
+            # The smallest int -sys.maxint - 1 has to be a Bignum,
+            # because parsing gives a Bignum in that case
+            return self.newint(intmask(someinteger))
+        else:
+            return self.newbigint_fromrbigint(rbigint.fromrarith_int(someinteger))
+
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
 
@@ -339,6 +352,7 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromchars(self, chars)
 
     def newstr_fromstr(self, strvalue):
+        assert strvalue is not None
         return W_StringObject.newstr_fromstr(self, strvalue)
 
     def newstr_fromstrs(self, strs_w):
@@ -372,7 +386,8 @@ class ObjectSpace(object):
         if w_function is None:
             raise self.error(
                 self.w_NameError,
-                "undefined method `%s' for class `%s'" % (name, w_cls.name)
+                "undefined method `%s' for class `%s'" % (name,
+                                                          self.obj_to_s(w_cls))
             )
         else:
             return W_UnboundMethodObject(self, w_cls, w_function)
@@ -409,6 +424,13 @@ class ObjectSpace(object):
     def str_w(self, w_obj):
         """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
+
+    def str0_w(self, w_obj):
+        string = w_obj.str_w(self)
+        if "\x00" in string:
+            raise self.error(self.w_ArgumentError, "string contains null byte")
+        else:
+            return string
 
     def listview(self, w_obj):
         return w_obj.listview(self)
@@ -638,19 +660,21 @@ class ObjectSpace(object):
         except RubyError:
             if not raise_error:
                 return self.w_nil
-            src_cls = self.getclass(w_obj).name
+            src_cls_name = self.obj_to_s(self.getclass(w_obj))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(
-                self.w_TypeError, "can't convert %s into %s" % (src_cls, w_cls.name)
+                self.w_TypeError, "can't convert %s into %s" % (src_cls_name, w_cls_name)
             )
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return self.w_nil
         elif not self.is_kind_of(w_res, w_cls):
-            src_cls = self.getclass(w_obj).name
-            res_cls = self.getclass(w_res).name
+            src_cls = self.obj_to_s(self.getclass(w_obj))
+            res_cls = self.obj_to_s(self.getclass(w_res))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(self.w_TypeError,
                 "can't convert %s to %s (%s#%s gives %s)" % (
-                    src_cls, w_cls.name, src_cls, method, res_cls
+                    src_cls, w_cls_name, src_cls, method, res_cls
                 )
             )
         else:
@@ -658,6 +682,9 @@ class ObjectSpace(object):
 
     def any_to_s(self, w_obj):
         return "#<%s:0x%x>" % (
-            self.str_w(self.send(self.getclass(w_obj), self.newsymbol("name"))),
+            self.obj_to_s(self.getnonsingletonclass(w_obj)),
             self.int_w(self.send(w_obj, self.newsymbol("__id__")))
         )
+
+    def obj_to_s(self, w_obj):
+        return self.str_w(self.send(w_obj, self.newsymbol("to_s")))

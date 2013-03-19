@@ -23,7 +23,9 @@ class RubySorter(TimSort):
         if w_cmp_res is self.space.w_nil:
             raise self.space.error(
                 self.space.w_ArgumentError,
-                "comparison of %s with %s failed" % (self.space.getclass(a).name, self.space.getclass(b).name)
+                "comparison of %s with %s failed" %
+                (self.space.obj_to_s(self.space.getclass(a)),
+                   self.space.obj_to_s(self.space.getclass(b)))
             )
         else:
             return self.space.int_w(w_cmp_res) < 0
@@ -48,10 +50,6 @@ class W_ArrayObject(W_Object):
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, args_w):
         return W_ArrayObject(space, [], self)
-
-    @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, args_w):
-        return space.newarray(args_w)
 
     @classdef.method("initialize_copy", other_w="array")
     @classdef.method("replace", other_w="array")
