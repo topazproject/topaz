@@ -13,6 +13,7 @@ from topaz.modules.process import Process
 from topaz.objects.exceptionobject import W_ExceptionObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.stringobject import W_StringObject
+from topaz.objects.bindingobject import W_BindingObject
 
 
 class Kernel(Module):
@@ -305,6 +306,14 @@ class Kernel(Module):
         if w_binding is None:
             frame = space.getexecutioncontext().gettoprubyframe()
             w_binding = space.newbinding_fromframe(frame)
+        elif not isinstance(w_binding, W_BindingObject):
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Binding)" % space.str_w(
+                    space.send(space.getclassfor(w_binding.__class__),
+                               space.newsymbol("name"))
+                )
+            )
         return space.send(w_binding, space.newsymbol("eval"), [w_source])
 
     @moduledef.method("set_trace_func")
