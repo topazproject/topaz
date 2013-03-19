@@ -148,4 +148,24 @@ module Enumerable
     end
     result
   end
+
+  def min
+    inject do |minimum, current|
+      if minimum > current
+        current
+      else
+        minimum
+      end
+    end
+  end
+
+  def max
+    inject do |maximum, current|
+      if maximum < current
+        current
+      else
+        maximum
+      end
+    end
+  end
 end
