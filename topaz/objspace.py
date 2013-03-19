@@ -218,6 +218,7 @@ class ObjectSpace(object):
         self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
 
     def _freeze_(self):
+        self._executioncontext = None
         return True
 
     def find_executable(self, executable):
