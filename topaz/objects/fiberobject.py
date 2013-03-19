@@ -164,7 +164,7 @@ def new_stacklet_callback(h, arg):
         except Exception as e:
             global_state.propagate_exception = e
 
-    space.fromcache(State).current = origin
+    space.fromcache(State).current = self.parent_fiber
     global_state.space = space
     return origin.h
 

@@ -121,3 +121,11 @@ class TestFiberObject(BaseTopazTest):
         return r
         """)
         assert self.unwrap(space, w_res) == [10]
+
+    def test_nested_resume_yield(self, space):
+        space.execute("""
+        f2 = Fiber.new { Fiber.yield }
+        f1 = Fiber.new { f2.resume }
+        f1.resume
+        f2.resume
+        """)
