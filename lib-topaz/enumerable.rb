@@ -148,4 +148,61 @@ module Enumerable
     end
     result
   end
+  
+  def max(&block)
+    max = first
+    self.each do |e|
+      max = e if (block ? block.call(max, e) : max <=> e) < 0
+    end
+    max
+  end
+
+  def min(&block)
+    min = first
+    self.each do |e|
+      min = e if (block ? block.call(min, e) : min <=> e) > 0
+    end
+    min
+  end
+
+  def max_by(&block)
+    max = first
+    maxv = block ? block.call(max) : max
+    self.each do |e|
+      ev = block ? block.call(e) : e
+      max, maxv = e, ev if (maxv <=> ev) < 0
+    end
+    max
+  end
+
+  def min_by(&block)
+    min = first 
+    minv = block ? block.call(min) : min
+    self.each do |e|
+      ev = block ? block.call(e) : e
+      min, minv = e, ev if (minv <=> ev) > 0
+    end
+    min
+  end
+
+  def minmax(&block)
+    min = max = first
+    self.each do |e|
+      min = e if (block ? block.call(min, e) : min <=> e) > 0
+      max = e if (block ? block.call(max, e) : max <=> e) < 0
+    end
+    [min, max]
+  end
+
+  def minmax_by(&block)
+    min = max = first
+    maxv = minv = block ? block.call(min) : min
+    self.each do |e|
+      ev = block ? block.call(e) : e
+      max, maxv = e, ev if (maxv <=> ev) < 0
+      min, minv = e, ev if (minv <=> ev) > 0
+    end
+    [min, max]
+  end
+
 end
