@@ -19,14 +19,18 @@ module Enumerable
   alias collect map
 
   def inject(*args)
-    memo, meth, dropped = case args.length
-                          when 0
-                            [self.first, nil, 1]
-                          when 1
-                            args + [nil, 0]
-                          when 2
-                            args + [0]
-                          end
+    dropped = 0
+    meth = nil
+    case args.length
+    when 0
+      memo = self.first
+      dropped = 1
+    when 1
+      memo = args[0]
+    when 2
+      memo = args[0]
+      meth = args[1]
+    end
     self.drop(dropped).each do |x|
       if meth
         memo = memo.send(meth, x)
