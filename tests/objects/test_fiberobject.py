@@ -68,6 +68,15 @@ class TestFiberObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3]
 
+    def test_yield_with_no_value(self, space):
+        w_res = space.execute("""
+        f = Fiber.new {
+            Fiber.yield
+        }
+        return f.resume
+        """)
+        assert w_res is space.w_nil
+
     def test_yield_from_main(self, space):
         with self.raises(space, "FiberError", "can't yield from root fiber"):
             space.execute("Fiber.yield")

@@ -67,7 +67,9 @@ class W_FiberObject(W_Object):
         space.fromcache(State).current = parent_fiber
 
         topframeref = space.getexecutioncontext().topframeref
-        if len(args_w) == 1:
+        if len(args_w) == 0:
+            global_state.w_result = space.w_nil
+        elif len(args_w) == 1:
             global_state.w_result = args_w[0]
         else:
             global_state.w_result = space.newarray(args_w)
