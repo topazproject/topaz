@@ -129,3 +129,11 @@ class TestFiberObject(BaseTopazTest):
         f1.resume
         f2.resume
         """)
+
+    def test_multiple_resume_exception(self, space):
+        space.execute("""
+        $f = Fiber.new { Fiber.yield; raise "error" }
+        $f.resume
+        """)
+        with self.raises(space, "RuntimeError", "error"):
+            space.execute("$f.resume")

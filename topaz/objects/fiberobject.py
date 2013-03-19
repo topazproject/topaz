@@ -67,6 +67,7 @@ class W_FiberObject(W_Object):
         space.fromcache(State).current = parent_fiber
 
         topframeref = space.getexecutioncontext().topframeref
+        current.bottomframe.backref = jit.vref_None
         if len(args_w) == 0:
             global_state.w_result = space.w_nil
         elif len(args_w) == 1:
@@ -75,6 +76,7 @@ class W_FiberObject(W_Object):
             global_state.w_result = space.newarray(args_w)
         parent_fiber.h = space.getexecutioncontext().fiber_thread.switch(parent_fiber.h)
         assert space.fromcache(State).current is current
+        current.bottomframe.backref = space.getexecutioncontext().topframeref
         space.getexecutioncontext().topframeref = topframeref
 
         return get_result()
