@@ -1,4 +1,4 @@
-TOPLEVEL_BINDING = binding unless defined?(TOPLEVEL_BINDING)
+TOPLEVEL_BINDING = binding
 
 class << self
   def include(*mods)

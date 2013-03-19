@@ -302,8 +302,8 @@ class Kernel(Module):
 
     @moduledef.method("eval")
     def method_eval(self, space, w_source, w_binding=None):
-        frame = space.getexecutioncontext().gettoprubyframe()
         if w_binding is None:
+            frame = space.getexecutioncontext().gettoprubyframe()
             w_binding = space.newbinding_fromframe(frame)
         return space.send(w_binding, space.newsymbol("eval"), [w_source])
 
