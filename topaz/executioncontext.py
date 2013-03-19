@@ -5,6 +5,21 @@ from topaz.frame import Frame
 from topaz.objects.fiberobject import W_FiberObject
 
 
+class ExecutionContextHolder(object):
+    # TODO: convert to be a threadlocal store once we have threads.
+    def __init__(self):
+        self._ec = None
+
+    def get(self):
+        return self._ec
+
+    def set(self, ec):
+        self._ec = ec
+
+    def clear(self):
+        self._ec = None
+
+
 class ExecutionContext(object):
     _immutable_fields_ = ["w_trace_proc?"]
 

@@ -16,7 +16,7 @@ from topaz.astcompiler import CompilerContext, SymbolTable
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
 from topaz.error import RubyError, print_traceback
-from topaz.executioncontext import ExecutionContext
+from topaz.executioncontext import ExecutionContext, ExecutionContextHolder
 from topaz.frame import Frame
 from topaz.interpreter import Interpreter
 from topaz.lexer import LexerError, Lexer
@@ -84,7 +84,7 @@ class ObjectSpace(object):
 
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        self._executioncontext = None
+        self._executioncontexts = ExecutionContextHolder()
         self.globals = GlobalsDict()
         self.bootstrap = True
         self.exit_handlers_w = []
@@ -218,7 +218,7 @@ class ObjectSpace(object):
         self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
 
     def _freeze_(self):
-        self._executioncontext = None
+        self._executioncontexts.clear()
         return True
 
     def find_executable(self, executable):
@@ -297,10 +297,11 @@ class ObjectSpace(object):
 
     @jit.loop_invariant
     def getexecutioncontext(self):
-        # When we have threads this should become a thread local.
-        if self._executioncontext is None:
-            self._executioncontext = ExecutionContext(self)
-        return self._executioncontext
+        ec = self._executioncontexts.get()
+        if ec is None:
+            ec = ExecutionContext(self)
+            self._executioncontexts.set(ec)
+        return ec
 
     def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
                      parent_interp=None, regexp_match_cell=None):
