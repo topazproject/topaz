@@ -8,17 +8,6 @@ UTC_ENV["TZ"] = "UTC+0"
 
 
 class TestTimeObject(object):
-    def epoch(self, space, tz='UTC+0'):
-        try:
-            orig_tz = os.environ.get('TZ')
-            os.environ['TZ'] = tz
-            time.tzset(space)
-            return time.localtime(space, space.newfloat(0.0))
-        finally:
-            if orig_tz is not None:
-                os.environ['TZ'] = orig_tz
-            time.tzset(space)
-
     def test_now(self, space, monkeypatch):
         monkeypatch.setattr(time, "time", lambda: 342.1)
         monkeypatch.setattr(os, "environ", UTC_ENV)
