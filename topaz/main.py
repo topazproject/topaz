@@ -40,7 +40,12 @@ USAGE = "\n".join([
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
-RUBY_REVISION = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip()
+
+RUBY_REVISION = subprocess.Popen(['git', 'rev-parse', '--short', 'HEAD'],
+                            cwd=os.path.dirname(os.path.abspath(__file__)),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE).communicate()[0].rstrip()
+
 
 @specialize.memo()
 def getspace():
