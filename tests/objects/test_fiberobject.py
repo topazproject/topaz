@@ -100,3 +100,15 @@ class TestFiberObject(BaseTopazTest):
         """)
         with self.raises(space, "LocalJumpError", "break from proc-closure"):
             space.execute("$f.resume")
+
+    def test_resume_with_value(self, space):
+        w_res = space.execute("""
+        r = []
+        f = Fiber.new {
+            r << (Fiber.yield)
+        }
+        f.resume
+        f.resume(10)
+        return r
+        """)
+        assert self.unwrap(space, w_res) == [10]

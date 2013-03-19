@@ -110,6 +110,10 @@ class W_FiberObject(W_Object):
                 self.sthread = sthread
                 self.h = sthread.new(new_stacklet_callback)
             else:
+                if len(args_w) == 1:
+                    global_state.w_result = args_w[0]
+                else:
+                    global_state.w_result = space.newarray(args_w)
                 self.h = self.sthread.switch(self.h)
             assert space.fromcache(State).current is self.parent_fiber
             space.getexecutioncontext().topframeref = topframeref
