@@ -1,4 +1,14 @@
 module Enumerable
+
+  def first(*args)
+    if args.empty?
+      self.each { |e| return e }
+      nil
+    else
+      take(*args)
+    end
+  end
+
   def map
     result = []
     self.each do |x|
@@ -95,6 +105,7 @@ module Enumerable
   alias find detect
 
   def take(n)
+    n = Topaz.coerce_int(n)
     raise ArgumentError.new("attempt to take negative size") if n < 0
     result = []
     unless n == 0
