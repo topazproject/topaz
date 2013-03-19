@@ -19,7 +19,8 @@ class W_NumericObject(W_Object):
             if raise_error:
                 raise space.error(space.w_ArgumentError,
                     "comparison of %s with %s failed" % (
-                        space.getclass(w_recv).name, space.getclass(w_arg).name
+                        space.obj_to_s(space.getclass(w_recv)),
+                        space.obj_to_s(space.getclass(w_arg))
                     )
                 )
         if space.getclass(w_ary) is space.w_array:

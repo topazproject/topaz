@@ -119,7 +119,8 @@ class W_BignumObject(W_IntegerObject):
             ])
         else:
             raise space.error(space.w_TypeError,
-                "can't coerce %s to Bignum" % space.getclass(w_other).name
+                "can't coerce %s to Bignum" %
+                    space.obj_to_s(space.getclass(w_other))
             )
 
     @classdef.method("**")
@@ -148,5 +149,6 @@ class W_BignumObject(W_IntegerObject):
         else:
             raise space.error(
                 space.w_TypeError,
-                "%s can't be coerced into Bignum" % space.getclass(w_other).name
+                "%s can't be coerced into Bignum" %
+                    space.obj_to_s(space.getclass(w_other))
             )
