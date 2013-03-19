@@ -300,9 +300,9 @@ class Kernel(Module):
 
     @moduledef.method("instance_of?")
     def method_instance_of(self, space, w_mod):
-        if isinstance(w_mod, W_ClassObject) or isinstance(w_mod, W_ModuleObject):
-            return space.newbool(space.getnonsingletonclass(self) is w_mod)
-        raise space.error(space.w_TypeError, "class or module required")
+        if not isinstance(w_mod, W_ModuleObject):
+            raise space.error(space.w_TypeError, "class or module required")
+        return space.newbool(space.getnonsingletonclass(self) is w_mod)
 
     @moduledef.method("eval")
     def method_eval(self, space, w_source):
