@@ -1,5 +1,4 @@
 module Enumerable
-
   def first(*args)
     if args.empty?
       self.each { |e| return e }
@@ -105,7 +104,7 @@ module Enumerable
   alias find detect
 
   def take(n)
-    n = Topaz.coerce_int(n)
+    n = Topaz.convert_type(n, Fixnum, :to_int)
     raise ArgumentError.new("attempt to take negative size") if n < 0
     result = []
     unless n == 0
