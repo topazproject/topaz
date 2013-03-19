@@ -89,7 +89,7 @@ If you implemented a new feature, and want to untag the specs that now pass::
 And finally, during development, you may find it useful to run the
 specs untranslated::
 
-    $ invoke specs.run --translated=False --files=../rubyspec/core/array/new_spec.rb
+    $ invoke specs.run --untranslated --files=../rubyspec/core/array/new_spec.rb
 
 Adding yourself to the authors file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
