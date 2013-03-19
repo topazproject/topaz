@@ -199,13 +199,13 @@ class W_FileObject(W_IOObject):
         return space.newbool(file_stat.st_dev == other_stat.st_dev and
                 file_stat.st_ino == other_stat.st_ino)
 
-    @classdef.singleton_method("basename", filename="path")
+    @classdef.singleton_method("basename", filename="path", suffix="path")
     def method_basename(self, space, filename, suffix=None):
         i = filename.rfind("/") + 1
         assert i >= 0
         filename = filename[i:]
         if suffix is not None and filename.endswith(suffix):
-            filename = filename[:len(suffix)]
+            filename = filename[:-len(suffix)]
         return space.newstr_fromstr(filename)
 
     @classdef.singleton_method("umask", mask="int")

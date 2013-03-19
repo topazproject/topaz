@@ -256,8 +256,8 @@ class TestFile(BaseTopazTest):
         assert space.str_w(space.execute("return File.basename('ab')")) == "ab"
         assert space.str_w(space.execute("return File.basename('/ab')")) == "ab"
         assert space.str_w(space.execute("return File.basename('/foo/bar/ab')")) == "ab"
-        assert space.str_w(space.execute("return File.basename('ab.rb','rb')")) == "ab"
-        assert space.str_w(space.execute("return File.basename('ab.rb','b.rb')")) == "a"
+        assert space.str_w(space.execute("return File.basename('ab.rb', '.rb')")) == "ab"
+        assert space.str_w(space.execute("return File.basename('ab.rb', 'b.rb')")) == "a"
 
     def test_truncate(self, space, tmpdir):
         f = tmpdir.join("file.txt")
