@@ -301,9 +301,10 @@ class Kernel(Module):
         return space.newbool(space.getnonsingletonclass(self) is w_mod)
 
     @moduledef.method("eval")
-    def method_eval(self, space, w_source):
+    def method_eval(self, space, w_source, w_binding=None):
         frame = space.getexecutioncontext().gettoprubyframe()
-        w_binding = space.newbinding_fromframe(frame)
+        if w_binding is None:
+            w_binding = space.newbinding_fromframe(frame)
         return space.send(w_binding, space.newsymbol("eval"), [w_source])
 
     @moduledef.method("set_trace_func")
