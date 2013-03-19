@@ -2,6 +2,8 @@
 
 from ..base import BaseTopazTest
 
+import pytest
+
 
 class TestModuleObject(BaseTopazTest):
     def test_name(self, space):
@@ -349,6 +351,23 @@ class TestModuleObject(BaseTopazTest):
         return [last_const, m.const_get(last_const)]
         """)
         assert self.unwrap(space, w_res) == ['ZzŻżŹź', 'utf_8_is_legal']
+
+    def test_to_s(self, space):
+        w_res = space.execute("return Kernel.class.to_s")
+        assert space.str_w(w_res) == "Module"
+
+    def test_anon_module_to_s(self, space):
+        w_res = space.execute("return Module.new.to_s")
+        assert space.str_w(w_res).startswith("#<Module:0x")
+
+    @pytest.mark.xfail
+    def test_singletonclass_to_s(self, space):
+        w_res = space.execute("Module.new.singleton_class.to_s")
+        assert space.str_w(w_res).startswith("#<Class:#<Module:0x")
+
+    def test_anon_class_name(self, space):
+        w_res = space.execute("return Module.new.name")
+        assert w_res is space.w_nil
 
 
 class TestMethodVisibility(object):
