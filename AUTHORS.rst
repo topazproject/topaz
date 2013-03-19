@@ -10,11 +10,14 @@ Authors
 * Maciej Fijalkowski
 * Alex Gaynor
 * Magnus Holm
+* Ryan Levick
+* Konstantin Makarchev
 * Curt Micol
 * Bill Mill
 * Charles Oliver Nutter
 * Thomas Pelletier
 * Greg Price
 * Armin Rigo
+* David Schneider
 * Robin Schreiber
 * Jeremy Thurgood
