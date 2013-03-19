@@ -13,6 +13,8 @@ from topaz.modules.process import Process
 from topaz.objects.exceptionobject import W_ExceptionObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.stringobject import W_StringObject
+from topaz.objects.classobject import W_ClassObject
+from topaz.objects.moduleobject import W_ModuleObject
 
 
 class Kernel(Module):
@@ -298,7 +300,9 @@ class Kernel(Module):
 
     @moduledef.method("instance_of?")
     def method_instance_of(self, space, w_mod):
-        return space.newbool(space.getnonsingletonclass(self) is w_mod)
+        if isinstance(w_mod, W_ClassObject) or isinstance(w_mod, W_ModuleObject):
+            return space.newbool(space.getnonsingletonclass(self) is w_mod)
+        raise space.error(space.w_TypeError, "class or module required")
 
     @moduledef.method("eval")
     def method_eval(self, space, w_source):
