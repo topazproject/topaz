@@ -9,6 +9,18 @@ module Enumerable
 
   alias collect map
 
+  def first(n = nil)
+    raise ArgumentError.new("negative array size") if n && n < 0
+    count = n || 1
+    result = []
+    self.each do |elem|
+      break if count.zero?
+      result << elem
+      count -= 1
+    end
+    n.nil? ? result[0] : result
+  end
+
   def inject(memo)
     self.each do |x|
       memo = (yield memo, x)
