@@ -312,8 +312,7 @@ class Kernel(Module):
             w_binding = space.newbinding_fromframe(frame)
         elif not isinstance(w_binding, W_BindingObject):
             raise space.error(space.w_TypeError,
-                "wrong argument type %s (expected Binding)" %
-                space.getclass(w_binding).name
+                "wrong argument type %s (expected Binding)" % space.getclass(w_binding).name
             )
         return space.send(w_binding, space.newsymbol("eval"), [w_source])
 
