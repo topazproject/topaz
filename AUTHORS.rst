@@ -18,5 +18,6 @@ Authors
 * Thomas Pelletier
 * Greg Price
 * Armin Rigo
+* David Schneider
 * Robin Schreiber
 * Jeremy Thurgood

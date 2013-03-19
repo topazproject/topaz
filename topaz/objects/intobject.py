@@ -155,7 +155,8 @@ class W_FixnumObject(W_RootObject):
         else:
             raise space.error(
                 space.w_TypeError,
-                "%s can't be coerced into Fixnum" % space.getclass(w_other).name
+                "%s can't be coerced into Fixnum" %
+                    space.obj_to_s(space.getclass(w_other))
             )
 
     def method_pow_int_impl(self, space, w_other):
