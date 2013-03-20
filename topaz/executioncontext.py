@@ -70,7 +70,6 @@ class ExecutionContext(object):
         frame.backref = self.topframeref
         if self.last_instr != -1:
             frame.back_last_instr = self.last_instr
-            self.last_instr = -1
         self.topframeref = jit.virtual_ref(frame)
         if isinstance(frame, Frame):
             self.regexp_match_cell = frame.regexp_match_cell
