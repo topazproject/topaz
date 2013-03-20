@@ -309,10 +309,10 @@ class W_StringObject(W_Object):
         return obj
 
     @staticmethod
-    def newstr_fromstr(space, strvalue, klass=None):
+    def newstr_fromstr(space, strvalue):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase(strvalue)
-        return W_StringObject(space, storage, strategy, klass)
+        return W_StringObject(space, storage, strategy)
 
     @staticmethod
     @jit.look_inside_iff(lambda space, strs_w: jit.isconstant(len(strs_w)))
@@ -394,7 +394,9 @@ class W_StringObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_s=None):
-        return W_StringObject.newstr_fromstr(space, "", self)
+        strategy = space.fromcache(ConstantStringStrategy)
+        storage = strategy.erase("")
+        return W_StringObject(space, storage, strategy, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_s=None):
