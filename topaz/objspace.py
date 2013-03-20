@@ -299,7 +299,7 @@ class ObjectSpace(object):
     def getexecutioncontext(self):
         ec = self._executioncontexts.get()
         if ec is None:
-            ec = ExecutionContext(self)
+            ec = ExecutionContext()
             self._executioncontexts.set(ec)
         return ec
 

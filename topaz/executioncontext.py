@@ -23,7 +23,7 @@ class ExecutionContextHolder(object):
 class ExecutionContext(object):
     _immutable_fields_ = ["w_trace_proc?"]
 
-    def __init__(self, space):
+    def __init__(self):
         self.topframeref = jit.vref_None
         self.last_instr = -1
         self.regexp_match_cell = None
@@ -33,7 +33,12 @@ class ExecutionContext(object):
         self.catch_names = {}
 
         self.fiber_thread = None
-        self.w_main_fiber = W_FiberObject.build_main_fiber(space, self)
+        self.w_main_fiber = None
+
+    def getmainfiber(self, space):
+        if self.w_main_fiber is None:
+            self.w_main_fiber = W_FiberObject.build_main_fiber(space, self)
+        return self.w_main_fiber
 
     def settraceproc(self, w_proc):
         self.w_trace_proc = w_proc

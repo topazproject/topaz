@@ -13,7 +13,7 @@ class State(object):
         self.current = None
 
     def get_current(self, space):
-        return self.current or space.getexecutioncontext().w_main_fiber
+        return self.current or space.getexecutioncontext().getmainfiber(space)
 
 
 class W_FiberObject(W_Object):
