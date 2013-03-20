@@ -1,4 +1,7 @@
 from topaz.module import ClassDef
+from topaz.objects.blockobject import W_BlockObject
+from topaz.objects.functionobject import W_UserFunction
+from topaz.objects.moduleobject import AttributeReader, AttributeWriter, DefineMethodBlock
 from topaz.objects.objectobject import W_Object
 
 
@@ -57,6 +60,25 @@ class W_MethodObject(W_Object):
             )
         else:
             return space.w_false
+
+    @classdef.method("arity")
+    def method_arity(self, space):
+        args_count = 0
+        bytecode = None
+
+        if isinstance(self.w_function, AttributeWriter):
+            args_count = 1
+        elif isinstance(self.w_function, DefineMethodBlock):
+            bytecode = self.w_function.block.bytecode
+        elif isinstance(self.w_function, W_UserFunction):
+            bytecode = self.w_function.bytecode
+        
+        if bytecode is not None:
+            args_count = len(bytecode.arg_pos) - len(bytecode.defaults)
+            if len(bytecode.defaults) > 0 or bytecode.splat_arg_pos != -1:
+                args_count = -(args_count + 1)
+
+        return space.newint(args_count)
 
 
 class W_UnboundMethodObject(W_Object):
