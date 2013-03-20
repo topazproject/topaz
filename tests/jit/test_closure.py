@@ -46,6 +46,7 @@ class TestClosure(BaseJITTest):
         debug_merge_point(0, 0, 'each at DISCARD_TOP')
         debug_merge_point(0, 0, 'each at JUMP')
         debug_merge_point(0, 0, 'each at LOAD_DEREF')
+        setfield_gc(p35, 9, descr=<FieldS topaz.executioncontext.ExecutionContext.inst_last_instr 24>)
         setfield_gc(p68, i75, descr=<FieldS topaz.closure.IntCell.inst_intvalue 16>)
         i86 = arraylen_gc(p66, descr=<ArrayP 8>)
         jump(p0, p1, p3, p4, p5, p6, p7, p9, p12, i85, p20, p22, p24, p26, p28, p31, p33, p35, i55, p46, p47, p68, p66, descr=TargetToken(4324574536))
