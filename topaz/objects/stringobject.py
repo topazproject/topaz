@@ -297,8 +297,8 @@ class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
     classdef.include_module(Comparable)
 
-    def __init__(self, space, storage, strategy):
-        W_Object.__init__(self, space)
+    def __init__(self, space, storage, strategy, klass=None):
+        W_Object.__init__(self, space, klass)
         self.str_storage = storage
         self.strategy = strategy
 
@@ -309,10 +309,10 @@ class W_StringObject(W_Object):
         return obj
 
     @staticmethod
-    def newstr_fromstr(space, strvalue):
+    def newstr_fromstr(space, strvalue, klass=None):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase(strvalue)
-        return W_StringObject(space, storage, strategy)
+        return W_StringObject(space, storage, strategy, klass)
 
     @staticmethod
     @jit.look_inside_iff(lambda space, strs_w: jit.isconstant(len(strs_w)))
@@ -394,7 +394,7 @@ class W_StringObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_s=None):
-        return space.newstr_fromstr("")
+        return W_StringObject.newstr_fromstr(space, "", self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_s=None):
