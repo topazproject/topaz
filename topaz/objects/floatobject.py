@@ -8,10 +8,10 @@ from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
     NAN, INFINITY)
 
-from topaz.module import ClassDef
-from topaz.objects.numericobject import W_NumericObject
 from topaz.error import RubyError
+from topaz.module import ClassDef
 from topaz.objects.exceptionobject import W_ArgumentError
+from topaz.objects.numericobject import W_NumericObject
 
 
 class W_FloatObject(W_NumericObject):
@@ -126,11 +126,11 @@ class W_FloatObject(W_NumericObject):
 
     @classdef.method("==")
     def method_eq(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_float):
+            return space.newbool(self.floatvalue == space.float_w(w_other))
+
         try:
-            if space.is_kind_of(w_other, space.w_float):
-                return space.newbool(self.floatvalue == space.float_w(w_other))
-            else:
-                return W_NumericObject.retry_binop_coercing(space, self, w_other, "==")
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "==")
         except RubyError as e:
             if isinstance(e.w_value, W_ArgumentError):
                 return space.send(w_other, space.newsymbol("=="), [self])
