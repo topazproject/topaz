@@ -16,7 +16,7 @@ class Rubyspecs(BaseTest):
         run_("../mspec/bin/mspec %s -t %s --config=topaz.mspec %s" % (args, self.exe, self.files))
 
     def run(self):
-        self.mspec("run -G fails %s" % self.options)
+        self.mspec("run -G fails %s -f spec" % self.options)
 
     def tag(self):
         self.mspec("tag --add fails -G fails -f spec %s" % self.options)
