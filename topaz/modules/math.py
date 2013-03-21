@@ -180,5 +180,5 @@ class Math(Module):
 
 
 class W_DomainError(W_StandardError):
-    classdef = ClassDef("DomainError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("Math::DomainError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
