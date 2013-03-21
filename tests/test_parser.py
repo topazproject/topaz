@@ -2104,6 +2104,29 @@ HERE
             ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 3))
         ]))
 
+    def test_multi_line_comments(self, space):
+        r = space.parse("""
+        1 + 1
+=begin
+foo bar
+=end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 2))
+        ]))
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse(" =begin\nfoo\n=end")
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=begin\nfoo\nbar")
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=foo\nbar\n=end")
+
+        with self.raises(space, 'SyntaxError'):
+            space.parse("=begin\nbar\n=foo")
+
     def test_send_block_argument(self, space):
         r = space.parse("f(&b)")
         assert r == ast.Main(ast.Block([

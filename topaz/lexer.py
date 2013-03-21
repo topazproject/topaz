@@ -359,12 +359,11 @@ class Lexer(object):
 
     def multiline_comment(self, ch):
         read = 0
-        for ch in "begin":
-            read += 1
+        for idx, ch in enumerate("begin"):
             if self.read() == ch:
                 break
         else:
-            for i in xrange(read):
+            for i in xrange(idx + 1):
                 self.unread()
             for token in self.equal(ch):
                 yield token
