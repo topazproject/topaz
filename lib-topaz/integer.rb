@@ -7,4 +7,13 @@ class Integer < Numeric
       current -= 1
     end
   end
+
+  def times
+    i = 0
+    while i < self
+      yield i
+      i += 1
+    end
+    self
+  end
 end
