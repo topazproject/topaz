@@ -241,10 +241,7 @@ class Kernel(Module):
             space.newsymbol("respond_to_missing?"),
             [w_name, space.newbool(include_private)]
         )
-        if space.is_true(w_found):
-            return space.newbool(True)
-        else:
-            return space.newbool(False)
+        return space.newbool(space.is_true(w_found))
 
     @moduledef.method("respond_to_missing?")
     def method_respond_to_missingp(self, space, w_name, w_include_private):
