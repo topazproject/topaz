@@ -1,2 +1,0 @@
-fails:Symbol#succ propagates a 'carry'
-fails:Symbol#next propagates a 'carry'
