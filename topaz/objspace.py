@@ -377,11 +377,11 @@ class ObjectSpace(object):
     def newregexp(self, regexp, flags):
         return W_RegexpObject(self, regexp, flags)
 
-    def newmodule(self, name):
-        return W_ModuleObject(self, name)
+    def newmodule(self, name, w_scope=None):
+        return W_ModuleObject(self, name, w_scope)
 
-    def newclass(self, name, superclass, is_singleton=False):
-        return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
+    def newclass(self, name, superclass, is_singleton=False, w_scope=None):
+        return W_ClassObject(self, name, superclass, is_singleton, w_scope)
 
     def newfunction(self, w_name, w_code, lexical_scope):
         name = self.symbol_w(w_name)
@@ -487,7 +487,7 @@ class ObjectSpace(object):
         if valid:
             for i in range(1, len(name)):
                 ch = name[i]
-                if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
+                if not (ch.isalnum() or ch == "_" or ord(ch) > 127 or ch == ":"):
                     valid = False
                     break
         if not valid:

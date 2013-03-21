@@ -81,8 +81,13 @@ class W_ModuleObject(W_RootObject):
 
     classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name):
+    def __init__(self, space, name, w_scope=None):
         self.name = name
+        if w_scope is not None:
+            assert isinstance(w_scope, W_ModuleObject)
+            if w_scope.name != "Object":
+                self.name = "%s::%s" % (w_scope.name, name)
+
         self.klass = None
         self.version = VersionTag()
         self.methods_w = {}
@@ -358,16 +363,15 @@ class W_ModuleObject(W_RootObject):
         pass
 
     @classdef.method("extended")
-    def method_included(self, space, w_mod):
+    def method_extended(self, space, w_mod):
         # TODO: should be private
         pass
 
     @classdef.method("name")
     def method_name(self, space):
-        name = self.name
-        if name is None:
+        if self.name is None:
             return space.w_nil
-        return space.newstr_fromstr(name)
+        return space.newstr_fromstr(self.name)
 
     @classdef.method("private")
     def method_private(self, space, args_w):

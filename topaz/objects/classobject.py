@@ -10,8 +10,8 @@ class W_ClassObject(W_ModuleObject):
 
     classdef = ClassDef("Class", W_ModuleObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name, superclass, is_singleton=False):
-        W_ModuleObject.__init__(self, space, name)
+    def __init__(self, space, name, superclass, is_singleton=False, w_scope=None):
+        W_ModuleObject.__init__(self, space, name, w_scope)
         self.superclass = superclass
         self.is_singleton = is_singleton
 
