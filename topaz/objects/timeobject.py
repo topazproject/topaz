@@ -30,37 +30,41 @@ class W_TimeObject(W_Object):
     def method_now(self, space):
         return space.send(self, "new")
 
-    @classdef.singleton_method("local", arg0="int")
-    @classdef.singleton_method("mktime", arg0="int")
-    def method_local(self, space, arg0, w_arg1=None, w_arg2=None, w_arg3=None,
-                     w_arg4=None, w_arg5=None, w_arg6=None, w_arg7=None,
-                     w_arg8=None, w_arg9=None, w_arg10=None):
+    @classdef.singleton_method("local", year_or_sec="int")
+    @classdef.singleton_method("mktime", year_or_sec="int")
+    def method_local(self, space, year_or_sec, w_month_or_min=None,
+                     w_day_or_hour=None, w_hour_or_day=None,
+                     w_min_or_month=None, w_sec_or_year=None,
+                     w_usec_with_frac_or_wday=None, w_yday=None,
+                     w_isdst=None, w_tz=None, w_unknown=None):
         args_raw_w = [
-            w_arg1, w_arg2, w_arg3, w_arg4, w_arg5, w_arg6, w_arg7, w_arg8,
-            w_arg9, w_arg10
+            w_month_or_min, w_day_or_hour, w_hour_or_day, w_min_or_month,
+            w_sec_or_year, w_usec_with_frac_or_wday, w_yday, w_isdst, w_tz,
+            w_unknown
         ]
         args_w = [
             w_arg if w_arg is not None and w_arg is not space.w_nil
                 else space.newint(0) for w_arg in args_raw_w
         ]
-        args_filtered_w = []
+        n_args = 0
         for w_arg in [space.newint(0)] + args_raw_w:
             if w_arg is not None and w_arg is not space.w_nil:
-                args_filtered_w.append(w_arg)
+                n_args += 1
 
-        n_args = len(args_filtered_w)
         if n_args == 9:
             raise space.error(space.w_ArgumentError, "%s for 1..8" % n_args)
         if n_args == 11:
             raise space.error(space.w_ArgumentError, "%s for 1..10" % n_args)
+        if n_args > 6:
+            raise space.error(space.w_NotImplementedError)
 
         w_time = W_TimeObject(space, self)
-        # this assumes signatures where "year" is first argument
+        # FIXME the following assumes signatures where "year" is first argument
         month, day, hour, minute, sec = [
             Coerce.int(space, w_arg) for w_arg in args_w[:5]
         ]
         w_time.struct_time = (
-            arg0,                       # tm_year
+            year_or_sec,                # tm_year
             1 if month == 0 else month, # tm_mon
             1 if day == 0 else day,     # tm_mday
             hour,                       # tm_hour
