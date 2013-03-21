@@ -28,9 +28,7 @@ class W_EnvObject(W_Object):
     @classdef.method("[]=", key="str")
     def method_subscript_assign(self, space, key, w_value):
         if w_value is space.w_nil:
-            # Let's just wait for #521
-            #if key in os.environ:
-                #del os.environ[key]
+            self.method_delete(space, key)
             return space.w_nil
         value = space.str_w(w_value)
         if "\0" in key:
