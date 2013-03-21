@@ -278,7 +278,7 @@ class TestMain(object):
         self.run(space, tmpdir, "puts RUBY_DESCRIPTION")
         out1, err1 = capfd.readouterr()
         self.run(space, tmpdir, """
-        puts "#{RUBY_ENGINE} (ruby-#{RUBY_VERSION}p#{RUBY_PATCHLEVEL}) [#{RUBY_PLATFORM}] (git rev #{RUBY_REVISION})"
+        puts "#{RUBY_ENGINE} (ruby-#{RUBY_VERSION}p#{RUBY_PATCHLEVEL}) (git rev #{RUBY_REVISION}) [#{RUBY_PLATFORM}]"
         """)
         out2, err2 = capfd.readouterr()
         assert out1 == out2

@@ -203,7 +203,7 @@ def _entry_point(space, argv):
     engine = "topaz"
     version = "1.9.3"
     patchlevel = 125
-    description = "%s (ruby-%sp%d) [%s] (git rev %s)" % (engine, version, patchlevel, platform, RUBY_REVISION)
+    description = "%s (ruby-%sp%d) (git rev %s) [%s]" % (engine, version, patchlevel, RUBY_REVISION, platform)
     space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
     space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
