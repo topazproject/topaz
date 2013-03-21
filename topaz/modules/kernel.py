@@ -233,7 +233,22 @@ class Kernel(Module):
 
     @moduledef.method("respond_to?", include_private="bool")
     def method_respond_top(self, space, w_name, include_private=False):
-        return space.newbool(space.respond_to(self, w_name))
+        if space.respond_to(self, w_name):
+            return space.newbool(True)
+
+        w_found = space.send(
+            self,
+            space.newsymbol("respond_to_missing?"),
+            [w_name, space.newbool(include_private)]
+        )
+        if space.is_true(w_found):
+            return space.newbool(True)
+        else:
+            return space.newbool(False)
+
+    @moduledef.method("respond_to_missing?")
+    def method_respond_to_missingp(self, space, w_name, w_include_private):
+        return space.newbool(False)
 
     @moduledef.method("dup")
     def method_dup(self, space):
