@@ -6,3 +6,4 @@ fails:String#match converts string patterns to regexps without escaping
 fails:String#match sets $~ to MatchData of match or nil when there is none
 fails:String#match when passed a block yields the MatchData
 fails:String#match when passed a block returns the block result
+fails:String#match uses the start as a character offset

@@ -7,3 +7,4 @@ fails:Regexp#match when passed a block yields the MatchData
 fails:Regexp#match when passed a block returns the block result
 fails:Regexp#~ matches against the contents of $_
 fails:Regexp#match returns a MatchData object, when argument is a Symbol
+fails:Regexp#match uses the start as a character offset
