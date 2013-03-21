@@ -25,7 +25,7 @@ from topaz.modules.objectspace import ObjectSpace as ObjectSpaceModule
 from topaz.modules.process import Process
 from topaz.modules.signal import Signal
 from topaz.modules.topaz import Topaz
-from topaz.objects.arrayobject import W_ArrayObject
+from topaz.objects.arrayobject import W_ArrayObject, ObjectArrayStrategy, FloatArrayStrategy, FixnumArrayStrategy, ArrayStrategy
 from topaz.objects.bignumobject import W_BignumObject
 from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.boolobject import W_TrueObject, W_FalseObject
@@ -328,7 +328,18 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromstrs(self, strs_w)
 
     def newarray(self, items_w):
-        return W_ArrayObject(self, items_w)
+        if items_w:
+            array_type = type(items_w[0])
+            for item in items_w:
+                if not isinstance(item, array_type):
+                    return W_ArrayObject(self, self.fromcache(ObjectArrayStrategy), items_w)
+            if array_type == W_FixnumObject:
+                return W_ArrayObject(self, self.fromcache(FixnumArrayStrategy), items_w) 
+            elif array_type == W_FloatObject:
+                print array_type
+                return W_ArrayObject(self, self.fromcache(FloatArrayStrategy), items_w)
+        # unknown type, can not be optimized
+        return W_ArrayObject(self, self.fromcache(ObjectArrayStrategy), items_w)
 
     def newhash(self):
         return W_HashObject(self)
@@ -531,7 +542,7 @@ class ObjectSpace(object):
             isinstance(args_w[0], W_ArrayObject) and len(bc.arg_pos) >= 2):
             w_arg = args_w[0]
             assert isinstance(w_arg, W_ArrayObject)
-            args_w = w_arg.items_w
+            args_w = w_arg.listview(self)
         if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
