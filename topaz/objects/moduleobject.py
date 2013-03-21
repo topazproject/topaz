@@ -30,6 +30,9 @@ class AttributeWriter(W_FunctionObject):
         space.set_instance_var(w_obj, self.varname, w_value)
         return w_value
 
+    def arity(self, space):
+        return space.newint(1)
+
 
 class UndefMethod(W_FunctionObject):
     _immutable_fields_ = ["name"]
@@ -52,6 +55,13 @@ class DefineMethodBlock(W_FunctionObject):
     def call(self, space, w_obj, args_w, block):
         method_block = self.block.copy(w_self=w_obj)
         return space.invoke_block(method_block, args_w, block)
+
+    def arity(self, space):
+        args_count = len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
+        if len(self.block.bytecode.defaults) > 0 or self.block.bytecode.splat_arg_pos != -1:
+            args_count = -(args_count + 1)
+
+        return space.newint(args_count)
 
 
 class DefineMethodMethod(W_FunctionObject):

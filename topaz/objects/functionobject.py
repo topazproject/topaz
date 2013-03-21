@@ -5,7 +5,7 @@ from topaz.objects.objectobject import W_BaseObject
 
 
 class W_FunctionObject(W_BaseObject):
-    _immutable_fields_ = ["name", "w_class", "block", "bytecode"]
+    _immutable_fields_ = ["name", "w_class"]
 
     def __init__(self, name, w_class=None):
         self.name = name
@@ -16,6 +16,9 @@ class W_FunctionObject(W_BaseObject):
         obj.name = self.name
         obj.w_class = copy.deepcopy(self.w_class, memo)
         return obj
+
+    def arity(self, space):
+        return space.newint(0)
 
 
 class W_UserFunction(W_FunctionObject):
@@ -42,6 +45,13 @@ class W_UserFunction(W_FunctionObject):
         with space.getexecutioncontext().visit_frame(frame):
             frame.handle_args(space, self.bytecode, args_w, block)
             return space.execute_frame(frame, self.bytecode)
+
+    def arity(self, space):
+        args_count = len(self.bytecode.arg_pos) - len(self.bytecode.defaults)
+        if len(self.bytecode.defaults) > 0 or self.bytecode.splat_arg_pos != -1:
+            args_count = -(args_count + 1)
+
+        return space.newint(args_count)
 
 
 class W_BuiltinFunction(W_FunctionObject):
