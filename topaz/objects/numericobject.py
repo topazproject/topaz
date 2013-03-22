@@ -1,7 +1,11 @@
+import math
+
+from topaz.coerce import Coerce
 from topaz.error import RubyError
 from topaz.module import ClassDef
 from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
+from rpython.rlib.rfloat import round_away
 
 
 class W_NumericObject(W_Object):
@@ -54,3 +58,15 @@ class W_NumericObject(W_Object):
             return space.newarray([w_other, self])
         else:
             return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
+
+    @classdef.method("ceil")
+    def method_ceil(self, space):
+        return space.newint(int(math.ceil(Coerce.float(space, self))))
+
+    @classdef.method("floor")
+    def method_floor(self, space):
+        return space.newint(int(math.floor(Coerce.float(space, self))))
+
+    @classdef.method("round")
+    def method_round(self, space):
+        return space.newint(int(round_away(Coerce.float(space, self))))
