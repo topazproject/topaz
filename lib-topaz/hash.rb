@@ -69,4 +69,22 @@ class Hash
     end
     nil
   end
+
+  def inspect
+    result = "{"
+    recursion = Thread.current.recursion_guard(:hash_inspect, self) do
+      self.each_with_index do |key, i|
+        if i > 0
+          result << ", "
+        end
+        result << "#{key.inspect}=>#{self[key].inspect}"
+      end
+    end
+    if recursion
+      result << "..."
+    end
+    result << "}"
+  end
+
+  alias :to_s :inspect
 end
