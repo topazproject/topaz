@@ -1,5 +1,6 @@
 import math
 
+from topaz.coerce import Coerce
 from topaz.error import RubyError
 from topaz.module import ClassDef
 from topaz.modules.comparable import Comparable
@@ -60,15 +61,12 @@ class W_NumericObject(W_Object):
 
     @classdef.method("ceil")
     def method_ceil(self, space):
-        return space.newint(int(math.ceil(self._to_float(space))))
+        return space.newint(int(math.ceil(Coerce.float(space, self))))
 
     @classdef.method("floor")
     def method_floor(self, space):
-        return space.newint(int(math.floor(self._to_float(space))))
+        return space.newint(int(math.floor(Coerce.float(space, self))))
 
     @classdef.method("round")
     def method_round(self, space):
-        return space.newint(int(round_away(self._to_float(space))))
-
-    def _to_float(self, space):
-        return space.float_w(space.send(self, space.newsymbol("to_f")))
+        return space.newint(int(round_away(Coerce.float(space, self))))
