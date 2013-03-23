@@ -17,6 +17,24 @@ class TestModuleObject(BaseTopazTest):
         """)
         assert space.int_w(w_res) == 4
 
+    def test_submodule(self, space):
+        w_res = space.execute("""
+        return Math::DomainError.name
+        """)
+        assert space.str_w(w_res) == "Math::DomainError"
+
+    def test_generated_submodule(self, space):
+        w_res = space.execute("""
+        module Foo
+            module Bar
+                module Baz
+                end
+            end
+        end
+        return Foo::Bar::Baz.name
+        """)
+        assert space.str_w(w_res) == "Foo::Bar::Baz"
+
     def test_module_function(self, space):
         w_res = space.execute("""
         module Mod

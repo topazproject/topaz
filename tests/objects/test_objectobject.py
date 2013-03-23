@@ -43,8 +43,7 @@ class TestBaseObject(BaseTopazTest):
         t = T.new
         return t.instance_eval(&M::C).name
         """)
-        # TODO: this shoudl really be M::X
-        assert space.str_w(w_res) == "X"
+        assert space.str_w(w_res) == "M::X"
 
     def test___id__(self, space):
         w_res = space.execute("return BasicObject.new.__id__")

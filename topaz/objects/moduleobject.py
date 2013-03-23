@@ -358,16 +358,15 @@ class W_ModuleObject(W_RootObject):
         pass
 
     @classdef.method("extended")
-    def method_included(self, space, w_mod):
+    def method_extended(self, space, w_mod):
         # TODO: should be private
         pass
 
     @classdef.method("name")
     def method_name(self, space):
-        name = self.name
-        if name is None:
+        if self.name is None:
             return space.w_nil
-        return space.newstr_fromstr(name)
+        return space.newstr_fromstr(self.name)
 
     @classdef.method("private")
     def method_private(self, space, args_w):

@@ -6,6 +6,18 @@ class TestClassObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Class")
 
+    def test_generated_subclass(self, space):
+        w_res = space.execute("""
+        class Foo
+            class Bar
+                class Baz
+                end
+            end
+        end
+        return Foo::Bar::Baz.name
+        """)
+        assert space.str_w(w_res) == "Foo::Bar::Baz"
+
     def test_to_s(self, space):
         w_res = space.execute("return 1.class.to_s")
         assert space.str_w(w_res) == "Fixnum"
