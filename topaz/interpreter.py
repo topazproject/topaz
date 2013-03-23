@@ -376,7 +376,7 @@ class Interpreter(object):
                     "wrong argument type %s (expected Class)" % cls_name
                 )
             assert isinstance(superclass, W_ClassObject)
-            w_cls = space.newclass(name, superclass)
+            w_cls = space.newclass(name, superclass, is_singleton=False, w_scope=w_scope)
             space.set_const(w_scope, name, w_cls)
         elif not space.is_kind_of(w_cls, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a class" % name)
@@ -390,8 +390,9 @@ class Interpreter(object):
 
         name = space.symbol_w(w_name)
         w_mod = w_scope.find_const(space, name)
+
         if w_mod is None:
-            w_mod = space.newmodule(name)
+            w_mod = space.newmodule(name, w_scope=w_scope)
             space.set_const(w_scope, name, w_mod)
         elif not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a module" % name)

@@ -377,11 +377,13 @@ class ObjectSpace(object):
     def newregexp(self, regexp, flags):
         return W_RegexpObject(self, regexp, flags)
 
-    def newmodule(self, name):
-        return W_ModuleObject(self, name)
+    def newmodule(self, name, w_scope=None):
+        complete_name = self.buildname(name, w_scope)
+        return W_ModuleObject(self, complete_name)
 
-    def newclass(self, name, superclass, is_singleton=False):
-        return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
+    def newclass(self, name, superclass, is_singleton=False, w_scope=None):
+        complete_name = self.buildname(name, w_scope)
+        return W_ClassObject(self, complete_name, superclass, is_singleton=is_singleton)
 
     def newfunction(self, w_name, w_code, lexical_scope):
         name = self.symbol_w(w_name)
@@ -415,6 +417,14 @@ class ObjectSpace(object):
         names = block.bytecode.cellvars + block.bytecode.freevars
         cells = block.cells[:]
         return W_BindingObject(self, names, cells, block.w_self, block.lexical_scope)
+
+    def buildname(self, name, w_scope):
+        complete_name = name
+        if w_scope is not None:
+            assert isinstance(w_scope, W_ModuleObject)
+            if w_scope.name != "Object":
+                complete_name = "%s::%s" % (w_scope.name, name)
+        return complete_name
 
     def int_w(self, w_obj):
         return w_obj.int_w(self)
