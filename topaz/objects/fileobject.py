@@ -144,11 +144,12 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                ec = space.getexecutioncontext()
+                with ec.recursion_guard("file_singleton_method_join", w_arg) as in_recursion:
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(
-                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
                     )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
@@ -198,11 +199,16 @@ class W_FileObject(W_IOObject):
         return space.newbool(file_stat.st_dev == other_stat.st_dev and
                 file_stat.st_ino == other_stat.st_ino)
 
-    @classdef.singleton_method("basename", filename="path")
-    def method_basename(self, space, filename):
+    @classdef.singleton_method("basename", filename="path", suffix="path")
+    def method_basename(self, space, filename, suffix=None):
         i = filename.rfind("/") + 1
         assert i >= 0
-        return space.newstr_fromstr(filename[i:])
+        filename = filename[i:]
+        if suffix is not None and filename.endswith(suffix):
+            end = len(filename) - len(suffix)
+            assert end >= 0
+            filename = filename[:end]
+        return space.newstr_fromstr(filename)
 
     @classdef.singleton_method("umask", mask="int")
     def method_umask(self, space, mask=-1):

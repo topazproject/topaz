@@ -211,3 +211,8 @@ class W_RegexpError(W_StandardError):
 class W_ThreadError(W_StandardError):
     classdef = ClassDef("ThreadError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
+
+
+class W_FiberError(W_StandardError):
+    classdef = ClassDef("FiberError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)

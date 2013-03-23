@@ -88,6 +88,12 @@ class IO
     return lines
   end
 
+  def self.read(name)
+    File.open(name) do |f|
+      f.read
+    end
+  end
+
   def self.readlines(name, *args)
     File.open(name) do |f|
       return f.readlines(*args)

@@ -2,6 +2,7 @@ class MSpecScript
   Topaz = File.expand_path(File.dirname(__FILE__))
   Rubyspec = File.expand_path("../../rubyspec", __FILE__)
 
+  MSpec.enable_feature :fiber
   core = ["#{Rubyspec}/core/",
           "^#{Rubyspec}/core/array/pack/",
           "^#{Rubyspec}/core/fixnum/right_shift_spec.rb",

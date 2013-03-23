@@ -16,7 +16,7 @@ from topaz.astcompiler import CompilerContext, SymbolTable
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
 from topaz.error import RubyError, print_traceback
-from topaz.executioncontext import ExecutionContext
+from topaz.executioncontext import ExecutionContext, ExecutionContextHolder
 from topaz.frame import Frame
 from topaz.interpreter import Interpreter
 from topaz.lexer import LexerError, Lexer
@@ -43,7 +43,8 @@ from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
-    W_EOFError, W_RegexpError, W_ThreadError, W_FloatDomainError)
+    W_RegexpError, W_ThreadError, W_FiberError, W_EOFError, W_FloatDomainError)
+from topaz.objects.fiberobject import W_FiberObject
 from topaz.objects.fileobject import W_FileObject
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.functionobject import W_UserFunction
@@ -78,10 +79,12 @@ class SpaceCache(Cache):
 
 
 class ObjectSpace(object):
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
+
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        self._executioncontext = None
+        self._executioncontexts = ExecutionContextHolder()
         self.globals = GlobalsDict()
         self.bootstrap = True
         self.exit_handlers_w = []
@@ -123,6 +126,7 @@ class ObjectSpace(object):
         self.w_KeyError = self.getclassfor(W_KeyError)
         self.w_IOError = self.getclassfor(W_IOError)
         self.w_EOFError = self.getclassfor(W_EOFError)
+        self.w_FiberError = self.getclassfor(W_FiberError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
         self.w_FloatDomainError = self.getclassfor(W_FloatDomainError)
@@ -151,7 +155,7 @@ class ObjectSpace(object):
             self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
             self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
-            self.w_EOFError, self.w_FloatDomainError,
+            self.w_EOFError, self.w_FloatDomainError, self.w_FiberError,
 
             self.w_kernel, self.w_topaz,
 
@@ -166,6 +170,9 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
+            self.getclassfor(W_MethodObject),
+            self.getclassfor(W_UnboundMethodObject),
+            self.getclassfor(W_FiberObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_ThreadError),
@@ -211,6 +218,7 @@ class ObjectSpace(object):
         self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
 
     def _freeze_(self):
+        self._executioncontexts.clear()
         return True
 
     def find_executable(self, executable):
@@ -289,10 +297,11 @@ class ObjectSpace(object):
 
     @jit.loop_invariant
     def getexecutioncontext(self):
-        # When we have threads this should become a thread local.
-        if self._executioncontext is None:
-            self._executioncontext = ExecutionContext()
-        return self._executioncontext
+        ec = self._executioncontexts.get()
+        if ec is None:
+            ec = ExecutionContext()
+            self._executioncontexts.set(ec)
+        return ec
 
     def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
                      parent_interp=None, regexp_match_cell=None):
@@ -350,6 +359,7 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromchars(self, chars)
 
     def newstr_fromstr(self, strvalue):
+        assert strvalue is not None
         return W_StringObject.newstr_fromstr(self, strvalue)
 
     def newstr_fromstrs(self, strs_w):
@@ -383,7 +393,8 @@ class ObjectSpace(object):
         if w_function is None:
             raise self.error(
                 self.w_NameError,
-                "undefined method `%s' for class `%s'" % (name, w_cls.name)
+                "undefined method `%s' for class `%s'" % (name,
+                                                          self.obj_to_s(w_cls))
             )
         else:
             return W_UnboundMethodObject(self, w_cls, w_function)
@@ -562,11 +573,6 @@ class ObjectSpace(object):
             block=block.block, parent_interp=block.parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
-        if (len(args_w) == 1 and
-            isinstance(args_w[0], W_ArrayObject) and len(bc.arg_pos) >= 2):
-            w_arg = args_w[0]
-            assert isinstance(w_arg, W_ArrayObject)
-            args_w = w_arg.items_w
         if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
@@ -656,19 +662,21 @@ class ObjectSpace(object):
         except RubyError:
             if not raise_error:
                 return self.w_nil
-            src_cls = self.getclass(w_obj).name
+            src_cls_name = self.obj_to_s(self.getclass(w_obj))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(
-                self.w_TypeError, "can't convert %s into %s" % (src_cls, w_cls.name)
+                self.w_TypeError, "can't convert %s into %s" % (src_cls_name, w_cls_name)
             )
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return self.w_nil
         elif not self.is_kind_of(w_res, w_cls):
-            src_cls = self.getclass(w_obj).name
-            res_cls = self.getclass(w_res).name
+            src_cls = self.obj_to_s(self.getclass(w_obj))
+            res_cls = self.obj_to_s(self.getclass(w_res))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(self.w_TypeError,
                 "can't convert %s to %s (%s#%s gives %s)" % (
-                    src_cls, w_cls.name, src_cls, method, res_cls
+                    src_cls, w_cls_name, src_cls, method, res_cls
                 )
             )
         else:
@@ -676,6 +684,9 @@ class ObjectSpace(object):
 
     def any_to_s(self, w_obj):
         return "#<%s:0x%x>" % (
-            self.str_w(self.send(self.getclass(w_obj), self.newsymbol("name"))),
+            self.obj_to_s(self.getnonsingletonclass(w_obj)),
             self.int_w(self.send(w_obj, self.newsymbol("__id__")))
         )
+
+    def obj_to_s(self, w_obj):
+        return self.str_w(self.send(w_obj, self.newsymbol("to_s")))

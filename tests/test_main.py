@@ -1,5 +1,6 @@
 import os
 import platform
+import subprocess
 
 import pytest
 
@@ -64,6 +65,7 @@ class TestMain(object):
         assert "1.9.3" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
+        assert subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip() in version
         assert out == "5"
 
         self.run(space, tmpdir, ruby_args=["-v"])
@@ -121,6 +123,7 @@ class TestMain(object):
         assert "1.9.3" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
+        assert subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip() in version
 
     def test_stop_consuming_args(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
@@ -275,7 +278,7 @@ class TestMain(object):
         self.run(space, tmpdir, "puts RUBY_DESCRIPTION")
         out1, err1 = capfd.readouterr()
         self.run(space, tmpdir, """
-        puts "#{RUBY_ENGINE} (ruby-#{RUBY_VERSION}p#{RUBY_PATCHLEVEL}) [#{RUBY_PLATFORM}]"
+        puts "#{RUBY_ENGINE} (ruby-#{RUBY_VERSION}p#{RUBY_PATCHLEVEL}) (git rev #{RUBY_REVISION}) [#{RUBY_PLATFORM}]"
         """)
         out2, err2 = capfd.readouterr()
         assert out1 == out2

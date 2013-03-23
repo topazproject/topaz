@@ -7,14 +7,6 @@ class Fixnum < Integer
     self + 1
   end
 
-  def times
-    i = 0
-    while i < self
-      yield i
-      i += 1
-    end
-  end
-
   def upto(n)
     i = self
     while i <= n
