@@ -487,7 +487,7 @@ class ObjectSpace(object):
         if valid:
             for i in range(1, len(name)):
                 ch = name[i]
-                if not (ch.isalnum() or ch == "_" or ord(ch) > 127 or ch == ":"):
+                if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
                     valid = False
                     break
         if not valid:
