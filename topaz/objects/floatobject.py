@@ -80,10 +80,6 @@ class W_FloatObject(W_NumericObject):
             )
         return self.float_to_w_int(space, self.floatvalue)
 
-    @classdef.method("-@")
-    def method_neg(self, space):
-        return space.newfloat(-self.floatvalue)
-
     @classdef.method("+", other="float")
     def method_add(self, space, other):
         return space.newfloat(self.floatvalue + other)
