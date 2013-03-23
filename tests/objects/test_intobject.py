@@ -205,7 +205,7 @@ class TestFixnumObject(BaseTopazTest):
 
     def test_nonzero(self, space):
         w_res = space.execute("return [2.nonzero?, 0.nonzero?]")
-        assert self.unwrap(space, w_res) == [True, False]
+        assert self.unwrap(space, w_res) == [2, None]
 
     def test_object_id(self, space):
         w_res = space.execute("return 2.object_id, 2.object_id")
