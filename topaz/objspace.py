@@ -3,9 +3,10 @@ from __future__ import absolute_import
 import os
 import sys
 
-from rpython.rlib import jit, rpath
+from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
+from rpython.rlib.signature import signature
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rbigint import rbigint
 
@@ -56,7 +57,7 @@ from topaz.objects.methodobject import W_MethodObject, W_UnboundMethodObject
 from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.nilobject import W_NilObject
 from topaz.objects.numericobject import W_NumericObject
-from topaz.objects.objectobject import W_Object, W_BaseObject
+from topaz.objects.objectobject import W_Object, W_BaseObject, W_Root
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.rangeobject import W_RangeObject
@@ -317,12 +318,14 @@ class ObjectSpace(object):
 
     # Methods for allocating new objects.
 
+    @signature(types.any(), types.bool(), returns=types.instance(W_Root))
     def newbool(self, boolvalue):
         if boolvalue:
             return self.w_true
         else:
             return self.w_false
 
+    @signature(types.any(), types.int(), returns=types.instance(W_FixnumObject))
     def newint(self, intvalue):
         return W_FixnumObject(self, intvalue)
 
@@ -422,7 +425,7 @@ class ObjectSpace(object):
         complete_name = name
         if w_scope is not None:
             assert isinstance(w_scope, W_ModuleObject)
-            if w_scope.name != "Object":
+            if w_scope is not self.w_object:
                 complete_name = "%s::%s" % (w_scope.name, name)
         return complete_name
 

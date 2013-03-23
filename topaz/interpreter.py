@@ -376,7 +376,7 @@ class Interpreter(object):
                     "wrong argument type %s (expected Class)" % cls_name
                 )
             assert isinstance(superclass, W_ClassObject)
-            w_cls = space.newclass(name, superclass, is_singleton=False, w_scope=w_scope)
+            w_cls = space.newclass(name, superclass, w_scope=w_scope)
             space.set_const(w_scope, name, w_cls)
         elif not space.is_kind_of(w_cls, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a class" % name)

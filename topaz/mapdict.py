@@ -8,6 +8,7 @@ NUM_DIGITS_POW2 = 1 << NUM_DIGITS
 # note: we use "x * NUM_DIGITS_POW2" instead of "x << NUM_DIGITS" because
 # we want to propagate knowledge that the result cannot be negative
 
+
 class MapTransitionCache(object):
     def __init__(self, space):
         # Mappings of classes -> their terminator nodes.

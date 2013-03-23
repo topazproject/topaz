@@ -395,11 +395,11 @@ class W_FileStatObject(W_Object):
 
     @classdef.method("setgid?")
     def method_setgidp(self, space):
-        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISGID)
+        return space.newbool(bool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISGID))
 
     @classdef.method("setuid?")
     def method_setuidp(self, space):
-        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISUID)
+        return space.newbool(bool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISUID))
 
     @classdef.method("size")
     def method_size(self, space):
@@ -411,7 +411,7 @@ class W_FileStatObject(W_Object):
 
     @classdef.method("sticky?")
     def method_stickyp(self, space):
-        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISVTX)
+        return space.newbool(bool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISVTX))
 
     @classdef.method("symlink?")
     def method_symlinkp(self, space):
