@@ -81,13 +81,8 @@ class W_ModuleObject(W_RootObject):
 
     classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name, w_scope=None):
+    def __init__(self, space, name):
         self.name = name
-        if w_scope is not None:
-            assert isinstance(w_scope, W_ModuleObject)
-            if w_scope.name != "Object":
-                self.name = "%s::%s" % (w_scope.name, name)
-
         self.klass = None
         self.version = VersionTag()
         self.methods_w = {}
