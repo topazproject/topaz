@@ -246,10 +246,6 @@ class W_FixnumObject(W_RootObject):
     method_gt = new_bool_op(classdef, ">", operator.gt)
     method_gte = new_bool_op(classdef, ">=", operator.ge)
 
-    @classdef.method("-@")
-    def method_neg(self, space):
-        return space.newint(-self.intvalue)
-
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
         if isinstance(w_other, W_FixnumObject):

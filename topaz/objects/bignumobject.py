@@ -87,10 +87,6 @@ class W_BignumObject(W_IntegerObject):
     def method_xor(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.xor(other))
 
-    @classdef.method("-@")
-    def method_uminus(self, space):
-        return space.newbigint_fromrbigint(self.bigint.neg())
-
     @classdef.method("==", other="bigint")
     def method_eq(self, space, other):
         return space.newbool(self.bigint.eq(other))

@@ -16,14 +16,6 @@ class Fixnum < Integer
     self
   end
 
-  def zero?
-    self == 0
-  end
-
-  def nonzero?
-    self != 0
-  end
-
   def even?
     self % 2 == 0
   end
