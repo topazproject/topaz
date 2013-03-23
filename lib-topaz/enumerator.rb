@@ -61,7 +61,7 @@ class Enumerator
 
   def with_object(obj, &block)
     return Enumerator.new(self, :with_object, obj) unless block
-    self.each{ |*v| yield( *v, obj ) }
+    self.each { |*v| yield(*v, obj) }
     return obj
   end
 
@@ -71,8 +71,8 @@ class Enumerator
     end
 
     def each
-      proc = Proc.new{ |*args| yield *args }
-      @block.call Yielder.new(&proc)
+      proc = Proc.new { |*args| yield *args }
+      @block.call(Yielder.new(&proc))
     end
   end
 
@@ -82,7 +82,7 @@ class Enumerator
     end
 
     def yield(*args)
-      @block.call *args
+      @block.call(*args)
     end
 
     def <<(val)
