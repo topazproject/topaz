@@ -8,7 +8,8 @@ module Enumerable
     end
   end
 
-  def map
+  def map(&block)
+    return self.enum_for(:map) unless block
     result = []
     self.each do |x|
       result << (yield x)
@@ -66,6 +67,7 @@ module Enumerable
   end
 
   def select(&block)
+    return self.enum_for(:select) unless block
     result = []
     self.each do |o|
       if block.call(o)
@@ -112,6 +114,7 @@ module Enumerable
   alias entries to_a
 
   def detect(ifnone = nil, &block)
+    return self.enum_for(:detect) unless block
     self.each do |o|
       return o if block.call(o)
     end
