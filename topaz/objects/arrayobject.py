@@ -286,20 +286,18 @@ class W_ArrayObject(W_Object):
         self.items_w.reverse()
         return self
 
-    @classdef.method("rotate!")
+    @classdef.method("rotate!", n="int")
     @check_frozen()
-    def method_rotate_i(self, space, w_n=None):     
-        if w_n is None:
-            n = 1
-        else:
-            n = space.int_w(space.convert_type(w_n, space.w_fixnum, "to_int"))
-        _len = len(self.items_w)
-        if n == 0 or _len == 0:
+    def method_rotate_i(self, space, n=1): 
+        length = len(self.items_w)
+        if length == 0:
             return self
-        if abs(n) > _len:
-            n = n % _len
+        if abs(n) >= length:
+            n %= length
         if n < 0:
-            n = _len + n
+            n += length
+        if n == 0: 
+            return self
         assert n >= 0       
         self.items_w.extend(self.items_w[:n])
         del self.items_w[:n]
