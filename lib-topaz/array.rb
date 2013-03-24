@@ -298,4 +298,13 @@ class Array
     0.upto(size - 1, &block)
     self
   end
+
+  def reverse
+    self.dup.reverse!
+  end
+
+  def reverse_each(&block)
+    reverse.each(&block)
+    self
+  end
 end
