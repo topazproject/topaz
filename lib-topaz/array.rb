@@ -311,4 +311,9 @@ class Array
     end
     return self
   end
+
+  def rotate(n = 1)
+    Array.new(self).rotate!(n)
+  end
+
 end
