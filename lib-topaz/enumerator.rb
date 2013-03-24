@@ -20,30 +20,29 @@ class Enumerator
   def rewind
     @object.rewind if @object.respond_to?(:rewind)
     @nextvals = nil
+    @fiber = nil
+    @finished = false 
     self
   end
 
   def peek
     if @nextvals.nil?
       @nextvals = []
-      # naive implementation storing all values at once.
-      # TODO: use Thread or Fiber once available
-      if @nextvals.empty?
-        @object.send(@method, *@args) do |*v|
-          if v.size == 1 then
-            @nextvals << v.first
-          else
-            @nextvals << v
-          end
+      @finished = false
+      @fiber ||= Fiber.new do
+        self.each do |*values|
+          Fiber.yield(*values)
         end
+        @finished = true
       end
     end
 
     if @nextvals.empty?
-      raise StopIteration.new("iteration reached an end")
-    else
-      return @nextvals.first
-    end
+      @nextvals << @fiber.resume 
+      raise StopIteration.new("iteration reached an end") if @finished
+    end 
+    
+    return @nextvals.first
   end
 
   def peek_values
@@ -51,6 +50,7 @@ class Enumerator
   end
   
   def next
+    raise StopIteration.new("iteration reached an end") if @finished
     self.peek
     return @nextvals.shift 
   end
