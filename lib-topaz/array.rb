@@ -304,7 +304,11 @@ class Array
   end
 
   def reverse_each(&block)
-    reverse.each(&block)
-    self
+    i = self.length - 1
+    while i >= 0
+      yield self[i]
+      i -= 1
+    end
+    return self
   end
 end
