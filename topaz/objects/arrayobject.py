@@ -279,3 +279,10 @@ class W_ArrayObject(W_Object):
     def method_sort(self, space, block):
         RubySorter(space, self.items_w, sortblock=block).sort()
         return self
+
+    @classdef.method("reverse!")
+    @check_frozen()
+    def method_reverse_i(self, space):
+        self.items_w.reverse()
+        return self
+
