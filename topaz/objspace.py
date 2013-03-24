@@ -44,7 +44,8 @@ from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
-    W_RegexpError, W_ThreadError, W_FiberError, W_EOFError, W_FloatDomainError)
+    W_RegexpError, W_ThreadError, W_FiberError, W_EOFError, W_FloatDomainError,
+    W_SystemStackError)
 from topaz.objects.fiberobject import W_FiberObject
 from topaz.objects.fileobject import W_FileObject
 from topaz.objects.floatobject import W_FloatObject
@@ -138,6 +139,7 @@ class ObjectSpace(object):
         self.w_SyntaxError = self.getclassfor(W_SyntaxError)
         self.w_SystemCallError = self.getclassfor(W_SystemCallError)
         self.w_SystemExit = self.getclassfor(W_SystemExit)
+        self.w_SystemStackError = self.getclassfor(W_SystemStackError)
         self.w_TypeError = self.getclassfor(W_TypeError)
         self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
         self.w_kernel = self.getmoduleobject(Kernel.moduledef)
@@ -157,6 +159,7 @@ class ObjectSpace(object):
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
             self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
             self.w_EOFError, self.w_FloatDomainError, self.w_FiberError,
+            self.w_SystemStackError,
 
             self.w_kernel, self.w_topaz,
 

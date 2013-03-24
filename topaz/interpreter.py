@@ -1,4 +1,4 @@
-from rpython.rlib import jit
+from rpython.rlib import jit, rstackovf
 from rpython.rlib.debug import check_nonneg
 from rpython.rlib.objectmodel import we_are_translated, specialize
 
@@ -73,6 +73,9 @@ class Interpreter(object):
             pc = self.handle_raise_break(space, pc, frame, bytecode, e)
         except Throw as e:
             pc = self.handle_throw(space, pc, frame, bytecode, e)
+        except rstackovf.StackOverflow:
+            rstackovf.check_stack_overflow()
+            pc = self.handle_ruby_error(space, pc, frame, bytecode, space.error(space.w_SystemStackError, "stack level too deep"))
         return pc
 
     def handle_bytecode(self, space, pc, frame, bytecode):
