@@ -111,8 +111,9 @@ class Array
     detect { |arr| arr.is_a?(Array) && arr[1] == value }
   end
 
-  def delete_if
+  def delete_if(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    return self.enum_for(:delete_if) unless block
     i = 0
     c = 0
     sz = self.size

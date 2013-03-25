@@ -47,4 +47,10 @@ module Kernel
     raise TypeError.new("can't convert #{cmd.class} into String") unless cmd.is_a?(String)
     IO.popen(cmd) { |r| r.read }
   end
+
+  def to_enum(method = :each, *args)
+    Enumerator.new(self, method, *args)
+  end
+
+  alias :enum_for :to_enum
 end
