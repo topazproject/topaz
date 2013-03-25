@@ -252,14 +252,6 @@ class Array
     self
   end
 
-  def max(&block)
-    max = self[0]
-    self.each do |e|
-      max = e if (block ? block.call(max, e) : max <=> e) < 0
-    end
-    max
-  end
-
   def uniq!(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     seen = {}
@@ -312,4 +304,76 @@ class Array
     end
     return self
   end
+
+  def max(&block)
+    max = self[0]
+    i = 1
+    while i < self.length
+      max = self[i] if Topaz.compare(max, self[i], &block) == -1
+      i += 1
+    end
+    max
+  end
+
+  def min(&block)
+    min = self[0]
+    i = 1
+    while i < self.length
+      min = self[i] if Topaz.compare(min, self[i], &block) == 1
+      i += 1
+    end
+    min
+  end
+
+  def max_by(&block)
+    return self.enum_for(:max_by) unless block
+    max = self[0]
+    maxv = block.call(max) if self.length > 0
+    i = 1
+    while i < self.length
+      ev = block.call(self[i])
+      max, maxv = self[i], ev if Topaz.compare(maxv, ev) == -1
+      i += 1
+    end   
+    max
+  end
+
+  def min_by(&block)
+    return self.enum_for(:min_by) unless block
+    min = self[0]
+    minv = block.call(min) if self.length > 0
+    i = 1
+    while i < self.length
+      ev = block.call(self[i])
+      min, minv = self[i], ev if Topaz.compare(minv, ev) == 1
+      i += 1
+    end
+    min
+  end
+
+  def minmax(&block)
+    min = max = self[0]
+    i = 1
+    while i < self.length
+      min = self[i] if Topaz.compare(min, self[i], &block) == 1
+      max = self[i] if Topaz.compare(max, self[i], &block) == -1
+      i += 1
+    end
+    [min, max]
+  end
+
+  def minmax_by(&block)
+    return self.enum_for(:minmax_by) unless block
+    min = max = self[0]
+    minv = maxv = block.call(min) if self.length > 0
+    i = 1
+    while i < self.length
+      ev = block.call(self[i])
+      max, maxv = self[i], ev if Topaz.compare(maxv, ev) == -1
+      min, minv = self[i], ev if Topaz.compare(minv, ev) == 1
+      i += 1
+    end
+    [min, max]
+  end
+
 end

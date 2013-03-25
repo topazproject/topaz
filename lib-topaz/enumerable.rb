@@ -152,23 +152,60 @@ module Enumerable
     result
   end
 
-  def min
-    inject do |minimum, current|
-      if minimum > current
-        current
-      else
-        minimum
-      end
+  def max(&block)
+    max = nil
+    self.each_with_index do |e, i|
+      max = e if i == 0 || Topaz.compare(max, e, &block) == -1
     end
+    max
   end
 
-  def max
-    inject do |maximum, current|
-      if maximum < current
-        current
-      else
-        maximum
-      end
+  def min(&block)
+    min = nil
+    self.each_with_index do |e, i|
+      min = e if i == 0 || Topaz.compare(min, e, &block) == 1
     end
+    min
   end
+
+  def max_by(&block)
+    return self.enum_for(:max_by) unless block
+    max = maxv = nil 
+    self.each_with_index do |e, i|
+      ev = block ? block.call(e) : e
+      max, maxv = e, ev if i == 0 || Topaz.compare(maxv, ev) == -1
+    end
+    max
+  end
+
+  def min_by(&block)
+    return self.enum_for(:min_by) unless block
+    min = minv = nil
+    self.each_with_index do |e, i|
+      ev = block ? block.call(e) : e
+      min, minv = e, ev if i == 0 || Topaz.compare(minv, ev) == 1
+    end
+    min
+  end
+
+  def minmax(&block)
+    min = max = nil
+    self.each_with_index do |e, i|
+      min = e if i == 0 || Topaz.compare(min, e, &block) == 1
+      max = e if i == 0 || Topaz.compare(max, e, &block) == -1
+    end
+    [min, max]
+  end
+
+  def minmax_by(&block)
+    return self.enum_for(:minmax_by) unless block
+    min = max = minv = maxv = nil
+    self.each_with_index do |e, i|
+      ev = block ? block.call(e) : e
+      max, maxv = e, ev if i == 0 || Topaz.compare(maxv, ev) == -1
+      min, minv = e, ev if i == 0 || Topaz.compare(minv, ev) == 1
+    end
+    [min, max]
+  end
+
 end
