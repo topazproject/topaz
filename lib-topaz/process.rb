@@ -19,16 +19,14 @@ module Process
     end
 
     def stopped?
-      false
-    end
-
-    def exited?
-      true
+      raise NotImplementedError
     end
 
     def success?
       @exitstatus == 0
     end
+
+    alias exited? success?
 
     def pid
       @pid
