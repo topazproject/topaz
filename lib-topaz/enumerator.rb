@@ -2,8 +2,8 @@ class Enumerator
   include Enumerable
 
   def initialize(obj = nil, method = :each, *args, &block)
-    obj = Generator.new(&block) if obj.equal? nil
-    
+    obj = Generator.new(&block) if obj.nil?
+
     @object = obj
     @method = method.to_sym
     @args = args
@@ -21,7 +21,7 @@ class Enumerator
     @object.rewind if @object.respond_to?(:rewind)
     @nextvals = nil
     @fiber = nil
-    @finished = false 
+    @finished = false
     self
   end
 
@@ -38,21 +38,21 @@ class Enumerator
     end
 
     if @nextvals.empty?
-      @nextvals << @fiber.resume 
+      @nextvals << @fiber.resume
       raise StopIteration.new("iteration reached an end") if @finished
-    end 
-    
+    end
+
     return @nextvals.first
   end
 
   def peek_values
     return Array(self.peek)
   end
-  
+
   def next
     raise StopIteration.new("iteration reached an end") if @finished
     self.peek
-    return @nextvals.shift 
+    return @nextvals.shift
   end
 
   def next_values
