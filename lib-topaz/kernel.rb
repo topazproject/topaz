@@ -48,7 +48,7 @@ module Kernel
     res = ''
     IO.popen(cmd) do |r|
       res << r.read
-      Process.waitpid(r.instance_variable_get("@pid"))
+      Process.waitpid(r.pid)
     end
     res
   end
