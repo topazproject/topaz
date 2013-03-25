@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from rpython.rlib.rarithmetic import intmask
 
 from topaz.module import Module, ModuleDef
+from topaz.compare import Compare
 from topaz.objects.classobject import W_ClassObject
 
 
@@ -22,3 +23,8 @@ class Topaz(Module):
         if not isinstance(w_type, W_ClassObject):
             raise space.error(space.w_TypeError, "type argument must be a class")
         return space.convert_type(w_obj, w_type, method)
+
+    @moduledef.function("compare")
+    def method_compare(self, space, w_a, w_b, block=None):
+        return Compare.compare(space, w_a, w_b, block)
+
