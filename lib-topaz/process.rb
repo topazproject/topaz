@@ -18,10 +18,6 @@ module Process
       @exitstatus = exitstatus
     end
 
-    def stopped?
-      raise NotImplementedError
-    end
-
     def success?
       @exitstatus == 0
     end
