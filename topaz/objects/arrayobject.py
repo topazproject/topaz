@@ -17,7 +17,7 @@ class RubySorter(TimSort):
 
     def lt(self, a, b):
         cmp_res = Compare.compare(self.space, a, b, self.sortblock)
-        return self.space.int_w(cmp_res) == -1
+        return self.space.int_w(cmp_res) < 0
 
 class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
