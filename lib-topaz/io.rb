@@ -8,6 +8,20 @@ class IO
     return self
   end
 
+  def puts(*args)
+    if args.empty?
+      write("\n")
+      return nil
+    end
+
+    args.flatten.each do |string|
+      string = string.to_s unless string.is_a?(String)
+      write(string)
+      write("\n") unless string[-1] == "\n"
+    end
+    nil
+  end
+
   def pos=(i)
     seek(i, IO::SEEK_SET)
   end
