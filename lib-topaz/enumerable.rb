@@ -155,7 +155,7 @@ module Enumerable
   def max(&block)
     max = nil
     self.each_with_index do |e, i|
-      max = e if i == 0 || Topaz.compare(max, e, &block) == -1
+      max = e if i == 0 || Topaz.compare(e, max, &block) > 0
     end
     max
   end
@@ -163,7 +163,7 @@ module Enumerable
   def min(&block)
     min = nil
     self.each_with_index do |e, i|
-      min = e if i == 0 || Topaz.compare(min, e, &block) == 1
+      min = e if i == 0 || Topaz.compare(e, min, &block) < 0
     end
     min
   end
@@ -173,7 +173,7 @@ module Enumerable
     max = maxv = nil 
     self.each_with_index do |e, i|
       ev = block ? block.call(e) : e
-      max, maxv = e, ev if i == 0 || Topaz.compare(maxv, ev) == -1
+      max, maxv = e, ev if i == 0 || Topaz.compare(ev, maxv) > 0
     end
     max
   end
@@ -183,7 +183,7 @@ module Enumerable
     min = minv = nil
     self.each_with_index do |e, i|
       ev = block ? block.call(e) : e
-      min, minv = e, ev if i == 0 || Topaz.compare(minv, ev) == 1
+      min, minv = e, ev if i == 0 || Topaz.compare(ev, minv) < 0
     end
     min
   end
@@ -191,8 +191,8 @@ module Enumerable
   def minmax(&block)
     min = max = nil
     self.each_with_index do |e, i|
-      min = e if i == 0 || Topaz.compare(min, e, &block) == 1
-      max = e if i == 0 || Topaz.compare(max, e, &block) == -1
+      min = e if i == 0 || Topaz.compare(e, min, &block) < 0
+      max = e if i == 0 || Topaz.compare(e, max, &block) > 0
     end
     [min, max]
   end
@@ -202,8 +202,8 @@ module Enumerable
     min = max = minv = maxv = nil
     self.each_with_index do |e, i|
       ev = block ? block.call(e) : e
-      max, maxv = e, ev if i == 0 || Topaz.compare(maxv, ev) == -1
-      min, minv = e, ev if i == 0 || Topaz.compare(minv, ev) == 1
+      max, maxv = e, ev if i == 0 || Topaz.compare(ev, maxv) > 0
+      min, minv = e, ev if i == 0 || Topaz.compare(ev, minv) < 0
     end
     [min, max]
   end

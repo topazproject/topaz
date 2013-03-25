@@ -309,7 +309,7 @@ class Array
     max = self[0]
     i = 1
     while i < self.length
-      max = self[i] if Topaz.compare(max, self[i], &block) == -1
+      max = self[i] if Topaz.compare(self[i], max, &block) > 0
       i += 1
     end
     max
@@ -319,7 +319,7 @@ class Array
     min = self[0]
     i = 1
     while i < self.length
-      min = self[i] if Topaz.compare(min, self[i], &block) == 1
+      min = self[i] if Topaz.compare(self[i], min, &block) < 0
       i += 1
     end
     min
@@ -332,7 +332,7 @@ class Array
     i = 1
     while i < self.length
       ev = block.call(self[i])
-      max, maxv = self[i], ev if Topaz.compare(maxv, ev) == -1
+      max, maxv = self[i], ev if Topaz.compare(ev, maxv) > 0
       i += 1
     end   
     max
@@ -345,7 +345,7 @@ class Array
     i = 1
     while i < self.length
       ev = block.call(self[i])
-      min, minv = self[i], ev if Topaz.compare(minv, ev) == 1
+      min, minv = self[i], ev if Topaz.compare(ev, minv) < 0
       i += 1
     end
     min
@@ -355,8 +355,8 @@ class Array
     min = max = self[0]
     i = 1
     while i < self.length
-      min = self[i] if Topaz.compare(min, self[i], &block) == 1
-      max = self[i] if Topaz.compare(max, self[i], &block) == -1
+      min = self[i] if Topaz.compare(self[i], min, &block) < 0
+      max = self[i] if Topaz.compare(self[i], max, &block) > 0
       i += 1
     end
     [min, max]
@@ -369,8 +369,8 @@ class Array
     i = 1
     while i < self.length
       ev = block.call(self[i])
-      max, maxv = self[i], ev if Topaz.compare(maxv, ev) == -1
-      min, minv = self[i], ev if Topaz.compare(minv, ev) == 1
+      max, maxv = self[i], ev if Topaz.compare(ev, maxv) > 0
+      min, minv = self[i], ev if Topaz.compare(ev, minv) < 0
       i += 1
     end
     [min, max]
