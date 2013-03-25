@@ -18,6 +18,18 @@ module Process
       @exitstatus = exitstatus
     end
 
+    def stopped?
+      false
+    end
+
+    def exited?
+      true
+    end
+
+    def success?
+      @exitstatus == 0
+    end
+
     def pid
       @pid
     end
