@@ -14,8 +14,6 @@ class IO
       return nil
     end
 
-    return nil if args.length == 1 && args[0] == []
-
     args.flatten.each do |string|
       string = string.to_s unless string.is_a?(String)
       write(string)
