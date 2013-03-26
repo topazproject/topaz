@@ -32,7 +32,7 @@ class W_RandomObject(W_Object):
         self.random = Random()
 
     @classdef.singleton_method("srand")
-    def method_srand(self, space, args_w):
+    def method_singleton_srand(self, space, args_w):
         default = space.find_const(self, "DEFAULT")
         return space.send(default, space.newsymbol("srand"), args_w)
 
