@@ -76,7 +76,7 @@ class ArrayStrategyMixin(object):
         return self.slice_i(space, w_ary, 0, n)
 
     def clear(self, space, w_ary):
-        del self.unerase(w_ary.array_storage)[:]
+        self.to_empty_strategy(space, w_ary)
 
     def pop_n(self, space, w_ary, num):
         pop_size = max(0, self.length(w_ary) - num)
@@ -116,6 +116,10 @@ class ArrayStrategyMixin(object):
         obj_strategy = space.fromcache(ObjectArrayStrategy)
         w_ary.array_storage = obj_strategy.erase(self.listview(space, w_ary))
         w_ary.strategy = obj_strategy
+
+    def to_empty_strategy(self, space, w_ary):
+        w_ary.strategy = space.fromcache(EmptyArrayStrategy)
+        w_ary.array_storage = w_ary.strategy.erase(None)
 
 
 class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
@@ -200,6 +204,18 @@ class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
 
 
 class EmptyArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
+    _erase, _unerase = new_static_erasing_pair("empty")
+
+    def slice(self, space, w_ary, start, end):
+        return space.newarray([])
+    slice_i = slice
+
+    def listview(self, space, w_ary):
+        return []
+
+    def length(self, w_ary):
+        return 0
+
     def wrap(self, space, i):
         raise RuntimeError("should not be called")
 
@@ -210,22 +226,22 @@ class EmptyArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
         return False
 
     def store(self, space, items_w):
-        if items_w:
-            raise RuntimeError("EmptyArrayStrategy for non-empty list")
-        return None
+        return self.erase(items_w)
 
     def erase(self, items):
-        return []
+        assert not items
+        return self._erase(None)
 
     def unerase(self, items):
-        return []
+        return self._unerase(items)
 
     def adapt(self, space, w_ary, w_obj):
-        self.to_strategy(space, w_ary, W_ArrayObject.strategy_for_list(space, [w_obj]))
-
-    def to_strategy(self, space, w_ary, strategy):
+        strategy = W_ArrayObject.strategy_for_list(space, [w_obj])
         w_ary.array_storage = strategy.erase([])
         w_ary.strategy = strategy
+
+    def to_empty_strategy(self, space, w_ary):
+        pass
 
 
 class W_ArrayObject(W_Object):
