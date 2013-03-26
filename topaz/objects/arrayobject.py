@@ -164,9 +164,14 @@ class ArrayStrategyMixin(object):
         storage = self.unerase(a.array_storage)
         storage.reverse()
 
+    def to_object_strategy(self, space, a):
+        obj_strategy = space.fromcache(ObjectArrayStrategy)
+        a.strategy = obj_strategy
+        a.array_storage = obj_strategy.erase(self.listview(space, a))
+
 
 class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
-    erase, unerase = new_static_erasing_pair("object")
+    _erase, _unerase = new_static_erasing_pair("object")
 
     def wrap(self, space, w_obj):
         return w_obj
@@ -183,16 +188,15 @@ class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     def to_object_strategy(self, space, a):
         pass
 
+    def erase(self, items):
+        return self._erase(items)
 
-class SpecializedStrategy(ArrayStrategyMixin, ArrayStrategy):
-    def to_object_strategy(self, space, a):
-        obj_strategy = space.fromcache(ObjectArrayStrategy)
-        a.strategy = obj_strategy
-        a.array_storage = obj_strategy.erase(self.listview(space, a))
+    def unerase(self, items):
+        return self._unerase(items)
 
 
-class FloatArrayStrategy(SpecializedStrategy):
-    erase, unerase = new_static_erasing_pair("float")
+class FloatArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
+    _erase, _unerase = new_static_erasing_pair("float")
 
     def wrap(self, space, f):
         return space.newfloat(f)
@@ -206,9 +210,15 @@ class FloatArrayStrategy(SpecializedStrategy):
     def sort(self, space, a, block):
         FloatSorter(space, self.unerase(a.array_storage), sortblock=block).sort()
 
+    def erase(self, items):
+        return self._erase(items)
 
-class FixnumArrayStrategy(SpecializedStrategy):
-    erase, unerase = new_static_erasing_pair("fixnum")
+    def unerase(self, items):
+        return self._unerase(items)
+
+
+class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
+    _erase, _unerase = new_static_erasing_pair("fixnum")
 
     def wrap(self, space, i):
         return space.newint(i)
@@ -221,6 +231,12 @@ class FixnumArrayStrategy(SpecializedStrategy):
 
     def sort(self, space, a, block):
         IntSorter(space, self.unerase(a.array_storage), sortblock=block).sort()
+
+    def erase(self, items):
+        return self._erase(items)
+
+    def unerase(self, items):
+        return self._unerase(items)
 
 
 class W_ArrayObject(W_Object):
