@@ -410,8 +410,8 @@ class W_ArrayObject(W_Object):
         if nil:
             return space.w_nil
         elif as_range:
-            start = min(max(start, 0), len(self.items_w))
-            end = min(max(end, 0), len(self.items_w))
+            start = min(max(start, 0), self.length())
+            end = min(max(end, 0), self.length())
             delta = (end - start)
             assert delta >= 0
             return self.strategy.slice_i(space, self, start, start + delta)
