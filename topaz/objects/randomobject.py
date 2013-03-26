@@ -1,3 +1,5 @@
+import os
+
 from rpython.rlib.rrandom import Random
 
 from topaz.module import ClassDef
@@ -25,11 +27,24 @@ class W_RandomObject(W_Object):
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_seed=None):
-        pass
+        self.seed = w_seed
 
     @classdef.method("srand")
-    def method_srand(self, space, args_w):
-        self.random = Random()
+    def method_srand(self, space, w_seed=None):
+        previous_seed = self.seed
+        self.seed = w_seed
+        if w_seed is None:
+            # TODO: /dev/urandom is not available everywhere.
+            file = os.open('/dev/urandom', os.R_OK, 0644)
+            seed = ord(os.read(file, 1)[0])
+            os.close(file)
+        else:
+            seed = Coerce.int(space, w_seed)
+        self.random = Random(abs(seed))
+        if previous_seed is None:
+            return space.send(self, space.newsymbol("rand"))
+        else:
+            return previous_seed
 
     @classdef.singleton_method("srand")
     def method_singleton_srand(self, space, args_w):
