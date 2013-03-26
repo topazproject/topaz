@@ -104,6 +104,12 @@ class W_FileObject(W_IOObject):
     def method_dirname(self, space, path):
         if "/" not in path:
             return space.newstr_fromstr(".")
+        if path == "/":
+            return space.newstr_fromstr("/")
+        if path.endswith("/"):
+            newlen = len(path) - 1
+            assert newlen >= 0
+            path = path[:newlen]
         idx = path.rfind("/")
         while idx > 0 and path[idx - 1] == "/":
             idx -= 1
