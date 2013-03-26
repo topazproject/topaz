@@ -1,1 +1,0 @@
-fails:File::NULL returns /dev/null as a string
