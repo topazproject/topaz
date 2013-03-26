@@ -82,7 +82,6 @@ class ArrayStrategyMixin(object):
         
     def range_assign(self, space, a, start, end, w_obj):
         assert end >= 0
-        strategy = self
         w_converted = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
         if w_converted is space.w_nil:
             rep_w = [w_obj]
@@ -93,7 +92,10 @@ class ArrayStrategyMixin(object):
                 self.verify_strategy(space, a, each)
         delta = (end - start) - len(rep_w)
 	# storage can be of different array type after strategy is verified -> decorator ? ifs?
-        storage = a.strategy.unerase(a.array_storage)
+	a.strategy.padd_assign(space, a, delta, start, end, rep_w)
+
+    def padd_assign(self, space, a, delta, start, end, rep_w):
+	storage = self.unerase(a.array_storage)
         if delta < 0:
             storage += [None] * -delta
             lim = start + len(rep_w)
@@ -103,8 +105,7 @@ class ArrayStrategyMixin(object):
                 i -= 1
         elif delta > 0:
             del storage[start:start + delta]
-        storage[start:start + len(rep_w)] = [a.strategy.unwrap(space, r) for r in rep_w]
-        return strategy
+        storage[start:start + len(rep_w)] = [self.unwrap(space, r) for r in rep_w]
         
     def slice(self, space, a, start, end):
         return space.newarray(self.listview(space, a)[start:end])
