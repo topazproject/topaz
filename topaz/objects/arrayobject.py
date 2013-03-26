@@ -45,7 +45,7 @@ class ArrayStrategy(object):
     def append(self, space, w_ary, w_obj):
         raise NotImplementedError
 
-    def checktype(self, space, w_obj):
+    def checktype(self, w_obj):
         raise NotImplementedError
 
     def clear(self, space, w_ary):
@@ -269,7 +269,7 @@ class EmptyArrayStrategy(ArrayStrategy):
     def listview(self, space, w_ary):
         return []
 
-    def checktype(self, space, w_obj):
+    def checktype(self, w_obj):
         return False
 
     def store(self, space, items_w):
