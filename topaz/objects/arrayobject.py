@@ -63,12 +63,13 @@ class ArrayStrategyMixin(object):
         storage[start:start + len(rep_w)] = [self.unwrap(space, w_obj) for w_obj in rep_w]
 
     def slice(self, space, w_ary, start, end):
-        items_w = self.listview(space, w_ary, start, end)
+        items = self.unerase(w_ary.array_storage)[start:end]
+        items_w = [self.wrap(space, item) for item in items]
         return space.newarray(items_w)
 
     def slice_i(self, space, w_ary, start, end):
         w_items = self.slice(space, w_ary, start, end)
-        del self.unerase(a.array_storage)[start:end]
+        del self.unerase(w_ary.array_storage)[start:end]
         return w_items
 
     def shift(self, space, w_ary, n):
@@ -79,20 +80,20 @@ class ArrayStrategyMixin(object):
 
     def pop_n(self, space, w_ary, num):
         pop_size = max(0, self.length(w_ary) - num)
-        return self.slice_i(space, w_ary, pop_size, -1)
+        return self.slice_i(space, w_ary, pop_size, self.length(w_ary))
 
-    def adapt(self, space, a, w_obj):
+    def adapt(self, space, w_ary, w_obj):
         if not self.checktype(w_obj):
-            self.to_object_strategy(space, a)
+            self.to_object_strategy(space, w_ary)
 
     def get_item(self, space, w_ary, idx):
-        return self.wrap(space, self.unerase(a.array_storage)[idx])
+        return self.wrap(space, self.unerase(w_ary.array_storage)[idx])
 
     def set_item(self, space, w_ary, idx, w_obj):
-        self.unerase(a.array_storage)[idx] = self.unwrap(space, w_obj)
+        self.unerase(w_ary.array_storage)[idx] = self.unwrap(space, w_obj)
 
-    def listview(self, space, w_ary, start=0, stop=-1):
-        return [self.wrap(space, o) for o in self.unerase(a.array_storage)[start:stop]]
+    def listview(self, space, w_ary):
+        return [self.wrap(space, item) for item in self.unerase(w_ary.array_storage)]
 
     def extend(self, space, w_ary, other_w):
         self.unerase(w_ary.array_storage).extend([self.unwrap(space, w_o) for w_o in other_w])
@@ -107,8 +108,8 @@ class ArrayStrategyMixin(object):
     def insert(self, space, w_ary, idx, w_obj):
         self.unerase(w_ary.array_storage).insert(idx, self.unwrap(space, w_obj))
 
-    def reverse_i(self, space, a):
-        storage = self.unerase(a.array_storage)
+    def reverse_i(self, space, w_ary):
+        storage = self.unerase(w_ary.array_storage)
         storage.reverse()
 
     def to_object_strategy(self, space, w_ary):
@@ -130,18 +131,18 @@ class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     def checktype(self, w_obj):
         return True
 
-    def to_object_strategy(self, space, a):
+    def to_object_strategy(self, space, w_ary):
         pass
 
     def store(self, space, items_w):
         l = [self.unwrap(space, w_o) for w_o in items_w]
         return self.erase(l)
 
-    def listview(self, space, w_ary, start=0, end=-1):
-        return self.unerase(w_ary.array_storage)[start:end]
+    def listview(self, space, w_ary):
+        return self.unerase(w_ary.array_storage)
 
     def extend(self, space, w_ary, other_w):
-        self.unerase(a.array_storage).extend(other_w)
+        self.unerase(w_ary.array_storage).extend(other_w)
 
     def erase(self, items):
         return self._erase(items)
@@ -198,6 +199,35 @@ class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
         return self._unerase(items)
 
 
+class EmptyArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
+    def wrap(self, space, i):
+        raise RuntimeError("should not be called")
+
+    def unwrap(self, space, w_i):
+        raise RuntimeError("should not be called")
+
+    def checktype(self, space, w_obj):
+        return False
+
+    def store(self, space, items_w):
+        if items_w:
+            raise RuntimeError("EmptyArrayStrategy for non-empty list")
+        return None
+
+    def erase(self, items):
+        return []
+
+    def unerase(self, items):
+        return []
+
+    def adapt(self, space, w_ary, w_obj):
+        self.to_strategy(space, w_ary, W_ArrayObject.strategy_for_list(space, [w_obj]))
+
+    def to_strategy(self, space, w_ary, strategy):
+        w_ary.array_storage = strategy.erase([])
+        w_ary.strategy = strategy
+
+
 class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
@@ -236,6 +266,8 @@ class W_ArrayObject(W_Object):
                 return space.fromcache(FixnumArrayStrategy)
             elif array_type is W_FloatObject:
                 return space.fromcache(FloatArrayStrategy)
+        else:
+            return space.fromcache(EmptyArrayStrategy)
         return space.fromcache(ObjectArrayStrategy)
 
     @classdef.singleton_method("allocate")
