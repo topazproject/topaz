@@ -1,3 +1,4 @@
+import math
 import sys
 
 from rpython.rlib.rarithmetic import LONG_BIT
@@ -52,6 +53,24 @@ class TestFixnumObject(BaseTopazTest):
     def test_division(self, space):
         w_res = space.execute("return 3 / 5")
         assert space.int_w(w_res) == 0
+        w_res = space.execute("return 3 / 5.0")
+        assert space.float_w(w_res) == 0.6
+        w_res = space.execute("return 3 / (0.0 / 0.0)")
+        assert math.isnan(space.float_w(w_res))
+        w_res = space.execute("return 3 / (1.0 / 0.0)")
+        assert space.float_w(w_res) == 0.0
+        w_res = space.execute("return 3 / (1.0 / -0.0)")
+        assert space.float_w(w_res) == -0.0
+
+    def test_div(self, space):
+        w_res = space.execute("return 3.div(5)")
+        assert space.int_w(w_res) == 0
+        w_res = space.execute("return 3.div(5.0)")
+        assert space.int_w(w_res) == 0
+        with self.raises(space, "ZeroDivisionError", "divided by 0"):
+            space.execute("return 3.div(0)")
+        with self.raises(space, "FloatDomainError", "NaN"):
+            space.execute("return 3.div(0.0 / 0.0)")
 
     def test_modulo(self, space):
         w_res = space.execute("return 5 % 2")
@@ -186,7 +205,7 @@ class TestFixnumObject(BaseTopazTest):
 
     def test_nonzero(self, space):
         w_res = space.execute("return [2.nonzero?, 0.nonzero?]")
-        assert self.unwrap(space, w_res) == [True, False]
+        assert self.unwrap(space, w_res) == [2, None]
 
     def test_object_id(self, space):
         w_res = space.execute("return 2.object_id, 2.object_id")

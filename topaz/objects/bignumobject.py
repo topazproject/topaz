@@ -3,6 +3,7 @@ from rpython.rlib.rfloat import INFINITY
 
 from topaz.module import ClassDef
 from topaz.objects.integerobject import W_IntegerObject
+from topaz.objects.numericobject import W_NumericObject
 
 
 class W_BignumObject(W_IntegerObject):
@@ -53,6 +54,27 @@ class W_BignumObject(W_IntegerObject):
     def method_times(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.mul(other))
 
+    def floordiv(self, space, other):
+        try:
+            result = self.bigint.div(other)
+        except ZeroDivisionError:
+            raise space.error(space.w_ZeroDivisionError, "divided by 0")
+        try:
+            return space.newint(result.toint())
+        except OverflowError:
+            return space.newbigint_fromrbigint(result)
+
+    @classdef.method("/")
+    def method_divide(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            return self.floordiv(space, rbigint.fromint(space.int_w(w_other)))
+        elif space.is_kind_of(w_other, space.w_bignum):
+            return self.floordiv(space, space.bigint_w(w_other))
+        elif space.is_kind_of(w_other, space.w_float):
+            return space.send(space.newfloat(space.float_w(self)), space.newsymbol("/"), [w_other])
+        else:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
+
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.lshift(other))
@@ -64,10 +86,6 @@ class W_BignumObject(W_IntegerObject):
     @classdef.method("^", other="bigint")
     def method_xor(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.xor(other))
-
-    @classdef.method("-@")
-    def method_uminus(self, space):
-        return space.newbigint_fromrbigint(self.bigint.neg())
 
     @classdef.method("==", other="bigint")
     def method_eq(self, space, other):
@@ -97,7 +115,8 @@ class W_BignumObject(W_IntegerObject):
             ])
         else:
             raise space.error(space.w_TypeError,
-                "can't coerce %s to Bignum" % space.getclass(w_other).name
+                "can't coerce %s to Bignum" %
+                    space.obj_to_s(space.getclass(w_other))
             )
 
     @classdef.method("**")
@@ -126,5 +145,6 @@ class W_BignumObject(W_IntegerObject):
         else:
             raise space.error(
                 space.w_TypeError,
-                "%s can't be coerced into Bignum" % space.getclass(w_other).name
+                "%s can't be coerced into Bignum" %
+                    space.obj_to_s(space.getclass(w_other))
             )

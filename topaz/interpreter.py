@@ -1,4 +1,4 @@
-from rpython.rlib import jit
+from rpython.rlib import jit, rstackovf
 from rpython.rlib.debug import check_nonneg
 from rpython.rlib.objectmodel import we_are_translated, specialize
 
@@ -71,6 +71,11 @@ class Interpreter(object):
             pc = self.handle_raise_return(space, pc, frame, bytecode, e)
         except RaiseBreak as e:
             pc = self.handle_raise_break(space, pc, frame, bytecode, e)
+        except Throw as e:
+            pc = self.handle_throw(space, pc, frame, bytecode, e)
+        except rstackovf.StackOverflow:
+            rstackovf.check_stack_overflow()
+            pc = self.handle_ruby_error(space, pc, frame, bytecode, space.error(space.w_SystemStackError, "stack level too deep"))
         return pc
 
     def handle_bytecode(self, space, pc, frame, bytecode):
@@ -136,6 +141,13 @@ class Interpreter(object):
         if block is None:
             raise e
         unroller = RaiseBreakValue(e.parent_interp, e.w_value)
+        return block.handle(space, frame, unroller)
+
+    def handle_throw(self, space, pc, frame, bytecode, e):
+        block = frame.unrollstack(ThrowValue.kind)
+        if block is None:
+            raise e
+        unroller = ThrowValue(e.name, e.w_value)
         return block.handle(space, frame, unroller)
 
     def jump(self, space, bytecode, frame, cur_pc, target_pc):
@@ -255,8 +267,9 @@ class Interpreter(object):
         assert isinstance(w_module, W_ModuleObject)
         w_value = space.find_class_var(w_module, name)
         if w_value is None:
+            module_name = space.obj_to_s(w_module)
             raise space.error(space.w_NameError,
-                "uninitialized class variable %s in %s" % (name, w_module.name)
+                "uninitialized class variable %s in %s" % (name, module_name)
             )
         frame.push(w_value)
 
@@ -361,11 +374,12 @@ class Interpreter(object):
             if superclass is space.w_nil:
                 superclass = space.w_object
             if not space.is_kind_of(superclass, space.w_class):
+                cls_name = space.obj_to_s(space.getclass(superclass))
                 raise space.error(space.w_TypeError,
-                    "wrong argument type %s (expected Class)" % space.getclass(superclass).name
+                    "wrong argument type %s (expected Class)" % cls_name
                 )
             assert isinstance(superclass, W_ClassObject)
-            w_cls = space.newclass(name, superclass)
+            w_cls = space.newclass(name, superclass, w_scope=w_scope)
             space.set_const(w_scope, name, w_cls)
         elif not space.is_kind_of(w_cls, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a class" % name)
@@ -379,8 +393,9 @@ class Interpreter(object):
 
         name = space.symbol_w(w_name)
         w_mod = w_scope.find_const(space, name)
+
         if w_mod is None:
-            w_mod = space.newmodule(name)
+            w_mod = space.newmodule(name, w_scope=w_scope)
             space.set_const(w_scope, name, w_mod)
         elif not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a module" % name)
@@ -743,6 +758,12 @@ class RaiseBreak(RaiseFlow):
     pass
 
 
+class Throw(RaiseFlow):
+    def __init__(self, name, w_value):
+        self.name = name
+        self.w_value = w_value
+
+
 class SuspendedUnroller(W_Root):
     pass
 
@@ -801,6 +822,17 @@ class RaiseBreakValue(SuspendedUnroller):
 
     def nomoreblocks(self):
         raise RaiseBreak(self.parent_interp, self.w_value)
+
+
+class ThrowValue(SuspendedUnroller):
+    kind = 1 << 6
+
+    def __init__(self, name, w_value):
+        self.name = name
+        self.w_value = w_value
+
+    def nomoreblocks(self):
+        raise Throw(self.name, self.w_value)
 
 
 class FrameBlock(object):

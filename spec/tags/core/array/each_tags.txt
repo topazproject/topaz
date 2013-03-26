@@ -1,3 +1,0 @@
-fails:Array#each yields each element to the block
-fails:Array#each returns an Enumerator if no block given
-fails:Array#each 

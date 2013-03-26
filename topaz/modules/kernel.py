@@ -4,15 +4,18 @@ import os
 import time
 
 from rpython.rlib.rfloat import round_double
-from rpython.rlib.rstring import assert_str0
 from rpython.rlib.streamio import open_file_as_stream
 
-from topaz.error import RubyError
+from topaz.coerce import Coerce
+from topaz.error import RubyError, error_for_oserror
 from topaz.module import Module, ModuleDef
 from topaz.modules.process import Process
+from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.stringobject import W_StringObject
+from topaz.objects.classobject import W_ClassObject
+from topaz.objects.moduleobject import W_ModuleObject
 
 
 class Kernel(Module):
@@ -54,23 +57,26 @@ class Kernel(Module):
         if not (path.startswith("/") or path.startswith("./") or path.startswith("../")):
             w_load_path = space.globals.get(space, "$LOAD_PATH")
             for w_base in space.listview(w_load_path):
-                base = space.str_w(w_base)
+                base = Coerce.path(space, w_base)
                 full = os.path.join(base, path)
-                if os.path.exists(assert_str0(full)):
+                if os.path.exists(full):
                     path = os.path.join(base, path)
                     break
         return path
 
     @staticmethod
     def load_feature(space, path, orig_path):
-        if not os.path.exists(assert_str0(path)):
+        if not os.path.exists(path):
             raise space.error(space.w_LoadError, orig_path)
 
-        f = open_file_as_stream(path)
         try:
-            contents = f.readall()
-        finally:
-            f.close()
+            f = open_file_as_stream(path, buffering=0)
+            try:
+                contents = f.readall()
+            finally:
+                f.close()
+        except OSError as e:
+            raise error_for_oserror(space, e)
 
         space.execute(contents, filepath=path)
 
@@ -99,6 +105,7 @@ class Kernel(Module):
         Kernel.load_feature(space, path, orig_path)
         return space.w_true
 
+    @moduledef.method("fail")
     @moduledef.method("raise")
     def method_raise(self, space, w_str_or_exception=None, w_string=None, w_array=None):
         w_exception = None
@@ -162,13 +169,13 @@ class Kernel(Module):
         if space.respond_to(args_w[0], space.newsymbol("to_ary")):
             w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
             cmd, argv0 = [
-                space.str_w(space.convert_type(
+                space.str0_w(space.convert_type(
                     w_e, space.w_string, "to_str"
                 )) for w_e in space.listview(w_cmd)
             ]
         else:
             w_cmd = space.convert_type(args_w[0], space.w_string, "to_str")
-            cmd = space.str_w(w_cmd)
+            cmd = space.str0_w(w_cmd)
             argv0 = None
 
         if len(args_w) > 1 or argv0 is not None:
@@ -180,7 +187,7 @@ class Kernel(Module):
                     argv0 = cmd
             args = [argv0]
             args += [
-                space.str_w(space.convert_type(
+                space.str0_w(space.convert_type(
                     w_arg, space.w_string, "to_str"
                 )) for w_arg in args_w[1:]
             ]
@@ -226,7 +233,19 @@ class Kernel(Module):
 
     @moduledef.method("respond_to?", include_private="bool")
     def method_respond_top(self, space, w_name, include_private=False):
-        return space.newbool(space.respond_to(self, w_name))
+        if space.respond_to(self, w_name):
+            return space.newbool(True)
+
+        w_found = space.send(
+            self,
+            space.newsymbol("respond_to_missing?"),
+            [w_name, space.newbool(include_private)]
+        )
+        return space.newbool(space.is_true(w_found))
+
+    @moduledef.method("respond_to_missing?")
+    def method_respond_to_missingp(self, space, w_name, w_include_private):
+        return space.newbool(False)
 
     @moduledef.method("dup")
     def method_dup(self, space):
@@ -294,12 +313,19 @@ class Kernel(Module):
 
     @moduledef.method("instance_of?")
     def method_instance_of(self, space, w_mod):
+        if not isinstance(w_mod, W_ModuleObject):
+            raise space.error(space.w_TypeError, "class or module required")
         return space.newbool(space.getnonsingletonclass(self) is w_mod)
 
     @moduledef.method("eval")
-    def method_eval(self, space, w_source):
-        frame = space.getexecutioncontext().gettoprubyframe()
-        w_binding = space.newbinding_fromframe(frame)
+    def method_eval(self, space, w_source, w_binding=None):
+        if w_binding is None:
+            frame = space.getexecutioncontext().gettoprubyframe()
+            w_binding = space.newbinding_fromframe(frame)
+        elif not isinstance(w_binding, W_BindingObject):
+            raise space.error(space.w_TypeError,
+                "wrong argument type %s (expected Binding)" % space.getclass(w_binding).name
+            )
         return space.send(w_binding, space.newsymbol("eval"), [w_source])
 
     @moduledef.method("set_trace_func")
@@ -331,3 +357,23 @@ class Kernel(Module):
     method_untrust, method_untrusted, method_trust = new_flag(moduledef, "untrust", "untrusted?", "trust")
     method_taint, method_tainted, method_untaint = new_flag(moduledef, "taint", "tainted?", "untaint")
     method_freeze, method_frozen = new_flag(moduledef, "freeze", "frozen?", None)
+
+    @moduledef.method("throw", name="symbol")
+    def method_throw(self, space, name, w_value=None):
+        from topaz.interpreter import Throw
+        if not space.getexecutioncontext().is_in_catch_block_for_name(name):
+            raise space.error(space.w_ArgumentError, "uncaught throw :%s" % name)
+        if w_value is None:
+            w_value = space.w_nil
+        raise Throw(name, w_value)
+
+    @moduledef.method("catch", name="symbol")
+    def method_catch(self, space, name, block):
+        from topaz.interpreter import Throw
+        with space.getexecutioncontext().catch_block(name):
+            try:
+                return space.invoke_block(block, [])
+            except Throw as e:
+                if e.name == name:
+                    return e.w_value
+                raise

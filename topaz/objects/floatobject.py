@@ -5,9 +5,12 @@ import sys
 from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
-from rpython.rlib.rfloat import NAN, INFINITY
+from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
+    NAN, INFINITY)
 
+from topaz.error import RubyError
 from topaz.module import ClassDef
+from topaz.objects.exceptionobject import W_ArgumentError
 from topaz.objects.numericobject import W_NumericObject
 
 
@@ -31,11 +34,27 @@ class W_FloatObject(W_NumericObject):
     def bigint_w(self, space):
         return rbigint.fromfloat(self.floatvalue)
 
+    @staticmethod
+    def float_to_w_int(space, floatvalue):
+        try:
+            # the extra case makes sure that this method returns
+            # bignums for the same numbers as the parser does.
+            # this is checked in rubyspecs
+            if floatvalue < 0:
+                return space.newint(-ovfcheck_float_to_int(-floatvalue))
+            else:
+                return space.newint(ovfcheck_float_to_int(floatvalue))
+        except OverflowError:
+            return space.newbigint_fromfloat(floatvalue)
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.set_const(w_cls, "MAX", space.newfloat(sys.float_info.max))
         space.set_const(w_cls, "MIN", space.newfloat(sys.float_info.min))
+        space.set_const(w_cls, "INFINITY", space.newfloat(INFINITY))
+        space.set_const(w_cls, "NAN", space.newfloat(NAN))
 
+    @classdef.method("inspect")
     @classdef.method("to_s")
     def method_to_s(self, space):
         if math.isinf(self.floatvalue):
@@ -46,7 +65,7 @@ class W_FloatObject(W_NumericObject):
         elif math.isnan(self.floatvalue):
             return space.newstr_fromstr("NaN")
         else:
-            return space.newstr_fromstr(str(self.floatvalue))
+            return space.newstr_fromstr(formatd(self.floatvalue, "g", DTSF_STR_PRECISION, DTSF_ADD_DOT_0))
 
     @classdef.method("to_f")
     def method_to_f(self, space):
@@ -59,14 +78,7 @@ class W_FloatObject(W_NumericObject):
                 space.w_FloatDomainError,
                 space.str_w(space.send(self, space.newsymbol("to_s")))
             )
-        try:
-            return space.newint(ovfcheck_float_to_int(self.floatvalue))
-        except OverflowError:
-            return space.newbigint_fromfloat(self.floatvalue)
-
-    @classdef.method("-@")
-    def method_neg(self, space):
-        return space.newfloat(-self.floatvalue)
+        return self.float_to_w_int(space, self.floatvalue)
 
     @classdef.method("+", other="float")
     def method_add(self, space, other):
@@ -85,10 +97,12 @@ class W_FloatObject(W_NumericObject):
         if other == 0.0:
             if self.floatvalue == 0.0:
                 return space.newfloat(NAN)
-            elif self.floatvalue < 0.0:
-                return space.newfloat(-INFINITY)
             else:
-                return space.newfloat(INFINITY)
+                inf = math.copysign(INFINITY, other)
+                if self.floatvalue < 0.0:
+                    return space.newfloat(-inf)
+                else:
+                    return space.newfloat(inf)
         else:
             return space.newfloat(self.floatvalue / other)
 
@@ -103,9 +117,21 @@ class W_FloatObject(W_NumericObject):
         return method
     method_lt = new_bool_op(classdef, "<", operator.lt)
     method_lte = new_bool_op(classdef, "<=", operator.le)
-    method_eq = new_bool_op(classdef, "==", operator.eq)
     method_gt = new_bool_op(classdef, ">", operator.gt)
     method_gte = new_bool_op(classdef, ">=", operator.ge)
+
+    @classdef.method("==")
+    def method_eq(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_float):
+            return space.newbool(self.floatvalue == space.float_w(w_other))
+
+        try:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "==")
+        except RubyError as e:
+            if isinstance(e.w_value, W_ArgumentError):
+                return space.send(w_other, space.newsymbol("=="), [self])
+            else:
+                raise
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
@@ -184,3 +210,21 @@ class W_FloatObject(W_NumericObject):
                 space.w_TypeError,
                 "%s can't be coerced into Float" % space.getclass(w_other).name
             )
+
+    @classdef.method("floor")
+    def method_floor(self, space):
+        return self.float_to_w_int(space, math.floor(self.floatvalue))
+
+    @classdef.method("ceil")
+    def method_ceil(self, space):
+        return self.float_to_w_int(space, math.ceil(self.floatvalue))
+
+    @classdef.method("infinite?")
+    def method_infinity(self, space):
+        if math.isinf(self.floatvalue):
+            return space.newint(int(math.copysign(1, self.floatvalue)))
+        return space.w_nil
+
+    @classdef.method("nan?")
+    def method_nan(self, space):
+        return space.newbool(math.isnan(self.floatvalue))

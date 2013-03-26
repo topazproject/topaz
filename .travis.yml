@@ -9,14 +9,10 @@ env:
         - TEST_TYPE=own
         - TEST_TYPE=translate
 #         - TEST_TYPE=rubyspec_untranslated
-# matrix:
-#     allow_failures:
-#         - env: TEST_TYPE=rubyspec_untranslated
 install:
-    - pip install --use-mirrors fabric requests
-    - fab travis.install_requirements
-script: fab travis.run_tests
-after_success: fab travis.upload_build
+    - pip install --use-mirrors requests invoke
+    - invoke travis.install_requirements
+script: invoke travis.run_tests
+after_success: invoke travis.upload_build
 notifications:
-    email: false
     irc: "irc.freenode.org#topaz"

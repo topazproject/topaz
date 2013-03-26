@@ -2,8 +2,6 @@ fails:Enumerator#with_index passes each element and its index to block
 fails:Enumerator#with_index returns the object being enumerated when given a block
 fails:Enumerator#with_index binds splat arguments properly
 fails:Enumerator#with_index returns an enumerator if no block is supplied
-fails:Enumerator#with_index accepts an optional argument when given a block
-fails:Enumerator#with_index accepts an optional argument when not given a block
 fails:Enumerator#with_index numbers indices from the given index when given an offset but no block
 fails:Enumerator#with_index numbers indices from the given index when given an offset and block
 fails:Enumerator#with_index raises a TypeError when the argument cannot be converted to numeric

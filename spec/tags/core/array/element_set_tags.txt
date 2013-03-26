@@ -5,6 +5,4 @@ fails:Array#[]= does not call to_ary on rhs array subclasses for multi-element s
 fails:Array#[]= raises a RuntimeError on a frozen array
 fails:Array#[]= with [index, count] pads the Array with nils if the span is past the end
 fails:Array#[]= with [index, count] inserts other section in place defined by idx
-fails:Array#[]= with [m..n] accepts Range subclasses
 fails:Array#[] after a shift works for insertion
-fails:Array#[]= 

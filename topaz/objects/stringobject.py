@@ -1,5 +1,6 @@
 import copy
 import string
+import math
 
 from rpython.rlib import jit
 from rpython.rlib.objectmodel import newlist_hint, compute_hash
@@ -260,6 +261,7 @@ class MutableStringStrategy(StringStrategy):
                     storage[start] = "A"
                 else:
                     storage[start] = chr(ord(ch) + 1)
+                    carry = "\0"
 
                 if carry == "\0":
                     break
@@ -279,7 +281,7 @@ class MutableStringStrategy(StringStrategy):
                     break
                 start -= 1
 
-        if start < 0:
+        if start < 0 and carry != "\0":
             last_alnum_ch = storage[last_alnum]
             storage[last_alnum] = carry
             storage.insert(last_alnum + 1, last_alnum_ch)
@@ -295,8 +297,8 @@ class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
     classdef.include_module(Comparable)
 
-    def __init__(self, space, storage, strategy):
-        W_Object.__init__(self, space)
+    def __init__(self, space, storage, strategy, klass=None):
+        W_Object.__init__(self, space, klass)
         self.str_storage = storage
         self.strategy = strategy
 
@@ -392,7 +394,9 @@ class W_StringObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_s=None):
-        return space.newstr_fromstr("")
+        strategy = space.fromcache(ConstantStringStrategy)
+        storage = strategy.erase("")
+        return W_StringObject(space, storage, strategy, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_s=None):
@@ -413,6 +417,12 @@ class W_StringObject(W_Object):
     @classdef.method("to_s")
     def method_to_s(self, space):
         return self
+
+    @classdef.method("ord")
+    def method_ord(self, space):
+        if self.length() == 0:
+            raise space.error(space.w_ArgumentError, "empty string")
+        return space.newint(ord(self.strategy.getitem(self.str_storage, 0)))
 
     @classdef.method("inspect")
     def method_inspect(self, space):
@@ -527,7 +537,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" % space.getclass(w_sub).name
+                "type mismatch: %s given" %
+                    space.obj_to_s(space.getclass(w_sub))
             )
 
     @classdef.method("rindex", end="int")
@@ -554,7 +565,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" % space.getclass(w_sub).name
+                "type mismatch: %s given" %
+                    space.obj_to_s(space.getclass(w_sub))
             )
         if idx < 0:
             return space.w_nil
@@ -628,7 +640,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" % space.getclass(w_sep).name
+                "wrong argument type %s (expected Regexp)" %
+                    space.obj_to_s(space.getclass(w_sep))
             )
 
     @classdef.method("swapcase!")
@@ -714,6 +727,55 @@ class W_StringObject(W_Object):
         else:
             return space.newint(value)
 
+    @classdef.method("to_f")
+    def method_to_f(self, space):
+        value = 0.0
+        precision = False
+        pointer = 0.1
+        negative = False
+        exponent = False
+        multi = 0
+        number = False
+
+        for char in space.str_w(self):
+            c = ord(char)
+            if ord("0") <= c <= ord("9"):
+                if exponent:
+                    multi = multi * 10 + c - ord("0")
+                elif precision:
+                    value = value + pointer * (c - ord("0"))
+                    pointer /= 10
+                else:
+                    value = value * 10 + c - ord("0")
+
+                number = True
+            elif c == ord("-"):
+                if value != 0.0:
+                    break
+                negative = not negative
+            elif c == ord("+"):
+                if value != 0.0:
+                    break
+                pass
+            elif c == ord("."):
+                if precision or exponent:
+                    break
+                precision = True
+            elif c == ord("e"):
+                if exponent:
+                    break
+                exponent = True
+            elif char.isspace():
+                if number:
+                    break
+            else:
+                break
+
+        if exponent:
+            value = value * math.pow(10, multi)
+
+        return space.newfloat(value)
+
     @classdef.method("tr", source="str", replacement="str")
     def method_tr(self, space, source, replacement):
         string = self.copy(space)
@@ -796,7 +858,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" % space.getclass(w_replacement).name
+                "wrong argument type %s (expected Regexp)" %
+                    space.obj_to_s(space.getclass(w_replacement))
             )
 
     def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, first_only):

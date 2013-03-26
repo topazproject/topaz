@@ -81,6 +81,11 @@ class W_StandardError(W_ExceptionObject):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_SystemStackError(W_ExceptionObject):
+    classdef = ClassDef("SystemStackError", W_ExceptionObject.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_SystemExit(W_ExceptionObject):
     classdef = ClassDef("SystemExit", W_ExceptionObject.classdef, filepath=__file__)
 
@@ -198,6 +203,11 @@ class W_IOError(W_StandardError):
     method_allocate = new_exception_allocate(classdef)
 
 
+class W_EOFError(W_IOError):
+    classdef = ClassDef("EOFError", W_IOError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
 class W_RegexpError(W_StandardError):
     classdef = ClassDef("RegexpError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)
@@ -205,4 +215,9 @@ class W_RegexpError(W_StandardError):
 
 class W_ThreadError(W_StandardError):
     classdef = ClassDef("ThreadError", W_StandardError.classdef, filepath=__file__)
+    method_allocate = new_exception_allocate(classdef)
+
+
+class W_FiberError(W_StandardError):
+    classdef = ClassDef("FiberError", W_StandardError.classdef, filepath=__file__)
     method_allocate = new_exception_allocate(classdef)

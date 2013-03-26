@@ -1,5 +1,6 @@
 import os
 import platform
+import subprocess
 
 import pytest
 
@@ -64,6 +65,7 @@ class TestMain(object):
         assert "1.9.3" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
+        assert subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip() in version
         assert out == "5"
 
         self.run(space, tmpdir, ruby_args=["-v"])
@@ -71,10 +73,47 @@ class TestMain(object):
         [version] = out.splitlines()
         assert version.startswith("topaz")
 
+    def test_debug_defaults_to_false(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $DEBUG")
+        out, _ = capfd.readouterr()
+        assert out.strip() == "false"
+
+    def test_debug_sets_verbose(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $VERBOSE", ruby_args=["-d"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
+    def test_debug_sets_dash_d(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $-d", ruby_args=["-d"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
+    def test_dash_w_defaults_to_false(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $-w")
+        out, _ = capfd.readouterr()
+        assert out.strip() == "false"
+
+    def test_warnings_sets_dash_w(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $-w", ruby_args=["-w"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
+    def test_warning_level_defaults_to_verbose_true(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, "puts $VERBOSE", ruby_args=["-W"])
+        out, _ = capfd.readouterr()
+        assert out.strip() == "true"
+
     def test_help(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-h"])
         out, _ = capfd.readouterr()
         assert out.splitlines()[0] == "Usage: topaz [switches] [--] [programfile] [arguments]"
+
+    def test_copyright(self, space, tmpdir, capfd):
+        self.run(space, tmpdir, ruby_args=["--copyright"])
+        out, _ = capfd.readouterr()
+        [copyright] = out.splitlines()
+        assert copyright.startswith("topaz")
+        assert "Alex Gaynor" in copyright
 
     def test_version(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["--version"])
@@ -84,6 +123,7 @@ class TestMain(object):
         assert "1.9.3" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
+        assert subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip() in version
 
     def test_stop_consuming_args(self, space, tmpdir, capfd):
         self.run(space, tmpdir, ruby_args=["-e", "puts ARGV.join(' ')", "--", "--help", "-e"])
@@ -238,7 +278,7 @@ class TestMain(object):
         self.run(space, tmpdir, "puts RUBY_DESCRIPTION")
         out1, err1 = capfd.readouterr()
         self.run(space, tmpdir, """
-        puts "#{RUBY_ENGINE} (ruby-#{RUBY_VERSION}p#{RUBY_PATCHLEVEL}) [#{RUBY_PLATFORM}]"
+        puts "#{RUBY_ENGINE} (ruby-#{RUBY_VERSION}p#{RUBY_PATCHLEVEL}) (git rev #{RUBY_REVISION}) [#{RUBY_PLATFORM}]"
         """)
         out2, err2 = capfd.readouterr()
         assert out1 == out2
@@ -273,6 +313,9 @@ class TestMain(object):
         f = self.run(space, tmpdir, "puts $0")
         out2, err2 = capfd.readouterr()
         assert out2 == "{}\n".format(f)
+        f = self.run(space, tmpdir, "puts $PROGRAM_NAME")
+        out3, _ = capfd.readouterr()
+        assert out3 == "{}\n".format(f)
 
     def test_non_existent_file(self, space, tmpdir, capfd):
         self.run(space, tmpdir, None, ruby_args=[str(tmpdir.join("t.rb"))], status=1)

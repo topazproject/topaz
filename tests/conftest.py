@@ -1,10 +1,13 @@
 import copy
 
+from rpython.config.translationoption import get_combined_translation_config
+
 
 def pytest_funcarg__space(request):
     # Inside the function so various intitialization stuff isn't seen until
     # coverage is setup.
     import topaz
+    from topaz.main import get_topaz_config_options
     from topaz.objspace import ObjectSpace
 
     # Building a space is exceptionally expensive, so we create one once, and
@@ -12,7 +15,9 @@ def pytest_funcarg__space(request):
     # (at the time of writing about 1/3 of total test time), but significantly
     # less so than building a new space.
     def build_space():
-        space = ObjectSpace()
+        space = ObjectSpace(get_combined_translation_config(
+            overrides=get_topaz_config_options(),
+        ))
         space.setup(topaz.__file__)
         return space
 

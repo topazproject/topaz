@@ -1,18 +1,23 @@
 from __future__ import absolute_import
 
 import os
+import sys
 
-from rpython.rlib import jit, rpath
+from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
 from rpython.rlib.objectmodel import specialize
+from rpython.rlib.signature import signature
+from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rbigint import rbigint
 
 from rply.errors import ParsingError
 
+from topaz import system
 from topaz.astcompiler import CompilerContext, SymbolTable
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
 from topaz.error import RubyError, print_traceback
-from topaz.executioncontext import ExecutionContext
+from topaz.executioncontext import ExecutionContext, ExecutionContextHolder
 from topaz.frame import Frame
 from topaz.interpreter import Interpreter
 from topaz.lexer import LexerError, Lexer
@@ -39,18 +44,21 @@ from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
     W_NotImplementedError, W_RangeError, W_LocalJumpError, W_IOError,
-    W_RegexpError, W_ThreadError, W_FloatDomainError)
-from topaz.objects.fileobject import W_FileObject, W_IOObject
+    W_RegexpError, W_ThreadError, W_FiberError, W_EOFError, W_FloatDomainError,
+    W_SystemStackError)
+from topaz.objects.fiberobject import W_FiberObject
+from topaz.objects.fileobject import W_FileObject
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.functionobject import W_UserFunction
 from topaz.objects.hashobject import W_HashObject, W_HashIterator
 from topaz.objects.integerobject import W_IntegerObject
 from topaz.objects.intobject import W_FixnumObject
+from topaz.objects.ioobject import W_IOObject
 from topaz.objects.methodobject import W_MethodObject, W_UnboundMethodObject
 from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.nilobject import W_NilObject
 from topaz.objects.numericobject import W_NumericObject
-from topaz.objects.objectobject import W_Object, W_BaseObject
+from topaz.objects.objectobject import W_Object, W_BaseObject, W_Root
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.rangeobject import W_RangeObject
@@ -60,6 +68,7 @@ from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.threadobject import W_ThreadObject
 from topaz.objects.timeobject import W_TimeObject
 from topaz.parser import Parser
+from topaz.utils.ll_file import isdir
 
 
 class SpaceCache(Cache):
@@ -72,10 +81,12 @@ class SpaceCache(Cache):
 
 
 class ObjectSpace(object):
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
+
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        self._executioncontext = None
+        self._executioncontexts = ExecutionContextHolder()
         self.globals = GlobalsDict()
         self.bootstrap = True
         self.exit_handlers_w = []
@@ -116,6 +127,8 @@ class ObjectSpace(object):
         self.w_IndexError = self.getclassfor(W_IndexError)
         self.w_KeyError = self.getclassfor(W_KeyError)
         self.w_IOError = self.getclassfor(W_IOError)
+        self.w_EOFError = self.getclassfor(W_EOFError)
+        self.w_FiberError = self.getclassfor(W_FiberError)
         self.w_LoadError = self.getclassfor(W_LoadError)
         self.w_RangeError = self.getclassfor(W_RangeError)
         self.w_FloatDomainError = self.getclassfor(W_FloatDomainError)
@@ -126,6 +139,7 @@ class ObjectSpace(object):
         self.w_SyntaxError = self.getclassfor(W_SyntaxError)
         self.w_SystemCallError = self.getclassfor(W_SystemCallError)
         self.w_SystemExit = self.getclassfor(W_SystemExit)
+        self.w_SystemStackError = self.getclassfor(W_SystemStackError)
         self.w_TypeError = self.getclassfor(W_TypeError)
         self.w_ZeroDivisionError = self.getclassfor(W_ZeroDivisionError)
         self.w_kernel = self.getmoduleobject(Kernel.moduledef)
@@ -144,7 +158,8 @@ class ObjectSpace(object):
             self.w_LoadError, self.w_StopIteration, self.w_SyntaxError,
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
             self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
-            self.w_FloatDomainError,
+            self.w_EOFError, self.w_FloatDomainError, self.w_FiberError,
+            self.w_SystemStackError,
 
             self.w_kernel, self.w_topaz,
 
@@ -159,6 +174,9 @@ class ObjectSpace(object):
             self.getclassfor(W_RandomObject),
             self.getclassfor(W_ThreadObject),
             self.getclassfor(W_TimeObject),
+            self.getclassfor(W_MethodObject),
+            self.getclassfor(W_UnboundMethodObject),
+            self.getclassfor(W_FiberObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_ThreadError),
@@ -204,19 +222,32 @@ class ObjectSpace(object):
         self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
 
     def _freeze_(self):
+        self._executioncontexts.clear()
         return True
+
+    def find_executable(self, executable):
+        if os.sep in executable or (system.IS_WINDOWS and ":" in executable):
+            return executable
+        path = os.environ.get("PATH")
+        if path:
+            for dir in path.split(os.pathsep):
+                f = os.path.join(dir, executable)
+                if os.path.isfile(f):
+                    executable = f
+                    break
+        return rpath.rabspath(executable)
 
     def setup(self, executable):
         """
         Performs runtime setup.
         """
-        path = rpath.rabspath(executable)
+        path = rpath.rabspath(self.find_executable(executable))
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
         kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
         while path:
             path = rpath.rabspath(os.path.join(path, os.path.pardir))
-            if os.path.isdir(os.path.join(path, "lib-ruby")):
+            if isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
                 kernel_path = os.path.join(path, "lib-topaz")
                 break
@@ -270,10 +301,11 @@ class ObjectSpace(object):
 
     @jit.loop_invariant
     def getexecutioncontext(self):
-        # When we have threads this should become a thread local.
-        if self._executioncontext is None:
-            self._executioncontext = ExecutionContext()
-        return self._executioncontext
+        ec = self._executioncontexts.get()
+        if ec is None:
+            ec = ExecutionContext()
+            self._executioncontexts.set(ec)
+        return ec
 
     def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
                      parent_interp=None, regexp_match_cell=None):
@@ -289,12 +321,14 @@ class ObjectSpace(object):
 
     # Methods for allocating new objects.
 
+    @signature(types.any(), types.bool(), returns=types.instance(W_Root))
     def newbool(self, boolvalue):
         if boolvalue:
             return self.w_true
         else:
             return self.w_false
 
+    @signature(types.any(), types.int(), returns=types.instance(W_FixnumObject))
     def newint(self, intvalue):
         return W_FixnumObject(self, intvalue)
 
@@ -306,6 +340,15 @@ class ObjectSpace(object):
 
     def newbigint_fromrbigint(self, bigint):
         return W_BignumObject.newbigint_fromrbigint(self, bigint)
+
+    @specialize.argtype(1)
+    def newint_or_bigint(self, someinteger):
+        if -sys.maxint <= someinteger <= sys.maxint:
+            # The smallest int -sys.maxint - 1 has to be a Bignum,
+            # because parsing gives a Bignum in that case
+            return self.newint(intmask(someinteger))
+        else:
+            return self.newbigint_fromrbigint(rbigint.fromrarith_int(someinteger))
 
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
@@ -322,6 +365,7 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromchars(self, chars)
 
     def newstr_fromstr(self, strvalue):
+        assert strvalue is not None
         return W_StringObject.newstr_fromstr(self, strvalue)
 
     def newstr_fromstrs(self, strs_w):
@@ -334,7 +378,7 @@ class ObjectSpace(object):
                 if not isinstance(item, array_type):
                     return W_ArrayObject(self, self.fromcache(ObjectArrayStrategy), items_w)
             if array_type == W_FixnumObject:
-                return W_ArrayObject(self, self.fromcache(FixnumArrayStrategy), items_w) 
+                return W_ArrayObject(self, self.fromcache(FixnumArrayStrategy), items_w)
             elif array_type == W_FloatObject:
                 print array_type
                 return W_ArrayObject(self, self.fromcache(FloatArrayStrategy), items_w)
@@ -350,11 +394,13 @@ class ObjectSpace(object):
     def newregexp(self, regexp, flags):
         return W_RegexpObject(self, regexp, flags)
 
-    def newmodule(self, name):
-        return W_ModuleObject(self, name)
+    def newmodule(self, name, w_scope=None):
+        complete_name = self.buildname(name, w_scope)
+        return W_ModuleObject(self, complete_name)
 
-    def newclass(self, name, superclass, is_singleton=False):
-        return W_ClassObject(self, name, superclass, is_singleton=is_singleton)
+    def newclass(self, name, superclass, is_singleton=False, w_scope=None):
+        complete_name = self.buildname(name, w_scope)
+        return W_ClassObject(self, complete_name, superclass, is_singleton=is_singleton)
 
     def newfunction(self, w_name, w_code, lexical_scope):
         name = self.symbol_w(w_name)
@@ -366,7 +412,8 @@ class ObjectSpace(object):
         if w_function is None:
             raise self.error(
                 self.w_NameError,
-                "undefined method `%s' for class `%s'" % (name, w_cls.name)
+                "undefined method `%s' for class `%s'" % (name,
+                                                          self.obj_to_s(w_cls))
             )
         else:
             return W_UnboundMethodObject(self, w_cls, w_function)
@@ -388,6 +435,14 @@ class ObjectSpace(object):
         cells = block.cells[:]
         return W_BindingObject(self, names, cells, block.w_self, block.lexical_scope)
 
+    def buildname(self, name, w_scope):
+        complete_name = name
+        if w_scope is not None:
+            assert isinstance(w_scope, W_ModuleObject)
+            if w_scope is not self.w_object:
+                complete_name = "%s::%s" % (w_scope.name, name)
+        return complete_name
+
     def int_w(self, w_obj):
         return w_obj.int_w(self)
 
@@ -403,6 +458,13 @@ class ObjectSpace(object):
     def str_w(self, w_obj):
         """Unpacks a string object as an rstr."""
         return w_obj.str_w(self)
+
+    def str0_w(self, w_obj):
+        string = w_obj.str_w(self)
+        if "\x00" in string:
+            raise self.error(self.w_ArgumentError, "string contains null byte")
+        else:
+            return string
 
     def listview(self, w_obj):
         return w_obj.listview(self)
@@ -538,11 +600,6 @@ class ObjectSpace(object):
             block=block.block, parent_interp=block.parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
-        if (len(args_w) == 1 and
-            isinstance(args_w[0], W_ArrayObject) and len(bc.arg_pos) >= 2):
-            w_arg = args_w[0]
-            assert isinstance(w_arg, W_ArrayObject)
-            args_w = w_arg.listview(self)
         if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
             frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
@@ -632,19 +689,21 @@ class ObjectSpace(object):
         except RubyError:
             if not raise_error:
                 return self.w_nil
-            src_cls = self.getclass(w_obj).name
+            src_cls_name = self.obj_to_s(self.getclass(w_obj))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(
-                self.w_TypeError, "can't convert %s into %s" % (src_cls, w_cls.name)
+                self.w_TypeError, "can't convert %s into %s" % (src_cls_name, w_cls_name)
             )
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return self.w_nil
         elif not self.is_kind_of(w_res, w_cls):
-            src_cls = self.getclass(w_obj).name
-            res_cls = self.getclass(w_res).name
+            src_cls = self.obj_to_s(self.getclass(w_obj))
+            res_cls = self.obj_to_s(self.getclass(w_res))
+            w_cls_name = self.obj_to_s(w_cls)
             raise self.error(self.w_TypeError,
                 "can't convert %s to %s (%s#%s gives %s)" % (
-                    src_cls, w_cls.name, src_cls, method, res_cls
+                    src_cls, w_cls_name, src_cls, method, res_cls
                 )
             )
         else:
@@ -652,6 +711,9 @@ class ObjectSpace(object):
 
     def any_to_s(self, w_obj):
         return "#<%s:0x%x>" % (
-            self.str_w(self.send(self.getclass(w_obj), self.newsymbol("name"))),
+            self.obj_to_s(self.getnonsingletonclass(w_obj)),
             self.int_w(self.send(w_obj, self.newsymbol("__id__")))
         )
+
+    def obj_to_s(self, w_obj):
+        return self.str_w(self.send(w_obj, self.newsymbol("to_s")))

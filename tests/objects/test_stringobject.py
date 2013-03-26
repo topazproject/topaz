@@ -36,6 +36,14 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute('return "ABC".to_str')
         assert space.str_w(w_res) == "ABC"
 
+    def test_ord(self, space):
+        w_res = space.execute('return "a".ord')
+        assert space.int_w(w_res) == 97
+        w_res = space.execute('return "asd".ord')
+        assert space.int_w(w_res) == 97
+        with self.raises(space, "ArgumentError", "empty string"):
+            space.execute("''.ord")
+
     def test_length(self, space):
         w_res = space.execute("return 'ABC'.length")
         assert space.int_w(w_res) == 3
@@ -280,6 +288,22 @@ class TestStringObject(BaseTopazTest):
             space.execute('"".to_i(1)')
         with self.raises(space, "ArgumentError"):
             space.execute('"".to_i(37)')
+
+    def test_to_f(self, space):
+        w_res = space.execute('return "123.45".to_f')
+        assert space.float_w(w_res) == 123.45
+
+        w_res = space.execute('return "45.67 degrees".to_f')
+        assert space.float_w(w_res) == 45.67
+
+        w_res = space.execute('return "thx1138".to_f')
+        assert space.float_w(w_res) == 0.0
+
+        w_res = space.execute('return "123.45e1".to_f')
+        assert space.float_w(w_res) == 1234.5
+
+        w_res = space.execute('return "  123.45e1".to_f')
+        assert space.float_w(w_res) == 1234.5
 
     def test_swapcase(self, space):
         w_res = space.execute("""

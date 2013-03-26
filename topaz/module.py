@@ -57,6 +57,16 @@ class ClassDef(object):
             raise space.error(space.w_TypeError, "allocator undefined for %s" % self.name)
         return method_allocate
 
+    def notimplemented(self, name):
+        @self.method(name)
+        def method(self, space):
+            raise space.error(space.w_NotImplementedError)
+
+    def singleton_notimplemented(self, name):
+        @self.singleton_method(name)
+        def method(self, space):
+            raise space.error(space.w_NotImplementedError)
+
 
 class Module(object):
     pass

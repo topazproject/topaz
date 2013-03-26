@@ -1,5 +1,3 @@
-fails:IO.for_fd creates an IO instance from a Fixnum argument
-fails:IO.for_fd calls #to_int on an object to convert to a Fixnum
 fails:IO.for_fd accepts a :mode option
 fails:IO.for_fd accepts a mode argument set to nil with a valid :mode option
 fails:IO.for_fd accepts a mode argument with a :mode option set to nil
@@ -42,6 +40,5 @@ fails:IO.for_fd raises TypeError if passed a hash for mode and nil for options
 fails:IO.for_fd accepts an :autoclose option
 fails:IO.for_fd accepts any truthy option :autoclose
 fails:IO.for_fd raises an Errno::EBADF if the file descriptor is not valid
-fails:IO.for_fd raises an IOError if passed a closed stream
 fails:IO.for_fd raises an Errno::EINVAL if the new mode is not compatible with the descriptor's current mode
 fails:IO.for_fd raises ArgumentError if passed an empty mode string

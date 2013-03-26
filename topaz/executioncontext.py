@@ -2,6 +2,22 @@ from rpython.rlib import jit
 
 from topaz.error import RubyError
 from topaz.frame import Frame
+from topaz.objects.fiberobject import W_FiberObject
+
+
+class ExecutionContextHolder(object):
+    # TODO: convert to be a threadlocal store once we have threads.
+    def __init__(self):
+        self._ec = None
+
+    def get(self):
+        return self._ec
+
+    def set(self, ec):
+        self._ec = ec
+
+    def clear(self):
+        self._ec = None
 
 
 class ExecutionContext(object):
@@ -13,7 +29,16 @@ class ExecutionContext(object):
         self.regexp_match_cell = None
         self.w_trace_proc = None
         self.in_trace_proc = False
-        self.recursive_objects = {}
+        self.recursive_calls = {}
+        self.catch_names = {}
+
+        self.fiber_thread = None
+        self.w_main_fiber = None
+
+    def getmainfiber(self, space):
+        if self.w_main_fiber is None:
+            self.w_main_fiber = W_FiberObject.build_main_fiber(space, self)
+        return self.w_main_fiber
 
     def settraceproc(self, w_proc):
         self.w_trace_proc = w_proc
@@ -45,7 +70,6 @@ class ExecutionContext(object):
         frame.backref = self.topframeref
         if self.last_instr != -1:
             frame.back_last_instr = self.last_instr
-            self.last_instr = -1
         self.topframeref = jit.virtual_ref(frame)
         if isinstance(frame, Frame):
             self.regexp_match_cell = frame.regexp_match_cell
@@ -74,8 +98,19 @@ class ExecutionContext(object):
             frame = frame.backref()
         return frame
 
-    def recursion_guard(self, w_obj):
-        return _RecursionGuardContextManager(self, w_obj)
+    def recursion_guard(self, func_id, w_obj):
+        # We need independent recursion detection for different blocks of
+        # potentially recursive code so that they don't interfere with each
+        # other and cause false positives. This is only likely to be a problem
+        # if one recursion-guarded function calls another, but we can't
+        # guarantee that won't happen.
+        return _RecursionGuardContextManager(self, func_id, w_obj)
+
+    def catch_block(self, name):
+        return _CatchContextManager(self, name)
+
+    def is_in_catch_block_for_name(self, name):
+        return name in self.catch_names
 
 
 class _VisitFrameContextManager(object):
@@ -96,18 +131,46 @@ class _VisitFrameContextManager(object):
 
 
 class _RecursionGuardContextManager(object):
-    def __init__(self, ec, w_obj):
+    def __init__(self, ec, func_id, w_obj):
         self.ec = ec
+        if func_id not in self.ec.recursive_calls:
+            self.ec.recursive_calls[func_id] = {}
+        self.recursive_objects = self.ec.recursive_calls[func_id]
+        self.func_id = func_id
         self.w_obj = w_obj
         self.added = False
 
     def __enter__(self):
-        if self.w_obj in self.ec.recursive_objects:
+        if self.w_obj in self.recursive_objects:
             return True
-        self.ec.recursive_objects[self.w_obj] = None
+        self.recursive_objects[self.w_obj] = None
         self.added = True
         return False
 
     def __exit__(self, exc_type, exc_value, tb):
         if self.added:
-            del self.ec.recursive_objects[self.w_obj]
+            del self.recursive_objects[self.w_obj]
+            if not self.recursive_objects:
+                del self.ec.recursive_calls[self.func_id]
+
+
+class _CatchContextManager(object):
+    """This context manager tracks which symbol names we're in catch blocks for
+    so that we can raise an appropriate Ruby exception when app-level code
+    tries to throw a symbol we're catching. When catch blocks for the same
+    symbol are nested, we only care about the outermost one.
+    """
+    def __init__(self, ec, catch_name):
+        self.ec = ec
+        self.catch_name = catch_name
+        self.added = False
+
+    def __enter__(self):
+        if self.catch_name in self.ec.catch_names:
+            return
+        self.ec.catch_names[self.catch_name] = None
+        self.added = True
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if self.added:
+            del self.ec.catch_names[self.catch_name]

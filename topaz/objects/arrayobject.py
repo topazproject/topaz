@@ -11,6 +11,7 @@ from topaz.utils.packing.pack import RPacker
 from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.intobject import W_FixnumObject
 
+
 class RubySorter(TimSort):
     def __init__(self, space, list, listlength=None, sortblock=None):
         TimSort.__init__(self, list, listlength=listlength)
@@ -25,61 +26,37 @@ class RubySorter(TimSort):
         if w_cmp_res is self.space.w_nil:
             raise self.space.error(
                 self.space.w_ArgumentError,
-                "comparison of %s with %s failed" % (self.space.getclass(a).name, self.space.getclass(b).name)
+                "comparison of %s with %s failed" %
+                (self.space.obj_to_s(self.space.getclass(a)),
+                   self.space.obj_to_s(self.space.getclass(b)))
             )
         else:
             return self.space.int_w(w_cmp_res) < 0
-            
+
+
 class IntSorter(RubySorter):
     def lt(self, a, b):
-        if self.sortblock is None:
-            return a < b
-        else:
-            w_cmp_res = self.space.invoke_block(self.sortblock, 
-                                               [self.space.newint(a),
-                                                self.space.newint(b)])
-            if w_cmp_res is self.space.w_nil:
-                raise self.space.error(
-                    self.space.w_ArgumentError,
-                    "comparison of %s with %s failed" % (self.space.getclass(a).name, 
-                                                         self.space.getclass(b).name)
-                    )
-            else:
-                return self.space.int_w(w_cmp_res) < 0
+        w_a, w_b = space.newint(a), space.newint(b)
+        RubySorter.lt(self, w_a, w_b)
+
 
 class FloatSorter(RubySorter):
     def lt(self, a, b):
-        if self.sortblock is None:
-            return a < b
-        else:
-            w_cmp_res = self.space.invoke_block(self.sortblock, 
-                                               [self.space.newfloat(a), 
-                                                self.space.newfloat(b)])
-            if w_cmp_res is self.space.w_nil:
-                raise self.space.error(
-                    self.space.w_ArgumentError,
-                    "comparison of %s with %s failed" % (self.space.getclass(a).name, 
-                                                         self.space.getclass(b).name)
-                )
-            else:
-                return self.space.int_w(w_cmp_res) < 0
-    
+        w_a, w_b = space.newfloat(a), space.newfloat(b)
+        RubySorter.lt(self, w_a, w_b)
+
+
 class ArrayStrategy(object):
-    
-    def __init__(self, space):
-        pass
-    
     def __deepcopy__(self, memo):
         memo[id(self)] = result = object.__new__(self.__class__)
         return result
-    
+
 class ArrayStrategyMixin(object):
-    
     _mixin_ = True
-        
+
     def length(self, a):
         return len(self.unerase(a.array_storage))
-        
+
     def range_assign(self, space, a, start, end, w_obj):
         assert end >= 0
         w_converted = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
@@ -91,11 +68,11 @@ class ArrayStrategyMixin(object):
             for each in rep_w:
                 self.verify_strategy(space, a, each)
         delta = (end - start) - len(rep_w)
-	# storage can be of different array type after strategy is verified -> decorator ? ifs?
-	a.strategy.padd_assign(space, a, delta, start, end, rep_w)
+        # storage can be of different array type after strategy is verified -> decorator ? ifs?
+        a.strategy.padd_assign(space, a, delta, start, end, rep_w)
 
     def padd_assign(self, space, a, delta, start, end, rep_w):
-	storage = self.unerase(a.array_storage)
+        storage = self.unerase(a.array_storage)
         if delta < 0:
             storage += [None] * -delta
             lim = start + len(rep_w)
@@ -106,10 +83,10 @@ class ArrayStrategyMixin(object):
         elif delta > 0:
             del storage[start:start + delta]
         storage[start:start + len(rep_w)] = [self.unwrap(space, r) for r in rep_w]
-        
+
     def slice(self, space, a, start, end):
         return space.newarray(self.listview(space, a)[start:end])
-        
+
     def slice_i(self, space, a, start, end, as_range, nil):
         if nil:
             return space.w_nil
@@ -126,73 +103,73 @@ class ArrayStrategyMixin(object):
             w_item = storage[start]
             del storage[start]
             return w_item
-        
+
     def shift(self, space, a, n):
         if n < 0:
             raise space.error(space.w_ArgumentError, "negative array size")
         items_w = self.listview(space, a)[:n]
         del self.unerase(a.array_storage)[:n]
         return space.newarray(items_w)
-        
+
     def clear(self, space, a):
         del self.unerase(a.array_storage)[:]
-            
+
     def pop_n(self, space, a, num):
         pop_size = max(0, self.length(a) - num)
         res_w = self.listview(space, a)[pop_size:]
         del self.unerase(a.array_storage)[pop_size:]
         return space.newarray(res_w)
-        
+
     def replace(self, space, a, other_w):
         for o in other_w:
             if not self.checktype(o):
                 obj_strategy = space.fromcache(ObjectArrayStrategy)
                 a.array_storage = obj_strategy.store(space, other_w)
-		a.strategy = obj_strategy
+                a.strategy = obj_strategy
                 return
-        a.array_store = self.store(space, other_w)            
-        
+        a.array_store = self.store(space, other_w)
+
     def verify_strategy(self, space, a, w_obj):
         if not self.checktype(w_obj):
             obj_strategy = space.fromcache(ObjectArrayStrategy)
             a.array_storage = obj_strategy.erase(self.listview(space, a))
-	    a.strategy = obj_strategy
-    
+            a.strategy = obj_strategy
+
     def store(self, space, items_w):
-	l = []
-	for o in items_w:
-	    assert self.checktype(o)
-	    l.append(self.unwrap(space, o))
-	return self.erase(l)
-        
+        l = []
+        for o in items_w:
+            assert self.checktype(o)
+            l.append(self.unwrap(space, o))
+        return self.erase(l)
+
     def get_item(self, space, a, idx):
         return self.wrap(space, self.unerase(a.array_storage)[idx])
-        
+
     def set_item(self, space, a, idx, w_obj):
         self.verify_strategy(space, a, w_obj)
         if self.checktype(w_obj):
             self.unerase(a.array_storage)[idx] = self.unwrap(space, w_obj)
         else:
-	    obj_strategy = space.fromcache(ObjectArrayStrategy)
+            obj_strategy = space.fromcache(ObjectArrayStrategy)
             obj_strategy.unerase(a.array_storage)[idx] = obj_strategy.unwrap(space, w_obj)
-        
+
     def listview(self, space, a):
         return [self.wrap(space, o) for o in self.unerase(a.array_storage)]
-        
+
     def extend(self, space, a, other_w):
         for o in other_w:
             if not self.checktype(o):
                 obj_strategy = space.fromcache(ObjectArrayStrategy)
                 a.array_storage = obj_strategy.erase(self.listview(space, a))
                 obj_strategy.unerase(a.array_storage).extend(other_w)
-		a.strategy = obj_strategy
+                a.strategy = obj_strategy
                 return
-	l = []
-	for o in other_w:
-	    assert self.checktype(o)
-	    l.append(self.unwrap(space, o))
+        l = []
+        for o in other_w:
+            assert self.checktype(o)
+            l.append(self.unwrap(space, o))
         self.unerase(a.array_storage).extend(l)
-        
+
     def append(self, space, a, w_obj):
         self.verify_strategy(space, a, w_obj)
         if self.checktype(w_obj):
@@ -200,71 +177,71 @@ class ArrayStrategyMixin(object):
         else:
             obj_strategy = space.fromcache(ObjectArrayStrategy)
             obj_strategy.unerase(a.array_storage).append(obj_strategy.unwrap(space, w_obj))
-        
+
     def pop(self, space, a, idx):
         storage = self.unerase(a.array_storage)
         if storage:
             return self.wrap(space, storage.pop(idx))
         else:
             return space.w_nil
-            
+
     def insert(self, space, a, idx, w_obj):
         self.verify_strategy(space, a, w_obj)
         if self.checktype(w_obj):
             self.unerase(a.array_storage).insert(idx, self.unwrap(space, w_obj))
         else:
-	    obj_strategy = space.fromcache(ObjectArrayStrategy)
+            obj_strategy = space.fromcache(ObjectArrayStrategy)
             obj_strategy.unerase(a.array_storage).insert(idx, obj_strategy.unwrap(space, w_obj))
-    
+
 class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
-    
+
     erase, unerase = new_static_erasing_pair("object")
-    
+
     def verify_strategy(self, space, a, w_obj):
-        pass 
-        
+        pass
+
     def wrap(self, space, w_obj):
         return w_obj
-        
+
     def unwrap(self, space, w_obj):
         return w_obj
-        
+
     def checktype(self, w_obj):
         return True
-        
+
     def sort(self, space, a, block):
         RubySorter(space, self.unerase(a.array_storage), sortblock=block).sort()
-    
+
 class FloatArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
-    
+
     erase, unerase = new_static_erasing_pair("float")
-    
+
     def wrap(self, space, f):
         return space.newfloat(f)
-        
+
     def unwrap(self, space, w_f):
         return space.float_w(w_f)
-        
+
     def checktype(self, w_obj):
         return isinstance(w_obj, W_FloatObject)
-    
+
     def sort(self, space, a, block):
         FloatSorter(space, self.unerase(a.array_storage), sortblock=block).sort()
-    
+
 class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
-    
+
     erase, unerase = new_static_erasing_pair("fixnum")
-    
+
     def wrap(self, space, i):
-	assert isinstance(i, int)
+        assert isinstance(i, int)
         return space.newint(i)
-        
+
     def unwrap(self, space, w_i):
         return space.int_w(w_i)
-        
+
     def checktype(self, w_obj):
         return isinstance(w_obj, W_FixnumObject)
-            
+
     def sort(self, space, a, block):
         IntSorter(space, self.unerase(a.array_storage), sortblock=block).sort()
 
@@ -272,8 +249,8 @@ class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
     classdef.include_module(Enumerable)
 
-    def __init__(self, space, strategy, items_w):
-        W_Object.__init__(self, space)
+    def __init__(self, space, strategy, items_w, klass=None):
+        W_Object.__init__(self, space, klass)
         self.strategy = strategy
         self.array_storage = self.strategy.store(space, items_w)
 
@@ -285,17 +262,13 @@ class W_ArrayObject(W_Object):
 
     def listview(self, space):
         return self.strategy.listview(space, self)
-        
+
     def length(self):
         return self.strategy.length(self)
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, args_w):
-        return space.newarray([])
-
-    @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, args_w):
-        return space.newarray(args_w)
+        return W_ArrayObject(space, [], self)
 
     @classdef.method("initialize_copy", other_w="array")
     @classdef.method("replace", other_w="array")
@@ -304,7 +277,6 @@ class W_ArrayObject(W_Object):
         self.strategy.replace(space, self, other_w)
         return self
 
-    @classdef.method("at")
     @classdef.method("[]")
     @classdef.method("slice")
     def subscript(self, space, w_idx, w_count=None):
@@ -339,7 +311,7 @@ class W_ArrayObject(W_Object):
                 )
             )
         elif start >= self.length():
-            self.strategy.extend(space, self, 
+            self.strategy.extend(space, self,
                                                 [space.w_nil] * (start - self.length() + 1))
             self.strategy.set_item(space, self, start, w_obj)
         elif as_range:
@@ -395,7 +367,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("unshift")
     @check_frozen()
-    def method_unshift(self, space, args_w):        
+    def method_unshift(self, space, args_w):
         for i in xrange(len(args_w) - 1, -1, -1):
             w_obj = args_w[i]
             self.strategy.insert(space, self, 0, w_obj)
@@ -483,10 +455,9 @@ class W_ArrayObject(W_Object):
     def method_sort(self, space, block):
         self.strategy.sort(space, self, block)
         return self
-        
-    @classdef.method("dup")
-    def method_dup(self, space, block):
-        # this needs to be here, as the Kernel>>dup 
-        # aparrently can not sucessfully copy arrays
-        # which are based on this new storage model
-        return space.newarray(self.listview(space))
+
+    @classdef.method("reverse!")
+    @check_frozen()
+    def method_reverse_i(self, space):
+        self.items_w.reverse()
+        return self

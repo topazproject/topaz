@@ -43,8 +43,7 @@ class TestBaseObject(BaseTopazTest):
         t = T.new
         return t.instance_eval(&M::C).name
         """)
-        # TODO: this shoudl really be M::X
-        assert space.str_w(w_res) == "X"
+        assert space.str_w(w_res) == "M::X"
 
     def test___id__(self, space):
         w_res = space.execute("return BasicObject.new.__id__")
@@ -231,6 +230,16 @@ class TestObjectObject(BaseTopazTest):
         return obj.to_s == obj.inspect
         """)
         assert w_res == space.w_true
+        w_res = space.execute("""
+        class A
+          def to_s
+            10
+          end
+        end
+        obj = A.new
+        return obj.to_s == obj.inspect
+        """)
+        assert w_res == space.w_true
 
     def test_send(self, space):
         w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
@@ -379,3 +388,14 @@ class TestMapDict(BaseTopazTest):
         return 'aaa'.method(A.new).class
         """)
         assert self.unwrap(space, w_res) == space.getclassfor(W_MethodObject)
+
+    def test_tap(self, space):
+        with self.raises(space, "LocalJumpError"):
+            space.execute("1.tap")
+
+        w_res = space.execute("""
+        x = nil
+        res = 1.tap { |c| x = c + 1 }
+        return res, x
+        """)
+        assert self.unwrap(space, w_res) == [1, 2]
