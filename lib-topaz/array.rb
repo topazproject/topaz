@@ -61,7 +61,8 @@ class Array
     self[idx]
   end
 
-  def each
+  def each(&block)
+    return self.enum_for(:each) unless block
     i = 0
     while i < self.length
       yield self[i]
@@ -296,6 +297,7 @@ class Array
   end
 
   def each_index(&block)
+    return self.enum_for(:each_index) unless block
     0.upto(size - 1, &block)
     self
   end
@@ -305,6 +307,7 @@ class Array
   end
 
   def reverse_each(&block)
+    return self.enum_for(:reverse_each) unless block
     i = self.length - 1
     while i >= 0
       yield self[i]
