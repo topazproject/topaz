@@ -51,6 +51,7 @@ class ArrayStrategy(object):
         memo[id(self)] = result = object.__new__(self.__class__)
         return result
 
+
 class ArrayStrategyMixin(object):
     _mixin_ = True
 
@@ -193,8 +194,12 @@ class ArrayStrategyMixin(object):
             obj_strategy = space.fromcache(ObjectArrayStrategy)
             obj_strategy.unerase(a.array_storage).insert(idx, obj_strategy.unwrap(space, w_obj))
 
-class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
+    def reverse_i(self, space, a):
+        storage = self.unerase(a.array_storage)
+        storage.reverse()
 
+
+class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     erase, unerase = new_static_erasing_pair("object")
 
     def verify_strategy(self, space, a, w_obj):
@@ -212,8 +217,8 @@ class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     def sort(self, space, a, block):
         RubySorter(space, self.unerase(a.array_storage), sortblock=block).sort()
 
-class FloatArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
 
+class FloatArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     erase, unerase = new_static_erasing_pair("float")
 
     def wrap(self, space, f):
@@ -228,12 +233,11 @@ class FloatArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     def sort(self, space, a, block):
         FloatSorter(space, self.unerase(a.array_storage), sortblock=block).sort()
 
-class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
 
+class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     erase, unerase = new_static_erasing_pair("fixnum")
 
     def wrap(self, space, i):
-        assert isinstance(i, int)
         return space.newint(i)
 
     def unwrap(self, space, w_i):
@@ -244,6 +248,7 @@ class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
 
     def sort(self, space, a, block):
         IntSorter(space, self.unerase(a.array_storage), sortblock=block).sort()
+
 
 class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
