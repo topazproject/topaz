@@ -116,13 +116,6 @@ class ArrayStrategyMixin(object):
         del self.unerase(a.array_storage)[pop_size:]
         return space.newarray(res_w)
 
-    def replace(self, space, a, other_w):
-        for w_o in other_w:
-            if not self.checktype(w_o):
-                a.array_storage = obj_strategy.store(space, other_w)
-                return
-        a.array_storage = self.store(space, other_w)
-
     def adapt(self, space, a, w_obj):
         if not self.checktype(w_obj):
             self.to_object_strategy(space, a)
@@ -253,19 +246,23 @@ class W_ArrayObject(W_Object):
 
     @staticmethod
     def newarray(space, items_w):
-        strategy = space.fromcache(ObjectArrayStrategy)
-        if items_w:
-            array_type = type(items_w[0])
-            if array_type is W_FixnumObject:
-                strategy = space.fromcache(FixnumArrayStrategy)
-            elif array_type is W_FloatObject:
-                strategy = space.fromcache(FloatArrayStrategy)
-            for item in items_w:
-                if not isinstance(item, array_type):
-                    strategy = space.fromcache(ObjectArrayStrategy)
-                    break
+        strategy = W_ArrayObject.strategy_for_list(space, items_w)
         storage = strategy.store(space, items_w)
         return W_ArrayObject(space, storage, strategy)
+
+    @staticmethod
+    def strategy_for_list(space, items_w):
+        if items_w:
+            array_type = type(items_w[0])
+            for item in items_w:
+                if not isinstance(item, array_type):
+                    return space.fromcache(ObjectArrayStrategy)
+            if array_type is W_FixnumObject:
+                return space.fromcache(FixnumArrayStrategy)
+            elif array_type is W_FloatObject:
+                return space.fromcache(FloatArrayStrategy)
+        else:
+            return space.fromcache(ObjectArrayStrategy)
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, args_w):
@@ -275,7 +272,8 @@ class W_ArrayObject(W_Object):
     @classdef.method("replace", other_w="array")
     @check_frozen()
     def method_replace(self, space, other_w):
-        self.strategy.replace(space, self, other_w)
+        self.strategy = W_ArrayObject.strategy_for_list(space, other_w)
+        self.array_storage = self.strategy.store(space, other_w)
         return self
 
     @classdef.method("[]")
