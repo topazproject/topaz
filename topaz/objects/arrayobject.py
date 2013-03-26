@@ -12,11 +12,8 @@ from topaz.objects.floatobject import W_FloatObject
 from topaz.objects.intobject import W_FixnumObject
 
 
-class RubySorter(TimSort):
-    def __init__(self, space, list, listlength=None, sortblock=None):
-        TimSort.__init__(self, list, listlength=listlength)
-        self.space = space
-        self.sortblock = sortblock
+class RubySorterMixin(object):
+    _mixin_ = True
 
     def lt(self, w_a, w_b):
         if self.sortblock is None:
@@ -34,16 +31,25 @@ class RubySorter(TimSort):
             return self.space.int_w(w_cmp_res) < 0
 
 
-class IntSorter(RubySorter):
-    def lt(self, a, b):
-        w_a, w_b = self.space.newint(a), self.space.newint(b)
-        return RubySorter.lt(self, w_a, w_b)
+class RubySorter(TimSort, RubySorterMixin):
+    def __init__(self, space, list, listlength=None, sortblock=None):
+        TimSort.__init__(self, list, listlength=listlength)
+        self.space = space
+        self.sortblock = sortblock
 
 
-class FloatSorter(RubySorter):
-    def lt(self, a, b):
-        w_a, w_b = self.space.newfloat(a), self.space.newfloat(b)
-        return RubySorter.lt(self, w_a, w_b)
+class FloatSorter(TimSort, RubySorterMixin):
+    def __init__(self, space, list, listlength=None, sortblock=None):
+        TimSort.__init__(self, list, listlength=listlength)
+        self.space = space
+        self.sortblock = sortblock
+
+
+class IntSorter(TimSort, RubySorterMixin):
+    def __init__(self, space, list, listlength=None, sortblock=None):
+        TimSort.__init__(self, list, listlength=listlength)
+        self.space = space
+        self.sortblock = sortblock
 
 
 class ArrayStrategy(object):
