@@ -28,12 +28,15 @@ class W_FileObject(W_IOObject):
         if IS_WINDOWS:
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
+            w_devnull = space.newstr_fromstr("NUL")
         else:
             w_alt_seperator = space.w_nil
             w_fnm_syscase = space.newint(0)
+            w_devnull = space.newstr_fromstr("/dev/null")
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
         space.set_const(w_cls, "PATH_SEPARATOR", space.newstr_fromstr(os.pathsep))
+        space.set_const(w_cls, "NULL", w_devnull)
         space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
         space.set_const(w_cls, "FNM_NOESCAPE", space.newint(FNM_NOESCAPE))
         space.set_const(w_cls, "FNM_PATHNAME", space.newint(FNM_PATHNAME))
