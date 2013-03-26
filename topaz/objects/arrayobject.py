@@ -92,6 +92,7 @@ class ArrayStrategyMixin(object):
             for each in rep_w:
                 self.verify_strategy(space, a, each)
         delta = (end - start) - len(rep_w)
+	# storage can be of different array type after strategy is verified -> decorator ? ifs?
         storage = a.strategy.unerase(a.array_storage)
         if delta < 0:
             storage += [None] * -delta
@@ -144,18 +145,24 @@ class ArrayStrategyMixin(object):
     def replace(self, space, a, other_w):
         for o in other_w:
             if not self.checktype(o):
-                a.strategy = space.fromcache(ObjectArrayStrategy)
-                a.array_storage = a.strategy.store(space, other_w)
+                obj_strategy = space.fromcache(ObjectArrayStrategy)
+                a.array_storage = obj_strategy.store(space, other_w)
+		a.strategy = obj_strategy
                 return
         a.array_store = self.store(space, other_w)            
         
     def verify_strategy(self, space, a, w_obj):
         if not self.checktype(w_obj):
-            a.strategy = space.fromcache(ObjectArrayStrategy)
-            a.array_storage = a.strategy.erase(self.listview(space, a))
+            obj_strategy = space.fromcache(ObjectArrayStrategy)
+            a.array_storage = obj_strategy.erase(self.listview(space, a))
+	    a.strategy = obj_strategy
     
     def store(self, space, items_w):
-        return self.erase([self.unwrap(space, o) for o in items_w])
+	l = []
+	for o in items_w:
+	    assert self.checktype(o)
+	    l.append(self.unwrap(space, o))
+	return self.erase(l)
         
     def get_item(self, space, a, idx):
         return self.wrap(space, self.unerase(a.array_storage)[idx])
@@ -165,7 +172,8 @@ class ArrayStrategyMixin(object):
         if self.checktype(w_obj):
             self.unerase(a.array_storage)[idx] = self.unwrap(space, w_obj)
         else:
-            a.strategy.unerase(a.array_storage)[idx] = a.strategy.unwrap(space, w_obj)
+	    obj_strategy = space.fromcache(ObjectArrayStrategy)
+            obj_strategy.unerase(a.array_storage)[idx] = obj_strategy.unwrap(space, w_obj)
         
     def listview(self, space, a):
         return [self.wrap(space, o) for o in self.unerase(a.array_storage)]
@@ -173,18 +181,24 @@ class ArrayStrategyMixin(object):
     def extend(self, space, a, other_w):
         for o in other_w:
             if not self.checktype(o):
-                a.strategy = space.fromcache(ObjectArrayStrategy)
-                a.array_storage = a.strategy.erase(self.listview(space, a))
-                a.strategy.unerase(a.array_storage).extend(other_w)
+                obj_strategy = space.fromcache(ObjectArrayStrategy)
+                a.array_storage = obj_strategy.erase(self.listview(space, a))
+                obj_strategy.unerase(a.array_storage).extend(other_w)
+		a.strategy = obj_strategy
                 return
-        self.unerase(a.array_storage).extend([self.unwrap(space, o) for o in other_w])
+	l = []
+	for o in other_w:
+	    assert self.checktype(o)
+	    l.append(self.unwrap(space, o))
+        self.unerase(a.array_storage).extend(l)
         
     def append(self, space, a, w_obj):
         self.verify_strategy(space, a, w_obj)
         if self.checktype(w_obj):
             self.unerase(a.array_storage).append(self.unwrap(space, w_obj))
         else:
-            a.strategy.unerase(a.array_storage).append(a.strategy.unwrap(space, w_obj))
+            obj_strategy = space.fromcache(ObjectArrayStrategy)
+            obj_strategy.unerase(a.array_storage).append(obj_strategy.unwrap(space, w_obj))
         
     def pop(self, space, a, idx):
         storage = self.unerase(a.array_storage)
@@ -198,8 +212,8 @@ class ArrayStrategyMixin(object):
         if self.checktype(w_obj):
             self.unerase(a.array_storage).insert(idx, self.unwrap(space, w_obj))
         else:
-            assert isinstance(a.strategy, ObjectArrayStrategy)
-            a.strategy.unerase(a.array_storage).insert(idx, a.strategy.unwrap(space, w_obj))
+	    obj_strategy = space.fromcache(ObjectArrayStrategy)
+            obj_strategy.unerase(a.array_storage).insert(idx, obj_strategy.unwrap(space, w_obj))
     
 class ObjectArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     
@@ -241,6 +255,7 @@ class FixnumArrayStrategy(ArrayStrategyMixin, ArrayStrategy):
     erase, unerase = new_static_erasing_pair("fixnum")
     
     def wrap(self, space, i):
+	assert isinstance(i, int)
         return space.newint(i)
         
     def unwrap(self, space, w_i):
