@@ -250,8 +250,7 @@ class W_ArrayObject(W_Object):
                 return space.fromcache(FixnumArrayStrategy)
             elif array_type is W_FloatObject:
                 return space.fromcache(FloatArrayStrategy)
-        else:
-            return space.fromcache(ObjectArrayStrategy)
+        return space.fromcache(ObjectArrayStrategy)
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, args_w):
@@ -349,11 +348,11 @@ class W_ArrayObject(W_Object):
     def concat(self, space, other_w):
         strategy = self.strategy_for_list(space, other_w)
         if self.strategy is not strategy:
-            self.array_storage = self.strategy.store(space, self.listview(space))
+            self.array_storage = strategy.store(space, self.listview(space))
             self.strategy = strategy
         self.strategy.extend(space, self, other_w)
 
-    @classdef.method("concat", other="array")
+    @classdef.method("concat", other_w="array")
     @check_frozen()
     def method_concat(self, space, other_w):
         self.concat(space, other_w)
