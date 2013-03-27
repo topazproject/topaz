@@ -265,6 +265,14 @@ class TestKernel(BaseTopazTest):
         w_res = space.execute("return `echo 10`")
         assert self.unwrap(space, w_res) == "10\n"
 
+    def test_backtick_sets_process_status(self, space):
+        w_res = space.execute("""
+        $? = nil
+        `echo`
+        return $?.class.name
+        """)
+        assert self.unwrap(space, w_res) == "Process::Status"
+
 
 class TestRequire(BaseTopazTest):
     def test_simple(self, space, tmpdir):
