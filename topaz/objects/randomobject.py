@@ -40,11 +40,12 @@ class W_RandomObject(W_Object):
             os.close(file)
         else:
             seed = Coerce.int(space, w_seed)
-        self.random = Random(abs(seed))
         if previous_seed is None:
-            return space.send(self, space.newsymbol("rand"))
+            value = space.newfloat(self.random.random())
         else:
-            return previous_seed
+            value = previous_seed
+        self.random = Random(abs(seed))
+        return value
 
     @classdef.singleton_method("srand")
     def method_singleton_srand(self, space, args_w):
