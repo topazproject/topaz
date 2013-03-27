@@ -9,7 +9,7 @@ from topaz.coerce import Coerce
 class W_RandomObject(W_Object):
     classdef = ClassDef("Random", W_Object.classdef, filepath=__file__)
 
-    def __init__(self, space, seed = 0, klass=None):
+    def __init__(self, space, seed=0, klass=None):
         W_Object.__init__(self, space, klass)
         self.random = Random(abs(seed))
 
