@@ -18,12 +18,8 @@ class W_RandomObject(W_Object):
         default = space.send(w_cls, space.newsymbol("new"))
         space.set_const(w_cls, "DEFAULT", default)
 
-    @classdef.singleton_method("allocate")
-    def method_allocate(self, space, w_seed=None):
-        if w_seed is None:
-            seed = 0
-        else:
-            seed = Coerce.int(space, w_seed)
+    @classdef.singleton_method("allocate", seed="int")
+    def method_allocate(self, space, seed=0):
         return W_RandomObject(space, seed, self)
 
     @classdef.method("initialize")
