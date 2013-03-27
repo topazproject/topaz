@@ -3,7 +3,6 @@ from rpython.rlib.rrandom import Random
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.rangeobject import W_RangeObject
-from topaz.objects.floatobject import W_FloatObject
 from topaz.coerce import Coerce
 
 
@@ -44,7 +43,7 @@ class W_RandomObject(W_Object):
     def method_rand(self, space, w_max=None):
         if w_max is None:
             return space.newfloat(self.random.random())
-        elif space.is_kind_of(w_max, space.getclassfor(W_FloatObject)):
+        elif space.is_kind_of(w_max, space.w_float):
             return self._rand_float(space, w_max)
         elif space.is_kind_of(w_max, space.getclassfor(W_RangeObject)):
             return self._rand_range(space, w_max)
@@ -65,8 +64,8 @@ class W_RandomObject(W_Object):
         diff = space.send(last, space.newsymbol("-"), [first])
         offset = space.send(diff, space.newsymbol("*"), [space.newfloat(random)])
         choice = space.send(offset, space.newsymbol("+"), [first])
-        if (not space.is_kind_of(first, space.getclassfor(W_FloatObject)) and
-            not space.is_kind_of(last, space.getclassfor(W_FloatObject))):
+        if (not space.is_kind_of(first, space.w_float) and
+            not space.is_kind_of(last, space.w_float)):
             choice = space.send(choice, space.newsymbol("to_i"))
         return choice
 
