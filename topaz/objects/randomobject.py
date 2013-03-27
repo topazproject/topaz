@@ -10,9 +10,9 @@ from topaz.coerce import Coerce
 class W_RandomObject(W_Object):
     classdef = ClassDef("Random", W_Object.classdef, filepath=__file__)
 
-    def __init__(self, space, klass=None):
+    def __init__(self, space, seed = 0, klass=None):
         W_Object.__init__(self, space, klass)
-        self.random = Random()
+        self.random = Random(abs(seed))
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -21,7 +21,11 @@ class W_RandomObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, w_seed=None):
-        return W_RandomObject(space, self)
+        if w_seed is None:
+            seed = 0
+        else:
+            seed = Coerce.int(space, w_seed)
+        return W_RandomObject(space, seed, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_seed=None):
