@@ -315,4 +315,26 @@ class Array
     end
     return self
   end
+
+  def index(obj = nil, &block)
+    return self.enum_for(:index) if !obj && !block
+    i = 0
+    while i < self.length
+      return i if obj ? (self[i] == obj) : block.call(self[i])
+      i += 1
+    end
+    nil
+  end
+
+  alias :find_index :index
+
+  def rindex(obj = nil, &block)
+    return self.enum_for(:rindex) if !obj && !block
+    i = self.length - 1
+    while i >= 0
+      return i if obj ? (self[i] == obj) : block.call(self[i])
+      i -= 1
+    end
+    nil
+  end
 end
