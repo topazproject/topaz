@@ -18,3 +18,4 @@ fails:Time.at with a second argument that responds to #to_r coerces using #to_r
 fails:Time.at passed [Integer, nil] raises a TypeError
 fails:Time.at passed [Integer, String] raises a TypeError
 fails:Time.at passed [Time, Integer] returns a Time object equal to the specified time plus the number of microseconds
+fails:Time.at passed [Time, Integer] raises a TypeError
