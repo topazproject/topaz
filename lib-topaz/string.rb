@@ -61,10 +61,9 @@ class String
   alias next succ
 
   def upto(max, exclusive = false, &block)
-    raise TypeError.new("can't convert #{max.class} into String") unless max.respond_to?(:to_str)
     return self.enum_for(:upto, max, exclusive) unless block
 
-    maximum = max.to_str
+    maximum = Topaz.convert_type(max, String, :to_str)
     return self if self > maximum
 
     current = self.dup
