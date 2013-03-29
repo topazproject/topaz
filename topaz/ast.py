@@ -137,7 +137,7 @@ class Next(BaseStatement):
         elif isinstance(ctx.symtable, BlockSymbolTable):
             ctx.emit(consts.RETURN)
         else:
-            raise NotImplementedError
+            raise SystemError
 
 
 class Break(BaseStatement):
@@ -151,7 +151,7 @@ class Break(BaseStatement):
         elif isinstance(ctx.symtable, BlockSymbolTable):
             ctx.emit(consts.RAISE_BREAK)
         else:
-            raise NotImplementedError
+            raise SystemError
 
 
 class TryExcept(Node):

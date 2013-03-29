@@ -11,5 +11,3 @@ fails:Kernel#String raises a TypeError if #to_s does not return a String
 fails:Kernel#String returns the same object if it is already a String
 fails:Kernel#String returns the same object if it is an instance of a String subclass
 fails:Kernel#String is a private method
-fails:Kernel.String converts a Float to a String
-fails:Kernel#String converts a Float to a String

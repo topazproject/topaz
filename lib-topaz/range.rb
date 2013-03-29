@@ -1,6 +1,6 @@
 class Range
   def each(&block)
-    raise NotImplementedError.new("Object#enum_for") if !block
+    return self.enum_for unless block
 
     if !(self.begin.respond_to? :succ)
       raise TypeError.new("can't iterate from #{self.begin.class}")
@@ -19,6 +19,14 @@ class Range
       end
     end
     self
+  end
+
+  def first(*args)
+    if args.empty?
+      self.begin
+    else
+      take(*args)
+    end
   end
 
   def ===(value)

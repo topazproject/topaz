@@ -30,6 +30,9 @@ class AttributeWriter(W_FunctionObject):
         space.set_instance_var(w_obj, self.varname, w_value)
         return w_value
 
+    def arity(self, space):
+        return space.newint(1)
+
 
 class UndefMethod(W_FunctionObject):
     _immutable_fields_ = ["name"]
@@ -52,6 +55,13 @@ class DefineMethodBlock(W_FunctionObject):
     def call(self, space, w_obj, args_w, block):
         method_block = self.block.copy(w_self=w_obj)
         return space.invoke_block(method_block, args_w, block)
+
+    def arity(self, space):
+        args_count = len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
+        if len(self.block.bytecode.defaults) > 0 or self.block.bytecode.splat_arg_pos != -1:
+            args_count = -(args_count + 1)
+
+        return space.newint(args_count)
 
 
 class DefineMethodMethod(W_FunctionObject):
@@ -256,13 +266,14 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        # TODO: this should really store None for the name and all places
-        # reading the name should handle None
-        return W_ModuleObject(space, "")
+        return W_ModuleObject(space, None)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
-        return space.newstr_fromstr(self.name)
+        name = self.name
+        if name is None:
+            return space.newstr_fromstr(space.any_to_s(self))
+        return space.newstr_fromstr(name)
 
     @classdef.method("include")
     def method_include(self, space, w_mod):
@@ -347,12 +358,14 @@ class W_ModuleObject(W_RootObject):
         pass
 
     @classdef.method("extended")
-    def method_included(self, space, w_mod):
+    def method_extended(self, space, w_mod):
         # TODO: should be private
         pass
 
     @classdef.method("name")
     def method_name(self, space):
+        if self.name is None:
+            return space.w_nil
         return space.newstr_fromstr(self.name)
 
     @classdef.method("private")
@@ -403,8 +416,9 @@ class W_ModuleObject(W_RootObject):
         else:
             w_res = self.find_local_const(space, const)
         if w_res is None:
+            name = space.obj_to_s(self)
             raise space.error(space.w_NameError,
-                "uninitialized constant %s::%s" % (self.name, const)
+                "uninitialized constant %s::%s" % (name, const)
             )
         return w_res
 
@@ -433,8 +447,9 @@ class W_ModuleObject(W_RootObject):
     def method_undef_method(self, space, name):
         w_method = self.find_method(space, name)
         if w_method is None or isinstance(w_method, UndefMethod):
+            cls_name = space.obj_to_s(self)
             raise space.error(space.w_NameError,
-                "undefined method `%s' for class `%s'" % (name, self.name)
+                "undefined method `%s' for class `%s'" % (name, cls_name)
             )
         self.define_method(space, name, UndefMethod(name))
         return self
@@ -443,8 +458,9 @@ class W_ModuleObject(W_RootObject):
     def method_remove_method(self, space, name):
         w_method = self._find_method_pure(space, name, self.version)
         if w_method is None or isinstance(w_method, UndefMethod):
+            cls_name = space.obj_to_s(self)
             raise space.error(space.w_NameError,
-                "method `%s' not defined in %s" % (name, self.name)
+                "method `%s' not defined in %s" % (name, cls_name)
             )
         self.define_method(space, name, UndefMethod(name))
         return self

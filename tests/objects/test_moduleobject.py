@@ -2,6 +2,8 @@
 
 from ..base import BaseTopazTest
 
+import pytest
+
 
 class TestModuleObject(BaseTopazTest):
     def test_name(self, space):
@@ -14,6 +16,24 @@ class TestModuleObject(BaseTopazTest):
         return m::Const
         """)
         assert space.int_w(w_res) == 4
+
+    def test_submodule(self, space):
+        w_res = space.execute("""
+        return Math::DomainError.name
+        """)
+        assert space.str_w(w_res) == "Math::DomainError"
+
+    def test_generated_submodule(self, space):
+        w_res = space.execute("""
+        module Foo
+            module Bar
+                module Baz
+                end
+            end
+        end
+        return Foo::Bar::Baz.name
+        """)
+        assert space.str_w(w_res) == "Foo::Bar::Baz"
 
     def test_module_function(self, space):
         w_res = space.execute("""
@@ -349,6 +369,23 @@ class TestModuleObject(BaseTopazTest):
         return [last_const, m.const_get(last_const)]
         """)
         assert self.unwrap(space, w_res) == ['ZzŻżŹź', 'utf_8_is_legal']
+
+    def test_to_s(self, space):
+        w_res = space.execute("return Kernel.class.to_s")
+        assert space.str_w(w_res) == "Module"
+
+    def test_anon_module_to_s(self, space):
+        w_res = space.execute("return Module.new.to_s")
+        assert space.str_w(w_res).startswith("#<Module:0x")
+
+    @pytest.mark.xfail
+    def test_singletonclass_to_s(self, space):
+        w_res = space.execute("Module.new.singleton_class.to_s")
+        assert space.str_w(w_res).startswith("#<Class:#<Module:0x")
+
+    def test_anon_class_name(self, space):
+        w_res = space.execute("return Module.new.name")
+        assert w_res is space.w_nil
 
 
 class TestMethodVisibility(object):

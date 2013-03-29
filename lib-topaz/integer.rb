@@ -7,4 +7,14 @@ class Integer < Numeric
       current -= 1
     end
   end
+
+  def times(&block)
+    return self.enum_for(:times) unless block
+    i = 0
+    while i < self
+      yield i
+      i += 1
+    end
+    self
+  end
 end

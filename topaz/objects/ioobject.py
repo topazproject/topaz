@@ -184,17 +184,6 @@ class W_IOObject(W_Object):
         os.write(self.fd, end)
         return space.w_nil
 
-    @classdef.method("puts")
-    @jit.look_inside_iff(lambda self, space, args_w: jit.isconstant(len(args_w)))
-    def method_puts(self, space, args_w):
-        self.ensure_not_closed(space)
-        for w_arg in args_w:
-            string = space.str_w(space.send(w_arg, space.newsymbol("to_s")))
-            os.write(self.fd, string)
-            if not string.endswith("\n"):
-                os.write(self.fd, "\n")
-        return space.w_nil
-
     @classdef.method("getc")
     def method_getc(self, space):
         self.ensure_not_closed(space)

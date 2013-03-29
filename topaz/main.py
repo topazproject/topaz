@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import subprocess
 
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
@@ -39,17 +40,31 @@ USAGE = "\n".join([
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
+RUBY_REVISION = subprocess.check_output([
+    "git",
+    "--git-dir", os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".git"),
+    "rev-parse", "--short", "HEAD"
+]).rstrip()
+
 
 
 @specialize.memo()
-def getspace():
-    return ObjectSpace()
+def getspace(config):
+    return ObjectSpace(config)
 
 
-def entry_point(argv):
-    space = getspace()
-    space.setup(argv[0])
-    return _entry_point(space, argv)
+def get_topaz_config_options():
+    return {
+        "translation.continuation": True,
+    }
+
+
+def create_entry_point(config):
+    def entry_point(argv):
+        space = getspace(config)
+        space.setup(argv[0])
+        return _entry_point(space, argv)
+    return entry_point
 
 
 class CommandLineError(Exception):
@@ -93,12 +108,12 @@ def _parse_argv(space, argv):
             raise ShortCircuitError(COPYRIGHT)
         elif arg == "--version":
             raise ShortCircuitError("%s\n" % space.str_w(
-                    space.send(
-                        space.w_object,
-                        space.newsymbol("const_get"),
-                        [space.newstr_fromstr("RUBY_DESCRIPTION")]
-                    )
-                ))
+                space.send(
+                    space.w_object,
+                    space.newsymbol("const_get"),
+                    [space.newstr_fromstr("RUBY_DESCRIPTION")]
+                )
+            ))
         elif arg == "-v":
             flag_globals_w["$-v"] = space.w_true
             flag_globals_w["$VERBOSE"] = space.w_true
@@ -188,12 +203,13 @@ def _entry_point(space, argv):
     engine = "topaz"
     version = "1.9.3"
     patchlevel = 125
-    description = "%s (ruby-%sp%d) [%s]" % (engine, version, patchlevel, platform)
+    description = "%s (ruby-%sp%d) (git rev %s) [%s]" % (engine, version, patchlevel, RUBY_REVISION, platform)
     space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
     space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
     space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
     space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
+    space.set_const(space.w_object, "RUBY_REVISION", space.newstr_fromstr(RUBY_REVISION))
 
     try:
         (

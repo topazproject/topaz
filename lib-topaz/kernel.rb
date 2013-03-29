@@ -45,20 +45,30 @@ module Kernel
   def `(cmd)
     cmd = cmd.to_str if cmd.respond_to?(:to_str)
     raise TypeError.new("can't convert #{cmd.class} into String") unless cmd.is_a?(String)
-    IO.popen(cmd) { |r| r.read }
+    res = ''
+    IO.popen(cmd) do |r|
+      res << r.read
+      Process.waitpid(r.pid)
+    end
+    res
   end
 
-  def rand(max = 0)
-    random = Random.new.rand
-    if max.is_a? Range
-      (max.last - max.first) * random + max.first
-    else
-      max = max.to_int.abs
-      if max.zero?
-        random
-      else
-        (max * random).to_int
+  def to_enum(method = :each, *args)
+    Enumerator.new(self, method, *args)
+  end
+
+  alias :enum_for :to_enum
+
+  def rand(max = 1.0)
+    if max.is_a?(Numeric)
+      if max < 0
+        return Random.rand(-max)
+      elsif max.zero?
+        return Random.rand
+      elsif max.is_a?(Float) and max > 1
+        return Random.rand(max).ceil
       end
     end
+    Random.rand(max)
   end
 end

@@ -1,4 +1,3 @@
 fails:Method#unbind returns a String containing 'UnboundMethod'
-fails:Method#unbind returns a String containing the method name
 fails:Method#unbind returns a String containing the Module the method is defined in
 fails:Method#unbind returns a String containing the Module the method is referenced from

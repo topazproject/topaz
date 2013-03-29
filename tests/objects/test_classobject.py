@@ -1,6 +1,22 @@
-class TestClassObject(object):
+import pytest
+from ..base import BaseTopazTest
+
+
+class TestClassObject(BaseTopazTest):
     def test_name(self, space):
         space.execute("Class")
+
+    def test_generated_subclass(self, space):
+        w_res = space.execute("""
+        class Foo
+            class Bar
+                class Baz
+                end
+            end
+        end
+        return Foo::Bar::Baz.name
+        """)
+        assert space.str_w(w_res) == "Foo::Bar::Baz"
 
     def test_to_s(self, space):
         w_res = space.execute("return 1.class.to_s")
@@ -8,6 +24,33 @@ class TestClassObject(object):
 
         w_res = space.execute("return 1.class.class.to_s")
         assert space.str_w(w_res) == "Class"
+
+    def test_anon_class_to_s(self, space):
+        w_res = space.execute("return Class.new.to_s")
+        assert space.str_w(w_res).startswith("#<Class:0x")
+
+        w_res = space.execute("return Class.new.new.to_s")
+        assert space.str_w(w_res).startswith("#<#<Class:0x")
+
+    @pytest.mark.xfail
+    def test_singletonclass_to_s(self, space):
+        w_res = space.execute("Class.new.singleton_class.to_s")
+        assert space.str_w(w_res).startswith("#<Class:#<Class:0x")
+
+    def test_anon_class_name(self, space):
+        w_res = space.execute("return Class.new.name")
+        assert w_res is space.w_nil
+
+    def test_anon_class_method_missing_raises(self, space):
+        with self.raises(space, "NoMethodError"):
+            space.execute("""
+            class A; end
+            Class.new.does_not_exist
+            """)
+
+    def test_singletonclass_name(self, space):
+        w_res = space.execute("Class.new.singleton_class.name")
+        assert w_res is space.w_nil
 
     def test_class_new(self, space):
         w_res = space.execute("return Class.new.superclass.name")
