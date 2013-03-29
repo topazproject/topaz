@@ -95,11 +95,11 @@ class W_RandomObject(W_Object):
             return space.newint(int(random * max))
 
     def _generate_seed(self):
-        # TODO: /dev/urandom is not available everywhere.
-        file = os.open('/dev/urandom', os.R_OK, 0644)
         seed = 0
-        bytes = os.read(file, 4)
-        for i in range(len(bytes)):
-            seed = seed * 0xff + ord(bytes[i])
-        os.close(file)
+        if os.access('/dev/urandom', os.R_OK):
+            file = os.open('/dev/urandom', os.R_OK, 0644)
+            bytes = os.read(file, 4)
+            os.close(file)
+            for i in range(len(bytes)):
+                seed = seed * 0xff + ord(bytes[i])
         return seed + int(time.time())
