@@ -23,7 +23,9 @@ class RubySorter(TimSort):
         if w_cmp_res is self.space.w_nil:
             raise self.space.error(
                 self.space.w_ArgumentError,
-                "comparison of %s with %s failed" % (self.space.getclass(a).name, self.space.getclass(b).name)
+                "comparison of %s with %s failed" %
+                (self.space.obj_to_s(self.space.getclass(a)),
+                   self.space.obj_to_s(self.space.getclass(b)))
             )
         else:
             return self.space.int_w(w_cmp_res) < 0
@@ -276,4 +278,27 @@ class W_ArrayObject(W_Object):
     @classdef.method("sort!")
     def method_sort(self, space, block):
         RubySorter(space, self.items_w, sortblock=block).sort()
+        return self
+
+    @classdef.method("reverse!")
+    @check_frozen()
+    def method_reverse_i(self, space):
+        self.items_w.reverse()
+        return self
+
+    @classdef.method("rotate!", n="int")
+    @check_frozen()
+    def method_rotate_i(self, space, n=1): 
+        length = len(self.items_w)
+        if length == 0:
+            return self
+        if abs(n) >= length:
+            n %= length
+        if n < 0:
+            n += length
+        if n == 0: 
+            return self
+        assert n >= 0       
+        self.items_w.extend(self.items_w[:n])
+        del self.items_w[:n]
         return self

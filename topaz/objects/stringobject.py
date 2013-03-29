@@ -297,8 +297,8 @@ class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
     classdef.include_module(Comparable)
 
-    def __init__(self, space, storage, strategy):
-        W_Object.__init__(self, space)
+    def __init__(self, space, storage, strategy, klass=None):
+        W_Object.__init__(self, space, klass)
         self.str_storage = storage
         self.strategy = strategy
 
@@ -394,7 +394,9 @@ class W_StringObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_s=None):
-        return space.newstr_fromstr("")
+        strategy = space.fromcache(ConstantStringStrategy)
+        storage = strategy.erase("")
+        return W_StringObject(space, storage, strategy, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_s=None):
@@ -535,7 +537,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" % space.getclass(w_sub).name
+                "type mismatch: %s given" %
+                    space.obj_to_s(space.getclass(w_sub))
             )
 
     @classdef.method("rindex", end="int")
@@ -562,7 +565,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" % space.getclass(w_sub).name
+                "type mismatch: %s given" %
+                    space.obj_to_s(space.getclass(w_sub))
             )
         if idx < 0:
             return space.w_nil
@@ -636,7 +640,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" % space.getclass(w_sep).name
+                "wrong argument type %s (expected Regexp)" %
+                    space.obj_to_s(space.getclass(w_sep))
             )
 
     @classdef.method("swapcase!")
@@ -853,7 +858,8 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" % space.getclass(w_replacement).name
+                "wrong argument type %s (expected Regexp)" %
+                    space.obj_to_s(space.getclass(w_replacement))
             )
 
     def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, first_only):

@@ -1,4 +1,3 @@
-fails:IO#gets with ASCII separator returns the separator's character representation
 fails:IO#gets with no separator returns tainted strings
 fails:IO#gets with no separator updates lineno with each invocation
 fails:IO#gets with no separator updates $. with each invocation

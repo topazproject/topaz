@@ -11,10 +11,7 @@ class Array
         return self.replace(size_or_arr.to_ary)
       end
     end
-    if !size_or_arr.respond_to?(:to_int)
-      raise TypeError.new("can't convert #{size_or_arr.class} into Integer")
-    end
-    length = size_or_arr.to_int
+    length = Topaz.convert_type(size_or_arr, Fixnum, :to_int)
     raise ArgumentError.new("negative array size") if length < 0
     if block
       # TODO: Emit "block supersedes default value argument" warning
@@ -31,7 +28,7 @@ class Array
 
   def inspect
     result = "["
-    recursion = Thread.current.recursion_guard(self) do
+    recursion = Thread.current.recursion_guard(:array_inspect, self) do
       self.each_with_index do |obj, i|
         if i > 0
           result << ", "
@@ -61,7 +58,8 @@ class Array
     self[idx]
   end
 
-  def each
+  def each(&block)
+    return self.enum_for(:each) unless block
     i = 0
     while i < self.length
       yield self[i]
@@ -111,8 +109,9 @@ class Array
     detect { |arr| arr.is_a?(Array) && arr[1] == value }
   end
 
-  def delete_if
+  def delete_if(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    return self.enum_for(:delete_if) unless block
     i = 0
     c = 0
     sz = self.size
@@ -137,13 +136,17 @@ class Array
     return nil
   end
 
-  def first
-    return self[0]
+  def first(*args)
+    if args.empty?
+      self[0]
+    else
+      take(*args)
+    end
   end
 
   def flatten(level = -1)
     list = []
-    recursion = Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_flatten, self) do
       self.each do |item|
         if level == 0
           list << item
@@ -155,9 +158,7 @@ class Array
       end
       return list
     end
-    if recursion
-      raise ArgumentError.new("tried to flatten recursive array")
-    end
+    raise ArgumentError.new("tried to flatten recursive array")
   end
 
   def flatten!(level = -1)
@@ -183,7 +184,7 @@ class Array
     if self.size != other.size
       return false
     end
-    Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_equals, self) do
       self.each_with_index do |x, i|
         if x != other[i]
           return false
@@ -203,7 +204,7 @@ class Array
     if self.length != other.length
       return false
     end
-    Thread.current.recursion_guard(self) do
+    Thread.current.recursion_guard(:array_eqlp, self) do
       self.each_with_index do |x, i|
         if !x.eql?(other[i])
           return false
@@ -224,15 +225,7 @@ class Array
 
   def *(arg)
     return join(arg) if arg.respond_to? :to_str
-
-    # MRI error cases
-    argcls = arg.class
-    begin
-      arg = arg.to_int
-    rescue Exception
-      raise TypeError.new("can't convert #{argcls} into Fixnum")
-    end
-    raise TypeError.new("can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)") if arg.class != Fixnum
+    arg = Topaz.convert_type(arg, Fixnum, :to_int)
     raise ArgumentError.new("Count cannot be negative") if arg < 0
 
     return [] if arg == 0
@@ -293,7 +286,27 @@ class Array
   end
 
   def each_index(&block)
+    return self.enum_for(:each_index) unless block
     0.upto(size - 1, &block)
     self
   end
+
+  def reverse
+    self.dup.reverse!
+  end
+
+  def reverse_each(&block)
+    return self.enum_for(:reverse_each) unless block
+    i = self.length - 1
+    while i >= 0
+      yield self[i]
+      i -= 1
+    end
+    return self
+  end
+
+  def rotate(n = 1)
+    Array.new(self).rotate!(n)
+  end
+
 end

@@ -26,7 +26,7 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return [Math.acosh(1), Math.acosh(2)]")
         assert self.unwrap(space, w_res) == [0, math.acosh(2)]
 
-        with self.raises(space, "DomainError", 'Numerical argument is out of domain - "acosh"'):
+        with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "acosh"'):
             space.execute("Math.acosh(0)")
 
     def test_asin(self, space):
@@ -49,7 +49,7 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return [Math.atanh(1), Math.atanh(-1), Math.atanh(0), Math.atanh(0.5)]")
         assert self.unwrap(space, w_res) == [float("inf"), float("-inf"), 0, math.atanh(0.5)]
 
-        with self.raises(space, "DomainError", 'Numerical argument is out of domain - "atanh"'):
+        with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "atanh"'):
             space.execute("Math.atanh(2)")
 
     def test_cbrt(self, space):
@@ -100,9 +100,9 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return Math.gamma(Float::INFINITY)")
         assert space.float_w(w_res) == float("inf")
 
-        with self.raises(space, "DomainError", 'Numerical argument is out of domain - "gamma"'):
+        with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "gamma"'):
             space.execute("""Math.gamma(-1)""")
-        with self.raises(space, "DomainError", 'Numerical argument is out of domain - "gamma"'):
+        with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "gamma"'):
             space.execute("""Math.gamma(-Float::INFINITY)""")
 
         w_res = space.execute("return Math.gamma(Float::NAN)")
@@ -117,7 +117,7 @@ class TestMath(BaseTopazTest):
         assert self.unwrap(space, w_res) == 1234
 
     def test_log(self, space):
-        with self.raises(space, "DomainError", 'Numerical argument is out of domain - "log"'):
+        with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "log"'):
             space.execute("Math.log(-1)")
 
         w_res = space.execute("return Math.log(0)")
@@ -133,7 +133,7 @@ class TestMath(BaseTopazTest):
         self.assert_float_equal(space.float_w(w_res), math.log(3, 4))
 
     def test_log10(self, space):
-        with self.raises(space, "DomainError", 'Numerical argument is out of domain - "log10"'):
+        with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "log10"'):
             space.execute("Math.log10(-1)")
 
         w_res = space.execute("return Math.log10(0)")
@@ -146,7 +146,7 @@ class TestMath(BaseTopazTest):
         assert space.float_w(w_res) == 1.0
 
     def test_log2(self, space):
-        with self.raises(space, "DomainError", 'Numerical argument is out of domain - "log2"'):
+        with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "log2"'):
             space.execute("Math.log2(-1)")
 
         w_res = space.execute("return Math.log2(0)")

@@ -28,12 +28,15 @@ class W_FileObject(W_IOObject):
         if IS_WINDOWS:
             w_alt_seperator = space.newstr_fromstr("\\")
             w_fnm_syscase = space.newint(0x08)
+            w_devnull = space.newstr_fromstr("NUL")
         else:
             w_alt_seperator = space.w_nil
             w_fnm_syscase = space.newint(0)
+            w_devnull = space.newstr_fromstr("/dev/null")
         space.set_const(w_cls, "SEPARATOR", space.newstr_fromstr("/"))
         space.set_const(w_cls, "ALT_SEPARATOR", w_alt_seperator)
         space.set_const(w_cls, "PATH_SEPARATOR", space.newstr_fromstr(os.pathsep))
+        space.set_const(w_cls, "NULL", w_devnull)
         space.set_const(w_cls, "FNM_SYSCASE", w_fnm_syscase)
         space.set_const(w_cls, "FNM_NOESCAPE", space.newint(FNM_NOESCAPE))
         space.set_const(w_cls, "FNM_PATHNAME", space.newint(FNM_PATHNAME))
@@ -101,6 +104,12 @@ class W_FileObject(W_IOObject):
     def method_dirname(self, space, path):
         if "/" not in path:
             return space.newstr_fromstr(".")
+        if path == "/":
+            return space.newstr_fromstr("/")
+        if path.endswith("/"):
+            newlen = len(path) - 1
+            assert newlen >= 0
+            path = path[:newlen]
         idx = path.rfind("/")
         while idx > 0 and path[idx - 1] == "/":
             idx -= 1
@@ -144,11 +153,12 @@ class W_FileObject(W_IOObject):
         result = []
         for w_arg in args_w:
             if isinstance(w_arg, W_ArrayObject):
-                with space.getexecutioncontext().recursion_guard(w_arg) as in_recursion:
+                ec = space.getexecutioncontext()
+                with ec.recursion_guard("file_singleton_method_join", w_arg) as in_recursion:
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(
-                        W_FileObject.singleton_method_join(self, space, space.listview(w_arg))
+                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
                     )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
@@ -198,11 +208,16 @@ class W_FileObject(W_IOObject):
         return space.newbool(file_stat.st_dev == other_stat.st_dev and
                 file_stat.st_ino == other_stat.st_ino)
 
-    @classdef.singleton_method("basename", filename="path")
-    def method_basename(self, space, filename):
+    @classdef.singleton_method("basename", filename="path", suffix="path")
+    def method_basename(self, space, filename, suffix=None):
         i = filename.rfind("/") + 1
         assert i >= 0
-        return space.newstr_fromstr(filename[i:])
+        filename = filename[i:]
+        if suffix is not None and filename.endswith(suffix):
+            end = len(filename) - len(suffix)
+            assert end >= 0
+            filename = filename[:end]
+        return space.newstr_fromstr(filename)
 
     @classdef.singleton_method("umask", mask="int")
     def method_umask(self, space, mask=-1):
@@ -389,11 +404,11 @@ class W_FileStatObject(W_Object):
 
     @classdef.method("setgid?")
     def method_setgidp(self, space):
-        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISGID)
+        return space.newbool(bool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISGID))
 
     @classdef.method("setuid?")
     def method_setuidp(self, space):
-        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISUID)
+        return space.newbool(bool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISUID))
 
     @classdef.method("size")
     def method_size(self, space):
@@ -405,7 +420,7 @@ class W_FileStatObject(W_Object):
 
     @classdef.method("sticky?")
     def method_stickyp(self, space):
-        return space.newbool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISVTX)
+        return space.newbool(bool(stat.S_IMODE(self.get_stat(space).st_mode) & stat.S_ISVTX))
 
     @classdef.method("symlink?")
     def method_symlinkp(self, space):

@@ -1,3 +1,0 @@
-fails:Float#-@ returns negative infinity for positive infinity
-fails:Float#-@ returns positive infinity for negative infinity
-fails:Float#-@ returns NaN for NaN

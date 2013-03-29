@@ -17,6 +17,9 @@ class W_FunctionObject(W_BaseObject):
         obj.w_class = copy.deepcopy(self.w_class, memo)
         return obj
 
+    def arity(self, space):
+        return space.newint(0)
+
 
 class W_UserFunction(W_FunctionObject):
     _immutable_fields_ = ["bytecode", "lexical_scope"]
@@ -42,6 +45,13 @@ class W_UserFunction(W_FunctionObject):
         with space.getexecutioncontext().visit_frame(frame):
             frame.handle_args(space, self.bytecode, args_w, block)
             return space.execute_frame(frame, self.bytecode)
+
+    def arity(self, space):
+        args_count = len(self.bytecode.arg_pos) - len(self.bytecode.defaults)
+        if len(self.bytecode.defaults) > 0 or self.bytecode.splat_arg_pos != -1:
+            args_count = -(args_count + 1)
+
+        return space.newint(args_count)
 
 
 class W_BuiltinFunction(W_FunctionObject):

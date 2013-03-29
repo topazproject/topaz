@@ -1,5 +1,15 @@
 module Enumerable
-  def map
+  def first(*args)
+    if args.empty?
+      self.each { |e| return e }
+      nil
+    else
+      take(*args)
+    end
+  end
+
+  def map(&block)
+    return self.enum_for(:map) unless block
     result = []
     self.each do |x|
       result << (yield x)
@@ -9,9 +19,25 @@ module Enumerable
 
   alias collect map
 
-  def inject(memo)
-    self.each do |x|
-      memo = (yield memo, x)
+  def inject(*args)
+    dropped = 0
+    meth = nil
+    case args.length
+    when 0
+      memo = self.first
+      dropped = 1
+    when 1
+      memo = args[0]
+    when 2
+      memo = args[0]
+      meth = args[1]
+    end
+    self.drop(dropped).each do |x|
+      if meth
+        memo = memo.send(meth, x)
+      else
+        memo = (yield memo, x)
+      end
     end
     memo
   end
@@ -41,6 +67,7 @@ module Enumerable
   end
 
   def select(&block)
+    return self.enum_for(:select) unless block
     result = []
     self.each do |o|
       if block.call(o)
@@ -87,6 +114,7 @@ module Enumerable
   alias entries to_a
 
   def detect(ifnone = nil, &block)
+    return self.enum_for(:detect) unless block
     self.each do |o|
       return o if block.call(o)
     end
@@ -95,6 +123,7 @@ module Enumerable
   alias find detect
 
   def take(n)
+    n = Topaz.convert_type(n, Fixnum, :to_int)
     raise ArgumentError.new("attempt to take negative size") if n < 0
     result = []
     unless n == 0
@@ -121,5 +150,25 @@ module Enumerable
       result << o unless yield(o)
     end
     result
+  end
+
+  def min
+    inject do |minimum, current|
+      if minimum > current
+        current
+      else
+        minimum
+      end
+    end
+  end
+
+  def max
+    inject do |maximum, current|
+      if maximum < current
+        current
+      else
+        maximum
+      end
+    end
   end
 end

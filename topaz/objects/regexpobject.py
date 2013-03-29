@@ -223,7 +223,7 @@ class W_RegexpObject(W_Object):
 
     @classdef.method("casefold?")
     def method_casefoldp(self, space):
-        return space.newbool(self.flags & regexp.IGNORE_CASE)
+        return space.newbool(bool(self.flags & regexp.IGNORE_CASE))
 
     @classdef.singleton_method("escape", string="str")
     def method_escape(self, space, string):

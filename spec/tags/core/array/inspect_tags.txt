@@ -1,6 +1,3 @@
-fails:Array#inspect returns '[]' for an empty Array
-fails:Array#inspect calls inspect on its elements and joins the results with commas
-fails:Array#inspect represents a recursive element with '[...]'
 fails:Array#inspect taints the result if the Array is non-empty and tainted
 fails:Array#inspect taints the result if an element is tainted
 fails:Array#inspect untrusts the result if the Array is untrusted

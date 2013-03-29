@@ -1,6 +1,7 @@
 from rpython.rlib import jit
 
 from topaz.closure import LocalCell
+from topaz.objects.arrayobject import W_ArrayObject
 
 
 class BaseFrame(object):
@@ -39,9 +40,17 @@ class Frame(BaseFrame):
         self.cells[pos].set(space, self, pos, w_value)
 
     def handle_block_args(self, space, bytecode, args_w, block):
+        if (len(args_w) == 1 and
+            isinstance(args_w[0], W_ArrayObject) and len(bytecode.arg_pos) >= 2):
+            w_arg = args_w[0]
+            assert isinstance(w_arg, W_ArrayObject)
+            args_w = w_arg.items_w
         minargc = len(bytecode.arg_pos) - len(bytecode.defaults)
         if len(args_w) < minargc:
             args_w.extend([space.w_nil] * (minargc - len(args_w)))
+        if bytecode.splat_arg_pos == -1:
+            if len(args_w) > len(bytecode.arg_pos):
+                del args_w[len(bytecode.arg_pos):]
         return self.handle_args(space, bytecode, args_w, block)
 
     @jit.unroll_safe

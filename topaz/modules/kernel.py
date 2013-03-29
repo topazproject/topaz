@@ -10,9 +10,12 @@ from topaz.coerce import Coerce
 from topaz.error import RubyError, error_for_oserror
 from topaz.module import Module, ModuleDef
 from topaz.modules.process import Process
+from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.stringobject import W_StringObject
+from topaz.objects.classobject import W_ClassObject
+from topaz.objects.moduleobject import W_ModuleObject
 
 
 class Kernel(Module):
@@ -230,7 +233,19 @@ class Kernel(Module):
 
     @moduledef.method("respond_to?", include_private="bool")
     def method_respond_top(self, space, w_name, include_private=False):
-        return space.newbool(space.respond_to(self, w_name))
+        if space.respond_to(self, w_name):
+            return space.newbool(True)
+
+        w_found = space.send(
+            self,
+            space.newsymbol("respond_to_missing?"),
+            [w_name, space.newbool(include_private)]
+        )
+        return space.newbool(space.is_true(w_found))
+
+    @moduledef.method("respond_to_missing?")
+    def method_respond_to_missingp(self, space, w_name, w_include_private):
+        return space.newbool(False)
 
     @moduledef.method("dup")
     def method_dup(self, space):
@@ -298,12 +313,19 @@ class Kernel(Module):
 
     @moduledef.method("instance_of?")
     def method_instance_of(self, space, w_mod):
+        if not isinstance(w_mod, W_ModuleObject):
+            raise space.error(space.w_TypeError, "class or module required")
         return space.newbool(space.getnonsingletonclass(self) is w_mod)
 
     @moduledef.method("eval")
-    def method_eval(self, space, w_source):
-        frame = space.getexecutioncontext().gettoprubyframe()
-        w_binding = space.newbinding_fromframe(frame)
+    def method_eval(self, space, w_source, w_binding=None):
+        if w_binding is None:
+            frame = space.getexecutioncontext().gettoprubyframe()
+            w_binding = space.newbinding_fromframe(frame)
+        elif not isinstance(w_binding, W_BindingObject):
+            raise space.error(space.w_TypeError,
+                "wrong argument type %s (expected Binding)" % space.getclass(w_binding).name
+            )
         return space.send(w_binding, space.newsymbol("eval"), [w_source])
 
     @moduledef.method("set_trace_func")
