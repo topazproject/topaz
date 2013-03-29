@@ -304,5 +304,4 @@ class Array
     end
     return self
   end
-  
 end
