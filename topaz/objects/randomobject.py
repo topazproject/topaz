@@ -1,4 +1,5 @@
 import os
+import time
 
 from rpython.rlib.rrandom import Random
 
@@ -33,10 +34,7 @@ class W_RandomObject(W_Object):
         previous_seed = self.seed
         self.seed = w_seed
         if w_seed is None:
-            # TODO: /dev/urandom is not available everywhere.
-            file = os.open('/dev/urandom', os.R_OK, 0644)
-            seed = ord(os.read(file, 1)[0])
-            os.close(file)
+            seed = self._generate_seed()
         else:
             seed = Coerce.int(space, w_seed)
         if previous_seed is None:
@@ -95,3 +93,13 @@ class W_RandomObject(W_Object):
             raise space.error(space.w_ArgumentError, "invalid argument")
         else:
             return space.newint(int(random * max))
+
+    def _generate_seed(self):
+        # TODO: /dev/urandom is not available everywhere.
+        file = os.open('/dev/urandom', os.R_OK, 0644)
+        seed = 0
+        bytes = os.read(file, 4)
+        for i in range(len(bytes)):
+            seed = seed * 0xff + ord(bytes[i])
+        os.close(file)
+        return seed + int(time.time())
