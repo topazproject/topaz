@@ -5,25 +5,24 @@ from rpython.rlib.rrandom import Random
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.rangeobject import W_RangeObject
-from topaz.objects.floatobject import W_FloatObject
 from topaz.coerce import Coerce
 
 
 class W_RandomObject(W_Object):
     classdef = ClassDef("Random", W_Object.classdef, filepath=__file__)
 
-    def __init__(self, space, klass=None):
+    def __init__(self, space, seed=0, klass=None):
         W_Object.__init__(self, space, klass)
-        self.random = Random()
+        self.random = Random(abs(seed))
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         default = space.send(w_cls, space.newsymbol("new"))
         space.set_const(w_cls, "DEFAULT", default)
 
-    @classdef.singleton_method("allocate")
-    def method_allocate(self, space, w_seed=None):
-        return W_RandomObject(space, self)
+    @classdef.singleton_method("allocate", seed="int")
+    def method_allocate(self, space, seed=0):
+        return W_RandomObject(space, seed, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_seed=None):
@@ -56,7 +55,7 @@ class W_RandomObject(W_Object):
     def method_rand(self, space, w_max=None):
         if w_max is None:
             return space.newfloat(self.random.random())
-        elif space.is_kind_of(w_max, space.getclassfor(W_FloatObject)):
+        elif space.is_kind_of(w_max, space.w_float):
             return self._rand_float(space, w_max)
         elif space.is_kind_of(w_max, space.getclassfor(W_RangeObject)):
             return self._rand_range(space, w_max)
@@ -77,8 +76,8 @@ class W_RandomObject(W_Object):
         diff = space.send(last, space.newsymbol("-"), [first])
         offset = space.send(diff, space.newsymbol("*"), [space.newfloat(random)])
         choice = space.send(offset, space.newsymbol("+"), [first])
-        if (not space.is_kind_of(first, space.getclassfor(W_FloatObject)) and
-            not space.is_kind_of(last, space.getclassfor(W_FloatObject))):
+        if (not space.is_kind_of(first, space.w_float) and
+            not space.is_kind_of(last, space.w_float)):
             choice = space.send(choice, space.newsymbol("to_i"))
         return choice
 
