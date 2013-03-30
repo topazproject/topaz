@@ -309,4 +309,18 @@ class Array
     Array.new(self).rotate!(n)
   end
 
+  def shuffle!
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    (self.length - 1).downto(1) do |idx|
+      other = rand(idx + 1)
+      self[other], self[idx] = self[idx], self[other]
+    end
+    self
+  end
+
+  def shuffle
+    arr = Array.new(self)
+    arr.shuffle!
+    arr
+  end
 end
