@@ -44,14 +44,12 @@ module Enumerable
 
   alias reduce inject
 
-  def each_with_index(*args, &block)
-    return self.enum_for(:each_with_index, *args) unless block
+  def each_with_index(&block)
     i = 0
     self.each do |obj|
       yield obj, i
       i += 1
     end
-    self
   end
 
   def all?(&block)
