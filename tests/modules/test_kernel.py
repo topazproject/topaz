@@ -265,6 +265,14 @@ class TestKernel(BaseTopazTest):
         w_res = space.execute("return `echo 10`")
         assert self.unwrap(space, w_res) == "10\n"
 
+    def test_backtick_sets_process_status(self, space):
+        w_res = space.execute("""
+        $? = nil
+        `echo`
+        return $?.class.name
+        """)
+        assert self.unwrap(space, w_res) == "Process::Status"
+
 
 class TestRequire(BaseTopazTest):
     def test_simple(self, space, tmpdir):
@@ -388,6 +396,19 @@ class TestRequire(BaseTopazTest):
         require 't'
         return $success
         """ % tmpdir)
+        assert w_res is space.w_true
+
+    def test_path_ambigious_directory_file(self, space, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        $success = true
+        """)
+        tmpdir.join("t").ensure(dir=True)
+        w_res = space.execute("""
+        $LOAD_PATH << '%s'
+        require '%s'
+        return $success
+        """ % (tmpdir, tmpdir.join("t")))
         assert w_res is space.w_true
 
 

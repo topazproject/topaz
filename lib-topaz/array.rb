@@ -11,10 +11,7 @@ class Array
         return self.replace(size_or_arr.to_ary)
       end
     end
-    if !size_or_arr.respond_to?(:to_int)
-      raise TypeError.new("can't convert #{size_or_arr.class} into Integer")
-    end
-    length = size_or_arr.to_int
+    length = Topaz.convert_type(size_or_arr, Fixnum, :to_int)
     raise ArgumentError.new("negative array size") if length < 0
     if block
       # TODO: Emit "block supersedes default value argument" warning
@@ -61,7 +58,8 @@ class Array
     self[idx]
   end
 
-  def each
+  def each(&block)
+    return self.enum_for(:each) unless block
     i = 0
     while i < self.length
       yield self[i]
@@ -227,15 +225,7 @@ class Array
 
   def *(arg)
     return join(arg) if arg.respond_to? :to_str
-
-    # MRI error cases
-    argcls = arg.class
-    begin
-      arg = arg.to_int
-    rescue Exception
-      raise TypeError.new("can't convert #{argcls} into Fixnum")
-    end
-    raise TypeError.new("can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)") if arg.class != Fixnum
+    arg = Topaz.convert_type(arg, Fixnum, :to_int)
     raise ArgumentError.new("Count cannot be negative") if arg < 0
 
     return [] if arg == 0
@@ -288,6 +278,7 @@ class Array
   end
 
   def each_index(&block)
+    return self.enum_for(:each_index) unless block
     0.upto(size - 1, &block)
     self
   end
@@ -297,11 +288,31 @@ class Array
   end
 
   def reverse_each(&block)
+    return self.enum_for(:reverse_each) unless block
     i = self.length - 1
     while i >= 0
       yield self[i]
       i -= 1
     end
     return self
+  end
+
+  def rotate(n = 1)
+    Array.new(self).rotate!(n)
+  end
+
+  def shuffle!
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    (self.length - 1).downto(1) do |idx|
+      other = rand(idx + 1)
+      self[other], self[idx] = self[idx], self[other]
+    end
+    self
+  end
+
+  def shuffle
+    arr = Array.new(self)
+    arr.shuffle!
+    arr
   end
 end

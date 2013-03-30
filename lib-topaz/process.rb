@@ -18,6 +18,12 @@ module Process
       @exitstatus = exitstatus
     end
 
+    def success?
+      @exitstatus == 0
+    end
+
+    alias exited? success?
+
     def pid
       @pid
     end
