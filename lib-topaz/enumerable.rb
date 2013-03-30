@@ -172,7 +172,7 @@ module Enumerable
     return self.enum_for(:max_by) unless block
     max = maxv = nil 
     self.each_with_index do |e, i|
-      ev = block ? block.call(e) : e
+      ev = yield(e)
       max, maxv = e, ev if i == 0 || Topaz.compare(ev, maxv) > 0
     end
     max
@@ -182,7 +182,7 @@ module Enumerable
     return self.enum_for(:min_by) unless block
     min = minv = nil
     self.each_with_index do |e, i|
-      ev = block ? block.call(e) : e
+      ev = yield(e)
       min, minv = e, ev if i == 0 || Topaz.compare(ev, minv) < 0
     end
     min
@@ -201,7 +201,7 @@ module Enumerable
     return self.enum_for(:minmax_by) unless block
     min = max = minv = maxv = nil
     self.each_with_index do |e, i|
-      ev = block ? block.call(e) : e
+      ev = yield(e)
       max, maxv = e, ev if i == 0 || Topaz.compare(ev, maxv) > 0
       min, minv = e, ev if i == 0 || Topaz.compare(ev, minv) < 0
     end
