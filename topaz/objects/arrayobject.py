@@ -3,7 +3,6 @@ import copy
 from rpython.rlib.listsort import TimSort
 
 from topaz.coerce import Coerce
-from topaz.compare import Compare
 from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
@@ -16,7 +15,7 @@ class RubySorter(TimSort):
         self.sortblock = sortblock
 
     def lt(self, a, b):
-        cmp_res = Compare.compare(self.space, a, b, self.sortblock)
+        cmp_res = self.space.compare(self.space, a, b, self.sortblock)
         return self.space.int_w(cmp_res) < 0
 
 class W_ArrayObject(W_Object):

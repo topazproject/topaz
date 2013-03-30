@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from rpython.rlib.rarithmetic import intmask
 
 from topaz.module import Module, ModuleDef
-from topaz.compare import Compare
 from topaz.objects.classobject import W_ClassObject
 
 
@@ -26,5 +25,5 @@ class Topaz(Module):
 
     @moduledef.function("compare")
     def method_compare(self, space, w_a, w_b, block=None):
-        return Compare.compare(space, w_a, w_b, block)
+        return space.compare(space, w_a, w_b, block)
 
