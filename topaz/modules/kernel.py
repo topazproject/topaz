@@ -49,7 +49,7 @@ class Kernel(Module):
     @staticmethod
     def find_feature(space, path):
         assert path is not None
-        if os.path.exists(path):
+        if os.path.isfile(path):
             return path
         if not path.endswith(".rb"):
             path += ".rb"
@@ -59,7 +59,7 @@ class Kernel(Module):
             for w_base in space.listview(w_load_path):
                 base = Coerce.path(space, w_base)
                 full = os.path.join(base, path)
-                if os.path.exists(full):
+                if os.path.isfile(full):
                     path = os.path.join(base, path)
                     break
         return path

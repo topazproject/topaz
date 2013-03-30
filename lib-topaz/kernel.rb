@@ -58,4 +58,17 @@ module Kernel
   end
 
   alias :enum_for :to_enum
+
+  def rand(max = 1.0)
+    if max.is_a?(Numeric)
+      if max < 0
+        return Random.rand(-max)
+      elsif max.zero?
+        return Random.rand
+      elsif max.is_a?(Float) and max > 1
+        return Random.rand(max).ceil
+      end
+    end
+    Random.rand(max)
+  end
 end

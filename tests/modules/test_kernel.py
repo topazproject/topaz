@@ -398,6 +398,19 @@ class TestRequire(BaseTopazTest):
         """ % tmpdir)
         assert w_res is space.w_true
 
+    def test_path_ambigious_directory_file(self, space, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        $success = true
+        """)
+        tmpdir.join("t").ensure(dir=True)
+        w_res = space.execute("""
+        $LOAD_PATH << '%s'
+        require '%s'
+        return $success
+        """ % (tmpdir, tmpdir.join("t")))
+        assert w_res is space.w_true
+
 
 class TestExec(BaseTopazTest):
     def fork_and_wait(self, space, capfd, code):
