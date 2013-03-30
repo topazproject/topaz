@@ -312,7 +312,7 @@ class Array
   def shuffle!
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     self.length.times do |idx|
-      other = self.rand(length)
+      other = rand(length)
       tmp = self[idx]
       self[idx] = self[other]
       self[other] = tmp
