@@ -959,12 +959,7 @@ class Parser(object):
 
     @pg.production("lhs : primary_value COLON2 IDENTIFIER")
     def lhs_colon_identifier(self, p):
-        """
-        primary_value tCOLON2 tIDENTIFIER {
-                    $$ = support.attrset($1, (String) $3.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], None)
 
     @pg.production("lhs : primary_value DOT CONSTANT")
     def lhs_dot_constant(self, p):
