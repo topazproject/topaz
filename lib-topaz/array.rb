@@ -328,18 +328,9 @@ class Array
 
   def rindex(obj = nil, &block)
     return self.enum_for(:rindex) if !obj && !block
-    reverse_each_with_index do |e, i|
+    reverse.each_with_index do |e, i|
       return i if obj ? (e == obj) : block.call(e)
     end
     nil
-  end
-
-  def reverse_each_with_index(&block)
-    i = self.length - 1
-    while i >= 0
-      yield self[i], i
-      i -= 1
-    end
-    self
   end
 end
