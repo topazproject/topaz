@@ -58,6 +58,17 @@ class Array
     self[idx]
   end
 
+  def fetch(*args, &block)
+    i = Topaz.convert_type(args[0], Fixnum, :to_int)
+    if i < -self.length || i >= self.length
+      return block.call(args[0]) if block
+      return args[1] if args.size > 1
+      raise IndexError, "index #{i} outside of array bounds: -#{self.length}...#{self.length}"
+    else
+      self[i]
+    end
+  end
+
   def each(&block)
     return self.enum_for(:each) unless block
     i = 0
@@ -94,7 +105,21 @@ class Array
     reject! { |obj| obj.nil? }
   end
 
+  def select!(&block)
+    return self.enum_for(:select!) unless block
+    new_arr = self.select(&block)
+    if new_arr.size != self.size
+      self.replace(new_arr)
+      self
+    end
+  end
+
+  def keep_if(&block)
+    self.select!(&block) || self
+  end
+
   def reject!(&block)
+    return self.enum_for(:reject!) unless block
     prev_size = self.size
     self.delete_if(&block)
     return nil if prev_size == self.size
@@ -194,6 +219,27 @@ class Array
     return true
   end
 
+  def <=>(other)
+    return 0 if self.equal?(other)
+    unless other.kind_of?(Array)
+      if other.respond_to?(:to_ary)
+        other = other.to_ary
+      else
+        return nil
+      end
+    end
+    cmp_len = (self.size <=> other.size)
+    return cmp_len if cmp_len != 0
+    Thread.current.recursion_guard(:array_comparison, self) do
+      self.each_with_index do |e, i|
+        cmp = (e <=> other[i])
+        return cmp if cmp != 0
+      end
+      return 0
+    end
+    nil
+  end
+
   def eql?(other)
     if self.equal?(other)
       return true
@@ -237,10 +283,13 @@ class Array
   end
 
   def map!(&block)
+    return self.enum_for(:map!) unless block
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     self.each_with_index { |obj, idx| self[idx] = yield(obj) }
     self
   end
+
+  alias :collect! :map!
 
   def max(&block)
     max = self[0]
@@ -307,6 +356,21 @@ class Array
 
   def rotate(n = 1)
     Array.new(self).rotate!(n)
+  end
+
+  def count(*args, &block)
+    c = 0
+    if args.empty?
+      if block
+        self.each { |e| c += 1 if block.call(e) }
+      else
+        c = self.length
+      end
+    else
+      arg = args[0]
+      self.each { |e| c += 1 if e == arg }
+    end
+    c
   end
 
   def shuffle!
