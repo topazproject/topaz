@@ -95,6 +95,7 @@ class Array
   end
 
   def reject!(&block)
+    return self.enum_for(:reject!) unless block
     prev_size = self.size
     self.delete_if(&block)
     return nil if prev_size == self.size
@@ -237,10 +238,13 @@ class Array
   end
 
   def map!(&block)
+    return self.enum_for(:map!) unless block
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     self.each_with_index { |obj, idx| self[idx] = yield(obj) }
     self
   end
+
+  alias :collect! :map!
 
   def max(&block)
     max = self[0]
