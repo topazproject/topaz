@@ -329,7 +329,7 @@ class Array
   def rindex(obj = nil, &block)
     return self.enum_for(:rindex) if !obj && !block
     reverse.each_with_index do |e, i|
-      return i if obj ? (e == obj) : block.call(e)
+      return length - i - 1 if obj ? (e == obj) : block.call(e)
     end
     nil
   end
