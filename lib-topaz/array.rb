@@ -58,6 +58,17 @@ class Array
     self[idx]
   end
 
+  def fetch(*args, &block)
+    i = Topaz.convert_type(args[0], Fixnum, :to_int)
+    if i < -self.length || i >= self.length
+      return block.call(args[0]) if block
+      return args[1] if args.size > 1
+      raise IndexError.new("index #{i} outside of array bounds: -#{self.length}...#{self.length}")
+    else
+      self[i]
+    end
+  end
+
   def each(&block)
     return self.enum_for(:each) unless block
     i = 0
