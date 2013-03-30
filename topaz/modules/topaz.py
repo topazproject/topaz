@@ -25,5 +25,5 @@ class Topaz(Module):
 
     @moduledef.function("compare")
     def method_compare(self, space, w_a, w_b, block=None):
-        return space.compare(space, w_a, w_b, block)
+        return space.compare(w_a, w_b, block)
 
