@@ -77,6 +77,8 @@ module Enumerable
     result
   end
 
+  alias :find_all :select
+
   def include?(obj)
     self.each do |o|
       return true if o == obj
@@ -136,6 +138,7 @@ module Enumerable
   end
 
   def take_while(&block)
+    return self.enum_for(:take_while) unless block
     result = []
     self.each do |o|
       break unless yield(o)
@@ -145,6 +148,7 @@ module Enumerable
   end
 
   def reject(&block)
+    return self.enum_for(:reject) unless block
     result = []
     self.each do |o|
       result << o unless yield(o)
