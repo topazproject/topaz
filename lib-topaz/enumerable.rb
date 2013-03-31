@@ -176,6 +176,15 @@ module Enumerable
     end
   end
 
+  def partition(&block)
+    return self.enum_for(:partition) unless block
+    a, b = [], []
+    self.each do |e|
+      block.call(e) ? a.push(e) : b.push(e)
+    end
+    [a, b]
+  end
+
   def count(*args, &block)
     c = 0
     if args.empty?
