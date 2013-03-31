@@ -22,3 +22,8 @@ class Topaz(Module):
         if not isinstance(w_type, W_ClassObject):
             raise space.error(space.w_TypeError, "type argument must be a class")
         return space.convert_type(w_obj, w_type, method)
+
+    @moduledef.function("compare")
+    def method_compare(self, space, w_a, w_b, block=None):
+        return space.compare(w_a, w_b, block)
+
