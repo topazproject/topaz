@@ -348,6 +348,11 @@ class TestParser(BaseTopazTest):
             ))
         ]))
 
+    def test_colon_attr_assignment(self, space):
+        assert space.parse("a::b = nil") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "b", [], None, 1), ast.Nil()))
+        ]))
+
     def test_splat_rhs_assignment(self, space):
         assert space.parse("a,b,c = *[1,2,3]") == ast.Main(ast.Block([
             ast.Statement(ast.MultiAssignment(
