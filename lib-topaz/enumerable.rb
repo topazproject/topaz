@@ -77,6 +77,8 @@ module Enumerable
     result
   end
 
+  alias :find_all :select
+
   def include?(obj)
     self.each do |o|
       return true if o == obj
@@ -136,6 +138,7 @@ module Enumerable
   end
 
   def take_while(&block)
+    return self.enum_for(:take_while) unless block
     result = []
     self.each do |o|
       break unless yield(o)
@@ -145,6 +148,7 @@ module Enumerable
   end
 
   def reject(&block)
+    return self.enum_for(:reject) unless block
     result = []
     self.each do |o|
       result << o unless yield(o)
@@ -208,4 +212,27 @@ module Enumerable
     [min, max]
   end
 
+  def partition(&block)
+    return self.enum_for(:partition) unless block
+    a, b = [], []
+    self.each do |e|
+      block.call(e) ? a.push(e) : b.push(e)
+    end
+    [a, b]
+  end
+
+  def count(*args, &block)
+    c = 0
+    if args.empty?
+      if block
+        self.each { |e| c += 1 if block.call(e) }
+      else
+        self.each { c += 1 }
+      end
+    else
+      arg = args[0]
+      self.each { |e| c += 1 if e == arg }
+    end
+    c
+  end
 end
