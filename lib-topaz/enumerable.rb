@@ -171,4 +171,19 @@ module Enumerable
       end
     end
   end
+
+  def count(*args, &block)
+    c = 0
+    if args.empty?
+      if block
+        self.each { |e| c += 1 if block.call(e) }
+      else
+        self.each { c += 1 }
+      end
+    else
+      arg = args[0]
+      self.each { |e| c += 1 if e == arg }
+    end
+    c
+  end
 end
