@@ -320,6 +320,21 @@ class Array
     Array.new(self).rotate!(n)
   end
 
+  def count(*args, &block)
+    c = 0
+    if args.empty?
+      if block
+        self.each { |e| c += 1 if block.call(e) }
+      else
+        c = self.length
+      end
+    else
+      arg = args[0]
+      self.each { |e| c += 1 if e == arg }
+    end
+    c
+  end
+
   def shuffle!
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     (self.length - 1).downto(1) do |idx|
