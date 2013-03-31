@@ -320,6 +320,24 @@ class Array
     return self
   end
 
+  def index(obj = nil, &block)
+    return self.enum_for(:index) if !obj && !block
+    each_with_index do |e, i|
+      return i if obj ? (e == obj) : block.call(e)
+    end
+    nil
+  end
+
+  alias :find_index :index
+
+  def rindex(obj = nil, &block)
+    return self.enum_for(:rindex) if !obj && !block
+    reverse.each_with_index do |e, i|
+      return length - i - 1 if obj ? (e == obj) : block.call(e)
+    end
+    nil
+  end
+
   def rotate(n = 1)
     Array.new(self).rotate!(n)
   end
