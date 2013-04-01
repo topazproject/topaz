@@ -257,14 +257,6 @@ class Array
 
   alias :collect! :map!
 
-  def max(&block)
-    max = self[0]
-    self.each do |e|
-      max = e if (block ? block.call(max, e) : max <=> e) < 0
-    end
-    max
-  end
-
   def uniq!(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     seen = {}
