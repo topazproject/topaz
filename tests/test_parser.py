@@ -831,6 +831,9 @@ class TestParser(BaseTopazTest):
         assert space.parse("x[0] = 5") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [ast.ConstantInt(0)], 1), ast.ConstantInt(5)))
         ]))
+        assert space.parse("x[] = 5") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [], 1), ast.ConstantInt(5)))
+        ]))
 
     def test_def(self, space):
         assert space.parse("def f() end") == ast.Main(ast.Block([

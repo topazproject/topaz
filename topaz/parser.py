@@ -951,7 +951,8 @@ class Parser(object):
 
     @pg.production("lhs : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def lhs_subscript(self, p):
-        return BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno))
+        args = p[2].getcallargs() if p[2] is not None else []
+        return BoxAST(ast.Subscript(p[0].getast(), args, p[1].getsourcepos().lineno))
 
     @pg.production("lhs : primary_value DOT IDENTIFIER")
     def lhs_dot_identifier(self, p):
