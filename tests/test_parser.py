@@ -835,6 +835,11 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [], 1), ast.ConstantInt(5)))
         ]))
 
+    def test_subscript_augmented_assignment(self, space):
+        assert space.parse("x[] += 5") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("+", ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [], 1), ast.ConstantInt(5)))
+        ]))
+
     def test_def(self, space):
         assert space.parse("def f() end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))

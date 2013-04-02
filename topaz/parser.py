@@ -1182,9 +1182,10 @@ class Parser(object):
 
     @pg.production("arg : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN arg")
     def arg_subscript_op_asgn_arg(self, p):
+        args = p[2].getcallargs() if p[2] is not None else []
         return self.new_augmented_assignment(
             p[4],
-            BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno)),
+            BoxAST(ast.Subscript(p[0].getast(), args, p[1].getsourcepos().lineno)),
             p[5],
         )
 
