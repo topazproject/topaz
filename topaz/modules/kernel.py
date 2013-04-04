@@ -309,6 +309,8 @@ class Kernel(Module):
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")
     def method_is_kind_ofp(self, space, w_mod):
+        if not isinstance(w_mod, W_ModuleObject):
+            raise space.error(space.w_TypeError, "class or module required")
         return space.newbool(self.is_kind_of(space, w_mod))
 
     @moduledef.method("instance_of?")
