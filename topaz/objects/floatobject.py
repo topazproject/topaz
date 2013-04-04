@@ -6,7 +6,7 @@ from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
-    NAN, INFINITY)
+    NAN, INFINITY, isfinite)
 
 from topaz.error import RubyError
 from topaz.module import ClassDef
@@ -232,6 +232,10 @@ class W_FloatObject(W_NumericObject):
         if math.isinf(self.floatvalue):
             return space.newint(int(math.copysign(1, self.floatvalue)))
         return space.w_nil
+
+    @classdef.method("finite?")
+    def method_finite(self, space):
+        return space.newbool(isfinite(self.floatvalue))
 
     @classdef.method("nan?")
     def method_nan(self, space):
