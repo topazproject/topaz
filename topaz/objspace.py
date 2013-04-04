@@ -148,9 +148,10 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
-            self.w_symbol, self.w_class, self.w_module, self.w_hash,
-            self.w_regexp, self.w_method, self.w_unbound_method, self.w_io,
+            self.w_numeric, self.w_fixnum, self.w_bignum, self.w_float,
+            self.w_string, self.w_symbol, self.w_class, self.w_module,
+            self.w_hash, self.w_regexp, self.w_method, self.w_unbound_method,
+            self.w_io,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
