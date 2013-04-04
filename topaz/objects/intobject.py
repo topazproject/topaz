@@ -294,3 +294,9 @@ class W_FixnumObject(W_RootObject):
             raise space.error(space.w_RangeError, "%d out of char range" % self.intvalue)
         else:
             return space.newstr_fromstr(chr(self.intvalue))
+
+    @classdef.method("[]", idx="int")
+    def method_subscript(self, space, idx):
+        if not 0 <= idx < LONG_BIT:
+            return space.newint(0)
+        return space.newint(int(bool(self.intvalue & (1 << idx))))
