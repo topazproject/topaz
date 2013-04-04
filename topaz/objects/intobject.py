@@ -203,6 +203,13 @@ class W_FixnumObject(W_RootObject):
             else:
                 return space.newint(value)
 
+    @classdef.method(">>", other="int")
+    def method_right_shift(self, space, other):
+        if other < 0:
+            return space.newint(self.intvalue << -other)
+        else:
+            return space.newint(self.intvalue >> other)
+
     @classdef.method("&", other="int")
     def method_and(self, space, other):
         return space.newint(self.intvalue & other)
