@@ -146,7 +146,7 @@ class Array
 
   def flatten(level = -1)
     level = Topaz.convert_type(level, Fixnum, :to_int)
-    internal_flatten(level)
+    Topaz::Array.flatten(self, level)
   end
 
   def flatten!(level = -1)
@@ -314,24 +314,5 @@ class Array
     arr = Array.new(self)
     arr.shuffle!
     arr
-  end
-
-private
-
-  def internal_flatten(level)
-    list = self.class.allocate
-    Thread.current.recursion_guard(:array_flatten, self) do
-      self.each do |item|
-        if level == 0
-          list << item
-        elsif ary = Array.try_convert(item)
-          list.concat(ary.internal_flatten(level - 1))
-        else
-          list << item
-        end
-      end
-      return list
-    end
-    raise ArgumentError, "tried to flatten recursive array"
   end
 end
