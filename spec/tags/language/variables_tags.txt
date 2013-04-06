@@ -1,8 +1,4 @@
-fails:Basic multiple assignment with a single RHS value does not call #to_ary on an Array subclass instance
-fails:Basic multiple assignment with a single RHS value does not call #to_a on an Array subclass instance
 fails:Basic multiple assignment with a single RHS value does not call #to_a on an object if #to_ary is not defined
-fails:Basic multiple assignment with a splatted single RHS value does not call #to_ary on an Array subclass instance
-fails:Basic multiple assignment with a splatted single RHS value does not call #to_a on an Array subclass instance
 fails:Basic multiple assignment with a splatted single RHS value does not call #to_ary on an object
 fails:Conditional assignment checks for class variable definition before fetching its value
 fails:Unconditional operator assignment 'var op= expr' is equivalent to 'var = var op expr'

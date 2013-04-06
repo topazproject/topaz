@@ -7,7 +7,8 @@ class Fixnum < Integer
     self + 1
   end
 
-  def upto(n)
+  def upto(n, &block)
+    return self.enum_for(:upto) if !block
     i = self
     while i <= n
       yield i

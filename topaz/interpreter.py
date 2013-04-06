@@ -538,9 +538,15 @@ class Interpreter(object):
     def SEND_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
         space.getexecutioncontext().last_instr = pc
         arrays_w = frame.popitemsreverse(num_args)
-        args_w = []
+        length = 0
         for w_array in arrays_w:
-            args_w.extend(space.listview(w_array))
+            length += len(space.listview(w_array))
+        args_w = [None] * length
+        pos = 0
+        for w_array in arrays_w:
+            array_w = space.listview(w_array)
+            args_w[pos:pos + len(array_w)] = array_w
+            pos += len(array_w)
         w_receiver = frame.pop()
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
         frame.push(w_res)

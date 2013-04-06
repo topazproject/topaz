@@ -951,7 +951,8 @@ class Parser(object):
 
     @pg.production("lhs : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def lhs_subscript(self, p):
-        return BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno))
+        args = p[2].getcallargs() if p[2] is not None else []
+        return BoxAST(ast.Subscript(p[0].getast(), args, p[1].getsourcepos().lineno))
 
     @pg.production("lhs : primary_value DOT IDENTIFIER")
     def lhs_dot_identifier(self, p):
@@ -959,12 +960,7 @@ class Parser(object):
 
     @pg.production("lhs : primary_value COLON2 IDENTIFIER")
     def lhs_colon_identifier(self, p):
-        """
-        primary_value tCOLON2 tIDENTIFIER {
-                    $$ = support.attrset($1, (String) $3.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], None)
 
     @pg.production("lhs : primary_value DOT CONSTANT")
     def lhs_dot_constant(self, p):
@@ -1186,9 +1182,10 @@ class Parser(object):
 
     @pg.production("arg : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN arg")
     def arg_subscript_op_asgn_arg(self, p):
+        args = p[2].getcallargs() if p[2] is not None else []
         return self.new_augmented_assignment(
             p[4],
-            BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno)),
+            BoxAST(ast.Subscript(p[0].getast(), args, p[1].getsourcepos().lineno)),
             p[5],
         )
 
