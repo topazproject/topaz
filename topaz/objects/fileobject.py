@@ -102,16 +102,30 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("dirname", path="path")
     def method_dirname(self, space, path):
-        if "/" not in path:
+        separators = ["/"]
+        if IS_WINDOWS:
+            separators.append("\\")
+
+        has_separator = False
+        for separator in separators:
+            if separator in path:
+                has_separator = True
+                break
+        if not has_separator:
             return space.newstr_fromstr(".")
-        if path == "/":
+
+        if path in separators:
             return space.newstr_fromstr("/")
-        if path.endswith("/"):
+
+        while path[-1] in separators:
             newlen = len(path) - 1
             assert newlen >= 0
             path = path[:newlen]
-        idx = path.rfind("/")
-        while idx > 0 and path[idx - 1] == "/":
+
+        idx = -1
+        for separator in separators:
+            idx = max(idx, path.rfind(separator))
+        while idx > 0 and path[idx - 1] in separators:
             idx -= 1
         if idx == 0:
             return space.newstr_fromstr("/")
