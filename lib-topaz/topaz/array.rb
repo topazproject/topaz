@@ -6,7 +6,7 @@ module Topaz
         array.each do |item|
           if level == 0
             list << item
-          elsif ary = ::Array.try_convert(item)
+          elsif item.respond_to?(:to_ary) && ary = ::Array.try_convert(item)
             list.concat(flatten(ary, level - 1))
           else
             list << item
