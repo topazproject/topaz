@@ -136,6 +136,7 @@ class W_FileObject(W_IOObject):
             path = dir + "/" + path
 
         items = []
+        path = path.replace("\\", "/")
         parts = path.split("/")
         for part in parts:
             if part == "..":
@@ -143,9 +144,13 @@ class W_FileObject(W_IOObject):
             elif part and part != ".":
                 items.append(part)
 
+        if not IS_WINDOWS:
+            root = "/"
+        else:
+            root = ""
         if not items:
-            return space.newstr_fromstr("/")
-        return space.newstr_fromstr("/" + "/".join(items))
+            return space.newstr_fromstr(root)
+        return space.newstr_fromstr(root + "/".join(items))
 
     @classdef.singleton_method("join")
     def singleton_method_join(self, space, args_w):
