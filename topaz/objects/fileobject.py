@@ -117,7 +117,7 @@ class W_FileObject(W_IOObject):
         if path in separators:
             return space.newstr_fromstr("/")
 
-        while path[-1] in separators:
+        while path and path[-1] in separators:
             newlen = len(path) - 1
             assert newlen >= 0
             path = path[:newlen]
@@ -127,7 +127,7 @@ class W_FileObject(W_IOObject):
             idx = max(idx, path.rfind(separator))
         while idx > 0 and path[idx - 1] in separators:
             idx -= 1
-        if idx == 0:
+        if idx <= 0:
             return space.newstr_fromstr("/")
         assert idx >= 0
         return space.newstr_fromstr(path[:idx])
