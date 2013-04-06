@@ -150,7 +150,8 @@ class W_FileObject(W_IOObject):
             path = dir + "/" + path
 
         items = []
-        path = path.replace("\\", "/")
+        if IS_WINDOWS:
+            path = path.replace("\\", "/")
         parts = path.split("/")
         for part in parts:
             if part == "..":
@@ -292,8 +293,8 @@ class W_FileObject(W_IOObject):
         return stat_obj
 
     if IS_WINDOWS:
-        classdef.s_notimplemented("symlink")
-        classdef.s_notimplemented("link")
+        classdef.singleton_notimplemented("symlink")
+        classdef.singleton_notimplemented("link")
     else:
         @classdef.singleton_method("symlink", old_name="path", new_name="path")
         def singleton_method_symlink(self, space, old_name, new_name):
