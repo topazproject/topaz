@@ -150,7 +150,8 @@ class W_FileObject(W_IOObject):
             path = dir + "/" + path
 
         items = []
-        path = path.replace("\\", "/")
+        if IS_WINDOWS:
+            path = path.replace("\\", "/")
         parts = path.split("/")
         for part in parts:
             if part == "..":
