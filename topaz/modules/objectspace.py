@@ -40,3 +40,7 @@ class ObjectSpace(Module):
         for w_obj in match_w:
             space.invoke_block(block, [w_obj])
         return space.newint(len(match_w))
+
+    @moduledef.function("garbage_collect")
+    def method_garbage_collect(self):
+        rgc.collect()
