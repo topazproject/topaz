@@ -253,4 +253,13 @@ module Enumerable
     end
     true
   end
+
+  def group_by(&block)
+    return self.enum_for(:group_by) unless block
+    h = Hash.new { |h, k| h[k] = [] }
+    self.each do |e|
+      h[yield(e)] << e
+    end
+    h
+  end
 end
