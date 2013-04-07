@@ -26,6 +26,10 @@ class W_SymbolObject(W_Object):
     def getsingletonclass(self, space):
         raise space.error(space.w_TypeError, "can't define singleton")
 
+    @classdef.singleton_method("all_symbols")
+    def singleton_method_all_symbols(self, space):
+        return space.newarray(space.symbol_cache.values())
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.symbol)
