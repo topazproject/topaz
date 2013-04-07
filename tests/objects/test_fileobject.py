@@ -4,6 +4,7 @@ import stat
 import pytest
 
 from topaz.objects.fileobject import W_FileObject
+from topaz.system import IS_WINDOWS
 
 from ..base import BaseTopazTest
 
@@ -314,6 +315,16 @@ class TestExpandPath(BaseTopazTest):
         with self.raises(space, "ArgumentError", "string contains null byte"):
             space.execute("""return File.expand_path(".\\0.")""")
 
+    def test_expand_backslash_handling(self, space):
+        w_res = space.execute("""
+        return File.expand_path("a\\\\b")
+        """)
+        res = self.unwrap(space, w_res)
+        if IS_WINDOWS:
+            assert res == "/".join([os.getcwd().replace("\\", "/"), "a", "b"])
+        else:
+            assert res == os.path.join(os.getcwd(), "a\\b")
+
     def test_covert_to_absolute_using_provided_base(self, space):
         w_res = space.execute("""return File.expand_path("", "/tmp")""")
         assert self.unwrap(space, w_res) == "/tmp"
@@ -345,7 +356,8 @@ class TestDirname(BaseTopazTest):
             File.dirname("/home///guido//file.txt"),
             File.dirname(""),
             File.dirname("/"),
-            File.dirname("/foo/foo")
+            File.dirname("/foo/foo"),
+            File.dirname("/foo/foo//")
         ]
         """)
         assert self.unwrap(space, w_res) == [
@@ -356,4 +368,19 @@ class TestDirname(BaseTopazTest):
             ".",
             "/",
             "/foo",
+            "/foo",
         ]
+
+    def test_windows_backslash_handling(self, space):
+        w_res = space.execute("""
+        return [
+            File.dirname("a/b/c"),
+            File.dirname("a\\\\b\\\\//\\\\c/\\\\"),
+            File.dirname("\\\\"),
+        ]
+        """)
+        res = self.unwrap(space, w_res)
+        if IS_WINDOWS:
+            assert res == ["a/b", "a\\b", "/"]
+        else:
+            assert res == ["a/b", "a\\b\\//\\c", "."]
