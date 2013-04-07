@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from rpython.rlib import rgc
+from rpython.rlib import rgc, jit
 
 from topaz.module import Module, ModuleDef
 from topaz.objects.objectobject import W_BaseObject
@@ -42,5 +42,6 @@ class ObjectSpace(Module):
         return space.newint(len(match_w))
 
     @moduledef.function("garbage_collect")
+    @jit.dont_look_inside
     def method_garbage_collect(self):
         rgc.collect()
