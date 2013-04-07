@@ -1,6 +1,6 @@
 class Integer < Numeric
   def downto(limit, &block)
-    return self.enum_for(:downto) unless block
+    return self.enum_for(:downto, limit) unless block
     current = self
     while current >= limit
       yield current
