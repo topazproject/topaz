@@ -18,6 +18,10 @@ class Integer < Numeric
     self
   end
 
+  def integer?
+    return true
+  end
+
   def ceil
     return self
   end
