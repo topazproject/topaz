@@ -38,6 +38,7 @@ class W_SymbolObject(W_Object):
     def method_inspect(self, space):
         return space.newstr_fromstr(":%s" % self.symbol)
 
+    @classdef.method("length")
     @classdef.method("size")
     def method_size(self, space):
         return space.newint(len(self.symbol))
