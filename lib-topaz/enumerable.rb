@@ -253,4 +253,15 @@ module Enumerable
     end
     true
   end
+
+  def group_by(&block)
+    return self.enum_for(:group_by) unless block
+    h = {}
+    self.each do |e|
+      v = yield e
+      a = h.fetch(v) { |v| h[v] = [] }
+      a << e
+    end
+    h
+  end
 end
