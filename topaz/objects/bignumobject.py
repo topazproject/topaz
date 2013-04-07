@@ -83,6 +83,10 @@ class W_BignumObject(W_IntegerObject):
     def method_and(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.and_(other))
 
+    @classdef.method("|", other="bigint")
+    def method_or(self, space, other):
+        return space.newbigint_fromrbigint(self.bigint.or_(other))
+
     @classdef.method("^", other="bigint")
     def method_xor(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.xor(other))

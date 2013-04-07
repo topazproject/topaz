@@ -28,7 +28,7 @@ class Coerce(object):
 
     @staticmethod
     def bigint(space, w_obj):
-        return space.bigint_w(w_obj)
+        return space.bigint_w(space.convert_type(w_obj, space.w_integer, "to_int"))
 
     @staticmethod
     def float(space, w_obj):
