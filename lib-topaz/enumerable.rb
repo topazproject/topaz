@@ -44,7 +44,8 @@ module Enumerable
 
   alias reduce inject
 
-  def each_with_index
+  def each_with_index(&block)
+    return self.enum_for(:each_with_index) if !block
     i = 0
     self.each do |obj|
       yield obj, i
@@ -88,6 +89,7 @@ module Enumerable
   alias member? include?
 
   def drop(n)
+    n = Topaz.convert_type(n, Fixnum, :to_int)
     raise ArgumentError.new("attempt to drop negative size") if n < 0
     result = self.to_a
     return [] if n > result.size
@@ -95,6 +97,7 @@ module Enumerable
   end
 
   def drop_while(&block)
+    return self.enum_for(:drop_while) if !block
     result = []
     dropping = true
     self.each do |o|
