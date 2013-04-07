@@ -238,4 +238,19 @@ module Enumerable
     end
     c
   end
+
+  def one?(&block)
+    c = 0
+    self.each do |e|
+      c += 1 if block ? yield(e) : e
+    end
+    c == 1
+  end
+
+  def none?(&block)
+    self.each do |e|
+      return false if block ? yield(e) : e
+    end
+    true
+  end
 end
