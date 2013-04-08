@@ -1,1 +1,0 @@
-fails:Hash#each_value calls block once for each key, passing value

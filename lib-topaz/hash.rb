@@ -6,7 +6,7 @@ class Hash
       begin
         key, value = iter.next()
       rescue StopIteration
-        return
+        return self
       end
       yield key, value
     end
