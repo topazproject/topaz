@@ -110,7 +110,7 @@ class W_HashObject(W_Object):
     @check_frozen()
     def method_shift(self, space):
         if not self.contents:
-            return space.send(self, space.newsymbol("default"))
+            return space.send(self, space.newsymbol("default"), [space.w_nil])
         w_key, w_value = self.contents.popitem()
         return space.newarray([w_key, w_value])
 
