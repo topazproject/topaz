@@ -77,7 +77,8 @@ class W_HashObject(W_Object):
 
     @classdef.method("store")
     @classdef.method("[]=")
-    def method_subscript_assign(self, w_key, w_value):
+    @check_frozen()
+    def method_subscript_assign(self, space, w_key, w_value):
         self.contents[w_key] = w_value
         return w_value
 
