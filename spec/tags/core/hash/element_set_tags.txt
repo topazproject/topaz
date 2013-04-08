@@ -1,1 +1,0 @@
-fails:Hash#[]= associates the key with the value and return the value

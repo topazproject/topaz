@@ -1,1 +1,0 @@
-fails:Hash#store associates the key with the value and return the value
