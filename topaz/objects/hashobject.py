@@ -79,6 +79,9 @@ class W_HashObject(W_Object):
     @classdef.method("[]=")
     @check_frozen()
     def method_subscript_assign(self, space, w_key, w_value):
+        if space.is_kind_of(w_key, space.w_string):
+            w_key = space.send(w_key, space.newsymbol("dup"))
+            w_key = space.send(w_key, space.newsymbol("freeze"))
         self.contents[w_key] = w_value
         return w_value
 
