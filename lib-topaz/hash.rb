@@ -77,6 +77,10 @@ class Hash
     nil
   end
 
+  def values_at(*keys)
+    keys.map { |k| self[k] }
+  end
+
   def inspect
     result = "{"
     recursion = Thread.current.recursion_guard(:hash_inspect, self) do
