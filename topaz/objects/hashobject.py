@@ -39,10 +39,16 @@ class W_HashObject(W_Object):
 
     @classdef.method("default")
     def method_default(self, space, w_key=None):
-        if self.default_proc is not None:
+        if self.default_proc is not None and w_key is not None:
             return space.invoke_block(self.default_proc, [self, w_key])
         else:
             return self.w_default
+
+    @classdef.method("default=")
+    @check_frozen()
+    def method_set_default(self, space, w_defl):
+        self.default_proc = None
+        self.w_default = w_defl
 
     @classdef.method("default_proc")
     def method_default_proc(self, space):
