@@ -95,6 +95,10 @@ class TestHashObject(BaseTopazTest):
         with self.raises(space, "KeyError"):
             space.execute("return {}.fetch('a')")
 
+    def test_fetch_no_args(self, space):
+        with self.raises(space, "ArgumentError"):
+            space.execute("{}.fetch()")
+
     def test_delete(self, space):
         w_res = space.execute("""
         x = {2 => 3, 4 => 5}
