@@ -142,8 +142,14 @@ class Array
 
   def delete(obj, &block)
     sz = self.size
-    self.delete_if { |o| o == obj }
-    return obj if sz != self.size
+    last_matched_element = nil
+    self.delete_if do |o|
+      if match = (o == obj)
+        last_matched_element = o
+      end
+      match
+    end
+    return last_matched_element if sz != self.size
     return yield if block
     return nil
   end
