@@ -23,6 +23,14 @@ class Hash
     each { |k, v| yield v }
   end
 
+  def to_a
+    res = []
+    each do |k, v|
+      res << [k, v]
+    end
+    res
+  end
+
   def ==(other)
     if self.equal?(other)
       return true
