@@ -77,6 +77,13 @@ class Hash
     nil
   end
 
+  def value?(value)
+    each do |k, v|
+      return true if value == v
+    end
+    false
+  end
+
   def values_at(*keys)
     keys.map { |k| self[k] }
   end
