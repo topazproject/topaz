@@ -7,6 +7,10 @@ class Symbol
     self
   end
 
+  def empty?
+    self.equal?(:'')
+  end
+
   def succ
     self.to_s.succ.to_sym
   end
