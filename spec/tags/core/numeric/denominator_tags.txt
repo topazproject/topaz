@@ -1,2 +1,1 @@
-fails:Numeric#denominator returns 1
 fails:Numeric#denominator works with Numeric subclasses
