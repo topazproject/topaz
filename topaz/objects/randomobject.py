@@ -29,25 +29,19 @@ class W_RandomObject(W_Object):
     def method_initialize(self, space, w_seed=None):
         self.seed = w_seed
 
-    @classdef.method("srand")
-    def method_srand(self, space, w_seed=None):
+    def srand(self, space, seed):
         previous_seed = self.seed
-        self.seed = w_seed
-        if w_seed is None:
+        self.seed = seed
+        if seed is None:
             seed = self._generate_seed()
         else:
-            seed = Coerce.int(space, w_seed)
+            seed = Coerce.int(space, seed)
         if previous_seed is None:
             value = space.newfloat(self.random.random())
         else:
             value = previous_seed
         self.random = Random(abs(seed))
         return value
-
-    @classdef.singleton_method("srand")
-    def method_singleton_srand(self, space, args_w):
-        default = space.find_const(self, "DEFAULT")
-        return space.send(default, space.newsymbol("srand"), args_w)
 
     @classdef.method("rand")
     def method_rand(self, space, w_max=None):

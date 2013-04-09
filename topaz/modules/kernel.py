@@ -16,6 +16,7 @@ from topaz.objects.procobject import W_ProcObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.randomobject import W_RandomObject
 
 
 class Kernel(Module):
@@ -377,3 +378,9 @@ class Kernel(Module):
                 if e.name == name:
                     return e.w_value
                 raise
+
+    @moduledef.method("srand")
+    def method_srand(self, space, w_seed=None):
+        random_class = space.getclassfor(W_RandomObject)
+        default = space.find_const(random_class, "DEFAULT")
+        return default.srand(space, w_seed)
