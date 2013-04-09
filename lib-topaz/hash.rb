@@ -91,6 +91,7 @@ class Hash
     end
     false
   end
+  alias has_value? value?
 
   def values_at(*keys)
     keys.map { |k| self[k] }
