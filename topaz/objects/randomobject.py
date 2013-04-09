@@ -14,6 +14,7 @@ class W_RandomObject(W_Object):
 
     def __init__(self, space, seed=0, klass=None):
         W_Object.__init__(self, space, klass)
+        self.w_seed = None
         self.random = Random(abs(seed))
 
     @classdef.setup_class
@@ -27,15 +28,19 @@ class W_RandomObject(W_Object):
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_seed=None):
-        self.seed = w_seed
+        return self.srand(space, w_seed)
 
-    def srand(self, space, seed):
-        previous_seed = self.seed
-        self.seed = seed
+    @classdef.method("seed")
+    def method_seed(self, space):
+        return self.w_seed
+
+    def srand(self, space, seed=None):
+        previous_seed = self.w_seed
         if seed is None:
             seed = self._generate_seed()
         else:
             seed = Coerce.int(space, seed)
+        self.w_seed = space.newint(seed)
         if previous_seed is None:
             value = space.newfloat(self.random.random())
         else:
