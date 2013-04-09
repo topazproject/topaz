@@ -158,15 +158,17 @@ class Array
 
   def flatten(level = -1)
     level = Topaz.convert_type(level, Fixnum, :to_int)
-    Topaz::Array.flatten(self, level)
+    out = self.class.allocate
+    Topaz::Array.flatten(self, out, level)
+    out
   end
 
   def flatten!(level = -1)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
-    list = self.flatten(level)
-    if list.size != self.size
-      self.replace(list)
-      self
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    if Topaz::Array.flatten(self, out, level)
+      self.replace(out)
     end
   end
 
