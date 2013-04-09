@@ -6,6 +6,7 @@ class Symbol
   def to_sym
     self
   end
+  alias intern to_sym
 
   def succ
     self.to_s.succ.to_sym
