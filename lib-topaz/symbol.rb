@@ -7,6 +7,8 @@ class Symbol
     self
   end
 
+  alias id2name to_s
+
   def succ
     self.to_s.succ.to_sym
   end
