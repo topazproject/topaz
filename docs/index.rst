@@ -16,6 +16,7 @@ To get started right away, you can `download a pre-built binary`_ and run it::
    current-status
    contributing
    style-guide
+   source-map
    community
    code-of-conduct
    blog/index
