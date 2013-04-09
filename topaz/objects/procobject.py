@@ -15,6 +15,8 @@ class W_ProcObject(W_Object):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space, args_w, block):
+        if block is None:
+            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
         return W_ProcObject(space, block, False)
 
     @classdef.method("[]")
