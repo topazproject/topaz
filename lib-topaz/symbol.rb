@@ -15,6 +15,10 @@ class Symbol
   end
   alias next succ
 
+  def capitalize
+    self.to_s.capitalize.to_sym
+  end
+
   def swapcase
     self.to_s.swapcase.to_sym
   end
