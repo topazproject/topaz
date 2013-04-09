@@ -55,3 +55,11 @@ class W_SymbolObject(W_Object):
             return space.newint(0)
         elif s1 > s2:
             return space.newint(1)
+
+    @classdef.method("downcase")
+    def method_downcase(self, space):
+        return space.newsymbol(self.symbol.lower())
+
+    @classdef.method("upcase")
+    def method_upcase(self, space):
+        return space.newsymbol(self.symbol.upper())
