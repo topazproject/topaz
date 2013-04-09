@@ -1,3 +1,0 @@
-fails:does not copy untrusted status
-fails:does not copy tainted status
-fails:returns the evaluated value of block if it broke in the block
