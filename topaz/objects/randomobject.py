@@ -94,6 +94,6 @@ class W_RandomObject(W_Object):
             file = os.open('/dev/urandom', os.R_OK, 0644)
             bytes = os.read(file, 4)
             os.close(file)
-            for i in range(len(bytes)):
-                seed = seed * 0xff + ord(bytes[i])
+            for b in bytes:
+                seed = seed * 0xff + ord(b)
         return seed + int(time.time()) + os.getpid()
