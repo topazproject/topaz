@@ -96,4 +96,4 @@ class W_RandomObject(W_Object):
             os.close(file)
             for i in range(len(bytes)):
                 seed = seed * 0xff + ord(bytes[i])
-        return seed + int(time.time())
+        return seed + int(time.time()) + os.getpid()
