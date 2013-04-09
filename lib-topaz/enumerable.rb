@@ -264,4 +264,12 @@ module Enumerable
     end
     h
   end
+
+  def find_index(obj = nil, &block)
+    return self.enum_for(:find_index) if !obj && !block
+    each_with_index do |e, i|
+      return i if obj ? (e == obj) : block.call(e)
+    end
+    nil
+  end
 end
