@@ -12,4 +12,8 @@ class Symbol
     self.to_s.succ.to_sym
   end
   alias next succ
+
+  def swapcase
+    self.to_s.swapcase.to_sym
+  end
 end
