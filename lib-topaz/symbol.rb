@@ -8,6 +8,8 @@ class Symbol
   end
   alias intern to_sym
 
+  alias id2name to_s
+
   def succ
     self.to_s.succ.to_sym
   end
