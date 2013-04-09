@@ -388,7 +388,7 @@ class Lexer(object):
                 yield self.emit_identifier(command_state)
                 self.unread()
                 break
-            if ch in "!?" or (ch == "=" and self.state == self.EXPR_FNAME):
+            if ch in "!?" or (ch == "=" and self.state == self.EXPR_FNAME and self.peek() not in "~>"):
                 self.add(ch)
                 yield self.emit_identifier(command_state, "FID")
                 break

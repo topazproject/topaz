@@ -20,4 +20,5 @@ Authors
 * Armin Rigo
 * David Schneider
 * Robin Schreiber
+* Jan Stępień
 * Jeremy Thurgood

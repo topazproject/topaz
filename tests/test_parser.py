@@ -232,6 +232,9 @@ class TestParser(BaseTopazTest):
         assert space.parse("2.to_s(:base => 3)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(3))])], None, 1))
         ]))
+        assert space.parse("2.to_s(:base=>3)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(3))])], None, 1))
+        ]))
         assert space.parse("Integer other") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Send(ast.Self(1), "other", [], None, 1)], None, 1))
         ]))

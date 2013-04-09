@@ -44,6 +44,8 @@ class Kernel(Module):
 
     @moduledef.method("proc")
     def function_proc(self, space, block):
+        if block is None:
+            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
         return space.newproc(block, False)
 
     @staticmethod

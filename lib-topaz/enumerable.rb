@@ -44,7 +44,8 @@ module Enumerable
 
   alias reduce inject
 
-  def each_with_index
+  def each_with_index(&block)
+    return self.enum_for(:each_with_index) if !block
     i = 0
     self.each do |obj|
       yield obj, i
@@ -88,6 +89,7 @@ module Enumerable
   alias member? include?
 
   def drop(n)
+    n = Topaz.convert_type(n, Fixnum, :to_int)
     raise ArgumentError.new("attempt to drop negative size") if n < 0
     result = self.to_a
     return [] if n > result.size
@@ -95,6 +97,7 @@ module Enumerable
   end
 
   def drop_while(&block)
+    return self.enum_for(:drop_while) if !block
     result = []
     dropping = true
     self.each do |o|
@@ -116,11 +119,11 @@ module Enumerable
   alias entries to_a
 
   def detect(ifnone = nil, &block)
-    return self.enum_for(:detect) unless block
+    return self.enum_for(:detect, ifnone) unless block
     self.each do |o|
       return o if block.call(o)
     end
-    return ifnone
+    ifnone.is_a?(Proc) ? ifnone.call : ifnone
   end
   alias find detect
 
@@ -234,5 +237,39 @@ module Enumerable
       self.each { |e| c += 1 if e == arg }
     end
     c
+  end
+
+  def one?(&block)
+    c = 0
+    self.each do |e|
+      c += 1 if block ? yield(e) : e
+    end
+    c == 1
+  end
+
+  def none?(&block)
+    self.each do |e|
+      return false if block ? yield(e) : e
+    end
+    true
+  end
+
+  def group_by(&block)
+    return self.enum_for(:group_by) unless block
+    h = {}
+    self.each do |e|
+      v = yield e
+      a = h.fetch(v) { |v| h[v] = [] }
+      a << e
+    end
+    h
+  end
+
+  def find_index(obj = nil, &block)
+    return self.enum_for(:find_index) if !obj && !block
+    each_with_index do |e, i|
+      return i if obj ? (e == obj) : block.call(e)
+    end
+    nil
   end
 end

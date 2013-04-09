@@ -1,7 +1,3 @@
-fails:A block taking |a| arguments assigns the first value yielded to the argument
-fails:A block taking |a, b| arguments assigns the first two values yielded to the arguments
-fails:A block taking |a, b| arguments does not destructure an Array value as one of several values yielded
-fails:A block taking |a, b| arguments destructures a single Array value yielded
 fails:A block taking |a, b| arguments calls #to_ary to convert a single yielded object to an Array
 fails:A block taking |a, b| arguments raises an TypeError if #to_ary does not return an Array
 fails:A block taking |a, *b| arguments assigns 'nil' and '[]' to the arguments when a single, empty Array is yielded
