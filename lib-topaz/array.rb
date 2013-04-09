@@ -363,4 +363,8 @@ class Array
     arr.shuffle!
     arr
   end
+
+  def to_a
+    self.instance_of?(Array) ? self : Array.new(self)
+  end
 end
