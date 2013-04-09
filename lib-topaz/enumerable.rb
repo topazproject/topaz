@@ -119,11 +119,11 @@ module Enumerable
   alias entries to_a
 
   def detect(ifnone = nil, &block)
-    return self.enum_for(:detect) unless block
+    return self.enum_for(:detect, ifnone) unless block
     self.each do |o|
       return o if block.call(o)
     end
-    return ifnone
+    ifnone.is_a?(Proc) ? ifnone.call : ifnone
   end
   alias find detect
 
