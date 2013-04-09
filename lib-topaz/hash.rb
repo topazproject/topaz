@@ -96,6 +96,14 @@ class Hash
     keys.map { |k| self[k] }
   end
 
+  def invert
+    res = {}
+    each do |k, v|
+      res[v] = k
+    end
+    res
+  end
+
   def inspect
     result = "{"
     recursion = Thread.current.recursion_guard(:hash_inspect, self) do
