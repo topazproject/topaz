@@ -120,8 +120,8 @@ module Enumerable
 
   def detect(ifnone = nil, &block)
     return self.enum_for(:detect, ifnone) unless block
-    self.each_with_index do |o, i|
-      return o if block.call(o, i)
+    self.each do |o|
+      return o if block.call(o)
     end
     ifnone.is_a?(Proc) ? ifnone.call : ifnone
   end
