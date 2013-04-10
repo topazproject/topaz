@@ -802,6 +802,7 @@ class W_StringObject(W_Object):
         return space.newstr_fromchars(new_string) if new_string else string
 
     @classdef.method("tr_s!", source="str", replacement="str")
+    @check_frozen()
     def method_tr_s_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
