@@ -97,6 +97,15 @@ class Hash
     keys.map { |k| self[k] }
   end
 
+  def key(value)
+    each_pair do |k, v|
+      return k if v == value
+    end
+    nil
+  end
+  # TODO: Emit "warning: Hash#index is deprecated; use Hash#key" warning
+  alias index key
+
   def invert
     res = {}
     each do |k, v|
