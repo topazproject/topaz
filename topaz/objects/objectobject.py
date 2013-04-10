@@ -48,11 +48,7 @@ class W_BaseObject(W_Root):
         raise space.error(space.w_TypeError,
             "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
         )
-
-    def find_local_const(self, space, name):
-        raise space.error(space.w_TypeError,
-            "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
-        )
+    find_included_const = find_local_const = find_const
 
     @classdef.method("initialize")
     def method_initialize(self):
