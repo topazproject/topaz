@@ -28,7 +28,7 @@ class W_RandomObject(W_Object):
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_seed=None):
-        return self.srand(space, w_seed)
+        self.srand(space, w_seed)
 
     @classdef.method("seed")
     def method_seed(self, space):
