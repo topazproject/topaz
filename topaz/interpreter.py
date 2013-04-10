@@ -392,7 +392,7 @@ class Interpreter(object):
         w_scope = frame.pop()
 
         name = space.symbol_w(w_name)
-        w_mod = w_scope.find_const(space, name)
+        w_mod = w_scope.find_local_const(space, name)
 
         if w_mod is None:
             w_mod = space.newmodule(name, w_scope=w_scope)
