@@ -97,6 +97,13 @@ class Hash
     keys.map { |k| self[k] }
   end
 
+  def key(value)
+    each_pair do |k, v|
+      return k if v == value
+    end
+    nil
+  end
+
   def invert
     res = {}
     each do |k, v|
