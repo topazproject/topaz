@@ -10,6 +10,7 @@ Authors
 * Maciej Fijalkowski
 * Alex Gaynor
 * Magnus Holm
+* Kenichi Kamiya
 * Ryan Levick
 * Konstantin Makarchev
 * Curt Micol
@@ -22,4 +23,3 @@ Authors
 * Robin Schreiber
 * Jan Stępień
 * Jeremy Thurgood
-* Kenichi Kamiya
