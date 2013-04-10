@@ -658,6 +658,7 @@ class W_StringObject(W_Object):
         return self if changed else space.w_nil
 
     @classdef.method("downcase!")
+    @check_frozen()
     def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
