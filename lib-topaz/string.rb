@@ -72,6 +72,7 @@ class String
 
     self
   end
+  alias chars each_char
 
   def upto(max, exclusive = false, &block)
     return self.enum_for(:upto, max, exclusive) unless block
