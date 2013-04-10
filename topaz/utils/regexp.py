@@ -285,6 +285,9 @@ class Character(RegexpBase):
     def rebuild(self, positive, case_insensitive, zerowidth):
         return Character(self.value, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
 
+    def getwidth(self):
+        return 1, 1
+
     def fix_groups(self):
         pass
 
