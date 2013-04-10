@@ -53,6 +53,14 @@ module Enumerable
     end
   end
 
+  def each_with_object(memo, &block)
+    return self.enum_for(:each_with_object, memo) unless block
+    self.each do |elm|
+      yield elm, memo
+    end
+    memo
+  end
+
   def all?(&block)
     self.each do |obj|
       return false unless (block ? block.call(obj) : obj)
