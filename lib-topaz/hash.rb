@@ -103,6 +103,8 @@ class Hash
     end
     nil
   end
+  # TODO: Emit "warning: Hash#index is deprecated; use Hash#key" warning
+  alias index key
 
   def invert
     res = {}
