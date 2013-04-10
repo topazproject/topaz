@@ -108,7 +108,7 @@ class Math(Module):
         except (ValueError, OverflowError):
             res = rfloat.INFINITY
         gamma = space.float_w(space.send(self, space.newsymbol("gamma"), [space.newfloat(value)]))
-        sign = 1 if gamma >= 0 else -1 if gamma < 0 else 0
+        sign = 1 if gamma > 0 else -1 if gamma < 0 else 0
         return space.newarray([space.newfloat(res), space.newint(sign)])
 
     @moduledef.function("hypot", value1="float", value2="float")
