@@ -163,25 +163,19 @@ class Array
   end
 
   def flatten(level = -1)
-    list = []
-    Thread.current.recursion_guard(:array_flatten, self) do
-      self.each do |item|
-        if level == 0
-          list << item
-        elsif ary = Array.try_convert(item)
-          list.concat(ary.flatten(level - 1))
-        else
-          list << item
-        end
-      end
-      return list
-    end
-    raise ArgumentError.new("tried to flatten recursive array")
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    Topaz::Array.flatten(self, out, level)
+    out
   end
 
   def flatten!(level = -1)
-    list = self.flatten(level)
-    self.replace(list)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    if Topaz::Array.flatten(self, out, level)
+      self.replace(out)
+    end
   end
 
   def sort(&block)
