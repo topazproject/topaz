@@ -496,6 +496,7 @@ class W_StringObject(W_Object):
         return space.newsymbol(space.str_w(self))
 
     @classdef.method("clear")
+    @check_frozen()
     def method_clear(self, space):
         self.clear(space)
         return self
