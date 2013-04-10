@@ -313,4 +313,12 @@ module Enumerable
     yield buf unless buf.empty?
     nil
   end
+
+  def sort(&block)
+    to_a.sort!(&block)
+  end
+
+  def sort_by(&block)
+    to_a.sort_by!(&block)
+  end
 end
