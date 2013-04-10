@@ -272,4 +272,37 @@ module Enumerable
     end
     nil
   end
+
+  def each_cons(num, &block)
+    return self.enum_for(:each_cons, num) if !block
+    num = Topaz.convert_type(num, Fixnum, :to_int)
+    raise ArgumentError.new("invalid size") if num <= 0
+    buf = []
+    self.each_with_index do |e, i|
+      buf << e
+      if i == num - 1
+        yield buf.dup
+      elsif i >= num
+        buf.shift
+        yield buf.dup
+      end
+    end
+    nil
+  end
+
+  def each_slice(num, &block)
+    return self.enum_for(:each_slice, num) if !block
+    num = Topaz.convert_type(num, Fixnum, :to_int)
+    raise ArgumentError.new("invalid slice size") if num <= 0
+    buf = []
+    self.each do |e|
+      buf << e
+      if buf.size == num
+        yield buf
+        buf = []
+      end
+    end
+    yield buf unless buf.empty?
+    nil
+  end
 end
