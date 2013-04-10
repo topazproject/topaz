@@ -965,6 +965,7 @@ class W_StringObject(W_Object):
                 return space.any_to_s(w_replacement)
 
     @classdef.method("chomp!")
+    @check_frozen()
     def method_chomp_i(self, space, w_newline=None):
         if w_newline is None:
             w_newline = space.globals.get(space, "$/")
