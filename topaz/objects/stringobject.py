@@ -645,6 +645,7 @@ class W_StringObject(W_Object):
             )
 
     @classdef.method("swapcase!")
+    @check_frozen()
     def method_swapcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.swapcase(self.str_storage)
