@@ -978,6 +978,7 @@ class W_StringObject(W_Object):
         return self if changed else space.w_nil
 
     @classdef.method("chop!")
+    @check_frozen()
     def method_chop_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chop(self.str_storage)
