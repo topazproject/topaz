@@ -197,7 +197,7 @@ class TestRegexpObject(BaseTopazTest):
         w_res = space.execute("return /(foo)?(bar)?/.match('foobar')[2]")
         assert self.unwrap(space, w_res) == "bar"
         w_res = space.execute("return /(foo)?(bar)?/.match('foo')[2]")
-        assert self.unwrap(space, w_res) == None
+        assert self.unwrap(space, w_res) is None
 
     def test_quantify_set(self, space):
         w_res = space.execute("return /([0-9]){3,5}?/ =~ 'ab12345'")
