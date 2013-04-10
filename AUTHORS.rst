@@ -22,3 +22,4 @@ Authors
 * Robin Schreiber
 * Jan Stępień
 * Jeremy Thurgood
+* Kenichi Kamiya
