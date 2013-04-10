@@ -182,6 +182,10 @@ class Array
     dup.sort!(&block)
   end
 
+  def sort_by(&block)
+    dup.sort_by!(&block)
+  end
+
   def ==(other)
     if self.equal?(other)
       return true
