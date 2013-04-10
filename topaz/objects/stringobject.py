@@ -446,6 +446,7 @@ class W_StringObject(W_Object):
         return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
+    @classdef.method("concat")
     @check_frozen()
     def method_lshift(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
