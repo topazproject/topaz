@@ -43,6 +43,10 @@ class W_SymbolObject(W_Object):
     def method_size(self, space):
         return space.newint(len(self.symbol))
 
+    @classdef.method("empty?")
+    def method_emptyp(self, space):
+        return space.newbool(not self.symbol)
+
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
         if not space.is_kind_of(w_other, space.w_symbol):
