@@ -987,6 +987,7 @@ class W_StringObject(W_Object):
 
     @classdef.method("next!")
     @classdef.method("succ!")
+    @check_frozen()
     def method_succ_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.succ(self.str_storage)
