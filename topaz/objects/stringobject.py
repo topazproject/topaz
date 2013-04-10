@@ -666,6 +666,7 @@ class W_StringObject(W_Object):
         return self if changed else space.w_nil
 
     @classdef.method("capitalize!")
+    @check_frozen()
     def method_capitalize_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.capitalize(self.str_storage)
