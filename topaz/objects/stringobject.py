@@ -986,6 +986,7 @@ class W_StringObject(W_Object):
         return self if changed else space.w_nil
 
     @classdef.method("reverse!")
+    @check_frozen()
     def method_reverse_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.reverse(self.str_storage)
