@@ -147,6 +147,8 @@ class W_RootObject(W_BaseObject):
 
     @classdef.method("===")
     def method_eqeqeq(self, space, w_other):
+        if self is w_other:
+            return space.w_true
         return space.send(self, space.newsymbol("=="), [w_other])
 
     @classdef.method("send")
