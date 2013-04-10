@@ -61,6 +61,15 @@ module Enumerable
     memo
   end
 
+  def each_entry(*args, &block)
+    return self.enum_for(:each_entry, *args) unless block
+    each(*args) do |*e|
+      v = (e.size == 1) ? e[0] : e
+      yield v
+    end
+    self
+  end
+
   def all?(&block)
     self.each do |obj|
       return false unless (block ? block.call(obj) : obj)
