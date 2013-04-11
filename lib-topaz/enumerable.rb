@@ -330,4 +330,19 @@ module Enumerable
   def sort_by(&block)
     to_a.sort_by!(&block)
   end
+
+  def collect_concat(&block)
+    return self.enum_for(:collect_concat) unless block
+    out = []
+    self.each do |e|
+      v = yield(e)
+      if v.respond_to?(:to_ary) && ary = Array.try_convert(v)
+        out.concat(ary)
+      else
+        out << v
+      end
+    end
+    out
+  end
+  alias flat_map collect_concat
 end
