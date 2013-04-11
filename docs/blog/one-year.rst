@@ -1,6 +1,8 @@
 One Year of Topaz
 =================
 
+**Posted: April 10, 2013**
+
 It slipped by so quickly I didn't even notice at the time, but April 7th was
 the one year anniversary of me working on Topaz. Or at least, of the
 development work. In reality I'd spent weeks (maybe even months) studying Ruby,
