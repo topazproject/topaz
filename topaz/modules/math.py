@@ -197,11 +197,11 @@ class Math(Module):
 
     @moduledef.function("erf", value="float")
     def method_erf(self, space, value):
-        return space.newfloat(math.erf(value))
+        return space.newfloat(rfloat.erf(value))
 
     @moduledef.function("erfc", value="float")
     def method_erfc(self, space, value):
-        return space.newfloat(math.erfc(value))
+        return space.newfloat(rfloat.erfc(value))
 
 
 class W_DomainError(W_StandardError):
