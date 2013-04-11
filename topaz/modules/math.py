@@ -187,6 +187,10 @@ class Math(Module):
     def method_tanh(self, space, value):
         return space.newfloat(math.tanh(value))
 
+    @moduledef.function("erf", value="float")
+    def method_erf(self, space, value):
+        return space.newfloat(math.erf(value))
+
 
 class W_DomainError(W_StandardError):
     classdef = ClassDef("Math::DomainError", W_StandardError.classdef, filepath=__file__)
