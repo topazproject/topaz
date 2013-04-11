@@ -119,11 +119,11 @@ class Hash
   def inspect
     result = "{"
     recursion = Thread.current.recursion_guard(:hash_inspect, self) do
-      self.each_with_index do |key, i|
+      self.each_with_index do |(key, value), i|
         if i > 0
           result << ", "
         end
-        result << "#{key.inspect}=>#{self[key].inspect}"
+        result << "#{key.inspect}=>#{value.inspect}"
       end
     end
     if recursion
