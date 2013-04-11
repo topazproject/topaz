@@ -191,6 +191,10 @@ class Math(Module):
     def method_erf(self, space, value):
         return space.newfloat(math.erf(value))
 
+    @moduledef.function("erfc", value="float")
+    def method_erfc(self, space, value):
+        return space.newfloat(math.erfc(value))
+
 
 class W_DomainError(W_StandardError):
     classdef = ClassDef("Math::DomainError", W_StandardError.classdef, filepath=__file__)
