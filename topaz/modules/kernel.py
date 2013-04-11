@@ -45,12 +45,14 @@ class Kernel(Module):
 
     @moduledef.method("proc")
     def function_proc(self, space, block):
+        if block is None:
+            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
         return space.newproc(block, False)
 
     @staticmethod
     def find_feature(space, path):
         assert path is not None
-        if os.path.exists(path):
+        if os.path.isfile(path):
             return path
         if not path.endswith(".rb"):
             path += ".rb"
@@ -60,7 +62,7 @@ class Kernel(Module):
             for w_base in space.listview(w_load_path):
                 base = Coerce.path(space, w_base)
                 full = os.path.join(base, path)
-                if os.path.exists(full):
+                if os.path.isfile(full):
                     path = os.path.join(base, path)
                     break
         return path
@@ -310,6 +312,8 @@ class Kernel(Module):
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")
     def method_is_kind_ofp(self, space, w_mod):
+        if not isinstance(w_mod, W_ModuleObject):
+            raise space.error(space.w_TypeError, "class or module required")
         return space.newbool(self.is_kind_of(space, w_mod))
 
     @moduledef.method("instance_of?")

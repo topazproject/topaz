@@ -1,6 +1,5 @@
 fails:A singleton class is a subclass of Class's singleton class
 fails:A singleton class is a subclass of the same level of Class's singleton class
-fails:A singleton class has class Bignum as the superclass of a Bignum instance
 fails:Defining instance methods on a singleton class define public methods
 fails:Instance methods of a singleton class include ones of the object's class
 fails:Instance methods of a singleton class do not include class methods of the object's class

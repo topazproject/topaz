@@ -47,7 +47,6 @@ RUBY_REVISION = subprocess.check_output([
 ]).rstrip()
 
 
-
 @specialize.memo()
 def getspace(config):
     return ObjectSpace(config)

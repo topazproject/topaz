@@ -1,4 +1,0 @@
-fails:Hash#[]= associates the key with the value and return the value
-fails:Hash#[]= duplicates string keys using dup semantics
-fails:Hash#[]= duplicates and freezes string keys
-fails:Hash#[]= raises a RuntimeError if called on a frozen instance

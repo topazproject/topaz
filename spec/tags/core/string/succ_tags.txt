@@ -1,2 +1,0 @@
-fails:String#succ returns subclass instances when called on a subclass
-fails:String#succ! raises a RuntimeError if self is frozen

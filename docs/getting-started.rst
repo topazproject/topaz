@@ -55,5 +55,21 @@ You can also run Topaz without compiling, on top of Python::
 Note that this is extremely slow, and should never be used for benchmarking,
 only for testing.
 
+Alternately, you can build ``topaz`` using ``ruby-build``::
+
+    $ git clone git://github.com/sstephenson/ruby-build.git
+    $ cd ruby-build
+    $ ./bin/ruby-build topaz-dev /path/to/install/topaz
+
+If you run ``homebrew`` on OS X, it's even easier::
+
+    $ brew update && brew install ruby-build
+    $ ruby-build topaz-dev /path/to/install/topaz
+
+You can also build ``topaz`` using ``ruby-build`` as a plugin to ``rbenv``::
+
+    $ brew update && brew install rbenv ruby-build
+    $ rbenv install topaz-dev
+
 .. _`download a binary`: http://www.topazruby.com/builds/
 .. _`virtualenv`: http://www.virtualenv.org/

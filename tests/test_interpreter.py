@@ -623,6 +623,20 @@ class TestInterpreter(BaseTopazTest):
             end
             """)
 
+    def test_module_reopen_scope(self, space):
+        w_res = space.execute("""
+        class Foo
+        end
+
+        module Bar
+            module Foo
+            end
+        end
+        return Foo, Bar::Foo
+        """)
+        [w_cls1, w_cls2] = space.listview(w_res)
+        assert w_cls1 is not w_cls2
+
     def test_singleton_method(self, space):
         w_res = space.execute("""
         def Array.hello

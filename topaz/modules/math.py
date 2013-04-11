@@ -6,7 +6,6 @@ from rpython.rlib import rfloat
 
 from topaz.module import Module, ModuleDef, ClassDef
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
-from rpython.rlib.rfloat import NAN
 
 
 class Math(Module):
@@ -102,6 +101,16 @@ class Math(Module):
             res = rfloat.INFINITY
         return space.newfloat(res)
 
+    @moduledef.function("lgamma", value="float")
+    def method_lgamma(self, space, value):
+        try:
+            res = rfloat.lgamma(value)
+        except (ValueError, OverflowError):
+            res = rfloat.INFINITY
+        gamma = space.float_w(space.send(self, space.newsymbol("gamma"), [space.newfloat(value)]))
+        sign = 1 if gamma > 0 else -1 if gamma < 0 else 0
+        return space.newarray([space.newfloat(res), space.newint(sign)])
+
     @moduledef.function("hypot", value1="float", value2="float")
     def method_hypot(self, space, value1, value2):
         return space.newfloat(math.hypot(value1, value2))
@@ -120,7 +129,7 @@ class Math(Module):
                 res = math.log(value) / math.log(base)
         except ValueError:
             if value == 0.0:
-                res = float("-inf")
+                res = float(-rfloat.INFINITY)
             else:
                 raise space.error(space.getclassfor(W_DomainError), 'Numerical argument is out of domain - "log"')
 
@@ -132,7 +141,7 @@ class Math(Module):
             res = math.log10(value)
         except ValueError:
             if value == 0.0:
-                res = float("-inf")
+                res = float(-rfloat.INFINITY)
             else:
                 raise space.error(space.getclassfor(W_DomainError), 'Numerical argument is out of domain - "log10"')
 
@@ -144,7 +153,7 @@ class Math(Module):
             res = math.log(value) / math.log(2)
         except ValueError:
             if value == 0.0:
-                res = float("-inf")
+                res = float(-rfloat.INFINITY)
             else:
                 raise space.error(space.getclassfor(W_DomainError), 'Numerical argument is out of domain - "log2"')
 
@@ -171,7 +180,7 @@ class Math(Module):
         try:
             res = math.tan(value)
         except ValueError:
-            res = NAN
+            res = rfloat.NAN
         return space.newfloat(res)
 
     @moduledef.function("tanh", value="float")

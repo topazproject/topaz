@@ -58,6 +58,17 @@ class Array
     self[idx]
   end
 
+  def fetch(*args, &block)
+    i = Topaz.convert_type(args[0], Fixnum, :to_int)
+    if i < -self.length || i >= self.length
+      return block.call(args[0]) if block
+      return args[1] if args.size > 1
+      raise IndexError.new("index #{i} outside of array bounds: -#{self.length}...#{self.length}")
+    else
+      self[i]
+    end
+  end
+
   def each(&block)
     return self.enum_for(:each) unless block
     i = 0
@@ -95,6 +106,7 @@ class Array
   end
 
   def reject!(&block)
+    return self.enum_for(:reject!) unless block
     prev_size = self.size
     self.delete_if(&block)
     return nil if prev_size == self.size
@@ -130,8 +142,14 @@ class Array
 
   def delete(obj, &block)
     sz = self.size
-    self.delete_if { |o| o == obj }
-    return obj if sz != self.size
+    last_matched_element = nil
+    self.delete_if do |o|
+      if match = (o == obj)
+        last_matched_element = o
+      end
+      match
+    end
+    return last_matched_element if sz != self.size
     return yield if block
     return nil
   end
@@ -145,29 +163,27 @@ class Array
   end
 
   def flatten(level = -1)
-    list = []
-    Thread.current.recursion_guard(:array_flatten, self) do
-      self.each do |item|
-        if level == 0
-          list << item
-        elsif ary = Array.try_convert(item)
-          list.concat(ary.flatten(level - 1))
-        else
-          list << item
-        end
-      end
-      return list
-    end
-    raise ArgumentError.new("tried to flatten recursive array")
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    Topaz::Array.flatten(self, out, level)
+    out
   end
 
   def flatten!(level = -1)
-    list = self.flatten(level)
-    self.replace(list)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    if Topaz::Array.flatten(self, out, level)
+      self.replace(out)
+    end
   end
 
   def sort(&block)
     dup.sort!(&block)
+  end
+
+  def sort_by(&block)
+    dup.sort_by!(&block)
   end
 
   def ==(other)
@@ -237,18 +253,13 @@ class Array
   end
 
   def map!(&block)
+    return self.enum_for(:map!) unless block
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     self.each_with_index { |obj, idx| self[idx] = yield(obj) }
     self
   end
 
-  def max(&block)
-    max = self[0]
-    self.each do |e|
-      max = e if (block ? block.call(max, e) : max <=> e) < 0
-    end
-    max
-  end
+  alias :collect! :map!
 
   def uniq!(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
@@ -305,8 +316,59 @@ class Array
     return self
   end
 
+  def index(obj = nil, &block)
+    return self.enum_for(:index) if !obj && !block
+    each_with_index do |e, i|
+      return i if obj ? (e == obj) : block.call(e)
+    end
+    nil
+  end
+
+  alias :find_index :index
+
+  def rindex(obj = nil, &block)
+    return self.enum_for(:rindex) if !obj && !block
+    reverse.each_with_index do |e, i|
+      return length - i - 1 if obj ? (e == obj) : block.call(e)
+    end
+    nil
+  end
+
   def rotate(n = 1)
     Array.new(self).rotate!(n)
   end
 
+  def count(*args, &block)
+    c = 0
+    if args.empty?
+      if block
+        self.each { |e| c += 1 if block.call(e) }
+      else
+        c = self.length
+      end
+    else
+      arg = args[0]
+      self.each { |e| c += 1 if e == arg }
+    end
+    c
+  end
+
+  def shuffle!
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    (self.length - 1).downto(1) do |idx|
+      other = rand(idx + 1)
+      self[other], self[idx] = self[idx], self[other]
+    end
+    self
+  end
+
+  def shuffle
+    arr = Array.new(self)
+    arr.shuffle!
+    arr
+  end
+
+  def to_a
+    self.instance_of?(Array) ? self : Array.new(self)
+  end
 end

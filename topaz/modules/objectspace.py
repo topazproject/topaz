@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from rpython.rlib import rgc
+from rpython.rlib import rgc, jit
 
 from topaz.module import Module, ModuleDef
 from topaz.objects.objectobject import W_BaseObject
@@ -23,6 +23,8 @@ class ObjectSpace(Module):
 
     @moduledef.function("each_object")
     def method_each_object(self, space, w_mod, block):
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("each_object"), w_mod], block)
         match_w = []
         roots = [gcref for gcref in rgc.get_rpy_roots() if gcref]
         pending = roots[:]
@@ -37,3 +39,9 @@ class ObjectSpace(Module):
         clear_gcflag_extra(roots)
         for w_obj in match_w:
             space.invoke_block(block, [w_obj])
+        return space.newint(len(match_w))
+
+    @moduledef.function("garbage_collect")
+    @jit.dont_look_inside
+    def method_garbage_collect(self):
+        rgc.collect()
