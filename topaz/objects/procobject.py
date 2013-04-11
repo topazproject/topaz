@@ -13,11 +13,15 @@ class W_ProcObject(W_Object):
     def get_block(self):
         return self.block
 
-    @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w, block):
+    @classdef.singleton_method("new")
+    def method_new(self, space, args_w, block):
         if block is None:
             raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
         return W_ProcObject(space, block, False)
+
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space):
+        raise space.error(space.w_TypeError, "allocator undefined for Proc")
 
     @classdef.method("[]")
     @classdef.method("call")
