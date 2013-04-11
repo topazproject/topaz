@@ -1,2 +1,0 @@
-fails:Enumerable#none? gathers whole arrays as elements when each yields multiple
-fails:Enumerable#none? with a block yields multiple arguments when each yields multiple

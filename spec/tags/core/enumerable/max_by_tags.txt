@@ -1,1 +1,0 @@
-fails:Enumerable#max_by gathers whole arrays as elements when each yields multiple
