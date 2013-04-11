@@ -67,6 +67,7 @@ class Hash
     end
     self
   end
+  alias update merge!
 
   def merge(other, &block)
     dup.merge! other, &block
