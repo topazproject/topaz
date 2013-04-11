@@ -50,6 +50,7 @@ class Hash
   end
 
   def merge!(other, &block)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     other = other.to_hash unless other.kind_of? Hash
     if block
       other.each do |key, val|
