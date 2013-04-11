@@ -1,6 +1,6 @@
 import copy
 
-from rpython.rlib.listsort import TimSort
+from rpython.rlib.listsort import make_timsort_class
 
 from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
@@ -8,23 +8,35 @@ from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.packing.pack import RPacker
 
-class RubySorter(TimSort):
+
+BaseRubySorter = make_timsort_class()
+BaseRubySortBy = make_timsort_class()
+
+
+class RubySorter(BaseRubySorter):
     def __init__(self, space, list, listlength=None, sortblock=None):
-        TimSort.__init__(self, list, listlength=listlength)
+        BaseRubySorter.__init__(self, list, listlength=listlength)
         self.space = space
         self.sortblock = sortblock
 
     def lt(self, w_a, w_b):
-        cmp_res = self.space.compare(w_a, w_b, self.sortblock)
-        return self.space.int_w(cmp_res) < 0
+        w_cmp_res = self.space.compare(w_a, w_b, self.sortblock)
+        return self.space.int_w(w_cmp_res) < 0
 
-class RubySorterYielder(RubySorter):
+
+class RubySortBy(BaseRubySortBy):
+    def __init__(self, space, list, listlength=None, sortblock=None):
+        BaseRubySortBy.__init__(self, list, listlength=listlength)
+        self.space = space
+        self.sortblock = sortblock
+
     def lt(self, w_a, w_b):
-        cmp_res = self.space.compare(
+        w_cmp_res = self.space.compare(
             self.space.invoke_block(self.sortblock, [w_a]),
             self.space.invoke_block(self.sortblock, [w_b])
         )
-        return self.space.int_w(cmp_res) < 0
+        return self.space.int_w(w_cmp_res) < 0
+
 
 class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
@@ -281,7 +293,7 @@ class W_ArrayObject(W_Object):
     def method_sort_by_i(self, space, block):
         if block is None:
             return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("sort_by!")])
-        RubySorterYielder(space, self.items_w, sortblock=block).sort()
+        RubySortBy(space, self.items_w, sortblock=block).sort()
         return self
 
     @classdef.method("reverse!")
@@ -292,7 +304,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("rotate!", n="int")
     @check_frozen()
-    def method_rotate_i(self, space, n=1): 
+    def method_rotate_i(self, space, n=1):
         length = len(self.items_w)
         if length == 0:
             return self
@@ -300,9 +312,9 @@ class W_ArrayObject(W_Object):
             n %= length
         if n < 0:
             n += length
-        if n == 0: 
+        if n == 0:
             return self
-        assert n >= 0       
+        assert n >= 0
         self.items_w.extend(self.items_w[:n])
         del self.items_w[:n]
         return self
