@@ -1,2 +1,0 @@
-fails:Enumerable#one? when passed a block yields multiple arguments when each yields multiple
-fails:Enumerable#one? when not passed a block gathers whole arrays as elements when each yields multiple

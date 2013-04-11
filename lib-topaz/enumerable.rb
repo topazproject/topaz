@@ -1,7 +1,7 @@
 module Enumerable
   def first(*args)
     if args.empty?
-      self.each { |e| return e }
+      self.each_entry { |e| return e }
       nil
     else
       take(*args)
@@ -44,10 +44,10 @@ module Enumerable
 
   alias reduce inject
 
-  def each_with_index(&block)
-    return self.enum_for(:each_with_index) if !block
+  def each_with_index(*args, &block)
+    return self.enum_for(:each_with_index, *args) if !block
     i = 0
-    self.each do |obj|
+    self.each_entry(*args) do |obj|
       yield obj, i
       i += 1
     end
@@ -55,7 +55,7 @@ module Enumerable
 
   def each_with_object(memo, &block)
     return self.enum_for(:each_with_object, memo) unless block
-    self.each do |elm|
+    self.each_entry do |elm|
       yield elm, memo
     end
     memo
@@ -77,15 +77,19 @@ module Enumerable
   end
 
   def all?(&block)
-    self.each do |obj|
-      return false unless (block ? block.call(obj) : obj)
+    if block
+      self.each { |*e| return false unless yield(*e) }
+    else
+      self.each_entry { |e| return false unless e }
     end
     true
   end
 
   def any?(&block)
-    self.each do |obj|
-      return true if (block ? block.call(obj) : obj)
+    if block
+      self.each { |*e| return true if yield(*e) }
+    else
+      self.each_entry { |e| return true if e }
     end
     false
   end
@@ -93,7 +97,7 @@ module Enumerable
   def select(&block)
     return self.enum_for(:select) unless block
     result = []
-    self.each do |o|
+    self.each_entry do |o|
       if block.call(o)
         result << o
       end
@@ -104,7 +108,7 @@ module Enumerable
   alias :find_all :select
 
   def include?(obj)
-    self.each do |o|
+    self.each_entry do |o|
       return true if o == obj
     end
     false
@@ -123,7 +127,7 @@ module Enumerable
     return self.enum_for(:drop_while) if !block
     result = []
     dropping = true
-    self.each do |o|
+    self.each_entry do |o|
       unless dropping && yield(o)
         result << o
         dropping = false
@@ -132,9 +136,9 @@ module Enumerable
     result
   end
 
-  def to_a
+  def to_a(*args)
     result = []
-    self.each do |i|
+    self.each_entry(*args) do |i|
       result << i
     end
     result
@@ -143,7 +147,7 @@ module Enumerable
 
   def detect(ifnone = nil, &block)
     return self.enum_for(:detect, ifnone) unless block
-    self.each do |o|
+    self.each_entry do |o|
       return o if block.call(o)
     end
     ifnone.is_a?(Proc) ? ifnone.call : ifnone
@@ -155,7 +159,7 @@ module Enumerable
     raise ArgumentError.new("attempt to take negative size") if n < 0
     result = []
     unless n == 0
-      self.each do |o|
+      self.each_entry do |o|
         result << o
         break if result.size == n
       end
@@ -166,7 +170,7 @@ module Enumerable
   def take_while(&block)
     return self.enum_for(:take_while) unless block
     result = []
-    self.each do |o|
+    self.each_entry do |o|
       break unless yield(o)
       result << o
     end
@@ -176,7 +180,7 @@ module Enumerable
   def reject(&block)
     return self.enum_for(:reject) unless block
     result = []
-    self.each do |o|
+    self.each_entry do |o|
       result << o unless yield(o)
     end
     result
@@ -241,7 +245,7 @@ module Enumerable
   def partition(&block)
     return self.enum_for(:partition) unless block
     a, b = [], []
-    self.each do |e|
+    self.each_entry do |e|
       block.call(e) ? a.push(e) : b.push(e)
     end
     [a, b]
@@ -264,15 +268,25 @@ module Enumerable
 
   def one?(&block)
     c = 0
-    self.each do |e|
-      c += 1 if block ? yield(e) : e
+    if block
+      self.each do |*e|
+        c += 1 if yield(*e)
+        return false if c > 1
+      end
+    else
+      self.each_entry do |e|
+        c += 1 if e
+        return false if c > 1
+      end
     end
     c == 1
   end
 
   def none?(&block)
-    self.each do |e|
-      return false if block ? yield(e) : e
+    if block
+      self.each { |*e| return false if yield(*e) }
+    else
+      self.each_entry { |e| return false if e }
     end
     true
   end
@@ -280,7 +294,7 @@ module Enumerable
   def group_by(&block)
     return self.enum_for(:group_by) unless block
     h = {}
-    self.each do |e|
+    self.each_entry do |e|
       v = yield e
       a = h.fetch(v) { |v| h[v] = [] }
       a << e
@@ -290,8 +304,10 @@ module Enumerable
 
   def find_index(obj = nil, &block)
     return self.enum_for(:find_index) if !obj && !block
-    each_with_index do |e, i|
+    i = 0
+    each do |e|
       return i if obj ? (e == obj) : block.call(e)
+      i += 1
     end
     nil
   end
@@ -318,7 +334,7 @@ module Enumerable
     num = Topaz.convert_type(num, Fixnum, :to_int)
     raise ArgumentError.new("invalid slice size") if num <= 0
     buf = []
-    self.each do |e|
+    self.each_entry do |e|
       buf << e
       if buf.size == num
         yield buf

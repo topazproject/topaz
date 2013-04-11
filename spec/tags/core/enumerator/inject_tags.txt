@@ -1,3 +1,2 @@
 fails:Enumerator#inject calls #each on the underlying object until it's exhausted
 fails:Enumerator#inject calls the method given in the constructor until it's exhausted
-fails:Enumerator#inject works when chained against each_with_index
