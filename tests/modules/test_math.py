@@ -108,6 +108,18 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return Math.gamma(Float::NAN)")
         assert math.isnan(space.float_w(w_res))
 
+    def test_lgamma(self, space):
+        res_w = space.execute("return Math.lgamma(6.0)")
+        w_res1, w_res2 = space.listview(res_w)
+        self.assert_float_equal(space.float_w(w_res1), math.log(120))
+        assert space.int_w(w_res2) == 1
+
+        res_w = space.execute("return Math.lgamma(-1)")
+        w_inf = space.execute("return Float.get_const(:INFINITY)")
+        w_res1, w_res2 = space.listview(res_w)
+        assert self.unwrap(w_res1) == self.unwrap(w_inf)
+        assert space.int_w(w_res2) == 1
+
     def test_hypot(self, space):
         w_res = space.execute("return Math.hypot(3, 4)")
         assert self.unwrap(space, w_res) == 5
