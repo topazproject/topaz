@@ -190,3 +190,7 @@ class TestMath(BaseTopazTest):
     def test_erf(self, space):
         w_res = space.execute("return [Math.erf(0), Math.erf(10), Math.erf(-10)]")
         assert self.unwrap(space, w_res) == [0.0, 1.0, -1.0]
+
+    def test_erfc(self, space):
+        w_res = space.execute("return [Math.erfc(-1), Math.erfc(0), Math.erfc(1.5)]")
+        assert self.unwrap(space, w_res) == [math.erfc(-1), 1.0, math.erfc(1.5)]
