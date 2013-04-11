@@ -11,8 +11,8 @@ prepare myself.
 
 A year went by very quickly; before long other contributors were helping out,
 and we were starting to run more and more real Ruby code. Finally we were able
-to start running stuff that looked useful benchmarks, and then (more
-importantly) to start running `RubySpec`_, that was a big milestone.
+to start running useful benchmarks, and then (more importantly) to start
+running `RubySpec`_, that was a big milestone.
 
 Finally, in February, we open sourced Topaz, and the response from the
 community has been incredible. So many of you have contributed pull requests,
