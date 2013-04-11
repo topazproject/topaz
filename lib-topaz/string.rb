@@ -60,6 +60,20 @@ class String
   end
   alias next succ
 
+  def each_char(&block)
+    return self.enum_for(:each_char) unless block
+
+    i = 0
+    limit = self.length
+    while i < limit
+      yield self[i]
+      i += 1
+    end
+
+    self
+  end
+  alias chars each_char
+
   def upto(max, exclusive = false, &block)
     return self.enum_for(:upto, max, exclusive) unless block
 
