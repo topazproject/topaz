@@ -212,13 +212,8 @@ class Array
 
   def <=>(other)
     return 0 if self.equal?(other)
-    unless other.kind_of?(Array)
-      if other.respond_to?(:to_ary)
-        other = other.to_ary
-      else
-        return nil
-      end
-    end
+    other = Array.try_convert(other)
+    return nil unless other
     cmp_len = (self.size <=> other.size)
     return cmp_len if cmp_len != 0
     Thread.current.recursion_guard(:array_comparison, self) do
