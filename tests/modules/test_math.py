@@ -115,9 +115,9 @@ class TestMath(BaseTopazTest):
         assert space.int_w(w_res2) == 1
 
         res_w = space.execute("return Math.lgamma(-1)")
-        w_inf = space.execute("return Float.get_const(:INFINITY)")
+        w_inf = space.execute("return Float::INFINITY")
         w_res1, w_res2 = space.listview(res_w)
-        assert self.unwrap(w_res1) == self.unwrap(w_inf)
+        assert self.unwrap(space, w_res1) == self.unwrap(space, w_inf)
         assert space.int_w(w_res2) == 1
 
     def test_hypot(self, space):
