@@ -70,6 +70,12 @@ module Enumerable
     self
   end
 
+  def reverse_each(&block)
+    return self.enum_for(:reverse_each) unless block
+    self.to_a.reverse_each(&block)
+    self
+  end
+
   def all?(&block)
     self.each do |obj|
       return false unless (block ? block.call(obj) : obj)
