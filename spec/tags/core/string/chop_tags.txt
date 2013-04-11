@@ -1,5 +1,2 @@
 fails:String#chop returns a new string with the last character removed
-fails:String#chop returns subclass instances when called on a subclass
 fails:String#chop! behaves just like chop, but in-place
-fails:String#chop! raises a RuntimeError on a frozen instance that is modified
-fails:String#chop! raises a RuntimeError on a frozen instance that would not be modified

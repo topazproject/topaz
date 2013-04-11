@@ -1,2 +1,0 @@
-fails:Hash#clear does not remove default values
-fails:Hash#clear does not remove default procs

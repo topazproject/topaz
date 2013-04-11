@@ -8,28 +8,23 @@ from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.packing.pack import RPacker
 
-
 class RubySorter(TimSort):
     def __init__(self, space, list, listlength=None, sortblock=None):
         TimSort.__init__(self, list, listlength=listlength)
         self.space = space
         self.sortblock = sortblock
 
-    def lt(self, a, b):
-        if self.sortblock is None:
-            w_cmp_res = self.space.send(a, self.space.newsymbol("<=>"), [b])
-        else:
-            w_cmp_res = self.space.invoke_block(self.sortblock, [a, b])
-        if w_cmp_res is self.space.w_nil:
-            raise self.space.error(
-                self.space.w_ArgumentError,
-                "comparison of %s with %s failed" %
-                (self.space.obj_to_s(self.space.getclass(a)),
-                   self.space.obj_to_s(self.space.getclass(b)))
-            )
-        else:
-            return self.space.int_w(w_cmp_res) < 0
+    def lt(self, w_a, w_b):
+        cmp_res = self.space.compare(w_a, w_b, self.sortblock)
+        return self.space.int_w(cmp_res) < 0
 
+class RubySorterYielder(RubySorter):
+    def lt(self, w_a, w_b):
+        cmp_res = self.space.compare(
+            self.space.invoke_block(self.sortblock, [w_a]),
+            self.space.invoke_block(self.sortblock, [w_b])
+        )
+        return self.space.int_w(cmp_res) < 0
 
 class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
@@ -276,8 +271,17 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("sort!")
-    def method_sort(self, space, block):
+    @check_frozen()
+    def method_sort_i(self, space, block):
         RubySorter(space, self.items_w, sortblock=block).sort()
+        return self
+
+    @classdef.method("sort_by!")
+    @check_frozen()
+    def method_sort_by_i(self, space, block):
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("sort_by!")])
+        RubySorterYielder(space, self.items_w, sortblock=block).sort()
         return self
 
     @classdef.method("reverse!")

@@ -129,7 +129,6 @@ class MSpecScript
               "^#{Rubyspec}/language/regexp/interpolation_spec.rb",
               "^#{Rubyspec}/language/regexp/modifiers_spec.rb",
               "^#{Rubyspec}/language/BEGIN_spec.rb",
-              "^#{Rubyspec}/language/variables_spec.rb",
               "^#{Rubyspec}/language/alias_spec.rb",
               "^#{Rubyspec}/language/break_spec.rb",
               "^#{Rubyspec}/language/class_spec.rb",

@@ -1,2 +1,1 @@
-fails:Hash.new creates a Hash with a default_proc if passed a block
 fails:Hash.new raises an ArgumentError if passed both default argument and default block

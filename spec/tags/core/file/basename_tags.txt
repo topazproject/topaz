@@ -4,4 +4,3 @@ fails:File.basename return the basename for unix format
 fails:File.basename return the basename for edge cases
 fails:File.basename ignores a trailing directory separator
 fails:File.basename return the basename for unix suffix
-fails:File.basename raises a TypeError if the arguments are not String types

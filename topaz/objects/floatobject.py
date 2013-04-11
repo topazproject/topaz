@@ -6,7 +6,7 @@ from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
-    NAN, INFINITY)
+    NAN, INFINITY, isfinite)
 
 from topaz.error import RubyError
 from topaz.module import ClassDef
@@ -53,6 +53,14 @@ class W_FloatObject(W_NumericObject):
         space.set_const(w_cls, "MIN", space.newfloat(sys.float_info.min))
         space.set_const(w_cls, "INFINITY", space.newfloat(INFINITY))
         space.set_const(w_cls, "NAN", space.newfloat(NAN))
+        space.set_const(w_cls, "DIG", space.newint(sys.float_info.dig))
+        space.set_const(w_cls, "EPSILON", space.newfloat(sys.float_info.epsilon))
+        space.set_const(w_cls, "MANT_DIG", space.newint(sys.float_info.mant_dig))
+        space.set_const(w_cls, "MAX_10_EXP", space.newint(sys.float_info.max_10_exp))
+        space.set_const(w_cls, "MIN_10_EXP", space.newint(sys.float_info.min_10_exp))
+        space.set_const(w_cls, "MAX_EXP", space.newint(sys.float_info.max_exp))
+        space.set_const(w_cls, "MIN_EXP", space.newint(sys.float_info.min_exp))
+        space.set_const(w_cls, "RADIX", space.newint(sys.float_info.radix))
 
     @classdef.method("inspect")
     @classdef.method("to_s")
@@ -224,6 +232,10 @@ class W_FloatObject(W_NumericObject):
         if math.isinf(self.floatvalue):
             return space.newint(int(math.copysign(1, self.floatvalue)))
         return space.w_nil
+
+    @classdef.method("finite?")
+    def method_finite(self, space):
+        return space.newbool(isfinite(self.floatvalue))
 
     @classdef.method("nan?")
     def method_nan(self, space):

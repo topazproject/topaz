@@ -26,6 +26,10 @@ class W_SymbolObject(W_Object):
     def getsingletonclass(self, space):
         raise space.error(space.w_TypeError, "can't define singleton")
 
+    @classdef.singleton_method("all_symbols")
+    def singleton_method_all_symbols(self, space):
+        return space.newarray(space.symbol_cache.values())
+
     @classdef.method("to_s")
     def method_to_s(self, space):
         return space.newstr_fromstr(self.symbol)
@@ -33,6 +37,15 @@ class W_SymbolObject(W_Object):
     @classdef.method("inspect")
     def method_inspect(self, space):
         return space.newstr_fromstr(":%s" % self.symbol)
+
+    @classdef.method("length")
+    @classdef.method("size")
+    def method_size(self, space):
+        return space.newint(len(self.symbol))
+
+    @classdef.method("empty?")
+    def method_emptyp(self, space):
+        return space.newbool(not self.symbol)
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
@@ -46,3 +59,11 @@ class W_SymbolObject(W_Object):
             return space.newint(0)
         elif s1 > s2:
             return space.newint(1)
+
+    @classdef.method("downcase")
+    def method_downcase(self, space):
+        return space.newsymbol(self.symbol.lower())
+
+    @classdef.method("upcase")
+    def method_upcase(self, space):
+        return space.newsymbol(self.symbol.upper())

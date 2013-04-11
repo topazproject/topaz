@@ -1,2 +1,0 @@
-fails:String#capitalize returns subclass instances when called on a subclass
-fails:String#capitalize! raises a RuntimeError when self is frozen

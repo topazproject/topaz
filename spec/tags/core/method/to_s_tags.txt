@@ -1,3 +1,2 @@
 fails:Method#to_s returns a String containing 'Method'
 fails:Method#to_s returns a String containing the Module the method is defined in
-fails:Method#to_s returns a String containing the Module the method is referenced from

@@ -1,2 +1,0 @@
-fails:Integer#succ returns the next larger positive Bignum
-fails:Integer#succ returns the next larger negative Bignum
