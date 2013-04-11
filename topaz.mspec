@@ -5,7 +5,6 @@ class MSpecScript
   MSpec.enable_feature :fiber
   core = ["#{Rubyspec}/core/",
           "^#{Rubyspec}/core/array/pack/",
-          "^#{Rubyspec}/core/fixnum/right_shift_spec.rb",
           "^#{Rubyspec}/core/struct",
           "^#{Rubyspec}/core/string/unpack/",
           "^#{Rubyspec}/core/string/split_spec.rb",
@@ -81,8 +80,6 @@ class MSpecScript
           "^#{Rubyspec}/core/dir/seek_spec.rb",
           "^#{Rubyspec}/core/dir/tell_spec.rb",
           "^#{Rubyspec}/core/dir/unlink_spec.rb",
-          "^#{Rubyspec}/core/enumerator/generator/each_spec.rb",
-          "^#{Rubyspec}/core/enumerator/inject_spec.rb",
           "^#{Rubyspec}/core/file/open_spec.rb",
           "^#{Rubyspec}/core/io/dup_spec.rb",
           "^#{Rubyspec}/core/io/sysopen_spec.rb",
@@ -111,9 +108,9 @@ class MSpecScript
           "^#{Rubyspec}/core/process/wait2_spec.rb",
           "^#{Rubyspec}/core/process/wait_spec.rb",
           "^#{Rubyspec}/core/process/waitall_spec.rb",
-          "^#{Rubyspec}/core/string/chop_spec.rb",
           "^#{Rubyspec}/core/string/chomp_spec.rb",
-          "^#{Rubyspec}/core/file/ctime_spec.rb"]
+          "^#{Rubyspec}/core/file/ctime_spec.rb"
+  ]
 
   language = ["#{Rubyspec}/language",
               "^#{Rubyspec}/language/block_spec.rb",
