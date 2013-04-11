@@ -186,3 +186,7 @@ class TestMath(BaseTopazTest):
     def test_tanh(self, space):
         w_res = space.execute("return [Math.tanh(0), Math.tanh(1), Math.tanh(1234)]")
         assert self.unwrap(space, w_res) == [0, math.tanh(1), 1.0]
+
+    def test_erf(self, space):
+        w_res = space.execute("return [Math.erf(0), Math.erf(10), Math.erf(-10)]")
+        assert self.unwrap(space, w_res) == [0.0, 1.0, -1.0]
