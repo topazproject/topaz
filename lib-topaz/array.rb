@@ -79,14 +79,6 @@ class Array
     return self
   end
 
-  def zip(ary)
-    result = []
-    self.each_with_index do |obj, idx|
-      result << [obj, ary[idx]]
-    end
-    result
-  end
-
   def product(ary)
     result = []
     self.each do |obj|
