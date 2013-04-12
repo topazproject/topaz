@@ -6,6 +6,7 @@ from rpython.rlib import rfloat
 
 from topaz.module import Module, ModuleDef, ClassDef
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
+from topaz.error import RubyError
 
 
 class Math(Module):
@@ -103,21 +104,15 @@ class Math(Module):
 
     @moduledef.function("lgamma", value="float")
     def method_lgamma(self, space, value):
-        if value == -1:
-            return space.newarray([space.newfloat(rfloat.INFINITY),
-                                   space.newint(1)])
-        else:
-            if math.isnan(value):
-                return space.newarray([space.newfloat(rfloat.NAN),
-                                       space.newint(1)])
-            else:
-                try:
-                    res = rfloat.lgamma(value)
-                except (ValueError, OverflowError):
-                    res = rfloat.INFINITY
-                gamma = space.float_w(space.send(self, space.newsymbol("gamma"), [space.newfloat(value)]))
-                sign = 1 if gamma > 0 else -1 if gamma < 0 else 0
-                return space.newarray([space.newfloat(res), space.newint(sign)])
+        try:
+            res = rfloat.lgamma(value)
+        except (ValueError, OverflowError):
+            res = rfloat.INFINITY
+        gamma = (1 if value == -1 or math.isnan(value) else
+                 space.float_w(space.send(self, space.newsymbol("gamma"),
+                               [space.newfloat(value)])))
+        sign = 1 if gamma > 0 else -1 if gamma < 0 else 0
+        return space.newarray([space.newfloat(res), space.newint(sign)])
 
     @moduledef.function("hypot", value1="float", value2="float")
     def method_hypot(self, space, value1, value2):
