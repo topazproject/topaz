@@ -41,7 +41,7 @@ class TestProcess(BaseTopazTest):
         with self.raises(space, "SystemExit"):
             space.execute("""
             Process.fork do
-                puts "child"
+              puts "child"
             end
             """)
         out, err = capfd.readouterr()
@@ -50,7 +50,7 @@ class TestProcess(BaseTopazTest):
         monkeypatch.setattr(process, "fork", lambda: 200)
         w_res = space.execute("""
         return Process.fork do
-            puts "child"
+          puts "child"
         end
         """)
         assert space.int_w(w_res) == 200

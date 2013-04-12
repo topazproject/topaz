@@ -5,14 +5,14 @@ class TestEnumberable(BaseTopazTest):
     def test_inject(self, space):
         w_res = space.execute("""
         return (5..10).inject(1) do |prod, n|
-            prod * n
+          prod * n
         end
         """)
         assert space.int_w(w_res) == 151200
 
         w_res = space.execute("""
         return (1..10).inject(0) do |sum, n|
-            sum + n
+          sum + n
         end
         """)
         assert space.int_w(w_res) == 55
@@ -20,7 +20,7 @@ class TestEnumberable(BaseTopazTest):
     def test_reduce(self, space):
         w_res = space.execute("""
         return [1, 2, 4, 8].reduce(0) do |accum, cur|
-            accum + cur
+          accum + cur
         end
         """)
         assert space.int_w(w_res) == 15
@@ -29,7 +29,7 @@ class TestEnumberable(BaseTopazTest):
         w_res = space.execute("""
         result = []
         (5..10).each_with_index do |n, idx|
-            result << [n, idx]
+          result << [n, idx]
         end
         return result
         """)
@@ -38,7 +38,7 @@ class TestEnumberable(BaseTopazTest):
     def test_all(self, space):
         w_res = space.execute("""
         return ["ant", "bear", "cat"].all? do |word|
-            word.length > 2
+          word.length > 2
         end
         """)
         assert w_res is space.w_true
@@ -46,7 +46,7 @@ class TestEnumberable(BaseTopazTest):
     def test_all_false(self, space):
         w_res = space.execute("""
         return ["ant", "bear", "cat"].all? do |word|
-            word.length > 3
+          word.length > 3
         end
         """)
         assert w_res is space.w_false
@@ -66,7 +66,7 @@ class TestEnumberable(BaseTopazTest):
     def test_any(self, space):
         w_res = space.execute("""
         return ["ant", "bear", "cat"].any? do |word|
-            word.length > 2
+          word.length > 2
         end
         """)
         assert w_res is space.w_true
@@ -126,15 +126,15 @@ class TestEnumberable(BaseTopazTest):
 
         w_res = space.execute("""
         class A
-            include Enumerable
+          include Enumerable
 
-            def each
-                i = 0
-                while i < 5
-                    yield i
-                    i += 1
-                end
+          def each
+            i = 0
+            while i < 5
+              yield i
+              i += 1
             end
+          end
         end
         return A.new.to_a""")
         assert self.unwrap(space, w_res) == [0, 1, 2, 3, 4]

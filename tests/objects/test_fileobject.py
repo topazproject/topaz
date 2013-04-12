@@ -350,14 +350,14 @@ class TestDirname(BaseTopazTest):
     def test_simple(self, space):
         w_res = space.execute("""
         return [
-            File.dirname("/home/guido"),
-            File.dirname("/home/guido/test.txt"),
-            File.dirname("test.txt"),
-            File.dirname("/home///guido//file.txt"),
-            File.dirname(""),
-            File.dirname("/"),
-            File.dirname("/foo/foo"),
-            File.dirname("/foo/foo//")
+          File.dirname("/home/guido"),
+          File.dirname("/home/guido/test.txt"),
+          File.dirname("test.txt"),
+          File.dirname("/home///guido//file.txt"),
+          File.dirname(""),
+          File.dirname("/"),
+          File.dirname("/foo/foo"),
+          File.dirname("/foo/foo//")
         ]
         """)
         assert self.unwrap(space, w_res) == [
@@ -374,9 +374,9 @@ class TestDirname(BaseTopazTest):
     def test_windows_backslash_handling(self, space):
         w_res = space.execute("""
         return [
-            File.dirname("a/b/c"),
-            File.dirname("a\\\\b\\\\//\\\\c/\\\\"),
-            File.dirname("\\\\"),
+          File.dirname("a/b/c"),
+          File.dirname("a\\\\b\\\\//\\\\c/\\\\"),
+          File.dirname("\\\\"),
         ]
         """)
         res = self.unwrap(space, w_res)
