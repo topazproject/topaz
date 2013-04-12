@@ -225,8 +225,8 @@ class TestIO(BaseTopazTest):
         assert isinstance(w_read, W_IOObject)
         w_res = space.execute("""
         r, w, r_c, w_c = IO.pipe do |r, w|
-            r.close
-            [r, w, r.closed?, w.closed?]
+          r.close
+          [r, w, r.closed?, w.closed?]
         end
         return r.closed?, w.closed?, r_c, w_c
         """)

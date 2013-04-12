@@ -19,7 +19,7 @@ class TestFiberObject(BaseTopazTest):
     def test_nested_resume(self, space):
         space.execute("""
         $f = Fiber.new {
-            $f.resume
+          $f.resume
         }
         """)
         with self.raises(space, "FiberError", "double resume"):
@@ -45,9 +45,9 @@ class TestFiberObject(BaseTopazTest):
         w_res = space.execute("""
         r = []
         f = Fiber.new {
-            r << 1
-            Fiber.yield 3
-            r << 2
+          r << 1
+          Fiber.yield 3
+          r << 2
         }
         r << "a"
         res = f.resume
@@ -62,7 +62,7 @@ class TestFiberObject(BaseTopazTest):
     def test_yield_multiarg(self, space):
         w_res = space.execute("""
         f = Fiber.new {
-            Fiber.yield 1, 2, 3
+          Fiber.yield 1, 2, 3
         }
         return f.resume
         """)
@@ -71,7 +71,7 @@ class TestFiberObject(BaseTopazTest):
     def test_yield_with_no_value(self, space):
         w_res = space.execute("""
         f = Fiber.new {
-            Fiber.yield
+          Fiber.yield
         }
         return f.resume
         """)
@@ -114,7 +114,7 @@ class TestFiberObject(BaseTopazTest):
         w_res = space.execute("""
         r = []
         f = Fiber.new {
-            r << (Fiber.yield)
+          r << (Fiber.yield)
         }
         f.resume
         f.resume(10)
