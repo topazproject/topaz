@@ -21,11 +21,11 @@ class TestProcObject(BaseTopazTest):
     def test_return(self, space):
         w_res = space.execute("""
         def f(a)
-            a << "a"
-            a << (lambda { return "r" }.call)
-            a << "b"
-            proc { return "p" }.call
-            a << "f"
+          a << "a"
+          a << (lambda { return "r" }.call)
+          a << "b"
+          proc { return "p" }.call
+          a << "f"
         end
 
         a = []
@@ -47,7 +47,7 @@ class TestProcObject(BaseTopazTest):
     def test_binding(self, space):
         w_res = space.execute("""
         def f(a)
-            return proc {}
+          return proc {}
         end
         return f(2).binding.eval("a")
         """)

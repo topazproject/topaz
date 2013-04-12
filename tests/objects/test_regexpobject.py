@@ -63,8 +63,8 @@ class TestRegexpObject(BaseTopazTest):
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp
-                def self.new(*args); /foo/; end
-                def self.compile(*args); /foo/; end
+              def self.new(*args); /foo/; end
+              def self.compile(*args); /foo/; end
             end
             r = "(?~)"
             /#{r}/
@@ -76,7 +76,7 @@ class TestRegexpObject(BaseTopazTest):
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp
-                def self.new(*args); /foo/; end
+              def self.new(*args); /foo/; end
             end
             Regexp.compile "(?~)"
             """)
@@ -87,7 +87,7 @@ class TestRegexpObject(BaseTopazTest):
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp
-                def self.compile(*args); /foo/; end
+              def self.compile(*args); /foo/; end
             end
             Regexp.new "(?~)"
             """)
