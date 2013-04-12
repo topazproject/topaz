@@ -21,6 +21,7 @@ class W_ProcObject(W_Object):
 
     method_allocate = classdef.undefine_allocator()
 
+    @classdef.method("===")
     @classdef.method("[]")
     @classdef.method("call")
     def method_call(self, space, args_w, block):
