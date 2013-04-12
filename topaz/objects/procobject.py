@@ -21,10 +21,21 @@ class W_ProcObject(W_Object):
 
     method_allocate = classdef.undefine_allocator()
 
+    @classdef.method("===")
     @classdef.method("[]")
     @classdef.method("call")
     def method_call(self, space, args_w, block):
         from topaz.interpreter import RaiseReturn, RaiseBreak
+
+        if (self.is_lambda and
+            (len(args_w) < (len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)) or
+            (self.block.bytecode.splat_arg_pos == -1 and len(args_w) > len(self.block.bytecode.arg_pos)))):
+            raise space.error(space.w_ArgumentError,
+                "wrong number of arguments (%d for %d)" % (
+                    len(args_w),
+                    len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
+                )
+            )
 
         try:
             return space.invoke_block(self.block, args_w, block_arg=block)
