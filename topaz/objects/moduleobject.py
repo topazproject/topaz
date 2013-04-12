@@ -107,7 +107,7 @@ class W_ModuleObject(W_RootObject):
 
     def getclass(self, space):
         if self.klass is not None:
-            return self.klass
+            return jit.promote(self).klass
         return W_RootObject.getclass(self, space)
 
     def getsingletonclass(self, space):
