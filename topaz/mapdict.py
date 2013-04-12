@@ -49,7 +49,10 @@ class BaseNode(object):
             self._size_estimate = size_est
         if node.length() > self.length():
             # note that node.size_estimate() is always at least node.length()
-            new_storage = [None] * max(node.size_estimate(), len(w_obj.storage) if w_obj.storage else 0)
+            new_size = node.size_estimate()
+            if w_obj.storage:
+                new_size = max(new_size, len(w_obj.storage))
+            new_storage = [None] * new_size
             if w_obj.storage:
                 new_storage[:len(w_obj.storage)] = w_obj.storage
             w_obj.storage = new_storage
