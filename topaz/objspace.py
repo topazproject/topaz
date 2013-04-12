@@ -502,15 +502,17 @@ class ObjectSpace(object):
         return w_res
 
     @jit.elidable
+    def _valid_const_name(self, name):
+        if not name[0].isupper():
+            return False
+        for i in range(1, len(name)):
+            ch = name[i]
+            if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
+                return False
+        return True
+
     def _check_const_name(self, name):
-        valid = name[0].isupper()
-        if valid:
-            for i in range(1, len(name)):
-                ch = name[i]
-                if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
-                    valid = False
-                    break
-        if not valid:
+        if not self._valid_const_name(name):
             raise self.error(self.w_NameError,
                 "wrong constant name %s" % name
             )
