@@ -295,7 +295,7 @@ def _entry_point(space, argv):
     status = 0
     w_exit_error = None
     explicit_status = False
-    jit.set_param(None, "trace_limit", 1000)
+    jit.set_param(None, "trace_limit", 10000)
     try:
         if do_loop:
             print_after = space.is_true(flag_globals_w["$-p"])
