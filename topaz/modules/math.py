@@ -104,11 +104,11 @@ class Math(Module):
     @moduledef.function("lgamma", value="float")
     def method_lgamma(self, space, value):
         if value == -1:
-            return space.newarray([space.newfloat(float("inf")),
+            return space.newarray([space.newfloat(rfloat.INFINITY),
                                    space.newint(1)])
         else:
             if math.isnan(value):
-                return space.newarray([space.newfloat(float("NaN")),
+                return space.newarray([space.newfloat(rfloat.NAN),
                                        space.newint(1)])
             else:
                 try:
