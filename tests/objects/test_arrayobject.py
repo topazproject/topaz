@@ -307,12 +307,12 @@ class TestArrayObject(BaseTopazTest):
         w_res = space.execute("""
         x = []
         return [
-            [] == :abc,
-            [] == [],
-            [:abc] == [:abc],
-            x == (x << 2),
-            [1, 2, 3] == [1, 2, 4],
-            [1] == [1, 2],
+          [] == :abc,
+          [] == [],
+          [:abc] == [:abc],
+          x == (x << 2),
+          [1, 2, 3] == [1, 2, 4],
+          [1] == [1, 2],
         ]
         """)
         assert self.unwrap(space, w_res) == [False, True, True, True, False, False]
