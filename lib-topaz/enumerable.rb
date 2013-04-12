@@ -367,4 +367,27 @@ module Enumerable
     out
   end
   alias flat_map collect_concat
+
+  def zip(*lists, &block)
+    lists = lists.map do |l|
+      l.respond_to?(:to_ary) ? l.to_ary : l.to_enum(:each)
+    end
+
+    index = -1
+    tail = proc do
+      index += 1
+      lists.map do |l|
+        l.kind_of?(Array) ? l[index] : l.next
+      end
+    end
+
+    if block
+      self.each do |elm|
+        yield [elm, *tail.call]
+      end
+      nil
+    else
+      self.map { |elm| [elm, *tail.call] }
+    end
+  end
 end
