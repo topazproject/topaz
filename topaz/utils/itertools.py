@@ -19,7 +19,7 @@ def combinations(iterable, r):
 
 def combinations_with_replacement(iterable, r):
     n = len(iterable)
-    if r < 0:
+    if r < 0 or (n < r and n == 0):
         return
     assert r >= 0
     pool = list(iterable)
@@ -59,3 +59,19 @@ def permutations(iterable, r):
         else:
             return
 
+def permutations_with_replacement(iterable, r):
+    n = len(iterable)
+    if r < 0:
+        return
+    assert r >= 0
+    pool = list(iterable)
+    for indices in product(range(n), r):
+        yield [pool[i] for i in indices]
+
+def product(l, repeat=1):
+    pools = [l] * repeat
+    result = [[]]
+    for pool in pools:
+        result = [x+[y] for x in result for y in pool]
+    for prod in result:
+        yield prod

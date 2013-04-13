@@ -330,13 +330,10 @@ class W_ArrayObject(W_Object):
         return self
 
     @classdef.method("repeated_combination")
-    def method_combination(self, space, w_count, block=None):
+    def method_repeated_combination(self, space, w_count, block=None):
         w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
         if block is None:
             return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("repeated_combination"), w_count])
-        if len(self.items_w) == 0:
-            space.invoke_block(block, [space.newarray(list())])
-            return self
         for cmb in itertools.combinations_with_replacement(self.items_w, space.int_w(w_count)):
             space.invoke_block(block, [space.newarray(cmb)])
         return self
@@ -349,5 +346,15 @@ class W_ArrayObject(W_Object):
             w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
         count_w = len(self.items_w) if w_count is None else space.int_w(w_count)
         for cmb in itertools.permutations(self.items_w, count_w):
+            space.invoke_block(block, [space.newarray(cmb)])
+        return self
+
+    @classdef.method("repeated_permutation")
+    def method_repeated_permutation(self, space, w_count, block=None):
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("repeated_permutation"), w_count])
+        w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
+        count_w = space.int_w(w_count)
+        for cmb in itertools.permutations_with_replacement(self.items_w, count_w):
             space.invoke_block(block, [space.newarray(cmb)])
         return self
