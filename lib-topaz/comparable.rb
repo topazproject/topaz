@@ -1,18 +1,18 @@
 module Comparable
   def >(other)
-    return (self <=> other) > 0
+    return Topaz.compare(self, other) > 0
   end
 
   def <(other)
-    return (self <=> other) < 0
+    return Topaz.compare(self, other) < 0
   end
 
   def >=(other)
-    return !((self <=> other) < 0)
+    return Topaz.compare(self, other) >= 0
   end
 
   def <=(other)
-    return !((self <=> other) > 0)
+    return Topaz.compare(self, other) <= 0
   end
 
   def ==(other)

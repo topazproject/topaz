@@ -148,9 +148,10 @@ class ObjectSpace(object):
 
         for w_cls in [
             self.w_basicobject, self.w_object, self.w_array, self.w_proc,
-            self.w_numeric, self.w_fixnum, self.w_float, self.w_string,
-            self.w_symbol, self.w_class, self.w_module, self.w_hash,
-            self.w_regexp, self.w_method, self.w_unbound_method, self.w_io,
+            self.w_numeric, self.w_fixnum, self.w_bignum, self.w_float,
+            self.w_string, self.w_symbol, self.w_class, self.w_module,
+            self.w_hash, self.w_regexp, self.w_method, self.w_unbound_method,
+            self.w_io,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -245,8 +246,11 @@ class ObjectSpace(object):
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
         kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
-        while path:
-            path = rpath.rabspath(os.path.join(path, os.path.pardir))
+        while True:
+            par_path = rpath.rabspath(os.path.join(path, os.path.pardir))
+            if par_path == path:
+                break
+            path = par_path
             if isdir(os.path.join(path, "lib-ruby")):
                 lib_path = os.path.join(path, "lib-ruby")
                 kernel_path = os.path.join(path, "lib-topaz")
@@ -498,15 +502,17 @@ class ObjectSpace(object):
         return w_res
 
     @jit.elidable
+    def _valid_const_name(self, name):
+        if not name[0].isupper():
+            return False
+        for i in range(1, len(name)):
+            ch = name[i]
+            if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
+                return False
+        return True
+
     def _check_const_name(self, name):
-        valid = name[0].isupper()
-        if valid:
-            for i in range(1, len(name)):
-                ch = name[i]
-                if not (ch.isalnum() or ch == "_" or ord(ch) > 127):
-                    valid = False
-                    break
-        if not valid:
+        if not self._valid_const_name(name):
             raise self.error(self.w_NameError,
                 "wrong constant name %s" % name
             )
@@ -706,3 +712,18 @@ class ObjectSpace(object):
 
     def obj_to_s(self, w_obj):
         return self.str_w(self.send(w_obj, self.newsymbol("to_s")))
+
+    def compare(self, w_a, w_b, block=None):
+        if block is None:
+            w_cmp_res = self.send(w_a, self.newsymbol("<=>"), [w_b])
+        else:
+            w_cmp_res = self.invoke_block(block, [w_a, w_b])
+        if w_cmp_res is self.w_nil:
+            raise self.error(self.w_ArgumentError,
+                "comparison of %s with %s failed" % (
+                    self.obj_to_s(self.getclass(w_a)),
+                    self.obj_to_s(self.getclass(w_b)),
+                )
+            )
+        else:
+            return w_cmp_res

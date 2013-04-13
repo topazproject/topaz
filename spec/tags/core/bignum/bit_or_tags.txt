@@ -1,7 +1,1 @@
-fails:Bignum#| returns self bitwise OR other
-fails:Bignum#| returns self bitwise OR other when one operand is negative
-fails:Bignum#| returns self bitwise OR other when both operands are negative
 fails:Bignum#| raises a TypeError when passed a Float
-fails:Bignum#| calls #to_int to convert an object to an Integer
-fails:Bignum#| raises a TypeError if #to_int does not return an Integer
-fails:Bignum#| raises a TypeError if the object does not respond to #to_int

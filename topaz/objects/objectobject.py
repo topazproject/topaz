@@ -48,11 +48,7 @@ class W_BaseObject(W_Root):
         raise space.error(space.w_TypeError,
             "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
         )
-
-    def find_local_const(self, space, name):
-        raise space.error(space.w_TypeError,
-            "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
-        )
+    find_included_const = find_local_const = find_const
 
     @classdef.method("initialize")
     def method_initialize(self):
@@ -75,13 +71,6 @@ class W_BaseObject(W_Root):
     @classdef.method("equal?")
     def method_eq(self, space, w_other):
         return space.newbool(self is w_other)
-
-    @classdef.method("<=>")
-    def method_cmp(self, space, w_other):
-        if w_other is self:
-            return space.newint(0)
-        else:
-            return space.w_nil
 
     @classdef.method("!")
     def method_not(self, space):
@@ -149,8 +138,17 @@ class W_RootObject(W_BaseObject):
     def method_to_s(self, space):
         return space.newstr_fromstr(space.any_to_s(self))
 
+    @classdef.method("<=>")
+    def method_cmp(self, space, w_other):
+        if w_other is self:
+            return space.newint(0)
+        else:
+            return space.w_nil
+
     @classdef.method("===")
     def method_eqeqeq(self, space, w_other):
+        if self is w_other:
+            return space.w_true
         return space.send(self, space.newsymbol("=="), [w_other])
 
     @classdef.method("send")

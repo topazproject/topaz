@@ -232,6 +232,9 @@ class TestParser(BaseTopazTest):
         assert space.parse("2.to_s(:base => 3)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(3))])], None, 1))
         ]))
+        assert space.parse("2.to_s(:base=>3)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(3))])], None, 1))
+        ]))
         assert space.parse("Integer other") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Send(ast.Self(1), "other", [], None, 1)], None, 1))
         ]))
@@ -830,6 +833,14 @@ class TestParser(BaseTopazTest):
     def test_subscript_assginment(self, space):
         assert space.parse("x[0] = 5") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [ast.ConstantInt(0)], 1), ast.ConstantInt(5)))
+        ]))
+        assert space.parse("x[] = 5") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [], 1), ast.ConstantInt(5)))
+        ]))
+
+    def test_subscript_augmented_assignment(self, space):
+        assert space.parse("x[] += 5") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("+", ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [], 1), ast.ConstantInt(5)))
         ]))
 
     def test_def(self, space):
@@ -2098,6 +2109,7 @@ HERE
         assert space.parse("$+") == simple_global("$+")
         assert space.parse("$,") == simple_global("$,")
         assert space.parse("$-w") == simple_global("$-w")
+        assert space.parse("$@") == simple_global("$@")
 
     def test_comments(self, space):
         r = space.parse("""

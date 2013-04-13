@@ -153,10 +153,8 @@ class W_FixnumObject(W_RootObject):
                 [w_other]
             )
         else:
-            raise space.error(
-                space.w_TypeError,
-                "%s can't be coerced into Fixnum" %
-                    space.obj_to_s(space.getclass(w_other))
+            raise space.error(space.w_TypeError,
+                "%s can't be coerced into Fixnum" % space.obj_to_s(space.getclass(w_other))
             )
 
     def method_pow_int_impl(self, space, w_other):
@@ -205,6 +203,13 @@ class W_FixnumObject(W_RootObject):
             else:
                 return space.newint(value)
 
+    @classdef.method(">>", other="int")
+    def method_right_shift(self, space, other):
+        if other < 0:
+            return space.newint(self.intvalue << -other)
+        else:
+            return space.newint(self.intvalue >> other)
+
     @classdef.method("&", other="int")
     def method_and(self, space, other):
         return space.newint(self.intvalue & other)
@@ -216,6 +221,10 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("|", other="int")
     def method_or(self, space, other):
         return space.newint(self.intvalue | other)
+
+    @classdef.method("~")
+    def method_invert(self, space):
+        return space.newint(~self.intvalue)
 
     @classdef.method("==")
     def method_eq(self, space, w_other):
@@ -292,3 +301,9 @@ class W_FixnumObject(W_RootObject):
             raise space.error(space.w_RangeError, "%d out of char range" % self.intvalue)
         else:
             return space.newstr_fromstr(chr(self.intvalue))
+
+    @classdef.method("[]", idx="int")
+    def method_subscript(self, space, idx):
+        if not 0 <= idx < LONG_BIT:
+            return space.newint(0)
+        return space.newint(int(bool(self.intvalue & (1 << idx))))

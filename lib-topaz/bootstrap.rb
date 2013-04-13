@@ -5,6 +5,7 @@ load_bootstrap = proc do |file|
   load(File.join(lib_topaz, file))
 end
 
+load_bootstrap.call("topaz.rb")
 load_bootstrap.call("array.rb")
 load_bootstrap.call("class.rb")
 load_bootstrap.call("comparable.rb")
@@ -22,4 +23,5 @@ load_bootstrap.call("range.rb")
 load_bootstrap.call("random.rb")
 load_bootstrap.call("string.rb")
 load_bootstrap.call("symbol.rb")
+load_bootstrap.call("thread.rb")
 load_bootstrap.call("top_self.rb")

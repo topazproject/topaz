@@ -102,18 +102,32 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("dirname", path="path")
     def method_dirname(self, space, path):
-        if "/" not in path:
+        separators = ["/"]
+        if IS_WINDOWS:
+            separators.append("\\")
+
+        has_separator = False
+        for separator in separators:
+            if separator in path:
+                has_separator = True
+                break
+        if not has_separator:
             return space.newstr_fromstr(".")
-        if path == "/":
+
+        if path in separators:
             return space.newstr_fromstr("/")
-        if path.endswith("/"):
+
+        while path and path[-1] in separators:
             newlen = len(path) - 1
             assert newlen >= 0
             path = path[:newlen]
-        idx = path.rfind("/")
-        while idx > 0 and path[idx - 1] == "/":
+
+        idx = -1
+        for separator in separators:
+            idx = max(idx, path.rfind(separator))
+        while idx > 0 and path[idx - 1] in separators:
             idx -= 1
-        if idx == 0:
+        if idx <= 0:
             return space.newstr_fromstr("/")
         assert idx >= 0
         return space.newstr_fromstr(path[:idx])
@@ -136,6 +150,8 @@ class W_FileObject(W_IOObject):
             path = dir + "/" + path
 
         items = []
+        if IS_WINDOWS:
+            path = path.replace("\\", "/")
         parts = path.split("/")
         for part in parts:
             if part == "..":
@@ -143,9 +159,13 @@ class W_FileObject(W_IOObject):
             elif part and part != ".":
                 items.append(part)
 
+        if not IS_WINDOWS:
+            root = "/"
+        else:
+            root = ""
         if not items:
-            return space.newstr_fromstr("/")
-        return space.newstr_fromstr("/" + "/".join(items))
+            return space.newstr_fromstr(root)
+        return space.newstr_fromstr(root + "/".join(items))
 
     @classdef.singleton_method("join")
     def singleton_method_join(self, space, args_w):
@@ -273,8 +293,8 @@ class W_FileObject(W_IOObject):
         return stat_obj
 
     if IS_WINDOWS:
-        classdef.s_notimplemented("symlink")
-        classdef.s_notimplemented("link")
+        classdef.singleton_notimplemented("symlink")
+        classdef.singleton_notimplemented("link")
     else:
         @classdef.singleton_method("symlink", old_name="path", new_name="path")
         def singleton_method_symlink(self, space, old_name, new_name):

@@ -2,7 +2,6 @@ fails:Exception is a superclass of NoMemoryError
 fails:Exception is a superclass of ScriptError
 fails:Exception is a superclass of SignalException
 fails:Exception is a superclass of Interrupt
-fails:Exception is a superclass of SystemStackError
 fails:Exception is a superclass of SecurityError
 fails:Exception is a superclass of EncodingError
 fails:Exception#exception returns self when passed self as an argument

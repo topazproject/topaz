@@ -446,6 +446,8 @@ class W_StringObject(W_Object):
         return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
+    @classdef.method("concat")
+    @check_frozen()
     def method_lshift(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
         self.extend(space, w_other)
@@ -496,6 +498,7 @@ class W_StringObject(W_Object):
         return space.newsymbol(space.str_w(self))
 
     @classdef.method("clear")
+    @check_frozen()
     def method_clear(self, space):
         self.clear(space)
         return self
@@ -645,24 +648,28 @@ class W_StringObject(W_Object):
             )
 
     @classdef.method("swapcase!")
+    @check_frozen()
     def method_swapcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.swapcase(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("upcase!")
+    @check_frozen()
     def method_upcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.upcase(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("downcase!")
+    @check_frozen()
     def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("capitalize!")
+    @check_frozen()
     def method_capitalize_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.capitalize(self.str_storage)
@@ -783,6 +790,7 @@ class W_StringObject(W_Object):
         return space.newstr_fromchars(new_string) if new_string else string
 
     @classdef.method("tr!", source="str", replacement="str")
+    @check_frozen()
     def method_tr_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, False)
         self.replace(space, new_string)
@@ -795,6 +803,7 @@ class W_StringObject(W_Object):
         return space.newstr_fromchars(new_string) if new_string else string
 
     @classdef.method("tr_s!", source="str", replacement="str")
+    @check_frozen()
     def method_tr_s_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
@@ -961,6 +970,7 @@ class W_StringObject(W_Object):
                 return space.any_to_s(w_replacement)
 
     @classdef.method("chomp!")
+    @check_frozen()
     def method_chomp_i(self, space, w_newline=None):
         if w_newline is None:
             w_newline = space.globals.get(space, "$/")
@@ -974,12 +984,14 @@ class W_StringObject(W_Object):
         return self if changed else space.w_nil
 
     @classdef.method("chop!")
+    @check_frozen()
     def method_chop_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chop(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("reverse!")
+    @check_frozen()
     def method_reverse_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.reverse(self.str_storage)
@@ -987,6 +999,7 @@ class W_StringObject(W_Object):
 
     @classdef.method("next!")
     @classdef.method("succ!")
+    @check_frozen()
     def method_succ_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.succ(self.str_storage)

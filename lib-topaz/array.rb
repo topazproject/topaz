@@ -79,14 +79,6 @@ class Array
     return self
   end
 
-  def zip(ary)
-    result = []
-    self.each_with_index do |obj, idx|
-      result << [obj, ary[idx]]
-    end
-    result
-  end
-
   def product(ary)
     result = []
     self.each do |obj|
@@ -142,8 +134,14 @@ class Array
 
   def delete(obj, &block)
     sz = self.size
-    self.delete_if { |o| o == obj }
-    return obj if sz != self.size
+    last_matched_element = nil
+    self.delete_if do |o|
+      if match = (o == obj)
+        last_matched_element = o
+      end
+      match
+    end
+    return last_matched_element if sz != self.size
     return yield if block
     return nil
   end
@@ -157,29 +155,27 @@ class Array
   end
 
   def flatten(level = -1)
-    list = []
-    Thread.current.recursion_guard(:array_flatten, self) do
-      self.each do |item|
-        if level == 0
-          list << item
-        elsif ary = Array.try_convert(item)
-          list.concat(ary.flatten(level - 1))
-        else
-          list << item
-        end
-      end
-      return list
-    end
-    raise ArgumentError.new("tried to flatten recursive array")
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    Topaz::Array.flatten(self, out, level)
+    out
   end
 
   def flatten!(level = -1)
-    list = self.flatten(level)
-    self.replace(list)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    if Topaz::Array.flatten(self, out, level)
+      self.replace(out)
+    end
   end
 
   def sort(&block)
     dup.sort!(&block)
+  end
+
+  def sort_by(&block)
+    dup.sort_by!(&block)
   end
 
   def ==(other)
@@ -204,6 +200,22 @@ class Array
       end
     end
     return true
+  end
+
+  def <=>(other)
+    return 0 if self.equal?(other)
+    other = Array.try_convert(other)
+    return nil unless other
+    cmp_len = (self.size <=> other.size)
+    return cmp_len if cmp_len != 0
+    Thread.current.recursion_guard(:array_comparison, self) do
+      self.each_with_index do |e, i|
+        cmp = (e <=> other[i])
+        return cmp if cmp != 0
+      end
+      return 0
+    end
+    nil
   end
 
   def eql?(other)
@@ -256,14 +268,6 @@ class Array
   end
 
   alias :collect! :map!
-
-  def max(&block)
-    max = self[0]
-    self.each do |e|
-      max = e if (block ? block.call(max, e) : max <=> e) < 0
-    end
-    max
-  end
 
   def uniq!(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
@@ -370,5 +374,9 @@ class Array
     arr = Array.new(self)
     arr.shuffle!
     arr
+  end
+
+  def to_a
+    self.instance_of?(Array) ? self : Array.new(self)
   end
 end

@@ -16,6 +16,7 @@ from topaz.objects.procobject import W_ProcObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.randomobject import W_RandomObject
 
 
 class Kernel(Module):
@@ -44,6 +45,8 @@ class Kernel(Module):
 
     @moduledef.method("proc")
     def function_proc(self, space, block):
+        if block is None:
+            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
         return space.newproc(block, False)
 
     @staticmethod
@@ -309,6 +312,8 @@ class Kernel(Module):
     @moduledef.method("kind_of?")
     @moduledef.method("is_a?")
     def method_is_kind_ofp(self, space, w_mod):
+        if not isinstance(w_mod, W_ModuleObject):
+            raise space.error(space.w_TypeError, "class or module required")
         return space.newbool(self.is_kind_of(space, w_mod))
 
     @moduledef.method("instance_of?")
@@ -377,3 +382,9 @@ class Kernel(Module):
                 if e.name == name:
                     return e.w_value
                 raise
+
+    @moduledef.method("srand")
+    def method_srand(self, space, w_seed=None):
+        random_class = space.getclassfor(W_RandomObject)
+        default = space.find_const(random_class, "DEFAULT")
+        return default.srand(space, w_seed)

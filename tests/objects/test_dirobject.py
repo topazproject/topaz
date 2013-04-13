@@ -43,7 +43,7 @@ class TestDir(BaseTopazTest):
         dirs = []
         dirs << Dir.pwd
         Dir.chdir('%s') do
-            dirs << Dir.pwd
+          dirs << Dir.pwd
         end
         dirs << Dir.pwd
         return dirs
@@ -54,7 +54,7 @@ class TestDir(BaseTopazTest):
         monkeypatch.setenv("HOME", str(tmpdir))
         w_res = space.execute("""
         Dir.chdir do
-            return Dir.pwd
+          return Dir.pwd
         end
         """)
 
@@ -69,7 +69,7 @@ class TestDir(BaseTopazTest):
         sub2.join("sub2content2").ensure()
         w_res = space.execute("""
         Dir.chdir('%s') do
-            return Dir['*']
+          return Dir['*']
         end
         """ % tmpdir)
         res = self.unwrap(space, w_res)
@@ -77,7 +77,7 @@ class TestDir(BaseTopazTest):
         assert res == ["sub1", "sub2"]
         w_res = space.execute("""
         Dir.chdir('%s') do
-            return Dir['**/*']
+          return Dir['**/*']
         end
         """ % tmpdir)
         res = self.unwrap(space, w_res)
@@ -85,7 +85,7 @@ class TestDir(BaseTopazTest):
         assert res == ["sub1", "sub1/sub1content1", "sub1/sub1content2", "sub2", "sub2/sub2content1", "sub2/sub2content2"]
         w_res = space.execute("""
         Dir.chdir('%s') do
-            return Dir['**/*{1con}*']
+          return Dir['**/*{1con}*']
         end
         """ % tmpdir)
         res = self.unwrap(space, w_res)
@@ -93,7 +93,7 @@ class TestDir(BaseTopazTest):
         assert res == ["sub1/sub1content1", "sub1/sub1content2"]
         w_res = space.execute("""
         Dir.chdir('%s') do
-            return Dir['**/sub[1]content[12]']
+          return Dir['**/sub[1]content[12]']
         end
         """ % tmpdir)
         res = self.unwrap(space, w_res)
@@ -101,13 +101,13 @@ class TestDir(BaseTopazTest):
         assert res == ["sub1/sub1content1", "sub1/sub1content2"]
         w_res = space.execute("""
         Dir.chdir('%s') do
-            return Dir['%s/']
+          return Dir['%s/']
         end
         """ % (tmpdir, tmpdir.join("..")))
         assert self.unwrap(space, w_res) == [str(tmpdir.join("..")) + "/"]
         w_res = space.execute("""
         Dir.chdir('%s') do
-            return Dir["sub1\\0foo", "sub\\02bar"], Dir["sub1\\0foo"]
+          return Dir["sub1\\0foo", "sub\\02bar"], Dir["sub1\\0foo"]
         end
         """ % tmpdir)
         res = self.unwrap(space, w_res)

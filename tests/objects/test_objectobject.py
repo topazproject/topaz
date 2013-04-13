@@ -30,11 +30,11 @@ class TestBaseObject(BaseTopazTest):
     def test_instance_eval_scope(self, space):
         w_res = space.execute("""
         module M
-            C = proc {
-                class X
-                end
-                X
-            }
+          C = proc {
+            class X
+            end
+            X
+          }
         end
 
         class T
@@ -98,10 +98,10 @@ class TestBaseObject(BaseTopazTest):
     def test_dup(self, space):
         w_res = space.execute("""
         class A
-            attr_accessor :a, :b
-            def initialize_dup(o)
-                $dup_ran = true
-            end
+          attr_accessor :a, :b
+          def initialize_dup(o)
+            $dup_ran = true
+          end
         end
 
         module B
@@ -109,9 +109,9 @@ class TestBaseObject(BaseTopazTest):
 
         a = A.new
         a.singleton_class.class_eval do
-            def a
-               10
-            end
+          def a
+            10
+          end
         end
         a.a = a.b = 3
         a.singleton_class.class_eval("include B")
@@ -123,10 +123,10 @@ class TestBaseObject(BaseTopazTest):
     def test_clone(self, space):
         w_res = space.execute("""
         class A
-            attr_accessor :a, :b
-            def initialize_clone(o)
-                $copy_ran = true
-            end
+          attr_accessor :a, :b
+          def initialize_clone(o)
+            $copy_ran = true
+          end
         end
 
         module B
@@ -134,9 +134,9 @@ class TestBaseObject(BaseTopazTest):
 
         a = A.new
         a.singleton_class.class_eval do
-            def a
-               10
-            end
+          def a
+            10
+          end
         end
         a.a = a.b = 3
         a.singleton_class.class_eval("include B")
@@ -154,13 +154,13 @@ class TestObjectObject(BaseTopazTest):
     def test_initialize(self, space):
         w_res = space.execute("""
         class X
-            def initialize
-                @a = 3
-            end
+          def initialize
+            @a = 3
+          end
 
-            def foo
-                @a
-            end
+          def foo
+            @a
+          end
         end
         return X.new.foo
         """)
@@ -169,13 +169,13 @@ class TestObjectObject(BaseTopazTest):
     def test_initialize_args(self, space):
         w_res = space.execute("""
         class X
-            def initialize a, b
-                @a = a
-                @b = b
-            end
-            def attrs
-                [@a, @b]
-            end
+          def initialize a, b
+            @a = a
+            @b = b
+          end
+          def attrs
+            [@a, @b]
+          end
         end
         x = X.new 2, 3
         return x.attrs
@@ -311,12 +311,12 @@ class TestObjectObject(BaseTopazTest):
         $res = []
         class A; end
         module B
-            def self.extended(base)
-                $res << "extended in: #{base.class.name}"
-            end
-            def self.included(base)
-                $res << "included in: #{base.class.name}"
-            end
+          def self.extended(base)
+            $res << "extended in: #{base.class.name}"
+          end
+          def self.included(base)
+            $res << "included in: #{base.class.name}"
+          end
         end
         A.new.extend B
         A.send :include, B
@@ -333,9 +333,9 @@ class TestObjectObject(BaseTopazTest):
         class MyModule < Module; end
         B = MyModule.new
         B.instance_eval do
-            def self.extended(base)
-                $res = "extended in: #{base.class.name}"
-            end
+          def self.extended(base)
+            $res = "extended in: #{base.class.name}"
+          end
         end
         A.new.extend B
         return $res
@@ -347,14 +347,14 @@ class TestMapDict(BaseTopazTest):
     def test_simple_attr(self, space):
         w_res = space.execute("""
         class X
-            def initialize
-                @a = 3
-                @b = 4
-                @c = 5
-            end
-            def attrs
-                [@a, @b, @c]
-            end
+          def initialize
+            @a = 3
+            @b = 4
+            @c = 5
+          end
+          def attrs
+            [@a, @b, @c]
+          end
         end
         return X.new.attrs
         """)
@@ -363,10 +363,10 @@ class TestMapDict(BaseTopazTest):
     def test_unitialized_att(self, space):
         w_res = space.execute("""
         class X
-            attr_accessor :a
-            def attrs
-                [self.a, @b]
-            end
+          attr_accessor :a
+          def attrs
+            [self.a, @b]
+          end
         end
         return X.new.attrs
         """)

@@ -1,19 +1,34 @@
 class Hash
-  def each
+  def each(&block)
+    return self.enum_for(:each) if !block
     iter = Topaz::HashIterator.new(self)
     while true
       begin
         key, value = iter.next()
       rescue StopIteration
-        return
+        return self
       end
       yield key, value
     end
   end
   alias each_pair each
 
-  def each_key
+  def each_key(&block)
+    return self.enum_for(:each_key) if !block
     each { |k, v| yield k }
+  end
+
+  def each_value(&block)
+    return self.enum_for(:each_value) if !block
+    each { |k, v| yield v }
+  end
+
+  def to_a
+    res = []
+    each do |k, v|
+      res << [k, v]
+    end
+    res
   end
 
   def ==(other)
@@ -35,6 +50,7 @@ class Hash
   end
 
   def merge!(other, &block)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     other = other.to_hash unless other.kind_of? Hash
     if block
       other.each do |key, val|
@@ -51,6 +67,7 @@ class Hash
     end
     self
   end
+  alias update merge!
 
   def merge(other, &block)
     dup.merge! other, &block
@@ -70,14 +87,43 @@ class Hash
     nil
   end
 
+  def value?(value)
+    each do |k, v|
+      return true if value == v
+    end
+    false
+  end
+  alias has_value? value?
+
+  def values_at(*keys)
+    keys.map { |k| self[k] }
+  end
+
+  def key(value)
+    each_pair do |k, v|
+      return k if v == value
+    end
+    nil
+  end
+  # TODO: Emit "warning: Hash#index is deprecated; use Hash#key" warning
+  alias index key
+
+  def invert
+    res = {}
+    each do |k, v|
+      res[v] = k
+    end
+    res
+  end
+
   def inspect
     result = "{"
     recursion = Thread.current.recursion_guard(:hash_inspect, self) do
-      self.each_with_index do |key, i|
+      self.each_with_index do |(key, value), i|
         if i > 0
           result << ", "
         end
-        result << "#{key.inspect}=>#{self[key].inspect}"
+        result << "#{key.inspect}=>#{value.inspect}"
       end
     end
     if recursion

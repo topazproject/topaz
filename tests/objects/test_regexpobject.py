@@ -49,6 +49,7 @@ class TestRegexpObject(BaseTopazTest):
         /(?:a|b)*/
         /.*/m
         /(.*|.+)/
+        /(?<=b)/
         """)
 
     def test_regexp_syntax_errors(self, space):
@@ -62,8 +63,8 @@ class TestRegexpObject(BaseTopazTest):
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp
-                def self.new(*args); /foo/; end
-                def self.compile(*args); /foo/; end
+              def self.new(*args); /foo/; end
+              def self.compile(*args); /foo/; end
             end
             r = "(?~)"
             /#{r}/
@@ -75,7 +76,7 @@ class TestRegexpObject(BaseTopazTest):
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp
-                def self.new(*args); /foo/; end
+              def self.new(*args); /foo/; end
             end
             Regexp.compile "(?~)"
             """)
@@ -86,7 +87,7 @@ class TestRegexpObject(BaseTopazTest):
         with self.raises(space, "RegexpError"):
             space.execute("""
             class Regexp
-                def self.compile(*args); /foo/; end
+              def self.compile(*args); /foo/; end
             end
             Regexp.new "(?~)"
             """)
@@ -196,7 +197,7 @@ class TestRegexpObject(BaseTopazTest):
         w_res = space.execute("return /(foo)?(bar)?/.match('foobar')[2]")
         assert self.unwrap(space, w_res) == "bar"
         w_res = space.execute("return /(foo)?(bar)?/.match('foo')[2]")
-        assert self.unwrap(space, w_res) == None
+        assert self.unwrap(space, w_res) is None
 
     def test_quantify_set(self, space):
         w_res = space.execute("return /([0-9]){3,5}?/ =~ 'ab12345'")
