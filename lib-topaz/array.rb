@@ -202,6 +202,22 @@ class Array
     return true
   end
 
+  def <=>(other)
+    return 0 if self.equal?(other)
+    other = Array.try_convert(other)
+    return nil unless other
+    cmp_len = (self.size <=> other.size)
+    return cmp_len if cmp_len != 0
+    Thread.current.recursion_guard(:array_comparison, self) do
+      self.each_with_index do |e, i|
+        cmp = (e <=> other[i])
+        return cmp if cmp != 0
+      end
+      return 0
+    end
+    nil
+  end
+
   def eql?(other)
     if self.equal?(other)
       return true
