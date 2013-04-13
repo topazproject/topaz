@@ -11,37 +11,41 @@ module Enumerable
   def map(&block)
     return self.enum_for(:map) unless block
     result = []
-    self.each do |x|
-      result << (yield x)
+    self.each do |*x|
+      result << (yield *x)
     end
     result
   end
 
   alias collect map
 
-  def inject(*args)
+  def inject(*args, &block)
+    op = nil
     dropped = 0
-    meth = nil
-    case args.length
+    memo = nil
+    case args.size
     when 0
-      memo = self.first
       dropped = 1
     when 1
-      memo = args[0]
+      if args[0].is_a?(Symbol)
+        dropped = 1
+        op = args[0]
+      else
+        memo = args[0]
+      end
     when 2
       memo = args[0]
-      meth = args[1]
+      op = args[1]
     end
-    self.drop(dropped).each do |x|
-      if meth
-        memo = memo.send(meth, x)
+    self.each_with_index do |e, i|
+      if i < dropped
+        memo = e
       else
-        memo = (yield memo, x)
+        memo = op ? memo.send(op, e) : yield(memo, e)
       end
     end
     memo
   end
-
   alias reduce inject
 
   def each_with_index(*args, &block)
@@ -387,7 +391,32 @@ module Enumerable
       end
       nil
     else
-      self.map { |elm| [elm, *tail.call] }
+      res = []
+      self.each_entry { |elm| res << [elm, *tail.call] }
+      res
+    end
+  end
+
+  def cycle(n = nil, &block)
+    return self.enum_for(:cycle, n) unless block
+    unless n.nil?
+      n = Topaz.convert_type(n, Fixnum, :to_int)
+      return nil if n <= 0
+    end
+
+    buf = []
+    self.each_entry do |e|
+      buf << e
+      yield e
+    end
+    return nil if buf.empty?
+
+    if n
+      (n - 1).times { buf.each(&block) }
+    else
+      while true
+        buf.each(&block)
+      end
     end
   end
 end

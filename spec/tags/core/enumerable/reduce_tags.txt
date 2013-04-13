@@ -1,1 +1,0 @@
-fails:Enumerable#reduce can take a symbol argument
