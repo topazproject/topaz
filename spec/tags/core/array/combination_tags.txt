@@ -1,2 +1,0 @@
-fails:Array#combination yields the expected combinations
-fails:Array#combination yields a partition consisting of only singletons

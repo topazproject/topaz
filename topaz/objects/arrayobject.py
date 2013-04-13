@@ -331,12 +331,11 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("permutation")
     def method_permutation(self, space, w_count=None, block=None):
-        if w_count is not None:
-            w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
-        else:
-            w_count = space.newint(len(self.items_w))
         if block is None:
             return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("permutation"), w_count])
-        for cmb in itertools.permutations(self.items_w, space.int_w(w_count)):
+        if w_count is not None:
+            w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
+        count_w = len(self.items_w) if w_count is None else space.int_w(w_count)
+        for cmb in itertools.permutations(self.items_w, count_w):
             space.invoke_block(block, [space.newarray(cmb)])
         return self
