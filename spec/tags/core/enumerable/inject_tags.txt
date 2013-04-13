@@ -1,1 +1,0 @@
-fails:Enumerable#inject can take a symbol argument
