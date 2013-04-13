@@ -329,6 +329,18 @@ class W_ArrayObject(W_Object):
             space.invoke_block(block, [space.newarray(cmb)])
         return self
 
+    @classdef.method("repeated_combination")
+    def method_combination(self, space, w_count, block=None):
+        w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("repeated_combination"), w_count])
+        if len(self.items_w) == 0:
+            space.invoke_block(block, [space.newarray(list())])
+            return self
+        for cmb in itertools.combinations_with_replacement(self.items_w, space.int_w(w_count)):
+            space.invoke_block(block, [space.newarray(cmb)])
+        return self
+
     @classdef.method("permutation")
     def method_permutation(self, space, w_count=None, block=None):
         if block is None:
