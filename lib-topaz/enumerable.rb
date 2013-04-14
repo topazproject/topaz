@@ -419,4 +419,22 @@ module Enumerable
       end
     end
   end
+
+  def grep(pattern, &block)
+    ret = []
+    if block
+      self.each do |elm|
+        if pattern === elm
+          ret << yield(elm)
+        end
+      end
+    else
+      self.each do |elm|
+        if pattern === elm
+          ret << elm
+        end
+      end
+    end
+    ret
+  end
 end
