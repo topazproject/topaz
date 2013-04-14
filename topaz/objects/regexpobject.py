@@ -74,20 +74,24 @@ class W_RegexpObject(W_Object):
         space.globals.define_virtual("$'", cls._get_post_match)
 
     @staticmethod
+    def _get_regexp_cell(space):
+        return space.getexecutioncontext().gettoprubyframe().regexp_match_cell
+
+    @staticmethod
     def _get_regexp_match(space):
-        return space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
+        return W_RegexpObject._get_regexp_cell(space).get(space, None, 0)
 
     @staticmethod
     def _set_regexp_match(space, w_match):
         if (w_match is not space.w_nil and
             not space.is_kind_of(w_match, space.getclassfor(W_MatchDataObject))):
             raise space.error(space.w_TypeError, "wrong argument type %s (expected MatchData)" % space.getclass(w_match).name)
-        space.getexecutioncontext().regexp_match_cell.set(space, None, 0, w_match)
+        W_RegexpObject._get_regexp_cell(space).set(space, None, 0, w_match)
 
     @staticmethod
     def _create_regexp_match_getter(n):
         def getter(space):
-            w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
+            w_match = W_RegexpObject._get_regexp_match(space)
             if w_match is None:
                 return space.w_nil
             else:
@@ -96,7 +100,7 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _get_last_match(space):
-        w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
+        w_match = W_RegexpObject._get_regexp_match(space)
         if w_match is None:
             return space.w_nil
         else:
@@ -106,7 +110,7 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _get_pre_match(space):
-        w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
+        w_match = W_RegexpObject._get_regexp_match(space)
         if w_match is None:
             return space.w_nil
         else:
@@ -114,7 +118,7 @@ class W_RegexpObject(W_Object):
 
     @staticmethod
     def _get_post_match(space):
-        w_match = space.getexecutioncontext().regexp_match_cell.get(space, None, 0)
+        w_match = W_RegexpObject._get_regexp_match(space)
         if w_match is None:
             return space.w_nil
         else:

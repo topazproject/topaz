@@ -26,7 +26,6 @@ class ExecutionContext(object):
     def __init__(self):
         self.topframeref = jit.vref_None
         self.last_instr = -1
-        self.regexp_match_cell = None
         self.w_trace_proc = None
         self.in_trace_proc = False
         self.recursive_calls = {}
@@ -71,10 +70,8 @@ class ExecutionContext(object):
         if self.last_instr != -1:
             frame.back_last_instr = self.last_instr
         self.topframeref = jit.virtual_ref(frame)
-        if isinstance(frame, Frame):
-            self.regexp_match_cell = frame.regexp_match_cell
 
-    def leave(self, frame, got_exception, original_regexp_match_cell):
+    def leave(self, frame, got_exception):
         frame_vref = self.topframeref
         self.topframeref = frame.backref
         if frame.escaped or got_exception:
@@ -83,7 +80,6 @@ class ExecutionContext(object):
                 back.escaped = True
             frame_vref()
         jit.virtual_ref_finish(frame_vref, frame)
-        self.regexp_match_cell = original_regexp_match_cell
 
     def visit_frame(self, frame):
         return _VisitFrameContextManager(self, frame)
@@ -119,7 +115,6 @@ class _VisitFrameContextManager(object):
         self.frame = frame
 
     def __enter__(self):
-        self.original_regexp_match_cell = self.ec.regexp_match_cell
         self.ec.enter(self.frame)
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -127,7 +122,7 @@ class _VisitFrameContextManager(object):
             if exc_value.w_value.frame is None:
                 exc_value.w_value.frame = self.frame
 
-        self.ec.leave(self.frame, exc_value is not None, self.original_regexp_match_cell)
+        self.ec.leave(self.frame, exc_value is not None)
 
 
 class _RecursionGuardContextManager(object):
