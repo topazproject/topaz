@@ -153,4 +153,9 @@ class Hash
     select!(&block)
     self
   end
+
+  def select(&block)
+    return enum_for(:select) unless block
+    dup.keep_if(&block)
+  end
 end
