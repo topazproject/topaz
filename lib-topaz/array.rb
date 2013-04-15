@@ -44,16 +44,6 @@ class Array
 
   alias :to_s :inspect
 
-  def -(other)
-    res = []
-    self.each do |x|
-      if !other.include?(x)
-        res << x
-      end
-    end
-    res
-  end
-
   def at(idx)
     self[idx]
   end
@@ -240,9 +230,11 @@ class Array
 
   def hash
     res = 0x345678
-    self.each do |x|
-      # We want to keep this within a fixnum range.
-      res = Topaz.intmask((1000003 * res) ^ x.hash)
+    Thread.current.recursion_guard(:array_hash, self) do
+      self.each do |x|
+        # We want to keep this within a fixnum range.
+        res = Topaz.intmask((1000003 * res) ^ x.hash)
+      end
     end
     return res
   end
@@ -378,5 +370,24 @@ class Array
 
   def to_a
     self.instance_of?(Array) ? self : Array.new(self)
+  end
+
+  def &(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    m = Topaz::Array::IdentityMap.new(other)
+    self.select{ |e| m.pop?(e) }
+  end
+
+  def |(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    m = Topaz::Array::IdentityMap.new(self)
+    m.add(other)
+    m.values
+  end
+
+  def -(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    m = Topaz::Array::IdentityMap.new(other)
+    self.reject{ |e| m.include?(e) }
   end
 end

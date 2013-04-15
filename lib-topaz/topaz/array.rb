@@ -19,3 +19,36 @@ module Topaz
     end
   end
 end
+
+class Topaz::Array::IdentityMap
+  def initialize(array)
+    @h = {}
+    add(array)
+  end
+
+  def add(array)
+    return unless array
+    if @h.empty?
+      array.each{ |e| @h[e] = e }
+    else
+      array.each{ |e| @h.fetch(e){|v| @h[v] = e } }
+    end
+  end
+
+  def values
+    @h.values
+  end
+
+  def include?(a)
+    if b = @h[a]
+      a.equal?(b) || a.eql?(b)
+    end
+  end
+
+  def pop?(obj)
+    if res = include?(obj)
+      @h.delete(obj)
+    end
+    res
+  end
+end
