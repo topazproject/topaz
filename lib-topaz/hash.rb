@@ -133,4 +133,17 @@ class Hash
   end
 
   alias :to_s :inspect
+
+  def select!(&block)
+    return enum_for(:select!) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    delete_p = false
+    each_pair do |key, value|
+      unless yield key, value
+        delete key
+        delete_p = true
+      end
+    end
+    delete_p ? self : nil
+  end
 end
