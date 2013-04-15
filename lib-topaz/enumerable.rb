@@ -1,7 +1,7 @@
 module Enumerable
   def first(*args)
     if args.empty?
-      self.each { |e| return e }
+      self.each_entry { |e| return e }
       nil
     else
       take(*args)
@@ -11,43 +11,47 @@ module Enumerable
   def map(&block)
     return self.enum_for(:map) unless block
     result = []
-    self.each do |x|
-      result << (yield x)
+    self.each do |*x|
+      result << (yield *x)
     end
     result
   end
 
   alias collect map
 
-  def inject(*args)
+  def inject(*args, &block)
+    op = nil
     dropped = 0
-    meth = nil
-    case args.length
+    memo = nil
+    case args.size
     when 0
-      memo = self.first
       dropped = 1
     when 1
-      memo = args[0]
+      if args[0].is_a?(Symbol)
+        dropped = 1
+        op = args[0]
+      else
+        memo = args[0]
+      end
     when 2
       memo = args[0]
-      meth = args[1]
+      op = args[1]
     end
-    self.drop(dropped).each do |x|
-      if meth
-        memo = memo.send(meth, x)
+    self.each_with_index do |e, i|
+      if i < dropped
+        memo = e
       else
-        memo = (yield memo, x)
+        memo = op ? memo.send(op, e) : yield(memo, e)
       end
     end
     memo
   end
-
   alias reduce inject
 
-  def each_with_index(&block)
-    return self.enum_for(:each_with_index) if !block
+  def each_with_index(*args, &block)
+    return self.enum_for(:each_with_index, *args) if !block
     i = 0
-    self.each do |obj|
+    self.each_entry(*args) do |obj|
       yield obj, i
       i += 1
     end
@@ -55,7 +59,7 @@ module Enumerable
 
   def each_with_object(memo, &block)
     return self.enum_for(:each_with_object, memo) unless block
-    self.each do |elm|
+    self.each_entry do |elm|
       yield elm, memo
     end
     memo
@@ -70,16 +74,26 @@ module Enumerable
     self
   end
 
+  def reverse_each(&block)
+    return self.enum_for(:reverse_each) unless block
+    self.to_a.reverse_each(&block)
+    self
+  end
+
   def all?(&block)
-    self.each do |obj|
-      return false unless (block ? block.call(obj) : obj)
+    if block
+      self.each { |*e| return false unless yield(*e) }
+    else
+      self.each_entry { |e| return false unless e }
     end
     true
   end
 
   def any?(&block)
-    self.each do |obj|
-      return true if (block ? block.call(obj) : obj)
+    if block
+      self.each { |*e| return true if yield(*e) }
+    else
+      self.each_entry { |e| return true if e }
     end
     false
   end
@@ -87,7 +101,7 @@ module Enumerable
   def select(&block)
     return self.enum_for(:select) unless block
     result = []
-    self.each do |o|
+    self.each_entry do |o|
       if block.call(o)
         result << o
       end
@@ -98,7 +112,7 @@ module Enumerable
   alias :find_all :select
 
   def include?(obj)
-    self.each do |o|
+    self.each_entry do |o|
       return true if o == obj
     end
     false
@@ -117,7 +131,7 @@ module Enumerable
     return self.enum_for(:drop_while) if !block
     result = []
     dropping = true
-    self.each do |o|
+    self.each_entry do |o|
       unless dropping && yield(o)
         result << o
         dropping = false
@@ -126,9 +140,9 @@ module Enumerable
     result
   end
 
-  def to_a
+  def to_a(*args)
     result = []
-    self.each do |i|
+    self.each_entry(*args) do |i|
       result << i
     end
     result
@@ -137,7 +151,7 @@ module Enumerable
 
   def detect(ifnone = nil, &block)
     return self.enum_for(:detect, ifnone) unless block
-    self.each do |o|
+    self.each_entry do |o|
       return o if block.call(o)
     end
     ifnone.is_a?(Proc) ? ifnone.call : ifnone
@@ -149,7 +163,7 @@ module Enumerable
     raise ArgumentError.new("attempt to take negative size") if n < 0
     result = []
     unless n == 0
-      self.each do |o|
+      self.each_entry do |o|
         result << o
         break if result.size == n
       end
@@ -160,7 +174,7 @@ module Enumerable
   def take_while(&block)
     return self.enum_for(:take_while) unless block
     result = []
-    self.each do |o|
+    self.each_entry do |o|
       break unless yield(o)
       result << o
     end
@@ -170,7 +184,7 @@ module Enumerable
   def reject(&block)
     return self.enum_for(:reject) unless block
     result = []
-    self.each do |o|
+    self.each_entry do |o|
       result << o unless yield(o)
     end
     result
@@ -235,7 +249,7 @@ module Enumerable
   def partition(&block)
     return self.enum_for(:partition) unless block
     a, b = [], []
-    self.each do |e|
+    self.each_entry do |e|
       block.call(e) ? a.push(e) : b.push(e)
     end
     [a, b]
@@ -258,15 +272,25 @@ module Enumerable
 
   def one?(&block)
     c = 0
-    self.each do |e|
-      c += 1 if block ? yield(e) : e
+    if block
+      self.each do |*e|
+        c += 1 if yield(*e)
+        return false if c > 1
+      end
+    else
+      self.each_entry do |e|
+        c += 1 if e
+        return false if c > 1
+      end
     end
     c == 1
   end
 
   def none?(&block)
-    self.each do |e|
-      return false if block ? yield(e) : e
+    if block
+      self.each { |*e| return false if yield(*e) }
+    else
+      self.each_entry { |e| return false if e }
     end
     true
   end
@@ -274,7 +298,7 @@ module Enumerable
   def group_by(&block)
     return self.enum_for(:group_by) unless block
     h = {}
-    self.each do |e|
+    self.each_entry do |e|
       v = yield e
       a = h.fetch(v) { |v| h[v] = [] }
       a << e
@@ -284,8 +308,10 @@ module Enumerable
 
   def find_index(obj = nil, &block)
     return self.enum_for(:find_index) if !obj && !block
-    each_with_index do |e, i|
+    i = 0
+    each do |e|
       return i if obj ? (e == obj) : block.call(e)
+      i += 1
     end
     nil
   end
@@ -312,7 +338,7 @@ module Enumerable
     num = Topaz.convert_type(num, Fixnum, :to_int)
     raise ArgumentError.new("invalid slice size") if num <= 0
     buf = []
-    self.each do |e|
+    self.each_entry do |e|
       buf << e
       if buf.size == num
         yield buf
@@ -345,4 +371,70 @@ module Enumerable
     out
   end
   alias flat_map collect_concat
+
+  def zip(*lists, &block)
+    lists = lists.map do |l|
+      l.respond_to?(:to_ary) ? l.to_ary : l.to_enum(:each)
+    end
+
+    index = -1
+    tail = proc do
+      index += 1
+      lists.map do |l|
+        l.kind_of?(Array) ? l[index] : l.next
+      end
+    end
+
+    if block
+      self.each do |elm|
+        yield [elm, *tail.call]
+      end
+      nil
+    else
+      res = []
+      self.each_entry { |elm| res << [elm, *tail.call] }
+      res
+    end
+  end
+
+  def cycle(n = nil, &block)
+    return self.enum_for(:cycle, n) unless block
+    unless n.nil?
+      n = Topaz.convert_type(n, Fixnum, :to_int)
+      return nil if n <= 0
+    end
+
+    buf = []
+    self.each_entry do |e|
+      buf << e
+      yield e
+    end
+    return nil if buf.empty?
+
+    if n
+      (n - 1).times { buf.each(&block) }
+    else
+      while true
+        buf.each(&block)
+      end
+    end
+  end
+
+  def grep(pattern, &block)
+    ret = []
+    if block
+      self.each do |elm|
+        if pattern === elm
+          ret << yield(elm)
+        end
+      end
+    else
+      self.each do |elm|
+        if pattern === elm
+          ret << elm
+        end
+      end
+    end
+    ret
+  end
 end

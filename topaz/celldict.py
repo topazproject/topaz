@@ -32,6 +32,8 @@ class Cell(BaseCell):
 
 
 class GetterSetterCell(BaseCell):
+    _immutable_fields_ = ["getter", "setter"]
+
     def __init__(self, getter, setter=None):
         self.getter = getter
         self.setter = setter

@@ -1,0 +1,1 @@
+fails:Array#delete returns nil on a frozen array if a modification does not take place

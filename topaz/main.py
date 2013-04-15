@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import subprocess
 
+from rpython.rlib import jit
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 
@@ -294,6 +295,7 @@ def _entry_point(space, argv):
     status = 0
     w_exit_error = None
     explicit_status = False
+    jit.set_param(None, "trace_limit", 10000)
     try:
         if do_loop:
             print_after = space.is_true(flag_globals_w["$-p"])

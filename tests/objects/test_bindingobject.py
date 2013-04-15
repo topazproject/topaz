@@ -20,7 +20,7 @@ class TestBindingObject(object):
     def test_in_block(self, space):
         w_res = space.execute("""
         def f(a, b)
-            return proc { binding }
+          return proc { binding }
         end
 
         return f(3, 4).call.eval("a + b")

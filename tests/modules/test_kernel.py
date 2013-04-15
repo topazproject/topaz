@@ -198,9 +198,9 @@ class TestKernel(BaseTopazTest):
         res = []
         i = 0
         loop {
-            i += 1
-            res << i
-            break if i == 3
+          i += 1
+          res << i
+          break if i == 3
         }
         return res
         """)
@@ -279,7 +279,7 @@ class TestRequire(BaseTopazTest):
         f = tmpdir.join("t.rb")
         f.write("""
         def t(a, b)
-            a - b
+          a - b
         end
         """)
         w_res = space.execute("""
@@ -293,7 +293,7 @@ class TestRequire(BaseTopazTest):
         f = tmpdir.join("t.rb")
         f.write("""
         def t(a, b)
-            a - b
+          a - b
         end
         """)
         w_res = space.execute("""
@@ -307,7 +307,7 @@ class TestRequire(BaseTopazTest):
         f = tmpdir.join("t.rb")
         f.write("""
         def t(a, b)
-            a - b
+          a - b
         end
         """)
         w_res = space.execute("""
@@ -458,7 +458,7 @@ class TestSetTraceFunc(BaseTopazTest):
         w_res = space.execute("""
         output = []
         set_trace_func proc { |event, file, line, id, binding, classname|
-            output << [event, file, line, id, classname]
+          output << [event, file, line, id, classname]
         }
 
         class << self
