@@ -39,14 +39,10 @@ class Topaz::Array::IdentityMap
   end
 
   def include?(a)
-    if b = @h[a]
-      a.equal?(b) || a.eql?(b)
-    end
+    @h.key?(a)
   end
 
   def pop?(a)
-    if b = @h.delete(a)
-      a.equal?(b) || a.eql?(b)
-    end
+    @h.delete(a)
   end
 end
