@@ -6,7 +6,6 @@ from rpython.rlib import rfloat
 
 from topaz.module import Module, ModuleDef, ClassDef
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
-from topaz.error import RubyError
 
 
 class Math(Module):
