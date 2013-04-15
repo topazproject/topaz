@@ -158,4 +158,17 @@ class Hash
     return enum_for(:select) unless block
     dup.keep_if(&block)
   end
+
+  def reject!(&block)
+    return enum_for(:reject!) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    delete_p = false
+    each_pair do |key, value|
+      if yield key, value
+        delete key
+        delete_p = true
+      end
+    end
+    delete_p ? self : nil
+  end
 end
