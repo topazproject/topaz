@@ -27,7 +27,6 @@ class Topaz::Array::IdentityMap
   end
 
   def add(array)
-    return unless array
     if @h.empty?
       array.each { |e| @h[e] = e }
     else
@@ -45,10 +44,9 @@ class Topaz::Array::IdentityMap
     end
   end
 
-  def pop?(obj)
-    if res = include?(obj)
-      @h.delete(obj)
+  def pop?(a)
+    if b = @h.delete(a)
+      a.equal?(b) || a.eql?(b)
     end
-    res
   end
 end
