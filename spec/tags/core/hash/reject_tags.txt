@@ -3,5 +3,3 @@ fails:Hash#reject is equivalent to hsh.dup.delete_if
 fails:Hash#reject returns subclass instance for subclasses
 fails:Hash#reject taints the resulting hash
 fails:Hash#reject processes entries with the same order as reject!
-fails:Hash#reject! is equivalent to delete_if if changes are made
-fails:Hash#reject! processes entries with the same order as delete_if
