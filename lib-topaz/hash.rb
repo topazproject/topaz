@@ -178,4 +178,9 @@ class Hash
     reject!(&block)
     self
   end
+
+  def reject(&block)
+    return enum_for(:reject) unless block
+    dup.delete_if(&block)
+  end
 end

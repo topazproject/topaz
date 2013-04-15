@@ -1,5 +1,1 @@
-fails:Hash#reject returns a new hash removing keys for which the block yields true
-fails:Hash#reject is equivalent to hsh.dup.delete_if
 fails:Hash#reject returns subclass instance for subclasses
-fails:Hash#reject taints the resulting hash
-fails:Hash#reject processes entries with the same order as reject!
