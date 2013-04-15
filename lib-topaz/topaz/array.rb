@@ -29,9 +29,9 @@ class Topaz::Array::IdentityMap
   def add(array)
     return unless array
     if @h.empty?
-      array.each{ |e| @h[e] = e }
+      array.each { |e| @h[e] = e }
     else
-      array.each{ |e| @h.fetch(e){|v| @h[v] = e } }
+      array.each { |e| @h.fetch(e){|v| @h[v] = e } }
     end
   end
 

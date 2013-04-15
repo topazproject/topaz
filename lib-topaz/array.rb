@@ -375,7 +375,7 @@ class Array
   def &(other)
     other = Topaz.convert_type(other, Array, :to_ary)
     m = Topaz::Array::IdentityMap.new(other)
-    self.select{ |e| m.pop?(e) }
+    self.select { |e| m.pop?(e) }
   end
 
   def |(other)
@@ -388,6 +388,6 @@ class Array
   def -(other)
     other = Topaz.convert_type(other, Array, :to_ary)
     m = Topaz::Array::IdentityMap.new(other)
-    self.reject{ |e| m.include?(e) }
+    self.reject { |e| m.include?(e) }
   end
 end
