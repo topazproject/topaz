@@ -137,14 +137,14 @@ class Hash
   def select!(&block)
     return enum_for(:select!) unless block
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
-    delete_p = false
+    modified = false
     each_pair do |key, value|
       unless yield key, value
         delete key
-        delete_p = true
+        modified = true
       end
     end
-    delete_p ? self : nil
+    modified ? self : nil
   end
 
   def keep_if(&block)
@@ -162,14 +162,14 @@ class Hash
   def reject!(&block)
     return enum_for(:reject!) unless block
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
-    delete_p = false
+    modified = false
     each_pair do |key, value|
       if yield key, value
         delete key
-        delete_p = true
+        modified = true
       end
     end
-    delete_p ? self : nil
+    modified ? self : nil
   end
 
   def delete_if(&block)
