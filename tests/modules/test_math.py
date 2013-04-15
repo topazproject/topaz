@@ -108,6 +108,23 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return Math.gamma(Float::NAN)")
         assert math.isnan(space.float_w(w_res))
 
+    def test_lgamma(self, space):
+        res_w = space.execute("return Math.lgamma(6.0)")
+        w_res1, w_res2 = space.listview(res_w)
+        self.assert_float_equal(space.float_w(w_res1), math.log(120))
+        assert space.int_w(w_res2) == 1
+
+        res_w = space.execute("return Math.lgamma(-1)")
+        w_inf = space.execute("return Float::INFINITY")
+        w_res1, w_res2 = space.listview(res_w)
+        assert self.unwrap(space, w_res1) == self.unwrap(space, w_inf)
+        assert space.int_w(w_res2) == 1
+
+        res_w = space.execute("return Math.lgamma(Float::NAN)")
+        w_res1, w_res2 = space.listview(res_w)
+        assert math.isnan(self.unwrap(space, w_res1))
+        assert space.int_w(w_res2) == 1
+
     def test_hypot(self, space):
         w_res = space.execute("return Math.hypot(3, 4)")
         assert self.unwrap(space, w_res) == 5
@@ -186,3 +203,11 @@ class TestMath(BaseTopazTest):
     def test_tanh(self, space):
         w_res = space.execute("return [Math.tanh(0), Math.tanh(1), Math.tanh(1234)]")
         assert self.unwrap(space, w_res) == [0, math.tanh(1), 1.0]
+
+    def test_erf(self, space):
+        w_res = space.execute("return [Math.erf(0), Math.erf(10), Math.erf(-10)]")
+        assert self.unwrap(space, w_res) == [0.0, 1.0, -1.0]
+
+    def test_erfc(self, space):
+        w_res = space.execute("return [Math.erfc(-1), Math.erfc(0), Math.erfc(1.5)]")
+        assert self.unwrap(space, w_res) == [math.erfc(-1), 1.0, math.erfc(1.5)]
