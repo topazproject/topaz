@@ -146,4 +146,11 @@ class Hash
     end
     delete_p ? self : nil
   end
+
+  def keep_if(&block)
+    return enum_for(:keep_if) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    select!(&block)
+    self
+  end
 end
