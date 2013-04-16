@@ -161,11 +161,11 @@ class Array
   end
 
   def sort(&block)
-    dup.sort!(&block)
+    Array.new(self).sort!(&block)
   end
 
   def sort_by(&block)
-    dup.sort_by!(&block)
+    Array.new(self).sort_by!(&block)
   end
 
   def ==(other)
@@ -303,7 +303,7 @@ class Array
   end
 
   def reverse
-    self.dup.reverse!
+    Array.new(self).reverse!
   end
 
   def reverse_each(&block)

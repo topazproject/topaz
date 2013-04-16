@@ -15,6 +15,7 @@ Authors
 * Konstantin Makarchev
 * Curt Micol
 * Bill Mill
+* Gerd Mömken
 * Charles Oliver Nutter
 * Thomas Pelletier
 * Greg Price

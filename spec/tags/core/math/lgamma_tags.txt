@@ -1,2 +1,0 @@
-fails:Math.lgamma returns [Infinity, 1] when passed -1
-fails:Math.lgamma returns [NaN, 1] when passed NaN

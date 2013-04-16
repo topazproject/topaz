@@ -107,7 +107,9 @@ class Math(Module):
             res = rfloat.lgamma(value)
         except (ValueError, OverflowError):
             res = rfloat.INFINITY
-        gamma = space.float_w(space.send(self, space.newsymbol("gamma"), [space.newfloat(value)]))
+        gamma = (1 if value == -1 or math.isnan(value) else
+                 space.float_w(space.send(self, space.newsymbol("gamma"),
+                               [space.newfloat(value)])))
         sign = 1 if gamma > 0 else -1 if gamma < 0 else 0
         return space.newarray([space.newfloat(res), space.newint(sign)])
 
@@ -186,6 +188,14 @@ class Math(Module):
     @moduledef.function("tanh", value="float")
     def method_tanh(self, space, value):
         return space.newfloat(math.tanh(value))
+
+    @moduledef.function("erf", value="float")
+    def method_erf(self, space, value):
+        return space.newfloat(rfloat.erf(value))
+
+    @moduledef.function("erfc", value="float")
+    def method_erfc(self, space, value):
+        return space.newfloat(rfloat.erfc(value))
 
 
 class W_DomainError(W_StandardError):
