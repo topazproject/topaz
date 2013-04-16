@@ -34,7 +34,7 @@ class Topaz::Array::IdentityMap
     end
   end
 
-  def keys
+  def entries
     @h.keys
   end
 

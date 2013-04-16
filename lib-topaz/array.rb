@@ -382,7 +382,7 @@ class Array
     other = Topaz.convert_type(other, Array, :to_ary)
     m = Topaz::Array::IdentityMap.new(self)
     m.add(other)
-    m.keys
+    m.entries
   end
 
   def -(other)

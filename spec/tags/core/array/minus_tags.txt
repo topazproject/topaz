@@ -1,2 +1,0 @@
-fails:Array#- removes an item identified as equivalent via #hash and #eql?
-fails:Array#- doesn't remove an item with the same hash but not #eql?
