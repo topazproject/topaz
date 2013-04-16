@@ -67,6 +67,16 @@ class String
     end
   end
 
+  def end_with?(*suffixes)
+    suffixes.any? do |suffix|
+      next false unless suffix.respond_to?(:to_str)
+      suffix = suffix.to_str
+      suflen = suffix.length
+      next false if suflen > self.length
+      (-suflen).upto(-1).all? { |index| self[index] == suffix[index] }
+    end
+  end
+
   def match(pattern)
     return Regexp.new(pattern).match(self)
   end
