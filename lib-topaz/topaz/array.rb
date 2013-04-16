@@ -34,7 +34,7 @@ class Topaz::Array::IdentityMap
     end
   end
 
-  def values
+  def keys
     @h.keys
   end
 
@@ -42,7 +42,7 @@ class Topaz::Array::IdentityMap
     @h.key?(a)
   end
 
-  def pop?(a)
+  def delete(a)
     @h.delete(a)
   end
 end

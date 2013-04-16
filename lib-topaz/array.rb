@@ -375,14 +375,14 @@ class Array
   def &(other)
     other = Topaz.convert_type(other, Array, :to_ary)
     m = Topaz::Array::IdentityMap.new(other)
-    self.select { |e| m.pop?(e) }
+    self.select { |e| m.delete(e) }
   end
 
   def |(other)
     other = Topaz.convert_type(other, Array, :to_ary)
     m = Topaz::Array::IdentityMap.new(self)
     m.add(other)
-    m.values
+    m.keys
   end
 
   def -(other)
