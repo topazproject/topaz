@@ -28,14 +28,14 @@ class Topaz::Array::IdentityMap
 
   def add(array)
     if @h.empty?
-      array.each { |e| @h[e] = e }
+      array.each { |e| @h[e] = true }
     else
-      array.each { |e| @h.fetch(e){|v| @h[v] = e } }
+      array.each { |e| @h.fetch(e){|v| @h[v] = true } }
     end
   end
 
   def values
-    @h.values
+    @h.keys
   end
 
   def include?(a)
