@@ -80,13 +80,13 @@ class Array
   end
 
   def product(*args, &block)
-    arrs = args.unshift(self)
+    args = args.unshift(self)
     if block
-      Topaz::Array.product(arrs, &block)
+      Topaz::Array.product(args, &block)
       self
     else
       out = self.class.allocate
-      Topaz::Array.product(arrs) { |e| out << e }
+      Topaz::Array.product(args) { |e| out << e }
       out
     end
   end

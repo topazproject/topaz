@@ -17,12 +17,23 @@ class Topaz::Array
     raise ArgumentError, "tried to flatten recursive array"
   end
 
-  def self.product(arrs, &block)
+  def self.product(args, &block)
+    arrs, pool, lens = [], [], []
+    sumlen = 1
+    args.each do |arr|
+      arr = Array.try_convert(arr)
+      next unless arr
+      size = arr.size
+      return if size == 0
+      sumlen *= size
+      arrs << arr
+      lens << size
+    end
+    raise RangeError.new("product result is too large") if sumlen > Fixnum::MAX
+
     n = arrs.size
     indices = [0] * n
-    lens = arrs.map(&:size)
     pool = arrs.map(&:first)
-
     yield pool.dup
 
     while true do
