@@ -173,7 +173,6 @@ class MSpecScript
              "^#{Rubyspec}/library/scanf/",
              "^#{Rubyspec}/library/securerandom/",
              "^#{Rubyspec}/library/set/",
-             "^#{Rubyspec}/library/set/",
              "^#{Rubyspec}/library/shellwords/",
              "^#{Rubyspec}/library/singleton/",
              "^#{Rubyspec}/library/socket/",
