@@ -134,8 +134,10 @@ class TestMath(BaseTopazTest):
         assert self.unwrap(space, w_res) == 1234
 
         with self.raises(space, "TypeError",
-                         "can't convert String into Integer"):
+                         "can't convert String into Float"):
             space.execute("Math.ldexp('1', 2)")
+        with self.raises(space, "TypeError",
+                         "can't convert String into Integer"):
             space.execute("Math.ldexp(1, '2')")
 
     def test_log(self, space):
