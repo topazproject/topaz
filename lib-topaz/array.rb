@@ -79,14 +79,16 @@ class Array
     return self
   end
 
-  def product(ary)
-    result = []
-    self.each do |obj|
-      ary.each do |other|
-        result << [obj, other]
-      end
+  def product(*args, &block)
+    arrs = args.unshift(self)
+    if block
+      Topaz::Array.product(arrs, &block)
+      self
+    else
+      out = self.class.allocate
+      Topaz::Array.product(arrs) { |e| out << e }
+      out
     end
-    result
   end
 
   def compact
