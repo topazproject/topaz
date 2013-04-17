@@ -28,13 +28,14 @@ class Topaz::Array
       sumlen *= size
       arrs << arr
       lens << size
+      pool << arr[0]
     end
     raise RangeError.new("product result is too large") if sumlen > Fixnum::MAX
 
+    yield pool.dup
+
     n = arrs.size
     indices = [0] * n
-    pool = arrs.map(&:first)
-    yield pool.dup
 
     while true do
       i = n - 1

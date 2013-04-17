@@ -45,8 +45,8 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        space.set_const(w_cls, "MAX", space.newfloat(sys.maxint))
-        space.set_const(w_cls, "MIN", space.newfloat(-sys.maxint))
+        space.set_const(w_cls, "MAX", space.newint(sys.maxint))
+        space.set_const(w_cls, "MIN", space.newint(-sys.maxint))
 
     def int_w(self, space):
         return self.intvalue
