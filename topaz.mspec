@@ -128,13 +128,11 @@ class MSpecScript
               "^#{Rubyspec}/language/BEGIN_spec.rb",
               "^#{Rubyspec}/language/alias_spec.rb",
               "^#{Rubyspec}/language/break_spec.rb",
-              "^#{Rubyspec}/language/class_spec.rb",
               "^#{Rubyspec}/language/def_spec.rb",
               "^#{Rubyspec}/language/defined_spec.rb",
               "^#{Rubyspec}/language/or_spec.rb",
               "^#{Rubyspec}/language/retry_spec.rb",
               "^#{Rubyspec}/language/return_spec.rb",
-              "^#{Rubyspec}/language/execution_spec.rb",
               "^#{Rubyspec}/language/super_spec.rb"]
 
   command_line = ["#{Rubyspec}/command_line"]
@@ -174,7 +172,6 @@ class MSpecScript
              "^#{Rubyspec}/library/rexml/",
              "^#{Rubyspec}/library/scanf/",
              "^#{Rubyspec}/library/securerandom/",
-             "^#{Rubyspec}/library/set/",
              "^#{Rubyspec}/library/set/",
              "^#{Rubyspec}/library/shellwords/",
              "^#{Rubyspec}/library/singleton/",

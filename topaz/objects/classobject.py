@@ -99,3 +99,11 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("superclass")
     def method_superclass(self, space):
         return self.superclass if self.superclass is not None else space.w_nil
+
+    @classdef.method("class_variables")
+    def method_class_variables(self, space):
+        return space.newarray([space.newsymbol(cvar) for cvar in self.class_variables])
+
+    @classdef.method("instance_variables")
+    def method_instance_variables(self, space):
+        return space.newarray([space.newsymbol(ivar) for ivar in self.instance_variables])
