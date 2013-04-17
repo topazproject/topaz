@@ -133,7 +133,6 @@ class MSpecScript
               "^#{Rubyspec}/language/or_spec.rb",
               "^#{Rubyspec}/language/retry_spec.rb",
               "^#{Rubyspec}/language/return_spec.rb",
-              "^#{Rubyspec}/language/execution_spec.rb",
               "^#{Rubyspec}/language/super_spec.rb"]
 
   command_line = ["#{Rubyspec}/command_line"]
