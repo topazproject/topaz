@@ -80,6 +80,7 @@ class W_ArrayObject(W_Object):
             return self.items_w[start]
 
     @classdef.method("[]=")
+    @check_frozen()
     def method_subscript_assign(self, space, w_idx, w_count_or_obj, w_obj=None):
         w_count = None
         if w_obj:
