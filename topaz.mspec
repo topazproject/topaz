@@ -52,6 +52,7 @@ class MSpecScript
           "^#{Rubyspec}/core/io/lineno_spec.rb",
           "^#{Rubyspec}/core/io/each_spec.rb",
           "^#{Rubyspec}/core/io/each_line_spec.rb",
+          "^#{Rubyspec}/core/io/foreach_spec.rb",
           "^#{Rubyspec}/core/io/isatty_spec.rb",
           "^#{Rubyspec}/core/file/stat/ftype_spec.rb",
           "^#{Rubyspec}/core/file/socket_spec.rb",
