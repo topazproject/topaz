@@ -337,6 +337,9 @@ class W_StringObject(W_Object):
     def str_w(self, space):
         return self.strategy.str_w(self.str_storage)
 
+    def symbol_w(self, space):
+        return self.str_w(space)
+
     def liststr_w(self, space):
         return self.strategy.liststr_w(self.str_storage)
 
