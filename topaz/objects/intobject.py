@@ -1,6 +1,5 @@
 import math
 import operator
-import sys
 
 from rpython.rlib.debug import check_regular_int
 from rpython.rlib.objectmodel import specialize
@@ -42,11 +41,6 @@ class W_FixnumObject(W_RootObject):
         obj = super(W_FixnumObject, self).__deepcopy__(memo)
         obj.intvalue = self.intvalue
         return obj
-
-    @classdef.setup_class
-    def setup_class(cls, space, w_cls):
-        space.set_const(w_cls, "MAX", space.newint(sys.maxint))
-        space.set_const(w_cls, "MIN", space.newint(-sys.maxint))
 
     def int_w(self, space):
         return self.intvalue

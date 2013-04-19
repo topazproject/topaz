@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import sys
 
 from rpython.rlib.rarithmetic import intmask
 
@@ -8,6 +9,10 @@ from topaz.objects.classobject import W_ClassObject
 
 class Topaz(Module):
     moduledef = ModuleDef("Topaz", filepath=__file__)
+
+    @moduledef.setup_module
+    def setup_module(space, w_mod):
+        space.set_const(w_mod, "FIXNUM_MAX", space.newint(sys.maxint))
 
     @moduledef.function("intmask")
     def method_intmask(self, space, w_int):

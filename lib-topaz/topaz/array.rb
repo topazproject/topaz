@@ -30,7 +30,7 @@ class Topaz::Array
       lens << size
       pool << arr[0]
     end
-    raise RangeError.new("product result is too large") if sumlen > Fixnum::MAX
+    raise RangeError.new("product result is too large") if sumlen > Topaz::FIXNUM_MAX
 
     yield pool.dup
 
