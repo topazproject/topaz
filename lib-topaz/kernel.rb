@@ -15,6 +15,10 @@ module Kernel
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
   end
 
+  def <=>(other)
+    self == other ? 0 : nil
+  end
+
   def Array(arg)
     if arg.respond_to? :to_ary
       arg.to_ary
