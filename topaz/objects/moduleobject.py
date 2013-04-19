@@ -264,6 +264,16 @@ class W_ModuleObject(W_RootObject):
     def set_method_visibility(self, space, name, visibility):
         pass
 
+    @classdef.singleton_method("nesting")
+    def singleton_method_nesting(self, space):
+        frame = space.getexecutioncontext().gettoprubyframe()
+        modules_w = []
+        scope = frame.lexical_scope
+        while scope is not None:
+            modules_w.append(scope.w_mod)
+            scope = scope.backscope
+        return space.newarray(modules_w)
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
         return W_ModuleObject(space, None)
@@ -430,6 +440,20 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):
         return space.newbool(self.find_class_var(space, name) is not None)
+
+    @classdef.method("remove_class_variable", name="symbol")
+    def method_remove_class_variable(self, space, name):
+        w_value = self.class_variables.get(space, name)
+        if w_value is not None:
+            self.class_variables.delete(name)
+            return w_value
+        if self.find_class_var(space, name) is not None:
+            raise space.error(space.w_NameError,
+                "cannot remove %s for %s" % (name, space.obj_to_s(self))
+            )
+        raise space.error(space.w_NameError,
+            "class variable %s not defined for %s" % (name, space.obj_to_s(self))
+        )
 
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):

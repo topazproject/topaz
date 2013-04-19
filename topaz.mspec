@@ -29,7 +29,6 @@ class MSpecScript
           "^#{Rubyspec}/core/regexp/equal_value_spec.rb",
           "^#{Rubyspec}/core/regexp/inspect_spec.rb",
           "^#{Rubyspec}/core/process/detach_spec.rb",
-          "^#{Rubyspec}/core/module/",
           "^#{Rubyspec}/core/gc/profiler/",
           "^#{Rubyspec}/core/object/instance_exec_spec.rb",
           "^#{Rubyspec}/core/method/parameters_spec.rb",
