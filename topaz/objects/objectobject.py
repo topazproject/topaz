@@ -138,13 +138,6 @@ class W_RootObject(W_BaseObject):
     def method_to_s(self, space):
         return space.newstr_fromstr(space.any_to_s(self))
 
-    @classdef.method("<=>")
-    def method_cmp(self, space, w_other):
-        if w_other is self:
-            return space.newint(0)
-        else:
-            return space.w_nil
-
     @classdef.method("===")
     def method_eqeqeq(self, space, w_other):
         if self is w_other:
