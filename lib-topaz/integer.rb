@@ -18,14 +18,6 @@ class Integer < Numeric
     self
   end
 
-  def integer?
-    return true
-  end
-
-  def denominator
-    return 1
-  end
-
   def next
     return self + 1
   end

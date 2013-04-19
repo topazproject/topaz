@@ -14,3 +14,11 @@ class W_IntegerObject(W_NumericObject):
     @classdef.method("numerator")
     def method_to_i(self, space):
         return self
+
+    @classdef.method("integer?")
+    def method_integerp(self, space):
+        return space.w_true
+
+    @classdef.method("denominator")
+    def method_denominator(self, space):
+        return space.newint(1)
