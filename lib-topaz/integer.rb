@@ -46,4 +46,8 @@ class Integer < Numeric
     return self + 1
   end
   alias succ next
+
+  def pred
+    return self - 1
+  end
 end
