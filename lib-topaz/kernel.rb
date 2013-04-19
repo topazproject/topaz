@@ -35,11 +35,16 @@ module Kernel
   end
   module_function :Integer
 
-  def loop
-    while true
-      yield
+  def loop(&block)
+    return enum_for(:loop) unless block
+    begin
+      while true
+        yield
+      end
+    rescue StopIteration
+      nil
     end
-    return nil
+    nil
   end
 
   def `(cmd)
