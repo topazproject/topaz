@@ -34,6 +34,10 @@ class Integer < Numeric
     return self
   end
 
+  def ord
+    return self
+  end
+
   def denominator
     return 1
   end
