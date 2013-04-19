@@ -7,6 +7,7 @@ from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.packing.pack import RPacker
+from topaz.utils import itertools
 
 
 BaseRubySorter = make_timsort_class()
@@ -318,4 +319,43 @@ class W_ArrayObject(W_Object):
         assert n >= 0
         self.items_w.extend(self.items_w[:n])
         del self.items_w[:n]
+        return self
+
+    @classdef.method("combination")
+    def method_combination(self, space, w_count, block=None):
+        w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("combination"), w_count])
+        for cmb in itertools.combinations(self.items_w, space.int_w(w_count)):
+            space.invoke_block(block, [space.newarray(cmb)])
+        return self
+
+    @classdef.method("repeated_combination")
+    def method_repeated_combination(self, space, w_count, block=None):
+        w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("repeated_combination"), w_count])
+        for cmb in itertools.combinations_with_replacement(self.items_w, space.int_w(w_count)):
+            space.invoke_block(block, [space.newarray(cmb)])
+        return self
+
+    @classdef.method("permutation")
+    def method_permutation(self, space, w_count=None, block=None):
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("permutation"), w_count])
+        if w_count is not None:
+            w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
+        count_w = len(self.items_w) if w_count is None else space.int_w(w_count)
+        for cmb in itertools.permutations(self.items_w, count_w):
+            space.invoke_block(block, [space.newarray(cmb)])
+        return self
+
+    @classdef.method("repeated_permutation")
+    def method_repeated_permutation(self, space, w_count, block=None):
+        if block is None:
+            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("repeated_permutation"), w_count])
+        w_count = space.convert_type(w_count, space.w_fixnum, "to_int")
+        count_w = space.int_w(w_count)
+        for cmb in itertools.permutations_with_replacement(self.items_w, count_w):
+            space.invoke_block(block, [space.newarray(cmb)])
         return self
