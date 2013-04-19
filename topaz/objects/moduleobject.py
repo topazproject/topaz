@@ -410,6 +410,10 @@ class W_ModuleObject(W_RootObject):
     def method_protected(self, space, args_w):
         self.set_visibility(space, args_w, "protected")
 
+    @classdef.method("private_constant")
+    def method_private_constant(self, space, args_w):
+        pass
+
     @classdef.method("constants")
     def method_constants(self, space):
         return space.newarray([space.newsymbol(n) for n in self.constants_w])
