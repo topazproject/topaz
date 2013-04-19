@@ -116,6 +116,19 @@ class String
   end
   alias chars each_char
 
+  def each_byte(&block)
+    return self.enum_for(:each_byte) unless block
+
+    i = 0
+    limit = self.length
+    while i < limit
+      yield self.getbyte(i)
+      i += 1
+    end
+
+    self
+  end
+
   def upto(max, exclusive = false, &block)
     return self.enum_for(:upto, max, exclusive) unless block
 
