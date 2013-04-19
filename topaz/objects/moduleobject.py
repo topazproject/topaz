@@ -436,7 +436,7 @@ class W_ModuleObject(W_RootObject):
         elif block is None:
             raise space.error(space.w_ArgumentError, "block not supplied")
         else:
-            space.invoke_block(block.copy(w_self=self, lexical_scope=StaticScope(self, None)), [])
+            space.invoke_block(block.copy(w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
 
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):
