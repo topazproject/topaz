@@ -161,6 +161,19 @@ class TestModuleObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == ["dummy", 123]
 
+    def test_module_eval_has_scope_of_its_block_and_the_receiving_module(self, space):
+        w_res = space.execute("""
+        module A
+          Cow = "cow"
+        end
+        module B
+          Horse = "horse"
+          A.module_eval { $animals = [Horse, Cow] }
+        end
+        return $animals
+        """)
+        assert self.unwrap(space, w_res) == ["horse", "cow"]
+
     def test_const_definedp(self, space):
         w_res = space.execute("""
         class X; Const = 1; end

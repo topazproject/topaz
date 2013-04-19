@@ -161,6 +161,12 @@ class Kernel(Module):
     def method_binding(self, space):
         return space.newbinding_fromframe(space.getexecutioncontext().gettoprubyframe())
 
+    @moduledef.function("__method__")
+    @moduledef.function("__callee__")
+    def method_method(self, space):
+        frame = space.getexecutioncontext().gettoprubyframe()
+        return space.newsymbol(frame.bytecode.name)
+
     @moduledef.function("exec")
     def method_exec(self, space, args_w):
         if len(args_w) > 1 and space.respond_to(args_w[0], space.newsymbol("to_hash")):

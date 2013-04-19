@@ -99,6 +99,19 @@ class Array
     reject! { |obj| obj.nil? }
   end
 
+  def select!(&block)
+    return self.enum_for(:select!) unless block
+    new_arr = self.select(&block)
+    if new_arr.size != self.size
+      self.replace(new_arr)
+      self
+    end
+  end
+
+  def keep_if(&block)
+    self.select!(&block) || self
+  end
+
   def reject!(&block)
     return self.enum_for(:reject!) unless block
     prev_size = self.size

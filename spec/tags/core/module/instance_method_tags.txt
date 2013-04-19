@@ -1,0 +1,2 @@
+fails:Module#instance_method gives UnboundMethod method name, Module defined in and Module extracted from
+fails:Module#instance_method raises a NameError if the method has been undefined

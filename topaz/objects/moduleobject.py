@@ -89,6 +89,7 @@ class W_ModuleObject(W_RootObject):
         self.constants_w = {}
         self.class_variables = CellDict()
         self.instance_variables = CellDict()
+        self.flags = CellDict()
         self.included_modules = []
         self.descendants = []
 
@@ -212,6 +213,25 @@ class W_ModuleObject(W_RootObject):
     def find_instance_var(self, space, name):
         return self.instance_variables.get(space, name) or space.w_nil
 
+    def copy_instance_vars(self, space, w_other):
+        assert isinstance(w_other, W_ModuleObject)
+        for key in w_other.instance_variables:
+            w_value = w_other.instance_variables.get(space, key)
+            self.set_instance_var(space, key, w_value)
+
+    def set_flag(self, space, name):
+        self.flags.set(space, name, space.w_true)
+
+    def unset_flag(self, space, name):
+        self.flags.set(space, name, space.w_false)
+
+    def copy_flags(self, space, w_other):
+        assert isinstance(w_other, W_ModuleObject)
+        for key in w_other.flags:
+            w_value = w_other.flags.get(space, key)
+            if w_value is space.w_true:
+                self.set_flag(space, key)
+
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
             return [self] + self.included_modules
@@ -263,6 +283,16 @@ class W_ModuleObject(W_RootObject):
 
     def set_method_visibility(self, space, name, visibility):
         pass
+
+    @classdef.singleton_method("nesting")
+    def singleton_method_nesting(self, space):
+        frame = space.getexecutioncontext().gettoprubyframe()
+        modules_w = []
+        scope = frame.lexical_scope
+        while scope is not None:
+            modules_w.append(scope.w_mod)
+            scope = scope.backscope
+        return space.newarray(modules_w)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
@@ -380,6 +410,10 @@ class W_ModuleObject(W_RootObject):
     def method_protected(self, space, args_w):
         self.set_visibility(space, args_w, "protected")
 
+    @classdef.method("private_constant")
+    def method_private_constant(self, space, args_w):
+        pass
+
     @classdef.method("constants")
     def method_constants(self, space):
         return space.newarray([space.newsymbol(n) for n in self.constants_w])
@@ -399,8 +433,10 @@ class W_ModuleObject(W_RootObject):
             else:
                 lineno = 1
             return space.execute(string, self, lexical_scope=StaticScope(self, None), filepath=filename, initial_lineno=lineno)
+        elif block is None:
+            raise space.error(space.w_ArgumentError, "block not supplied")
         else:
-            space.invoke_block(block.copy(w_self=self, lexical_scope=StaticScope(self, None)), [])
+            space.invoke_block(block.copy(w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
 
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):
@@ -430,6 +466,20 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):
         return space.newbool(self.find_class_var(space, name) is not None)
+
+    @classdef.method("remove_class_variable", name="symbol")
+    def method_remove_class_variable(self, space, name):
+        w_value = self.class_variables.get(space, name)
+        if w_value is not None:
+            self.class_variables.delete(name)
+            return w_value
+        if self.find_class_var(space, name) is not None:
+            raise space.error(space.w_NameError,
+                "cannot remove %s for %s" % (name, space.obj_to_s(self))
+            )
+        raise space.error(space.w_NameError,
+            "class variable %s not defined for %s" % (name, space.obj_to_s(self))
+        )
 
     @classdef.method("method_defined?", name="str")
     def method_method_definedp(self, space, name):
