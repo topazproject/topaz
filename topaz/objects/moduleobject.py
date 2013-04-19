@@ -89,6 +89,7 @@ class W_ModuleObject(W_RootObject):
         self.constants_w = {}
         self.class_variables = CellDict()
         self.instance_variables = CellDict()
+        self.flags = CellDict()
         self.included_modules = []
         self.descendants = []
 
@@ -211,6 +212,9 @@ class W_ModuleObject(W_RootObject):
 
     def find_instance_var(self, space, name):
         return self.instance_variables.get(space, name) or space.w_nil
+
+    def set_flag(self, space, name):
+        self.flags.set(space, name, space.w_true)
 
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
