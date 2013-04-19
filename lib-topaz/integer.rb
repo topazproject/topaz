@@ -22,6 +22,10 @@ class Integer < Numeric
     return true
   end
 
+  def to_int
+    return self
+  end
+
   def ceil
     return self
   end
