@@ -15,6 +15,10 @@ module Kernel
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
   end
 
+  def <=>(other)
+    self == other ? 0 : nil
+  end
+
   def Array(arg)
     if arg.respond_to? :to_ary
       arg.to_ary
@@ -35,11 +39,16 @@ module Kernel
   end
   module_function :Integer
 
-  def loop
-    while true
-      yield
+  def loop(&block)
+    return enum_for(:loop) unless block
+    begin
+      while true
+        yield
+      end
+    rescue StopIteration
+      nil
     end
-    return nil
+    nil
   end
 
   def `(cmd)
