@@ -429,6 +429,8 @@ class W_ModuleObject(W_RootObject):
             else:
                 lineno = 1
             return space.execute(string, self, lexical_scope=StaticScope(self, None), filepath=filename, initial_lineno=lineno)
+        elif block is None:
+            raise space.error(space.w_ArgumentError, "block not supplied")
         else:
             space.invoke_block(block.copy(w_self=self, lexical_scope=StaticScope(self, None)), [])
 
