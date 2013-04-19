@@ -213,8 +213,24 @@ class W_ModuleObject(W_RootObject):
     def find_instance_var(self, space, name):
         return self.instance_variables.get(space, name) or space.w_nil
 
+    def copy_instance_vars(self, space, w_other):
+        assert isinstance(w_other, W_ModuleObject)
+        for key in w_other.instance_variables:
+            w_value = w_other.instance_variables.get(space, key)
+            self.set_instance_var(space, key, w_value)
+
     def set_flag(self, space, name):
         self.flags.set(space, name, space.w_true)
+
+    def unset_flag(self, space, name):
+        self.flags.set(space, name, space.w_false)
+
+    def copy_flags(self, space, w_other):
+        assert isinstance(w_other, W_ModuleObject)
+        for key in w_other.flags:
+            w_value = w_other.flags.get(space, key)
+            if w_value is space.w_true:
+                self.set_flag(space, key)
 
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
