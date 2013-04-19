@@ -22,32 +22,8 @@ class Integer < Numeric
     return true
   end
 
-  def to_int
-    return self
-  end
-
-  def ceil
-    return self
-  end
-
-  def floor
-    return self
-  end
-
-  def truncate
-    return self
-  end
-
-  def ord
-    return self
-  end
-
   def denominator
     return 1
-  end
-
-  def numerator
-    return self
   end
 
   def next
