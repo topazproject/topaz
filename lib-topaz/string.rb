@@ -57,6 +57,26 @@ class String
     self.length == 0
   end
 
+  def start_with?(*prefixes)
+    prefixes.any? do |prefix|
+      next false unless prefix.respond_to?(:to_str)
+      prefix = prefix.to_str
+      prelen = prefix.length
+      next false if prelen > self.length
+      0.upto(prelen - 1).all? { |index| self[index] == prefix[index] }
+    end
+  end
+
+  def end_with?(*suffixes)
+    suffixes.any? do |suffix|
+      next false unless suffix.respond_to?(:to_str)
+      suffix = suffix.to_str
+      suflen = suffix.length
+      next false if suflen > self.length
+      (-suflen).upto(-1).all? { |index| self[index] == suffix[index] }
+    end
+  end
+
   def match(pattern)
     return Regexp.new(pattern).match(self)
   end
