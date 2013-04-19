@@ -18,32 +18,12 @@ class Integer < Numeric
     self
   end
 
-  def integer?
-    return true
-  end
-
-  def ceil
-    return self
-  end
-
-  def floor
-    return self
-  end
-
-  def truncate
-    return self
-  end
-
-  def denominator
-    return 1
-  end
-
-  def numerator
-    return self
-  end
-
   def next
     return self + 1
   end
   alias succ next
+
+  def pred
+    return self - 1
+  end
 end
