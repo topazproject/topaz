@@ -1,2 +1,0 @@
-fails:Kernel#<=> returns nil if self.==(arg) returns nil
-fails:Kernel#<=> returns 0 if self is == to the argument
