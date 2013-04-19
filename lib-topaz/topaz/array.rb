@@ -21,7 +21,7 @@ class Topaz::Array
     arrs, pool, lens = [], [], []
     sumlen = 1
     args.each do |arr|
-      arr = Array.try_convert(arr)
+      arr = Topaz.convert_type(arr, Array, :to_ary)
       next unless arr
       size = arr.size
       return if size == 0
