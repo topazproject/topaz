@@ -1,0 +1,4 @@
+fails:Module#attr_writer creates a setter for each given attribute name
+fails:Module#attr_writer converts non string/symbol/fixnum names to strings using to_str
+fails:Module#attr_writer raises a TypeError when the given names can't be converted to strings using to_str
+fails:Module#attr_writer is a private method
