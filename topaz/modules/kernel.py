@@ -162,6 +162,7 @@ class Kernel(Module):
         return space.newbinding_fromframe(space.getexecutioncontext().gettoprubyframe())
 
     @moduledef.function("__method__")
+    @moduledef.function("__callee__")
     def method_method(self, space):
         frame = space.getexecutioncontext().gettoprubyframe()
         return space.newsymbol(frame.bytecode.name)
