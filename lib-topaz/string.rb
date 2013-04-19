@@ -128,6 +128,7 @@ class String
 
     self
   end
+  alias bytes each_byte
 
   def upto(max, exclusive = false, &block)
     return self.enum_for(:upto, max, exclusive) unless block
