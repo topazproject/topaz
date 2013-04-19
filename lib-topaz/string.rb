@@ -31,6 +31,28 @@ class String
     return copy
   end
 
+  def casecmp(other)
+    unless other.respond_to?(:to_str)
+      raise TypeError.new("can't convert #{other.class} into String")
+    end
+    
+    other = other.to_str
+    diff = self.length - other.length
+    short = diff < 0
+    long = diff > 0
+    limit = (short ? self.length : other.length) - 1
+
+    0.upto(limit) do |index|
+      a, b = self[index], other[index]
+      a.upcase!
+      b.upcase!
+      compared = a <=> b
+      return compared unless compared == 0
+    end
+
+    short ? -1 : (long ? 1 : 0)
+  end
+
   def empty?
     self.length == 0
   end
