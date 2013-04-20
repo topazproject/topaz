@@ -229,6 +229,7 @@ class W_RegexpObject(W_Object):
     def method_casefoldp(self, space):
         return space.newbool(bool(self.flags & regexp.IGNORE_CASE))
 
+    @classdef.singleton_method("quote", string="str")
     @classdef.singleton_method("escape", string="str")
     def method_escape(self, space, string):
         result = []
