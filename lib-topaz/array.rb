@@ -54,6 +54,18 @@ class Array
     res
   end
 
+  def |(other)
+    other = other.kind_of?(Array) ? other : other.to_ary
+    hash = {}
+    self.each do |elm|
+      hash[elm] = nil
+    end
+    other.each do |elm|
+      hash[elm] = nil
+    end
+    hash.keys
+  end
+
   def at(idx)
     self[idx]
   end
