@@ -266,6 +266,8 @@ class TestFixnumObject(BaseTopazTest):
             space.execute("256.chr")
         with self.raises(space, "RangeError", "-1 out of char range"):
             space.execute("-1.chr")
+        w_res = space.execute("return 4.chr")
+        assert self.unwrap(space, w_res) == "\x04"
 
     def test_pow(self, space):
         w_res = space.execute("return 2 ** 6")
