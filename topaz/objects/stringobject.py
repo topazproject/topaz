@@ -294,6 +294,9 @@ class MutableStringStrategy(StringStrategy):
 
     def strip(self, storage):
         storage = self.unerase(storage)
+        if not storage:
+            return False
+
         shift = 0
         while shift < len(storage) and storage[shift].isspace():
             shift += 1
