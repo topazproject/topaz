@@ -40,7 +40,6 @@ class MSpecScript
           "^#{Rubyspec}/core/marshal/dump_spec.rb",
           "^#{Rubyspec}/core/marshal/load_spec.rb",
           "^#{Rubyspec}/core/marshal/restore_spec.rb",
-          "^#{Rubyspec}/core/kernel/autoload_spec.rb",
           "^#{Rubyspec}/core/kernel/define_singleton_method_spec.rb",
           "^#{Rubyspec}/core/kernel/p_spec.rb",
           "^#{Rubyspec}/core/main/public_spec.rb",

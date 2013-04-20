@@ -394,3 +394,11 @@ class Kernel(Module):
         random_class = space.getclassfor(W_RandomObject)
         default = space.find_const(random_class, "DEFAULT")
         return default.srand(space, w_seed)
+
+    @moduledef.method("autoload")
+    def method_autoload(self, space, args_w):
+        return space.send(
+            space.getclass(self),
+            space.newsymbol("autoload"),
+            args_w
+        )
