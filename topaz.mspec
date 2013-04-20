@@ -115,7 +115,6 @@ class MSpecScript
   language = ["#{Rubyspec}/language",
               "^#{Rubyspec}/language/block_spec.rb",
               "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
-              "^#{Rubyspec}/language/regexp/anchors_spec.rb",
               "^#{Rubyspec}/language/send_spec.rb",
               "^#{Rubyspec}/language/constants_spec.rb",
               "^#{Rubyspec}/language/precedence_spec.rb",
