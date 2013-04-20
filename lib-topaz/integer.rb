@@ -30,4 +30,8 @@ class Integer < Numeric
   def even?
     (self % 2).zero?
   end
+
+  def odd?
+    !even?
+  end
 end
