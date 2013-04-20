@@ -1,1 +1,0 @@
-fails:Hash#to_a is called for Enumerable#entries
