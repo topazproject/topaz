@@ -804,7 +804,10 @@ class SetIntersection(SetBase):
         ] + [self.items[-1]]).compile(ctx)
 
 
-POSITION_ESCAPES = {}
+POSITION_ESCAPES = {
+    "A": StartOfString(),
+    "z": EndOfString(),
+}
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
 }
