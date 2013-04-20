@@ -30,6 +30,12 @@ class W_HashObject(W_Object):
         result.contents.update(w_res.contents)
         return result
 
+    @classdef.singleton_method("try_convert")
+    def method_try_convert(self, space, w_obj):
+        if not space.is_kind_of(w_obj, space.w_hash):
+            w_obj = space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
+        return w_obj
+
     @classdef.method("initialize")
     def method_initialize(self, space, w_default=None, block=None):
         if w_default is not None:
