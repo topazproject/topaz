@@ -26,4 +26,8 @@ class Integer < Numeric
   def pred
     return self - 1
   end
+
+  def even?
+    (self % 2).zero?
+  end
 end
