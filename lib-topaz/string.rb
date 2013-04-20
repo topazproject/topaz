@@ -35,7 +35,7 @@ class String
     unless other.respond_to?(:to_str)
       raise TypeError.new("can't convert #{other.class} into String")
     end
-    
+
     other = other.to_str
     diff = self.length - other.length
     short = diff < 0
@@ -155,5 +155,11 @@ class String
     end
 
     return self
+  end
+
+  def strip
+    duplicate = self.dup
+    duplicate.strip!
+    duplicate
   end
 end
