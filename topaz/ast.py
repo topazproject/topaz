@@ -932,6 +932,7 @@ class LookupConstant(Node):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_CONSTANT, ctx.create_symbol_const(self.name))
 
 
