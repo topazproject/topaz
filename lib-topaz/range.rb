@@ -48,6 +48,7 @@ class Range
     end
     return false
   end
+  alias cover? include?
 
   def ==(other)
     return true if self.equal?(other)
