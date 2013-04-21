@@ -41,6 +41,14 @@ class Range
     args.empty? ? self.end : self.to_a.last(*args)
   end
 
+  def min(&block)
+    return super(&block) if block
+    if (self.end < self.begin) || (self.exclude_end? && (self.end == self.begin))
+      return nil
+    end
+    self.begin
+  end
+
   def ===(value)
     self.include?(value)
   end
