@@ -268,10 +268,14 @@ class W_ArrayObject(W_Object):
         else:
             return self.items_w[len(self.items_w) - 1]
 
-    @classdef.method("pack", template="str")
-    def method_pack(self, space, template):
+    @classdef.method("pack")
+    def method_pack(self, space, w_template):
+        template = Coerce.str(space, w_template)
         result = RPacker(template, space.listview(self)).operate(space)
-        return space.newstr_fromchars(result)
+        w_result = space.newstr_fromchars(result)
+        if space.is_true(space.send(w_template, space.newsymbol("tainted?"))):
+            space.send(w_result, space.newsymbol("taint"))
+        return w_result
 
     @classdef.method("to_ary")
     def method_to_ary(self, space):

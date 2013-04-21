@@ -12,11 +12,10 @@ from topaz.module import Module, ModuleDef
 from topaz.modules.process import Process
 from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
-from topaz.objects.procobject import W_ProcObject
-from topaz.objects.stringobject import W_StringObject
-from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
+from topaz.objects.stringobject import W_StringObject
 
 
 class Kernel(Module):
