@@ -1,9 +1,17 @@
 class Range
   def each(&block)
     return self.enum_for unless block
-
-    if !(self.begin.respond_to? :succ)
+    unless self.begin.respond_to?(:succ)
       raise TypeError.new("can't iterate from #{self.begin.class}")
+    end
+
+    case self.begin
+    when String
+      self.begin.upto(self.end, self.exclude_end?, &block)
+    when Symbol
+      self.begin.to_s.upto(self.end.to_s, self.exclude_end?) do |s|
+        yield s.to_sym
+      end
     else
       i = self.begin
       if self.exclude_end?
@@ -29,6 +37,36 @@ class Range
     end
   end
 
+  def last(*args)
+    args.empty? ? self.end : self.to_a.last(*args)
+  end
+
+  def min(&block)
+    return super(&block) if block
+    if (self.end < self.begin) || (self.exclude_end? && (self.end == self.begin))
+      return nil
+    end
+    self.begin
+  end
+
+  def max(&block)
+    return super(&block) if block || (self.exclude_end? && !self.end.kind_of?(Numeric))
+    if (self.end < self.begin) || (self.exclude_end? && (self.end == self.begin))
+      return nil
+    end
+    if self.exclude_end?
+      unless self.end.kind_of?(Integer)
+        raise TypeError.new("cannot exclude non Integer end value")
+      end
+      unless self.end.kind_of?(Integer)
+        raise TypeError.new("cannot exclude end value with non Integer begin value")
+      end
+      self.end - 1
+    else
+      self.end
+    end
+  end
+
   def ===(value)
     self.include?(value)
   end
@@ -48,6 +86,8 @@ class Range
     end
     return false
   end
+  alias cover? include?
+  alias member? include?
 
   def ==(other)
     return true if self.equal?(other)

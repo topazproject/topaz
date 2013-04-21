@@ -32,7 +32,6 @@ class W_RangeObject(W_Object):
     def method_begin(self, space):
         return self.w_start
 
-    @classdef.method("last")
     @classdef.method("end")
     def method_end(self, space):
         return self.w_end
