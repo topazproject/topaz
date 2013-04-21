@@ -323,3 +323,26 @@ class W_ArrayObject(W_Object):
         self.items_w.extend(self.items_w[:n])
         del self.items_w[:n]
         return self
+
+    @classdef.method("insert", i="int")
+    @check_frozen()
+    def method_insert(self, space, i, args_w):
+        if not args_w:
+            return self
+        length = len(self.items_w)
+        if i > length:
+            for _ in xrange(i - length):
+                self.items_w.append(space.w_nil)
+            self.items_w.extend(args_w)
+            return self
+        if i < 0:
+            if i < -length - 1:
+                 raise space.error(space.w_IndexError,
+                      "index %d too small for array; minimum: %d" % (i + 1, -length))
+            i += length + 1
+        assert i >= 0
+        j = i
+        for e in args_w:
+            self.items_w.insert(j, e)
+            j += 1
+        return self
