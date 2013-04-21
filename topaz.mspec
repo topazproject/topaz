@@ -6,6 +6,7 @@ class MSpecScript
   core = ["#{Rubyspec}/core/",
           "^#{Rubyspec}/core/struct",
           "^#{Rubyspec}/core/string/unpack/",
+          "^#{Rubyspec}/core/string/chomp_spec.rb",
           "^#{Rubyspec}/core/string/split_spec.rb",
           "^#{Rubyspec}/core/string/slice_spec.rb",
           "^#{Rubyspec}/core/string/crypt_spec.rb",
@@ -82,7 +83,6 @@ class MSpecScript
           "^#{Rubyspec}/core/process/wait2_spec.rb",
           "^#{Rubyspec}/core/process/wait_spec.rb",
           "^#{Rubyspec}/core/process/waitall_spec.rb",
-          "^#{Rubyspec}/core/string/chomp_spec.rb",
           "^#{Rubyspec}/core/file/ctime_spec.rb"
   ]
 
