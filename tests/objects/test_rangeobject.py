@@ -52,8 +52,8 @@ class TestRangeObject(BaseTopazTest):
         w_res = space.execute("return (1..10) === -1")
         assert w_res is space.w_false
 
-    def test_first(self, space):
-        w_res = space.execute("return (1..10).first")
+    def test_begin(self, space):
+        w_res = space.execute("return (1..10).begin")
         assert space.int_w(w_res) == 1
 
     def test_end(self, space):
