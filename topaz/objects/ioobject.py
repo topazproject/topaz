@@ -1,7 +1,5 @@
 import os
 
-from rpython.rlib import jit
-
 from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
@@ -254,3 +252,9 @@ class W_IOObject(W_Object):
         stat_obj = W_FileStatObject(space)
         stat_obj.set_stat(stat_val)
         return stat_obj
+
+    @classdef.method("isatty")
+    @classdef.method("tty?")
+    def method_isatty(self, space):
+        self.ensure_not_closed(space)
+        return space.newbool(os.isatty(self.fd))
