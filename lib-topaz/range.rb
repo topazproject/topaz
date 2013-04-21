@@ -1,9 +1,17 @@
 class Range
   def each(&block)
     return self.enum_for unless block
-
-    if !(self.begin.respond_to? :succ)
+    unless self.begin.respond_to?(:succ)
       raise TypeError.new("can't iterate from #{self.begin.class}")
+    end
+
+    case self.begin
+    when String
+      self.begin.upto(self.end, self.exclude_end?, &block)
+    when Symbol
+      self.begin.to_s.upto(self.end.to_s, self.exclude_end?) do |s|
+        yield s.to_sym
+      end
     else
       i = self.begin
       if self.exclude_end?
