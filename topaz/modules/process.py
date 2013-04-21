@@ -1,17 +1,19 @@
 from __future__ import absolute_import
 
 import os
-import sys
 
-from topaz.module import Module, ModuleDef
+from topaz.module import ModuleDef
 from topaz.system import IS_WINDOWS
 
 
 if IS_WINDOWS:
     def geteuid():
-        return 0 # MRI behaviour on windows
+        # MRI behaviour on windows
+        return 0
+
     def fork():
         raise NotImplementedError("fork on windows")
+
     def WEXITSTATUS(status):
         return status
 else:
@@ -20,7 +22,7 @@ else:
     WEXITSTATUS = os.WEXITSTATUS
 
 
-class Process(Module):
+class Process(object):
     moduledef = ModuleDef("Process", filepath=__file__)
 
     @moduledef.function("euid")

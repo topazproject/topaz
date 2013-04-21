@@ -8,7 +8,7 @@ from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.coerce import Coerce
 from topaz.error import RubyError, error_for_oserror
-from topaz.module import Module, ModuleDef
+from topaz.module import ModuleDef
 from topaz.modules.process import Process
 from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
@@ -18,7 +18,7 @@ from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.stringobject import W_StringObject
 
 
-class Kernel(Module):
+class Kernel(object):
     moduledef = ModuleDef("Kernel", filepath=__file__)
 
     @moduledef.method("class")

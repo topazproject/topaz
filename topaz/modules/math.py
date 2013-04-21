@@ -4,11 +4,11 @@ import math
 
 from rpython.rlib import rfloat
 
-from topaz.module import Module, ModuleDef, ClassDef
+from topaz.module import ModuleDef, ClassDef
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 
 
-class Math(Module):
+class Math(object):
     moduledef = ModuleDef("Math", filepath=__file__)
 
     @moduledef.setup_module
