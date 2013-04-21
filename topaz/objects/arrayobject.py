@@ -338,11 +338,11 @@ class W_ArrayObject(W_Object):
         if i < 0:
             if i < -length - 1:
                  raise space.error(space.w_IndexError,
-                      "index %d too small for array; minimum: %d" % (i + 1, -length))
+                      "index %d too small for array; minimum: %d" % (i + 1, -length)
+                  )
             i += length + 1
         assert i >= 0
-        j = i
-        for e in args_w:
-            self.items_w.insert(j, e)
-            j += 1
+        for w_e in args_w:
+            self.items_w.insert(i, w_e)
+            i += 1
         return self
