@@ -411,8 +411,12 @@ class ObjectSpace(object):
         else:
             return W_UnboundMethodObject(self, w_cls, w_function)
 
-    def newproc(self, block, is_lambda=False):
-        return W_ProcObject(self, block, is_lambda)
+    def newproc(self, bytecode, w_self, lexical_scope, cells, block,
+                parent_interp, regexp_match_cell, is_lambda=False):
+        return W_ProcObject(
+            self, bytecode, w_self, lexical_scope, cells, block, parent_interp,
+            regexp_match_cell, is_lambda=False
+        )
 
     @jit.unroll_safe
     def newbinding_fromframe(self, frame):

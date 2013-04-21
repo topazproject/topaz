@@ -1,7 +1,4 @@
 from topaz.module import ClassDef
-from topaz.objects.blockobject import W_BlockObject
-from topaz.objects.functionobject import W_UserFunction
-from topaz.objects.moduleobject import AttributeWriter, DefineMethodBlock
 from topaz.objects.objectobject import W_Object
 
 

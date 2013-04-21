@@ -48,7 +48,7 @@ class W_HashObject(W_Object):
     def method_default_proc(self, space):
         if self.default_proc is None:
             return space.w_nil
-        return space.newproc(self.default_proc)
+        return self.default_proc
 
     @classdef.method("[]")
     def method_subscript(self, space, w_key):

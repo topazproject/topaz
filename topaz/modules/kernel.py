@@ -40,13 +40,15 @@ class Kernel(object):
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
-        return space.newproc(block, True)
+        return block.copy(space, is_lambda=True)
 
     @moduledef.method("proc")
     def function_proc(self, space, block):
         if block is None:
-            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
-        return space.newproc(block, False)
+            raise space.error(space.w_ArgumentError,
+                "tried to create Proc object without a block"
+            )
+        return block.copy(space)
 
     @staticmethod
     def find_feature(space, path):
@@ -219,9 +221,8 @@ class Kernel(object):
 
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):
-        w_proc = space.newproc(block)
-        space.register_exit_handler(w_proc)
-        return w_proc
+        space.register_exit_handler(block)
+        return block
 
     @moduledef.function("=~")
     def method_match(self, space, w_other):

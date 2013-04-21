@@ -5,7 +5,6 @@ from rpython.rlib.objectmodel import we_are_translated, specialize
 from topaz import consts
 from topaz.error import RubyError
 from topaz.objects.arrayobject import W_ArrayObject
-from topaz.objects.blockobject import W_BlockObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.codeobject import W_CodeObject
 from topaz.objects.functionobject import W_FunctionObject
@@ -351,16 +350,15 @@ class Interpreter(object):
         cells = [frame.pop() for _ in range(n_cells)]
         w_code = frame.pop()
         assert isinstance(w_code, W_CodeObject)
-        block = W_BlockObject(
+        frame.push(space.newproc(
             w_code, frame.w_self, frame.lexical_scope, cells, frame.block,
             self, frame.regexp_match_cell
-        )
-        frame.push(block)
+        ))
 
     def BUILD_LAMBDA(self, space, bytecode, frame, pc):
         block = frame.pop()
-        assert isinstance(block, W_BlockObject)
-        frame.push(space.newproc(block, is_lambda=True))
+        assert isinstance(block, W_ProcObject)
+        frame.push(block.copy(space, is_lambda=True))
 
     def BUILD_CLASS(self, space, bytecode, frame, pc):
         space.getexecutioncontext().last_instr = pc
@@ -442,13 +440,13 @@ class Interpreter(object):
         if w_block is space.w_nil:
             frame.push(w_block)
         elif isinstance(w_block, W_ProcObject):
-            frame.push(w_block.block)
+            frame.push(w_block)
         elif space.respond_to(w_block, space.newsymbol("to_proc")):
             space.getexecutioncontext().last_instr = pc
             # Proc implements to_proc, too, but MRI doesn't call it
             w_res = space.convert_type(w_block, space.w_proc, "to_proc")
             assert isinstance(w_res, W_ProcObject)
-            frame.push(w_res.block)
+            frame.push(w_res)
         else:
             raise space.error(space.w_TypeError, "wrong argument type")
 
@@ -530,7 +528,7 @@ class Interpreter(object):
         if w_block is space.w_nil:
             w_block = None
         else:
-            assert isinstance(w_block, W_BlockObject)
+            assert isinstance(w_block, W_ProcObject)
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
@@ -563,7 +561,7 @@ class Interpreter(object):
         if w_block is space.w_nil:
             w_block = None
         else:
-            assert isinstance(w_block, W_BlockObject)
+            assert isinstance(w_block, W_ProcObject)
         w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
@@ -583,7 +581,7 @@ class Interpreter(object):
         if w_block is space.w_nil:
             w_block = None
         else:
-            assert isinstance(w_block, W_BlockObject)
+            assert isinstance(w_block, W_ProcObject)
         w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
@@ -599,7 +597,7 @@ class Interpreter(object):
         if w_block is space.w_nil:
             w_block = None
         else:
-            assert isinstance(w_block, W_BlockObject)
+            assert isinstance(w_block, W_ProcObject)
         w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
         frame.push(w_res)
 
