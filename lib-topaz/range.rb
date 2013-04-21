@@ -37,6 +37,10 @@ class Range
     end
   end
 
+  def last(*args)
+    args.empty? ? self.end : self.to_a.last(*args)
+  end
+
   def ===(value)
     self.include?(value)
   end
