@@ -49,6 +49,24 @@ class Range
     self.begin
   end
 
+  def max(&block)
+    return super(&block) if block || (self.exclude_end? && !self.end.kind_of?(Numeric))
+    if (self.end < self.begin) || (self.exclude_end? && (self.end == self.begin))
+      return nil
+    end
+    if self.exclude_end?
+      unless self.end.kind_of?(Integer)
+        raise TypeError.new("cannot exclude non Integer end value")
+      end
+      unless self.end.kind_of?(Integer)
+        raise TypeError.new("cannot exclude end value with non Integer begin value")
+      end
+      self.end - 1
+    else
+      self.end
+    end
+  end
+
   def ===(value)
     self.include?(value)
   end
