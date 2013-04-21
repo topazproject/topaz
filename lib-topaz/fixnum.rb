@@ -29,6 +29,10 @@ class Fixnum < Integer
     self * 2 + 1
   end
 
+  def magnitude
+    abs
+  end
+
   def step(limit, step=1)
     idx = self
     if limit.is_a?(Float) || step.is_a?(Float)
