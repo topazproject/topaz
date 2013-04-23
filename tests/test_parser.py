@@ -1479,6 +1479,22 @@ HERE
                 )])
             ), 1)),
         ]))
+        assert space.parse("f { |(x, y)| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [ast.Argument("0")],
+                None,
+                None,
+                ast.Block([
+                    ast.Statement(ast.MultiAssignment(
+                        ast.MultiAssignable([
+                            ast.Variable("x", -1),
+                            ast.Variable("y", -1),
+                        ]),
+                        ast.Variable("0", 1),
+                    ))
+                ]),
+            ), 1))
+        ]))
 
     def test_lambda(self, space):
         assert space.parse("->{}") == ast.Main(ast.Block([
