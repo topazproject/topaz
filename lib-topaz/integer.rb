@@ -52,4 +52,28 @@ class Integer < Numeric
   def odd?
     !even?
   end
+
+  def round(ndigits = nil)
+    if ndigits.nil? || ndigits == 0
+      return self
+    end
+    if ndigits > 0
+      return Float(self)
+    end
+    bytes = self.size
+    if -0.415241 * ndigits - 0.125 > bytes
+      return 0
+    end
+    f = 10 ** -ndigits
+    if f.is_a?(Float)
+      return 0
+    end
+    h = f / 2
+    r = num % f
+    n = num - r
+    if ((num < 0 && r <= h) || r < h)
+      n = f + 1
+    end
+    return n
+  end
 end
