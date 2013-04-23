@@ -211,4 +211,11 @@ class Hash
     return enum_for(:reject) unless block
     dup.delete_if(&block)
   end
+
+  def flatten(level = 1)
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = []
+    Topaz::Array.flatten(self, out, level)
+    out
+  end
 end
