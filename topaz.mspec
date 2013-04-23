@@ -57,7 +57,6 @@ class MSpecScript
           "^#{Rubyspec}/core/file/socket_spec.rb",
           "^#{Rubyspec}/core/file/ftype_spec.rb",
           "^#{Rubyspec}/core/file/open_spec.rb",
-          "^#{Rubyspec}/core/io/dup_spec.rb",
           "^#{Rubyspec}/core/io/sysopen_spec.rb",
           "^#{Rubyspec}/core/method/arity_spec.rb",
           "^#{Rubyspec}/core/method/call_spec.rb",
