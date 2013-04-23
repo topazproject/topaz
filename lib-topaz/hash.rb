@@ -8,7 +8,7 @@ class Hash
       rescue StopIteration
         return self
       end
-      yield key, value
+      yield [key, value]
     end
   end
   alias each_pair each
