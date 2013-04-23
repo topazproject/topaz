@@ -54,7 +54,11 @@ class Integer < Numeric
   end
 
   def round(ndigits = nil)
-    if ndigits.nil? || ndigits == 0
+    if ndigits.nil?
+      return self
+    end
+    ndigits = Topaz.convert_type(ndigits, Fixnum, :to_int)
+    if ndigits == 0
       return self
     end
     if ndigits > 0
