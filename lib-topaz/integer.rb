@@ -18,6 +18,24 @@ class Integer < Numeric
     self
   end
 
+  def to_i
+    self
+  end
+  alias to_int to_i
+  alias ceil to_i
+  alias floor to_i
+  alias truncate to_i
+  alias ord to_i
+  alias numerator to_i
+
+  def denominator
+    1
+  end
+
+  def integer?
+    true
+  end
+
   def next
     return self + 1
   end
