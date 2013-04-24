@@ -693,14 +693,11 @@ class Interpreter(object):
         unroller = RaiseReturnValue(frame.parent_interp, w_returnvalue)
         return block.handle(space, frame, unroller)
 
-    @jit.unroll_safe
     def YIELD(self, space, bytecode, frame, pc, n_args):
         if frame.block is None:
             raise space.error(space.w_LocalJumpError, "no block given (yield)")
         space.getexecutioncontext().last_instr = pc
-        args_w = [None] * n_args
-        for i in xrange(n_args - 1, -1, -1):
-            args_w[i] = frame.pop()
+        args_w = frame.popitemsreverse(n_args)
         w_res = space.invoke_block(frame.block, args_w)
         frame.push(w_res)
 
