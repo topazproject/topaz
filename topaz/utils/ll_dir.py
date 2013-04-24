@@ -1,5 +1,3 @@
-import sys
-
 from rpython.rlib import rposix
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rtyper.tool import rffi_platform as platform

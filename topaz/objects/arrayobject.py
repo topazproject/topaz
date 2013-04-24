@@ -337,9 +337,9 @@ class W_ArrayObject(W_Object):
             return self
         if i < 0:
             if i < -length - 1:
-                 raise space.error(space.w_IndexError,
-                      "index %d too small for array; minimum: %d" % (i + 1, -length)
-                  )
+                raise space.error(space.w_IndexError,
+                    "index %d too small for array; minimum: %d" % (i + 1, -length)
+                )
             i += length + 1
         assert i >= 0
         for w_e in args_w:

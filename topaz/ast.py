@@ -287,6 +287,7 @@ class SingletonClass(BaseModule):
             ctx.emit(consts.LOAD_SINGLETON_CLASS)
             self.compile_body(ctx, "singletonclass")
 
+
 class Module(BaseModule):
     def compile(self, ctx):
         if self.scope is not None:
