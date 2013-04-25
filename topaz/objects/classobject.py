@@ -92,6 +92,10 @@ class W_ClassObject(W_ModuleObject):
     def method_allocate(self, space, args_w):
         return W_Object(space, self)
 
+    @classdef.method("initialize")
+    def method_initialize(self, space, args_w, block):
+        space.send_super(space.getclassfor(W_ClassObject), self, space.newsymbol("initialize"), [], block=block)
+
     @classdef.method("superclass")
     def method_superclass(self, space):
         return self.superclass if self.superclass is not None else space.w_nil
