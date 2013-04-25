@@ -170,6 +170,18 @@ class W_ArrayObject(W_Object):
         self.items_w += other
         return self
 
+    @classdef.method("*")
+    def method_times(self, space, w_other):
+        if space.respond_to(w_other, space.newsymbol("to_str")):
+            return space.send(self, space.newsymbol("join"), [w_other])
+        n = space.int_w(space.convert_type(w_other, space.w_fixnum, "to_int"))
+        if n < 0:
+            raise space.error(space.w_ArgumentError, "Count cannot be negative")
+        w_res = W_ArrayObject(space, self.items_w * n, space.getnonsingletonclass(self))
+        w_res.copy_flags(space, self)
+        w_res.unset_flag(space, "frozen?")
+        return w_res
+
     @classdef.method("push")
     @check_frozen()
     def method_push(self, space, args_w):

@@ -263,19 +263,6 @@ class Array
     return res
   end
 
-  def *(arg)
-    return join(arg) if arg.respond_to? :to_str
-    arg = Topaz.convert_type(arg, Fixnum, :to_int)
-    raise ArgumentError.new("Count cannot be negative") if arg < 0
-
-    return [] if arg == 0
-    result = self.dup
-    for i in 1...arg do
-      result.concat(self)
-    end
-    result
-  end
-
   def map!(&block)
     return self.enum_for(:map!) unless block
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
