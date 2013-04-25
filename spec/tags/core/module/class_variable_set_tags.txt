@@ -1,0 +1,1 @@
+fails:Module#class_variable_set raises a NameError when the given name is not allowed
