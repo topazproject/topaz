@@ -226,6 +226,9 @@ class W_ModuleObject(W_RootObject):
     def unset_flag(self, space, name):
         self.flags.set(space, name, space.w_false)
 
+    def get_flag(self, space, name):
+        return self.flags.get(space, name) or space.w_false
+
     def copy_flags(self, space, w_other):
         assert isinstance(w_other, W_ModuleObject)
         for key in w_other.flags:
@@ -298,6 +301,10 @@ class W_ModuleObject(W_RootObject):
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
         return W_ModuleObject(space, None)
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, block):
+        space.invoke_block(block.copy(space, w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
 
     @classdef.method("to_s")
     def method_to_s(self, space):
