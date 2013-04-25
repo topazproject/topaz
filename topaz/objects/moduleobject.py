@@ -304,7 +304,8 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("initialize")
     def method_initialize(self, space, block):
-        space.invoke_block(block.copy(space, w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
+        if block is not None:
+            space.invoke_block(block.copy(space, w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
 
     @classdef.method("to_s")
     def method_to_s(self, space):
