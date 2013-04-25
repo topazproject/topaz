@@ -101,6 +101,7 @@ class Array
 
   def select!(&block)
     return self.enum_for(:select!) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     new_arr = self.select(&block)
     if new_arr.size != self.size
       self.replace(new_arr)
@@ -129,8 +130,8 @@ class Array
   end
 
   def delete_if(&block)
-    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     return self.enum_for(:delete_if) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     i = 0
     c = 0
     sz = self.size
