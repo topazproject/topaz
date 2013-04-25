@@ -555,7 +555,13 @@ class ObjectSpace(object):
         w_obj.set_instance_var(self, name, w_value)
 
     def find_class_var(self, w_module, name):
-        return w_module.find_class_var(self, name)
+        w_res = w_module.find_class_var(self, name)
+        if w_res is None:
+            module_name = self.obj_to_s(w_module)
+            raise self.error(self.w_NameError,
+                "uninitialized class variable %s in %s" % (name, module_name)
+            )
+        return w_res
 
     def set_class_var(self, w_module, name, w_value):
         w_module.set_class_var(self, name, w_value)

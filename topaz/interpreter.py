@@ -265,11 +265,6 @@ class Interpreter(object):
         w_module = frame.pop()
         assert isinstance(w_module, W_ModuleObject)
         w_value = space.find_class_var(w_module, name)
-        if w_value is None:
-            module_name = space.obj_to_s(w_module)
-            raise space.error(space.w_NameError,
-                "uninitialized class variable %s in %s" % (name, module_name)
-            )
         frame.push(w_value)
 
     def STORE_CLASS_VAR(self, space, bytecode, frame, pc, idx):

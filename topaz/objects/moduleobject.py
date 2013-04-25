@@ -3,7 +3,7 @@ import copy
 from rpython.rlib import jit
 
 from topaz.celldict import CellDict, VersionTag
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from topaz.objects.functionobject import W_FunctionObject
 from topaz.objects.objectobject import W_RootObject
 from topaz.objects.procobject import W_ProcObject
@@ -476,6 +476,16 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):
         return space.newbool(self.find_class_var(space, name) is not None)
+
+    @classdef.method("class_variable_get", name="symbol")
+    def method_class_variable_get(self, space, name):
+        return space.find_class_var(self, name)
+
+    @classdef.method("class_variable_set", name="symbol")
+    @check_frozen()
+    def method_class_variable_set(self, space, name, w_value):
+        self.set_class_var(space, name, w_value)
+        return w_value
 
     @classdef.method("remove_class_variable", name="symbol")
     def method_remove_class_variable(self, space, name):
