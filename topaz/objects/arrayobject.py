@@ -104,26 +104,29 @@ class W_ArrayObject(W_Object):
             self.items_w += [space.w_nil] * (start - len(self.items_w) + 1)
             self.items_w[start] = w_obj
         elif as_range:
-            assert end >= 0
-            w_converted = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
-            if w_converted is space.w_nil:
-                rep_w = [w_obj]
-            else:
-                rep_w = space.listview(w_converted)
-            delta = (end - start) - len(rep_w)
-            if delta < 0:
-                self.items_w += [None] * -delta
-                lim = start + len(rep_w)
-                i = len(self.items_w) - 1
-                while i >= lim:
-                    self.items_w[i] = self.items_w[i + delta]
-                    i -= 1
-            elif delta > 0:
-                del self.items_w[start:start + delta]
-            self.items_w[start:start + len(rep_w)] = rep_w
+            self._subscript_assign_range(space, start, end, w_obj)
         else:
             self.items_w[start] = w_obj
         return w_obj
+
+    def _subscript_assign_range(self, space, start, end, w_obj):
+        assert end >= 0
+        w_converted = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
+        if w_converted is space.w_nil:
+            rep_w = [w_obj]
+        else:
+            rep_w = space.listview(w_converted)
+        delta = (end - start) - len(rep_w)
+        if delta < 0:
+            self.items_w += [None] * -delta
+            lim = start + len(rep_w)
+            i = len(self.items_w) - 1
+            while i >= lim:
+                self.items_w[i] = self.items_w[i + delta]
+                i -= 1
+        elif delta > 0:
+            del self.items_w[start:start + delta]
+        self.items_w[start:start + len(rep_w)] = rep_w
 
     @classdef.method("slice!")
     @check_frozen()
