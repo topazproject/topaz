@@ -71,7 +71,7 @@ class Enumerator
     end
 
     def each
-      proc = Proc.new { |*args| yield *args }
+      proc = Proc.new { |*args| yield(*args) }
       @block.call(Yielder.new(&proc))
     end
   end
