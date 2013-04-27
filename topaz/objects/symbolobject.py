@@ -36,7 +36,12 @@ class W_SymbolObject(W_Object):
 
     @classdef.method("inspect")
     def method_inspect(self, space):
-        return space.newstr_fromstr(":%s" % self.symbol)
+        string_format = (not self.symbol or not self.symbol[0].isalpha() or
+            not self.symbol.isalnum())
+        if string_format:
+            return space.newstr_fromstr(':"%s"' % self.symbol.replace('"', '\\"'))
+        else:
+            return space.newstr_fromstr(":%s" % self.symbol)
 
     @classdef.method("length")
     @classdef.method("size")
