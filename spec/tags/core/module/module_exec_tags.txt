@@ -1,1 +1,0 @@
-fails:Module#module_exec passes arguments to the block

@@ -226,6 +226,7 @@ class W_FixnumObject(W_RootObject):
     def method_invert(self, space):
         return space.newint(~self.intvalue)
 
+    @classdef.method("equal?")
     @classdef.method("==")
     @classdef.method("equal?")
     def method_eq(self, space, w_other):
