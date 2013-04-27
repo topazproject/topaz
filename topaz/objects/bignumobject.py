@@ -26,7 +26,10 @@ class W_BignumObject(W_IntegerObject):
         return W_BignumObject(space, bigint)
 
     def int_w(self, space):
-        return self.bigint.toint()
+        try:
+            return self.bigint.toint()
+        except OverflowError:
+            raise space.error(space.w_RangeError, "bignum too big to convert into `long'")
 
     def bigint_w(self, space):
         return self.bigint
