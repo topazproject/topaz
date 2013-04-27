@@ -479,6 +479,8 @@ class W_StringObject(W_Object):
 
     @classdef.method("*", times="int")
     def method_times(self, space, times):
+        if times < 0:
+            raise space.error(space.w_ArgumentError, "negative argument")
         return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
