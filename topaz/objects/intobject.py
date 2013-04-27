@@ -227,6 +227,7 @@ class W_FixnumObject(W_RootObject):
         return space.newint(~self.intvalue)
 
     @classdef.method("==")
+    @classdef.method("equal?")
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_FixnumObject):
             return space.newbool(self.comparator(space, space.int_w(w_other)) == 0)
