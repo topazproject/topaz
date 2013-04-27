@@ -72,3 +72,4 @@ fails:String#[]= with Fixnum index, count raises a TypeError of #to_str does not
 fails:String#[]= with Fixnum index, count raises an IndexError if |idx| is greater than the length of the string
 fails:String#[]= with Fixnum index, count raises an IndexError if count < 0
 fails:String#[]= with Fixnum index, count raises a TypeError if other_str is a type other than String
+fails:String#[]= with a Regexp index with 3 arguments when the optional capture does not match raises an IndexError before setting the replacement
