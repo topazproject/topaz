@@ -19,7 +19,9 @@ Filing bugs
 If anything doesn't work right with Topaz, whether it's a segfault or a typo in
 an error message, please let us know. We can't fix the bugs we don't know about!
 You can file a bug on our Github repository, try to provide all the information
-someone will need in order to reproduce your bug.
+someone will need in order to reproduce your bug. When filing a bug, make sure
+to include the version of Topaz you were testing with (``topaz -v`` will show
+you it).
 
 Benchmarking
 ------------
