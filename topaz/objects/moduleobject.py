@@ -3,6 +3,7 @@ import copy
 from rpython.rlib import jit
 
 from topaz.celldict import CellDict, VersionTag
+from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
 from topaz.objects.functionobject import W_FunctionObject
 from topaz.objects.objectobject import W_RootObject
@@ -348,13 +349,13 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("attr_reader")
     def method_attr_reader(self, space, args_w):
         for w_arg in args_w:
-            varname = space.symbol_w(w_arg)
+            varname = Coerce.symbol(space, w_arg)
             self.define_method(space, varname, AttributeReader("@" + varname))
 
     @classdef.method("attr_writer")
     def method_attr_writer(self, space, args_w):
         for w_arg in args_w:
-            varname = space.symbol_w(w_arg)
+            varname = Coerce.symbol(space, w_arg)
             self.define_method(space, varname + "=", AttributeWriter("@" + varname))
 
     @classdef.method("attr")
