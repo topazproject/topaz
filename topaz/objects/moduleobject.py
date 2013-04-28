@@ -377,7 +377,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("module_function")
     def method_module_function(self, space, args_w):
         for w_arg in args_w:
-            name = space.symbol_w(w_arg)
+            name = Coerce.symbol(space, w_arg)
             self.attach_method(space, name, self._find_method_pure(space, name, self.version))
 
     @classdef.method("private_class_method")
