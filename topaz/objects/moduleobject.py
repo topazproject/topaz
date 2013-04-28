@@ -436,6 +436,8 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("class_eval", string="str", filename="str")
     @classdef.method("module_eval", string="str", filename="str")
     def method_module_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
+        if string is not None and block is not None:
+            raise space.error(space.w_ArgumentError, "wrong number of arguments")
         if string is not None:
             if filename is None:
                 filename = "module_eval"
@@ -447,10 +449,11 @@ class W_ModuleObject(W_RootObject):
         elif block is None:
             raise space.error(space.w_ArgumentError, "block not supplied")
         else:
-            space.invoke_block(block.copy(space, w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
+            return space.invoke_block(block.copy(space, w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
 
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):
+        space._check_const_name(const)
         if inherit:
             return space.newbool(self.find_const(space, const) is not None)
         else:
@@ -458,6 +461,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_get", const="symbol", inherit="bool")
     def method_const_get(self, space, const, inherit=True):
+        space._check_const_name(const)
         if inherit:
             w_res = self.find_const(space, const)
         else:
