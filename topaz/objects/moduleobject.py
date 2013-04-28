@@ -316,11 +316,20 @@ class W_ModuleObject(W_RootObject):
         return space.newstr_fromstr(name)
 
     @classdef.method("include")
-    def method_include(self, space, w_mod):
-        space.send(w_mod, space.newsymbol("append_features"), [self])
+    def method_include(self, space, args_w):
+        for w_mod in args_w:
+            if type(w_mod) is not W_ModuleObject:
+                raise space.error(space.w_TypeError, "wrong argument type %s (expected Module)" % w_mod.klass)
+
+        for w_mod in reversed(args_w):
+            space.send(w_mod, space.newsymbol("append_features"), [self])
+
+        return self
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
+        if w_mod is self:
+            raise space.error(space.w_ArgumentError, "cyclic include detected")
         ancestors = self.ancestors()
         for idx in xrange(len(ancestors) - 1, -1, -1):
             w_mod.include_module(space, ancestors[idx])
