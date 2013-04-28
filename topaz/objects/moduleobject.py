@@ -170,6 +170,12 @@ class W_ModuleObject(W_RootObject):
                     break
         return w_res
 
+    def included_constants(self, space):
+        consts = self.constants_w.keys()
+        for w_mod in self.included_modules:
+            consts = consts + w_mod.included_constants(space)
+        return list(set(consts))
+
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
 
@@ -436,7 +442,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("constants")
     def method_constants(self, space):
-        return space.newarray([space.newsymbol(n) for n in self.constants_w])
+        return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
