@@ -1,4 +1,4 @@
-import copy
+import copy, random
 
 from rpython.rlib.listsort import make_timsort_class
 
@@ -256,6 +256,22 @@ class W_ArrayObject(W_Object):
                 res_w = self.items_w[pop_size:]
                 del self.items_w[pop_size:]
                 return space.newarray(res_w)
+
+    @classdef.method("sample", n="int")
+    def method_sample(self, space, n = 1):
+        if len(self.items_w) == 0:
+            return space.w_nil
+        if n < 0:
+            raise space.error(space.w_ArgumentError, "negative sample number")
+        elif n == 0:
+            return space.newarray([])
+        elif n == 1:
+            return self.items_w[random.randrange(len(self.items_w))]
+        if n > len(self.items_w):
+            n = len(self.items_w)
+
+        return space.newarray(random.sample(self.items_w, n))
+
 
     @classdef.method("delete_at", idx="int")
     @check_frozen()
