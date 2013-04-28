@@ -63,10 +63,10 @@ will verify for every pull request that it compiles and tests pass.
 Running Rubyspecs
 ~~~~~~~~~~~~~~~~~
 
-To run Rubyspecs, you can use the provided ``invoke`` tasks. To get ``invoke`` you
-must have `Invoke`_ installed. The `rubyspec`_ and `mspec`_
-repositories have to be checked out next to your topaz repository, the spec
-tasks will clone them for you if they aren't already there.
+To run Rubyspecs, you can use the provided ``invoke`` tasks. To get ``invoke``
+you must have `Invoke`_ installed. The `rubyspec`_ and `mspec`_ repositories
+have to be checked out next to your topaz repository, the spec tasks will clone
+them for you if they aren't already there.
 
 To just run all specs that should pass::
 
