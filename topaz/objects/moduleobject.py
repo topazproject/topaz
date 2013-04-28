@@ -298,21 +298,14 @@ class W_ModuleObject(W_RootObject):
             scope = scope.backscope
         return space.newarray(modules_w)
 
-    @classdef.singleton_method("new")
-    def new_method(self, space, block=None):
-        module = space.send(self, space.newsymbol("allocate"))
+    @classdef.method("initialize")
+    def method_initialize(self, space, block=None):
         if block is not None:
-            space.send(module, space.newsymbol("module_exec"), [module], block)
-        return module
+            space.send(self, space.newsymbol("module_exec"), [self], block)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
         return W_ModuleObject(space, None, self)
-
-    @classdef.method("initialize")
-    def method_initialize(self, space, block):
-        if block is not None:
-            space.invoke_block(block.copy(space, w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -544,9 +537,9 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("class_exec")
     @classdef.method("module_exec")
-    def method_module_exec(self, space, args_w, block=None):
+    def method_module_exec(self, space, args_w, block):
         if block is None:
-            raise space.error(space.w_LocalJumpError, "Missing block")
+            raise space.error(space.w_LocalJumpError, "no block given")
         return space.invoke_block(
             block.copy(
                 space,
