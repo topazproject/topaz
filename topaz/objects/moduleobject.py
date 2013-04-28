@@ -298,6 +298,13 @@ class W_ModuleObject(W_RootObject):
             scope = scope.backscope
         return space.newarray(modules_w)
 
+    @classdef.singleton_method("new")
+    def new_method(self, space, block=None):
+        module = space.send(self, space.newsymbol("allocate"))
+        if block is not None:
+            space.send(module, space.newsymbol("module_exec"), [module], block)
+        return module
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
         return W_ModuleObject(space, None, self)
