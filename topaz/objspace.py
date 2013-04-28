@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import sys
+import weakref
 
 from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
@@ -98,11 +99,13 @@ class ObjectSpace(object):
         # Force the setup of a few key classes, we create a fake "Class" class
         # for the initial bootstrap.
         self.w_class = self.newclass("FakeClass", None)
+        cls_reference = weakref.ref(self.w_class)
         self.w_basicobject = self.getclassfor(W_BaseObject)
         self.w_object = self.getclassfor(W_Object)
         self.w_class = self.getclassfor(W_ClassObject)
         # We replace the one reference to our FakeClass with the real class.
         self.w_basicobject.klass.superclass = self.w_class
+        assert cls_reference() is None
 
         self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_array = self.getclassfor(W_ArrayObject)

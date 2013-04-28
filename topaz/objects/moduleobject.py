@@ -83,9 +83,9 @@ class W_ModuleObject(W_RootObject):
 
     classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name):
+    def __init__(self, space, name, klass=None):
         self.name = name
-        self.klass = None
+        self.klass = klass
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
@@ -114,9 +114,9 @@ class W_ModuleObject(W_RootObject):
         return W_RootObject.getclass(self, space)
 
     def getsingletonclass(self, space):
-        if self.klass is None:
+        if self.klass is None or not self.klass.is_singleton:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, space.w_module, is_singleton=True
+                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True
             )
         return self.klass
 
@@ -301,7 +301,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        return W_ModuleObject(space, None)
+        return W_ModuleObject(space, None, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, block):

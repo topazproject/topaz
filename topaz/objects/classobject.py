@@ -28,7 +28,7 @@ class W_ClassObject(W_ModuleObject):
         return obj
 
     def getsingletonclass(self, space):
-        if self.klass is None:
+        if self.klass is None or not self.klass.is_singleton:
             if self.superclass is None:
                 singleton_superclass = space.w_class
             else:
