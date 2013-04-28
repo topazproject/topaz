@@ -328,7 +328,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
-        if w_mod is self:
+        if w_mod in self.ancestors():
             raise space.error(space.w_ArgumentError, "cyclic include detected")
         ancestors = self.ancestors()
         for idx in xrange(len(ancestors) - 1, -1, -1):
