@@ -82,9 +82,9 @@ class W_ModuleObject(W_RootObject):
 
     classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name):
+    def __init__(self, space, name, klass=None):
         self.name = name
-        self.klass = None
+        self.klass = klass
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
@@ -298,9 +298,16 @@ class W_ModuleObject(W_RootObject):
             scope = scope.backscope
         return space.newarray(modules_w)
 
+    @classdef.singleton_method("new")
+    def new_method(self, space, block=None):
+        module = space.send(self, space.newsymbol("allocate"))
+        if block is not None:
+            space.send(module, space.newsymbol("module_exec"), [module], block)
+        return module
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        return W_ModuleObject(space, None)
+        return W_ModuleObject(space, None, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, block):
@@ -534,3 +541,17 @@ class W_ModuleObject(W_RootObject):
             )
         self.define_method(space, name, UndefMethod(name))
         return self
+
+    @classdef.method("class_exec")
+    @classdef.method("module_exec")
+    def method_module_exec(self, space, args_w, block=None):
+        if block is None:
+            raise space.error(space.w_LocalJumpError, "Missing block")
+        return space.invoke_block(
+            block.copy(
+                space,
+                w_self=self,
+                lexical_scope=StaticScope(self, None)
+            ),
+            args_w
+        )
