@@ -35,3 +35,4 @@ fails:Array#sample calls #to_f on the Object returned by #rand
 fails:Array#sample raises a RangeError if the random generator returns a value less than 0.0
 fails:Array#sample raises a RangeError if the random generator returns a value equal to 1.0
 fails:Array#sample raises a RangeError if the random generator returns a value greater than 1.0
+fails:Array#sample ignores an Object passed for the RNG if it does not define #rand

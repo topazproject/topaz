@@ -28,7 +28,6 @@ fails:Symbol#inspect returns self as a symbol literal for :$@
 fails:Symbol#inspect returns self as a symbol literal for :$1234
 fails:Symbol#inspect returns self as a symbol literal for :-@
 fails:Symbol#inspect returns self as a symbol literal for :+@
-fails:Symbol#inspect returns self as a symbol literal for :+
 fails:Symbol#inspect returns self as a symbol literal for :%
 fails:Symbol#inspect returns self as a symbol literal for :&
 fails:Symbol#inspect returns self as a symbol literal for :*
