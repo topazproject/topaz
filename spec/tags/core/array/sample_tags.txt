@@ -17,7 +17,6 @@ fails:Array#sample uses default random generator
 fails:Array#sample uses given random generator
 fails:Array#sample uses default random generator and return proper array size
 fails:Array#sample uses given random generator and return proper array size
-fails:Array#sample returns a single value when not passed a count
 fails:Array#sample calls #to_hash to convert the passed Object
 fails:Array#sample calls #to_int on the first argument and #to_hash on the second when passed Objects
 fails:Array#sample calls #rand on the Object passed by the :random key in the arguments Hash
