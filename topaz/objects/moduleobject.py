@@ -298,14 +298,14 @@ class W_ModuleObject(W_RootObject):
             scope = scope.backscope
         return space.newarray(modules_w)
 
-    @classdef.method("initialize")
-    def method_initialize(self, space, block=None):
-        if block is not None:
-            space.send(self, space.newsymbol("module_exec"), [self], block)
-
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
         return W_ModuleObject(space, None, self)
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, block):
+        if block is not None:
+            space.send(self, space.newsymbol("module_exec"), [self], block)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
