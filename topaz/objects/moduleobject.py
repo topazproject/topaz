@@ -83,9 +83,9 @@ class W_ModuleObject(W_RootObject):
 
     classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name, klass=None):
+    def __init__(self, space, name):
         self.name = name
-        self.klass = klass
+        self.klass = None
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
@@ -301,7 +301,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        return W_ModuleObject(space, None, self)
+        return W_ModuleObject(space, None)
 
     @classdef.method("initialize")
     def method_initialize(self, space, block):
