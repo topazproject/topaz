@@ -55,8 +55,13 @@ class DefineMethodBlock(W_FunctionObject):
         self.block = block
 
     def call(self, space, w_obj, args_w, block):
-        method_block = self.block.copy(space, w_self=w_obj)
-        return space.invoke_block(method_block, args_w, block)
+        from topaz.interpreter import RaiseReturn
+
+        method_block = self.block.copy(space, w_self=w_obj, is_lambda=True)
+        try:
+            return space.invoke_block(method_block, args_w, block)
+        except RaiseReturn as e:
+            return e.w_value
 
     def arity(self, space):
         args_count = len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
