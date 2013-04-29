@@ -548,6 +548,24 @@ class W_ModuleObject(W_RootObject):
             return space.w_false
         return space.send(w_other, space.newsymbol("<="), [self])
 
+    @classdef.method("<=>")
+    def method_comparison(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            return space.w_nil
+
+        if self is w_other:
+            return space.newint(0)
+
+        other_is_subclass = space.send(self, space.newsymbol("<"), [w_other])
+
+        if space.is_true(other_is_subclass):
+            return space.newint(-1)
+        elif other_is_subclass is space.w_nil:
+            return space.w_nil
+        else:
+            return space.newint(1)
+
+
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
