@@ -534,6 +534,12 @@ class W_ModuleObject(W_RootObject):
             return space.w_false
         return space.send(self, space.newsymbol("<="), [w_other])
 
+    @classdef.method(">=")
+    def method_gte(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        return space.send(w_other, space.newsymbol("<="), [self])
+
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
