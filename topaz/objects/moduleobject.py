@@ -174,7 +174,10 @@ class W_ModuleObject(W_RootObject):
         consts = self.constants_w.keys()
         for w_mod in self.included_modules:
             consts = consts + w_mod.included_constants(space)
-        return list(set(consts))
+        const_seen = {}
+        for const in consts:
+           const_seen[const] = 1
+        return const_seen.keys()
 
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
@@ -327,11 +330,11 @@ class W_ModuleObject(W_RootObject):
             if type(w_mod) is not W_ModuleObject:
                 raise space.error(
                     space.w_TypeError,
-                    "wrong argument type %s (expected Module)" % space.getclassfor(w_mod).name
+                    "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
                 )
 
-        for w_mod in reversed(args_w):
-            space.send(w_mod, space.newsymbol("append_features"), [self])
+        for idx in xrange(len(args_w) - 1, -1, -1):
+            space.send(args_w[idx], space.newsymbol("append_features"), [self])
 
         return self
 
@@ -340,7 +343,7 @@ class W_ModuleObject(W_RootObject):
         if type(w_mod) is not W_ModuleObject:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Module)" % space.getclassfor(w_mod).name
+                "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
             )
         if w_mod is self:
             return space.w_false
