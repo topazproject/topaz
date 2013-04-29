@@ -333,8 +333,8 @@ class W_ModuleObject(W_RootObject):
                     "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
                 )
 
-        for idx in xrange(len(args_w) - 1, -1, -1):
-            space.send(args_w[idx], space.newsymbol("append_features"), [self])
+        for w_mod in reversed(args_w):
+            space.send(w_mod, space.newsymbol("append_features"), [self])
 
         return self
 
