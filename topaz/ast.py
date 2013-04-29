@@ -822,8 +822,7 @@ class SendBlock(Node):
         for name, pos in block_ctx.symtable.cell_numbers.iteritems():
             cells[pos] = name
         num_cells = 0
-        for i in xrange(len(cells) - 1, -1, -1):
-            name = cells[i]
+        for name in reversed(cells):
             if block_ctx.symtable.cells[name] == block_ctx.symtable.FREEVAR:
                 ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(name))
                 num_cells += 1

@@ -209,8 +209,7 @@ class W_ArrayObject(W_Object):
     @classdef.method("unshift")
     @check_frozen()
     def method_unshift(self, space, args_w):
-        for i in xrange(len(args_w) - 1, -1, -1):
-            w_obj = args_w[i]
+        for w_obj in reversed(args_w):
             self.items_w.insert(0, w_obj)
         return self
 

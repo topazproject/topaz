@@ -184,9 +184,7 @@ class W_ModuleObject(W_RootObject):
 
     @jit.unroll_safe
     def set_class_var(self, space, name, w_obj):
-        ancestors = self.ancestors()
-        for idx in xrange(len(ancestors) - 1, -1, -1):
-            module = ancestors[idx]
+        for module in reversed(self.ancestors()):
             assert isinstance(module, W_ModuleObject)
             w_res = module.class_variables.get(space, name)
             if w_res is not None or module is self:
@@ -326,9 +324,8 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
-        ancestors = self.ancestors()
-        for idx in xrange(len(ancestors) - 1, -1, -1):
-            w_mod.include_module(space, ancestors[idx])
+        for module in reversed(self.ancestors()):
+            w_mod.include_module(space, module)
 
     @classdef.method("define_method", name="symbol")
     def method_define_method(self, space, name, w_method=None, block=None):
