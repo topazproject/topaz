@@ -325,12 +325,26 @@ class W_ModuleObject(W_RootObject):
     def method_include(self, space, args_w):
         for w_mod in args_w:
             if type(w_mod) is not W_ModuleObject:
-                raise space.error(space.w_TypeError, "wrong argument type %s (expected Module)" % w_mod.klass)
+                raise space.error(
+                    space.w_TypeError,
+                    "wrong argument type %s (expected Module)" % space.getclassfor(w_mod).name
+                )
 
         for w_mod in reversed(args_w):
             space.send(w_mod, space.newsymbol("append_features"), [self])
 
         return self
+
+    @classdef.method("include?")
+    def method_includep(self, space, w_mod):
+        if type(w_mod) is not W_ModuleObject:
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Module)" % space.getclassfor(w_mod).name
+            )
+        if w_mod is self:
+            return space.w_false
+        return space.newbool(w_mod in self.ancestors())
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
