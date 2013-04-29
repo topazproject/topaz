@@ -1,5 +1,4 @@
 import os
-import sys
 
 from topaz.objects.stringobject import W_StringObject
 from topaz.utils.ll_file import O_BINARY

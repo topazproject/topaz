@@ -1,5 +1,4 @@
 import os
-import sys
 import stat
 
 from topaz.coerce import Coerce
@@ -9,7 +8,6 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.ioobject import W_IOObject
-from topaz.objects.stringobject import W_StringObject
 from topaz.system import IS_WINDOWS
 from topaz.utils.ll_file import O_BINARY, ftruncate, isdir, fchmod
 from topaz.utils.filemode import map_filemode

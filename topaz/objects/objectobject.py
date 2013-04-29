@@ -4,7 +4,7 @@ from rpython.rlib import jit
 from rpython.rlib.objectmodel import compute_unique_id, compute_identity_hash
 
 from topaz.mapdict import MapTransitionCache
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from topaz.scope import StaticScope
 
 
@@ -97,7 +97,7 @@ class W_BaseObject(W_Root):
                 lineno = 1
             return space.execute(string, self, StaticScope(space.getclass(self), None), filename, lineno)
         else:
-            return space.invoke_block(block.copy(w_self=self), [])
+            return space.invoke_block(block.copy(space, w_self=self), [])
 
 
 class W_RootObject(W_BaseObject):
@@ -161,6 +161,7 @@ class W_RootObject(W_BaseObject):
         return space.find_instance_var(self, name)
 
     @classdef.method("instance_variable_set", name="str")
+    @check_frozen()
     def method_instance_variable_set(self, space, name, w_value):
         space.set_instance_var(self, name, w_value)
         return w_value

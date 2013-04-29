@@ -1147,6 +1147,12 @@ class TestInterpreter(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == ["super", None]
 
+    def test_defined_unscoped_constant(self, space):
+        w_res = space.execute("return defined? ::Foobar")
+        assert w_res is space.w_nil
+        w_res = space.execute("return defined? ::Fixnum")
+        assert self.unwrap(space, w_res) == "constant"
+
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
         assert self.unwrap(space, w_res) is None

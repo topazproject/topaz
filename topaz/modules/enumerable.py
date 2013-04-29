@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from topaz.module import Module, ModuleDef
+from topaz.module import ModuleDef
 
 
-class Enumerable(Module):
+class Enumerable(object):
     moduledef = ModuleDef("Enumerable", filepath=__file__)

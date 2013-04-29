@@ -3,9 +3,11 @@ import copy
 from rpython.rlib import jit
 
 from topaz.celldict import CellDict, VersionTag
-from topaz.module import ClassDef
+from topaz.coerce import Coerce
+from topaz.module import ClassDef, check_frozen
 from topaz.objects.functionobject import W_FunctionObject
 from topaz.objects.objectobject import W_RootObject
+from topaz.objects.procobject import W_ProcObject
 from topaz.scope import StaticScope
 
 
@@ -53,8 +55,13 @@ class DefineMethodBlock(W_FunctionObject):
         self.block = block
 
     def call(self, space, w_obj, args_w, block):
-        method_block = self.block.copy(w_self=w_obj)
-        return space.invoke_block(method_block, args_w, block)
+        from topaz.interpreter import RaiseReturn
+
+        method_block = self.block.copy(space, w_self=w_obj, is_lambda=True)
+        try:
+            return space.invoke_block(method_block, args_w, block)
+        except RaiseReturn as e:
+            return e.w_value
 
     def arity(self, space):
         args_count = len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
@@ -94,9 +101,9 @@ class W_ModuleObject(W_RootObject):
 
     classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name):
+    def __init__(self, space, name, klass=None):
         self.name = name
-        self.klass = None
+        self.klass = klass
         self.version = VersionTag()
         self.methods_w = {}
         self.constants_w = {}
@@ -125,9 +132,9 @@ class W_ModuleObject(W_RootObject):
         return W_RootObject.getclass(self, space)
 
     def getsingletonclass(self, space):
-        if self.klass is None:
+        if self.klass is None or not self.klass.is_singleton:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, space.w_module, is_singleton=True
+                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True
             )
         return self.klass
 
@@ -196,9 +203,7 @@ class W_ModuleObject(W_RootObject):
 
     @jit.unroll_safe
     def set_class_var(self, space, name, w_obj):
-        ancestors = self.ancestors()
-        for idx in xrange(len(ancestors) - 1, -1, -1):
-            module = ancestors[idx]
+        for module in reversed(self.ancestors()):
             assert isinstance(module, W_ModuleObject)
             w_res = module.class_variables.get(space, name)
             if w_res is not None or module is self:
@@ -243,6 +248,9 @@ class W_ModuleObject(W_RootObject):
 
     def unset_flag(self, space, name):
         self.flags.set(space, name, space.w_false)
+
+    def get_flag(self, space, name):
+        return self.flags.get(space, name) or space.w_false
 
     def copy_flags(self, space, w_other):
         assert isinstance(w_other, W_ModuleObject)
@@ -315,7 +323,12 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
-        return W_ModuleObject(space, None)
+        return W_ModuleObject(space, None, self)
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, block):
+        if block is not None:
+            space.send(self, space.newsymbol("module_exec"), [self], block)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -330,9 +343,8 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
-        ancestors = self.ancestors()
-        for idx in xrange(len(ancestors) - 1, -1, -1):
-            w_mod.include_module(space, ancestors[idx])
+        for module in reversed(self.ancestors()):
+            w_mod.include_module(space, module)
 
     @classdef.method("define_method", name="symbol")
     def method_define_method(self, space, name, w_method=None, block=None):
@@ -343,7 +355,8 @@ class W_ModuleObject(W_RootObject):
             if space.is_kind_of(w_method, space.w_unbound_method):
                 self.define_method(space, name, DefineMethodMethod(name, w_method))
             elif space.is_kind_of(w_method, space.w_proc):
-                self.define_method(space, name, DefineMethodBlock(name, w_method.get_block()))
+                assert isinstance(w_method, W_ProcObject)
+                self.define_method(space, name, DefineMethodBlock(name, w_method))
         elif block is not None:
             self.define_method(space, name, DefineMethodBlock(name, block))
         else:
@@ -357,13 +370,13 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("attr_reader")
     def method_attr_reader(self, space, args_w):
         for w_arg in args_w:
-            varname = space.symbol_w(w_arg)
+            varname = Coerce.symbol(space, w_arg)
             self.define_method(space, varname, AttributeReader("@" + varname))
 
     @classdef.method("attr_writer")
     def method_attr_writer(self, space, args_w):
         for w_arg in args_w:
-            varname = space.symbol_w(w_arg)
+            varname = Coerce.symbol(space, w_arg)
             self.define_method(space, varname + "=", AttributeWriter("@" + varname))
 
     @classdef.method("attr")
@@ -380,7 +393,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("module_function")
     def method_module_function(self, space, args_w):
         for w_arg in args_w:
-            name = space.symbol_w(w_arg)
+            name = Coerce.symbol(space, w_arg)
             self.attach_method(space, name, self._find_method_pure(space, name, self.version))
 
     @classdef.method("private_class_method")
@@ -444,6 +457,8 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("class_eval", string="str", filename="str")
     @classdef.method("module_eval", string="str", filename="str")
     def method_module_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
+        if string is not None and block is not None:
+            raise space.error(space.w_ArgumentError, "wrong number of arguments")
         if string is not None:
             if filename is None:
                 filename = "module_eval"
@@ -455,10 +470,11 @@ class W_ModuleObject(W_RootObject):
         elif block is None:
             raise space.error(space.w_ArgumentError, "block not supplied")
         else:
-            space.invoke_block(block.copy(w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
+            return space.invoke_block(block.copy(space, w_self=self, lexical_scope=StaticScope(self, block.lexical_scope)), [])
 
     @classdef.method("const_defined?", const="str", inherit="bool")
     def method_const_definedp(self, space, const, inherit=True):
+        space._check_const_name(const)
         if inherit:
             return space.newbool(self.find_const(space, const, autoload=False) is not None)
         else:
@@ -466,6 +482,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_get", const="symbol", inherit="bool")
     def method_const_get(self, space, const, inherit=True):
+        space._check_const_name(const)
         if inherit:
             w_res = self.find_const(space, const)
         else:
@@ -485,6 +502,16 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):
         return space.newbool(self.find_class_var(space, name) is not None)
+
+    @classdef.method("class_variable_get", name="symbol")
+    def method_class_variable_get(self, space, name):
+        return space.find_class_var(self, name)
+
+    @classdef.method("class_variable_set", name="symbol")
+    @check_frozen()
+    def method_class_variable_set(self, space, name, w_value):
+        self.set_class_var(space, name, w_value)
+        return w_value
 
     @classdef.method("remove_class_variable", name="symbol")
     def method_remove_class_variable(self, space, name):
@@ -538,3 +565,17 @@ class W_ModuleObject(W_RootObject):
     def method_autoload(self, space, name, w_path):
         self.set_const(space, name, W_Autoload(space, w_path))
         return space.w_nil
+
+    @classdef.method("class_exec")
+    @classdef.method("module_exec")
+    def method_module_exec(self, space, args_w, block):
+        if block is None:
+            raise space.error(space.w_LocalJumpError, "no block given")
+        return space.invoke_block(
+            block.copy(
+                space,
+                w_self=self,
+                lexical_scope=StaticScope(self, None)
+            ),
+            args_w
+        )

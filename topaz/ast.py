@@ -287,6 +287,7 @@ class SingletonClass(BaseModule):
             ctx.emit(consts.LOAD_SINGLETON_CLASS)
             self.compile_body(ctx, "singletonclass")
 
+
 class Module(BaseModule):
     def compile(self, ctx):
         if self.scope is not None:
@@ -821,8 +822,7 @@ class SendBlock(Node):
         for name, pos in block_ctx.symtable.cell_numbers.iteritems():
             cells[pos] = name
         num_cells = 0
-        for i in xrange(len(cells) - 1, -1, -1):
-            name = cells[i]
+        for name in reversed(cells):
             if block_ctx.symtable.cells[name] == block_ctx.symtable.FREEVAR:
                 ctx.emit(consts.LOAD_CLOSURE, ctx.symtable.get_cell_num(name))
                 num_cells += 1
@@ -932,6 +932,7 @@ class LookupConstant(Node):
         ctx.emit(consts.STORE_CONSTANT, ctx.create_symbol_const(self.name))
 
     def compile_defined(self, ctx):
+        self.compile_receiver(ctx)
         ctx.emit(consts.DEFINED_CONSTANT, ctx.create_symbol_const(self.name))
 
 

@@ -18,18 +18,6 @@ class W_HashObject(W_Object):
     def method_allocate(self, space, args_w):
         return W_HashObject(space, self)
 
-    @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, w_obj=None):
-        if w_obj is None:
-            return W_HashObject(space)
-        w_res = space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
-        if w_res is space.w_nil:
-            raise NotImplementedError
-        assert isinstance(w_res, W_HashObject)
-        result = W_HashObject(space)
-        result.contents.update(w_res.contents)
-        return result
-
     @classdef.singleton_method("try_convert")
     def method_try_convert(self, space, w_obj):
         if not space.is_kind_of(w_obj, space.w_hash):
@@ -60,7 +48,7 @@ class W_HashObject(W_Object):
     def method_default_proc(self, space):
         if self.default_proc is None:
             return space.w_nil
-        return space.newproc(self.default_proc)
+        return self.default_proc
 
     @classdef.method("[]")
     def method_subscript(self, space, w_key):

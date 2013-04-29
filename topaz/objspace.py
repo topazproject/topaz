@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import sys
+import weakref
 
 from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
@@ -98,11 +99,13 @@ class ObjectSpace(object):
         # Force the setup of a few key classes, we create a fake "Class" class
         # for the initial bootstrap.
         self.w_class = self.newclass("FakeClass", None)
+        cls_reference = weakref.ref(self.w_class)
         self.w_basicobject = self.getclassfor(W_BaseObject)
         self.w_object = self.getclassfor(W_Object)
         self.w_class = self.getclassfor(W_ClassObject)
         # We replace the one reference to our FakeClass with the real class.
         self.w_basicobject.klass.superclass = self.w_class
+        assert cls_reference() is None
 
         self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_array = self.getclassfor(W_ArrayObject)
@@ -411,8 +414,12 @@ class ObjectSpace(object):
         else:
             return W_UnboundMethodObject(self, w_cls, w_function)
 
-    def newproc(self, block, is_lambda=False):
-        return W_ProcObject(self, block, is_lambda)
+    def newproc(self, bytecode, w_self, lexical_scope, cells, block,
+                parent_interp, regexp_match_cell, is_lambda=False):
+        return W_ProcObject(
+            self, bytecode, w_self, lexical_scope, cells, block, parent_interp,
+            regexp_match_cell, is_lambda=False
+        )
 
     @jit.unroll_safe
     def newbinding_fromframe(self, frame):
@@ -551,7 +558,13 @@ class ObjectSpace(object):
         w_obj.set_instance_var(self, name, w_value)
 
     def find_class_var(self, w_module, name):
-        return w_module.find_class_var(self, name)
+        w_res = w_module.find_class_var(self, name)
+        if w_res is None:
+            module_name = self.obj_to_s(w_module)
+            raise self.error(self.w_NameError,
+                "uninitialized class variable %s in %s" % (name, module_name)
+            )
+        return w_res
 
     def set_class_var(self, w_module, name, w_value):
         w_module.set_class_var(self, name, w_value)

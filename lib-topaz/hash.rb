@@ -8,10 +8,38 @@ class Hash
       rescue StopIteration
         return self
       end
-      yield key, value
+      yield [key, value]
     end
   end
   alias each_pair each
+
+  def self.[](*args)
+    if args.size == 1
+      arg = args[0]
+      if hash = Hash.try_convert(arg)
+        return allocate.replace(hash)
+      elsif array = Array.try_convert(arg)
+        h = new
+        array.each do |a|
+          next unless a = Array.try_convert(a)
+          next if a.size < 1 || a.size > 2
+          h[a[0]] = a[1]
+        end
+        return h
+      end
+    end
+
+    return new if args.empty?
+    raise ArgumentError.new("odd number of arguments for Hash") if args.size.odd?
+
+    h = new
+    i = 0
+    while i < args.size
+      h[args[i]] = args[i + 1]
+      i += 2
+    end
+    h
+  end
 
   def each_key(&block)
     return self.enum_for(:each_key) if !block
@@ -182,5 +210,12 @@ class Hash
   def reject(&block)
     return enum_for(:reject) unless block
     dup.delete_if(&block)
+  end
+
+  def flatten(level = 1)
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = []
+    Topaz::Array.flatten(self, out, level)
+    out
   end
 end

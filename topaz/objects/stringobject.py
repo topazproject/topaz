@@ -292,6 +292,33 @@ class MutableStringStrategy(StringStrategy):
             storage.insert(idx, char)
             idx += 1
 
+    def strip(self, storage):
+        storage = self.unerase(storage)
+        if not storage:
+            return False
+
+        shift = 0
+        while shift < len(storage) and storage[shift].isspace():
+            shift += 1
+        if shift == len(storage):
+            del storage[:]
+            return True
+
+        pop = len(storage)
+        while pop > 0 and storage[pop - 1].isspace() or storage[pop - 1] == '\0':
+            pop -= 1
+
+        if pop < len(storage) or shift > 0:
+            end = pop
+            new_len = end - shift
+            assert end >= 0
+            assert new_len >= 0
+            storage[0:new_len] = storage[shift:end]
+            del storage[new_len:]
+            return True
+        else:
+            return False
+
 
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
@@ -452,6 +479,8 @@ class W_StringObject(W_Object):
 
     @classdef.method("*", times="int")
     def method_times(self, space, times):
+        if times < 0:
+            raise space.error(space.w_ArgumentError, "negative argument")
         return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
@@ -1026,3 +1055,13 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         self.strategy.insert(self.str_storage, index, other)
         return self
+
+    @classdef.method("strip!")
+    @check_frozen()
+    def method_strip_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.strip(self.str_storage)
+        if changed:
+            return self
+        else:
+            return space.w_nil

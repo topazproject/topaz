@@ -68,10 +68,6 @@ class ClassDef(object):
             raise space.error(space.w_NotImplementedError)
 
 
-class Module(object):
-    pass
-
-
 class ModuleDef(object):
     def __init__(self, name, filepath):
         self.name = name

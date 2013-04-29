@@ -28,7 +28,7 @@ class W_ClassObject(W_ModuleObject):
         return obj
 
     def getsingletonclass(self, space):
-        if self.klass is None:
+        if self.klass is None or not self.klass.is_singleton:
             if self.superclass is None:
                 singleton_superclass = space.w_class
             else:
@@ -82,10 +82,6 @@ class W_ClassObject(W_ModuleObject):
             w_superclass = space.w_object
         return space.newclass(None, w_superclass)
 
-    @classdef.method("initialize")
-    def method_initialize(self, space, args_w):
-        pass
-
     @classdef.method("new")
     def method_new(self, space, args_w, block):
         w_obj = space.send(self, space.newsymbol("allocate"), args_w, block)
@@ -95,6 +91,10 @@ class W_ClassObject(W_ModuleObject):
     @classdef.method("allocate")
     def method_allocate(self, space, args_w):
         return W_Object(space, self)
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, args_w, block):
+        space.send_super(space.getclassfor(W_ClassObject), self, space.newsymbol("initialize"), [], block=block)
 
     @classdef.method("superclass")
     def method_superclass(self, space):

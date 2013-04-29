@@ -8,18 +8,17 @@ from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.coerce import Coerce
 from topaz.error import RubyError, error_for_oserror
-from topaz.module import Module, ModuleDef
+from topaz.module import ModuleDef
 from topaz.modules.process import Process
 from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
-from topaz.objects.procobject import W_ProcObject
-from topaz.objects.stringobject import W_StringObject
-from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
+from topaz.objects.stringobject import W_StringObject
 
 
-class Kernel(Module):
+class Kernel(object):
     moduledef = ModuleDef("Kernel", filepath=__file__)
 
     @moduledef.method("class")
@@ -41,13 +40,15 @@ class Kernel(Module):
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
-        return space.newproc(block, True)
+        return block.copy(space, is_lambda=True)
 
     @moduledef.method("proc")
     def function_proc(self, space, block):
         if block is None:
-            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
-        return space.newproc(block, False)
+            raise space.error(space.w_ArgumentError,
+                "tried to create Proc object without a block"
+            )
+        return block.copy(space)
 
     @staticmethod
     def find_feature(space, path):
@@ -220,9 +221,8 @@ class Kernel(Module):
 
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):
-        w_proc = space.newproc(block)
-        space.register_exit_handler(w_proc)
-        return w_proc
+        space.register_exit_handler(block)
+        return block
 
     @moduledef.function("=~")
     def method_match(self, space, w_other):

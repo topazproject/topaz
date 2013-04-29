@@ -163,7 +163,7 @@ class Parser(object):
 
     def new_send_block(self, lineno, params, body):
         stmts = body.getastlist() if body is not None else []
-        args = params.getargs() if params is not None else []
+        args = params.getargs(include_multi=True) if params is not None else []
         splat = params.getsplatarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
 
@@ -2933,8 +2933,8 @@ class BoxArgs(BaseBox):
         self.splat_arg = splat_arg
         self.block_arg = block_arg
 
-    def getargs(self):
-        if self.is_multiassignment():
+    def getargs(self, include_multi=False):
+        if self.is_multiassignment() and not include_multi:
             return []
         else:
             return self.args

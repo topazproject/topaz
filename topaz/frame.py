@@ -83,7 +83,7 @@ class Frame(BaseFrame):
             if block is None:
                 w_block = space.w_nil
             else:
-                w_block = space.newproc(block)
+                w_block = block.copy(space)
             self._set_arg(space, bytecode.block_arg_pos, w_block)
 
     def push(self, w_obj):

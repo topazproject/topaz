@@ -1,11 +1,12 @@
 import math
 
+from rpython.rlib.rfloat import round_away
+
 from topaz.coerce import Coerce
 from topaz.error import RubyError
 from topaz.module import ClassDef
 from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
-from rpython.rlib.rfloat import round_away
 
 
 class W_NumericObject(W_Object):
