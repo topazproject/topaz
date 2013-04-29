@@ -516,6 +516,18 @@ class W_ModuleObject(W_RootObject):
     def method_eqeqeq(self, space, w_obj):
         return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
 
+    @classdef.method("<=")
+    def method_lte(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        for w_mod in self.ancestors():
+            if w_other is w_mod:
+                return space.w_true
+        for w_mod in w_other.ancestors():
+            if self is w_mod:
+                return space.w_false
+        return space.w_nil
+
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
