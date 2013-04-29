@@ -888,7 +888,7 @@ class TestInterpreter(BaseTopazTest):
 
     def test_class_variable_accessed_from_instance_side(self, space):
         w_res = space.execute("""
-        class A
+        module A
           @@foo = 'a'
         end
 
