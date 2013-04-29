@@ -528,6 +528,12 @@ class W_ModuleObject(W_RootObject):
                 return space.w_false
         return space.w_nil
 
+    @classdef.method("<")
+    def method_lt(self, space, w_other):
+        if self is w_other:
+            return space.w_false
+        return space.send(self, space.newsymbol("<="), [w_other])
+
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
