@@ -304,7 +304,16 @@ class Array
   end
 
   def values_at(*args)
-    args.map { |n| self[n] }
+    out = []
+    args.each do |n|
+      case n
+      when Range
+        out += self[n]
+      else
+        out << self[n]
+      end
+    end
+    out
   end
 
   def each_index(&block)

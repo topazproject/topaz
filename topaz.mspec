@@ -4,7 +4,6 @@ class MSpecScript
 
   MSpec.enable_feature :fiber
   core = ["#{Rubyspec}/core/",
-          "^#{Rubyspec}/core/struct",
           "^#{Rubyspec}/core/string/unpack/",
           "^#{Rubyspec}/core/string/chomp_spec.rb",
           "^#{Rubyspec}/core/string/split_spec.rb",
