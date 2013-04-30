@@ -582,6 +582,7 @@ class W_ModuleObject(W_RootObject):
         return self
 
     @classdef.method("remove_method", name="symbol")
+    @check_frozen()
     def method_remove_method(self, space, name):
         w_method = self._find_method_pure(space, name, self.version)
         if w_method is None or isinstance(w_method, UndefMethod):
@@ -589,7 +590,8 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_NameError,
                 "method `%s' not defined in %s" % (name, cls_name)
             )
-        self.define_method(space, name, UndefMethod(name))
+        del self.methods_w[name]
+        self.mutated()
         return self
 
     @classdef.method("class_exec")
