@@ -592,7 +592,12 @@ class W_ModuleObject(W_RootObject):
             )
         del self.methods_w[name]
         self.mutated()
+        space.send(self, space.newsymbol("method_removed"), [space.newsymbol(name)])
         return self
+
+    @classdef.method("method_removed")
+    def method_method_removed(self, space, w_name):
+        return space.w_nil
 
     @classdef.method("class_exec")
     @classdef.method("module_exec")
