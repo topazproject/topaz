@@ -212,4 +212,16 @@ class Struct
     return "[...]" if recursion
   end
   alias inspect to_s
+
+  Struct.new('Tms', :utime, :stime, :cutime, :cstime, :tutime, :tstime) do
+    def initialize(utime=nil, stime=nil, cutime=nil, cstime=nil,
+                   tutime=nil, tstime=nil)
+      @utime = utime
+      @stime = stime
+      @cutime = cutime
+      @cstime = cstime
+      @tutime = tutime
+      @tstime = tstime
+    end
+  end
 end

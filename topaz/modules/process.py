@@ -64,3 +64,15 @@ class Process(object):
                 return space.w_nil
         else:
             return space.newint(pid)
+
+    @moduledef.function("times")
+    def method_times(self, space):
+        tms = space.find_const(
+            space.w_object.find_const(space.w_object, "Struct"),
+            "Tms"
+        )
+        return space.send(
+            tms,
+            space.newsymbol("new"),
+            [space.newfloat(t) for t in os.times()[0:4]]
+        )
