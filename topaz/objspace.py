@@ -503,7 +503,7 @@ class ObjectSpace(object):
         return self.fromcache(ModuleCache).getorbuild(moduledef)
 
     def find_const(self, w_module, name):
-        w_res = w_module.find_const(self, name)
+        w_res = w_module.find_const(self, name, autoload=True)
         if w_res is None:
             w_res = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
         return w_res
@@ -534,14 +534,14 @@ class ObjectSpace(object):
         scope = lexical_scope
         while scope is not None:
             w_mod = scope.w_mod
-            w_res = w_mod.find_local_const(self, name)
+            w_res = w_mod.find_local_const(self, name, autoload=True)
             if w_res is not None:
                 return w_res
             scope = scope.backscope
         if lexical_scope is not None:
-            w_res = lexical_scope.w_mod.find_const(self, name)
+            w_res = lexical_scope.w_mod.find_const(self, name, autoload=True)
         if w_res is None:
-            w_res = self.w_object.find_const(self, name)
+            w_res = self.w_object.find_const(self, name, autoload=True)
         if w_res is None:
             if lexical_scope is not None:
                 w_mod = lexical_scope.w_mod
