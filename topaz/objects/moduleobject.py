@@ -171,13 +171,13 @@ class W_ModuleObject(W_RootObject):
         return w_res
 
     def included_constants(self, space):
-        consts = self.constants_w.keys()
+        consts = {}
+        for const in self.constants_w.keys():
+            consts[const] = None
         for w_mod in self.included_modules:
-            consts = consts + w_mod.included_constants(space)
-        const_seen = {}
-        for const in consts:
-           const_seen[const] = 1
-        return const_seen.keys()
+            for const in w_mod.included_constants(space):
+                consts[const] = None
+        return consts.keys()
 
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
