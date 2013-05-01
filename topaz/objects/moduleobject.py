@@ -121,7 +121,7 @@ class W_ModuleObject(W_RootObject):
     def getsingletonclass(self, space):
         if self.klass is None or not self.klass.is_singleton:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True
+                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True, attached=self
             )
         return self.klass
 
@@ -592,8 +592,11 @@ class W_ModuleObject(W_RootObject):
             )
         del self.methods_w[name]
         self.mutated()
-        space.send(self, space.newsymbol("method_removed"), [space.newsymbol(name)])
+        self.method_removed(space, space.newsymbol(name))
         return self
+
+    def method_removed(self, space, w_name):
+        space.send(self, space.newsymbol("method_removed"), [w_name])
 
     @classdef.method("method_removed")
     def method_method_removed(self, space, w_name):

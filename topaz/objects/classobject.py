@@ -10,10 +10,11 @@ class W_ClassObject(W_ModuleObject):
 
     classdef = ClassDef("Class", W_ModuleObject.classdef, filepath=__file__)
 
-    def __init__(self, space, name, superclass, is_singleton=False):
+    def __init__(self, space, name, superclass, is_singleton=False, attached=None):
         W_ModuleObject.__init__(self, space, name)
         self.superclass = superclass
         self.is_singleton = is_singleton
+        self.attached = attached
 
         if self.superclass is not None:
             self.superclass.inherited(space, self)
@@ -38,7 +39,7 @@ class W_ClassObject(W_ModuleObject):
             else:
                 name = "#<Class:%s>" % self.name
             self.klass = space.newclass(
-                name, singleton_superclass, is_singleton=True
+                name, singleton_superclass, is_singleton=True, attached=self
             )
         return self.klass
 
@@ -73,6 +74,12 @@ class W_ClassObject(W_ModuleObject):
         self.descendants.append(w_mod)
         if not space.bootstrap and space.respond_to(self, space.newsymbol("inherited")):
             space.send(self, space.newsymbol("inherited"), [w_mod])
+
+    def method_removed(self, space, w_name):
+        if self.is_singleton:
+            space.send(self.attached, space.newsymbol("singleton_method_removed"), [w_name])
+        else:
+            super(W_ClassObject, self).method_removed(space, w_name)
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_superclass=None):
