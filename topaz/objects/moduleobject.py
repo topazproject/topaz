@@ -55,8 +55,13 @@ class DefineMethodBlock(W_FunctionObject):
         self.block = block
 
     def call(self, space, w_obj, args_w, block):
-        method_block = self.block.copy(space, w_self=w_obj)
-        return space.invoke_block(method_block, args_w, block)
+        from topaz.interpreter import RaiseReturn
+
+        method_block = self.block.copy(space, w_self=w_obj, is_lambda=True)
+        try:
+            return space.invoke_block(method_block, args_w, block)
+        except RaiseReturn as e:
+            return e.w_value
 
     def arity(self, space):
         args_count = len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
@@ -188,9 +193,7 @@ class W_ModuleObject(W_RootObject):
 
     @jit.unroll_safe
     def set_class_var(self, space, name, w_obj):
-        ancestors = self.ancestors()
-        for idx in xrange(len(ancestors) - 1, -1, -1):
-            module = ancestors[idx]
+        for module in reversed(self.ancestors()):
             assert isinstance(module, W_ModuleObject)
             w_res = module.class_variables.get(space, name)
             if w_res is not None or module is self:
@@ -353,9 +356,8 @@ class W_ModuleObject(W_RootObject):
     def method_append_features(self, space, w_mod):
         if w_mod in self.ancestors():
             raise space.error(space.w_ArgumentError, "cyclic include detected")
-        ancestors = self.ancestors()
-        for idx in xrange(len(ancestors) - 1, -1, -1):
-            w_mod.include_module(space, ancestors[idx])
+        for module in reversed(self.ancestors()):
+            w_mod.include_module(space, module)
 
     @classdef.method("define_method", name="symbol")
     def method_define_method(self, space, name, w_method=None, block=None):
@@ -404,7 +406,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("module_function")
     def method_module_function(self, space, args_w):
         for w_arg in args_w:
-            name = space.symbol_w(w_arg)
+            name = Coerce.symbol(space, w_arg)
             self.attach_method(space, name, self._find_method_pure(space, name, self.version))
 
     @classdef.method("private_class_method")
@@ -545,6 +547,56 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("===")
     def method_eqeqeq(self, space, w_obj):
         return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
+
+    @classdef.method("<=")
+    def method_lte(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        for w_mod in self.ancestors():
+            if w_other is w_mod:
+                return space.w_true
+        for w_mod in w_other.ancestors():
+            if self is w_mod:
+                return space.w_false
+        return space.w_nil
+
+    @classdef.method("<")
+    def method_lt(self, space, w_other):
+        if self is w_other:
+            return space.w_false
+        return space.send(self, space.newsymbol("<="), [w_other])
+
+    @classdef.method(">=")
+    def method_gte(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        return space.send(w_other, space.newsymbol("<="), [self])
+
+    @classdef.method(">")
+    def method_gt(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        if self is w_other:
+            return space.w_false
+        return space.send(w_other, space.newsymbol("<="), [self])
+
+    @classdef.method("<=>")
+    def method_comparison(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            return space.w_nil
+
+        if self is w_other:
+            return space.newint(0)
+
+        other_is_subclass = space.send(self, space.newsymbol("<"), [w_other])
+
+        if space.is_true(other_is_subclass):
+            return space.newint(-1)
+        elif other_is_subclass is space.w_nil:
+            return space.w_nil
+        else:
+            return space.newint(1)
+
 
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
