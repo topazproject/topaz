@@ -110,6 +110,7 @@ class ObjectSpace(object):
         self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
+        self.w_binding = self.getclassfor(W_BindingObject)
         self.w_numeric = self.getclassfor(W_NumericObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
         self.w_float = self.getclassfor(W_FloatObject)
@@ -154,7 +155,7 @@ class ObjectSpace(object):
             self.w_numeric, self.w_fixnum, self.w_bignum, self.w_float,
             self.w_string, self.w_symbol, self.w_class, self.w_module,
             self.w_hash, self.w_regexp, self.w_method, self.w_unbound_method,
-            self.w_io,
+            self.w_io, self.w_binding,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
