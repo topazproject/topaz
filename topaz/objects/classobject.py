@@ -79,7 +79,7 @@ class W_ClassObject(W_ModuleObject):
         if self.is_singleton:
             space.send(self.attached, space.newsymbol("singleton_method_removed"), [w_name])
         else:
-            space.send(self, space.newsymbol("method_removed"), [w_name])
+            W_ModuleObject.method_removed(self, space, w_name)
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_superclass=None):
