@@ -99,6 +99,10 @@ class W_BaseObject(W_Root):
         else:
             return space.invoke_block(block.copy(space, w_self=self), [])
 
+    @classdef.method("singleton_method_removed")
+    def method_singleton_method_removed(self, space, w_name):
+        return space.w_nil
+
 
 class W_RootObject(W_BaseObject):
     _attrs_ = []
