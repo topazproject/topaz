@@ -25,6 +25,7 @@ class W_ClassObject(W_ModuleObject):
     def __deepcopy__(self, memo):
         obj = super(W_ClassObject, self).__deepcopy__(memo)
         obj.is_singleton = self.is_singleton
+        obj.attached = copy.deepcopy(self.attached, memo)
         obj.superclass = copy.deepcopy(self.superclass, memo)
         return obj
 
