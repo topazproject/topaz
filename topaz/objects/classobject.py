@@ -87,6 +87,12 @@ class W_ClassObject(W_ModuleObject):
         else:
             W_ModuleObject.method_added(self, space, w_name)
 
+    def method_undefined(self, space, w_name):
+        if self.is_singleton:
+            space.send(self.attached, space.newsymbol("singleton_method_undefined"), [w_name])
+        else:
+            W_ModuleObject.method_undefined(self, space, w_name)
+
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_superclass=None):
         if w_superclass is not None:
