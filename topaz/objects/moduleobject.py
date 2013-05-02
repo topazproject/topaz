@@ -121,7 +121,7 @@ class W_ModuleObject(W_RootObject):
     def getsingletonclass(self, space):
         if self.klass is None or not self.klass.is_singleton:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True
+                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True, attached=self
             )
         return self.klass
 
@@ -582,6 +582,7 @@ class W_ModuleObject(W_RootObject):
         return self
 
     @classdef.method("remove_method", name="symbol")
+    @check_frozen()
     def method_remove_method(self, space, name):
         w_method = self._find_method_pure(space, name, self.version)
         if w_method is None or isinstance(w_method, UndefMethod):
@@ -589,8 +590,17 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_NameError,
                 "method `%s' not defined in %s" % (name, cls_name)
             )
-        self.define_method(space, name, UndefMethod(name))
+        del self.methods_w[name]
+        self.mutated()
+        self.method_removed(space, space.newsymbol(name))
         return self
+
+    def method_removed(self, space, w_name):
+        space.send(self, space.newsymbol("method_removed"), [w_name])
+
+    @classdef.method("method_removed")
+    def method_method_removed(self, space, w_name):
+        return space.w_nil
 
     @classdef.method("class_exec")
     @classdef.method("module_exec")
