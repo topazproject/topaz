@@ -175,6 +175,15 @@ class W_ModuleObject(W_RootObject):
                     break
         return w_res
 
+    def included_constants(self, space):
+        consts = {}
+        for const in self.constants_w.keys():
+            consts[const] = None
+        for w_mod in self.included_modules:
+            for const in w_mod.included_constants(space):
+                consts[const] = None
+        return consts.keys()
+
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
 
@@ -319,11 +328,34 @@ class W_ModuleObject(W_RootObject):
         return space.newstr_fromstr(name)
 
     @classdef.method("include")
-    def method_include(self, space, w_mod):
-        space.send(w_mod, space.newsymbol("append_features"), [self])
+    def method_include(self, space, args_w):
+        for w_mod in args_w:
+            if type(w_mod) is not W_ModuleObject:
+                raise space.error(
+                    space.w_TypeError,
+                    "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
+                )
+
+        for w_mod in reversed(args_w):
+            space.send(w_mod, space.newsymbol("append_features"), [self])
+
+        return self
+
+    @classdef.method("include?")
+    def method_includep(self, space, w_mod):
+        if type(w_mod) is not W_ModuleObject:
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
+            )
+        if w_mod is self:
+            return space.w_false
+        return space.newbool(w_mod in self.ancestors())
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
+        if w_mod in self.ancestors():
+            raise space.error(space.w_ArgumentError, "cyclic include detected")
         for module in reversed(self.ancestors()):
             w_mod.include_module(space, module)
 
@@ -429,7 +461,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("constants")
     def method_constants(self, space):
-        return space.newarray([space.newsymbol(n) for n in self.constants_w])
+        return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
