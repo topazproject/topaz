@@ -132,7 +132,10 @@ class W_ModuleObject(W_RootObject):
         self.mutated()
         self.methods_w[name] = method
         if not space.bootstrap:
-            self.method_added(space, space.newsymbol(name))
+            if isinstance(method, UndefMethod):
+                self.method_undefined(space, space.newsymbol(name))
+            else:
+                self.method_added(space, space.newsymbol(name))
 
     @jit.unroll_safe
     def find_method(self, space, name):
@@ -305,6 +308,9 @@ class W_ModuleObject(W_RootObject):
 
     def method_added(self, space, w_name):
         space.send(self, space.newsymbol("method_added"), [w_name])
+
+    def method_undefined(self, space, w_name):
+        space.send(self, space.newsymbol("method_undefined"), [w_name])
 
     def method_removed(self, space, w_name):
         space.send(self, space.newsymbol("method_removed"), [w_name])
@@ -637,6 +643,10 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("method_added")
     def method_method_added(self, space, w_name):
+        return space.w_nil
+
+    @classdef.method("method_undefined")
+    def method_method_undefined(self, space, w_name):
         return space.w_nil
 
     @classdef.method("method_removed")
