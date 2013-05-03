@@ -202,6 +202,8 @@ class Interpreter(object):
         w_value = frame.pop()
         w_scope = frame.pop()
         space.set_const(w_scope, name, w_value)
+        if isinstance(w_value, W_ModuleObject) and w_value.name is None:
+            w_value.name = space.buildname(name, w_scope)
         frame.push(w_value)
 
     def DEFINED_CONSTANT(self, space, bytecode, frame, pc, idx):
