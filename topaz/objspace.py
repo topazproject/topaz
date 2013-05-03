@@ -26,6 +26,7 @@ from topaz.modules.comparable import Comparable
 from topaz.modules.enumerable import Enumerable
 from topaz.modules.math import Math
 from topaz.modules.kernel import Kernel
+from topaz.modules.ffi import FFI
 from topaz.modules.objectspace import ObjectSpace as ObjectSpaceModule
 from topaz.modules.process import Process
 from topaz.modules.signal import Signal
@@ -185,6 +186,7 @@ class ObjectSpace(object):
             self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),
             self.getmoduleobject(Math.moduledef),
+            self.getmoduleobject(FFI.moduledef),
             self.getmoduleobject(Process.moduledef),
             self.getmoduleobject(Signal.moduledef),
             self.getmoduleobject(ObjectSpaceModule.moduledef),
