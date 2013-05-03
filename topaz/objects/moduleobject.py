@@ -648,7 +648,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("autoload", name="symbol")
     def method_autoload(self, space, name, w_path):
-        self.set_const(space, name, W_Autoload(space, w_path))
+        space.set_const(self, name, W_Autoload(space, w_path))
         return space.w_nil
 
     def method_removed(self, space, w_name):
