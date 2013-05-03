@@ -74,5 +74,5 @@ class Process(object):
         return space.send(
             tms,
             space.newsymbol("new"),
-            [space.newfloat(t) for t in os.times()[0:4]]
+            [space.newfloat(t) for t in list(os.times()[0:4])]
         )
