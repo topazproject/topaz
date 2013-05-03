@@ -84,7 +84,16 @@ class W_ClassObject(W_ModuleObject):
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_superclass=None):
         if w_superclass is not None:
-            assert isinstance(w_superclass, W_ClassObject)
+            if not isinstance(w_superclass, W_ClassObject):
+                raise space.error(
+                    space.w_TypeError,
+                    "superclass must be a Class (%s given)" % space.obj_to_s(space.getclass(w_superclass))
+                )
+            if w_superclass.is_singleton:
+                raise space.error(
+                    space.w_TypeError,
+                    "can't make subclass of singleton class"
+                )
         else:
             w_superclass = space.w_object
         return space.newclass(None, w_superclass)
