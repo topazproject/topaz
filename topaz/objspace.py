@@ -394,9 +394,9 @@ class ObjectSpace(object):
         complete_name = self.buildname(name, w_scope)
         return W_ModuleObject(self, complete_name)
 
-    def newclass(self, name, superclass, is_singleton=False, w_scope=None):
+    def newclass(self, name, superclass, is_singleton=False, w_scope=None, attached=None):
         complete_name = self.buildname(name, w_scope)
-        return W_ClassObject(self, complete_name, superclass, is_singleton=is_singleton)
+        return W_ClassObject(self, complete_name, superclass, is_singleton=is_singleton, attached=attached)
 
     def newfunction(self, w_name, w_code, lexical_scope):
         name = self.symbol_w(w_name)

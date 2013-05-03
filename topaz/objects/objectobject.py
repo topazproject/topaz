@@ -99,6 +99,10 @@ class W_BaseObject(W_Root):
         else:
             return space.invoke_block(block.copy(space, w_self=self), [])
 
+    @classdef.method("singleton_method_removed")
+    def method_singleton_method_removed(self, space, w_name):
+        return space.w_nil
+
 
 class W_RootObject(W_BaseObject):
     _attrs_ = []
@@ -205,14 +209,14 @@ class W_Object(W_RootObject):
         w_cls = jit.promote(self.map).get_class()
         if w_cls.is_singleton:
             return w_cls
-        w_cls = space.newclass(w_cls.name, w_cls, is_singleton=True)
+        w_cls = space.newclass(w_cls.name, w_cls, is_singleton=True, attached=self)
         self.map = self.map.change_class(space, w_cls)
         return w_cls
 
     def copy_singletonclass(self, space, w_other):
         w_cls = jit.promote(self.map).get_class()
         assert not w_cls.is_singleton
-        w_copy = space.newclass(w_cls.name, w_cls, is_singleton=True)
+        w_copy = space.newclass(w_cls.name, w_cls, is_singleton=True, attached=self)
         w_copy.methods_w.update(w_other.methods_w)
         w_copy.constants_w.update(w_other.constants_w)
         w_copy.included_modules = w_copy.included_modules + w_other.included_modules

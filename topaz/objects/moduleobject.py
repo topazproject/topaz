@@ -134,7 +134,7 @@ class W_ModuleObject(W_RootObject):
     def getsingletonclass(self, space):
         if self.klass is None or not self.klass.is_singleton:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True
+                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True, attached=self
             )
         return self.klass
 
@@ -187,6 +187,15 @@ class W_ModuleObject(W_RootObject):
                 if w_res is not None:
                     break
         return w_res
+
+    def included_constants(self, space):
+        consts = {}
+        for const in self.constants_w.keys():
+            consts[const] = None
+        for w_mod in self.included_modules:
+            for const in w_mod.included_constants(space):
+                consts[const] = None
+        return consts.keys()
 
     def find_local_const(self, space, name, autoload=True):
         return self._find_const_pure(name, self.version, autoload=autoload)
@@ -338,11 +347,34 @@ class W_ModuleObject(W_RootObject):
         return space.newstr_fromstr(name)
 
     @classdef.method("include")
-    def method_include(self, space, w_mod):
-        space.send(w_mod, space.newsymbol("append_features"), [self])
+    def method_include(self, space, args_w):
+        for w_mod in args_w:
+            if type(w_mod) is not W_ModuleObject:
+                raise space.error(
+                    space.w_TypeError,
+                    "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
+                )
+
+        for w_mod in reversed(args_w):
+            space.send(w_mod, space.newsymbol("append_features"), [self])
+
+        return self
+
+    @classdef.method("include?")
+    def method_includep(self, space, w_mod):
+        if type(w_mod) is not W_ModuleObject:
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
+            )
+        if w_mod is self:
+            return space.w_false
+        return space.newbool(w_mod in self.ancestors())
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
+        if w_mod in self.ancestors():
+            raise space.error(space.w_ArgumentError, "cyclic include detected")
         for module in reversed(self.ancestors()):
             w_mod.include_module(space, module)
 
@@ -448,7 +480,7 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("constants")
     def method_constants(self, space):
-        return space.newarray([space.newsymbol(n) for n in self.constants_w])
+        return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
@@ -535,6 +567,56 @@ class W_ModuleObject(W_RootObject):
     def method_eqeqeq(self, space, w_obj):
         return space.newbool(self.is_ancestor_of(space.getclass(w_obj)))
 
+    @classdef.method("<=")
+    def method_lte(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        for w_mod in self.ancestors():
+            if w_other is w_mod:
+                return space.w_true
+        for w_mod in w_other.ancestors():
+            if self is w_mod:
+                return space.w_false
+        return space.w_nil
+
+    @classdef.method("<")
+    def method_lt(self, space, w_other):
+        if self is w_other:
+            return space.w_false
+        return space.send(self, space.newsymbol("<="), [w_other])
+
+    @classdef.method(">=")
+    def method_gte(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        return space.send(w_other, space.newsymbol("<="), [self])
+
+    @classdef.method(">")
+    def method_gt(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            raise space.error(space.w_TypeError, "compared with non class/module")
+        if self is w_other:
+            return space.w_false
+        return space.send(w_other, space.newsymbol("<="), [self])
+
+    @classdef.method("<=>")
+    def method_comparison(self, space, w_other):
+        if not isinstance(w_other, W_ModuleObject):
+            return space.w_nil
+
+        if self is w_other:
+            return space.newint(0)
+
+        other_is_subclass = space.send(self, space.newsymbol("<"), [w_other])
+
+        if space.is_true(other_is_subclass):
+            return space.newint(-1)
+        elif other_is_subclass is space.w_nil:
+            return space.w_nil
+        else:
+            return space.newint(1)
+
+
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
@@ -551,6 +633,7 @@ class W_ModuleObject(W_RootObject):
         return self
 
     @classdef.method("remove_method", name="symbol")
+    @check_frozen()
     def method_remove_method(self, space, name):
         w_method = self._find_method_pure(space, name, self.version)
         if w_method is None or isinstance(w_method, UndefMethod):
@@ -558,12 +641,21 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_NameError,
                 "method `%s' not defined in %s" % (name, cls_name)
             )
-        self.define_method(space, name, UndefMethod(name))
+        del self.methods_w[name]
+        self.mutated()
+        self.method_removed(space, space.newsymbol(name))
         return self
 
     @classdef.method("autoload", name="symbol")
     def method_autoload(self, space, name, w_path):
         self.set_const(space, name, W_Autoload(space, w_path))
+        return space.w_nil
+
+    def method_removed(self, space, w_name):
+        space.send(self, space.newsymbol("method_removed"), [w_name])
+
+    @classdef.method("method_removed")
+    def method_method_removed(self, space, w_name):
         return space.w_nil
 
     @classdef.method("class_exec")
