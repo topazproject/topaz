@@ -25,6 +25,7 @@ class W_ClassObject(W_ModuleObject):
     def __deepcopy__(self, memo):
         obj = super(W_ClassObject, self).__deepcopy__(memo)
         obj.is_singleton = self.is_singleton
+        obj.attached = copy.deepcopy(self.attached, memo)
         obj.superclass = copy.deepcopy(self.superclass, memo)
         return obj
 
@@ -80,6 +81,18 @@ class W_ClassObject(W_ModuleObject):
             space.send(self.attached, space.newsymbol("singleton_method_removed"), [w_name])
         else:
             W_ModuleObject.method_removed(self, space, w_name)
+
+    def method_added(self, space, w_name):
+        if self.is_singleton:
+            space.send(self.attached, space.newsymbol("singleton_method_added"), [w_name])
+        else:
+            W_ModuleObject.method_added(self, space, w_name)
+
+    def method_undefined(self, space, w_name):
+        if self.is_singleton:
+            space.send(self.attached, space.newsymbol("singleton_method_undefined"), [w_name])
+        else:
+            W_ModuleObject.method_undefined(self, space, w_name)
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space, w_superclass=None):

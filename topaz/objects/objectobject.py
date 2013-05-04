@@ -103,6 +103,13 @@ class W_BaseObject(W_Root):
     def method_singleton_method_removed(self, space, w_name):
         return space.w_nil
 
+    @classdef.method("singleton_method_added")
+    def method_singleton_method_added(self, space, w_name):
+        return space.w_nil
+
+    @classdef.method("singleton_method_undefined")
+    def method_singleton_method_undefined(self, space, w_name):
+        return space.w_nil
 
 class W_RootObject(W_BaseObject):
     _attrs_ = []
