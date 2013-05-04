@@ -131,6 +131,11 @@ class W_ModuleObject(W_RootObject):
     def define_method(self, space, name, method):
         self.mutated()
         self.methods_w[name] = method
+        if not space.bootstrap:
+            if isinstance(method, UndefMethod):
+                self.method_undefined(space, space.newsymbol(name))
+            else:
+                self.method_added(space, space.newsymbol(name))
 
     @jit.unroll_safe
     def find_method(self, space, name):
@@ -300,6 +305,15 @@ class W_ModuleObject(W_RootObject):
 
     def set_method_visibility(self, space, name, visibility):
         pass
+
+    def method_added(self, space, w_name):
+        space.send(self, space.newsymbol("method_added"), [w_name])
+
+    def method_undefined(self, space, w_name):
+        space.send(self, space.newsymbol("method_undefined"), [w_name])
+
+    def method_removed(self, space, w_name):
+        space.send(self, space.newsymbol("method_removed"), [w_name])
 
     @classdef.singleton_method("nesting")
     def singleton_method_nesting(self, space):
@@ -627,8 +641,13 @@ class W_ModuleObject(W_RootObject):
         self.method_removed(space, space.newsymbol(name))
         return self
 
-    def method_removed(self, space, w_name):
-        space.send(self, space.newsymbol("method_removed"), [w_name])
+    @classdef.method("method_added")
+    def method_method_added(self, space, w_name):
+        return space.w_nil
+
+    @classdef.method("method_undefined")
+    def method_method_undefined(self, space, w_name):
+        return space.w_nil
 
     @classdef.method("method_removed")
     def method_method_removed(self, space, w_name):
