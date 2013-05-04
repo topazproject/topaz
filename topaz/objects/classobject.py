@@ -95,7 +95,21 @@ class W_ClassObject(W_ModuleObject):
             W_ModuleObject.method_undefined(self, space, w_name)
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space, w_superclass=None):
+    def singleton_method_allocate(self, space, args_w):
+        return space.newclass(None, None)
+
+    @classdef.method("new")
+    def method_new(self, space, args_w, block):
+        w_obj = space.send(self, space.newsymbol("allocate"), args_w, block)
+        space.send(w_obj, space.newsymbol("initialize"), args_w, block)
+        return w_obj
+
+    @classdef.method("allocate")
+    def method_allocate(self, space, args_w):
+        return W_Object(space, self)
+
+    @classdef.method("initialize")
+    def method_initialize(self, space, w_superclass=None, block=None):
         if w_superclass is not None:
             if not isinstance(w_superclass, W_ClassObject):
                 raise space.error(
@@ -109,25 +123,17 @@ class W_ClassObject(W_ModuleObject):
                 )
         else:
             w_superclass = space.w_object
-        return space.newclass(None, w_superclass)
-
-    @classdef.method("new")
-    def method_new(self, space, args_w, block):
-        w_obj = space.send(self, space.newsymbol("allocate"), args_w, block)
-        space.send(w_obj, space.newsymbol("initialize"), args_w, block)
-        return w_obj
-
-    @classdef.method("allocate")
-    def method_allocate(self, space, args_w):
-        return W_Object(space, self)
-
-    @classdef.method("initialize")
-    def method_initialize(self, space, args_w, block):
+        self.superclass = w_superclass
+        self.superclass.inherited(space, self)
         space.send_super(space.getclassfor(W_ClassObject), self, space.newsymbol("initialize"), [], block=block)
 
     @classdef.method("superclass")
     def method_superclass(self, space):
-        return self.superclass if self.superclass is not None else space.w_nil
+        if self.superclass is not None:
+            return self.superclass
+        if self is space.w_basicobject:
+            return space.w_nil
+        raise space.error(space.w_TypeError, "uninitialized class")
 
     @classdef.method("class_variables")
     def method_class_variables(self, space):
