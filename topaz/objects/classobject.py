@@ -6,6 +6,7 @@ from topaz.objects.objectobject import W_Object
 
 
 class W_ClassObject(W_ModuleObject):
+    _immutable_fields_ = ["superclass?"]
 
     classdef = ClassDef("Class", W_ModuleObject.classdef, filepath=__file__)
 
@@ -124,6 +125,7 @@ class W_ClassObject(W_ModuleObject):
             w_superclass = space.w_object
         self.superclass = w_superclass
         self.superclass.inherited(space, self)
+        self.getsingletonclass(space)
         space.send_super(space.getclassfor(W_ClassObject), self, space.newsymbol("initialize"), [], block=block)
 
     @classdef.method("superclass")
