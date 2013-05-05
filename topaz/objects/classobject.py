@@ -6,7 +6,7 @@ from topaz.objects.objectobject import W_Object
 
 
 class W_ClassObject(W_ModuleObject):
-    _immutable_fields_ = ["superclass"]
+    _immutable_fields_ = ["superclass?"]
 
     classdef = ClassDef("Class", W_ModuleObject.classdef, filepath=__file__)
 
@@ -95,19 +95,8 @@ class W_ClassObject(W_ModuleObject):
             W_ModuleObject.method_undefined(self, space, w_name)
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space, w_superclass=None):
-        if w_superclass is not None:
-            if not isinstance(w_superclass, W_ClassObject):
-                raise space.error(space.w_TypeError,
-                    "superclass must be a Class (%s given)" % space.obj_to_s(space.getclass(w_superclass))
-                )
-            if w_superclass.is_singleton:
-                raise space.error(space.w_TypeError,
-                    "can't make subclass of singleton class"
-                )
-        else:
-            w_superclass = space.w_object
-        return space.newclass(None, w_superclass)
+    def singleton_method_allocate(self, space, args_w):
+        return space.newclass(None, None)
 
     @classdef.method("new")
     def method_new(self, space, args_w, block):
@@ -120,12 +109,30 @@ class W_ClassObject(W_ModuleObject):
         return W_Object(space, self)
 
     @classdef.method("initialize")
-    def method_initialize(self, space, args_w, block):
+    def method_initialize(self, space, w_superclass=None, block=None):
+        if w_superclass is not None:
+            if not isinstance(w_superclass, W_ClassObject):
+                raise space.error(space.w_TypeError,
+                    "superclass must be a Class (%s given)" % space.obj_to_s(space.getclass(w_superclass))
+                )
+            if w_superclass.is_singleton:
+                raise space.error(space.w_TypeError,
+                    "can't make subclass of singleton class"
+                )
+        else:
+            w_superclass = space.w_object
+        self.superclass = w_superclass
+        self.superclass.inherited(space, self)
+        self.getsingletonclass(space)
         space.send_super(space.getclassfor(W_ClassObject), self, space.newsymbol("initialize"), [], block=block)
 
     @classdef.method("superclass")
     def method_superclass(self, space):
-        return self.superclass if self.superclass is not None else space.w_nil
+        if self.superclass is not None:
+            return self.superclass
+        if self is space.w_basicobject:
+            return space.w_nil
+        raise space.error(space.w_TypeError, "uninitialized class")
 
     @classdef.method("class_variables")
     def method_class_variables(self, space):
