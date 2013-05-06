@@ -475,9 +475,6 @@ class ObjectSpace(object):
     def is_true(self, w_obj):
         return w_obj.is_true(self)
 
-    def is_array(self, w_obj):
-        return isinstance(w_obj, W_ArrayObject)
-
     def getclass(self, w_receiver):
         return w_receiver.getclass(self)
 

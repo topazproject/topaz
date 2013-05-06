@@ -1,6 +1,5 @@
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
-from topaz.objects.stringobject import W_StringObject
 
 
 def new_exception_allocate(classdef):
@@ -74,13 +73,13 @@ class W_ExceptionObject(W_Object):
         if w_backtrace is space.w_nil:
             self.w_backtrace = w_backtrace
             return w_backtrace
-        if space.is_array(w_backtrace):
+        if space.is_kind_of(w_backtrace, space.w_array):
             for w_obj in space.listview(w_backtrace):
-                if not isinstance(w_obj, W_StringObject):
+                if not space.is_kind_of(w_obj, space.w_string):
                     raise space.error(space.w_TypeError, "backtrace must be Array of String")
             self.w_backtrace = w_backtrace
             return w_backtrace
-        if isinstance(w_backtrace, W_StringObject):
+        if space.is_kind_of(w_backtrace, space.w_string):
             self.w_backtrace = space.newarray([w_backtrace])
             return self.w_backtrace
         raise space.error(space.w_TypeError, "backtrace must be Array of String")
