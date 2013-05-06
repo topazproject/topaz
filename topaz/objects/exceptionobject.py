@@ -10,7 +10,7 @@ def new_exception_allocate(classdef):
 
 
 class W_ExceptionObject(W_Object):
-    _attrs_ = ["msg", "frame", "last_instructions"]
+    _attrs_ = ["msg", "frame", "last_instructions", "w_backtrace"]
 
     classdef = ClassDef("Exception", W_Object.classdef, filepath=__file__)
 
