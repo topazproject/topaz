@@ -9,24 +9,8 @@ from rpython.rtyper.lltypesystem import rffi
 class FFI(object):
     moduledef = ModuleDef("FFI", filepath=__file__)
 
-    @moduledef.function("call", name="str")
-    def method_call(self, space, name, w_args):
-        assert name == 'abs' or 'ceil'
-        lib = (clibffi.CDLL('libm.so') if name == 'ceil' else
-               clibffi.CDLL(clibffi.get_libc_name()))
-        if space.is_kind_of(w_args, space.w_integer):
-            arg = space.int_w(w_args)
-            arg_type = clibffi.ffi_type_sint
-            rffi_type = rffi.INT
-            wrap_up = space.newint
-        elif space.is_kind_of(w_args, space.w_float):
-            arg = space.float_w(w_args)
-            arg_type = clibffi.ffi_type_double
-            rffi_type = rffi.DOUBLE
-            wrap_up = space.newfloat
-        else:
-            raise Exception("not supported")
-        ptr = lib.getpointer(name, [arg_type], arg_type)
-        ptr.push_arg(arg)
-        res = ptr.call(rffi_type)
-        return wrap_up(res)
+    @moduledef.setup_module
+    def setup_module(space, w_mod):
+        space.set_const(w_mod, 'TypeDefs', space.newhash())
+        space.set_const(w_mod, 'Types', space.newhash())
+        space.set_const(w_mod, 'Type', space.w_nil) # should be a class
