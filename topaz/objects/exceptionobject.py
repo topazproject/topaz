@@ -24,6 +24,14 @@ class W_ExceptionObject(W_Object):
 
     method_allocate = new_exception_allocate(classdef)
 
+    def copy_instance_vars(self, space, w_other):
+        """Copies special instance vars after #copy or #dup"""
+        assert isinstance(w_other, W_ExceptionObject)
+        W_Object.copy_instance_vars(self, space, w_other)
+        self.msg = w_other.msg
+        self.frame = w_other.frame
+        self.w_backtrace = w_other.w_backtrace
+
     @classdef.method("initialize")
     def method_initialize(self, space, w_msg=None):
         if w_msg is space.w_nil or w_msg is None:
@@ -83,6 +91,27 @@ class W_ExceptionObject(W_Object):
             self.w_backtrace = space.newarray([w_backtrace])
             return self.w_backtrace
         raise space.error(space.w_TypeError, "backtrace must be Array of String")
+
+    @classdef.method("==")
+    def method_eq(self, space, w_other):
+        if not isinstance(w_other, W_ExceptionObject):
+            return space.w_false
+        if self is w_other:
+            return space.w_true
+
+        id_message = space.newsymbol("message")
+        id_backtrace = space.newsymbol("backtrace")
+        id_eq = space.newsymbol("==")
+
+        w_msg = space.send(self, id_message)
+        w_other_msg = space.send(w_other, id_message)
+        w_backtrace = space.send(self, id_backtrace)
+        w_other_bactrace = space.send(w_other, id_backtrace)
+
+        return space.newbool(
+            space.is_true(space.send(w_msg, id_eq, [w_other_msg]))
+            and space.is_true(space.send(w_backtrace, id_eq, [w_other_bactrace]))
+        )
 
 
 class W_ScriptError(W_ExceptionObject):
