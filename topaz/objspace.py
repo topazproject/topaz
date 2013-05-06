@@ -441,7 +441,7 @@ class ObjectSpace(object):
         if w_scope is not None:
             assert isinstance(w_scope, W_ModuleObject)
             if w_scope is not self.w_object:
-                complete_name = "%s::%s" % (w_scope.name, name)
+                complete_name = "%s::%s" % (self.obj_to_s(w_scope), name)
         return complete_name
 
     def int_w(self, w_obj):

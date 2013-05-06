@@ -315,6 +315,12 @@ class W_ModuleObject(W_RootObject):
     def method_removed(self, space, w_name):
         space.send(self, space.newsymbol("method_removed"), [w_name])
 
+    def set_name_in_scope(self, space, name, w_scope):
+        self.name = space.buildname(name, w_scope)
+        for name, w_const in self.constants_w.iteritems():
+            if isinstance(w_const, W_ModuleObject):
+                w_const.set_name_in_scope(space, name, self)
+
     @classdef.singleton_method("nesting")
     def singleton_method_nesting(self, space):
         frame = space.getexecutioncontext().gettoprubyframe()
