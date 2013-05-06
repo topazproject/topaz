@@ -13,4 +13,4 @@ class FFI(object):
     def setup_module(space, w_mod):
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
-        space.set_const(w_mod, 'Type', space.w_nil) # should be a class
+        space.set_const(w_mod, 'Type', space.newclass('Type', None))
