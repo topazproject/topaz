@@ -1,5 +1,6 @@
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
+from topaz.objects.stringobject import W_StringObject
 
 
 def new_exception_allocate(classdef):
@@ -17,6 +18,7 @@ class W_ExceptionObject(W_Object):
         W_Object.__init__(self, space, klass)
         self.msg = ""
         self.frame = None
+        self.w_backtrace = None
 
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self.msg)
@@ -52,6 +54,8 @@ class W_ExceptionObject(W_Object):
 
     @classdef.method("backtrace")
     def method_backtrace(self, space):
+        if self.w_backtrace is not None:
+            return self.w_backtrace
         frame = self.frame
         results_w = []
         prev_frame = None
@@ -64,6 +68,22 @@ class W_ExceptionObject(W_Object):
             prev_frame = frame
             frame = frame.backref()
         return space.newarray(results_w)
+
+    @classdef.method("set_backtrace")
+    def method_set_backtrace(self, space, w_backtrace):
+        if w_backtrace is space.w_nil:
+            self.w_backtrace = w_backtrace
+            return w_backtrace
+        if space.is_array(w_backtrace):
+            for w_obj in space.listview(w_backtrace):
+                if not isinstance(w_obj, W_StringObject):
+                    raise space.error(space.w_TypeError, "backtrace must be Array of String")
+            self.w_backtrace = w_backtrace
+            return w_backtrace
+        if isinstance(w_backtrace, W_StringObject):
+            self.w_backtrace = space.newarray([w_backtrace])
+            return self.w_backtrace
+        raise space.error(space.w_TypeError, "backtrace must be Array of String")
 
 
 class W_ScriptError(W_ExceptionObject):
