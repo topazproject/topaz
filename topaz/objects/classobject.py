@@ -128,6 +128,12 @@ class W_ClassObject(W_ModuleObject):
         self.getsingletonclass(space)
         space.send_super(space.getclassfor(W_ClassObject), self, "initialize", [], block=block)
 
+    @classdef.method("initialize_copy")
+    def method_initialize_copy(self, space, w_other):
+        if self.superclass is not None or self is space.w_basicobject:
+            raise space.error(space.w_TypeError, "already initialized class")
+        return space.send_super(space.getclassfor(W_ClassObject), self, "initialize_copy", [w_other])
+
     @classdef.method("superclass")
     def method_superclass(self, space):
         if self.superclass is not None:
