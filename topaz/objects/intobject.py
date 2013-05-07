@@ -62,7 +62,7 @@ class W_FixnumObject(W_RootObject):
     def getsingletonclass(self, space):
         return self
 
-    attach_method = classdef.undefine_attach_method()
+    attach_method = define_method = classdef.undefine_attach_method()
 
     method_singleton_class = classdef.undefine_singleton_class()
 

@@ -30,7 +30,7 @@ class W_SymbolObject(W_Object):
     def singleton_method_all_symbols(self, space):
         return space.newarray(space.symbol_cache.values())
 
-    attach_method = classdef.undefine_attach_method()
+    attach_method = define_method = classdef.undefine_attach_method()
 
     method_singleton_class = classdef.undefine_singleton_class()
 
