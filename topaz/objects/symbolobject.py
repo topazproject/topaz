@@ -23,12 +23,13 @@ class W_SymbolObject(W_Object):
     def str_w(self, space):
         return self.symbol
 
-    def getsingletonclass(self, space):
-        raise space.error(space.w_TypeError, "can't define singleton")
-
     @classdef.singleton_method("all_symbols")
     def singleton_method_all_symbols(self, space):
         return space.newarray(space.symbol_cache.values())
+
+    attach_method = classdef.undefine_attach_method()
+
+    method_singleton_class = classdef.undefine_singleton_class()
 
     @classdef.method("to_s")
     def method_to_s(self, space):

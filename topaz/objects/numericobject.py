@@ -13,6 +13,8 @@ class W_NumericObject(W_Object):
     classdef = ClassDef("Numeric", W_Object.classdef, filepath=__file__)
     classdef.include_module(Comparable)
 
+    attach_method = classdef.undefine_attach_method()
+
     @staticmethod
     def retry_binop_coercing(space, w_recv, w_arg, binop, raise_error=True):
         w_ary = None
