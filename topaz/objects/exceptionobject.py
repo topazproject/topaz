@@ -37,7 +37,7 @@ class W_ExceptionObject(W_Object):
         if w_msg is space.w_nil or w_msg is None:
             msg = space.getclass(self).name
         else:
-            msg = space.str_w(w_msg)
+            msg = space.str_w(space.send(w_msg, "to_s"))
         self.msg = msg
 
     @classdef.method("to_s")
