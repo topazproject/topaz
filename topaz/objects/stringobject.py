@@ -524,8 +524,8 @@ class W_StringObject(W_Object):
             elif s1 > s2:
                 return space.newint(1)
         else:
-            if space.respond_to(w_other, space.newsymbol("to_str")) and space.respond_to(w_other, space.newsymbol("<=>")):
-                tmp = space.send(w_other, space.newsymbol("<=>"), [self])
+            if space.respond_to(w_other, "to_str") and space.respond_to(w_other, "<=>"):
+                tmp = space.send(w_other, "<=>", [self])
                 if tmp is not space.w_nil:
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
@@ -852,7 +852,7 @@ class W_StringObject(W_Object):
         if space.is_kind_of(w_obj, space.w_string):
             raise space.error(space.w_TypeError, "type mismatch: String given")
         else:
-            return space.send(w_obj, space.newsymbol("=~"), [self])
+            return space.send(w_obj, "=~", [self])
 
     @classdef.method("%")
     def method_mod(self, space, w_arg):
@@ -959,11 +959,11 @@ class W_StringObject(W_Object):
         return result
 
     def gsub_regexp_block(self, space, block, w_match):
-        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        w_arg = space.send(w_match, "[]", [space.newint(0)])
         return self.gsub_yield_block(space, block, w_arg)
 
     def gsub_regexp_hash(self, space, w_hash, w_match):
-        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        w_arg = space.send(w_match, "[]", [space.newint(0)])
         return self.gsub_lookup_hash(space, w_hash, w_arg)
 
     def gsub_string(self, space, w_pattern, replacement, w_hash, block, first_only):
@@ -994,14 +994,14 @@ class W_StringObject(W_Object):
         return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_lookup_hash(self, space, w_hash, w_matchstr):
-        w_value = space.send(w_hash, space.newsymbol("[]"), [w_matchstr])
+        w_value = space.send(w_hash, "[]", [w_matchstr])
         return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_replacement_to_s(self, space, w_replacement):
         if space.is_kind_of(w_replacement, space.w_string):
             return space.str_w(w_replacement)
         else:
-            w_replacement = space.send(w_replacement, space.newsymbol("to_s"))
+            w_replacement = space.send(w_replacement, "to_s")
             if space.is_kind_of(w_replacement, space.w_string):
                 return space.str_w(w_replacement)
             else:

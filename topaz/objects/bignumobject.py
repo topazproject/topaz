@@ -74,7 +74,7 @@ class W_BignumObject(W_IntegerObject):
         elif space.is_kind_of(w_other, space.w_bignum):
             return self.floordiv(space, space.bigint_w(w_other))
         elif space.is_kind_of(w_other, space.w_float):
-            return space.send(space.newfloat(space.float_w(self)), space.newsymbol("/"), [w_other])
+            return space.send(space.newfloat(space.float_w(self)), "/", [w_other])
         else:
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
 
@@ -146,7 +146,7 @@ class W_BignumObject(W_IntegerObject):
                 return space.newfloat(INFINITY)
             return space.send(
                 space.newfloat(float_value),
-                space.newsymbol("**"),
+                "**",
                 [w_other]
             )
         else:

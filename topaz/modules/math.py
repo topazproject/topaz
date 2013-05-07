@@ -108,8 +108,7 @@ class Math(object):
         except (ValueError, OverflowError):
             res = rfloat.INFINITY
         gamma = (1 if value == -1 or math.isnan(value) else
-                 space.float_w(space.send(self, space.newsymbol("gamma"),
-                               [space.newfloat(value)])))
+                 space.float_w(space.send(self, "gamma", [space.newfloat(value)])))
         sign = 1 if gamma > 0 else -1 if gamma < 0 else 0
         return space.newarray([space.newfloat(res), space.newint(sign)])
 

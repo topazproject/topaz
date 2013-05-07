@@ -46,18 +46,18 @@ class W_ExceptionObject(W_Object):
 
     @classdef.singleton_method("exception")
     def singleton_method_exception(self, space, args_w):
-        return space.send(self, space.newsymbol("new"), args_w)
+        return space.send(self, "new", args_w)
 
     @classdef.method("exception")
     def method_exception(self, space, w_string=None):
         if w_string is None:
             return self
         else:
-            return space.send(space.getclassfor(self.__class__), space.newsymbol("new"), [w_string])
+            return space.send(space.getclassfor(self.__class__), "new", [w_string])
 
     @classdef.method("message")
     def method_message(self, space):
-        return space.send(self, space.newsymbol("to_s"))
+        return space.send(self, "to_s")
 
     @classdef.method("backtrace")
     def method_backtrace(self, space):
@@ -99,18 +99,11 @@ class W_ExceptionObject(W_Object):
         if self is w_other:
             return space.w_true
 
-        id_message = space.newsymbol("message")
-        id_backtrace = space.newsymbol("backtrace")
-        id_eq = space.newsymbol("==")
-
-        w_msg = space.send(self, id_message)
-        w_other_msg = space.send(w_other, id_message)
-        w_backtrace = space.send(self, id_backtrace)
-        w_other_bactrace = space.send(w_other, id_backtrace)
-
+        w_msg = space.send(self, "message")
+        w_backtrace = space.send(self, "backtrace")
         return space.newbool(
-            space.is_true(space.send(w_msg, id_eq, [w_other_msg]))
-            and space.is_true(space.send(w_backtrace, id_eq, [w_other_bactrace]))
+            space.is_true(space.send(w_msg, "==", [space.send(w_other, "message")])) and
+            space.is_true(space.send(w_backtrace, "==", [space.send(w_other, "backtrace")]))
         )
 
 

@@ -211,7 +211,7 @@ class Interpreter(object):
         space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_scope = frame.pop()
-        if space.is_true(space.send(w_scope, space.newsymbol("const_defined?"), [w_name])):
+        if space.is_true(space.send(w_scope, "const_defined?", [w_name])):
             frame.push(space.newstr_fromstr("constant"))
         else:
             frame.push(space.w_nil)
@@ -231,12 +231,12 @@ class Interpreter(object):
         scope = jit.promote(frame.lexical_scope)
         while scope is not None:
             w_mod = scope.w_mod
-            if space.is_true(space.send(w_mod, space.newsymbol("const_defined?"), [w_name])):
+            if space.is_true(space.send(w_mod, "const_defined?", [w_name])):
                 frame.push(space.newstr_fromstr("constant"))
                 break
             scope = scope.backscope
         else:
-            if space.is_true(space.send(space.w_object, space.newsymbol("const_defined?"), [w_name])):
+            if space.is_true(space.send(space.w_object, "const_defined?", [w_name])):
                 frame.push(space.newstr_fromstr("constant"))
             else:
                 frame.push(space.w_nil)
@@ -258,7 +258,7 @@ class Interpreter(object):
         space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
-        if space.is_true(space.send(w_obj, space.newsymbol("instance_variable_defined?"), [w_name])):
+        if space.is_true(space.send(w_obj, "instance_variable_defined?", [w_name])):
             frame.push(space.newstr_fromstr("instance-variable"))
         else:
             frame.push(space.w_nil)
@@ -282,7 +282,7 @@ class Interpreter(object):
         space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
-        if space.is_true(space.send(w_obj, space.newsymbol("class_variable_defined?"), [w_name])):
+        if space.is_true(space.send(w_obj, "class_variable_defined?", [w_name])):
             frame.push(space.newstr_fromstr("class variable"))
         else:
             frame.push(space.w_nil)
@@ -423,10 +423,10 @@ class Interpreter(object):
             frame.push(w_obj)
         else:
             space.getexecutioncontext().last_instr = pc
-            if space.respond_to(w_obj, space.newsymbol("to_a")):
-                w_res = space.send(w_obj, space.newsymbol("to_a"))
-            elif space.respond_to(w_obj, space.newsymbol("to_ary")):
-                w_res = space.send(w_obj, space.newsymbol("to_ary"))
+            if space.respond_to(w_obj, "to_a"):
+                w_res = space.send(w_obj, "to_a")
+            elif space.respond_to(w_obj, "to_ary"):
+                w_res = space.send(w_obj, "to_ary")
             else:
                 w_res = space.newarray([w_obj])
             if not isinstance(w_res, W_ArrayObject):
@@ -439,7 +439,7 @@ class Interpreter(object):
             frame.push(w_block)
         elif isinstance(w_block, W_ProcObject):
             frame.push(w_block)
-        elif space.respond_to(w_block, space.newsymbol("to_proc")):
+        elif space.respond_to(w_block, "to_proc"):
             space.getexecutioncontext().last_instr = pc
             # Proc implements to_proc, too, but MRI doesn't call it
             w_res = space.convert_type(w_block, space.w_proc, "to_proc")
@@ -515,7 +515,7 @@ class Interpreter(object):
         space.getexecutioncontext().last_instr = pc
         args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()
-        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
+        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w)
         frame.push(w_res)
 
     def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
@@ -527,7 +527,7 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
         frame.push(w_res)
 
     @jit.unroll_safe
@@ -544,7 +544,7 @@ class Interpreter(object):
             args_w[pos:pos + len(array_w)] = array_w
             pos += len(array_w)
         w_receiver = frame.pop()
-        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w)
+        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w)
         frame.push(w_res)
 
     @jit.unroll_safe
@@ -560,13 +560,13 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send(w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
         frame.push(w_res)
 
     def DEFINED_METHOD(self, space, bytecode, frame, pc, meth_idx):
         space.getexecutioncontext().last_instr = pc
         w_obj = frame.pop()
-        if space.respond_to(w_obj, bytecode.consts_w[meth_idx]):
+        if space.respond_to(w_obj, space.symbol_w(bytecode.consts_w[meth_idx])):
             frame.push(space.newstr_fromstr("method"))
         else:
             frame.push(space.w_nil)
@@ -580,7 +580,7 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
         frame.push(w_res)
 
     @jit.unroll_safe
@@ -596,7 +596,7 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, bytecode.consts_w[meth_idx], args_w, block=w_block)
+        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
         frame.push(w_res)
 
     def DEFINED_SUPER(self, space, bytecode, frame, pc, meth_idx):

@@ -175,8 +175,8 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("*")
     def method_times(self, space, w_other):
-        if space.respond_to(w_other, space.newsymbol("to_str")):
-            return space.send(self, space.newsymbol("join"), [w_other])
+        if space.respond_to(w_other, "to_str"):
+            return space.send(self, "join", [w_other])
         n = space.int_w(space.convert_type(w_other, space.w_fixnum, "to_int"))
         if n < 0:
             raise space.error(space.w_ArgumentError, "Count cannot be negative")
@@ -219,14 +219,14 @@ class W_ArrayObject(W_Object):
             return space.newstr_fromstr("")
         if w_sep is None:
             separator = ""
-        elif space.respond_to(w_sep, space.newsymbol("to_str")):
-            separator = space.str_w(space.send(w_sep, space.newsymbol("to_str")))
+        elif space.respond_to(w_sep, "to_str"):
+            separator = space.str_w(space.send(w_sep, "to_str"))
         else:
             raise space.error(space.w_TypeError,
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([
-            space.str_w(space.send(w_o, space.newsymbol("to_s")))
+            space.str_w(space.send(w_o, "to_s"))
             for w_o in self.items_w
         ]))
 
@@ -287,8 +287,8 @@ class W_ArrayObject(W_Object):
         template = Coerce.str(space, w_template)
         result = RPacker(template, space.listview(self)).operate(space)
         w_result = space.newstr_fromchars(result)
-        if space.is_true(space.send(w_template, space.newsymbol("tainted?"))):
-            space.send(w_result, space.newsymbol("taint"))
+        if space.is_true(space.send(w_template, "tainted?")):
+            space.send(w_result, "taint")
         return w_result
 
     @classdef.method("to_ary")
@@ -311,7 +311,7 @@ class W_ArrayObject(W_Object):
     @check_frozen()
     def method_sort_by_i(self, space, block):
         if block is None:
-            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("sort_by!")])
+            return space.send(self, "enum_for", [space.newsymbol("sort_by!")])
         RubySortBy(space, self.items_w, sortblock=block).sort()
         return self
 

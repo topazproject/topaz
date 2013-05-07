@@ -44,7 +44,7 @@ class UndefMethod(W_FunctionObject):
 
     def call(self, space, w_obj, args_w, block):
         args_w.insert(0, space.newsymbol(self.name))
-        return space.send(w_obj, space.newsymbol("method_missing"), args_w, block)
+        return space.send(w_obj, "method_missing", args_w, block)
 
 
 class DefineMethodBlock(W_FunctionObject):
@@ -79,8 +79,8 @@ class DefineMethodMethod(W_FunctionObject):
         self.w_unbound_method = w_unbound_method
 
     def call(self, space, w_obj, args_w, block):
-        w_bound_method = space.send(self.w_unbound_method, space.newsymbol("bind"), [w_obj])
-        return space.send(w_bound_method, space.newsymbol("call"), args_w, block)
+        w_bound_method = space.send(self.w_unbound_method, "bind", [w_obj])
+        return space.send(w_bound_method, "call", args_w, block)
 
 
 class W_ModuleObject(W_RootObject):
@@ -279,8 +279,8 @@ class W_ModuleObject(W_RootObject):
 
     def included(self, space, w_mod):
         self.descendants.append(w_mod)
-        if space.respond_to(self, space.newsymbol("included")):
-            space.send(self, space.newsymbol("included"), [w_mod])
+        if space.respond_to(self, "included"):
+            space.send(self, "included", [w_mod])
 
     def extend_object(self, space, w_obj, w_mod):
         if w_mod not in self.ancestors():
@@ -289,8 +289,8 @@ class W_ModuleObject(W_RootObject):
 
     def extended(self, space, w_obj, w_mod):
         self.descendants.append(w_mod)
-        if space.respond_to(self, space.newsymbol("extended")):
-            space.send(self, space.newsymbol("extended"), [w_obj])
+        if space.respond_to(self, "extended"):
+            space.send(self, "extended", [w_obj])
 
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
@@ -307,13 +307,13 @@ class W_ModuleObject(W_RootObject):
         pass
 
     def method_added(self, space, w_name):
-        space.send(self, space.newsymbol("method_added"), [w_name])
+        space.send(self, "method_added", [w_name])
 
     def method_undefined(self, space, w_name):
-        space.send(self, space.newsymbol("method_undefined"), [w_name])
+        space.send(self, "method_undefined", [w_name])
 
     def method_removed(self, space, w_name):
-        space.send(self, space.newsymbol("method_removed"), [w_name])
+        space.send(self, "method_removed", [w_name])
 
     def set_name_in_scope(self, space, name, w_scope):
         self.name = space.buildname(name, w_scope)
@@ -338,7 +338,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("initialize")
     def method_initialize(self, space, block):
         if block is not None:
-            space.send(self, space.newsymbol("module_exec"), [self], block)
+            space.send(self, "module_exec", [self], block)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -357,7 +357,7 @@ class W_ModuleObject(W_RootObject):
                 )
 
         for w_mod in reversed(args_w):
-            space.send(w_mod, space.newsymbol("append_features"), [self])
+            space.send(w_mod, "append_features", [self])
 
         return self
 
@@ -383,7 +383,7 @@ class W_ModuleObject(W_RootObject):
     def method_define_method(self, space, name, w_method=None, block=None):
         if w_method is not None:
             if space.is_kind_of(w_method, space.w_method):
-                w_method = space.send(w_method, space.newsymbol("unbind"))
+                w_method = space.send(w_method, "unbind")
 
             if space.is_kind_of(w_method, space.w_unbound_method):
                 self.define_method(space, name, DefineMethodMethod(name, w_method))
@@ -432,12 +432,12 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("private_class_method")
     def method_private_class_method(self, space, w_name):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, space.newsymbol("private"), [w_name])
+        return space.send(w_cls, "private", [w_name])
 
     @classdef.method("public_class_method")
     def method_public_class_method(self, space, w_name):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, space.newsymbol("public"), [w_name])
+        return space.send(w_cls, "public", [w_name])
 
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
@@ -584,13 +584,13 @@ class W_ModuleObject(W_RootObject):
     def method_lt(self, space, w_other):
         if self is w_other:
             return space.w_false
-        return space.send(self, space.newsymbol("<="), [w_other])
+        return space.send(self, "<=", [w_other])
 
     @classdef.method(">=")
     def method_gte(self, space, w_other):
         if not isinstance(w_other, W_ModuleObject):
             raise space.error(space.w_TypeError, "compared with non class/module")
-        return space.send(w_other, space.newsymbol("<="), [self])
+        return space.send(w_other, "<=", [self])
 
     @classdef.method(">")
     def method_gt(self, space, w_other):
@@ -598,7 +598,7 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_TypeError, "compared with non class/module")
         if self is w_other:
             return space.w_false
-        return space.send(w_other, space.newsymbol("<="), [self])
+        return space.send(w_other, "<=", [self])
 
     @classdef.method("<=>")
     def method_comparison(self, space, w_other):
@@ -608,7 +608,7 @@ class W_ModuleObject(W_RootObject):
         if self is w_other:
             return space.newint(0)
 
-        other_is_subclass = space.send(self, space.newsymbol("<"), [w_other])
+        other_is_subclass = space.send(self, "<", [w_other])
 
         if space.is_true(other_is_subclass):
             return space.newint(-1)

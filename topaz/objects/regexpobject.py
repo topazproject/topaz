@@ -95,7 +95,7 @@ class W_RegexpObject(W_Object):
             if w_match is None:
                 return space.w_nil
             else:
-                return space.send(w_match, space.newsymbol("[]"), [space.newint(n)])
+                return space.send(w_match, "[]", [space.newint(n)])
         return getter
 
     @staticmethod
@@ -104,9 +104,9 @@ class W_RegexpObject(W_Object):
         if w_match is None:
             return space.w_nil
         else:
-            w_size = space.send(w_match, space.newsymbol("size"))
-            w_last = space.send(w_size, space.newsymbol("-"), [space.newint(1)])
-            return space.send(w_match, space.newsymbol("[]"), [w_last])
+            w_size = space.send(w_match, "size")
+            w_last = space.send(w_size, "-", [space.newint(1)])
+            return space.send(w_match, "[]", [w_last])
 
     @staticmethod
     def _get_pre_match(space):
@@ -114,7 +114,7 @@ class W_RegexpObject(W_Object):
         if w_match is None:
             return space.w_nil
         else:
-            return space.send(w_match, space.newsymbol("pre_match"))
+            return space.send(w_match, "pre_match")
 
     @staticmethod
     def _get_post_match(space):
@@ -122,7 +122,7 @@ class W_RegexpObject(W_Object):
         if w_match is None:
             return space.w_nil
         else:
-            return space.send(w_match, space.newsymbol("post_match"))
+            return space.send(w_match, "post_match")
 
     def _check_initialized(self, space):
         if self.source is None:
@@ -159,8 +159,8 @@ class W_RegexpObject(W_Object):
 
     @classdef.singleton_method("compile")
     def method_compile(self, space, args_w):
-        w_obj = space.send(self, space.newsymbol("allocate"), args_w)
-        return space.send(w_obj, space.newsymbol("initialize"), args_w)
+        w_obj = space.send(self, "allocate", args_w)
+        return space.send(w_obj, "initialize", args_w)
 
     @classdef.method("initialize", flags="int")
     def method_initialize(self, space, w_source, flags=0):
@@ -292,7 +292,7 @@ class W_MatchDataObject(W_Object):
     def method_to_a(self, space):
         res_w = []
         for i in xrange(self.size()):
-            res_w.append(space.send(self, space.newsymbol("[]"), [space.newint(i)]))
+            res_w.append(space.send(self, "[]", [space.newint(i)]))
         return space.newarray(res_w)
 
     @classdef.method("begin", n="int")
@@ -333,7 +333,5 @@ class W_MatchDataObject(W_Object):
     @classdef.method("values_at")
     def method_values_at(self, space, args_w):
         return space.send(
-            space.send(self, space.newsymbol("to_a")),
-            space.newsymbol("values_at"),
-            args_w
+            space.send(self, "to_a"), "values_at", args_w
         )

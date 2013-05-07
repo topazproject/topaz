@@ -21,7 +21,7 @@ class W_RangeObject(W_Object):
     def method_initialize(self, space, w_start, w_end, excl=False):
         if self.w_start is not None or self.w_end is not None:
             raise space.error(space.w_NameError, "`initialize' called twice")
-        if space.send(w_start, space.newsymbol("<=>"), [w_end]) is space.w_nil:
+        if space.send(w_start, "<=>", [w_end]) is space.w_nil:
             raise space.error(space.w_ArgumentError, "bad value for range")
 
         self.w_start = w_start

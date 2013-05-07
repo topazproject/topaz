@@ -50,7 +50,7 @@ class StringFormatter(object):
         return space.newstr_fromstr((width - len(num)) * "0" + num)
 
     def fmt_s(self, space, w_item, width):
-        return space.send(w_item, space.newsymbol("to_s"))
+        return space.send(w_item, "to_s")
 
     def fmt_d(self, space, w_item, width):
         num = space.int_w(w_item)
