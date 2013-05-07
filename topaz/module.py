@@ -57,6 +57,19 @@ class ClassDef(object):
             raise space.error(space.w_TypeError, "allocator undefined for %s" % self.name)
         return method_allocate
 
+    def undefine_singleton_class(self):
+        @self.method("singleton_class")
+        def method_singleton_class(self, space):
+            raise space.error(space.w_TypeError, "can't define singleton")
+        return method_singleton_class
+
+    def undefine_attach_method(self):
+        def attach_method(self, space, name, func):
+            raise space.error(space.w_TypeError,
+                "can't define singleton method \"%s\" for %s" % (name, space.getclass(self).name)
+            )
+        return attach_method
+
     def notimplemented(self, name):
         @self.method(name)
         def method(self, space):
