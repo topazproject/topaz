@@ -23,6 +23,9 @@ class W_SymbolObject(W_Object):
     def str_w(self, space):
         return self.symbol
 
+    def getsingletonclass(self, space):
+        return self
+
     @classdef.singleton_method("all_symbols")
     def singleton_method_all_symbols(self, space):
         return space.newarray(space.symbol_cache.values())

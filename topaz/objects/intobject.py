@@ -59,6 +59,9 @@ class W_FixnumObject(W_RootObject):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
         storage.set_instance_var(space, name, w_value)
 
+    def getsingletonclass(self, space):
+        return self
+
     attach_method = classdef.undefine_attach_method()
 
     method_singleton_class = classdef.undefine_singleton_class()
