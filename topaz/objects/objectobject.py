@@ -98,6 +98,19 @@ class W_BaseObject(W_Root):
         else:
             return space.invoke_block(block.copy(space, w_self=self), [])
 
+    @classdef.method("instance_exec")
+    def method_instance_exec(self, space, args_w, block):
+        if block is None:
+            raise space.error(space.w_LocalJumpError, "no block given")
+        return space.invoke_block(
+            block.copy(
+                space,
+                w_self=self,
+                lexical_scope=StaticScope(self, None)
+            ),
+            args_w
+        )
+
     @classdef.method("singleton_method_removed")
     def method_singleton_method_removed(self, space, w_name):
         return space.w_nil
