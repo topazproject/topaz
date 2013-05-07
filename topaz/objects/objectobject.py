@@ -118,7 +118,7 @@ class W_BaseObject(W_Root):
             block.copy(
                 space,
                 w_self=self,
-                lexical_scope=StaticScope(space.getsingletonclass(self), None)
+                lexical_scope=StaticScope(space.getsingletonclass(self), block.lexical_scope)
             ),
             args_w
         )
