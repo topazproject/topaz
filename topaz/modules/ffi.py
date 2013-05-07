@@ -14,36 +14,39 @@ class FFI(object):
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
         space.set_const(w_mod, 'Type', space.newclass('Type', None))
-        # TODO: LONG and ULONG ommited,
-        #       since clibffi doesn't have slong or ulong
         ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
         ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)
-        typenames = ['VOID', 'INT8', 'UINT8', 'INT16', 'UINT16', 'INT32',
-                     'UINT32', 'INT64', 'UINT64', 'LONG', 'ULONG', 'FLOAT32',
-                     'FLOAT64', 'LONGDOUBLE', 'POINTER', 'STRING', 'BUFFER_IN',
-                     'BUFFER_OUT', 'BUFFER_INOUT', 'BOOL', 'VARARGS']
-        ffitypes = ([clibffi.ffi_type_void, clibffi.ffi_type_sint8,
-                     clibffi.ffi_type_uint8, clibffi.ffi_type_sint16,
-                     clibffi.ffi_type_uint16, clibffi.ffi_type_sint32,
-                     clibffi.ffi_type_uint32, clibffi.ffi_type_sint64,
-                     clibffi.ffi_type_uint64, ffi_type_long, ffi_type_ulong,
-                     clibffi.ffi_type_float, clibffi.ffi_type_double,
-                     clibffi.ffi_type_longdouble] +
-                     5*[clibffi.ffi_type_pointer] +
-                     [clibffi.ffi_type_uchar, clibffi.ffi_type_void])
-        assert len(typenames) == len(ffitypes)
-        typealias = [('INT8', 'SCHAR'), ('INT8', 'CHAR'), ('UINT8', 'UCHAR'),
-                     ('INT16', 'SHORT'), ('INT16', 'SSHORT'),
-                     ('UINT16', 'USHORT'), ('INT32', 'INT'), ('INT32', 'SINT'),
-                     ('UINT32', 'UINT'), ('INT64', 'LONG_LONG'),
-                     ('LONG', 'SLONG'), ('INT64', 'SLONG_LONG'),
-                     ('UINT64', 'ULONG_LONG'), ('FLOAT32', 'FLOAT'),
-                     ('FLOAT64', 'DOUBLE')]
-        for tn in typenames:
-            space.set_const(w_mod, 'TYPE_' + tn, space.w_nil)
+        ffitypes = {'VOID':clibffi.ffi_type_void,
+                    'INT8': clibffi.ffi_type_sint8,
+                    'UINT8': clibffi.ffi_type_uint8,
+                    'INT16': clibffi.ffi_type_sint16,
+                    'UINT16': clibffi.ffi_type_uint16,
+                    'INT32': clibffi.ffi_type_sint32,
+                    'UINT32': clibffi.ffi_type_uint32,
+                    'INT64': clibffi.ffi_type_sint64,
+                    'UINT64': clibffi.ffi_type_uint64,
+                    'LONG': ffi_type_long,
+                    'ULONG': ffi_type_ulong,
+                    'FLOAT32': clibffi.ffi_type_float,
+                    'FLOAT64': clibffi.ffi_type_double,
+                    'LONGDOUBLE': clibffi.ffi_type_longdouble,
+                    'POINTER': clibffi.ffi_type_pointer,
+                    'BOOL': clibffi.ffi_type_uchar}
+        typealiases = {'SCHAR': 'INT8', 'CHAR': 'INT8', 'UCHAR': 'UINT8',
+                       'SHORT': 'INT16', 'SSHORT': 'INT16',
+                       'USHORT': 'UINT16', 'INT': 'INT32', 'SINT': 'INT32',
+                       'UINT': 'UINT32', 'LONG_LONG': 'INT64',
+                       'SLONG': 'LONG', 'SLONG_LONG': 'INT64',
+                       'ULONG_LONG': 'UINT64', 'FLOAT': 'FLOAT32',
+                       'DOUBLE': 'FLOAT64', 'STRING': 'POINTER',
+                       'BUFFER_IN': 'POINTER', 'BUFFER_OUT': 'POINTER',
+                       'BUFFER_INOUT': 'POINTER', 'VARARGS': 'VOID'}
         rbffi_type_class = space.find_const(w_mod, 'Type')
-        for tn, ft in zip(typenames, ffitypes):
-            space.set_const(rbffi_type_class, tn, space.w_nil)
-        for name, aka in typealias:
-            ffitype = space.find_const(rbffi_type_class, name)
+        for typename in ffitypes:
+            space.set_const(w_mod, 'TYPE_' + typename, space.w_nil)
+            # using space.w_nil for now, should be something with
+            # ffitypes[typename] later.
+            space.set_const(rbffi_type_class, typename, space.w_nil)
+        for aka in typealiases:
+            ffitype = space.find_const(rbffi_type_class, typealiases[aka])
             space.set_const(rbffi_type_class, aka, ffitype)
