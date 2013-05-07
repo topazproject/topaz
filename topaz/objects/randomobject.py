@@ -19,7 +19,7 @@ class W_RandomObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        default = space.send(w_cls, space.newsymbol("new"))
+        default = space.send(w_cls, "new")
         space.set_const(w_cls, "DEFAULT", default)
 
     @classdef.singleton_method("allocate", seed="int")
@@ -62,20 +62,20 @@ class W_RandomObject(W_Object):
     @classdef.singleton_method("rand")
     def method_singleton_rand(self, space, args_w):
         default = space.find_const(self, "DEFAULT")
-        return space.send(default, space.newsymbol("rand"), args_w)
+        return space.send(default, "rand", args_w)
 
     def _rand_range(self, space, range):
         random = self.random.random()
-        first = space.send(range, space.newsymbol("first"))
-        last = space.send(range, space.newsymbol("last"))
-        if space.is_true(space.send(range, space.newsymbol("include?"), [last])):
-            last = space.send(last, space.newsymbol("+"), [space.newint(1)])
-        diff = space.send(last, space.newsymbol("-"), [first])
-        offset = space.send(diff, space.newsymbol("*"), [space.newfloat(random)])
-        choice = space.send(offset, space.newsymbol("+"), [first])
+        first = space.send(range, "first")
+        last = space.send(range, "last")
+        if space.is_true(space.send(range, "include?", [last])):
+            last = space.send(last, "+", [space.newint(1)])
+        diff = space.send(last, "-", [first])
+        offset = space.send(diff, "*", [space.newfloat(random)])
+        choice = space.send(offset, "+", [first])
         if (not space.is_kind_of(first, space.w_float) and
             not space.is_kind_of(last, space.w_float)):
-            choice = space.send(choice, space.newsymbol("to_i"))
+            choice = space.send(choice, "to_i")
         return choice
 
     def _rand_float(self, space, float):

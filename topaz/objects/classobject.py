@@ -73,24 +73,24 @@ class W_ClassObject(W_ModuleObject):
 
     def inherited(self, space, w_mod):
         self.descendants.append(w_mod)
-        if not space.bootstrap and space.respond_to(self, space.newsymbol("inherited")):
-            space.send(self, space.newsymbol("inherited"), [w_mod])
+        if not space.bootstrap and space.respond_to(self, "inherited"):
+            space.send(self, "inherited", [w_mod])
 
     def method_removed(self, space, w_name):
         if self.is_singleton:
-            space.send(self.attached, space.newsymbol("singleton_method_removed"), [w_name])
+            space.send(self.attached, "singleton_method_removed", [w_name])
         else:
             W_ModuleObject.method_removed(self, space, w_name)
 
     def method_added(self, space, w_name):
         if self.is_singleton:
-            space.send(self.attached, space.newsymbol("singleton_method_added"), [w_name])
+            space.send(self.attached, "singleton_method_added", [w_name])
         else:
             W_ModuleObject.method_added(self, space, w_name)
 
     def method_undefined(self, space, w_name):
         if self.is_singleton:
-            space.send(self.attached, space.newsymbol("singleton_method_undefined"), [w_name])
+            space.send(self.attached, "singleton_method_undefined", [w_name])
         else:
             W_ModuleObject.method_undefined(self, space, w_name)
 
@@ -100,8 +100,8 @@ class W_ClassObject(W_ModuleObject):
 
     @classdef.method("new")
     def method_new(self, space, args_w, block):
-        w_obj = space.send(self, space.newsymbol("allocate"), args_w, block)
-        space.send(w_obj, space.newsymbol("initialize"), args_w, block)
+        w_obj = space.send(self, "allocate", args_w, block)
+        space.send(w_obj, "initialize", args_w, block)
         return w_obj
 
     @classdef.method("allocate")
@@ -124,7 +124,7 @@ class W_ClassObject(W_ModuleObject):
         self.superclass = w_superclass
         self.superclass.inherited(space, self)
         self.getsingletonclass(space)
-        space.send_super(space.getclassfor(W_ClassObject), self, space.newsymbol("initialize"), [], block=block)
+        space.send_super(space.getclassfor(W_ClassObject), self, "initialize", [], block=block)
 
     @classdef.method("superclass")
     def method_superclass(self, space):
