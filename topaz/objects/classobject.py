@@ -110,6 +110,8 @@ class W_ClassObject(W_ModuleObject):
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_superclass=None, block=None):
+        if self.superclass is not None or self is space.w_basicobject:
+            raise space.error(space.w_TypeError, "already initialized class")
         if w_superclass is not None:
             if not isinstance(w_superclass, W_ClassObject):
                 raise space.error(space.w_TypeError,
