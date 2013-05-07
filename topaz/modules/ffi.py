@@ -28,8 +28,17 @@ class FFI(object):
                      clibffi.ffi_type_double, clibffi.ffi_type_longdouble] +
                      4*[clibffi.ffi_type_pointer] +
                      [clibffi.ffi_type_uchar, clibffi.ffi_type_void])
+        typealias = [('INT8', 'SCHAR'), ('INT8', 'CHAR'), ('UINT8', 'UCHAR'),
+                     ('INT16', 'SHORT'), ('INT16', 'SSHORT'),
+                     ('UINT16', 'USHORT'), ('INT32', 'INT'), ('INT32', 'SINT'),
+                     ('UINT32', 'UINT'), ('INT64', 'LONG_LONG'),
+                     ('INT64', 'SLONG_LONG'), ('UINT64', 'ULONG_LONG'),
+                     ('FLOAT32', 'FLOAT'), ('FLOAT64', 'DOUBLE')]
         for tn in typenames:
             space.set_const(w_mod, 'TYPE_' + tn, space.w_nil)
+        rbffi_type_class = space.find_const(w_mod, 'Type')
         for tn, ft in zip(typenames, ffitypes):
-            rbffi_type_class = space.find_const(w_mod, 'Type')
             space.set_const(rbffi_type_class, tn, space.w_nil)
+        for name, aka in typealias:
+            ffitype = space.find_const(rbffi_type_class, name)
+            space.set_const(rbffi_type_class, aka, ffitype)
