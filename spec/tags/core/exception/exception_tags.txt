@@ -4,5 +4,4 @@ fails:Exception is a superclass of SignalException
 fails:Exception is a superclass of Interrupt
 fails:Exception is a superclass of SecurityError
 fails:Exception is a superclass of EncodingError
-fails:Exception#exception returns self when passed self as an argument
 fails:Exception#exception returns an exception of the same class as self with the message given as argument, but without reinitializing
