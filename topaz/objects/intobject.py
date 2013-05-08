@@ -51,9 +51,6 @@ class W_FixnumObject(W_RootObject):
     def float_w(self, space):
         return float(self.intvalue)
 
-    def getsingletonclass(self, space):
-        raise space.error(space.w_TypeError, "can't define singleton")
-
     def find_instance_var(self, space, name):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
         return storage.find_instance_var(space, name)
