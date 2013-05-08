@@ -30,11 +30,11 @@ class TestFFI(BaseTopazTest):
             w_type.find_const(space, space.newsymbol(pt))
 
     def test_DataConverter(self, space):
-        w_data_converter = space.execute('FFI::DataConverter')
-        assert isinstance(w_data_converter, W_ModuleObject)
-        w_func = w_data_converter.find_method(space, space.newsymbol('native_type'))
+        w_dc = space.execute('FFI::DataConverter')
+        assert isinstance(w_dc, W_ModuleObject)
+        w_func = w_dc.find_method(space, space.newsymbol('native_type'))
         assert isinstance(w_func, W_FunctionObject)
-        w_func = w_data_converter.find_method(space, space.newsymbol('to_native'))
+        w_func = w_dc.find_method(space, space.newsymbol('to_native'))
         assert isinstance(w_func, W_FunctionObject)
-        w_func = w_data_converter.find_method(space, space.newsymbol('from_native'))
+        w_func = w_dc.find_method(space, space.newsymbol('from_native'))
         assert isinstance(w_func, W_FunctionObject)
