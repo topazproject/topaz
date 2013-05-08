@@ -55,12 +55,12 @@ class FFI(object):
                        'DOUBLE': 'FLOAT64', 'STRING': 'POINTER',
                        'BUFFER_IN': 'POINTER', 'BUFFER_OUT': 'POINTER',
                        'BUFFER_INOUT': 'POINTER', 'VARARGS': 'VOID'}
-        rbffi_type_class = space.find_const(w_mod, 'Type')
+        w_ffi_type_cls = space.find_const(w_mod, 'Type')
         for typename in ffitypes:
             space.set_const(w_mod, 'TYPE_' + typename, space.w_nil)
             # using space.w_nil for now, should be something with
             # ffitypes[typename] later.
-            space.set_const(rbffi_type_class, typename, space.w_nil)
+            space.set_const(w_ffi_type_cls, typename, space.w_nil)
         for aka in typealiases:
-            ffitype = space.find_const(rbffi_type_class, typealiases[aka])
-            space.set_const(rbffi_type_class, aka, ffitype)
+            ffitype = space.find_const(w_ffi_type_cls, typealiases[aka])
+            space.set_const(w_ffi_type_cls, aka, ffitype)
