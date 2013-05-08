@@ -3,7 +3,6 @@ from topaz.modules.ffi import FFI
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
-from topaz.objects.functionobject import W_FunctionObject
 
 class TestFFI(BaseTopazTest):
 
@@ -40,9 +39,9 @@ class TestFFI(BaseTopazTest):
     def test_DataConverter(self, space):
         w_dc = space.execute('FFI::DataConverter')
         assert isinstance(w_dc, W_ModuleObject)
-        w_func = w_dc.find_method(space, space.newsymbol('native_type'))
-        assert isinstance(w_func, W_FunctionObject)
-        w_func = w_dc.find_method(space, space.newsymbol('to_native'))
-        assert isinstance(w_func, W_FunctionObject)
-        w_func = w_dc.find_method(space, space.newsymbol('from_native'))
-        assert isinstance(w_func, W_FunctionObject)
+        w_res = space.execute('FFI::DataConverter.native_type')
+        assert w_res == space.w_nil
+        w_res = space.execute('FFI::DataConverter.to_native')
+        assert w_res == space.w_nil
+        w_res = space.execute('FFI::DataConverter.from_native')
+        assert w_res == space.w_nil
