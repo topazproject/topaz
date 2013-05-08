@@ -24,9 +24,12 @@ class FFI(object):
                                              w_mock_bytecode, {})
         w_func_from_native = space.newfunction(space.newsymbol('from_native'),
                                                w_mock_bytecode, {})
-        w_dt.define_method(space, 'native_type', w_func_native_type)
-        w_dt.define_method(space, 'to_native', w_func_to_native)
-        w_dt.define_method(space, 'from_native', w_func_from_native)
+        w_dt.define_method(space, space.newsymbol('native_type'),
+                           w_func_native_type)
+        w_dt.define_method(space, space.newsymbol('to_native'),
+                           w_func_to_native)
+        w_dt.define_method(space, space.newsymbol('from_native'),
+                           w_func_from_native)
 
         ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
         ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)
