@@ -11,6 +11,12 @@ class TestFFI(BaseTopazTest):
                         'INT32', 'UINT32', 'INT64', 'UINT64',
                         'LONG', 'ULONG', 'FLOAT32', 'FLOAT64',
                         'VOID', 'LONGDOUBLE', 'POINTER', 'BOOL']
+    alias_types = ['SCHAR', 'CHAR', 'UCHAR',
+                   'SHORT', 'SSHORT', 'USHORT',
+                   'INT', 'SINT', 'UINT',
+                   'LONG_LONG', 'SLONG', 'SLONG_LONG', 'ULONG_LONG',
+                   'FLOAT', 'DOUBLE', 'STRING',
+                   'BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT', 'VARARGS']
 
     def test_basic(self, space):
         w_type_defs = space.execute('FFI::TypeDefs')
@@ -27,7 +33,9 @@ class TestFFI(BaseTopazTest):
         w_type = space.execute('FFI::Type')
         assert isinstance(w_type, W_ClassObject)
         for pt in TestFFI.primitive_types:
-            w_type.find_const(space, space.newsymbol(pt))
+            space.execute('FFI::Type::%s' %pt)
+        for at in TestFFI.alias_types:
+            space.execute('FFI::Type::%s' %at)
 
     def test_DataConverter(self, space):
         w_dc = space.execute('FFI::DataConverter')
