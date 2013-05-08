@@ -18,7 +18,7 @@ class FFI(object):
         md_DataConverter = ModuleDef('DataConverter', filepath=__file__)
 
         @md_DataConverter.function('native_type')
-        def native_type(self, space): pass
+        def native_type(self, space, args_w): pass
 
         @md_DataConverter.function('to_native')
         def to_native(self, space): pass

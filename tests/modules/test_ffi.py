@@ -39,7 +39,7 @@ class TestFFI(BaseTopazTest):
     def test_DataConverter(self, space):
         w_dc = space.execute('FFI::DataConverter')
         assert isinstance(w_dc, W_ModuleObject)
-        w_res = space.execute('FFI::DataConverter.native_type')
+        w_res = space.execute('FFI::DataConverter.native_type(0)')
         assert w_res == space.w_nil
         w_res = space.execute('FFI::DataConverter.to_native')
         assert w_res == space.w_nil
