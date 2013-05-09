@@ -375,10 +375,18 @@ class Interpreter(object):
                     "wrong argument type %s (expected Class)" % cls_name
                 )
             assert isinstance(superclass, W_ClassObject)
+            if superclass.is_singleton:
+                raise space.error(space.w_TypeError, "can't make subclass of singleton class")
             w_cls = space.newclass(name, superclass, w_scope=w_scope)
             space.set_const(w_scope, name, w_cls)
         elif not space.is_kind_of(w_cls, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a class" % name)
+        else:
+            assert isinstance(w_cls, W_ClassObject)
+            if superclass is not space.w_nil and w_cls.superclass is not superclass:
+                raise space.error(space.w_TypeError,
+                    "superclass mismatch for class %s" % w_cls.name
+                )
 
         frame.push(w_cls)
 
