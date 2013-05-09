@@ -152,7 +152,8 @@ class W_RootObject(W_BaseObject):
                 space.w_TypeError,
                 "wrong argument type %s (expected Module)" % name
             )
-        self.getsingletonclass(space).extend_object(space, self, w_mod)
+        space.send(w_mod, "extend_object", [self])
+        space.send(w_mod, "extended", [self])
 
     @classdef.method("inspect")
     def method_inspect(self, space):

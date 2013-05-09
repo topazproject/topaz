@@ -282,15 +282,10 @@ class W_ModuleObject(W_RootObject):
         if space.respond_to(self, "included"):
             space.send(self, "included", [w_mod])
 
-    def extend_object(self, space, w_obj, w_mod):
-        if w_mod not in self.ancestors():
-            self.included_modules = [w_mod] + self.included_modules
-            w_mod.extended(space, w_obj, self)
-
-    def extended(self, space, w_obj, w_mod):
-        self.descendants.append(w_mod)
-        if space.respond_to(self, "extended"):
-            space.send(self, "extended", [w_obj])
+    def extend_object(self, space, w_mod):
+        if self not in w_mod.ancestors():
+            self.descendants.append(w_mod)
+            w_mod.included_modules = [self] + w_mod.included_modules
 
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
@@ -456,6 +451,10 @@ class W_ModuleObject(W_RootObject):
     def method_extended(self, space, w_mod):
         # TODO: should be private
         pass
+
+    @classdef.method("extend_object")
+    def method_extend_object(self, space, w_obj):
+        self.extend_object(space, space.getsingletonclass(w_obj))
 
     @classdef.method("name")
     def method_name(self, space):
