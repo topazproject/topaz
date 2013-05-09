@@ -382,7 +382,8 @@ class Interpreter(object):
         elif not space.is_kind_of(w_cls, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a class" % name)
         else:
-            if superclass is not space.w_nil and  w_cls.superclass is not superclass:
+            assert isinstance(w_cls, W_ClassObject)
+            if superclass is not space.w_nil and w_cls.superclass is not superclass:
                 raise space.error(space.w_TypeError,
                     "superclass mismatch for class %s" % w_cls.name
                 )
