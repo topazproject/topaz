@@ -517,6 +517,8 @@ class Interpreter(object):
 
     def LOAD_SINGLETON_CLASS(self, space, bytecode, frame, pc):
         w_obj = frame.pop()
+        if space.is_kind_of(w_obj, space.w_symbol) or space.is_kind_of(w_obj, space.w_fixnum):
+            raise space.error(space.w_TypeError, "can't define singleton")
         frame.push(space.getsingletonclass(w_obj))
 
     def SEND(self, space, bytecode, frame, pc, meth_idx, num_args):
