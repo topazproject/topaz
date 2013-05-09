@@ -27,6 +27,7 @@ class W_SymbolObject(W_Object):
     def singleton_method_all_symbols(self, space):
         return space.newarray(space.symbol_cache.values())
 
+    @classdef.method("extend")
     @classdef.method("singleton_class")
     def method_singleton_class(self, space):
         raise space.error(space.w_TypeError, "can't define singleton")

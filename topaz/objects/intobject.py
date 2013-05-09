@@ -59,6 +59,7 @@ class W_FixnumObject(W_RootObject):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
         storage.set_instance_var(space, name, w_value)
 
+    @classdef.method("extend")
     @classdef.method("singleton_class")
     def method_singleton_class(self, space):
         raise space.error(space.w_TypeError, "can't define singleton")
