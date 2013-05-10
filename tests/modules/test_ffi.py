@@ -53,3 +53,7 @@ class TestFFI(BaseTopazTest):
         assert w_res == space.w_nil
         w_res = space.execute('FFI::DataConverter.from_native')
         assert w_res == space.w_nil
+
+    def test_DynamicLibrary(self, space):
+        w_res = space.execute('FFI::DynamicLibrary')
+        assert w_res == space.w_nil
