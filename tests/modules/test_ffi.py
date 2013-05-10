@@ -28,6 +28,9 @@ class TestFFI(BaseTopazTest):
         for pt in TestFFI.primitive_types:
             space.execute('FFI::TYPE_%s' % pt)
 
+    #def test_Mapped(self, space):
+    #    space.execute("Mapped.new(42)")
+
     def test_Type(self, space):
         w_type = space.execute('FFI::Type')
         assert isinstance(w_type, W_ClassObject)
@@ -39,6 +42,7 @@ class TestFFI(BaseTopazTest):
         assert isinstance(w_mapped, W_ClassObject)
         w_res = space.execute('FFI::Type::Mapped.respond_to? :method_missing')
         assert self.unwrap(space, w_res)
+        w_res = space.execute('FFI::Type::Mapped.new(42)')
 
     def test_DataConverter(self, space):
         w_dc = space.execute('FFI::DataConverter')

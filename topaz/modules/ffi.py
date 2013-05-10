@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from topaz.module import ModuleDef, ClassDef
-from topaz.objects.objectobject import W_RootObject
+from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 
 from rpython.rlib import clibffi, rarithmetic
@@ -31,14 +31,15 @@ class FFI(object):
         space.set_const(w_mod, 'DataConverter',
                         space.getmoduleobject(md_DataConverter))
 
-        cd_Mapped = ClassDef('Mapped',
-                             superclassdef=W_RootObject.classdef,
-                             filepath=__file__)
-        cd_Mapped.cls = 'Mapped'
-
+        w_mapped = space.execute("""
+                                 class Mapped
+                                   def initialize(arg)
+                                   end
+                                 end
+                                 Mapped
+                                 """)
         space.set_const(w_type, 'Mapped',
-                        space.getclassobject(cd_Mapped))
-        w_mapped = space.find_const(w_type, 'Mapped')
+                        w_mapped)
 
         ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
         ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)
