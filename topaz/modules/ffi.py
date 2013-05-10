@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from topaz.module import ModuleDef, ClassDef
+from topaz.objects.objectobject import W_RootObject
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 
 from rpython.rlib import clibffi, rarithmetic
@@ -14,6 +15,7 @@ class FFI(object):
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
         space.set_const(w_mod, 'Type', space.newclass('Type', None))
+        w_type = space.find_const(w_mod, 'Type')
 
         md_DataConverter = ModuleDef('DataConverter', filepath=__file__)
 
@@ -28,6 +30,15 @@ class FFI(object):
 
         space.set_const(w_mod, 'DataConverter',
                         space.getmoduleobject(md_DataConverter))
+
+        cd_Mapped = ClassDef('Mapped',
+                             superclassdef=W_RootObject.classdef,
+                             filepath=__file__)
+        cd_Mapped.cls = 'Mapped'
+
+        space.set_const(w_type, 'Mapped',
+                        space.getclassobject(cd_Mapped))
+        w_mapped = space.find_const(w_type, 'Mapped')
 
         ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
         ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)

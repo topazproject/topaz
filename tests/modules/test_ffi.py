@@ -35,6 +35,10 @@ class TestFFI(BaseTopazTest):
             space.execute('FFI::Type::%s' %pt)
         for at in TestFFI.alias_types:
             space.execute('FFI::Type::%s' %at)
+        w_mapped = space.execute('FFI::Type::Mapped')
+        assert isinstance(w_mapped, W_ClassObject)
+        w_res = space.execute('FFI::Type::Mapped.respond_to? :method_missing')
+        assert self.unwrap(space, w_res)
 
     def test_DataConverter(self, space):
         w_dc = space.execute('FFI::DataConverter')
