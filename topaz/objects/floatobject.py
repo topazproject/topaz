@@ -84,7 +84,7 @@ class W_FloatObject(W_NumericObject):
         if math.isnan(self.floatvalue) or math.isinf(self.floatvalue):
             raise space.error(
                 space.w_FloatDomainError,
-                space.str_w(space.send(self, space.newsymbol("to_s")))
+                space.str_w(space.send(self, "to_s"))
             )
         return self.float_to_w_int(space, self.floatvalue)
 
@@ -137,7 +137,7 @@ class W_FloatObject(W_NumericObject):
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "==")
         except RubyError as e:
             if isinstance(e.w_value, W_ArgumentError):
-                return space.send(w_other, space.newsymbol("=="), [self])
+                return space.send(w_other, "==", [self])
             else:
                 raise
 

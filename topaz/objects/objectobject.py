@@ -46,7 +46,7 @@ class W_BaseObject(W_Root):
 
     def find_const(self, space, name):
         raise space.error(space.w_TypeError,
-            "%s is not a class/module" % space.str_w(space.send(self, space.newsymbol("inspect")))
+            "%s is not a class/module" % space.str_w(space.send(self, "inspect"))
         )
     find_included_const = find_local_const = find_const
 
@@ -61,8 +61,7 @@ class W_BaseObject(W_Root):
     @classdef.method("method_missing")
     def method_method_missing(self, space, w_name, args_w):
         name = space.symbol_w(w_name)
-        class_name = space.str_w(space.send(self.getclass(space),
-            space.newsymbol("to_s")))
+        class_name = space.str_w(space.send(self.getclass(space), "to_s"))
         raise space.error(space.w_NoMethodError,
             "undefined method `%s' for %s" % (name, class_name)
         )
@@ -79,12 +78,12 @@ class W_BaseObject(W_Root):
     @classdef.method("!=")
     def method_ne(self, space, w_other):
         return space.newbool(
-            not space.is_true(space.send(self, space.newsymbol("=="), [w_other]))
+            not space.is_true(space.send(self, "==", [w_other]))
         )
 
     @classdef.method("__send__", method="str")
     def method_send(self, space, method, args_w, block):
-        return space.send(self, space.newsymbol(method), args_w, block)
+        return space.send(self, method, args_w, block)
 
     @classdef.method("instance_eval", string="str", filename="str")
     def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
@@ -103,6 +102,27 @@ class W_BaseObject(W_Root):
     def method_singleton_method_removed(self, space, w_name):
         return space.w_nil
 
+    @classdef.method("singleton_method_added")
+    def method_singleton_method_added(self, space, w_name):
+        return space.w_nil
+
+    @classdef.method("singleton_method_undefined")
+    def method_singleton_method_undefined(self, space, w_name):
+        return space.w_nil
+
+    @classdef.method("instance_exec")
+    def method_instance_exec(self, space, args_w, block):
+        if block is None:
+            raise space.error(space.w_LocalJumpError, "no block given")
+        return space.invoke_block(
+            block.copy(
+                space,
+                w_self=self,
+                lexical_scope=StaticScope(space.getsingletonclass(self), block.lexical_scope)
+            ),
+            args_w
+        )
+
 
 class W_RootObject(W_BaseObject):
     _attrs_ = []
@@ -115,7 +135,7 @@ class W_RootObject(W_BaseObject):
 
     @classdef.method("object_id")
     def method_object_id(self, space):
-        return space.send(self, space.newsymbol("__id__"))
+        return space.send(self, "__id__")
 
     @classdef.method("singleton_class")
     def method_singleton_class(self, space):
@@ -132,11 +152,12 @@ class W_RootObject(W_BaseObject):
                 space.w_TypeError,
                 "wrong argument type %s (expected Module)" % name
             )
-        self.getsingletonclass(space).extend_object(space, self, w_mod)
+        space.send(w_mod, "extend_object", [self])
+        space.send(w_mod, "extended", [self])
 
     @classdef.method("inspect")
     def method_inspect(self, space):
-        return space.send(self, space.newsymbol("to_s"))
+        return space.send(self, "to_s")
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -146,11 +167,11 @@ class W_RootObject(W_BaseObject):
     def method_eqeqeq(self, space, w_other):
         if self is w_other:
             return space.w_true
-        return space.send(self, space.newsymbol("=="), [w_other])
+        return space.send(self, "==", [w_other])
 
     @classdef.method("send")
     def method_send(self, space, args_w, block):
-        return space.send(self, space.newsymbol("__send__"), args_w, block)
+        return space.send(self, "__send__", args_w, block)
 
     @classdef.method("nil?")
     def method_nilp(self, space):
@@ -173,8 +194,8 @@ class W_RootObject(W_BaseObject):
     @classdef.method("method")
     def method_method(self, space, w_sym):
         return space.send(
-            space.send(space.getclass(self), space.newsymbol("instance_method"), [w_sym]),
-            space.newsymbol("bind"),
+            space.send(space.getclass(self), "instance_method", [w_sym]),
+            "bind",
             [self]
         )
 

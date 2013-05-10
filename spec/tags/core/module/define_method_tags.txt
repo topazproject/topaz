@@ -1,7 +1,6 @@
 fails:passed { |a, b = 1|  } creates a method that raises an ArgumentError when passed zero arguments
 fails:passed { |a, b = 1|  } creates a method that raises an ArgumentError when passed three arguments
 fails:Module#define_method when given an UnboundMethod adds the new method to the methods list
-fails:Module#define_method calls #method_added after the method is added to the Module
 fails:Module#define_method raises a TypeError when the given method is no Method/Proc
 fails:Module#define_method raises a RuntimeError if frozen
 fails:Module#define_method is private

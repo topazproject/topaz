@@ -1280,8 +1280,6 @@ class StringTerm(BaseStringTerm):
             elif ch == "{":
                 self.lexer.add(ch)
                 return self.lexer.emit("STRING_DBEG")
-            else:
-                self.lexer.add("#")
         self.lexer.unread()
 
         while True:

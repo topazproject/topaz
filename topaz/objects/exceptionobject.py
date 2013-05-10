@@ -9,7 +9,7 @@ def new_exception_allocate(classdef):
 
 
 class W_ExceptionObject(W_Object):
-    _attrs_ = ["msg", "frame", "last_instructions"]
+    _attrs_ = ["msg", "frame", "last_instructions", "w_backtrace"]
 
     classdef = ClassDef("Exception", W_Object.classdef, filepath=__file__)
 
@@ -17,18 +17,27 @@ class W_ExceptionObject(W_Object):
         W_Object.__init__(self, space, klass)
         self.msg = ""
         self.frame = None
+        self.w_backtrace = None
 
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self.msg)
 
     method_allocate = new_exception_allocate(classdef)
 
+    def copy_instance_vars(self, space, w_other):
+        """Copies special instance vars after #copy or #dup"""
+        assert isinstance(w_other, W_ExceptionObject)
+        W_Object.copy_instance_vars(self, space, w_other)
+        self.msg = w_other.msg
+        self.frame = w_other.frame
+        self.w_backtrace = w_other.w_backtrace
+
     @classdef.method("initialize")
     def method_initialize(self, space, w_msg=None):
         if w_msg is space.w_nil or w_msg is None:
             msg = space.getclass(self).name
         else:
-            msg = space.str_w(w_msg)
+            msg = space.str_w(space.send(w_msg, "to_s"))
         self.msg = msg
 
     @classdef.method("to_s")
@@ -37,21 +46,23 @@ class W_ExceptionObject(W_Object):
 
     @classdef.singleton_method("exception")
     def singleton_method_exception(self, space, args_w):
-        return space.send(self, space.newsymbol("new"), args_w)
+        return space.send(self, "new", args_w)
 
     @classdef.method("exception")
     def method_exception(self, space, w_string=None):
         if w_string is None:
             return self
         else:
-            return space.send(space.getclassfor(self.__class__), space.newsymbol("new"), [w_string])
+            return space.send(space.getclassfor(self.__class__), "new", [w_string])
 
     @classdef.method("message")
     def method_message(self, space):
-        return space.send(self, space.newsymbol("to_s"))
+        return space.send(self, "to_s")
 
     @classdef.method("backtrace")
     def method_backtrace(self, space):
+        if self.w_backtrace is not None:
+            return self.w_backtrace
         frame = self.frame
         results_w = []
         prev_frame = None
@@ -64,6 +75,36 @@ class W_ExceptionObject(W_Object):
             prev_frame = frame
             frame = frame.backref()
         return space.newarray(results_w)
+
+    @classdef.method("set_backtrace")
+    def method_set_backtrace(self, space, w_backtrace):
+        if w_backtrace is space.w_nil:
+            self.w_backtrace = w_backtrace
+            return w_backtrace
+        if space.is_kind_of(w_backtrace, space.w_array):
+            for w_obj in space.listview(w_backtrace):
+                if not space.is_kind_of(w_obj, space.w_string):
+                    raise space.error(space.w_TypeError, "backtrace must be Array of String")
+            self.w_backtrace = w_backtrace
+            return w_backtrace
+        if space.is_kind_of(w_backtrace, space.w_string):
+            self.w_backtrace = space.newarray([w_backtrace])
+            return self.w_backtrace
+        raise space.error(space.w_TypeError, "backtrace must be Array of String")
+
+    @classdef.method("==")
+    def method_eq(self, space, w_other):
+        if not isinstance(w_other, W_ExceptionObject):
+            return space.w_false
+        if self is w_other:
+            return space.w_true
+
+        w_msg = space.send(self, "message")
+        w_backtrace = space.send(self, "backtrace")
+        return space.newbool(
+            space.is_true(space.send(w_msg, "==", [space.send(w_other, "message")])) and
+            space.is_true(space.send(w_backtrace, "==", [space.send(w_other, "backtrace")]))
+        )
 
 
 class W_ScriptError(W_ExceptionObject):
