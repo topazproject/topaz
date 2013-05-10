@@ -242,13 +242,6 @@ class W_ModuleObject(W_RootObject):
     def get_flag(self, space, name):
         return self.flags.get(space, name) or space.w_false
 
-    def copy_flags(self, space, w_other):
-        assert isinstance(w_other, W_ModuleObject)
-        for key in w_other.flags:
-            w_value = w_other.flags.get(space, key)
-            if w_value is space.w_true:
-                self.set_flag(space, key)
-
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
             return [self] + self.included_modules

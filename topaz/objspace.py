@@ -717,6 +717,18 @@ class ObjectSpace(object):
         else:
             return w_res
 
+    def infect(self, w_dest, w_src, taint=True, untrust=True, freeze=False):
+        """
+        By default copies tainted and untrusted state from src to dest.
+        Frozen state isn't copied by default, as this is the rarer case MRI.
+        """
+        if taint and self.is_true(w_src.get_flag(self, "tainted?")):
+            w_dest.set_flag(self, "tainted?")
+        if untrust and self.is_true(w_src.get_flag(self, "untrusted?")):
+            w_dest.set_flag(self, "untrusted?")
+        if freeze and self.is_true(w_src.get_flag(self, "frozen?")):
+            w_dest.set_flag(self, "frozen?")
+
     def any_to_s(self, w_obj):
         return "#<%s:0x%x>" % (
             self.obj_to_s(self.getnonsingletonclass(w_obj)),

@@ -181,8 +181,7 @@ class W_ArrayObject(W_Object):
         if n < 0:
             raise space.error(space.w_ArgumentError, "Count cannot be negative")
         w_res = W_ArrayObject(space, self.items_w * n, space.getnonsingletonclass(self))
-        w_res.copy_flags(space, self)
-        w_res.unset_flag(space, "frozen?")
+        space.infect(w_res, self, freeze=False)
         return w_res
 
     @classdef.method("push")

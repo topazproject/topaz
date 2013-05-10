@@ -259,7 +259,3 @@ class W_Object(W_RootObject):
         if idx != -1:
             # Flags are by default unset, no need to add if unsetting
             self.storage[idx] = space.w_false
-
-    def copy_flags(self, space, w_other):
-        assert isinstance(w_other, W_Object)
-        w_other.map.copy_flags(space, w_other, self)
