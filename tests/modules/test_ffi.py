@@ -55,5 +55,5 @@ class TestFFI(BaseTopazTest):
         assert w_res == space.w_nil
 
     def test_DynamicLibrary(self, space):
-        w_res = space.execute('FFI::DynamicLibrary')
-        assert w_res == space.w_nil
+        w_dl = space.execute('FFI::DynamicLibrary')
+        assert isinstance(w_dl, W_ClassObject)

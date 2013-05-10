@@ -15,7 +15,8 @@ class FFI(object):
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
         space.set_const(w_mod, 'Type', space.newclass('Type', None))
-        space.set_const(w_mod, 'DynamicLibrary', space.w_nil)
+        space.set_const(w_mod, 'DynamicLibrary',
+                        space.newclass('DynamicLibrary', None))
         w_type = space.find_const(w_mod, 'Type')
 
         md_DataConverter = ModuleDef('DataConverter', filepath=__file__)
