@@ -202,9 +202,6 @@ class Interpreter(object):
         w_value = frame.pop()
         w_scope = frame.pop()
         space.set_const(w_scope, name, w_value)
-        if (isinstance(w_value, W_ModuleObject) and w_value.name is None
-            and isinstance(w_scope, W_ModuleObject) and w_scope.name is not None):
-            w_value.set_name_in_scope(space, name, w_scope)
         frame.push(w_value)
 
     def DEFINED_CONSTANT(self, space, bytecode, frame, pc, idx):
