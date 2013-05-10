@@ -533,6 +533,19 @@ class W_ModuleObject(W_RootObject):
         space.set_const(self, const, w_value)
         return w_value
 
+    @classdef.method("remove_const", name="str")
+    def method_remove_const(self, space, name):
+        space._check_const_name(name)
+        w_res = self.find_local_const(space, name)
+        if w_res is None:
+            self_name = space.obj_to_s(self)
+            raise space.error(space.w_NameError,
+                "uninitialized constant %s::%s" % (self_name, name)
+            )
+        del self.constants_w[name]
+        self.mutated()
+        return w_res
+
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):
         return space.newbool(self.find_class_var(space, name) is not None)
