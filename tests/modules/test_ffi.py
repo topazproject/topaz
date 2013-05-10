@@ -57,3 +57,6 @@ class TestFFI(BaseTopazTest):
     def test_DynamicLibrary(self, space):
         w_dl = space.execute('FFI::DynamicLibrary')
         assert isinstance(w_dl, W_ClassObject)
+        for name in ['LAZY', 'NOW', 'GLOBAL', 'LOCAL']:
+            w_res = space.execute('FFI::DynamicLibrary::RTLD_%s' % name)
+            w_res == space.w_nil

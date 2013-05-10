@@ -15,8 +15,6 @@ class FFI(object):
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
         space.set_const(w_mod, 'Type', space.newclass('Type', None))
-        space.set_const(w_mod, 'DynamicLibrary',
-                        space.newclass('DynamicLibrary', None))
 
         md_DataConverter = ModuleDef('DataConverter', filepath=__file__)
 
@@ -42,6 +40,14 @@ class FFI(object):
 
         w_type = space.find_const(w_mod, 'Type')
         space.set_const(w_type, 'Mapped', w_mapped)
+
+        w_dynamic_lib = space.newclass('DynamicLibrary', None)
+        space.set_const(w_mod, 'DynamicLibrary',
+                        w_dynamic_lib)
+        space.set_const(w_dynamic_lib, "RTLD_LAZY", space.w_nil)
+        space.set_const(w_dynamic_lib, "RTLD_NOW", space.w_nil)
+        space.set_const(w_dynamic_lib, "RTLD_GLOBAL", space.w_nil)
+        space.set_const(w_dynamic_lib, "RTLD_LOCAL", space.w_nil)
 
         ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
         ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)
