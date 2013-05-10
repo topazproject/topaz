@@ -101,6 +101,7 @@ class Array
 
   def select!(&block)
     return self.enum_for(:select!) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     new_arr = self.select(&block)
     if new_arr.size != self.size
       self.replace(new_arr)
@@ -129,8 +130,8 @@ class Array
   end
 
   def delete_if(&block)
-    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     return self.enum_for(:delete_if) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     i = 0
     c = 0
     sz = self.size
@@ -260,19 +261,6 @@ class Array
       res = Topaz.intmask((1000003 * res) ^ x.hash)
     end
     return res
-  end
-
-  def *(arg)
-    return join(arg) if arg.respond_to? :to_str
-    arg = Topaz.convert_type(arg, Fixnum, :to_int)
-    raise ArgumentError.new("Count cannot be negative") if arg < 0
-
-    return [] if arg == 0
-    result = self.dup
-    for i in 1...arg do
-      result.concat(self)
-    end
-    result
   end
 
   def map!(&block)

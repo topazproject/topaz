@@ -1,5 +1,4 @@
 import os
-import sys
 import stat
 
 from topaz.coerce import Coerce
@@ -9,7 +8,6 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.ioobject import W_IOObject
-from topaz.objects.stringobject import W_StringObject
 from topaz.system import IS_WINDOWS
 from topaz.utils.ll_file import O_BINARY, ftruncate, isdir, fchmod
 from topaz.utils.filemode import map_filemode
@@ -143,7 +141,7 @@ class W_FileObject(W_IOObject):
                 raise NotImplementedError
         elif not path or path[0] != "/":
             if w_dir is not None and w_dir is not space.w_nil:
-                dir = space.str_w(space.send(self, space.newsymbol("expand_path"), [w_dir]))
+                dir = space.str_w(space.send(self, "expand_path", [w_dir]))
             else:
                 dir = os.getcwd()
 
@@ -178,7 +176,7 @@ class W_FileObject(W_IOObject):
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(
-                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
+                        space.send(space.getclassfor(W_FileObject), "join", space.listview(w_arg))
                     )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)

@@ -12,7 +12,7 @@ module Enumerable
     return self.enum_for(:map) unless block
     result = []
     self.each do |*x|
-      result << (yield *x)
+      result << yield(*x)
     end
     result
   end
@@ -208,7 +208,7 @@ module Enumerable
 
   def max_by(&block)
     return self.enum_for(:max_by) unless block
-    max = maxv = nil 
+    max = maxv = nil
     self.each_with_index do |e, i|
       ev = yield(e)
       max, maxv = e, ev if i == 0 || Topaz.compare(ev, maxv) > 0

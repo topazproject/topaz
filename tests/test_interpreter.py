@@ -886,9 +886,9 @@ class TestInterpreter(BaseTopazTest):
         with self.raises(space, "SyntaxError"):
             space.execute("/(/")
 
-    def test_class_variable_accessed_from_instance_side(self, space):
+    def test_class_variable_from_module_accessed_from_instance_side(self, space):
         w_res = space.execute("""
-        class A
+        module A
           @@foo = 'a'
         end
 
@@ -903,6 +903,8 @@ class TestInterpreter(BaseTopazTest):
         return B.new.get
         """)
         assert space.str_w(w_res) == 'a'
+
+    def test_class_variable_accessed_from_instance_side(self, space):
         w_res = space.execute("""
         class A; end
         class B < A

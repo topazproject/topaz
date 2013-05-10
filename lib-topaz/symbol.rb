@@ -1,6 +1,9 @@
 class Symbol
   def to_proc
-    Proc.new { |arg, *args| arg.send(self, *args) }
+    Proc.new do |*args|
+      raise ArgumentError.new("no receiver given") if args.empty?
+      args.shift.send(self, *args)
+    end
   end
 
   def to_sym

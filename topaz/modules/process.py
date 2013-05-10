@@ -39,7 +39,7 @@ class Process(object):
         status = WEXITSTATUS(status)
         w_status = space.send(
             space.find_const(self, "Status"),
-            space.newsymbol("new"),
+            "new",
             [space.newint(pid), space.newint(status)]
         )
         space.globals.set(space, "$?", w_status)
@@ -59,7 +59,7 @@ class Process(object):
         if pid == 0:
             if block is not None:
                 space.invoke_block(block, [])
-                space.send(self, space.newsymbol("exit"))
+                space.send(self, "exit")
             else:
                 return space.w_nil
         else:

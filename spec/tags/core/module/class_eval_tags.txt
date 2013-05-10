@@ -1,3 +1,0 @@
-fails:Module#class_eval evaluates a given block in the context of self
-fails:Module#class_eval raises an ArgumentError when a block and normal arguments are given
-fails:Module#class_eval adds methods respecting the lexical constant scope

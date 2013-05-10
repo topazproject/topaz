@@ -55,7 +55,7 @@ class W_HashObject(W_Object):
         try:
             return self.contents[w_key]
         except KeyError:
-            return space.send(self, space.newsymbol("default"), [w_key])
+            return space.send(self, "default", [w_key])
 
     @classdef.method("fetch")
     def method_fetch(self, space, w_key, w_value=None, block=None):
@@ -67,17 +67,17 @@ class W_HashObject(W_Object):
             elif block is not None:
                 return space.invoke_block(block, [w_key])
             else:
-                raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, space.newsymbol("inspect")))
+                raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, "inspect"))
 
     @classdef.method("store")
     @classdef.method("[]=")
     @check_frozen()
     def method_subscript_assign(self, space, w_key, w_value):
         if (space.is_kind_of(w_key, space.w_string) and
-            not space.is_true(space.send(w_key, space.newsymbol("frozen?")))):
+            not space.is_true(space.send(w_key, "frozen?"))):
 
-            w_key = space.send(w_key, space.newsymbol("dup"))
-            w_key = space.send(w_key, space.newsymbol("freeze"))
+            w_key = space.send(w_key, "dup")
+            w_key = space.send(w_key, "freeze")
         self.contents[w_key] = w_value
         return w_value
 
@@ -110,7 +110,7 @@ class W_HashObject(W_Object):
     @check_frozen()
     def method_shift(self, space):
         if not self.contents:
-            return space.send(self, space.newsymbol("default"), [space.w_nil])
+            return space.send(self, "default", [space.w_nil])
         w_key, w_value = self.contents.popitem()
         return space.newarray([w_key, w_value])
 

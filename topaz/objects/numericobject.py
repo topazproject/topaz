@@ -17,7 +17,7 @@ class W_NumericObject(W_Object):
     def retry_binop_coercing(space, w_recv, w_arg, binop, raise_error=True):
         w_ary = None
         try:
-            w_ary = space.send(w_recv, space.newsymbol("coerce"), [w_arg])
+            w_ary = space.send(w_recv, "coerce", [w_arg])
         except RubyError as e:
             if not space.is_kind_of(e.w_value, space.w_StandardError):
                 raise
@@ -31,7 +31,7 @@ class W_NumericObject(W_Object):
         if space.getclass(w_ary) is space.w_array:
             ary = space.listview(w_ary)
             if len(ary) == 2:
-                return space.send(ary[1], space.newsymbol(binop), ary[:1])
+                return space.send(ary[1], binop, ary[:1])
         elif raise_error:
             raise space.error(space.w_TypeError, "coerce must return [x, y]")
         else:
@@ -50,7 +50,7 @@ class W_NumericObject(W_Object):
 
     @classdef.method("<=")
     def method_lte(self, space, w_other):
-        w_result = space.send(self, space.newsymbol("<=>"), [w_other])
+        w_result = space.send(self, "<=>", [w_other])
         return space.newbool(not (w_result is space.w_nil or space.int_w(w_result) > 0))
 
     @classdef.method("coerce")
@@ -58,7 +58,7 @@ class W_NumericObject(W_Object):
         if space.getclass(w_other) is space.getclass(self):
             return space.newarray([w_other, self])
         else:
-            return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
+            return space.newarray([space.send(self, "Float", [w_other]), self])
 
     @classdef.method("ceil")
     def method_ceil(self, space):

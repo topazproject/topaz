@@ -69,6 +69,8 @@ class IO
     end
     self
   end
+  alias each each_line
+  alias lines each_line
 
   def readline(sep = $/, limit = nil)
     line = gets(sep, limit)

@@ -110,7 +110,7 @@ def _parse_argv(space, argv):
             raise ShortCircuitError("%s\n" % space.str_w(
                 space.send(
                     space.w_object,
-                    space.newsymbol("const_get"),
+                    "const_get",
                     [space.newstr_fromstr("RUBY_DESCRIPTION")]
                 )
             ))
@@ -233,13 +233,13 @@ def _entry_point(space, argv):
     for path_entry in load_path_entries:
         space.send(
             space.w_load_path,
-            space.newsymbol("<<"),
+            "<<",
             [space.newstr_fromstr(path_entry)]
         )
     for required_lib in reqs:
         space.send(
             space.w_kernel,
-            space.newsymbol("require"),
+            "require",
             [space.newstr_fromstr(required_lib)]
         )
 
@@ -302,13 +302,13 @@ def _entry_point(space, argv):
             bc = space.compile(source, path)
             frame = space.create_frame(bc)
             while True:
-                w_line = space.send(space.w_kernel, space.newsymbol("gets"))
+                w_line = space.send(space.w_kernel, "gets")
                 if w_line is space.w_nil:
                     break
                 with space.getexecutioncontext().visit_frame(frame):
                     w_res = space.execute_frame(frame, bc)
                     if print_after:
-                        space.send(space.w_kernel, space.newsymbol("print"), [w_res])
+                        space.send(space.w_kernel, "print", [w_res])
         else:
             space.execute(source, filepath=path)
     except RubyError as e:
