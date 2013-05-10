@@ -162,6 +162,8 @@ class W_ModuleObject(W_RootObject):
     def set_const(self, space, name, w_obj):
         self.mutated()
         self.constants_w[name] = w_obj
+        if isinstance(w_obj, W_ModuleObject) and w_obj.name is None and self.name is not None:
+            w_obj.set_name_in_scope(space, name, self)
 
     def find_const(self, space, name):
         w_res = self.find_included_const(space, name)
