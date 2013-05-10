@@ -1,6 +1,7 @@
 import os
 import time
 
+from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rrandom import Random
 
 from topaz.module import ClassDef
@@ -37,7 +38,7 @@ class W_RandomObject(W_Object):
     def srand(self, space, seed=None):
         previous_seed = self.w_seed
         if seed is None:
-            seed = self._generate_seed()
+            seed = intmask(self._generate_seed())
         else:
             seed = Coerce.int(space, seed)
         self.w_seed = space.newint(seed)
