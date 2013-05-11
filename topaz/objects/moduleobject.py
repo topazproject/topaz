@@ -191,6 +191,25 @@ class W_ModuleObject(W_RootObject):
                 consts[const] = None
         return consts.keys()
 
+    def lexical_constants(self, space):
+        consts = {}
+        frame = space.getexecutioncontext().gettoprubyframe()
+        scope = frame.lexical_scope
+
+        while scope is not None:
+            assert isinstance(scope, W_ModuleObject)
+            for const in scope.w_mod.constants_w:
+                consts[const] = None
+            scope = scope.backscope
+
+        return consts.keys()
+
+    def local_constants(self, space):
+        return self.constants_w.keys()
+
+    def inherited_constants(self, space):
+        return self.local_constants(space)
+
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
 
@@ -474,8 +493,19 @@ class W_ModuleObject(W_RootObject):
         pass
 
     @classdef.method("constants")
-    def method_constants(self, space):
-        return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
+    def method_constants(self, space, w_inherit=None):
+        if self is space.w_module and w_inherit is None:
+            consts = {}
+            for const in self.lexical_constants(space):
+                consts[const] = None
+            for const in self.inherited_constants(space):
+                consts[const] = None
+            return space.newarray([space.newsymbol(n) for n in consts.keys()])
+
+        if w_inherit is None or space.is_true(w_inherit):
+            return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
+        else:
+            return space.newarray([space.newsymbol(n) for n in self.constants_w.keys()])
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
