@@ -31,3 +31,8 @@ class Topaz(object):
     @moduledef.function("compare")
     def method_compare(self, space, w_a, w_b, block=None):
         return space.compare(w_a, w_b, block)
+
+    @moduledef.function("infect", taint="bool", untrust="bool", freeze="bool")
+    def method_infect(self, space, w_dest, w_src, taint=True, untrust=True, freeze=False):
+        space.infect(w_dest, w_src, taint=taint, untrust=untrust, freeze=freeze)
+        return self
