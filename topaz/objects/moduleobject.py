@@ -197,6 +197,7 @@ class W_ModuleObject(W_RootObject):
         scope = frame.lexical_scope
 
         while scope is not None:
+            assert isinstance(scope, W_ModuleObject)
             for const in scope.w_mod.constants_w:
                 consts[const] = None
             scope = scope.backscope
@@ -498,9 +499,9 @@ class W_ModuleObject(W_RootObject):
     def method_private_constant(self, space, args_w):
         pass
 
-    @classdef.method("constants", inherit="bool")
-    def method_constants(self, space, inherit=None):
-        if self is space.w_module and inherit is None:
+    @classdef.method("constants")
+    def method_constants(self, space, w_inherit=None):
+        if self is space.w_module and w_inherit is None:
             consts = {}
             for const in self.lexical_constants(space):
                 consts[const] = None
@@ -508,7 +509,7 @@ class W_ModuleObject(W_RootObject):
                 consts[const] = None
             return space.newarray([space.newsymbol(n) for n in consts.keys()])
 
-        if inherit is None or inherit:
+        if w_inherit is None or space.is_true(w_inherit):
             return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
         else:
             return space.newarray([space.newsymbol(n) for n in self.constants_w.keys()])
