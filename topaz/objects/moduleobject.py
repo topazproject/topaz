@@ -184,7 +184,7 @@ class W_ModuleObject(W_RootObject):
 
     def included_constants(self, space):
         consts = {}
-        for const in self.constants_w.keys():
+        for const in self.constants_w:
             consts[const] = None
         for w_mod in self.included_modules:
             for const in w_mod.included_constants(space):
@@ -500,12 +500,12 @@ class W_ModuleObject(W_RootObject):
                 consts[const] = None
             for const in self.inherited_constants(space):
                 consts[const] = None
-            return space.newarray([space.newsymbol(n) for n in consts.keys()])
+            return space.newarray([space.newsymbol(n) for n in consts])
 
         if w_inherit is None or space.is_true(w_inherit):
             return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
         else:
-            return space.newarray([space.newsymbol(n) for n in self.constants_w.keys()])
+            return space.newarray([space.newsymbol(n) for n in self.constants_w])
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
