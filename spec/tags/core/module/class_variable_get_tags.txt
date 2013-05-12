@@ -1,0 +1,3 @@
+fails:Module#class_variable_get returns class variables defined in the class body and accessed in the metaclass
+fails:Module#class_variable_get returns class variables defined in the metaclass and accessed by class methods
+fails:Module#class_variable_get returns class variables defined in the metaclass and accessed by instance methods

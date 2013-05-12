@@ -4,3 +4,4 @@ fails:Array#pack with format 'x' does not add a NULL byte when passed the '*' mo
 fails:Array#pack with format 'X' reduces the output string by one byte at the point it is encountered
 fails:Array#pack with format 'X' does not consume any elements
 fails:Array#pack with format 'X' reduces the output string by multiple bytes when passed a count modifier
+fails:Array#pack with format 'X' has no affect when passed the '*' modifier

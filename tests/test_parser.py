@@ -1087,6 +1087,7 @@ class TestParser(BaseTopazTest):
         assert space.parse('"\w"') == const_string("w")
         assert space.parse('"\M-a"') == const_string("\xe1")
         assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab", 1))
+        assert space.parse('"#test"') == const_string("#test")
 
     def test_percent_terms(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
@@ -1478,6 +1479,22 @@ HERE
                     )
                 )])
             ), 1)),
+        ]))
+        assert space.parse("f { |(x, y)| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [ast.Argument("0")],
+                None,
+                None,
+                ast.Block([
+                    ast.Statement(ast.MultiAssignment(
+                        ast.MultiAssignable([
+                            ast.Variable("x", -1),
+                            ast.Variable("y", -1),
+                        ]),
+                        ast.Variable("0", 1),
+                    ))
+                ]),
+            ), 1))
         ]))
 
     def test_lambda(self, space):
@@ -2110,6 +2127,7 @@ HERE
         assert space.parse("$,") == simple_global("$,")
         assert space.parse("$-w") == simple_global("$-w")
         assert space.parse("$@") == simple_global("$@")
+        assert space.parse("$;") == simple_global("$;")
 
     def test_comments(self, space):
         r = space.parse("""

@@ -5,19 +5,32 @@ from topaz.objects.objectobject import W_Object
 class W_ProcObject(W_Object):
     classdef = ClassDef("Proc", W_Object.classdef, filepath=__file__)
 
-    def __init__(self, space, block, is_lambda):
+    def __init__(self, space, bytecode, w_self, lexical_scope, cells, block,
+                 parent_interp, regexp_match_cell, is_lambda):
         W_Object.__init__(self, space)
+        self.bytecode = bytecode
+        self.w_self = w_self
+        self.lexical_scope = lexical_scope
+        self.cells = cells
         self.block = block
+        self.parent_interp = parent_interp
+        self.regexp_match_cell = regexp_match_cell
         self.is_lambda = is_lambda
 
-    def get_block(self):
-        return self.block
+    def copy(self, space, w_self=None, lexical_scope=None, is_lambda=False):
+        return W_ProcObject(
+            space, self.bytecode,
+            w_self or self.w_self,
+            lexical_scope or self.lexical_scope,
+            self.cells, self.block, self.parent_interp, self.regexp_match_cell,
+            is_lambda or self.is_lambda
+        )
 
     @classdef.singleton_method("new")
-    def method_new(self, space, args_w, block):
+    def method_new(self, space, block):
         if block is None:
             raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
-        return W_ProcObject(space, block, False)
+        return block.copy(space)
 
     method_allocate = classdef.undefine_allocator()
 
@@ -29,7 +42,7 @@ class W_ProcObject(W_Object):
         from topaz.interpreter import RaiseReturn, RaiseBreak
 
         try:
-            return space.invoke_block(self.block, args_w, block_arg=block)
+            return space.invoke_block(self, args_w, block_arg=block)
         except RaiseReturn as e:
             if self.is_lambda:
                 return e.w_value
@@ -47,4 +60,4 @@ class W_ProcObject(W_Object):
 
     @classdef.method("binding")
     def method_binding(self, space):
-        return space.newbinding_fromblock(self.block)
+        return space.newbinding_fromblock(self)

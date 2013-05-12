@@ -15,6 +15,10 @@ class Numeric
     self < 0 ? -self : self
   end
 
+  def abs2
+    self * self
+  end
+
   def div(other)
     raise ZeroDivisionError, "divided by 0" if other == 0
     (self / other).floor

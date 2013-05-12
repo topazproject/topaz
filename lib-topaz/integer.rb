@@ -18,32 +18,66 @@ class Integer < Numeric
     self
   end
 
-  def integer?
-    return true
+  def to_i
+    self
   end
-
-  def ceil
-    return self
-  end
-
-  def floor
-    return self
-  end
-
-  def truncate
-    return self
-  end
+  alias to_int to_i
+  alias ceil to_i
+  alias floor to_i
+  alias truncate to_i
+  alias ord to_i
+  alias numerator to_i
 
   def denominator
-    return 1
+    1
   end
 
-  def numerator
-    return self
+  def integer?
+    true
   end
 
   def next
     return self + 1
   end
   alias succ next
+
+  def pred
+    return self - 1
+  end
+
+  def even?
+    (self % 2).zero?
+  end
+
+  def odd?
+    !even?
+  end
+
+  def round(ndigits = nil)
+    if ndigits.nil?
+      return self
+    end
+    ndigits = Topaz.convert_type(ndigits, Fixnum, :to_int)
+    if ndigits == 0
+      return self
+    end
+    if ndigits > 0
+      return Float(self)
+    end
+    bytes = self.size
+    if -0.415241 * ndigits - 0.125 > bytes
+      return 0
+    end
+    f = 10 ** -ndigits
+    if f.is_a?(Float)
+      return 0
+    end
+    h = f / 2
+    r = num % f
+    n = num - r
+    if ((num < 0 && r <= h) || r < h)
+      n = f + 1
+    end
+    return n
+  end
 end

@@ -292,6 +292,33 @@ class MutableStringStrategy(StringStrategy):
             storage.insert(idx, char)
             idx += 1
 
+    def strip(self, storage):
+        storage = self.unerase(storage)
+        if not storage:
+            return False
+
+        shift = 0
+        while shift < len(storage) and storage[shift].isspace():
+            shift += 1
+        if shift == len(storage):
+            del storage[:]
+            return True
+
+        pop = len(storage)
+        while pop > 0 and storage[pop - 1].isspace() or storage[pop - 1] == '\0':
+            pop -= 1
+
+        if pop < len(storage) or shift > 0:
+            end = pop
+            new_len = end - shift
+            assert end >= 0
+            assert new_len >= 0
+            storage[0:new_len] = storage[shift:end]
+            del storage[new_len:]
+            return True
+        else:
+            return False
+
 
 class W_StringObject(W_Object):
     classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
@@ -336,6 +363,9 @@ class W_StringObject(W_Object):
 
     def str_w(self, space):
         return self.strategy.str_w(self.str_storage)
+
+    def symbol_w(self, space):
+        return self.str_w(space)
 
     def liststr_w(self, space):
         return self.strategy.liststr_w(self.str_storage)
@@ -398,6 +428,12 @@ class W_StringObject(W_Object):
         storage = strategy.erase("")
         return W_StringObject(space, storage, strategy, self)
 
+    @classdef.singleton_method("try_convert")
+    def method_try_convert(self, space, w_obj):
+        if not space.is_kind_of(w_obj, space.w_string):
+            w_obj = space.convert_type(w_obj, space.w_string, "to_str", raise_error=False)
+        return w_obj
+
     @classdef.method("initialize")
     def method_initialize(self, space, w_s=None):
         if w_s is not None:
@@ -443,6 +479,8 @@ class W_StringObject(W_Object):
 
     @classdef.method("*", times="int")
     def method_times(self, space, times):
+        if times < 0:
+            raise space.error(space.w_ArgumentError, "negative argument")
         return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
@@ -486,8 +524,8 @@ class W_StringObject(W_Object):
             elif s1 > s2:
                 return space.newint(1)
         else:
-            if space.respond_to(w_other, space.newsymbol("to_str")) and space.respond_to(w_other, space.newsymbol("<=>")):
-                tmp = space.send(w_other, space.newsymbol("<=>"), [self])
+            if space.respond_to(w_other, "to_str") and space.respond_to(w_other, "<=>"):
+                tmp = space.send(w_other, "<=>", [self])
                 if tmp is not space.w_nil:
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
@@ -814,7 +852,7 @@ class W_StringObject(W_Object):
         if space.is_kind_of(w_obj, space.w_string):
             raise space.error(space.w_TypeError, "type mismatch: String given")
         else:
-            return space.send(w_obj, space.newsymbol("=~"), [self])
+            return space.send(w_obj, "=~", [self])
 
     @classdef.method("%")
     def method_mod(self, space, w_arg):
@@ -921,11 +959,11 @@ class W_StringObject(W_Object):
         return result
 
     def gsub_regexp_block(self, space, block, w_match):
-        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        w_arg = space.send(w_match, "[]", [space.newint(0)])
         return self.gsub_yield_block(space, block, w_arg)
 
     def gsub_regexp_hash(self, space, w_hash, w_match):
-        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        w_arg = space.send(w_match, "[]", [space.newint(0)])
         return self.gsub_lookup_hash(space, w_hash, w_arg)
 
     def gsub_string(self, space, w_pattern, replacement, w_hash, block, first_only):
@@ -956,14 +994,14 @@ class W_StringObject(W_Object):
         return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_lookup_hash(self, space, w_hash, w_matchstr):
-        w_value = space.send(w_hash, space.newsymbol("[]"), [w_matchstr])
+        w_value = space.send(w_hash, "[]", [w_matchstr])
         return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_replacement_to_s(self, space, w_replacement):
         if space.is_kind_of(w_replacement, space.w_string):
             return space.str_w(w_replacement)
         else:
-            w_replacement = space.send(w_replacement, space.newsymbol("to_s"))
+            w_replacement = space.send(w_replacement, "to_s")
             if space.is_kind_of(w_replacement, space.w_string):
                 return space.str_w(w_replacement)
             else:
@@ -1017,3 +1055,13 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         self.strategy.insert(self.str_storage, index, other)
         return self
+
+    @classdef.method("strip!")
+    @check_frozen()
+    def method_strip_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.strip(self.str_storage)
+        if changed:
+            return self
+        else:
+            return space.w_nil

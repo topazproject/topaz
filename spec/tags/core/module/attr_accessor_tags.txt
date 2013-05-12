@@ -1,0 +1,2 @@
+fails:Module#attr_accessor is a private method
+fails:Module#attr_accessor applies current visibility to methods created

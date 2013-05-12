@@ -277,6 +277,26 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_for_loop_over_send_block(self, space):
+        self.assert_compiles(space, """
+        for k in f { 1 }
+          2
+        end
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 1 1
+
+        LOAD_CONST 2
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 3 1
+
+        RETURN
+        """)
+
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
         SETUP_LOOP 20

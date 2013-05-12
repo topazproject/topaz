@@ -1,6 +1,4 @@
 import os
-import stat
-import sys
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.tool import rffi_platform as platform
@@ -12,12 +10,13 @@ from topaz.system import IS_WINDOWS
 if IS_WINDOWS:
     O_BINARY = os.O_BINARY
 
-    eci = ExternalCompilationInfo(includes=['windows.h'])
+    eci = ExternalCompilationInfo(includes=["windows.h"])
+
     class CConfig:
         _compilation_info_ = eci
     config = platform.configure(CConfig)
 
-    _chsize = rffi.llexternal('_chsize',
+    _chsize = rffi.llexternal("_chsize",
         [rffi.INT, rffi.LONG], rffi.INT,
         compilation_info=eci,
     )

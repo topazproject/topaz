@@ -13,7 +13,7 @@ class Rubyspecs(BaseTest):
         self.download_rubyspec()
 
     def mspec(self, args):
-        run_("../mspec/bin/mspec %s -t %s --config=topaz.mspec %s" % (args, self.exe, self.files))
+        run_("../mspec/bin/mspec %s -t %s --config=topaz.mspec %s" % (args, self.exe, self.files), echo=True)
 
     def run(self):
         self.mspec("run -G fails %s" % self.options)

@@ -1,0 +1,1 @@
+fails:Module#method_removed is a private instance method

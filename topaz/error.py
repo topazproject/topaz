@@ -10,7 +10,7 @@ class RubyError(Exception):
 
 
 def format_traceback(space, exc, top_filepath):
-    w_bt = space.send(exc, space.newsymbol("backtrace"))
+    w_bt = space.send(exc, "backtrace")
     bt_w = space.listview(w_bt)
     if bt_w:
         yield "%s: %s (%s)\n" % (space.str_w(bt_w[0]), exc.msg, space.getclass(exc).name)

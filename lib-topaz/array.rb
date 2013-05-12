@@ -69,14 +69,16 @@ class Array
     return self
   end
 
-  def product(ary)
-    result = []
-    self.each do |obj|
-      ary.each do |other|
-        result << [obj, other]
-      end
+  def product(*args, &block)
+    args = args.unshift(self)
+    if block
+      Topaz::Array.product(args, &block)
+      self
+    else
+      out = self.class.allocate
+      Topaz::Array.product(args) { |e| out << e }
+      out
     end
-    result
   end
 
   def compact
@@ -85,6 +87,20 @@ class Array
 
   def compact!
     reject! { |obj| obj.nil? }
+  end
+
+  def select!(&block)
+    return self.enum_for(:select!) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    new_arr = self.select(&block)
+    if new_arr.size != self.size
+      self.replace(new_arr)
+      self
+    end
+  end
+
+  def keep_if(&block)
+    self.select!(&block) || self
   end
 
   def reject!(&block)
@@ -104,8 +120,8 @@ class Array
   end
 
   def delete_if(&block)
-    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     return self.enum_for(:delete_if) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     i = 0
     c = 0
     sz = self.size
@@ -237,19 +253,6 @@ class Array
       end
     end
     return res
-  end
-
-  def *(arg)
-    return join(arg) if arg.respond_to? :to_str
-    arg = Topaz.convert_type(arg, Fixnum, :to_int)
-    raise ArgumentError.new("Count cannot be negative") if arg < 0
-
-    return [] if arg == 0
-    result = self.dup
-    for i in 1...arg do
-      result.concat(self)
-    end
-    result
   end
 
   def map!(&block)

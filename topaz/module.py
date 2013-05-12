@@ -68,10 +68,6 @@ class ClassDef(object):
             raise space.error(space.w_NotImplementedError)
 
 
-class Module(object):
-    pass
-
-
 class ModuleDef(object):
     def __init__(self, name, filepath):
         self.name = name
@@ -150,7 +146,7 @@ class ClassCache(Cache):
 
         for mod in reversed(classdef.includes):
             w_mod = self.space.getmoduleobject(mod.moduledef)
-            self.space.send(w_class, self.space.newsymbol("include"), [w_mod])
+            self.space.send(w_class, "include", [w_mod])
 
         if classdef.setup_class_func is not None:
             classdef.setup_class_func(classdef.cls, self.space, w_class)

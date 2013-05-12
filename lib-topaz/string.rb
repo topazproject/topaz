@@ -31,8 +31,50 @@ class String
     return copy
   end
 
+  def casecmp(other)
+    unless other.respond_to?(:to_str)
+      raise TypeError.new("can't convert #{other.class} into String")
+    end
+
+    other = other.to_str
+    diff = self.length - other.length
+    short = diff < 0
+    long = diff > 0
+    limit = (short ? self.length : other.length) - 1
+
+    0.upto(limit) do |index|
+      a, b = self[index], other[index]
+      a.upcase!
+      b.upcase!
+      compared = a <=> b
+      return compared unless compared == 0
+    end
+
+    short ? -1 : (long ? 1 : 0)
+  end
+
   def empty?
     self.length == 0
+  end
+
+  def start_with?(*prefixes)
+    prefixes.any? do |prefix|
+      next false unless prefix.respond_to?(:to_str)
+      prefix = prefix.to_str
+      prelen = prefix.length
+      next false if prelen > self.length
+      0.upto(prelen - 1).all? { |index| self[index] == prefix[index] }
+    end
+  end
+
+  def end_with?(*suffixes)
+    suffixes.any? do |suffix|
+      next false unless suffix.respond_to?(:to_str)
+      suffix = suffix.to_str
+      suflen = suffix.length
+      next false if suflen > self.length
+      (-suflen).upto(-1).all? { |index| self[index] == suffix[index] }
+    end
   end
 
   def match(pattern)
@@ -74,6 +116,20 @@ class String
   end
   alias chars each_char
 
+  def each_byte(&block)
+    return self.enum_for(:each_byte) unless block
+
+    i = 0
+    limit = self.length
+    while i < limit
+      yield self.getbyte(i)
+      i += 1
+    end
+
+    self
+  end
+  alias bytes each_byte
+
   def upto(max, exclusive = false, &block)
     return self.enum_for(:upto, max, exclusive) unless block
 
@@ -99,5 +155,19 @@ class String
     end
 
     return self
+  end
+
+  def strip
+    duplicate = self.dup
+    duplicate.strip!
+    duplicate
+  end
+
+  def replace(other)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    other = Topaz.convert_type(other, String, :to_str)
+    Topaz.infect(self, other)
+    clear
+    insert(0, other)
   end
 end

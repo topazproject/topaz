@@ -886,9 +886,9 @@ class TestInterpreter(BaseTopazTest):
         with self.raises(space, "SyntaxError"):
             space.execute("/(/")
 
-    def test_class_variable_accessed_from_instance_side(self, space):
+    def test_class_variable_from_module_accessed_from_instance_side(self, space):
         w_res = space.execute("""
-        class A
+        module A
           @@foo = 'a'
         end
 
@@ -903,6 +903,8 @@ class TestInterpreter(BaseTopazTest):
         return B.new.get
         """)
         assert space.str_w(w_res) == 'a'
+
+    def test_class_variable_accessed_from_instance_side(self, space):
         w_res = space.execute("""
         class A; end
         class B < A
@@ -1146,6 +1148,12 @@ class TestInterpreter(BaseTopazTest):
         return [C.new.a, C.new.b]
         """)
         assert self.unwrap(space, w_res) == ["super", None]
+
+    def test_defined_unscoped_constant(self, space):
+        w_res = space.execute("return defined? ::Foobar")
+        assert w_res is space.w_nil
+        w_res = space.execute("return defined? ::Fixnum")
+        assert self.unwrap(space, w_res) == "constant"
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")

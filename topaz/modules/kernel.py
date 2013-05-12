@@ -8,18 +8,17 @@ from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.coerce import Coerce
 from topaz.error import RubyError, error_for_oserror
-from topaz.module import Module, ModuleDef
+from topaz.module import ModuleDef
 from topaz.modules.process import Process
 from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
-from topaz.objects.procobject import W_ProcObject
-from topaz.objects.stringobject import W_StringObject
-from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
+from topaz.objects.stringobject import W_StringObject
 
 
-class Kernel(Module):
+class Kernel(object):
     moduledef = ModuleDef("Kernel", filepath=__file__)
 
     @moduledef.method("class")
@@ -41,13 +40,15 @@ class Kernel(Module):
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
-        return space.newproc(block, True)
+        return block.copy(space, is_lambda=True)
 
     @moduledef.method("proc")
     def function_proc(self, space, block):
         if block is None:
-            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
-        return space.newproc(block, False)
+            raise space.error(space.w_ArgumentError,
+                "tried to create Proc object without a block"
+            )
+        return block.copy(space)
 
     @staticmethod
     def find_feature(space, path):
@@ -91,7 +92,7 @@ class Kernel(Module):
 
         w_loaded_features = space.globals.get(space, '$"')
         w_already_loaded = space.send(
-            w_loaded_features, space.newsymbol("include?"), [space.newstr_fromstr(path)]
+            w_loaded_features, "include?", [space.newstr_fromstr(path)]
         )
         if space.is_true(w_already_loaded):
             return space.w_false
@@ -122,15 +123,15 @@ class Kernel(Module):
         else:
             w_exception = w_str_or_exception
 
-        if not space.respond_to(w_exception, space.newsymbol("exception")):
+        if not space.respond_to(w_exception, "exception"):
             raise space.error(space.w_TypeError,
                 "exception class/object expected"
             )
 
         if w_string is not None:
-            w_exc = space.send(w_exception, space.newsymbol("exception"), [w_string])
+            w_exc = space.send(w_exception, "exception", [w_string])
         else:
-            w_exc = space.send(w_exception, space.newsymbol("exception"))
+            w_exc = space.send(w_exception, "exception")
 
         if w_array is not None:
             raise NotImplementedError("custom backtrace for Kernel#raise")
@@ -146,7 +147,7 @@ class Kernel(Module):
     def method_exit(self, space, status=0):
         return space.send(
             space.getmoduleobject(Process.moduledef),
-            space.newsymbol("exit"),
+            "exit",
             [space.newint(status)]
         )
 
@@ -161,15 +162,21 @@ class Kernel(Module):
     def method_binding(self, space):
         return space.newbinding_fromframe(space.getexecutioncontext().gettoprubyframe())
 
+    @moduledef.function("__method__")
+    @moduledef.function("__callee__")
+    def method_method(self, space):
+        frame = space.getexecutioncontext().gettoprubyframe()
+        return space.newsymbol(frame.bytecode.name)
+
     @moduledef.function("exec")
     def method_exec(self, space, args_w):
-        if len(args_w) > 1 and space.respond_to(args_w[0], space.newsymbol("to_hash")):
+        if len(args_w) > 1 and space.respond_to(args_w[0], "to_hash"):
             raise space.error(space.w_NotImplementedError, "exec with environment")
 
-        if len(args_w) > 1 and space.respond_to(args_w[-1], space.newsymbol("to_hash")):
+        if len(args_w) > 1 and space.respond_to(args_w[-1], "to_hash"):
             raise space.error(space.w_NotImplementedError, "exec with options")
 
-        if space.respond_to(args_w[0], space.newsymbol("to_ary")):
+        if space.respond_to(args_w[0], "to_ary"):
             w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
             cmd, argv0 = [
                 space.str0_w(space.convert_type(
@@ -207,16 +214,13 @@ class Kernel(Module):
     @moduledef.function("fork")
     def method_fork(self, space, block):
         return space.send(
-            space.getmoduleobject(Process.moduledef),
-            space.newsymbol("fork"),
-            block=block
+            space.getmoduleobject(Process.moduledef), "fork", block=block
         )
 
     @moduledef.function("at_exit")
     def method_at_exit(self, space, block):
-        w_proc = space.newproc(block)
-        space.register_exit_handler(w_proc)
-        return w_proc
+        space.register_exit_handler(block)
+        return block
 
     @moduledef.function("=~")
     def method_match(self, space, w_other):
@@ -224,7 +228,7 @@ class Kernel(Module):
 
     @moduledef.function("!~")
     def method_not_match(self, space, w_other):
-        return space.newbool(not space.is_true(space.send(self, space.newsymbol("=~"), [w_other])))
+        return space.newbool(not space.is_true(space.send(self, "=~", [w_other])))
 
     @moduledef.function("eql?")
     def method_eqlp(self, space, w_other):
@@ -236,12 +240,12 @@ class Kernel(Module):
 
     @moduledef.method("respond_to?", include_private="bool")
     def method_respond_top(self, space, w_name, include_private=False):
-        if space.respond_to(self, w_name):
+        if space.respond_to(self, space.symbol_w(w_name)):
             return space.newbool(True)
 
         w_found = space.send(
             self,
-            space.newsymbol("respond_to_missing?"),
+            "respond_to_missing?",
             [w_name, space.newbool(include_private)]
         )
         return space.newbool(space.is_true(w_found))
@@ -256,11 +260,10 @@ class Kernel(Module):
             self is space.w_false or space.is_kind_of(self, space.w_symbol) or
             space.is_kind_of(self, space.w_fixnum)):
             raise space.error(space.w_TypeError, "can't dup %s" % space.getclass(self).name)
-        w_dup = space.send(space.getnonsingletonclass(self), space.newsymbol("allocate"))
+        w_dup = space.send(space.getnonsingletonclass(self), "allocate")
         w_dup.copy_instance_vars(space, self)
-        w_dup.copy_flags(space, self)
-        w_dup.unset_flag(space, "frozen?")
-        space.send(w_dup, space.newsymbol("initialize_dup"), [self])
+        space.infect(w_dup, self, freeze=False)
+        space.send(w_dup, "initialize_dup", [self])
         return w_dup
 
     @moduledef.method("clone")
@@ -269,11 +272,11 @@ class Kernel(Module):
             self is space.w_false or space.is_kind_of(self, space.w_symbol) or
             space.is_kind_of(self, space.w_fixnum)):
             raise space.error(space.w_TypeError, "can't dup %s" % space.getclass(self).name)
-        w_dup = space.send(space.getnonsingletonclass(self), space.newsymbol("allocate"))
+        w_dup = space.send(space.getnonsingletonclass(self), "allocate")
         w_dup.copy_instance_vars(space, self)
-        w_dup.copy_flags(space, self)
+        space.infect(w_dup, self, freeze=True)
         w_dup.copy_singletonclass(space, space.getsingletonclass(self))
-        space.send(w_dup, space.newsymbol("initialize_clone"), [self])
+        space.send(w_dup, "initialize_clone", [self])
         return w_dup
 
     @moduledef.method("sleep")
@@ -287,7 +290,7 @@ class Kernel(Module):
     @moduledef.method("initialize_clone")
     @moduledef.method("initialize_dup")
     def method_initialize_dup(self, space, w_other):
-        space.send(self, space.newsymbol("initialize_copy"), [w_other])
+        space.send(self, "initialize_copy", [w_other])
         return self
 
     @moduledef.method("initialize_copy")
@@ -331,7 +334,7 @@ class Kernel(Module):
             raise space.error(space.w_TypeError,
                 "wrong argument type %s (expected Binding)" % space.getclass(w_binding).name
             )
-        return space.send(w_binding, space.newsymbol("eval"), [w_source])
+        return space.send(w_binding, "eval", [w_source])
 
     @moduledef.method("set_trace_func")
     def method_set_trace_func(self, space, w_proc):

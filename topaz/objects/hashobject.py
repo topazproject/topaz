@@ -18,17 +18,11 @@ class W_HashObject(W_Object):
     def method_allocate(self, space, args_w):
         return W_HashObject(space, self)
 
-    @classdef.singleton_method("[]")
-    def singleton_method_subscript(self, space, w_obj=None):
-        if w_obj is None:
-            return W_HashObject(space)
-        w_res = space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
-        if w_res is space.w_nil:
-            raise NotImplementedError
-        assert isinstance(w_res, W_HashObject)
-        result = W_HashObject(space)
-        result.contents.update(w_res.contents)
-        return result
+    @classdef.singleton_method("try_convert")
+    def method_try_convert(self, space, w_obj):
+        if not space.is_kind_of(w_obj, space.w_hash):
+            w_obj = space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
+        return w_obj
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_default=None, block=None):
@@ -54,14 +48,14 @@ class W_HashObject(W_Object):
     def method_default_proc(self, space):
         if self.default_proc is None:
             return space.w_nil
-        return space.newproc(self.default_proc)
+        return self.default_proc
 
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         try:
             return self.contents[w_key]
         except KeyError:
-            return space.send(self, space.newsymbol("default"), [w_key])
+            return space.send(self, "default", [w_key])
 
     @classdef.method("fetch")
     def method_fetch(self, space, w_key, w_value=None, block=None):
@@ -73,17 +67,17 @@ class W_HashObject(W_Object):
             elif block is not None:
                 return space.invoke_block(block, [w_key])
             else:
-                raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, space.newsymbol("inspect")))
+                raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, "inspect"))
 
     @classdef.method("store")
     @classdef.method("[]=")
     @check_frozen()
     def method_subscript_assign(self, space, w_key, w_value):
         if (space.is_kind_of(w_key, space.w_string) and
-            not space.is_true(space.send(w_key, space.newsymbol("frozen?")))):
+            not space.is_true(space.send(w_key, "frozen?"))):
 
-            w_key = space.send(w_key, space.newsymbol("dup"))
-            w_key = space.send(w_key, space.newsymbol("freeze"))
+            w_key = space.send(w_key, "dup")
+            w_key = space.send(w_key, "freeze")
         self.contents[w_key] = w_value
         return w_value
 
@@ -116,7 +110,7 @@ class W_HashObject(W_Object):
     @check_frozen()
     def method_shift(self, space):
         if not self.contents:
-            return space.send(self, space.newsymbol("default"), [space.w_nil])
+            return space.send(self, "default", [space.w_nil])
         w_key, w_value = self.contents.popitem()
         return space.newarray([w_key, w_value])
 
