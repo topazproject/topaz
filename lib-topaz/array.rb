@@ -378,22 +378,22 @@ class Array
   def &(other)
     other = Topaz.convert_type(other, Array, :to_ary)
     h = {}
-    other.each { |e| h[e] = nil }
+    other.each { |e| h[e] = true }
     self.select { |e| h.delete(e) }
   end
 
   def |(other)
     other = Topaz.convert_type(other, Array, :to_ary)
     h = {}
-    self.each { |e| h[e] = nil }
-    other.each { |e| h.fetch(e) { |v| h[v] = nil } }
+    self.each { |e| h[e] = true }
+    other.each { |e| h.fetch(e) { |v| h[v] = true } }
     h.keys
   end
 
   def -(other)
     other = Topaz.convert_type(other, Array, :to_ary)
     h = {}
-    other.each { |e| h[e] = nil }
+    other.each { |e| h[e] = true }
     self.reject { |e| h.has_key?(e) }
   end
 end
