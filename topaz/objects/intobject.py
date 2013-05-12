@@ -24,7 +24,7 @@ class FixnumStorage(object):
         try:
             storage = self.storages[intvalue]
         except KeyError:
-            self.storages[intvalue] = storage = space.send(space.w_object, space.newsymbol("new"))
+            self.storages[intvalue] = storage = space.send(space.w_object, "new")
         return storage
 
 
@@ -85,13 +85,13 @@ class W_FixnumObject(W_RootObject):
                     value = ovfcheck(func(self.intvalue, other))
                 except OverflowError:
                     return space.send(
-                        space.newbigint_fromint(self.intvalue), space.newsymbol(name),
+                        space.newbigint_fromint(self.intvalue), name,
                         [w_other]
                     )
                 else:
                     return space.newint(value)
             elif space.is_kind_of(w_other, space.w_bignum):
-                return space.send(space.newbigint_fromint(self.intvalue), space.newsymbol(name), [w_other])
+                return space.send(space.newbigint_fromint(self.intvalue), name, [w_other])
             elif space.is_kind_of(w_other, space.w_float):
                 return space.newfloat(func(self.intvalue, space.float_w(w_other)))
             else:
@@ -113,9 +113,9 @@ class W_FixnumObject(W_RootObject):
             except ZeroDivisionError:
                 self.raise_zero_division_error(space)
         elif space.is_kind_of(w_other, space.w_bignum):
-            return space.send(space.newbigint_fromint(self.intvalue), space.newsymbol("/"), [w_other])
+            return space.send(space.newbigint_fromint(self.intvalue), "/", [w_other])
         elif space.is_kind_of(w_other, space.w_float):
-            return space.send(space.newfloat(space.float_w(self)), space.newsymbol("/"), [w_other])
+            return space.send(space.newfloat(space.float_w(self)), "/", [w_other])
         else:
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
 
@@ -131,11 +131,11 @@ class W_FixnumObject(W_RootObject):
             else:
                 w_float = space.send(
                     space.newfloat(space.float_w(self)),
-                    space.newsymbol("/"),
+                    "/",
                     [w_other]
                 )
                 w_float = space.newfloat(math.floor(Coerce.float(space, w_float)))
-                return space.send(w_float, space.newsymbol("to_i"))
+                return space.send(w_float, "to_i")
         else:
             return self.divide(space, w_other)
 
@@ -145,11 +145,11 @@ class W_FixnumObject(W_RootObject):
             return self.method_pow_int_impl(space, w_other)
         elif space.getclass(w_other) is space.w_float:
             return space.send(
-                space.newfloat(float(self.intvalue)), space.newsymbol("**"), [w_other]
+                space.newfloat(float(self.intvalue)), "**", [w_other]
             )
         elif space.getclass(w_other) is space.w_bignum:
             return space.send(
-                space.newbigint_fromint(self.intvalue), space.newsymbol("**"),
+                space.newbigint_fromint(self.intvalue), "**",
                 [w_other]
             )
         else:
@@ -172,12 +172,12 @@ class W_FixnumObject(W_RootObject):
                     temp = ovfcheck(temp * temp)
             except OverflowError:
                 return space.send(
-                    space.newbigint_fromint(self.intvalue), space.newsymbol("**"),
+                    space.newbigint_fromint(self.intvalue), "**",
                     [space.newint(exp)]
                 )
             return space.newint(ix)
         else:
-            return space.send(space.newfloat(float(temp)), space.newsymbol("**"), [w_other])
+            return space.send(space.newfloat(float(temp)), "**", [w_other])
 
     @classdef.method("%", other="int")
     def method_mod(self, space, other):
@@ -189,7 +189,7 @@ class W_FixnumObject(W_RootObject):
             return space.newint(self.intvalue >> -other)
         elif other >= LONG_BIT:
             return space.send(
-                space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
+                space.newbigint_fromint(self.intvalue), "<<",
                 [space.newint(other)]
             )
         else:
@@ -197,7 +197,7 @@ class W_FixnumObject(W_RootObject):
                 value = ovfcheck(self.intvalue << other)
             except OverflowError:
                 return space.send(
-                    space.newbigint_fromint(self.intvalue), space.newsymbol("<<"),
+                    space.newbigint_fromint(self.intvalue), "<<",
                     [space.newint(other)]
                 )
             else:
@@ -234,11 +234,11 @@ class W_FixnumObject(W_RootObject):
         elif isinstance(w_other, W_FloatObject):
             return space.newbool(self.comparator(space, space.float_w(w_other)) == 0)
         else:
-            return space.send(w_other, space.newsymbol("=="), [self])
+            return space.send(w_other, "==", [self])
 
     @classdef.method("!=")
     def method_ne(self, space, w_other):
-        return space.newbool(space.send(self, space.newsymbol("=="), [w_other]) is space.w_false)
+        return space.newbool(space.send(self, "==", [w_other]) is space.w_false)
 
     def new_bool_op(classdef, name, func):
         @classdef.method(name)
@@ -294,7 +294,7 @@ class W_FixnumObject(W_RootObject):
         if space.getclass(w_other) is space.getclass(self):
             return space.newarray([w_other, self])
         else:
-            return space.newarray([space.send(self, space.newsymbol("Float"), [w_other]), self])
+            return space.newarray([space.send(self, "Float", [w_other]), self])
 
     @classdef.method("chr")
     def method_chr(self, space):

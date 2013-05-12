@@ -71,17 +71,17 @@ class W_IOObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
+        w_stdin = space.send(w_cls, "new", [space.newint(0)])
         space.globals.set(space, "$stdin", w_stdin)
         space.set_const(space.w_object, "STDIN", w_stdin)
 
-        w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
+        w_stdout = space.send(w_cls, "new", [space.newint(1)])
         space.globals.set(space, "$stdout", w_stdout)
         space.globals.set(space, "$>", w_stdout)
         space.globals.set(space, "$/", space.newstr_fromstr("\n"))
         space.set_const(space.w_object, "STDOUT", w_stdout)
 
-        w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
+        w_stderr = space.send(w_cls, "new", [space.newint(2)])
         space.globals.set(space, "$stderr", w_stderr)
         space.set_const(space.w_object, "STDERR", w_stderr)
 
@@ -158,7 +158,7 @@ class W_IOObject(W_Object):
     @classdef.method("write")
     def method_write(self, space, w_str):
         self.ensure_not_closed(space)
-        string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
+        string = space.str_w(space.send(w_str, "to_s"))
         self.stream.write(string)
         if self.sync and self.stream.flushable():
             self.stream.flush()
@@ -209,15 +209,15 @@ class W_IOObject(W_Object):
                 args_w.append(w_last)
         w_sep = space.globals.get(space, "$,")
         if w_sep:
-            sep = space.str_w(space.send(w_sep, space.newsymbol("to_s")))
+            sep = space.str_w(space.send(w_sep, "to_s"))
         else:
             sep = ""
         w_end = space.globals.get(space, "$\\")
         if w_end:
-            end = space.str_w(space.send(w_end, space.newsymbol("to_s")))
+            end = space.str_w(space.send(w_end, "to_s"))
         else:
             end = ""
-        strings = [space.str_w(space.send(w_arg, space.newsymbol("to_s"))) for w_arg in args_w]
+        strings = [space.str_w(space.send(w_arg, "to_s")) for w_arg in args_w]
         self.stream.write(sep.join(strings))
         self.stream.write(end)
         if self.sync and self.stream.flushable():
@@ -236,16 +236,16 @@ class W_IOObject(W_Object):
     def method_pipe(self, space, block=None):
         r, w = os.pipe()
         pipes_w = [
-            space.send(self, space.newsymbol("new"), [space.newint(r)]),
-            space.send(self, space.newsymbol("new"), [space.newint(w)])
+            space.send(self, "new", [space.newint(r)]),
+            space.send(self, "new", [space.newint(w)])
         ]
         if block is not None:
             try:
                 return space.invoke_block(block, pipes_w)
             finally:
                 for pipe_w in pipes_w:
-                    if not space.is_true(space.send(pipe_w, space.newsymbol("closed?"))):
-                        space.send(pipe_w, space.newsymbol("close"))
+                    if not space.is_true(space.send(pipe_w, "closed?")):
+                        space.send(pipe_w, "close")
         else:
             return space.newarray(pipes_w)
 
@@ -256,7 +256,7 @@ class W_IOObject(W_Object):
         if w_io is space.w_nil:
             from topaz.objects.fileobject import W_FileObject
             args = [w_arg] if w_mode is None else [w_arg, w_mode]
-            w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
+            w_io = space.send(space.getclassfor(W_FileObject), "new", args)
         assert isinstance(w_io, W_IOObject)
         w_io.ensure_not_closed(space)
         if self.stream.flushable():

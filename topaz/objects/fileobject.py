@@ -141,7 +141,7 @@ class W_FileObject(W_IOObject):
                 raise NotImplementedError
         elif not path or path[0] != "/":
             if w_dir is not None and w_dir is not space.w_nil:
-                dir = space.str_w(space.send(self, space.newsymbol("expand_path"), [w_dir]))
+                dir = space.str_w(space.send(self, "expand_path", [w_dir]))
             else:
                 dir = os.getcwd()
 
@@ -176,7 +176,7 @@ class W_FileObject(W_IOObject):
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(
-                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
+                        space.send(space.getclassfor(W_FileObject), "join", space.listview(w_arg))
                     )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)

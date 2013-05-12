@@ -44,7 +44,7 @@ class UndefMethod(W_FunctionObject):
 
     def call(self, space, w_obj, args_w, block):
         args_w.insert(0, space.newsymbol(self.name))
-        return space.send(w_obj, space.newsymbol("method_missing"), args_w, block)
+        return space.send(w_obj, "method_missing", args_w, block)
 
 
 class DefineMethodBlock(W_FunctionObject):
@@ -79,8 +79,8 @@ class DefineMethodMethod(W_FunctionObject):
         self.w_unbound_method = w_unbound_method
 
     def call(self, space, w_obj, args_w, block):
-        w_bound_method = space.send(self.w_unbound_method, space.newsymbol("bind"), [w_obj])
-        return space.send(w_bound_method, space.newsymbol("call"), args_w, block)
+        w_bound_method = space.send(self.w_unbound_method, "bind", [w_obj])
+        return space.send(w_bound_method, "call", args_w, block)
 
 
 class W_ModuleObject(W_RootObject):
@@ -121,7 +121,7 @@ class W_ModuleObject(W_RootObject):
     def getsingletonclass(self, space):
         if self.klass is None or not self.klass.is_singleton:
             self.klass = space.newclass(
-                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True
+                "#<Class:%s>" % self.name, self.klass or space.w_module, is_singleton=True, attached=self
             )
         return self.klass
 
@@ -131,6 +131,11 @@ class W_ModuleObject(W_RootObject):
     def define_method(self, space, name, method):
         self.mutated()
         self.methods_w[name] = method
+        if not space.bootstrap:
+            if isinstance(method, UndefMethod):
+                self.method_undefined(space, space.newsymbol(name))
+            else:
+                self.method_added(space, space.newsymbol(name))
 
     @jit.unroll_safe
     def find_method(self, space, name):
@@ -157,6 +162,8 @@ class W_ModuleObject(W_RootObject):
     def set_const(self, space, name, w_obj):
         self.mutated()
         self.constants_w[name] = w_obj
+        if isinstance(w_obj, W_ModuleObject) and w_obj.name is None and self.name is not None:
+            w_obj.set_name_in_scope(space, name, self)
 
     def find_const(self, space, name):
         w_res = self.find_included_const(space, name)
@@ -174,6 +181,34 @@ class W_ModuleObject(W_RootObject):
                 if w_res is not None:
                     break
         return w_res
+
+    def included_constants(self, space):
+        consts = {}
+        for const in self.constants_w:
+            consts[const] = None
+        for w_mod in self.included_modules:
+            for const in w_mod.included_constants(space):
+                consts[const] = None
+        return consts.keys()
+
+    def lexical_constants(self, space):
+        consts = {}
+        frame = space.getexecutioncontext().gettoprubyframe()
+        scope = frame.lexical_scope
+
+        while scope is not None:
+            assert isinstance(scope, W_ModuleObject)
+            for const in scope.w_mod.constants_w:
+                consts[const] = None
+            scope = scope.backscope
+
+        return consts.keys()
+
+    def local_constants(self, space):
+        return self.constants_w.keys()
+
+    def inherited_constants(self, space):
+        return self.local_constants(space)
 
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
@@ -233,13 +268,6 @@ class W_ModuleObject(W_RootObject):
     def get_flag(self, space, name):
         return self.flags.get(space, name) or space.w_false
 
-    def copy_flags(self, space, w_other):
-        assert isinstance(w_other, W_ModuleObject)
-        for key in w_other.flags:
-            w_value = w_other.flags.get(space, key)
-            if w_value is space.w_true:
-                self.set_flag(space, key)
-
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
             return [self] + self.included_modules
@@ -265,18 +293,13 @@ class W_ModuleObject(W_RootObject):
 
     def included(self, space, w_mod):
         self.descendants.append(w_mod)
-        if space.respond_to(self, space.newsymbol("included")):
-            space.send(self, space.newsymbol("included"), [w_mod])
+        if space.respond_to(self, "included"):
+            space.send(self, "included", [w_mod])
 
-    def extend_object(self, space, w_obj, w_mod):
-        if w_mod not in self.ancestors():
-            self.included_modules = [w_mod] + self.included_modules
-            w_mod.extended(space, w_obj, self)
-
-    def extended(self, space, w_obj, w_mod):
-        self.descendants.append(w_mod)
-        if space.respond_to(self, space.newsymbol("extended")):
-            space.send(self, space.newsymbol("extended"), [w_obj])
+    def extend_object(self, space, w_mod):
+        if self not in w_mod.ancestors():
+            self.descendants.append(w_mod)
+            w_mod.included_modules = [self] + w_mod.included_modules
 
     def set_visibility(self, space, names_w, visibility):
         names = [space.symbol_w(w_name) for w_name in names_w]
@@ -291,6 +314,21 @@ class W_ModuleObject(W_RootObject):
 
     def set_method_visibility(self, space, name, visibility):
         pass
+
+    def method_added(self, space, w_name):
+        space.send(self, "method_added", [w_name])
+
+    def method_undefined(self, space, w_name):
+        space.send(self, "method_undefined", [w_name])
+
+    def method_removed(self, space, w_name):
+        space.send(self, "method_removed", [w_name])
+
+    def set_name_in_scope(self, space, name, w_scope):
+        self.name = space.buildname(name, w_scope)
+        for name, w_const in self.constants_w.iteritems():
+            if isinstance(w_const, W_ModuleObject):
+                w_const.set_name_in_scope(space, name, self)
 
     @classdef.singleton_method("nesting")
     def singleton_method_nesting(self, space):
@@ -309,7 +347,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("initialize")
     def method_initialize(self, space, block):
         if block is not None:
-            space.send(self, space.newsymbol("module_exec"), [self], block)
+            space.send(self, "module_exec", [self], block)
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -319,11 +357,34 @@ class W_ModuleObject(W_RootObject):
         return space.newstr_fromstr(name)
 
     @classdef.method("include")
-    def method_include(self, space, w_mod):
-        space.send(w_mod, space.newsymbol("append_features"), [self])
+    def method_include(self, space, args_w):
+        for w_mod in args_w:
+            if type(w_mod) is not W_ModuleObject:
+                raise space.error(
+                    space.w_TypeError,
+                    "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
+                )
+
+        for w_mod in reversed(args_w):
+            space.send(w_mod, "append_features", [self])
+
+        return self
+
+    @classdef.method("include?")
+    def method_includep(self, space, w_mod):
+        if type(w_mod) is not W_ModuleObject:
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Module)" % space.obj_to_s(space.getclass(w_mod))
+            )
+        if w_mod is self:
+            return space.w_false
+        return space.newbool(w_mod in self.ancestors())
 
     @classdef.method("append_features")
     def method_append_features(self, space, w_mod):
+        if w_mod in self.ancestors():
+            raise space.error(space.w_ArgumentError, "cyclic include detected")
         for module in reversed(self.ancestors()):
             w_mod.include_module(space, module)
 
@@ -331,7 +392,7 @@ class W_ModuleObject(W_RootObject):
     def method_define_method(self, space, name, w_method=None, block=None):
         if w_method is not None:
             if space.is_kind_of(w_method, space.w_method):
-                w_method = space.send(w_method, space.newsymbol("unbind"))
+                w_method = space.send(w_method, "unbind")
 
             if space.is_kind_of(w_method, space.w_unbound_method):
                 self.define_method(space, name, DefineMethodMethod(name, w_method))
@@ -380,12 +441,12 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("private_class_method")
     def method_private_class_method(self, space, w_name):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, space.newsymbol("private"), [w_name])
+        return space.send(w_cls, "private", [w_name])
 
     @classdef.method("public_class_method")
     def method_public_class_method(self, space, w_name):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, space.newsymbol("public"), [w_name])
+        return space.send(w_cls, "public", [w_name])
 
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     def method_alias_method(self, space, new_name, old_name):
@@ -404,6 +465,10 @@ class W_ModuleObject(W_RootObject):
     def method_extended(self, space, w_mod):
         # TODO: should be private
         pass
+
+    @classdef.method("extend_object")
+    def method_extend_object(self, space, w_obj):
+        self.extend_object(space, space.getsingletonclass(w_obj))
 
     @classdef.method("name")
     def method_name(self, space):
@@ -428,8 +493,19 @@ class W_ModuleObject(W_RootObject):
         pass
 
     @classdef.method("constants")
-    def method_constants(self, space):
-        return space.newarray([space.newsymbol(n) for n in self.constants_w])
+    def method_constants(self, space, w_inherit=None):
+        if self is space.w_module and w_inherit is None:
+            consts = {}
+            for const in self.lexical_constants(space):
+                consts[const] = None
+            for const in self.inherited_constants(space):
+                consts[const] = None
+            return space.newarray([space.newsymbol(n) for n in consts])
+
+        if w_inherit is None or space.is_true(w_inherit):
+            return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
+        else:
+            return space.newarray([space.newsymbol(n) for n in self.constants_w])
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
@@ -479,6 +555,19 @@ class W_ModuleObject(W_RootObject):
     def method_const_set(self, space, const, w_value):
         space.set_const(self, const, w_value)
         return w_value
+
+    @classdef.method("remove_const", name="str")
+    def method_remove_const(self, space, name):
+        space._check_const_name(name)
+        w_res = self.find_local_const(space, name)
+        if w_res is None:
+            self_name = space.obj_to_s(self)
+            raise space.error(space.w_NameError,
+                "uninitialized constant %s::%s" % (self_name, name)
+            )
+        del self.constants_w[name]
+        self.mutated()
+        return w_res
 
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):
@@ -532,13 +621,13 @@ class W_ModuleObject(W_RootObject):
     def method_lt(self, space, w_other):
         if self is w_other:
             return space.w_false
-        return space.send(self, space.newsymbol("<="), [w_other])
+        return space.send(self, "<=", [w_other])
 
     @classdef.method(">=")
     def method_gte(self, space, w_other):
         if not isinstance(w_other, W_ModuleObject):
             raise space.error(space.w_TypeError, "compared with non class/module")
-        return space.send(w_other, space.newsymbol("<="), [self])
+        return space.send(w_other, "<=", [self])
 
     @classdef.method(">")
     def method_gt(self, space, w_other):
@@ -546,7 +635,7 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_TypeError, "compared with non class/module")
         if self is w_other:
             return space.w_false
-        return space.send(w_other, space.newsymbol("<="), [self])
+        return space.send(w_other, "<=", [self])
 
     @classdef.method("<=>")
     def method_comparison(self, space, w_other):
@@ -556,7 +645,7 @@ class W_ModuleObject(W_RootObject):
         if self is w_other:
             return space.newint(0)
 
-        other_is_subclass = space.send(self, space.newsymbol("<"), [w_other])
+        other_is_subclass = space.send(self, "<", [w_other])
 
         if space.is_true(other_is_subclass):
             return space.newint(-1)
@@ -582,6 +671,7 @@ class W_ModuleObject(W_RootObject):
         return self
 
     @classdef.method("remove_method", name="symbol")
+    @check_frozen()
     def method_remove_method(self, space, name):
         w_method = self._find_method_pure(space, name, self.version)
         if w_method is None or isinstance(w_method, UndefMethod):
@@ -589,8 +679,22 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_NameError,
                 "method `%s' not defined in %s" % (name, cls_name)
             )
-        self.define_method(space, name, UndefMethod(name))
+        del self.methods_w[name]
+        self.mutated()
+        self.method_removed(space, space.newsymbol(name))
         return self
+
+    @classdef.method("method_added")
+    def method_method_added(self, space, w_name):
+        return space.w_nil
+
+    @classdef.method("method_undefined")
+    def method_method_undefined(self, space, w_name):
+        return space.w_nil
+
+    @classdef.method("method_removed")
+    def method_method_removed(self, space, w_name):
+        return space.w_nil
 
     @classdef.method("class_exec")
     @classdef.method("module_exec")
