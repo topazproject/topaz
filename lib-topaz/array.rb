@@ -374,20 +374,23 @@ class Array
 
   def &(other)
     other = Topaz.convert_type(other, Array, :to_ary)
-    m = Topaz::Array::IdentityMap.new(other)
-    self.select { |e| m.delete(e) }
+    h = {}
+    other.each { |e| h[e] = nil }
+    self.select { |e| h.delete(e) }
   end
 
   def |(other)
     other = Topaz.convert_type(other, Array, :to_ary)
-    m = Topaz::Array::IdentityMap.new(self)
-    m.add(other)
-    m.entries
+    h = {}
+    self.each { |e| h[e] = nil }
+    other.each { |e| h.fetch(e) { |v| h[v] = nil } }
+    h.keys
   end
 
   def -(other)
     other = Topaz.convert_type(other, Array, :to_ary)
-    m = Topaz::Array::IdentityMap.new(other)
-    self.reject { |e| m.include?(e) }
+    h = {}
+    other.each { |e| h[e] = nil }
+    self.reject { |e| h.has_key?(e) }
   end
 end
