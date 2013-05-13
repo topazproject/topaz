@@ -94,3 +94,8 @@ class FFI(object):
         w_platform = space.newmodule('Platform', None)
         space.set_const(w_platform, 'ADDRESS_SIZE', space.newint(8))
         space.set_const(w_mod, 'Platform', w_platform)
+
+        # setup StructLayout
+        w_struct_layout = space.newclass('StructLayout', None)
+        space.set_const(w_struct_layout, 'Field', space.w_nil)
+        space.set_const(w_mod, 'StructLayout', w_struct_layout)

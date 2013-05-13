@@ -67,3 +67,9 @@ class TestFFI(BaseTopazTest):
         assert type(w_p) is W_ModuleObject
         w_res = space.execute('FFI::Platform::ADDRESS_SIZE')
         assert space.int_w(w_res) == 8
+
+    def test_StructLayout(self, space):
+        w_sl = space.execute('FFI::StructLayout')
+        assert isinstance(w_sl, W_ClassObject)
+        w_res = space.execute('FFI::StructLayout::Field')
+        assert w_res == space.w_nil
