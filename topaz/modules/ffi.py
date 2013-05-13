@@ -50,31 +50,13 @@ class FFI(object):
 
     @moduledef.setup_module
     def setup_module(space, w_mod):
+        # setup type constants
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
-
         for typename in FFI.types:
             space.set_const(w_mod, 'TYPE_' + typename, space.w_nil)
 
-        space.set_const(w_mod, 'DataConverter',
-                        space.getmoduleobject(DataConverter.moduledef))
-
-        w_dynamic_lib = space.newclass('DynamicLibrary', None)
-        space.set_const(w_mod, 'DynamicLibrary',
-                        w_dynamic_lib)
-        space.set_const(w_dynamic_lib, "RTLD_LAZY", space.w_nil)
-        space.set_const(w_dynamic_lib, "RTLD_NOW", space.w_nil)
-        space.set_const(w_dynamic_lib, "RTLD_GLOBAL", space.w_nil)
-        space.set_const(w_dynamic_lib, "RTLD_LOCAL", space.w_nil)
-
-        w_pointer = space.newclass('Pointer', None)
-        space.set_const(w_mod, 'Pointer', w_pointer)
-
-        w_platform = space.newmodule('Platform', None)
-        space.set_const(w_mod, 'Platform', w_platform)
-        space.set_const(w_platform, 'ADDRESS_SIZE', space.newint(8))
-
-        # setup Type class
+        # setup Type
         w_type = space.newclass('Type', None)
         for typename in FFI.types:
             # using space.w_nil for now, should be something with
@@ -92,3 +74,23 @@ class FFI(object):
                                  """)
         space.set_const(w_type, 'Mapped', w_mapped)
         space.set_const(w_mod, 'Type', w_type)
+
+        space.set_const(w_mod, 'DataConverter',
+                        space.getmoduleobject(DataConverter.moduledef))
+
+        # setup DynamicLibrary
+        w_dynamic_lib = space.newclass('DynamicLibrary', None)
+        space.set_const(w_dynamic_lib, "RTLD_LAZY", space.w_nil)
+        space.set_const(w_dynamic_lib, "RTLD_NOW", space.w_nil)
+        space.set_const(w_dynamic_lib, "RTLD_GLOBAL", space.w_nil)
+        space.set_const(w_dynamic_lib, "RTLD_LOCAL", space.w_nil)
+        space.set_const(w_mod, 'DynamicLibrary', w_dynamic_lib)
+
+        # setup Pointer
+        w_pointer = space.newclass('Pointer', None)
+        space.set_const(w_mod, 'Pointer', w_pointer)
+
+        # setup Platform
+        w_platform = space.newmodule('Platform', None)
+        space.set_const(w_platform, 'ADDRESS_SIZE', space.newint(8))
+        space.set_const(w_mod, 'Platform', w_platform)
