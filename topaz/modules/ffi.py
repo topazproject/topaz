@@ -10,10 +10,39 @@ from rpython.rtyper.lltypesystem import rffi
 class FFI(object):
     moduledef = ModuleDef("FFI", filepath=__file__)
 
+    types = {'VOID':clibffi.ffi_type_void,
+             'INT8': clibffi.ffi_type_sint8,
+             'UINT8': clibffi.ffi_type_uint8,
+             'INT16': clibffi.ffi_type_sint16,
+             'UINT16': clibffi.ffi_type_uint16,
+             'INT32': clibffi.ffi_type_sint32,
+             'UINT32': clibffi.ffi_type_uint32,
+             'INT64': clibffi.ffi_type_sint64,
+             'UINT64': clibffi.ffi_type_uint64,
+             'LONG': clibffi.cast_type_to_ffitype(rffi.LONG),
+             'ULONG': clibffi.cast_type_to_ffitype(rffi.ULONG),
+             'FLOAT32': clibffi.ffi_type_float,
+             'FLOAT64': clibffi.ffi_type_double,
+             'LONGDOUBLE': clibffi.ffi_type_longdouble,
+             'POINTER': clibffi.ffi_type_pointer,
+             'BOOL': clibffi.ffi_type_uchar}
+    aliases = {'SCHAR': 'INT8', 'CHAR': 'INT8', 'UCHAR': 'UINT8',
+               'SHORT': 'INT16', 'SSHORT': 'INT16',
+               'USHORT': 'UINT16', 'INT': 'INT32', 'SINT': 'INT32',
+               'UINT': 'UINT32', 'LONG_LONG': 'INT64',
+               'SLONG': 'LONG', 'SLONG_LONG': 'INT64',
+               'ULONG_LONG': 'UINT64', 'FLOAT': 'FLOAT32',
+               'DOUBLE': 'FLOAT64', 'STRING': 'POINTER',
+               'BUFFER_IN': 'POINTER', 'BUFFER_OUT': 'POINTER',
+               'BUFFER_INOUT': 'POINTER', 'VARARGS': 'VOID'}
+
     @moduledef.setup_module
     def setup_module(space, w_mod):
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
+
+        for typename in FFI.types:
+            space.set_const(w_mod, 'TYPE_' + typename, space.w_nil)
 
         md_DataConverter = ModuleDef('DataConverter', filepath=__file__)
 
@@ -44,41 +73,14 @@ class FFI(object):
         space.set_const(w_mod, 'Platform', w_platform)
         space.set_const(w_platform, 'ADDRESS_SIZE', space.newint(8))
 
-        ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
-        ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)
-        ffitypes = {'VOID':clibffi.ffi_type_void,
-                    'INT8': clibffi.ffi_type_sint8,
-                    'UINT8': clibffi.ffi_type_uint8,
-                    'INT16': clibffi.ffi_type_sint16,
-                    'UINT16': clibffi.ffi_type_uint16,
-                    'INT32': clibffi.ffi_type_sint32,
-                    'UINT32': clibffi.ffi_type_uint32,
-                    'INT64': clibffi.ffi_type_sint64,
-                    'UINT64': clibffi.ffi_type_uint64,
-                    'LONG': ffi_type_long,
-                    'ULONG': ffi_type_ulong,
-                    'FLOAT32': clibffi.ffi_type_float,
-                    'FLOAT64': clibffi.ffi_type_double,
-                    'LONGDOUBLE': clibffi.ffi_type_longdouble,
-                    'POINTER': clibffi.ffi_type_pointer,
-                    'BOOL': clibffi.ffi_type_uchar}
-        typealiases = {'SCHAR': 'INT8', 'CHAR': 'INT8', 'UCHAR': 'UINT8',
-                       'SHORT': 'INT16', 'SSHORT': 'INT16',
-                       'USHORT': 'UINT16', 'INT': 'INT32', 'SINT': 'INT32',
-                       'UINT': 'UINT32', 'LONG_LONG': 'INT64',
-                       'SLONG': 'LONG', 'SLONG_LONG': 'INT64',
-                       'ULONG_LONG': 'UINT64', 'FLOAT': 'FLOAT32',
-                       'DOUBLE': 'FLOAT64', 'STRING': 'POINTER',
-                       'BUFFER_IN': 'POINTER', 'BUFFER_OUT': 'POINTER',
-                       'BUFFER_INOUT': 'POINTER', 'VARARGS': 'VOID'}
+        # setup Type class
         w_type = space.newclass('Type', None)
-        for typename in ffitypes:
-            space.set_const(w_mod, 'TYPE_' + typename, space.w_nil)
+        for typename in FFI.types:
             # using space.w_nil for now, should be something with
-            # ffitypes[typename] later.
+            # FFI.types[typename] later.
             space.set_const(w_type, typename, space.w_nil)
-        for aka in typealiases:
-            ffitype = space.find_const(w_type, typealiases[aka])
+        for aka in FFI.aliases:
+            ffitype = space.find_const(w_type, FFI.aliases[aka])
             space.set_const(w_type, aka, ffitype)
         w_mapped = space.execute("""
                                  class Mapped
