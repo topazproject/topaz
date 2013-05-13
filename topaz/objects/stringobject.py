@@ -920,6 +920,7 @@ class W_StringObject(W_Object):
                 last += 1
             else:
                 last = ctx.match_end
+            assert last >= 0
             ctx.reset(last)
 
     def scan_process_result(self, space, w_match, results_w, block):
