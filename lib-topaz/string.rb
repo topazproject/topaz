@@ -170,4 +170,12 @@ class String
     clear
     insert(0, other)
   end
+
+  def gsub!(*args)
+    replace(gsub(*args))
+  end
+
+  def sub(*args)
+    replace(sub(*args))
+  end
 end
