@@ -171,11 +171,15 @@ class String
     insert(0, other)
   end
 
-  def gsub!(*args)
-    replace(gsub(*args))
+  def gsub!(*args, &block)
+    replace(gsub(*args, &block))
+    args.each { |arg| Topaz.infect(self, arg) }
+    self
   end
 
-  def sub!(*args)
-    replace(sub(*args))
+  def sub!(*args, &block)
+    replace(sub(*args, &block))
+    args.each { |arg| Topaz.infect(self, arg) }
+    self
   end
 end
