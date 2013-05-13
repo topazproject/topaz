@@ -57,3 +57,7 @@ class TestFFI(BaseTopazTest):
         for name in ['LAZY', 'NOW', 'GLOBAL', 'LOCAL']:
             w_res = space.execute('FFI::DynamicLibrary::RTLD_%s' % name)
             w_res == space.w_nil
+
+    def test_Pointer(self, space):
+        w_p = space.execute('FFI::Pointer')
+        assert isinstance(w_p, W_ClassObject)

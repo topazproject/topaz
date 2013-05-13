@@ -49,6 +49,9 @@ class FFI(object):
         space.set_const(w_dynamic_lib, "RTLD_GLOBAL", space.w_nil)
         space.set_const(w_dynamic_lib, "RTLD_LOCAL", space.w_nil)
 
+        w_pointer = space.newclass('Pointer', None)
+        space.set_const(w_mod, 'Pointer', w_pointer)
+
         ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
         ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)
         ffitypes = {'VOID':clibffi.ffi_type_void,
