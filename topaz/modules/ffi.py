@@ -52,6 +52,10 @@ class FFI(object):
         w_pointer = space.newclass('Pointer', None)
         space.set_const(w_mod, 'Pointer', w_pointer)
 
+        w_platform = space.newmodule('Platform', None)
+        space.set_const(w_mod, 'Platform', w_platform)
+        space.set_const(w_platform, 'ADDRESS_SIZE', space.newint(8))
+
         ffi_type_long = clibffi.cast_type_to_ffitype(rffi.LONG)
         ffi_type_ulong = clibffi.cast_type_to_ffitype(rffi.ULONG)
         ffitypes = {'VOID':clibffi.ffi_type_void,

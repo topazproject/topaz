@@ -61,3 +61,9 @@ class TestFFI(BaseTopazTest):
     def test_Pointer(self, space):
         w_p = space.execute('FFI::Pointer')
         assert isinstance(w_p, W_ClassObject)
+
+    def test_Platform(self, space):
+        w_p = space.execute('FFI::Platform')
+        assert type(w_p) is W_ModuleObject
+        w_res = space.execute('FFI::Platform::ADDRESS_SIZE')
+        assert space.int_w(w_res) == 8
