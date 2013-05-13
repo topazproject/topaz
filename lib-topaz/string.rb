@@ -175,7 +175,7 @@ class String
     replace(gsub(*args))
   end
 
-  def sub(*args)
+  def sub!(*args)
     replace(sub(*args))
   end
 end
