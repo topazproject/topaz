@@ -50,6 +50,18 @@ class W_ClassObject(W_ModuleObject):
             w_res = self.superclass.find_const(space, name)
         return w_res
 
+    def inherited_constants(self, space):
+        consts = {}
+        for const in W_ModuleObject.local_constants(self, space):
+            consts[const] = None
+        w_cls = self.superclass
+        while w_cls is not None:
+            for const in w_cls.local_constants(space):
+                consts[const] = None
+            w_cls = w_cls.superclass
+
+        return consts.keys()
+
     def find_method(self, space, name):
         method = W_ModuleObject.find_method(self, space, name)
         if method is None and self.superclass is not None:

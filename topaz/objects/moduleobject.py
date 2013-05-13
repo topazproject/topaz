@@ -162,6 +162,8 @@ class W_ModuleObject(W_RootObject):
     def set_const(self, space, name, w_obj):
         self.mutated()
         self.constants_w[name] = w_obj
+        if isinstance(w_obj, W_ModuleObject) and w_obj.name is None and self.name is not None:
+            w_obj.set_name_in_scope(space, name, self)
 
     def find_const(self, space, name):
         w_res = self.find_included_const(space, name)
@@ -182,12 +184,31 @@ class W_ModuleObject(W_RootObject):
 
     def included_constants(self, space):
         consts = {}
-        for const in self.constants_w.keys():
+        for const in self.constants_w:
             consts[const] = None
         for w_mod in self.included_modules:
             for const in w_mod.included_constants(space):
                 consts[const] = None
         return consts.keys()
+
+    def lexical_constants(self, space):
+        consts = {}
+        frame = space.getexecutioncontext().gettoprubyframe()
+        scope = frame.lexical_scope
+
+        while scope is not None:
+            assert isinstance(scope, W_ModuleObject)
+            for const in scope.w_mod.constants_w:
+                consts[const] = None
+            scope = scope.backscope
+
+        return consts.keys()
+
+    def local_constants(self, space):
+        return self.constants_w.keys()
+
+    def inherited_constants(self, space):
+        return self.local_constants(space)
 
     def find_local_const(self, space, name):
         return self._find_const_pure(name, self.version)
@@ -246,13 +267,6 @@ class W_ModuleObject(W_RootObject):
 
     def get_flag(self, space, name):
         return self.flags.get(space, name) or space.w_false
-
-    def copy_flags(self, space, w_other):
-        assert isinstance(w_other, W_ModuleObject)
-        for key in w_other.flags:
-            w_value = w_other.flags.get(space, key)
-            if w_value is space.w_true:
-                self.set_flag(space, key)
 
     def ancestors(self, include_singleton=True, include_self=True):
         if include_self:
@@ -479,8 +493,19 @@ class W_ModuleObject(W_RootObject):
         pass
 
     @classdef.method("constants")
-    def method_constants(self, space):
-        return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
+    def method_constants(self, space, w_inherit=None):
+        if self is space.w_module and w_inherit is None:
+            consts = {}
+            for const in self.lexical_constants(space):
+                consts[const] = None
+            for const in self.inherited_constants(space):
+                consts[const] = None
+            return space.newarray([space.newsymbol(n) for n in consts])
+
+        if w_inherit is None or space.is_true(w_inherit):
+            return space.newarray([space.newsymbol(n) for n in self.included_constants(space)])
+        else:
+            return space.newarray([space.newsymbol(n) for n in self.constants_w])
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
@@ -530,6 +555,19 @@ class W_ModuleObject(W_RootObject):
     def method_const_set(self, space, const, w_value):
         space.set_const(self, const, w_value)
         return w_value
+
+    @classdef.method("remove_const", name="str")
+    def method_remove_const(self, space, name):
+        space._check_const_name(name)
+        w_res = self.find_local_const(space, name)
+        if w_res is None:
+            self_name = space.obj_to_s(self)
+            raise space.error(space.w_NameError,
+                "uninitialized constant %s::%s" % (self_name, name)
+            )
+        del self.constants_w[name]
+        self.mutated()
+        return w_res
 
     @classdef.method("class_variable_defined?", name="symbol")
     def method_class_variable_definedp(self, space, name):

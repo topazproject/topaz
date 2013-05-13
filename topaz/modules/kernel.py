@@ -262,8 +262,7 @@ class Kernel(object):
             raise space.error(space.w_TypeError, "can't dup %s" % space.getclass(self).name)
         w_dup = space.send(space.getnonsingletonclass(self), "allocate")
         w_dup.copy_instance_vars(space, self)
-        w_dup.copy_flags(space, self)
-        w_dup.unset_flag(space, "frozen?")
+        space.infect(w_dup, self, freeze=False)
         space.send(w_dup, "initialize_dup", [self])
         return w_dup
 
@@ -275,7 +274,7 @@ class Kernel(object):
             raise space.error(space.w_TypeError, "can't dup %s" % space.getclass(self).name)
         w_dup = space.send(space.getnonsingletonclass(self), "allocate")
         w_dup.copy_instance_vars(space, self)
-        w_dup.copy_flags(space, self)
+        space.infect(w_dup, self, freeze=True)
         w_dup.copy_singletonclass(space, space.getsingletonclass(self))
         space.send(w_dup, "initialize_clone", [self])
         return w_dup
