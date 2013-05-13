@@ -7,6 +7,18 @@ from topaz.objects.exceptionobject import W_StandardError, new_exception_allocat
 from rpython.rlib import clibffi, rarithmetic
 from rpython.rtyper.lltypesystem import rffi
 
+class DataConverter(object):
+    moduledef = ModuleDef('DataConverter', filepath=__file__)
+
+    @moduledef.function('native_type')
+    def native_type(self, space, args_w): pass
+
+    @moduledef.function('to_native')
+    def to_native(self, space): pass
+
+    @moduledef.function('from_native')
+    def from_native(self, space): pass
+
 class FFI(object):
     moduledef = ModuleDef("FFI", filepath=__file__)
 
@@ -44,19 +56,8 @@ class FFI(object):
         for typename in FFI.types:
             space.set_const(w_mod, 'TYPE_' + typename, space.w_nil)
 
-        md_DataConverter = ModuleDef('DataConverter', filepath=__file__)
-
-        @md_DataConverter.function('native_type')
-        def native_type(self, space, args_w): pass
-
-        @md_DataConverter.function('to_native')
-        def to_native(self, space): pass
-
-        @md_DataConverter.function('from_native')
-        def from_native(self, space): pass
-
         space.set_const(w_mod, 'DataConverter',
-                        space.getmoduleobject(md_DataConverter))
+                        space.getmoduleobject(DataConverter.moduledef))
 
         w_dynamic_lib = space.newclass('DynamicLibrary', None)
         space.set_const(w_mod, 'DynamicLibrary',
