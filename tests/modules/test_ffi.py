@@ -28,9 +28,6 @@ class TestFFI(BaseTopazTest):
         for pt in TestFFI.primitive_types:
             space.execute('FFI::TYPE_%s' % pt)
 
-    #def test_Mapped(self, space):
-    #    space.execute("Mapped.new(42)")
-
     def test_Type(self, space):
         w_type = space.execute('FFI::Type')
         assert isinstance(w_type, W_ClassObject)
