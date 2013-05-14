@@ -52,13 +52,19 @@ class TestFFI(BaseTopazTest):
         assert w_res == space.w_nil
 
     def test_DynamicLibrary(self, space):
-        w_dl = space.execute('FFI::DynamicLibrary')
-        assert isinstance(w_dl, W_ClassObject)
         for name in ['LAZY', 'NOW', 'GLOBAL', 'LOCAL']:
             w_res = space.execute('FFI::DynamicLibrary::RTLD_%s' % name)
             w_res == space.w_nil
-        w_res = space.execute('FFI::DynamicLibrary.respond_to? :open')
-        assert self.unwrap(space, w_res)
+        w_res = space.execute("FFI::DynamicLibrary.open('something', 1)")
+        assert w_res == space.w_nil
+        w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)")
+        assert w_res == space.w_nil
+        with self.raises(space, "TypeError", "can't convert Float into String"):
+            space.execute("FFI::DynamicLibrary.open(3.142, 1)")
+        # The next error message is different from the one in ruby 1.9.3.
+        # But the meaning is the same.
+        with self.raises(space, "TypeError", "can't convert String into Integer"):
+            space.execute("FFI::DynamicLibrary.open('something', 'invalid flag')")
 
     def test_Pointer(self, space):
         w_p = space.execute('FFI::Pointer')

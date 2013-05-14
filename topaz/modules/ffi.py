@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
+from topaz.coerce import Coerce
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 
 from rpython.rlib import clibffi, rarithmetic
@@ -29,8 +30,12 @@ class W_DynamicLibraryObject(W_Object):
         space.set_const(w_cls, "RTLD_GLOBAL", space.w_nil)
         space.set_const(w_cls, "RTLD_LOCAL", space.w_nil)
 
-    @classdef.singleton_method('open')
-    def method_open(self, space):
+    @classdef.singleton_method('open', flags='int')
+    def method_open(self, space, w_name, flags):
+        if w_name == space.w_nil:
+            name = None
+        else:
+            name = Coerce.path(space, w_name)
         return space.w_nil
 
 class FFI(object):
