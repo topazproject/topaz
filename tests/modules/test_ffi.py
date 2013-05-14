@@ -52,9 +52,10 @@ class TestFFI(BaseTopazTest):
         assert w_res == space.w_nil
 
     def test_DynamicLibrary(self, space):
-        for name in ['LAZY', 'NOW', 'GLOBAL', 'LOCAL']:
+        consts = {'LAZY':1 , 'NOW':2, 'GLOBAL':257, 'LOCAL':0}
+        for name in consts:
             w_res = space.execute('FFI::DynamicLibrary::RTLD_%s' % name)
-            w_res == space.w_nil
+            space.int_w(w_res) == consts[name]
         w_res = space.execute("FFI::DynamicLibrary.open('something', 1)")
         assert w_res == space.w_nil
         w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)")

@@ -25,10 +25,10 @@ class W_DynamicLibraryObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        space.set_const(w_cls, "RTLD_LAZY", space.w_nil)
-        space.set_const(w_cls, "RTLD_NOW", space.w_nil)
-        space.set_const(w_cls, "RTLD_GLOBAL", space.w_nil)
-        space.set_const(w_cls, "RTLD_LOCAL", space.w_nil)
+        space.set_const(w_cls, "RTLD_LAZY", space.newint(1))
+        space.set_const(w_cls, "RTLD_NOW", space.newint(2))
+        space.set_const(w_cls, "RTLD_GLOBAL", space.newint(257))
+        space.set_const(w_cls, "RTLD_LOCAL", space.newint(0))
 
     @classdef.singleton_method('open', flags='int')
     def method_open(self, space, w_name, flags):
