@@ -51,11 +51,13 @@ class TestFFI(BaseTopazTest):
         w_res = space.execute('FFI::DataConverter.from_native')
         assert w_res == space.w_nil
 
-    def test_DynamicLibrary(self, space):
+    def test_DynamicLibrary_consts(self, space):
         consts = {'LAZY':1 , 'NOW':2, 'GLOBAL':257, 'LOCAL':0}
         for name in consts:
             w_res = space.execute('FFI::DynamicLibrary::RTLD_%s' % name)
             space.int_w(w_res) == consts[name]
+
+    def test_DynamicLibrary_open(self, space):
         w_res = space.execute("FFI::DynamicLibrary.open('something', 1)")
         assert w_res == space.w_nil
         w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)")
