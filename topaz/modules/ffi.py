@@ -19,6 +19,20 @@ class DataConverter(object):
     @moduledef.function('from_native')
     def from_native(self, space): pass
 
+class W_DynamicLibraryObject(W_Object):
+    classdef = ClassDef('DynamicLibrary', W_Object.classdef, filepath=__file__)
+
+    @classdef.setup_class
+    def setup_class(cls, space, w_cls):
+        space.set_const(w_cls, "RTLD_LAZY", space.w_nil)
+        space.set_const(w_cls, "RTLD_NOW", space.w_nil)
+        space.set_const(w_cls, "RTLD_GLOBAL", space.w_nil)
+        space.set_const(w_cls, "RTLD_LOCAL", space.w_nil)
+
+    @classdef.singleton_method('open')
+    def method_open(self, space):
+        return space.w_nil
+
 class FFI(object):
     moduledef = ModuleDef("FFI", filepath=__file__)
 
@@ -79,12 +93,8 @@ class FFI(object):
                         space.getmoduleobject(DataConverter.moduledef))
 
         # setup DynamicLibrary
-        w_dynamic_lib = space.newclass('DynamicLibrary', None)
-        space.set_const(w_dynamic_lib, "RTLD_LAZY", space.w_nil)
-        space.set_const(w_dynamic_lib, "RTLD_NOW", space.w_nil)
-        space.set_const(w_dynamic_lib, "RTLD_GLOBAL", space.w_nil)
-        space.set_const(w_dynamic_lib, "RTLD_LOCAL", space.w_nil)
-        space.set_const(w_mod, 'DynamicLibrary', w_dynamic_lib)
+        space.set_const(w_mod, 'DynamicLibrary',
+                        space.getclassfor(W_DynamicLibraryObject))
 
         # setup Pointer
         w_pointer = space.newclass('Pointer', None)
@@ -99,3 +109,7 @@ class FFI(object):
         w_struct_layout = space.newclass('StructLayout', None)
         space.set_const(w_struct_layout, 'Field', space.w_nil)
         space.set_const(w_mod, 'StructLayout', w_struct_layout)
+
+        # setup StructByReference
+        w_struct_by_reference = space.newclass('StructByValue', None)
+        space.set_const(w_mod, 'StructByReference', w_struct_by_reference)
