@@ -1,5 +1,5 @@
 from ..base import BaseTopazTest
-from topaz.modules.ffi import FFI
+from topaz.modules.ffi import FFI, W_DynamicLibraryObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
@@ -59,9 +59,8 @@ class TestFFI(BaseTopazTest):
 
     def test_DynamicLibrary_open(self, space):
         w_res = space.execute("FFI::DynamicLibrary.open('something', 1)")
-        assert w_res == space.w_nil
-        w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)")
-        assert w_res == space.w_nil
+        assert isinstance(w_res, W_DynamicLibraryObject)
+        w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)") #didn't crash
         with self.raises(space, "TypeError", "can't convert Float into String"):
             space.execute("FFI::DynamicLibrary.open(3.142, 1)")
         # The next error message is different from the one in ruby 1.9.3.

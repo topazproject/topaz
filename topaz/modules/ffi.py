@@ -36,7 +36,7 @@ class W_DynamicLibraryObject(W_Object):
             name = None
         else:
             name = Coerce.path(space, w_name)
-        return space.w_nil
+        return W_DynamicLibraryObject(space)
 
 class FFI(object):
     moduledef = ModuleDef("FFI", filepath=__file__)
