@@ -208,6 +208,8 @@ class ObjectSpace(object):
                 w_cls
             )
 
+        self.set_const(self.w_basicobject, "BasicObject", self.w_basicobject)
+
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
         self.send(self.w_object, "include", [self.w_kernel])
