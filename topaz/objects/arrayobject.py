@@ -75,7 +75,7 @@ class W_ArrayObject(W_Object):
         elif as_range:
             assert start >= 0
             assert end >= 0
-            return space.newarray(self.items_w[start:end])
+            return W_ArrayObject(space, self.items_w[start:end], space.getnonsingletonclass(self))
         else:
             return self.items_w[start]
 
@@ -87,7 +87,7 @@ class W_ArrayObject(W_Object):
             w_count = w_count_or_obj
         else:
             w_obj = w_count_or_obj
-        start, end, as_range, nil = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
+        start, end, as_range, _ = space.subscript_access(len(self.items_w), w_idx, w_count=w_count)
 
         if w_count and end < start:
             raise space.error(space.w_IndexError,

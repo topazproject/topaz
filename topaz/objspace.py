@@ -585,9 +585,14 @@ class ObjectSpace(object):
     def _send_raw(self, name, raw_method, w_receiver, w_cls, args_w, block):
         if raw_method is None:
             method_missing = w_cls.find_method(self, "method_missing")
-            assert method_missing is not None
-            args_w.insert(0, self.newsymbol(name))
-            return method_missing.call(self, w_receiver, args_w, block)
+            if method_missing is None:
+                class_name = self.str_w(self.send(w_cls, "to_s"))
+                raise self.error(self.w_NoMethodError,
+                    "undefined method `%s' for %s" % (name, class_name)
+                )
+            else:
+                args_w.insert(0, self.newsymbol(name))
+                return method_missing.call(self, w_receiver, args_w, block)
         return raw_method.call(self, w_receiver, args_w, block)
 
     def respond_to(self, w_receiver, name):
@@ -653,6 +658,7 @@ class ObjectSpace(object):
         inclusive = False
         as_range = False
         end = 0
+        nil = False
 
         if isinstance(w_idx, W_RangeObject) and not w_count:
             start = self.int_w(self.convert_type(w_idx.w_start, self.w_fixnum, "to_int"))
@@ -665,9 +671,14 @@ class ObjectSpace(object):
                 end = self.int_w(self.convert_type(w_count, self.w_fixnum, "to_int"))
                 if end >= 0:
                     as_range = True
+                else:
+                    if start < 0:
+                        start += length
+                    return (start, end, False, True)
 
         if start < 0:
             start += length
+
         if as_range:
             if w_count:
                 end += start
@@ -679,9 +690,10 @@ class ObjectSpace(object):
                 end = start
             elif end > length:
                 end = length
+            nil = start < 0 or end < 0 or start > length
+        else:
+            nil = start < 0 or start >= length
 
-        nil = ((not as_range and start >= length) or
-            start < 0 or end < 0 or (start > 0 and start > length))
         return (start, end, as_range, nil)
 
     def convert_type(self, w_obj, w_cls, method, raise_error=True):
