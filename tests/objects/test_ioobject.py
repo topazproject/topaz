@@ -45,7 +45,11 @@ class TestIO(BaseTopazTest):
             """ % f)
 
     def test_push(self, space, capfd, tmpdir):
-        space.execute('return IO.new(1, "w") << "hello" << "world"')
+        space.execute("""
+        out = IO.new(1, "w")
+        out.sync = true
+        return out << "hello" << "world"
+        """)
         out, err = capfd.readouterr()
         assert out == "helloworld"
 
@@ -86,7 +90,11 @@ class TestIO(BaseTopazTest):
             """ % f)
 
     def test_simple_print(self, space, capfd, tmpdir):
-        space.execute('IO.new(1, "w").print("foo")')
+        space.execute("""
+        out = IO.new(1, "w")
+        out.sync = true
+        out.print("foo")
+        """)
         out, err = capfd.readouterr()
         assert out == "foo"
 
@@ -99,30 +107,54 @@ class TestIO(BaseTopazTest):
             """ % f)
 
     def test_multi_print(self, space, capfd):
-        space.execute('IO.new(1, "w").print("This", "is", 100, "percent")')
+        space.execute("""
+        out = IO.new(1, "w")
+        out.sync = true
+        out.print("This", "is", 100, "percent")
+        """)
         out, err = capfd.readouterr()
         assert out == "Thisis100percent"
 
     def test_print_globals(self, space, capfd):
         space.globals.set(space, "$,", space.newstr_fromstr(":"))
         space.globals.set(space, "$\\", space.newstr_fromstr("\n"))
-        space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
+        space.execute("""
+        out = IO.new(1, "w")
+        out.sync = true
+        out.print("foo", "bar", "baz")
+        """)
         space.globals.set(space, "$_", space.newstr_fromstr('lastprint'))
-        space.execute('IO.new(1, "w").print')
+        space.execute("""
+        out = IO.new(1, "w")
+        out.sync = true
+        out.print
+        """)
         out, err = capfd.readouterr()
         assert out == "foo:bar:baz\nlastprint\n"
 
     def test_non_string_print_globals(self, space, capfd):
         space.globals.set(space, "$,", space.w_nil)
         space.globals.set(space, "$\\", space.w_nil)
-        space.execute('IO.new(1, "w").print("foo", "bar", "baz")')
+        space.execute("""
+        out = IO.new(1, "w")
+        out.sync = true
+        out.print("foo", "bar", "baz")
+        """)
         space.globals.set(space, "$_", space.w_nil)
-        space.execute('IO.new(1, "w").print')
+        space.execute("""
+        out = IO.new(1, "w")
+        out.sync = true
+        out.print
+        """)
         out, err = capfd.readouterr()
         assert out == "foobarbaz"
 
     def test_puts(self, space, capfd, tmpdir):
-        space.execute("IO.new(1, 'w').puts('This', 'is\n', 100, 'percent')")
+        space.execute("""
+        out = IO.new(1, 'w')
+        out.sync = true
+        out.puts('This', 'is\n', 100, 'percent')
+        """)
         out, err = capfd.readouterr()
         assert out == "This\nis\n100\npercent\n"
 
@@ -135,7 +167,11 @@ class TestIO(BaseTopazTest):
             """ % f)
 
     def test_flush(self, space, capfd, tmpdir):
-        space.execute("IO.new(1, 'w').flush.puts('String')")
+        space.execute("""
+        out = IO.new(1, 'w')
+        out.puts('String')
+        out.flush
+        """)
         out, err = capfd.readouterr()
         assert out == "String\n"
 
@@ -149,6 +185,9 @@ class TestIO(BaseTopazTest):
 
     def test_globals(self, space, capfd):
         w_res = space.execute("""
+        $stdout.sync = true
+        $stdin.sync = true
+
         STDOUT.puts("STDOUT")
         $stdout.puts("$stdout")
         $>.puts("$>")
@@ -288,9 +327,9 @@ class TestIO(BaseTopazTest):
             """ % f)
 
     def test_reopen(self, space, tmpdir):
-        content = "This is line one"
+        content = "This is line one\n"
         f = tmpdir.join("testfile")
-        f.write(content + "\n")
+        f.write(content)
         w_res = space.execute("""
         res = []
         class A
@@ -306,12 +345,12 @@ class TestIO(BaseTopazTest):
         res << f2.readlines[0]
         return res
         """ % (f, f))
-        assert self.unwrap(space, w_res) == [content, content, ""]
+        assert self.unwrap(space, w_res) == [content, content, None]
 
     def test_reopen_path(self, space, tmpdir):
-        content = "This is line one"
+        content = "This is line one\n"
         f = tmpdir.join("testfile")
-        f.write(content + "\n")
+        f.write(content)
         w_res = space.execute("""
         res = []
         f = File.new("%s")
@@ -321,7 +360,7 @@ class TestIO(BaseTopazTest):
         res << f.readlines[0]
         return res
         """ % (f, f))
-        assert self.unwrap(space, w_res) == [content, content, ""]
+        assert self.unwrap(space, w_res) == [content, content, None]
 
     def test_reopen_with_invalid_arg(self, space):
         with self.raises(space, "TypeError", "can't convert Fixnum into String"):

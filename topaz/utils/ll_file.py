@@ -21,9 +21,6 @@ if IS_WINDOWS:
         compilation_info=eci,
     )
 
-    def ftruncate(fd, size):
-        _chsize(fd, size)
-
     def fchmod(fd, mode):
         raise NotImplementedError("chmod on windows")
 
@@ -33,6 +30,5 @@ if IS_WINDOWS:
     from genericpath import isdir
 else:
     O_BINARY = 0
-    ftruncate = os.ftruncate
     isdir = os.path.isdir
     fchmod = os.fchmod

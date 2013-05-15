@@ -106,16 +106,16 @@ class TestFile(BaseTopazTest):
         f = tmpdir.join("file.txt")
         f.write(contents)
         w_res = space.execute("return File.new('%s').readlines()" % f)
-        assert self.unwrap(space, w_res) == ["01", "02", "03", "04", ""]
+        assert self.unwrap(space, w_res) == ["01\n", "02\n", "03\n", "04\n"]
 
         w_res = space.execute("return File.new('%s').readlines('3')" % f)
-        assert self.unwrap(space, w_res) == ["01\n02\n0", "\n04\n"]
+        assert self.unwrap(space, w_res) == ["01\n02\n03", "\n04\n"]
 
         w_res = space.execute("return File.new('%s').readlines(1)" % f)
-        assert self.unwrap(space, w_res) == ["0", "1", "0", "2", "0", "3", "0", "4", ""]
+        assert self.unwrap(space, w_res) == ["0", "1", "\n", "0", "2", "\n", "0", "3", "\n", "0", "4", "\n"]
 
         w_res = space.execute("return File.new('%s').readlines('3', 4)" % f)
-        assert self.unwrap(space, w_res) == ["01\n0", "2\n0", "\n04\n"]
+        assert self.unwrap(space, w_res) == ["01\n0", "2\n03", "\n04\n"]
 
     def test_each_line(self, space, tmpdir):
         contents = "01\n02\n03\n04\n"
@@ -126,25 +126,25 @@ class TestFile(BaseTopazTest):
         File.new('%s').each_line { |l| r << l }
         return r
         """ % f)
-        assert self.unwrap(space, w_res) == ["01", "02", "03", "04", ""]
+        assert self.unwrap(space, w_res) == ["01\n", "02\n", "03\n", "04\n"]
         w_res = space.execute("""
         r = []
         File.new('%s').each_line('3') { |l| r << l }
         return r
         """ % f)
-        assert self.unwrap(space, w_res) == ["01\n02\n0", "\n04\n"]
+        assert self.unwrap(space, w_res) == ["01\n02\n03", "\n04\n"]
         w_res = space.execute("""
         r = []
         File.new('%s').each_line(1) { |l| r << l }
         return r
         """ % f)
-        assert self.unwrap(space, w_res) == ["0", "1", "0", "2", "0", "3", "0", "4", ""]
+        assert self.unwrap(space, w_res) == ["0", "1", "\n", "0", "2", "\n", "0", "3", "\n", "0", "4", "\n"]
         w_res = space.execute("""
         r = []
         File.new('%s').each_line('3', 4) { |l| r << l }
         return r
         """ % f)
-        assert self.unwrap(space, w_res) == ["01\n0", "2\n0", "\n04\n"]
+        assert self.unwrap(space, w_res) == ["01\n0", "2\n03", "\n04\n"]
 
         with self.raises(space, "ArgumentError", "invalid limit: 0 for each_line"):
             w_res = space.execute("""
