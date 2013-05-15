@@ -1,5 +1,7 @@
 from ..base import BaseTopazTest
-from topaz.modules.ffi import FFI, W_DynamicLibraryObject
+from topaz.modules.ffi import FFI
+from topaz.modules.ffi.data_converter import DataConverter
+from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject

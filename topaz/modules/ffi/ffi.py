@@ -2,54 +2,12 @@ from __future__ import absolute_import
 
 from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
-from topaz.coerce import Coerce
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
+from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
+from topaz.modules.ffi.data_converter import DataConverter
 
 from rpython.rlib import clibffi, rarithmetic
 from rpython.rtyper.lltypesystem import rffi
-
-class DataConverter(object):
-    moduledef = ModuleDef('DataConverter', filepath=__file__)
-
-    @moduledef.function('native_type')
-    def native_type(self, space, args_w): pass
-
-    @moduledef.function('to_native')
-    def to_native(self, space): pass
-
-    @moduledef.function('from_native')
-    def from_native(self, space): pass
-
-class W_DynamicLibraryObject(W_Object):
-    classdef = ClassDef('DynamicLibrary', W_Object.classdef, filepath=__file__)
-
-    @classdef.setup_class
-    def setup_class(cls, space, w_cls):
-        space.set_const(w_cls, "RTLD_LAZY", space.newint(1))
-        space.set_const(w_cls, "RTLD_NOW", space.newint(2))
-        space.set_const(w_cls, "RTLD_GLOBAL", space.newint(257))
-        space.set_const(w_cls, "RTLD_LOCAL", space.newint(0))
-
-    @classdef.singleton_method('open', flags='int')
-    def method_open(self, space, w_name, flags):
-        if w_name == space.w_nil:
-            name = None
-        else:
-            name = Coerce.path(space, w_name)
-        return W_DynamicLibraryObject(space)
-
-class W_MappedObject(W_Object):
-    classdef = ClassDef('MappedObject', W_Object.classdef, filepath=__file__)
-
-    def __init__(self, space, klass=None):
-        W_Object.__init__(self, space, klass)
-
-    @classdef.singleton_method('allocate')
-    def singleton_method_allocate(self, space, args_w):
-        return W_MappedObject(space)
-
-    @classdef.method('initialize')
-    def method_initialize(self, space, args_w): pass
 
 class FFI(object):
     moduledef = ModuleDef("FFI", filepath=__file__)
@@ -124,3 +82,16 @@ class FFI(object):
         # setup StructByReference
         w_struct_by_reference = space.newclass('StructByValue', None)
         space.set_const(w_mod, 'StructByReference', w_struct_by_reference)
+
+class W_MappedObject(W_Object):
+    classdef = ClassDef('MappedObject', W_Object.classdef, filepath=__file__)
+
+    def __init__(self, space, klass=None):
+        W_Object.__init__(self, space, klass)
+
+    @classdef.singleton_method('allocate')
+    def singleton_method_allocate(self, space, args_w):
+        return W_MappedObject(space)
+
+    @classdef.method('initialize')
+    def method_initialize(self, space, args_w): pass
