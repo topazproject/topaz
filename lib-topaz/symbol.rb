@@ -22,9 +22,10 @@ class Symbol
     self.to_s.capitalize.to_sym
   end
 
-  def slice(*args)
-    self.to_s.slice args
+  def [](*args)
+    self.to_s[*args]
   end
+  alias slice []
 
   def swapcase
     self.to_s.swapcase.to_sym
