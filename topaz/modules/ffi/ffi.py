@@ -37,6 +37,14 @@ class FFI(object):
                'DOUBLE': 'FLOAT64', 'STRING': 'POINTER',
                'BUFFER_IN': 'POINTER', 'BUFFER_OUT': 'POINTER',
                'BUFFER_INOUT': 'POINTER', 'VARARGS': 'VOID'}
+    sizes = {'INT8': rffi.sizeof(rffi.CHAR),
+             'INT16': rffi.sizeof(rffi.SHORT),
+             'INT32': rffi.sizeof(rffi.INT),
+             'INT64': rffi.sizeof(rffi.LONGLONG),
+             'LONG': rffi.sizeof(rffi.LONG),
+             'FLOAT': rffi.sizeof(rffi.FLOAT),
+             'DOUBLE': rffi.sizeof(rffi.DOUBLE),
+             'ADDRESS': rffi.sizeof(rffi.VOIDP)}
 
     @moduledef.setup_module
     def setup_module(space, w_mod):
@@ -71,7 +79,9 @@ class FFI(object):
 
         # setup Platform
         w_platform = space.newmodule('Platform', None)
-        space.set_const(w_platform, 'ADDRESS_SIZE', space.newint(8))
+        for name in FFI.sizes:
+            space.set_const(w_platform, name + '_SIZE',
+                            space.newint(FFI.sizes[name]))
         space.set_const(w_mod, 'Platform', w_platform)
 
         # setup StructLayout
