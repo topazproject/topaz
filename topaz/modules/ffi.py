@@ -38,6 +38,19 @@ class W_DynamicLibraryObject(W_Object):
             name = Coerce.path(space, w_name)
         return W_DynamicLibraryObject(space)
 
+class W_MappedObject(W_Object):
+    classdef = ClassDef('MappedObject', W_Object.classdef, filepath=__file__)
+
+    def __init__(self, space, klass=None):
+        W_Object.__init__(self, space, klass)
+
+    @classdef.singleton_method('allocate')
+    def singleton_method_allocate(self, space, args_w):
+        return W_MappedObject(space)
+
+    @classdef.method('initialize')
+    def method_initialize(self, space, args_w): pass
+
 class FFI(object):
     moduledef = ModuleDef("FFI", filepath=__file__)
 
@@ -84,14 +97,7 @@ class FFI(object):
         for aka in FFI.aliases:
             ffitype = space.find_const(w_type, FFI.aliases[aka])
             space.set_const(w_type, aka, ffitype)
-        w_mapped = space.execute("""
-                                 class Mapped
-                                   def initialize(arg)
-                                   end
-                                 end
-                                 Mapped
-                                 """)
-        space.set_const(w_type, 'Mapped', w_mapped)
+        space.set_const(w_type, 'Mapped', space.getclassfor(W_MappedObject))
         space.set_const(w_mod, 'Type', w_type)
 
         space.set_const(w_mod, 'DataConverter',
