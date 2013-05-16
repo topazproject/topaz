@@ -71,6 +71,15 @@ class TestFFI(BaseTopazTest):
         with self.raises(space, "TypeError", "can't convert String into Integer"):
             space.execute("FFI::DynamicLibrary.open('something', 'invalid flag')")
 
+    def test_DynamicLibrary_Symbol(self, space):
+        w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol")
+        assert w_lib_sym != space.w_symbol
+
+    def test_DynamicLibrary_find_variable(self, space):
+        w_dl_sym = space.execute("FFI::DynamicLibrary::Symbol")
+        w_res = space.execute("FFI::DynamicLibrary.new.find_variable(:sym)")
+        assert w_res.getclass(space) is w_dl_sym
+
     def test_Pointer(self, space):
         w_p = space.execute('FFI::Pointer')
         assert isinstance(w_p, W_ClassObject)
