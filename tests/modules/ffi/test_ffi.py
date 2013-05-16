@@ -1,7 +1,5 @@
-from ..base import BaseTopazTest
+from tests.base import BaseTopazTest
 from topaz.modules.ffi import FFI
-from topaz.modules.ffi.data_converter import DataConverter
-from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
@@ -43,46 +41,6 @@ class TestFFI(BaseTopazTest):
         w_res = space.execute('FFI::Type::Mapped.respond_to? :method_missing')
         assert self.unwrap(space, w_res)
         w_res = space.execute('FFI::Type::Mapped.new(42)')
-
-    def test_DataConverter(self, space):
-        w_dc = space.execute('FFI::DataConverter')
-        assert isinstance(w_dc, W_ModuleObject)
-        w_res = space.execute('FFI::DataConverter.native_type(0)')
-        assert w_res == space.w_nil
-        w_res = space.execute('FFI::DataConverter.to_native')
-        assert w_res == space.w_nil
-        w_res = space.execute('FFI::DataConverter.from_native')
-        assert w_res == space.w_nil
-
-    def test_DynamicLibrary_consts(self, space):
-        consts = {'LAZY':1 , 'NOW':2, 'GLOBAL':257, 'LOCAL':0}
-        for name in consts:
-            w_res = space.execute('FFI::DynamicLibrary::RTLD_%s' % name)
-            space.int_w(w_res) == consts[name]
-
-    def test_DynamicLibrary_open(self, space):
-        w_res = space.execute("FFI::DynamicLibrary.open('something', 1)")
-        assert isinstance(w_res, W_DynamicLibraryObject)
-        w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)") #didn't crash
-        with self.raises(space, "TypeError", "can't convert Float into String"):
-            space.execute("FFI::DynamicLibrary.open(3.142, 1)")
-        # The next error message is different from the one in ruby 1.9.3.
-        # But the meaning is the same.
-        with self.raises(space, "TypeError", "can't convert String into Integer"):
-            space.execute("FFI::DynamicLibrary.open('something', 'invalid flag')")
-
-    def test_DynamicLibrary_Symbol(self, space):
-        w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol")
-        assert w_lib_sym != space.w_symbol
-
-    def test_DynamicLibrary_find_variable(self, space):
-        w_dl_sym = space.execute("FFI::DynamicLibrary::Symbol")
-        w_res = space.execute("FFI::DynamicLibrary.new.find_variable(:sym)")
-        assert w_res.getclass(space) is w_dl_sym
-
-    def test_Pointer(self, space):
-        w_p = space.execute('FFI::Pointer')
-        assert isinstance(w_p, W_ClassObject)
 
     def test_Platform(self, space):
         w_p = space.execute('FFI::Platform')
