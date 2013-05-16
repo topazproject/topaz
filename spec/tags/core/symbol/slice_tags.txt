@@ -1,9 +1,3 @@
-fails:Symbol#slice with an Integer index returns the character code of the element at the index
-fails:Symbol#slice with an Integer index and length and a positive index and length returns a blank slice if the length is 0
-fails:Symbol#slice with an Integer index and length and a negative index and positive length returns a slice starting from the end upto the length
-fails:Symbol#slice with a Float index converts the index to a Integer
-fails:Symbol#slice with a Range slice that is out of bounds returns nil if the first range value starts from the end and is out of bounds and the last value starts from the end and is less than the length
-fails:Symbol#slice with a Range slice with Float values converts the first value to an Integer
 fails:Symbol#slice with a Regex slice without a capture index returns a string of the match
 fails:Symbol#slice with a Regex slice without a capture index returns nil if the expression does not match
 fails:Symbol#slice with a Regex slice without a capture index sets $~ to the MatchData if there is a match
