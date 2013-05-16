@@ -70,11 +70,9 @@ class FFI(object):
         space.set_const(w_mod, 'DataConverter',
                         space.getmoduleobject(DataConverter.moduledef))
 
-        # setup DynamicLibrary
         space.set_const(w_mod, 'DynamicLibrary',
                         space.getclassfor(W_DynamicLibraryObject))
 
-        # setup Pointer
         space.set_const(w_mod, 'Pointer',
                         space.getclassfor(W_PointerObject))
 
