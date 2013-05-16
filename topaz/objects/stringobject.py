@@ -501,6 +501,7 @@ class W_StringObject(W_Object):
         return space.newint(self.strategy.hash(self.str_storage))
 
     @classdef.method("[]")
+    @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):
         start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
         if nil:
