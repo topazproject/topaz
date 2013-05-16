@@ -4,6 +4,7 @@ from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
+from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.data_converter import DataConverter
 
 from rpython.rlib import clibffi, rarithmetic
@@ -74,8 +75,8 @@ class FFI(object):
                         space.getclassfor(W_DynamicLibraryObject))
 
         # setup Pointer
-        w_pointer = space.newclass('Pointer', None)
-        space.set_const(w_mod, 'Pointer', w_pointer)
+        space.set_const(w_mod, 'Pointer',
+                        space.getclassfor(W_PointerObject))
 
         # setup Platform
         w_platform = space.newmodule('Platform', None)
