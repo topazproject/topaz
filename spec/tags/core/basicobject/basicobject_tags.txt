@@ -1,2 +1,1 @@
-fails:BasicObject does not define built-in constants (according to defined?)
 fails:BasicObject subclass contains Kernel methods when including Kernel
