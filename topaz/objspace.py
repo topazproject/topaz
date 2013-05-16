@@ -558,8 +558,10 @@ class ObjectSpace(object):
                 w_res = w_mod.find_const(self, name)
                 if w_res is not None:
                     return w_res
-                assert isinstance(w_mod, W_ClassObject)
-                w_mod = w_mod.superclass
+                if isinstance(w_mod, W_ClassObject):
+                    w_mod = w_mod.superclass
+                else:
+                    break
 
         if fallback_scope is not None:
             w_res = fallback_scope.find_const(self, name)
