@@ -535,16 +535,35 @@ class ObjectSpace(object):
     def find_lexical_const(self, lexical_scope, name):
         w_res = None
         scope = lexical_scope
+        # perform lexical search but skip Object
         while scope is not None:
             w_mod = scope.w_mod
+            if w_mod is self.w_top_self:
+                break
             w_res = w_mod.find_local_const(self, name)
             if w_res is not None:
                 return w_res
             scope = scope.backscope
+
+        object_seen = False
+        fallback_scope = self.w_object
+
         if lexical_scope is not None:
-            w_res = lexical_scope.w_mod.find_const(self, name)
-        if w_res is None:
-            w_res = self.w_object.find_const(self, name)
+            w_mod = lexical_scope.w_mod
+            while w_mod is not None:
+                object_seen = w_mod is self.w_object
+                # BasicObject was out starting point, do not use Object
+                # as fallback
+                if w_mod is self.w_basicobject and not object_seen:
+                    fallback_scope = None
+                w_res = w_mod.find_const(self, name)
+                if w_res is not None:
+                    return w_res
+                assert isinstance(w_mod, W_ClassObject)
+                w_mod = w_mod.superclass
+
+        if fallback_scope is not None:
+            w_res = fallback_scope.find_const(self, name)
         if w_res is None:
             if lexical_scope is not None:
                 w_mod = lexical_scope.w_mod
