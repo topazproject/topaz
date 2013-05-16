@@ -208,6 +208,8 @@ class ObjectSpace(object):
                 w_cls
             )
 
+        self.set_const(self.w_basicobject, "BasicObject", self.w_basicobject)
+
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
         self.send(self.w_object, "include", [self.w_kernel])
@@ -529,20 +531,45 @@ class ObjectSpace(object):
         self._check_const_name(name)
         module.set_const(self, name, w_value)
 
-    @jit.unroll_safe
-    def find_lexical_const(self, lexical_scope, name):
+    def _find_lexical_const(self, lexical_scope, name):
         w_res = None
         scope = lexical_scope
+        # perform lexical search but skip Object
         while scope is not None:
             w_mod = scope.w_mod
+            if w_mod is self.w_top_self:
+                break
             w_res = w_mod.find_local_const(self, name)
             if w_res is not None:
                 return w_res
             scope = scope.backscope
+
+        object_seen = False
+        fallback_scope = self.w_object
+
         if lexical_scope is not None:
-            w_res = lexical_scope.w_mod.find_const(self, name)
-        if w_res is None:
-            w_res = self.w_object.find_const(self, name)
+            w_mod = lexical_scope.w_mod
+            while w_mod is not None:
+                object_seen = w_mod is self.w_object
+                # BasicObject was our starting point, do not use Object
+                # as fallback
+                if w_mod is self.w_basicobject and not object_seen:
+                    fallback_scope = None
+                w_res = w_mod.find_const(self, name)
+                if w_res is not None:
+                    return w_res
+                if isinstance(w_mod, W_ClassObject):
+                    w_mod = w_mod.superclass
+                else:
+                    break
+
+        if fallback_scope is not None:
+            w_res = fallback_scope.find_const(self, name)
+        return w_res
+
+    @jit.unroll_safe
+    def find_lexical_const(self, lexical_scope, name):
+        w_res = self._find_lexical_const(lexical_scope, name)
         if w_res is None:
             if lexical_scope is not None:
                 w_mod = lexical_scope.w_mod
@@ -550,6 +577,13 @@ class ObjectSpace(object):
                 w_mod = self.w_object
             w_res = self.send(w_mod, "const_missing", [self.newsymbol(name)])
         return w_res
+
+    @jit.unroll_safe
+    def defined_lexical_const(self, lexical_scope, name):
+        w_res = self._find_lexical_const(lexical_scope, name)
+        if w_res is None:
+            return self.w_nil
+        return self.newstr_fromstr("constant")
 
     def find_instance_var(self, w_obj, name):
         w_res = w_obj.find_instance_var(self, name)
