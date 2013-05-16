@@ -39,7 +39,7 @@ class RubySortBy(BaseRubySortBy):
 
 
 class W_ArrayObject(W_Object):
-    classdef = ClassDef("Array", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Array", W_Object.classdef)
     classdef.include_module(Enumerable)
 
     def __init__(self, space, items_w, klass=None):

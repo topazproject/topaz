@@ -10,7 +10,7 @@ from topaz.utils.ll_dir import opendir, readdir, closedir
 
 
 class W_DirObject(W_Object):
-    classdef = ClassDef("Dir", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Dir", W_Object.classdef)
     classdef.include_module(Enumerable)
 
     def __init__(self, space, klass=None):

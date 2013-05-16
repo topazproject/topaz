@@ -26,7 +26,7 @@ class W_FiberObject(W_Object):
     * Suspended execution in the stack of fibers: self.sthread is not None and (self.parent_fiber is None or self is space.w_main_fiber)
     * Dead: self.sthread is not None and self.sthread.is_empty_handle(self.h)
     """
-    classdef = ClassDef("Fiber", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Fiber", W_Object.classdef)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)

@@ -5,7 +5,7 @@ from topaz.utils.ordereddict import OrderedDict
 
 
 class W_HashObject(W_Object):
-    classdef = ClassDef("Hash", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Hash", W_Object.classdef)
     classdef.include_module(Enumerable)
 
     def __init__(self, space, klass=None):
@@ -144,7 +144,7 @@ class W_HashObject(W_Object):
 
 
 class W_HashIterator(W_Object):
-    classdef = ClassDef("HashIterator", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("HashIterator", W_Object.classdef)
 
     def __init__(self, space, d):
         W_Object.__init__(self, space)

@@ -321,7 +321,7 @@ class MutableStringStrategy(StringStrategy):
 
 
 class W_StringObject(W_Object):
-    classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("String", W_Object.classdef)
     classdef.include_module(Comparable)
 
     def __init__(self, space, storage, strategy, klass=None):

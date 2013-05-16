@@ -8,7 +8,7 @@ from topaz.objects.objectobject import W_Object
 class W_ClassObject(W_ModuleObject):
     _immutable_fields_ = ["superclass?"]
 
-    classdef = ClassDef("Class", W_ModuleObject.classdef, filepath=__file__)
+    classdef = ClassDef("Class", W_ModuleObject.classdef)
 
     def __init__(self, space, name, superclass, is_singleton=False, attached=None):
         W_ModuleObject.__init__(self, space, name)

@@ -23,7 +23,7 @@ else:
 
 
 class Process(object):
-    moduledef = ModuleDef("Process", filepath=__file__)
+    moduledef = ModuleDef("Process")
 
     @moduledef.function("euid")
     def method_euid(self, space):

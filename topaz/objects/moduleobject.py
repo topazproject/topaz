@@ -86,7 +86,7 @@ class DefineMethodMethod(W_FunctionObject):
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = ["version?", "included_modules?[*]", "klass?", "name?"]
 
-    classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
+    classdef = ClassDef("Module", W_RootObject.classdef)
 
     def __init__(self, space, name, klass=None):
         self.name = name

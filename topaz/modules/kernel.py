@@ -19,7 +19,7 @@ from topaz.objects.stringobject import W_StringObject
 
 
 class Kernel(object):
-    moduledef = ModuleDef("Kernel", filepath=__file__)
+    moduledef = ModuleDef("Kernel")
 
     @moduledef.method("class")
     def function_class(self, space):

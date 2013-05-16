@@ -3,7 +3,7 @@ from topaz.objects.objectobject import W_Object
 
 
 class W_ProcObject(W_Object):
-    classdef = ClassDef("Proc", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Proc", W_Object.classdef)
 
     def __init__(self, space, bytecode, w_self, lexical_scope, cells, block,
                  parent_interp, regexp_match_cell, is_lambda):
