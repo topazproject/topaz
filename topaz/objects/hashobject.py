@@ -118,9 +118,12 @@ class W_HashObject(W_Object):
     @classdef.method("replace")
     @check_frozen()
     def method_replace(self, space, w_hash):
+        w_hash = space.convert_type(w_hash, space.w_hash, "to_hash")
         assert isinstance(w_hash, W_HashObject)
         self.contents.clear()
         self.contents.update(w_hash.contents)
+        self.w_default = w_hash.w_default
+        self.default_proc = w_hash.default_proc
         return self
 
     @classdef.method("keys")
