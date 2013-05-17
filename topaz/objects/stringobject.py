@@ -856,8 +856,9 @@ class W_StringObject(W_Object):
 
     @classdef.method("%")
     def method_mod(self, space, w_arg):
-        if space.is_kind_of(w_arg, space.w_array):
-            args_w = space.listview(w_arg)
+        w_ary = space.convert_type(w_arg, space.w_array, "to_ary", raise_error=False)
+        if w_ary is not space.w_nil:
+            args_w = space.listview(w_ary)
         else:
             args_w = [w_arg]
         elements_w = StringFormatter(space.str_w(self), args_w).format(space)
