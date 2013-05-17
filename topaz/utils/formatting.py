@@ -4,7 +4,7 @@ from rpython.rlib.unroll import unrolling_iterable
 
 
 FORMAT_CHARS = unrolling_iterable([
-    "s", "d", "f"
+    "s", "d", "i", "f"
 ])
 
 DEFAULT_PRECISION = 6
@@ -80,13 +80,26 @@ class StringFormatter(object):
             string = space.str_w(w_item)
         return self._fmt(space, string, " ", width, max_width)
 
-    def fmt_d(self, space, w_item, width, max_width):
-        w_ary = space.convert_type(w_item, "to_ary", space.w_array, raise_error=False)
+    def coerce_integer(self, space, w_item):
+        w_ary = space.convert_type(w_item, space.w_array, "to_ary", raise_error=False)
         if w_ary is space.w_nil:
-            w_int = space.convert_type(w_item, "to_int", space.w_numeric,
-        num = space.int_w(w_item)
+            w_int = space.convert_type(w_item, space.w_numeric, "to_int", raise_error=False)
+            if w_int is space.w_nil:
+                return space.int_w(space.convert_type(w_item, space.w_numeric, "to_i"))
+            else:
+                return space.int_w(w_int)
+        else:
+            return space.int_w(space.listview(w_ary)[0])
+
+    def fmt_d(self, space, w_item, width, max_width):
+        num = self.coerce_integer(space, w_item)
         return self._fmt(space, str(num), "0", width, max_width)
 
+    fmt_i = fmt_d
+
     def fmt_f(self, space, w_item, width, max_width):
-        num = space.float_w(w_item)
+        if space.is_kind_of(w_item, space.w_float):
+            num = space.float_w(w_item)
+        else:
+            num = space.float_w(space.send(space.w_object, "Float", [w_item]))
         return self._fmt(space, formatd(num, "f", 6), "0", width, max_width)
