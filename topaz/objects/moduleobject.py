@@ -64,11 +64,7 @@ class DefineMethodBlock(W_FunctionObject):
             return e.w_value
 
     def arity(self, space):
-        args_count = len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
-        if len(self.block.bytecode.defaults) > 0 or self.block.bytecode.splat_arg_pos != -1:
-            args_count = -(args_count + 1)
-
-        return space.newint(args_count)
+        return space.newint(self.block.bytecode.arity(negative_defaults=True))
 
 
 class DefineMethodMethod(W_FunctionObject):

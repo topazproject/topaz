@@ -58,6 +58,12 @@ class W_CodeObject(W_BaseObject):
         obj.splat_arg_pos = self.splat_arg_pos
         return obj
 
+    def arity(self, negative_defaults=False):
+        args_count = len(self.arg_pos) - len(self.defaults)
+        if self.splat_arg_pos != -1 or (negative_defaults and len(self.defaults) > 0):
+            args_count = -(args_count + 1)
+        return args_count
+
     @classdef.method("filepath")
     def method_filepath(self, space):
         return space.newstr_fromstr(self.filepath)
