@@ -58,6 +58,10 @@ class W_ProcObject(W_Object):
     def method_lambda(self, space):
         return space.newbool(self.is_lambda)
 
+    @classdef.method("arity")
+    def method_arity(self, space):
+        return space.newint(self.bytecode.arity())
+
     @classdef.method("binding")
     def method_binding(self, space):
         return space.newbinding_fromblock(self)
