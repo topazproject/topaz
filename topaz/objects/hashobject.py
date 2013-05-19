@@ -74,10 +74,10 @@ class W_HashObject(W_Object):
         try:
             return self.contents[w_key]
         except KeyError:
-            if w_value is not None:
-                return w_value
-            elif block is not None:
+            if block is not None:
                 return space.invoke_block(block, [w_key])
+            elif w_value is not None:
+                return w_value
             else:
                 raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, "inspect"))
 

@@ -164,7 +164,7 @@ class ObjectSpace(object):
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
             self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
             self.w_EOFError, self.w_FloatDomainError, self.w_FiberError,
-            self.w_SystemStackError,
+            self.w_SystemStackError, self.w_KeyError,
 
             self.w_kernel, self.w_topaz,
 
