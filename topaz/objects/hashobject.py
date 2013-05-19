@@ -2,6 +2,7 @@ from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.ordereddict import OrderedDict
+from topaz.objects.procobject import W_ProcObject
 
 
 class W_HashObject(W_Object):
@@ -49,6 +50,17 @@ class W_HashObject(W_Object):
         if self.default_proc is None:
             return space.w_nil
         return self.default_proc
+
+    @classdef.method("default_proc=")
+    def method_set_default_proc(self, space, w_proc):
+        w_new_proc = space.convert_type(w_proc, space.w_proc, "to_proc")
+        assert isinstance(w_new_proc, W_ProcObject)
+        arity = space.int_w(space.send(w_new_proc, "arity"))
+        if arity != 2 and space.is_true(space.send(w_new_proc, "lambda?")):
+            raise space.error(space.w_TypeError, "default_proc takes two arguments (2 for %s)" % arity)
+        self.default_proc = w_new_proc
+        self.w_default = space.w_nil
+        return w_proc
 
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
