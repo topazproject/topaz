@@ -226,7 +226,11 @@ class Interpreter(object):
         frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
-        frame.push(space.defined_lexical_const(jit.promote(frame.lexical_scope), name))
+        w_res = self._find_lexical_const(jit.promote(frame.lexical_scope), name)
+        if w_res is None:
+            frame.push(self.w_nil)
+        else:
+            frame.push(self.newstr_fromstr("constant"))
 
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]

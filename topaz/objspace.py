@@ -531,6 +531,7 @@ class ObjectSpace(object):
         self._check_const_name(name)
         module.set_const(self, name, w_value)
 
+    @jit.unroll_safe
     def _find_lexical_const(self, lexical_scope, name):
         w_res = None
         scope = lexical_scope
@@ -577,13 +578,6 @@ class ObjectSpace(object):
                 w_mod = self.w_object
             w_res = self.send(w_mod, "const_missing", [self.newsymbol(name)])
         return w_res
-
-    @jit.unroll_safe
-    def defined_lexical_const(self, lexical_scope, name):
-        w_res = self._find_lexical_const(lexical_scope, name)
-        if w_res is None:
-            return self.w_nil
-        return self.newstr_fromstr("constant")
 
     def find_instance_var(self, w_obj, name):
         w_res = w_obj.find_instance_var(self, name)
