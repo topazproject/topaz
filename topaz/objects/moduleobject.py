@@ -505,7 +505,11 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
-        raise space.error(space.w_NameError, "uninitialized constant %s" % name)
+        if self is space.w_object:
+            raise space.error(space.w_NameError, "uninitialized constant %s" % (name))
+        else:
+            self_name = space.obj_to_s(self)
+            raise space.error(space.w_NameError, "uninitialized constant %s::%s" % (self_name, name))
 
     @classdef.method("class_eval", string="str", filename="str")
     @classdef.method("module_eval", string="str", filename="str")
@@ -541,10 +545,7 @@ class W_ModuleObject(W_RootObject):
         else:
             w_res = self.find_local_const(space, const)
         if w_res is None:
-            name = space.obj_to_s(self)
-            raise space.error(space.w_NameError,
-                "uninitialized constant %s::%s" % (name, const)
-            )
+            return space.send(self, "const_missing", [space.newsymbol(const)])
         return w_res
 
     @classdef.method("const_set", const="symbol")
