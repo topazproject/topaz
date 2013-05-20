@@ -410,6 +410,10 @@ class W_ModuleObject(W_RootObject):
             elif space.is_kind_of(w_method, space.w_proc):
                 assert isinstance(w_method, W_ProcObject)
                 self.define_method(space, name, DefineMethodBlock(name, w_method))
+            else:
+                raise space.error(space.w_TypeError,
+                    "wrong argument type %s (expected Proc/Method)" % space.obj_to_s(space.getclass(w_method))
+                )
         elif block is not None:
             self.define_method(space, name, DefineMethodBlock(name, block))
         else:
