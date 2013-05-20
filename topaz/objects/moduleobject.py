@@ -407,15 +407,18 @@ class W_ModuleObject(W_RootObject):
 
             if space.is_kind_of(w_method, space.w_unbound_method):
                 self.define_method(space, name, DefineMethodMethod(name, w_method))
+                return w_method
             elif space.is_kind_of(w_method, space.w_proc):
                 assert isinstance(w_method, W_ProcObject)
                 self.define_method(space, name, DefineMethodBlock(name, w_method))
+                return w_method.copy(space, is_lambda=True)
             else:
                 raise space.error(space.w_TypeError,
                     "wrong argument type %s (expected Proc/Method)" % space.obj_to_s(space.getclass(w_method))
                 )
         elif block is not None:
             self.define_method(space, name, DefineMethodBlock(name, block))
+            return block.copy(space, is_lambda=True)
         else:
             raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
 
