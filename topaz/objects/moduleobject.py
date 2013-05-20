@@ -155,6 +155,20 @@ class W_ModuleObject(W_RootObject):
     def _find_method_pure(self, space, method, version):
         return self.methods_w.get(method, None)
 
+    def methods(self, space, inherit=True):
+        methods = {}
+        for name, method in self.methods_w.iteritems():
+            if not isinstance(method, UndefMethod):
+                methods[name] = None
+
+        if inherit:
+            for w_mod in self.included_modules:
+                for name in w_mod.methods(space, inherit):
+                    method = self._find_method_pure(space, name, self.version)
+                    if method is None or not isinstance(method, UndefMethod):
+                        methods[name] = None
+        return methods.keys()
+
     def set_const(self, space, name, w_obj):
         self.mutated()
         self.constants_w[name] = w_obj
