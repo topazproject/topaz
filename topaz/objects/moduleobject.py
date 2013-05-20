@@ -399,6 +399,7 @@ class W_ModuleObject(W_RootObject):
             w_mod.include_module(space, module)
 
     @classdef.method("define_method", name="symbol")
+    @check_frozen()
     def method_define_method(self, space, name, w_method=None, block=None):
         if w_method is not None:
             if space.is_kind_of(w_method, space.w_method):

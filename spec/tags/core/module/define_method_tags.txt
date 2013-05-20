@@ -1,4 +1,3 @@
 fails:Module#define_method raises a TypeError when the given method is no Method/Proc
-fails:Module#define_method raises a RuntimeError if frozen
 fails:Module#define_method is private
 fails:Module#define_method returns a Proc
