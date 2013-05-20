@@ -1,3 +1,10 @@
 fails:Array#shuffle attempts coercion via #to_hash
 fails:Array#shuffle uses default random generator
 fails:Array#shuffle uses given random generator
+fails:Array#shuffle calls #rand on the Object passed by the :random key in the arguments Hash
+fails:Array#shuffle ignores an Object passed for the RNG if it does not define #rand
+fails:Array#shuffle accepts a Float for the value returned by #rand
+fails:Array#shuffle calls #to_f on the Object returned by #rand
+fails:Array#shuffle raises a RangeError if the random generator returns a value less than 0.0
+fails:Array#shuffle raises a RangeError if the random generator returns a value equal to 1.0
+fails:Array#shuffle raises a RangeError if the random generator returns a value greater than 1.0
