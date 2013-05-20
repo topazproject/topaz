@@ -3,3 +3,14 @@ fails:File.open opens file when call with a block (basic case)
 fails:File.open opens a file with mode string and block
 fails:File.open opens the file when passed mode, num and permissions
 fails:File.open opens a file with mode num and block
+fails:File.open opens the file when passed mode, num, permissions and block
+fails:File.open creates the file and returns writable descriptor when called with 'w' mode and r-o permissions
+fails:File.open opens the existing file, does not change permissions even when they are specified
+fails:File.open creates a new write-only file when invoked with 'w' and '0222'
+fails:File.open opens a file that no exists when use File::WRONLY mode
+fails:File.open opens a file that no exists when use File::RDONLY mode
+fails:File.open opens a file that no exists when use 'r' mode
+fails:File.open opens a file that no exists when use File::EXCL mode
+fails:File.open opens a file that no exists when use File::NONBLOCK mode
+fails:File.open opens a file that no exists when use File::TRUNC mode
+fails:File.open opens a file that no exists when use File::NOCTTY mode
