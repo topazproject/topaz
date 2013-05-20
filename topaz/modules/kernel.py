@@ -39,6 +39,12 @@ class Kernel(object):
                 w_cls = w_cls.superclass
         return space.newarray([space.newsymbol(m) for m in methods])
 
+    @moduledef.method("methods", inherit="bool")
+    def method_methods(self, space, inherit=True):
+        w_cls = space.getclass(self)
+
+        return space.newarray([space.newsymbol(m) for m in w_cls.methods(space, inherit)])
+
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
         return block.copy(space, is_lambda=True)

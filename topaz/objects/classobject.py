@@ -1,7 +1,7 @@
 import copy
 
 from topaz.module import ClassDef
-from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.moduleobject import UndefMethod, W_ModuleObject
 from topaz.objects.objectobject import W_Object
 
 
@@ -73,6 +73,17 @@ class W_ClassObject(W_ModuleObject):
         if method is None and self.superclass is not None:
             method = self.superclass.find_method(space, name)
         return method
+
+    def methods(self, space, inherit=True):
+        methods = {}
+        for name in W_ModuleObject.methods(self, space, inherit):
+            methods[name] = None
+        if inherit and self.superclass is not None:
+            for name in self.superclass.methods(space, inherit):
+                method = self._find_method_pure(space, name, self.version)
+                if method is None or not isinstance(method, UndefMethod):
+                    methods[name] = None
+        return methods.keys()
 
     def ancestors(self, include_singleton=True, include_self=True):
         assert include_self
