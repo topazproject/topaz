@@ -639,8 +639,11 @@ class ObjectSpace(object):
             block=block.block, parent_interp=block.parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
-        if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
-            frame.handle_block_args(self, bc, args_w, block_arg)
+        if block.is_lambda:
+            frame.handle_args(self, bc, args_w, block_arg)
+        else:
+            if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
+                frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
         for i in xrange(len(bc.freevars)):
             frame.cells[len(bc.cellvars) + i] = block.cells[i]
