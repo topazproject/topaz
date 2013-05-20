@@ -396,4 +396,32 @@ class Array
     other.each { |e| h[e] = true }
     self.reject { |e| h.has_key?(e) }
   end
+
+  def permutation(r = nil, &block)
+    return self.enum_for(:permutation, r) unless block
+    r = r ? Topaz.convert_type(r, Fixnum, :to_int) : self.size
+    Topaz::Array.permutation(self, r, &block)
+    self
+  end
+
+  def combination(r = nil, &block)
+    return self.enum_for(:combination, r) unless block
+    r = r ? Topaz.convert_type(r, Fixnum, :to_int) : self.size
+    Topaz::Array.combination(self, r, &block)
+    self
+  end
+
+  def repeated_combination(r, &block)
+    return self.enum_for(:repeated_combination, r) unless block
+    r = Topaz.convert_type(r, Fixnum, :to_int)
+    Topaz::Array.repeated_combination(self, r, &block)
+    self
+  end
+
+  def repeated_permutation(r, &block)
+    return self.enum_for(:repeated_permutation, r) unless block
+    r = Topaz.convert_type(r, Fixnum, :to_int)
+    Topaz::Array.repeated_permutation(self, r, &block)
+    self
+  end
 end
