@@ -31,7 +31,7 @@ maintains things like the Ruby call stack.
 ``frame.py``
 -------------
 
-This contains Ruby frame objects, and assosciated logic for manipulating them.
+This contains Ruby frame objects, and associated logic for manipulating them.
 
 ``gateway.py``
 ---------------
