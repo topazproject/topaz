@@ -406,6 +406,17 @@ class W_ModuleObject(W_RootObject):
                 w_method = space.send(w_method, "unbind")
 
             if space.is_kind_of(w_method, space.w_unbound_method):
+                if self is not w_method.w_owner and not w_method.w_owner.is_ancestor_of(self):
+                    if w_method.w_owner.is_singleton:
+                        raise space.error(space.w_TypeError,
+                            "can't bind singleton method to a different class"
+                        )
+                    else:
+                        raise space.error(space.w_TypeError,
+                            "bind argument must be a subclass of %s" % space.obj_to_s(
+                                space.getclass(w_method.w_owner)
+                            )
+                        )
                 self.define_method(space, name, DefineMethodMethod(name, w_method))
                 return w_method
             elif space.is_kind_of(w_method, space.w_proc):
