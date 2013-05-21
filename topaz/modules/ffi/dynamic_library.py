@@ -38,6 +38,10 @@ class W_DL_SymbolObject(W_Object):
     def singleton_method_allocate(self, space, args_w):
         return W_DL_SymbolObject(space)
 
+    @classdef.method('null?')
+    def method_null_p(self, space):
+        return space.newbool(True)
+
     #@classdef.method('initialize')
     #def method_initialize(self, space):
     #    return W_DL_SymbolObject(space)
