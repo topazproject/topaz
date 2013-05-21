@@ -1,1 +1,0 @@
-fails:Module#const_get calls #const_missing on the receiver if unable to locate the constant

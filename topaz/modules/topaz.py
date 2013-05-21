@@ -8,7 +8,7 @@ from topaz.objects.classobject import W_ClassObject
 
 
 class Topaz(object):
-    moduledef = ModuleDef("Topaz", filepath=__file__)
+    moduledef = ModuleDef("Topaz")
 
     @moduledef.setup_module
     def setup_module(space, w_mod):

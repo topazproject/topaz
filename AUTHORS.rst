@@ -23,4 +23,5 @@ Authors
 * David Schneider
 * Robin Schreiber
 * Jan Stępień
+* Andrew Thompson
 * Jeremy Thurgood

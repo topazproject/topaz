@@ -4,4 +4,4 @@ from topaz.module import ModuleDef
 
 
 class Comparable(object):
-    moduledef = ModuleDef("Comparable", filepath=__file__)
+    moduledef = ModuleDef("Comparable")

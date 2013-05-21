@@ -10,7 +10,7 @@ class W_CodeObject(W_BaseObject):
         "arg_pos[*]", "defaults[*]", "block_arg_pos", "splat_arg_pos",
     ]
 
-    classdef = ClassDef("Code", W_BaseObject.classdef, filepath=__file__)
+    classdef = ClassDef("Code", W_BaseObject.classdef)
 
     def __init__(self, name, filepath, code, max_stackdepth, consts, args,
                  splat_arg, block_arg, defaults, cellvars, freevars,
@@ -57,6 +57,12 @@ class W_CodeObject(W_BaseObject):
         obj.block_arg_pos = self.block_arg_pos
         obj.splat_arg_pos = self.splat_arg_pos
         return obj
+
+    def arity(self, negative_defaults=False):
+        args_count = len(self.arg_pos) - len(self.defaults)
+        if self.splat_arg_pos != -1 or (negative_defaults and len(self.defaults) > 0):
+            args_count = -(args_count + 1)
+        return args_count
 
     @classdef.method("filepath")
     def method_filepath(self, space):

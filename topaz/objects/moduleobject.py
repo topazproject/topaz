@@ -64,11 +64,7 @@ class DefineMethodBlock(W_FunctionObject):
             return e.w_value
 
     def arity(self, space):
-        args_count = len(self.block.bytecode.arg_pos) - len(self.block.bytecode.defaults)
-        if len(self.block.bytecode.defaults) > 0 or self.block.bytecode.splat_arg_pos != -1:
-            args_count = -(args_count + 1)
-
-        return space.newint(args_count)
+        return space.newint(self.block.bytecode.arity(negative_defaults=True))
 
 
 class DefineMethodMethod(W_FunctionObject):
@@ -86,7 +82,7 @@ class DefineMethodMethod(W_FunctionObject):
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = ["version?", "included_modules?[*]", "klass?", "name?"]
 
-    classdef = ClassDef("Module", W_RootObject.classdef, filepath=__file__)
+    classdef = ClassDef("Module", W_RootObject.classdef)
 
     def __init__(self, space, name, klass=None):
         self.name = name
@@ -158,6 +154,20 @@ class W_ModuleObject(W_RootObject):
     @jit.elidable
     def _find_method_pure(self, space, method, version):
         return self.methods_w.get(method, None)
+
+    def methods(self, space, inherit=True):
+        methods = {}
+        for name, method in self.methods_w.iteritems():
+            if not isinstance(method, UndefMethod):
+                methods[name] = None
+
+        if inherit:
+            for w_mod in self.included_modules:
+                for name in w_mod.methods(space, inherit):
+                    method = self._find_method_pure(space, name, self.version)
+                    if method is None or not isinstance(method, UndefMethod):
+                        methods[name] = None
+        return methods.keys()
 
     def set_const(self, space, name, w_obj):
         self.mutated()
@@ -389,6 +399,7 @@ class W_ModuleObject(W_RootObject):
             w_mod.include_module(space, module)
 
     @classdef.method("define_method", name="symbol")
+    @check_frozen()
     def method_define_method(self, space, name, w_method=None, block=None):
         if w_method is not None:
             if space.is_kind_of(w_method, space.w_method):
@@ -396,11 +407,18 @@ class W_ModuleObject(W_RootObject):
 
             if space.is_kind_of(w_method, space.w_unbound_method):
                 self.define_method(space, name, DefineMethodMethod(name, w_method))
+                return w_method
             elif space.is_kind_of(w_method, space.w_proc):
                 assert isinstance(w_method, W_ProcObject)
                 self.define_method(space, name, DefineMethodBlock(name, w_method))
+                return w_method.copy(space, is_lambda=True)
+            else:
+                raise space.error(space.w_TypeError,
+                    "wrong argument type %s (expected Proc/Method)" % space.obj_to_s(space.getclass(w_method))
+                )
         elif block is not None:
             self.define_method(space, name, DefineMethodBlock(name, block))
+            return block.copy(space, is_lambda=True)
         else:
             raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
 
@@ -509,7 +527,11 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("const_missing", name="symbol")
     def method_const_missing(self, space, name):
-        raise space.error(space.w_NameError, "uninitialized constant %s" % name)
+        if self is space.w_object:
+            raise space.error(space.w_NameError, "uninitialized constant %s" % (name))
+        else:
+            self_name = space.obj_to_s(self)
+            raise space.error(space.w_NameError, "uninitialized constant %s::%s" % (self_name, name))
 
     @classdef.method("class_eval", string="str", filename="str")
     @classdef.method("module_eval", string="str", filename="str")
@@ -545,10 +567,7 @@ class W_ModuleObject(W_RootObject):
         else:
             w_res = self.find_local_const(space, const)
         if w_res is None:
-            name = space.obj_to_s(self)
-            raise space.error(space.w_NameError,
-                "uninitialized constant %s::%s" % (name, const)
-            )
+            return space.send(self, "const_missing", [space.newsymbol(const)])
         return w_res
 
     @classdef.method("const_set", const="symbol")

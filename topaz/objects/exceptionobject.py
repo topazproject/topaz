@@ -11,7 +11,7 @@ def new_exception_allocate(classdef):
 class W_ExceptionObject(W_Object):
     _attrs_ = ["msg", "frame", "last_instructions", "w_backtrace"]
 
-    classdef = ClassDef("Exception", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Exception", W_Object.classdef)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)
@@ -108,27 +108,27 @@ class W_ExceptionObject(W_Object):
 
 
 class W_ScriptError(W_ExceptionObject):
-    classdef = ClassDef("ScriptError", W_ExceptionObject.classdef, filepath=__file__)
+    classdef = ClassDef("ScriptError", W_ExceptionObject.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_LoadError(W_ScriptError):
-    classdef = ClassDef("LoadError", W_ScriptError.classdef, filepath=__file__)
+    classdef = ClassDef("LoadError", W_ScriptError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_StandardError(W_ExceptionObject):
-    classdef = ClassDef("StandardError", W_ExceptionObject.classdef, filepath=__file__)
+    classdef = ClassDef("StandardError", W_ExceptionObject.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_SystemStackError(W_ExceptionObject):
-    classdef = ClassDef("SystemStackError", W_ExceptionObject.classdef, filepath=__file__)
+    classdef = ClassDef("SystemStackError", W_ExceptionObject.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_SystemExit(W_ExceptionObject):
-    classdef = ClassDef("SystemExit", W_ExceptionObject.classdef, filepath=__file__)
+    classdef = ClassDef("SystemExit", W_ExceptionObject.classdef)
 
     def __init__(self, space, klass=None):
         W_ExceptionObject.__init__(self, space, klass)
@@ -151,57 +151,57 @@ class W_SystemExit(W_ExceptionObject):
 
 
 class W_TypeError(W_ExceptionObject):
-    classdef = ClassDef("TypeError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("TypeError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_NameError(W_StandardError):
-    classdef = ClassDef("NameError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("NameError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_NoMethodError(W_NameError):
-    classdef = ClassDef("NoMethodError", W_NameError.classdef, filepath=__file__)
+    classdef = ClassDef("NoMethodError", W_NameError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_ZeroDivisionError(W_StandardError):
-    classdef = ClassDef("ZeroDivisionError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("ZeroDivisionError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_SyntaxError(W_ScriptError):
-    classdef = ClassDef("SyntaxError", W_ScriptError.classdef, filepath=__file__)
+    classdef = ClassDef("SyntaxError", W_ScriptError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_NotImplementedError(W_ScriptError):
-    classdef = ClassDef("NotImplementedError", W_ScriptError.classdef, filepath=__file__)
+    classdef = ClassDef("NotImplementedError", W_ScriptError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_ArgumentError(W_StandardError):
-    classdef = ClassDef("ArgumentError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("ArgumentError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_RangeError(W_StandardError):
-    classdef = ClassDef("RangeError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("RangeError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_FloatDomainError(W_RangeError):
-    classdef = ClassDef("FloatDomainError", W_RangeError.classdef, filepath=__file__)
+    classdef = ClassDef("FloatDomainError", W_RangeError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_RuntimeError(W_StandardError):
-    classdef = ClassDef("RuntimeError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("RuntimeError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_SystemCallError(W_StandardError):
-    classdef = ClassDef("SystemCallError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("SystemCallError", W_StandardError.classdef)
 
     def __init__(self, space, klass=None):
         W_ExceptionObject.__init__(self, space, klass)
@@ -220,45 +220,45 @@ class W_SystemCallError(W_StandardError):
 
 
 class W_IndexError(W_StandardError):
-    classdef = ClassDef("IndexError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("IndexError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_KeyError(W_IndexError):
-    classdef = ClassDef("KeyError", W_IndexError.classdef, filepath=__file__)
+    classdef = ClassDef("KeyError", W_IndexError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_StopIteration(W_IndexError):
-    classdef = ClassDef("StopIteration", W_IndexError.classdef, filepath=__file__)
+    classdef = ClassDef("StopIteration", W_IndexError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_LocalJumpError(W_StandardError):
-    classdef = ClassDef("LocalJumpError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("LocalJumpError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_IOError(W_StandardError):
-    classdef = ClassDef("IOError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("IOError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_EOFError(W_IOError):
-    classdef = ClassDef("EOFError", W_IOError.classdef, filepath=__file__)
+    classdef = ClassDef("EOFError", W_IOError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_RegexpError(W_StandardError):
-    classdef = ClassDef("RegexpError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("RegexpError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_ThreadError(W_StandardError):
-    classdef = ClassDef("ThreadError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("ThreadError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
 
 class W_FiberError(W_StandardError):
-    classdef = ClassDef("FiberError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("FiberError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)

@@ -321,7 +321,7 @@ class MutableStringStrategy(StringStrategy):
 
 
 class W_StringObject(W_Object):
-    classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("String", W_Object.classdef)
     classdef.include_module(Comparable)
 
     def __init__(self, space, storage, strategy, klass=None):
@@ -501,6 +501,7 @@ class W_StringObject(W_Object):
         return space.newint(self.strategy.hash(self.str_storage))
 
     @classdef.method("[]")
+    @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):
         start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
         if nil:
@@ -875,6 +876,80 @@ class W_StringObject(W_Object):
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
         return space.newbool(substr in space.str_w(self))
+
+    def scan_string(self, space, w_pattern):
+        string = space.str_w(self)
+        pattern = space.str_w(w_pattern)
+        idx = string.find(pattern, 0)
+        while idx >= 0:
+            w_match = space.newstr_fromstr(string[idx:idx + len(pattern)])
+            space.infect(w_match, self)
+            space.infect(w_match, w_pattern)
+            yield w_match
+            if not pattern:
+                idx += 1
+            else:
+                idx += len(pattern)
+            idx = string.find(pattern, idx)
+
+    def scan_regexp(self, space, w_pattern):
+        last = -1
+        string = space.str_w(self)
+        ctx = w_pattern.make_ctx(string)
+
+        while last < len(string) and self.search_context(space, ctx):
+            w_matchdata = w_pattern.get_match_result(space, ctx, found=True)
+            if w_matchdata.size() > 1:
+                matches_w = []
+                for num in xrange(1, w_matchdata.size(), 1):
+                    begin, end = w_matchdata.get_span(num)
+                    assert begin >= 0
+                    assert end >= 0
+                    w_str = space.newstr_fromstr(string[begin:end])
+                    space.infect(w_str, self)
+                    space.infect(w_str, w_pattern)
+                    matches_w.append(w_str)
+                w_match = space.newarray(matches_w)
+            else:
+                w_match = space.newstr_fromstr(string[ctx.match_start:ctx.match_end])
+                space.infect(w_match, self)
+                space.infect(w_match, w_pattern)
+
+            yield w_match
+
+            if ctx.match_start == ctx.match_end:
+                last += 1
+            else:
+                last = ctx.match_end
+            assert last >= 0
+            ctx.reset(last)
+
+    def scan_process_result(self, space, w_match, results_w, block):
+        if block:
+            space.invoke_block(block, [w_match])
+        else:
+            results_w.append(w_match)
+
+    @classdef.method("scan")
+    def method_scan(self, space, w_pattern, block):
+        results_w = []
+        w_str_pattern = space.convert_type(w_pattern, space.w_string, "to_str", raise_error=False)
+        if w_str_pattern is not space.w_nil:
+            for w_match in self.scan_string(space, w_str_pattern):
+                self.scan_process_result(space, w_match, results_w, block)
+        elif space.is_kind_of(w_pattern, space.w_regexp):
+            for w_match in self.scan_regexp(space, w_pattern):
+                self.scan_process_result(space, w_match, results_w, block)
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Regexp)" %
+                    space.obj_to_s(space.getclass(w_pattern))
+            )
+        if block:
+            return self
+        else:
+            return space.newarray(results_w)
 
     @classdef.method("gsub")
     def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
