@@ -678,6 +678,21 @@ class W_ModuleObject(W_RootObject):
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
 
+    def instance_methods(self):
+        return self.methods_w.keys()
+
+    @classdef.method("public_instance_methods", include_super="bool")
+    @classdef.method("instance_methods", include_super="bool")
+    def method_instance_methods(self, space, include_super=True):
+        methods = {}
+        for module in self.included_modules:
+            for method in module.instance_methods():
+                methods[method] = None
+        for method in self.instance_methods():
+            if not isinstance(self.methods_w[method], UndefMethod):
+                methods[method] = None
+        return space.newarray([space.newsymbol(sym) for sym in methods])
+
     @classdef.method("undef_method", name="symbol")
     def method_undef_method(self, space, name):
         w_method = self.find_method(space, name)
