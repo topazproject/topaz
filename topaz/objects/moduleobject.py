@@ -681,9 +681,9 @@ class W_ModuleObject(W_RootObject):
     def instance_methods(self):
         return self.methods_w.keys()
 
-    @classdef.method("public_instance_methods", _="bool")
-    @classdef.method("instance_methods", _="bool")
-    def method_instance_methods(self, space, _=True):
+    @classdef.method("public_instance_methods", include_super="bool")
+    @classdef.method("instance_methods", include_super="bool")
+    def method_instance_methods(self, space, include_super=True):
         methods = {}
         for module in self.included_modules:
             for method in module.instance_methods():
