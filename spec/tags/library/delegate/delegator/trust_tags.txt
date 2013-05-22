@@ -1,0 +1,5 @@
+fails:Delegator#trust returns self
+fails:Delegator#trust trusts the delegator
+fails:Delegator#trust trusts the delegated object
+fails:Delegator#trust raises a SecurityError when modifying a trusted delegator
+fails:Delegator#trust raises a SecurityError when modifying a trusted delegate

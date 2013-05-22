@@ -1,0 +1,3 @@
+fails:Delegator#taint returns self
+fails:Delegator#taint taints the delegator
+fails:Delegator#taint taints the delegated object

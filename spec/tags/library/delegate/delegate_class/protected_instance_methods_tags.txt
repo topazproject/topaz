@@ -1,0 +1,1 @@
+fails:DelegateClass.protected_instance_methods

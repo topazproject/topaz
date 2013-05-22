@@ -1,0 +1,1 @@
+fails:Delegator#tap yield the delegator object
