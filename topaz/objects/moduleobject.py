@@ -124,17 +124,17 @@ class W_ModuleObject(W_RootObject):
     def mutated(self):
         self.version = VersionTag()
 
-    def define_singleton_method(self, space, name, method):
-        self.klass.define_method(space, name, method)
-
-    def define_method(self, space, name, method):
-        self.mutated()
-        self.methods_w[name] = method
-        if not space.bootstrap:
-            if isinstance(method, UndefMethod):
-                self.method_undefined(space, space.newsymbol(name))
-            else:
-                self.method_added(space, space.newsymbol(name))
+    def define_method(self, space, name, method, singleton=False):
+        if singleton:
+            self.klass.define_method(space, name, method)
+        else:
+            self.mutated()
+            self.methods_w[name] = method
+            if not space.bootstrap:
+                if isinstance(method, UndefMethod):
+                    self.method_undefined(space, space.newsymbol(name))
+                else:
+                    self.method_added(space, space.newsymbol(name))
 
     @jit.unroll_safe
     def find_method(self, space, name):
@@ -404,47 +404,36 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("define_singleton_method", name="symbol")
     @check_frozen()
     def method_define_singleton_method(self, space, name, w_method=None, block=None):
-        if w_method is not None:
-            if space.is_kind_of(w_method, space.w_method):
-                w_method = space.send(w_method, "unbind")
+        return self.create_and_define_method(space, name, w_method, block, True)
 
-            if space.is_kind_of(w_method, space.w_unbound_method):
-                self.define_singleton_method(space, name, DefineMethodMethod(name, w_method))
-                return w_method
-            elif space.is_kind_of(w_method, space.w_proc):
-                assert isinstance(w_method, W_ProcObject)
-                self.define_singleton_method(space, name, DefineMethodBlock(name, w_method))
-                return w_method.copy(space, is_lambda=True)
-            else:
-                raise space.error(space.w_TypeError,
-                    "wrong argument type %s (expected Proc/Method)" % space.obj_to_s(space.getclass(w_method))
-                )
-        elif block is not None:
-            self.define_singleton_method(space, name, DefineMethodBlock(name, block))
-            return block.copy(space, is_lambda=True)
-        else:
-            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
 
     @classdef.method("define_method", name="symbol")
     @check_frozen()
     def method_define_method(self, space, name, w_method=None, block=None):
+        return self.create_and_define_method(space, name, w_method, block)
+
+    def create_and_define_method(self, space, name, w_method=None, block=None,
+            singleton=False):
         if w_method is not None:
             if space.is_kind_of(w_method, space.w_method):
                 w_method = space.send(w_method, "unbind")
 
             if space.is_kind_of(w_method, space.w_unbound_method):
-                self.define_method(space, name, DefineMethodMethod(name, w_method))
+                self.define_method(space, name, DefineMethodMethod(name, w_method),
+                        singleton)
                 return w_method
             elif space.is_kind_of(w_method, space.w_proc):
                 assert isinstance(w_method, W_ProcObject)
-                self.define_method(space, name, DefineMethodBlock(name, w_method))
+                self.define_method(space, name, DefineMethodBlock(name, w_method),
+                        singleton)
                 return w_method.copy(space, is_lambda=True)
             else:
                 raise space.error(space.w_TypeError,
                     "wrong argument type %s (expected Proc/Method)" % space.obj_to_s(space.getclass(w_method))
                 )
         elif block is not None:
-            self.define_method(space, name, DefineMethodBlock(name, block))
+            self.define_method(space, name, DefineMethodBlock(name, block),
+                    singleton)
             return block.copy(space, is_lambda=True)
         else:
             raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
