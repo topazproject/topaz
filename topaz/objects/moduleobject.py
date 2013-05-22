@@ -124,6 +124,9 @@ class W_ModuleObject(W_RootObject):
     def mutated(self):
         self.version = VersionTag()
 
+    def define_singleton_method(self, space, name, method):
+        self.klass.define_method(space, name, method)
+
     def define_method(self, space, name, method):
         self.mutated()
         self.methods_w[name] = method
@@ -397,6 +400,30 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_ArgumentError, "cyclic include detected")
         for module in reversed(self.ancestors()):
             w_mod.include_module(space, module)
+
+    @classdef.method("define_singleton_method", name="symbol")
+    @check_frozen()
+    def method_define_singleton_method(self, space, name, w_method=None, block=None):
+        if w_method is not None:
+            if space.is_kind_of(w_method, space.w_method):
+                w_method = space.send(w_method, "unbind")
+
+            if space.is_kind_of(w_method, space.w_unbound_method):
+                self.define_singleton_method(space, name, DefineMethodMethod(name, w_method))
+                return w_method
+            elif space.is_kind_of(w_method, space.w_proc):
+                assert isinstance(w_method, W_ProcObject)
+                self.define_singleton_method(space, name, DefineMethodBlock(name, w_method))
+                return w_method.copy(space, is_lambda=True)
+            else:
+                raise space.error(space.w_TypeError,
+                    "wrong argument type %s (expected Proc/Method)" % space.obj_to_s(space.getclass(w_method))
+                )
+        elif block is not None:
+            self.define_singleton_method(space, name, DefineMethodBlock(name, block))
+            return block.copy(space, is_lambda=True)
+        else:
+            raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
 
     @classdef.method("define_method", name="symbol")
     @check_frozen()
