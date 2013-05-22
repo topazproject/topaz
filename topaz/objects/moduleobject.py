@@ -687,11 +687,11 @@ class W_ModuleObject(W_RootObject):
         methods = {}
         for module in self.included_modules:
             for method in module.instance_methods():
-                methods[space.newsymbol(method)] = 1
+                methods[method] = None
         for method in self.instance_methods():
             if not isinstance(self.methods_w[method], UndefMethod):
-                methods[space.newsymbol(method)] = 1
-        return space.newarray(methods.keys())
+                methods[method] = None
+        return space.newarray([space.newsymbol(sym) for sym in methods])
 
     @classdef.method("undef_method", name="symbol")
     def method_undef_method(self, space, name):
