@@ -2,7 +2,7 @@ from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 
 class W_PointerObject(W_Object):
-    classdef = ClassDef('Pointer', W_Object.classdef, filepath=__file__)
+    classdef = ClassDef('Pointer', W_Object.classdef)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):

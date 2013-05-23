@@ -11,7 +11,7 @@ from rpython.rlib import clibffi, rarithmetic
 from rpython.rtyper.lltypesystem import rffi
 
 class FFI(object):
-    moduledef = ModuleDef("FFI", filepath=__file__)
+    moduledef = ModuleDef("FFI")
 
     types = {'VOID':clibffi.ffi_type_void,
              'INT8': clibffi.ffi_type_sint8,
@@ -93,7 +93,7 @@ class FFI(object):
         space.set_const(w_mod, 'StructByReference', w_struct_by_reference)
 
 class W_MappedObject(W_Object):
-    classdef = ClassDef('MappedObject', W_Object.classdef, filepath=__file__)
+    classdef = ClassDef('MappedObject', W_Object.classdef)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)

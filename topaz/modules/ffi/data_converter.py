@@ -1,7 +1,7 @@
 from topaz.module import ModuleDef
 
 class DataConverter(object):
-    moduledef = ModuleDef('DataConverter', filepath=__file__)
+    moduledef = ModuleDef('DataConverter')
 
     @moduledef.function('native_type')
     def native_type(self, space, args_w): pass

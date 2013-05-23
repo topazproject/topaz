@@ -3,7 +3,7 @@ from topaz.objects.objectobject import W_Object
 from topaz.coerce import Coerce
 
 class W_DynamicLibraryObject(W_Object):
-    classdef = ClassDef('DynamicLibrary', W_Object.classdef, filepath=__file__)
+    classdef = ClassDef('DynamicLibrary', W_Object.classdef)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -32,7 +32,7 @@ class W_DynamicLibraryObject(W_Object):
         return w_sym.method_new(space, [], None)
 
 class W_DL_SymbolObject(W_Object):
-    classdef = ClassDef('Symbol', W_Object.classdef, filepath=__file__)
+    classdef = ClassDef('Symbol', W_Object.classdef)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
