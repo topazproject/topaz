@@ -114,11 +114,17 @@ class W_BaseObject(W_Root):
     def method_instance_exec(self, space, args_w, block):
         if block is None:
             raise space.error(space.w_LocalJumpError, "no block given")
+
+        if space.is_kind_of(self, space.w_symbol) or space.is_kind_of(self, space.w_numeric):
+            self_klass = None
+        else:
+            self_klass = space.getsingletonclass(self)
+
         return space.invoke_block(
             block.copy(
                 space,
                 w_self=self,
-                lexical_scope=StaticScope(space.getsingletonclass(self), block.lexical_scope)
+                lexical_scope=StaticScope(self_klass, block.lexical_scope)
             ),
             args_w
         )
