@@ -1,10 +1,10 @@
 import copy
 
 from rpython.rlib import jit
-from rpython.rlib.objectmodel import compute_unique_id, compute_identity_hash
+from rpython.rlib.objectmodel import compute_unique_id
 
 from topaz.mapdict import MapTransitionCache
-from topaz.module import ClassDef, check_frozen
+from topaz.module import ClassDef
 from topaz.scope import StaticScope
 
 
@@ -29,7 +29,7 @@ class W_Root(object):
 class W_BaseObject(W_Root):
     _attrs_ = []
 
-    classdef = ClassDef("BasicObject", filepath=__file__)
+    classdef = ClassDef("BasicObject")
 
     def getclass(self, space):
         return space.getclassobject(self.classdef)
@@ -133,84 +133,11 @@ class W_BaseObject(W_Root):
 class W_RootObject(W_BaseObject):
     _attrs_ = []
 
-    classdef = ClassDef("Object", W_BaseObject.classdef, filepath=__file__)
+    classdef = ClassDef("Object", W_BaseObject.classdef)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.w_top_self = W_Object(space, w_cls)
-
-    @classdef.method("object_id")
-    def method_object_id(self, space):
-        return space.send(self, "__id__")
-
-    @classdef.method("singleton_class")
-    def method_singleton_class(self, space):
-        return space.getsingletonclass(self)
-
-    @classdef.method("extend")
-    def method_extend(self, space, w_mod):
-        if not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
-            if space.is_kind_of(w_mod, space.w_class):
-                name = "Class"
-            else:
-                name = space.obj_to_s(space.getclass(w_mod))
-            raise space.error(
-                space.w_TypeError,
-                "wrong argument type %s (expected Module)" % name
-            )
-        self.getsingletonclass(space).extend_object(space, self, w_mod)
-
-    @classdef.method("inspect")
-    def method_inspect(self, space):
-        return space.send(self, "to_s")
-
-    @classdef.method("to_s")
-    def method_to_s(self, space):
-        return space.newstr_fromstr(space.any_to_s(self))
-
-    @classdef.method("===")
-    def method_eqeqeq(self, space, w_other):
-        if self is w_other:
-            return space.w_true
-        return space.send(self, "==", [w_other])
-
-    @classdef.method("send")
-    def method_send(self, space, args_w, block):
-        return space.send(self, "__send__", args_w, block)
-
-    @classdef.method("nil?")
-    def method_nilp(self, space):
-        return space.w_false
-
-    @classdef.method("hash")
-    def method_hash(self, space):
-        return space.newint(compute_identity_hash(self))
-
-    @classdef.method("instance_variable_get", name="str")
-    def method_instance_variable_get(self, space, name):
-        return space.find_instance_var(self, name)
-
-    @classdef.method("instance_variable_set", name="str")
-    @check_frozen()
-    def method_instance_variable_set(self, space, name, w_value):
-        space.set_instance_var(self, name, w_value)
-        return w_value
-
-    @classdef.method("method")
-    def method_method(self, space, w_sym):
-        return space.send(
-            space.send(space.getclass(self), "instance_method", [w_sym]),
-            "bind",
-            [self]
-        )
-
-    @classdef.method("tap")
-    def method_tap(self, space, block):
-        if block is not None:
-            space.invoke_block(block, [self])
-        else:
-            raise space.error(space.w_LocalJumpError, "no block given")
-        return self
 
 
 class W_Object(W_RootObject):
@@ -285,7 +212,3 @@ class W_Object(W_RootObject):
         if idx != -1:
             # Flags are by default unset, no need to add if unsetting
             self.storage[idx] = space.w_false
-
-    def copy_flags(self, space, w_other):
-        assert isinstance(w_other, W_Object)
-        w_other.map.copy_flags(space, w_other, self)

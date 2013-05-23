@@ -4,7 +4,6 @@ fails:Kernel#eval does not share locals across eval scopes
 fails:Kernel#eval does not make Proc locals visible to evaluated code
 fails:Kernel#eval allows a binding to be captured inside an eval
 fails:Kernel#eval includes file and line information in syntax error
-fails:Kernel#eval sets constants at the toplevel from inside a block
 fails:Kernel#eval uses the filename of the binding if none is provided
 fails:Kernel#eval does not alter the value of __FILE__ in the binding
 fails:Kernel#eval uses the receiver as self inside the eval

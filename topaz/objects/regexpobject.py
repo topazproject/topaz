@@ -47,7 +47,7 @@ class RegexpCache(object):
 
 
 class W_RegexpObject(W_Object):
-    classdef = ClassDef("Regexp", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Regexp", W_Object.classdef)
 
     def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
@@ -239,7 +239,7 @@ class W_RegexpObject(W_Object):
 
 
 class W_MatchDataObject(W_Object):
-    classdef = ClassDef("MatchData", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("MatchData", W_Object.classdef)
 
     def __init__(self, space, regexp, ctx):
         W_Object.__init__(self, space)

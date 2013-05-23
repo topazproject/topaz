@@ -100,9 +100,6 @@ class ClassNode(BaseNode):
     def copy_attrs(self, space, w_obj, w_target):
         pass
 
-    def copy_flags(self, space, w_obj, w_target):
-        pass
-
     def length(self):
         return 0
 
@@ -151,9 +148,6 @@ class AttributeNode(StorageNode):
         self.prev.copy_attrs(space, w_obj, w_target)
         w_target.set_instance_var(space, self.name, w_obj.storage[self.pos])
 
-    def copy_flags(self, space, w_obj, w_target):
-        self.prev.copy_flags(space, w_obj, w_target)
-
 
 class FlagNode(StorageNode):
     @jit.elidable
@@ -177,9 +171,3 @@ class FlagNode(StorageNode):
 
     def copy_attrs(self, space, w_obj, w_target):
         self.prev.copy_attrs(space, w_obj, w_target)
-
-    def copy_flags(self, space, w_obj, w_target):
-        self.prev.copy_flags(space, w_obj, w_target)
-        if w_obj.storage[self.pos] is space.w_true:
-            # Only copy flags that are still set
-            w_target.set_flag(space, self.name)

@@ -10,7 +10,7 @@ from topaz.objects.objectobject import W_Object
 
 
 class W_NumericObject(W_Object):
-    classdef = ClassDef("Numeric", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Numeric", W_Object.classdef)
     classdef.include_module(Comparable)
 
     @staticmethod

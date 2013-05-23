@@ -164,7 +164,7 @@ class ObjectSpace(object):
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
             self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
             self.w_EOFError, self.w_FloatDomainError, self.w_FiberError,
-            self.w_SystemStackError,
+            self.w_SystemStackError, self.w_KeyError,
 
             self.w_kernel, self.w_topaz,
 
@@ -207,6 +207,8 @@ class ObjectSpace(object):
                 self.str_w(self.send(w_cls, "name")),
                 w_cls
             )
+
+        self.set_const(self.w_basicobject, "BasicObject", self.w_basicobject)
 
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
@@ -530,19 +532,45 @@ class ObjectSpace(object):
         module.set_const(self, name, w_value)
 
     @jit.unroll_safe
-    def find_lexical_const(self, lexical_scope, name):
+    def _find_lexical_const(self, lexical_scope, name):
         w_res = None
         scope = lexical_scope
+        # perform lexical search but skip Object
         while scope is not None:
             w_mod = scope.w_mod
+            if w_mod is self.w_top_self:
+                break
             w_res = w_mod.find_local_const(self, name)
             if w_res is not None:
                 return w_res
             scope = scope.backscope
+
+        object_seen = False
+        fallback_scope = self.w_object
+
         if lexical_scope is not None:
-            w_res = lexical_scope.w_mod.find_const(self, name)
-        if w_res is None:
-            w_res = self.w_object.find_const(self, name)
+            w_mod = lexical_scope.w_mod
+            while w_mod is not None:
+                object_seen = w_mod is self.w_object
+                # BasicObject was our starting point, do not use Object
+                # as fallback
+                if w_mod is self.w_basicobject and not object_seen:
+                    fallback_scope = None
+                w_res = w_mod.find_const(self, name)
+                if w_res is not None:
+                    return w_res
+                if isinstance(w_mod, W_ClassObject):
+                    w_mod = w_mod.superclass
+                else:
+                    break
+
+        if fallback_scope is not None:
+            w_res = fallback_scope.find_const(self, name)
+        return w_res
+
+    @jit.unroll_safe
+    def find_lexical_const(self, lexical_scope, name):
+        w_res = self._find_lexical_const(lexical_scope, name)
         if w_res is None:
             if lexical_scope is not None:
                 w_mod = lexical_scope.w_mod
@@ -585,9 +613,14 @@ class ObjectSpace(object):
     def _send_raw(self, name, raw_method, w_receiver, w_cls, args_w, block):
         if raw_method is None:
             method_missing = w_cls.find_method(self, "method_missing")
-            assert method_missing is not None
-            args_w.insert(0, self.newsymbol(name))
-            return method_missing.call(self, w_receiver, args_w, block)
+            if method_missing is None:
+                class_name = self.str_w(self.send(w_cls, "to_s"))
+                raise self.error(self.w_NoMethodError,
+                    "undefined method `%s' for %s" % (name, class_name)
+                )
+            else:
+                args_w.insert(0, self.newsymbol(name))
+                return method_missing.call(self, w_receiver, args_w, block)
         return raw_method.call(self, w_receiver, args_w, block)
 
     def respond_to(self, w_receiver, name):
@@ -606,8 +639,11 @@ class ObjectSpace(object):
             block=block.block, parent_interp=block.parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
-        if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
-            frame.handle_block_args(self, bc, args_w, block_arg)
+        if block.is_lambda:
+            frame.handle_args(self, bc, args_w, block_arg)
+        else:
+            if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
+                frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
         for i in xrange(len(bc.freevars)):
             frame.cells[len(bc.cellvars) + i] = block.cells[i]
@@ -653,6 +689,7 @@ class ObjectSpace(object):
         inclusive = False
         as_range = False
         end = 0
+        nil = False
 
         if isinstance(w_idx, W_RangeObject) and not w_count:
             start = self.int_w(self.convert_type(w_idx.w_start, self.w_fixnum, "to_int"))
@@ -665,9 +702,14 @@ class ObjectSpace(object):
                 end = self.int_w(self.convert_type(w_count, self.w_fixnum, "to_int"))
                 if end >= 0:
                     as_range = True
+                else:
+                    if start < 0:
+                        start += length
+                    return (start, end, False, True)
 
         if start < 0:
             start += length
+
         if as_range:
             if w_count:
                 end += start
@@ -679,9 +721,10 @@ class ObjectSpace(object):
                 end = start
             elif end > length:
                 end = length
+            nil = start < 0 or end < 0 or start > length
+        else:
+            nil = start < 0 or start >= length
 
-        nil = ((not as_range and start >= length) or
-            start < 0 or end < 0 or (start > 0 and start > length))
         return (start, end, as_range, nil)
 
     def convert_type(self, w_obj, w_cls, method, raise_error=True):
@@ -712,6 +755,18 @@ class ObjectSpace(object):
             )
         else:
             return w_res
+
+    def infect(self, w_dest, w_src, taint=True, untrust=True, freeze=False):
+        """
+        By default copies tainted and untrusted state from src to dest.
+        Frozen state isn't copied by default, as this is the rarer case MRI.
+        """
+        if taint and self.is_true(w_src.get_flag(self, "tainted?")):
+            w_dest.set_flag(self, "tainted?")
+        if untrust and self.is_true(w_src.get_flag(self, "untrusted?")):
+            w_dest.set_flag(self, "untrusted?")
+        if freeze and self.is_true(w_src.get_flag(self, "frozen?")):
+            w_dest.set_flag(self, "frozen?")
 
     def any_to_s(self, w_obj):
         return "#<%s:0x%x>" % (

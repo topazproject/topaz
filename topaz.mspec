@@ -31,7 +31,6 @@ class MSpecScript
           "^#{Rubyspec}/core/process/detach_spec.rb",
           "^#{Rubyspec}/core/gc/profiler/",
           "^#{Rubyspec}/core/object/instance_exec_spec.rb",
-          "^#{Rubyspec}/core/method/parameters_spec.rb",
           "^#{Rubyspec}/core/matchdata/names_spec.rb",
           "^#{Rubyspec}/core/matchdata/begin_spec.rb",
           "^#{Rubyspec}/core/matchdata/end_spec.rb",
@@ -42,7 +41,6 @@ class MSpecScript
           "^#{Rubyspec}/core/marshal/restore_spec.rb",
           "^#{Rubyspec}/core/kernel/autoload_spec.rb",
           "^#{Rubyspec}/core/kernel/define_singleton_method_spec.rb",
-          "^#{Rubyspec}/core/kernel/p_spec.rb",
           "^#{Rubyspec}/core/main/public_spec.rb",
           "^#{Rubyspec}/core/main/private_spec.rb",
           "^#{Rubyspec}/core/main/include_spec.rb",
@@ -58,20 +56,6 @@ class MSpecScript
           "^#{Rubyspec}/core/file/ftype_spec.rb",
           "^#{Rubyspec}/core/file/open_spec.rb",
           "^#{Rubyspec}/core/io/sysopen_spec.rb",
-          "^#{Rubyspec}/core/method/arity_spec.rb",
-          "^#{Rubyspec}/core/method/call_spec.rb",
-          "^#{Rubyspec}/core/method/clone_spec.rb",
-          "^#{Rubyspec}/core/method/element_reference_spec.rb",
-          "^#{Rubyspec}/core/method/eql_spec.rb",
-          "^#{Rubyspec}/core/method/equal_value_spec.rb",
-          "^#{Rubyspec}/core/method/inspect_spec.rb",
-          "^#{Rubyspec}/core/method/name_spec.rb",
-          "^#{Rubyspec}/core/method/owner_spec.rb",
-          "^#{Rubyspec}/core/method/receiver_spec.rb",
-          "^#{Rubyspec}/core/method/source_location_spec.rb",
-          "^#{Rubyspec}/core/method/to_proc_spec.rb",
-          "^#{Rubyspec}/core/method/to_s_spec.rb",
-          "^#{Rubyspec}/core/method/unbind_spec.rb",
           "^#{Rubyspec}/core/numeric/to_c_spec.rb",
           "^#{Rubyspec}/core/process/status/exited_spec.rb",
           "^#{Rubyspec}/core/process/status/exitstatus_spec.rb",
@@ -105,7 +89,8 @@ class MSpecScript
               "^#{Rubyspec}/language/or_spec.rb",
               "^#{Rubyspec}/language/retry_spec.rb",
               "^#{Rubyspec}/language/return_spec.rb",
-              "^#{Rubyspec}/language/super_spec.rb"]
+              "^#{Rubyspec}/language/super_spec.rb"
+  ]
 
   command_line = ["#{Rubyspec}/command_line"]
 

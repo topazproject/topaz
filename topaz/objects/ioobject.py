@@ -9,7 +9,7 @@ from topaz.utils.filemode import map_filemode
 
 
 class W_IOObject(W_Object):
-    classdef = ClassDef("IO", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("IO", W_Object.classdef)
 
     def __init__(self, space):
         W_Object.__init__(self, space)

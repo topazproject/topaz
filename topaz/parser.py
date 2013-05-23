@@ -12,6 +12,7 @@ from topaz.utils import regexp
 class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
+        self._hidden_scopes = []
 
     def parse(self):
         l = LexerWrapper(self.lexer.tokenize())
@@ -34,6 +35,13 @@ class Parser(object):
         child_symtable = self.lexer.symtable
         child_symtable.parent_symtable.add_subscope(node, child_symtable)
         self.lexer.symtable = child_symtable.parent_symtable
+
+    def hide_scope(self):
+        self._hidden_scopes.append(self.lexer.symtable)
+        self.lexer.symtable = self.lexer.symtable.parent_symtable
+
+    def unhide_scope(self):
+        self.lexer.symtable = self._hidden_scopes.pop()
 
     def new_token(self, orig, name, value):
         return Token(name, value, orig.getsourcepos())
@@ -1677,10 +1685,12 @@ class Parser(object):
     @pg.production("post_for_in : ")
     def post_for_in(self, p):
         self.lexer.condition_state.begin()
+        self.hide_scope()
 
     @pg.production("post_for_do : ")
     def post_for_do(self, p):
         self.lexer.condition_state.end()
+        self.unhide_scope()
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):

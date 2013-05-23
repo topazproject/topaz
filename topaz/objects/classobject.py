@@ -1,14 +1,14 @@
 import copy
 
 from topaz.module import ClassDef
-from topaz.objects.moduleobject import W_ModuleObject
+from topaz.objects.moduleobject import UndefMethod, W_ModuleObject
 from topaz.objects.objectobject import W_Object
 
 
 class W_ClassObject(W_ModuleObject):
     _immutable_fields_ = ["superclass?"]
 
-    classdef = ClassDef("Class", W_ModuleObject.classdef, filepath=__file__)
+    classdef = ClassDef("Class", W_ModuleObject.classdef)
 
     def __init__(self, space, name, superclass, is_singleton=False, attached=None):
         W_ModuleObject.__init__(self, space, name)
@@ -50,6 +50,18 @@ class W_ClassObject(W_ModuleObject):
             w_res = self.superclass.find_const(space, name)
         return w_res
 
+    def inherited_constants(self, space):
+        consts = {}
+        for const in W_ModuleObject.local_constants(self, space):
+            consts[const] = None
+        w_cls = self.superclass
+        while w_cls is not None:
+            for const in w_cls.local_constants(space):
+                consts[const] = None
+            w_cls = w_cls.superclass
+
+        return consts.keys()
+
     def find_method(self, space, name):
         method = W_ModuleObject.find_method(self, space, name)
         if method is None and self.superclass is not None:
@@ -61,6 +73,17 @@ class W_ClassObject(W_ModuleObject):
         if method is None and self.superclass is not None:
             method = self.superclass.find_method(space, name)
         return method
+
+    def methods(self, space, inherit=True):
+        methods = {}
+        for name in W_ModuleObject.methods(self, space, inherit):
+            methods[name] = None
+        if inherit and self.superclass is not None:
+            for name in self.superclass.methods(space, inherit):
+                method = self._find_method_pure(space, name, self.version)
+                if method is None or not isinstance(method, UndefMethod):
+                    methods[name] = None
+        return methods.keys()
 
     def ancestors(self, include_singleton=True, include_self=True):
         assert include_self

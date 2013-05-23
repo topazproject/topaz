@@ -2,10 +2,11 @@ from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.ordereddict import OrderedDict
+from topaz.objects.procobject import W_ProcObject
 
 
 class W_HashObject(W_Object):
-    classdef = ClassDef("Hash", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Hash", W_Object.classdef)
     classdef.include_module(Enumerable)
 
     def __init__(self, space, klass=None):
@@ -50,6 +51,17 @@ class W_HashObject(W_Object):
             return space.w_nil
         return self.default_proc
 
+    @classdef.method("default_proc=")
+    def method_set_default_proc(self, space, w_proc):
+        w_new_proc = space.convert_type(w_proc, space.w_proc, "to_proc")
+        assert isinstance(w_new_proc, W_ProcObject)
+        arity = space.int_w(space.send(w_new_proc, "arity"))
+        if arity != 2 and space.is_true(space.send(w_new_proc, "lambda?")):
+            raise space.error(space.w_TypeError, "default_proc takes two arguments (2 for %s)" % arity)
+        self.default_proc = w_new_proc
+        self.w_default = space.w_nil
+        return w_proc
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         try:
@@ -62,10 +74,10 @@ class W_HashObject(W_Object):
         try:
             return self.contents[w_key]
         except KeyError:
-            if w_value is not None:
-                return w_value
-            elif block is not None:
+            if block is not None:
                 return space.invoke_block(block, [w_key])
+            elif w_value is not None:
+                return w_value
             else:
                 raise space.error(space.w_KeyError, "key not found: %s" % space.send(w_key, "inspect"))
 
@@ -118,9 +130,12 @@ class W_HashObject(W_Object):
     @classdef.method("replace")
     @check_frozen()
     def method_replace(self, space, w_hash):
+        w_hash = space.convert_type(w_hash, space.w_hash, "to_hash")
         assert isinstance(w_hash, W_HashObject)
         self.contents.clear()
         self.contents.update(w_hash.contents)
+        self.w_default = w_hash.w_default
+        self.default_proc = w_hash.default_proc
         return self
 
     @classdef.method("keys")
@@ -144,7 +159,7 @@ class W_HashObject(W_Object):
 
 
 class W_HashIterator(W_Object):
-    classdef = ClassDef("HashIterator", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("HashIterator", W_Object.classdef)
 
     def __init__(self, space, d):
         W_Object.__init__(self, space)

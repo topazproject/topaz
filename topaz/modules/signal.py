@@ -4,7 +4,7 @@ from topaz.module import ModuleDef
 
 
 class Signal(object):
-    moduledef = ModuleDef("Signal", filepath=__file__)
+    moduledef = ModuleDef("Signal")
 
     @moduledef.function("trap")
     def method_trap(self, args_w):

@@ -5,7 +5,7 @@ from topaz.objects.objectobject import W_Object
 
 class W_SymbolObject(W_Object):
     _immutable_fields_ = ["symbol"]
-    classdef = ClassDef("Symbol", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Symbol", W_Object.classdef)
     classdef.include_module(Comparable)
 
     def __init__(self, space, symbol):

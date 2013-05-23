@@ -19,7 +19,7 @@ FNM_DOTMATCH = 0x04
 
 
 class W_FileObject(W_IOObject):
-    classdef = ClassDef("File", W_IOObject.classdef, filepath=__file__)
+    classdef = ClassDef("File", W_IOObject.classdef)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -312,7 +312,7 @@ class W_FileObject(W_IOObject):
 
 
 class W_FileStatObject(W_Object):
-    classdef = ClassDef("Stat", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Stat", W_Object.classdef)
 
     def __init__(self, space):
         W_Object.__init__(self, space)

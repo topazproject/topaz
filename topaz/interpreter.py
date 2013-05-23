@@ -202,9 +202,6 @@ class Interpreter(object):
         w_value = frame.pop()
         w_scope = frame.pop()
         space.set_const(w_scope, name, w_value)
-        if (isinstance(w_value, W_ModuleObject) and w_value.name is None
-            and isinstance(w_scope, W_ModuleObject) and w_scope.name is not None):
-            w_value.set_name_in_scope(space, name, w_scope)
         frame.push(w_value)
 
     def DEFINED_CONSTANT(self, space, bytecode, frame, pc, idx):
@@ -226,20 +223,14 @@ class Interpreter(object):
     @jit.unroll_safe
     def DEFINED_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
         space.getexecutioncontext().last_instr = pc
-        w_name = bytecode.consts_w[idx]
         frame.pop()
-        scope = jit.promote(frame.lexical_scope)
-        while scope is not None:
-            w_mod = scope.w_mod
-            if space.is_true(space.send(w_mod, "const_defined?", [w_name])):
-                frame.push(space.newstr_fromstr("constant"))
-                break
-            scope = scope.backscope
+        w_name = bytecode.consts_w[idx]
+        name = space.symbol_w(w_name)
+        w_res = space._find_lexical_const(jit.promote(frame.lexical_scope), name)
+        if w_res is None:
+            frame.push(space.w_nil)
         else:
-            if space.is_true(space.send(space.w_object, "const_defined?", [w_name])):
-                frame.push(space.newstr_fromstr("constant"))
-            else:
-                frame.push(space.w_nil)
+            frame.push(space.newstr_fromstr("constant"))
 
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
@@ -375,10 +366,18 @@ class Interpreter(object):
                     "wrong argument type %s (expected Class)" % cls_name
                 )
             assert isinstance(superclass, W_ClassObject)
+            if superclass.is_singleton:
+                raise space.error(space.w_TypeError, "can't make subclass of singleton class")
             w_cls = space.newclass(name, superclass, w_scope=w_scope)
             space.set_const(w_scope, name, w_cls)
         elif not space.is_kind_of(w_cls, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a class" % name)
+        else:
+            assert isinstance(w_cls, W_ClassObject)
+            if superclass is not space.w_nil and w_cls.superclass is not superclass:
+                raise space.error(space.w_TypeError,
+                    "superclass mismatch for class %s" % w_cls.name
+                )
 
         frame.push(w_cls)
 

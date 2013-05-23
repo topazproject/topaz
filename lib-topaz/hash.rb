@@ -60,21 +60,27 @@ class Hash
   end
 
   def ==(other)
-    if self.equal?(other)
-      return true
-    end
-    if !other.kind_of?(Hash)
-      return false
-    end
-    if self.size != other.size
-      return false
-    end
-    self.each do |key, value|
-      if !other.has_key?(key) || other[key] != value
-        return false
+    return true if self.equal?(other)
+    return false unless other.kind_of?(Hash)
+    return false unless self.size == other.size
+    Thread.current.recursion_guard(:hash_compare, self) do
+      self.each do |key, value|
+        return false unless other.has_key?(key) && value == other[key]
       end
     end
-    return true
+    true
+  end
+
+  def eql?(other)
+    return true if self.equal?(other)
+    return false unless other.kind_of?(Hash)
+    return false unless self.size == other.size
+    Thread.current.recursion_guard(:hash_eql, self) do
+      self.each do |key, value|
+        return false unless other.has_key?(key) && value.eql?(other[key])
+      end
+    end
+    true
   end
 
   def merge!(other, &block)

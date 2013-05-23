@@ -47,11 +47,7 @@ class W_UserFunction(W_FunctionObject):
             return space.execute_frame(frame, self.bytecode)
 
     def arity(self, space):
-        args_count = len(self.bytecode.arg_pos) - len(self.bytecode.defaults)
-        if len(self.bytecode.defaults) > 0 or self.bytecode.splat_arg_pos != -1:
-            args_count = -(args_count + 1)
-
-        return space.newint(args_count)
+        return space.newint(self.bytecode.arity(negative_defaults=True))
 
 
 class W_BuiltinFunction(W_FunctionObject):
