@@ -11,6 +11,7 @@ Authors
 * Alex Gaynor
 * Magnus Holm
 * Kenichi Kamiya
+* Marjan Krekoten'
 * Ryan Levick
 * Konstantin Makarchev
 * Curt Micol
