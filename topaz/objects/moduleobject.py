@@ -401,14 +401,14 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("define_singleton_method", name="symbol")
     @check_frozen()
     def method_define_singleton_method(self, space, name, w_method=None, block=None):
-        return self.klass.create_and_define_method(space, name, w_method, block)
+        args_w = [space.newsymbol(name)]
+        if w_method is not None:
+            args_w.append(w_method)
+        return space.send(self.klass, "define_method", args_w, block)
 
     @classdef.method("define_method", name="symbol")
     @check_frozen()
     def method_define_method(self, space, name, w_method=None, block=None):
-        return self.create_and_define_method(space, name, w_method, block)
-
-    def create_and_define_method(self, space, name, w_method=None, block=None):
         if w_method is not None:
             if space.is_kind_of(w_method, space.w_method):
                 w_method = space.send(w_method, "unbind")
