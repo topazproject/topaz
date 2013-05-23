@@ -45,6 +45,10 @@ class Kernel(object):
 
         return space.newarray([space.newsymbol(m) for m in w_cls.methods(space, inherit)])
 
+    @moduledef.method("define_singleton_method")
+    def method_define_singleton_method(self, space, w_name, w_method=None, block=None):
+        return space.send(space.getsingletonclass(self), "define_method", [w_name, w_method], block)
+
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
         return block.copy(space, is_lambda=True)

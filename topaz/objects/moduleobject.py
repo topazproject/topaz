@@ -6,6 +6,7 @@ from topaz.celldict import CellDict, VersionTag
 from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
 from topaz.objects.functionobject import W_FunctionObject
+from topaz.objects.methodobject import W_UnboundMethodObject
 from topaz.objects.objectobject import W_RootObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.scope import StaticScope
@@ -286,13 +287,9 @@ class W_ModuleObject(W_RootObject):
 
     @jit.unroll_safe
     def is_ancestor_of(self, w_cls):
-        if self is w_cls:
-            return True
-        for w_mod in w_cls.included_modules:
+        for w_mod in w_cls.ancestors():
             if self is w_mod:
                 return True
-        if w_cls.superclass is not None:
-            return self.is_ancestor_of(w_cls.superclass)
         return False
 
     def include_module(self, space, w_mod):
@@ -414,6 +411,18 @@ class W_ModuleObject(W_RootObject):
                 w_method = space.send(w_method, "unbind")
 
             if space.is_kind_of(w_method, space.w_unbound_method):
+                assert isinstance(w_method, W_UnboundMethodObject)
+                if not w_method.w_owner.is_ancestor_of(self):
+                    if w_method.w_owner.is_singleton:
+                        raise space.error(space.w_TypeError,
+                            "can't bind singleton method to a different class"
+                        )
+                    else:
+                        raise space.error(space.w_TypeError,
+                            "bind argument must be a subclass of %s" % space.obj_to_s(
+                                space.getclass(w_method.w_owner)
+                            )
+                        )
                 self.define_method(space, name, DefineMethodMethod(name, w_method))
                 return w_method
             elif space.is_kind_of(w_method, space.w_proc):
