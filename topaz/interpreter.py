@@ -484,7 +484,7 @@ class Interpreter(object):
         # a method on Symbol or Numeric.
         if w_scope is None:
             raise space.error(space.w_TypeError,
-                'can\'t define singleton method "%s" for %s' % (
+                """cant define singleton method "%s" for %s""" % (
                     space.symbol_w(w_name), space.getclass(frame.w_self).name
                 )
             )
