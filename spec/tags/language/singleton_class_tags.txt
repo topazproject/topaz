@@ -1,24 +1,10 @@
 fails:A singleton class is a subclass of Class's singleton class
 fails:A singleton class is a subclass of the same level of Class's singleton class
-fails:Defining instance methods on a singleton class define public methods
 fails:Instance methods of a singleton class include ones of the object's class
-fails:Instance methods of a singleton class do not include class methods of the object's class
 fails:Instance methods of a singleton class include instance methods of Object
-fails:Instance methods of a singleton class do not include class methods of Object
 fails:Instance methods of a singleton class for a class include instance methods of Class
-fails:Instance methods of a singleton class for a class do not include class methods of Class
-fails:Instance methods of a singleton class for a class do not include instance methods of the singleton class of Class
-fails:Instance methods of a singleton class for a class do not include class methods of the singleton class of Class
 fails:Instance methods of a singleton class for a singleton class includes instance methods of the singleton class of Class
-fails:Instance methods of a singleton class for a singleton class does not include class methods of the singleton class of Class
 fails:Class methods of a singleton class include ones of the object's class
-fails:Class methods of a singleton class do not include instance methods of the object's class
-fails:Class methods of a singleton class include instance methods of Class
-fails:Class methods of a singleton class do not include class methods of Class
-fails:Class methods of a singleton class for a class include instance methods of Class
-fails:Class methods of a singleton class for a class include class methods of Class
-fails:Class methods of a singleton class for a class include instance methods of the singleton class of Class
-fails:Class methods of a singleton class for a class do not include class methods of the singleton class of Class
 fails:Class methods of a singleton class for a singleton class include instance methods of the singleton class of Class
 fails:Class methods of a singleton class for a singleton class include class methods of the singleton class of Class
 fails:Instantiating a singleton class raises a TypeError when new is called

@@ -296,7 +296,16 @@ class Array
   end
 
   def values_at(*args)
-    args.map { |n| self[n] }
+    out = []
+    args.each do |arg|
+      if arg.is_a?(Range)
+        v = self[arg]
+        out.concat(v) if v
+      else
+        out << self[arg]
+      end
+    end
+    out
   end
 
   def each_index(&block)
