@@ -398,14 +398,6 @@ class W_ModuleObject(W_RootObject):
         for module in reversed(self.ancestors()):
             w_mod.include_module(space, module)
 
-    @classdef.method("define_singleton_method", name="symbol")
-    @check_frozen()
-    def method_define_singleton_method(self, space, name, w_method=None, block=None):
-        args_w = [space.newsymbol(name)]
-        if w_method is not None:
-            args_w.append(w_method)
-        return space.send(self.klass, "define_method", args_w, block)
-
     @classdef.method("define_method", name="symbol")
     @check_frozen()
     def method_define_method(self, space, name, w_method=None, block=None):
