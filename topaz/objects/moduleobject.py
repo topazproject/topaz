@@ -287,13 +287,9 @@ class W_ModuleObject(W_RootObject):
 
     @jit.unroll_safe
     def is_ancestor_of(self, w_cls):
-        if self is w_cls:
-            return True
-        for w_mod in w_cls.included_modules:
+        for w_mod in w_cls.ancestors():
             if self is w_mod:
                 return True
-        if w_cls.superclass is not None:
-            return self.is_ancestor_of(w_cls.superclass)
         return False
 
     def include_module(self, space, w_mod):
@@ -408,7 +404,7 @@ class W_ModuleObject(W_RootObject):
 
             if space.is_kind_of(w_method, space.w_unbound_method):
                 assert isinstance(w_method, W_UnboundMethodObject)
-                if self is not w_method.w_owner and not w_method.w_owner.is_ancestor_of(self):
+                if not w_method.w_owner.is_ancestor_of(self):
                     if w_method.w_owner.is_singleton:
                         raise space.error(space.w_TypeError,
                             "can't bind singleton method to a different class"
