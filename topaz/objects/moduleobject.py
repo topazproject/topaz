@@ -743,3 +743,7 @@ class W_ModuleObject(W_RootObject):
             ),
             args_w
         )
+
+    @classdef.method("instance_variable_defined?", name="symbol")
+    def method_instance_variable_definedp(self, space, name):
+        return space.newbool(self.find_instance_var(space, name) is not space.w_nil)
