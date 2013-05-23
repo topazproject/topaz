@@ -398,9 +398,17 @@ class W_ModuleObject(W_RootObject):
         for module in reversed(self.ancestors()):
             w_mod.include_module(space, module)
 
+    @classdef.method("define_singleton_method", name="symbol")
+    @check_frozen()
+    def method_define_singleton_method(self, space, name, w_method=None, block=None):
+        return self.klass.create_and_define_method(space, name, w_method, block)
+
     @classdef.method("define_method", name="symbol")
     @check_frozen()
     def method_define_method(self, space, name, w_method=None, block=None):
+        return self.create_and_define_method(space, name, w_method, block)
+
+    def create_and_define_method(self, space, name, w_method=None, block=None):
         if w_method is not None:
             if space.is_kind_of(w_method, space.w_method):
                 w_method = space.send(w_method, "unbind")
