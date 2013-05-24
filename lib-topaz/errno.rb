@@ -1,4 +1,4 @@
 module Errno
-  class ECHILD < Exception
+  class ECHILD < SystemCallError
   end
 end
