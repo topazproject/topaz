@@ -4,6 +4,8 @@ import os
 
 from topaz.module import ModuleDef
 from topaz.system import IS_WINDOWS
+from topaz.objects.classobject import W_ClassObject
+from topaz.objects.moduleobject import W_ModuleObject
 
 
 if IS_WINDOWS:
@@ -35,15 +37,21 @@ class Process(object):
 
     @moduledef.function("waitpid", pid="int")
     def method_waitpid(self, space, pid=-1):
-        pid, status = os.waitpid(pid, 0)
-        status = WEXITSTATUS(status)
-        w_status = space.send(
-            space.find_const(self, "Status"),
-            "new",
-            [space.newint(pid), space.newint(status)]
-        )
-        space.globals.set(space, "$?", w_status)
-        return space.newint(pid)
+        try:
+            pid, status = os.waitpid(pid, 0)
+            status = WEXITSTATUS(status)
+            w_status = space.send(
+                space.find_const(self, "Status"),
+                "new",
+                [space.newint(pid), space.newint(status)]
+            )
+            space.globals.set(space, "$?", w_status)
+            return space.newint(pid)
+        except OSError as ex:
+            errno = space.find_const(self, "Errno")
+            echild = space.find_const(errno, "ECHILD")
+            assert isinstance(echild, W_ClassObject)
+            raise space.error(echild, str(ex))
 
     @moduledef.function("exit", status="int")
     def method_exit(self, space, status=0):
