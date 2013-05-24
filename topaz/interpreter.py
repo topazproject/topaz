@@ -235,7 +235,8 @@ class Interpreter(object):
     def LOAD_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
-        w_res = space.find_instance_var(w_obj, space.symbol_w(w_name))
+        w_res = (space.find_instance_var(w_obj, space.symbol_w(w_name))
+                 or space.w_nil)
         frame.push(w_res)
 
     def STORE_INSTANCE_VAR(self, space, bytecode, frame, pc, idx):
