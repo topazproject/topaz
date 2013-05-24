@@ -17,6 +17,31 @@ class Enumerator
     end
   end
 
+  def each_with_index(&block)
+    return self.enum_for(:each_with_index) unless block
+
+    i = 0
+    self.each do |*e|
+      v = (e.size == 1) ? e[0] : e
+      val = yield(v, i)
+      i += 1
+      val
+    end
+  end
+
+  def with_index(offset = nil, &block)
+    return self.enum_for(:with_index, offset) unless block
+    offset = offset ? Topaz.convert_type(offset, Fixnum, :to_int) : 0
+
+    i = offset
+    self.each do |*e|
+      v = (e.size == 1) ? e[0] : e
+      val = yield(v, i)
+      i += 1
+      val
+    end
+  end
+
   def rewind
     @object.rewind if @object.respond_to?(:rewind)
     @nextvals = nil
