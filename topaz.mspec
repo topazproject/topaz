@@ -63,7 +63,6 @@ class MSpecScript
           "^#{Rubyspec}/core/process/status/signaled_spec.rb",
           "^#{Rubyspec}/core/process/status/success_spec.rb",
           "^#{Rubyspec}/core/process/status/termsig_spec.rb",
-          "^#{Rubyspec}/core/process/wait_spec.rb",
           "^#{Rubyspec}/core/file/ctime_spec.rb"
   ]
 
