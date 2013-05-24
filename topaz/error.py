@@ -1,4 +1,5 @@
 import os
+import errno
 
 
 class RubyError(Exception):
@@ -30,4 +31,18 @@ def error_for_oserror(space, exc):
         space.w_SystemCallError,
         os.strerror(exc.errno),
         [space.newint(exc.errno)]
+    )
+
+_errno_for_oserror_map = {
+    errno.ECHILD: "ECHILD",
+}
+
+def errno_for_oserror(callee, space, exc):
+    try:
+        name = _errno_for_oserror_map[exc.errno]
+    except KeyError:
+        raise NotImplementedError("no such errno: %s" % exc.errno)
+    return space.error(
+        space.find_const(space.find_const(callee, "Errno"), name),
+        os.strerror(exc.errno)
     )
