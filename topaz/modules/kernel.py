@@ -472,3 +472,11 @@ class Kernel(object):
         else:
             raise space.error(space.w_LocalJumpError, "no block given")
         return self
+
+    @moduledef.method("define_singleton_method", name="symbol")
+    @check_frozen()
+    def method_define_singleton_method(self, space, name, w_method=None, block=None):
+        args_w = [space.newsymbol(name)]
+        if w_method is not None:
+            args_w.append(w_method)
+        return space.send(space.getsingletonclass(self), "define_method", args_w, block)
