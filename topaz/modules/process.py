@@ -4,7 +4,7 @@ import os
 
 from topaz.module import ModuleDef
 from topaz.system import IS_WINDOWS
-from topaz.error import errno_for_oserror
+from topaz.error import error_for_oserror
 
 
 if IS_WINDOWS:
@@ -39,7 +39,7 @@ class Process(object):
         try:
             pid, status = os.waitpid(pid, 0)
         except OSError as e:
-            raise errno_for_oserror(self, space, e)
+            raise error_for_oserror(space, e, self)
         status = WEXITSTATUS(status)
         w_status = space.send(
             space.find_const(self, "Status"),

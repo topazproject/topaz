@@ -26,23 +26,21 @@ def print_traceback(space, w_exc, top_filepath=None):
         os.write(2, line)
 
 
-def error_for_oserror(space, exc):
-    return space.error(
-        space.w_SystemCallError,
-        os.strerror(exc.errno),
-        [space.newint(exc.errno)]
-    )
-
 _errno_for_oserror_map = {
     errno.ECHILD: "ECHILD",
 }
 
-def errno_for_oserror(callee, space, exc):
-    try:
-        name = _errno_for_oserror_map[exc.errno]
-    except KeyError:
-        raise NotImplementedError("no such errno: %s" % exc.errno)
+def error_for_oserror(space, exc, callee=None):
+    if callee:
+        try:
+            name = _errno_for_oserror_map[exc.errno]
+            type = space.find_const(space.find_const(callee, "Errno"), name)
+        except KeyError:
+            type = space.w_SystemCallError
+    else:
+        type = space.w_SystemCallError
     return space.error(
-        space.find_const(space.find_const(callee, "Errno"), name),
-        os.strerror(exc.errno)
+        type,
+        os.strerror(exc.errno),
+        [space.newint(exc.errno)]
     )
