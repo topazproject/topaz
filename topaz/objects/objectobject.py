@@ -3,6 +3,7 @@ import copy
 from rpython.rlib import jit
 from rpython.rlib.objectmodel import compute_unique_id
 
+from topaz.coerce import Coerce
 from topaz.mapdict import MapTransitionCache
 from topaz.module import ClassDef
 from topaz.scope import StaticScope
@@ -85,18 +86,36 @@ class W_BaseObject(W_Root):
     def method_send(self, space, method, args_w, block):
         return space.send(self, method, args_w, block)
 
-    @classdef.method("instance_eval", string="str", filename="str")
-    def method_instance_eval(self, space, string=None, filename=None, w_lineno=None, block=None):
-        if string is not None:
-            if filename is None:
+    @classdef.method("instance_eval")
+    def method_instance_eval(self, space, w_string=None, w_filename=None, w_lineno=None, block=None):
+        if space.is_kind_of(self, space.w_symbol) or space.is_kind_of(self, space.w_numeric):
+            self_klass = None
+        else:
+            self_klass = space.getsingletonclass(self)
+        if block is not None:
+            if w_string is not None or w_filename is not None or w_lineno is not None:
+                raise space.error(space.w_ArgumentError, "can't use both block and string in instance_eval")
+            return space.invoke_block(
+                block.copy(
+                    space,
+                    w_self=self,
+                    lexical_scope=StaticScope(self_klass, block.lexical_scope)
+                ),
+                [self]
+            )
+        elif w_string is not None:
+            string = Coerce.str(space, w_string)
+            if w_filename is None:
                 filename = "instance_eval"
+            else:
+                filename = Coerce.str(space, w_filename)
             if w_lineno is not None:
                 lineno = space.int_w(w_lineno)
             else:
                 lineno = 1
-            return space.execute(string, self, StaticScope(space.getclass(self), None), filename, lineno)
+            return space.execute(string, self, StaticScope(self_klass, None), filename, lineno)
         else:
-            return space.invoke_block(block.copy(space, w_self=self), [])
+            raise space.error(space.w_ArgumentError, "block not supplied")
 
     @classdef.method("singleton_method_removed")
     def method_singleton_method_removed(self, space, w_name):
