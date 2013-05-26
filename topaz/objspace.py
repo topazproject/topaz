@@ -95,6 +95,7 @@ class ObjectSpace(object):
         self.w_true = W_TrueObject(self)
         self.w_false = W_FalseObject(self)
         self.w_nil = W_NilObject(self)
+        self.w_undefined = W_NilObject(self)
 
         # Force the setup of a few key classes, we create a fake "Class" class
         # for the initial bootstrap.

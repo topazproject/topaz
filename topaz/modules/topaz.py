@@ -14,6 +14,10 @@ class Topaz(object):
     def setup_module(space, w_mod):
         space.set_const(w_mod, "FIXNUM_MAX", space.newint(sys.maxint))
 
+    @moduledef.function("nil")
+    def method_intmask(self, space):
+        return space.w_undefined
+
     @moduledef.function("intmask")
     def method_intmask(self, space, w_int):
         if space.is_kind_of(w_int, space.w_fixnum):

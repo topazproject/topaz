@@ -470,4 +470,28 @@ module Enumerable
       yielder.yield [previous, accumulate] unless accumulate.empty?
     end
   end
+
+  def slice_before(arg = Topaz.nil, &block)
+    if block
+      has_init = (arg != Topaz.nil)
+    else
+      raise ArgumentError.new("wrong number of arguments (0 for 1)") if arg == Topaz.nil
+      block = Proc.new{ |elem| arg === elem }
+    end
+    ::Enumerator.new do |yielder|
+      init = arg.dup if has_init
+      accumulator = nil
+      each do |elem|
+        start_new = has_init ? block.yield(elem, init) : block.yield(elem)
+        if start_new
+          yielder.yield accumulator if accumulator
+          accumulator = [elem]
+        else
+          accumulator ||= []
+          accumulator << elem
+        end
+      end
+      yielder.yield accumulator if accumulator
+    end
+  end
 end
