@@ -471,11 +471,18 @@ module Enumerable
     end
   end
 
-  def slice_before(arg = Topaz.nil, &block)
+  def slice_before(*args, &block)
+    arg = nil
     if block
-      has_init = (arg != Topaz.nil)
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 0..1)") if args.size > 1
+      if args.size == 1
+        has_init = true
+        arg = args[0]
+      end
     else
-      raise ArgumentError.new("wrong number of arguments (0 for 1)") if arg == Topaz.nil
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 1)") if args.size > 1
+      raise ArgumentError.new("wrong number of arguments (0 for 1)") if args.empty?
+      arg = args[0]
       block = Proc.new{ |elem| arg === elem }
     end
     ::Enumerator.new do |yielder|
