@@ -39,7 +39,7 @@ class Process(object):
         try:
             pid, status = os.waitpid(pid, 0)
         except OSError as e:
-            raise error_for_oserror(space, e, self)
+            raise error_for_oserror(space, e)
         status = WEXITSTATUS(status)
         w_status = space.send(
             space.find_const(self, "Status"),
