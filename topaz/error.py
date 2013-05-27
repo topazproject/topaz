@@ -1,4 +1,5 @@
 import os
+import errno
 
 
 class RubyError(Exception):
@@ -25,9 +26,22 @@ def print_traceback(space, w_exc, top_filepath=None):
         os.write(2, line)
 
 
-def error_for_oserror(space, exc):
+_errno_for_oserror_map = {
+    errno.ECHILD: "ECHILD",
+}
+
+def error_for_oserror(space, exc, callee=None):
+    if callee:
+        try:
+            name = _errno_for_oserror_map[exc.errno]
+        except KeyError:
+            type = space.w_SystemCallError
+        else:
+            type = space.find_const(space.find_const(callee, "Errno"), name)
+    else:
+        type = space.w_SystemCallError
     return space.error(
-        space.w_SystemCallError,
+        type,
         os.strerror(exc.errno),
         [space.newint(exc.errno)]
     )
