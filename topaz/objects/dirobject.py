@@ -36,7 +36,7 @@ class W_DirObject(W_Object):
         self.open = True
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_DirObject(space)
 
     @classdef.singleton_method("pwd")

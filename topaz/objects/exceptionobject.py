@@ -4,7 +4,7 @@ from topaz.objects.objectobject import W_Object
 
 def new_exception_allocate(classdef):
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return classdef.cls(space, self)
 
 

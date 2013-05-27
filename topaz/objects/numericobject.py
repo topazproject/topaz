@@ -38,7 +38,7 @@ class W_NumericObject(W_Object):
             return None
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_NumericObject(space, self)
 
     @classdef.method("<=>")
