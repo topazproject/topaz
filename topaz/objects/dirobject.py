@@ -49,12 +49,18 @@ class W_DirObject(W_Object):
         if path is None:
             path = os.environ["HOME"]
         current_dir = os.getcwd()
-        os.chdir(path)
+        try:
+            os.chdir(path)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         if block is not None:
             try:
                 return space.invoke_block(block, [space.newstr_fromstr(path)])
             finally:
-                os.chdir(current_dir)
+                try:
+                    os.chdir(current_dir)
+                except OSError as e:
+                    raise error_for_oserror(space, e)
         else:
             return space.newint(0)
 

@@ -21,7 +21,7 @@ class Test(BaseTest):
         self.create_build = create_build
 
     def install_deps(self):
-        run("pip install --use-mirrors {}".format(" ".join(self.deps)))
+        run("pip install {}".format(" ".join(self.deps)))
 
     def download_rpython(self):
         run("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2 || wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")

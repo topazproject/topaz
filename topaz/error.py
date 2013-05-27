@@ -27,21 +27,20 @@ def print_traceback(space, w_exc, top_filepath=None):
 
 
 _errno_for_oserror_map = {
+    errno.ENOENT: "ENOENT",
     errno.ECHILD: "ECHILD",
 }
 
-def error_for_oserror(space, exc, callee=None):
-    if callee:
-        try:
-            name = _errno_for_oserror_map[exc.errno]
-        except KeyError:
-            type = space.w_SystemCallError
-        else:
-            type = space.find_const(space.find_const(callee, "Errno"), name)
+
+def error_for_oserror(space, exc):
+    try:
+        name = _errno_for_oserror_map[exc.errno]
+    except KeyError:
+        w_type = space.w_SystemCallError
     else:
-        type = space.w_SystemCallError
+        w_type = space.find_const(space.find_const(space.w_object, "Errno"), name)
     return space.error(
-        type,
+        w_type,
         os.strerror(exc.errno),
         [space.newint(exc.errno)]
     )
