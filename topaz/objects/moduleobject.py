@@ -18,7 +18,7 @@ class AttributeReader(W_FunctionObject):
         self.varname = varname
 
     def call(self, space, w_obj, args_w, block):
-        return space.find_instance_var(w_obj, self.varname)
+        return space.find_instance_var(w_obj, self.varname) or space.w_nil
 
 
 class AttributeWriter(W_FunctionObject):
@@ -261,7 +261,7 @@ class W_ModuleObject(W_RootObject):
         return self.instance_variables.set(space, name, w_value)
 
     def find_instance_var(self, space, name):
-        return self.instance_variables.get(space, name) or space.w_nil
+        return self.instance_variables.get(space, name)
 
     def copy_instance_vars(self, space, w_other):
         assert isinstance(w_other, W_ModuleObject)
