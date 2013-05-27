@@ -1,5 +1,7 @@
 from tests.base import BaseTopazTest
 from topaz.modules.ffi import FFI
+from topaz.modules.ffi.type import W_TypeObject
+from rpython.rlib import clibffi
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
@@ -48,6 +50,11 @@ class TestFFI(BaseTopazTest):
         assert isinstance(w_native_type, W_ModuleObject)
         for pt in TestFFI.primitive_types:
             space.execute('FFI::NativeType::%s' %pt)
+
+    def test_Type_ll(self, space):
+        w_type = W_TypeObject(space, 'TESTVOID', clibffi.ffi_type_void)
+        assert w_type.native_type == 'TESTVOID'
+        assert w_type.ffi_type is clibffi.ffi_type_void
 
     def test_Type(self, space):
         w_type = space.execute('FFI::Type')
