@@ -31,6 +31,10 @@ class W_DynamicLibraryObject(W_Object):
         # TODO: return an instance of the class w_sym instead of just w_sym
         return w_sym.method_new(space, [], None)
 
+    @classdef.method('find_function', name='symbol')
+    def method_find_function(self, space, name):
+        return self.method_find_variable(space, name)
+
 class W_DL_SymbolObject(W_Object):
     classdef = ClassDef('Symbol', W_Object.classdef)
 
