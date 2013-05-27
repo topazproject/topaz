@@ -154,12 +154,12 @@ class W_RegexpObject(W_Object):
         return w_match
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_RegexpObject(space, None, 0)
 
     @classdef.singleton_method("compile")
     def method_compile(self, space, args_w):
-        w_obj = space.send(self, "allocate", args_w)
+        w_obj = space.send(self, "allocate")
         return space.send(w_obj, "initialize", args_w)
 
     @classdef.method("initialize", flags="int")

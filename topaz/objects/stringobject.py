@@ -423,7 +423,7 @@ class W_StringObject(W_Object):
         return new_string if change_made else None
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space, w_s=None):
+    def singleton_method_allocate(self, space):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase("")
         return W_StringObject(space, storage, strategy, self)
