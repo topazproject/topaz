@@ -29,6 +29,9 @@ def print_traceback(space, w_exc, top_filepath=None):
 _errno_for_oserror_map = {
     errno.ENOENT: "ENOENT",
     errno.ECHILD: "ECHILD",
+    errno.EACCES: "EACCES",
+    errno.ENOTDIR: "ENOTDIR",
+    errno.ENOTEMPTY: "ENOTEMPTY",
 }
 
 

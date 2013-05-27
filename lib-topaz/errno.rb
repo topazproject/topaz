@@ -4,4 +4,13 @@ module Errno
 
   class ECHILD < SystemCallError
   end
+
+  class EACCES < SystemCallError
+  end
+
+  class ENOTDIR < SystemCallError
+  end
+
+  class ENOTEMPTY < SystemCallError
+  end
 end
