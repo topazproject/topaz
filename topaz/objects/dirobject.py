@@ -57,7 +57,10 @@ class W_DirObject(W_Object):
             try:
                 return space.invoke_block(block, [space.newstr_fromstr(path)])
             finally:
-                os.chdir(current_dir)
+                try:
+                    os.chdir(current_dir)
+                except OSError as e:
+                    raise error_for_oserror(space, e)
         else:
             return space.newint(0)
 
