@@ -12,12 +12,25 @@ class TestFFI(BaseTopazTest):
                         'LONG', 'ULONG', 'FLOAT32', 'FLOAT64',
                         'VOID', 'LONGDOUBLE', 'POINTER', 'BOOL',
                         'VARARGS']
-    alias_types = ['SCHAR', 'CHAR', 'UCHAR',
-                   'SHORT', 'SSHORT', 'USHORT',
-                   'INT', 'SINT', 'UINT',
-                   'LONG_LONG', 'SLONG', 'SLONG_LONG', 'ULONG_LONG',
-                   'FLOAT', 'DOUBLE', 'STRING',
-                   'BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT']
+    alias_types = {'SCHAR': 'INT8',
+                   'CHAR' : 'INT8',
+                   'UCHAR' : 'UINT8',
+                   'SHORT' : 'INT16',
+                   'SSHORT' : 'INT16',
+                   'USHORT' : 'UINT16',
+                   'INT' : 'INT32',
+                   'SINT' : 'INT32',
+                   'UINT' : 'UINT32',
+                   'LONG_LONG' : 'INT64',
+                   'SLONG' : 'LONG',
+                   'SLONG_LONG' : 'INT64',
+                   'ULONG_LONG' : 'UINT64',
+                   'FLOAT' : 'FLOAT32',
+                   'DOUBLE' : 'FLOAT64',
+                   'STRING' : 'POINTER',
+                   'BUFFER_IN' : 'POINTER',
+                   'BUFFER_OUT' : 'POINTER',
+                   'BUFFER_INOUT' : 'POINTER'}
 
     def test_basic(self, space):
         w_type_defs = space.execute('FFI::TypeDefs')
@@ -40,9 +53,13 @@ class TestFFI(BaseTopazTest):
         w_type = space.execute('FFI::Type')
         assert isinstance(w_type, W_ClassObject)
         for pt in TestFFI.primitive_types:
-            space.execute('FFI::Type::%s' %pt)
+            w_ac = space.execute('FFI::Type::%s' %pt)
+            w_ex = space.execute('FFI::NativeType::%s' % pt)
+            assert self.unwrap(space, w_ac) == self.unwrap(space, w_ex)
         for at in TestFFI.alias_types:
-            space.execute('FFI::Type::%s' %at)
+            w_ac = space.execute('FFI::Type::%s' %at)
+            w_ex = space.execute('FFI::Type::%s' %TestFFI.alias_types[at])
+            assert self.unwrap(space, w_ac) == self.unwrap(space, w_ex)
         w_mapped = space.execute('FFI::Type::Mapped')
         assert isinstance(w_mapped, W_ClassObject)
         w_res = space.execute('FFI::Type::Mapped.respond_to? :method_missing')
