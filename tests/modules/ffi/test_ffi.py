@@ -10,13 +10,14 @@ class TestFFI(BaseTopazTest):
     primitive_types =  ['INT8', 'UINT8', 'INT16', 'UINT16',
                         'INT32', 'UINT32', 'INT64', 'UINT64',
                         'LONG', 'ULONG', 'FLOAT32', 'FLOAT64',
-                        'VOID', 'LONGDOUBLE', 'POINTER', 'BOOL']
+                        'VOID', 'LONGDOUBLE', 'POINTER', 'BOOL',
+                        'VARARGS']
     alias_types = ['SCHAR', 'CHAR', 'UCHAR',
                    'SHORT', 'SSHORT', 'USHORT',
                    'INT', 'SINT', 'UINT',
                    'LONG_LONG', 'SLONG', 'SLONG_LONG', 'ULONG_LONG',
                    'FLOAT', 'DOUBLE', 'STRING',
-                   'BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT', 'VARARGS']
+                   'BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT']
 
     def test_basic(self, space):
         w_type_defs = space.execute('FFI::TypeDefs')
@@ -28,6 +29,12 @@ class TestFFI(BaseTopazTest):
         # just check, whether the constants even exist for now
         for pt in TestFFI.primitive_types:
             space.execute('FFI::TYPE_%s' % pt)
+
+    def test_NativeType(self, space):
+        w_native_type = space.execute('FFI::NativeType')
+        assert isinstance(w_native_type, W_ModuleObject)
+        for pt in TestFFI.primitive_types:
+            space.execute('FFI::NativeType::%s' %pt)
 
     def test_Type(self, space):
         w_type = space.execute('FFI::Type')

@@ -28,7 +28,8 @@ class FFI(object):
              'FLOAT64': clibffi.ffi_type_double,
              'LONGDOUBLE': clibffi.ffi_type_longdouble,
              'POINTER': clibffi.ffi_type_pointer,
-             'BOOL': clibffi.ffi_type_uchar}
+             'BOOL': clibffi.ffi_type_uchar,
+             'VARARGS': clibffi.ffi_type_void}
     aliases = {'SCHAR': 'INT8', 'CHAR': 'INT8', 'UCHAR': 'UINT8',
                'SHORT': 'INT16', 'SSHORT': 'INT16',
                'USHORT': 'UINT16', 'INT': 'INT32', 'SINT': 'INT32',
@@ -37,7 +38,7 @@ class FFI(object):
                'ULONG_LONG': 'UINT64', 'FLOAT': 'FLOAT32',
                'DOUBLE': 'FLOAT64', 'STRING': 'POINTER',
                'BUFFER_IN': 'POINTER', 'BUFFER_OUT': 'POINTER',
-               'BUFFER_INOUT': 'POINTER', 'VARARGS': 'VOID'}
+               'BUFFER_INOUT': 'POINTER'}
     sizes = {'INT8': rffi.sizeof(rffi.CHAR),
              'INT16': rffi.sizeof(rffi.SHORT),
              'INT32': rffi.sizeof(rffi.INT),
@@ -54,6 +55,12 @@ class FFI(object):
         space.set_const(w_mod, 'Types', space.newhash())
         for typename in FFI.types:
             space.set_const(w_mod, 'TYPE_' + typename, space.w_nil)
+
+        # setup NativeType
+        w_native_type = space.newmodule('NativeType')
+        for typename in FFI.types:
+            space.set_const(w_native_type, typename, space.w_nil)
+        space.set_const(w_mod, 'NativeType', w_native_type)
 
         # setup Type
         w_type = space.newclass('Type', None)
