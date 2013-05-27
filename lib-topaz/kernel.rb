@@ -20,10 +20,10 @@ module Kernel
   end
 
   def Array(arg)
-    if arg.respond_to? :to_ary
-      arg.to_ary
-    elsif arg.respond_to? :to_a
-      arg.to_a
+    if ary = Topaz.try_convert_type(arg, Array, :to_ary)
+      ary
+    elsif arg.respond_to?(:to_a) && ary = Topaz.try_convert_type(arg, Array, :to_a)
+      ary
     else
       [arg]
     end
