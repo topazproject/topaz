@@ -34,9 +34,10 @@ def error_for_oserror(space, exc, callee=None):
     if callee:
         try:
             name = _errno_for_oserror_map[exc.errno]
-            type = space.find_const(space.find_const(callee, "Errno"), name)
         except KeyError:
             type = space.w_SystemCallError
+        else:
+            type = space.find_const(space.find_const(callee, "Errno"), name)
     else:
         type = space.w_SystemCallError
     return space.error(
