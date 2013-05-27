@@ -18,7 +18,7 @@ class TestDir(BaseTopazTest):
         f = d.join("content")
         f.write("hello")
         space.execute("Dir.new('%s')" % d)
-        with self.raises(space, "SystemCallError"):
+        with self.raises(space, "Errno::ENOENT"):
             space.execute("Dir.new('this does not exist')")
         with self.raises(space, "SystemCallError"):
             space.execute("Dir.new('%s')" % f)
