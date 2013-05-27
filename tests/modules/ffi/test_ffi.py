@@ -52,6 +52,14 @@ class TestFFI(BaseTopazTest):
     def test_Type(self, space):
         w_type = space.execute('FFI::Type')
         assert isinstance(w_type, W_ClassObject)
+
+    def test_Builtin(self, space):
+        w_builtin = space.execute('FFI::Type::Builtin')
+        assert isinstance(w_builtin, W_ClassObject)
+        w_type = space.execute('FFI::Type')
+        assert w_builtin.superclass is w_type
+
+    def test_Builtin_instances(self, space):
         for pt in TestFFI.primitive_types:
             w_ac = space.execute('FFI::Type::%s' %pt)
             w_ex = space.execute('FFI::NativeType::%s' % pt)

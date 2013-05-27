@@ -64,6 +64,7 @@ class FFI(object):
 
         # setup Type
         w_type = space.newclass('Type', None)
+        w_builtin = space.newclass('Builtin', w_type)
         for typename in FFI.types:
             # using space.w_nil for now, should be something with
             # FFI.types[typename] later.
@@ -72,6 +73,7 @@ class FFI(object):
             ffitype = space.find_const(w_type, FFI.aliases[aka])
             space.set_const(w_type, aka, ffitype)
         space.set_const(w_type, 'Mapped', space.getclassfor(W_MappedObject))
+        space.set_const(w_type, 'Builtin', w_builtin)
         space.set_const(w_mod, 'Type', w_type)
 
         space.set_const(w_mod, 'DataConverter',
