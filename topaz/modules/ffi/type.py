@@ -38,9 +38,10 @@ class W_TypeObject(W_Object):
     def setup_class(cls, space, w_cls):
         w_builtin = space.newclass('Builtin', w_cls)
         for typename in W_TypeObject.basics:
-            # using space.w_nil for now, should be something with
-            # W_TypeObject.basics[typename] later.
-            space.set_const(w_cls, typename, space.w_nil)
+            w_new_type = W_TypeObject(space, typename,
+                                      W_TypeObject.basics[typename])
+            w_new_builtin_type = W_BuiltinObject(space, typename, w_new_type)
+            space.set_const(w_cls, typename, w_new_builtin_type)
         for aka in W_TypeObject.aliases:
             ffitype = space.find_const(w_cls, W_TypeObject.aliases[aka])
             space.set_const(w_cls, aka, ffitype)
@@ -52,13 +53,33 @@ class W_TypeObject(W_Object):
         self.native_type = native_type
         self.ffi_type = ffi_type
 
+    def __deepcopy__(self, memo):
+        obj = super(W_TypeObject, self).__deepcopy__(memo)
+        obj.native_type = self.native_type
+        obj.ffi_type = self.ffi_type
+        return obj
+
+    def __eq__(self, other):
+        return (isinstance(other, W_TypeObject) and
+                self.native_type == other.native_type and
+                self.ffi_type == other.ffi_type)
+
 class W_BuiltinObject(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
 
-    def __init__(self, space, name, w_type, klass=None):
-        self.name = name
-        self.native_type = w_type.native_type
-        self.ffi_type = w_type.ffi_type
+    def __init__(self, space, typename, w_type, klass=None):
+        W_TypeObject.__init__(self, space, w_type.native_type, w_type.ffi_type)
+        self.typename = typename
+
+    def __deepcopy__(self, memo):
+        obj = super(W_BuiltinObject, self).__deepcopy__(memo)
+        obj.typename = self.typename
+        return obj
+
+    def __eq__(self, other):
+        return (isinstance(other, W_BuiltinObject) and
+                super(W_BuiltinObject, self).__eq__(other) and
+                self.typename == other.typename)
 
 class W_MappedObject(W_Object):
     classdef = ClassDef('MappedObject', W_Object.classdef)

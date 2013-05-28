@@ -45,7 +45,7 @@ class TestType(BaseTopazTest):
     def test_Builtin_ll(self, space):
         w_testint = W_TypeObject(space, 'TESTBOOL', clibffi.ffi_type_uchar)
         w_builtin = W_BuiltinObject(space, 'BUILTIN_TESTBOOL', w_testint)
-        assert w_builtin.name == 'BUILTIN_TESTBOOL'
+        assert w_builtin.typename == 'BUILTIN_TESTBOOL'
         assert w_builtin.native_type == w_testint.native_type
         assert w_builtin.ffi_type == w_testint.ffi_type
 
@@ -61,13 +61,15 @@ class TestType(BaseTopazTest):
 
     def test_Builtin_instances(self, space):
         for pt in TestType.primitive_types:
-            w_ac = space.execute('FFI::Type::%s' %pt)
-            w_ex = space.execute('FFI::NativeType::%s' % pt)
-            assert self.unwrap(space, w_ac) == self.unwrap(space, w_ex)
+            w_t1 = space.execute('FFI::TYPE_%s' % pt)
+            w_t2 = space.execute('FFI::Type::%s' % pt)
+            w_t3 = space.execute('FFI::NativeType::%s' % pt)
+            assert w_t1 == w_t2
+            assert w_t2 == w_t3
         for at in TestType.alias_types:
-            w_ac = space.execute('FFI::Type::%s' %at)
-            w_ex = space.execute('FFI::Type::%s' %TestType.alias_types[at])
-            assert self.unwrap(space, w_ac) == self.unwrap(space, w_ex)
+            w_ac = space.execute('FFI::Type::%s' % at)
+            w_ex = space.execute('FFI::Type::%s' % TestType.alias_types[at])
+            assert w_ac == w_ex
         w_mapped = space.execute('FFI::Type::Mapped')
         assert isinstance(w_mapped, W_ClassObject)
         w_res = space.execute('FFI::Type::Mapped.respond_to? :method_missing')

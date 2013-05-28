@@ -1,8 +1,9 @@
 from tests.base import BaseTopazTest
-from tests.modules.ffi.test_type import TestType
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
+from topaz.modules.ffi.type import W_TypeObject
+
 from rpython.rtyper.lltypesystem import rffi
 
 class TestFFI(BaseTopazTest):
@@ -14,9 +15,11 @@ class TestFFI(BaseTopazTest):
         assert isinstance(w_types, W_HashObject)
 
     def test_FFI_type_constants(self, space):
-        # just check, whether the constants even exist for now
-        for pt in TestType.primitive_types:
-            space.execute('FFI::TYPE_%s' % pt)
+        for bt in W_TypeObject.basics:
+            w_res = space.execute('FFI::TYPE_%s' % bt)
+            assert w_res.typename == bt
+            assert w_res.native_type == bt
+            assert w_res.ffi_type == W_TypeObject.basics[bt]
 
     def test_Platform(self, space):
         w_p = space.execute('FFI::Platform')
