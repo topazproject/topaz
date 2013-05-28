@@ -45,12 +45,20 @@ class W_TypeObject(W_Object):
             ffitype = space.find_const(w_cls, W_TypeObject.aliases[aka])
             space.set_const(w_cls, aka, ffitype)
         space.set_const(w_cls, 'Mapped', space.getclassfor(W_MappedObject))
-        space.set_const(w_cls, 'Builtin', w_builtin)
+        space.set_const(w_cls, 'Builtin', space.getclassfor(W_BuiltinObject))
 
     def __init__(self, space, native_type, ffi_type, klass=None):
         W_Object.__init__(self, space, klass)
         self.native_type = native_type
         self.ffi_type = ffi_type
+
+class W_BuiltinObject(W_TypeObject):
+    classdef = ClassDef('Builtin', W_TypeObject.classdef)
+
+    def __init__(self, space, name, w_type, klass=None):
+        self.name = name
+        self.native_type = w_type.native_type
+        self.ffi_type = w_type.ffi_type
 
 class W_MappedObject(W_Object):
     classdef = ClassDef('MappedObject', W_Object.classdef)

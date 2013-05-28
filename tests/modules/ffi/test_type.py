@@ -1,5 +1,5 @@
 from tests.base import BaseTopazTest
-from topaz.modules.ffi.type import W_TypeObject
+from topaz.modules.ffi.type import W_TypeObject, W_BuiltinObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
 from rpython.rlib import clibffi
@@ -41,6 +41,13 @@ class TestType(BaseTopazTest):
         w_type = W_TypeObject(space, 'TESTVOID', clibffi.ffi_type_void)
         assert w_type.native_type == 'TESTVOID'
         assert w_type.ffi_type is clibffi.ffi_type_void
+
+    def test_Builtin_ll(self, space):
+        w_testint = W_TypeObject(space, 'TESTBOOL', clibffi.ffi_type_uchar)
+        w_builtin = W_BuiltinObject(space, 'BUILTIN_TESTBOOL', w_testint)
+        assert w_builtin.name == 'BUILTIN_TESTBOOL'
+        assert w_builtin.native_type == w_testint.native_type
+        assert w_builtin.ffi_type == w_testint.ffi_type
 
     def test_Type(self, space):
         w_type = space.execute('FFI::Type')
