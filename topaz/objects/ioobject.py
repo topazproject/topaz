@@ -131,7 +131,10 @@ class W_IOObject(W_Object):
     def method_write(self, space, w_str):
         self.ensure_not_closed(space)
         string = space.str_w(space.send(w_str, "to_s"))
-        bytes_written = os.write(self.fd, string)
+        try:
+            bytes_written = os.write(self.fd, string)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         return space.newint(bytes_written)
 
     @classdef.method("flush")
@@ -185,7 +188,10 @@ class W_IOObject(W_Object):
     @classdef.method("getc")
     def method_getc(self, space):
         self.ensure_not_closed(space)
-        c = os.read(self.fd, 1)
+        try:
+            c = os.read(self.fd, 1)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         if not c:
             return space.w_nil
         return space.newstr_fromstr(c)
