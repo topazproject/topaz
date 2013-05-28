@@ -11,25 +11,27 @@ class TestType(BaseTopazTest):
                         'LONG', 'ULONG', 'FLOAT32', 'FLOAT64',
                         'VOID', 'LONGDOUBLE', 'POINTER', 'BOOL',
                         'VARARGS']
-    alias_types = {'SCHAR': 'INT8',
-                   'CHAR' : 'INT8',
-                   'UCHAR' : 'UINT8',
-                   'SHORT' : 'INT16',
-                   'SSHORT' : 'INT16',
-                   'USHORT' : 'UINT16',
-                   'INT' : 'INT32',
-                   'SINT' : 'INT32',
-                   'UINT' : 'UINT32',
-                   'LONG_LONG' : 'INT64',
-                   'SLONG' : 'LONG',
-                   'SLONG_LONG' : 'INT64',
-                   'ULONG_LONG' : 'UINT64',
-                   'FLOAT' : 'FLOAT32',
-                   'DOUBLE' : 'FLOAT64',
-                   'STRING' : 'POINTER',
-                   'BUFFER_IN' : 'POINTER',
-                   'BUFFER_OUT' : 'POINTER',
-                   'BUFFER_INOUT' : 'POINTER'}
+
+    def test_aliases(self, space):
+        assert W_TypeObject.aliases['SCHAR'] == 'INT8'
+        assert W_TypeObject.aliases['CHAR'] == 'INT8'
+        assert W_TypeObject.aliases['UCHAR'] == 'UINT8'
+        assert W_TypeObject.aliases['SHORT'] == 'INT16'
+        assert W_TypeObject.aliases['SSHORT'] == 'INT16'
+        assert W_TypeObject.aliases['USHORT'] == 'UINT16'
+        assert W_TypeObject.aliases['INT'] == 'INT32'
+        assert W_TypeObject.aliases['SINT'] == 'INT32'
+        assert W_TypeObject.aliases['UINT'] == 'UINT32'
+        assert W_TypeObject.aliases['LONG_LONG'] == 'INT64'
+        assert W_TypeObject.aliases['SLONG'] == 'LONG'
+        assert W_TypeObject.aliases['SLONG_LONG'] == 'INT64'
+        assert W_TypeObject.aliases['ULONG_LONG'] == 'UINT64'
+        assert W_TypeObject.aliases['FLOAT'] == 'FLOAT32'
+        assert W_TypeObject.aliases['DOUBLE'] == 'FLOAT64'
+        assert W_TypeObject.aliases['STRING'] == 'POINTER'
+        assert W_TypeObject.aliases['BUFFER_IN'] == 'POINTER'
+        assert W_TypeObject.aliases['BUFFER_OUT'] == 'POINTER'
+        assert W_TypeObject.aliases['BUFFER_INOUT'] == 'POINTER'
 
     def test_NativeType(self, space):
         w_native_type = space.execute('FFI::NativeType')
@@ -66,9 +68,9 @@ class TestType(BaseTopazTest):
             w_t3 = space.execute('FFI::NativeType::%s' % pt)
             assert w_t1 == w_t2
             assert w_t2 == w_t3
-        for at in TestType.alias_types:
+        for at in W_TypeObject.aliases:
             w_ac = space.execute('FFI::Type::%s' % at)
-            w_ex = space.execute('FFI::Type::%s' % TestType.alias_types[at])
+            w_ex = space.execute('FFI::Type::%s' % W_TypeObject.aliases[at])
             assert w_ac == w_ex
         w_mapped = space.execute('FFI::Type::Mapped')
         assert isinstance(w_mapped, W_ClassObject)
