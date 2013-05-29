@@ -27,10 +27,8 @@ class W_DynamicLibraryObject(W_Object):
     @classdef.singleton_method('new', flags='int')
     @classdef.singleton_method('open', flags='int')
     def singleton_method_new(self, space, w_name, flags=0):
-        if w_name == space.w_nil:
-            name = None
-        else:
-            name = Coerce.path(space, w_name)
+        name = (Coerce.path(space, w_name) if w_name is not space.w_nil
+                else None)
         lib = W_DynamicLibraryObject(space, name, flags)
         return lib
 
