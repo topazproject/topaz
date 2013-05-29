@@ -22,7 +22,13 @@ class W_DynamicLibraryObject(W_Object):
 
     def __init__(self, space, name, flags, klass=None):
         W_Object.__init__(self, space, klass)
-        self.handle = clibffi.dlopen(name, flags)
+        namestr = '[current process]' if name is None else name
+        try:
+            self.handle = clibffi.dlopen(name, flags)
+        except clibffi.DLOpenError:
+            raise space.error(space.w_LoadError,
+                              "Could not open library %s" % namestr)
+        self.set_instance_var(space, '@name', space.newsymbol(namestr))
 
     @classdef.singleton_method('new', flags='int')
     @classdef.singleton_method('open', flags='int')

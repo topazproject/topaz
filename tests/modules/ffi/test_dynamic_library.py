@@ -14,15 +14,25 @@ class TestDynamicLibrary(BaseTopazTest):
         w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 1)")
         assert isinstance(w_res, W_DynamicLibraryObject)
         assert w_res.handle == clibffi.dlopen('libm.so', 1)
+        w_name = space.find_instance_var(w_res, '@name')
+        assert self.unwrap(space, w_name) == 'libm.so'
         w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 0)")
         assert w_res.handle == clibffi.dlopen('libm.so', 0)
-        w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)") #didn't crash
+        w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)")
+        assert w_res.handle == clibffi.dlopen(None, 2)
+        w_name = space.find_instance_var(w_res, '@name')
+        assert self.unwrap(space, w_name) == '[current process]'
         with self.raises(space, "TypeError", "can't convert Float into String"):
             space.execute("FFI::DynamicLibrary.open(3.142, 1)")
         # The next error message is different from the one in ruby 1.9.3.
         # But the meaning is the same.
         with self.raises(space, "TypeError", "can't convert String into Integer"):
             space.execute("FFI::DynamicLibrary.open('something', 'invalid flag')")
+
+    def test_open_error(self, space):
+        with self.raises(space, "LoadError",
+                         "Could not open library wrong_name.so"):
+            space.execute("FFI::DynamicLibrary.open('wrong_name.so')")
 
     def test_new_same_as_open(self, space):
         w_lib1 = space.execute("FFI::DynamicLibrary.new('libm.so')")
