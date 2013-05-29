@@ -13,5 +13,9 @@ class TestFunction(BaseTopazTest):
         """) # didn't crash
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
             space.execute("FFI::Function.new(1, [], {})")
+        with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
+            space.execute("FFI::Function.new(:void, [2], {})")
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
             space.execute("FFI::Function.new(:null, [], {})")
+        with self.raises(space, "TypeError", "can't convert Symbol into Type"):
+            space.execute("FFI::Function.new(:int32, [:array], {})")
