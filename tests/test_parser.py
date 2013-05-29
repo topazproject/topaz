@@ -848,6 +848,15 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
         ]))
 
+        r = space.parse("""
+        def
+        f
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
+        ]))
+
         assert space.parse("def []; end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "[]", [], None, None, ast.Nil()))
         ]))
@@ -1240,6 +1249,14 @@ HERE
         end""")
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Class(ast.Scope(2), "X", None, ast.Nil()))
+        ]))
+
+        r = space.parse("""
+        class
+        X
+        end""")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Class(ast.Scope(3), "X", None, ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -2381,6 +2398,16 @@ HERE
         r = space.parse("""
         0 ? (0) :
                  0
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(0),
+                ast.Block([ast.Statement(ast.ConstantInt(0))]),
+                ast.ConstantInt(0),
+            ))
+        ]))
+        r = space.parse("""
+        0 ?
+        (0) : 0
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0),
