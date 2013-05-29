@@ -11,8 +11,10 @@ class TestDynamicLibrary(BaseTopazTest):
             space.int_w(w_res) == consts[name]
 
     def test_open(self, space):
-        w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 0)")
+        w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 1)")
         assert isinstance(w_res, W_DynamicLibraryObject)
+        assert w_res.handle == clibffi.dlopen('libm.so', 1)
+        w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 0)")
         assert w_res.handle == clibffi.dlopen('libm.so', 0)
         w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)") #didn't crash
         with self.raises(space, "TypeError", "can't convert Float into String"):
@@ -21,6 +23,11 @@ class TestDynamicLibrary(BaseTopazTest):
         # But the meaning is the same.
         with self.raises(space, "TypeError", "can't convert String into Integer"):
             space.execute("FFI::DynamicLibrary.open('something', 'invalid flag')")
+
+    def test_new_same_as_open(self, space):
+        w_lib1 = space.execute("FFI::DynamicLibrary.new('libm.so')")
+        w_lib2 = space.execute("FFI::DynamicLibrary.open('libm.so')")
+        assert w_lib1.handle == w_lib2.handle
 
     def test_Symbol(self, space):
         w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol")
