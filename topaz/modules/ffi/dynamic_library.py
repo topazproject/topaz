@@ -2,8 +2,15 @@ from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.coerce import Coerce
 
+from rpython.rlib import clibffi
+
 class W_DynamicLibraryObject(W_Object):
     classdef = ClassDef('DynamicLibrary', W_Object.classdef)
+
+    def __deepcopy__(self, memo):
+        obj = super(W_TypeObject, self).__deepcopy__(memo)
+        obj.handle = self.handle
+        return obj
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -23,7 +30,9 @@ class W_DynamicLibraryObject(W_Object):
             name = None
         else:
             name = Coerce.path(space, w_name)
-        return W_DynamicLibraryObject(space)
+        ret = W_DynamicLibraryObject(space)
+        ret.handle = clibffi.dlopen(name, flags)
+        return ret
 
     @classdef.method('find_variable', name='symbol')
     def method_find_variable(self, space, name):

@@ -1,5 +1,6 @@
 from tests.base import BaseTopazTest
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
+from rpython.rlib import clibffi
 
 class TestDynamicLibrary(BaseTopazTest):
 
@@ -10,8 +11,9 @@ class TestDynamicLibrary(BaseTopazTest):
             space.int_w(w_res) == consts[name]
 
     def test_open(self, space):
-        w_res = space.execute("FFI::DynamicLibrary.open('something', 1)")
+        w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 0)")
         assert isinstance(w_res, W_DynamicLibraryObject)
+        assert w_res.handle == clibffi.dlopen('libm.so', 0)
         w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)") #didn't crash
         with self.raises(space, "TypeError", "can't convert Float into String"):
             space.execute("FFI::DynamicLibrary.open(3.142, 1)")
