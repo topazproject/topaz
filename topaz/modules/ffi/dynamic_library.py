@@ -54,7 +54,3 @@ class W_DL_SymbolObject(W_Object):
     @classdef.method('null?')
     def method_null_p(self, space):
         return space.newbool(True)
-
-    #@classdef.method('initialize')
-    #def method_initialize(self, space):
-    #    return W_DL_SymbolObject(space)
