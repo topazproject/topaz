@@ -20,19 +20,19 @@ class W_DynamicLibraryObject(W_Object):
         space.set_const(w_cls, "RTLD_LOCAL", space.newint(0))
         space.set_const(w_cls, 'Symbol', space.getclassfor(W_DL_SymbolObject))
 
-    @classdef.singleton_method('allocate')
-    def singleton_method_allocate(self, space, args_w):
-        return W_DynamicLibraryObject(space)
+    def __init__(self, space, name, flags, klass=None):
+        W_Object.__init__(self, space, klass)
+        self.handle = clibffi.dlopen(name, flags)
 
+    @classdef.singleton_method('new', flags='int')
     @classdef.singleton_method('open', flags='int')
-    def method_open(self, space, w_name, flags):
+    def singleton_method_new(self, space, w_name, flags=0):
         if w_name == space.w_nil:
             name = None
         else:
             name = Coerce.path(space, w_name)
-        ret = W_DynamicLibraryObject(space)
-        ret.handle = clibffi.dlopen(name, flags)
-        return ret
+        lib = W_DynamicLibraryObject(space, name, flags)
+        return lib
 
     @classdef.method('find_variable', name='symbol')
     def method_find_variable(self, space, name):
