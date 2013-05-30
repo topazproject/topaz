@@ -66,7 +66,7 @@ If you run ``homebrew`` on OS X, it's even easier::
     $ brew update && brew install ruby-build
     $ ruby-build topaz-dev /path/to/install/topaz
 
-You can also build ``topaz`` using ``ruby-build`` as a plugin to ``rbenv``::
+You can also install the latest nightly build of ``topaz`` using ``ruby-build`` as a plugin to ``rbenv``::
 
     $ brew update && brew install rbenv ruby-build
     $ rbenv install topaz-dev
