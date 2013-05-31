@@ -83,6 +83,11 @@ class W_TimeObject(W_Object):
         usec = int(math.floor(math.modf(self.epoch_seconds)[0] * 100000))
         return space.newint(usec)
 
+    @classdef.method("utc?")
+    @classdef.method("gmt?")
+    def method_utcp(self, space):
+        return space.newbool(self.offset == 0)
+
     @classdef.method("-")
     def method_sub(self, space, w_other):
         assert isinstance(w_other, W_TimeObject)
