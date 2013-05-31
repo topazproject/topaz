@@ -9,7 +9,7 @@ from topaz.objects.objectobject import W_Object
 class W_TimeObject(W_Object):
     classdef = ClassDef("Time", W_Object.classdef)
 
-    def __init__(self, space, klass, epoch_seconds = 0, microseconds = 0, tzoffset = 0):
+    def __init__(self, space, klass, epoch_seconds = 0, microseconds = 0, tzoffset = time.timezone):
         W_Object.__init__(self, space, klass)
         self.epoch_seconds = epoch_seconds
         self.microseconds = microseconds
