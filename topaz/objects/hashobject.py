@@ -62,6 +62,17 @@ class W_HashObject(W_Object):
         self.w_default = space.w_nil
         return w_proc
 
+    @classdef.method("compare_by_identity")
+    @check_frozen()
+    def method_set_default_proc(self, space):
+        self.compare_by_identity = True
+        self.contents.set_eq_func(space.equal_w)
+        return self
+
+    @classdef.method("compare_by_identity?")
+    def method_set_default_proc(self, space):
+        return space.newbool(hasattr(self, "compare_by_identity"))
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         try:

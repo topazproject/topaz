@@ -69,6 +69,9 @@ class OrderedDict(object):
     def clear(self):
         self.contents.clear()
 
+    def set_eq_func(self, new_eq_func):
+        self.eq_func = new_eq_func
+
 
 class DictKey(object):
     def __init__(self, d, key):
