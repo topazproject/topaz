@@ -30,9 +30,12 @@ class W_TimeObject(W_Object):
     @classmethod
     def num_exact(class_, space, w_obj):
         t = space.getclass(w_obj)
-        if t in [space.w_fixnum, space.w_bignum, space.w_float]:
+        if t.name == 'NilClass':
+            raise space.error(space.w_TypeError,
+                    "can't convert nil into an exact number")
+        elif t in [space.w_fixnum, space.w_bignum, space.w_float]:
             return w_obj
-        elif t in [space.w_string, space.w_nil]:
+        elif t in [space.w_string]:
             raise space.error(space.w_TypeError,
                     "can't convert %s into an exact number" % space.getclass(w_obj).name)
         else:
