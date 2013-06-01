@@ -66,7 +66,9 @@ class W_HashObject(W_Object):
     @check_frozen()
     def method_compare_by_identity(self, space):
         self.compare_by_identity = True
-        self.contents.set_eq_func(space.equal_w)
+        new_contents = OrderedDict(None, None)
+        new_contents.update(self.contents)
+        self.contents = new_contents
         return self
 
     @classdef.method("compare_by_identity?")
