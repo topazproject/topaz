@@ -64,13 +64,13 @@ class W_HashObject(W_Object):
 
     @classdef.method("compare_by_identity")
     @check_frozen()
-    def method_set_default_proc(self, space):
+    def method_compare_by_identity(self, space):
         self.compare_by_identity = True
         self.contents.set_eq_func(space.equal_w)
         return self
 
     @classdef.method("compare_by_identity?")
-    def method_set_default_proc(self, space):
+    def method_compare_by_identity_p(self, space):
         return space.newbool(hasattr(self, "compare_by_identity"))
 
     @classdef.method("[]")
