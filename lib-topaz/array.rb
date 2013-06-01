@@ -474,11 +474,21 @@ class Array
       right = size
     end
 
-    self.concat([nil] * (right - size)) if right > size
+    right_bound = (right > size) ? size : right
 
     i = left
-    while i < right
+    while i < right_bound
       self[i] = block ? yield(i) : obj
+      i += 1
+    end
+
+    if left > size
+      self.concat([nil] * (left - size))
+      i = size
+    end
+
+    while i < right
+      self << (block ? yield(i) : obj)
       i += 1
     end
 
