@@ -143,7 +143,9 @@ class Lexer(object):
             elif ch in "\r\n":
                 space_seen = newline_seen = True
                 self.newline(ch)
-                if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
+                if self.state not in [self.EXPR_BEG, self.EXPR_DOT,
+                                      self.EXPR_VALUE, self.EXPR_FNAME,
+                                      self.EXPR_CLASS]:
                     self.add("\n")
                     self.command_start = True
                     self.state = self.EXPR_BEG

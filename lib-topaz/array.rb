@@ -433,4 +433,22 @@ class Array
     Topaz::Array.repeated_permutation(self, r, &block)
     self
   end
+
+  def transpose
+    return [] if self.empty?
+
+    max = nil
+    lists = self.map do |ary|
+      ary = Topaz.convert_type(ary, Array, :to_ary)
+      max ||= ary.size
+      raise IndexError.new("element size differs (#{ary.size} should be #{max})") if ary.size != max
+      ary
+    end
+
+    out = []
+    max.times do |i|
+      out << lists.map { |l| l[i] }
+    end
+    out
+  end
 end

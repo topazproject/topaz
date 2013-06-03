@@ -16,7 +16,7 @@ class W_HashObject(W_Object):
         self.default_proc = None
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_HashObject(space, self)
 
     @classdef.singleton_method("try_convert")
@@ -161,18 +161,18 @@ class W_HashObject(W_Object):
 class W_HashIterator(W_Object):
     classdef = ClassDef("HashIterator", W_Object.classdef)
 
-    def __init__(self, space, d):
+    def __init__(self, space):
         W_Object.__init__(self, space)
-        self.iterator = d.iteritems()
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, w_obj):
-        assert isinstance(w_obj, W_HashObject)
-        return W_HashIterator(space, w_obj.contents)
+    def method_allocate(self, space):
+        return W_HashIterator(space)
 
     @classdef.method("initialize")
     def method_initialize(self, w_obj):
-        pass
+        assert isinstance(w_obj, W_HashObject)
+        self.iterator = w_obj.contents.iteritems()
+        return self
 
     @classdef.method("next")
     def method_next(self, space):

@@ -40,7 +40,6 @@ class MSpecScript
           "^#{Rubyspec}/core/marshal/load_spec.rb",
           "^#{Rubyspec}/core/marshal/restore_spec.rb",
           "^#{Rubyspec}/core/kernel/autoload_spec.rb",
-          "^#{Rubyspec}/core/kernel/define_singleton_method_spec.rb",
           "^#{Rubyspec}/core/main/public_spec.rb",
           "^#{Rubyspec}/core/main/private_spec.rb",
           "^#{Rubyspec}/core/main/include_spec.rb",
@@ -55,7 +54,6 @@ class MSpecScript
           "^#{Rubyspec}/core/file/socket_spec.rb",
           "^#{Rubyspec}/core/file/ftype_spec.rb",
           "^#{Rubyspec}/core/file/open_spec.rb",
-          "^#{Rubyspec}/core/io/sysopen_spec.rb",
           "^#{Rubyspec}/core/numeric/to_c_spec.rb",
           "^#{Rubyspec}/core/process/status/exited_spec.rb",
           "^#{Rubyspec}/core/process/status/exitstatus_spec.rb",
@@ -63,7 +61,6 @@ class MSpecScript
           "^#{Rubyspec}/core/process/status/signaled_spec.rb",
           "^#{Rubyspec}/core/process/status/success_spec.rb",
           "^#{Rubyspec}/core/process/status/termsig_spec.rb",
-          "^#{Rubyspec}/core/process/wait_spec.rb",
           "^#{Rubyspec}/core/file/ctime_spec.rb"
   ]
 

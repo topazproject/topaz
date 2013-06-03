@@ -118,17 +118,17 @@ class W_ClassObject(W_ModuleObject):
             W_ModuleObject.method_undefined(self, space, w_name)
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space, args_w):
+    def singleton_method_allocate(self, space):
         return space.newclass(None, None)
 
     @classdef.method("new")
     def method_new(self, space, args_w, block):
-        w_obj = space.send(self, "allocate", args_w, block)
+        w_obj = space.send(self, "allocate")
         space.send(w_obj, "initialize", args_w, block)
         return w_obj
 
     @classdef.method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_Object(space, self)
 
     @classdef.method("initialize")
