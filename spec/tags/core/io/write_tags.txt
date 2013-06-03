@@ -1,6 +1,5 @@
 fails:IO#write on a file writes all of the string's bytes but buffers them
 fails:IO#write on a file does not check if the file is writable if writing zero bytes
-fails:IO#write on a file returns a length of 0 when writing a blank string
 fails:IO.write coerces the argument to a string using to_s
 fails:IO.write returns the number of bytes written
 fails:IO.write creates a file if missing
@@ -14,13 +13,5 @@ fails:IO.write truncates if empty :opts provided and offset skipped
 fails:IO.write uses encoding from given options, if provided
 fails:IO.write uses an :open_args option
 fails:IO.write disregards other options if :open_args is given
-fails:IO.write needs to be reviewed for spec completeness
-fails:IO#write coerces the argument to a string using to_s
 fails:IO#write checks if the file is writable if writing more than zero bytes
-fails:IO#write returns the number of bytes written
-fails:IO#write invokes to_s on non-String argument
 fails:IO#write writes all of the string's bytes without buffering if mode is sync
-fails:IO#write does not warn if called after IO#read
-fails:IO#write writes to the current position after IO#read
-fails:IO#write advances the file position by the count of given bytes
-fails:IO#write raises IOError on closed stream

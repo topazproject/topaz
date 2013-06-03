@@ -1,1 +1,0 @@
-fails:BasicObject#instance_eval is a public instance method
