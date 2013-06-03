@@ -18,9 +18,9 @@ class TestDir(BaseTopazTest):
         f = d.join("content")
         f.write("hello")
         space.execute("Dir.new('%s')" % d)
-        with self.raises(space, "SystemCallError"):
+        with self.raises(space, "Errno::ENOENT"):
             space.execute("Dir.new('this does not exist')")
-        with self.raises(space, "SystemCallError"):
+        with self.raises(space, "Errno::ENOTDIR"):
             space.execute("Dir.new('%s')" % f)
 
     def test_delete(self, space, tmpdir):
@@ -30,7 +30,7 @@ class TestDir(BaseTopazTest):
         d = tmpdir.mkdir("sub")
         f = d.join("content")
         f.write("hello")
-        with self.raises(space, "SystemCallError"):
+        with self.raises(space, "Errno::ENOTEMPTY"):
             space.execute("Dir.delete('%s')" % d)
 
     def test_mkdir(self, space, tmpdir):

@@ -23,9 +23,9 @@ class W_RandomObject(W_Object):
         default = space.send(w_cls, "new")
         space.set_const(w_cls, "DEFAULT", default)
 
-    @classdef.singleton_method("allocate", seed="int")
-    def method_allocate(self, space, seed=0):
-        return W_RandomObject(space, seed, self)
+    @classdef.singleton_method("allocate")
+    def method_allocate(self, space):
+        return W_RandomObject(space, 0, self)
 
     @classdef.method("initialize")
     def method_initialize(self, space, w_seed=None):

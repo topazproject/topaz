@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import gc
 import os
 import sys
 import weakref
@@ -105,6 +106,8 @@ class ObjectSpace(object):
         self.w_class = self.getclassfor(W_ClassObject)
         # We replace the one reference to our FakeClass with the real class.
         self.w_basicobject.klass.superclass = self.w_class
+
+        gc.collect()
         assert cls_reference() is None
 
         self.w_symbol = self.getclassfor(W_SymbolObject)

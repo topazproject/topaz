@@ -1,2 +1,0 @@
-fails:Dir.chdir raises an Errno::ENOENT if the directory does not exist
-fails:Dir.chdir raises an Errno::ENOENT if the original directory no longer exists
