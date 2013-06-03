@@ -26,11 +26,13 @@ class W_HashObject(W_Object):
         return w_obj
 
     @classdef.method("initialize")
+    @check_frozen()
     def method_initialize(self, space, w_default=None, block=None):
         if w_default is not None:
             self.w_default = w_default
         if block is not None:
             self.default_proc = block
+        return self
 
     @classdef.method("default")
     def method_default(self, space, w_key=None):
