@@ -86,11 +86,7 @@ module FFI
     def ffi_lib(*names)
       raise LoadError.new("library names list must not be empty") if names.empty?
 
-      lib_flags = if defined?(@ffi_lib_flags) and not @ffi_lib_flags.nil? and @ffi_lib_flags.kind_of?(Integer)
-                    @ffi_lib_flags
-                  else
-                    FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
-                  end
+      lib_flags = defined?(@ffi_lib_flags) ? @ffi_lib_flags : FFI::DynamicLibrary::RTLD_LAZY | FFI::DynamicLibrary::RTLD_LOCAL
       ffi_libs = names.map do |name|
 
         if name == FFI::CURRENT_PROCESS
