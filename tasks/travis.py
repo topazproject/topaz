@@ -53,7 +53,7 @@ class Test(BaseTest):
                 raise ValueError("Don't recognize platform: {!r}".format(sys.platform))
             build_name = "topaz-{platform}-{sha1}.tar.bz2".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
             run("python topaz/tools/make_release.py {}".format(build_name))
-            with open(build_name) as f:
+            with open(build_name, "rb") as f:
                 response = requests.post("http://www.topazruby.com/builds/create/", {
                     "build_secret": os.environ["BUILD_SECRET"],
                     "sha1": os.environ["TRAVIS_COMMIT"],
