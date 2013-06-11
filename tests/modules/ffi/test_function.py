@@ -3,6 +3,8 @@ from topaz.objects.classobject import W_ClassObject
 from topaz.modules.ffi.function import W_FunctionObject
 from rpython.rlib import clibffi
 
+libm = clibffi.CDLL('libm.so')
+
 class TestFunction(BaseTopazTest):
 
     def test_type_unwrap(self, space):
@@ -46,3 +48,20 @@ class TestFunction(BaseTopazTest):
                                         clibffi.ffi_type_double]
         assert w_function.ret_type == clibffi.ffi_type_sint8
         assert w_function.name == 'foo'
+
+    def test_attach(self, space):
+        w_library = space.execute("""
+        class LibraryMock
+            def initialize
+                local = FFI::DynamicLibrary::RTLD_LOCAL
+                @ffi_libs = [FFI::DynamicLibrary.open('libm.so', local)]
+            end
+        end
+        lib = LibraryMock.new
+        func = FFI::Function.new(:float64, [:float64, :float64], :pow, {})
+        func.attach(lib, 'pow')
+        lib
+        """)
+        c_pow = libm.getpointer('pow', 2*[clibffi.ffi_type_double],
+                              clibffi.ffi_type_double)
+        assert w_library.pow == c_pow
