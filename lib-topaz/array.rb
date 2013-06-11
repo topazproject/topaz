@@ -433,4 +433,83 @@ class Array
     Topaz::Array.repeated_permutation(self, r, &block)
     self
   end
+
+  def fill(*args, &block)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+
+    if block
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 0..2)") if args.size > 2
+      one, two = args
+    else
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 1..3)") if args.empty? || args.size > 3
+      obj, one, two = args
+    end
+
+    if one.kind_of?(Range)
+      raise TypeError.new("no implicit conversion of Range into Integer") if two
+
+      left = Topaz.convert_type(one.begin, Fixnum, :to_int)
+      left += size if left < 0
+      raise RangeError.new("#{one} out of range") if left < 0
+
+      right = Topaz.convert_type(one.end, Fixnum, :to_int)
+      right += size if right < 0
+      right += 1 unless one.exclude_end?
+      return self if right <= left
+
+    elsif one
+      left = Topaz.convert_type(one, Fixnum, :to_int)
+      left += size if left < 0
+      left = 0 if left < 0
+
+      if two
+        right = Topaz.convert_type(two, Fixnum, :to_int)
+        return self if right == 0
+        right += left
+      else
+        right = size
+      end
+    else
+      left = 0
+      right = size
+    end
+
+    right_bound = (right > size) ? size : right
+
+    i = left
+    while i < right_bound
+      self[i] = block ? yield(i) : obj
+      i += 1
+    end
+
+    if left > size
+      self.concat([nil] * (left - size))
+      i = size
+    end
+
+    while i < right
+      self << (block ? yield(i) : obj)
+      i += 1
+    end
+
+    self
+  end
+
+  def transpose
+    return [] if self.empty?
+
+    max = nil
+    lists = self.map do |ary|
+      ary = Topaz.convert_type(ary, Array, :to_ary)
+      max ||= ary.size
+      raise IndexError.new("element size differs (#{ary.size} should be #{max})") if ary.size != max
+      ary
+    end
+
+    out = []
+    max.times do |i|
+      out << lists.map { |l| l[i] }
+    end
+    out
+  end
 end

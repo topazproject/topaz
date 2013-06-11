@@ -14,7 +14,7 @@ class W_RangeObject(W_Object):
         self.exclusive = exclusive
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_RangeObject(space, None, None, False)
 
     @classdef.method("initialize", excl="bool")

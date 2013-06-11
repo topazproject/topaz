@@ -10,7 +10,7 @@ env:
         - TEST_TYPE=translate
 #         - TEST_TYPE=rubyspec_untranslated
 install:
-    - pip install --use-mirrors requests invoke
+    - pip install requests invoke
     - invoke travis.install_requirements
 script: invoke travis.run_tests
 after_success: invoke travis.upload_build

@@ -1,1 +1,0 @@
-fails:BasicObject#! is a public instance method

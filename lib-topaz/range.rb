@@ -156,4 +156,8 @@ class Range
   end
 
   alias eql? ==
+
+  def to_s
+    "#{self.begin}#{self.exclude_end? ? '...' : '..'}#{self.end}"
+  end
 end

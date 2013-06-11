@@ -16,7 +16,7 @@ class W_HashObject(W_Object):
         self.default_proc = None
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_HashObject(space, self)
 
     @classdef.singleton_method("try_convert")
@@ -26,11 +26,13 @@ class W_HashObject(W_Object):
         return w_obj
 
     @classdef.method("initialize")
+    @check_frozen()
     def method_initialize(self, space, w_default=None, block=None):
         if w_default is not None:
             self.w_default = w_default
         if block is not None:
             self.default_proc = block
+        return self
 
     @classdef.method("default")
     def method_default(self, space, w_key=None):
@@ -161,18 +163,18 @@ class W_HashObject(W_Object):
 class W_HashIterator(W_Object):
     classdef = ClassDef("HashIterator", W_Object.classdef)
 
-    def __init__(self, space, d):
+    def __init__(self, space):
         W_Object.__init__(self, space)
-        self.iterator = d.iteritems()
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, w_obj):
-        assert isinstance(w_obj, W_HashObject)
-        return W_HashIterator(space, w_obj.contents)
+    def method_allocate(self, space):
+        return W_HashIterator(space)
 
     @classdef.method("initialize")
     def method_initialize(self, w_obj):
-        pass
+        assert isinstance(w_obj, W_HashObject)
+        self.iterator = w_obj.contents.iteritems()
+        return self
 
     @classdef.method("next")
     def method_next(self, space):

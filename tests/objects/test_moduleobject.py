@@ -410,6 +410,17 @@ class TestModuleObject(BaseTopazTest):
         return A.foo_defined? ? 'yes' : 'no'
         """)
         assert self.unwrap(space, w_res) == 'no'
+        w_res = space.execute("""
+        module A
+          @foo = nil
+
+          def foo_defined?
+            defined?(@foo)
+          end
+        end
+        return A.foo_defined? ? 'yes' : 'no'
+        """)
+        assert self.unwrap(space, w_res) == 'yes'
 
 
 class TestMethodVisibility(object):

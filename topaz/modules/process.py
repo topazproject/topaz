@@ -4,6 +4,7 @@ import os
 
 from topaz.module import ModuleDef
 from topaz.system import IS_WINDOWS
+from topaz.error import error_for_oserror
 
 
 if IS_WINDOWS:
@@ -35,7 +36,10 @@ class Process(object):
 
     @moduledef.function("waitpid", pid="int")
     def method_waitpid(self, space, pid=-1):
-        pid, status = os.waitpid(pid, 0)
+        try:
+            pid, status = os.waitpid(pid, 0)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         status = WEXITSTATUS(status)
         w_status = space.send(
             space.find_const(self, "Status"),
