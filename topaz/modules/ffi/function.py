@@ -11,12 +11,12 @@ class W_FunctionObject(W_Object):
     def singleton_method_allocate(self, space, args_w):
         return W_FunctionObject(space)
 
-    @classdef.method('initialize')
-    def method_initialize(self, space, w_ret_type, w_arg_types, w_function, w_options):
-        ret_type = self.type_unwrap(space, w_ret_type)
-        arg_types = [self.type_unwrap(space, w_type)
-                     for w_type in space.listview(w_arg_types)]
-        # code for type object
+    @classdef.method('initialize', name='symbol')
+    def method_initialize(self, space, w_ret_type, w_arg_types, name, w_options):
+        self.ret_type = self.type_unwrap(space, w_ret_type)
+        self.arg_types = [self.type_unwrap(space, w_type)
+                          for w_type in space.listview(w_arg_types)]
+        self.name = name
 
     @staticmethod
     def type_unwrap(space, w_type):
