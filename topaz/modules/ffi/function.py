@@ -18,9 +18,10 @@ class W_FunctionObject(W_Object):
                      for w_type in space.listview(w_arg_types)]
         # code for type object
 
-    def type_unwrap(self, space, w_type):
+    @staticmethod
+    def type_unwrap(space, w_type):
         if space.is_kind_of(w_type, space.getclassfor(W_TypeObject)):
-            return self
+            return w_type.ffi_type
         try:
             sym = Coerce.symbol(space, w_type)
             key = sym.upper()
