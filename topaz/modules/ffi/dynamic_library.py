@@ -24,7 +24,7 @@ class W_DynamicLibraryObject(W_Object):
         W_Object.__init__(self, space, klass)
         namestr = '[current process]' if name is None else name
         try:
-            self.handle = clibffi.dlopen(name, flags)
+            self.cdll = clibffi.CDLL(name, flags)
         except clibffi.DLOpenError:
             raise space.error(space.w_LoadError,
                               "Could not open library %s" % namestr)

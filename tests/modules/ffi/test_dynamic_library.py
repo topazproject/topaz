@@ -13,13 +13,13 @@ class TestDynamicLibrary(BaseTopazTest):
     def test_open(self, space):
         w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 1)")
         assert isinstance(w_res, W_DynamicLibraryObject)
-        assert w_res.handle == clibffi.dlopen('libm.so', 1)
+        assert w_res.cdll.lib == clibffi.dlopen('libm.so', 1)
         w_name = space.find_instance_var(w_res, '@name')
         assert self.unwrap(space, w_name) == 'libm.so'
         w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 0)")
-        assert w_res.handle == clibffi.dlopen('libm.so', 0)
+        assert w_res.cdll.lib == clibffi.dlopen('libm.so', 0)
         w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)")
-        assert w_res.handle == clibffi.dlopen(None, 2)
+        assert w_res.cdll.lib == clibffi.dlopen(None, 2)
         w_name = space.find_instance_var(w_res, '@name')
         assert self.unwrap(space, w_name) == '[current process]'
         with self.raises(space, "TypeError", "can't convert Float into String"):
@@ -37,7 +37,7 @@ class TestDynamicLibrary(BaseTopazTest):
     def test_new_same_as_open(self, space):
         w_lib1 = space.execute("FFI::DynamicLibrary.new('libm.so')")
         w_lib2 = space.execute("FFI::DynamicLibrary.open('libm.so')")
-        assert w_lib1.handle == w_lib2.handle
+        assert w_lib1.cdll.lib == w_lib2.cdll.lib
 
     def test_Symbol(self, space):
         w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol")
