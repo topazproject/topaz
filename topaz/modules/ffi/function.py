@@ -13,17 +13,23 @@ class W_FunctionObject(W_Object):
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types, w_function, w_options):
-        if not space.is_kind_of(w_ret_type, space.getclassfor(W_TypeObject)):
-            try:
-                sym = Coerce.symbol(space, w_ret_type)
-                if sym.upper() in W_TypeObject.basics:
-                    # code for string object
-                    pass
-                else:
-                    raise space.error(space.w_TypeError,
-                                      "can't convert Symbol into Type")
-            except RubyError:
-                tp = w_ret_type.getclass(space).name
-                raise space.error(space.w_TypeError,
-                                  "can't convert %s into Type" % tp)
+        ret_type = self.type_unwrap(space, w_ret_type)
+        arg_types = [self.type_unwrap(space, w_type)
+                     for w_type in space.listview(w_arg_types)]
         # code for type object
+
+    def type_unwrap(self, space, w_type):
+        if space.is_kind_of(w_type, space.getclassfor(W_TypeObject)):
+            return self
+        try:
+            sym = Coerce.symbol(space, w_type)
+            key = sym.upper()
+            if key in W_TypeObject.basics:
+                return W_TypeObject.basics[key]
+            else:
+                raise space.error(space.w_TypeError,
+                                  "can't convert Symbol into Type")
+        except RubyError:
+            tp = w_type.getclass(space).name
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into Type" % tp)
