@@ -12,7 +12,7 @@ class W_FunctionObject(W_Object):
         return W_FunctionObject(space)
 
     @classdef.method('initialize')
-    def method_initialize(self, space, w_ret_type, w_arg_types, w_options):
+    def method_initialize(self, space, w_ret_type, w_arg_types, w_function, w_options):
         if not space.is_kind_of(w_ret_type, space.getclassfor(W_TypeObject)):
             try:
                 sym = Coerce.symbol(space, w_ret_type)
