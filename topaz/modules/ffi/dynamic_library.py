@@ -7,11 +7,6 @@ from rpython.rlib import clibffi
 class W_DynamicLibraryObject(W_Object):
     classdef = ClassDef('DynamicLibrary', W_Object.classdef)
 
-    def __deepcopy__(self, memo):
-        obj = super(W_TypeObject, self).__deepcopy__(memo)
-        obj.handle = self.handle
-        return obj
-
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         space.set_const(w_cls, "RTLD_LAZY", space.newint(1))
