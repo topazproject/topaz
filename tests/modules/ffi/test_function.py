@@ -60,11 +60,13 @@ class TestFunction(BaseTopazTest):
         lib = LibraryMock.new
         func = FFI::Function.new(:float64, [:float64, :float64], :pow, {})
         func.attach(lib, 'pow')
+        func.attach(lib, 'power')
         lib
         """)
         c_pow = libm.getpointer('pow', 2*[clibffi.ffi_type_double],
                               clibffi.ffi_type_double)
         assert results_equal(w_library.pow, c_pow)
+        assert results_equal(w_library.power, c_pow)
 
 # Just test whether both calculate the same results over 5 x 5 set
 def results_equal(f1, f2):
