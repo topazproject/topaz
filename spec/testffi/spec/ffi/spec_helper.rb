@@ -16,7 +16,8 @@
 require 'ffi'
 
 module TestLibrary
-  PATH = "build/libtest.#{FFI::Platform::LIBSUFFIX}"
+  #PATH = "build/libtest.#{FFI::Platform::LIBSUFFIX}"
+  PATH = "/home/gerd/Programmierung/topaz/spec/testffi/build/libtest.#{FFI::Platform::LIBSUFFIX}"
   def self.force_gc
    # if RUBY_PLATFORM =~ /java/
    #   java.lang.System.gc
