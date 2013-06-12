@@ -30,6 +30,7 @@ class Symbol
   def =~(pattern)
     self.to_s =~ pattern
   end
+  alias match =~
 
   def swapcase
     self.to_s.swapcase.to_sym
