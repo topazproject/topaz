@@ -27,6 +27,10 @@ class Symbol
   end
   alias slice []
 
+  def =~(pattern)
+    self.to_s =~ pattern
+  end
+
   def swapcase
     self.to_s.swapcase.to_sym
   end
