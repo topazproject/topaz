@@ -29,6 +29,8 @@ class W_HashObject(W_Object):
     @check_frozen()
     def method_initialize(self, space, w_default=None, block=None):
         if w_default is not None:
+            if block is not None:
+                raise space.error(space.w_ArgumentError, "wrong number of arguments")
             self.w_default = w_default
         if block is not None:
             self.default_proc = block
