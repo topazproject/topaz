@@ -34,3 +34,14 @@ class W_FunctionObject(W_Object):
             tp = w_type.getclass(space).name
             raise space.error(space.w_TypeError,
                               "can't convert %s into Type" % tp)
+
+    @classdef.method('attach', name='str')
+    def method_attach(self, space, w_lib, name):
+        w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
+        for w_dl in w_ffi_libs.listview(space):
+            try:
+                func_ptr = w_dl.cdll.getpointer(self.name,
+                                                self.arg_types,
+                                                self.ret_type)
+                setattr(w_lib, name, func_ptr)
+            except KeyError: pass

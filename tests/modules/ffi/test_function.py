@@ -64,4 +64,18 @@ class TestFunction(BaseTopazTest):
         """)
         c_pow = libm.getpointer('pow', 2*[clibffi.ffi_type_double],
                               clibffi.ffi_type_double)
-        assert w_library.pow == c_pow
+        assert results_equal(w_library.pow, c_pow)
+
+# Just test whether both calculate the same results over 5 x 5 set
+def results_equal(f1, f2):
+    for i in range(5):
+        for j in range(5):
+            f1.push_arg(i)
+            f1.push_arg(j)
+            f2.push_arg(i)
+            f2.push_arg(j)
+            res1 = f1.call(clibffi.rffi.DOUBLE)
+            res2 = f2.call(clibffi.rffi.DOUBLE)
+            if res1 != res2:
+                return False
+    return True
