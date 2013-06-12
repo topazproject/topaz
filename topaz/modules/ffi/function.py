@@ -1,6 +1,7 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.modules.ffi.type import W_TypeObject
+from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
 from topaz.error import RubyError
 from topaz.coerce import Coerce
 
@@ -11,12 +12,12 @@ class W_FunctionObject(W_Object):
     def singleton_method_allocate(self, space, args_w):
         return W_FunctionObject(space)
 
-    @classdef.method('initialize', name='symbol')
-    def method_initialize(self, space, w_ret_type, w_arg_types, name, w_options):
+    @classdef.method('initialize')
+    def method_initialize(self, space, w_ret_type, w_arg_types, w_name, w_options):
         self.ret_type = self.type_unwrap(space, w_ret_type)
         self.arg_types = [self.type_unwrap(space, w_type)
                           for w_type in space.listview(w_arg_types)]
-        self.name = name
+        self.name = self.dlsym_unwrap(space, w_name)
 
     @staticmethod
     def type_unwrap(space, w_type):
@@ -34,6 +35,15 @@ class W_FunctionObject(W_Object):
             tp = w_type.getclass(space).name
             raise space.error(space.w_TypeError,
                               "can't convert %s into Type" % tp)
+
+    @staticmethod
+    def dlsym_unwrap(space, w_name):
+        if space.is_kind_of(w_name, space.getclassfor(W_DL_SymbolObject)):
+            return w_name.symbol
+        else:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into DynamicLibrary::Symbol"
+                              % w_name.getclass(space).name)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

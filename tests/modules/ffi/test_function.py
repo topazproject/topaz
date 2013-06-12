@@ -22,27 +22,31 @@ class TestFunction(BaseTopazTest):
             W_FunctionObject.type_unwrap(space, w_unknown_type)
 
     def test_initialize_typing(self, space):
+        fname = "FFI::DynamicLibrary::Symbol.new(:fname)"
         w_function = space.execute("""
-        FFI::Function.new(:void, [:int8, :int16], :funcname, {})
-        """) #didn't crash
+        FFI::Function.new(:void, [:int8, :int16], %s, {})
+        """ % fname) #didn't crash
         w_function = space.execute("""
         FFI::Function.new(FFI::Type::VOID,
-                          [FFI::Type::INT8, FFI::Type::INT16], :fname, {})
-        """) # didn't crash
+                          [FFI::Type::INT8, FFI::Type::INT16], %s, {})
+        """ % fname) # didn't crash
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
-            space.execute("FFI::Function.new(1, [], :fname, {})")
+            space.execute("FFI::Function.new(1, [], %s, {})" % fname)
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
-            space.execute("FFI::Function.new(:void, [2], :fname, {})")
+            space.execute("FFI::Function.new(:void, [2], %s, {})" % fname)
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
-            space.execute("FFI::Function.new(:null, [], :fname, {})")
+            space.execute("FFI::Function.new(:null, [], %s, {})" % fname)
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
-            space.execute("FFI::Function.new(:int32, [:array], :fname, {})")
-        with self.raises(space, "TypeError", "500 is not a symbol"):
+            space.execute("FFI::Function.new(:int32, [:array], %s, {})"
+                          % fname)
+        with self.raises(space, "TypeError",
+                         "can't convert Fixnum into DynamicLibrary::Symbol"):
             space.execute("FFI::Function.new(:void, [:uint8], 500, {})")
 
     def test_initialize_setvars(self, space):
         w_function = space.execute("""
-        FFI::Function.new(:int8, [:int16, :float64], :foo, {})
+        foo = FFI::DynamicLibrary::Symbol.new(:foo)
+        FFI::Function.new(:int8, [:int16, :float64], foo, {})
         """)
         assert w_function.arg_types == [clibffi.ffi_type_sint16,
                                         clibffi.ffi_type_double]
@@ -58,7 +62,8 @@ class TestFunction(BaseTopazTest):
             end
         end
         lib = LibraryMock.new
-        func = FFI::Function.new(:float64, [:float64, :float64], :pow, {})
+        pow = FFI::DynamicLibrary::Symbol.new(:pow)
+        func = FFI::Function.new(:float64, [:float64, :float64], pow, {})
         func.attach(lib, 'pow')
         func.attach(lib, 'power')
         lib
