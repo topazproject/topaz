@@ -40,11 +40,12 @@ class TestDynamicLibrary(BaseTopazTest):
         assert w_lib1.cdll.lib == w_lib2.cdll.lib
 
     def test_Symbol(self, space):
-        w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol")
-        assert w_lib_sym != space.w_symbol
+        w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol.new(:sym)")
+        assert w_lib_sym.getclass(space) != space.w_symbol
+        assert w_lib_sym.symbol == 'sym'
 
     def test_Symbol_null_p(self, space):
-        w_res = space.execute("FFI::DynamicLibrary::Symbol.new.null?")
+        w_res = space.execute("FFI::DynamicLibrary::Symbol.new(:sym).null?")
         assert self.unwrap(space, w_res)
 
     def test_find_variable(self, space):
