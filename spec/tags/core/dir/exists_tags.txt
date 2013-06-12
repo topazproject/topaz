@@ -8,3 +8,4 @@ fails:Dir.exists? doesn't require the name to have a trailing slash
 fails:Dir.exists? doesn't expand paths
 fails:Dir.exists? returns false if the argument exists but is a file
 fails:Dir.exists? calls #to_path on non String arguments
+fails:Dir.exists? doesn't set $! when file doesn't exist

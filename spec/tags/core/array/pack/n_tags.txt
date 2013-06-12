@@ -4,3 +4,9 @@ fails:Array#pack with format 'N' returns an ASCII-8BIT string
 fails:Array#pack with format 'N' encodes all remaining elements when passed the '*' modifier
 fails:Array#pack with format 'n' returns an ASCII-8BIT string
 fails:Array#pack with format 'n' encodes all remaining elements when passed the '*' modifier
+fails:Array#pack with format 'N' encodes the number of array elements specified by the count modifier
+fails:Array#pack with format 'N' ignores NULL bytes between directives
+fails:Array#pack with format 'N' ignores spaces between directives
+fails:Array#pack with format 'n' encodes the number of array elements specified by the count modifier
+fails:Array#pack with format 'n' ignores NULL bytes between directives
+fails:Array#pack with format 'n' ignores spaces between directives
