@@ -6,6 +6,8 @@ from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
+from rpython.rtyper.lltypesystem import rffi
+
 class W_FunctionObject(W_Object):
     classdef = ClassDef('Function', W_Object.classdef)
 
@@ -55,8 +57,10 @@ class W_FunctionObject(W_Object):
                                                 self.arg_types,
                                                 self.ret_type)
                 def attachment(self, space, args_w, block):
-                    a, b = [space.int_w(w_x) for w_x in args_w]
-                    return space.newint(a ** b)
+                    a, b = [space.float_w(w_x) for w_x in args_w]
+                    func_ptr.push_arg(a)
+                    func_ptr.push_arg(b)
+                    return space.newfloat(func_ptr.call(rffi.DOUBLE))
                 method = W_BuiltinFunction(name, w_lib.getclass(space),
                                            attachment)
                 w_lib.getclass(space).define_method(space, name, method)
