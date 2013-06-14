@@ -4,6 +4,7 @@ from topaz.modules.ffi.type import W_TypeObject
 from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
 from topaz.error import RubyError
 from topaz.coerce import Coerce
+from topaz.objects.functionobject import W_BuiltinFunction
 
 class W_FunctionObject(W_Object):
     classdef = ClassDef('Function', W_Object.classdef)
@@ -42,7 +43,7 @@ class W_FunctionObject(W_Object):
             return w_name.symbol
         else:
             raise space.error(space.w_TypeError,
-                              "can't convert %s into DynamicLibrary::Symbol"
+                              "can't convert %s into Symbol"
                               % w_name.getclass(space).name)
 
     @classdef.method('attach', name='str')
@@ -53,5 +54,10 @@ class W_FunctionObject(W_Object):
                 func_ptr = w_dl.cdll.getpointer(self.name,
                                                 self.arg_types,
                                                 self.ret_type)
-                setattr(w_lib, name, func_ptr)
+                def attachment(self, space, args_w, block):
+                    a, b = [space.int_w(w_x) for w_x in args_w]
+                    return space.newint(a ** b)
+                method = W_BuiltinFunction(name, w_lib.getclass(space),
+                                           attachment)
+                w_lib.getclass(space).define_method(space, name, method)
             except KeyError: pass

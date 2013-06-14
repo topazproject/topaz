@@ -40,7 +40,7 @@ class TestFunction(BaseTopazTest):
             space.execute("FFI::Function.new(:int32, [:array], %s, {})"
                           % fname)
         with self.raises(space, "TypeError",
-                         "can't convert Fixnum into DynamicLibrary::Symbol"):
+                         "can't convert Fixnum into Symbol"):
             space.execute("FFI::Function.new(:void, [:uint8], 500, {})")
 
     def test_initialize_setvars(self, space):
@@ -54,7 +54,7 @@ class TestFunction(BaseTopazTest):
         assert w_function.name == 'foo'
 
     def test_attach(self, space):
-        w_library = space.execute("""
+        w_res = space.execute("""
         class LibraryMock
             def initialize
                 local = FFI::DynamicLibrary::RTLD_LOCAL
@@ -64,14 +64,11 @@ class TestFunction(BaseTopazTest):
         lib = LibraryMock.new
         pow = FFI::DynamicLibrary::Symbol.new(:pow)
         func = FFI::Function.new(:float64, [:float64, :float64], pow, {})
-        func.attach(lib, 'pow')
         func.attach(lib, 'power')
-        lib
+        arr1 = (0..5).each.map { |x| lib.power(x, 2) }
         """)
-        c_pow = libm.getpointer('pow', 2*[clibffi.ffi_type_double],
-                              clibffi.ffi_type_double)
-        assert results_equal(w_library.pow, c_pow)
-        assert results_equal(w_library.power, c_pow)
+        for i, w_x in enumerate(w_res.listview(space)):
+            assert self.unwrap(space, w_x) == i*i
 
 # Just test whether both calculate the same results over 5 x 5 set
 def results_equal(f1, f2):
