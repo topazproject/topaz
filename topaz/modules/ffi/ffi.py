@@ -7,6 +7,7 @@ from topaz.modules.ffi.type import W_TypeObject, W_BuiltinObject
 from topaz.modules.ffi.function import W_FunctionObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.modules.ffi.pointer import W_PointerObject
+from topaz.modules.ffi.buffer import W_BufferObject
 from topaz.modules.ffi.data_converter import DataConverter
 
 from rpython.rtyper.lltypesystem import rffi
@@ -55,6 +56,8 @@ class FFI(object):
                         space.getclassfor(W_PointerObject))
 
         space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
+
+        space.set_const(w_mod, 'Buffer', space.getclassfor(W_BufferObject))
 
         # setup Platform
         w_platform = space.newmodule('Platform', None)
