@@ -15,7 +15,13 @@ class AttributeReader(W_FunctionObject):
     _immutable_fields_ = ["varname"]
 
     def __init__(self, varname):
+        super(AttributeReader, self).__init__(varname)
         self.varname = varname
+
+    def __deepcopy__(self, memo):
+        obj = super(AttributeReader, self).__deepcopy__(memo)
+        obj.varname = self.varname
+        return obj
 
     def call(self, space, w_obj, args_w, block):
         return space.find_instance_var(w_obj, self.varname) or space.w_nil
