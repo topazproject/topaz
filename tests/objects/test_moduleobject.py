@@ -452,7 +452,7 @@ class TestMethodVisibility(object):
     def test_private_class_method(self, space):
         space.execute("""
         class X
-          def m
+          def self.m
           end
           private_class_method :m
         end
@@ -461,7 +461,7 @@ class TestMethodVisibility(object):
     def test_public_class_method(self, space):
         space.execute("""
         class X
-          def m
+          def self.m
           end
           public_class_method :m
         end

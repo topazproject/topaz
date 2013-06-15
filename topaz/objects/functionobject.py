@@ -5,11 +5,16 @@ from topaz.objects.objectobject import W_BaseObject
 
 
 class W_FunctionObject(W_BaseObject):
-    _immutable_fields_ = ["name", "w_class"]
+    _immutable_fields_ = ["name", "w_class", "visibility"]
 
-    def __init__(self, name, w_class=None):
+    PUBLIC = 0
+    PROTECTED = 1
+    PRIVATE = 2
+
+    def __init__(self, name, w_class=None, visibility=PUBLIC):
         self.name = name
         self.w_class = w_class
+        self.visibility = visibility
 
     def __deepcopy__(self, memo):
         obj = super(W_FunctionObject, self).__deepcopy__(memo)
@@ -24,8 +29,8 @@ class W_FunctionObject(W_BaseObject):
 class W_UserFunction(W_FunctionObject):
     _immutable_fields_ = ["bytecode", "lexical_scope"]
 
-    def __init__(self, name, bytecode, lexical_scope):
-        W_FunctionObject.__init__(self, name)
+    def __init__(self, name, bytecode, lexical_scope, visibility=W_FunctionObject.PUBLIC):
+        W_FunctionObject.__init__(self, name, visibility)
         self.bytecode = bytecode
         self.lexical_scope = lexical_scope
 
@@ -34,6 +39,9 @@ class W_UserFunction(W_FunctionObject):
         obj.bytecode = copy.deepcopy(self.bytecode, memo)
         obj.lexical_scope = copy.deepcopy(self.lexical_scope, memo)
         return obj
+
+    def change_visibility(self, visibility):
+        return W_UserFunction(self.name, self.bytecode, self.lexical_scope, self.visibility)
 
     def call(self, space, w_receiver, args_w, block):
         frame = space.create_frame(
