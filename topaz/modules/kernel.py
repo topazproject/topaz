@@ -150,13 +150,21 @@ class Kernel(object):
 
         raise RubyError(w_exc)
 
-    @moduledef.function("exit", status="int")
-    def method_exit(self, space, status=0):
+    @moduledef.function("exit")
+    def method_exit(self, space, args_w):
         return space.send(
-            space.getmoduleobject(Process.moduledef),
-            "exit",
-            [space.newint(status)]
+            space.getmoduleobject(Process.moduledef), "exit", args_w
         )
+
+    @moduledef.function("exit!")
+    def method_exit_bang(self, space, args_w):
+        return space.send(
+            space.getmoduleobject(Process.moduledef), "exit!", args_w
+        )
+
+    @moduledef.function("abort")
+    def method_abort(self, space):
+        return space.send(self, "exit", [space.w_false])
 
     @moduledef.function("block_given?")
     @moduledef.function("iterator?")
@@ -217,6 +225,10 @@ class Kernel(object):
             else:
                 argv0 = shell
             os.execv(shell, [argv0, "-c", cmd])
+
+    @moduledef.function("system")
+    def method_system(self, space, args_w):
+        raise space.error(space.w_NotImplementedError, "Kernel#system()")
 
     @moduledef.function("fork")
     def method_fork(self, space, block):
