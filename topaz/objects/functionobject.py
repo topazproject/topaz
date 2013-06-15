@@ -61,17 +61,14 @@ class W_UserFunction(W_FunctionObject):
 class W_BuiltinFunction(W_FunctionObject):
     _immutable_fields_ = ["func"]
 
-    def __init__(self, name, w_class, func, visibility=W_FunctionObject.PUBLIC):
-        W_FunctionObject.__init__(self, name, w_class, visibility)
+    def __init__(self, name, w_class, func):
+        W_FunctionObject.__init__(self, name, w_class)
         self.func = func
 
     def __deepcopy__(self, memo):
         obj = super(W_BuiltinFunction, self).__deepcopy__(memo)
         obj.func = self.func
         return obj
-
-    def change_visibility(self, visibility):
-        return W_BuiltinFunction(self.name, self.w_class, self.func, visibility)
 
     def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)
