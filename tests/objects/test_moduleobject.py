@@ -466,3 +466,10 @@ class TestMethodVisibility(object):
           public_class_method :m
         end
         """)
+
+    def test_private_builtin(self, space):
+        space.execute("""
+        class X < Array
+          public :<<
+        end
+        """)
