@@ -5,7 +5,7 @@ from topaz.objects.objectobject import W_BaseObject
 
 
 class W_FunctionObject(W_BaseObject):
-    _immutable_fields_ = ["name", "w_class", "visibility"]
+    _immutable_fields_ = ["name", "w_class", "visibility?"]
 
     PUBLIC = 0
     PROTECTED = 1
@@ -21,6 +21,9 @@ class W_FunctionObject(W_BaseObject):
         obj.name = self.name
         obj.w_class = copy.deepcopy(self.w_class, memo)
         return obj
+
+    def update_visibility(self, visibility):
+        self.visibility = visibility
 
     def arity(self, space):
         return space.newint(0)
@@ -39,9 +42,6 @@ class W_UserFunction(W_FunctionObject):
         obj.bytecode = copy.deepcopy(self.bytecode, memo)
         obj.lexical_scope = copy.deepcopy(self.lexical_scope, memo)
         return obj
-
-    def change_visibility(self, visibility):
-        return W_UserFunction(self.name, self.bytecode, self.lexical_scope, self.visibility)
 
     def call(self, space, w_receiver, args_w, block):
         frame = space.create_frame(
@@ -69,9 +69,6 @@ class W_BuiltinFunction(W_FunctionObject):
         obj = super(W_BuiltinFunction, self).__deepcopy__(memo)
         obj.func = self.func
         return obj
-
-    def change_visibility(self, visibility):
-        return W_BuiltinFunction(self.name, self.w_class, self.func, visibility)
 
     def call(self, space, w_receiver, args_w, block):
         frame = BuiltinFrame(self.name)

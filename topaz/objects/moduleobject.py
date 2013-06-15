@@ -329,7 +329,7 @@ class W_ModuleObject(W_RootObject):
             raise space.error(space.w_NameError,
                 "undefined method `%s' for class `%s'" % (name, cls_name)
             )
-        self.define_method(space, name, w_method.change_visibility(visibility))
+        w_method.update_visibility(visibility)
 
     def method_added(self, space, w_name):
         space.send(self, "method_added", [w_name])
