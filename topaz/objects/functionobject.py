@@ -30,7 +30,7 @@ class W_UserFunction(W_FunctionObject):
     _immutable_fields_ = ["bytecode", "lexical_scope"]
 
     def __init__(self, name, bytecode, lexical_scope, visibility=W_FunctionObject.PUBLIC):
-        W_FunctionObject.__init__(self, name, visibility=visibility)
+        W_FunctionObject.__init__(self, name, visibility)
         self.bytecode = bytecode
         self.lexical_scope = lexical_scope
 
@@ -62,7 +62,7 @@ class W_BuiltinFunction(W_FunctionObject):
     _immutable_fields_ = ["func"]
 
     def __init__(self, name, w_class, func, visibility=W_FunctionObject.PUBLIC):
-        W_FunctionObject.__init__(self, name, w_class, visibility=visibility)
+        W_FunctionObject.__init__(self, name, w_class, visibility)
         self.func = func
 
     def __deepcopy__(self, memo):
