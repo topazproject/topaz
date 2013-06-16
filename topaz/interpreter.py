@@ -332,7 +332,7 @@ class Interpreter(object):
     def BUILD_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()
-        w_func = space.newfunction(w_name, w_code, frame.lexical_scope)
+        w_func = space.newfunction(w_name, w_code, frame.lexical_scope, frame.visibility)
         frame.push(w_func)
 
     @jit.unroll_safe
