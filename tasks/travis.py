@@ -3,7 +3,7 @@ import os
 import struct
 import sys
 
-from invoke import task, run
+import invoke
 
 import requests
 
@@ -21,11 +21,11 @@ class Test(BaseTest):
         self.create_build = create_build
 
     def install_deps(self):
-        run("pip install {}".format(" ".join(self.deps)))
+        invoke.run("pip install {}".format(" ".join(self.deps)))
 
     def download_rpython(self):
-        run("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2 || wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
-        run("tar -xf `pwd`/../pypy.tar.bz2 -C `pwd`/../")
+        invoke.run("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2 || wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
+        invoke.run("tar -xf `pwd`/../pypy.tar.bz2 -C `pwd`/../")
         [path_name] = glob.glob("../pypy-pypy*")
         path_name = os.path.abspath(path_name)
         with open("rpython_marker", "w") as f:
@@ -52,7 +52,7 @@ class Test(BaseTest):
             else:
                 raise ValueError("Don't recognize platform: {!r}".format(sys.platform))
             build_name = "topaz-{platform}-{sha1}.tar.bz2".format(platform=platform, sha1=os.environ["TRAVIS_COMMIT"])
-            run("python topaz/tools/make_release.py {}".format(build_name))
+            invoke.run("python topaz/tools/make_release.py {}".format(build_name))
             with open(build_name, "rb") as f:
                 response = requests.post("http://www.topazruby.com/builds/create/", {
                     "build_secret": os.environ["BUILD_SECRET"],
@@ -63,7 +63,7 @@ class Test(BaseTest):
                 response.raise_for_status()
 
 
-@task
+@invoke.task
 def install_requirements():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     if t.deps:
@@ -75,23 +75,23 @@ def install_requirements():
         t.download_rubyspec()
 
 
-@task
+@invoke.task
 def run_tests():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     t.run_tests()
 
 
-@task
+@invoke.task
 def tag_specs(files=""):
-    run("../mspec/bin/mspec tag -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
+    invoke.run("../mspec/bin/mspec tag -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
 
 
-@task
+@invoke.task
 def untag_specs(files=""):
-    run("../mspec/bin/mspec tag --del fails -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
+    invoke.run("../mspec/bin/mspec tag --del fails -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
 
 
-@task
+@invoke.task
 def upload_build():
     t = TEST_TYPES[os.environ["TEST_TYPE"]]
     if t.create_build:
@@ -99,7 +99,7 @@ def upload_build():
 
 
 def run_own_tests(env):
-    run("PYTHONPATH=$PYTHONPATH:{rpython_path} py.test".format(**env))
+    invoke.run("PYTHONPATH=$PYTHONPATH:{rpython_path} py.test".format(**env))
 
 
 def run_rubyspec_untranslated(env):
@@ -107,20 +107,21 @@ def run_rubyspec_untranslated(env):
 
 
 def run_translate_tests(env):
-    run("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch -Ojit targettopaz.py".format(**env))
+    invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch -Ojit targettopaz.py".format(**env))
     run_specs("`pwd`/bin/topaz")
-    run("PYTHONPATH={rpython_path}:$PYTHONPATH py.test --topaz=bin/topaz tests/jit/".format(**env))
+    invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH py.test --topaz=bin/topaz tests/jit/".format(**env))
 
 
 def run_specs(binary, prefix=""):
-    run("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
+    invoke.run("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
         prefix=prefix,
         binary=binary
     ))
 
 
 def run_docs_tests(env):
-    run("sphinx-build -W -b html docs/ docs/_build/")
+    invoke.run("sphinx-build -W -b html docs/ docs/_build/")
+
 
 TEST_TYPES = {
     "own": Test(run_own_tests, deps=["-r requirements.txt"]),
