@@ -17,7 +17,7 @@ class TestBuffer(BaseTopazTest):
                    'float': 4,
                    'double': 8}
 
-    def test_initialize(self, space):
+    def test_total(self, space):
         for key in TestBuffer.sizes:
             w_res = space.execute("""
             buffer = FFI::Buffer.new(:%s, 3)
@@ -25,3 +25,17 @@ class TestBuffer(BaseTopazTest):
             """ % key)
             expected = TestBuffer.sizes[key]*3
             assert self.unwrap(space, w_res) == expected
+
+    def test_instantiations(self, space):
+        generic_init = "FFI::Buffer.%s(:int, 5)"
+        total_should = TestBuffer.sizes['int']*5
+        for init_method in ['new',
+                            'new_inout',
+                            'new_in',
+                            'new_out',
+                            'alloc_inout',
+                            'alloc_in',
+                            'alloc_out']:
+            w_buffer = space.execute(generic_init % init_method)
+            w_buffer_total = space.send(w_buffer, 'total')
+            assert total_should == self.unwrap(space, w_buffer_total)
