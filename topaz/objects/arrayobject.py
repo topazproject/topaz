@@ -229,12 +229,6 @@ class W_ArrayObject(W_Object):
             for w_o in self.items_w
         ]))
 
-    @classdef.singleton_method("try_convert")
-    def method_try_convert(self, space, w_obj):
-        if not space.is_kind_of(w_obj, space.w_array):
-            w_obj = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
-        return w_obj
-
     @classdef.method("pop")
     @check_frozen()
     def method_pop(self, space, w_num=None):
