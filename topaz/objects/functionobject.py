@@ -1,21 +1,28 @@
 import copy
 
-from topaz.frame import BuiltinFrame
 from topaz.objects.objectobject import W_BaseObject
 
 
 class W_FunctionObject(W_BaseObject):
-    _immutable_fields_ = ["name", "w_class"]
+    _immutable_fields_ = ["name", "w_class", "visibility?"]
 
-    def __init__(self, name, w_class=None):
+    PUBLIC = 0
+    PROTECTED = 1
+    PRIVATE = 2
+
+    def __init__(self, name, w_class=None, visibility=PUBLIC):
         self.name = name
         self.w_class = w_class
+        self.visibility = visibility
 
     def __deepcopy__(self, memo):
         obj = super(W_FunctionObject, self).__deepcopy__(memo)
         obj.name = self.name
         obj.w_class = copy.deepcopy(self.w_class, memo)
         return obj
+
+    def update_visibility(self, visibility):
+        self.visibility = visibility
 
     def arity(self, space):
         return space.newint(0)
@@ -24,8 +31,8 @@ class W_FunctionObject(W_BaseObject):
 class W_UserFunction(W_FunctionObject):
     _immutable_fields_ = ["bytecode", "lexical_scope"]
 
-    def __init__(self, name, bytecode, lexical_scope):
-        W_FunctionObject.__init__(self, name)
+    def __init__(self, name, bytecode, lexical_scope, visibility=W_FunctionObject.PUBLIC):
+        W_FunctionObject.__init__(self, name, visibility=visibility)
         self.bytecode = bytecode
         self.lexical_scope = lexical_scope
 
@@ -53,8 +60,8 @@ class W_UserFunction(W_FunctionObject):
 class W_BuiltinFunction(W_FunctionObject):
     _immutable_fields_ = ["func"]
 
-    def __init__(self, name, w_class, func):
-        W_FunctionObject.__init__(self, name, w_class)
+    def __init__(self, name, w_class, func, visibility=W_FunctionObject.PUBLIC):
+        W_FunctionObject.__init__(self, name, w_class, visibility=visibility)
         self.func = func
 
     def __deepcopy__(self, memo):
@@ -63,6 +70,8 @@ class W_BuiltinFunction(W_FunctionObject):
         return obj
 
     def call(self, space, w_receiver, args_w, block):
+        from topaz.frame import BuiltinFrame
+
         frame = BuiltinFrame(self.name)
         ec = space.getexecutioncontext()
         ec.invoke_trace_proc(space, "c-call", self.name, self.w_class.name)

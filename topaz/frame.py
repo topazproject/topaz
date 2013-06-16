@@ -2,6 +2,7 @@ from rpython.rlib import jit
 
 from topaz.closure import LocalCell
 from topaz.objects.arrayobject import W_ArrayObject
+from topaz.objects.functionobject import W_FunctionObject
 
 
 class BaseFrame(object):
@@ -33,6 +34,7 @@ class Frame(BaseFrame):
         self.lexical_scope = lexical_scope
         self.block = block
         self.parent_interp = parent_interp
+        self.visibility = W_FunctionObject.PUBLIC
         self.lastblock = None
 
     def _set_arg(self, space, pos, w_value):

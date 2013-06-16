@@ -1,5 +1,3 @@
-from topaz.objects.symbolobject import W_SymbolObject
-
 from ..base import BaseTopazTest
 
 

@@ -326,10 +326,20 @@ class W_ModuleObject(W_RootObject):
             self.set_default_visibility(space, visibility)
 
     def set_default_visibility(self, space, visibility):
-        pass
+        frame = space.getexecutioncontext().gettoprubyframe()
+        frame.visibility = visibility
 
     def set_method_visibility(self, space, name, visibility):
-        pass
+        w_method = self.find_method(space, name)
+        if w_method is None or isinstance(w_method, UndefMethod):
+            w_method = space.w_object.find_method(space, name)
+
+        if w_method is None or isinstance(w_method, UndefMethod):
+            cls_name = space.obj_to_s(self)
+            raise space.error(space.w_NameError,
+                "undefined method `%s' for class `%s'" % (name, cls_name)
+            )
+        w_method.update_visibility(visibility)
 
     def method_added(self, space, w_name):
         space.send(self, "method_added", [w_name])
@@ -502,15 +512,15 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("private")
     def method_private(self, space, args_w):
-        self.set_visibility(space, args_w, "private")
+        self.set_visibility(space, args_w, W_FunctionObject.PRIVATE)
 
     @classdef.method("public")
     def method_public(self, space, args_w):
-        self.set_visibility(space, args_w, "public")
+        self.set_visibility(space, args_w, W_FunctionObject.PUBLIC)
 
     @classdef.method("protected")
     def method_protected(self, space, args_w):
-        self.set_visibility(space, args_w, "protected")
+        self.set_visibility(space, args_w, W_FunctionObject.PROTECTED)
 
     @classdef.method("private_constant")
     def method_private_constant(self, space, args_w):
@@ -678,7 +688,6 @@ class W_ModuleObject(W_RootObject):
             return space.w_nil
         else:
             return space.newint(1)
-
 
     @classdef.method("instance_method", name="symbol")
     def method_instance_method(self, space, name):
