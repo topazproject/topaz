@@ -123,9 +123,14 @@ def run_docs_tests(env):
     invoke.run("sphinx-build -W -b html docs/ docs/_build/")
 
 
+def run_flake8_tests(env):
+    invoke.run('flake8 . --ignore="E122,E123,E124,E125,E126,E128,E501,F811"')
+
+
 TEST_TYPES = {
     "own": Test(run_own_tests, deps=["-r requirements.txt"]),
     "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
     "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True, create_build=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_rpython=False),
+    "flake8": Test(run_flake8_tests, deps=["flake8"], needs_rpython=False),
 }

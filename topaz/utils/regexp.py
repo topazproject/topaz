@@ -1237,18 +1237,11 @@ def _parse_posix_class(source, info):
 
 
 def _compile_no_cache(pattern, flags):
-    global_flags = flags
-    while True:
-        source = Source(pattern)
-        if flags & EXTENDED:
-            source.ignore_space = True
-        info = Info(flags)
-        try:
-            parsed = _parse_pattern(source, info)
-        except UnscopedFlagSet as e:
-            global_flags = e.flags | flags
-        else:
-            break
+    source = Source(pattern)
+    if flags & EXTENDED:
+        source.ignore_space = True
+    info = Info(flags)
+    parsed = _parse_pattern(source, info)
 
     if not source.at_end():
         raise RegexpError("trailing characters in pattern")

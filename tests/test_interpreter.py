@@ -1,11 +1,6 @@
 import math
 
-import pytest
-
-from topaz.modules.kernel import Kernel
-from topaz.objects.boolobject import W_TrueObject
 from topaz.objects.moduleobject import W_ModuleObject
-from topaz.objects.objectobject import W_Object, W_BaseObject
 
 from .base import BaseTopazTest
 
@@ -930,7 +925,7 @@ class TestInterpreter(BaseTopazTest):
 
     def test_class_variable_access_has_static_scope(self, space):
         with self.raises(space, "NameError"):
-            w_res = space.execute("""
+            space.execute("""
             class A
               def get
                 @@foo
@@ -1623,7 +1618,7 @@ class TestBlocks(BaseTopazTest):
         assert self.unwrap(space, w_res) == ["begin", "ensure", "begin", "begin_end", "ensure", "after", "begin", "ensure"]
 
     def test_break_block_frame_exited(self, space):
-        w_res = space.execute("""
+        space.execute("""
         def create_block
           b = capture_block do
             break
