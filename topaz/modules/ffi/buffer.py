@@ -93,3 +93,25 @@ class W_BufferObject(W_Object):
         return space.newint(  least_significant
                             + middle_significant * 256
                             + most_significant   * 256 * 256)
+
+    @classdef.method('put_ulong_long', offset='int', val='int')
+    def method_put_ulong_long(self, space, offset, val):
+        most_significant = val / 256 / 256 / 256
+        nearly_most_significant = val / 256 / 256 % 256
+        nearly_least_significant = val / 256 % 256
+        least_significant = val % 256
+        self.buffer[offset] = chr(most_significant)
+        self.buffer[offset+1] = chr(nearly_most_significant)
+        self.buffer[offset+2] = chr(nearly_least_significant)
+        self.buffer[offset+3] = chr(least_significant)
+
+    @classdef.method('get_ulong_long', offset='int')
+    def method_get_ulong_long(self, space, offset):
+        most_significant = ord(self.buffer[offset])
+        nearly_most_significant = ord(self.buffer[offset+1])
+        nearly_least_significant = ord(self.buffer[offset+2])
+        least_significant = ord(self.buffer[offset+3])
+        return space.newint(  least_significant
+                            + nearly_least_significant * 256
+                            + nearly_most_significant  * 256 * 256
+                            + most_significant         * 256 * 256 * 256)

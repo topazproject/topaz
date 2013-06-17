@@ -76,3 +76,13 @@ class TestBuffer(BaseTopazTest):
         w_chars = w_array.listview(space)
         assert all([self.unwrap(space, w_res) == 16777215
                     for w_res in w_chars])
+
+    def test_put_and_get_ulong_long(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:char, 8)
+        (0..4).each { |x| buffer.put_ulong_long(x, 4294967295) }
+        (0..4).map { |x| buffer.get_ulong_long(x) }
+        """)
+        w_chars = w_array.listview(space)
+        assert all([self.unwrap(space, w_res) == 4294967295
+                    for w_res in w_chars])
