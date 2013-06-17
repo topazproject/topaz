@@ -85,7 +85,7 @@ class Hash
 
   def merge!(other, &block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
-    other = other.to_hash unless other.kind_of? Hash
+    other = Topaz.convert_type(other, Hash, :to_hash)
     if block
       other.each do |key, val|
         if has_key? key
@@ -223,5 +223,9 @@ class Hash
     out = []
     Topaz::Array.flatten(self, out, level)
     out
+  end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, Hash, :to_hash)
   end
 end

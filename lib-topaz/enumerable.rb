@@ -362,7 +362,7 @@ module Enumerable
     out = []
     self.each do |e|
       v = yield(e)
-      if v.respond_to?(:to_ary) && ary = Array.try_convert(v)
+      if ary = Array.try_convert(v)
         out.concat(ary)
       else
         out << v

@@ -1,14 +1,10 @@
 class Array
   def initialize(size_or_arr = nil, obj = nil, &block)
     self.clear
-    if size_or_arr.nil?
-      return self
-    end
+    return self if size_or_arr.nil?
     if obj.nil?
-      if size_or_arr.kind_of?(Array)
-        return self.replace(size_or_arr)
-      elsif size_or_arr.respond_to?(:to_ary)
-        return self.replace(size_or_arr.to_ary)
+      if ary = Topaz.try_convert_type(size_or_arr, Array, :to_ary)
+        return self.replace(ary)
       end
     end
     length = Topaz.convert_type(size_or_arr, Fixnum, :to_int)
@@ -511,5 +507,9 @@ class Array
       out << lists.map { |l| l[i] }
     end
     out
+  end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, Array, :to_ary)
   end
 end

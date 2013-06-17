@@ -148,4 +148,8 @@ class IO
   def pid
     @pid
   end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, IO, :to_io)
+  end
 end
