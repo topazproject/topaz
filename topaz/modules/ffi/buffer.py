@@ -20,7 +20,7 @@ class W_BufferObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        w_cls.method_attr_reader(space, [space.newsymbol('total')])
+        pass
         # TODO: Try this, once method_alias works in topaz
         #w_cls.method_alias(space, space.newsymbol('alloc_inout'),
         #                          space.newsymbol('new'))
@@ -33,7 +33,11 @@ class W_BufferObject(W_Object):
     @classdef.method('initialize', typesym='symbol', length='int')
     def method_initialize(self, space, typesym, length):
         size = rffi.sizeof(self.typesymbols[typesym])
-        self.set_instance_var(space, '@total', space.newint(length * size))
+        self.buffer = (length * size) * [0]
+
+    @classdef.method('total')
+    def method_total(self, space):
+        return space.newint(len(self.buffer))
 
     # TODO: Once method_alias works in topaz, try the code in setup_class
     #       instead of this.
@@ -45,3 +49,11 @@ class W_BufferObject(W_Object):
     @classdef.singleton_method('alloc_inout')
     def singleton_method_alloc_inout(self, space, args_w):
         return self.method_new(space, args_w, None)
+
+    @classdef.method('put_char', offset='int', char='int')
+    def method_put_char(self, space, offset, char):
+        self.buffer[offset] = char
+
+    @classdef.method('get_char', offset='int')
+    def method_get_char(self, space, offset):
+        return space.newint(self.buffer[offset])

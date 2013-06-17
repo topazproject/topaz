@@ -39,3 +39,12 @@ class TestBuffer(BaseTopazTest):
             w_buffer = space.execute(generic_init % init_method)
             w_buffer_total = space.send(w_buffer, 'total')
             assert total_should == self.unwrap(space, w_buffer_total)
+
+    def test_put_and_get_char(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:char, 5)
+        (0..4).each { |x| buffer.put_char(x, 127) }
+        (0..4).map { |x| buffer.get_char(x) }
+        """)
+        w_chars = w_array.listview(space)
+        assert all([self.unwrap(space, w_res) == 127 for w_res in w_chars])
