@@ -428,12 +428,6 @@ class W_StringObject(W_Object):
         storage = strategy.erase("")
         return W_StringObject(space, storage, strategy, self)
 
-    @classdef.singleton_method("try_convert")
-    def method_try_convert(self, space, w_obj):
-        if not space.is_kind_of(w_obj, space.w_string):
-            w_obj = space.convert_type(w_obj, space.w_string, "to_str", raise_error=False)
-        return w_obj
-
     @classdef.method("initialize")
     def method_initialize(self, space, w_s=None):
         if w_s is not None:

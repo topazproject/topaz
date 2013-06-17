@@ -30,7 +30,7 @@ module Kernel
   end
 
   def String(arg)
-    arg.to_s
+    Topaz.convert_type(arg, String, :to_s)
   end
   module_function :String
 
@@ -52,8 +52,7 @@ module Kernel
   end
 
   def `(cmd)
-    cmd = cmd.to_str if cmd.respond_to?(:to_str)
-    raise TypeError.new("can't convert #{cmd.class} into String") unless cmd.is_a?(String)
+    cmd = Topaz.convert_type(cmd, String, :to_str)
     res = ''
     IO.popen(cmd) do |r|
       res << r.read

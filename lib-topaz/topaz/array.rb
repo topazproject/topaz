@@ -5,7 +5,7 @@ class Topaz::Array
       array.each do |e|
         if level == 0
           out << e
-        elsif e.respond_to?(:to_ary) && ary = ::Array.try_convert(e)
+        elsif ary = ::Array.try_convert(e)
           modified = true
           flatten(ary, out, level - 1)
         else
