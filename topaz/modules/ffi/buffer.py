@@ -33,7 +33,7 @@ class W_BufferObject(W_Object):
     @classdef.method('initialize', typesym='symbol', length='int')
     def method_initialize(self, space, typesym, length):
         size = rffi.sizeof(self.typesymbols[typesym])
-        self.buffer = (length * size) * [0]
+        self.buffer = (length * size) * ['\x00']
 
     @classdef.method('total')
     def method_total(self, space):
@@ -50,10 +50,46 @@ class W_BufferObject(W_Object):
     def singleton_method_alloc_inout(self, space, args_w):
         return self.method_new(space, args_w, None)
 
-    @classdef.method('put_char', offset='int', char='int')
-    def method_put_char(self, space, offset, char):
-        self.buffer[offset] = char
+    @classdef.method('put_char', offset='int', val='int')
+    @classdef.method('put_uchar', offset='int', val='int')
+    def method_put_uchar(self, space, offset, val):
+        self.buffer[offset] = chr(val)
+        return self
 
     @classdef.method('get_char', offset='int')
-    def method_get_char(self, space, offset):
-        return space.newint(self.buffer[offset])
+    @classdef.method('get_uchar', offset='int')
+    def method_get_uchar(self, space, offset):
+        return space.newint(ord(self.buffer[offset]))
+
+    @classdef.method('put_ushort', offset='int', val='int')
+    def method_put_ushort(self, space, offset, val):
+        most_significant = val / 256
+        least_significant = val % 256
+        self.buffer[offset] = chr(most_significant)
+        self.buffer[offset+1] = chr(least_significant)
+        return self
+
+    @classdef.method('get_ushort', offset='int')
+    def method_get_ushort(self, space, offset):
+        most_significant = ord(self.buffer[offset])
+        least_significant = ord(self.buffer[offset+1])
+        return space.newint(  least_significant
+                            + most_significant * 256)
+
+    @classdef.method('put_uint', offset='int', val='int')
+    def method_put_uint(self, space, offset, val):
+        most_significant = val / 256 / 256
+        middle_significant = val / 256 % 256
+        least_significant = val % 256
+        self.buffer[offset] = chr(most_significant)
+        self.buffer[offset+1] = chr(middle_significant)
+        self.buffer[offset+2] = chr(least_significant)
+
+    @classdef.method('get_uint', offset='int')
+    def method_get_uint(self, space, offset):
+        most_significant = ord(self.buffer[offset])
+        middle_significant = ord(self.buffer[offset+1])
+        least_significant = ord(self.buffer[offset+2])
+        return space.newint(  least_significant
+                            + middle_significant * 256
+                            + most_significant   * 256 * 256)

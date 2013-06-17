@@ -48,3 +48,31 @@ class TestBuffer(BaseTopazTest):
         """)
         w_chars = w_array.listview(space)
         assert all([self.unwrap(space, w_res) == 127 for w_res in w_chars])
+
+    def test_put_and_get_uchar(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:char, 5)
+        (0..4).each { |x| buffer.put_uchar(x, 255) }
+        (0..4).map { |x| buffer.get_uchar(x) }
+        """)
+        w_chars = w_array.listview(space)
+        assert all([self.unwrap(space, w_res) == 255 for w_res in w_chars])
+
+    def test_put_and_get_ushort(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:char, 6)
+        (0..4).each { |x| buffer.put_ushort(x, 65535) }
+        (0..4).map { |x| buffer.get_ushort(x) }
+        """)
+        w_chars = w_array.listview(space)
+        assert all([self.unwrap(space, w_res) == 65535 for w_res in w_chars])
+
+    def test_put_and_get_uint(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:char, 7)
+        (0..4).each { |x| buffer.put_uint(x, 16777215) }
+        (0..4).map { |x| buffer.get_uint(x) }
+        """)
+        w_chars = w_array.listview(space)
+        assert all([self.unwrap(space, w_res) == 16777215
+                    for w_res in w_chars])
