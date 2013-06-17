@@ -3,14 +3,27 @@ from topaz.modules.ffi.type import W_TypeObject, W_BuiltinObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
 from rpython.rlib import clibffi
+from rpython.rtyper.lltypesystem import rffi
 
 class TestType(BaseTopazTest):
 
-    primitive_types =  ['INT8', 'UINT8', 'INT16', 'UINT16',
-                        'INT32', 'UINT32', 'INT64', 'UINT64',
-                        'LONG', 'ULONG', 'FLOAT32', 'FLOAT64',
-                        'VOID', 'LONGDOUBLE', 'POINTER', 'BOOL',
-                        'VARARGS']
+    primitive_types =  {'INT8': {'size': 1},
+                        'UINT8': {'size': 1},
+                        'INT16': {'size': 2},
+                        'UINT16': {'size': 2},
+                        'INT32': {'size': 4},
+                        'UINT32': {'size': 4},
+                        'INT64': {'size': 8},
+                        'UINT64': {'size': 8},
+                        'LONG': {'size': rffi.sizeof(rffi.LONG)},
+                        'ULONG': {'size': rffi.sizeof(rffi.ULONG)},
+                        'FLOAT32': {'size': 4},
+                        'FLOAT64': {'size': 8},
+                        'VOID': {'size': 1},
+                        'LONGDOUBLE': {'size': 16},
+                        'POINTER': {'size': 8},
+                        'BOOL': {'size': 1},
+                        'VARARGS': {'size': 1}}
 
     def test_aliases(self, space):
         assert W_TypeObject.aliases['SCHAR'] == 'INT8'
@@ -62,6 +75,12 @@ class TestType(BaseTopazTest):
         assert w_builtin.superclass is w_type
 
     def test_Builtin_instances(self, space):
+        for pt in TestType.primitive_types:
+            w_res = space.execute("FFI::Type::%s.size" % pt)
+            assert (self.unwrap(space, w_res) ==
+                    TestType.primitive_types[pt]['size'])
+
+    def test_ways_to_access_Builtin_instances(self, space):
         for pt in TestType.primitive_types:
             w_t1 = space.execute('FFI::TYPE_%s' % pt)
             w_t2 = space.execute('FFI::Type::%s' % pt)

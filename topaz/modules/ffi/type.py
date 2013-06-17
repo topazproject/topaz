@@ -75,6 +75,10 @@ class W_TypeObject(W_Object):
                 self.native_type == other.native_type and
                 self.ffi_type == other.ffi_type)
 
+    @classdef.method('size')
+    def method_size(self, space):
+        return space.newint(int(self.ffi_type._obj.c_size))
+
 class W_BuiltinObject(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
 
