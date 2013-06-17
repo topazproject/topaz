@@ -40,6 +40,10 @@ class TestBuffer(BaseTopazTest):
             w_buffer_total = space.send(w_buffer, 'total')
             assert total_should == self.unwrap(space, w_buffer_total)
 
+    def test_default_size_is_1(self, space):
+        w_res = space.execute("FFI::Buffer.alloc_in(7).total")
+        assert self.unwrap(space, w_res) == 7
+
     def test_put_and_get_char(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:char, 5)

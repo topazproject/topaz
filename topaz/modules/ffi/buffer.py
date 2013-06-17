@@ -1,4 +1,6 @@
 from topaz.objects.objectobject import W_Object
+from topaz.coerce import Coerce
+from topaz.error import RubyError
 from topaz.module import ClassDef
 from rpython.rtyper.lltypesystem import rffi
 
@@ -30,10 +32,22 @@ class W_BufferObject(W_Object):
     def singleton_method_allocate(self, space, args_w):
         return W_BufferObject(space)
 
-    @classdef.method('initialize', typesym='symbol', length='int')
-    def method_initialize(self, space, typesym, length):
+    @classdef.method('initialize')
+    def method_initialize(self, space, w_arg1, w_arg2=None):
+        try:
+            typesym = Coerce.str(space, w_arg1)
+            length = Coerce.int(space, w_arg2)
+            self.init_str_int(space, typesym, length)
+        except RubyError:
+            length = Coerce.int(space, w_arg1)
+            self.init_int(space, length)
+
+    def init_str_int(self, space, typesym, length):
         size = rffi.sizeof(self.typesymbols[typesym])
         self.buffer = (length * size) * ['\x00']
+
+    def init_int(self, space, length):
+        self.buffer = length * ['\x00']
 
     @classdef.method('total')
     def method_total(self, space):
