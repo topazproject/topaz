@@ -109,7 +109,7 @@ class W_ArrayObject(W_Object):
                 rep_w = [w_obj]
             else:
                 rep_w = space.listview(w_converted)
-            self._subscript_assign_range(space, start, end, w_obj, rep_w)
+            self._subscript_assign_range(space, start, end, rep_w)
         else:
             self.items_w[start] = w_obj
         return w_obj
