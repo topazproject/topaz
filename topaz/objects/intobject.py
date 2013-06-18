@@ -145,8 +145,9 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("fdiv")
     def method_fdiv(self, space, w_other):
         if space.is_kind_of(w_other, space.w_fixnum):
+            other = space.int_w(w_other)
             try:
-                res = float(self.intvalue) / float(space.int_w(w_other))
+                res = float(self.intvalue) / float(other)
             except ZeroDivisionError:
                 return space.newfloat(rfloat.copysign(rfloat.INFINITY, float(self.intvalue)))
             else:
@@ -154,8 +155,9 @@ class W_FixnumObject(W_RootObject):
         elif space.is_kind_of(w_other, space.w_bignum):
             return space.send(space.newbigint_fromint(self.intvalue), "fdiv", [w_other])
         elif space.is_kind_of(w_other, space.w_float):
+            other = space.float_w(w_other)
             try:
-                res = float(self.intvalue) / space.float_w(w_other)
+                res = float(self.intvalue) / other
             except ZeroDivisionError:
                 return space.newfloat(rfloat.copysign(rfloat.INFINITY, float(self.intvalue)))
             else:
