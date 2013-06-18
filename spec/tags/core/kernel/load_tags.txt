@@ -45,3 +45,4 @@ fails:Kernel.load
 fails:Kernel.load (path resolution) calls #to_str on non-String objects returned by #to_path
 fails:Kernel.load (path resolution) loads a path with duplicate path separators
 fails:Kernel.load (path resolution) with an unreadable file raises a LoadError
+fails:Kernel#load (path resolution) does not load file twice after $LOAD_PATH change

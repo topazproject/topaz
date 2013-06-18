@@ -1,4 +1,3 @@
 fails:File.stat returns a File::Stat object if the given file exists
 fails:File.stat returns a File::Stat object when called on an instance of File
-fails:File.stat raises an Errno::ENOENT if the file does not exist
 fails:File.stat returns information for a file that has been deleted but is still open

@@ -46,3 +46,6 @@ fails:IO.copy_stream from a pipe IO to an IO leaves the destination IO position 
 fails:IO.copy_stream from a pipe IO to an IO raises an IOError if the destination IO is not open for writing
 fails:IO.copy_stream from a pipe IO to an IO does not close the destination IO
 fails:IO.copy_stream from a pipe IO to an IO copies only length bytes when specified
+fails:IO.copy_stream with non-IO Objects calls #readpartial on the source Object if defined
+fails:IO.copy_stream with non-IO Objects calls #read on the source Object
+fails:IO.copy_stream with non-IO Objects calls #write on the destination Object

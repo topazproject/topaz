@@ -69,6 +69,8 @@ class IO
     end
     self
   end
+  alias each each_line
+  alias lines each_line
 
   def readline(sep = $/, limit = nil)
     line = gets(sep, limit)
@@ -145,5 +147,9 @@ class IO
 
   def pid
     @pid
+  end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, IO, :to_io)
   end
 end

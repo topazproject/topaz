@@ -33,15 +33,18 @@ class WrapperGenerator(object):
         argcount = 0
         for arg in argnames:
             argcount += arg.startswith("w_") or arg in argspec
+        min_args = argcount
+        for arg, default in zip(reversed(argnames), reversed(defaults)):
+            min_args -= arg.startswith("w_") or arg in argspec
         unrolling_argnames = unrolling_iterable(enumerate(argnames))
         takes_args_w = "args_w" in argnames
 
         @functools.wraps(self.func)
         def wrapper(self, space, args_w, block):
-            if ((len(args_w) < (argcount - len(defaults)) or
-                (not takes_args_w and len(args_w) > argcount))):
+            if (len(args_w) < min_args or
+                (not takes_args_w and len(args_w) > argcount)):
                 raise space.error(space.w_ArgumentError,
-                    "wrong number of arguments (%d for %d)" % (len(args_w), argcount - len(defaults))
+                    "wrong number of arguments (%d for %d)" % (len(args_w), min_args)
                 )
             args = ()
             arg_count = 0

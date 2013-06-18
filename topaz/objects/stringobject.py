@@ -292,9 +292,36 @@ class MutableStringStrategy(StringStrategy):
             storage.insert(idx, char)
             idx += 1
 
+    def strip(self, storage):
+        storage = self.unerase(storage)
+        if not storage:
+            return False
+
+        shift = 0
+        while shift < len(storage) and storage[shift].isspace():
+            shift += 1
+        if shift == len(storage):
+            del storage[:]
+            return True
+
+        pop = len(storage)
+        while pop > 0 and storage[pop - 1].isspace() or storage[pop - 1] == '\0':
+            pop -= 1
+
+        if pop < len(storage) or shift > 0:
+            end = pop
+            new_len = end - shift
+            assert end >= 0
+            assert new_len >= 0
+            storage[0:new_len] = storage[shift:end]
+            del storage[new_len:]
+            return True
+        else:
+            return False
+
 
 class W_StringObject(W_Object):
-    classdef = ClassDef("String", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("String", W_Object.classdef)
     classdef.include_module(Comparable)
 
     def __init__(self, space, storage, strategy, klass=None):
@@ -336,6 +363,9 @@ class W_StringObject(W_Object):
 
     def str_w(self, space):
         return self.strategy.str_w(self.str_storage)
+
+    def symbol_w(self, space):
+        return self.str_w(space)
 
     def liststr_w(self, space):
         return self.strategy.liststr_w(self.str_storage)
@@ -393,7 +423,7 @@ class W_StringObject(W_Object):
         return new_string if change_made else None
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space, w_s=None):
+    def singleton_method_allocate(self, space):
         strategy = space.fromcache(ConstantStringStrategy)
         storage = strategy.erase("")
         return W_StringObject(space, storage, strategy, self)
@@ -443,9 +473,13 @@ class W_StringObject(W_Object):
 
     @classdef.method("*", times="int")
     def method_times(self, space, times):
+        if times < 0:
+            raise space.error(space.w_ArgumentError, "negative argument")
         return self.strategy.mul(space, self.str_storage, times)
 
     @classdef.method("<<")
+    @classdef.method("concat")
+    @check_frozen()
     def method_lshift(self, space, w_other):
         assert isinstance(w_other, W_StringObject)
         self.extend(space, w_other)
@@ -461,6 +495,7 @@ class W_StringObject(W_Object):
         return space.newint(self.strategy.hash(self.str_storage))
 
     @classdef.method("[]")
+    @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):
         start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
         if nil:
@@ -484,8 +519,8 @@ class W_StringObject(W_Object):
             elif s1 > s2:
                 return space.newint(1)
         else:
-            if space.respond_to(w_other, space.newsymbol("to_str")) and space.respond_to(w_other, space.newsymbol("<=>")):
-                tmp = space.send(w_other, space.newsymbol("<=>"), [self])
+            if space.respond_to(w_other, "to_str") and space.respond_to(w_other, "<=>"):
+                tmp = space.send(w_other, "<=>", [self])
                 if tmp is not space.w_nil:
                     return space.newint(-space.int_w(tmp))
             return space.w_nil
@@ -496,6 +531,7 @@ class W_StringObject(W_Object):
         return space.newsymbol(space.str_w(self))
 
     @classdef.method("clear")
+    @check_frozen()
     def method_clear(self, space):
         self.clear(space)
         return self
@@ -645,24 +681,28 @@ class W_StringObject(W_Object):
             )
 
     @classdef.method("swapcase!")
+    @check_frozen()
     def method_swapcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.swapcase(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("upcase!")
+    @check_frozen()
     def method_upcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.upcase(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("downcase!")
+    @check_frozen()
     def method_downcase_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.downcase(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("capitalize!")
+    @check_frozen()
     def method_capitalize_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.capitalize(self.str_storage)
@@ -783,6 +823,7 @@ class W_StringObject(W_Object):
         return space.newstr_fromchars(new_string) if new_string else string
 
     @classdef.method("tr!", source="str", replacement="str")
+    @check_frozen()
     def method_tr_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, False)
         self.replace(space, new_string)
@@ -795,6 +836,7 @@ class W_StringObject(W_Object):
         return space.newstr_fromchars(new_string) if new_string else string
 
     @classdef.method("tr_s!", source="str", replacement="str")
+    @check_frozen()
     def method_tr_s_i(self, space, source, replacement):
         new_string = self.tr_trans(space, source, replacement, True)
         self.replace(space, new_string)
@@ -805,7 +847,7 @@ class W_StringObject(W_Object):
         if space.is_kind_of(w_obj, space.w_string):
             raise space.error(space.w_TypeError, "type mismatch: String given")
         else:
-            return space.send(w_obj, space.newsymbol("=~"), [self])
+            return space.send(w_obj, "=~", [self])
 
     @classdef.method("%")
     def method_mod(self, space, w_arg):
@@ -828,6 +870,80 @@ class W_StringObject(W_Object):
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
         return space.newbool(substr in space.str_w(self))
+
+    def scan_string(self, space, w_pattern):
+        string = space.str_w(self)
+        pattern = space.str_w(w_pattern)
+        idx = string.find(pattern, 0)
+        while idx >= 0:
+            w_match = space.newstr_fromstr(string[idx:idx + len(pattern)])
+            space.infect(w_match, self)
+            space.infect(w_match, w_pattern)
+            yield w_match
+            if not pattern:
+                idx += 1
+            else:
+                idx += len(pattern)
+            idx = string.find(pattern, idx)
+
+    def scan_regexp(self, space, w_pattern):
+        last = -1
+        string = space.str_w(self)
+        ctx = w_pattern.make_ctx(string)
+
+        while last < len(string) and self.search_context(space, ctx):
+            w_matchdata = w_pattern.get_match_result(space, ctx, found=True)
+            if w_matchdata.size() > 1:
+                matches_w = []
+                for num in xrange(1, w_matchdata.size(), 1):
+                    begin, end = w_matchdata.get_span(num)
+                    assert begin >= 0
+                    assert end >= 0
+                    w_str = space.newstr_fromstr(string[begin:end])
+                    space.infect(w_str, self)
+                    space.infect(w_str, w_pattern)
+                    matches_w.append(w_str)
+                w_match = space.newarray(matches_w)
+            else:
+                w_match = space.newstr_fromstr(string[ctx.match_start:ctx.match_end])
+                space.infect(w_match, self)
+                space.infect(w_match, w_pattern)
+
+            yield w_match
+
+            if ctx.match_start == ctx.match_end:
+                last += 1
+            else:
+                last = ctx.match_end
+            assert last >= 0
+            ctx.reset(last)
+
+    def scan_process_result(self, space, w_match, results_w, block):
+        if block:
+            space.invoke_block(block, [w_match])
+        else:
+            results_w.append(w_match)
+
+    @classdef.method("scan")
+    def method_scan(self, space, w_pattern, block):
+        results_w = []
+        w_str_pattern = space.convert_type(w_pattern, space.w_string, "to_str", raise_error=False)
+        if w_str_pattern is not space.w_nil:
+            for w_match in self.scan_string(space, w_str_pattern):
+                self.scan_process_result(space, w_match, results_w, block)
+        elif space.is_kind_of(w_pattern, space.w_regexp):
+            for w_match in self.scan_regexp(space, w_pattern):
+                self.scan_process_result(space, w_match, results_w, block)
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "wrong argument type %s (expected Regexp)" %
+                    space.obj_to_s(space.getclass(w_pattern))
+            )
+        if block:
+            return self
+        else:
+            return space.newarray(results_w)
 
     @classdef.method("gsub")
     def method_gsub(self, space, w_pattern, w_replacement=None, block=None):
@@ -912,11 +1028,11 @@ class W_StringObject(W_Object):
         return result
 
     def gsub_regexp_block(self, space, block, w_match):
-        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        w_arg = space.send(w_match, "[]", [space.newint(0)])
         return self.gsub_yield_block(space, block, w_arg)
 
     def gsub_regexp_hash(self, space, w_hash, w_match):
-        w_arg = space.send(w_match, space.newsymbol("[]"), [space.newint(0)])
+        w_arg = space.send(w_match, "[]", [space.newint(0)])
         return self.gsub_lookup_hash(space, w_hash, w_arg)
 
     def gsub_string(self, space, w_pattern, replacement, w_hash, block, first_only):
@@ -947,20 +1063,21 @@ class W_StringObject(W_Object):
         return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_lookup_hash(self, space, w_hash, w_matchstr):
-        w_value = space.send(w_hash, space.newsymbol("[]"), [w_matchstr])
+        w_value = space.send(w_hash, "[]", [w_matchstr])
         return self.gsub_replacement_to_s(space, w_value)
 
     def gsub_replacement_to_s(self, space, w_replacement):
         if space.is_kind_of(w_replacement, space.w_string):
             return space.str_w(w_replacement)
         else:
-            w_replacement = space.send(w_replacement, space.newsymbol("to_s"))
+            w_replacement = space.send(w_replacement, "to_s")
             if space.is_kind_of(w_replacement, space.w_string):
                 return space.str_w(w_replacement)
             else:
                 return space.any_to_s(w_replacement)
 
     @classdef.method("chomp!")
+    @check_frozen()
     def method_chomp_i(self, space, w_newline=None):
         if w_newline is None:
             w_newline = space.globals.get(space, "$/")
@@ -974,12 +1091,14 @@ class W_StringObject(W_Object):
         return self if changed else space.w_nil
 
     @classdef.method("chop!")
+    @check_frozen()
     def method_chop_i(self, space):
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chop(self.str_storage)
         return self if changed else space.w_nil
 
     @classdef.method("reverse!")
+    @check_frozen()
     def method_reverse_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.reverse(self.str_storage)
@@ -987,6 +1106,7 @@ class W_StringObject(W_Object):
 
     @classdef.method("next!")
     @classdef.method("succ!")
+    @check_frozen()
     def method_succ_i(self, space):
         self.strategy.to_mutable(space, self)
         self.strategy.succ(self.str_storage)
@@ -1004,3 +1124,13 @@ class W_StringObject(W_Object):
         self.strategy.to_mutable(space, self)
         self.strategy.insert(self.str_storage, index, other)
         return self
+
+    @classdef.method("strip!")
+    @check_frozen()
+    def method_strip_i(self, space):
+        self.strategy.to_mutable(space, self)
+        changed = self.strategy.strip(self.str_storage)
+        if changed:
+            return self
+        else:
+            return space.w_nil

@@ -10,7 +10,7 @@ from topaz.utils.ll_dir import opendir, readdir, closedir
 
 
 class W_DirObject(W_Object):
-    classdef = ClassDef("Dir", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Dir", W_Object.classdef)
     classdef.include_module(Enumerable)
 
     def __init__(self, space, klass=None):
@@ -36,7 +36,7 @@ class W_DirObject(W_Object):
         self.open = True
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_DirObject(space)
 
     @classdef.singleton_method("pwd")
@@ -49,12 +49,18 @@ class W_DirObject(W_Object):
         if path is None:
             path = os.environ["HOME"]
         current_dir = os.getcwd()
-        os.chdir(path)
+        try:
+            os.chdir(path)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         if block is not None:
             try:
                 return space.invoke_block(block, [space.newstr_fromstr(path)])
             finally:
-                os.chdir(current_dir)
+                try:
+                    os.chdir(current_dir)
+                except OSError as e:
+                    raise error_for_oserror(space, e)
         else:
             return space.newint(0)
 
@@ -71,9 +77,9 @@ class W_DirObject(W_Object):
     @classdef.singleton_method("[]")
     def method_subscript(self, space, args_w):
         if len(args_w) == 1:
-            return space.send(self, space.newsymbol("glob"), args_w)
+            return space.send(self, "glob", args_w)
         else:
-            return space.send(self, space.newsymbol("glob"), [space.newarray(args_w)])
+            return space.send(self, "glob", [space.newarray(args_w)])
 
     @classdef.singleton_method("glob", flags="int")
     def method_glob(self, space, w_pattern, flags=0, block=None):

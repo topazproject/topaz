@@ -7,8 +7,16 @@ class Numeric
     self.to_i
   end
 
+  def integer?
+    false
+  end
+
   def abs
     self < 0 ? -self : self
+  end
+
+  def abs2
+    self * self
   end
 
   def div(other)

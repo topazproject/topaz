@@ -212,9 +212,9 @@ class CompilerContext(object):
         return False
 
     def find_frame_block(self, block_type):
-        for i in xrange(len(self.frame_blocks) - 1, -1, -1):
-            if self.frame_blocks[i][0] == block_type:
-                return self.frame_blocks[i][1]
+        for frame_block in reversed(self.frame_blocks):
+            if frame_block[0] == block_type:
+                return frame_block[1]
         raise SystemError
 
     def new_block(self):

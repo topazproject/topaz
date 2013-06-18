@@ -6,8 +6,6 @@ fails:Array#pack with format 'f' raises a ArgumentError if a String does not rep
 fails:Array#pack with format 'f' calls #to_f to convert an object to a float
 fails:Array#pack with format 'F' returns an ASCII-8BIT string
 fails:Array#pack with format 'F' encodes all remaining elements when passed the '*' modifier
-fails:Array#pack with format 'F' encodes positive Infinity
-fails:Array#pack with format 'F' encodes negative Infinity
 fails:Array#pack with format 'F' encodes NaN
 fails:encodes a positive Float outside the range of a single precision float
 fails:encodes a negative Float outside the range of a single precision float

@@ -15,7 +15,6 @@ The following is a list of known missing features:
 
 * Most of the standard library is missing.
 * No threading support.
-* No fibers.
 * No ``call/cc``.
 * No method visibility (``private``).
 * Many builtin methods are missing.

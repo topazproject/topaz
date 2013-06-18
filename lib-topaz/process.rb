@@ -8,8 +8,15 @@ module Process
     return [pid, $?]
   end
 
+  def self.wait2(pid = -1)
+    waitpid2(pid)
+  end
+
   def self.waitall
-    raise NotImplementedError.new("Process.waitall")
+    result = []
+    result << wait2 while true
+  rescue Errno::ECHILD
+    result
   end
 
   class Status
@@ -17,6 +24,12 @@ module Process
       @pid = pid
       @exitstatus = exitstatus
     end
+
+    def success?
+      @exitstatus == 0
+    end
+
+    alias exited? success?
 
     def pid
       @pid

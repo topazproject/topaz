@@ -1,20 +1,13 @@
 class Array
   def initialize(size_or_arr = nil, obj = nil, &block)
     self.clear
-    if size_or_arr.nil?
-      return self
-    end
+    return self if size_or_arr.nil?
     if obj.nil?
-      if size_or_arr.kind_of?(Array)
-        return self.replace(size_or_arr)
-      elsif size_or_arr.respond_to?(:to_ary)
-        return self.replace(size_or_arr.to_ary)
+      if ary = Topaz.try_convert_type(size_or_arr, Array, :to_ary)
+        return self.replace(ary)
       end
     end
-    if !size_or_arr.respond_to?(:to_int)
-      raise TypeError.new("can't convert #{size_or_arr.class} into Integer")
-    end
-    length = size_or_arr.to_int
+    length = Topaz.convert_type(size_or_arr, Fixnum, :to_int)
     raise ArgumentError.new("negative array size") if length < 0
     if block
       # TODO: Emit "block supersedes default value argument" warning
@@ -47,18 +40,19 @@ class Array
 
   alias :to_s :inspect
 
-  def -(other)
-    res = []
-    self.each do |x|
-      if !other.include?(x)
-        res << x
-      end
-    end
-    res
-  end
-
   def at(idx)
     self[idx]
+  end
+
+  def fetch(*args, &block)
+    i = Topaz.convert_type(args[0], Fixnum, :to_int)
+    if i < -self.length || i >= self.length
+      return block.call(args[0]) if block
+      return args[1] if args.size > 1
+      raise IndexError.new("index #{i} outside of array bounds: -#{self.length}...#{self.length}")
+    else
+      self[i]
+    end
   end
 
   def each(&block)
@@ -71,22 +65,16 @@ class Array
     return self
   end
 
-  def zip(ary)
-    result = []
-    self.each_with_index do |obj, idx|
-      result << [obj, ary[idx]]
+  def product(*args, &block)
+    args = args.unshift(self)
+    if block
+      Topaz::Array.product(args, &block)
+      self
+    else
+      out = self.class.allocate
+      Topaz::Array.product(args) { |e| out << e }
+      out
     end
-    result
-  end
-
-  def product(ary)
-    result = []
-    self.each do |obj|
-      ary.each do |other|
-        result << [obj, other]
-      end
-    end
-    result
   end
 
   def compact
@@ -97,7 +85,22 @@ class Array
     reject! { |obj| obj.nil? }
   end
 
+  def select!(&block)
+    return self.enum_for(:select!) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    new_arr = self.select(&block)
+    if new_arr.size != self.size
+      self.replace(new_arr)
+      self
+    end
+  end
+
+  def keep_if(&block)
+    self.select!(&block) || self
+  end
+
   def reject!(&block)
+    return self.enum_for(:reject!) unless block
     prev_size = self.size
     self.delete_if(&block)
     return nil if prev_size == self.size
@@ -113,8 +116,8 @@ class Array
   end
 
   def delete_if(&block)
-    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     return self.enum_for(:delete_if) unless block
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     i = 0
     c = 0
     sz = self.size
@@ -133,8 +136,14 @@ class Array
 
   def delete(obj, &block)
     sz = self.size
-    self.delete_if { |o| o == obj }
-    return obj if sz != self.size
+    last_matched_element = nil
+    self.delete_if do |o|
+      if match = (o == obj)
+        last_matched_element = o
+      end
+      match
+    end
+    return last_matched_element if sz != self.size
     return yield if block
     return nil
   end
@@ -148,29 +157,27 @@ class Array
   end
 
   def flatten(level = -1)
-    list = []
-    Thread.current.recursion_guard(:array_flatten, self) do
-      self.each do |item|
-        if level == 0
-          list << item
-        elsif ary = Array.try_convert(item)
-          list.concat(ary.flatten(level - 1))
-        else
-          list << item
-        end
-      end
-      return list
-    end
-    raise ArgumentError.new("tried to flatten recursive array")
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    Topaz::Array.flatten(self, out, level)
+    out
   end
 
   def flatten!(level = -1)
-    list = self.flatten(level)
-    self.replace(list)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    level = Topaz.convert_type(level, Fixnum, :to_int)
+    out = self.class.allocate
+    if Topaz::Array.flatten(self, out, level)
+      self.replace(out)
+    end
   end
 
   def sort(&block)
-    dup.sort!(&block)
+    Array.new(self).sort!(&block)
+  end
+
+  def sort_by(&block)
+    Array.new(self).sort_by!(&block)
   end
 
   def ==(other)
@@ -197,6 +204,22 @@ class Array
     return true
   end
 
+  def <=>(other)
+    return 0 if self.equal?(other)
+    other = Array.try_convert(other)
+    return nil unless other
+    cmp_len = (self.size <=> other.size)
+    return cmp_len if cmp_len != 0
+    Thread.current.recursion_guard(:array_comparison, self) do
+      self.each_with_index do |e, i|
+        cmp = (e <=> other[i])
+        return cmp if cmp != 0
+      end
+      return 0
+    end
+    nil
+  end
+
   def eql?(other)
     if self.equal?(other)
       return true
@@ -219,47 +242,23 @@ class Array
 
   def hash
     res = 0x345678
-    self.each do |x|
-      # We want to keep this within a fixnum range.
-      res = Topaz.intmask((1000003 * res) ^ x.hash)
+    Thread.current.recursion_guard(:array_hash, self) do
+      self.each do |x|
+        # We want to keep this within a fixnum range.
+        res = Topaz.intmask((1000003 * res) ^ x.hash)
+      end
     end
     return res
   end
 
-  def *(arg)
-    return join(arg) if arg.respond_to? :to_str
-
-    # MRI error cases
-    argcls = arg.class
-    begin
-      arg = arg.to_int
-    rescue Exception
-      raise TypeError.new("can't convert #{argcls} into Fixnum")
-    end
-    raise TypeError.new("can't convert #{argcls} to Fixnum (argcls#to_int gives arg.class)") if arg.class != Fixnum
-    raise ArgumentError.new("Count cannot be negative") if arg < 0
-
-    return [] if arg == 0
-    result = self.dup
-    for i in 1...arg do
-      result.concat(self)
-    end
-    result
-  end
-
   def map!(&block)
+    return self.enum_for(:map!) unless block
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     self.each_with_index { |obj, idx| self[idx] = yield(obj) }
     self
   end
 
-  def max(&block)
-    max = self[0]
-    self.each do |e|
-      max = e if (block ? block.call(max, e) : max <=> e) < 0
-    end
-    max
-  end
+  alias :collect! :map!
 
   def uniq!(&block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
@@ -293,7 +292,16 @@ class Array
   end
 
   def values_at(*args)
-    args.map { |n| self[n] }
+    out = []
+    args.each do |arg|
+      if arg.is_a?(Range)
+        v = self[arg]
+        out.concat(v) if v
+      else
+        out << self[arg]
+      end
+    end
+    out
   end
 
   def each_index(&block)
@@ -303,7 +311,7 @@ class Array
   end
 
   def reverse
-    self.dup.reverse!
+    Array.new(self).reverse!
   end
 
   def reverse_each(&block)
@@ -314,5 +322,194 @@ class Array
       i -= 1
     end
     return self
+  end
+
+  def index(obj = nil, &block)
+    return self.enum_for(:index) if !obj && !block
+    each_with_index do |e, i|
+      return i if obj ? (e == obj) : block.call(e)
+    end
+    nil
+  end
+
+  alias :find_index :index
+
+  def rindex(obj = nil, &block)
+    return self.enum_for(:rindex) if !obj && !block
+    reverse.each_with_index do |e, i|
+      return length - i - 1 if obj ? (e == obj) : block.call(e)
+    end
+    nil
+  end
+
+  def rotate(n = 1)
+    Array.new(self).rotate!(n)
+  end
+
+  def count(*args, &block)
+    c = 0
+    if args.empty?
+      if block
+        self.each { |e| c += 1 if block.call(e) }
+      else
+        c = self.length
+      end
+    else
+      arg = args[0]
+      self.each { |e| c += 1 if e == arg }
+    end
+    c
+  end
+
+  def shuffle!
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    (self.length - 1).downto(1) do |idx|
+      other = rand(idx + 1)
+      self[other], self[idx] = self[idx], self[other]
+    end
+    self
+  end
+
+  def shuffle
+    arr = Array.new(self)
+    arr.shuffle!
+    arr
+  end
+
+  def to_a
+    self.instance_of?(Array) ? self : Array.new(self)
+  end
+
+  def &(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    h = {}
+    other.each { |e| h[e] = true }
+    self.select { |e| h.delete(e) }
+  end
+
+  def |(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    h = {}
+    self.each { |e| h[e] = true }
+    other.each { |e| h.fetch(e) { |v| h[v] = true } }
+    h.keys
+  end
+
+  def -(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    h = {}
+    other.each { |e| h[e] = true }
+    self.reject { |e| h.has_key?(e) }
+  end
+
+  def permutation(r = nil, &block)
+    return self.enum_for(:permutation, r) unless block
+    r = r ? Topaz.convert_type(r, Fixnum, :to_int) : self.size
+    Topaz::Array.permutation(self, r, &block)
+    self
+  end
+
+  def combination(r = nil, &block)
+    return self.enum_for(:combination, r) unless block
+    r = r ? Topaz.convert_type(r, Fixnum, :to_int) : self.size
+    Topaz::Array.combination(self, r, &block)
+    self
+  end
+
+  def repeated_combination(r, &block)
+    return self.enum_for(:repeated_combination, r) unless block
+    r = Topaz.convert_type(r, Fixnum, :to_int)
+    Topaz::Array.repeated_combination(self, r, &block)
+    self
+  end
+
+  def repeated_permutation(r, &block)
+    return self.enum_for(:repeated_permutation, r) unless block
+    r = Topaz.convert_type(r, Fixnum, :to_int)
+    Topaz::Array.repeated_permutation(self, r, &block)
+    self
+  end
+
+  def fill(*args, &block)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+
+    if block
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 0..2)") if args.size > 2
+      one, two = args
+    else
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 1..3)") if args.empty? || args.size > 3
+      obj, one, two = args
+    end
+
+    if one.kind_of?(Range)
+      raise TypeError.new("no implicit conversion of Range into Integer") if two
+
+      left = Topaz.convert_type(one.begin, Fixnum, :to_int)
+      left += size if left < 0
+      raise RangeError.new("#{one} out of range") if left < 0
+
+      right = Topaz.convert_type(one.end, Fixnum, :to_int)
+      right += size if right < 0
+      right += 1 unless one.exclude_end?
+      return self if right <= left
+
+    elsif one
+      left = Topaz.convert_type(one, Fixnum, :to_int)
+      left += size if left < 0
+      left = 0 if left < 0
+
+      if two
+        right = Topaz.convert_type(two, Fixnum, :to_int)
+        return self if right == 0
+        right += left
+      else
+        right = size
+      end
+    else
+      left = 0
+      right = size
+    end
+
+    right_bound = (right > size) ? size : right
+
+    i = left
+    while i < right_bound
+      self[i] = block ? yield(i) : obj
+      i += 1
+    end
+
+    if left > size
+      self.concat([nil] * (left - size))
+      i = size
+    end
+
+    while i < right
+      self << (block ? yield(i) : obj)
+      i += 1
+    end
+
+    self
+  end
+
+  def transpose
+    return [] if self.empty?
+
+    max = nil
+    lists = self.map do |ary|
+      ary = Topaz.convert_type(ary, Array, :to_ary)
+      max ||= ary.size
+      raise IndexError.new("element size differs (#{ary.size} should be #{max})") if ary.size != max
+      ary
+    end
+
+    out = []
+    max.times do |i|
+      out << lists.map { |l| l[i] }
+    end
+    out
+  end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, Array, :to_ary)
   end
 end

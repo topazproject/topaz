@@ -1,4 +1,3 @@
-fails:Float#% returns self modulo other
 fails:Float#% returns self when modulus is +Infinity
 fails:Float#% returns -Infinity when modulus is -Infinity
 fails:Float#% returns NaN when called on NaN or Infinities

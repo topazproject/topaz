@@ -1,2 +1,0 @@
-fails:Enumerable#drop_while returns an Enumerator if no block given
-fails:Enumerable#drop_while gathers whole arrays as elements when each yields multiple

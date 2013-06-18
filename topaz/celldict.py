@@ -32,6 +32,8 @@ class Cell(BaseCell):
 
 
 class GetterSetterCell(BaseCell):
+    _immutable_fields_ = ["getter", "setter"]
+
     def __init__(self, getter, setter=None):
         self.getter = getter
         self.setter = setter
@@ -65,6 +67,9 @@ class CellDict(object):
         c.values = copy.deepcopy(self.values, memo)
         c.version = copy.deepcopy(self.version, memo)
         return c
+
+    def __iter__(self):
+        return iter(self.values)
 
     def mutated(self):
         self.version = VersionTag()

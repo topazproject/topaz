@@ -5,11 +5,8 @@ from topaz.utils.cache import Cache
 
 
 class ClassDef(object):
-    def __init__(self, name, superclassdef=None, filepath=None):
-        if filepath is None:
-            raise TypeError("filepath argument is required")
+    def __init__(self, name, superclassdef=None):
         self.name = name
-        self.filepath = filepath
         self.methods = {}
         self.singleton_methods = {}
         self.includes = []
@@ -68,14 +65,9 @@ class ClassDef(object):
             raise space.error(space.w_NotImplementedError)
 
 
-class Module(object):
-    pass
-
-
 class ModuleDef(object):
-    def __init__(self, name, filepath):
+    def __init__(self, name):
         self.name = name
-        self.filepath = filepath
         self.methods = {}
 
         self.singleton_methods = {}
@@ -150,7 +142,7 @@ class ClassCache(Cache):
 
         for mod in reversed(classdef.includes):
             w_mod = self.space.getmoduleobject(mod.moduledef)
-            self.space.send(w_class, self.space.newsymbol("include"), [w_mod])
+            self.space.send(w_class, "include", [w_mod])
 
         if classdef.setup_class_func is not None:
             classdef.setup_class_func(classdef.cls, self.space, w_class)

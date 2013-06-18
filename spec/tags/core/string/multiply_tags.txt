@@ -1,2 +1,2 @@
-fails:String#*
-fails:String#* raises an ArgumentError when given integer is negative
+fails:String#* returns subclass instances
+fails:String#* always taints the result when self is tainted

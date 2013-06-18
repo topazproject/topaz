@@ -33,9 +33,9 @@ class TestHashObject(BaseTopazTest):
 
         w_res = space.execute("""
         class Foo < Hash
-            def default key
-                key * 2
-            end
+          def default key
+            key * 2
+          end
         end
 
         return Foo.new[6]
@@ -95,6 +95,10 @@ class TestHashObject(BaseTopazTest):
         with self.raises(space, "KeyError"):
             space.execute("return {}.fetch('a')")
 
+    def test_fetch_no_args(self, space):
+        with self.raises(space, "ArgumentError"):
+            space.execute("{}.fetch()")
+
     def test_delete(self, space):
         w_res = space.execute("""
         x = {2 => 3, 4 => 5}
@@ -129,7 +133,7 @@ class TestHashObject(BaseTopazTest):
         x = {2 => 3, "four" => 5, 3 => 2}
         result = []
         x.each_key do |k|
-            result << k
+          result << k
         end
         return result
         """)
@@ -140,7 +144,7 @@ class TestHashObject(BaseTopazTest):
         x = {2 => 3, "four" => 5, 3 => 2}
         result = []
         x.each do |k, v|
-            result << [k, v]
+          result << [k, v]
         end
         return result
         """)
@@ -148,7 +152,7 @@ class TestHashObject(BaseTopazTest):
         w_res = space.execute("""
         result = []
         {2 => 3}.each_pair do |k, v|
-            result << [k, v]
+          result << [k, v]
         end
         return result
         """)

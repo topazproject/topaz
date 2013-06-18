@@ -14,7 +14,7 @@ class TestObjectSpace(object):
         w_res = space.execute("""
         names = []
         ObjectSpace.each_object(Module) do |mod|
-            names << mod.name
+          names << mod.name
         end
         return names.include? "X"
         """)

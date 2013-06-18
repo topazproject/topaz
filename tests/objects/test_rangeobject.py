@@ -1,5 +1,3 @@
-from topaz.objects.symbolobject import W_SymbolObject
-
 from ..base import BaseTopazTest
 
 
@@ -10,7 +8,7 @@ class TestRangeObject(BaseTopazTest):
     def test_map(self, space):
         w_res = space.execute("""
         return (1..3).map do |x|
-            x * 5
+          x * 5
         end
         """)
         assert self.unwrap(space, w_res) == [5, 10, 15]
@@ -18,13 +16,13 @@ class TestRangeObject(BaseTopazTest):
     def test_float_iteration(self, space):
         w_res = space.execute("""
         return (1..3.2).map do |x|
-            x
+          x
         end
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3]
         w_res = space.execute("""
         return (1...3.2).map do |x|
-            x
+          x
         end
         """)
         assert self.unwrap(space, w_res) == [1, 2, 3]
@@ -34,7 +32,7 @@ class TestRangeObject(BaseTopazTest):
     def test_starting_point_always_returned(self, space):
         w_res = space.execute("""
         return (1..1).map do |x|
-            x
+          x
         end
         """)
         assert self.unwrap(space, w_res) == [1]
@@ -52,19 +50,19 @@ class TestRangeObject(BaseTopazTest):
         w_res = space.execute("return (1..10) === -1")
         assert w_res is space.w_false
 
-    def test_first(self, space):
-        w_res = space.execute("return (1..10).first")
+    def test_begin(self, space):
+        w_res = space.execute("return (1..10).begin")
         assert space.int_w(w_res) == 1
 
-    def test_last(self, space):
-        w_res = space.execute("return (1..10).last")
+    def test_end(self, space):
+        w_res = space.execute("return (1..10).end")
         assert space.int_w(w_res) == 10
 
     def test_range_each_chars(self, space):
         w_res = space.execute("""
         a = []
         ('a'..'e').each do |x|
-            a << x
+          a << x
         end
         a
         """)
@@ -74,7 +72,7 @@ class TestRangeObject(BaseTopazTest):
         w_res = space.execute("""
         a = []
         (:a..:e).each do |x|
-            a << x
+          a << x
         end
         a
         """)

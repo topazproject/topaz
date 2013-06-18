@@ -49,9 +49,13 @@ class BaseNode(object):
             self._size_estimate = size_est
         if node.length() > self.length():
             # note that node.size_estimate() is always at least node.length()
-            new_storage = [None] * node.size_estimate()
+            new_size = node.size_estimate()
             if w_obj.storage:
-                new_storage[:len(w_obj.storage)] = w_obj.storage
+                new_size = max(new_size, len(w_obj.storage))
+            new_storage = [None] * new_size
+            if w_obj.storage:
+                for i, w_val in enumerate(w_obj.storage):
+                    new_storage[i] = w_val
             w_obj.storage = new_storage
 
     def add_attr(self, space, w_obj, name):
@@ -94,9 +98,6 @@ class ClassNode(BaseNode):
         return space.fromcache(MapTransitionCache).get_class_node(w_cls)
 
     def copy_attrs(self, space, w_obj, w_target):
-        pass
-
-    def copy_flags(self, space, w_obj, w_target):
         pass
 
     def length(self):
@@ -147,9 +148,6 @@ class AttributeNode(StorageNode):
         self.prev.copy_attrs(space, w_obj, w_target)
         w_target.set_instance_var(space, self.name, w_obj.storage[self.pos])
 
-    def copy_flags(self, space, w_obj, w_target):
-        self.prev.copy_flags(space, w_obj, w_target)
-
 
 class FlagNode(StorageNode):
     @jit.elidable
@@ -173,9 +171,3 @@ class FlagNode(StorageNode):
 
     def copy_attrs(self, space, w_obj, w_target):
         self.prev.copy_attrs(space, w_obj, w_target)
-
-    def copy_flags(self, space, w_obj, w_target):
-        self.prev.copy_flags(space, w_obj, w_target)
-        if w_obj.storage[self.pos] is space.w_true:
-            # Only copy flags that are still set
-            w_target.set_flag(space, self.name)

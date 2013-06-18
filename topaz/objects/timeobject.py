@@ -5,7 +5,7 @@ from topaz.objects.objectobject import W_Object
 
 
 class W_TimeObject(W_Object):
-    classdef = ClassDef("Time", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Time", W_Object.classdef)
 
     def __init__(self, space, klass):
         W_Object.__init__(self, space, klass)
@@ -17,7 +17,7 @@ class W_TimeObject(W_Object):
 
     @classdef.singleton_method("now")
     def method_now(self, space):
-        return space.send(self, space.newsymbol("new"))
+        return space.send(self, "new")
 
     @classdef.method("initialize")
     def method_initialize(self, space):

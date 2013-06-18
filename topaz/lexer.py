@@ -143,7 +143,9 @@ class Lexer(object):
             elif ch in "\r\n":
                 space_seen = newline_seen = True
                 self.newline(ch)
-                if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
+                if self.state not in [self.EXPR_BEG, self.EXPR_DOT,
+                                      self.EXPR_VALUE, self.EXPR_FNAME,
+                                      self.EXPR_CLASS]:
                     self.add("\n")
                     self.command_start = True
                     self.state = self.EXPR_BEG
@@ -388,7 +390,7 @@ class Lexer(object):
                 yield self.emit_identifier(command_state)
                 self.unread()
                 break
-            if ch in "!?" or (ch == "=" and self.state == self.EXPR_FNAME):
+            if ch in "!?" or (ch == "=" and self.state == self.EXPR_FNAME and self.peek() not in "~>"):
                 self.add(ch)
                 yield self.emit_identifier(command_state, "FID")
                 break
@@ -533,7 +535,7 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\!\"~&`'+/,":
+        if ch in "$>:?\\!\"~&`'+/,@;":
             self.add(ch)
             yield self.emit("GVAR")
         elif ch == "-" and self.peek().isalnum():
@@ -1280,8 +1282,6 @@ class StringTerm(BaseStringTerm):
             elif ch == "{":
                 self.lexer.add(ch)
                 return self.lexer.emit("STRING_DBEG")
-            else:
-                self.lexer.add("#")
         self.lexer.unread()
 
         while True:

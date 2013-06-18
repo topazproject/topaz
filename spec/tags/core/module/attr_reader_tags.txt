@@ -1,0 +1,2 @@
+fails:Module#attr_reader is a private method
+fails:Module#attr_reader applies current visibility to methods created

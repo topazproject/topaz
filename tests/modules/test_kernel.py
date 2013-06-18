@@ -198,9 +198,9 @@ class TestKernel(BaseTopazTest):
         res = []
         i = 0
         loop {
-            i += 1
-            res << i
-            break if i == 3
+          i += 1
+          res << i
+          break if i == 3
         }
         return res
         """)
@@ -219,7 +219,7 @@ class TestKernel(BaseTopazTest):
 
     def test_trust(self, space):
         w_res = space.execute("return 'a'.untrusted?")
-        assert self.unwrap(space, w_res) == False
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         a = 'a'
         a.untrust
@@ -236,7 +236,7 @@ class TestKernel(BaseTopazTest):
 
     def test_taint(self, space):
         w_res = space.execute("return 'a'.tainted?")
-        assert self.unwrap(space, w_res) == False
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         a = 'a'
         a.taint
@@ -253,7 +253,7 @@ class TestKernel(BaseTopazTest):
 
     def test_freeze(self, space):
         w_res = space.execute("return 'a'.frozen?")
-        assert self.unwrap(space, w_res) == False
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         a = 'a'
         a.freeze
@@ -265,13 +265,21 @@ class TestKernel(BaseTopazTest):
         w_res = space.execute("return `echo 10`")
         assert self.unwrap(space, w_res) == "10\n"
 
+    def test_backtick_sets_process_status(self, space):
+        w_res = space.execute("""
+        $? = nil
+        `echo`
+        return $?.class.name
+        """)
+        assert self.unwrap(space, w_res) == "Process::Status"
+
 
 class TestRequire(BaseTopazTest):
     def test_simple(self, space, tmpdir):
         f = tmpdir.join("t.rb")
         f.write("""
         def t(a, b)
-            a - b
+          a - b
         end
         """)
         w_res = space.execute("""
@@ -285,7 +293,7 @@ class TestRequire(BaseTopazTest):
         f = tmpdir.join("t.rb")
         f.write("""
         def t(a, b)
-            a - b
+          a - b
         end
         """)
         w_res = space.execute("""
@@ -299,7 +307,7 @@ class TestRequire(BaseTopazTest):
         f = tmpdir.join("t.rb")
         f.write("""
         def t(a, b)
-            a - b
+          a - b
         end
         """)
         w_res = space.execute("""
@@ -390,6 +398,19 @@ class TestRequire(BaseTopazTest):
         """ % tmpdir)
         assert w_res is space.w_true
 
+    def test_path_ambigious_directory_file(self, space, tmpdir):
+        f = tmpdir.join("t.rb")
+        f.write("""
+        $success = true
+        """)
+        tmpdir.join("t").ensure(dir=True)
+        w_res = space.execute("""
+        $LOAD_PATH << '%s'
+        require '%s'
+        return $success
+        """ % (tmpdir, tmpdir.join("t")))
+        assert w_res is space.w_true
+
 
 class TestExec(BaseTopazTest):
     def fork_and_wait(self, space, capfd, code):
@@ -437,7 +458,7 @@ class TestSetTraceFunc(BaseTopazTest):
         w_res = space.execute("""
         output = []
         set_trace_func proc { |event, file, line, id, binding, classname|
-            output << [event, file, line, id, classname]
+          output << [event, file, line, id, classname]
         }
 
         class << self

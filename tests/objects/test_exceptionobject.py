@@ -54,9 +54,9 @@ class TestExceptionObject(BaseTopazTest):
     def test_message(self, space):
         w_res = space.execute("""
         begin
-            raise "foo"
+          raise "foo"
         rescue StandardError => e
-            return e.message
+          return e.message
         end
         """)
         assert self.unwrap(space, w_res) == "foo"
@@ -64,9 +64,9 @@ class TestExceptionObject(BaseTopazTest):
     def test_message_calls_to_s(self, space):
         w_res = space.execute("""
         class X < Exception
-            def to_s
-                "hi, a message!"
-            end
+          def to_s
+            "hi, a message!"
+          end
         end
         return X.new.message
         """)
@@ -75,12 +75,12 @@ class TestExceptionObject(BaseTopazTest):
     def test_backtrace(self, space):
         w_res = space.execute("""
         def f
-            yield
+          yield
         end
         begin
-            f { 1 / 0}
+          f { 1 / 0}
         rescue Exception => e
-            return e.backtrace
+          return e.backtrace
         end
         """)
         assert self.unwrap(space, w_res) == [
@@ -93,30 +93,30 @@ class TestExceptionObject(BaseTopazTest):
     def test_backtrace_complex(self, space):
         w_res = space.execute("""
         def f
-            1 / 0
+          1 / 0
         end
 
 
         def g
-            begin
-                f
-            rescue => e
-                return e
-            end
+          begin
+            f
+          rescue => e
+            return e
+          end
         end
 
         def h
-            e = g
-            nil
-            nil
-            nil
-            nil
-            @e = e
+          e = g
+          nil
+          nil
+          nil
+          nil
+          @e = e
         end
 
         def i
-            h
-            @e
+          h
+          @e
         end
 
         return i.backtrace

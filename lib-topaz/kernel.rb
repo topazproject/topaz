@@ -15,18 +15,22 @@ module Kernel
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
   end
 
+  def <=>(other)
+    self == other ? 0 : nil
+  end
+
   def Array(arg)
-    if arg.respond_to? :to_ary
-      arg.to_ary
-    elsif arg.respond_to? :to_a
-      arg.to_a
+    if ary = Topaz.try_convert_type(arg, Array, :to_ary)
+      ary
+    elsif arg.respond_to?(:to_a) && ary = Topaz.try_convert_type(arg, Array, :to_a)
+      ary
     else
       [arg]
     end
   end
 
   def String(arg)
-    arg.to_s
+    Topaz.convert_type(arg, String, :to_s)
   end
   module_function :String
 
@@ -35,17 +39,26 @@ module Kernel
   end
   module_function :Integer
 
-  def loop
-    while true
-      yield
+  def loop(&block)
+    return enum_for(:loop) unless block
+    begin
+      while true
+        yield
+      end
+    rescue StopIteration
+      nil
     end
-    return nil
+    nil
   end
 
   def `(cmd)
-    cmd = cmd.to_str if cmd.respond_to?(:to_str)
-    raise TypeError.new("can't convert #{cmd.class} into String") unless cmd.is_a?(String)
-    IO.popen(cmd) { |r| r.read }
+    cmd = Topaz.convert_type(cmd, String, :to_str)
+    res = ''
+    IO.popen(cmd) do |r|
+      res << r.read
+      Process.waitpid(r.pid)
+    end
+    res
   end
 
   def to_enum(method = :each, *args)
@@ -53,4 +66,17 @@ module Kernel
   end
 
   alias :enum_for :to_enum
+
+  def rand(max = 1.0)
+    if max.is_a?(Numeric)
+      if max < 0
+        return Random.rand(-max)
+      elsif max.zero?
+        return Random.rand
+      elsif max.is_a?(Float) and max > 1
+        return Random.rand(max).ceil
+      end
+    end
+    Random.rand(max)
+  end
 end

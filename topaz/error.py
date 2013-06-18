@@ -1,4 +1,5 @@
 import os
+import errno
 
 
 class RubyError(Exception):
@@ -10,7 +11,7 @@ class RubyError(Exception):
 
 
 def format_traceback(space, exc, top_filepath):
-    w_bt = space.send(exc, space.newsymbol("backtrace"))
+    w_bt = space.send(exc, "backtrace")
     bt_w = space.listview(w_bt)
     if bt_w:
         yield "%s: %s (%s)\n" % (space.str_w(bt_w[0]), exc.msg, space.getclass(exc).name)
@@ -25,9 +26,25 @@ def print_traceback(space, w_exc, top_filepath=None):
         os.write(2, line)
 
 
+_errno_for_oserror_map = {
+    errno.ENOENT: "ENOENT",
+    errno.ECHILD: "ECHILD",
+    errno.EACCES: "EACCES",
+    errno.ENOTDIR: "ENOTDIR",
+    errno.EISDIR: "EISDIR",
+    errno.ENOTEMPTY: "ENOTEMPTY",
+}
+
+
 def error_for_oserror(space, exc):
+    try:
+        name = _errno_for_oserror_map[exc.errno]
+    except KeyError:
+        w_type = space.w_SystemCallError
+    else:
+        w_type = space.find_const(space.find_const(space.w_object, "Errno"), name)
     return space.error(
-        space.w_SystemCallError,
+        w_type,
         os.strerror(exc.errno),
         [space.newint(exc.errno)]
     )

@@ -26,10 +26,10 @@ class TestModuleObject(BaseTopazTest):
     def test_generated_submodule(self, space):
         w_res = space.execute("""
         module Foo
-            module Bar
-                module Baz
-                end
+          module Bar
+            module Baz
             end
+          end
         end
         return Foo::Bar::Baz.name
         """)
@@ -38,22 +38,22 @@ class TestModuleObject(BaseTopazTest):
     def test_module_function(self, space):
         w_res = space.execute("""
         module Mod
-            def f
-                3
-            end
-            def g
-                4
-            end
-            module_function :f, :g
+          def f
+            3
+          end
+          def g
+            4
+          end
+          module_function :f, :g
         end
         class X
-            include Mod
-            def mathf
-                f + 2
-            end
-            def mathg
-                g + 2
-            end
+          include Mod
+          def mathf
+            f + 2
+          end
+          def mathg
+            g + 2
+          end
         end
         return [Mod.f, X.new.mathf, X.new.mathg]
         """)
@@ -62,10 +62,10 @@ class TestModuleObject(BaseTopazTest):
     def test_alias_method(self, space):
         w_res = space.execute("""
         class X
-            def f
-                3
-            end
-            alias_method :g, :f
+          def f
+            3
+          end
+          alias_method :g, :f
         end
 
         return X.new.g
@@ -75,13 +75,13 @@ class TestModuleObject(BaseTopazTest):
     def test_define_method_with_block(self, space):
         w_res = space.execute("""
         class X
-            a = 10
-            define_method :add do
-                self.b + a
-            end
-            sub = proc { a - self.b }
-            define_method :sub, sub
-            def b; 5; end
+          a = 10
+          define_method :add do
+            self.b + a
+          end
+          sub = proc { a - self.b }
+          define_method :sub, sub
+          def b; 5; end
         end
         return X.new.add, X.new.sub
         """)
@@ -90,9 +90,9 @@ class TestModuleObject(BaseTopazTest):
     def test_define_method_with_method(self, space):
         w_res = space.execute("""
         class X
-            def a; 10; end
-            define_method :x, instance_method(:a).bind(self.new)
-            define_method :y, instance_method(:a)
+          def a; 10; end
+          define_method :x, instance_method(:a).bind(self.new)
+          define_method :y, instance_method(:a)
         end
         return X.new.x, X.new.y
         """)
@@ -118,10 +118,10 @@ class TestModuleObject(BaseTopazTest):
     def test_instance_variable(self, space):
         w_res = space.execute("""
         class X
-            @abc = 3
-            def self.m
-                @abc
-            end
+          @abc = 3
+          def self.m
+            @abc
+          end
         end
 
         return X.m
@@ -131,9 +131,9 @@ class TestModuleObject(BaseTopazTest):
     def test_missing_instance_variable(self, space):
         w_res = space.execute("""
         class X
-            def self.m
-                @a
-            end
+          def self.m
+            @a
+          end
         end
         return X.m
         """)
@@ -161,6 +161,19 @@ class TestModuleObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == ["dummy", 123]
 
+    def test_module_eval_has_scope_of_its_block_and_the_receiving_module(self, space):
+        w_res = space.execute("""
+        module A
+          Cow = "cow"
+        end
+        module B
+          Horse = "horse"
+          A.module_eval { $animals = [Horse, Cow] }
+        end
+        return $animals
+        """)
+        assert self.unwrap(space, w_res) == ["horse", "cow"]
+
     def test_const_definedp(self, space):
         w_res = space.execute("""
         class X; Const = 1; end
@@ -174,7 +187,7 @@ class TestModuleObject(BaseTopazTest):
     def test_const_get(self, space):
         space.execute("""
         class X
-            Const = 1
+          Const = 1
         end
         class Y < X
         end
@@ -231,13 +244,13 @@ class TestModuleObject(BaseTopazTest):
     def test_attr(self, space):
         space.execute("""
         class X
-            attr :a, false
-            attr :b, true
-            attr :c, :d
+          attr :a, false
+          attr :b, true
+          attr :c, :d
 
-            def set_a v
-                @a = v
-            end
+          def set_a v
+            @a = v
+          end
         end
         """)
         with self.raises(space, "NoMethodError"):
@@ -276,24 +289,24 @@ class TestModuleObject(BaseTopazTest):
 
     def test_instance_method(self, space):
         w_res = space.execute("""
-          class Interpreter
-            def do_a() "there, "; end
-            def do_d() "Hello ";  end
-            def do_e() "!\n";     end
-            def do_v() "Dave";    end
-            Dispatcher = {
-              "a" => instance_method(:do_a),
-              "d" => instance_method(:do_d),
-              "e" => instance_method(:do_e),
-              "v" => instance_method(:do_v)
-            }
-            def interpret(instructions)
-              instructions.map {|b| Dispatcher[b].bind(self).call }
-            end
+        class Interpreter
+          def do_a() "there, "; end
+          def do_d() "Hello ";  end
+          def do_e() "!\n";     end
+          def do_v() "Dave";    end
+          Dispatcher = {
+            "a" => instance_method(:do_a),
+            "d" => instance_method(:do_d),
+            "e" => instance_method(:do_e),
+            "v" => instance_method(:do_v)
+          }
+          def interpret(instructions)
+            instructions.map {|b| Dispatcher[b].bind(self).call }
           end
+        end
 
-          interpreter = Interpreter.new
-          return interpreter.interpret(%w[d a v e])
+        interpreter = Interpreter.new
+        return interpreter.interpret(%w[d a v e])
         """)
         assert self.unwrap(space, w_res) == ["Hello ", "there, ", "Dave", "!\n"]
 
@@ -336,14 +349,14 @@ class TestModuleObject(BaseTopazTest):
     def test_remove_method(self, space):
         space.execute("""
         class A
-            def foo
-            end
+          def foo
+          end
         end
         """)
         space.execute("A.new.foo")
         space.execute("""
         class A
-            remove_method :foo
+          remove_method :foo
         end
         """)
         with self.raises(space, "NoMethodError"):
@@ -351,13 +364,13 @@ class TestModuleObject(BaseTopazTest):
         with self.raises(space, "NameError", "method `foo' not defined in A"):
             space.execute("""
             class A
-                remove_method :foo
+              remove_method :foo
             end
             """)
         with self.raises(space, "NameError", "method `bar' not defined in A"):
             space.execute("""
             class A
-                remove_method :bar
+              remove_method :bar
             end
             """)
 
@@ -387,47 +400,76 @@ class TestModuleObject(BaseTopazTest):
         w_res = space.execute("return Module.new.name")
         assert w_res is space.w_nil
 
+    def test_definedp(self, space):
+        w_res = space.execute("""
+        module A
+          def self.foo_defined?
+            defined?(@foo)
+          end
+        end
+        return A.foo_defined? ? 'yes' : 'no'
+        """)
+        assert self.unwrap(space, w_res) == 'no'
+        w_res = space.execute("""
+        module A
+          @foo = nil
+
+          def foo_defined?
+            defined?(@foo)
+          end
+        end
+        return A.foo_defined? ? 'yes' : 'no'
+        """)
+        assert self.unwrap(space, w_res) == 'yes'
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):
         space.execute("""
         class X
-            def m
-            end
-            private :m
+          def m
+          end
+          private :m
         end
         """)
 
     def test_public(self, space):
         space.execute("""
         class X
-            def m
-            end
-            public :m
+          def m
+          end
+          public :m
         end
         """)
 
     def test_protected(self, space):
         space.execute("""
         class X
-            protected
+          protected
         end
         """)
 
     def test_private_class_method(self, space):
         space.execute("""
         class X
-            def m
-            end
-            private_class_method :m
+          def self.m
+          end
+          private_class_method :m
         end
         """)
 
     def test_public_class_method(self, space):
         space.execute("""
         class X
-            def m
-            end
-            public_class_method :m
+          def self.m
+          end
+          public_class_method :m
+        end
+        """)
+
+    def test_private_builtin(self, space):
+        space.execute("""
+        class X < Array
+          public :<<
         end
         """)

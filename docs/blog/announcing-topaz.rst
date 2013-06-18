@@ -1,6 +1,8 @@
 Announcing Topaz: A New Ruby
 ============================
 
+**Posted: February 6, 2013**
+
 I'm extraordinarily pleased to today announce Topaz, a project I started 10
 months ago, to create a brand new implementation of the Ruby programming
 language (version 1.9.3).

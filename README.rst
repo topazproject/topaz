@@ -5,8 +5,8 @@ Topaz
 .. image:: https://travis-ci.org/topazproject/topaz.png?branch=master
     :target: https://travis-ci.org/topazproject/topaz
 
-An implementation of the Ruby programming language, in Python, using the
-RPython VM toolchain. Its goals are simplicity of implementation and
+Topaz is an implementation of the Ruby programming language, written in Python,
+using the RPython VM toolchain. Its goals are simplicity of implementation and
 performance.
 
 You'll need to have a few dependencies installed. You can get them with ``pip

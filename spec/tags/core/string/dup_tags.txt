@@ -1,2 +1,0 @@
-fails:String#dup calls #initialize_copy on the new instance
-fails:String#dup copies instance variables

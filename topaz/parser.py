@@ -12,6 +12,7 @@ from topaz.utils import regexp
 class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
+        self._hidden_scopes = []
 
     def parse(self):
         l = LexerWrapper(self.lexer.tokenize())
@@ -34,6 +35,13 @@ class Parser(object):
         child_symtable = self.lexer.symtable
         child_symtable.parent_symtable.add_subscope(node, child_symtable)
         self.lexer.symtable = child_symtable.parent_symtable
+
+    def hide_scope(self):
+        self._hidden_scopes.append(self.lexer.symtable)
+        self.lexer.symtable = self.lexer.symtable.parent_symtable
+
+    def unhide_scope(self):
+        self.lexer.symtable = self._hidden_scopes.pop()
 
     def new_token(self, orig, name, value):
         return Token(name, value, orig.getsourcepos())
@@ -163,7 +171,7 @@ class Parser(object):
 
     def new_send_block(self, lineno, params, body):
         stmts = body.getastlist() if body is not None else []
-        args = params.getargs() if params is not None else []
+        args = params.getargs(include_multi=True) if params is not None else []
         splat = params.getsplatarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
 
@@ -951,7 +959,8 @@ class Parser(object):
 
     @pg.production("lhs : primary_value LITERAL_LBRACKET opt_call_args rbracket")
     def lhs_subscript(self, p):
-        return BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno))
+        args = p[2].getcallargs() if p[2] is not None else []
+        return BoxAST(ast.Subscript(p[0].getast(), args, p[1].getsourcepos().lineno))
 
     @pg.production("lhs : primary_value DOT IDENTIFIER")
     def lhs_dot_identifier(self, p):
@@ -959,12 +968,7 @@ class Parser(object):
 
     @pg.production("lhs : primary_value COLON2 IDENTIFIER")
     def lhs_colon_identifier(self, p):
-        """
-        primary_value tCOLON2 tIDENTIFIER {
-                    $$ = support.attrset($1, (String) $3.getValue());
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_call(p[0], p[2], None)
 
     @pg.production("lhs : primary_value DOT CONSTANT")
     def lhs_dot_constant(self, p):
@@ -1186,9 +1190,10 @@ class Parser(object):
 
     @pg.production("arg : primary_value LITERAL_LBRACKET opt_call_args rbracket OP_ASGN arg")
     def arg_subscript_op_asgn_arg(self, p):
+        args = p[2].getcallargs() if p[2] is not None else []
         return self.new_augmented_assignment(
             p[4],
-            BoxAST(ast.Subscript(p[0].getast(), p[2].getcallargs(), p[1].getsourcepos().lineno)),
+            BoxAST(ast.Subscript(p[0].getast(), args, p[1].getsourcepos().lineno)),
             p[5],
         )
 
@@ -1680,10 +1685,12 @@ class Parser(object):
     @pg.production("post_for_in : ")
     def post_for_in(self, p):
         self.lexer.condition_state.begin()
+        self.hide_scope()
 
     @pg.production("post_for_do : ")
     def post_for_do(self, p):
         self.lexer.condition_state.end()
+        self.unhide_scope()
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
@@ -2936,8 +2943,8 @@ class BoxArgs(BaseBox):
         self.splat_arg = splat_arg
         self.block_arg = block_arg
 
-    def getargs(self):
-        if self.is_multiassignment():
+    def getargs(self, include_multi=False):
+        if self.is_multiassignment() and not include_multi:
             return []
         else:
             return self.args

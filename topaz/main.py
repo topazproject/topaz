@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import subprocess
 
+from rpython.rlib import jit
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 
@@ -45,7 +46,6 @@ RUBY_REVISION = subprocess.check_output([
     "--git-dir", os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".git"),
     "rev-parse", "--short", "HEAD"
 ]).rstrip()
-
 
 
 @specialize.memo()
@@ -110,7 +110,7 @@ def _parse_argv(space, argv):
             raise ShortCircuitError("%s\n" % space.str_w(
                 space.send(
                     space.w_object,
-                    space.newsymbol("const_get"),
+                    "const_get",
                     [space.newstr_fromstr("RUBY_DESCRIPTION")]
                 )
             ))
@@ -233,13 +233,13 @@ def _entry_point(space, argv):
     for path_entry in load_path_entries:
         space.send(
             space.w_load_path,
-            space.newsymbol("<<"),
+            "<<",
             [space.newstr_fromstr(path_entry)]
         )
     for required_lib in reqs:
         space.send(
             space.w_kernel,
-            space.newsymbol("require"),
+            "require",
             [space.newstr_fromstr(required_lib)]
         )
 
@@ -295,19 +295,20 @@ def _entry_point(space, argv):
     status = 0
     w_exit_error = None
     explicit_status = False
+    jit.set_param(None, "trace_limit", 10000)
     try:
         if do_loop:
             print_after = space.is_true(flag_globals_w["$-p"])
             bc = space.compile(source, path)
             frame = space.create_frame(bc)
             while True:
-                w_line = space.send(space.w_kernel, space.newsymbol("gets"))
+                w_line = space.send(space.w_kernel, "gets")
                 if w_line is space.w_nil:
                     break
                 with space.getexecutioncontext().visit_frame(frame):
                     w_res = space.execute_frame(frame, bc)
                     if print_after:
-                        space.send(space.w_kernel, space.newsymbol("print"), [w_res])
+                        space.send(space.w_kernel, "print", [w_res])
         else:
             space.execute(source, filepath=path)
     except RubyError as e:

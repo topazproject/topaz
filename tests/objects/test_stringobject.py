@@ -13,6 +13,8 @@ class TestStringObject(BaseTopazTest):
     def test_lshift(self, space):
         w_res = space.execute('return "abc" << "def" << "ghi"')
         assert space.str_w(w_res) == "abcdefghi"
+        w_res = space.execute('return "abc".concat("def").concat("ghi")')
+        assert space.str_w(w_res) == "abcdefghi"
 
     def test_plus(self, space):
         w_res = space.execute('return "abc" + "def" + "ghi"')
@@ -60,14 +62,14 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute("""
         a = "hello there"
         return [
-            a[1],
-            a[2, 3],
-            a[2..3],
-            a[-3, 2],
-            a[7..-2],
-            a[-4..-2],
-            a[-2..-4],
-            a[12..-1],
+          a[1],
+          a[2, 3],
+          a[2..3],
+          a[-3, 2],
+          a[7..-2],
+          a[-4..-2],
+          a[-2..-4],
+          a[12..-1],
         ]
         """)
         assert self.unwrap(space, w_res) == ["e", "llo", "ll", "er", "her", "her", "", None]
@@ -76,14 +78,14 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute("""
         a = "hello" << " " << "there"
         return [
-            a[1],
-            a[2, 3],
-            a[2..3],
-            a[-3, 2],
-            a[7..-2],
-            a[-4..-2],
-            a[-2..-4],
-            a[12..-1],
+          a[1],
+          a[2, 3],
+          a[2..3],
+          a[-3, 2],
+          a[7..-2],
+          a[-4..-2],
+          a[-2..-4],
+          a[12..-1],
         ]
         """)
         assert self.unwrap(space, w_res) == ["e", "llo", "ll", "er", "her", "her", "", None]
@@ -374,9 +376,9 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute("return 'hello'.tr!('','').nil?")
         assert self.unwrap(space, w_res) is True
         w_res = space.execute("""
-            s = 'hello'
-            s.tr!('e', 'a')
-            return s
+        s = 'hello'
+        s.tr!('e', 'a')
+        return s
         """)
         assert space.str_w(w_res) == "hallo"
 
@@ -388,9 +390,9 @@ class TestStringObject(BaseTopazTest):
         w_res = space.execute("return 'hello'.tr_s('el', 'hx')")
         assert space.str_w(w_res) == "hhxo"
         w_res = space.execute("""
-            s = 'hello'
-            s.tr_s!('el', 'hx')
-            return s
+        s = 'hello'
+        s.tr_s!('el', 'hx')
+        return s
         """)
         assert space.str_w(w_res) == "hhxo"
         w_res = space.execute("return 'hello'.tr_s!('','').nil?")

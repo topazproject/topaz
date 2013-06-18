@@ -7,7 +7,8 @@ class Fixnum < Integer
     self + 1
   end
 
-  def upto(n)
+  def upto(n, &block)
+    return self.enum_for(:upto, n) if !block
     i = self
     while i <= n
       yield i
@@ -26,6 +27,10 @@ class Fixnum < Integer
 
   def __id__
     self * 2 + 1
+  end
+
+  def magnitude
+    abs
   end
 
   def step(limit, step=1)

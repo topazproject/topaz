@@ -118,7 +118,10 @@ class RPacker(object):
     def operate(self, space):
         indices = self.interpret(space)
         for idx, reps in indices:
-            pack_operators[idx](space, self, reps)
+            op = pack_operators[idx]
+            if op is None:
+                raise space.error(space.w_NotImplementedError, "Operator %s" % chr(idx))
+            op(space, self, reps)
         return self.result
 
 

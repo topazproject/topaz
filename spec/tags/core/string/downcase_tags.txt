@@ -1,3 +1,0 @@
-fails:String#downcase is locale insensitive (only replaces A-Z)
-fails:String#downcase returns a subclass instance for subclasses
-fails:String#downcase! raises a RuntimeError when self is frozen

@@ -1,2 +1,0 @@
-fails:Enumerable#reduce can take a symbol argument
-fails:Enumerable#reduce gathers whole arrays as elements when each yields multiple

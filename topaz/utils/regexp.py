@@ -285,6 +285,9 @@ class Character(RegexpBase):
     def rebuild(self, positive, case_insensitive, zerowidth):
         return Character(self.value, positive=positive, case_insensitive=case_insensitive, zerowidth=zerowidth)
 
+    def getwidth(self):
+        return 1, 1
+
     def fix_groups(self):
         pass
 
@@ -801,9 +804,13 @@ class SetIntersection(SetBase):
         ] + [self.items[-1]]).compile(ctx)
 
 
-POSITION_ESCAPES = {}
+POSITION_ESCAPES = {
+    "A": StartOfString(),
+    "z": EndOfString(),
+}
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
+    "w": Property(CATEGORY_WORD),
 }
 PROPERTIES = {
     "digit": CATEGORY_DIGIT,
@@ -1230,18 +1237,11 @@ def _parse_posix_class(source, info):
 
 
 def _compile_no_cache(pattern, flags):
-    global_flags = flags
-    while True:
-        source = Source(pattern)
-        if flags & EXTENDED:
-            source.ignore_space = True
-        info = Info(flags)
-        try:
-            parsed = _parse_pattern(source, info)
-        except UnscopedFlagSet as e:
-            global_flags = e.flags | flags
-        else:
-            break
+    source = Source(pattern)
+    if flags & EXTENDED:
+        source.ignore_space = True
+    info = Info(flags)
+    parsed = _parse_pattern(source, info)
 
     if not source.at_end():
         raise RegexpError("trailing characters in pattern")

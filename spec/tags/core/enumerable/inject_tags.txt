@@ -1,2 +1,0 @@
-fails:Enumerable#inject can take a symbol argument
-fails:Enumerable#inject gathers whole arrays as elements when each yields multiple

@@ -1,5 +1,4 @@
 import os
-import sys
 import stat
 
 from topaz.coerce import Coerce
@@ -9,7 +8,6 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.ioobject import W_IOObject
-from topaz.objects.stringobject import W_StringObject
 from topaz.system import IS_WINDOWS
 from topaz.utils.ll_file import O_BINARY, ftruncate, isdir, fchmod
 from topaz.utils.filemode import map_filemode
@@ -21,7 +19,7 @@ FNM_DOTMATCH = 0x04
 
 
 class W_FileObject(W_IOObject):
-    classdef = ClassDef("File", W_IOObject.classdef, filepath=__file__)
+    classdef = ClassDef("File", W_IOObject.classdef)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -53,7 +51,7 @@ class W_FileObject(W_IOObject):
         space.set_const(w_cls, "Stat", space.getclassfor(W_FileStatObject))
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_FileObject(space)
 
     @classdef.singleton_method("size?", name="path")
@@ -102,12 +100,32 @@ class W_FileObject(W_IOObject):
 
     @classdef.singleton_method("dirname", path="path")
     def method_dirname(self, space, path):
-        if "/" not in path:
+        separators = ["/"]
+        if IS_WINDOWS:
+            separators.append("\\")
+
+        has_separator = False
+        for separator in separators:
+            if separator in path:
+                has_separator = True
+                break
+        if not has_separator:
             return space.newstr_fromstr(".")
-        idx = path.rfind("/")
-        while idx > 0 and path[idx - 1] == "/":
+
+        if path in separators:
+            return space.newstr_fromstr("/")
+
+        while path and path[-1] in separators:
+            newlen = len(path) - 1
+            assert newlen >= 0
+            path = path[:newlen]
+
+        idx = -1
+        for separator in separators:
+            idx = max(idx, path.rfind(separator))
+        while idx > 0 and path[idx - 1] in separators:
             idx -= 1
-        if idx == 0:
+        if idx <= 0:
             return space.newstr_fromstr("/")
         assert idx >= 0
         return space.newstr_fromstr(path[:idx])
@@ -123,13 +141,15 @@ class W_FileObject(W_IOObject):
                 raise NotImplementedError
         elif not path or path[0] != "/":
             if w_dir is not None and w_dir is not space.w_nil:
-                dir = space.str_w(space.send(self, space.newsymbol("expand_path"), [w_dir]))
+                dir = space.str_w(space.send(self, "expand_path", [w_dir]))
             else:
                 dir = os.getcwd()
 
             path = dir + "/" + path
 
         items = []
+        if IS_WINDOWS:
+            path = path.replace("\\", "/")
         parts = path.split("/")
         for part in parts:
             if part == "..":
@@ -137,9 +157,13 @@ class W_FileObject(W_IOObject):
             elif part and part != ".":
                 items.append(part)
 
+        if not IS_WINDOWS:
+            root = "/"
+        else:
+            root = ""
         if not items:
-            return space.newstr_fromstr("/")
-        return space.newstr_fromstr("/" + "/".join(items))
+            return space.newstr_fromstr(root)
+        return space.newstr_fromstr(root + "/".join(items))
 
     @classdef.singleton_method("join")
     def singleton_method_join(self, space, args_w):
@@ -152,7 +176,7 @@ class W_FileObject(W_IOObject):
                     if in_recursion:
                         raise space.error(space.w_ArgumentError, "recursive array")
                     string = space.str_w(
-                        space.send(space.getclassfor(W_FileObject), space.newsymbol("join"), space.listview(w_arg))
+                        space.send(space.getclassfor(W_FileObject), "join", space.listview(w_arg))
                     )
             else:
                 w_string = space.convert_type(w_arg, space.w_string, "to_path", raise_error=False)
@@ -267,8 +291,8 @@ class W_FileObject(W_IOObject):
         return stat_obj
 
     if IS_WINDOWS:
-        classdef.s_notimplemented("symlink")
-        classdef.s_notimplemented("link")
+        classdef.singleton_notimplemented("symlink")
+        classdef.singleton_notimplemented("link")
     else:
         @classdef.singleton_method("symlink", old_name="path", new_name="path")
         def singleton_method_symlink(self, space, old_name, new_name):
@@ -288,7 +312,7 @@ class W_FileObject(W_IOObject):
 
 
 class W_FileStatObject(W_Object):
-    classdef = ClassDef("Stat", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Stat", W_Object.classdef)
 
     def __init__(self, space):
         W_Object.__init__(self, space)
@@ -304,7 +328,7 @@ class W_FileStatObject(W_Object):
         return self._stat
 
     @classdef.singleton_method("allocate")
-    def singleton_method_allocate(self, space, w_args):
+    def singleton_method_allocate(self, space):
         return W_FileStatObject(space)
 
     @classdef.method("initialize", filename="path")

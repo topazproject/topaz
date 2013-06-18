@@ -9,10 +9,10 @@ class TestClassObject(BaseTopazTest):
     def test_generated_subclass(self, space):
         w_res = space.execute("""
         class Foo
-            class Bar
-                class Baz
-                end
+          class Bar
+            class Baz
             end
+          end
         end
         return Foo::Bar::Baz.name
         """)
@@ -70,9 +70,9 @@ class TestClassObject(BaseTopazTest):
 
         w_res = space.execute("""
         class X
-            def m
-                self
-            end
+          def m
+            self
+          end
         end
 
         x = X.new
@@ -91,11 +91,11 @@ class TestClassObject(BaseTopazTest):
     def test_attr_accessor(self, space):
         w_res = space.execute("""
         class X
-            attr_accessor :a, :b, :c
-            def initialize a
-                @a = a
-                self.b = 25
-            end
+          attr_accessor :a, :b, :c
+          def initialize a
+            @a = a
+            self.b = 25
+          end
         end
 
         x = X.new(3)
@@ -108,10 +108,10 @@ class TestClassObject(BaseTopazTest):
     def test_attr_reader(self, space):
         w_res = space.execute("""
         class X
-            attr_reader :a
-            def initialize
-                @a = 5
-            end
+          attr_reader :a
+          def initialize
+            @a = 5
+          end
         end
         return X.new.a
         """)

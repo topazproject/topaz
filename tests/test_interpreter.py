@@ -1,11 +1,6 @@
 import math
 
-import pytest
-
-from topaz.modules.kernel import Kernel
-from topaz.objects.boolobject import W_TrueObject
 from topaz.objects.moduleobject import W_ModuleObject
-from topaz.objects.objectobject import W_Object, W_BaseObject
 
 from .base import BaseTopazTest
 
@@ -31,7 +26,7 @@ class TestInterpreter(BaseTopazTest):
     def test_uninitailized_variables(self, space):
         w_res = space.execute("""
         if false
-            x = 5
+          x = 5
         end
         return x
         """)
@@ -40,7 +35,7 @@ class TestInterpreter(BaseTopazTest):
     def test_uninitialized_closure_var(self, space):
         w_res = space.execute("""
         if false
-            x = 3
+          x = 3
         end
         proc { x }
         return x
@@ -67,7 +62,7 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         i = 0
         while i < 1
-            i += 1
+          i += 1
         end
         return i
         """)
@@ -83,7 +78,7 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         i = 0
         for i, *rest, b in [1, 2, 3] do
-            bbb = "hello"
+          bbb = "hello"
         end
         return i, bbb, rest, b
         """)
@@ -92,7 +87,7 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         i = 0
         for i, *rest, b in [[1, 2, 3, 4]] do
-            bbb = "hello"
+          bbb = "hello"
         end
         return i, bbb, rest, b
         """)
@@ -100,7 +95,7 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         for i, *$c, @a in [[1, 2, 3, 4]] do
-            bbb = "hello"
+          bbb = "hello"
         end
         return i, bbb, $c, @a
         """)
@@ -111,9 +106,9 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         class A
-            def each
-                [1, 2, 3]
-            end
+          def each
+            [1, 2, 3]
+          end
         end
         for i in A.new; end
         return i
@@ -169,7 +164,7 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         def f(a, b)
-            a + b
+          a + b
         end
         return f 1, 2
         """)
@@ -180,20 +175,20 @@ class TestInterpreter(BaseTopazTest):
     def test_splat_first_in_def_function(self, space):
         w_res = space.execute("""
         def self.f(*a, b, c, &blk)
-            a << b << c << blk.call
+          a << b << c << blk.call
         end
         return f(2, 3, 'b', 'c') do
-            "blk"
+          "blk"
         end
         """)
         assert self.unwrap(space, w_res) == [2, 3, 'b', 'c', 'blk']
 
         w_res = space.execute("""
         def f(*a, b, c, &blk)
-            a << b << c << blk.call
+          a << b << c << blk.call
         end
         return f(2, 3, 'b', 'c') do
-            "blk"
+          "blk"
         end
         """)
         assert self.unwrap(space, w_res) == [2, 3, 'b', 'c', 'blk']
@@ -204,8 +199,8 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         def test
-            x = ""
-            x << "abc"
+          x = ""
+          x << "abc"
         end
 
         return [test, test]
@@ -215,13 +210,13 @@ class TestInterpreter(BaseTopazTest):
     def test_class(self, space):
         w_res = space.execute("""
         class X
-            def m
-                self
-            end
+          def m
+            self
+          end
 
-            def f
-                2
-            end
+          def f
+            2
+          end
         end
         """)
         w_cls = space.w_object.constants_w["X"]
@@ -229,9 +224,9 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         class Z < X
-            def g
-                3
-            end
+          def g
+            3
+          end
         end
 
         z = Z.new
@@ -242,15 +237,15 @@ class TestInterpreter(BaseTopazTest):
     def test_reopen_class(self, space):
         space.execute("""
         class X
-            def f
-                3
-            end
+          def f
+            3
+          end
         end
 
         class X
-            def m
-                5
-            end
+          def m
+            5
+          end
         end
         """)
         w_cls = space.w_object.constants_w["X"]
@@ -288,7 +283,7 @@ class TestInterpreter(BaseTopazTest):
     def test_class_returnvalue(self, space):
         w_res = space.execute("""
         return (class X
-            5
+          5
         end)
         """)
         assert space.int_w(w_res) == 5
@@ -296,16 +291,16 @@ class TestInterpreter(BaseTopazTest):
     def test_singleton_class(self, space):
         w_res = space.execute("""
         class X
-            def initialize
-                @a = 3
-            end
+          def initialize
+            @a = 3
+          end
         end
 
         x = X.new
         class << x
-            def m
-                6
-            end
+          def m
+            6
+          end
         end
         return x.m
         """)
@@ -321,7 +316,7 @@ class TestInterpreter(BaseTopazTest):
 
         x = X.new
         return (class << x
-            5
+          5
         end)
         """)
         assert space.int_w(w_res) == 5
@@ -335,10 +330,10 @@ class TestInterpreter(BaseTopazTest):
     def test_class_constant(self, space):
         w_res = space.execute("""
         class X
-            Constant = 3
-            def f
-                return Constant
-            end
+          Constant = 3
+          def f
+            return Constant
+          end
         end
         return X.new.f
         """)
@@ -349,8 +344,8 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         ExternalConst = 10
         module Y
-            Constant = 5
-            OtherConstant = ExternalConst
+          Constant = 5
+          OtherConstant = ExternalConst
         end
         return [Y::Constant, Y::OtherConstant]
         """)
@@ -360,12 +355,12 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         GlobalConstant = 5
         class X
-            Constant = 3
+          Constant = 3
         end
         class Y < X
-            def f
-                [Constant, GlobalConstant]
-            end
+          def f
+            [Constant, GlobalConstant]
+          end
         end
         return Y.new.f
         """)
@@ -381,12 +376,12 @@ class TestInterpreter(BaseTopazTest):
     def test_class_constant_block(self, space):
         w_res = space.execute("""
         class X
-            Constant = 5
-            def f
-                (1..3).map do
-                    Constant
-                end
+          Constant = 5
+          def f
+            (1..3).map do
+              Constant
             end
+          end
         end
         return X.new.f
         """)
@@ -399,12 +394,12 @@ class TestInterpreter(BaseTopazTest):
     def test_instance_var(self, space):
         w_res = space.execute("""
         class X
-            def set val
-                @a = val
-            end
-            def get
-                @a
-            end
+          def set val
+            @a = val
+          end
+          def get
+            @a
+          end
         end
         x = X.new
         x.set 3
@@ -417,7 +412,7 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         res = []
         [1, 2, 3].each do |x|
-            res << (x * 2)
+          res << (x * 2)
         end
         return res
         """)
@@ -427,9 +422,9 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         res = []
         block = proc do |&b|
-            [1, 2, 3].each do |x|
-                res << b.call(x)
-            end
+          [1, 2, 3].each do |x|
+            res << b.call(x)
+          end
         end
         block.call { |x| 2 * x }
         return res
@@ -448,7 +443,7 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         res = []
         [1, 2, 3].each do |x, y="y"|
-            res << x << y
+          res << x << y
         end
         return res
         """)
@@ -456,8 +451,8 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         res = []
         block = proc do |x, y="y", *rest, &block|
-            res << x << y << rest
-            block.call(res)
+          res << x << y << rest
+          block.call(res)
         end
         block.call(1) { |res| res << "block called" }
         return res
@@ -467,15 +462,15 @@ class TestInterpreter(BaseTopazTest):
     def test_yield(self, space):
         w_res = space.execute("""
         class X
-            def f
-                yield 2, 3
-                yield 4, 5
-            end
+          def f
+            yield 2, 3
+            yield 4, 5
+          end
         end
 
         res = []
         X.new.f do |x, y|
-            res << (x - y)
+          res << (x - y)
         end
         return res
         """)
@@ -494,10 +489,10 @@ class TestInterpreter(BaseTopazTest):
         assert space.int_w(w_res) == 5
         w_res = space.execute("""
         class X
-            attr_accessor :a
-            def initialize
-                self.a = 5
-            end
+          attr_accessor :a
+          def initialize
+            self.a = 5
+          end
         end
         x = X.new
         x.a += 5
@@ -507,13 +502,13 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         class Counter
-            attr_reader :value
-            def initialize start
-                @value = start
-            end
-            def incr
-                @value += 1
-            end
+          attr_reader :value
+          def initialize start
+            @value = start
+          end
+          def incr
+            @value += 1
+          end
         end
 
         c = Counter.new 0
@@ -543,17 +538,17 @@ class TestInterpreter(BaseTopazTest):
     def test_lookup_constant(self, space):
         w_res = space.execute("""
         class X
-            Constant = 3
+          Constant = 3
         end
         return X::Constant
         """)
         assert space.int_w(w_res) == 3
         w_res = space.execute("""
         class X
-            Constant = 3
-            def self.constant
-               Constant
-            end
+          Constant = 3
+          def self.constant
+            Constant
+          end
         end
         return X.constant
         """)
@@ -579,7 +574,7 @@ class TestInterpreter(BaseTopazTest):
     def test_default_arguments(self, space):
         w_res = space.execute("""
         def f(a, b=3, c=b)
-            [a, b, c]
+          [a, b, c]
         end
         return f 1
         """)
@@ -592,9 +587,9 @@ class TestInterpreter(BaseTopazTest):
     def test_module(self, space):
         w_res = space.execute("""
         module M
-            def oninstanceonly
-                5
-            end
+          def oninstanceonly
+            5
+          end
         end
         return M
         """)
@@ -607,9 +602,9 @@ class TestInterpreter(BaseTopazTest):
     def test_module_reopen_non_module(self, space):
         space.execute("""
         module Foo
-            Const = nil
-            class X
-            end
+          Const = nil
+          class X
+          end
         end
         """)
         with self.raises(space, "TypeError", "Const is not a module"):
@@ -623,10 +618,24 @@ class TestInterpreter(BaseTopazTest):
             end
             """)
 
+    def test_module_reopen_scope(self, space):
+        w_res = space.execute("""
+        class Foo
+        end
+
+        module Bar
+          module Foo
+          end
+        end
+        return Foo, Bar::Foo
+        """)
+        [w_cls1, w_cls2] = space.listview(w_res)
+        assert w_cls1 is not w_cls2
+
     def test_singleton_method(self, space):
         w_res = space.execute("""
         def Array.hello
-            "hello world"
+          "hello world"
         end
 
         return Array.hello
@@ -639,7 +648,7 @@ class TestInterpreter(BaseTopazTest):
     def test_splat(self, space):
         w_res = space.execute("""
         def f(a, b, c, d, e, f)
-            [a, b, c, d, e, f]
+          [a, b, c, d, e, f]
         end
 
         return f(*2, *[5, 3], *[], 7, 8, *[1], *nil)
@@ -648,9 +657,9 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         class ToA
-            def to_a
-                [1, 2, 3, 4, 5, 6]
-            end
+          def to_a
+            [1, 2, 3, 4, 5, 6]
+          end
         end
 
         return f *ToA.new
@@ -659,9 +668,9 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         class ToAry
-            def to_ary
-                [1, 5, 6, 7, 8, 9]
-            end
+          def to_ary
+            [1, 5, 6, 7, 8, 9]
+          end
         end
 
         return f *ToAry.new
@@ -671,8 +680,8 @@ class TestInterpreter(BaseTopazTest):
     def test_send_block_splat(self, space):
         w_res = space.execute("""
         def f(a)
-            x = yield
-            return a + x
+          x = yield
+          return a + x
         end
 
         return f(*2) { 5 }
@@ -680,7 +689,7 @@ class TestInterpreter(BaseTopazTest):
         assert space.int_w(w_res) == 7
         w_res = space.execute("""
         def f(&a)
-            return a
+          return a
         end
         return f(*[], &nil)
         """)
@@ -706,7 +715,7 @@ class TestInterpreter(BaseTopazTest):
     def test_receive_splat_argument(self, space):
         w_res = space.execute("""
         def f(*args)
-            args
+          args
         end
 
         return f(1, 2, *[3, 4])
@@ -715,7 +724,7 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         def f(*args)
-            'hi'
+          'hi'
         end
 
         return f(1, 2, *[3, 4])
@@ -724,7 +733,7 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         def f(h, *)
-            h
+          h
         end
 
         return f(1, 2, *[3, 4])
@@ -777,9 +786,9 @@ class TestInterpreter(BaseTopazTest):
     def test_splat_assignment(self, space):
         w_res = space.execute("""
         class X
-            def to_a
-                return nil
-            end
+          def to_a
+            return nil
+          end
         end
         x = X.new
         a = *x
@@ -829,7 +838,7 @@ class TestInterpreter(BaseTopazTest):
     def test_minus(self, space):
         w_res = space.execute("""
         def a(x)
-            Math.sin(x)
+          Math.sin(x)
         end
         b = 1
         c = 1
@@ -841,14 +850,14 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         res = []
         4.times do |i|
-            case i
-            when 0, 1
-                res << 0
-            when 2
-                res << 1
-            else
-                res << 2
-            end
+          case i
+          when 0, 1
+            res << 0
+          when 2
+            res << 1
+          else
+            res << 2
+          end
         end
         return res
         """)
@@ -872,9 +881,9 @@ class TestInterpreter(BaseTopazTest):
         with self.raises(space, "SyntaxError"):
             space.execute("/(/")
 
-    def test_class_variable_accessed_from_instance_side(self, space):
+    def test_class_variable_from_module_accessed_from_instance_side(self, space):
         w_res = space.execute("""
-        class A
+        module A
           @@foo = 'a'
         end
 
@@ -889,6 +898,8 @@ class TestInterpreter(BaseTopazTest):
         return B.new.get
         """)
         assert space.str_w(w_res) == 'a'
+
+    def test_class_variable_accessed_from_instance_side(self, space):
         w_res = space.execute("""
         class A; end
         class B < A
@@ -914,7 +925,7 @@ class TestInterpreter(BaseTopazTest):
 
     def test_class_variable_access_has_static_scope(self, space):
         with self.raises(space, "NameError"):
-            w_res = space.execute("""
+            space.execute("""
             class A
               def get
                 @@foo
@@ -1100,17 +1111,17 @@ class TestInterpreter(BaseTopazTest):
         assert self.unwrap(space, w_res) == ["global-variable", None]
         w_res = space.execute("""
         class A
-            @@abc = 3
-            def m
-                return [defined?(@@abc), defined?(@@abd)]
-            end
+          @@abc = 3
+          def m
+            return [defined?(@@abc), defined?(@@abd)]
+          end
         end
         return A.new.m
         """)
         assert self.unwrap(space, w_res) == ["class variable", None]
         w_res = space.execute("""
         def f
-            defined?(yield)
+          defined?(yield)
         end
 
         return [f, f(&:a)]
@@ -1118,20 +1129,26 @@ class TestInterpreter(BaseTopazTest):
         assert self.unwrap(space, w_res) == [None, "yield"]
         w_res = space.execute("""
         class B
-            def a
-            end
+          def a
+          end
         end
         class C < B
-            def a
-                defined?(super)
-            end
-            def b
-                defined?(super())
-            end
+          def a
+            defined?(super)
+          end
+          def b
+            defined?(super())
+          end
         end
         return [C.new.a, C.new.b]
         """)
         assert self.unwrap(space, w_res) == ["super", None]
+
+    def test_defined_unscoped_constant(self, space):
+        w_res = space.execute("return defined? ::Foobar")
+        assert w_res is space.w_nil
+        w_res = space.execute("return defined? ::Fixnum")
+        assert self.unwrap(space, w_res) == "constant"
 
     def test_match(self, space):
         w_res = space.execute("return 3 =~ nil")
@@ -1144,15 +1161,15 @@ class TestInterpreter(BaseTopazTest):
     def test_super(self, space):
         w_res = space.execute("""
         class A
-            def f(a, b)
-                return [a, b]
-            end
+          def f(a, b)
+            return [a, b]
+          end
         end
         class B < A
-            def f(a, b)
-                a += 10
-                return super
-            end
+          def f(a, b)
+            a += 10
+            return super
+          end
         end
         return B.new.f(4, 5)
         """)
@@ -1160,9 +1177,9 @@ class TestInterpreter(BaseTopazTest):
 
         w_res = space.execute("""
         class C < A
-            def f
-                super(*[1, 2])
-            end
+          def f
+            super(*[1, 2])
+          end
         end
         return C.new.f
         """)
@@ -1171,15 +1188,15 @@ class TestInterpreter(BaseTopazTest):
     def test_super_block(self, space):
         w_res = space.execute("""
         class A
-            def f a
-                a + yield
-            end
+          def f a
+            a + yield
+          end
         end
 
         class B < A
-            def f
-                super(2) { 5 }
-            end
+          def f
+            super(2) { 5 }
+          end
         end
 
         return B.new.f
@@ -1187,9 +1204,9 @@ class TestInterpreter(BaseTopazTest):
         assert space.int_w(w_res) == 7
         w_res = space.execute("""
         class C < A
-            def f
-                super(*[2]) { 12 }
-            end
+          def f
+            super(*[2]) { 12 }
+          end
         end
 
         return C.new.f
@@ -1197,9 +1214,9 @@ class TestInterpreter(BaseTopazTest):
         assert space.int_w(w_res) == 14
         w_res = space.execute("""
         class D < A
-            def f a
-                super
-            end
+          def f a
+            super
+          end
         end
 
         return D.new.f(3) { 12 }
@@ -1211,11 +1228,11 @@ class TestInterpreter(BaseTopazTest):
         res = []
         i = 0
         while i < 10
-            i += 1
-            if i > 3
-                next
-            end
-            res << i
+          i += 1
+          if i > 3
+            next
+          end
+          res << i
         end
         return res
         """)
@@ -1225,13 +1242,13 @@ class TestInterpreter(BaseTopazTest):
         w_res = space.execute("""
         a = []
         2.times {
-            i = 0
-            while i < 3
-                i += 1
-                a << i
-                next
-                raise "abc"
-            end
+          i = 0
+          while i < 3
+            i += 1
+            a << i
+            next
+            raise "abc"
+          end
         }
         return a
         """)
@@ -1242,11 +1259,11 @@ class TestInterpreter(BaseTopazTest):
         res = []
         i = 0
         other = while i < 10
-            i += 1
-            if i > 3
-                break 200
-            end
-            res << i
+          i += 1
+          if i > 3
+              break 200
+          end
+          res << i
         end
         res << other
         return res
@@ -1256,15 +1273,15 @@ class TestInterpreter(BaseTopazTest):
     def test_simple_lexical_scope_constant(self, space):
         w_res = space.execute("""
         class A
-            CONST = 1
+          CONST = 1
 
-            def get
-                CONST
-            end
+          def get
+            CONST
+          end
         end
 
         class B < A
-            CONST = 2
+          CONST = 2
         end
 
         return A.new.get == B.new.get
@@ -1274,26 +1291,26 @@ class TestInterpreter(BaseTopazTest):
     def test_complex_lexical_scope_constant(self, space):
         space.execute("""
         class Bar
-            module M
-            end
+          module M
+          end
         end
 
         module X
-            module M
-                FOO = 5
-            end
+          module M
+            FOO = 5
+          end
 
-            class Foo < Bar
-                def f
-                    M::FOO
-                end
+          class Foo < Bar
+            def f
+              M::FOO
             end
+          end
         end
 
         class X::Foo
-            def g
-                M::FOO
-            end
+          def g
+            M::FOO
+          end
         end
         """)
         w_res = space.execute("return X::Foo.new.f")
@@ -1304,12 +1321,12 @@ class TestInterpreter(BaseTopazTest):
     def test_lexical_scope_singletonclass(self, space):
         space.execute("""
         class M
-            module NestedModule
-            end
+          module NestedModule
+          end
 
-            class << self
-                include NestedModule
-            end
+          class << self
+            include NestedModule
+          end
         end
         """)
 
@@ -1351,7 +1368,7 @@ class TestInterpreter(BaseTopazTest):
     def test_top_level_include(self, space):
         w_res = space.execute("""
         module M
-            Foo = 10
+          Foo = 10
         end
         include M
         return Foo
@@ -1401,17 +1418,17 @@ class TestBlocks(BaseTopazTest):
     def test_self(self, space):
         w_res = space.execute("""
         class X
-            def initialize
-                @data = []
+          def initialize
+            @data = []
+          end
+          def process d
+            d.each do |x|
+              @data << x * 2
             end
-            def process d
-                d.each do |x|
-                    @data << x * 2
-                end
-            end
-            def data
-                @data
-            end
+          end
+          def data
+            @data
+          end
         end
 
         x = X.new
@@ -1423,10 +1440,10 @@ class TestBlocks(BaseTopazTest):
     def test_param_is_cell(self, space):
         w_res = space.execute("""
         def sum(arr, start)
-            arr.each do |x|
-                start += x
-            end
-            start
+          arr.each do |x|
+            start += x
+          end
+          start
         end
 
         return sum([1, 2, 3], 4)
@@ -1437,9 +1454,9 @@ class TestBlocks(BaseTopazTest):
         w_res = space.execute("""
         result = []
         [1, 2, 3].each do |x|
-            [3, 4, 5].each do |y|
-                result << x - y
-            end
+          [3, 4, 5].each do |y|
+            result << x - y
+          end
         end
         return result
         """)
@@ -1449,7 +1466,7 @@ class TestBlocks(BaseTopazTest):
         w_res = space.execute("""
         result = []
         2.times do
-            result << "hello"
+          result << "hello"
         end
         return result
         """)
@@ -1459,7 +1476,7 @@ class TestBlocks(BaseTopazTest):
         w_res = space.execute("""
         res = []
         [[1, 2], [3, 4]].each do |x, y|
-            res << x - y
+          res << x - y
         end
         return res
         """)
@@ -1468,7 +1485,7 @@ class TestBlocks(BaseTopazTest):
     def test_block_argument(self, space):
         w_res = space.execute("""
         def f(&b)
-            b.call
+          b.call
         end
         return f { 5 }
         """)
@@ -1476,7 +1493,7 @@ class TestBlocks(BaseTopazTest):
 
         w_res = space.execute("""
         def g(&b)
-            b
+          b
         end
         return g
         """)
@@ -1484,7 +1501,7 @@ class TestBlocks(BaseTopazTest):
 
         w_res = space.execute("""
         def h(&b)
-            [1, 2, 3].map { |x| b.call(x) }
+          [1, 2, 3].map { |x| b.call(x) }
         end
         return h { |x| x * 3 }
         """)
@@ -1498,7 +1515,7 @@ class TestBlocks(BaseTopazTest):
         assert self.unwrap(space, w_res) == [2, 4, 6]
         w_res = space.execute("""
         def x(&b)
-            b
+          b
         end
         return x(&nil)
         """)
@@ -1521,7 +1538,7 @@ class TestBlocks(BaseTopazTest):
     def test_too_few_block_arguments(self, space):
         w_res = space.execute("""
         def f
-            yield 1
+          yield 1
         end
         return f { |a,b,c| [a,b,c] }
         """)
@@ -1530,12 +1547,12 @@ class TestBlocks(BaseTopazTest):
     def test_block_return(self, space):
         w_res = space.execute("""
         def f
-            yield
-            10
+          yield
+          10
         end
         def g
-            f { return 15 }
-            5
+          f { return 15 }
+          5
         end
         return g
         """)
@@ -1544,12 +1561,12 @@ class TestBlocks(BaseTopazTest):
     def test_nested_block_return(self, space):
         w_res = space.execute("""
         def f
-            [1].each do |x|
-                [x].each do |y|
-                    return y
-                end
+          [1].each do |x|
+            [x].each do |y|
+              return y
             end
-            3
+          end
+          3
         end
         return f
         """)
@@ -1558,16 +1575,16 @@ class TestBlocks(BaseTopazTest):
     def test_break_block(self, space):
         w_res = space.execute("""
         def f(res, &a)
-            begin
-                g(&a)
-            ensure
-                res << 1
-            end
-            5
+          begin
+            g(&a)
+          ensure
+            res << 1
+          end
+          5
         end
 
         def g()
-            4 + yield
+          4 + yield
         end
 
         res = []
@@ -1579,37 +1596,37 @@ class TestBlocks(BaseTopazTest):
     def test_break_nested_block(self, space):
         w_res = space.execute("""
         def f
-            yield
+          yield
         end
 
         return f {
-            a = []
-            3.times do |i|
-                begin
-                    a << :begin
-                    next if i == 0
-                    break if i == 2
-                    a << :begin_end
-                ensure
-                    a << :ensure
-                end
-                a << :after
+          a = []
+          3.times do |i|
+            begin
+              a << :begin
+              next if i == 0
+              break if i == 2
+              a << :begin_end
+            ensure
+              a << :ensure
             end
-            a
+            a << :after
+          end
+          a
         }
         """)
         assert self.unwrap(space, w_res) == ["begin", "ensure", "begin", "begin_end", "ensure", "after", "begin", "ensure"]
 
     def test_break_block_frame_exited(self, space):
-        w_res = space.execute("""
+        space.execute("""
         def create_block
-            b = capture_block do
-                break
-            end
+          b = capture_block do
+            break
+          end
         end
 
         def capture_block(&b)
-            b
+          b
         end
         """)
         with self.raises(space, "LocalJumpError", "break from proc-closure"):
@@ -1618,9 +1635,9 @@ class TestBlocks(BaseTopazTest):
     def test_singleton_class_block(self, space):
         w_res = space.execute("""
         def f(o)
-            class << o
-                yield
-            end
+          class << o
+            yield
+          end
         end
 
         return f(Object.new) { 123 }
@@ -1630,7 +1647,7 @@ class TestBlocks(BaseTopazTest):
     def test_yield_no_block(self, space):
         space.execute("""
         def f
-            yield
+          yield
         end
         """)
         with self.raises(space, "LocalJumpError"):
@@ -1639,7 +1656,7 @@ class TestBlocks(BaseTopazTest):
     def test_splat_arg_block(self, space):
         w_res = space.execute("""
         def f a, b, c
-            yield a, b, c
+          yield a, b, c
         end
 
         return f(2, 3, 4) { |*args| args }
@@ -1649,7 +1666,7 @@ class TestBlocks(BaseTopazTest):
     def test_yield_splat(self, space):
         w_res = space.execute("""
         def f(*args)
-            yield *args
+          yield *args
         end
 
         return f(3, 5) { |a, b| a + b }
@@ -1657,7 +1674,7 @@ class TestBlocks(BaseTopazTest):
         assert space.int_w(w_res) == 8
         w_res = space.execute("""
         def f
-            yield 3, *[4, 5]
+          yield 3, *[4, 5]
         end
         return f() { |a, b, c| a * b + c}
         """)
@@ -1684,9 +1701,9 @@ class TestExceptions(BaseTopazTest):
     def test_simple(self, space):
         w_res = space.execute("""
         return begin
-            1 / 0
+          1 / 0
         rescue ZeroDivisionError
-            5
+          5
         end
         """)
         assert space.int_w(w_res) == 5
@@ -1694,9 +1711,9 @@ class TestExceptions(BaseTopazTest):
     def test_bind_to_name(self, space):
         w_res = space.execute("""
         return begin
-            1 / 0
+          1 / 0
         rescue ZeroDivisionError => e
-            e.to_s
+          e.to_s
         end
         """)
         assert space.str_w(w_res) == "divided by 0"
@@ -1704,9 +1721,9 @@ class TestExceptions(BaseTopazTest):
     def test_rescue_no_exception(self, space):
         w_res = space.execute("""
         return begin
-            1 + 1
+          1 + 1
         rescue ZeroDivisionError
-            5
+          5
         end
         """)
         assert space.int_w(w_res) == 2
@@ -1715,20 +1732,20 @@ class TestExceptions(BaseTopazTest):
         with self.raises(space, "NoMethodError"):
             space.execute("""
             begin
-                [].dsafdsafsa
+              [].dsafdsafsa
             rescue ZeroDivisionError
-                5
+              5
             end
             """)
 
     def test_multiple_rescues(self, space):
         w_res = space.execute("""
         return begin
-            1 / 0
+          1 / 0
         rescue NoMethodError
-            5
+          5
         rescue ZeroDivisionError
-            10
+          10
         end
         """)
         assert space.int_w(w_res) == 10
@@ -1736,13 +1753,13 @@ class TestExceptions(BaseTopazTest):
     def test_nested_rescue(self, space):
         w_res = space.execute("""
         return begin
-            begin
-                1 / 0
-            rescue NoMethodError
-                10
-            end
+          begin
+            1 / 0
+          rescue NoMethodError
+            10
+          end
         rescue ZeroDivisionError
-            5
+          5
         end
         """)
         assert space.int_w(w_res) == 5
@@ -1751,12 +1768,12 @@ class TestExceptions(BaseTopazTest):
         w_res = space.execute("""
         res = []
         begin
-            res << 1
-            1 / 0
+          res << 1
+          1 / 0
         rescue ZeroDivisionError
-            res << 2
+          res << 2
         ensure
-            res << 3
+          res << 3
         end
         return res
         """)
@@ -1766,9 +1783,9 @@ class TestExceptions(BaseTopazTest):
         w_res = space.execute("""
         res = []
         begin
-            return res
+          return res
         ensure
-            res << 1
+          res << 1
         end
         """)
         assert self.unwrap(space, w_res) == [1]
@@ -1776,22 +1793,22 @@ class TestExceptions(BaseTopazTest):
     def test_ensure_block_return(self, space):
         w_res = space.execute("""
         def h
-            yield
+          yield
         end
         def g(res)
-            h {
-                begin
-                    return 5
-                ensure
-                    res << 12
-                end
-            }
-            10
+          h {
+            begin
+              return 5
+            ensure
+              res << 12
+            end
+          }
+          10
         end
         def f
-            res = []
-            res << g(res)
-            res
+          res = []
+          res << g(res)
+          res
         end
         return f
         """)
@@ -1800,17 +1817,17 @@ class TestExceptions(BaseTopazTest):
     def test_ensure_nonlocal_block_return(self, space):
         w_res = space.execute("""
         def h
-            yield
+          yield
         end
         def g(res, &a)
-            begin
-               yield
-            ensure
-               res << 1
-            end
+          begin
+            yield
+          ensure
+            res << 1
+          end
         end
         def f(res)
-            g(res) { return 5 }
+          g(res) { return 5 }
         end
         res = []
         res << f(res)
@@ -1822,7 +1839,7 @@ class TestExceptions(BaseTopazTest):
         w_res = space.execute("""
         return begin
         ensure
-            nil
+          nil
         end
         """)
         assert w_res is space.w_nil
@@ -1831,11 +1848,11 @@ class TestExceptions(BaseTopazTest):
         w_res = space.execute("""
         i = 0
         while i < 3
-            begin
-                [].asdef
-            rescue NoMethodError
-                i += 1
-            end
+          begin
+            [].asdef
+          rescue NoMethodError
+            i += 1
+          end
         end
         return i
         """)
@@ -1844,9 +1861,9 @@ class TestExceptions(BaseTopazTest):
     def test_rescue_superclass(self, space):
         w_res = space.execute("""
         begin
-            1 / 0
+          1 / 0
         rescue StandardError
-            return 0
+          return 0
         end
         """)
         assert space.int_w(w_res) == 0

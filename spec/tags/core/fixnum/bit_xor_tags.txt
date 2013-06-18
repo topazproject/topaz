@@ -1,1 +1,3 @@
-fails:Fixnum#^
+fails:Fixnum#^ returns self bitwise EXCLUSIVE OR other
+fails:Fixnum#^ returns self bitwise EXCLUSIVE OR a Bignum
+fails:Fixnum#^ raises a TypeError when passed a Float

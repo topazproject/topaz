@@ -1,3 +1,0 @@
-fails:Hash#== computes equality for complex recursive hashes
-fails:Hash#== compares the values in self to values in other hash
-fails:Hash#== compares values with == semantics

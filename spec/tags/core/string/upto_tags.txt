@@ -1,1 +1,1 @@
-fails:String#upto returns an enumerator when no block given
+fails:String#upto on sequence of numbers calls the block as Integer#upto

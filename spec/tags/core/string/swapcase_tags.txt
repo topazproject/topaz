@@ -1,2 +1,0 @@
-fails:String#swapcase returns subclass instances when called on a subclass
-fails:String#swapcase! raises a RuntimeError when self is frozen

@@ -10,7 +10,7 @@ class Coerce(object):
         else:
             w_str = space.convert_type(w_obj, space.w_string, "to_str", raise_error=False)
             if w_str is space.w_nil:
-                w_inspect_str = space.send(w_obj, space.newsymbol("inspect"))
+                w_inspect_str = space.send(w_obj, "inspect")
                 if not space.is_kind_of(w_inspect_str, space.w_string):
                     inspect_str = space.any_to_s(w_obj)
                 else:
@@ -28,14 +28,14 @@ class Coerce(object):
 
     @staticmethod
     def bigint(space, w_obj):
-        return space.bigint_w(w_obj)
+        return space.bigint_w(space.convert_type(w_obj, space.w_integer, "to_int"))
 
     @staticmethod
     def float(space, w_obj):
         if space.is_kind_of(w_obj, space.w_float):
             return space.float_w(w_obj)
         else:
-            return space.float_w(space.send(w_obj, space.newsymbol("Float"), [w_obj]))
+            return space.float_w(space.send(w_obj, "Float", [w_obj]))
 
     @staticmethod
     def str(space, w_obj):

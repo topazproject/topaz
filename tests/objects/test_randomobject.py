@@ -15,10 +15,10 @@ class TestRandomObject(BaseTopazTest):
     def test_subclass(self, space):
         w_res = space.execute("""
         class SubRandom < Random
-            def better_rand
-                # http://xkcd.com/221/
-                4
-            end
+          def better_rand
+            # http://xkcd.com/221/
+            4
+          end
         end
         c = SubRandom.new
         return [c.rand, c.better_rand]

@@ -2,6 +2,7 @@ from rpython.rlib import jit
 
 from topaz.closure import LocalCell
 from topaz.objects.arrayobject import W_ArrayObject
+from topaz.objects.functionobject import W_FunctionObject
 
 
 class BaseFrame(object):
@@ -33,6 +34,7 @@ class Frame(BaseFrame):
         self.lexical_scope = lexical_scope
         self.block = block
         self.parent_interp = parent_interp
+        self.visibility = W_FunctionObject.PUBLIC
         self.lastblock = None
 
     def _set_arg(self, space, pos, w_value):
@@ -43,7 +45,6 @@ class Frame(BaseFrame):
         if (len(args_w) == 1 and
             isinstance(args_w[0], W_ArrayObject) and len(bytecode.arg_pos) >= 2):
             w_arg = args_w[0]
-            assert isinstance(w_arg, W_ArrayObject)
             args_w = space.listview(w_arg)
         minargc = len(bytecode.arg_pos) - len(bytecode.defaults)
         if len(args_w) < minargc:
@@ -83,7 +84,7 @@ class Frame(BaseFrame):
             if block is None:
                 w_block = space.w_nil
             else:
-                w_block = space.newproc(block)
+                w_block = block.copy(space)
             self._set_arg(space, bytecode.block_arg_pos, w_block)
 
     def push(self, w_obj):

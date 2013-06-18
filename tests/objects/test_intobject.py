@@ -157,7 +157,7 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("""
         res = []
         3.times do |x|
-            res << x
+          res << x
         end
         return res
         """)
@@ -167,7 +167,7 @@ class TestFixnumObject(BaseTopazTest):
         w_res = space.execute("""
         res = []
         3.upto(6) do |x|
-            res << x
+          res << x
         end
         return res
         """)

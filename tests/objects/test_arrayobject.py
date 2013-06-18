@@ -254,7 +254,7 @@ class TestArrayObject(BaseTopazTest):
         assert self.unwrap(space, space.execute("return [1, 2, 3].pop(2)")) == [2, 3]
         assert self.unwrap(space, space.execute("return [1, 2, 3].pop(10)")) == [1, 2, 3]
         assert self.unwrap(space, space.execute("return [].pop(1)")) == []
-        assert self.unwrap(space, space.execute("return [].pop")) == None
+        assert self.unwrap(space, space.execute("return [].pop")) is None
         with self.raises(space, "ArgumentError"):
             space.execute("[1].pop(-1)")
         with self.raises(space, "TypeError"):
@@ -318,12 +318,12 @@ class TestArrayObject(BaseTopazTest):
         w_res = space.execute("""
         x = []
         return [
-            [] == :abc,
-            [] == [],
-            [:abc] == [:abc],
-            x == (x << 2),
-            [1, 2, 3] == [1, 2, 4],
-            [1] == [1, 2],
+          [] == :abc,
+          [] == [],
+          [:abc] == [:abc],
+          x == (x << 2),
+          [1, 2, 3] == [1, 2, 4],
+          [1] == [1, 2],
         ]
         """)
         assert self.unwrap(space, w_res) == [False, True, True, True, False, False]
@@ -382,7 +382,7 @@ class TestArrayObject(BaseTopazTest):
 
     def test_multiply(self, space):
         w_res = space.execute("return [ 1, 2, 3 ] * 3")
-        assert self.unwrap(space, w_res) == [ 1, 2, 3, 1, 2, 3, 1, 2, 3 ]
+        assert self.unwrap(space, w_res) == [1, 2, 3, 1, 2, 3, 1, 2, 3]
         w_res = space.execute("return [ 1, 2, 3 ] * ','")
         assert self.unwrap(space, w_res) == "1,2,3"
 
@@ -402,6 +402,7 @@ class TestArrayObject(BaseTopazTest):
             a[0] = a
             a.flatten
             """)
+
 
 class TestArrayPack(BaseTopazTest):
     def test_garbage_format(self, space):

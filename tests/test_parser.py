@@ -232,6 +232,9 @@ class TestParser(BaseTopazTest):
         assert space.parse("2.to_s(:base => 3)") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(3))])], None, 1))
         ]))
+        assert space.parse("2.to_s(:base=>3)") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(2), "to_s", [ast.Hash([(ast.ConstantSymbol("base"), ast.ConstantInt(3))])], None, 1))
+        ]))
         assert space.parse("Integer other") == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.Self(1), "Integer", [ast.Send(ast.Self(1), "other", [], None, 1)], None, 1))
         ]))
@@ -346,6 +349,11 @@ class TestParser(BaseTopazTest):
                     ])
                 ])
             ))
+        ]))
+
+    def test_colon_attr_assignment(self, space):
+        assert space.parse("a::b = nil") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Send(ast.Send(ast.Self(1), "a", [], None, 1), "b", [], None, 1), ast.Nil()))
         ]))
 
     def test_splat_rhs_assignment(self, space):
@@ -605,7 +613,7 @@ class TestParser(BaseTopazTest):
         """)
         assert res == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Variable("i", 2), ast.ConstantInt(0))),
-            ast.Statement(ast.While(ast.Send(ast.Variable("i", 3),  "<", [ast.ConstantInt(10)], None, 3), ast.Block([
+            ast.Statement(ast.While(ast.Send(ast.Variable("i", 3), "<", [ast.ConstantInt(10)], None, 3), ast.Block([
                 ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
                 ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
                 ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], None, 6)),
@@ -826,9 +834,26 @@ class TestParser(BaseTopazTest):
         assert space.parse("x[0] = 5") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [ast.ConstantInt(0)], 1), ast.ConstantInt(5)))
         ]))
+        assert space.parse("x[] = 5") == ast.Main(ast.Block([
+            ast.Statement(ast.Assignment(ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [], 1), ast.ConstantInt(5)))
+        ]))
+
+    def test_subscript_augmented_assignment(self, space):
+        assert space.parse("x[] += 5") == ast.Main(ast.Block([
+            ast.Statement(ast.AugmentedAssignment("+", ast.Subscript(ast.Send(ast.Self(1), "x", [], None, 1), [], 1), ast.ConstantInt(5)))
+        ]))
 
     def test_def(self, space):
         assert space.parse("def f() end") == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
+        ]))
+
+        r = space.parse("""
+        def
+        f
+        end
+        """)
+        assert r == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
         ]))
 
@@ -842,7 +867,7 @@ class TestParser(BaseTopazTest):
 
         assert space.parse("def f(a, b) a + b end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b")], None, None, ast.Block([
-                ast.Statement(ast.Send(ast.Variable("a", 1),  "+", [ast.Variable("b", 1)], None, 1))
+                ast.Statement(ast.Send(ast.Variable("a", 1), "+", [ast.Variable("b", 1)], None, 1))
             ])))
         ]))
 
@@ -1071,6 +1096,7 @@ class TestParser(BaseTopazTest):
         assert space.parse('"\w"') == const_string("w")
         assert space.parse('"\M-a"') == const_string("\xe1")
         assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab", 1))
+        assert space.parse('"#test"') == const_string("#test")
 
     def test_percent_terms(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
@@ -1223,6 +1249,14 @@ HERE
         end""")
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Class(ast.Scope(2), "X", None, ast.Nil()))
+        ]))
+
+        r = space.parse("""
+        class
+        X
+        end""")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Class(ast.Scope(3), "X", None, ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -1462,6 +1496,22 @@ HERE
                     )
                 )])
             ), 1)),
+        ]))
+        assert space.parse("f { |(x, y)| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [ast.Argument("0")],
+                None,
+                None,
+                ast.Block([
+                    ast.Statement(ast.MultiAssignment(
+                        ast.MultiAssignable([
+                            ast.Variable("x", -1),
+                            ast.Variable("y", -1),
+                        ]),
+                        ast.Variable("0", 1),
+                    ))
+                ]),
+            ), 1))
         ]))
 
     def test_lambda(self, space):
@@ -2093,6 +2143,8 @@ HERE
         assert space.parse("$+") == simple_global("$+")
         assert space.parse("$,") == simple_global("$,")
         assert space.parse("$-w") == simple_global("$-w")
+        assert space.parse("$@") == simple_global("$@")
+        assert space.parse("$;") == simple_global("$;")
 
     def test_comments(self, space):
         r = space.parse("""
@@ -2346,6 +2398,16 @@ HERE
         r = space.parse("""
         0 ? (0) :
                  0
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(0),
+                ast.Block([ast.Statement(ast.ConstantInt(0))]),
+                ast.ConstantInt(0),
+            ))
+        ]))
+        r = space.parse("""
+        0 ?
+        (0) : 0
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0),

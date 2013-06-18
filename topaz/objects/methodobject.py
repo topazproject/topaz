@@ -1,7 +1,4 @@
 from topaz.module import ClassDef
-from topaz.objects.blockobject import W_BlockObject
-from topaz.objects.functionobject import W_UserFunction
-from topaz.objects.moduleobject import AttributeWriter, DefineMethodBlock
 from topaz.objects.objectobject import W_Object
 
 
@@ -22,7 +19,7 @@ def create_to_s(classdef):
 
 
 class W_MethodObject(W_Object):
-    classdef = ClassDef("Method", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Method", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function, w_receiver):
         W_Object.__init__(self, space)
@@ -67,7 +64,7 @@ class W_MethodObject(W_Object):
 
 
 class W_UnboundMethodObject(W_Object):
-    classdef = ClassDef("UnboundMethod", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("UnboundMethod", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function):
         W_Object.__init__(self, space)

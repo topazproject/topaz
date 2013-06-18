@@ -1,17 +1,20 @@
 from __future__ import absolute_import
 
 import os
-import sys
 
-from topaz.module import Module, ModuleDef
+from topaz.module import ModuleDef
 from topaz.system import IS_WINDOWS
+from topaz.error import error_for_oserror
 
 
 if IS_WINDOWS:
     def geteuid():
-        return 0 # MRI behaviour on windows
+        # MRI behaviour on windows
+        return 0
+
     def fork():
         raise NotImplementedError("fork on windows")
+
     def WEXITSTATUS(status):
         return status
 else:
@@ -20,8 +23,8 @@ else:
     WEXITSTATUS = os.WEXITSTATUS
 
 
-class Process(Module):
-    moduledef = ModuleDef("Process", filepath=__file__)
+class Process(object):
+    moduledef = ModuleDef("Process")
 
     @moduledef.function("euid")
     def method_euid(self, space):
@@ -33,11 +36,14 @@ class Process(Module):
 
     @moduledef.function("waitpid", pid="int")
     def method_waitpid(self, space, pid=-1):
-        pid, status = os.waitpid(pid, 0)
+        try:
+            pid, status = os.waitpid(pid, 0)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         status = WEXITSTATUS(status)
         w_status = space.send(
             space.find_const(self, "Status"),
-            space.newsymbol("new"),
+            "new",
             [space.newint(pid), space.newint(status)]
         )
         space.globals.set(space, "$?", w_status)
@@ -57,7 +63,7 @@ class Process(Module):
         if pid == 0:
             if block is not None:
                 space.invoke_block(block, [])
-                space.send(self, space.newsymbol("exit"))
+                space.send(self, "exit")
             else:
                 return space.w_nil
         else:
