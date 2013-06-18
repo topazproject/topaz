@@ -354,5 +354,5 @@ class W_ArrayObject(W_Object):
         return self
 
     def _append_nils(self, space, num):
-        for _ in xrange(nums):
+        for _ in xrange(num):
             self.items_w.append(space.w_nil)
