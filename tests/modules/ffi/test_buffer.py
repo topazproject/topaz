@@ -107,3 +107,21 @@ class TestBuffer(BaseTopazTest):
         w_chars = w_array.listview(space)
         assert all([self.unwrap(space, w_res).tolong() == maxi
                     for w_res in w_chars])
+
+    def test_put_returns_self(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.new(:char, 1)
+        put_result = buffer.put_bytes(0, 'a')
+        [buffer, put_result]
+        """)
+        w_buffers = w_array.listview(space)
+        assert w_buffers[0] is w_buffers[1]
+
+    def test_put_and_get_bytes(self, space):
+        for i in range(2):
+            w_res = space.execute("""
+            buffer = FFI::Buffer.alloc_in(:char, 11)
+            buffer.put_bytes(in_i, 'Hi there!')
+            buffer.get_bytes(in_i, 9)
+            """.replace('in_i', str(i)))
+            assert self.unwrap(space, w_res) == 'Hi there!'
