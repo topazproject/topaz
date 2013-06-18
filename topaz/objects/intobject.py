@@ -141,6 +141,17 @@ class W_FixnumObject(W_RootObject):
         else:
             return self.divide(space, w_other)
 
+    @classdef.method("fdiv")
+    def method_fdiv(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            return space.newfloat(float(self.intvalue) / float(space.int_w(w_other)))
+        elif space.is_kind_of(w_other, space.w_bignum):
+            return space.send(space.newbigint_fromint(self.intvalue), "fdiv", [w_other])
+        elif space.is_kind_of(w_other, space.w_float):
+            return space.newfloat(float(self.intvalue) / space.float_w(w_other))
+        else:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "fdiv")
+
     @classdef.method("**")
     def method_pow(self, space, w_other):
         if space.is_kind_of(w_other, space.w_fixnum):
