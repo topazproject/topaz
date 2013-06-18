@@ -44,6 +44,20 @@ class TestBuffer(BaseTopazTest):
         w_res = space.execute("FFI::Buffer.alloc_in(7).total")
         assert self.unwrap(space, w_res) == 7
 
+    def test_puts_return_self(self, space):
+        for put in ['put_char',
+                    'put_uchar',
+                    'put_ushort',
+                    'put_uint',
+                    'put_ulong_long']:
+            w_array = space.execute("""
+            buffer = FFI::Buffer.new(:char, 8)
+            put_result = buffer.%s(0, 0)
+            [buffer, put_result]
+            """ % put)
+            w_buffers = w_array.listview(space)
+            assert w_buffers[0] is w_buffers[1]
+
     def test_put_and_get_char(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:char, 5)
