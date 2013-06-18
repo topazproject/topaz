@@ -126,6 +126,10 @@ class W_BufferObject(W_Object):
             raise space.error(space.w_IndexError,
                               "Tried to start at index %s of str %s" %
                               (index, val))
+        if len(val) <= index + length:
+            raise space.error(space.w_IndexError,
+                              "Tried to end at index %s of str %s" %
+                              (index + length, val))
         val = val[index:] if length == -1 else val[index : index + length]
         for i, c in enumerate(val):
             self.buffer[offset+i] = val[i]
