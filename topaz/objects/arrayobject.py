@@ -1,5 +1,6 @@
 import copy
 
+from rpython.rlib import jit
 from rpython.rlib.listsort import make_timsort_class
 
 from topaz.coerce import Coerce
@@ -333,6 +334,7 @@ class W_ArrayObject(W_Object):
 
     @classdef.method("insert", i="int")
     @check_frozen()
+    @jit.look_inside_iff(lambda self, space, i, args_w: jit.isconstant(len(args_w)))
     def method_insert(self, space, i, args_w):
         if not args_w:
             return self
