@@ -125,3 +125,11 @@ class TestBuffer(BaseTopazTest):
             buffer.get_bytes(in_i, 9)
             """.replace('in_i', str(i)))
             assert self.unwrap(space, w_res) == 'Hi there!'
+
+    def test_put_bytes_index_and_length(self, space):
+        w_res = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:char, 3)
+        buffer.put_bytes(0, '0123456', 2, 3)
+        buffer.get_bytes(0, 3)
+        """)
+        assert self.unwrap(space, w_res) == '234'

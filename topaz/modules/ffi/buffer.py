@@ -119,8 +119,10 @@ class W_BufferObject(W_Object):
         val = sum([byte[i] * 256**i for i in range(8)])
         return space.newbigint_fromrbigint(rbigint.fromlong(val))
 
-    @classdef.method('put_bytes', offset='int', val='str')
-    def method_put_bytes(self, space, offset, val):
+    @classdef.method('put_bytes', offset='int', val='str',
+                                  index='int', length='int')
+    def method_put_bytes(self, space, offset, val, index=0, length=-1):
+        val = val[index:] if length == -1 else val[index : index + length]
         for i, c in enumerate(val):
             self.buffer[offset+i] = val[i]
         return self
