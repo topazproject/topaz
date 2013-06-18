@@ -56,7 +56,7 @@ class W_ArrayObject(W_Object):
         return self.items_w
 
     def length(self):
-        return self.length()
+        return len(self.items_w)
 
     @classdef.singleton_method("allocate")
     def singleton_method_allocate(self, space):
