@@ -122,6 +122,10 @@ class W_BufferObject(W_Object):
     @classdef.method('put_bytes', offset='int', val='str',
                                   index='int', length='int')
     def method_put_bytes(self, space, offset, val, index=0, length=-1):
+        if index >= len(val):
+            raise space.error(space.w_IndexError,
+                              "Tried to start at index %s of str %s" %
+                              (index, val))
         val = val[index:] if length == -1 else val[index : index + length]
         for i, c in enumerate(val):
             self.buffer[offset+i] = val[i]

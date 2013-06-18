@@ -133,3 +133,11 @@ class TestBuffer(BaseTopazTest):
         buffer.get_bytes(0, 3)
         """)
         assert self.unwrap(space, w_res) == '234'
+
+    def test_put_bytes_index_error(self, space):
+        with self.raises(space, 'IndexError',
+                         "Tried to start at index 3 of str 012"):
+            space.execute("""
+            buffer = FFI::Buffer.alloc_in(:char, 3)
+            buffer.put_bytes(0, '012', 3)
+            """)
