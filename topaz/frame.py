@@ -45,8 +45,7 @@ class Frame(BaseFrame):
         if (len(args_w) == 1 and
             isinstance(args_w[0], W_ArrayObject) and len(bytecode.arg_pos) >= 2):
             w_arg = args_w[0]
-            assert isinstance(w_arg, W_ArrayObject)
-            args_w = w_arg.items_w
+            args_w = space.listview(w_arg)
         minargc = len(bytecode.arg_pos) - len(bytecode.defaults)
         if len(args_w) < minargc:
             args_w.extend([space.w_nil] * (minargc - len(args_w)))
