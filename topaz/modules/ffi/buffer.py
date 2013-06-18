@@ -2,6 +2,7 @@ from topaz.objects.objectobject import W_Object
 from topaz.coerce import Coerce
 from topaz.error import RubyError
 from topaz.module import ClassDef
+from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 
 class W_BufferObject(W_Object):
@@ -77,55 +78,43 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_ushort', offset='int', val='int')
     def method_put_ushort(self, space, offset, val):
-        most_significant = val / 256
-        least_significant = val % 256
-        self.buffer[offset] = chr(most_significant)
-        self.buffer[offset+1] = chr(least_significant)
+        byte0 = val / 256
+        byte1 = val % 256
+        self.buffer[offset+0] = chr(byte0)
+        self.buffer[offset+1] = chr(byte1)
         return self
 
     @classdef.method('get_ushort', offset='int')
     def method_get_ushort(self, space, offset):
-        most_significant = ord(self.buffer[offset])
-        least_significant = ord(self.buffer[offset+1])
-        return space.newint(  least_significant
-                            + most_significant * 256)
+        byte0 = ord(self.buffer[offset])
+        byte1 = ord(self.buffer[offset+1])
+        return space.newint(  byte0 * 256**0
+                            + byte1 * 256**1)
 
     @classdef.method('put_uint', offset='int', val='int')
     def method_put_uint(self, space, offset, val):
-        most_significant = val / 256 / 256
-        middle_significant = val / 256 % 256
-        least_significant = val % 256
-        self.buffer[offset] = chr(most_significant)
-        self.buffer[offset+1] = chr(middle_significant)
-        self.buffer[offset+2] = chr(least_significant)
+        byte = [val / 256**i % 256 for i in range(4)]
+        for i in range(4):
+            self.buffer[offset+i] = chr(byte[i])
+        return self
 
     @classdef.method('get_uint', offset='int')
     def method_get_uint(self, space, offset):
-        most_significant = ord(self.buffer[offset])
-        middle_significant = ord(self.buffer[offset+1])
-        least_significant = ord(self.buffer[offset+2])
-        return space.newint(  least_significant
-                            + middle_significant * 256
-                            + most_significant   * 256 * 256)
+        byte = [ord(x) for x in self.buffer[offset:offset+4]]
+        return space.newint( sum([byte[i] * 256**i for i in range(4)]) )
 
-    @classdef.method('put_ulong_long', offset='int', val='int')
+    @classdef.method('put_ulong_long', offset='int', val='bigint')
     def method_put_ulong_long(self, space, offset, val):
-        most_significant = val / 256 / 256 / 256
-        nearly_most_significant = val / 256 / 256 % 256
-        nearly_least_significant = val / 256 % 256
-        least_significant = val % 256
-        self.buffer[offset] = chr(most_significant)
-        self.buffer[offset+1] = chr(nearly_most_significant)
-        self.buffer[offset+2] = chr(nearly_least_significant)
-        self.buffer[offset+3] = chr(least_significant)
+        rbi_256 = rbigint.fromint(256)
+        rbi_range8 = [rbigint.fromint(i) for i in range(8)]
+        byte = [val.div(rbi_256.pow(rbi)).mod(rbi_256)
+                for rbi in rbi_range8]
+        for i in range(8):
+            self.buffer[offset+i] = chr(byte[i].toint())
+        return self
 
     @classdef.method('get_ulong_long', offset='int')
     def method_get_ulong_long(self, space, offset):
-        most_significant = ord(self.buffer[offset])
-        nearly_most_significant = ord(self.buffer[offset+1])
-        nearly_least_significant = ord(self.buffer[offset+2])
-        least_significant = ord(self.buffer[offset+3])
-        return space.newint(  least_significant
-                            + nearly_least_significant * 256
-                            + nearly_most_significant  * 256 * 256
-                            + most_significant         * 256 * 256 * 256)
+        byte = [ord(x) for x in self.buffer[offset:offset+8]]
+        val = sum([byte[i] * 256**i for i in range(8)])
+        return space.newbigint_fromrbigint(rbigint.fromlong(val))
