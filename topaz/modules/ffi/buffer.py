@@ -135,6 +135,10 @@ class W_BufferObject(W_Object):
             self.buffer[offset+i] = val[i]
         return self
 
+    @classdef.method('write_bytes', val='str', index='int', length='int')
+    def method_write_bytes(self, space, val, index=0, length=-1):
+        return self.method_put_bytes(space, 0, val, index, length)
+
     @classdef.method('get_bytes', offset='int', length='int')
     def method_get_bytes(self, space, offset, length):
         val = [self.buffer[offset+i] for i in range(length)]

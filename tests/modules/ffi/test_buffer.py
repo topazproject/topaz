@@ -157,3 +157,11 @@ class TestBuffer(BaseTopazTest):
             buffer = FFI::Buffer.alloc_in(:char, 3)
             buffer.put_bytes(0, '0123', 1, 3)
             """)
+
+    def test_write_bytes_is_put_bytes_with_offset_eq_0(self, space):
+        w_res = space.execute("""
+        buffer = FFI::Buffer.new(:char, 3)
+        buffer.write_bytes('foo')
+        buffer.get_bytes(0, 3)
+        """)
+        assert self.unwrap(space, w_res) == 'foo'
