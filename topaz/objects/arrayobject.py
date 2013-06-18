@@ -338,7 +338,7 @@ class W_ArrayObject(W_Object):
             return self
         length = len(self.items_w)
         if i > length:
-            self._append_nils(i - length)
+            self._append_nils(space, i - length)
             self.items_w.extend(args_w)
             return self
         if i < 0:
@@ -353,6 +353,6 @@ class W_ArrayObject(W_Object):
             i += 1
         return self
 
-    def _append_nils(self, num):
-        for _ in xrange(num):
+    def _append_nils(self, space, num):
+        for _ in xrange(nums):
             self.items_w.append(space.w_nil)
