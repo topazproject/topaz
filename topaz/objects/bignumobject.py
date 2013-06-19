@@ -78,6 +78,10 @@ class W_BignumObject(W_IntegerObject):
         else:
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
 
+    @classdef.method("fdiv")
+    def method_fdiv(self, space, w_other):
+        raise space.error(space.w_NotImplementedError, "Bignum#fdiv")
+
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
         return space.newbigint_fromrbigint(self.bigint.lshift(other))
