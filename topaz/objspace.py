@@ -622,7 +622,7 @@ class ObjectSpace(object):
                     "undefined method `%s' for %s" % (name, class_name)
                 )
             else:
-                args_w.insert(0, self.newsymbol(name))
+                args_w = [self.newsymbol(name)] + args_w
                 return method_missing.call(self, w_receiver, args_w, block)
         return raw_method.call(self, w_receiver, args_w, block)
 
