@@ -60,12 +60,14 @@ class TestBuffer(BaseTopazTest):
 
     def test_put_and_get_char(self, space):
         w_array = space.execute("""
-        buffer = FFI::Buffer.alloc_in(:char, 5)
-        (0..4).each { |x| buffer.put_char(x, 127) }
-        (0..4).map { |x| buffer.get_char(x) }
+        buffer = FFI::Buffer.alloc_in(:char, 3)
+        buffer.put_char(0, -127)
+        buffer.put_char(1, 0)
+        buffer.put_char(2, 127)
+        (0..2).map { |x| buffer.get_char(x) }
         """)
-        w_chars = w_array.listview(space)
-        assert all([self.unwrap(space, w_res) == 127 for w_res in w_chars])
+        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        assert res == [-127, 0, 127]
 
     def test_put_and_get_uchar(self, space):
         w_array = space.execute("""
