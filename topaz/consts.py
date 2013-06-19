@@ -52,7 +52,6 @@ BYTECODES = [
     ("BUILD_MODULE", 0, -1),
     ("BUILD_REGEXP", 0, -1),
 
-    ("COPY_STRING", 0, 0),
     ("COERCE_ARRAY", 1, 0),
     ("COERCE_BLOCK", 0, 0),
     ("COERCE_STRING", 0, 0),

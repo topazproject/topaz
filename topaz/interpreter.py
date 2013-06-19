@@ -11,7 +11,6 @@ from topaz.objects.functionobject import W_FunctionObject
 from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.objectobject import W_Root
 from topaz.objects.procobject import W_ProcObject
-from topaz.objects.stringobject import W_StringObject
 from topaz.scope import StaticScope
 from topaz.utils.regexp import RegexpError
 
@@ -406,11 +405,6 @@ class Interpreter(object):
         except RegexpError as e:
             raise space.error(space.w_RegexpError, str(e))
         frame.push(w_regexp)
-
-    def COPY_STRING(self, space, bytecode, frame, pc):
-        w_s = frame.pop()
-        assert isinstance(w_s, W_StringObject)
-        frame.push(w_s.copy(space))
 
     def COERCE_ARRAY(self, space, bytecode, frame, pc, nil_is_empty):
         w_obj = frame.pop()
