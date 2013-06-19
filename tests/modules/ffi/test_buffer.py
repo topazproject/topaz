@@ -95,23 +95,23 @@ class TestBuffer(BaseTopazTest):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:ushort, 3)
         buffer.put_ushort(0, 256**2 - 1)
-        buffer.put_ushort(2, 257)
+        buffer.put_ushort(2, 256)
         buffer.put_ushort(4, 0)
         [0, 2, 4].map { |x| buffer.get_ushort(x) }
         """)
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
-        assert res == [256**2 - 1, 257, 0]
+        assert res == [256**2 - 1, 256, 0]
 
     def test_put_and_get_uint(self, space):
-        maxi = 256**4 - 1
         w_array = space.execute("""
-        buffer = FFI::Buffer.alloc_in(:char, 8)
-        (0..4).each { |x| buffer.put_uint(x, %s) }
-        (0..4).map { |x| buffer.get_uint(x) }
-        """ % maxi)
-        w_chars = w_array.listview(space)
-        assert all([self.unwrap(space, w_res) == maxi
-                    for w_res in w_chars])
+        buffer = FFI::Buffer.alloc_in(:uint, 3)
+        buffer.put_uint(0, 256**4 - 1)
+        buffer.put_uint(4, 2222222222)
+        buffer.put_uint(8, 0)
+        [0, 4, 8].map { |x| buffer.get_uint(x) }
+        """)
+        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        assert res == [256**4 - 1, 2222222222, 0]
 
     def test_put_and_get_ulong_long(self, space):
         maxi = 256**8 - 1
