@@ -107,6 +107,15 @@ class W_BufferObject(W_Object):
         return space.newint(  byte0 * 256**0
                             + byte1 * 256**1)
 
+    @classdef.method('put_int', offset='int', val='int')
+    def method_put_int(self, space, offset, val):
+        return self.method_put_uint(space, offset, val + 2**31 - 1)
+
+    @classdef.method('get_int', offset='int')
+    def method_get_int(self, space, offset):
+        val = space.int_w(self.method_get_uint(space, offset)) - (2**31 - 1)
+        return space.newint(val)
+
     @classdef.method('put_uint', offset='int', val='int')
     def method_put_uint(self, space, offset, val):
         byte = [val / 256**i % 256 for i in range(4)]

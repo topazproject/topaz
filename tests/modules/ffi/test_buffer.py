@@ -102,6 +102,17 @@ class TestBuffer(BaseTopazTest):
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
         assert res == [256**2 - 1, 256, 0]
 
+    def test_put_and_get_int(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:int, 3)
+        buffer.put_int(0, -(2**31 - 1))
+        buffer.put_int(4, 2**31 - 1)
+        buffer.put_int(8, 0)
+        [0, 4, 8].map { |x| buffer.get_int(x) }
+        """)
+        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        assert res == [-(2**31 - 1), 2**31 - 1, 0]
+
     def test_put_and_get_uint(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:uint, 3)
