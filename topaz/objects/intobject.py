@@ -1,6 +1,7 @@
 import math
 import operator
 
+from rpython.rlib import rfloat
 from rpython.rlib.debug import check_regular_int
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import ovfcheck, LONG_BIT
@@ -140,6 +141,29 @@ class W_FixnumObject(W_RootObject):
                 return space.send(w_float, "to_i")
         else:
             return self.divide(space, w_other)
+
+    @classdef.method("fdiv")
+    def method_fdiv(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            other = space.int_w(w_other)
+            try:
+                res = float(self.intvalue) / float(other)
+            except ZeroDivisionError:
+                return space.newfloat(rfloat.copysign(rfloat.INFINITY, float(self.intvalue)))
+            else:
+                return space.newfloat(res)
+        elif space.is_kind_of(w_other, space.w_bignum):
+            return space.send(space.newbigint_fromint(self.intvalue), "fdiv", [w_other])
+        elif space.is_kind_of(w_other, space.w_float):
+            other = space.float_w(w_other)
+            try:
+                res = float(self.intvalue) / other
+            except ZeroDivisionError:
+                return space.newfloat(rfloat.copysign(rfloat.INFINITY, float(self.intvalue)))
+            else:
+                return space.newfloat(res)
+        else:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "fdiv")
 
     @classdef.method("**")
     def method_pow(self, space, w_other):

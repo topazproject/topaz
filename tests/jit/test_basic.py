@@ -71,3 +71,37 @@ class TestBasic(BaseJITTest):
         i48 = arraylen_gc(p25, descr=<ArrayP 8>)
         jump(p0, p1, p3, p4, p5, p6, p9, p19, p47, p30, p25, descr=TargetToken(4323625760))
         """)
+
+    def test_constant_string(self, topaz, tmpdir):
+        traces = self.run(topaz, tmpdir, """
+        i = 0
+        while i < 10000
+            i += "a".length
+        end
+        """)
+        self.assert_matches(traces[0].loop, """
+        label(p0, p1, p3, p4, p5, p6, p9, i35, p19, p21, p27, descr=TargetToken(4310789600))
+        debug_merge_point(0, 0, '<main> at LOAD_DEREF')
+        debug_merge_point(0, 0, '<main> at LOAD_CONST')
+        debug_merge_point(0, 0, '<main> at SEND')
+        setfield_gc(p21, 21, descr=<FieldS topaz.executioncontext.ExecutionContext.inst_last_instr 24>)
+        guard_not_invalidated(descr=<Guard0x100fc35b0>)
+        p37 = force_token()
+        i38 = int_lt(i35, 10000)
+        guard_true(i38, descr=<Guard0x100fc3538>)
+        debug_merge_point(0, 0, '<main> at JUMP_IF_FALSE')
+        debug_merge_point(0, 0, '<main> at LOAD_DEREF')
+        debug_merge_point(0, 0, '<main> at LOAD_CONST')
+        debug_merge_point(0, 0, '<main> at COERCE_STRING')
+        debug_merge_point(0, 0, '<main> at SEND')
+        p39 = force_token()
+        debug_merge_point(0, 0, '<main> at SEND')
+        p40 = force_token()
+        i41 = int_add(i35, 1)
+        debug_merge_point(0, 0, '<main> at STORE_DEREF')
+        debug_merge_point(0, 0, '<main> at DISCARD_TOP')
+        debug_merge_point(0, 0, '<main> at JUMP')
+        debug_merge_point(0, 0, '<main> at LOAD_DEREF')
+        setfield_gc(p21, 41, descr=<FieldS topaz.executioncontext.ExecutionContext.inst_last_instr 24>)
+        jump(p0, p1, p3, p4, p5, p6, p9, i41, p19, p21, p27, descr=TargetToken(4310789600))
+        """)

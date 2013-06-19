@@ -1,5 +1,7 @@
 import copy
 
+from rpython.rlib.objectmodel import specialize
+
 from topaz.module import ClassDef
 from topaz.objects.moduleobject import UndefMethod, W_ModuleObject
 from topaz.objects.objectobject import W_Object
@@ -74,12 +76,13 @@ class W_ClassObject(W_ModuleObject):
             method = self.superclass.find_method(space, name)
         return method
 
-    def methods(self, space, inherit=True):
+    @specialize.argtype(2)
+    def methods(self, space, visibility=None, inherit=True):
         methods = {}
-        for name in W_ModuleObject.methods(self, space, inherit):
+        for name in W_ModuleObject.methods(self, space, inherit=inherit, visibility=visibility):
             methods[name] = None
         if inherit and self.superclass is not None:
-            for name in self.superclass.methods(space, inherit):
+            for name in self.superclass.methods(space, visibility=visibility):
                 method = self._find_method_pure(space, name, self.version)
                 if method is None or not isinstance(method, UndefMethod):
                     methods[name] = None
