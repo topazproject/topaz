@@ -192,10 +192,10 @@ class TestBuffer(BaseTopazTest):
 
     def test_put_bytes_length_error(self, space):
         with self.raises(space, 'IndexError',
-                         "Tried to end at index 4 of str 0123"):
+                         "Tried to end at index 5 of str 0123"):
             space.execute("""
             buffer = FFI::Buffer.alloc_in(:char, 3)
-            buffer.put_bytes(0, '0123', 1, 3)
+            buffer.put_bytes(0, '0123', 1, 4)
             """)
 
     def test_write_bytes_is_put_bytes_with_offset_eq_0(self, space):

@@ -168,7 +168,7 @@ class W_BufferObject(W_Object):
             raise space.error(space.w_IndexError,
                               "Tried to start at index %s of str %s" %
                               (index, val))
-        if len(val) <= index + length:
+        if len(val) < index + length:
             raise space.error(space.w_IndexError,
                               "Tried to end at index %s of str %s" %
                               (index + length, val))
