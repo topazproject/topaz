@@ -69,12 +69,14 @@ class TestBuffer(BaseTopazTest):
 
     def test_put_and_get_uchar(self, space):
         w_array = space.execute("""
-        buffer = FFI::Buffer.alloc_in(:char, 5)
-        (0..4).each { |x| buffer.put_uchar(x, 255) }
-        (0..4).map { |x| buffer.get_uchar(x) }
+        buffer = FFI::Buffer.alloc_in(:char, 3)
+        buffer.put_uchar(0, 255)
+        buffer.put_uchar(1, 127)
+        buffer.put_uchar(2, 0)
+        (0..2).map { |x| buffer.get_uchar(x) }
         """)
-        w_chars = w_array.listview(space)
-        assert all([self.unwrap(space, w_res) == 255 for w_res in w_chars])
+        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        assert res == [255, 127, 0]
 
     def test_put_and_get_ushort(self, space):
         maxi = 256**2 - 1
