@@ -82,7 +82,7 @@ class W_ClassObject(W_ModuleObject):
         for name in W_ModuleObject.methods(self, space, inherit=inherit, visibility=visibility):
             methods[name] = None
         if inherit and self.superclass is not None:
-            for name in self.superclass.methods(space, inherit=inherit, visibility=visibility):
+            for name in self.superclass.methods(space, visibility=visibility):
                 method = self._find_method_pure(space, name, self.version)
                 if method is None or not isinstance(method, UndefMethod):
                     methods[name] = None

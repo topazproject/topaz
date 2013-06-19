@@ -171,7 +171,7 @@ class W_ModuleObject(W_RootObject):
 
         if inherit:
             for w_mod in self.included_modules:
-                for name in w_mod.methods(space, inherit=inherit, visibility=visibility):
+                for name in w_mod.methods(space, visibility=visibility):
                     method = self._find_method_pure(space, name, self.version)
                     if method is None or not isinstance(method, UndefMethod):
                         methods[name] = None

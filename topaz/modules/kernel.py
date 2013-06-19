@@ -43,7 +43,7 @@ class Kernel(object):
     def method_methods(self, space, inherit=True):
         w_cls = space.getclass(self)
 
-        return space.newarray([space.newsymbol(m) for m in w_cls.methods(space, inherit)])
+        return space.newarray([space.newsymbol(m) for m in w_cls.methods(space, inherit=inherit)])
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
