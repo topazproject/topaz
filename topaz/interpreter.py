@@ -448,6 +448,10 @@ class Interpreter(object):
         else:
             raise space.error(space.w_TypeError, "wrong argument type")
 
+    def COERCE_STRING(self, space, bytecode, frame, pc):
+        w_symbol = frame.pop()
+        frame.push(space.newstr_fromstr(space.symbol_w(w_symbol)))
+
     @jit.unroll_safe
     def UNPACK_SEQUENCE(self, space, bytecode, frame, pc, n_items):
         w_obj = frame.pop()

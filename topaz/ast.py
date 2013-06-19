@@ -1150,11 +1150,11 @@ class ConstantString(ConstantNode):
         self.strvalue = strvalue
 
     def create_const(self, ctx):
-        return ctx.create_string_const(self.strvalue)
+        return ctx.create_symbol_const(self.strvalue)
 
     def compile(self, ctx):
         ConstantNode.compile(self, ctx)
-        ctx.emit(consts.COPY_STRING)
+        ctx.emit(consts.COERCE_STRING)
 
 
 class ConstantRegexp(ConstantNode):
