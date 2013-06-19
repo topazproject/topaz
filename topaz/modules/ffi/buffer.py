@@ -67,11 +67,13 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_char', offset='int', val='int')
     def method_put_char(self, space, offset, val):
-        return self.method_put_uchar(space, offset, val + 127)
+        as_uchar = val + 127
+        return self.method_put_uchar(space, offset, as_uchar)
 
     @classdef.method('get_char', offset='int')
     def method_get_char(self, space, offset):
-        val = space.int_w(self.method_get_uchar(space, offset)) - 127
+        uchar = space.int_w(self.method_get_uchar(space, offset))
+        val = uchar - 127
         return space.newint(val)
 
     @classdef.method('put_uchar', offset='int', val='int')
@@ -85,11 +87,13 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_short', offset='int', val='int')
     def method_put_short(self, space, offset, val):
-        return self.method_put_ushort(space, offset, val + 2**15 - 1)
+        as_ushort = val + 2**15 - 1
+        return self.method_put_ushort(space, offset, as_ushort)
 
     @classdef.method('get_short', offset='int')
     def method_get_short(self, space, offset):
-        val = space.int_w(self.method_get_ushort(space, offset)) - (2**15 - 1)
+        ushort = space.int_w(self.method_get_ushort(space, offset))
+        val = ushort - (2**15 - 1)
         return space.newint(val)
 
     @classdef.method('put_ushort', offset='int', val='int')
@@ -109,11 +113,13 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_int', offset='int', val='int')
     def method_put_int(self, space, offset, val):
-        return self.method_put_uint(space, offset, val + 2**31 - 1)
+        as_uint = 2**31 - 1
+        return self.method_put_uint(space, offset, val + as_uint)
 
     @classdef.method('get_int', offset='int')
     def method_get_int(self, space, offset):
-        val = space.int_w(self.method_get_uint(space, offset)) - (2**31 - 1)
+        uint = space.int_w(self.method_get_uint(space, offset))
+        val = uint - (2**31 - 1)
         return space.newint(val)
 
     @classdef.method('put_uint', offset='int', val='int')
