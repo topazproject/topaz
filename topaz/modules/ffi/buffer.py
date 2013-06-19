@@ -83,6 +83,15 @@ class W_BufferObject(W_Object):
     def method_get_uchar(self, space, offset):
         return space.newint(ord(self.buffer[offset]))
 
+    @classdef.method('put_short', offset='int', val='int')
+    def method_put_short(self, space, offset, val):
+        return self.method_put_ushort(space, offset, val + 2**15 - 1)
+
+    @classdef.method('get_short', offset='int')
+    def method_get_short(self, space, offset):
+        val = space.int_w(self.method_get_ushort(space, offset)) - (2**15 - 1)
+        return space.newint(val)
+
     @classdef.method('put_ushort', offset='int', val='int')
     def method_put_ushort(self, space, offset, val):
         byte0 = val % 256

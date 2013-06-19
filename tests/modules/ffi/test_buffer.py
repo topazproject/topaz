@@ -80,6 +80,17 @@ class TestBuffer(BaseTopazTest):
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
         assert res == [255, 127, 0]
 
+    def test_put_and_get_short(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:short, 3)
+        buffer.put_short(0, -(2**15 - 1))
+        buffer.put_short(2, 2**15 - 1)
+        buffer.put_short(4, 0)
+        [0, 2, 4].map { |x| buffer.get_short(x) }
+        """)
+        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        assert res == [-(2**15 - 1), 2**15 - 1, 0]
+
     def test_put_and_get_ushort(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:ushort, 3)
