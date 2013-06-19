@@ -67,12 +67,12 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_char', offset='int', val='int')
     def method_put_char(self, space, offset, val):
-        self.buffer[offset] = chr(val + 127)
-        return self
+        return self.method_put_uchar(space, offset, val + 127)
 
     @classdef.method('get_char', offset='int')
     def method_get_char(self, space, offset):
-        return space.newint(ord(self.buffer[offset]) - 127)
+        val = space.int_w(self.method_get_uchar(space, offset)) - 127
+        return space.newint(val)
 
     @classdef.method('put_uchar', offset='int', val='int')
     def method_put_uchar(self, space, offset, val):
