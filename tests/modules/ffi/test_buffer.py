@@ -124,6 +124,18 @@ class TestBuffer(BaseTopazTest):
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
         assert res == [256**4 - 1, 2222222222, 0]
 
+    def test_put_and_get_long_long(self, space):
+        w_array = space.execute("""
+        buffer = FFI::Buffer.alloc_in(:long_long, 3)
+        buffer.put_long_long(0, - 2**62)
+        buffer.put_long_long(8, 2**62)
+        buffer.put_long_long(16, 0)
+        [0, 8, 16].map { |x| buffer.get_long_long(x) }
+        """)
+        res = [self.unwrap(space, w_x).tolong()
+               for w_x in w_array.listview(space)]
+        assert res == [- 2**62, 2**62, 0]
+
     def test_put_and_get_ulong_long(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:ulong_long, 3)

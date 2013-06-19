@@ -128,6 +128,17 @@ class W_BufferObject(W_Object):
         byte = [ord(x) for x in self.buffer[offset:offset+4]]
         return space.newint( sum([byte[i] * 256**i for i in range(4)]) )
 
+    @classdef.method('put_long_long', offset='int', val='bigint')
+    def method_put_long_long(self, space, offset, val):
+        as_ulong_long = val.add(rbigint.fromlong(2**63))
+        return self.method_put_ulong_long(space, offset, as_ulong_long)
+
+    @classdef.method('get_long_long', offset='int')
+    def method_get_long_long(self, space, offset):
+        ulong_long = space.bigint_w(self.method_get_ulong_long(space, offset))
+        long_long = ulong_long.sub(rbigint.fromlong(2**63))
+        return space.newbigint_fromrbigint(long_long)
+
     @classdef.method('put_ulong_long', offset='int', val='bigint')
     def method_put_ulong_long(self, space, offset, val):
         rbi_256 = rbigint.fromint(256)
