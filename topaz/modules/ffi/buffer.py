@@ -39,11 +39,17 @@ class W_BufferObject(W_Object):
         try:
             typesym = Coerce.str(space, w_str_or_int)
             self.init_str_int(space, typesym, length, block)
-        except RubyError:
-            length = Coerce.int(space, w_str_or_int)
-            self.init_int(space, length, block)
+        except RubyError, rubyerr:
+            if rubyerr.w_value.is_kind_of(space, space.w_TypeError):
+                length = Coerce.int(space, w_str_or_int)
+                self.init_int(space, length, block)
+            else:
+                raise
 
     def init_str_int(self, space, typesym, length, block):
+        if typesym not in self.typesymbols:
+            raise space.error(space.w_ArgumentError,
+                              "I don't know the %s type." % typesym)
         size = rffi.sizeof(self.typesymbols[typesym])
         self.buffer = (length * size) * ['\x00']
         if block is not None:

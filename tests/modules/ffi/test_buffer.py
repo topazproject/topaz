@@ -27,6 +27,11 @@ class TestBuffer(BaseTopazTest):
             expected = TestBuffer.sizes[key]*3
             assert self.unwrap(space, w_res) == expected
 
+    def test_non_valid_init_symbol(self, space):
+        with self.raises(space, 'ArgumentError',
+                         "I don't know the megaint type."):
+            space.execute("FFI::Buffer.new(:megaint, 1)")
+
     def test_instantiations(self, space):
         generic_init = "FFI::Buffer.%s(:int, 5)"
         total_should = TestBuffer.sizes['int']*5
