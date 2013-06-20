@@ -19,7 +19,8 @@ class W_BufferObject(W_Object):
                    'long_long': rffi.LONGLONG,
                    'ulong_long': rffi.ULONGLONG,
                    'float': rffi.FLOAT,
-                   'double': rffi.DOUBLE}
+                   'double': rffi.DOUBLE,
+                   'pointer': rffi.VOIDP}
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):

@@ -15,7 +15,8 @@ class TestBuffer(BaseTopazTest):
                    'long_long': 8,
                    'ulong_long': 8,
                    'float': 4,
-                   'double': 8}
+                   'double': 8,
+                   'pointer': 8}
 
     def test_total(self, space):
         for key in TestBuffer.sizes:
