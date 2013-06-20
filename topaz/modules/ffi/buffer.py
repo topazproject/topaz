@@ -88,6 +88,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_uchar', offset='int', val='int')
     def method_put_uchar(self, space, offset, val):
+        if val < 0 or 256 <= val:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into a uchar" % val)
         self.buffer[offset] = chr(val)
         return self
 
