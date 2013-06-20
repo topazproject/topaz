@@ -247,6 +247,14 @@ class TestBuffer(BaseTopazTest):
                for w_x in w_array.listview(space)]
         assert res == [2**62, long(256**4 + 5), long(0)]
 
+    def test_call_put_ulong_long_in_wrong_situation(self, space):
+        with self.raises(space, 'TypeError',
+                         "can't convert -1 into a ulong_long"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:char, 1).put_ulong_long(0, -1)
+            """)
+        # wait until 2**64 works in topaz for rest of the test
+
     def test_put_returns_self(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.new(:char, 1)

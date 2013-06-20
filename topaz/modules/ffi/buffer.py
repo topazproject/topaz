@@ -175,6 +175,10 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_ulong_long', offset='int', val='bigint')
     def method_put_ulong_long(self, space, offset, val):
+        if val.tolong() < 0 or 2**64 <= val.tolong():
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into a ulong_long" %
+                              val.tolong())
         rbi_256 = rbigint.fromint(256)
         rbi_range8 = [rbigint.fromint(i) for i in range(8)]
         byte = [val.div(rbi_256.pow(rbi)).mod(rbi_256)
