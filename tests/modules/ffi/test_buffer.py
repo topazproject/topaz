@@ -185,6 +185,18 @@ class TestBuffer(BaseTopazTest):
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
         assert res == [-(2**31 - 1), 2**31 - 1, 0]
 
+    def test_call_put_int_in_wrong_situation(self, space):
+        with self.raises(space, 'TypeError',
+                         "can't convert -2147483648 into an int"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:long_long, 1).put_int(0, - 2**31)
+            """)
+        with self.raises(space, 'TypeError',
+                         "can't convert 2147483648 into an int"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:long_long, 1).put_int(0, 2**31)
+            """)
+
     def test_put_and_get_uint(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:uint, 3)

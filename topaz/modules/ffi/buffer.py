@@ -135,6 +135,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_int', offset='int', val='int')
     def method_put_int(self, space, offset, val):
+        if val <= -2**31 or 2**31 <= val:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into an int" % val)
         as_uint = 2**31 - 1
         return self.method_put_uint(space, offset, val + as_uint)
 
