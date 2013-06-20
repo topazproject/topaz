@@ -149,6 +149,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_uint', offset='int', val='int')
     def method_put_uint(self, space, offset, val):
+        if val < 0 or 2**32 <= val:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into a uint" % val)
         byte = [val / 256**i % 256 for i in range(4)]
         for i in range(4):
             self.buffer[offset+i] = chr(byte[i])
