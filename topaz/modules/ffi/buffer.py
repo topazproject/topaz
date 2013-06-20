@@ -77,6 +77,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_char', offset='int', val='int')
     def method_put_char(self, space, offset, val):
+        if val <= -128 or 128 <= val:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into a char" % val)
         as_uchar = val + 127
         return self.method_put_uchar(space, offset, as_uchar)
 

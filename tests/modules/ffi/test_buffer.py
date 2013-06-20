@@ -93,6 +93,18 @@ class TestBuffer(BaseTopazTest):
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
         assert res == [-127, 0, 127]
 
+    def test_call_put_char_in_wrong_situation(self, space):
+        with self.raises(space, 'TypeError',
+                         "can't convert -128 into a char"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:short, 1).put_char(0, -128)
+            """)
+        with self.raises(space, 'TypeError',
+                         "can't convert 128 into a char"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:short, 1).put_char(0, 128)
+            """)
+
     def test_put_and_get_uchar(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:uchar, 3)
