@@ -33,14 +33,13 @@ class W_BufferObject(W_Object):
     def singleton_method_allocate(self, space, args_w):
         return W_BufferObject(space)
 
-    @classdef.method('initialize')
-    def method_initialize(self, space, w_arg1, w_arg2=None, block=None):
+    @classdef.method('initialize', length='int')
+    def method_initialize(self, space, w_str_or_int, length=1, block=None):
         try:
-            typesym = Coerce.str(space, w_arg1)
-            length = Coerce.int(space, w_arg2)
+            typesym = Coerce.str(space, w_str_or_int)
             self.init_str_int(space, typesym, length, block)
         except RubyError:
-            length = Coerce.int(space, w_arg1)
+            length = Coerce.int(space, w_str_or_int)
             self.init_int(space, length, block)
 
     def init_str_int(self, space, typesym, length, block):

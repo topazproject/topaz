@@ -44,6 +44,10 @@ class TestBuffer(BaseTopazTest):
         w_res = space.execute("FFI::Buffer.alloc_in(7).total")
         assert self.unwrap(space, w_res) == 7
 
+    def test_default_length_is_1(self, space):
+        w_res = space.execute("FFI::Buffer.alloc_in(:short).total")
+        assert self.unwrap(space, w_res) == TestBuffer.sizes['short']
+
     def test_init_with_block(self, space):
         w_res = space.execute("""
         x = 0
