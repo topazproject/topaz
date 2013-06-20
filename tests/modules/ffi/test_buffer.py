@@ -232,6 +232,9 @@ class TestBuffer(BaseTopazTest):
                for w_x in w_array.listview(space)]
         assert res == [- 2**62, 2**62, 0]
 
+    # test_call_put_long_long_in_wrong_situation delayed until
+    # 2**63 works in topaz.
+
     def test_put_and_get_ulong_long(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:ulong_long, 3)
