@@ -34,21 +34,25 @@ class W_BufferObject(W_Object):
         return W_BufferObject(space)
 
     @classdef.method('initialize')
-    def method_initialize(self, space, w_arg1, w_arg2=None):
+    def method_initialize(self, space, w_arg1, w_arg2=None, block=None):
         try:
             typesym = Coerce.str(space, w_arg1)
             length = Coerce.int(space, w_arg2)
-            self.init_str_int(space, typesym, length)
+            self.init_str_int(space, typesym, length, block)
         except RubyError:
             length = Coerce.int(space, w_arg1)
-            self.init_int(space, length)
+            self.init_int(space, length, block)
 
-    def init_str_int(self, space, typesym, length):
+    def init_str_int(self, space, typesym, length, block):
         size = rffi.sizeof(self.typesymbols[typesym])
         self.buffer = (length * size) * ['\x00']
+        if block is not None:
+            space.invoke_block(block, [space.newint(length)])
 
-    def init_int(self, space, length):
+    def init_int(self, space, length, block):
         self.buffer = length * ['\x00']
+        if block is not None:
+            space.invoke_block(block, [space.newint(length)])
 
     @classdef.method('total')
     def method_total(self, space):
