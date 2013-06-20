@@ -139,6 +139,18 @@ class TestBuffer(BaseTopazTest):
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
         assert res == [-(2**15 - 1), 2**15 - 1, 0]
 
+    def test_call_put_short_in_wrong_situation(self, space):
+        with self.raises(space, 'TypeError',
+                         "can't convert -32768 into a short"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:int, 1).put_short(0, - 2**15)
+            """)
+        with self.raises(space, 'TypeError',
+                         "can't convert 32768 into a short"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:int, 1).put_short(0, 2**15)
+            """)
+
     def test_put_and_get_ushort(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:ushort, 3)

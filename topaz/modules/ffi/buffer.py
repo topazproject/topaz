@@ -103,6 +103,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_short', offset='int', val='int')
     def method_put_short(self, space, offset, val):
+        if val <= -2**15 or 2**15 <= val:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into a short" % val)
         as_ushort = val + 2**15 - 1
         return self.method_put_ushort(space, offset, as_ushort)
 
