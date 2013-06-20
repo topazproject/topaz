@@ -117,6 +117,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_ushort', offset='int', val='int')
     def method_put_ushort(self, space, offset, val):
+        if val < 0 or 2**16 <= val:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into a ushort" % val)
         byte0 = val % 256
         byte1 = val / 256
         self.buffer[offset+0] = chr(byte0)

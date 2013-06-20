@@ -162,6 +162,18 @@ class TestBuffer(BaseTopazTest):
         res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
         assert res == [256**2 - 1, 256, 0]
 
+    def test_call_put_ushort_in_wrong_situation(self, space):
+        with self.raises(space, 'TypeError',
+                         "can't convert -1 into a ushort"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:char, 1).put_ushort(0, -1)
+            """)
+        with self.raises(space, 'TypeError',
+                         "can't convert 65536 into a ushort"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:int, 1).put_ushort(0, 2**16)
+            """)
+
     def test_put_and_get_int(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:int, 3)
