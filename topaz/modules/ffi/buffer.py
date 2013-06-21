@@ -195,6 +195,8 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_bytes', offset='int', val='str',
                                   index='int', length='int')
+    @classdef.method('put_string', offset='int', val='str',
+                                  index='int', length='int')
     def method_put_bytes(self, space, offset, val, index=0, length=-1):
         if index < 0 or len(val) <= index:
             raise space.error(space.w_IndexError,
