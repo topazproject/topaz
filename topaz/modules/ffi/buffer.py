@@ -217,3 +217,10 @@ class W_BufferObject(W_Object):
     def method_get_bytes(self, space, offset, length):
         val = [self.buffer[offset+i] for i in range(length)]
         return space.newstr_fromchars(val)
+
+    @classdef.method('get_string', offset='int', length='int')
+    def method_get_string(self, space, offset, length):
+        byte = self.buffer[offset:offset+length]
+        str_end = byte.index('\x00') if '\x00' in byte else len(byte)-1
+        val = byte[:str_end]
+        return space.newstr_fromchars(val)

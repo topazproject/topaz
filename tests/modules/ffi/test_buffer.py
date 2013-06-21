@@ -312,3 +312,15 @@ class TestBuffer(BaseTopazTest):
         buffer.get_bytes(0, 3)
         """)
         assert self.unwrap(space, w_res) == 'foo'
+
+    # TODO: Put everything into the space.execute section
+    #       once the lexer can handle \0.
+    def test_get_string(self, space):
+        w_buffer = space.execute("""
+        FFI::Buffer.alloc_in(:char, 11)
+        """)
+        space.send(w_buffer, 'put_bytes',
+                   [space.newint(0), space.newstr_fromstr('Hi\0there')])
+        w_res = space.send(w_buffer, 'get_string',
+                           [space.newint(0), space.newint(9)])
+        assert self.unwrap(space, w_res) == 'Hi'
