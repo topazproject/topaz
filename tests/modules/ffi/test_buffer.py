@@ -33,18 +33,16 @@ class TestBuffer(BaseTopazTest):
             space.execute("FFI::Buffer.new(:megaint, 1)")
 
     def test_instantiations(self, space):
-        generic_init = "FFI::Buffer.%s(:int, 5)"
-        total_should = TestBuffer.sizes['int']*5
-        for init_method in ['new',
-                            'new_inout',
+        for init_method in ['new_inout',
                             'new_in',
                             'new_out',
                             'alloc_inout',
                             'alloc_in',
                             'alloc_out']:
-            w_buffer = space.execute(generic_init % init_method)
-            w_buffer_total = space.send(w_buffer, 'total')
-            assert total_should == self.unwrap(space, w_buffer_total)
+            w_res = space.execute("""
+            FFI::Buffer.method(:new) == FFI::Buffer.method(:%s)
+            """ % init_method)
+            assert self.unwrap(space, w_res)
 
     def test_default_size_is_1(self, space):
         w_res = space.execute("FFI::Buffer.alloc_in(7).total")
