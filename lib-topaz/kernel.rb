@@ -40,6 +40,7 @@ module Kernel
     arg.to_i
   end
   module_function :Integer
+  private :Integer
 
   def loop(&block)
     return enum_for(:loop) unless block
