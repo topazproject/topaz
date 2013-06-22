@@ -30,6 +30,7 @@ _errno_for_oserror_map = {
     errno.ENOENT: "ENOENT",
     errno.ECHILD: "ECHILD",
     errno.EACCES: "EACCES",
+    errno.EEXIST: "EEXIST",
     errno.ENOTDIR: "ENOTDIR",
     errno.EISDIR: "EISDIR",
     errno.ENOTEMPTY: "ENOTEMPTY",
