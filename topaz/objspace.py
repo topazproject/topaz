@@ -381,6 +381,12 @@ class ObjectSpace(object):
         assert strvalue is not None
         return W_StringObject.newstr_fromstr(self, strvalue)
 
+    def newstr_fromstr_frozen(self, strvalue):
+        assert strvalue is not None
+        w_str = W_StringObject.newstr_fromstr(self, strvalue)
+        self.send(w_str, "freeze")
+        return w_str
+
     def newstr_fromstrs(self, strs_w):
         return W_StringObject.newstr_fromstrs(self, strs_w)
 
@@ -664,6 +670,10 @@ class ObjectSpace(object):
         w_exc = self.send(w_type, "new", args_w)
         assert isinstance(w_exc, W_ExceptionObject)
         return RubyError(w_exc)
+
+    def errno_error(self, name, msg=""):
+        w_type = self.find_const(self.find_const(self.w_object, "Errno"), name)
+        return self.error(w_type, msg)
 
     def hash_w(self, w_obj):
         return self.int_w(self.send(w_obj, "hash"))
