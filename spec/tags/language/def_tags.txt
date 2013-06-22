@@ -1,5 +1,3 @@
-fails:Defining an 'initialize' method sets the method's visibility to private
-fails:Defining an 'initialize_copy' method sets the method's visibility to private
 fails:A singleton method definition raises RuntimeError if frozen
 fails:A method defined with extreme default arguments may use an fcall as a default
 fails:A singleton method defined with extreme default arguments may use an fcall as a default

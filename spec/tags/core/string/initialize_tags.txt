@@ -1,4 +1,3 @@
-fails:String#initialize is a private method
 fails:String#initialize with an argument returns self
 fails:String#initialize with an argument taints self if other is tainted
 fails:String#initialize with an argument untrusts self if other is untrusted

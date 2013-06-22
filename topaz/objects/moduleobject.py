@@ -131,6 +131,8 @@ class W_ModuleObject(W_RootObject):
         self.version = VersionTag()
 
     def define_method(self, space, name, method):
+        if name == "initialize" or name == "initialize_copy":
+            method.update_visibility(W_FunctionObject.PRIVATE)
         self.mutated()
         self.methods_w[name] = method
         if not space.bootstrap:

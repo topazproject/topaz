@@ -17,7 +17,6 @@ class Array
     end
     return self
   end
-  private :initialize
 
   def self.[](*args)
     args.inject(allocate) { |array, arg| array << arg}
