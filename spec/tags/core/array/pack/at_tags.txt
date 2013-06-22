@@ -1,4 +1,2 @@
 fails:Array#pack with format '@' taints the output string if the format string is tainted
-fails:Array#pack with format '@' moves the insertion point to the index specified by the count modifier
 fails:Array#pack with format '@' extends the string with NULL bytes if the string size is less than the count
-fails:Array#pack with format '@' truncates the string if the string size is greater than the count
