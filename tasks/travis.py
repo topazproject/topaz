@@ -113,7 +113,7 @@ def run_translate_tests(env):
 
 
 def run_specs(binary, prefix=""):
-    invoke.run("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=spec --config=topaz.mspec".format(
+    invoke.run("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
         prefix=prefix,
         binary=binary
     ))
