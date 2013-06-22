@@ -57,6 +57,7 @@ module Kernel
     end
     nil
   end
+  private :loop
 
   def `(cmd)
     cmd = Topaz.convert_type(cmd, String, :to_str)
