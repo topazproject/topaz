@@ -7,6 +7,7 @@ module Kernel
   def gets(sep = $/, limit = nil)
     $stdin.gets(sep, limit)
   end
+  private :gets
 
   def print(*args)
     $stdout.print(*args)
