@@ -1,3 +1,4 @@
+import errno
 import os
 
 from topaz.error import error_for_errno
