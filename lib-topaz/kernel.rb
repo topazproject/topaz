@@ -11,6 +11,7 @@ module Kernel
   def print(*args)
     $stdout.print(*args)
   end
+  private :print
 
   def p(*args)
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
