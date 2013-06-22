@@ -68,6 +68,7 @@ module Kernel
     end
     res
   end
+  private :`
 
   def to_enum(method = :each, *args)
     Enumerator.new(self, method, *args)
