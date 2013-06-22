@@ -38,7 +38,7 @@ class W_EnvObject(W_Object):
         if w_value is space.w_nil:
             try:
                 del os.environ[key]
-            except (KeyError, OSError):
+            except KeyError:
                 pass
             return space.w_nil
         if "=" in key or key is "":
