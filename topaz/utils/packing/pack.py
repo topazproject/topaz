@@ -140,7 +140,7 @@ def pack_back_up(space, packer, repetitions):
     else:
         begin = size - repetitions
         assert begin >= 0
-        packer.result[begin:size] = []
+        del packer.result[begin:]
 
 
 def pack_padding(space, packer, repetitions):
