@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import errno
 import os
 import time
 
@@ -8,7 +9,7 @@ from rpython.rlib.rfloat import round_double
 from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.coerce import Coerce
-from topaz.error import RubyError, error_for_oserror
+from topaz.error import RubyError, error_for_oserror, error_for_errno
 from topaz.module import ModuleDef, check_frozen
 from topaz.modules.process import Process
 from topaz.objects.bindingobject import W_BindingObject
@@ -216,15 +217,23 @@ class Kernel(object):
                     w_arg, space.w_string, "to_str"
                 )) for w_arg in args_w[1:]
             ]
-            os.execv(cmd, args)
+            try:
+                os.execv(cmd, args)
+            except OSError as e:
+                raise error_for_oserror(space, e)
         else:
+            if not cmd:
+                raise error_for_errno(space, errno.ENOENT)
             shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
             sepidx = shell.rfind(os.sep) + 1
             if sepidx > 0:
                 argv0 = shell[sepidx:]
             else:
                 argv0 = shell
-            os.execv(shell, [argv0, "-c", cmd])
+            try:
+                os.execv(shell, [argv0, "-c", cmd])
+            except OSError as e:
+                raise error_for_oserror(space, e)
 
     @moduledef.function("system")
     def method_system(self, space, args_w):
