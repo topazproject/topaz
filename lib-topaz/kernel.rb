@@ -28,6 +28,7 @@ module Kernel
       [arg]
     end
   end
+  private :Array
 
   def String(arg)
     Topaz.convert_type(arg, String, :to_s)
