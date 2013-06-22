@@ -9,6 +9,20 @@ class File < IO
     end
   end
 
+  def self.truncate(filename, length)
+    File.open(filename) do |f|
+      f.truncate(length)
+    end
+  end
+
+  def self.size(filename)
+    return File.stat(filename).size
+  end
+
+  def size
+    return self.stat.size
+  end
+
   def zero?
     self.size == 0
   end
