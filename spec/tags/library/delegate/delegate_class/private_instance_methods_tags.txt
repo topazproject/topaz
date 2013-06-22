@@ -1,0 +1,1 @@
+fails:DelegateClass.private_instance_methods

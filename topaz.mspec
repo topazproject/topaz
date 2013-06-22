@@ -98,7 +98,6 @@ class MSpecScript
              "^#{Rubyspec}/library/csv/",
              "^#{Rubyspec}/library/date/",
              "^#{Rubyspec}/library/datetime/",
-             "^#{Rubyspec}/library/delegate/",
              "^#{Rubyspec}/library/digest/",
              "^#{Rubyspec}/library/drb/",
              "^#{Rubyspec}/library/erb/",
