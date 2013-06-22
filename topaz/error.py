@@ -39,7 +39,7 @@ _errno_for_oserror_map = {
 
 
 def error_for_oserror(space, exc):
-    return error_for_errno(exc.errno)
+    return error_for_errno(space, exc.errno)
 
 
 def error_for_errno(space, errno):
