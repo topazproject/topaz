@@ -86,4 +86,5 @@ module Kernel
     end
     Random.rand(max)
   end
+  private :rand
 end
