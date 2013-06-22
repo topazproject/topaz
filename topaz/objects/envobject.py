@@ -37,14 +37,14 @@ class W_EnvObject(W_Object):
     def method_subscript_assign(self, space, key, w_value):
         if "\0" in key:
             raise space.error(space.w_ArgumentError, "bad environment variable name")
-        if "=" in key or key == "":
-            raise error_for_errno(space, errno.EINVAL)
         if w_value is space.w_nil:
             try:
                 del os.environ[key]
-            except KeyError:
+            except (KeyError, OSError):
                 pass
             return space.w_nil
+        if "=" in key or key == "":
+            raise error_for_errno(space, errno.EINVAL)
         value = Coerce.str(space, w_value)
         if "\0" in value:
             raise space.error(space.w_ArgumentError, "bad environment variable value")
