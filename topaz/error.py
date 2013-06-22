@@ -28,6 +28,7 @@ def print_traceback(space, w_exc, top_filepath=None):
 
 _errno_for_oserror_map = {
     errno.ENOENT: "ENOENT",
+    errno.EBADF: "EBADF",
     errno.ECHILD: "ECHILD",
     errno.EACCES: "EACCES",
     errno.EEXIST: "EEXIST",

@@ -2,6 +2,9 @@ module Errno
   class ENOENT < SystemCallError
   end
 
+  class EBADF < SystemCallError
+  end
+
   class ECHILD < SystemCallError
   end
 
