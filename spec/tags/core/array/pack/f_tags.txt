@@ -11,6 +11,4 @@ fails:encodes a positive Float outside the range of a single precision float
 fails:encodes a negative Float outside the range of a single precision float
 fails:Array#pack with format 'f' returns an ASCII-8BIT string
 fails:Array#pack with format 'f' encodes all remaining elements when passed the '*' modifier
-fails:Array#pack with format 'f' encodes positive Infinity
-fails:Array#pack with format 'f' encodes negative Infinity
 fails:Array#pack with format 'f' encodes NaN
