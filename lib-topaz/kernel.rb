@@ -34,6 +34,7 @@ module Kernel
     Topaz.convert_type(arg, String, :to_s)
   end
   module_function :String
+  private :String
 
   def Integer(arg)
     arg.to_i
