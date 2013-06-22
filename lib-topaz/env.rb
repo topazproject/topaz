@@ -1,6 +1,6 @@
 class << ENV
   def to_hash
-    {}.tap{ |h| self.each { |k, v| h[k] = v } }
+    {}.tap { |h| self.each { |k, v| h[k] = v } }
   end
 
   def empty?

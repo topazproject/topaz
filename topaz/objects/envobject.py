@@ -26,7 +26,9 @@ class W_EnvObject(W_Object):
             val = os.environ[key]
         except KeyError:
             return space.w_nil
-        return space.newstr_fromstr_frozen(val)
+        s = space.newstr_fromstr(val)
+        space.send(s, "freeze")
+        return s
 
     @classdef.method("store", key="str")
     @classdef.method("[]=", key="str")
@@ -36,7 +38,7 @@ class W_EnvObject(W_Object):
         if w_value is space.w_nil:
             try:
                 del os.environ[key]
-            except:
+            except (KeyError, OSError):
                 pass
             return space.w_nil
         if "=" in key or key is "":
@@ -53,10 +55,11 @@ class W_EnvObject(W_Object):
         if block is None:
             return space.send(self, "enum_for", [space.newsymbol("each")])
         for k, v in os.environ.items():
-            space.invoke_block(block, [space.newarray([
-                space.newstr_fromstr_frozen(k),
-                space.newstr_fromstr_frozen(v)
-            ])])
+            sk = space.newstr_fromstr(k)
+            sv = space.newstr_fromstr(v)
+            space.send(sk, "freeze")
+            space.send(sv, "freeze")
+            space.invoke_block(block, [space.newarray([sk, sv])])
         return self
 
     @classdef.method("length")
