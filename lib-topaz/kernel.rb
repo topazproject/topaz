@@ -16,6 +16,7 @@ module Kernel
   def p(*args)
     args.each { |arg| $stdout.print(arg.inspect + "\n") }
   end
+  private :p
 
   def <=>(other)
     self == other ? 0 : nil
