@@ -381,12 +381,6 @@ class ObjectSpace(object):
         assert strvalue is not None
         return W_StringObject.newstr_fromstr(self, strvalue)
 
-    def newstr_fromstr_frozen(self, strvalue):
-        assert strvalue is not None
-        w_str = W_StringObject.newstr_fromstr(self, strvalue)
-        self.send(w_str, "freeze")
-        return w_str
-
     def newstr_fromstrs(self, strs_w):
         return W_StringObject.newstr_fromstrs(self, strs_w)
 
