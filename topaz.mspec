@@ -78,7 +78,6 @@ class MSpecScript
               "^#{Rubyspec}/language/BEGIN_spec.rb",
               "^#{Rubyspec}/language/alias_spec.rb",
               "^#{Rubyspec}/language/break_spec.rb",
-              "^#{Rubyspec}/language/def_spec.rb",
               "^#{Rubyspec}/language/defined_spec.rb",
               "^#{Rubyspec}/language/or_spec.rb",
               "^#{Rubyspec}/language/return_spec.rb",
