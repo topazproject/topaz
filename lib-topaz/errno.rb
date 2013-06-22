@@ -22,4 +22,7 @@ module Errno
 
   class ENOTEMPTY < SystemCallError
   end
+
+  class EINVAL < SystemCallError
+  end
 end

@@ -665,6 +665,10 @@ class ObjectSpace(object):
         assert isinstance(w_exc, W_ExceptionObject)
         return RubyError(w_exc)
 
+    def errno_error(self, name, msg=""):
+        w_type = self.find_const(self.find_const(self.w_object, "Errno"), name)
+        return self.error(w_type, msg)
+
     def hash_w(self, w_obj):
         return self.int_w(self.send(w_obj, "hash"))
 
