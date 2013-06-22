@@ -1,5 +1,6 @@
 import os
 
+from topaz.error import error_for_errno
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
 from topaz.objects.objectobject import W_Object
@@ -42,7 +43,7 @@ class W_EnvObject(W_Object):
                 pass
             return space.w_nil
         if "=" in key or key is "":
-            raise space.errno_error("EINVAL", "Invalid argument - setenv")
+            raise error_for_errno(space, errno.EINVAL)
         value = Coerce.str(space, w_value)
         if "\0" in value:
             raise space.error(space.w_ArgumentError, "bad environment variable value")

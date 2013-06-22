@@ -37,14 +37,18 @@ _errno_for_oserror_map = {
 
 
 def error_for_oserror(space, exc):
+    return error_for_errno(exc.errno)
+
+
+def error_for_errno(space, errno):
     try:
-        name = _errno_for_oserror_map[exc.errno]
+        name = _errno_for_oserror_map[errno]
     except KeyError:
         w_type = space.w_SystemCallError
     else:
         w_type = space.find_const(space.find_const(space.w_object, "Errno"), name)
     return space.error(
         w_type,
-        os.strerror(exc.errno),
-        [space.newint(exc.errno)]
+        os.strerror(errno),
+        [space.newint(errno)]
     )
