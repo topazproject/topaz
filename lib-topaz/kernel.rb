@@ -2,6 +2,7 @@ module Kernel
   def puts(*args)
     $stdout.puts(*args)
   end
+  private :puts
 
   def gets(sep = $/, limit = nil)
     $stdin.gets(sep, limit)
