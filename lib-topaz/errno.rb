@@ -17,6 +17,9 @@ module Errno
   class EISDIR < SystemCallError
   end
 
+  class EINVAL < SystemCallError
+  end
+
   class ENOTEMPTY < SystemCallError
   end
 end
