@@ -2,8 +2,6 @@ import os
 import platform
 import subprocess
 
-import pytest
-
 from topaz.main import _entry_point
 
 
