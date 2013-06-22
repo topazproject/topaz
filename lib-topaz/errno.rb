@@ -8,10 +8,16 @@ module Errno
   class EACCES < SystemCallError
   end
 
+  class EEXIST < SystemCallError
+  end
+
   class ENOTDIR < SystemCallError
   end
 
   class EISDIR < SystemCallError
+  end
+
+  class EINVAL < SystemCallError
   end
 
   class ENOTEMPTY < SystemCallError
