@@ -2145,6 +2145,7 @@ HERE
         assert space.parse("$-w") == simple_global("$-w")
         assert space.parse("$@") == simple_global("$@")
         assert space.parse("$;") == simple_global("$;")
+        assert space.parse("$<") == simple_global("$<")
 
     def test_comments(self, space):
         r = space.parse("""
