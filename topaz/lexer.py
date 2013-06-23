@@ -376,6 +376,7 @@ class Lexer(object):
             if ch == self.EOF:
                 self.error("embedded document meets end of file")
             if ch in "\r\n":
+                self.newline(ch)
                 if (self.read() == "=" and
                     self.read() == "e" and
                     self.read() == "n" and
