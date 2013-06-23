@@ -2285,12 +2285,7 @@ class Parser(object):
         str_flags = p[2].getstr()
         flags = 0
         for f in str_flags:
-            flags |= {
-                "m": regexp.DOT_ALL,
-                "i": regexp.IGNORE_CASE,
-                "o": regexp.ONCE,
-                "x": regexp.EXTENDED,
-            }[f]
+            flags |= regexp.OPTIONS_MAP[f]
         if p[1] is not None:
             n = p[1].getast()
             if isinstance(n, ast.ConstantString):
@@ -2389,7 +2384,10 @@ class Parser(object):
         self.lexer.condition_state.restart()
         self.lexer.cmd_argument_state.restart()
         self.lexer.str_term = p[0].getstrterm()
-        return BoxAST(ast.DynamicString([ast.Block(p[1].getastlist())]))
+        if p[1]:
+            return BoxAST(ast.DynamicString([ast.Block(p[1].getastlist())]))
+        else:
+            return None
 
     @pg.production("string_dbeg : STRING_DBEG")
     def string_dbeg(self, p):

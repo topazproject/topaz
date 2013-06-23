@@ -72,6 +72,12 @@ class W_RegexpObject(W_Object):
         space.globals.define_virtual("$+", cls._get_last_match)
         space.globals.define_virtual("$`", cls._get_pre_match)
         space.globals.define_virtual("$'", cls._get_post_match)
+        space.set_const(w_cls, "IGNORECASE", space.newint(regexp.IGNORE_CASE))
+        space.set_const(w_cls, "EXTENDED", space.newint(regexp.EXTENDED))
+        space.set_const(w_cls, "MULTILINE", space.newint(regexp.DOT_ALL))
+        space.set_const(w_cls, "FIXEDENCODING", space.newint(regexp.FIXED_ENCODING))
+        space.set_const(w_cls, "NOENCODING", space.newint(regexp.NO_ENCODING))
+
 
     @staticmethod
     def _get_regexp_cell(space):
@@ -176,11 +182,7 @@ class W_RegexpObject(W_Object):
     @classdef.method("to_s")
     def method_to_s(self, space):
         flags = missing_flags = ""
-        for c, f in [
-            ("m", regexp.DOT_ALL),
-            ("i", regexp.IGNORE_CASE),
-            ("x", regexp.EXTENDED),
-        ]:
+        for c, f in regexp.FLAGS_MAP:
             if self.flags & f:
                 flags += c
             else:
@@ -236,6 +238,10 @@ class W_RegexpObject(W_Object):
         for ch in string:
             result += RE_ESCAPE_TABLE[ord(ch)]
         return space.newstr_fromchars(result)
+
+    @classdef.method("options")
+    def method_options(self, space):
+        return space.newint(self.flags)
 
 
 class W_MatchDataObject(W_Object):

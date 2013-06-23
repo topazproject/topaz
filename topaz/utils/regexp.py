@@ -15,6 +15,26 @@ EXTENDED = 1 << 1
 DOT_ALL = 1 << 2
 ONCE = 1 << 3
 
+FIXED_ENCODING = 1 << 4
+NO_ENCODING = 1 << 5
+
+OPTIONS_MAP = {
+    "i": IGNORE_CASE,
+    "x": EXTENDED,
+    "m": DOT_ALL,
+    "o": ONCE,
+    "u": FIXED_ENCODING,
+    "n": NO_ENCODING,
+    "e": FIXED_ENCODING,
+    "s": FIXED_ENCODING,
+}
+
+FLAGS_MAP = [
+    ("m", DOT_ALL),
+    ("i", IGNORE_CASE),
+    ("x", EXTENDED),
+]
+
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
 CHARACTER_ESCAPES = {
@@ -187,8 +207,6 @@ class Info(object):
 
     def new_group(self, name=None):
         if name in self.group_index:
-            if self.group_index[name] in self.used_groups:
-                raise RegexpError("duplicate group")
             group = self.group_index[name]
         else:
             while True:
@@ -982,6 +1000,11 @@ def _parse_paren(source, info):
             subpattern = _parse_pattern(source, info)
             source.expect(")")
             return subpattern
+        elif source.match("-") or source.match("m") or source.match("i") or source.match("x"):
+            flags = _parse_plain_flags(source)
+            subpattern = _parse_pattern(source, info)
+            source.expect(")")
+            return subpattern
         else:
             raise RegexpError("undefined group option")
     group = info.new_group()
@@ -1190,6 +1213,17 @@ def _parse_name(source):
             source.pos = here
             break
         elif not ch:
+            break
+        else:
+            b.append(ch)
+    return b.build()
+
+
+def _parse_plain_flags(source):
+    b = StringBuilder(4)
+    while True:
+        ch = source.get()
+        if ch == ":":
             break
         else:
             b.append(ch)
