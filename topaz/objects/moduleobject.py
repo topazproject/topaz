@@ -487,6 +487,7 @@ class W_ModuleObject(W_RootObject):
         return space.send(w_cls, "public", [w_name])
 
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
+    @check_frozen()
     def method_alias_method(self, space, new_name, old_name):
         w_method = self.find_method(space, old_name)
         if w_method is None:
