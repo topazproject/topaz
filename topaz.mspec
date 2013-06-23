@@ -64,7 +64,6 @@ class MSpecScript
               "^#{Rubyspec}/language/block_spec.rb",
               "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
               "^#{Rubyspec}/language/send_spec.rb",
-              "^#{Rubyspec}/language/constants_spec.rb",
               "^#{Rubyspec}/language/predefined_spec.rb",
               "^#{Rubyspec}/language/predefined/data_spec.rb",
               "^#{Rubyspec}/language/regexp/encoding_spec.rb",

@@ -1,2 +1,19 @@
 fails:Literal (A::X) constant resolution with dynamically assigned constants evaluates the right hand side before evaluating a constant path
 fails:Constant resolution within methods with ||= assignes constant if previously undefined
+fails:Module#private_constant marked constants remain private even when updated
+fails:Module#private_constant marked constants in a module cannot be accessed from outside the module
+fails:Module#private_constant marked constants in a module cannot be reopened as a module
+fails:Module#private_constant marked constants in a module cannot be reopened as a class
+fails:Module#private_constant marked constants in a module is not defined? with A::B form
+fails:Module#private_constant marked constants in a class cannot be accessed from outside the class
+fails:Module#private_constant marked constants in a class cannot be reopened as a module
+fails:Module#private_constant marked constants in a class cannot be reopened as a class
+fails:Module#private_constant marked constants in a class is not defined? with A::B form
+fails:Module#private_constant marked constants in Object cannot be accessed using ::Const form
+fails:Module#private_constant marked constants in Object is not defined? using ::Const form
+fails:Module#public_constant marked constants in a module can be accessed from outside the module
+fails:Module#public_constant marked constants in a module is defined? with A::B form
+fails:Module#public_constant marked constants in a class can be accessed from outside the class
+fails:Module#public_constant marked constants in a class is defined? with A::B form
+fails:Module#public_constant marked constants in Object can be accessed using ::Const form
+fails:Module#public_constant marked constants in Object is defined? using ::Const form
