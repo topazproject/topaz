@@ -14,6 +14,7 @@ from topaz.module import ModuleDef, check_frozen
 from topaz.modules.process import Process
 from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
+from topaz.objects.functionobject import W_FunctionObject
 from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
@@ -43,8 +44,34 @@ class Kernel(object):
     @moduledef.method("methods", inherit="bool")
     def method_methods(self, space, inherit=True):
         w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, inherit=inherit)
+        ])
 
-        return space.newarray([space.newsymbol(m) for m in w_cls.methods(space, inherit=inherit)])
+    @moduledef.method("private_methods", inherit="bool")
+    def method_private_methods(self, space, inherit=True):
+        w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, visibility=W_FunctionObject.PRIVATE, inherit=inherit)
+        ])
+
+    @moduledef.method("protected_methods", inherit="bool")
+    def method_protected_methods(self, space, inherit=True):
+        w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, visibility=W_FunctionObject.PROTECTED, inherit=inherit)
+        ])
+
+    @moduledef.method("public_methods", inherit="bool")
+    def method_public_methods(self, space, inherit=True):
+        w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, visibility=W_FunctionObject.PUBLIC, inherit=inherit)
+        ])
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
