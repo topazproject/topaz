@@ -76,8 +76,11 @@ class TestBuffer(BaseTopazTest):
     def test_puts_return_self(self, space):
         for put in ['put_char',
                     'put_uchar',
+                    'put_short',
                     'put_ushort',
+                    'put_int',
                     'put_uint',
+                    'put_long_long',
                     'put_ulong_long']:
             w_array = space.execute("""
             buffer = FFI::Buffer.new(:char, 8)
