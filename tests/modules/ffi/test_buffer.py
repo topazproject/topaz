@@ -27,6 +27,13 @@ class TestBuffer(BaseTopazTest):
             expected = TestBuffer.sizes[key]*3
             assert self.unwrap(space, w_res) == expected
 
+    def test_size_is_total(self, space):
+        w_res = space.execute("""
+        buffer = FFI::Buffer.new(:char, 1)
+        buffer.method(:total) == buffer.method(:size)
+        """)
+        assert self.unwrap(space, w_res)
+
     def test_non_valid_init_symbol(self, space):
         with self.raises(space, 'ArgumentError',
                          "I don't know the megaint type."):

@@ -31,6 +31,8 @@ class W_BufferObject(W_Object):
         w_cls.attach_method(space, 'new_inout', w_method_new)
         w_cls.attach_method(space, 'new_in', w_method_new)
         w_cls.attach_method(space, 'new_out', w_method_new)
+        space.send(w_cls, 'alias_method', [space.newsymbol('size'),
+                                           space.newsymbol('total')])
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
