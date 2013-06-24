@@ -24,11 +24,13 @@ class W_BufferObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        pass
-        # TODO: Try this, once method_alias works in topaz
-        #w_cls.method_alias(space, space.newsymbol('alloc_inout'),
-        #                          space.newsymbol('new'))
-        # Repeat with all other aliases!
+        w_method_new = w_cls.getclass(space).find_method(space, 'new')
+        w_cls.attach_method(space, 'alloc_inout', w_method_new)
+        w_cls.attach_method(space, 'alloc_in', w_method_new)
+        w_cls.attach_method(space, 'alloc_out', w_method_new)
+        w_cls.attach_method(space, 'new_inout', w_method_new)
+        w_cls.attach_method(space, 'new_in', w_method_new)
+        w_cls.attach_method(space, 'new_out', w_method_new)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -63,17 +65,6 @@ class W_BufferObject(W_Object):
     @classdef.method('total')
     def method_total(self, space):
         return space.newint(len(self.buffer))
-
-    # TODO: Once method_alias works in topaz, try the code in setup_class
-    #       instead of this.
-    @classdef.singleton_method('new_in')
-    @classdef.singleton_method('new_out')
-    @classdef.singleton_method('new_inout')
-    @classdef.singleton_method('alloc_in')
-    @classdef.singleton_method('alloc_out')
-    @classdef.singleton_method('alloc_inout')
-    def singleton_method_alloc_inout(self, space, args_w):
-        return self.method_new(space, args_w, None)
 
     @classdef.method('put_char', offset='int', val='int')
     def method_put_char(self, space, offset, val):
