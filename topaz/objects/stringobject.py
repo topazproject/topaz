@@ -554,6 +554,22 @@ class W_StringObject(W_Object):
             chars += padstr[:pad_len % len(padstr) + 1]
             return space.newstr_fromchars(chars)
 
+    @classdef.method("rjust", integer="int", padstr="str")
+    def method_rjust(self, space, integer, padstr=" "):
+        if not padstr:
+            raise space.error(space.w_ArgumentError, "zero width padding")
+        elif integer <= self.length():
+            return self.copy(space)
+        else:
+            pad_len = integer - self.length() - 1
+            assert pad_len >= 0
+            chars = []
+            for i in xrange(pad_len / len(padstr)):
+                chars += padstr
+            chars += padstr[:pad_len % len(padstr) + 1]
+            chars += space.str_w(self)
+            return space.newstr_fromchars(chars)
+
     def search_context(self, space, ctx):
         try:
             return rsre_core.search_context(ctx)
