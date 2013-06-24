@@ -46,7 +46,6 @@ class MSpecScript
               "^#{Rubyspec}/language/send_spec.rb",
               "^#{Rubyspec}/language/predefined_spec.rb",
               "^#{Rubyspec}/language/predefined/data_spec.rb",
-              "^#{Rubyspec}/language/regexp/modifiers_spec.rb",
               "^#{Rubyspec}/language/BEGIN_spec.rb",
               "^#{Rubyspec}/language/alias_spec.rb",
               "^#{Rubyspec}/language/break_spec.rb",
