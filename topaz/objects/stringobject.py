@@ -1125,6 +1125,13 @@ class W_StringObject(W_Object):
         self.strategy.insert(self.str_storage, index, other)
         return self
 
+    @classdef.method("prepend", other="str")
+    @check_frozen()
+    def method_prepend(self, space, other):
+        self.strategy.to_mutable(space, self)
+        self.strategy.insert(self.str_storage, 0, other)
+        return self
+
     @classdef.method("strip!")
     @check_frozen()
     def method_strip_i(self, space):

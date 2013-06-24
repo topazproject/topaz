@@ -2145,6 +2145,7 @@ HERE
         assert space.parse("$-w") == simple_global("$-w")
         assert space.parse("$@") == simple_global("$@")
         assert space.parse("$;") == simple_global("$;")
+        assert space.parse("$<") == simple_global("$<")
 
     def test_comments(self, space):
         r = space.parse("""
@@ -2751,3 +2752,15 @@ foo bar
 
         with self.raises(space, 'SyntaxError'):
             space.parse("=begin\nbar\n=foo")
+
+    def test_multiline_comments_lineno(self, space):
+        r = space.parse("""
+=begin
+some
+lines
+=end
+        1 + 1
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 6))
+        ]))

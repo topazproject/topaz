@@ -1,3 +1,0 @@
-fails:ENV.[] returns the specified environment variable
-fails:ENV.[] returns only frozen values
-fails:ENV.[] uses the locale encoding

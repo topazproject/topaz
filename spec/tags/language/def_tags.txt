@@ -1,2 +1,7 @@
-fails:Defining an 'initialize' method sets the method's visibility to private
-fails:Defining an 'initialize_copy' method sets the method's visibility to private
+fails:A singleton method definition raises RuntimeError if frozen
+fails:A method defined with extreme default arguments may use an fcall as a default
+fails:A singleton method defined with extreme default arguments may use an fcall as a default
+fails:A method definition inside a metaclass scope raises RuntimeError if frozen
+fails:A method definition inside an instance_eval creates a singleton method
+fails:A method definition inside an instance_eval creates a class method when the receiver is a class
+fails:The def keyword within a closure looks outside the closure for the visibility

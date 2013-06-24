@@ -284,8 +284,7 @@ class W_ArrayObject(W_Object):
         template = Coerce.str(space, w_template)
         result = RPacker(template, space.listview(self)).operate(space)
         w_result = space.newstr_fromchars(result)
-        if space.is_true(space.send(w_template, "tainted?")):
-            space.send(w_result, "taint")
+        space.infect(w_result, w_template)
         return w_result
 
     @classdef.method("to_ary")
