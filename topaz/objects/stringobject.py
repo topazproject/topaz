@@ -292,6 +292,10 @@ class MutableStringStrategy(StringStrategy):
             storage.insert(idx, char)
             idx += 1
 
+    def replaceitem(self, storage, idx, char):
+        storage = self.unerase(storage)
+        storage[idx] = char
+
     def strip(self, storage):
         storage = self.unerase(storage)
         if not storage:
@@ -884,6 +888,19 @@ class W_StringObject(W_Object):
             pos += self.length()
         ch = self.strategy.getitem(self.str_storage, pos)
         return space.newint(ord(ch))
+
+    @classdef.method("setbyte", pos="int", replacement="int")
+    @check_frozen()
+    def method_setbyte(self, space, pos, replacement):
+        if pos >= self.length() or pos < -self.length():
+            raise space.error(space.w_IndexError,
+                "index %d out of string" % pos
+            )
+        if pos < 0:
+            pos += self.length()
+        self.strategy.to_mutable(space, self)
+        self.strategy.replaceitem(self.str_storage, pos, chr(replacement))
+        return space.newint(replacement)
 
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
