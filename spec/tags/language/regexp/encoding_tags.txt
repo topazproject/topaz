@@ -17,3 +17,5 @@ fails:Regexps with encoding modifiers supports /u (UTF8 encoding) with interpola
 fails:Regexps with encoding modifiers supports /u (UTF8 encoding) with interpolation and /o
 fails:Regexps with encoding modifiers uses UTF-8 as /u encoding
 fails:Regexps with encoding modifiers preserves UTF-8 as /u encoding through interpolation
+fails:Regexps with encoding modifiers supports /n (No encoding) with interpolation
+fails:Regexps with encoding modifiers supports /n (No encoding) with interpolation /o

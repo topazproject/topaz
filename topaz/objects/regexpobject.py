@@ -78,7 +78,6 @@ class W_RegexpObject(W_Object):
         space.set_const(w_cls, "FIXEDENCODING", space.newint(regexp.FIXED_ENCODING))
         space.set_const(w_cls, "NOENCODING", space.newint(regexp.NO_ENCODING))
 
-
     @staticmethod
     def _get_regexp_cell(space):
         return space.getexecutioncontext().gettoprubyframe().regexp_match_cell

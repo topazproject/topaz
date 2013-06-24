@@ -1001,7 +1001,7 @@ def _parse_paren(source, info):
             source.expect(")")
             return subpattern
         elif source.match("-") or source.match("m") or source.match("i") or source.match("x"):
-            flags = _parse_plain_flags(source)
+            # TODO: parse plain here flags = _parse_plain_flags(source)
             subpattern = _parse_pattern(source, info)
             source.expect(")")
             return subpattern
