@@ -526,14 +526,17 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("private")
     def method_private(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PRIVATE)
+        return self
 
     @classdef.method("public")
     def method_public(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PUBLIC)
+        return self
 
     @classdef.method("protected")
     def method_protected(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PROTECTED)
+        return self
 
     @classdef.method("private_constant")
     def method_private_constant(self, space, args_w):
