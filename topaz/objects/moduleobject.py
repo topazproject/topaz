@@ -477,14 +477,14 @@ class W_ModuleObject(W_RootObject):
             self.attach_method(space, name, self._find_method_pure(space, name, self.version))
 
     @classdef.method("private_class_method")
-    def method_private_class_method(self, space, w_name):
+    def method_private_class_method(self, space, args_w):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, "private", [w_name])
+        return space.send(w_cls, "private", args_w)
 
     @classdef.method("public_class_method")
-    def method_public_class_method(self, space, w_name):
+    def method_public_class_method(self, space, args_w):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, "public", [w_name])
+        return space.send(w_cls, "public", args_w)
 
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     @check_frozen()
