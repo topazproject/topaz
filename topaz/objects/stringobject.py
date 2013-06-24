@@ -475,7 +475,9 @@ class W_StringObject(W_Object):
     def method_times(self, space, times):
         if times < 0:
             raise space.error(space.w_ArgumentError, "negative argument")
-        return self.strategy.mul(space, self.str_storage, times)
+        res = self.strategy.mul(space, self.str_storage, times)
+        space.infect(res, self)
+        return res
 
     @classdef.method("<<")
     @classdef.method("concat")
