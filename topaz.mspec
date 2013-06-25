@@ -8,10 +8,6 @@ class MSpecScript
           "^#{Rubyspec}/core/string/unpack/",
           "^#{Rubyspec}/core/string/chomp_spec.rb",
           "^#{Rubyspec}/core/string/split_spec.rb",
-          "^#{Rubyspec}/core/string/slice_spec.rb",
-          "^#{Rubyspec}/core/string/crypt_spec.rb",
-          "^#{Rubyspec}/core/string/byteslice_spec.rb",
-          "^#{Rubyspec}/core/string/element_reference_spec.rb",
           "^#{Rubyspec}/core/signal/list_spec.rb",
           "^#{Rubyspec}/core/process/detach_spec.rb",
           "^#{Rubyspec}/core/gc/profiler/",
@@ -26,7 +22,6 @@ class MSpecScript
           "^#{Rubyspec}/core/io/each_spec.rb",
           "^#{Rubyspec}/core/io/each_line_spec.rb",
           "^#{Rubyspec}/core/io/foreach_spec.rb",
-          "^#{Rubyspec}/core/file/stat/ftype_spec.rb",
           "^#{Rubyspec}/core/file/socket_spec.rb",
           "^#{Rubyspec}/core/file/ftype_spec.rb",
           "^#{Rubyspec}/core/file/open_spec.rb",
@@ -47,12 +42,9 @@ class MSpecScript
               "^#{Rubyspec}/language/predefined_spec.rb",
               "^#{Rubyspec}/language/predefined/data_spec.rb",
               "^#{Rubyspec}/language/BEGIN_spec.rb",
-              "^#{Rubyspec}/language/alias_spec.rb",
-              "^#{Rubyspec}/language/break_spec.rb",
               "^#{Rubyspec}/language/defined_spec.rb",
               "^#{Rubyspec}/language/or_spec.rb",
               "^#{Rubyspec}/language/return_spec.rb",
-              "^#{Rubyspec}/language/super_spec.rb"
   ]
 
   command_line = ["#{Rubyspec}/command_line"]
