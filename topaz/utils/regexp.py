@@ -359,16 +359,14 @@ class ZeroWidthBase(RegexpBase):
         return self
 
 
-class StartOfString(ZeroWidthBase):
+class AtPosition(ZeroWidthBase):
+    def __init__(self, code):
+        ZeroWidthBase.__init__(self)
+        self.code = code
+
     def compile(self, ctx):
         ctx.emit(OPCODE_AT)
-        ctx.emit(AT_BEGINNING_STRING)
-
-
-class EndOfString(ZeroWidthBase):
-    def compile(self, ctx):
-        ctx.emit(OPCODE_AT)
-        ctx.emit(AT_END_STRING)
+        ctx.emit(self.code)
 
 
 class Property(RegexpBase):
@@ -823,8 +821,11 @@ class SetIntersection(SetBase):
 
 
 POSITION_ESCAPES = {
-    "A": StartOfString(),
-    "z": EndOfString(),
+    "A": AtPosition(AT_BEGINNING_STRING),
+    "z": AtPosition(AT_END_STRING),
+
+    "b": AtPosition(AT_BOUNDARY),
+    "B": AtPosition(AT_NON_BOUNDARY),
 }
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
@@ -927,9 +928,9 @@ def _parse_element(source, info):
         elif ch == "[":
             return _parse_set(source, info)
         elif ch == "^":
-            return StartOfString()
+            return AtPosition(AT_BEGINNING_STRING)
         elif ch == "$":
-            return EndOfString()
+            return AtPosition(AT_END_STRING)
         elif ch == "{":
             here2 = source.pos
             counts = _parse_quantifier(source, info)
@@ -1128,7 +1129,7 @@ def _parse_escape(source, info, in_set):
             source.pos = here
         return make_character(info, ord(ch[0]), in_set)
     elif ch == "G" and not in_set:
-        return StartOfString()
+        return AtPosition(AT_BEGINNING)
     elif ch in "pP":
         return _parse_property(source, info, ch == "p", in_set)
     elif ch.isalpha():
@@ -1137,7 +1138,7 @@ def _parse_escape(source, info, in_set):
                 return POSITION_ESCAPES[ch]
         if ch in CHARSET_ESCAPES:
             return CHARSET_ESCAPES[ch]
-        if ch in CHARACTER_ESCAPES:
+        elif ch in CHARACTER_ESCAPES:
             return Character(ord(CHARACTER_ESCAPES[ch]))
         return make_character(info, ord(ch[0]), in_set)
     elif ch.isdigit():
