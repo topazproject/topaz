@@ -98,7 +98,7 @@ class TestBuffer(BaseTopazTest):
         buffer.put_char(2, 127)
         (0..2).map { |x| buffer.get_char(x) }
         """)
-        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        res = self.unwrap(space, w_array)
         assert res == [-127, 0, 127]
 
     def test_call_put_char_in_wrong_situation(self, space):
@@ -121,7 +121,7 @@ class TestBuffer(BaseTopazTest):
         buffer.put_uchar(2, 0)
         (0..2).map { |x| buffer.get_uchar(x) }
         """)
-        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        res = self.unwrap(space, w_array)
         assert res == [255, 127, 0]
 
     def test_call_put_uchar_in_wrong_situation(self, space):
@@ -144,7 +144,7 @@ class TestBuffer(BaseTopazTest):
         buffer.put_short(4, 0)
         [0, 2, 4].map { |x| buffer.get_short(x) }
         """)
-        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        res = self.unwrap(space, w_array)
         assert res == [-(2**15 - 1), 2**15 - 1, 0]
 
     def test_call_put_short_in_wrong_situation(self, space):
@@ -167,7 +167,7 @@ class TestBuffer(BaseTopazTest):
         buffer.put_ushort(4, 0)
         [0, 2, 4].map { |x| buffer.get_ushort(x) }
         """)
-        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        res = self.unwrap(space, w_array)
         assert res == [256**2 - 1, 256, 0]
 
     def test_call_put_ushort_in_wrong_situation(self, space):
@@ -190,7 +190,7 @@ class TestBuffer(BaseTopazTest):
         buffer.put_int(8, 0)
         [0, 4, 8].map { |x| buffer.get_int(x) }
         """)
-        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        res = self.unwrap(space, w_array)
         assert res == [-(2**31 - 1), 2**31 - 1, 0]
 
     def test_call_put_int_in_wrong_situation(self, space):
@@ -213,7 +213,7 @@ class TestBuffer(BaseTopazTest):
         buffer.put_uint(8, 0)
         [0, 4, 8].map { |x| buffer.get_uint(x) }
         """)
-        res = [self.unwrap(space, w_x) for w_x in w_array.listview(space)]
+        res = self.unwrap(space, w_array)
         assert res == [256**4 - 1, 2222222222, 0]
 
     def test_call_put_uint_in_wrong_situation(self, space):
