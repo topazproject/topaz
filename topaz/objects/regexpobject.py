@@ -150,9 +150,9 @@ class W_RegexpObject(W_Object):
         endpos = len(s)
         return rsre_core.StrMatchContext(self.code, s, offset, endpos, self.flags)
 
-    def get_match_result(self, space, ctx, found):
+    def get_match_result(self, space, ctx, target, found):
         if found:
-            w_match = W_MatchDataObject(space, self, ctx)
+            w_match = W_MatchDataObject(space, self, ctx, target)
         else:
             w_match = space.w_nil
         space.globals.set(space, "$~", w_match)
@@ -210,7 +210,7 @@ class W_RegexpObject(W_Object):
         s = Coerce.str(space, w_s)
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
-        self.get_match_result(space, ctx, matched)
+        self.get_match_result(space, ctx, s, matched)
         if matched:
             return space.newint(ctx.match_start)
         else:
@@ -227,13 +227,13 @@ class W_RegexpObject(W_Object):
             offset = 0
         ctx = self.make_ctx(s, offset)
         matched = rsre_core.search_context(ctx)
-        return self.get_match_result(space, ctx, matched)
+        return self.get_match_result(space, ctx, s, matched)
 
     @classdef.method("===", s="str")
     def method_eqeqeq(self, space, s):
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
-        self.get_match_result(space, ctx, matched)
+        self.get_match_result(space, ctx, s, matched)
         return space.newbool(matched)
 
     @classdef.method("casefold?")
@@ -256,10 +256,11 @@ class W_RegexpObject(W_Object):
 class W_MatchDataObject(W_Object):
     classdef = ClassDef("MatchData", W_Object.classdef)
 
-    def __init__(self, space, regexp, ctx):
+    def __init__(self, space, regexp, ctx, target):
         W_Object.__init__(self, space)
         self.regexp = regexp
         self.ctx = ctx
+        self.target = target
         self._flatten_cache = None
 
     def size(self):
@@ -290,6 +291,16 @@ class W_MatchDataObject(W_Object):
         assert idx >= 0
         return fmarks[idx], fmarks[idx + 1]
 
+    @classdef.method("regexp")
+    def method_regexp(self, space):
+        return self.regexp
+
+    @classdef.method("string")
+    def method_string(self, space):
+        res = space.newstr_fromstr(self.target)
+        space.send(res, "freeze")
+        return res
+
     @classdef.method("[]", n="int")
     def method_subscript(self, space, n):
         if n == 0:
@@ -302,6 +313,13 @@ class W_MatchDataObject(W_Object):
             return space.newstr_fromstr(self.ctx._string[start:end])
         else:
             return space.w_nil
+
+    @classdef.method("captures")
+    def method_captures(self, space):
+        res_w = []
+        for i in xrange(1, self.size()):
+            res_w.append(space.send(self, "[]", [space.newint(i)]))
+        return space.newarray(res_w)
 
     @classdef.method("to_a")
     def method_to_a(self, space):
