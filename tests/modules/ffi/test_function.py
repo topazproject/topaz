@@ -65,21 +65,13 @@ class TestFunction(BaseTopazTest):
         pow = FFI::DynamicLibrary::Symbol.new(:pow)
         func = FFI::Function.new(:float64, [:float64, :float64], pow, {})
         func.attach(lib, 'power')
+        floor = FFI::DynamicLibrary::Symbol.new(:floor)
+        FFI::Function.new(:float64, [:float64], floor, {}).attach(lib, 'floor')
         arr1 = (0..5).each.map { |x| lib.power(x, 2) }
+        arr2 = [1.1, 1.3, 1.6, 1.9].each.map { |x| lib.floor(x) }
+        arr1 + arr2
         """)
-        for i, w_x in enumerate(w_res.listview(space)):
-            assert self.unwrap(space, w_x) == i*i
-
-# Just test whether both calculate the same results over 5 x 5 set
-def results_equal(f1, f2):
-    for i in range(5):
-        for j in range(5):
-            f1.push_arg(i)
-            f1.push_arg(j)
-            f2.push_arg(i)
-            f2.push_arg(j)
-            res1 = f1.call(clibffi.rffi.DOUBLE)
-            res2 = f2.call(clibffi.rffi.DOUBLE)
-            if res1 != res2:
-                return False
-    return True
+        res = self.unwrap(space, w_res)
+        for i in range(6):
+            assert res[i] == i*i
+        assert all([x == 1 for x in res[6:]])

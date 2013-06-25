@@ -7,9 +7,16 @@ from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
 from rpython.rtyper.lltypesystem import rffi
+from rpython.rlib import clibffi
 
 class W_FunctionObject(W_Object):
     classdef = ClassDef('Function', W_Object.classdef)
+
+    def _ffi_type_to_rffi_type(self, ffi_type):
+        if ffi_type is clibffi.ffi_type_sint32: return rffi.INT
+        elif ffi_type is clibffi.ffi_type_double: return rffi.DOUBLE
+        else:
+            raise NotImplemented()
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -56,11 +63,12 @@ class W_FunctionObject(W_Object):
                 func_ptr = w_dl.cdll.getpointer(self.name,
                                                 self.arg_types,
                                                 self.ret_type)
-                def attachment(self, space, args_w, block):
-                    a, b = [space.float_w(w_x) for w_x in args_w]
-                    func_ptr.push_arg(a)
-                    func_ptr.push_arg(b)
-                    return space.newfloat(func_ptr.call(rffi.DOUBLE))
+                def attachment(lib, space, args_w, block):
+                    args = [space.float_w(w_x) for w_x in args_w]
+                    for arg in args:
+                        func_ptr.push_arg(arg)
+                    rffi_ret_type = self._ffi_type_to_rffi_type(self.ret_type)
+                    return space.newfloat(func_ptr.call(rffi_ret_type))
                 method = W_BuiltinFunction(name, w_lib.getclass(space),
                                            attachment)
                 w_lib.getclass(space).define_method(space, name, method)
