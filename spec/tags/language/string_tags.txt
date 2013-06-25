@@ -1,5 +1,4 @@
 fails:Ruby character strings uses an internal representation when #to_s doesn't return a String
-fails:Ruby character strings are produced from control character shortcuts
 fails:Ruby character strings Unicode escaping can be done with \u and four hex digits
 fails:Ruby character strings Unicode escaping can be done with \u{} and one to six hex digits
 fails:Ruby character strings Unicode escaping with US-ASCII source encoding produces an ASCII string when escaping ASCII characters via \u

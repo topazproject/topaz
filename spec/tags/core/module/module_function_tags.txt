@@ -1,5 +1,4 @@
 fails:Module#module_function with specific method names makes the instance methods private
-fails:Module#module_function with specific method names makes the new Module methods public
 fails:Module#module_function as a toggle (no arguments) in a Module body makes any subsequently defined methods module functions with the normal semantics
 fails:Module#module_function as a toggle (no arguments) in a Module body stops creating module functions if the body encounters another toggle like public/protected/private without arguments
 fails:Module#module_function as a toggle (no arguments) in a Module body does not stop creating module functions if the body encounters public/protected/private WITH arguments

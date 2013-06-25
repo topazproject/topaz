@@ -1,8 +1,2 @@
 fails:Math.gamma returns exactly 22! given 23
 fails:Math.gamma returns approximately 29! given 30
-fails:Math.gamma returns approximately 23! given 24
-fails:Math.gamma returns approximately 24! given 25
-fails:Math.gamma returns approximately 25! given 26
-fails:Math.gamma returns approximately 26! given 27
-fails:Math.gamma returns approximately 28! given 29
-fails:Math.gamma returns approximately 27! given 28
