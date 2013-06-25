@@ -64,7 +64,7 @@ from topaz.objects.objectobject import W_Object, W_BaseObject, W_Root
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.rangeobject import W_RangeObject
-from topaz.objects.regexpobject import W_RegexpObject
+from topaz.objects.regexpobject import W_RegexpObject, W_MatchDataObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.threadobject import W_ThreadObject
@@ -185,6 +185,7 @@ class ObjectSpace(object):
             self.getclassfor(W_MethodObject),
             self.getclassfor(W_UnboundMethodObject),
             self.getclassfor(W_FiberObject),
+            self.getclassfor(W_MatchDataObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_ThreadError),
