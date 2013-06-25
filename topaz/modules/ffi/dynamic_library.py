@@ -18,6 +18,8 @@ class W_DynamicLibraryObject(W_Object):
     def __init__(self, space, name, flags, klass=None):
         W_Object.__init__(self, space, klass)
         namestr = '[current process]' if name is None else name
+        # on my os it's libc.so.6, not just libc.so
+        if name == 'libc.so': name = 'libc.so.6'
         try:
             self.cdll = clibffi.CDLL(name, flags)
         except clibffi.DLOpenError:
