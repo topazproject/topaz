@@ -946,7 +946,7 @@ class Lexer(object):
                     if buf[i] not in string.octdigits:
                         prefix_idx = i
                         break
-                codepoint = int(buf[0:prefix_idx], 8) & 255
+                codepoint = int(buf[:prefix_idx], 8) & 255
                 unicode_chars = [chr(codepoint)]
                 unicode_chars += buf[prefix_idx:]
                 return unicode_chars
