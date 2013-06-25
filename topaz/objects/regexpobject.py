@@ -203,8 +203,11 @@ class W_RegexpObject(W_Object):
         self._check_initialized(space)
         return space.newstr_fromstr(self.source)
 
-    @classdef.method("=~", s="str")
-    def method_match_operator(self, space, s):
+    @classdef.method("=~")
+    def method_match_operator(self, space, w_s):
+        if w_s is space.w_nil:
+            return space.w_nil
+        s = Coerce.str(space, w_s)
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
         self.get_match_result(space, ctx, matched)
@@ -213,9 +216,16 @@ class W_RegexpObject(W_Object):
         else:
             return space.w_nil
 
-    @classdef.method("match", s="str")
-    def method_match(self, space, s):
-        ctx = self.make_ctx(s)
+    @classdef.method("match")
+    def method_match(self, space, w_s, w_offset=None):
+        if w_s is space.w_nil:
+            return space.w_nil
+        s = Coerce.str(space, w_s)
+        if w_offset is not None:
+            offset = Coerce.int(space, w_offset)
+        else:
+            offset = 0
+        ctx = self.make_ctx(s, offset)
         matched = rsre_core.search_context(ctx)
         return self.get_match_result(space, ctx, matched)
 
