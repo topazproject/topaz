@@ -42,7 +42,6 @@ class MSpecScript
               "^#{Rubyspec}/language/predefined_spec.rb",
               "^#{Rubyspec}/language/predefined/data_spec.rb",
               "^#{Rubyspec}/language/BEGIN_spec.rb",
-              "^#{Rubyspec}/language/defined_spec.rb",
               "^#{Rubyspec}/language/or_spec.rb",
               "^#{Rubyspec}/language/return_spec.rb",
   ]
