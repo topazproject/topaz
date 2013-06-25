@@ -1,4 +1,3 @@
-fails:String#+ taints the result when self or other is tainted
 fails:String#+ when self is in an ASCII-incompatible encoding incompatible with the argument's encoding uses self's encoding if both are empty
 fails:String#+ when self is in an ASCII-incompatible encoding incompatible with the argument's encoding uses self's encoding if the argument is empty
 fails:String#+ when self is in an ASCII-incompatible encoding incompatible with the argument's encoding uses the argument's encoding if self is empty
