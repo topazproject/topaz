@@ -466,15 +466,14 @@ class W_StringObject(W_Object):
 
     @classdef.method("+")
     def method_plus(self, space, w_obj):
-        if space.is_kind_of(w_obj, space.w_string):
-            w_other = w_obj
-        else:
-            w_other = space.convert_type(w_obj, space.w_string, "to_str")
+        w_other = space.convert_type(w_obj, space.w_string, "to_str")
         assert isinstance(w_other, W_StringObject)
         total_size = self.length() + w_other.length()
         s = space.newstr_fromchars(newlist_hint(total_size))
         s.extend(space, self)
         s.extend(space, w_other)
+        space.infect(s, self)
+        space.infect(s, w_other)
         return s
 
     @classdef.method("*", times="int")
@@ -489,8 +488,13 @@ class W_StringObject(W_Object):
     @classdef.method("concat")
     @check_frozen()
     def method_lshift(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            w_other = space.send(w_other, "chr")
+        else:
+            w_other = space.convert_type(w_other, space.w_string, "to_str")
         assert isinstance(w_other, W_StringObject)
         self.extend(space, w_other)
+        space.infect(self, w_other)
         return self
 
     @classdef.method("bytesize")
