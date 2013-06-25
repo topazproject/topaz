@@ -150,9 +150,9 @@ class W_RegexpObject(W_Object):
         endpos = len(s)
         return rsre_core.StrMatchContext(self.code, s, offset, endpos, self.flags)
 
-    def get_match_result(self, space, ctx, found):
+    def get_match_result(self, space, ctx, target, found):
         if found:
-            w_match = W_MatchDataObject(space, self, ctx)
+            w_match = W_MatchDataObject(space, self, ctx, target)
         else:
             w_match = space.w_nil
         space.globals.set(space, "$~", w_match)
@@ -210,7 +210,7 @@ class W_RegexpObject(W_Object):
         s = Coerce.str(space, w_s)
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
-        self.get_match_result(space, ctx, matched)
+        self.get_match_result(space, ctx, s, matched)
         if matched:
             return space.newint(ctx.match_start)
         else:
@@ -227,13 +227,13 @@ class W_RegexpObject(W_Object):
             offset = 0
         ctx = self.make_ctx(s, offset)
         matched = rsre_core.search_context(ctx)
-        return self.get_match_result(space, ctx, matched)
+        return self.get_match_result(space, ctx, s, matched)
 
     @classdef.method("===", s="str")
     def method_eqeqeq(self, space, s):
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
-        self.get_match_result(space, ctx, matched)
+        self.get_match_result(space, ctx, s, matched)
         return space.newbool(matched)
 
     @classdef.method("casefold?")
@@ -256,10 +256,11 @@ class W_RegexpObject(W_Object):
 class W_MatchDataObject(W_Object):
     classdef = ClassDef("MatchData", W_Object.classdef)
 
-    def __init__(self, space, regexp, ctx):
+    def __init__(self, space, regexp, ctx, target):
         W_Object.__init__(self, space)
         self.regexp = regexp
         self.ctx = ctx
+        self.target = target
         self._flatten_cache = None
 
     def size(self):
@@ -289,6 +290,12 @@ class W_MatchDataObject(W_Object):
         idx = 2 * (n - 1)
         assert idx >= 0
         return fmarks[idx], fmarks[idx + 1]
+
+    @classdef.method("string")
+    def method_string(self, space):
+        res = space.newstr_fromstr(self.target)
+        space.send(res, "freeze")
+        return res
 
     @classdef.method("[]", n="int")
     def method_subscript(self, space, n):
