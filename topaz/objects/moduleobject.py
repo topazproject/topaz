@@ -131,7 +131,8 @@ class W_ModuleObject(W_RootObject):
         self.version = VersionTag()
 
     def define_method(self, space, name, method):
-        if name == "initialize" or name == "initialize_copy":
+        if (name == "initialize" or name == "initialize_copy" or
+            method.visibility == W_FunctionObject.MODULE_FUNCTION):
             method.update_visibility(W_FunctionObject.PRIVATE)
         self.mutated()
         self.methods_w[name] = method
@@ -472,9 +473,20 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("module_function")
     def method_module_function(self, space, args_w):
+        if not args_w:
+            self.set_default_visibility(space, W_FunctionObject.MODULE_FUNCTION)
+            return self
         for w_arg in args_w:
             name = Coerce.symbol(space, w_arg)
-            self.attach_method(space, name, self._find_method_pure(space, name, self.version))
+            w_method = self.find_method(space, name)
+            if w_method is None or isinstance(w_method, UndefMethod):
+                cls_name = space.obj_to_s(self)
+                raise space.error(space.w_NameError,
+                    "undefined method `%s' for class `%s'" % (name, cls_name)
+                )
+            self.attach_method(space, name, w_method)
+            self.set_method_visibility(space, name, W_FunctionObject.PRIVATE)
+        return self
 
     @classdef.method("private_class_method")
     def method_private_class_method(self, space, args_w):
