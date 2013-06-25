@@ -314,6 +314,13 @@ class W_MatchDataObject(W_Object):
         else:
             return space.w_nil
 
+    @classdef.method("captures")
+    def method_captures(self, space):
+        res_w = []
+        for i in xrange(1, self.size()):
+            res_w.append(space.send(self, "[]", [space.newint(i)]))
+        return space.newarray(res_w)
+
     @classdef.method("to_a")
     def method_to_a(self, space):
         res_w = []
