@@ -7,10 +7,7 @@ fails:IO.read reads the file if the options Hash includes read/write mode
 fails:IO.read reads the file if the options Hash includes read/write append mode
 fails:IO.read treats second nil argument as no length limit
 fails:IO.read treats third nil argument as 0
-fails:IO.read reads the contents of a file up to a certain size when specified
-fails:IO.read reads the contents of a file from an offset of a specific size when specified
 fails:IO.read returns nil at end-of-file when length is passed
-fails:IO.read raises an Errno::ENOENT when the requested file does not exist
 fails:IO.read raises an Errno::EINVAL when not passed a valid offset
 fails:IO.read from a pipe runs the rest as a subprocess and returns the standard output
 fails:IO.read from a pipe opens a pipe to a fork if the rest is -
@@ -45,3 +42,5 @@ fails:IO.read with BOM reads a file with a utf-16le bom
 fails:IO.read with BOM reads a file with a utf-16be bom
 fails:IO.read with BOM reads a file with a utf-32le bom
 fails:IO.read with BOM reads a file with a utf-32be bom
+fails:IO.read reads the contents of a file up to a certain size when specified
+fails:IO.read reads the contents of a file from an offset of a specific size when specified

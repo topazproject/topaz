@@ -1,1 +1,0 @@
-fails:Numeric#abs2 returns the square of the absolute value of self

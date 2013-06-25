@@ -11,5 +11,3 @@ fails:Array#pack with format 'a' adds a NULL byte when the value is nil
 fails:Array#pack with format 'a' pads the output with NULL bytes when the value is nil
 fails:Array#pack with format 'a' does not pad with NULL bytes when passed the '*' modifier and the value is nil
 fails:Array#pack with format 'a' returns a tainted string when a pack argument is tainted
-fails:Array#pack with format 'a' taints the output string if the format string is tainted
-fails:Array#pack with format 'A' taints the output string if the format string is tainted
