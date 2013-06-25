@@ -291,6 +291,10 @@ class W_MatchDataObject(W_Object):
         assert idx >= 0
         return fmarks[idx], fmarks[idx + 1]
 
+    @classdef.method("regexp")
+    def method_regexp(self, space):
+        return self.regexp
+
     @classdef.method("string")
     def method_string(self, space):
         res = space.newstr_fromstr(self.target)
