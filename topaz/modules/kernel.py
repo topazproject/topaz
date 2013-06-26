@@ -456,6 +456,7 @@ class Kernel(object):
         return space.getsingletonclass(self)
 
     @moduledef.method("extend")
+    @check_frozen()
     def method_extend(self, space, w_mod):
         if not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             if space.is_kind_of(w_mod, space.w_class):
