@@ -1,5 +1,6 @@
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import INFINITY
+from rpython.rtyper.lltypesystem import lltype, rffi
 
 from topaz.module import ClassDef
 from topaz.objects.integerobject import W_IntegerObject
@@ -36,6 +37,18 @@ class W_BignumObject(W_IntegerObject):
 
     def float_w(self, space):
         return self.bigint.tofloat()
+
+    def intmask_w(self, space):
+        return rffi.cast(lltype.Signed, self.uintmask_w((space)))
+
+    def uintmask_w(self, space):
+        return self.bigint.uintmask()
+
+    def longlongmask_w(self, space):
+        return rffi.cast(lltype.SignedLongLong, self.ulonglongmask_w((space)))
+
+    def ulonglongmask_w(self, space):
+        return self.bigint.ulonglongmask()
 
     @classdef.method("to_s")
     def method_to_s(self, space):
