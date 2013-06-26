@@ -14,13 +14,6 @@ class TestFFI(BaseTopazTest):
         w_types = space.execute('FFI::Types')
         assert isinstance(w_types, W_HashObject)
 
-    def test_FFI_type_constants(self, space):
-        for bt in W_TypeObject.basics:
-            w_res = space.execute('FFI::TYPE_%s' % bt)
-            assert w_res.typename == bt
-            assert w_res.native_type == bt
-            assert w_res.ffi_type == W_TypeObject.basics[bt]
-
     def test_Platform(self, space):
         w_p = space.execute('FFI::Platform')
         assert type(w_p) is W_ModuleObject
