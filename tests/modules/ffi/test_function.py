@@ -71,7 +71,7 @@ class TestFunction(BaseTopazTest):
         (0..5).each.map { |x| lib.power(x, 2) }
         """)
         res = self.unwrap(space, w_res)
-        assert [int(float(x)) for x in res] == [0, 1, 4, 9, 16, 25]
+        assert [x for x in res] == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
 
     def test_attach_libc_abs(self, space):
         w_res = space.execute("""
