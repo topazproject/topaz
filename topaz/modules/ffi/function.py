@@ -12,11 +12,19 @@ from rpython.rlib import clibffi
 class W_FunctionObject(W_Object):
     classdef = ClassDef('Function', W_Object.classdef)
 
-    def _ffi_type_to_rffi_type(self, ffi_type):
-        if ffi_type is clibffi.ffi_type_sint32: return rffi.INT
-        elif ffi_type is clibffi.ffi_type_double: return rffi.DOUBLE
-        else:
-            raise NotImplemented()
+    types = {'int8': rffi.CHAR,
+             'uint8': rffi.UCHAR,
+             'int16': rffi.SHORT,
+             'uint16': rffi.USHORT,
+             'int32': rffi.INT,
+             'uint32': rffi.UINT,
+             'long': rffi.LONG,
+             'ulong': rffi.ULONG,
+             'int64': rffi.LONGLONG,
+             'uint64': rffi.ULONGLONG,
+             'float32': rffi.FLOAT,
+             'float64': rffi.DOUBLE,
+             'void': rffi.VOIDP}
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -32,19 +40,18 @@ class W_FunctionObject(W_Object):
     @staticmethod
     def type_unwrap(space, w_type):
         if space.is_kind_of(w_type, space.getclassfor(W_TypeObject)):
-            return w_type.ffi_type
+            return W_FunctionObject.types[w_type.native_type.lower()]
         try:
             sym = Coerce.symbol(space, w_type)
-            key = sym.upper()
-            if key in W_TypeObject.basics:
-                return W_TypeObject.basics[key]
-            else:
-                raise space.error(space.w_TypeError,
-                                  "can't convert Symbol into Type")
         except RubyError:
             tp = w_type.getclass(space).name
             raise space.error(space.w_TypeError,
                               "can't convert %s into Type" % tp)
+        if sym in W_FunctionObject.types:
+            return W_FunctionObject.types[sym]
+        else:
+            raise space.error(space.w_TypeError,
+                              "can't convert Symbol into Type")
 
     @staticmethod
     def dlsym_unwrap(space, w_name):
@@ -59,16 +66,19 @@ class W_FunctionObject(W_Object):
     def method_attach(self, space, w_lib, name):
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
         for w_dl in w_ffi_libs.listview(space):
+            ffi_arg_types = [clibffi.cast_type_to_ffitype(t)
+                             for t in self.arg_types]
+            ffi_ret_type = clibffi.cast_type_to_ffitype(self.ret_type)
             try:
                 func_ptr = w_dl.cdll.getpointer(self.name,
-                                                self.arg_types,
-                                                self.ret_type)
+                                                ffi_arg_types,
+                                                ffi_ret_type)
                 def attachment(lib, space, args_w, block):
                     args = [space.float_w(w_x) for w_x in args_w]
-                    for arg in args:
-                        func_ptr.push_arg(arg)
-                    rffi_ret_type = self._ffi_type_to_rffi_type(self.ret_type)
-                    return space.newfloat(func_ptr.call(rffi_ret_type))
+                    for argval, argtype in zip(args, self.arg_types):
+                        casted_val = rffi.cast(argtype, argval)
+                        func_ptr.push_arg(casted_val)
+                    return space.newfloat(func_ptr.call(self.ret_type))
                 method = W_BuiltinFunction(name, w_lib.getclass(space),
                                            attachment)
                 w_lib.getclass(space).define_method(space, name, method)
