@@ -9,6 +9,7 @@ class W_FunctionObject(W_BaseObject):
     PUBLIC = 0
     PROTECTED = 1
     PRIVATE = 2
+    MODULE_FUNCTION = 3
 
     def __init__(self, name, w_class=None, visibility=PUBLIC):
         self.name = name

@@ -1,4 +1,2 @@
-fails:properly handles recursive arrays
-fails:returns the same hash for equal recursive arrays
-fails:Array#hash returns same hash code for arrays with the same content
-fails:Array#hash returns the same value if arrays are #eql?
+fails:Array#hash returns the same hash for equal recursive arrays
+fails:Array#hash returns the same hash for equal recursive arrays through hashes

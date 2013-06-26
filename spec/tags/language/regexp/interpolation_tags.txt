@@ -1,0 +1,1 @@
+fails:Regexps with interpolation gives precedence to escape sequences over substitution

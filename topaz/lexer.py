@@ -937,9 +937,7 @@ class Lexer(object):
                 if len(buf) > 3 and character_escape:
                     self.error()
             if octal:
-                codepoint = int(buf, 8)
-                if codepoint > 255:
-                    codepoint = codepoint - 256
+                codepoint = int(buf, 8) & 255
                 return [chr(codepoint)]
             else:
                 buf = "0" * (len(buf) - 3) + buf
@@ -948,9 +946,7 @@ class Lexer(object):
                     if buf[i] not in string.octdigits:
                         prefix_idx = i
                         break
-                codepoint = int(buf[0:prefix_idx], 8)
-                if codepoint > 255:
-                    codepoint -= 256
+                codepoint = int(buf[:prefix_idx], 8) & 255
                 unicode_chars = [chr(codepoint)]
                 unicode_chars += buf[prefix_idx:]
                 return unicode_chars
@@ -962,7 +958,7 @@ class Lexer(object):
                 c = self.read_escape()
                 if len(c) != 1:
                     self.error()
-                return [chr(ord(c[0]) & 0x80)]
+                return [chr(ord(c[0]) | 0x80)]
             elif c == self.EOF:
                 self.error()
             else:
@@ -1336,7 +1332,7 @@ class StringTerm(BaseStringTerm):
                 if ch == self.lexer.EOF or not ch.isalpha():
                     self.lexer.unread()
                     break
-                elif ch in "ixmo":
+                elif ch in "ixmouesn":
                     if ch not in flags:
                         flags += ch
                         self.lexer.add(ch)

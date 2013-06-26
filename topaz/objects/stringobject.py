@@ -292,6 +292,10 @@ class MutableStringStrategy(StringStrategy):
             storage.insert(idx, char)
             idx += 1
 
+    def replaceitem(self, storage, idx, char):
+        storage = self.unerase(storage)
+        storage[idx] = char
+
     def strip(self, storage):
         storage = self.unerase(storage)
         if not storage:
@@ -429,12 +433,14 @@ class W_StringObject(W_Object):
         return W_StringObject(space, storage, strategy, self)
 
     @classdef.method("initialize")
+    @check_frozen()
     def method_initialize(self, space, w_s=None):
         if w_s is not None:
             w_s = space.convert_type(w_s, space.w_string, "to_str")
             assert isinstance(w_s, W_StringObject)
             self.strategy = w_s.strategy
             self.str_storage = w_s.strategy.copy(w_s.str_storage)
+        return self
 
     @classdef.method("initialize_copy")
     def method_initialize_copy(self, space, w_other):
@@ -460,31 +466,38 @@ class W_StringObject(W_Object):
 
     @classdef.method("+")
     def method_plus(self, space, w_obj):
-        if space.is_kind_of(w_obj, space.w_string):
-            w_other = w_obj
-        else:
-            w_other = space.convert_type(w_obj, space.w_string, "to_str")
+        w_other = space.convert_type(w_obj, space.w_string, "to_str")
         assert isinstance(w_other, W_StringObject)
         total_size = self.length() + w_other.length()
         s = space.newstr_fromchars(newlist_hint(total_size))
         s.extend(space, self)
         s.extend(space, w_other)
+        space.infect(s, self)
+        space.infect(s, w_other)
         return s
 
     @classdef.method("*", times="int")
     def method_times(self, space, times):
         if times < 0:
             raise space.error(space.w_ArgumentError, "negative argument")
-        return self.strategy.mul(space, self.str_storage, times)
+        res = self.strategy.mul(space, self.str_storage, times)
+        space.infect(res, self)
+        return res
 
     @classdef.method("<<")
     @classdef.method("concat")
     @check_frozen()
     def method_lshift(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            w_other = space.send(w_other, "chr")
+        else:
+            w_other = space.convert_type(w_other, space.w_string, "to_str")
         assert isinstance(w_other, W_StringObject)
         self.extend(space, w_other)
+        space.infect(self, w_other)
         return self
 
+    @classdef.method("bytesize")
     @classdef.method("size")
     @classdef.method("length")
     def method_length(self, space):
@@ -550,6 +563,22 @@ class W_StringObject(W_Object):
             for i in xrange(pad_len / len(padstr)):
                 chars += padstr
             chars += padstr[:pad_len % len(padstr) + 1]
+            return space.newstr_fromchars(chars)
+
+    @classdef.method("rjust", integer="int", padstr="str")
+    def method_rjust(self, space, integer, padstr=" "):
+        if not padstr:
+            raise space.error(space.w_ArgumentError, "zero width padding")
+        elif integer <= self.length():
+            return self.copy(space)
+        else:
+            pad_len = integer - self.length() - 1
+            assert pad_len >= 0
+            chars = []
+            for i in xrange(pad_len / len(padstr)):
+                chars += padstr
+            chars += padstr[:pad_len % len(padstr) + 1]
+            chars += space.str_w(self)
             return space.newstr_fromchars(chars)
 
     def search_context(self, space, ctx):
@@ -644,7 +673,7 @@ class W_StringObject(W_Object):
             last = 0
             string = space.str_w(self)
             ctx = w_sep.make_ctx(string)
-            w_match = w_sep.get_match_result(space, ctx, found=True)
+            w_match = w_sep.get_match_result(space, ctx, string, found=True)
 
             while limit <= 0 or n + 1 < limit:
                 if not self.search_context(space, ctx):
@@ -867,6 +896,19 @@ class W_StringObject(W_Object):
         ch = self.strategy.getitem(self.str_storage, pos)
         return space.newint(ord(ch))
 
+    @classdef.method("setbyte", pos="int", replacement="int")
+    @check_frozen()
+    def method_setbyte(self, space, pos, replacement):
+        if pos >= self.length() or pos < -self.length():
+            raise space.error(space.w_IndexError,
+                "index %d out of string" % pos
+            )
+        if pos < 0:
+            pos += self.length()
+        self.strategy.to_mutable(space, self)
+        self.strategy.replaceitem(self.str_storage, pos, chr(replacement))
+        return space.newint(replacement)
+
     @classdef.method("include?", substr="str")
     def method_includep(self, space, substr):
         return space.newbool(substr in space.str_w(self))
@@ -892,7 +934,7 @@ class W_StringObject(W_Object):
         ctx = w_pattern.make_ctx(string)
 
         while last < len(string) and self.search_context(space, ctx):
-            w_matchdata = w_pattern.get_match_result(space, ctx, found=True)
+            w_matchdata = w_pattern.get_match_result(space, ctx, string, found=True)
             if w_matchdata.size() > 1:
                 matches_w = []
                 for num in xrange(1, w_matchdata.size(), 1):
@@ -984,7 +1026,7 @@ class W_StringObject(W_Object):
         string = space.str_w(self)
         ctx = w_pattern.make_ctx(string)
 
-        w_matchdata = w_pattern.get_match_result(space, ctx, found=True)
+        w_matchdata = w_pattern.get_match_result(space, ctx, string, found=True)
         replacement_parts = None
         if replacement is not None and "\\" in replacement:
             replacement_parts = [s for s in replacement.split("\\") if s]

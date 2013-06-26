@@ -137,7 +137,8 @@ class W_ModuleObject(W_RootObject):
         self.version = VersionTag()
 
     def define_method(self, space, name, method):
-        if name == "initialize" or name == "initialize_copy":
+        if (name == "initialize" or name == "initialize_copy" or
+            method.visibility == W_FunctionObject.MODULE_FUNCTION):
             method.update_visibility(W_FunctionObject.PRIVATE)
         self.mutated()
         self.methods_w[name] = method
@@ -478,19 +479,30 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("module_function")
     def method_module_function(self, space, args_w):
+        if not args_w:
+            self.set_default_visibility(space, W_FunctionObject.MODULE_FUNCTION)
+            return self
         for w_arg in args_w:
             name = Coerce.symbol(space, w_arg)
-            self.attach_method(space, name, self._find_method_pure(space, name, self.version))
+            w_method = self.find_method(space, name)
+            if w_method is None or isinstance(w_method, UndefMethod):
+                cls_name = space.obj_to_s(self)
+                raise space.error(space.w_NameError,
+                    "undefined method `%s' for class `%s'" % (name, cls_name)
+                )
+            self.attach_method(space, name, w_method)
+            self.set_method_visibility(space, name, W_FunctionObject.PRIVATE)
+        return self
 
     @classdef.method("private_class_method")
-    def method_private_class_method(self, space, w_name):
+    def method_private_class_method(self, space, args_w):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, "private", [w_name])
+        return space.send(w_cls, "private", args_w)
 
     @classdef.method("public_class_method")
-    def method_public_class_method(self, space, w_name):
+    def method_public_class_method(self, space, args_w):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, "public", [w_name])
+        return space.send(w_cls, "public", args_w)
 
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
     @check_frozen()
@@ -532,14 +544,17 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("private")
     def method_private(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PRIVATE)
+        return self
 
     @classdef.method("public")
     def method_public(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PUBLIC)
+        return self
 
     @classdef.method("protected")
     def method_protected(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PROTECTED)
+        return self
 
     @classdef.method("private_constant")
     def method_private_constant(self, space, args_w):

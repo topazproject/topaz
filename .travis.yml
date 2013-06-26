@@ -9,6 +9,7 @@ env:
         - TEST_TYPE=flake8
         - TEST_TYPE=own
         - TEST_TYPE=translate
+        - TEST_TYPE=translate-jit
 #         - TEST_TYPE=rubyspec_untranslated
 install:
     - pip install requests invoke

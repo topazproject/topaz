@@ -5,7 +5,7 @@ def make_int_packer(size, signed, bigendian):
 
         for i in xrange(packer.args_index, repetitions + packer.args_index):
             num = space.int_w(
-                space.convert_type(packer.args_w[i], space.w_fixnum, "to_int")
+                space.convert_type(packer.args_w[i], space.w_integer, "to_int")
             )
             if bigendian:
                 for i in xrange(size - 1, -1, -1):
