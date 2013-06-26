@@ -4,7 +4,8 @@ import operator
 from rpython.rlib import rfloat
 from rpython.rlib.debug import check_regular_int
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.rarithmetic import r_uint, ovfcheck, LONG_BIT
+from rpython.rlib.rarithmetic import (r_uint, r_longlong, r_ulonglong,
+    ovfcheck, LONG_BIT)
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import lltype, rffi
 
@@ -57,6 +58,12 @@ class W_FixnumObject(W_RootObject):
 
     def uintmask_w(self, space):
         return r_uint(self.intvalue)
+
+    def longlongmask_w(self, space):
+        return r_longlong(self.intvalue)
+
+    def ulonglongmask_w(self, space):
+        return r_ulonglong(self.intvalue)
 
     def find_instance_var(self, space, name):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
