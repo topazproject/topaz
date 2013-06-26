@@ -66,7 +66,19 @@ class W_FunctionObject(W_Object):
                     for argval, argtype in zip(args, native_arg_types):
                         casted_val = rffi.cast(argtype, argval)
                         func_ptr.push_arg(casted_val)
-                    return space.newfloat(func_ptr.call(native_ret_type))
+                    result = func_ptr.call(native_ret_type)
+                    if ffi_ret_type in [clibffi.ffi_type_sint8,
+                                        clibffi.ffi_type_uint8,
+                                        clibffi.ffi_type_sint16,
+                                        clibffi.ffi_type_uint16,
+                                        clibffi.ffi_type_sint32,
+                                        clibffi.ffi_type_uint32,
+                                        clibffi.ffi_type_sint64,
+                                        clibffi.ffi_type_uint64]:
+                        return space.newint_or_bigint(result)
+                    elif ffi_ret_type in [clibffi.ffi_type_float,
+                                          clibffi.ffi_type_double]:
+                        return space.newfloat(result)
                 method = W_BuiltinFunction(name, w_lib.getclass(space),
                                            attachment)
                 w_lib.getclass(space).define_method(space, name, method)
