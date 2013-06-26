@@ -30,7 +30,8 @@ class FFI(object):
         space.set_const(w_mod, 'TypeDefs', space.newhash())
         space.set_const(w_mod, 'Types', space.newhash())
         for typename in W_TypeObject.basics:
-            w_new_type = W_TypeObject(space, typename,
+            w_new_type = W_TypeObject(space,
+                                      W_TypeObject.natives[typename],
                                       W_TypeObject.basics[typename])
             w_new_builtin_type = W_BuiltinObject(space, typename, w_new_type)
             space.set_const(w_mod, 'TYPE_' + typename, w_new_builtin_type)
@@ -38,7 +39,8 @@ class FFI(object):
         # setup NativeType
         w_native_type = space.newmodule('NativeType')
         for typename in W_TypeObject.basics:
-            w_new_type = W_TypeObject(space, typename,
+            w_new_type = W_TypeObject(space,
+                                      W_TypeObject.natives[typename],
                                       W_TypeObject.basics[typename])
             w_new_builtin_type = W_BuiltinObject(space, typename, w_new_type)
             space.set_const(w_native_type, typename, w_new_builtin_type)

@@ -25,6 +25,24 @@ class W_TypeObject(W_Object):
               'BOOL': clibffi.ffi_type_uchar,
               'VARARGS': clibffi.ffi_type_void}
 
+    natives = {'VOID': rffi.CHAR,
+               'INT8': rffi.CHAR,
+               'UINT8': rffi.UCHAR,
+               'INT16': rffi.SHORT,
+               'UINT16': rffi.USHORT,
+               'INT32': rffi.INT,
+               'UINT32': rffi.UINT,
+               'LONG': rffi.LONG,
+               'ULONG': rffi.ULONG,
+               'INT64': rffi.LONGLONG,
+               'UINT64': rffi.ULONGLONG,
+               'FLOAT32': rffi.FLOAT,
+               'FLOAT64': rffi.DOUBLE,
+               'LONGDOUBLE': rffi.LONGDOUBLE,
+               'POINTER': rffi.LONGLONG,
+               'BOOL': rffi.CHAR,
+               'VARARGS': rffi.CHAR}
+
     aliases = {'SCHAR': 'INT8',
            'CHAR': 'INT8',
            'UCHAR': 'UINT8',
@@ -49,7 +67,8 @@ class W_TypeObject(W_Object):
     def setup_class(cls, space, w_cls):
         w_builtin = space.newclass('Builtin', w_cls)
         for typename in W_TypeObject.basics:
-            w_new_type = W_TypeObject(space, typename,
+            native_type = W_TypeObject.natives[typename]
+            w_new_type = W_TypeObject(space, native_type,
                                       W_TypeObject.basics[typename])
             w_new_builtin_type = W_BuiltinObject(space, typename, w_new_type)
             space.set_const(w_cls, typename, w_new_builtin_type)
