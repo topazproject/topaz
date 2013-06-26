@@ -8,19 +8,19 @@ libm = clibffi.CDLL('libm.so')
 
 class TestFunction(BaseTopazTest):
 
-    def test_type_unwrap(self, space):
+    def test_ensure_w_type(self, space):
         w_type_object = space.execute("FFI::Type::VOID")
         w_type_symbol = space.execute(":void")
         w_some_int = space.execute("1")
         w_unknown_type = space.execute(":int42")
-        assert (W_FunctionObject.type_unwrap(space, w_type_object)
+        assert (W_FunctionObject.ensure_w_type(space, w_type_object)
                 is w_type_object)
-        assert (W_FunctionObject.type_unwrap(space, w_type_symbol)
+        assert (W_FunctionObject.ensure_w_type(space, w_type_symbol)
                 is w_type_object)
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
-            W_FunctionObject.type_unwrap(space, w_some_int)
+            W_FunctionObject.ensure_w_type(space, w_some_int)
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
-            W_FunctionObject.type_unwrap(space, w_unknown_type)
+            W_FunctionObject.ensure_w_type(space, w_unknown_type)
 
     def test_initialize_typing(self, space):
         fname = "FFI::DynamicLibrary::Symbol.new(:fname)"
@@ -52,8 +52,8 @@ class TestFunction(BaseTopazTest):
         w_short = space.execute("FFI::Type::SHORT")
         w_double = space.execute("FFI::Type::DOUBLE")
         w_char = space.execute("FFI::Type::CHAR")
-        assert w_function.arg_types == [w_short, w_double]
-        assert w_function.ret_type == w_char
+        assert w_function.arg_types_w == [w_short, w_double]
+        assert w_function.w_ret_type == w_char
         assert w_function.name == 'foo'
 
     def test_attach_libm_pow(self, space):

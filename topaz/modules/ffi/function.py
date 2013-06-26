@@ -18,24 +18,24 @@ class W_FunctionObject(W_Object):
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types, w_name, w_options):
-        self.ret_type = self.type_unwrap(space, w_ret_type)
-        self.arg_types = [self.type_unwrap(space, w_type)
+        self.w_ret_type = self.ensure_w_type(space, w_ret_type)
+        self.arg_types_w = [self.ensure_w_type(space, w_type)
                           for w_type in space.listview(w_arg_types)]
         self.name = self.dlsym_unwrap(space, w_name)
 
     @staticmethod
-    def type_unwrap(space, w_type):
-        if space.is_kind_of(w_type, space.getclassfor(W_TypeObject)):
-            return w_type
+    def ensure_w_type(space, w_type_or_sym):
+        if space.is_kind_of(w_type_or_sym, space.getclassfor(W_TypeObject)):
+            return w_type_or_sym
         try:
-            sym = Coerce.symbol(space, w_type)
+            sym = Coerce.symbol(space, w_type_or_sym)
         except RubyError:
-            tp = w_type.getclass(space).name
+            tp = w_type_or_sym.getclass(space).name
             raise space.error(space.w_TypeError,
                               "can't convert %s into Type" % tp)
         try:
-            w_type_cls = space.getclassfor(W_TypeObject)
-            return space.find_const(w_type_cls, sym.upper())
+            w_type_or_sym_cls = space.getclassfor(W_TypeObject)
+            return space.find_const(w_type_or_sym_cls, sym.upper())
         except RubyError:
             raise space.error(space.w_TypeError,
                               "can't convert Symbol into Type")
@@ -53,10 +53,10 @@ class W_FunctionObject(W_Object):
     def method_attach(self, space, w_lib, name):
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
         for w_dl in w_ffi_libs.listview(space):
-            ffi_arg_types = [t.ffi_type for t in self.arg_types]
-            ffi_ret_type = self.ret_type.ffi_type
-            native_arg_types = [t.native_type for t in self.arg_types]
-            native_ret_type = self.ret_type.native_type
+            ffi_arg_types = [t.ffi_type for t in self.arg_types_w]
+            ffi_ret_type = self.w_ret_type.ffi_type
+            native_arg_types = [t.native_type for t in self.arg_types_w]
+            native_ret_type = self.w_ret_type.native_type
             try:
                 func_ptr = w_dl.cdll.getpointer(self.name,
                                                 ffi_arg_types,
