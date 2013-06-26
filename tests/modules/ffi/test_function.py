@@ -14,9 +14,9 @@ class TestFunction(BaseTopazTest):
         w_some_int = space.execute("1")
         w_unknown_type = space.execute(":int42")
         assert (W_FunctionObject.type_unwrap(space, w_type_object)
-                is rffi.VOIDP)
+                is w_type_object)
         assert (W_FunctionObject.type_unwrap(space, w_type_symbol)
-                is rffi.VOIDP)
+                is w_type_object)
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
             W_FunctionObject.type_unwrap(space, w_some_int)
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
@@ -49,9 +49,11 @@ class TestFunction(BaseTopazTest):
         foo = FFI::DynamicLibrary::Symbol.new(:foo)
         FFI::Function.new(:int8, [:int16, :float64], foo, {})
         """)
-        assert w_function.arg_types == [rffi.SHORT,
-                                        rffi.DOUBLE]
-        assert w_function.ret_type == rffi.CHAR
+        w_short = space.execute("FFI::Type::SHORT")
+        w_double = space.execute("FFI::Type::DOUBLE")
+        w_char = space.execute("FFI::Type::CHAR")
+        assert w_function.arg_types == [w_short, w_double]
+        assert w_function.ret_type == w_char
         assert w_function.name == 'foo'
 
     def test_attach_libm_pow(self, space):

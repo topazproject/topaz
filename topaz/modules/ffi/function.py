@@ -12,20 +12,6 @@ from rpython.rlib import clibffi
 class W_FunctionObject(W_Object):
     classdef = ClassDef('Function', W_Object.classdef)
 
-    types = {'int8': rffi.CHAR,
-             'uint8': rffi.UCHAR,
-             'int16': rffi.SHORT,
-             'uint16': rffi.USHORT,
-             'int32': rffi.INT,
-             'uint32': rffi.UINT,
-             'long': rffi.LONG,
-             'ulong': rffi.ULONG,
-             'int64': rffi.LONGLONG,
-             'uint64': rffi.ULONGLONG,
-             'float32': rffi.FLOAT,
-             'float64': rffi.DOUBLE,
-             'void': rffi.VOIDP}
-
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
         return W_FunctionObject(space)
@@ -40,16 +26,17 @@ class W_FunctionObject(W_Object):
     @staticmethod
     def type_unwrap(space, w_type):
         if space.is_kind_of(w_type, space.getclassfor(W_TypeObject)):
-            return W_FunctionObject.types[w_type.native_type.lower()]
+            return w_type
         try:
             sym = Coerce.symbol(space, w_type)
         except RubyError:
             tp = w_type.getclass(space).name
             raise space.error(space.w_TypeError,
                               "can't convert %s into Type" % tp)
-        if sym in W_FunctionObject.types:
-            return W_FunctionObject.types[sym]
-        else:
+        try:
+            w_type_cls = space.getclassfor(W_TypeObject)
+            return space.find_const(w_type_cls, sym.upper())
+        except RubyError:
             raise space.error(space.w_TypeError,
                               "can't convert Symbol into Type")
 
@@ -66,19 +53,20 @@ class W_FunctionObject(W_Object):
     def method_attach(self, space, w_lib, name):
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
         for w_dl in w_ffi_libs.listview(space):
-            ffi_arg_types = [clibffi.cast_type_to_ffitype(t)
-                             for t in self.arg_types]
-            ffi_ret_type = clibffi.cast_type_to_ffitype(self.ret_type)
+            ffi_arg_types = [t.ffi_type for t in self.arg_types]
+            ffi_ret_type = self.ret_type.ffi_type
+            native_arg_types = [t.native_type for t in self.arg_types]
+            native_ret_type = self.ret_type.native_type
             try:
                 func_ptr = w_dl.cdll.getpointer(self.name,
                                                 ffi_arg_types,
                                                 ffi_ret_type)
                 def attachment(lib, space, args_w, block):
                     args = [space.float_w(w_x) for w_x in args_w]
-                    for argval, argtype in zip(args, self.arg_types):
+                    for argval, argtype in zip(args, native_arg_types):
                         casted_val = rffi.cast(argtype, argval)
                         func_ptr.push_arg(casted_val)
-                    return space.newfloat(func_ptr.call(self.ret_type))
+                    return space.newfloat(func_ptr.call(native_ret_type))
                 method = W_BuiltinFunction(name, w_lib.getclass(space),
                                            attachment)
                 w_lib.getclass(space).define_method(space, name, method)
