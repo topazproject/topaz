@@ -249,17 +249,22 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.newint(self.intvalue >> other)
 
-    @classdef.method("&", other="int")
-    def method_and(self, space, other):
-        return space.newint(self.intvalue & other)
-
-    @classdef.method("^", other="int")
-    def method_xor(self, space, other):
-        return space.newint(self.intvalue ^ other)
-
-    @classdef.method("|", other="int")
-    def method_or(self, space, other):
-        return space.newint(self.intvalue | other)
+    def new_bitwise_op(classdef, name, func):
+        @classdef.method(name)
+        def method(self, space, w_other):
+            w_other = space.convert_type(w_other, space.w_integer, "to_int")
+            if space.is_kind_of(w_other, space.w_fixnum):
+                other = space.int_w(w_other)
+                return space.newint(func(self.intvalue, other))
+            elif space.is_kind_of(w_other, space.w_bignum):
+                return space.send(space.newbigint_fromint(self.intvalue), name, [w_other])
+            else:
+                return W_NumericObject.retry_binop_coercing(space, self, w_other, name)
+        method.__name__ = "method_%s" % func.__name__
+        return method
+    method_and = new_bitwise_op(classdef, "&", operator.and_)
+    method_or = new_bitwise_op(classdef, "|", operator.or_)
+    method_xor = new_bitwise_op(classdef, "^", operator.xor)
 
     @classdef.method("~")
     def method_invert(self, space):
