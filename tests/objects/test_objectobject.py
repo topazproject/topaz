@@ -1,3 +1,5 @@
+import struct
+
 from topaz.objects.intobject import W_FixnumObject
 from topaz.objects.methodobject import W_MethodObject
 
@@ -222,7 +224,8 @@ class TestObjectObject(BaseTopazTest):
         return obj.to_s, obj.object_id
         """)
         s, oid = self.unwrap(space, w_res)
-        assert s == "#<Object:0x%x>" % oid
+        format = "%%0%dx" % (2 * struct.calcsize("P"))
+        assert s == ("#<Object:0x%s>" % format) % oid
 
     def test_inspect(self, space):
         w_res = space.execute("""

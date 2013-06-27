@@ -7,10 +7,11 @@ import weakref
 
 from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
-from rpython.rlib.objectmodel import specialize
+from rpython.rlib.objectmodel import specialize, compute_unique_id
 from rpython.rlib.signature import signature
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rbigint import rbigint
+from rpython.rtyper.lltypesystem import llmemory, rffi
 
 from rply.errors import ParsingError
 
@@ -774,10 +775,28 @@ class ObjectSpace(object):
         if freeze and self.is_true(w_src.get_flag(self, "frozen?")):
             w_dest.set_flag(self, "frozen?")
 
+    def getaddrstring(self, w_obj):
+        w_id = self.newint_or_bigint(compute_unique_id(w_obj))
+        w_4 = self.newint(4)
+        w_0x0F = self.newint(0x0F)
+        i = 2 * rffi.sizeof(llmemory.Address)
+        addrstring = [" "] * i
+        while True:
+            n = self.int_w(self.send(w_id, "&", [w_0x0F]))
+            n += ord("0")
+            if n > ord("9"):
+                n += (ord("a") - ord("9") - 1)
+            i -= 1
+            addrstring[i] = chr(n)
+            if i == 0:
+                break
+            w_id = self.send(w_id, ">>", [w_4])
+        return "".join(addrstring)
+
     def any_to_s(self, w_obj):
-        return "#<%s:0x%x>" % (
+        return "#<%s:0x%s>" % (
             self.obj_to_s(self.getnonsingletonclass(w_obj)),
-            self.int_w(self.send(w_obj, "__id__"))
+            self.getaddrstring(w_obj)
         )
 
     def obj_to_s(self, w_obj):
