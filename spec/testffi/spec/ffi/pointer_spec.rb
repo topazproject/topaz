@@ -31,15 +31,15 @@ describe "Pointer" do
     tp = ToPtrTest.new(memory)
     PointerTestLib.ptr_ret_int32_t(tp, 0).should == magic
   end
-  class PointerDelegate < DelegateClass(FFI::Pointer)
-    def initialize(ptr)
-      @ptr = ptr
-    end
-    def to_ptr
-      @ptr
-    end
-  end
   it "A DelegateClass(Pointer) can be passed as a :pointer parameter" do
+    class PointerDelegate < DelegateClass(FFI::Pointer)
+      def initialize(ptr)
+        @ptr = ptr
+      end
+      def to_ptr
+        @ptr
+      end
+    end
     memory = FFI::MemoryPointer.new :long_long
     magic = 0x12345678
     memory.put_int32(0, magic)
