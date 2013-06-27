@@ -212,7 +212,7 @@ class W_FixnumObject(W_RootObject):
             except OverflowError:
                 return space.send(
                     space.newbigint_fromint(self.intvalue), "**",
-                    [space.newint(exp)]
+                    [w_other]
                 )
             return space.newint(ix)
         else:
