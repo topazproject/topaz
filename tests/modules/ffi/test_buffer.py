@@ -82,13 +82,13 @@ class TestBuffer(BaseTopazTest):
                     'put_uint',
                     'put_long_long',
                     'put_ulong_long']:
-            w_array = space.execute("""
+            w_buffers = space.execute("""
             buffer = FFI::Buffer.new(:char, 8)
             put_result = buffer.%s(0, 0)
             [buffer, put_result]
             """ % put)
-            w_buffers = w_array.listview(space)
-            assert w_buffers[0] is w_buffers[1]
+            w_buffer, w_put_result = w_buffers.listview(space)
+            assert w_buffer is w_put_result
 
     def test_put_and_get_char(self, space):
         w_array = space.execute("""
@@ -229,31 +229,29 @@ class TestBuffer(BaseTopazTest):
             """)
 
     def test_put_and_get_long_long(self, space):
-        w_array = space.execute("""
+        w_res = space.execute("""
         buffer = FFI::Buffer.alloc_in(:long_long, 3)
         buffer.put_long_long(0, - 2**62)
         buffer.put_long_long(8, 2**62)
         buffer.put_long_long(16, 0)
         [0, 8, 16].map { |x| buffer.get_long_long(x) }
         """)
-        res = [self.unwrap(space, w_x).tolong()
-               for w_x in w_array.listview(space)]
+        res = [i.toint() for i in self.unwrap(space, w_res)]
         assert res == [- 2**62, 2**62, 0]
 
     # test_call_put_long_long_in_wrong_situation delayed until
     # 2**63 works in topaz.
 
     def test_put_and_get_ulong_long(self, space):
-        w_array = space.execute("""
+        w_res = space.execute("""
         buffer = FFI::Buffer.alloc_in(:ulong_long, 3)
         buffer.put_ulong_long(0, 2**62)
         buffer.put_ulong_long(8, 256**4 + 5)
         buffer.put_ulong_long(16, 0)
         [0, 8, 16].map { |x| buffer.get_ulong_long(x) }
         """)
-        res = [self.unwrap(space, w_x).tolong()
-               for w_x in w_array.listview(space)]
-        assert res == [2**62, long(256**4 + 5), long(0)]
+        res = [l.tolong() for l in self.unwrap(space, w_res)]
+        assert res == [2**62, 256**4 + 5, 0]
 
     def test_call_put_ulong_long_in_wrong_situation(self, space):
         with self.raises(space, 'TypeError',
@@ -263,14 +261,14 @@ class TestBuffer(BaseTopazTest):
             """)
         # wait until 2**64 works in topaz for rest of the test
 
-    def test_put_returns_self(self, space):
-        w_array = space.execute("""
+    def test_put_bytes_returns_self(self, space):
+        w_buffers = space.execute("""
         buffer = FFI::Buffer.new(:char, 1)
         put_result = buffer.put_bytes(0, 'a')
         [buffer, put_result]
         """)
-        w_buffers = w_array.listview(space)
-        assert w_buffers[0] is w_buffers[1]
+        w_buffer, w_put_result = w_buffers.listview(space)
+        assert w_buffer is w_put_result
 
     def test_put_and_get_bytes(self, space):
         for i in range(2):
