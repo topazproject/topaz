@@ -157,6 +157,10 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_long_long', offset='int', val='bigint')
     def method_put_long_long(self, space, offset, val):
+        if val <= -2**63 or 2**63 <= val:
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into a long long"
+                              % val.tolong())
         as_ulong_long = val.add(rbigint.fromlong(2**63))
         return self.method_put_ulong_long(space, offset, as_ulong_long)
 
