@@ -259,7 +259,11 @@ class TestBuffer(BaseTopazTest):
             space.execute("""
             FFI::Buffer.alloc_in(:char, 1).put_ulong_long(0, -1)
             """)
-        # wait until 2**64 works in topaz for rest of the test
+        with self.raises(space, 'TypeError',
+                         "can't convert 18446744073709551616 into a ulong_long"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:long_long, 1).put_ulong_long(0, 2**64)
+            """)
 
     def test_put_bytes_returns_self(self, space):
         w_buffers = space.execute("""
