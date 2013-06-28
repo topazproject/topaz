@@ -3,7 +3,7 @@
 # For licensing, see LICENSE.SPECS
 #
 require File.expand_path(File.join(File.dirname(__FILE__), "spec_helper"))
-require 'delegate'
+#require 'delegate'
 require 'java' if RUBY_PLATFORM =~ /java/
 
 module PointerTestLib

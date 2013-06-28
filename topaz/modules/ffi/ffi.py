@@ -7,6 +7,7 @@ from topaz.modules.ffi.type import W_TypeObject, W_BuiltinObject
 from topaz.modules.ffi.function import W_FunctionObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.modules.ffi.pointer import W_PointerObject
+from topaz.modules.ffi.memory_pointer import W_MemoryPointerObject
 from topaz.modules.ffi.buffer import W_BufferObject
 from topaz.modules.ffi.data_converter import DataConverter
 
@@ -46,20 +47,18 @@ class FFI(object):
             space.set_const(w_native_type, typename, w_new_builtin_type)
         space.set_const(w_mod, 'NativeType', w_native_type)
 
+        # setup modules from other files
         space.set_const(w_mod, 'Type', space.getclassfor(W_TypeObject))
-
         space.set_const(w_mod, 'DataConverter',
                         space.getmoduleobject(DataConverter.moduledef))
-
         space.set_const(w_mod, 'DynamicLibrary',
                         space.getclassfor(W_DynamicLibraryObject))
-
         space.set_const(w_mod, 'Pointer',
                         space.getclassfor(W_PointerObject))
-
         space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
-
         space.set_const(w_mod, 'Buffer', space.getclassfor(W_BufferObject))
+        space.set_const(w_mod, 'MemoryPointer',
+                        space.getclassfor(W_MemoryPointerObject))
 
         # setup Platform
         w_platform = space.newmodule('Platform', None)
