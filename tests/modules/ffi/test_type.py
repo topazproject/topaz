@@ -91,10 +91,3 @@ class TestType(BaseTopazTest):
             w_ac = space.execute('FFI::Type::%s' % at)
             w_ex = space.execute('FFI::Type::%s' % W_TypeObject.aliases[at])
             assert w_ac == w_ex
-
-    def test_Mapped(self, space):
-        w_mapped = space.execute('FFI::Type::Mapped')
-        assert isinstance(w_mapped, W_ClassObject)
-        w_res = space.execute('FFI::Type::Mapped.respond_to? :method_missing')
-        assert self.unwrap(space, w_res)
-        w_res = space.execute('FFI::Type::Mapped.new(42)')
