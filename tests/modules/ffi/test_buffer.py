@@ -241,6 +241,17 @@ class TestBuffer(BaseTopazTest):
 
     # test_call_put_long_long_in_wrong_situation delayed until
     # 2**63 works in topaz.
+    def test_call_put_long_long_in_wrong_situation(self, space):
+        with self.raises(space, 'TypeError',
+                         "can't convert -9223372036854775808 into a long long"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:long_long, 1).put_long_long(0, - 2**63)
+            """)
+        with self.raises(space, 'TypeError',
+                         "can't convert 9223372036854775808 into a long long"):
+            space.execute("""
+            FFI::Buffer.alloc_in(:long_long, 1).put_long_long(0, 2**63)
+            """)
 
     def test_put_and_get_ulong_long(self, space):
         w_res = space.execute("""
