@@ -44,9 +44,10 @@ class TestDynamicLibrary(BaseTopazTest):
         assert w_lib_sym.getclass(space) != space.w_symbol
         assert w_lib_sym.symbol == 'sym'
 
-    def test_Symbol_null_p(self, space):
-        w_res = space.execute("FFI::DynamicLibrary::Symbol.new(:sym).null?")
-        assert self.unwrap(space, w_res)
+    def test_Symbol_nullp(self, space):
+        question = "FFI::DynamicLibrary::Symbol.new(:sym).null?"
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
 
     def test_find_variable(self, space):
         w_dl_sym = space.execute("FFI::DynamicLibrary::Symbol")

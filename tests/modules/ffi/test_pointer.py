@@ -2,11 +2,15 @@ from tests.base import BaseTopazTest
 from topaz.modules.ffi.pointer import W_PointerObject
 
 class TestPointer(BaseTopazTest):
-    def test_NULL(self, space):
-        w_res = space.execute("FFI::Pointer::NULL.class.equal? FFI::Pointer")
-        assert self.unwrap(space, w_res)
-        w_res = space.execute("FFI::Pointer::NULL.null?")
-        assert self.unwrap(space, w_res)
+    def test_NULL_is_instance_of_Pointer(self, space):
+        question = "FFI::Pointer::NULL.class.equal? FFI::Pointer"
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
+
+    def test_nullp(self, space):
+        question = "FFI::Pointer::NULL.null?"
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
 
     def test_methods_exist(self, space):
         space.execute("FFI::Pointer::NULL.address")
@@ -18,8 +22,6 @@ class TestPointer(BaseTopazTest):
         w_res = space.execute("FFI::Pointer::NULL.to_i == "
                               "FFI::Pointer::NULL.address")
         assert self.unwrap(space, w_res) # to_i is just an alias for address
-        w_res = space.execute("FFI::Pointer::NULL == FFI::Pointer::NULL")
-        assert self.unwrap(space, w_res)
         space.execute("FFI::Pointer::NULL.order(:big)")
         with self.raises(space, "TypeError", "42 is not a symbol"):
             space.execute("FFI::Pointer::NULL.order(42)")
@@ -27,11 +29,9 @@ class TestPointer(BaseTopazTest):
         space.execute("FFI::Pointer::NULL.type_size")
 
     def test_autorelease(self, space):
-        w_res = space.execute("FFI::Pointer::NULL.autorelease=(true)")
-        assert self.unwrap(space, w_res)
-        w_res = space.execute("FFI::Pointer::NULL.autorelease?")
-        assert self.unwrap(space, w_res)
-        w_res = space.execute("FFI::Pointer::NULL.autorelease=(false)")
-        assert not self.unwrap(space, w_res)
-        w_res = space.execute("FFI::Pointer::NULL.autorelease?")
-        assert not self.unwrap(space, w_res)
+        for question in ["FFI::Pointer::NULL.autorelease=(true)",
+                         "FFI::Pointer::NULL.autorelease?",
+                         "not FFI::Pointer::NULL.autorelease=(false)",
+                         "not FFI::Pointer::NULL.autorelease?"]:
+            w_answer = space.execute(question)
+            assert self.unwrap(space, w_answer)

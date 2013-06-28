@@ -28,11 +28,12 @@ class TestBuffer(BaseTopazTest):
             assert self.unwrap(space, w_res) == expected
 
     def test_size_is_total(self, space):
-        w_res = space.execute("""
+        question = """
         buffer = FFI::Buffer.new(:char, 1)
         buffer.method(:total) == buffer.method(:size)
-        """)
-        assert self.unwrap(space, w_res)
+        """
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
 
     def test_non_valid_init_symbol(self, space):
         with self.raises(space, 'ArgumentError',
@@ -40,16 +41,15 @@ class TestBuffer(BaseTopazTest):
             space.execute("FFI::Buffer.new(:megaint, 1)")
 
     def test_instantiations(self, space):
+        question = "FFI::Buffer.method(:new) == FFI::Buffer.method(:%s)"
         for init_method in ['new_inout',
                             'new_in',
                             'new_out',
                             'alloc_inout',
                             'alloc_in',
                             'alloc_out']:
-            w_res = space.execute("""
-            FFI::Buffer.method(:new) == FFI::Buffer.method(:%s)
-            """ % init_method)
-            assert self.unwrap(space, w_res)
+            w_answer = space.execute(question % init_method)
+            assert self.unwrap(space, w_answer)
 
     def test_default_size_is_1(self, space):
         w_res = space.execute("FFI::Buffer.alloc_in(7).total")
