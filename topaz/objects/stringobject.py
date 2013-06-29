@@ -16,7 +16,8 @@ from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.formatting import StringFormatter
 
-RADIX_MAP = { "x":16, "d":10, "b":2, "o":8, "X":16, "D":10, "B":2, "O":8 }
+RADIX_MAP = {"x": 16, "d": 10, "b": 2, "o": 8, "X": 16, "D": 10, "B": 2, "O": 8}
+
 
 def create_trans_table(source, replacement, inv=False):
     src = expand_trans_str(source, len(source), inv)
@@ -798,7 +799,7 @@ class W_StringObject(W_Object):
         if i < length and s[i] == "0":
             if i + 1 < length:
                 try:
-                    r = RADIX_MAP[s[i+1]]
+                    r = RADIX_MAP[s[i + 1]]
                 except KeyError:
                     if radix == 0:
                         radix = 8
