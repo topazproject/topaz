@@ -1,8 +1,1 @@
 fails:String#to_i interprets leading characters as a number in the given base
-fails:String#to_i auto-detects base 8 via leading 0 when base = 0
-fails:String#to_i auto-detects base 2 via 0b when base = 0
-fails:String#to_i auto-detects base 10 via 0d when base = 0
-fails:String#to_i auto-detects base 8 via 0o when base = 0
-fails:String#to_i auto-detects base 16 via 0x when base = 0
-fails:String#to_i auto-detects base 10 with no base specifier when base = 0
-fails:String#to_i doesn't handle foreign base specifiers when base is > 0
