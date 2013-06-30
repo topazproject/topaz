@@ -2764,3 +2764,15 @@ lines
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 6))
         ]))
+
+    def test_call_no_space_symbol(self, space):
+        r = space.parse("""
+        def f
+        end
+
+        f:bar
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil())),
+            ast.Statement(ast.Send(ast.Self(5), "f", [ast.ConstantSymbol("bar")], None, 5))
+        ]))
