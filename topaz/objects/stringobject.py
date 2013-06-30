@@ -796,6 +796,8 @@ class W_StringObject(W_Object):
         neg = i < length and s[i] == "-"
         if neg:
             i += 1
+        if i < length and s[i] == "+":
+            i += 1
         if i < length and s[i] == "0":
             if i + 1 < length:
                 try:

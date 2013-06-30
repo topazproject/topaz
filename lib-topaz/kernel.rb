@@ -40,9 +40,24 @@ module Kernel
   module_function :String
   private :String
 
-  def Integer(arg)
-    arg.to_i
+  def Integer(arg, base = nil)
+    if arg.kind_of?(String)
+      if arg.empty?
+        raise ArgumentError.new("invalid value for Integer(): \"\"")
+      else
+        return arg.to_i(base || 0)
+      end
+    end
+
+    raise ArgumentError.new("base specified for non string value") if base
+    return Topaz.convert_type(arg, Fixnum, :to_int) if arg.nil?
+
+    if arg.respond_to?(:to_int) && val = arg.to_int
+      return val
+    end
+    Topaz.convert_type(arg, Fixnum, :to_i)
   end
+
   module_function :Integer
   private :Integer
 
