@@ -224,6 +224,8 @@ class ObjectSpace(object):
         self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
         self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
+        self.globals.define_virtual("$$", lambda space: space.send(space.getmoduleobject(Process.moduledef), "pid"))
+
         self.w_loaded_features = self.newarray([])
         self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
         self.globals.define_virtual('$"', lambda space: space.w_loaded_features)

@@ -15,6 +15,8 @@ class TestProcess(BaseTopazTest):
     def test_pid(self, space):
         w_res = space.execute("return Process.pid")
         assert space.int_w(w_res) == os.getpid()
+        w_res = space.execute("return $$")
+        assert space.int_w(w_res) == os.getpid()
 
     def test_exit(self, space):
         with self.raises(space, "SystemExit"):
