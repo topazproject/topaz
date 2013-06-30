@@ -17,7 +17,6 @@ class MSpecScript
           "^#{Rubyspec}/core/kernel/autoload_spec.rb",
           "^#{Rubyspec}/core/filetest",
           "^#{Rubyspec}/core/io/reopen_spec.rb",
-          "^#{Rubyspec}/core/io/lineno_spec.rb",
           "^#{Rubyspec}/core/io/each_spec.rb",
           "^#{Rubyspec}/core/io/each_line_spec.rb",
           "^#{Rubyspec}/core/io/foreach_spec.rb",
