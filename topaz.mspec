@@ -22,7 +22,6 @@ class MSpecScript
           "^#{Rubyspec}/core/io/each_line_spec.rb",
           "^#{Rubyspec}/core/io/foreach_spec.rb",
           "^#{Rubyspec}/core/file/socket_spec.rb",
-          "^#{Rubyspec}/core/file/ftype_spec.rb",
           "^#{Rubyspec}/core/numeric/to_c_spec.rb",
           "^#{Rubyspec}/core/process/status/exited_spec.rb",
           "^#{Rubyspec}/core/process/status/exitstatus_spec.rb",
