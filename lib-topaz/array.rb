@@ -509,6 +509,52 @@ class Array
     out
   end
 
+  def sample(*args)
+    case args.size
+    when 0
+      return self[Kernel.rand(size)]
+    when 1
+      arg = args[0]
+      if o = Topaz.try_convert_type(arg, Hash, :to_hash)
+        options = o
+        count = nil
+      else
+        options = nil
+        count = Topaz.convert_type(arg, Fixnum, :to_int)
+      end
+    when 2
+      count = Topaz.convert_type(args[0], Fixnum, :to_int)
+      options = Topaz.convert_type(args[1], Hash, :to_hash)
+    else
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 1)")
+    end
+
+    raise ArgumentError.new("negative sample number") if count and count < 0
+
+    rng = options[:random] if options
+    rng = Kernel unless rng && rng.respond_to?(:rand)
+
+    unless count
+      random = Topaz.convert_type(rng.rand, Float, :to_f)
+      raise RangeError.new("random number too big #{random}") if random < 0 || random >= 1.0
+
+      return self[random * size]
+    end
+
+    count = size if count > size
+    out = Array.new(self)
+
+    count.times do |i|
+      random = Topaz.convert_type(rng.rand, Float, :to_f)
+      raise RangeError.new("random number too big #{random}") if random < 0 || random >= 1.0
+
+      r = (random * size).to_i
+      out[i], out[r] = out[r], out[i]
+    end
+
+    return (count == size) ? out : out[0, count]
+  end
+
   def self.try_convert(arg)
     Topaz.try_convert_type(arg, Array, :to_ary)
   end

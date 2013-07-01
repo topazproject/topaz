@@ -147,6 +147,10 @@ class Lexer(object):
                                       self.EXPR_VALUE, self.EXPR_FNAME,
                                       self.EXPR_CLASS]:
                     self.add("\n")
+                    while self.peek() in "\r\n ":
+                        ch = self.read()
+                        if ch in "\r\n":
+                            self.newline(ch)
                     self.command_start = True
                     self.state = self.EXPR_BEG
                     yield self.emit("LITERAL_NEWLINE")
@@ -536,7 +540,7 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$<>:?\\!\"~&`'+/,@;":
+        if ch in "$<>:?\\!\"~&`'+/.,@;":
             self.add(ch)
             yield self.emit("GVAR")
         elif ch == "-" and self.peek().isalnum():

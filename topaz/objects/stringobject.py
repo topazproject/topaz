@@ -10,10 +10,13 @@ from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rsre import rsre_core
 from rpython.rlib.rstring import split
 
+from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
 from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.formatting import StringFormatter
+
+RADIX_MAP = {"x": 16, "d": 10, "b": 2, "o": 8, "X": 16, "D": 10, "B": 2, "O": 8}
 
 
 def create_trans_table(source, replacement, inv=False):
@@ -664,9 +667,17 @@ class W_StringObject(W_Object):
             return space.newarray(res_w)
         elif space.is_kind_of(w_sep, space.w_string):
             sep = space.str_w(w_sep)
-            return space.newarray([
-                space.newstr_fromstr(s) for s in split(space.str_w(self), sep, limit - 1)
-            ])
+            if sep:
+                return space.newarray([
+                    space.newstr_fromstr(s) for s in split(space.str_w(self), sep, limit - 1)
+                ])
+            else:
+                if limit:
+                    raise space.error(space.w_NotImplementedError, "String#split with empty string and limit")
+                return space.newarray([
+                    space.newstr_fromstr(self.strategy.getitem(self.str_storage, i))
+                    for i in xrange(self.length())
+                ])
         elif space.is_kind_of(w_sep, space.w_regexp):
             results_w = []
             n = 0
@@ -775,19 +786,41 @@ class W_StringObject(W_Object):
             val = val.neg()
         return val
 
-    @classdef.method("to_i", radix="int")
-    def method_to_i(self, space, radix=10):
-        if not 2 <= radix <= 36:
-            raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
+    @classdef.method("to_i")
+    def method_to_i(self, space, w_radix=None):
+        if w_radix is None:
+            is_radix = False
+            radix = 10
+        else:
+            is_radix = True
+            radix = Coerce.int(space, w_radix)
         s = space.str_w(self)
         i = 0
-        while i < len(s):
+        length = len(s)
+        while i < length:
             if not s[i].isspace():
                 break
             i += 1
-        neg = i < len(s) and s[i] == "-"
+        neg = i < length and s[i] == "-"
         if neg:
             i += 1
+        if i < length and s[i] == "+":
+            i += 1
+        if i < length and s[i] == "0":
+            if i + 1 < length:
+                try:
+                    r = RADIX_MAP[s[i + 1]]
+                except KeyError:
+                    if radix == 0:
+                        radix = 8
+                else:
+                    if not is_radix or radix == r or radix == 0:
+                        radix = r
+                        i += 2
+        if radix == 0:
+            radix = 10
+        if not 2 <= radix <= 36:
+            raise space.error(space.w_ArgumentError, "invalid radix %d" % radix)
         try:
             value = self.to_int(s, neg, i, radix)
         except OverflowError:

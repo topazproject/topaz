@@ -7,8 +7,6 @@ class MSpecScript
           "^#{Rubyspec}/core/struct",
           "^#{Rubyspec}/core/string/unpack/",
           "^#{Rubyspec}/core/string/chomp_spec.rb",
-          "^#{Rubyspec}/core/string/split_spec.rb",
-          "^#{Rubyspec}/core/signal/list_spec.rb",
           "^#{Rubyspec}/core/process/detach_spec.rb",
           "^#{Rubyspec}/core/gc/profiler/",
           "^#{Rubyspec}/core/object/instance_exec_spec.rb",
@@ -18,13 +16,7 @@ class MSpecScript
           "^#{Rubyspec}/core/kernel/autoload_spec.rb",
           "^#{Rubyspec}/core/filetest",
           "^#{Rubyspec}/core/io/reopen_spec.rb",
-          "^#{Rubyspec}/core/io/lineno_spec.rb",
-          "^#{Rubyspec}/core/io/each_spec.rb",
-          "^#{Rubyspec}/core/io/each_line_spec.rb",
-          "^#{Rubyspec}/core/io/foreach_spec.rb",
           "^#{Rubyspec}/core/file/socket_spec.rb",
-          "^#{Rubyspec}/core/file/ftype_spec.rb",
-          "^#{Rubyspec}/core/file/open_spec.rb",
           "^#{Rubyspec}/core/numeric/to_c_spec.rb",
           "^#{Rubyspec}/core/process/status/exited_spec.rb",
           "^#{Rubyspec}/core/process/status/exitstatus_spec.rb",
@@ -32,7 +24,6 @@ class MSpecScript
           "^#{Rubyspec}/core/process/status/signaled_spec.rb",
           "^#{Rubyspec}/core/process/status/success_spec.rb",
           "^#{Rubyspec}/core/process/status/termsig_spec.rb",
-          "^#{Rubyspec}/core/file/ctime_spec.rb"
   ]
 
   language = ["#{Rubyspec}/language",

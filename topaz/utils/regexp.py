@@ -364,6 +364,9 @@ class AtPosition(ZeroWidthBase):
         ZeroWidthBase.__init__(self)
         self.code = code
 
+    def can_be_affix(self):
+        return True
+
     def compile(self, ctx):
         ctx.emit(OPCODE_AT)
         ctx.emit(self.code)
