@@ -43,7 +43,6 @@ class W_BufferObject(W_Object):
         return W_BufferObject(space)
 
     @classdef.method('initialize', length='int')
-    @check_frozen
     def method_initialize(self, space, w_str_or_int, length=1, block=None):
         try:
             typesym = Coerce.str(space, w_str_or_int)
@@ -97,6 +96,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('get_uchar', offset='int')
     def method_get_uchar(self, space, offset):
+        if offset < 0:
+            raise space.error(space.w_IndexError,
+                              "Expected positive index")
         return space.newint(ord(self.buffer[offset]))
 
     @classdef.method('put_short', offset='int', val='int')
@@ -126,6 +128,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('get_ushort', offset='int')
     def method_get_ushort(self, space, offset):
+        if offset < 0:
+            raise space.error(space.w_IndexError,
+                              "Expected positive index")
         byte0 = ord(self.buffer[offset+0])
         byte1 = ord(self.buffer[offset+1])
         return space.newint(  byte0 * pow(256, 0)
@@ -157,6 +162,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('get_uint', offset='int')
     def method_get_uint(self, space, offset):
+        if offset < 0:
+            raise space.error(space.w_IndexError,
+                              "Expected positive index")
         byte = [ord(x) for x in self.buffer[offset:offset+4]]
         res = sum([byte[i] * pow(256, i) for i in range(4)])
         return space.newint(res)
@@ -193,6 +201,9 @@ class W_BufferObject(W_Object):
 
     @classdef.method('get_ulong_long', offset='int')
     def method_get_ulong_long(self, space, offset):
+        if offset < 0:
+            raise space.error(space.w_IndexError,
+                              "Expected positive index")
         byte = [ord(x) for x in self.buffer[offset:offset+8]]
         val = sum([byte[i] * pow(256, i) for i in range(8)])
         return space.newbigint_fromrbigint(rbigint.fromlong(val))
