@@ -16,7 +16,6 @@ class AttributeReader(W_FunctionObject):
     _immutable_fields_ = ["varname"]
 
     def __init__(self, varname):
-        super(AttributeReader, self).__init__(varname)
         W_FunctionObject.__init__(self, varname)
         self.varname = varname
 
