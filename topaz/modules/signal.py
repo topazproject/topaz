@@ -5,9 +5,20 @@ from rpython.rlib import rsignal
 from topaz.module import ModuleDef
 
 
+RUBY_SIGNALS = [
+    "SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP", "SIGIOT", "SIGABRT",
+    "SIGEMT", "SIGFPE", "SIGKILL", "SIGBUS", "SIGSEGV", "SIGSYS", "SIGPIPE",
+    "SIGALRM", "SIGTERM", "SIGURG", "SIGSTOP", "SIGTSTP", "SIGCONT", "SIGCHLD",
+    "SIGCLD", "SIGCHLD", "SIGTTIN", "SIGTTOU", "SIGIO", "SIGXCPU", "SIGXFSZ",
+    "SIGVTALRM", "SIGPROF", "SIGWINCH", "SIGUSR1", "SIGUSR2", "SIGLOST",
+    "SIGMSG", "SIGPWR", "SIGPOLL", "SIGDANGER", "SIGMIGRATE", "SIGPRE",
+    "SIGGRANT", "SIGRETRACT", "SIGSOUND", "SIGINFO",
+]
+
 SIGNALS = dict([
     (k[3:], getattr(rsignal, k))
     for k in rsignal.signal_names
+    if k in RUBY_SIGNALS
 ])
 SIGNALS["EXIT"] = 0
 SIGNALS["CLD"] = SIGNALS["CHLD"]
