@@ -96,7 +96,9 @@ class W_TypeObject(W_Object):
 
     @classdef.method('size')
     def method_size(self, space):
-        return space.newint(int(self.ffi_type._obj.c_size))
+        rsize = self.ffi_type.c_size
+        size = int(rsize)
+        return space.newint(size)
 
 class W_BuiltinObject(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
