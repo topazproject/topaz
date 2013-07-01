@@ -22,6 +22,10 @@ class W_BufferObject(W_Object):
                    'double': rffi.DOUBLE,
                    'pointer': rffi.VOIDP}
 
+    def __init__(self, space, klass=None):
+        W_Object.__init__(self, space, klass)
+        self.buffer = []
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_method_new = w_cls.getclass(space).find_method(space, 'new')
