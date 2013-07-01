@@ -90,6 +90,22 @@ class TestBuffer(BaseTopazTest):
             w_buffer, w_put_result = w_buffers.listview(space)
             assert w_buffer is w_put_result
 
+    def test_gets_dont_accept_negative_index(self, space):
+        for get in ['get_char',
+                    'get_uchar',
+                    'get_short',
+                    'get_ushort',
+                    'get_int',
+                    'get_uint',
+                    'get_long_long',
+                    'get_ulong_long']:
+            with self.raises(space, 'IndexError',
+                             'Expected positive index')
+            space.execute("""
+            buffer = FFI::Buffer(:char, 8)
+            buffer.%s(-1)
+            """)
+
     def test_put_and_get_char(self, space):
         w_array = space.execute("""
         buffer = FFI::Buffer.alloc_in(:char, 3)
