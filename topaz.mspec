@@ -7,7 +7,6 @@ class MSpecScript
           "^#{Rubyspec}/core/struct",
           "^#{Rubyspec}/core/string/unpack/",
           "^#{Rubyspec}/core/string/chomp_spec.rb",
-          "^#{Rubyspec}/core/signal/list_spec.rb",
           "^#{Rubyspec}/core/process/detach_spec.rb",
           "^#{Rubyspec}/core/gc/profiler/",
           "^#{Rubyspec}/core/object/instance_exec_spec.rb",
