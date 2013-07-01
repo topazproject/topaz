@@ -204,9 +204,12 @@ class W_BufferObject(W_Object):
         if offset < 0:
             raise space.error(space.w_IndexError,
                               "Expected positive index")
-        byte = [ord(x) for x in self.buffer[offset:offset+8]]
-        val = sum([byte[i] * pow(256, i) for i in range(8)])
-        return space.newbigint_fromrbigint(rbigint.fromlong(val))
+        rbyte = [rbigint.fromint(ord(x)) for x in self.buffer[offset:offset+8]]
+        val = rbigint.fromint(0)
+        for i, rb in enumerate(rbyte):
+            r_pow_256_i = rbigint.fromint(pow(256, i))
+            val = val.add(rb.mul(r_pow_256_i))
+        return space.newbigint_fromrbigint(val)
 
     @classdef.method('put_bytes', offset='int', val='str',
                                   index='int', length='int')
