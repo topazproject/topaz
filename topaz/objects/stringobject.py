@@ -667,9 +667,17 @@ class W_StringObject(W_Object):
             return space.newarray(res_w)
         elif space.is_kind_of(w_sep, space.w_string):
             sep = space.str_w(w_sep)
-            return space.newarray([
-                space.newstr_fromstr(s) for s in split(space.str_w(self), sep, limit - 1)
-            ])
+            if sep:
+                return space.newarray([
+                    space.newstr_fromstr(s) for s in split(space.str_w(self), sep, limit - 1)
+                ])
+            else:
+                if limit:
+                    raise space.error(space.w_NotImplementedError, "String#split with empty string and limit")
+                return space.newarray([
+                    space.newstr_fromstr(self.strategy.getitem(self.str_storage, i))
+                    for i in xrange(self.length())
+                ])
         elif space.is_kind_of(w_sep, space.w_regexp):
             results_w = []
             n = 0
