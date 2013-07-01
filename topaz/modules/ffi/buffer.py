@@ -176,7 +176,7 @@ class W_BufferObject(W_Object):
             raise space.error(space.w_TypeError,
                               "can't convert %s into a long long"
                               % val.repr()[:-1])
-        as_ulong_long = val.add(rbigint.fromlong(pow(2, 63)))
+        as_ulong_long = val.add(r_2pow63)
         return self.method_put_ulong_long(space, offset, as_ulong_long)
 
     @classdef.method('get_long_long', offset='int')
