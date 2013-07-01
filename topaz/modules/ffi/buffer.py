@@ -171,18 +171,19 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_long_long', offset='int', val='bigint')
     def method_put_long_long(self, space, offset, val):
-        r_2pow63 = rbigint(digits=[0, 1], sign=1)
-        if val.le(r_2pow63.neg()) or r_2pow63.le(val):
+        r_pow_2_63 = rbigint(digits=[0, 1], sign=1)
+        if val.le(r_pow_2_63.neg()) or r_pow_2_63.le(val):
             raise space.error(space.w_TypeError,
                               "can't convert %s into a long long"
                               % val.repr()[:-1])
-        as_ulong_long = val.add(r_2pow63)
+        as_ulong_long = val.add(r_pow_2_63)
         return self.method_put_ulong_long(space, offset, as_ulong_long)
 
     @classdef.method('get_long_long', offset='int')
     def method_get_long_long(self, space, offset):
+        r_pow_2_63 = rbigint(digits=[0, 1], sign=1)
         ulong_long = space.bigint_w(self.method_get_ulong_long(space, offset))
-        long_long = ulong_long.sub(rbigint.fromlong(pow(2, 63)))
+        long_long = ulong_long.sub(r_pow_2_63)
         return space.newbigint_fromrbigint(long_long)
 
     @classdef.method('put_ulong_long', offset='int', val='bigint')
