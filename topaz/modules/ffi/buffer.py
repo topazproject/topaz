@@ -101,21 +101,21 @@ class W_BufferObject(W_Object):
 
     @classdef.method('put_short', offset='int', val='int')
     def method_put_short(self, space, offset, val):
-        if val <= -2**15 or 2**15 <= val:
+        if val <= -pow(2, 15) or pow(2, 15) <= val:
             raise space.error(space.w_TypeError,
                               "can't convert %s into a short" % val)
-        as_ushort = val + 2**15 - 1
+        as_ushort = val + pow(2, 15) - 1
         return self.method_put_ushort(space, offset, as_ushort)
 
     @classdef.method('get_short', offset='int')
     def method_get_short(self, space, offset):
         ushort = space.int_w(self.method_get_ushort(space, offset))
-        val = ushort - (2**15 - 1)
+        val = ushort - (pow(2, 15) - 1)
         return space.newint(val)
 
     @classdef.method('put_ushort', offset='int', val='int')
     def method_put_ushort(self, space, offset, val):
-        if val < 0 or 2**16 <= val:
+        if val < 0 or pow(2, 16) <= val:
             raise space.error(space.w_TypeError,
                               "can't convert %s into a ushort" % val)
         byte0 = val % 256
@@ -128,29 +128,29 @@ class W_BufferObject(W_Object):
     def method_get_ushort(self, space, offset):
         byte0 = ord(self.buffer[offset+0])
         byte1 = ord(self.buffer[offset+1])
-        return space.newint(  byte0 * 256**0
-                            + byte1 * 256**1)
+        return space.newint(  byte0 * pow(256, 0)
+                            + byte1 * pow(256, 1))
 
     @classdef.method('put_int', offset='int', val='int')
     def method_put_int(self, space, offset, val):
-        if val <= -2**31 or 2**31 <= val:
+        if val <= -pow(2, 31) or pow(2, 31) <= val:
             raise space.error(space.w_TypeError,
                               "can't convert %s into an int" % val)
-        as_uint = 2**31 - 1
+        as_uint = pow(2, 31) - 1
         return self.method_put_uint(space, offset, val + as_uint)
 
     @classdef.method('get_int', offset='int')
     def method_get_int(self, space, offset):
         uint = space.int_w(self.method_get_uint(space, offset))
-        val = uint - (2**31 - 1)
+        val = uint - (pow(2, 31) - 1)
         return space.newint(val)
 
     @classdef.method('put_uint', offset='int', val='int')
     def method_put_uint(self, space, offset, val):
-        if val < 0 or 2**32 <= val:
+        if val < 0 or pow(2, 32) <= val:
             raise space.error(space.w_TypeError,
                               "can't convert %s into a uint" % val)
-        byte = [val / 256**i % 256 for i in range(4)]
+        byte = [val / pow(256, i) % 256 for i in range(4)]
         for i in range(4):
             self.buffer[offset+i] = chr(byte[i])
         return self
@@ -158,27 +158,28 @@ class W_BufferObject(W_Object):
     @classdef.method('get_uint', offset='int')
     def method_get_uint(self, space, offset):
         byte = [ord(x) for x in self.buffer[offset:offset+4]]
-        return space.newint( sum([byte[i] * 256**i for i in range(4)]) )
+        res = sum([byte[i] * pow(256, i) for i in range(4)])
+        return space.newint(res)
 
     @classdef.method('put_long_long', offset='int', val='bigint')
     def method_put_long_long(self, space, offset, val):
         val_tl = val.tolong()
-        if val_tl <= -2**63 or 2**63 <= val_tl:
+        if val_tl <= -pow(2, 63) or pow(2, 63) <= val_tl:
             raise space.error(space.w_TypeError,
                               "can't convert %s into a long long"
                               % val_tl)
-        as_ulong_long = val.add(rbigint.fromlong(2**63))
+        as_ulong_long = val.add(rbigint.fromlong(pow(2, 63)))
         return self.method_put_ulong_long(space, offset, as_ulong_long)
 
     @classdef.method('get_long_long', offset='int')
     def method_get_long_long(self, space, offset):
         ulong_long = space.bigint_w(self.method_get_ulong_long(space, offset))
-        long_long = ulong_long.sub(rbigint.fromlong(2**63))
+        long_long = ulong_long.sub(rbigint.fromlong(pow(2, 63)))
         return space.newbigint_fromrbigint(long_long)
 
     @classdef.method('put_ulong_long', offset='int', val='bigint')
     def method_put_ulong_long(self, space, offset, val):
-        if val.tolong() < 0 or 2**64 <= val.tolong():
+        if val.tolong() < 0 or pow(2, 64) <= val.tolong():
             raise space.error(space.w_TypeError,
                               "can't convert %s into a ulong_long" %
                                   val.tolong())
@@ -193,7 +194,7 @@ class W_BufferObject(W_Object):
     @classdef.method('get_ulong_long', offset='int')
     def method_get_ulong_long(self, space, offset):
         byte = [ord(x) for x in self.buffer[offset:offset+8]]
-        val = sum([byte[i] * 256**i for i in range(8)])
+        val = sum([byte[i] * pow(256, i) for i in range(8)])
         return space.newbigint_fromrbigint(rbigint.fromlong(val))
 
     @classdef.method('put_bytes', offset='int', val='str',
