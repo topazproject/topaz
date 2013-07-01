@@ -1,7 +1,7 @@
 from topaz.objects.objectobject import W_Object
 from topaz.coerce import Coerce
 from topaz.error import RubyError
-from topaz.module import ClassDef
+from topaz.module import ClassDef, check_frozen
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 
@@ -39,6 +39,7 @@ class W_BufferObject(W_Object):
         return W_BufferObject(space)
 
     @classdef.method('initialize', length='int')
+    @check_frozen
     def method_initialize(self, space, w_str_or_int, length=1, block=None):
         try:
             typesym = Coerce.str(space, w_str_or_int)
