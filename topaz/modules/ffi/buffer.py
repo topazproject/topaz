@@ -65,12 +65,12 @@ class W_BufferObject(W_Object):
             raise space.error(space.w_ArgumentError,
                               "I don't know the %s type." % typesym)
         size = rffi.sizeof(self.typesymbols[typesym])
-        self.buffer = (length * size) * ['\x00']
+        self.buffer = ['\x00' for _ in range(length * size)]
         if block is not None:
             space.invoke_block(block, [space.newint(length)])
 
     def init_int(self, space, length, block):
-        self.buffer = length * ['\x00']
+        self.buffer = ['\x00' for _ in range(length)]
         if block is not None:
             space.invoke_block(block, [space.newint(length)])
 
