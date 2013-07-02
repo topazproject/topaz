@@ -57,11 +57,10 @@ class TestDynamicLibrary(BaseTopazTest):
         """)
         assert w_res.getclass(space) is w_dl_sym
 
-    def test_find_function(self, space):
-        w_actual = space.execute("""
-        FFI::DynamicLibrary.new('libm.so').find_variable(:exp)
-        """)
-        w_expected = space.execute("""
-        FFI::DynamicLibrary.new('libm.so').find_function(:exp)
-        """)
-        assert w_actual.getclass(space) == w_expected.getclass(space)
+    def test_find_function_eq_find_variable(self, space):
+        question = """
+        dl = FFI::DynamicLibrary.new('libm.so')
+        dl.method(:find_function) == dl.method(:find_variable)
+        """
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)

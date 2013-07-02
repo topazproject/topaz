@@ -17,6 +17,8 @@ class W_DynamicLibraryObject(W_Object):
 
         w_method_new = w_cls.getclass(space).find_method(space, 'new')
         w_cls.attach_method(space, 'open', w_method_new)
+        space.send(w_cls, 'alias_method', [space.newsymbol('find_function'),
+                                           space.newsymbol('find_variable')])
 
     def __init__(self, space, name, flags, klass=None):
         W_Object.__init__(self, space, klass)
@@ -41,10 +43,6 @@ class W_DynamicLibraryObject(W_Object):
     def method_find_variable(self, space, name):
         w_sym = space.find_const(self.getclass(space), 'Symbol')
         return w_sym.method_new(space, [space.newsymbol(name)], None)
-
-    @classdef.method('find_function', name='symbol')
-    def method_find_function(self, space, name):
-        return self.method_find_variable(space, name)
 
 class W_DL_SymbolObject(W_Object):
     classdef = ClassDef('Symbol', W_Object.classdef)
