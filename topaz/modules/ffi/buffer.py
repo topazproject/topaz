@@ -249,6 +249,11 @@ class W_BufferObject(W_Object):
 
     @classdef.method('get_string', offset='int', length='int')
     def method_get_string(self, space, offset, length):
+        if offset < 0:
+            raise space.error(space.w_IndexError, 'Expected positive offset')
+        if length <= 0:
+            raise space.error(space.w_ArgumentError,
+                              'Expected positive and nonzero length')
         byte = self.buffer[offset:offset+length]
         str_end = byte.index('\x00') if '\x00' in byte else len(byte)-1
         val = byte[:str_end]

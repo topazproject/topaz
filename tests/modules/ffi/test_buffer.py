@@ -361,3 +361,22 @@ class TestBuffer(BaseTopazTest):
         w_res = space.send(w_buffer, 'get_string',
                            [space.newint(0), space.newint(9)])
         assert self.unwrap(space, w_res) == 'Hi'
+
+    def test_get_string_only_accepts_positive_offsets(self, space):
+        with self.raises(space, 'IndexError', 'Expected positive offset'):
+            space.execute("""
+            buffer = FFI::Buffer.new(:char, 1)
+            buffer.get_string(-2, 1)
+            """)
+
+    def test_get_string_only_accepts_positive_and_nonzero_length(self, space):
+        with self.raises(space, 'ArgumentError',
+                         'Expected positive and nonzero length'):
+            space.execute("""
+            buffer = FFI::Buffer.new(:char, 2).get_string(1, -3)
+            """)
+        with self.raises(space, 'ArgumentError',
+                         'Expected positive and nonzero length'):
+            space.execute("""
+            buffer = FFI::Buffer.new(:char, 3).get_string(2, 0)
+            """)
