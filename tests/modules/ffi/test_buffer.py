@@ -342,6 +342,13 @@ class TestBuffer(BaseTopazTest):
             buffer.put_bytes(0, '0123', 1, 4)
             """)
 
+    def test_put_bytes_only_accepts_m1_and_positives_as_length(self, space):
+        with self.raises(space, 'ArgumentError',
+                         'Expected length to be -1 or positive'):
+            space.execute("""
+            buffer = FFI::Buffer.new(:char, 2).put_bytes(0, 'a', 0, -2)
+            """)
+
     def test_write_bytes_is_put_bytes_with_offset_eq_0(self, space):
         w_res = space.execute("""
         buffer = FFI::Buffer.new(:char, 3)

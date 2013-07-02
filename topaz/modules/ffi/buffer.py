@@ -227,6 +227,9 @@ class W_BufferObject(W_Object):
     @classdef.method('put_string', offset='int', val='str',
                                   index='int', length='int')
     def method_put_bytes(self, space, offset, val, index=0, length=-1):
+        if length < -1:
+            raise space.error(space.w_ArgumentError,
+                              'Expected length to be -1 or positive')
         if index < 0 or len(val) <= index:
             raise space.error(space.w_IndexError,
                               "Tried to start at index %s of str %s" %
