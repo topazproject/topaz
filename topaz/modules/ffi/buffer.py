@@ -5,6 +5,12 @@ from topaz.module import ClassDef, check_frozen
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 
+def pow(x, y):
+    e = 1
+    for _ in range(y):
+        e *= x
+    return e
+
 class W_BufferObject(W_Object):
     classdef = ClassDef('Buffer', W_Object.classdef)
 
