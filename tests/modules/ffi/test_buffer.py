@@ -343,7 +343,7 @@ class TestBuffer(BaseTopazTest):
             """)
 
     def test_put_bytes_only_accepts_m1_and_positives_as_length(self, space):
-        with self.raises(space, 'ArgumentError',
+        with self.raises(space, 'RangeError',
                          'Expected length to be -1 or positive'):
             space.execute("""
             buffer = FFI::Buffer.new(:char, 2).put_bytes(0, 'a', 0, -2)
@@ -377,12 +377,12 @@ class TestBuffer(BaseTopazTest):
             """)
 
     def test_get_string_only_accepts_positive_and_nonzero_length(self, space):
-        with self.raises(space, 'ArgumentError',
+        with self.raises(space, 'RangeError',
                          'Expected positive and nonzero length'):
             space.execute("""
             buffer = FFI::Buffer.new(:char, 2).get_string(1, -3)
             """)
-        with self.raises(space, 'ArgumentError',
+        with self.raises(space, 'RangeError',
                          'Expected positive and nonzero length'):
             space.execute("""
             buffer = FFI::Buffer.new(:char, 3).get_string(2, 0)

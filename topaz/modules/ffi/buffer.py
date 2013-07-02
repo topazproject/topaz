@@ -228,7 +228,7 @@ class W_BufferObject(W_Object):
                                   index='int', length='int')
     def method_put_bytes(self, space, offset, val, index=0, length=-1):
         if length < -1:
-            raise space.error(space.w_ArgumentError,
+            raise space.error(space.w_RangeError,
                               'Expected length to be -1 or positive')
         if index < 0 or len(val) <= index:
             raise space.error(space.w_IndexError,
@@ -257,7 +257,7 @@ class W_BufferObject(W_Object):
         if offset < 0:
             raise space.error(space.w_IndexError, 'Expected positive offset')
         if length <= 0:
-            raise space.error(space.w_ArgumentError,
+            raise space.error(space.w_RangeError,
                               'Expected positive and nonzero length')
         byte = self.buffer[offset:offset+length]
         str_end = byte.index('\x00') if '\x00' in byte else len(byte)-1
