@@ -15,6 +15,9 @@ class W_DynamicLibraryObject(W_Object):
         space.set_const(w_cls, "RTLD_LOCAL", space.newint(0))
         space.set_const(w_cls, 'Symbol', space.getclassfor(W_DL_SymbolObject))
 
+        w_method_new = w_cls.getclass(space).find_method(space, 'new')
+        w_cls.attach_method(space, 'open', w_method_new)
+
     def __init__(self, space, name, flags, klass=None):
         W_Object.__init__(self, space, klass)
         namestr = '[current process]' if name is None else name
@@ -28,7 +31,6 @@ class W_DynamicLibraryObject(W_Object):
         self.set_instance_var(space, '@name', space.newsymbol(namestr))
 
     @classdef.singleton_method('new', flags='int')
-    @classdef.singleton_method('open', flags='int')
     def singleton_method_new(self, space, w_name, flags=0):
         name = (Coerce.path(space, w_name) if w_name is not space.w_nil
                 else None)

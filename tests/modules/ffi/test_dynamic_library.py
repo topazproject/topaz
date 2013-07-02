@@ -35,9 +35,10 @@ class TestDynamicLibrary(BaseTopazTest):
             space.execute("FFI::DynamicLibrary.open('wrong_name.so')")
 
     def test_new_same_as_open(self, space):
-        w_lib1 = space.execute("FFI::DynamicLibrary.new('libm.so')")
-        w_lib2 = space.execute("FFI::DynamicLibrary.open('libm.so')")
-        assert w_lib1.cdll.lib == w_lib2.cdll.lib
+        question = ("FFI::DynamicLibrary.method(:new) =="
+                    "FFI::DynamicLibrary.method(:open)")
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
 
     def test_Symbol(self, space):
         w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol.new(:sym)")
