@@ -172,7 +172,9 @@ class W_BufferObject(W_Object):
             raise space.error(space.w_IndexError,
                               "Expected positive index")
         byte = [ord(x) for x in self.buffer[offset:offset+4]]
-        res = sum([byte[i] * pow(256, i) for i in range(4)])
+        res = 0
+        for i in range(4):
+            res += byte[i] * pow(256, i)
         return space.newint(res)
 
     @classdef.method('put_long_long', offset='int', val='bigint')
