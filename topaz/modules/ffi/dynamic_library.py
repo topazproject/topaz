@@ -42,10 +42,15 @@ class W_DynamicLibraryObject(W_Object):
     @classdef.method('find_variable', name='symbol')
     def method_find_variable(self, space, name):
         w_sym = space.find_const(self.getclass(space), 'Symbol')
-        return w_sym.method_new(space, [space.newsymbol(name)], None)
+        #return w_sym.method_new(space, [space.newsymbol(name)], None)
+        return space.send(w_sym, 'new', [space.newsymbol(name)], None)
 
 class W_DL_SymbolObject(W_Object):
     classdef = ClassDef('Symbol', W_Object.classdef)
+
+    def __init__(self, space, klass=None):
+        W_Object.__init__(self, space, klass)
+        self.symbol = None
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
