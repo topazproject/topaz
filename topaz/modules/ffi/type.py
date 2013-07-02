@@ -2,6 +2,7 @@ from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 
 from rpython.rlib import clibffi
+from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 
 class W_TypeObject(W_Object):
@@ -96,8 +97,9 @@ class W_TypeObject(W_Object):
 
     @classdef.method('size')
     def method_size(self, space):
-        rsize = self.ffi_type.c_size
-        size = int(rsize)
+        r_uint_size = self.ffi_type.c_size
+        rbigint_size = rbigint.fromrarith_int(r_uint_size)
+        size = rbigint.toint(rbigint_size)
         return space.newint(size)
 
 class W_BuiltinObject(W_TypeObject):
