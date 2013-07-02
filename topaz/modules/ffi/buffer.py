@@ -238,9 +238,14 @@ class W_BufferObject(W_Object):
             raise space.error(space.w_IndexError,
                               "Tried to end at index %s of str %s" %
                               (index + length, val))
-        val = val[index:] if length == -1 else val[index : index + length]
-        for i, c in enumerate(val):
-            self.buffer[offset+i] = val[i]
+        if length == -1:
+            val = val[index:]
+        else:
+            index_plus_length = index + length
+            assert 0 <= index_plus_length
+            val = val[index : index_plus_length]
+        for i, v in enumerate(val):
+            self.buffer[offset+i] = v
         return self
 
     @classdef.method('write_bytes', val='str', index='int', length='int')
@@ -261,5 +266,6 @@ class W_BufferObject(W_Object):
                               'Expected positive and nonzero length')
         byte = self.buffer[offset:offset+length]
         str_end = byte.index('\x00') if '\x00' in byte else len(byte)-1
+        assert 0 <= str_end and str_end < len(byte)
         val = byte[:str_end]
         return space.newstr_fromchars(val)
