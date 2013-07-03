@@ -22,27 +22,40 @@ class TestFunction(BaseTopazTest):
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
             W_FunctionObject.ensure_w_type(space, w_unknown_type)
 
-    def test_initialize_typing(self, space):
-        fname = "FFI::DynamicLibrary::Symbol.new(:fname)"
-        w_function = space.execute("""
-        FFI::Function.new(:void, [:int8, :int16], %s, {})
-        """ % fname) #didn't crash
-        w_function = space.execute("""
-        FFI::Function.new(FFI::Type::VOID,
-                          [FFI::Type::INT8, FFI::Type::INT16], %s, {})
-        """ % fname) # didn't crash
-        with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
-            space.execute("FFI::Function.new(1, [], %s, {})" % fname)
-        with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
-            space.execute("FFI::Function.new(:void, [2], %s, {})" % fname)
-        with self.raises(space, "TypeError", "can't convert Symbol into Type"):
-            space.execute("FFI::Function.new(:null, [], %s, {})" % fname)
-        with self.raises(space, "TypeError", "can't convert Symbol into Type"):
-            space.execute("FFI::Function.new(:int32, [:array], %s, {})"
-                          % fname)
+    def test_new_needs_at_least_a_type_signature(self, space):
+        space.execute("FFI::Function.new(:void, [:int8, :int16])")
+
+    def test_new_takes_DynamicLibrabry_Symbol_as_3_argument(self, space):
+        space.execute("""
+        dlsym = FFI::DynamicLibrary::Symbol.new(:fname)
+        FFI::Function.new(:void, [:int8, :int16], dlsym)
+        """)
         with self.raises(space, "TypeError",
-                         "can't convert Fixnum into Symbol"):
-            space.execute("FFI::Function.new(:void, [:uint8], 500, {})")
+                      "can't convert Fixnum into FFI::DynamicLibrary::Symbol"):
+            space.execute("FFI::Function.new(:void, [:uint8], 500)")
+
+    def test_new_takes_hash_as_4_argument(self, space):
+        space.execute("""
+        FFI::Function.new(:void, [:int8, :int16],
+                          FFI::DynamicLibrary::Symbol.new('x'),
+                          {})
+        """)
+
+    def test_new_understands_Type_constants_for_the_signature(self, space):
+        space.execute("""
+        FFI::Function.new(FFI::Type::VOID,
+                          [FFI::Type::INT8, FFI::Type::INT16])
+        """)
+
+    def test_new_reacts_to_messy_signature_with_TypeError(self, space):
+        with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
+            space.execute("FFI::Function.new(1, [])")
+        with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
+            space.execute("FFI::Function.new(:void, [2])")
+        with self.raises(space, "TypeError", "can't convert Symbol into Type"):
+            space.execute("FFI::Function.new(:null, [])")
+        with self.raises(space, "TypeError", "can't convert Symbol into Type"):
+            space.execute("FFI::Function.new(:int32, [:array])")
 
     def test_initialize_setvars(self, space):
         w_function = space.execute("""

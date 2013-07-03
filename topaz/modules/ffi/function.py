@@ -17,11 +17,13 @@ class W_FunctionObject(W_Object):
         return W_FunctionObject(space)
 
     @classdef.method('initialize')
-    def method_initialize(self, space, w_ret_type, w_arg_types, w_name, w_options):
+    def method_initialize(self, space, w_ret_type, w_arg_types,
+                          w_name=None, w_options=None):
+        if w_options is None: w_options = space.newhash()
         self.w_ret_type = self.ensure_w_type(space, w_ret_type)
         self.arg_types_w = [self.ensure_w_type(space, w_type)
                           for w_type in space.listview(w_arg_types)]
-        self.name = self.dlsym_unwrap(space, w_name)
+        self.name = self.dlsym_unwrap(space, w_name) if w_name else None
 
     @staticmethod
     def ensure_w_type(space, w_type_or_sym):
@@ -34,8 +36,8 @@ class W_FunctionObject(W_Object):
             raise space.error(space.w_TypeError,
                               "can't convert %s into Type" % tp)
         try:
-            w_type_or_sym_cls = space.getclassfor(W_TypeObject)
-            return space.find_const(w_type_or_sym_cls, sym.upper())
+            w_type_cls = space.getclassfor(W_TypeObject)
+            return space.find_const(w_type_cls, sym.upper())
         except RubyError:
             raise space.error(space.w_TypeError,
                               "can't convert Symbol into Type")
@@ -46,7 +48,7 @@ class W_FunctionObject(W_Object):
             return w_name.symbol
         else:
             raise space.error(space.w_TypeError,
-                              "can't convert %s into Symbol"
+                            "can't convert %s into FFI::DynamicLibrary::Symbol"
                               % w_name.getclass(space).name)
 
     @classdef.method('attach', name='str')
