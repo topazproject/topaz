@@ -20,6 +20,7 @@ class W_FunctionObject(W_BaseObject):
         obj = super(W_FunctionObject, self).__deepcopy__(memo)
         obj.name = self.name
         obj.w_class = copy.deepcopy(self.w_class, memo)
+        obj.visibility = copy.deepcopy(self.visibility, memo)
         return obj
 
     def update_visibility(self, visibility):

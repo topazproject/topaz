@@ -111,6 +111,7 @@ class W_ModuleObject(W_RootObject):
         obj.constants_w = copy.deepcopy(self.constants_w, memo)
         obj.class_variables = copy.deepcopy(self.class_variables, memo)
         obj.instance_variables = copy.deepcopy(self.instance_variables, memo)
+        obj.flags = copy.deepcopy(self.flags, memo)
         obj.included_modules = copy.deepcopy(self.included_modules, memo)
         obj.descendants = copy.deepcopy(self.descendants, memo)
         return obj
