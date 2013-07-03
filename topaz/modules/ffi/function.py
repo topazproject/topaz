@@ -2,6 +2,7 @@ from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.modules.ffi.type import W_TypeObject
 from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
+from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
@@ -9,8 +10,8 @@ from topaz.objects.functionobject import W_BuiltinFunction
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rlib import clibffi
 
-class W_FunctionObject(W_Object):
-    classdef = ClassDef('Function', W_Object.classdef)
+class W_FunctionObject(W_PointerObject):
+    classdef = ClassDef('Function', W_PointerObject.classdef)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):

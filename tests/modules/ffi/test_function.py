@@ -22,6 +22,11 @@ class TestFunction(BaseTopazTest):
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
             W_FunctionObject.ensure_w_type(space, w_unknown_type)
 
+    def test_has_FFI_Pointer_as_ancestor(self, space):
+        question = "FFI::Function.ancestors.include? FFI::Pointer"
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
+
     def test_new_needs_at_least_a_type_signature(self, space):
         space.execute("FFI::Function.new(:void, [:int8, :int16])")
 
