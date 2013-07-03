@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from rpython.rlib import rsignal
 
 from topaz.module import ModuleDef
+from topaz.system import IS_WINDOWS
 
 
 RUBY_SIGNALS = set([
@@ -21,7 +22,8 @@ SIGNALS = dict([
     if k in RUBY_SIGNALS
 ])
 SIGNALS["EXIT"] = 0
-SIGNALS["CLD"] = SIGNALS["CHLD"]
+if not IS_WINDOWS:
+    SIGNALS["CLD"] = SIGNALS["CHLD"]
 
 
 class Signal(object):
