@@ -4,7 +4,7 @@ from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 from topaz.modules.ffi.type import W_TypeObject, W_BuiltinObject
-#from topaz.modules.ffi.function import W_FunctionObject
+from topaz.modules.ffi.function import W_FunctionObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.memory_pointer import W_MemoryPointerObject
@@ -28,8 +28,10 @@ class FFI(object):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         # setup type constants
-        #space.set_const(w_mod, 'TypeDefs', space.newhash())
-        #space.set_const(w_mod, 'Types', space.newhash())
+        ### >>> this is not rpython
+        space.set_const(w_mod, 'TypeDefs', space.newhash())
+        space.set_const(w_mod, 'Types', space.newhash())
+        ### <<<
         for typename in W_TypeObject.basics:
             w_new_type = W_TypeObject(space,
                                       W_TypeObject.natives[typename],
@@ -55,7 +57,7 @@ class FFI(object):
                         space.getclassfor(W_DynamicLibraryObject))
         space.set_const(w_mod, 'Pointer',
                         space.getclassfor(W_PointerObject))
-        #space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
+        space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
         space.set_const(w_mod, 'Buffer', space.getclassfor(W_BufferObject))
         space.set_const(w_mod, 'MemoryPointer',
                         space.getclassfor(W_MemoryPointerObject))
