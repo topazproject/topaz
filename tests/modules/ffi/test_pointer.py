@@ -17,6 +17,16 @@ class TestPointer(BaseTopazTest):
         w_answer = space.execute(question)
         assert self.unwrap(space, w_answer)
 
+    def test_NULL_eq_nil(self, space):
+        question = "FFI::Pointer::NULL == nil"
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
+
+    def test_NULL_raises_NullPointerError_on_read_write_methods(self, space):
+        with self.raises(space, 'FFI::NullPointerError',
+                         'read attempt on NULL pointer'):
+            space.execute("FFI::Pointer::NULL.read_something")
+
     def test_methods_exist(self, space):
         space.execute("FFI::Pointer::NULL.address")
         space.execute("FFI::Pointer::NULL + FFI::Pointer::NULL")
