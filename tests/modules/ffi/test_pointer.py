@@ -7,6 +7,11 @@ class TestPointer(BaseTopazTest):
         w_answer = space.execute(question)
         assert self.unwrap(space, w_answer)
 
+    def test_new_returns_NULL_when_given_0(self, space):
+        question = "FFI::Pointer.new(0).equal? FFI::Pointer::NULL"
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
+
     def test_nullp(self, space):
         question = "FFI::Pointer::NULL.null?"
         w_answer = space.execute(question)

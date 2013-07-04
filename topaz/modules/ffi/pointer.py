@@ -12,6 +12,13 @@ class W_PointerObject(W_Object):
     def setup_class(cls, space, w_cls):
         space.set_const(w_cls, 'NULL', W_PointerObject(space))
 
+    @classdef.singleton_method('new', arg='int')
+    def singleton_method_new(self, space, arg):
+        if arg == 0:
+            return space.find_const(self, 'NULL')
+        else:
+            return W_PointerObject(space)
+
     @classdef.method('null?')
     def method_null_p(self, space):
         w_null_instance = space.find_const(self.getclass(space), 'NULL')
