@@ -12,9 +12,9 @@ class W_MemoryPointerObject(W_PointerObject):
         return W_MemoryPointerObject(space)
 
     @classdef.method('initialize')
-    def method_initialize(self, space, w_sym):
+    def method_initialize(self, space, args_w):
         w_buffer_cls = space.getclassfor(W_BufferObject)
-        w_buffer = space.send(w_buffer_cls, 'new', [w_sym])
+        w_buffer = space.send(w_buffer_cls, 'new', args_w)
         self.set_instance_var(space, '@buffer', w_buffer)
 
     @classdef.method('method_missing')

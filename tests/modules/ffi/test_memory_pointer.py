@@ -9,9 +9,13 @@ class TestMemoryPointer(BaseTopazTest):
         assert self.unwrap(space, w_answer)
 
     def test_makes_a_buffer_out_of_1st_arg(self, space):
-        w_pointer = space.execute("FFI::MemoryPointer.new(:int)")
-        w_buffer = space.find_instance_var(w_pointer, '@buffer')
-        assert w_buffer.getclass(space) is space.getclassfor(W_BufferObject)
+        w_res = space.execute("""
+        class FFI::MemoryPointer
+            attr_reader :buffer
+        end
+        FFI::MemoryPointer.new(:int, 3).buffer.total
+        """)
+        assert self.unwrap(space, w_res) == 12
 
     def test_delegates_to_buffer_in_method_missing(self, space):
         w_res = space.execute("""
