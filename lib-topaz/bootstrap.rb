@@ -29,3 +29,6 @@ load_bootstrap.call("string.rb")
 load_bootstrap.call("symbol.rb")
 load_bootstrap.call("thread.rb")
 load_bootstrap.call("top_self.rb")
+
+# ffi
+load_bootstrap.call("ffitopaz/pointer.rb")
