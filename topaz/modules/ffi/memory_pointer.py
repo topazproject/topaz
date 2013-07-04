@@ -16,3 +16,11 @@ class W_MemoryPointerObject(W_PointerObject):
         w_buffer_cls = space.getclassfor(W_BufferObject)
         w_buffer = space.send(w_buffer_cls, 'new', [w_sym])
         self.set_instance_var(space, '@buffer', w_buffer)
+
+    @classdef.method('method_missing')
+    def method_method_missing(self, space, w_meth_id, args_w, block):
+        w_meth_name = space.send(w_meth_id, 'id2name')
+        meth_name = space.symbol_w(w_meth_name)
+        w_buffer = self.find_instance_var(space, '@buffer')
+        return space.send(w_buffer, meth_name, args_w, block)
+
