@@ -17,6 +17,12 @@ class W_FunctionObject(W_PointerObject):
     def singleton_method_allocate(self, space, args_w):
         return W_FunctionObject(space)
 
+    @classdef.singleton_method('new')
+    def singleton_method_new(self, space, args_w):
+        w_function = space.send(self, 'allocate', args_w)
+        space.send(w_function, 'initialize', args_w)
+        return w_function
+
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
                           w_name=None, w_options=None):
