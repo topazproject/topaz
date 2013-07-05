@@ -12,12 +12,15 @@ class W_PointerObject(W_Object):
     def setup_class(cls, space, w_cls):
         space.set_const(w_cls, 'NULL', W_PointerObject(space))
 
-    @classdef.singleton_method('new', arg='int')
-    def singleton_method_new(self, space, arg):
-        if arg == 0:
+    @classdef.singleton_method('new')
+    def singleton_method_new(self, space, args_w):
+        if(len(args_w) == 1 and space.is_kind_of(args_w[0], space.w_fixnum)
+           and space.int_w(args_w[0]) == 0):
             return space.find_const(self, 'NULL')
         else:
-            return W_PointerObject(space)
+            w_pointer = space.send(self, 'allocate')
+            space.send(w_pointer, 'initialize', args_w)
+            return w_pointer
 
     @classdef.method('null?')
     def method_null_p(self, space):
