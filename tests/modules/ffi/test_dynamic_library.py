@@ -1,66 +1,69 @@
-from tests.base import BaseTopazTest
-from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
+from tests.modules.ffi.base import BaseFFITest
 from rpython.rlib import clibffi
 
-class TestDynamicLibrary(BaseTopazTest):
-
+class TestDynamicLibrary(BaseFFITest):
     def test_consts(self, space):
         consts = {'LAZY':1 , 'NOW':2, 'GLOBAL':257, 'LOCAL':0}
         for name in consts:
             w_res = space.execute('FFI::DynamicLibrary::RTLD_%s' % name)
             space.int_w(w_res) == consts[name]
 
-    def test_open(self, space):
-        w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 1)")
-        assert isinstance(w_res, W_DynamicLibraryObject)
+class TestDynamicLibrary__new(BaseFFITest):
+    def test_it_opens_a_dynamic_library(self, space):
+        w_res = space.execute("FFI::DynamicLibrary.new('libm.so', 1)")
         assert w_res.cdll.lib == clibffi.dlopen('libm.so', 1)
+        w_res = space.execute("FFI::DynamicLibrary.new('libm.so', 0)")
+        assert w_res.cdll.lib == clibffi.dlopen('libm.so', 0)
+
+    def test_it_stores_the_name_of_the_opened_lib(self, space):
+        w_res = space.execute("FFI::DynamicLibrary.new('libm.so', 1)")
         w_name = space.find_instance_var(w_res, '@name')
         assert self.unwrap(space, w_name) == 'libm.so'
-        w_res = space.execute("FFI::DynamicLibrary.open('libm.so', 0)")
-        assert w_res.cdll.lib == clibffi.dlopen('libm.so', 0)
-        w_res = space.execute("FFI::DynamicLibrary.open(nil, 2)")
+
+    def test_it_accepts_nil_as_library_name(self, space):
+        w_res = space.execute("FFI::DynamicLibrary.new(nil, 2)")
         assert w_res.cdll.lib == clibffi.dlopen(None, 2)
         w_name = space.find_instance_var(w_res, '@name')
         assert self.unwrap(space, w_name) == '[current process]'
+
+    def test_it_does_not_accept_anything_else_as_lib_name(self, space):
         with self.raises(space, "TypeError", "can't convert Float into String"):
-            space.execute("FFI::DynamicLibrary.open(3.142, 1)")
+            space.execute("FFI::DynamicLibrary.new(3.142, 1)")
+
+    def test_it_only_accepts_an_integer_as_flag_parameter(self, space):
         # The next error message is different from the one in ruby 1.9.3.
         # But the meaning is the same.
         with self.raises(space, "TypeError", "can't convert String into Integer"):
-            space.execute("FFI::DynamicLibrary.open('something', 'invalid flag')")
+            space.execute("FFI::DynamicLibrary.new('something', 'invalid flag')")
 
-    def test_open_error(self, space):
+    def test_it_raises_a_LoadError_if_it_can_not_find_the_library(self, space):
         with self.raises(space, "LoadError",
                          "Could not open library wrong_name.so"):
-            space.execute("FFI::DynamicLibrary.open('wrong_name.so')")
+            space.execute("FFI::DynamicLibrary.new('wrong_name.so')")
 
-    def test_new_same_as_open(self, space):
-        question = ("FFI::DynamicLibrary.method(:new) =="
-                    "FFI::DynamicLibrary.method(:open)")
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+    def test_it_also_known_as_open(self, space):
+        assert self.ask(space, "FFI::DynamicLibrary.method(:new) =="
+                               "FFI::DynamicLibrary.method(:open)")
 
-    def test_Symbol(self, space):
+class TestDynamicLibrary__Symbol(BaseFFITest):
+    def test_its_a_wrapper_around_a_symbol(self, space):
         w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol.new(:sym)")
         assert w_lib_sym.getclass(space) != space.w_symbol
         assert w_lib_sym.symbol == 'sym'
 
-    def test_Symbol_nullp(self, space):
-        question = "FFI::DynamicLibrary::Symbol.new(:sym).null?"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+    def test_it_is_null(self, space): # null, NOT nil
+        assert self.ask(space, "FFI::DynamicLibrary::Symbol.new(:sym).null?")
 
-    def test_find_variable(self, space):
+class TestDynamicLibrary_find_variable(BaseFFITest):
+    def test_it_returns_a_DynamicLibrary__Symbol(self, space):
         w_dl_sym = space.execute("FFI::DynamicLibrary::Symbol")
         w_res = space.execute("""
         FFI::DynamicLibrary.new('libm.so').find_variable(:sin)
         """)
         assert w_res.getclass(space) is w_dl_sym
 
-    def test_find_function_eq_find_variable(self, space):
-        question = """
+    def test_it_also_known_as_find_function(self, space):
+        assert self.ask(space, """
         dl = FFI::DynamicLibrary.new('libm.so')
         dl.method(:find_function) == dl.method(:find_variable)
-        """
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        """)
