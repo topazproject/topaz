@@ -18,7 +18,6 @@ class MSpecScript
           "^#{Rubyspec}/core/io/reopen_spec.rb",
           "^#{Rubyspec}/core/file/socket_spec.rb",
           "^#{Rubyspec}/core/numeric/to_c_spec.rb",
-          "^#{Rubyspec}/core/process/status/exited_spec.rb",
           "^#{Rubyspec}/core/process/status/exitstatus_spec.rb",
           "^#{Rubyspec}/core/process/status/pid_spec.rb",
           "^#{Rubyspec}/core/process/status/signaled_spec.rb",
