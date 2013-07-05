@@ -32,3 +32,4 @@ load_bootstrap.call("top_self.rb")
 
 # ffi
 load_bootstrap.call("ffitopaz/pointer.rb")
+load_bootstrap.call("ffitopaz/errors.rb")

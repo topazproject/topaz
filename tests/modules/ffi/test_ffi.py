@@ -43,3 +43,8 @@ class TestFFI(BaseTopazTest):
     def test_StructByReference(self, space):
         w_sbr = space.execute('FFI::StructByReference')
         assert isinstance(w_sbr, W_ClassObject)
+
+    def test_NullPointerError_ihnerits_from_Exception(self, space):
+        question = "FFI::NullPointerError.ancestors.include? Exception"
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
