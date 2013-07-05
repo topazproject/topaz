@@ -72,6 +72,19 @@ class TestModuleObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_alias_method_builtin(self, space):
+        w_res = space.execute("""
+        class Fixnum
+          alias_method :comparator, :<=>
+          def <=>(*args)
+            comparator(*args)
+          end
+        end
+
+        return 1 <=> 1
+        """)
+        assert self.unwrap(space, w_res) == 0
+
     def test_define_method_with_block(self, space):
         w_res = space.execute("""
         class X
