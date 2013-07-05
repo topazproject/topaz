@@ -18,7 +18,6 @@ class MSpecScript
           "^#{Rubyspec}/core/io/reopen_spec.rb",
           "^#{Rubyspec}/core/file/socket_spec.rb",
           "^#{Rubyspec}/core/numeric/to_c_spec.rb",
-          "^#{Rubyspec}/core/process/status/signaled_spec.rb",
           "^#{Rubyspec}/core/process/status/termsig_spec.rb",
   ]
 
