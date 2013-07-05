@@ -6,17 +6,22 @@ from topaz.modules.ffi.type import W_TypeObject
 
 from rpython.rtyper.lltypesystem import rffi
 
-class TestFFI(BaseFFITest):
-
-    def test_TypeDefs(self, space):
+# Most of the stuff is still very vague.
+# This is because lots of the constants had to be set to something in order to
+# run some specs but the specs weren't about them.
+class TestTypeDefs(BaseFFITest):
+    def test_it_is_kind_of_a_Hash(self, space):
         assert self.ask(space, 'FFI::TypeDefs.kind_of? Hash')
 
-    def test_Types(self, space):
+class TestTypes(BaseFFITest):
+    def test_it_is_kind_of_a_Hash(self, space):
         assert self.ask(space, 'FFI::Types.kind_of? Hash')
 
-    def test_Platform(self, space):
-        w_p = space.execute('FFI::Platform')
-        assert type(w_p) is W_ModuleObject
+class TestPlatform(BaseFFITest):
+    def test_it_is_a_Module(self, space):
+        assert self.ask(space, "FFI::Platform.is_a? Module")
+
+    def test_it_offers_some_SIZE_constants(self, space):
         w_res = space.execute('FFI::Platform::INT8_SIZE')
         assert space.int_w(w_res) == rffi.sizeof(rffi.CHAR)
         w_res = space.execute('FFI::Platform::INT16_SIZE')
@@ -34,16 +39,18 @@ class TestFFI(BaseFFITest):
         w_res = space.execute('FFI::Platform::ADDRESS_SIZE')
         assert space.int_w(w_res) == rffi.sizeof(rffi.VOIDP)
 
-    def test_StructLayout(self, space):
-        w_sl = space.execute('FFI::StructLayout')
-        assert isinstance(w_sl, W_ClassObject)
-        w_res = space.execute('FFI::StructLayout::Field')
-        assert w_res == space.w_nil
+class TestStructLayout(BaseFFITest):
+    def test_it_is_a_class(self, space):
+        assert self.ask(space, "FFI::StructLayout.is_a? Class")
 
-    def test_StructByReference(self, space):
-        w_sbr = space.execute('FFI::StructByReference')
-        assert isinstance(w_sbr, W_ClassObject)
+    def test_its_Field_constant_is_nil(self, space):
+        assert self.ask(space, "FFI::StructLayout::Field.nil?")
 
-    def test_NullPointerError_ihnerits_from_Exception(self, space):
+class TestStructByReference(BaseFFITest):
+    def test_it_is_a_class(self, space):
+        assert self.ask(space, "FFI::StructByReference.is_a? Class")
+
+class TestNullPointerError(BaseFFITest):
+    def test_it_inherits_from_Exception(self, space):
         assert self.ask(space,
         "FFI::NullPointerError.ancestors.include? Exception")
