@@ -1,4 +1,4 @@
-from tests.base import BaseTopazTest
+from tests.modules.ffi.base import BaseFFITest
 from topaz.objects.classobject import W_ClassObject
 from topaz.modules.ffi.function import W_FunctionObject
 from rpython.rlib import clibffi
@@ -6,7 +6,7 @@ from rpython.rtyper.lltypesystem import rffi
 
 libm = clibffi.CDLL('libm.so')
 
-class TestFunction(BaseTopazTest):
+class TestFunction(BaseFFITest):
 
     def test_ensure_w_type(self, space):
         w_type_object = space.execute("FFI::Type::VOID")
@@ -22,15 +22,15 @@ class TestFunction(BaseTopazTest):
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
             W_FunctionObject.ensure_w_type(space, w_unknown_type)
 
-    def test_has_FFI_Pointer_as_ancestor(self, space):
-        question = "FFI::Function.ancestors.include? FFI::Pointer"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+    def test_it_has_FFI_Pointer_as_ancestor(self, space):
+        assert self.ask(space, "FFI::Function.ancestors.include? FFI::Pointer")
 
-    def test_new_needs_at_least_a_type_signature(self, space):
+
+class TestFunction__new(BaseFFITest):
+    def test_it_needs_at_least_a_type_signature(self, space):
         space.execute("FFI::Function.new(:void, [:int8, :int16])")
 
-    def test_new_takes_DynamicLibrabry_Symbol_as_3_argument(self, space):
+    def test_it_takes_a_DynamicLibrabry__Symbol_as_3_argument(self, space):
         space.execute("""
         dlsym = FFI::DynamicLibrary::Symbol.new(:fname)
         FFI::Function.new(:void, [:int8, :int16], dlsym)
@@ -39,20 +39,20 @@ class TestFunction(BaseTopazTest):
                       "can't convert Fixnum into FFI::DynamicLibrary::Symbol"):
             space.execute("FFI::Function.new(:void, [:uint8], 500)")
 
-    def test_new_takes_hash_as_4_argument(self, space):
+    def test_it_takes_a_hash_as_4_argument(self, space):
         space.execute("""
         FFI::Function.new(:void, [:int8, :int16],
                           FFI::DynamicLibrary::Symbol.new('x'),
                           {})
         """)
 
-    def test_new_understands_Type_constants_for_the_signature(self, space):
+    def test_it_understands_Type_constants_for_the_signature(self, space):
         space.execute("""
         FFI::Function.new(FFI::Type::VOID,
                           [FFI::Type::INT8, FFI::Type::INT16])
         """)
 
-    def test_new_reacts_to_messy_signature_with_TypeError(self, space):
+    def test_it_reacts_to_messy_signature_with_TypeError(self, space):
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
             space.execute("FFI::Function.new(1, [])")
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
@@ -62,7 +62,7 @@ class TestFunction(BaseTopazTest):
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
             space.execute("FFI::Function.new(:int32, [:array])")
 
-    def test_initialize_setvars(self, space):
+    def test_it_creates_the_following_low_level_data(self, space):
         w_function = space.execute("""
         foo = FFI::DynamicLibrary::Symbol.new(:foo)
         FFI::Function.new(:int8, [:int16, :float64], foo, {})
@@ -74,7 +74,8 @@ class TestFunction(BaseTopazTest):
         assert w_function.w_ret_type == w_char
         assert w_function.name == 'foo'
 
-    def test_attach_libm_pow(self, space):
+class TestFunction_attach(BaseFFITest):
+    def test_it_works_with_pow_from_libm(self, space):
         w_res = space.execute("""
         class LibraryMock
             def initialize
@@ -91,7 +92,7 @@ class TestFunction(BaseTopazTest):
         res = self.unwrap(space, w_res)
         assert [x for x in res] == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
 
-    def test_attach_libc_abs(self, space):
+    def test_it_works_with_abs_from_libc(self, space):
         w_res = space.execute("""
         class LibraryMock
             def initialize
