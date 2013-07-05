@@ -8,11 +8,15 @@ from rpython.rtyper.lltypesystem import rffi
 
 class TestFFI(BaseTopazTest):
 
-    def test_basic(self, space):
-        w_type_defs = space.execute('FFI::TypeDefs')
-        assert isinstance(w_type_defs, W_HashObject)
-        w_types = space.execute('FFI::Types')
-        assert isinstance(w_types, W_HashObject)
+    def test_TypeDefs(self, space):
+        question = 'FFI::TypeDefs.kind_of? Hash'
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
+
+    def test_Types(self, space):
+        question = 'FFI::Types.kind_of? Hash'
+        w_answer = space.execute(question)
+        assert self.unwrap(space, w_answer)
 
     def test_Platform(self, space):
         w_p = space.execute('FFI::Platform')
