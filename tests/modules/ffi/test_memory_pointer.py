@@ -1,14 +1,13 @@
-from tests.base import BaseTopazTest
+from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.buffer import W_BufferObject
 
-class TestMemoryPointer(BaseTopazTest):
+class TestMemoryPointer(BaseFFITest):
 
-    def test_inherits_from_Pointer(self, space):
-        question = "FFI::MemoryPointer.superclass.equal? FFI::Pointer"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+    def test_it_inherits_from_Pointer(self, space):
+        assert self.ask(space,
+        "FFI::MemoryPointer.ancestors.include? FFI::Pointer")
 
-    def test_makes_a_buffer_out_of_1st_arg(self, space):
+    def test_it_makes_a_buffer_out_of_1st_arg(self, space):
         w_res = space.execute("""
         class FFI::MemoryPointer
             attr_reader :buffer
@@ -17,7 +16,7 @@ class TestMemoryPointer(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == 12
 
-    def test_delegates_to_buffer_in_method_missing(self, space):
+    def test_it_delegates_to_buffer_in_method_missing(self, space):
         w_res = space.execute("""
         class FFI::MemoryPointer
             public :method_missing
