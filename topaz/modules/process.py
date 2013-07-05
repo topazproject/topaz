@@ -74,7 +74,9 @@ class Process(object):
     @moduledef.function("kill")
     def method_kill(self, space, w_signal, args_w):
         if not args_w:
-            raise space.error(space.w_ArgumentError, "wrong number of arguments (%d for at least 2)" % len(args_w + 1))
+            raise space.error(space.w_ArgumentError,
+                "wrong number of arguments (%d for at least 2)" % (len(args_w) + 1)
+            )
         if space.is_kind_of(w_signal, space.w_fixnum):
             sig = space.int_w(w_signal)
         else:
@@ -84,7 +86,9 @@ class Process(object):
             try:
                 sig = SIGNALS[s]
             except KeyError:
-                raise space.error(space.w_ArgumentError, "unsupported name `SIG%s'" % s)
+                raise space.error(space.w_ArgumentError,
+                    "unsupported name `SIG%s'" % s
+                )
 
         if sig < 0:
             for w_arg in args_w:
