@@ -1,20 +1,18 @@
-from tests.base import BaseTopazTest
+from tests.modules.ffi.base import BaseFFITest
 from topaz.objects.moduleobject import W_ModuleObject
 
-class TestDataConverter(BaseTopazTest):
+class TestDataConverter(BaseFFITest):
+    def test_it_is_a_Module(self, space):
+        assert self.ask(space, "FFI::DataConverter.is_a? Module")
 
-    def test_is_module(self, space):
-        w_dc = space.execute('FFI::DataConverter')
-        assert isinstance(w_dc, W_ModuleObject)
+class TestDataConverter__native_type(BaseFFITest):
+    def test_it_returns_nil_for_now(self, space):
+        assert self.ask(space, "FFI::DataConverter.native_type(0).nil?")
 
-    def test_native_type(self, space):
-        w_res = space.execute('FFI::DataConverter.native_type(0)')
-        assert w_res == space.w_nil
+class TestDataConverter__to_native(BaseFFITest):
+    def test_it_returns_nil_for_now(self, space):
+        assert self.ask(space, "FFI::DataConverter.to_native.nil?")
 
-    def test_to_native(self, space):
-        w_res = space.execute('FFI::DataConverter.to_native')
-        assert w_res == space.w_nil
-
-    def test_from_native(self, space):
-        w_res = space.execute('FFI::DataConverter.from_native')
-        assert w_res == space.w_nil
+class TestDataConverter__from_native(BaseFFITest):
+    def test_it_returns_nil_for_now(self, space):
+        assert self.ask(space, "FFI::DataConverter.from_native.nil?")
