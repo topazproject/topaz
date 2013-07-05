@@ -1,46 +1,44 @@
-from tests.base import BaseTopazTest
+from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.buffer import W_BufferObject
 from rpython.rtyper.lltypesystem.rffi import sizeof, LONG, ULONG
 
-class TestBuffer(BaseTopazTest):
+sizes = {'char': 1,
+         'uchar': 1,
+         'short': 2,
+         'ushort': 2,
+         'int': 4,
+         'uint': 4,
+         'long': sizeof(LONG),
+         'ulong': sizeof(ULONG),
+         'long_long': 8,
+         'ulong_long': 8,
+         'float': 4,
+         'double': 8,
+         'pointer': 8}
 
-    sizes = {'char': 1,
-                   'uchar': 1,
-                   'short': 2,
-                   'ushort': 2,
-                   'int': 4,
-                   'uint': 4,
-                   'long': sizeof(LONG),
-                   'ulong': sizeof(ULONG),
-                   'long_long': 8,
-                   'ulong_long': 8,
-                   'float': 4,
-                   'double': 8,
-                   'pointer': 8}
-
-    def test_total(self, space):
-        for key in TestBuffer.sizes:
+class TestBuffer_total(BaseFFITest):
+    def test_it_returns_the_buffer_size_in_bytes(self, space):
+        for key in sizes:
             w_res = space.execute("""
             buffer = FFI::Buffer.new(:%s, 3)
             buffer.total
             """ % key)
-            expected = TestBuffer.sizes[key]*3
+            expected = sizes[key]*3
             assert self.unwrap(space, w_res) == expected
 
-    def test_size_is_total(self, space):
-        question = """
+    def test_it_is_also_known_as_size(self, space):
+        assert self.ask(space, """
         buffer = FFI::Buffer.new(:char, 1)
         buffer.method(:total) == buffer.method(:size)
-        """
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        """)
 
-    def test_non_valid_init_symbol(self, space):
+class TestBuffer__new(BaseFFITest):
+    def test_it_raises_ArgumentError_on_unknown_symbol(self, space):
         with self.raises(space, 'ArgumentError',
                          "I don't know the megaint type."):
             space.execute("FFI::Buffer.new(:megaint, 1)")
 
-    def test_instantiations(self, space):
+    def test_it_has_lots_of_different_names(self, space):
         question = "FFI::Buffer.method(:new) == FFI::Buffer.method(:%s)"
         for init_method in ['new_inout',
                             'new_in',
@@ -48,18 +46,17 @@ class TestBuffer(BaseTopazTest):
                             'alloc_inout',
                             'alloc_in',
                             'alloc_out']:
-            w_answer = space.execute(question % init_method)
-            assert self.unwrap(space, w_answer)
+            assert self.ask(space, question % init_method)
 
-    def test_default_size_is_1(self, space):
-        w_res = space.execute("FFI::Buffer.alloc_in(7).total")
+    def test_it_chooses_char_if_no_symbol_was_given(self, space):
+        w_res = space.execute("FFI::Buffer.new(7).total")
         assert self.unwrap(space, w_res) == 7
 
-    def test_default_length_is_1(self, space):
-        w_res = space.execute("FFI::Buffer.alloc_in(:short).total")
-        assert self.unwrap(space, w_res) == TestBuffer.sizes['short']
+    def test_it_chooses_1_if_no_fixnum_was_given(self, space):
+        w_res = space.execute("FFI::Buffer.new(:short).total")
+        assert self.unwrap(space, w_res) == sizes['short']
 
-    def test_init_with_block(self, space):
+    def test_executes_a_block_if_given(self, space):
         w_res = space.execute("""
         x = 0
         FFI::Buffer.new(:char, 5) { |len| x = len}
@@ -73,6 +70,7 @@ class TestBuffer(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+class TestBuffer(BaseFFITest):
     def test_puts_return_self(self, space):
         for put in ['put_char',
                     'put_uchar',
@@ -318,15 +316,23 @@ class TestBuffer(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == '234'
 
-    def test_put_bytes_too_big_index_error(self, space):
+
+class TestBuffer_put_bytes(BaseFFITest):
+    def test_it_raises_an_IndexError_if_index_ge_strlen(self, space):
         with self.raises(space, 'IndexError',
                          "Tried to start at index 3 of str 012"):
             space.execute("""
             buffer = FFI::Buffer.alloc_in(:char, 3)
             buffer.put_bytes(0, '012', 3)
             """)
+        with self.raises(space, 'IndexError',
+                         "Tried to start at index 100 of str x"):
+            space.execute("""
+            buffer = FFI::Buffer.alloc_in(:char, 3)
+            buffer.put_bytes(0, 'x', 100)
+            """)
 
-    def test_put_bytes_negative_index_error(self, space):
+    def test_it_raises_an_IndexError_if_index_is_negative(self, space):
         with self.raises(space, 'IndexError',
                          "Tried to start at index -1 of str 012"):
             space.execute("""
@@ -334,7 +340,7 @@ class TestBuffer(BaseTopazTest):
             buffer.put_bytes(0, '012', -1)
             """)
 
-    def test_put_bytes_length_error(self, space):
+    def test_it_raises_IndexError_if_index_plus_length_too_big(self, space):
         with self.raises(space, 'IndexError',
                          "Tried to end at index 5 of str 0123"):
             space.execute("""
@@ -342,14 +348,15 @@ class TestBuffer(BaseTopazTest):
             buffer.put_bytes(0, '0123', 1, 4)
             """)
 
-    def test_put_bytes_only_accepts_m1_and_positives_as_length(self, space):
+    def test_it_only_accepts_minus1_and_positives_as_length(self, space):
         with self.raises(space, 'RangeError',
                          'Expected length to be -1 or positive'):
             space.execute("""
             buffer = FFI::Buffer.new(:char, 2).put_bytes(0, 'a', 0, -2)
             """)
 
-    def test_write_bytes_is_put_bytes_with_offset_eq_0(self, space):
+class TestBuffer_write_bytes(BaseFFITest):
+    def test_it_is_like_put_bytes_with_offset_0(self, space):
         w_res = space.execute("""
         buffer = FFI::Buffer.new(:char, 3)
         buffer.write_bytes('foo')
@@ -357,9 +364,10 @@ class TestBuffer(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == 'foo'
 
+class TestBuffer_get_string(BaseFFITest):
     # TODO: Put everything into the space.execute section
     #       once the lexer can handle \0.
-    def test_get_string(self, space):
+    def test_it_stops_at_backslash_0(self, space):
         w_buffer = space.execute("""
         FFI::Buffer.alloc_in(:char, 11)
         """)
@@ -369,14 +377,14 @@ class TestBuffer(BaseTopazTest):
                            [space.newint(0), space.newint(9)])
         assert self.unwrap(space, w_res) == 'Hi'
 
-    def test_get_string_only_accepts_positive_offsets(self, space):
+    def test_it_only_accepts_positive_offsets(self, space):
         with self.raises(space, 'IndexError', 'Expected positive offset'):
             space.execute("""
             buffer = FFI::Buffer.new(:char, 1)
             buffer.get_string(-2, 1)
             """)
 
-    def test_get_string_only_accepts_positive_and_nonzero_length(self, space):
+    def test_it_only_accepts_positive_and_nonzero_length(self, space):
         with self.raises(space, 'RangeError',
                          'Expected positive and nonzero length'):
             space.execute("""
