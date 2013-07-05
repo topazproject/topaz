@@ -1,4 +1,4 @@
-from tests.base import BaseTopazTest
+from tests.modules.ffi.base import BaseFFITest
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
@@ -6,17 +6,13 @@ from topaz.modules.ffi.type import W_TypeObject
 
 from rpython.rtyper.lltypesystem import rffi
 
-class TestFFI(BaseTopazTest):
+class TestFFI(BaseFFITest):
 
     def test_TypeDefs(self, space):
-        question = 'FFI::TypeDefs.kind_of? Hash'
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        assert self.ask(space, 'FFI::TypeDefs.kind_of? Hash')
 
     def test_Types(self, space):
-        question = 'FFI::Types.kind_of? Hash'
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        assert self.ask(space, 'FFI::Types.kind_of? Hash')
 
     def test_Platform(self, space):
         w_p = space.execute('FFI::Platform')
@@ -49,6 +45,5 @@ class TestFFI(BaseTopazTest):
         assert isinstance(w_sbr, W_ClassObject)
 
     def test_NullPointerError_ihnerits_from_Exception(self, space):
-        question = "FFI::NullPointerError.ancestors.include? Exception"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        assert self.ask(space,
+        "FFI::NullPointerError.ancestors.include? Exception")
