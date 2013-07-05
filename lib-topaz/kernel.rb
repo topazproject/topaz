@@ -76,9 +76,9 @@ module Kernel
 
   def `(cmd)
     cmd = Topaz.convert_type(cmd, String, :to_str)
-    res = ''
+    res = nil
     IO.popen(cmd) do |r|
-      res << r.read
+      res = r.read
       Process.waitpid(r.pid)
     end
     res
