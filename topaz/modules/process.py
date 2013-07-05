@@ -100,4 +100,4 @@ class Process(object):
                     os.kill(pid, sig)
                 except OSError as e:
                     raise error_for_oserror(space, e)
-        return len(args_w)
+        return space.newint(len(args_w))
