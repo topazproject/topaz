@@ -28,8 +28,6 @@ class MSpecScript
     "^#{Rubyspec}/language/send_spec.rb",
     # stringio: ``require 'stringio'``
     "^#{Rubyspec}/language/predefined_spec.rb",
-    # Void expression: ``break true or false``
-    "^#{Rubyspec}/language/or_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]
