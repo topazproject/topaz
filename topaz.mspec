@@ -3,19 +3,31 @@ class MSpecScript
   Rubyspec = File.expand_path("../../rubyspec", __FILE__)
 
   MSpec.enable_feature :fiber
-  core = ["#{Rubyspec}/core/",
-          "^#{Rubyspec}/core/struct",
-          "^#{Rubyspec}/core/string/chomp_spec.rb",
-          "^#{Rubyspec}/core/process/detach_spec.rb",
-          "^#{Rubyspec}/core/gc/profiler/",
-          "^#{Rubyspec}/core/marshal/dump_spec.rb",
-          "^#{Rubyspec}/core/marshal/load_spec.rb",
-          "^#{Rubyspec}/core/marshal/restore_spec.rb",
-          "^#{Rubyspec}/core/kernel/autoload_spec.rb",
-          "^#{Rubyspec}/core/filetest",
-          "^#{Rubyspec}/core/io/reopen_spec.rb",
-          "^#{Rubyspec}/core/file/socket_spec.rb",
-          "^#{Rubyspec}/core/numeric/to_c_spec.rb",
+  core = [
+    "#{Rubyspec}/core/",
+    # Struct: ``Struct.new(:field)``
+    "^#{Rubyspec}/core/struct",
+    "^#{Rubyspec}/core/string/chomp_spec.rb",
+    # timeout: ``require 'timeout'``
+    "^#{Rubyspec}/core/process/detach_spec.rb",
+    # GC: ``GC``
+    "^#{Rubyspec}/core/gc/profiler/",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/dump_spec.rb",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/load_spec.rb",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/restore_spec.rb",
+    # autoload: ``autoload :Class, "file.rb"``
+    "^#{Rubyspec}/core/kernel/autoload_spec.rb",
+    # FileTest: ``FileTest``
+    "^#{Rubyspec}/core/filetest",
+    # fcntl: ``require 'fcntl'``
+    "^#{Rubyspec}/core/io/reopen_spec.rb",
+    # socket: ``require 'socket'``
+    "^#{Rubyspec}/core/file/socket_spec.rb",
+    # Rational: ``Rational(2, 3)``
+    "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
 
   language = [
