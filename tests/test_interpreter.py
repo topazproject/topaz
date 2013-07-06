@@ -1582,11 +1582,17 @@ class TestBlocks(BaseTopazTest):
             @block.call
           end
 
+          def inner
+            yield
+          end
+
           def start
             outer do
-              @block = proc do
-                self.record = :before_return
-                return :return_value
+              inner do
+                @block = proc do
+                  self.record = :before_return
+                  return :return_value
+                end
               end
             end
             self.record = :bottom_of_start

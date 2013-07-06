@@ -339,7 +339,7 @@ class Interpreter(object):
         assert isinstance(w_code, W_CodeObject)
         frame.push(space.newproc(
             w_code, frame.w_self, frame.lexical_scope, cells, frame.block,
-            self, frame.parent_interp or self, frame.regexp_match_cell
+            self, frame.top_parent_interp or self, frame.regexp_match_cell
         ))
 
     def BUILD_LAMBDA(self, space, bytecode, frame, pc):

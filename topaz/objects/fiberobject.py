@@ -91,6 +91,7 @@ class W_FiberObject(W_Object):
             self.w_block.bytecode, w_self=self.w_block.w_self,
             lexical_scope=self.w_block.lexical_scope, block=self.w_block.block,
             parent_interp=self.w_block.parent_interp,
+            top_parent_interp=self.w_block.top_parent_interp,
             regexp_match_cell=self.w_block.regexp_match_cell,
         )
         for idx, cell in enumerate(self.w_block.cells):

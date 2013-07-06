@@ -30,8 +30,6 @@ class MSpecScript
     "^#{Rubyspec}/language/predefined_spec.rb",
     # Void expression: ``break true or false``
     "^#{Rubyspec}/language/or_spec.rb",
-    # rubyspec/languages/fixtures/start.rb
-    "^#{Rubyspec}/language/return_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]
