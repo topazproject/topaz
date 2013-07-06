@@ -18,15 +18,17 @@ class MSpecScript
           "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
 
-  language = ["#{Rubyspec}/language",
-              "^#{Rubyspec}/language/block_spec.rb",
-              "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
-              "^#{Rubyspec}/language/send_spec.rb",
-              "^#{Rubyspec}/language/predefined_spec.rb",
-              "^#{Rubyspec}/language/predefined/data_spec.rb",
-              "^#{Rubyspec}/language/BEGIN_spec.rb",
-              "^#{Rubyspec}/language/or_spec.rb",
-              "^#{Rubyspec}/language/return_spec.rb",
+  language = [
+    "#{Rubyspec}/language",
+    # Block local variables: ``[].each {|a; b| }``
+    "^#{Rubyspec}/language/block_spec.rb",
+    "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
+    "^#{Rubyspec}/language/send_spec.rb",
+    "^#{Rubyspec}/language/predefined_spec.rb",
+    "^#{Rubyspec}/language/predefined/data_spec.rb",
+    "^#{Rubyspec}/language/BEGIN_spec.rb",
+    "^#{Rubyspec}/language/or_spec.rb",
+    "^#{Rubyspec}/language/return_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]
