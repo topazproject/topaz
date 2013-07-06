@@ -22,6 +22,7 @@ class MSpecScript
     "#{Rubyspec}/language",
     # Block local variables: ``[].each {|a; b| }``
     "^#{Rubyspec}/language/block_spec.rb",
+    # Posix character class: ``/[[:alnum:]]/``
     "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
     "^#{Rubyspec}/language/send_spec.rb",
     "^#{Rubyspec}/language/predefined_spec.rb",
