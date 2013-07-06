@@ -28,7 +28,9 @@ class MSpecScript
     "^#{Rubyspec}/language/send_spec.rb",
     # stringio: ``require 'stringio'``
     "^#{Rubyspec}/language/predefined_spec.rb",
+    # Void expression: ``break true or false``
     "^#{Rubyspec}/language/or_spec.rb",
+    # rubyspec/languages/fixtures/start.rb
     "^#{Rubyspec}/language/return_spec.rb",
   ]
 
