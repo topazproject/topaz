@@ -8,7 +8,6 @@ class MSpecScript
           "^#{Rubyspec}/core/string/chomp_spec.rb",
           "^#{Rubyspec}/core/process/detach_spec.rb",
           "^#{Rubyspec}/core/gc/profiler/",
-          "^#{Rubyspec}/core/object/instance_exec_spec.rb",
           "^#{Rubyspec}/core/marshal/dump_spec.rb",
           "^#{Rubyspec}/core/marshal/load_spec.rb",
           "^#{Rubyspec}/core/marshal/restore_spec.rb",
