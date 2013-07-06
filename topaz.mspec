@@ -24,9 +24,10 @@ class MSpecScript
     "^#{Rubyspec}/language/block_spec.rb",
     # Posix character class: ``/[[:alnum:]]/``
     "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
+    # Required arg after *arg: ``def f(a, *b, c); end``
     "^#{Rubyspec}/language/send_spec.rb",
+    # stringio: ``require 'stringio'``
     "^#{Rubyspec}/language/predefined_spec.rb",
-    "^#{Rubyspec}/language/predefined/data_spec.rb",
     "^#{Rubyspec}/language/BEGIN_spec.rb",
     "^#{Rubyspec}/language/or_spec.rb",
     "^#{Rubyspec}/language/return_spec.rb",
