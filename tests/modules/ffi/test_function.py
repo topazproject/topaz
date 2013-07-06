@@ -82,12 +82,14 @@ class TestFunction_attach(BaseFFITest):
                 local = FFI::DynamicLibrary::RTLD_LOCAL
                 @ffi_libs = [FFI::DynamicLibrary.open('libm.so', local)]
             end
+            attr_reader :attachments
         end
         lib = LibraryMock.new
         oo_pow = FFI::DynamicLibrary::Symbol.new(:pow)
         func = FFI::Function.new(:float64, [:float64, :float64], oo_pow, {})
         func.attach(lib, 'power')
-        (0..5).each.map { |x| lib.power(x, 2) }
+        lib.attachments.include? :power
+        (0..5).each.map { |x| lib.attachments[:power].call(x, 2) }
         """)
         res = self.unwrap(space, w_res)
         assert [x for x in res] == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
@@ -99,10 +101,12 @@ class TestFunction_attach(BaseFFITest):
                 local = FFI::DynamicLibrary::RTLD_LOCAL
                 @ffi_libs = [FFI::DynamicLibrary.open('libc.so.6', local)]
             end
+            attr_reader :attachments
         end
         lib = LibraryMock.new
         oo_abs = FFI::DynamicLibrary::Symbol.new(:abs)
         FFI::Function.new(:int32, [:int32], oo_abs, {}).attach(lib, 'abs')
-        (-3..+3).each.map { |x| lib.abs(x) }
+        lib.attachments.include? :abs
+        (-3..+3).each.map { |x| lib.attachments[:abs].call(x) }
         """)
         assert self.unwrap(space, w_res) == [3, 2, 1, 0, 1, 2, 3]

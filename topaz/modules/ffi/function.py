@@ -25,6 +25,7 @@ class W_FunctionObject(W_PointerObject):
         self.arg_types_w = [self.ensure_w_type(space, w_type)
                           for w_type in space.listview(w_arg_types)]
         self.name = self.dlsym_unwrap(space, w_name) if w_name else None
+        self.ptr = None
 
     @staticmethod
     def ensure_w_type(space, w_type_or_sym):
@@ -52,6 +53,29 @@ class W_FunctionObject(W_PointerObject):
                             "can't convert %s into FFI::DynamicLibrary::Symbol"
                               % w_name.getclass(space).name)
 
+    @classdef.method('call')
+    def method_call(self, space, args_w):
+        ffi_ret_type = self.w_ret_type.ffi_type
+        native_arg_types = [t.native_type for t in self.arg_types_w]
+        native_ret_type = self.w_ret_type.native_type
+        args = [space.float_w(w_x) for w_x in args_w]
+        for argval, argtype in zip(args, native_arg_types):
+            casted_val = rffi.cast(argtype, argval)
+            self.ptr.push_arg(casted_val)
+        result = self.ptr.call(native_ret_type)
+        if ffi_ret_type in [clibffi.ffi_type_sint8,
+                            clibffi.ffi_type_uint8,
+                            clibffi.ffi_type_sint16,
+                            clibffi.ffi_type_uint16,
+                            clibffi.ffi_type_sint32,
+                            clibffi.ffi_type_uint32,
+                            clibffi.ffi_type_sint64,
+                            clibffi.ffi_type_uint64]:
+            return space.newint_or_bigint(result)
+        elif ffi_ret_type in [clibffi.ffi_type_float,
+                              clibffi.ffi_type_double]:
+            return space.newfloat(result)
+
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
         # NOT RPYTHON
@@ -60,31 +84,14 @@ class W_FunctionObject(W_PointerObject):
         for w_dl in w_ffi_libs.listview(space):
             ffi_arg_types = [t.ffi_type for t in self.arg_types_w]
             ffi_ret_type = self.w_ret_type.ffi_type
-            native_arg_types = [t.native_type for t in self.arg_types_w]
-            native_ret_type = self.w_ret_type.native_type
             try:
-                func_ptr = w_dl.cdll.getpointer(self.name,
+                self.ptr = w_dl.cdll.getpointer(self.name,
                                                 ffi_arg_types,
                                                 ffi_ret_type)
-                def attachment(lib, space, args_w, block):
-                    args = [space.float_w(w_x) for w_x in args_w]
-                    for argval, argtype in zip(args, native_arg_types):
-                        casted_val = rffi.cast(argtype, argval)
-                        func_ptr.push_arg(casted_val)
-                    result = func_ptr.call(native_ret_type)
-                    if ffi_ret_type in [clibffi.ffi_type_sint8,
-                                        clibffi.ffi_type_uint8,
-                                        clibffi.ffi_type_sint16,
-                                        clibffi.ffi_type_uint16,
-                                        clibffi.ffi_type_sint32,
-                                        clibffi.ffi_type_uint32,
-                                        clibffi.ffi_type_sint64,
-                                        clibffi.ffi_type_uint64]:
-                        return space.newint_or_bigint(result)
-                    elif ffi_ret_type in [clibffi.ffi_type_float,
-                                          clibffi.ffi_type_double]:
-                        return space.newfloat(result)
-                method = W_BuiltinFunction(name, w_lib.getclass(space),
-                                           attachment)
-                w_lib.getclass(space).define_method(space, name, method)
+                w_attachments = space.find_instance_var(w_lib, '@attachments')
+                if w_attachments is space.w_nil:
+                    w_attachments = space.newhash()
+                    space.set_instance_var(w_lib, '@attachments',
+                                           w_attachments)
+                space.send(w_attachments, '[]=', [space.newsymbol(name), self])
             except KeyError: pass
