@@ -28,7 +28,6 @@ class MSpecScript
     "^#{Rubyspec}/language/send_spec.rb",
     # stringio: ``require 'stringio'``
     "^#{Rubyspec}/language/predefined_spec.rb",
-    "^#{Rubyspec}/language/BEGIN_spec.rb",
     "^#{Rubyspec}/language/or_spec.rb",
     "^#{Rubyspec}/language/return_spec.rb",
   ]
