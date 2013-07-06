@@ -46,8 +46,6 @@ class Interpreter(object):
                 pc = self._interpret(space, pc, frame, bytecode)
         except RaiseReturn as e:
             if e.parent_interp is self:
-                if frame.parent_interp:
-                    raise RaiseReturn(frame.parent_interp, e.w_value)
                 return e.w_value
             raise
         except Return as e:
@@ -341,7 +339,7 @@ class Interpreter(object):
         assert isinstance(w_code, W_CodeObject)
         frame.push(space.newproc(
             w_code, frame.w_self, frame.lexical_scope, cells, frame.block,
-            self, frame.regexp_match_cell
+            self, frame.parent_interp or self, frame.regexp_match_cell
         ))
 
     def BUILD_LAMBDA(self, space, bytecode, frame, pc):
@@ -697,8 +695,8 @@ class Interpreter(object):
         w_returnvalue = frame.pop()
         block = frame.unrollstack(RaiseReturnValue.kind)
         if block is None:
-            raise RaiseReturn(frame.parent_interp, w_returnvalue)
-        unroller = RaiseReturnValue(frame.parent_interp, w_returnvalue)
+            raise RaiseReturn(frame.top_parent_interp, w_returnvalue)
+        unroller = RaiseReturnValue(frame.top_parent_interp, w_returnvalue)
         return block.handle(space, frame, unroller)
 
     def YIELD(self, space, bytecode, frame, pc, n_args):
