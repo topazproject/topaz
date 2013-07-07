@@ -197,7 +197,7 @@ class W_RegexpObject(W_Object):
             return space.w_false
         self._check_initialized(space)
         w_other._check_initialized(space)
-        return space.newbool(self.source == w_other.source)
+        return space.newbool(self.source == w_other.source and (self.flags | regexp.NO_ENCODING) == (w_other.flags | regexp.NO_ENCODING))
 
     @classdef.method("source")
     def method_source(self, space):
@@ -252,6 +252,10 @@ class W_RegexpObject(W_Object):
     @classdef.method("options")
     def method_options(self, space):
         return space.newint(self.flags)
+
+    @classdef.method("fixed_encoding?")
+    def method_fixed_encodingp(self, space):
+        return space.newbool(bool(self.flags & regexp.FIXED_ENCODING))
 
 
 class W_MatchDataObject(W_Object):
