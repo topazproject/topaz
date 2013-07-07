@@ -107,6 +107,11 @@ def run_rubyspec_untranslated(env):
 
 
 def run_translate_tests(env):
+    invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch targettopaz.py".format(**env))
+    run_specs("`pwd`/bin/topaz")
+
+
+def run_translate_jit_tests(env):
     invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch -Ojit targettopaz.py".format(**env))
     run_specs("`pwd`/bin/topaz")
     invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH py.test --topaz=bin/topaz tests/jit/".format(**env))
@@ -130,7 +135,8 @@ def run_flake8_tests(env):
 TEST_TYPES = {
     "own": Test(run_own_tests, deps=["-r requirements.txt"]),
     "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
-    "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True, create_build=True),
+    "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True),
+    "translate-jit": Test(run_translate_jit_tests, deps=["-r requirements.txt"], needs_rubyspec=True, create_build=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_rpython=False),
     "flake8": Test(run_flake8_tests, deps=["flake8"], needs_rpython=False),
 }

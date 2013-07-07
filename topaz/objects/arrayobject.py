@@ -4,6 +4,7 @@ from rpython.rlib import jit
 from rpython.rlib.listsort import TimSort
 from rpython.rlib.listsort import make_timsort_class
 from rpython.rlib.rerased import new_static_erasing_pair
+from rpython.rlib.rbigint import rbigint
 
 from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
@@ -40,7 +41,10 @@ class RubySorter(BaseRubySorter):
         else:
             return self.space.int_w(w_cmp_res) < 0
         #w_cmp_res = self.space.compare(w_a, w_b, self.sortblock)
-        #return self.space.int_w(w_cmp_res) < 0
+        #if self.space.is_kind_of(w_cmp_res, self.space.w_bignum):
+        #    return self.space.bigint_w(w_cmp_res).lt(rbigint.fromint(0))
+        #else:
+        #    return self.space.int_w(w_cmp_res) < 0
 
 
 class RubySortBy(BaseRubySortBy):
@@ -625,8 +629,7 @@ class W_ArrayObject(W_Object):
         template = Coerce.str(space, w_template)
         result = RPacker(template, space.listview(self)).operate(space)
         w_result = space.newstr_fromchars(result)
-        if space.is_true(space.send(w_template, "tainted?")):
-            space.send(w_result, "taint")
+        space.infect(w_result, w_template)
         return w_result
 
     @classdef.method("to_ary")

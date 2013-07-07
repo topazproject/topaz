@@ -1,6 +1,7 @@
 import copy
 
 from rpython.rlib import jit
+from rpython.rlib.objectmodel import specialize
 
 from topaz.celldict import CellDict, VersionTag
 from topaz.coerce import Coerce
@@ -15,6 +16,7 @@ class AttributeReader(W_FunctionObject):
     _immutable_fields_ = ["varname"]
 
     def __init__(self, varname):
+        W_FunctionObject.__init__(self, varname)
         self.varname = varname
 
     def call(self, space, w_obj, args_w, block):
@@ -25,6 +27,7 @@ class AttributeWriter(W_FunctionObject):
     _immutable_fields_ = ["varname"]
 
     def __init__(self, varname):
+        W_FunctionObject.__init__(self, varname)
         self.varname = varname
 
     def call(self, space, w_obj, args_w, block):
@@ -40,6 +43,7 @@ class UndefMethod(W_FunctionObject):
     _immutable_fields_ = ["name"]
 
     def __init__(self, name):
+        W_FunctionObject.__init__(self, name)
         self.name = name
 
     def call(self, space, w_obj, args_w, block):
@@ -51,6 +55,7 @@ class DefineMethodBlock(W_FunctionObject):
     _immutable_fields_ = ["name", "block"]
 
     def __init__(self, name, block):
+        W_FunctionObject.__init__(self, name)
         self.name = name
         self.block = block
 
@@ -71,6 +76,7 @@ class DefineMethodMethod(W_FunctionObject):
     _immutable_fields_ = ["name", "w_unbound_method"]
 
     def __init__(self, name, w_unbound_method):
+        W_FunctionObject.__init__(self, name)
         self.name = name
         self.w_unbound_method = w_unbound_method
 
@@ -105,6 +111,7 @@ class W_ModuleObject(W_RootObject):
         obj.constants_w = copy.deepcopy(self.constants_w, memo)
         obj.class_variables = copy.deepcopy(self.class_variables, memo)
         obj.instance_variables = copy.deepcopy(self.instance_variables, memo)
+        obj.flags = copy.deepcopy(self.flags, memo)
         obj.included_modules = copy.deepcopy(self.included_modules, memo)
         obj.descendants = copy.deepcopy(self.descendants, memo)
         return obj
@@ -125,6 +132,9 @@ class W_ModuleObject(W_RootObject):
         self.version = VersionTag()
 
     def define_method(self, space, name, method):
+        if (name == "initialize" or name == "initialize_copy" or
+            method.visibility == W_FunctionObject.MODULE_FUNCTION):
+            method.update_visibility(W_FunctionObject.PRIVATE)
         self.mutated()
         self.methods_w[name] = method
         if not space.bootstrap:
@@ -155,15 +165,17 @@ class W_ModuleObject(W_RootObject):
     def _find_method_pure(self, space, method, version):
         return self.methods_w.get(method, None)
 
-    def methods(self, space, inherit=True):
+    @specialize.argtype(2)
+    def methods(self, space, visibility=None, inherit=True):
         methods = {}
         for name, method in self.methods_w.iteritems():
-            if not isinstance(method, UndefMethod):
+            if (not isinstance(method, UndefMethod) and
+                (visibility is None or method.visibility == visibility)):
                 methods[name] = None
 
         if inherit:
             for w_mod in self.included_modules:
-                for name in w_mod.methods(space, inherit):
+                for name in w_mod.methods(space, visibility=visibility):
                     method = self._find_method_pure(space, name, self.version)
                     if method is None or not isinstance(method, UndefMethod):
                         methods[name] = None
@@ -462,23 +474,43 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("module_function")
     def method_module_function(self, space, args_w):
+        if not args_w:
+            self.set_default_visibility(space, W_FunctionObject.MODULE_FUNCTION)
+            return self
         for w_arg in args_w:
             name = Coerce.symbol(space, w_arg)
-            self.attach_method(space, name, self._find_method_pure(space, name, self.version))
+            w_method = self.find_method(space, name)
+            if w_method is None or isinstance(w_method, UndefMethod):
+                cls_name = space.obj_to_s(self)
+                raise space.error(space.w_NameError,
+                    "undefined method `%s' for class `%s'" % (name, cls_name)
+                )
+            self.attach_method(space, name, w_method)
+            self.set_method_visibility(space, name, W_FunctionObject.PRIVATE)
+        return self
 
     @classdef.method("private_class_method")
-    def method_private_class_method(self, space, w_name):
+    def method_private_class_method(self, space, args_w):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, "private", [w_name])
+        return space.send(w_cls, "private", args_w)
 
     @classdef.method("public_class_method")
-    def method_public_class_method(self, space, w_name):
+    def method_public_class_method(self, space, args_w):
         w_cls = self.getsingletonclass(space)
-        return space.send(w_cls, "public", [w_name])
+        return space.send(w_cls, "public", args_w)
 
     @classdef.method("alias_method", new_name="symbol", old_name="symbol")
+    @check_frozen()
     def method_alias_method(self, space, new_name, old_name):
-        self.define_method(space, new_name, self.find_method(space, old_name))
+        w_method = self.find_method(space, old_name)
+        if w_method is None:
+            w_method = space.w_object.find_method(space, old_name)
+        if w_method is None or isinstance(w_method, UndefMethod):
+            cls_name = space.obj_to_s(self)
+            raise space.error(space.w_NameError,
+                "undefined method `%s' for class `%s'" % (old_name, cls_name)
+            )
+        self.define_method(space, new_name, w_method)
 
     @classdef.method("ancestors")
     def method_ancestors(self, space):
@@ -507,14 +539,17 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("private")
     def method_private(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PRIVATE)
+        return self
 
     @classdef.method("public")
     def method_public(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PUBLIC)
+        return self
 
     @classdef.method("protected")
     def method_protected(self, space, args_w):
         self.set_visibility(space, args_w, W_FunctionObject.PROTECTED)
+        return self
 
     @classdef.method("private_constant")
     def method_private_constant(self, space, args_w):
@@ -687,20 +722,33 @@ class W_ModuleObject(W_RootObject):
     def method_instance_method(self, space, name):
         return space.newmethod(name, self)
 
-    def instance_methods(self):
-        return self.methods_w.keys()
+    @classdef.method("instance_methods", inherit="bool")
+    def method_instance_methods(self, space, inherit=True):
+        return space.newarray([
+            space.newsymbol(sym)
+            for sym in self.methods(space, inherit=inherit)
+        ])
 
-    @classdef.method("public_instance_methods", include_super="bool")
-    @classdef.method("instance_methods", include_super="bool")
-    def method_instance_methods(self, space, include_super=True):
-        methods = {}
-        for module in self.included_modules:
-            for method in module.instance_methods():
-                methods[method] = None
-        for method in self.instance_methods():
-            if not isinstance(self.methods_w[method], UndefMethod):
-                methods[method] = None
-        return space.newarray([space.newsymbol(sym) for sym in methods])
+    @classdef.method("public_instance_methods", inherit="bool")
+    def method_public_instance_methods(self, space, inherit=True):
+        return space.newarray([
+            space.newsymbol(sym)
+            for sym in self.methods(space, visibility=W_FunctionObject.PUBLIC, inherit=inherit)
+        ])
+
+    @classdef.method("protected_instance_methods", inherit="bool")
+    def method_protected_instance_methods(self, space, inherit=True):
+        return space.newarray([
+            space.newsymbol(sym)
+            for sym in self.methods(space, visibility=W_FunctionObject.PROTECTED, inherit=inherit)
+        ])
+
+    @classdef.method("private_instance_methods", inherit="bool")
+    def method_private_instance_methods(self, space, inherit=True):
+        return space.newarray([
+            space.newsymbol(sym)
+            for sym in self.methods(space, visibility=W_FunctionObject.PRIVATE, inherit=inherit)
+        ])
 
     @classdef.method("undef_method", name="symbol")
     def method_undef_method(self, space, name):

@@ -1,9 +1,11 @@
 import math
 import operator
 
+from rpython.rlib import rfloat
 from rpython.rlib.debug import check_regular_int
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.rarithmetic import ovfcheck, LONG_BIT
+from rpython.rlib.rarithmetic import (r_uint, r_longlong, r_ulonglong,
+    ovfcheck, LONG_BIT)
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import lltype, rffi
 
@@ -50,6 +52,18 @@ class W_FixnumObject(W_RootObject):
 
     def float_w(self, space):
         return float(self.intvalue)
+
+    def intmask_w(self, space):
+        return self.intvalue
+
+    def uintmask_w(self, space):
+        return r_uint(self.intvalue)
+
+    def longlongmask_w(self, space):
+        return r_longlong(self.intvalue)
+
+    def ulonglongmask_w(self, space):
+        return r_ulonglong(self.intvalue)
 
     def find_instance_var(self, space, name):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
@@ -141,6 +155,29 @@ class W_FixnumObject(W_RootObject):
         else:
             return self.divide(space, w_other)
 
+    @classdef.method("fdiv")
+    def method_fdiv(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_fixnum):
+            other = space.int_w(w_other)
+            try:
+                res = float(self.intvalue) / float(other)
+            except ZeroDivisionError:
+                return space.newfloat(rfloat.copysign(rfloat.INFINITY, float(self.intvalue)))
+            else:
+                return space.newfloat(res)
+        elif space.is_kind_of(w_other, space.w_bignum):
+            return space.send(space.newbigint_fromint(self.intvalue), "fdiv", [w_other])
+        elif space.is_kind_of(w_other, space.w_float):
+            other = space.float_w(w_other)
+            try:
+                res = float(self.intvalue) / other
+            except ZeroDivisionError:
+                return space.newfloat(rfloat.copysign(rfloat.INFINITY, float(self.intvalue)))
+            else:
+                return space.newfloat(res)
+        else:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "fdiv")
+
     @classdef.method("**")
     def method_pow(self, space, w_other):
         if space.is_kind_of(w_other, space.w_fixnum):
@@ -175,7 +212,7 @@ class W_FixnumObject(W_RootObject):
             except OverflowError:
                 return space.send(
                     space.newbigint_fromint(self.intvalue), "**",
-                    [space.newint(exp)]
+                    [w_other]
                 )
             return space.newint(ix)
         else:
@@ -212,17 +249,22 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.newint(self.intvalue >> other)
 
-    @classdef.method("&", other="int")
-    def method_and(self, space, other):
-        return space.newint(self.intvalue & other)
-
-    @classdef.method("^", other="int")
-    def method_xor(self, space, other):
-        return space.newint(self.intvalue ^ other)
-
-    @classdef.method("|", other="int")
-    def method_or(self, space, other):
-        return space.newint(self.intvalue | other)
+    def new_bitwise_op(classdef, name, func):
+        @classdef.method(name)
+        def method(self, space, w_other):
+            w_other = space.convert_type(w_other, space.w_integer, "to_int")
+            if space.is_kind_of(w_other, space.w_fixnum):
+                other = space.int_w(w_other)
+                return space.newint(func(self.intvalue, other))
+            elif space.is_kind_of(w_other, space.w_bignum):
+                return space.send(space.newbigint_fromint(self.intvalue), name, [w_other])
+            else:
+                return W_NumericObject.retry_binop_coercing(space, self, w_other, name)
+        method.__name__ = "method_%s" % func.__name__
+        return method
+    method_and = new_bitwise_op(classdef, "&", operator.and_)
+    method_or = new_bitwise_op(classdef, "|", operator.or_)
+    method_xor = new_bitwise_op(classdef, "^", operator.xor)
 
     @classdef.method("~")
     def method_invert(self, space):

@@ -3,4 +3,3 @@ fails:Random#rand with Bignum returns a Bignum greater than or equal to 0
 fails:Random#rand with Bignum returns a Bignum less than the argument
 fails:Random#rand with Bignum returns the same sequence for a given seed
 fails:Random#rand with Range raises an ArgumentError when the endpoint lacks #+ and #- methods
-fails:Random#rand with Bignum raises an ArgumentError when the argument is negative

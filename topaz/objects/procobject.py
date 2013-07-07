@@ -6,7 +6,8 @@ class W_ProcObject(W_Object):
     classdef = ClassDef("Proc", W_Object.classdef)
 
     def __init__(self, space, bytecode, w_self, lexical_scope, cells, block,
-                 parent_interp, regexp_match_cell, is_lambda):
+                 parent_interp, top_parent_interp, regexp_match_cell,
+                 is_lambda):
         W_Object.__init__(self, space)
         self.bytecode = bytecode
         self.w_self = w_self
@@ -14,6 +15,7 @@ class W_ProcObject(W_Object):
         self.cells = cells
         self.block = block
         self.parent_interp = parent_interp
+        self.top_parent_interp = top_parent_interp
         self.regexp_match_cell = regexp_match_cell
         self.is_lambda = is_lambda
 
@@ -22,7 +24,8 @@ class W_ProcObject(W_Object):
             space, self.bytecode,
             w_self or self.w_self,
             lexical_scope or self.lexical_scope,
-            self.cells, self.block, self.parent_interp, self.regexp_match_cell,
+            self.cells, self.block, self.parent_interp, self.top_parent_interp,
+            self.regexp_match_cell,
             is_lambda or self.is_lambda
         )
 

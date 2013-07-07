@@ -249,7 +249,10 @@ class W_FileObject(W_IOObject):
     @classdef.method("truncate", length="int")
     def method_truncate(self, space, length):
         self.ensure_not_closed(space)
-        ftruncate(self.fd, length)
+        try:
+            ftruncate(self.fd, length)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         return space.newint(0)
 
     @classdef.method("chmod", mode="int")

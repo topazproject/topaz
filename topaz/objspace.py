@@ -7,10 +7,11 @@ import weakref
 
 from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
-from rpython.rlib.objectmodel import specialize
+from rpython.rlib.objectmodel import specialize, compute_unique_id
 from rpython.rlib.signature import signature
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rbigint import rbigint
+from rpython.rtyper.lltypesystem import llmemory, rffi
 
 from rply.errors import ParsingError
 
@@ -64,7 +65,7 @@ from topaz.objects.objectobject import W_Object, W_BaseObject, W_Root
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.rangeobject import W_RangeObject
-from topaz.objects.regexpobject import W_RegexpObject
+from topaz.objects.regexpobject import W_RegexpObject, W_MatchDataObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.threadobject import W_ThreadObject
@@ -185,6 +186,7 @@ class ObjectSpace(object):
             self.getclassfor(W_MethodObject),
             self.getclassfor(W_UnboundMethodObject),
             self.getclassfor(W_FiberObject),
+            self.getclassfor(W_MatchDataObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_ThreadError),
@@ -221,6 +223,8 @@ class ObjectSpace(object):
         self.w_load_path = self.newarray([])
         self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
         self.globals.define_virtual("$:", lambda space: space.w_load_path)
+
+        self.globals.define_virtual("$$", lambda space: space.send(space.getmoduleobject(Process.moduledef), "pid"))
 
         self.w_loaded_features = self.newarray([])
         self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
@@ -321,13 +325,17 @@ class ObjectSpace(object):
         return ec
 
     def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
-                     parent_interp=None, regexp_match_cell=None):
+                     parent_interp=None, top_parent_interp=None,
+                     regexp_match_cell=None):
 
         if w_self is None:
             w_self = self.w_top_self
         if regexp_match_cell is None:
             regexp_match_cell = ClosureCell(None)
-        return Frame(jit.promote(bc), w_self, lexical_scope, block, parent_interp, regexp_match_cell)
+        return Frame(
+            jit.promote(bc), w_self, lexical_scope, block, parent_interp,
+            top_parent_interp, regexp_match_cell
+        )
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -421,10 +429,11 @@ class ObjectSpace(object):
             return W_UnboundMethodObject(self, w_cls, w_function)
 
     def newproc(self, bytecode, w_self, lexical_scope, cells, block,
-                parent_interp, regexp_match_cell, is_lambda=False):
+                parent_interp, top_parent_interp, regexp_match_cell,
+                is_lambda=False):
         return W_ProcObject(
             self, bytecode, w_self, lexical_scope, cells, block, parent_interp,
-            regexp_match_cell, is_lambda=False
+            top_parent_interp, regexp_match_cell, is_lambda=False
         )
 
     @jit.unroll_safe
@@ -622,7 +631,7 @@ class ObjectSpace(object):
                     "undefined method `%s' for %s" % (name, class_name)
                 )
             else:
-                args_w.insert(0, self.newsymbol(name))
+                args_w = [self.newsymbol(name)] + args_w
                 return method_missing.call(self, w_receiver, args_w, block)
         return raw_method.call(self, w_receiver, args_w, block)
 
@@ -640,6 +649,7 @@ class ObjectSpace(object):
         frame = self.create_frame(
             bc, w_self=block.w_self, lexical_scope=block.lexical_scope,
             block=block.block, parent_interp=block.parent_interp,
+            top_parent_interp=block.top_parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
         if block.is_lambda:
@@ -771,10 +781,28 @@ class ObjectSpace(object):
         if freeze and self.is_true(w_src.get_flag(self, "frozen?")):
             w_dest.set_flag(self, "frozen?")
 
+    def getaddrstring(self, w_obj):
+        w_id = self.newint_or_bigint(compute_unique_id(w_obj))
+        w_4 = self.newint(4)
+        w_0x0F = self.newint(0x0F)
+        i = 2 * rffi.sizeof(llmemory.Address)
+        addrstring = [" "] * i
+        while True:
+            n = self.int_w(self.send(w_id, "&", [w_0x0F]))
+            n += ord("0")
+            if n > ord("9"):
+                n += (ord("a") - ord("9") - 1)
+            i -= 1
+            addrstring[i] = chr(n)
+            if i == 0:
+                break
+            w_id = self.send(w_id, ">>", [w_4])
+        return "".join(addrstring)
+
     def any_to_s(self, w_obj):
-        return "#<%s:0x%x>" % (
+        return "#<%s:0x%s>" % (
             self.obj_to_s(self.getnonsingletonclass(w_obj)),
-            self.int_w(self.send(w_obj, "__id__"))
+            self.getaddrstring(w_obj)
         )
 
     def obj_to_s(self, w_obj):

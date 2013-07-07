@@ -111,7 +111,10 @@ class W_IOObject(W_Object):
                 max_read = int(length - read_bytes)
             else:
                 max_read = 8192
-            current_read = os.read(self.fd, max_read)
+            try:
+                current_read = os.read(self.fd, max_read)
+            except OSError as e:
+                raise error_for_oserror(space, e)
             if len(current_read) == 0:
                 break
             read_bytes += len(current_read)

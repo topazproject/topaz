@@ -71,3 +71,7 @@ class W_NumericObject(W_Object):
     @classdef.method("round")
     def method_round(self, space):
         return space.newint(int(round_away(Coerce.float(space, self))))
+
+    @classdef.method("quo")
+    def method_quo(self, space):
+        raise space.error(space.w_NotImplementedError, "Numeric#quo")

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import errno
 import os
 import time
 
@@ -8,11 +9,12 @@ from rpython.rlib.rfloat import round_double
 from rpython.rlib.streamio import open_file_as_stream
 
 from topaz.coerce import Coerce
-from topaz.error import RubyError, error_for_oserror
+from topaz.error import RubyError, error_for_oserror, error_for_errno
 from topaz.module import ModuleDef, check_frozen
 from topaz.modules.process import Process
 from topaz.objects.bindingobject import W_BindingObject
 from topaz.objects.exceptionobject import W_ExceptionObject
+from topaz.objects.functionobject import W_FunctionObject
 from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
@@ -42,8 +44,34 @@ class Kernel(object):
     @moduledef.method("methods", inherit="bool")
     def method_methods(self, space, inherit=True):
         w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, inherit=inherit)
+        ])
 
-        return space.newarray([space.newsymbol(m) for m in w_cls.methods(space, inherit)])
+    @moduledef.method("private_methods", inherit="bool")
+    def method_private_methods(self, space, inherit=True):
+        w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, visibility=W_FunctionObject.PRIVATE, inherit=inherit)
+        ])
+
+    @moduledef.method("protected_methods", inherit="bool")
+    def method_protected_methods(self, space, inherit=True):
+        w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, visibility=W_FunctionObject.PROTECTED, inherit=inherit)
+        ])
+
+    @moduledef.method("public_methods", inherit="bool")
+    def method_public_methods(self, space, inherit=True):
+        w_cls = space.getclass(self)
+        return space.newarray([
+            space.newsymbol(m)
+            for m in w_cls.methods(space, visibility=W_FunctionObject.PUBLIC, inherit=inherit)
+        ])
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
@@ -216,15 +244,23 @@ class Kernel(object):
                     w_arg, space.w_string, "to_str"
                 )) for w_arg in args_w[1:]
             ]
-            os.execv(cmd, args)
+            try:
+                os.execv(cmd, args)
+            except OSError as e:
+                raise error_for_oserror(space, e)
         else:
+            if not cmd:
+                raise error_for_errno(space, errno.ENOENT)
             shell = os.environ.get("RUBYSHELL") or os.environ.get("COMSPEC") or "/bin/sh"
             sepidx = shell.rfind(os.sep) + 1
             if sepidx > 0:
                 argv0 = shell[sepidx:]
             else:
                 argv0 = shell
-            os.execv(shell, [argv0, "-c", cmd])
+            try:
+                os.execv(shell, [argv0, "-c", cmd])
+            except OSError as e:
+                raise error_for_oserror(space, e)
 
     @moduledef.function("system")
     def method_system(self, space, args_w):
@@ -420,6 +456,7 @@ class Kernel(object):
         return space.getsingletonclass(self)
 
     @moduledef.method("extend")
+    @check_frozen()
     def method_extend(self, space, w_mod):
         if not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
             if space.is_kind_of(w_mod, space.w_class):
