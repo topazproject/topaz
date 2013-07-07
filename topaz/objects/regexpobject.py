@@ -197,9 +197,7 @@ class W_RegexpObject(W_Object):
             return space.w_false
         self._check_initialized(space)
         w_other._check_initialized(space)
-        return space.newbool(self.source == w_other.source and
-                   (self.flags | regexp.NO_ENCODING) == (w_other.flags | regexp.NO_ENCODING)
-               )
+        return space.newbool(self.source == w_other.source and (self.flags | regexp.NO_ENCODING) == (w_other.flags | regexp.NO_ENCODING))
 
     @classdef.method("source")
     def method_source(self, space):
