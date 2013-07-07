@@ -1258,14 +1258,13 @@ def _parse_property(source, info, positive, in_set):
 
 def _parse_property_name(source):
     b = StringBuilder(5)
-    here = source.pos
     while True:
-        pos2 = source.pos
+        here = source.pos
         ch = source.get()
         if ch.isalnum():
             b.append(ch)
         else:
-            source.pos = pos2
+            source.pos = here
             break
     name = b.build()
     return name, name
