@@ -16,6 +16,7 @@ from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.formatting import StringFormatter
 
+
 RADIX_MAP = {
     "X": 16,
     "x": 16,
