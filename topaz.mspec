@@ -3,6 +3,7 @@ class MSpecScript
   Rubyspec = File.expand_path("../../rubyspec", __FILE__)
 
   MSpec.enable_feature :fiber
+  MSpec.enable_feature :fork
   core = [
     "#{Rubyspec}/core/",
     # Struct: ``Struct.new(:field)``
