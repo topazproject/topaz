@@ -40,7 +40,8 @@ class TypedDictStrategyMixin(object):
         return self.unerase(storage).pop(self.unwrap(w_key), default)
 
     def popitem(self, storage):
-        return self.unerase(storage).popitem()
+        key, value = self.unerase(storage).popitem()
+        return self.wrap(key), value
 
     def keys(self, storage):
         return [self.wrap(k) for k in self.unerase(storage).keys()]
