@@ -750,16 +750,16 @@ class LLOrderedDict(object):
 
     @staticmethod
     def ll_copy(d):
-        DICT = lltype.typeOf(d)
-        new_d = lltype.malloc(DICT.TO)
-        new_d.entries = lltype.malloc(DICT.TO.entries.TO, len(d.entries), zero=True)
+        DICT = lltype.typeOf(d).TO
+        new_d = lltype.malloc(DICT)
+        new_d.entries = lltype.malloc(DICT.entries.TO, len(d.entries), zero=True)
         new_d.num_items = d.num_items
         new_d.resize_counter = d.resize_counter
         new_d.first_entry = d.first_entry
         new_d.last_entry = d.last_entry
-        if hasattr(DICT.TO, "hashkey_func"):
+        if hasattr(DICT, "hashkey_func"):
             new_d.hashkey_func = d.hashkey_func
-        if hasattr(DICT.TO, "keyeq_func"):
+        if hasattr(DICT, "keyeq_func"):
             new_d.keyeq_func = d.keyeq_func
         for i in xrange(len(d.entries)):
             entry = d.entries[i]
@@ -770,7 +770,7 @@ class LLOrderedDict(object):
             new_entry.prev = entry.prev
             new_entry.everused = entry.everused
             new_entry.valid = entry.valid
-            if hasattr(DICT.TO.entries.TO.OF, "hash"):
+            if hasattr(DICT.entries.TO.OF, "hash"):
                 new_entry.hash = entry.hash
         return d
 

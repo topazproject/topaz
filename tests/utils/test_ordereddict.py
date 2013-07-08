@@ -280,13 +280,13 @@ class BaseTestOrderedDict(object):
 
     @runner.func
     def copy(n):
-        o = OrderedDict()
-        o[n] = n
+        o = OrderedDict(Simple.eq, Simple.hash)
+        o[Simple(n)] = n
         d = o.copy()
-        return d[n]
+        return d[Simple(n)] * 10 + len(d)
 
     def test_copy(self):
-        assert self.copy(3) == 3
+        assert self.copy(3) == 31
 
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
