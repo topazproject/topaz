@@ -278,6 +278,16 @@ class BaseTestOrderedDict(object):
         assert self.popitem(0) == 400
         assert self.popitem(4) == 44
 
+    @runner.func
+    def copy(n):
+        o = OrderedDict()
+        o[n] = n
+        d = o.copy()
+        return d[n]
+
+    def test_copy(self):
+        assert self.copy(3) == 3
+
 
 class TestPythonOrderedDict(BaseTestOrderedDict):
     def setup_class(cls):
