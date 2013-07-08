@@ -52,7 +52,8 @@ class TypedDictStrategyMixin(object):
         return self.iter_erase(self.unerase(storage).iteritems())
 
     def iternext(self, storage):
-        return self.wrap(self.iter_unerase(storage).next())
+        key, value = self.iter_unerase(storage).next()
+        return self.wrap(key), value
 
 
 class ObjectDictStrategy(BaseDictStrategy, TypedDictStrategyMixin):
