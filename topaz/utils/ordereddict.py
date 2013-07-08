@@ -770,7 +770,7 @@ class LLOrderedDict(object):
             new_entry.prev = entry.prev
             new_entry.everused = entry.everused
             new_entry.valid = entry.valid
-            if hasattr(DICT.TO.entries, "hash"):
+            if hasattr(DICT.TO.entries.TO.OF, "hash"):
                 new_entry.hash = entry.hash
         return d
 
