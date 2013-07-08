@@ -47,7 +47,7 @@ class TypedDictStrategyMixin(object):
         return [self.wrap(k) for k in self.unerase(storage).keys()]
 
     def values(self, storage):
-        return [self.wrap(k) for k in self.unerase(storage).values()]
+        return self.unerase(storage).values()
 
     def iteritems(self, storage):
         return self.iter_erase(self.unerase(storage).iteritems())
