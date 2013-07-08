@@ -283,7 +283,7 @@ class BaseTestOrderedDict(object):
         o = OrderedDict(Simple.eq, Simple.hash)
         o[Simple(n)] = n
         d = o.copy()
-        return d[Simple(n)] * 10 + len(d)
+        return d.values()[0] * 10 + len(d)
 
     def test_copy(self):
         assert self.copy(3) == 31

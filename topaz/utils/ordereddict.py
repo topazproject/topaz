@@ -772,7 +772,7 @@ class LLOrderedDict(object):
             new_entry.valid = entry.valid
             if hasattr(DICT.entries.TO.OF, "hash"):
                 new_entry.hash = entry.hash
-        return d
+        return new_d
 
     @staticmethod
     def ll_newdictiter(ITER, d):
