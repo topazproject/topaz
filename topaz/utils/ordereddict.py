@@ -486,7 +486,7 @@ class LLOrderedDict(object):
         i = hash & mask
         if entries.valid(i):
             checkingkey = entries[i].key
-            if checkingkey == key:
+            if d.keyeq is None and checkingkey == key:
                 return i
             if d.keyeq is not None and entries.hash(i) == hash:
                 found = d.keyeq(checkingkey, key)
@@ -513,7 +513,7 @@ class LLOrderedDict(object):
                 return freeslot | LLOrderedDict.HIGHEST_BIT
             elif entries.valid(i):
                 checkingkey = entries[i].key
-                if checkingkey == key:
+                if d.keyeq is None and checkingkey == key:
                     return i
                 if d.keyeq is not None and entries.hash(i) == hash:
                     found = d.keyeq(checkingkey, key)
