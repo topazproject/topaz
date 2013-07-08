@@ -752,7 +752,7 @@ class LLOrderedDict(object):
     def ll_copy(d):
         DICT = lltype.typeOf(d)
         new_d = lltype.malloc(DICT.TO)
-        new_d.entries = lltype.malloc(DICT.TO.entries.TO, len(d.entries))
+        new_d.entries = lltype.malloc(DICT.TO.entries.TO, len(d.entries), zero=True)
         new_d.num_items = d.num_items
         new_d.resize_counter = d.resize_counter
         new_d.first_entry = d.first_entry
