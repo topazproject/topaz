@@ -60,6 +60,19 @@ class W_HashObject(W_Object):
         self.w_default = space.w_nil
         return w_proc
 
+    @classdef.method("compare_by_identity")
+    @check_frozen()
+    def method_compare_by_identity(self, space):
+        self.compare_by_identity = True
+        new_contents = OrderedDict(None, None)
+        new_contents.update(self.contents)
+        self.contents = new_contents
+        return self
+
+    @classdef.method("compare_by_identity?")
+    def method_compare_by_identity_p(self, space):
+        return space.newbool(hasattr(self, "compare_by_identity"))
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         try:
