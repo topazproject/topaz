@@ -757,6 +757,10 @@ class LLOrderedDict(object):
         new_d.resize_counter = d.resize_counter
         new_d.first_entry = d.first_entry
         new_d.last_entry = d.last_entry
+        if hasattr(DICT.TO, "hashkey_func"):
+            new_d.hashkey_func = d.hashkey_func
+        if hasattr(DICT.TO, "keyeq_func"):
+            new_d.keyeq_func = d.keyeq_func
         for i in xrange(len(d.entries)):
             entry = d.entries[i]
             new_entry = new_d.entries[i]
