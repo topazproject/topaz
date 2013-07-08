@@ -162,6 +162,21 @@ class W_HashObject(W_Object):
     def method_compare_by_identityp(self, space):
         return space.newbool(self.strategy is space.fromcache(IdentityDictStrategy))
 
+    @classdef.method("rehash")
+    @check_frozen()
+    def method_rehash(self, space):
+        storage = self.strategy.get_empty_storage(space)
+
+        iter = self.strategy.iteritems(self.dict_storage)
+        while True:
+            try:
+                w_key, w_value = self.strategy.iternext(iter)
+            except StopIteration:
+                break
+            self.strategy.setitem(storage, w_key, w_value)
+        self.dict_storage = storage
+        return self
+
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         try:
