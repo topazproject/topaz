@@ -1729,6 +1729,18 @@ class TestBlocks(BaseTopazTest):
             None, None, None, None, None
         ]
 
+    def test_block_local_var(self, space):
+        w_res = space.execute("""
+        def f
+            yield
+        end
+
+        x = 3
+        f { |;x| x = 5 }
+        return x
+        """)
+        assert space.int_w(w_res) == 3
+
 
 class TestExceptions(BaseTopazTest):
     def test_simple(self, space):

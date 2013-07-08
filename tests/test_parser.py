@@ -1513,6 +1513,11 @@ HERE
                 ]),
             ), 1))
         ]))
+        assert space.parse("f { |;x, y| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [], None, None, ast.Nil(),
+            ), 1))
+        ]))
 
     def test_lambda(self, space):
         assert space.parse("->{}") == ast.Main(ast.Block([

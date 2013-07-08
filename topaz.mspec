@@ -32,7 +32,7 @@ class MSpecScript
 
   language = [
     "#{Rubyspec}/language",
-    # Block local variables: ``[].each {|a; b| }``
+    # Required block arg after *args: ``f {|*a, b| }``
     "^#{Rubyspec}/language/block_spec.rb",
     # Posix character class: ``/[[:alnum:]]/``
     "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
