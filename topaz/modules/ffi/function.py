@@ -55,6 +55,7 @@ class W_FunctionObject(W_PointerObject):
 
     @classdef.method('call')
     def method_call(self, space, args_w):
+        # NOT RPYTHON
         ffi_ret_type = self.w_ret_type.ffi_type
         native_arg_types = [t.native_type for t in self.arg_types_w]
         native_ret_type = self.w_ret_type.native_type
@@ -78,8 +79,6 @@ class W_FunctionObject(W_PointerObject):
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
-        # NOT RPYTHON
-        # It defines a function: attachment (closures are not rpython)
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
         for w_dl in w_ffi_libs.listview(space):
             ffi_arg_types = [t.ffi_type for t in self.arg_types_w]
