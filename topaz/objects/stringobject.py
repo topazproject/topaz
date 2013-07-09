@@ -16,7 +16,20 @@ from topaz.modules.comparable import Comparable
 from topaz.objects.objectobject import W_Object
 from topaz.utils.formatting import StringFormatter
 
-RADIX_MAP = {"x": 16, "d": 10, "b": 2, "o": 8, "X": 16, "D": 10, "B": 2, "O": 8}
+
+RADIX_MAP = {
+    "X": 16,
+    "x": 16,
+
+    "D": 10,
+    "d": 10,
+
+    "O": 8,
+    "o": 8,
+
+    "B": 2,
+    "b": 2,
+}
 
 
 def create_trans_table(source, replacement, inv=False):

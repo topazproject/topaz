@@ -1572,6 +1572,39 @@ class TestBlocks(BaseTopazTest):
         """)
         assert space.int_w(w_res) == 1
 
+    def test_nested_block_dead_frame_return(self, space):
+        w_res = space.execute("""
+        class SavedInnerBlock
+          attr_accessor :record
+
+          def outer
+            yield
+            @block.call
+          end
+
+          def inner
+            yield
+          end
+
+          def start
+            outer do
+              inner do
+                @block = proc do
+                  self.record = :before_return
+                  return :return_value
+                end
+              end
+            end
+            self.record = :bottom_of_start
+            return false
+          end
+        end
+
+        sib = SavedInnerBlock.new
+        return [sib.start, sib.record]
+        """)
+        assert self.unwrap(space, w_res) == ["return_value", "before_return"]
+
     def test_break_block(self, space):
         w_res = space.execute("""
         def f(res, &a)
@@ -1695,6 +1728,18 @@ class TestBlocks(BaseTopazTest):
             1, 2, 3, ["ignored"], 4,
             None, None, None, None, None
         ]
+
+    def test_block_local_var(self, space):
+        w_res = space.execute("""
+        def f
+            yield
+        end
+
+        x = 3
+        f { |;x| x = 5 }
+        return x
+        """)
+        assert space.int_w(w_res) == 3
 
 
 class TestExceptions(BaseTopazTest):

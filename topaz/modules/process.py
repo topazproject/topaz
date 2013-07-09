@@ -2,7 +2,9 @@ from __future__ import absolute_import
 
 import os
 
+from topaz.gateway import Coerce
 from topaz.module import ModuleDef
+from topaz.modules.signal import SIGNALS
 from topaz.system import IS_WINDOWS
 from topaz.error import error_for_oserror
 
@@ -68,3 +70,38 @@ class Process(object):
                 return space.w_nil
         else:
             return space.newint(pid)
+
+    @moduledef.function("kill")
+    def method_kill(self, space, w_signal, args_w):
+        if not args_w:
+            raise space.error(space.w_ArgumentError,
+                "wrong number of arguments (%d for at least 2)" % (len(args_w) + 1)
+            )
+        if space.is_kind_of(w_signal, space.w_fixnum):
+            sig = space.int_w(w_signal)
+        else:
+            s = Coerce.str(space, w_signal)
+            if s.startswith("SIG"):
+                s = s[len("SIG"):]
+            try:
+                sig = SIGNALS[s]
+            except KeyError:
+                raise space.error(space.w_ArgumentError,
+                    "unsupported name `SIG%s'" % s
+                )
+
+        if sig < 0:
+            for w_arg in args_w:
+                pid = space.int_w(w_arg)
+                try:
+                    os.killpg(pid, -sig)
+                except OSError as e:
+                    raise error_for_oserror(space, e)
+        else:
+            for w_arg in args_w:
+                pid = space.int_w(w_arg)
+                try:
+                    os.kill(pid, sig)
+                except OSError as e:
+                    raise error_for_oserror(space, e)
+        return space.newint(len(args_w))

@@ -3,38 +3,44 @@ class MSpecScript
   Rubyspec = File.expand_path("../../rubyspec", __FILE__)
 
   MSpec.enable_feature :fiber
-  core = ["#{Rubyspec}/core/",
-          "^#{Rubyspec}/core/struct",
-          "^#{Rubyspec}/core/string/unpack/",
-          "^#{Rubyspec}/core/string/chomp_spec.rb",
-          "^#{Rubyspec}/core/process/detach_spec.rb",
-          "^#{Rubyspec}/core/gc/profiler/",
-          "^#{Rubyspec}/core/object/instance_exec_spec.rb",
-          "^#{Rubyspec}/core/marshal/dump_spec.rb",
-          "^#{Rubyspec}/core/marshal/load_spec.rb",
-          "^#{Rubyspec}/core/marshal/restore_spec.rb",
-          "^#{Rubyspec}/core/kernel/autoload_spec.rb",
-          "^#{Rubyspec}/core/filetest",
-          "^#{Rubyspec}/core/io/reopen_spec.rb",
-          "^#{Rubyspec}/core/file/socket_spec.rb",
-          "^#{Rubyspec}/core/numeric/to_c_spec.rb",
-          "^#{Rubyspec}/core/process/status/exited_spec.rb",
-          "^#{Rubyspec}/core/process/status/exitstatus_spec.rb",
-          "^#{Rubyspec}/core/process/status/pid_spec.rb",
-          "^#{Rubyspec}/core/process/status/signaled_spec.rb",
-          "^#{Rubyspec}/core/process/status/success_spec.rb",
-          "^#{Rubyspec}/core/process/status/termsig_spec.rb",
+  MSpec.enable_feature :fork
+  core = [
+    "#{Rubyspec}/core/",
+    # Struct: ``Struct.new(:field)``
+    "^#{Rubyspec}/core/struct",
+    "^#{Rubyspec}/core/string/chomp_spec.rb",
+    # timeout: ``require 'timeout'``
+    "^#{Rubyspec}/core/process/detach_spec.rb",
+    # GC: ``GC``
+    "^#{Rubyspec}/core/gc/profiler/",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/dump_spec.rb",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/load_spec.rb",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/restore_spec.rb",
+    # autoload: ``autoload :Class, "file.rb"``
+    "^#{Rubyspec}/core/kernel/autoload_spec.rb",
+    # FileTest: ``FileTest``
+    "^#{Rubyspec}/core/filetest",
+    # fcntl: ``require 'fcntl'``
+    "^#{Rubyspec}/core/io/reopen_spec.rb",
+    # socket: ``require 'socket'``
+    "^#{Rubyspec}/core/file/socket_spec.rb",
+    # Rational: ``Rational(2, 3)``
+    "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
 
-  language = ["#{Rubyspec}/language",
-              "^#{Rubyspec}/language/block_spec.rb",
-              "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
-              "^#{Rubyspec}/language/send_spec.rb",
-              "^#{Rubyspec}/language/predefined_spec.rb",
-              "^#{Rubyspec}/language/predefined/data_spec.rb",
-              "^#{Rubyspec}/language/BEGIN_spec.rb",
-              "^#{Rubyspec}/language/or_spec.rb",
-              "^#{Rubyspec}/language/return_spec.rb",
+  language = [
+    "#{Rubyspec}/language",
+    # Required block arg after *args: ``f {|*a, b| }``
+    "^#{Rubyspec}/language/block_spec.rb",
+    # Posix character class: ``/[[:alnum:]]/``
+    "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
+    # Required arg after *arg: ``def f(a, *b, c); end``
+    "^#{Rubyspec}/language/send_spec.rb",
+    # stringio: ``require 'stringio'``
+    "^#{Rubyspec}/language/predefined_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]

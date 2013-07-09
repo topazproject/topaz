@@ -327,13 +327,17 @@ class ObjectSpace(object):
         return ec
 
     def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
-                     parent_interp=None, regexp_match_cell=None):
+                     parent_interp=None, top_parent_interp=None,
+                     regexp_match_cell=None):
 
         if w_self is None:
             w_self = self.w_top_self
         if regexp_match_cell is None:
             regexp_match_cell = ClosureCell(None)
-        return Frame(jit.promote(bc), w_self, lexical_scope, block, parent_interp, regexp_match_cell)
+        return Frame(
+            jit.promote(bc), w_self, lexical_scope, block, parent_interp,
+            top_parent_interp, regexp_match_cell
+        )
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -427,10 +431,11 @@ class ObjectSpace(object):
             return W_UnboundMethodObject(self, w_cls, w_function)
 
     def newproc(self, bytecode, w_self, lexical_scope, cells, block,
-                parent_interp, regexp_match_cell, is_lambda=False):
+                parent_interp, top_parent_interp, regexp_match_cell,
+                is_lambda=False):
         return W_ProcObject(
             self, bytecode, w_self, lexical_scope, cells, block, parent_interp,
-            regexp_match_cell, is_lambda=False
+            top_parent_interp, regexp_match_cell, is_lambda=False
         )
 
     @jit.unroll_safe
@@ -646,6 +651,7 @@ class ObjectSpace(object):
         frame = self.create_frame(
             bc, w_self=block.w_self, lexical_scope=block.lexical_scope,
             block=block.block, parent_interp=block.parent_interp,
+            top_parent_interp=block.top_parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
         if block.is_lambda:

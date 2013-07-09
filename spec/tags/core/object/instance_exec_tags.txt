@@ -1,0 +1,3 @@
+fails:Object#instance_exec has an arity of -1
+fails:Object#instance_exec invokes Method objects without rebinding self
+fails:Object#instance_exec sets class variables in the receiver
