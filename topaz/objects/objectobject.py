@@ -204,10 +204,8 @@ class W_Object(W_RootObject):
             selector = mapdict.OBJECT_ATTR
         idx, tp = jit.promote(self.map).read(selector, name)
 
-        if idx == mapdict.ATTR_DOES_NOT_EXIST:
+        if idx == mapdict.ATTR_DOES_NOT_EXIST or idx == mapdict.ATTR_WRONG_TYPE:
             self.map, idx = self.map.add(space, selector, name, self)
-        elif idx == mapdict.ATTR_WRONG_TYPE:
-            raise NotImplementedError
 
         if selector == mapdict.INT_ATTR:
             self.unboxed_storage[idx] = longlong2float.longlong2float(space.int_w(w_value))

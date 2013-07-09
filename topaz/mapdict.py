@@ -176,7 +176,9 @@ class AttributeNode(BaseNode):
         elif (selector == OBJECT_ATTR or selector == INT_ATTR or
             selector == FLOAT_ATTR):
             if name == self.name:
-                if selector == self.selector:
+                if (selector == self.selector or
+                    (self.selector == INT_ATTR and selector == FLOAT_ATTR) or
+                    (self.selector == FLOAT_ATTR and selector == INT_ATTR)):
                     return self.pos(selector), selector
                 else:
                     return ATTR_WRONG_TYPE, self.selector
