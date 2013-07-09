@@ -98,7 +98,7 @@ class AttributeNode(StorageNode):
     def write(self, space, w_obj, w_value):
         if not self.correct_type(space, w_value):
             w_obj.map = w_obj.map.remove_attr(space, self, w_obj)
-            w_obj.map = node = w_obj.map.add(space, self.select_type(space, w_value), self.name, w_obj)
+            w_obj.map = node = w_obj.map.add(space, AttributeNode.select_type(space, w_value), self.name, w_obj)
             node.write(space, w_obj, w_value)
         else:
             self._store(space, w_obj, w_value)
@@ -108,7 +108,7 @@ class AttributeNode(StorageNode):
             return self.prev
         w_cur_val = self.read(space, w_obj)
         new_prev = self.prev.remove_attr(space, node, w_obj)
-        node = new_prev.add(space, self.select_type(space, w_cur_val), self.name, w_obj)
+        node = new_prev.add(space, AttributeNode.select_type(space, w_cur_val), self.name, w_obj)
         node.write(space, w_obj, w_cur_val)
         return node
 
