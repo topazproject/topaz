@@ -1,173 +1,217 @@
-import copy
-
 from rpython.rlib import jit
+from rpython.rlib.objectmodel import specialize
 
 
+NOT_FOUND = -1
+CLASS = 0
+FLAG = 1
+ATTR = 2
+INT_ATTR = 3
+FLOAT_ATTR = 4
+OBJECT_ATTR = 5
+
+ATTR_DOES_NOT_EXIST = -1
+ATTR_WRONG_TYPE = -2
+
+# note: we use "x * NUM_DIGITS_POW2" instead of "x << NUM_DIGITS" because we
+# want to propagate knowledge that the result cannot be negative
 NUM_DIGITS = 4
 NUM_DIGITS_POW2 = 1 << NUM_DIGITS
-# note: we use "x * NUM_DIGITS_POW2" instead of "x << NUM_DIGITS" because
-# we want to propagate knowledge that the result cannot be negative
 
 
 class MapTransitionCache(object):
     def __init__(self, space):
-        # Mappings of classes -> their terminator nodes.
+        # {w_cls: class_node}
         self.class_nodes = {}
-        # Mapping of (current_node, name) -> new node
-        self.add_transitions = {}
+        # {(node, selector, name): new_node}
+        self.transitions = {}
 
     @jit.elidable
-    def get_class_node(self, klass):
-        return self.class_nodes.setdefault(klass, ClassNode(klass))
+    def get_class_node(self, w_cls):
+        return self.class_nodes.setdefault(w_cls, ClassNode(w_cls))
 
     @jit.elidable
-    def transition_add_attr(self, node, name, pos):
-        return self.add_transitions.setdefault((node, name), AttributeNode(node, name, pos))
-
-    @jit.elidable
-    def transition_add_flag(self, node, name, pos):
-        return self.add_transitions.setdefault((node, name), FlagNode(node, name, pos))
+    def get_transition(self, node, selector, name, obj_pos, unboxed_pos):
+        return self.transitions.setdefault((node, selector, name), AttributeNode(node, selector, name, obj_pos, unboxed_pos))
 
 
 class BaseNode(object):
-    _attrs_ = ["_size_estimate"]
-    _size_estimate = 0
+    _attrs_ = ["_object_size_estimate", "_unboxed_size_estimate"]
 
-    def __deepcopy__(self, memo):
-        memo[id(self)] = result = object.__new__(self.__class__)
-        return result
+    def __init__(self):
+        self._object_size_estimate = 0
+        self._unboxed_size_estimate = 0
+
+    def raw_size_estimate(self, selector):
+        if selector == OBJECT_ATTR or selector == FLAG:
+            return self._object_size_estimate
+        elif selector == INT_ATTR or selector == FLOAT_ATTR:
+            return self._unboxed_size_estimate
+        else:
+            raise SystemError
 
     @jit.elidable
-    def size_estimate(self):
-        return self._size_estimate >> NUM_DIGITS
+    def size_estimate(self, selector):
+        if selector == OBJECT_ATTR or selector == FLAG:
+            return self._object_size_estimate >> NUM_DIGITS
+        elif selector == INT_ATTR or selector == FLOAT_ATTR:
+            return self._unboxed_size_estimate >> NUM_DIGITS
+        else:
+            raise SystemError
+
+    def add(self, space, selector, name, w_obj):
+        if selector == OBJECT_ATTR or selector == FLAG:
+            pos = obj_pos = self.length(selector)
+            unboxed_pos = -1
+        elif selector == INT_ATTR or selector == FLOAT_ATTR:
+            obj_pos = -1
+            pos = unboxed_pos = self.length(selector)
+        else:
+            raise SystemError
+        new_node = space.fromcache(MapTransitionCache).get_transition(self, selector, name, obj_pos, unboxed_pos)
+        self.update_storage_size(new_node, w_obj)
+        return new_node, pos
 
     @jit.unroll_safe
-    def update_storage_size(self, w_obj, node):
+    def update_storage_size(self, new_node, w_obj):
+        selector = new_node.selector
         if not jit.we_are_jitted():
-            size_est = (self._size_estimate + node.size_estimate() - self.size_estimate())
-            assert size_est >= (self.length() * NUM_DIGITS_POW2)
-            self._size_estimate = size_est
-        if node.length() > self.length():
+            size_est = self.raw_size_estimate(selector) + new_node.size_estimate(selector) - self.size_estimate(selector)
+            assert size_est >= (self.length(selector) * NUM_DIGITS_POW2)
+            if selector == OBJECT_ATTR or selector == FLAG:
+                self._object_size_estimate = size_est
+            elif selector == INT_ATTR or selector == FLOAT_ATTR:
+                self._unboxed_size_estimate = size_est
+            else:
+                raise SystemError
+        if new_node.length(selector) >= self.length(selector):
             # note that node.size_estimate() is always at least node.length()
-            new_size = node.size_estimate()
-            if w_obj.storage:
-                new_size = max(new_size, len(w_obj.storage))
-            new_storage = [None] * new_size
-            if w_obj.storage:
-                for i, w_val in enumerate(w_obj.storage):
-                    new_storage[i] = w_val
-            w_obj.storage = new_storage
-
-    def add_attr(self, space, w_obj, name):
-        attr_node = space.fromcache(MapTransitionCache).transition_add_attr(w_obj.map, name, self.length())
-        self.update_storage_size(w_obj, attr_node)
-        w_obj.map = attr_node
-        return attr_node.pos
-
-    def add_flag(self, space, w_obj, name):
-        flag_node = space.fromcache(MapTransitionCache).transition_add_flag(w_obj.map, name, self.length())
-        self.update_storage_size(w_obj, flag_node)
-        w_obj.map = flag_node
-        w_obj.storage[flag_node.pos] = space.w_true
+            new_size = new_node.size_estimate(selector)
+            if selector == OBJECT_ATTR or selector == FLAG:
+                if w_obj.object_storage:
+                    new_size = max(new_size, len(w_obj.object_storage))
+                new_storage = [None] * new_size
+                if w_obj.object_storage:
+                    for i, w_value in enumerate(w_obj.object_storage):
+                        new_storage[i] = w_value
+                w_obj.object_storage = new_storage
+            elif selector == INT_ATTR or selector == FLOAT_ATTR:
+                if w_obj.unboxed_storage:
+                    new_size = max(new_size, len(w_obj.unboxed_storage))
+                new_storage = [0.0] * new_size
+                if w_obj.unboxed_storage:
+                    for i, value in enumerate(w_obj.unboxed_storage):
+                        new_storage[i] = value
+                w_obj.unboxed_storage = new_storage
+            else:
+                raise SystemError
 
 
 class ClassNode(BaseNode):
-    _immutable_fields_ = ["klass"]
+    _attrs_ = ["w_cls"]
 
-    def __init__(self, klass):
-        self.klass = klass
+    def __init__(self, w_cls):
+        BaseNode.__init__(self)
+        self.w_cls = w_cls
 
-    def __deepcopy__(self, memo):
-        obj = super(ClassNode, self).__deepcopy__(memo)
-        obj.klass = copy.deepcopy(self.klass, memo)
-        return obj
+    @jit.elidable
+    @specialize.arg(1)
+    def read(self, selector, name=None):
+        if selector == CLASS:
+            return self.w_cls
+        elif selector == FLAG:
+            return ATTR_DOES_NOT_EXIST
+        elif (selector == ATTR or selector == INT_ATTR or
+            selector == FLOAT_ATTR or selector == OBJECT_ATTR):
+            return ATTR_DOES_NOT_EXIST, NOT_FOUND
+        else:
+            raise NotImplementedError
 
-    def get_class(self):
-        return self.klass
+    def replace(self, space, selector, w_value):
+        if selector == CLASS:
+            return space.fromcache(MapTransitionCache).get_class_node(w_value)
+        else:
+            raise NotImplementedError
 
-    def find_attr(self, space, name):
+    def length(self, selector):
+        return 0
+
+    def pos(self, selector):
         return -1
-
-    def find_set_attr(self, space, name):
-        return -1
-
-    def find_flag(self, space, name):
-        return -1
-
-    def change_class(self, space, w_cls):
-        return space.fromcache(MapTransitionCache).get_class_node(w_cls)
 
     def copy_attrs(self, space, w_obj, w_target):
         pass
 
-    def length(self):
-        return 0
 
-
-class StorageNode(BaseNode):
-    _immutable_fields_ = ["prev", "name", "pos"]
-
-    def __init__(self, prev, name, pos):
+class AttributeNode(BaseNode):
+    def __init__(self, prev, selector, name, obj_pos, unboxed_pos):
+        BaseNode.__init__(self)
         self.prev = prev
+        self.selector = selector
         self.name = name
-        self.pos = pos
-        self._size_estimate = self.length() * NUM_DIGITS_POW2
-
-    @jit.elidable
-    def get_class(self):
-        return self.prev.get_class()
-
-    def length(self):
-        return self.pos + 1
-
-
-class AttributeNode(StorageNode):
-    @jit.elidable
-    def find_attr(self, space, name):
-        if name == self.name:
-            return self.pos
+        self._obj_pos = obj_pos
+        self._unboxed_pos = unboxed_pos
+        if selector == OBJECT_ATTR or selector == FLAG:
+            self._object_size_estimate = self.length(selector) * NUM_DIGITS_POW2
+        elif selector == INT_ATTR or selector == FLOAT_ATTR:
+            self._unboxed_size_estimate = self.length(selector) * NUM_DIGITS_POW2
         else:
-            return self.prev.find_attr(space, name)
+            raise SystemError
 
     @jit.elidable
-    def find_set_attr(self, space, name):
-        if name == self.name:
-            return self.pos
+    @specialize.arg(1)
+    def read(self, selector, name=None):
+        if selector == CLASS:
+            return self.prev.read(selector)
+        elif selector == ATTR:
+            if name == self.name:
+                return self.pos(self.selector), self.selector
+            else:
+                return self.prev.read(selector, name)
+        elif selector == FLAG:
+            if selector == self.selector and self.name == name:
+                return self.pos(selector)
+            else:
+                return self.prev.read(selector, name)
+        elif (selector == OBJECT_ATTR or selector == INT_ATTR or
+            selector == FLOAT_ATTR):
+            if name == self.name:
+                if selector == self.selector:
+                    return self.pos(selector), selector
+                else:
+                    return ATTR_WRONG_TYPE, self.selector
+            else:
+                return self.prev.read(selector, name)
         else:
-            return self.prev.find_set_attr(space, name)
+            raise NotImplementedError
 
-    @jit.elidable
-    def find_flag(self, space, name):
-        return self.prev.find_flag(space, name)
+    def replace(self, space, selector, w_cls):
+        back = self.prev.replace(space, selector, w_cls)
+        return space.fromcache(MapTransitionCache).get_transition(back, self.selector, self.name, self._obj_pos, self._unboxed_pos)
 
-    def change_class(self, space, w_cls):
-        prev = self.prev.change_class(space, w_cls)
-        return space.fromcache(MapTransitionCache).transition_add_attr(prev, self.name, self.pos)
+    def length(self, selector):
+        if selector == self.selector:
+            if selector == OBJECT_ATTR or selector == FLAG:
+                return self._obj_pos + 1
+            elif selector == INT_ATTR or selector == FLOAT_ATTR:
+                return self._unboxed_pos + 1
+            else:
+                raise SystemError
+        else:
+            return self.prev.length(selector)
+
+    def pos(self, selector):
+        if selector == self.selector:
+            if selector == OBJECT_ATTR or selector == FLAG:
+                return self._obj_pos
+            elif selector == INT_ATTR or selector == FLOAT_ATTR:
+                return self._unboxed_pos
+            else:
+                raise SystemError
+        else:
+            return self.prev.pos(selector)
 
     def copy_attrs(self, space, w_obj, w_target):
         self.prev.copy_attrs(space, w_obj, w_target)
-        w_target.set_instance_var(space, self.name, w_obj.storage[self.pos])
-
-
-class FlagNode(StorageNode):
-    @jit.elidable
-    def find_attr(self, space, name):
-        return self.prev.find_attr(space, name)
-
-    @jit.elidable
-    def find_set_attr(self, space, name):
-        return self.prev.find_set_attr(space, name)
-
-    @jit.elidable
-    def find_flag(self, space, name):
-        if name == self.name:
-            return self.pos
-        else:
-            return self.prev.find_flag(space, name)
-
-    def change_class(self, space, w_cls):
-        prev = self.prev.change_class(space, w_cls)
-        return space.fromcache(MapTransitionCache).transition_add_flag(prev, self.name, self.pos)
-
-    def copy_attrs(self, space, w_obj, w_target):
-        self.prev.copy_attrs(space, w_obj, w_target)
+        if self.selector != FLAG:
+            w_target.set_instance_var(space, self.name, w_obj.find_instance_var(space, self.name))

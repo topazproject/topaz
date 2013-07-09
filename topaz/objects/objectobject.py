@@ -1,9 +1,10 @@
 import copy
 
-from rpython.rlib import jit
+from rpython.rlib import jit, longlong2float
 from rpython.rlib.objectmodel import compute_unique_id
+from rpython.rlib.rarithmetic import intmask
 
-from topaz.mapdict import MapTransitionCache
+from topaz import mapdict
 from topaz.module import ClassDef
 from topaz.scope import StaticScope
 
@@ -141,33 +142,36 @@ class W_RootObject(W_BaseObject):
 
 
 class W_Object(W_RootObject):
-    _attrs_ = ["map", "storage"]
+    _attrs_ = ["map", "object_storage", "unboxed_storage"]
 
     def __init__(self, space, klass=None):
         if klass is None:
             klass = space.getclassfor(self.__class__)
-        self.map = space.fromcache(MapTransitionCache).get_class_node(klass)
-        self.storage = None
+        self.map = space.fromcache(mapdict.MapTransitionCache).get_class_node(klass)
+        self.object_storage = None
+        self.unboxed_storage = None
 
     def __deepcopy__(self, memo):
         obj = super(W_Object, self).__deepcopy__(memo)
         obj.map = copy.deepcopy(self.map, memo)
-        obj.storage = copy.deepcopy(self.storage, memo)
+        obj.object_storage = copy.deepcopy(self.object_storage, memo)
+        obj.unboxed_storage = copy.deepcopy(self.unboxed_storage, memo)
         return obj
 
     def getclass(self, space):
-        return jit.promote(self.map).get_class()
+        w_cls = jit.promote(self.map).read(mapdict.CLASS)
+        return w_cls
 
     def getsingletonclass(self, space):
-        w_cls = jit.promote(self.map).get_class()
+        w_cls = jit.promote(self.map).read(mapdict.CLASS)
         if w_cls.is_singleton:
             return w_cls
         w_cls = space.newclass(w_cls.name, w_cls, is_singleton=True, attached=self)
-        self.map = self.map.change_class(space, w_cls)
+        self.map = self.map.replace(space, mapdict.CLASS, w_cls)
         return w_cls
 
     def copy_singletonclass(self, space, w_other):
-        w_cls = jit.promote(self.map).get_class()
+        w_cls = jit.promote(self.map).read(mapdict.CLASS)
         assert not w_cls.is_singleton
         w_copy = space.newclass(w_cls.name, w_cls, is_singleton=True, attached=self)
         w_copy.methods_w.update(w_other.methods_w)
@@ -175,40 +179,63 @@ class W_Object(W_RootObject):
         w_copy.included_modules = w_copy.included_modules + w_other.included_modules
         w_copy.mutated()
 
-        self.map = self.map.change_class(space, w_copy)
+        self.map = self.map.replace(space, mapdict.CLASS, w_copy)
         return w_cls
 
     def find_instance_var(self, space, name):
-        idx = jit.promote(self.map).find_attr(space, name)
-        if idx == -1:
+        idx, tp = jit.promote(self.map).read(mapdict.ATTR, name)
+        if idx == mapdict.ATTR_DOES_NOT_EXIST:
             return None
-        return self.storage[idx]
+        if tp == mapdict.INT_ATTR:
+            return space.newint(intmask(longlong2float.float2longlong(self.unboxed_storage[idx])))
+        elif tp == mapdict.FLOAT_ATTR:
+            return space.newfloat(self.unboxed_storage[idx])
+        elif tp == mapdict.OBJECT_ATTR:
+            return self.object_storage[idx]
+        else:
+            raise SystemError
 
     def set_instance_var(self, space, name, w_value):
-        idx = jit.promote(self.map).find_set_attr(space, name)
-        if idx == -1:
-            idx = self.map.add_attr(space, self, name)
-        self.storage[idx] = w_value
+        if space.is_kind_of(w_value, space.w_fixnum):
+            selector = mapdict.INT_ATTR
+        elif space.is_kind_of(w_value, space.w_float):
+            selector = mapdict.FLOAT_ATTR
+        else:
+            selector = mapdict.OBJECT_ATTR
+        idx, tp = jit.promote(self.map).read(selector, name)
+
+        if idx == mapdict.ATTR_DOES_NOT_EXIST:
+            self.map, idx = self.map.add(space, selector, name, self)
+        elif idx == mapdict.ATTR_WRONG_TYPE:
+            raise NotImplementedError
+
+        if selector == mapdict.INT_ATTR:
+            self.unboxed_storage[idx] = longlong2float.longlong2float(space.int_w(w_value))
+        elif selector == mapdict.FLOAT_ATTR:
+            self.unboxed_storage[idx] = space.float_w(w_value)
+        elif selector == mapdict.OBJECT_ATTR:
+            self.object_storage[idx] = w_value
+        else:
+            raise SystemError
 
     def copy_instance_vars(self, space, w_other):
         assert isinstance(w_other, W_Object)
         w_other.map.copy_attrs(space, w_other, self)
 
     def get_flag(self, space, name):
-        idx = jit.promote(self.map).find_flag(space, name)
-        if idx == -1:
+        idx = jit.promote(self.map).read(mapdict.FLAG, name)
+        if idx == mapdict.ATTR_DOES_NOT_EXIST:
             return space.w_false
-        return self.storage[idx]
+        return self.object_storage[idx]
 
     def set_flag(self, space, name):
-        idx = jit.promote(self.map).find_flag(space, name)
-        if idx == -1:
-            self.map.add_flag(space, self, name)
-        else:
-            self.storage[idx] = space.w_true
+        idx = jit.promote(self.map).read(mapdict.FLAG, name)
+        if idx == mapdict.ATTR_DOES_NOT_EXIST:
+            self.map, idx = self.map.add(space, mapdict.FLAG, name, self)
+        self.object_storage[idx] = space.w_true
 
     def unset_flag(self, space, name):
-        idx = jit.promote(self.map).find_flag(space, name)
-        if idx != -1:
+        idx = jit.promote(self.map).read(mapdict.FLAG, name)
+        if idx != mapdict.ATTR_DOES_NOT_EXIST:
             # Flags are by default unset, no need to add if unsetting
-            self.storage[idx] = space.w_false
+            self.object_storage[idx] = space.w_false
