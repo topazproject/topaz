@@ -198,11 +198,13 @@ class W_Object(W_RootObject):
     def set_instance_var(self, space, name, w_value):
         if space.is_kind_of(w_value, space.w_fixnum):
             selector = mapdict.INT_ATTR
+            idx, tp = jit.promote(self.map).read(selector, name)
         elif space.is_kind_of(w_value, space.w_float):
             selector = mapdict.FLOAT_ATTR
+            idx, tp = jit.promote(self.map).read(selector, name)
         else:
             selector = mapdict.OBJECT_ATTR
-        idx, tp = jit.promote(self.map).read(selector, name)
+            idx, tp = jit.promote(self.map).read(selector, name)
 
         if idx == mapdict.ATTR_DOES_NOT_EXIST or idx == mapdict.ATTR_WRONG_TYPE:
             self.map, idx = self.map.add(space, selector, name, self)
