@@ -89,7 +89,7 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        mode = map_filemode(space, w_mode)
+        mode, encoding = map_filemode(space, w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
             raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
         try:
