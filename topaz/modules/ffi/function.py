@@ -88,10 +88,6 @@ class W_FunctionObject(W_PointerObject):
                 self.ptr = w_dl.cdll.getpointer(self.name,
                                                 ffi_arg_types,
                                                 ffi_ret_type)
-                w_attachments = space.find_instance_var(w_lib, '@attachments')
-                if w_attachments is space.w_nil:
-                    w_attachments = space.newhash()
-                    space.set_instance_var(w_lib, '@attachments',
-                                           w_attachments)
+                w_attachments = space.find_const(w_lib, 'Attachments')
                 space.send(w_attachments, '[]=', [space.newsymbol(name), self])
             except KeyError: pass

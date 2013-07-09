@@ -77,36 +77,31 @@ class TestFunction__new(BaseFFITest):
 class TestFunction_attach(BaseFFITest):
     def test_it_works_with_pow_from_libm(self, space):
         w_res = space.execute("""
-        class LibraryMock
-            def initialize
-                local = FFI::DynamicLibrary::RTLD_LOCAL
-                @ffi_libs = [FFI::DynamicLibrary.open('libm.so', local)]
-            end
-            attr_reader :attachments
+        module LibraryMock
+            local = FFI::DynamicLibrary::RTLD_LOCAL
+            @ffi_libs = [FFI::DynamicLibrary.open('libm.so', local)]
+            Attachments = {}
         end
-        lib = LibraryMock.new
         oo_pow = FFI::DynamicLibrary::Symbol.new(:pow)
         func = FFI::Function.new(:float64, [:float64, :float64], oo_pow, {})
-        func.attach(lib, 'power')
-        lib.attachments.include? :power
-        (0..5).each.map { |x| lib.attachments[:power].call(x, 2) }
+        func.attach(LibraryMock, 'power')
+        LibraryMock::Attachments.include? :power
+        (0..5).each.map { |x| LibraryMock::Attachments[:power].call(x, 2) }
         """)
         res = self.unwrap(space, w_res)
         assert [x for x in res] == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
 
     def test_it_works_with_abs_from_libc(self, space):
         w_res = space.execute("""
-        class LibraryMock
-            def initialize
-                local = FFI::DynamicLibrary::RTLD_LOCAL
-                @ffi_libs = [FFI::DynamicLibrary.open('libc.so.6', local)]
-            end
-            attr_reader :attachments
+        module LibraryMock
+            local = FFI::DynamicLibrary::RTLD_LOCAL
+            @ffi_libs = [FFI::DynamicLibrary.open('libc.so.6', local)]
+            Attachments = {}
         end
-        lib = LibraryMock.new
         oo_abs = FFI::DynamicLibrary::Symbol.new(:abs)
-        FFI::Function.new(:int32, [:int32], oo_abs, {}).attach(lib, 'abs')
-        lib.attachments.include? :abs
-        (-3..+3).each.map { |x| lib.attachments[:abs].call(x) }
+        func = FFI::Function.new(:int32, [:int32], oo_abs, {})
+        func.attach(LibraryMock, 'abs')
+        LibraryMock::Attachments.include? :abs
+        (-3..+3).each.map { |x| LibraryMock::Attachments[:abs].call(x) }
         """)
         assert self.unwrap(space, w_res) == [3, 2, 1, 0, 1, 2, 3]
