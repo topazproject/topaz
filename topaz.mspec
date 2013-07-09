@@ -4,6 +4,7 @@ class MSpecScript
 
   MSpec.enable_feature :fiber
   MSpec.enable_feature :fork
+  MSpec.enable_feature :encoding
   core = [
     "#{Rubyspec}/core/",
     # Struct: ``Struct.new(:field)``

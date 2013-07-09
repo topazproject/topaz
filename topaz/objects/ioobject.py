@@ -61,7 +61,7 @@ class W_IOObject(W_Object):
         perm = 0666
         mode = os.O_RDONLY
         if w_mode_str_or_int is not None:
-            mode = map_filemode(space, w_mode_str_or_int)
+            mode, encoding = map_filemode(space, w_mode_str_or_int)
         if w_perm is not None and w_perm is not space.w_nil:
             perm = space.int_w(w_perm)
         path = Coerce.path(space, w_path)
@@ -80,8 +80,6 @@ class W_IOObject(W_Object):
             fd = Coerce.int(space, w_fd_or_io)
         if isinstance(w_mode_str_or_int, W_StringObject):
             mode = space.str_w(w_mode_str_or_int)
-            if ":" in mode:
-                raise space.error(space.w_NotImplementedError, "encoding for IO.new")
         elif w_mode_str_or_int is None:
             mode = None
         else:

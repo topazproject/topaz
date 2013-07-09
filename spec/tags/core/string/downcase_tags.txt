@@ -1,0 +1,1 @@
+fails:String#downcase! sets the result String encoding to the source String encoding
