@@ -78,7 +78,7 @@ class StorageNode(BaseNode):
 
     def change_class(self, space, w_cls):
         new_prev = self.prev.change_class(space, w_cls)
-        return space.fromcache(MapTransitionCache).get_transition(new_prev, type(self), self.name)
+        return space.fromcache(MapTransitionCache).get_transition(new_prev, self.__class__, self.name)
 
     def matches(self, node_cls, name):
         return isinstance(self, node_cls) and name == self.name
