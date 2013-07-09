@@ -147,7 +147,7 @@ class IntAttributeNode(UnboxedAttributeNode):
         return space.is_kind_of(w_value, space.w_fixnum)
 
     def _store(self, space, w_obj, w_value):
-        w_obj.unboxed_storage[self.pos()] = longlong2float.longlong2float(r_longlong(space.int_w(w_value)))
+        w_obj.unboxed_storage[self.pos()] = longlong2float.longlong2float(space.int_w(w_value))
 
     def read(self, space, w_obj):
         return space.newint(intmask(longlong2float.float2longlong(w_obj.unboxed_storage[self.pos()])))
