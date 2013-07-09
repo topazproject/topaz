@@ -85,8 +85,8 @@ class StorageNode(BaseNode):
 
 
 class AttributeNode(StorageNode):
-    @classmethod
-    def select_type(cls, space, w_value):
+    @staticmethod
+    def select_type(space, w_value):
         for cls in ATTRIBUTE_CLASSES:
             if cls.correct_type(space, w_value):
                 return cls
