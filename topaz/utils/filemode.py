@@ -42,7 +42,7 @@ def map_filemode(space, w_mode):
                 mode |= os.O_TRUNC | os.O_CREAT
                 writeable = True
             elif ch == ":":
-                encoding = mode_str[pos+1:]
+                encoding = mode_str[pos + 1:]
                 break
             else:
                 raise invalid_error
