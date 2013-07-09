@@ -1,3 +1,4 @@
+import copy
 from rpython.rlib.rerased import new_static_erasing_pair
 
 from topaz.module import ClassDef, check_frozen
@@ -95,6 +96,16 @@ class W_HashObject(W_Object):
         self.dict_storage = self.strategy.get_empty_storage(space)
         self.w_default = space.w_nil
         self.default_proc = None
+
+    def __deepcopy__(self, memo):
+        obj = super(W_HashObject, self).__deepcopy__(memo)
+        obj.strategy = copy.deepcopy(self.strategy)
+        # deepcopying these two will loop forever
+        obj.dict_storage = self.dict_storage
+        obj.w_default = self.w_default
+        ##############################
+        obj.default_proc = copy.deepcopy(self.default_proc)
+        return obj
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
