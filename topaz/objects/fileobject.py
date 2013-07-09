@@ -89,13 +89,14 @@ class W_FileObject(W_IOObject):
             perm = space.int_w(w_perm_or_opt)
         else:
             perm = 0665
-        mode = map_filemode(space, w_mode)
+        mode, encoding = map_filemode(space, w_mode)
         if w_perm_or_opt is not space.w_nil or w_opt is not space.w_nil:
             raise space.error(space.w_NotImplementedError, "options hash or permissions for File.new")
         try:
             self.fd = os.open(filename, mode, perm)
         except OSError as e:
             raise error_for_oserror(space, e)
+        self.filename = filename
         return self
 
     @classdef.singleton_method("dirname", path="path")
@@ -254,6 +255,16 @@ class W_FileObject(W_IOObject):
         except OSError as e:
             raise error_for_oserror(space, e)
         return space.newint(0)
+
+    @classdef.singleton_method("path", path="path")
+    def singleton_method_path(self, space, path):
+        w_str = space.newstr_fromstr(path)
+        space.send(w_str, "freeze")
+        return w_str
+
+    @classdef.method("path")
+    def method_path(self, space):
+        return space.newstr_fromstr(self.filename)
 
     @classdef.method("chmod", mode="int")
     def method_chmod(self, space, mode):
