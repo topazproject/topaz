@@ -142,8 +142,8 @@ class UnboxedAttributeNode(AttributeNode):
 
 
 class IntAttributeNode(UnboxedAttributeNode):
-    @classmethod
-    def correct_type(cls, space, w_value):
+    @staticmethod
+    def correct_type(space, w_value):
         return space.is_kind_of(w_value, space.w_fixnum)
 
     def _store(self, space, w_obj, w_value):
@@ -154,8 +154,8 @@ class IntAttributeNode(UnboxedAttributeNode):
 
 
 class FloatAttributeNode(UnboxedAttributeNode):
-    @classmethod
-    def correct_type(cls, space, w_value):
+    @staticmethod
+    def correct_type(space, w_value):
         return space.is_kind_of(w_value, space.w_float)
 
     def _store(self, space, w_obj, w_value):
@@ -166,8 +166,8 @@ class FloatAttributeNode(UnboxedAttributeNode):
 
 
 class ObjectAttributeNode(AttributeNode):
-    @classmethod
-    def correct_type(cls, space, w_value):
+    @staticmethod
+    def correct_type(space, w_value):
         return True
 
     @jit.elidable
