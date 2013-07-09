@@ -1,8 +1,7 @@
 import copy
 
-from rpython.rlib import jit, longlong2float
+from rpython.rlib import jit
 from rpython.rlib.objectmodel import compute_unique_id
-from rpython.rlib.rarithmetic import intmask
 
 from topaz import mapdict
 from topaz.module import ClassDef
