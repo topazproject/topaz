@@ -107,8 +107,8 @@ class AttributeNode(StorageNode):
         if node is self:
             return self.prev
         w_cur_val = self.read(space, w_obj)
-        new_prev = self.prev.remove_attr(node)
-        node = new_prev.add(space, self.select_type(w_cur_val), self.name, w_obj)
+        new_prev = self.prev.remove_attr(space, node, w_obj)
+        node = new_prev.add(space, self.select_type(space, w_cur_val), self.name, w_obj)
         node.write(space, w_obj, w_cur_val)
         return node
 
@@ -123,6 +123,9 @@ class UnboxedAttributeNode(AttributeNode):
                 n += 1
             node = node.getprev()
         return n
+
+    def uses_object_storage(self):
+        return False
 
     def uses_unboxed_storage(self):
         return True
@@ -154,6 +157,12 @@ class FloatAttributeNode(UnboxedAttributeNode):
     @classmethod
     def correct_type(cls, space, w_value):
         return space.is_kind_of(w_value, space.w_float)
+
+    def _store(self, space, w_obj, w_value):
+        w_obj.unboxed_storage[self.pos()] = space.float_w(w_value)
+
+    def read(self, space, w_obj):
+        return space.newfloat(w_obj.unboxed_storage[self.pos()])
 
 
 class ObjectAttributeNode(AttributeNode):

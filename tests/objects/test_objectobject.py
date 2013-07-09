@@ -398,7 +398,7 @@ class TestMapDict(BaseTopazTest):
     def test_change_attr_type(self, space):
         w_res = space.execute("""
         class X
-          attr_accessor :a
+          attr_accessor :a, :b
         end
         x = X.new
         x.a = 3.2
