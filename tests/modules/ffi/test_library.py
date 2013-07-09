@@ -8,18 +8,22 @@ class TestLibrary_method_missing(BaseFFITest):
             'bingo!'
           end
         end
-        module FFI::Library
-          Attachments = {:foo => IHaveCallMethod.new}
+        module Lib
+          extend FFI::Library
+          @attachments = {:foo => IHaveCallMethod.new}
         end
-        FFI::Library.foo
+        Lib.foo
         """)
         assert self.unwrap(space, w_res) == 'bingo!'
 
     def test_it_raises_NoMethodError_if_attachments_lookup_fails(self, space):
         with self.raises(space, 'NoMethodError',
-                         "undefined method `bar' for FFI::Library"):
+                         "undefined method `bar' for Lib"):
             space.execute("""
-            FFI::Library.bar
+            module Lib
+              extend FFI::Library
+            end
+            Lib.bar
             """)
 
     #def test_it_runs_cabs(self, space):

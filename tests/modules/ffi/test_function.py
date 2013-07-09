@@ -80,13 +80,14 @@ class TestFunction_attach(BaseFFITest):
         module LibraryMock
             local = FFI::DynamicLibrary::RTLD_LOCAL
             @ffi_libs = [FFI::DynamicLibrary.open('libm.so', local)]
-            Attachments = {}
+            @attachments = {}
+            self.singleton_class.attr_reader :attachments
         end
         oo_pow = FFI::DynamicLibrary::Symbol.new(:pow)
         func = FFI::Function.new(:float64, [:float64, :float64], oo_pow, {})
         func.attach(LibraryMock, 'power')
-        LibraryMock::Attachments.include? :power
-        (0..5).each.map { |x| LibraryMock::Attachments[:power].call(x, 2) }
+        LibraryMock::attachments.include? :power
+        (0..5).each.map { |x| LibraryMock::attachments[:power].call(x, 2) }
         """)
         res = self.unwrap(space, w_res)
         assert [x for x in res] == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
@@ -96,12 +97,13 @@ class TestFunction_attach(BaseFFITest):
         module LibraryMock
             local = FFI::DynamicLibrary::RTLD_LOCAL
             @ffi_libs = [FFI::DynamicLibrary.open('libc.so.6', local)]
-            Attachments = {}
+            @attachments = {}
+            self.singleton_class.attr_reader :attachments
         end
         oo_abs = FFI::DynamicLibrary::Symbol.new(:abs)
         func = FFI::Function.new(:int32, [:int32], oo_abs, {})
         func.attach(LibraryMock, 'abs')
-        LibraryMock::Attachments.include? :abs
-        (-3..+3).each.map { |x| LibraryMock::Attachments[:abs].call(x) }
+        LibraryMock::attachments.include? :abs
+        (-3..+3).each.map { |x| LibraryMock::attachments[:abs].call(x) }
         """)
         assert self.unwrap(space, w_res) == [3, 2, 1, 0, 1, 2, 3]

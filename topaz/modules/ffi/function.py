@@ -88,6 +88,6 @@ class W_FunctionObject(W_PointerObject):
                 self.ptr = w_dl.cdll.getpointer(self.name,
                                                 ffi_arg_types,
                                                 ffi_ret_type)
-                w_attachments = space.find_const(w_lib, 'Attachments')
+                w_attachments = space.send(w_lib, 'attachments')
                 space.send(w_attachments, '[]=', [space.newsymbol(name), self])
             except KeyError: pass
