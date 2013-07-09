@@ -159,19 +159,18 @@ class W_Object(W_RootObject):
         return obj
 
     def getclass(self, space):
-        w_cls = jit.promote(self.map).read(mapdict.CLASS)
-        return w_cls
+        return jit.promote(self.map).find(mapdict.ClassNode).getclass()
 
     def getsingletonclass(self, space):
-        w_cls = jit.promote(self.map).read(mapdict.CLASS)
+        w_cls = jit.promote(self.map).find(mapdict.ClassNode).getclass()
         if w_cls.is_singleton:
             return w_cls
         w_cls = space.newclass(w_cls.name, w_cls, is_singleton=True, attached=self)
-        self.map = self.map.replace(space, mapdict.CLASS, w_cls)
+        self.map = self.map.change_class(space, w_cls)
         return w_cls
 
     def copy_singletonclass(self, space, w_other):
-        w_cls = jit.promote(self.map).read(mapdict.CLASS)
+        w_cls = jit.promote(self.map).find(mapdict.ClassNode).getclass()
         assert not w_cls.is_singleton
         w_copy = space.newclass(w_cls.name, w_cls, is_singleton=True, attached=self)
         w_copy.methods_w.update(w_other.methods_w)
@@ -179,63 +178,37 @@ class W_Object(W_RootObject):
         w_copy.included_modules = w_copy.included_modules + w_other.included_modules
         w_copy.mutated()
 
-        self.map = self.map.replace(space, mapdict.CLASS, w_copy)
+        self.map = self.map.change_class(space, w_copy)
         return w_cls
 
     def find_instance_var(self, space, name):
-        idx, tp = jit.promote(self.map).read(mapdict.ATTR, name)
-        if idx == mapdict.ATTR_DOES_NOT_EXIST:
+        node = jit.promote(self.map).find(mapdict.AttributeNode, name)
+        if node is None:
             return None
-        if tp == mapdict.INT_ATTR:
-            return space.newint(intmask(longlong2float.float2longlong(self.unboxed_storage[idx])))
-        elif tp == mapdict.FLOAT_ATTR:
-            return space.newfloat(self.unboxed_storage[idx])
-        elif tp == mapdict.OBJECT_ATTR:
-            return self.object_storage[idx]
-        else:
-            raise SystemError
+        return node.read(space, self)
 
     def set_instance_var(self, space, name, w_value):
-        if space.is_kind_of(w_value, space.w_fixnum):
-            selector = mapdict.INT_ATTR
-            idx, tp = jit.promote(self.map).read(selector, name)
-        elif space.is_kind_of(w_value, space.w_float):
-            selector = mapdict.FLOAT_ATTR
-            idx, tp = jit.promote(self.map).read(selector, name)
-        else:
-            selector = mapdict.OBJECT_ATTR
-            idx, tp = jit.promote(self.map).read(selector, name)
-
-        if idx == mapdict.ATTR_DOES_NOT_EXIST or idx == mapdict.ATTR_WRONG_TYPE:
-            self.map, idx = self.map.add(space, selector, name, self)
-
-        if selector == mapdict.INT_ATTR:
-            self.unboxed_storage[idx] = longlong2float.longlong2float(space.int_w(w_value))
-        elif selector == mapdict.FLOAT_ATTR:
-            self.unboxed_storage[idx] = space.float_w(w_value)
-        elif selector == mapdict.OBJECT_ATTR:
-            self.object_storage[idx] = w_value
-        else:
-            raise SystemError
+        node = jit.promote(self.map).find(mapdict.AttributeNode, name)
+        if node is None:
+            self.map = node = self.map.add(space, mapdict.AttributeNode.select_type(space, w_value), name, self)
+        node.write(space, self, w_value)
 
     def copy_instance_vars(self, space, w_other):
         assert isinstance(w_other, W_Object)
         w_other.map.copy_attrs(space, w_other, self)
 
     def get_flag(self, space, name):
-        idx = jit.promote(self.map).read(mapdict.FLAG, name)
-        if idx == mapdict.ATTR_DOES_NOT_EXIST:
-            return space.w_false
-        return self.object_storage[idx]
+        node = jit.promote(self.map).find(mapdict.FlagNode, name)
+        return space.w_false if node is None else node.read(space, self)
 
     def set_flag(self, space, name):
-        idx = jit.promote(self.map).read(mapdict.FLAG, name)
-        if idx == mapdict.ATTR_DOES_NOT_EXIST:
-            self.map, idx = self.map.add(space, mapdict.FLAG, name, self)
-        self.object_storage[idx] = space.w_true
+        node = jit.promote(self.map).find(mapdict.FlagNode, name)
+        if node is None:
+            self.map = node = self.map.add(space, mapdict.FlagNode, name, self)
+        node.write(space, self, space.w_true)
 
     def unset_flag(self, space, name):
-        idx = jit.promote(self.map).read(mapdict.FLAG, name)
-        if idx != mapdict.ATTR_DOES_NOT_EXIST:
-            # Flags are by default unset, no need to add if unsetting
-            self.object_storage[idx] = space.w_false
+        node = jit.promote(self.map).find(mapdict.FlagNode, name)
+        # Flags are by default unset, no need to add if unsetting
+        if node is not None:
+            node.write(space, self, space.w_false)
