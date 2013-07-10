@@ -1,2 +1,6 @@
 fails:String#chop returns a new string with the last character removed
 fails:String#chop! behaves just like chop, but in-place
+fails:String#chop removes a multi-byte character
+fails:String#chop removes the final carriage return, newline from a non-ASCII String
+fails:String#chop! removes a multi-byte character
+fails:String#chop! removes the final carriage return, newline from a non-ASCII String

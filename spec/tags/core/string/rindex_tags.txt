@@ -19,3 +19,6 @@ fails:String#rindex with Regexp supports \G which matches at the given start off
 fails:String#rindex with Regexp tries to convert start_offset to an integer via to_int
 fails:String#rindex with Regexp raises a TypeError when given offset is nil
 fails:String#rindex with Regexp reverse matches multibyte UTF-8 chars
+fails:String#rindex with Regexp returns the reverse character index of a multibyte character
+fails:String#rindex with Regexp returns the character index before the finish
+fails:String#rindex with Regexp raises an Encoding::CompatibilityError if the encodings are incompatible
