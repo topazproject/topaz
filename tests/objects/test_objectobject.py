@@ -337,36 +337,6 @@ class TestObjectObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == "extended in: A"
 
-
-class TestMapDict(BaseTopazTest):
-    def test_simple_attr(self, space):
-        w_res = space.execute("""
-        class X
-          def initialize
-            @a = 3
-            @b = 4
-            @c = 5
-          end
-          def attrs
-            [@a, @b, @c]
-          end
-        end
-        return X.new.attrs
-        """)
-        assert self.unwrap(space, w_res) == [3, 4, 5]
-
-    def test_unitialized_att(self, space):
-        w_res = space.execute("""
-        class X
-          attr_accessor :a
-          def attrs
-            [self.a, @b]
-          end
-        end
-        return X.new.attrs
-        """)
-        assert space.listview(w_res) == [space.w_nil, space.w_nil]
-
     def test_method(self, space):
         w_res = space.execute("""
         class A; def a; end; end
@@ -394,3 +364,47 @@ class TestMapDict(BaseTopazTest):
         return res, x
         """)
         assert self.unwrap(space, w_res) == [1, 2]
+
+
+class TestMapDict(BaseTopazTest):
+    def test_simple_attr(self, space):
+        w_res = space.execute("""
+        class X
+          def initialize
+            @a = 3
+            @b = 4
+            @c = 5
+          end
+          def attrs
+            [@a, @b, @c]
+          end
+        end
+        return X.new.attrs
+        """)
+        assert self.unwrap(space, w_res) == [3, 4, 5]
+
+    def test_unitialized_attr(self, space):
+        w_res = space.execute("""
+        class X
+          attr_accessor :a
+          def attrs
+            [self.a, @b]
+          end
+        end
+        return X.new.attrs
+        """)
+        assert space.listview(w_res) == [space.w_nil, space.w_nil]
+
+    def test_change_attr_type(self, space):
+        w_res = space.execute("""
+        class X
+          attr_accessor :a, :b
+        end
+        x = X.new
+        x.a = 3.2
+        x.b = 5
+        x.a = "abc"
+        x.b = 3.8
+        return [x.a, x.b]
+        """)
+        assert self.unwrap(space, w_res) == ["abc", 3.8]
