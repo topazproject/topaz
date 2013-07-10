@@ -17,6 +17,10 @@ class W_FunctionObject(W_PointerObject):
     def singleton_method_allocate(self, space, args_w):
         return W_FunctionObject(space)
 
+    def __init__(self, space):
+        W_PointerObject.__init__(self, space)
+        self.ptr = None
+
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
                           w_name=None, w_options=None):
@@ -24,8 +28,7 @@ class W_FunctionObject(W_PointerObject):
         self.w_ret_type = self.ensure_w_type(space, w_ret_type)
         self.arg_types_w = [self.ensure_w_type(space, w_type)
                           for w_type in space.listview(w_arg_types)]
-        self.name = self.dlsym_unwrap(space, w_name) if w_name else None
-        self.ptr = None
+        self.w_name = self.dlsym_unwrap(space, w_name) if w_name else None
 
     @staticmethod
     def ensure_w_type(space, w_type_or_sym):
@@ -47,7 +50,7 @@ class W_FunctionObject(W_PointerObject):
     @staticmethod
     def dlsym_unwrap(space, w_name):
         if space.is_kind_of(w_name, space.getclassfor(W_DL_SymbolObject)):
-            return w_name.symbol
+            return space.newsymbol(w_name.symbol)
         else:
             raise space.error(space.w_TypeError,
                             "can't convert %s into FFI::DynamicLibrary::Symbol"
@@ -84,7 +87,7 @@ class W_FunctionObject(W_PointerObject):
             ffi_arg_types = [t.ffi_type for t in self.arg_types_w]
             ffi_ret_type = self.w_ret_type.ffi_type
             try:
-                self.ptr = w_dl.cdll.getpointer(self.name,
+                self.ptr = w_dl.cdll.getpointer(space.symbol_w(self.w_name),
                                                 ffi_arg_types,
                                                 ffi_ret_type)
                 w_attachments = space.send(w_lib, 'attachments')

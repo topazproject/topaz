@@ -72,7 +72,7 @@ class TestFunction__new(BaseFFITest):
         w_char = space.execute("FFI::Type::CHAR")
         assert w_function.arg_types_w == [w_short, w_double]
         assert w_function.w_ret_type == w_char
-        assert w_function.name == 'foo'
+        assert self.unwrap(space, w_function.w_name) == 'foo'
 
 class TestFunction_attach(BaseFFITest):
     def test_it_works_with_pow_from_libm(self, space):
