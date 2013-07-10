@@ -1,6 +1,7 @@
 from rpython.rlib import jit, longlong2float
-from rpython.rlib.rarithmetic import r_longlong, intmask
+from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.unroll import unrolling_iterable
+from rpython.rtyper.lltypesystem import rffi, lltype
 
 
 class MapTransitionCache(object):
@@ -147,7 +148,7 @@ class IntAttributeNode(UnboxedAttributeNode):
         return space.is_kind_of(w_value, space.w_fixnum)
 
     def _store(self, space, w_obj, w_value):
-        w_obj.unboxed_storage[self.pos()] = longlong2float.longlong2float(space.int_w(w_value))
+        w_obj.unboxed_storage[self.pos()] = longlong2float.longlong2float(rffi.cast(lltype.SignedLongLong, space.int_w(w_value)))
 
     def read(self, space, w_obj):
         return space.newint(intmask(longlong2float.float2longlong(w_obj.unboxed_storage[self.pos()])))
