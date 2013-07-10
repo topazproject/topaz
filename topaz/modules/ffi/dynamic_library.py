@@ -34,7 +34,8 @@ class W_DynamicLibraryObject(W_Object):
 
     @classdef.singleton_method('new', flags='int')
     def singleton_method_new(self, space, w_name, flags=0):
-        name = (Coerce.path(space, w_name) if w_name is not space.w_nil
+        name = (Coerce.path(space, w_name)
+                if w_name is not space.w_nil
                 else None)
         lib = W_DynamicLibraryObject(space, name, flags)
         return lib
@@ -50,7 +51,7 @@ class W_DL_SymbolObject(W_Object):
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)
-        self.symbol = None
+        self.symbol = ''
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -59,6 +60,10 @@ class W_DL_SymbolObject(W_Object):
     @classdef.method('initialize', symbol='symbol')
     def method_initialize(self, space, symbol):
         self.symbol = symbol
+
+    @classdef.method('to_sym')
+    def method_to_sym(self, space):
+        return space.newsymbol(self.symbol)
 
     @classdef.method('null?')
     def method_null_p(self, space):

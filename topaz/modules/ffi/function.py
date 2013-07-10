@@ -19,6 +19,9 @@ class W_FunctionObject(W_PointerObject):
 
     def __init__(self, space):
         W_PointerObject.__init__(self, space)
+        self.w_ret_type = W_TypeObject(space, rffi.CHAR, clibffi.ffi_type_void)
+        self.arg_types_w = []
+        self.w_name = space.newsymbol('')
         self.ptr = None
 
     @classdef.method('initialize')
@@ -49,9 +52,9 @@ class W_FunctionObject(W_PointerObject):
 
     @staticmethod
     def dlsym_unwrap(space, w_name):
-        if space.is_kind_of(w_name, space.getclassfor(W_DL_SymbolObject)):
-            return space.newsymbol(w_name.symbol)
-        else:
+        try:
+            return space.send(w_name, 'to_sym')
+        except RubyError:
             raise space.error(space.w_TypeError,
                             "can't convert %s into FFI::DynamicLibrary::Symbol"
                               % w_name.getclass(space).name)
@@ -59,9 +62,11 @@ class W_FunctionObject(W_PointerObject):
     @classdef.method('call')
     def method_call(self, space, args_w):
         # NOT RPYTHON
-        ffi_ret_type = self.w_ret_type.ffi_type
-        native_arg_types = [t.native_type for t in self.arg_types_w]
-        native_ret_type = self.w_ret_type.native_type
+        w_ret_type = self.w_ret_type
+        arg_types_w = self.arg_types_w
+        ffi_ret_type = w_ret_type.ffi_type
+        native_arg_types = [t.native_type for t in arg_types_w]
+        native_ret_type = w_ret_type.native_type
         args = [space.float_w(w_x) for w_x in args_w]
         for argval, argtype in zip(args, native_arg_types):
             casted_val = rffi.cast(argtype, argval)
@@ -82,12 +87,16 @@ class W_FunctionObject(W_PointerObject):
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
+        w_ret_type = self.w_ret_type
+        arg_types_w = self.arg_types_w
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
         for w_dl in w_ffi_libs.listview(space):
-            ffi_arg_types = [t.ffi_type for t in self.arg_types_w]
-            ffi_ret_type = self.w_ret_type.ffi_type
+            ffi_arg_types = [t.ffi_type for t in arg_types_w]
+            ffi_ret_type = w_ret_type.ffi_type
+            ptr_key = self.w_name
+            assert space.is_kind_of(ptr_key, space.w_symbol)
             try:
-                self.ptr = w_dl.cdll.getpointer(space.symbol_w(self.w_name),
+                self.ptr = w_dl.cdll.getpointer(space.symbol_w(ptr_key),
                                                 ffi_arg_types,
                                                 ffi_ret_type)
                 w_attachments = space.send(w_lib, 'attachments')
