@@ -225,6 +225,9 @@ class FlagNode(StorageNode):
                     new_storage[i] = w_value
             w_obj.object_storage = new_storage
 
+    def uses_object_storage(self):
+        return True
+
     def copy_attrs(self, space, w_obj, w_target):
         self.prev.copy_attrs(space, w_obj, w_target)
 

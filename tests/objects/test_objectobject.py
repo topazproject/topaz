@@ -408,3 +408,15 @@ class TestMapDict(BaseTopazTest):
         return [x.a, x.b]
         """)
         assert self.unwrap(space, w_res) == ["abc", 3.8]
+
+    def test_attribute_after_flag(self, space):
+        w_res = space.execute("""
+        class X
+          attr_accessor :a
+        end
+        x = X.new
+        x.taint
+        x.a = "abc"
+        return x.a
+        """)
+        assert space.str_w(w_res) == "abc"
