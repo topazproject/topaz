@@ -6,7 +6,7 @@ from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
-    NAN, INFINITY, isfinite)
+    NAN, INFINITY, isfinite, round_away)
 
 from topaz.error import RubyError
 from topaz.module import ClassDef
@@ -264,3 +264,11 @@ class W_FloatObject(W_RootObject):
     @classdef.method("nan?")
     def method_nan(self, space):
         return space.newbool(math.isnan(self.floatvalue))
+
+    @classdef.method("round")
+    def method_round(self, space):
+        return space.newint(int(round_away(self.floatvalue)))
+
+    @classdef.method("quo")
+    def method_quo(self, space):
+        raise space.error(space.w_NotImplementedError, "Numeric#quo")
