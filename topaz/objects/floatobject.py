@@ -21,7 +21,6 @@ class W_FloatObject(W_RootObject):
     classdef = ClassDef("Float", W_NumericObject.classdef)
 
     def __init__(self, space, floatvalue):
-        W_RootObject.__init__(self, space)
         self.floatvalue = floatvalue
 
     def __deepcopy__(self, memo):
