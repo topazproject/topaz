@@ -31,6 +31,9 @@ class BaseNode(object):
                 return node
             node = node.getprev()
 
+    def matches(self, node_cls, name):
+        return isinstance(self, node_cls)
+
     def add(self, space, node_cls, name, w_obj):
         new_node = space.fromcache(MapTransitionCache).get_transition(self, node_cls, name)
         new_node.update_storage_size(w_obj)
@@ -42,9 +45,6 @@ class ClassNode(BaseNode):
 
     def __init__(self, w_cls):
         self.w_cls = w_cls
-
-    def matches(self, cls, name=None):
-        return cls is ClassNode
 
     def getclass(self):
         return self.w_cls
@@ -82,7 +82,7 @@ class StorageNode(BaseNode):
         return space.fromcache(MapTransitionCache).get_transition(new_prev, self.__class__, self.name)
 
     def matches(self, node_cls, name):
-        return isinstance(self, node_cls) and name == self.name
+        return BaseNode.matches(self, node_cls) and name == self.name
 
 
 class AttributeNode(StorageNode):
