@@ -187,15 +187,8 @@ class ObjectAttributeNode(AttributeNode):
     def uses_unboxed_storage(self):
         return False
 
-    @jit.unroll_safe
     def update_storage_size(self, w_obj):
-        length = self.length()
-        if w_obj.object_storage is None or length >= len(w_obj.object_storage):
-            new_storage = [None] * length
-            if w_obj.object_storage is not None:
-                for i, w_value in enumerate(w_obj.object_storage):
-                    new_storage[i] = w_value
-            w_obj.object_storage = new_storage
+        update_object_storage(self, w_obj)
 
     def _store(self, space, w_obj, w_value):
         w_obj.object_storage[self.pos()] = w_value
@@ -215,15 +208,8 @@ class FlagNode(StorageNode):
             node = node.getprev()
         return n
 
-    @jit.unroll_safe
     def update_storage_size(self, w_obj):
-        length = self.length()
-        if w_obj.object_storage is None or length >= len(w_obj.object_storage):
-            new_storage = [None] * length
-            if w_obj.object_storage is not None:
-                for i, w_value in enumerate(w_obj.object_storage):
-                    new_storage[i] = w_value
-            w_obj.object_storage = new_storage
+        return update_object_storage(self, w_obj)
 
     def uses_object_storage(self):
         return True
@@ -243,3 +229,14 @@ ATTRIBUTE_CLASSES = unrolling_iterable([
     FloatAttributeNode,
     ObjectAttributeNode,
 ])
+
+
+@jit.unroll_safe
+def update_object_storage(node, w_obj):
+    length = node.length()
+    if w_obj.object_storage is None or length >= len(w_obj.object_storage):
+        new_storage = [None] * length
+        if w_obj.object_storage is not None:
+            for i, w_value in enumerate(w_obj.object_storage):
+                new_storage[i] = w_value
+        w_obj.object_storage = new_storage
