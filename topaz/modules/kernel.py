@@ -207,7 +207,7 @@ class Kernel(object):
 
     @moduledef.function("__method__")
     @moduledef.function("__callee__")
-    def method_method(self, space):
+    def method_callee(self, space):
         frame = space.getexecutioncontext().gettoprubyframe()
         return space.newsymbol(frame.bytecode.name)
 

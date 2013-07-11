@@ -103,11 +103,11 @@ class TestFloatObject(BaseTopazTest):
         w_res = space.execute("return -123.534.abs")
         assert space.float_w(w_res) == 123.534
 
-    def test_nan(self, space):
+    def test_zero_division_nan(self, space):
         w_res = space.execute("return 0.0 / 0.0")
         assert math.isnan(self.unwrap(space, w_res))
 
-    def test_infinity(self, space):
+    def test_zero_division_inf(self, space):
         w_res = space.execute("return 1.0 / 0.0")
         assert self.unwrap(space, w_res) == float('inf')
         w_res = space.execute("return -1.0 / 0.0")

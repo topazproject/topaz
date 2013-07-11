@@ -129,7 +129,14 @@ def run_docs_tests(env):
 
 
 def run_flake8_tests(env):
-    invoke.run('flake8 . --ignore="E122,E123,E124,E125,E126,E128,E501,F811"')
+    # E122 continuation line missing indentation or outdented
+    # E124 closing bracket does not match visual indentation
+    # E125 continuation line does not distinguish itself from next logical line
+    # E126 continuation line over-indented for hanging indent
+    # E128 continuation line under-indented for visual indent
+    # E501 line too long
+    # F811 redefinition of unused
+    invoke.run('flake8 . --ignore="E122,E124,E125,E126,E128,E501,F811"')
 
 
 TEST_TYPES = {
