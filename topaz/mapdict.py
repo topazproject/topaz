@@ -82,7 +82,7 @@ class StorageNode(BaseNode):
         return space.fromcache(MapTransitionCache).get_transition(new_prev, self.__class__, self.name)
 
     def matches(self, node_cls, name):
-        return BaseNode.matches(self, node_cls) and name == self.name
+        return BaseNode.matches(self, node_cls, name) and name == self.name
 
 
 class AttributeNode(StorageNode):
