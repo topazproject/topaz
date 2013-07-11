@@ -334,7 +334,6 @@ class TestIO(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == [True, "foo\n"]
 
-    @pytest.mark.xfail
     def test_popen_write(self, space, capfd):
         space.execute("""
         IO.popen("cat", "w") do |io|
