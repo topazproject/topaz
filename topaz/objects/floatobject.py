@@ -11,16 +11,17 @@ from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
 from topaz.error import RubyError
 from topaz.module import ClassDef
 from topaz.objects.exceptionobject import W_ArgumentError
+from topaz.objects.objectobject import W_RootObject
 from topaz.objects.numericobject import W_NumericObject
 
 
-class W_FloatObject(W_NumericObject):
+class W_FloatObject(W_RootObject):
     _immutable_fields_ = ["floatvalue"]
 
     classdef = ClassDef("Float", W_NumericObject.classdef)
 
     def __init__(self, space, floatvalue):
-        W_NumericObject.__init__(self, space)
+        W_RootObject.__init__(self, space)
         self.floatvalue = floatvalue
 
     def __deepcopy__(self, memo):
@@ -128,6 +129,7 @@ class W_FloatObject(W_NumericObject):
     method_gt = new_bool_op(classdef, ">", operator.gt)
     method_gte = new_bool_op(classdef, ">=", operator.ge)
 
+    @classdef.method("equal?")
     @classdef.method("==")
     def method_eq(self, space, w_other):
         if space.is_kind_of(w_other, space.w_float):
