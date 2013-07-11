@@ -160,6 +160,13 @@ class W_FloatObject(W_RootObject):
     def method_hash(self, space):
         return space.newint(compute_hash(self.floatvalue))
 
+    @classdef.method("coerce")
+    def method_coerce(self, space, w_other):
+        if space.getclass(w_other) is space.getclass(self):
+            return space.newarray([w_other, self])
+        else:
+            return space.newarray([space.send(self, "Float", [w_other]), self])
+
     @classdef.method("abs")
     def method_abs(self, space):
         return space.newfloat(abs(self.floatvalue))
