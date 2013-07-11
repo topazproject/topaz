@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 from topaz.objects.ioobject import W_IOObject
 
 from ..base import BaseTopazTest
