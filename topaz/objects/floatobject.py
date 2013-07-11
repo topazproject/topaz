@@ -128,7 +128,6 @@ class W_FloatObject(W_RootObject):
     method_gt = new_bool_op(classdef, ">", operator.gt)
     method_gte = new_bool_op(classdef, ">=", operator.ge)
 
-    @classdef.method("equal?")
     @classdef.method("==")
     def method_eq(self, space, w_other):
         if space.is_kind_of(w_other, space.w_float):
@@ -139,6 +138,23 @@ class W_FloatObject(W_RootObject):
         except RubyError as e:
             if isinstance(e.w_value, W_ArgumentError):
                 return space.send(w_other, "==", [self])
+            else:
+                raise
+
+    @classdef.method("equal?")
+    def method_equalp(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_float):
+            other = space.float_w(w_other)
+            return space.newbool(
+                self.floatvalue == other or
+                (math.isnan(self.floatvalue) and math.isnan(other))
+            )
+
+        try:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "equal?")
+        except RubyError as e:
+            if isinstance(e.w_value, W_ArgumentError):
+                return space.send(w_other, "equal?", [self])
             else:
                 raise
 
