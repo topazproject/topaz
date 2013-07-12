@@ -19,6 +19,12 @@ class W_TimeObject(W_Object):
     def method_now(self, space):
         return space.send(self, "new")
 
+    @classdef.singleton_method("at", timestamp="int")
+    def method_at(self, space, timestamp):
+        time = space.send(self, "new")
+        time._set_epoch_seconds(timestamp)
+        return time
+
     @classdef.method("initialize")
     def method_initialize(self, space):
         self.epoch_seconds = time.time()
@@ -31,3 +37,6 @@ class W_TimeObject(W_Object):
     def method_sub(self, space, w_other):
         assert isinstance(w_other, W_TimeObject)
         return space.newfloat(self.epoch_seconds - w_other.epoch_seconds)
+
+    def _set_epoch_seconds(self, timestamp):
+        self.epoch_seconds = timestamp
