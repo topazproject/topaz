@@ -1,1 +1,0 @@
-fails:Array#rindex rechecks the array size during iteration
