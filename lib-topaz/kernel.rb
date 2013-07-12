@@ -23,6 +23,11 @@ module Kernel
     self == other ? 0 : nil
   end
 
+  def chop
+    $_.chop!
+  end
+  private :chop
+
   def Array(arg)
     if ary = Topaz.try_convert_type(arg, Array, :to_ary)
       ary
