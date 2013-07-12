@@ -19,6 +19,19 @@ class File < IO
     return File.stat(filename).size
   end
 
+  def self.zero?(filename)
+    _filename = if filename.respond_to?(:to_path)
+                  filename.to_path
+                else
+                  filename
+                end
+    begin
+      File.size(_filename) == 0
+    rescue Errno::ENOENT
+      false
+    end
+  end
+
   def size
     return self.stat.size
   end
