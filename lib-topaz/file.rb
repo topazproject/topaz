@@ -20,13 +20,12 @@ class File < IO
   end
 
   def self.zero?(filename)
-    _filename = if filename.respond_to?(:to_path)
-                  filename.to_path
-                else
-                  filename
-                end
+    if filename.respond_to?(:to_path)
+      filename = filename.to_path
+    end
+
     begin
-      File.size(_filename) == 0
+      File.size(filename) == 0
     rescue Errno::ENOENT
       false
     end
