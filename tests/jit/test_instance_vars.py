@@ -13,8 +13,8 @@ class TestInstanceVars(BaseJITTest):
         end
         i = 0
         while i < 10000
-            A.new
-            i += 1
+          A.new
+          i += 1
         end
         """)
         self.assert_matches(traces[0].loop, """

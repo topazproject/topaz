@@ -6,7 +6,7 @@ class TestBasic(BaseJITTest):
         traces = self.run(topaz, tmpdir, """
         i = 0
         while i < 10000
-            i += 1
+          i += 1
         end
         """)
         self.assert_matches(traces[0].loop, """
@@ -37,7 +37,7 @@ class TestBasic(BaseJITTest):
         traces = self.run(topaz, tmpdir, """
         @i = 0
         while @i < 10000
-            @i += 1
+          @i += 1
         end
         """)
         self.assert_matches(traces[0].loop, """
@@ -76,7 +76,7 @@ class TestBasic(BaseJITTest):
         traces = self.run(topaz, tmpdir, """
         i = 0
         while i < 10000
-            i += "a".length
+          i += "a".length
         end
         """)
         self.assert_matches(traces[0].loop, """
@@ -110,8 +110,8 @@ class TestBasic(BaseJITTest):
         traces = self.run(topaz, tmpdir, """
         i = 0
         while i < 10000
-            Array.try_convert(1)
-            i += 1
+          Array.try_convert(1)
+          i += 1
         end
         """)
         self.assert_matches(traces[0].loop, """
