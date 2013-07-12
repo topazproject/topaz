@@ -1,4 +1,5 @@
 from rpython.rlib import jit, longlong2float
+from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rtyper.lltypesystem import rffi, lltype
@@ -43,6 +44,8 @@ class BaseNode(object):
 class ClassNode(BaseNode):
     _immutable_fields_ = ["w_cls"]
 
+    uses_object_storage = uses_unboxed_storage = False
+
     def __init__(self, w_cls):
         self.w_cls = w_cls
 
@@ -58,21 +61,17 @@ class ClassNode(BaseNode):
     def getprev(self):
         return None
 
-    def _uses_storage(self):
-        return False
-
-    uses_object_storage = uses_unboxed_storage = _uses_storage
-    del _uses_storage
-
 
 class StorageNode(BaseNode):
+    _immutable_fields_ = ["prev", "name", "pos"]
+
     def __init__(self, prev, name):
         self.prev = prev
         self.name = name
+        self.pos = self.compute_position()
 
-    @jit.elidable
     def length(self):
-        return self.pos() + 1
+        return self.pos + 1
 
     def getprev(self):
         return self.prev
@@ -115,21 +114,11 @@ class AttributeNode(StorageNode):
 
 
 class UnboxedAttributeNode(AttributeNode):
-    @jit.elidable
-    def pos(self):
-        node = self.getprev()
-        n = 0
-        while node is not None:
-            if node.uses_unboxed_storage():
-                n += 1
-            node = node.getprev()
-        return n
+    uses_object_storage = False
+    uses_unboxed_storage = True
 
-    def uses_object_storage(self):
-        return False
-
-    def uses_unboxed_storage(self):
-        return True
+    def compute_position(self):
+        return compute_position(self, "uses_unboxed_storage")
 
     @jit.unroll_safe
     def update_storage_size(self, w_obj):
@@ -148,10 +137,10 @@ class IntAttributeNode(UnboxedAttributeNode):
         return space.is_kind_of(w_value, space.w_fixnum)
 
     def _store(self, space, w_obj, w_value):
-        w_obj.unboxed_storage[self.pos()] = longlong2float.longlong2float(rffi.cast(lltype.SignedLongLong, space.int_w(w_value)))
+        w_obj.unboxed_storage[self.pos] = longlong2float.longlong2float(rffi.cast(lltype.SignedLongLong, space.int_w(w_value)))
 
     def read(self, space, w_obj):
-        return space.newint(intmask(longlong2float.float2longlong(w_obj.unboxed_storage[self.pos()])))
+        return space.newint(intmask(longlong2float.float2longlong(w_obj.unboxed_storage[self.pos])))
 
 
 class FloatAttributeNode(UnboxedAttributeNode):
@@ -160,68 +149,51 @@ class FloatAttributeNode(UnboxedAttributeNode):
         return space.is_kind_of(w_value, space.w_float)
 
     def _store(self, space, w_obj, w_value):
-        w_obj.unboxed_storage[self.pos()] = space.float_w(w_value)
+        w_obj.unboxed_storage[self.pos] = space.float_w(w_value)
 
     def read(self, space, w_obj):
-        return space.newfloat(w_obj.unboxed_storage[self.pos()])
+        return space.newfloat(w_obj.unboxed_storage[self.pos])
 
 
 class ObjectAttributeNode(AttributeNode):
+    uses_object_storage = True
+    uses_unboxed_storage = False
+
     @staticmethod
     def correct_type(space, w_value):
         return True
 
-    @jit.elidable
-    def pos(self):
-        node = self.getprev()
-        n = 0
-        while node is not None:
-            if node.uses_object_storage():
-                n += 1
-            node = node.getprev()
-        return n
-
-    def uses_object_storage(self):
-        return True
-
-    def uses_unboxed_storage(self):
-        return False
+    def compute_position(self):
+        return compute_position(self, "uses_object_storage")
 
     def update_storage_size(self, w_obj):
         update_object_storage(self, w_obj)
 
     def _store(self, space, w_obj, w_value):
-        w_obj.object_storage[self.pos()] = w_value
+        w_obj.object_storage[self.pos] = w_value
 
     def read(self, space, w_obj):
-        return w_obj.object_storage[self.pos()]
+        return w_obj.object_storage[self.pos]
 
 
 class FlagNode(StorageNode):
-    @jit.elidable
-    def pos(self):
-        node = self.getprev()
-        n = 0
-        while node is not None:
-            if node.uses_object_storage():
-                n += 1
-            node = node.getprev()
-        return n
+    uses_object_storage = True
+    uses_unboxed_storage = False
+
+    def compute_position(self):
+        return compute_position(self, "uses_object_storage")
 
     def update_storage_size(self, w_obj):
         return update_object_storage(self, w_obj)
-
-    def uses_object_storage(self):
-        return True
 
     def copy_attrs(self, space, w_obj, w_target):
         self.prev.copy_attrs(space, w_obj, w_target)
 
     def write(self, space, w_obj, w_value):
-        w_obj.object_storage[self.pos()] = w_value
+        w_obj.object_storage[self.pos] = w_value
 
     def read(self, space, w_obj):
-        return w_obj.object_storage[self.pos()]
+        return w_obj.object_storage[self.pos]
 
 
 ATTRIBUTE_CLASSES = unrolling_iterable([
@@ -240,3 +212,14 @@ def update_object_storage(node, w_obj):
             for i, w_value in enumerate(w_obj.object_storage):
                 new_storage[i] = w_value
         w_obj.object_storage = new_storage
+
+
+@specialize.arg(1)
+def compute_position(node, predicate):
+    node = node.getprev()
+    n = 0
+    while node is not None:
+        if getattr(node, predicate):
+            n += 1
+        node = node.getprev()
+    return n
