@@ -70,7 +70,7 @@ class TestInstanceVars(BaseJITTest):
         end
         a = A.new
         while a.data < 10000.0
-            a.data += 1.0
+          a.data += 1.0
         end
         """)
         self.assert_matches(traces[0].loop, """
