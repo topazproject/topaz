@@ -1,6 +1,7 @@
 import time
 
 from topaz.module import ClassDef
+from topaz.coerce import Coerce
 from topaz.objects.objectobject import W_Object
 
 
@@ -19,8 +20,12 @@ class W_TimeObject(W_Object):
     def method_now(self, space):
         return space.send(self, "new")
 
-    @classdef.singleton_method("at", timestamp="int")
-    def method_at(self, space, timestamp):
+    @classdef.singleton_method("at")
+    def method_at(self, space, w_time):
+        if not (w_time.is_kind_of(space, space.w_numeric) or
+                w_time.is_kind_of(space, space.getclassfor(W_TimeObject))):
+            raise space.error(space.w_TypeError)
+        timestamp = Coerce.float(space, w_time)
         time = space.send(self, "new")
         time._set_epoch_seconds(timestamp)
         return time
