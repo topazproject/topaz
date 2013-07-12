@@ -33,44 +33,6 @@ class TestBasic(BaseJITTest):
         jump(p0, p1, p3, p4, p5, p6, p7, p10, i40, p20, p22, p28, descr=TargetToken(4310781936))
         """)
 
-    def test_ivar_while_loop(self, topaz, tmpdir):
-        traces = self.run(topaz, tmpdir, """
-        @i = 0
-        while @i < 10000
-          @i += 1
-        end
-        """)
-        self.assert_matches(traces[0].loop, """
-        label(p0, p1, p3, p4, p5, p6, p7, p10, f39, p20, p31, p26, descr=TargetToken(4310773744))
-        debug_merge_point(0, 0, '<main> at LOAD_SELF')
-        debug_merge_point(0, 0, '<main> at LOAD_INSTANCE_VAR')
-        i42 = convert_float_bytes_to_longlong(f39)
-        debug_merge_point(0, 0, '<main> at LOAD_CONST')
-        debug_merge_point(0, 0, '<main> at SEND')
-        setfield_gc(p20, 23, descr=<FieldS topaz.executioncontext.ExecutionContext.inst_last_instr 24>)
-        guard_not_invalidated(descr=<Guard0x100ff6bd8>)
-        p43 = force_token()
-        i44 = int_lt(i42, 10000)
-        guard_true(i44, descr=<Guard0x100ff6b60>)
-        debug_merge_point(0, 0, '<main> at JUMP_IF_FALSE')
-        debug_merge_point(0, 0, '<main> at LOAD_SELF')
-        debug_merge_point(0, 0, '<main> at DUP_TOP')
-        debug_merge_point(0, 0, '<main> at LOAD_INSTANCE_VAR')
-        debug_merge_point(0, 0, '<main> at LOAD_CONST')
-        debug_merge_point(0, 0, '<main> at SEND')
-        p45 = force_token()
-        i46 = int_add(i42, 1)
-        debug_merge_point(0, 0, '<main> at STORE_INSTANCE_VAR')
-        f47 = convert_longlong_bytes_to_float(i46)
-        debug_merge_point(0, 0, '<main> at DISCARD_TOP')
-        debug_merge_point(0, 0, '<main> at JUMP')
-        debug_merge_point(0, 0, '<main> at LOAD_SELF')
-        setfield_gc(p20, 39, descr=<FieldS topaz.executioncontext.ExecutionContext.inst_last_instr 24>)
-        setarrayitem_gc(p26, 0, f47, descr=<ArrayF 8>)
-        i48 = arraylen_gc(p26, descr=<ArrayF 8>)
-        jump(p0, p1, p3, p4, p5, p6, p7, p10, f47, p20, p31, p26, descr=TargetToken(4310773744))
-        """)
-
     def test_constant_string(self, topaz, tmpdir):
         traces = self.run(topaz, tmpdir, """
         i = 0
