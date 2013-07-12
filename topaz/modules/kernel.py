@@ -329,9 +329,9 @@ class Kernel(object):
             raise space.error(space.w_TypeError, "can't dup %s" % space.getclass(self).name)
         w_dup = space.send(space.getnonsingletonclass(self), "allocate")
         w_dup.copy_instance_vars(space, self)
-        space.infect(w_dup, self, freeze=True)
         w_dup.copy_singletonclass(space, space.getsingletonclass(self))
         space.send(w_dup, "initialize_clone", [self])
+        space.infect(w_dup, self, freeze=True)
         return w_dup
 
     @moduledef.method("sleep")

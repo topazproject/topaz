@@ -1,1 +1,0 @@
-fails:Array#clone copies frozen status from the original
