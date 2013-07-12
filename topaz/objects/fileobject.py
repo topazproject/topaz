@@ -8,6 +8,7 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.ioobject import W_IOObject
+from topaz.objects.timeobject import W_TimeObject
 from topaz.system import IS_WINDOWS
 from topaz.utils.ll_file import O_BINARY, ftruncate, isdir, fchmod
 from topaz.utils.filemode import map_filemode
@@ -265,6 +266,34 @@ class W_FileObject(W_IOObject):
     @classdef.method("path")
     def method_path(self, space):
         return space.newstr_fromstr(self.filename)
+
+    @classdef.method("mtime")
+    def method_mtime(self, space):
+        try:
+            stat_val = os.stat(self.filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return self._time_at(space, stat_val.st_mtime)
+
+    @classdef.method("atime")
+    def method_atime(self, space):
+        try:
+            stat_val = os.stat(self.filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return self._time_at(space, stat_val.st_atime)
+
+    @classdef.method("ctime")
+    def method_ctime(self, space):
+        try:
+            stat_val = os.stat(self.filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return self._time_at(space, stat_val.st_ctime)
+
+    def _time_at(self, space, time):
+        return space.send(space.getclassfor(W_TimeObject), "at",
+            [space.newint(int(time))])
 
     @classdef.method("chmod", mode="int")
     def method_chmod(self, space, mode):

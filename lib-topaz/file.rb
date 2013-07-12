@@ -1,4 +1,16 @@
 class File < IO
+  def self.atime(filename)
+    File.new(filename).atime
+  end
+
+  def self.ctime(filename)
+    File.new(filename).ctime
+  end
+
+  def self.mtime(filename)
+    File.new(filename).mtime
+  end
+
   def self.open(filename, mode="r", perm=nil, opt=nil, &block)
     f = self.new filename, mode, perm, opt
     return f unless block
