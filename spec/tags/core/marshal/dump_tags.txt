@@ -63,6 +63,7 @@ fails:Marshal.dump with a Float dumps a Float
 fails:Marshal.dump with a Bignum dumps a Bignum
 fails:Marshal.dump with a String dumps a long String
 fails:Marshal.dump with a String dumps a String extended with a Module
+fails:Marshal.dump with a String dumps a String subclass extended with a Module
 fails:Marshal.dump with a String dumps a US-ASCII String
 fails:Marshal.dump with a String dumps a UTF-8 String
 fails:Marshal.dump with a String dumps a String in another encoding
