@@ -120,15 +120,8 @@ class UnboxedAttributeNode(AttributeNode):
     def compute_position(self):
         return compute_position(self, "uses_unboxed_storage")
 
-    @jit.unroll_safe
     def update_storage_size(self, w_obj):
-        length = self.length()
-        if w_obj.unboxed_storage is None or length >= len(w_obj.unboxed_storage):
-            new_storage = [0.0] * length
-            if w_obj.unboxed_storage is not None:
-                for i, value in enumerate(w_obj.unboxed_storage):
-                    new_storage[i] = value
-            w_obj.unboxed_storage = new_storage
+        update_storage(self, w_obj, "unboxed_storage", 0.0)
 
 
 class IntAttributeNode(UnboxedAttributeNode):
@@ -167,7 +160,7 @@ class ObjectAttributeNode(AttributeNode):
         return compute_position(self, "uses_object_storage")
 
     def update_storage_size(self, w_obj):
-        update_object_storage(self, w_obj)
+        update_storage(self, w_obj, "object_storage", None)
 
     def _store(self, space, w_obj, w_value):
         w_obj.object_storage[self.pos] = w_value
@@ -184,7 +177,7 @@ class FlagNode(StorageNode):
         return compute_position(self, "uses_object_storage")
 
     def update_storage_size(self, w_obj):
-        return update_object_storage(self, w_obj)
+        update_storage(self, w_obj, "object_storage", None)
 
     def copy_attrs(self, space, w_obj, w_target):
         self.prev.copy_attrs(space, w_obj, w_target)
@@ -203,15 +196,17 @@ ATTRIBUTE_CLASSES = unrolling_iterable([
 ])
 
 
+@specialize.arg(2)
 @jit.unroll_safe
-def update_object_storage(node, w_obj):
+def update_storage(node, w_obj, storage_name, empty_value):
     length = node.length()
-    if w_obj.object_storage is None or length >= len(w_obj.object_storage):
-        new_storage = [None] * length
-        if w_obj.object_storage is not None:
-            for i, w_value in enumerate(w_obj.object_storage):
-                new_storage[i] = w_value
-        w_obj.object_storage = new_storage
+    storage = getattr(w_obj, storage_name)
+    if storage is None or length >= len(storage):
+        new_storage = [empty_value] * length
+        if storage is not None:
+            for i, value in enumerate(storage):
+                new_storage[i] = value
+        setattr(w_obj, storage_name, new_storage)
 
 
 @specialize.arg(1)
