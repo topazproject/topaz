@@ -7,3 +7,4 @@ load_bootstrap = proc do |file|
 end
 
 load_bootstrap.call("array.rb")
+load_bootstrap.call("rubinius.rb")

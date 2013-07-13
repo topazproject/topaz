@@ -8,17 +8,15 @@ class MSpecScript
   core = [
     "#{Rubyspec}/core/",
     # Struct: ``Struct.new(:field)``
-    "^#{Rubyspec}/core/struct",
+    #"^#{Rubyspec}/core/struct",
     "^#{Rubyspec}/core/string/chomp_spec.rb",
     # timeout: ``require 'timeout'``
     "^#{Rubyspec}/core/process/detach_spec.rb",
     # GC: ``GC``
     "^#{Rubyspec}/core/gc/profiler/",
-    # openssl: ``require 'openssl'``
-    "^#{Rubyspec}/core/marshal/dump_spec.rb",
-    # openssl: ``require 'openssl'``
+    # stringio: ``require 'stringio'``
     "^#{Rubyspec}/core/marshal/load_spec.rb",
-    # openssl: ``require 'openssl'``
+    # stringio: ``require 'stringio'``
     "^#{Rubyspec}/core/marshal/restore_spec.rb",
     # autoload: ``autoload :Class, "file.rb"``
     "^#{Rubyspec}/core/kernel/autoload_spec.rb",

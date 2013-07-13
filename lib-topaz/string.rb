@@ -174,4 +174,8 @@ class String
   def self.try_convert(arg)
     Topaz.try_convert_type(arg, String, :to_str)
   end
+
+  def force_encoding(_)
+    self
+  end
 end
