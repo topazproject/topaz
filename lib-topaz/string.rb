@@ -159,6 +159,10 @@ class String
     duplicate
   end
 
+  def chr
+    self.dup[0] || self.dup
+  end
+
   def replace(other)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
     other = Topaz.convert_type(other, String, :to_str)
