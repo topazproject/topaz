@@ -292,8 +292,9 @@ class W_FileObject(W_IOObject):
         return self._time_at(space, stat_val.st_ctime)
 
     def _time_at(self, space, time):
-        return space.send(space.getclassfor(W_TimeObject), "at",
-            [space.newint(int(time))])
+        return space.send(
+            space.getclassfor(W_TimeObject), "at", [space.newint(int(time))]
+        )
 
     @classdef.method("chmod", mode="int")
     def method_chmod(self, space, mode):
