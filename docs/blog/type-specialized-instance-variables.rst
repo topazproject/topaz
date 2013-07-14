@@ -6,10 +6,10 @@ Type Specialized Instance Variables
 In Topaz, like most other VMs, all objects are stored in what are called
 "boxes". Essentially that means when you have something like ``x = 5``, ``x``
 is really a pointer to an object which contains ``5``, not the value ``5``
-itself. This is often a source of performance problems for VMs, this generates
-more garbage for the GC to process and means that to access the value ``5``
-more memory dereferences are needed. Topaz's just-in-time compiler (JIT) is
-often able to remove these allocations and memory dereferences in individual
+itself. This is often a source of performance problems for VMs, because it
+generates more garbage for the GC to process and means that to access the value
+``5`` more memory dereferences are needed. Topaz's just-in-time compiler (JIT)
+is often able to remove these allocations and memory dereferences in individual
 loops or functions, however it's not able to remove them in structures that
 stick around in memory, like objects.
 
