@@ -33,7 +33,8 @@ Let's look at an example:
 
     p = Point.new(1, 2, 3)
 
-Before this optimization, ``p`` looked like this in memory:
+Before this optimization, ``p`` looked like this in memory. Each box indicates
+an 8-byte (on 64-bit systems) value, and arrows are pointers:
 
 .. image:: images/type-specialized-instances-before.png
 
