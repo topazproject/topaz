@@ -27,6 +27,7 @@ class MapTransitionCache(object):
 
 class BaseNode(object):
     _attrs_ = ["size_estimate"]
+    _immutable_fields_ = ["size_estimate"]
 
     @jit.elidable
     def find(self, node_cls, name=None):
