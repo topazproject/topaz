@@ -38,4 +38,4 @@ class TestMapDict(object):
                 w_obj.map = w_obj.map.add(space, mapdict.ObjectAttributeNode, a, w_obj)
 
         assert class_node.size_estimate.object_size_estimate() in [(i + 10) // 2, (i + 11) // 2]
-        assert class_node.size_estimate.unboxed_size_estimate() in [(i + 10) // 2, (i + 11) // 2]
+        assert class_node.size_estimate.unboxed_size_estimate() == 0
