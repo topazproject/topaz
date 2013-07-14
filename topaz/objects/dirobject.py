@@ -26,7 +26,7 @@ class W_DirObject(W_Object):
         if not self.open:
             raise space.error(space.w_IOError, "closed directory")
 
-    @classdef.method("initialize", path="str")
+    @classdef.method("initialize", path="path")
     def method_initialize(self, space, path):
         self.path = path
         try:
@@ -126,6 +126,10 @@ class W_DirObject(W_Object):
         closedir(self.dirp)
         self.open = False
         return space.w_nil
+
+    @classdef.method("path")
+    def method_path(self, space):
+        return space.newstr_fromstr(self.path)
 
     @classdef.singleton_method("mkdir", path="path", mode="int")
     def method_mkdir(self, space, path, mode=0777):
