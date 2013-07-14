@@ -5,6 +5,10 @@ from rpython.rlib.unroll import unrolling_iterable
 from rpython.rtyper.lltypesystem import rffi, lltype
 
 
+NUM_DIGITS = 4
+NUM_DIGITS_POW2 = 1 << NUM_DIGITS
+
+
 class MapTransitionCache(object):
     def __init__(self, space):
         # {w_cls: ClassNode}
@@ -22,7 +26,7 @@ class MapTransitionCache(object):
 
 
 class BaseNode(object):
-    _attrs_ = []
+    _attrs_ = ["size_estimate"]
 
     @jit.elidable
     def find(self, node_cls, name=None):
@@ -37,7 +41,7 @@ class BaseNode(object):
 
     def add(self, space, node_cls, name, w_obj):
         new_node = space.fromcache(MapTransitionCache).get_transition(self, node_cls, name)
-        new_node.update_storage_size(w_obj)
+        new_node.update_storage_size(w_obj, self)
         return new_node
 
 
@@ -48,6 +52,7 @@ class ClassNode(BaseNode):
 
     def __init__(self, w_cls):
         self.w_cls = w_cls
+        self.size_estimate = SizeEstimate(0, 0)
 
     def getclass(self):
         return self.w_cls
@@ -83,6 +88,10 @@ class StorageNode(BaseNode):
     def matches(self, node_cls, name):
         return BaseNode.matches(self, node_cls, name) and name == self.name
 
+    def update_storage_size(self, w_obj, prev_node):
+        if not jit.we_are_jitted():
+            prev_node.size_estimate.update_from(self.size_estimate)
+
 
 class AttributeNode(StorageNode):
     @staticmethod
@@ -117,11 +126,19 @@ class UnboxedAttributeNode(AttributeNode):
     uses_object_storage = False
     uses_unboxed_storage = True
 
+    def __init__(self, prev, name):
+        AttributeNode.__init__(self, prev, name)
+        self.size_estimate = SizeEstimate(
+            prev.size_estimate._object_size_estimate,
+            self.length() * NUM_DIGITS_POW2
+        )
+
     def compute_position(self):
         return compute_position(self, "uses_unboxed_storage")
 
-    def update_storage_size(self, w_obj):
-        update_storage(self, w_obj, "unboxed_storage", 0.0)
+    def update_storage_size(self, w_obj, prev_node):
+        AttributeNode.update_storage_size(self, w_obj, prev_node)
+        update_storage(self, w_obj, "unboxed", 0.0)
 
 
 class IntAttributeNode(UnboxedAttributeNode):
@@ -152,6 +169,13 @@ class ObjectAttributeNode(AttributeNode):
     uses_object_storage = True
     uses_unboxed_storage = False
 
+    def __init__(self, prev, name):
+        AttributeNode.__init__(self, prev, name)
+        self.size_estimate = SizeEstimate(
+            self.length() * NUM_DIGITS_POW2,
+            prev.size_estimate._unboxed_size_estimate,
+        )
+
     @staticmethod
     def correct_type(space, w_value):
         return True
@@ -159,8 +183,9 @@ class ObjectAttributeNode(AttributeNode):
     def compute_position(self):
         return compute_position(self, "uses_object_storage")
 
-    def update_storage_size(self, w_obj):
-        update_storage(self, w_obj, "object_storage", None)
+    def update_storage_size(self, w_obj, prev_node):
+        AttributeNode.update_storage_size(self, w_obj, prev_node)
+        update_storage(self, w_obj, "object", None)
 
     def _store(self, space, w_obj, w_value):
         w_obj.object_storage[self.pos] = w_value
@@ -173,11 +198,19 @@ class FlagNode(StorageNode):
     uses_object_storage = True
     uses_unboxed_storage = False
 
+    def __init__(self, prev, name):
+        StorageNode.__init__(self, prev, name)
+        self.size_estimate = SizeEstimate(
+            self.length() * NUM_DIGITS_POW2,
+            prev.size_estimate._unboxed_size_estimate,
+        )
+
     def compute_position(self):
         return compute_position(self, "uses_object_storage")
 
-    def update_storage_size(self, w_obj):
-        update_storage(self, w_obj, "object_storage", None)
+    def update_storage_size(self, w_obj, prev_node):
+        StorageNode.update_storage_size(self, w_obj, prev_node)
+        update_storage(self, w_obj, "object", None)
 
     def copy_attrs(self, space, w_obj, w_target):
         self.prev.copy_attrs(space, w_obj, w_target)
@@ -199,14 +232,13 @@ ATTRIBUTE_CLASSES = unrolling_iterable([
 @specialize.arg(2)
 @jit.unroll_safe
 def update_storage(node, w_obj, storage_name, empty_value):
-    length = node.length()
-    storage = getattr(w_obj, storage_name)
-    if storage is None or length >= len(storage):
-        new_storage = [empty_value] * length
+    storage = getattr(w_obj, storage_name + "_storage")
+    if storage is None or node.length() >= len(storage):
+        new_storage = [empty_value] * getattr(node.size_estimate, storage_name + "_size_estimate")()
         if storage is not None:
             for i, value in enumerate(storage):
                 new_storage[i] = value
-        setattr(w_obj, storage_name, new_storage)
+        setattr(w_obj, storage_name + "_storage", new_storage)
 
 
 @specialize.arg(1)
@@ -218,3 +250,21 @@ def compute_position(node, predicate):
             n += 1
         node = node.getprev()
     return n
+
+
+class SizeEstimate(object):
+    def __init__(self, object_size_estimate, unboxed_size_estimate):
+        self._object_size_estimate = object_size_estimate
+        self._unboxed_size_estimate = unboxed_size_estimate
+
+    @jit.elidable
+    def object_size_estimate(self):
+        return self._object_size_estimate >> NUM_DIGITS
+
+    @jit.elidable
+    def unboxed_size_estimate(self):
+        return self._unboxed_size_estimate >> NUM_DIGITS
+
+    def update_from(self, other):
+        self._object_size_estimate = self._object_size_estimate + other.object_size_estimate() - self.object_size_estimate()
+        self._unboxed_size_estimate = self._unboxed_size_estimate + other.unboxed_size_estimate() - self.unboxed_size_estimate()
