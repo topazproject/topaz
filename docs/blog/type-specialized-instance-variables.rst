@@ -1,7 +1,7 @@
 Type Specialized Instance Variables
 ===================================
 
-**Posted: July 13, 2013**
+**Posted: July 14, 2013**
 
 In Topaz, like most other VMs, all objects are stored in what are called
 "boxes". Essentially that means when you have something like ``x = 5``, ``x``
