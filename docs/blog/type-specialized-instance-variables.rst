@@ -43,11 +43,11 @@ And after the optimization, it looks like this:
 
 With this optimization landed, Topaz will use less memory and be faster for
 programs that store ``Fixnum`` and ``Float`` objects in memory. If you're
-interested in this type of optimization you can read about a similar one in
-`PyPy for lists`_ that we're in the process of porting to Topaz.
+interested in this type of optimization you can read about a `similar one in
+PyPy for lists`_ that we're in the process of porting to Topaz.
 
 We're looking forward to doing our first release soon, we hope you'll test
 Topaz out, and give us feedback with the `nightly builds`_ until then
 
-.. _`PyPy for lists`: http://morepypy.blogspot.com/2011/10/more-compact-lists-with-list-strategies.html
+.. _`similar one in PyPy for lists`: http://morepypy.blogspot.com/2011/10/more-compact-lists-with-list-strategies.html
 .. _`nightly builds`: http://topazruby.com/builds/
