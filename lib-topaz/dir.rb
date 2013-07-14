@@ -4,11 +4,9 @@ class Dir
       dirname = dirname.to_path
     end
     begin
-      new(dirname)
+      !!new(dirname)
     rescue Errno::ENOENT, Errno::ENOTDIR
-      return false
-    else
-      return true
+      false
     end
   end
 
