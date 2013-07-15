@@ -89,8 +89,7 @@ class TestFunction_attach(BaseFFITest):
         LibraryMock::attachments.include? :power
         (0..5).each.map { |x| LibraryMock::attachments[:power].call(x, 2) }
         """)
-        res = self.unwrap(space, w_res)
-        assert [x for x in res] == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
+        assert self.unwrap(space, w_res) == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
 
     def test_it_works_with_abs_from_libc(self, space):
         w_res = space.execute("""
@@ -106,4 +105,5 @@ class TestFunction_attach(BaseFFITest):
         LibraryMock::attachments.include? :abs
         (-3..+3).each.map { |x| LibraryMock::attachments[:abs].call(x) }
         """)
-        assert self.unwrap(space, w_res) == [3, 2, 1, 0, 1, 2, 3]
+        res = [x.toint() for x in self.unwrap(space, w_res)]
+        assert res == [3, 2, 1, 0, 1, 2, 3]

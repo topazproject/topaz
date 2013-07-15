@@ -9,6 +9,12 @@ from topaz.objects.functionobject import W_BuiltinFunction
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rlib import clibffi
+from rpython.rlib.unroll import unrolling_iterable
+from rpython.rlib.rbigint import rbigint
+
+unrolling_types = unrolling_iterable([rffi.INT,
+                                      rffi.DOUBLE,
+                                      rffi.VOIDP])
 
 class W_FunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
@@ -35,20 +41,24 @@ class W_FunctionObject(W_PointerObject):
 
     @staticmethod
     def ensure_w_type(space, w_type_or_sym):
+        w_type = None
         if space.is_kind_of(w_type_or_sym, space.getclassfor(W_TypeObject)):
-            return w_type_or_sym
-        try:
-            sym = Coerce.symbol(space, w_type_or_sym)
-        except RubyError:
-            tp = w_type_or_sym.getclass(space).name
-            raise space.error(space.w_TypeError,
-                              "can't convert %s into Type" % tp)
-        try:
-            w_type_cls = space.getclassfor(W_TypeObject)
-            return space.find_const(w_type_cls, sym.upper())
-        except RubyError:
-            raise space.error(space.w_TypeError,
-                              "can't convert Symbol into Type")
+            w_type = w_type_or_sym
+        else:
+            try:
+                sym = Coerce.symbol(space, w_type_or_sym)
+            except RubyError:
+                tp = w_type_or_sym.getclass(space).name
+                raise space.error(space.w_TypeError,
+                                  "can't convert %s into Type" % tp)
+            try:
+                w_type_cls = space.getclassfor(W_TypeObject)
+                w_type = space.find_const(w_type_cls, sym.upper())
+            except RubyError:
+                raise space.error(space.w_TypeError,
+                                  "can't convert Symbol into Type")
+        assert isinstance(w_type, W_TypeObject)
+        return w_type
 
     @staticmethod
     def dlsym_unwrap(space, w_name):
@@ -64,26 +74,31 @@ class W_FunctionObject(W_PointerObject):
         # NOT RPYTHON
         w_ret_type = self.w_ret_type
         arg_types_w = self.arg_types_w
-        ffi_ret_type = w_ret_type.ffi_type
         native_arg_types = [t.native_type for t in arg_types_w]
         native_ret_type = w_ret_type.native_type
         args = [space.float_w(w_x) for w_x in args_w]
-        for argval, argtype in zip(args, native_arg_types):
-            casted_val = rffi.cast(argtype, argval)
-            self.ptr.push_arg(casted_val)
-        result = self.ptr.call(native_ret_type)
-        if ffi_ret_type in [clibffi.ffi_type_sint8,
-                            clibffi.ffi_type_uint8,
-                            clibffi.ffi_type_sint16,
-                            clibffi.ffi_type_uint16,
-                            clibffi.ffi_type_sint32,
-                            clibffi.ffi_type_uint32,
-                            clibffi.ffi_type_sint64,
-                            clibffi.ffi_type_uint64]:
-            return space.newint_or_bigint(result)
-        elif ffi_ret_type in [clibffi.ffi_type_float,
-                              clibffi.ffi_type_double]:
-            return space.newfloat(result)
+        for i, argval in enumerate(args):
+            argtype = native_arg_types[i]
+            for t in unrolling_types:
+                if t is argtype:
+                    #casted_val = rffi.cast(t, argval)
+                    #self.ptr.push_arg(casted_val)
+                    print argtype
+        for t in unrolling_types:
+            if t is native_ret_type:
+                if t is not rffi.VOIDP:
+                    #result = self.ptr.call(t)
+                    #result = rffi.cast(t, result)
+                    #if t is rffi.INT:
+                    #    bigres = rbigint.fromrarith_int(result)
+                    #    return space.newbigint_fromrbigint(bigres)
+                    #elif t is rffi.DOUBLE:
+                    #    return space.newfloat(result)
+                    return space.newfloat(1.0)
+                else:
+                    return space.w_nil
+        assert 0
+        return space.w_nil
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
@@ -96,9 +111,9 @@ class W_FunctionObject(W_PointerObject):
             ptr_key = self.w_name
             assert space.is_kind_of(ptr_key, space.w_symbol)
             try:
-                self.ptr = w_dl.cdll.getpointer(space.symbol_w(ptr_key),
-                                                ffi_arg_types,
-                                                ffi_ret_type)
+                self.ptr = w_dl.getpointer(space.symbol_w(ptr_key),
+                                           ffi_arg_types,
+                                           ffi_ret_type)
                 w_attachments = space.send(w_lib, 'attachments')
                 space.send(w_attachments, '[]=', [space.newsymbol(name), self])
             except KeyError: pass

@@ -29,8 +29,8 @@ class FFI(object):
     def setup_module(space, w_mod):
         # setup type constants
         ### >>> this is not rpython
-        space.set_const(w_mod, 'TypeDefs', space.newhash())
-        space.set_const(w_mod, 'Types', space.newhash())
+        #space.set_const(w_mod, 'TypeDefs', space.newhash())
+        #space.set_const(w_mod, 'Types', space.newhash())
         ### <<<
         for typename in W_TypeObject.basics:
             w_new_type = W_TypeObject(space,
@@ -51,13 +51,13 @@ class FFI(object):
 
         ## setup modules from other files
         space.set_const(w_mod, 'Type', space.getclassfor(W_TypeObject))
-        space.set_const(w_mod, 'DataConverter',
-                        space.getmoduleobject(DataConverter.moduledef))
         space.set_const(w_mod, 'DynamicLibrary',
                         space.getclassfor(W_DynamicLibraryObject))
+        space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
         space.set_const(w_mod, 'Pointer',
                         space.getclassfor(W_PointerObject))
-        space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
+        space.set_const(w_mod, 'DataConverter',
+                        space.getmoduleobject(DataConverter.moduledef))
         space.set_const(w_mod, 'Buffer', space.getclassfor(W_BufferObject))
         space.set_const(w_mod, 'MemoryPointer',
                         space.getclassfor(W_MemoryPointerObject))

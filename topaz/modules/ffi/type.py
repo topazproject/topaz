@@ -26,7 +26,7 @@ class W_TypeObject(W_Object):
               'BOOL': clibffi.ffi_type_uchar,
               'VARARGS': clibffi.ffi_type_void}
 
-    natives = {'VOID': rffi.CHAR,
+    natives = {'VOID': rffi.VOIDP,
                'INT8': rffi.CHAR,
                'UINT8': rffi.UCHAR,
                'INT16': rffi.SHORT,
