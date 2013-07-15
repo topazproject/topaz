@@ -25,7 +25,7 @@ class W_FunctionObject(W_PointerObject):
 
     def __init__(self, space):
         W_PointerObject.__init__(self, space)
-        self.w_ret_type = W_TypeObject(space, rffi.CHAR, clibffi.ffi_type_void)
+        self.w_ret_type = W_TypeObject(space, 'DUMMY')
         self.arg_types_w = []
         self.w_name = space.newsymbol('')
         self.ptr = None
@@ -74,26 +74,25 @@ class W_FunctionObject(W_PointerObject):
         # NOT RPYTHON
         w_ret_type = self.w_ret_type
         arg_types_w = self.arg_types_w
-        native_arg_types = [t.native_type for t in arg_types_w]
-        native_ret_type = w_ret_type.native_type
+        native_arg_types = [t.get_native_type() for t in arg_types_w]
+        native_ret_type = w_ret_type.get_native_type()
         args = [space.float_w(w_x) for w_x in args_w]
         for i, argval in enumerate(args):
             argtype = native_arg_types[i]
             for t in unrolling_types:
                 if t is argtype:
-                    #casted_val = rffi.cast(t, argval)
-                    #self.ptr.push_arg(casted_val)
-                    print argtype
+                    casted_val = rffi.cast(t, argval)
+                    self.ptr.push_arg(casted_val)
         for t in unrolling_types:
             if t is native_ret_type:
                 if t is not rffi.VOIDP:
-                    #result = self.ptr.call(t)
-                    #result = rffi.cast(t, result)
-                    #if t is rffi.INT:
-                    #    bigres = rbigint.fromrarith_int(result)
-                    #    return space.newbigint_fromrbigint(bigres)
-                    #elif t is rffi.DOUBLE:
-                    #    return space.newfloat(result)
+                    result = self.ptr.call(t)
+                    result = rffi.cast(t, result)
+                    if t is rffi.INT:
+                        bigres = rbigint.fromrarith_int(result)
+                        return space.newbigint_fromrbigint(bigres)
+                    elif t is rffi.DOUBLE:
+                        return space.newfloat(result)
                     return space.newfloat(1.0)
                 else:
                     return space.w_nil
@@ -106,8 +105,8 @@ class W_FunctionObject(W_PointerObject):
         arg_types_w = self.arg_types_w
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
         for w_dl in w_ffi_libs.listview(space):
-            ffi_arg_types = [t.ffi_type for t in arg_types_w]
-            ffi_ret_type = w_ret_type.ffi_type
+            ffi_arg_types = [t.get_ffi_type() for t in arg_types_w]
+            ffi_ret_type = w_ret_type.get_ffi_type()
             ptr_key = self.w_name
             assert space.is_kind_of(ptr_key, space.w_symbol)
             try:

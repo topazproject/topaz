@@ -3,7 +3,8 @@ from __future__ import absolute_import
 from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
-from topaz.modules.ffi.type import W_TypeObject, W_BuiltinObject
+from topaz.modules.ffi.type import (native_types, ffi_types,
+                                    W_TypeObject, W_BuiltinObject)
 from topaz.modules.ffi.function import W_FunctionObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.modules.ffi.pointer import W_PointerObject
@@ -32,20 +33,14 @@ class FFI(object):
         #space.set_const(w_mod, 'TypeDefs', space.newhash())
         #space.set_const(w_mod, 'Types', space.newhash())
         ### <<<
-        for typename in W_TypeObject.basics:
-            w_new_type = W_TypeObject(space,
-                                      W_TypeObject.natives[typename],
-                                      W_TypeObject.basics[typename])
-            w_new_builtin_type = W_BuiltinObject(space, typename, w_new_type)
+        for typename in ffi_types:
+            w_new_builtin_type = W_BuiltinObject(space, typename)
             space.set_const(w_mod, 'TYPE_' + typename, w_new_builtin_type)
 
         # setup NativeType
         w_native_type = space.newmodule('NativeType')
-        for typename in W_TypeObject.basics:
-            w_new_type = W_TypeObject(space,
-                                      W_TypeObject.natives[typename],
-                                      W_TypeObject.basics[typename])
-            w_new_builtin_type = W_BuiltinObject(space, typename, w_new_type)
+        for typename in ffi_types:
+            w_new_builtin_type = W_BuiltinObject(space, typename)
             space.set_const(w_native_type, typename, w_new_builtin_type)
         space.set_const(w_mod, 'NativeType', w_native_type)
 
