@@ -5,46 +5,43 @@ from rpython.rlib import clibffi
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 
-class W_TypeObject(W_Object):
-    classdef = ClassDef('Type', W_Object.classdef)
+ffi_types = {'VOID':clibffi.ffi_type_void,
+             'INT8': clibffi.ffi_type_sint8,
+             'UINT8': clibffi.ffi_type_uint8,
+             'INT16': clibffi.ffi_type_sint16,
+             'UINT16': clibffi.ffi_type_uint16,
+             'INT32': clibffi.ffi_type_sint32,
+             'UINT32': clibffi.ffi_type_uint32,
+             'INT64': clibffi.ffi_type_sint64,
+             'UINT64': clibffi.ffi_type_uint64,
+             'LONG': clibffi.cast_type_to_ffitype(rffi.LONG),
+             'ULONG': clibffi.cast_type_to_ffitype(rffi.ULONG),
+             'FLOAT32': clibffi.ffi_type_float,
+             'FLOAT64': clibffi.ffi_type_double,
+             'LONGDOUBLE': clibffi.ffi_type_longdouble,
+             'POINTER': clibffi.ffi_type_pointer,
+             'BOOL': clibffi.ffi_type_uchar,
+             'VARARGS': clibffi.ffi_type_void}
 
-    basics = {'VOID':clibffi.ffi_type_void,
-              'INT8': clibffi.ffi_type_sint8,
-              'UINT8': clibffi.ffi_type_uint8,
-              'INT16': clibffi.ffi_type_sint16,
-              'UINT16': clibffi.ffi_type_uint16,
-              'INT32': clibffi.ffi_type_sint32,
-              'UINT32': clibffi.ffi_type_uint32,
-              'INT64': clibffi.ffi_type_sint64,
-              'UINT64': clibffi.ffi_type_uint64,
-              'LONG': clibffi.cast_type_to_ffitype(rffi.LONG),
-              'ULONG': clibffi.cast_type_to_ffitype(rffi.ULONG),
-              'FLOAT32': clibffi.ffi_type_float,
-              'FLOAT64': clibffi.ffi_type_double,
-              'LONGDOUBLE': clibffi.ffi_type_longdouble,
-              'POINTER': clibffi.ffi_type_pointer,
-              'BOOL': clibffi.ffi_type_uchar,
-              'VARARGS': clibffi.ffi_type_void}
+native_types = {'VOID': rffi.VOIDP,
+                'INT8': rffi.CHAR,
+                'UINT8': rffi.UCHAR,
+                'INT16': rffi.SHORT,
+                'UINT16': rffi.USHORT,
+                'INT32': rffi.INT,
+                'UINT32': rffi.UINT,
+                'LONG': rffi.LONG,
+                'ULONG': rffi.ULONG,
+                'INT64': rffi.LONGLONG,
+                'UINT64': rffi.ULONGLONG,
+                'FLOAT32': rffi.FLOAT,
+                'FLOAT64': rffi.DOUBLE,
+                'LONGDOUBLE': rffi.LONGDOUBLE,
+                'POINTER': rffi.LONGLONG,
+                'BOOL': rffi.CHAR,
+                'VARARGS': rffi.CHAR}
 
-    natives = {'VOID': rffi.VOIDP,
-               'INT8': rffi.CHAR,
-               'UINT8': rffi.UCHAR,
-               'INT16': rffi.SHORT,
-               'UINT16': rffi.USHORT,
-               'INT32': rffi.INT,
-               'UINT32': rffi.UINT,
-               'LONG': rffi.LONG,
-               'ULONG': rffi.ULONG,
-               'INT64': rffi.LONGLONG,
-               'UINT64': rffi.ULONGLONG,
-               'FLOAT32': rffi.FLOAT,
-               'FLOAT64': rffi.DOUBLE,
-               'LONGDOUBLE': rffi.LONGDOUBLE,
-               'POINTER': rffi.LONGLONG,
-               'BOOL': rffi.CHAR,
-               'VARARGS': rffi.CHAR}
-
-    aliases = {'SCHAR': 'INT8',
+aliases = {'SCHAR': 'INT8',
            'CHAR': 'INT8',
            'UCHAR': 'UINT8',
            'SHORT': 'INT16',
@@ -64,38 +61,48 @@ class W_TypeObject(W_Object):
            'BUFFER_OUT': 'POINTER',
            'BUFFER_INOUT': 'POINTER'}
 
+class W_TypeObject(W_Object):
+    classdef = ClassDef('Type', W_Object.classdef)
+
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         w_builtin = space.newclass('Builtin', w_cls)
-        for typename in W_TypeObject.basics:
-            native_type = W_TypeObject.natives[typename]
-            w_new_type = W_TypeObject(space, native_type,
-                                      W_TypeObject.basics[typename])
-            w_new_builtin_type = W_BuiltinObject(space, typename, w_new_type)
+        for typename in ffi_types:
+            w_new_builtin_type = W_BuiltinObject(space, typename)
             space.set_const(w_cls, typename, w_new_builtin_type)
-        for aka in W_TypeObject.aliases:
-            ffitype = space.find_const(w_cls, W_TypeObject.aliases[aka])
-            space.set_const(w_cls, aka, ffitype)
+        for aka in aliases:
+            w_new_type = W_TypeObject(space, aka)
+            space.set_const(w_cls, aka, w_new_type)
         space.set_const(w_cls, 'Mapped', space.getclassfor(W_MappedObject))
         space.set_const(w_cls, 'Builtin', space.getclassfor(W_BuiltinObject))
 
-    def __init__(self, space, native_type, ffi_type, klass=None):
+    def __init__(self, space, name, klass=None):
         W_Object.__init__(self, space, klass)
-        self.native_type = native_type
-        self.ffi_type = ffi_type
+        self.name = name
 
     def __deepcopy__(self, memo):
         obj = super(W_TypeObject, self).__deepcopy__(memo)
-        obj.native_type = self.native_type
-        obj.ffi_type = self.ffi_type
+        obj.name = self.name
         return obj
 
     def __eq__(self, other):
-        return (isinstance(other, W_TypeObject) and
-                self.native_type == other.native_type and
-                self.ffi_type == other.ffi_type)
+        if not isinstance(other, W_TypeObject):
+            return False
+        return self.get_name() == other.get_name()
+
+    def get_name(self):
+        return aliases[self.name]
+
+    def get_native_type(self):
+        return native_types[self.get_name()]
+
+    def get_ffi_type(self):
+        return ffi_types[self.get_name()]
 
     @classdef.method('size')
+
+    def get_native_type(self):
+        return native_types[self.name]
     def method_size(self, space):
         r_uint_size = self.ffi_type.c_size
         rbigint_size = rbigint.fromrarith_int(r_uint_size)
@@ -105,19 +112,22 @@ class W_TypeObject(W_Object):
 class W_BuiltinObject(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
 
-    def __init__(self, space, typename, w_type, klass=None):
-        W_TypeObject.__init__(self, space, w_type.native_type, w_type.ffi_type)
-        self.typename = typename
+    #def __init__(self, space, typename, w_type, klass=None):
+    #    W_TypeObject.__init__(self, space, w_type.native_type, w_type.ffi_type)
+    #    self.typename = typename
 
-    def __deepcopy__(self, memo):
-        obj = super(W_BuiltinObject, self).__deepcopy__(memo)
-        obj.typename = self.typename
-        return obj
+    #def __deepcopy__(self, memo):
+    #    obj = super(W_BuiltinObject, self).__deepcopy__(memo)
+    #    obj.typename = self.typename
+    #    return obj
 
-    def __eq__(self, other):
-        return (isinstance(other, W_BuiltinObject) and
-                super(W_BuiltinObject, self).__eq__(other) and
-                self.typename == other.typename)
+    #def __eq__(self, other):
+    #    return (isinstance(other, W_BuiltinObject) and
+    #            super(W_BuiltinObject, self).__eq__(other) and
+    #            self.typename == other.typename)
+
+    def get_name(self):
+        return self.name
 
 class W_MappedObject(W_Object):
     classdef = ClassDef('MappedObject', W_Object.classdef)
