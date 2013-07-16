@@ -4,6 +4,7 @@ from topaz.module import ClassDef
 from rpython.rlib import clibffi
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
+from rpython.rlib.rarithmetic import intmask
 
 ffi_types = {'VOID':clibffi.ffi_type_void,
              'INT8': clibffi.ffi_type_sint8,
@@ -102,8 +103,7 @@ class W_TypeObject(W_Object):
     @classdef.method('size')
     def method_size(self, space):
         r_uint_size = self.get_ffi_type().c_size
-        rbigint_size = rbigint.fromrarith_int(r_uint_size)
-        size = rbigint.toint(rbigint_size)
+        size = intmask(r_uint_size)
         return space.newint(size)
 
 class W_BuiltinObject(W_TypeObject):
