@@ -29,10 +29,6 @@ class FFI(object):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         # setup type constants
-        ### >>> this is not rpython
-        #space.set_const(w_mod, 'TypeDefs', space.newhash())
-        #space.set_const(w_mod, 'Types', space.newhash())
-        ### <<<
         for typename in ffi_types:
             w_new_builtin_type = W_BuiltinObject(space, typename)
             space.set_const(w_mod, 'TYPE_' + typename, w_new_builtin_type)
