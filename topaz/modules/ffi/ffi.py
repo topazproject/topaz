@@ -17,15 +17,6 @@ from rpython.rtyper.lltypesystem import rffi
 class FFI(object):
     moduledef = ModuleDef("FFI")
 
-    sizes = {'INT8': rffi.sizeof(rffi.CHAR),
-             'INT16': rffi.sizeof(rffi.SHORT),
-             'INT32': rffi.sizeof(rffi.INT),
-             'INT64': rffi.sizeof(rffi.LONGLONG),
-             'LONG': rffi.sizeof(rffi.LONG),
-             'FLOAT': rffi.sizeof(rffi.FLOAT),
-             'DOUBLE': rffi.sizeof(rffi.DOUBLE),
-             'ADDRESS': rffi.sizeof(rffi.VOIDP)}
-
     @moduledef.setup_module
     def setup_module(space, w_mod):
         # setup type constants
@@ -55,9 +46,22 @@ class FFI(object):
 
         # setup Platform
         w_platform = space.newmodule('Platform', None)
-        for name in FFI.sizes:
-            space.set_const(w_platform, name + '_SIZE',
-                            space.newint(FFI.sizes[name]))
+        space.set_const(w_platform, 'INT8_SIZE',
+                        space.newint(rffi.sizeof(rffi.CHAR)))
+        space.set_const(w_platform, 'INT16_SIZE',
+                        space.newint(rffi.sizeof(rffi.SHORT)))
+        space.set_const(w_platform, 'INT32_SIZE',
+                        space.newint(rffi.sizeof(rffi.INT)))
+        space.set_const(w_platform, 'INT64_SIZE',
+                        space.newint(rffi.sizeof(rffi.LONGLONG)))
+        space.set_const(w_platform, 'LONG_SIZE',
+                        space.newint(rffi.sizeof(rffi.LONG)))
+        space.set_const(w_platform, 'FLOAT_SIZE',
+                        space.newint(rffi.sizeof(rffi.FLOAT)))
+        space.set_const(w_platform, 'DOUBLE_SIZE',
+                        space.newint(rffi.sizeof(rffi.DOUBLE)))
+        space.set_const(w_platform, 'ADDRESS_SIZE',
+                        space.newint(rffi.sizeof(rffi.VOIDP)))
         space.set_const(w_mod, 'Platform', w_platform)
 
         # setup StructLayout
