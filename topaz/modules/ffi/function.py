@@ -98,9 +98,13 @@ class W_FunctionObject(W_PointerObject):
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
-        argval = space.float_w(arg)
-        casted_val = rffi.cast(argtype, argval)
-        self.ptr.push_arg(casted_val)
+        if argtype is rffi.INT:
+            argval = space.int_w(arg)
+        elif argtype is rffi.DOUBLE:
+            argval = space.float_w(arg)
+        else:
+            assert False
+        self.ptr.push_arg(argval)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
