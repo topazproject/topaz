@@ -4,7 +4,7 @@ from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 from topaz.modules.ffi.type import (native_types, ffi_types,
-                                    W_TypeObject, W_BuiltinObject)
+                                    W_TypeObject)
 from topaz.modules.ffi.function import W_FunctionObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.modules.ffi.pointer import W_PointerObject
@@ -21,14 +21,14 @@ class FFI(object):
     def setup_module(space, w_mod):
         # setup type constants
         for typename in ffi_types:
-            w_new_builtin_type = W_BuiltinObject(space, typename)
-            space.set_const(w_mod, 'TYPE_' + typename, w_new_builtin_type)
+            w_new_type = W_TypeObject(space, typename)
+            space.set_const(w_mod, 'TYPE_' + typename, w_new_type)
 
         # setup NativeType
         w_native_type = space.newmodule('NativeType')
         for typename in ffi_types:
-            w_new_builtin_type = W_BuiltinObject(space, typename)
-            space.set_const(w_native_type, typename, w_new_builtin_type)
+            w_new_type = W_TypeObject(space, typename)
+            space.set_const(w_native_type, typename, w_new_type)
         space.set_const(w_mod, 'NativeType', w_native_type)
 
         ## setup modules from other files

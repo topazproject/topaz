@@ -67,11 +67,11 @@ class TestFunction__new(BaseFFITest):
         foo = FFI::DynamicLibrary::Symbol.new(:foo)
         FFI::Function.new(:int8, [:int16, :float64], foo, {})
         """)
-        w_short = space.execute("FFI::Type::SHORT")
-        w_double = space.execute("FFI::Type::DOUBLE")
-        w_char = space.execute("FFI::Type::CHAR")
-        assert w_function.arg_types_w == [w_short, w_double]
-        assert w_function.w_ret_type == w_char
+        w_int16 = space.execute("FFI::Type::INT16")
+        w_float64 = space.execute("FFI::Type::FLOAT64")
+        w_int8 = space.execute("FFI::Type::INT8")
+        assert w_function.arg_types_w == [w_int16, w_float64]
+        assert w_function.w_ret_type == w_int8
         assert self.unwrap(space, w_function.w_name) == 'foo'
 
 class TestFunction_attach(BaseFFITest):

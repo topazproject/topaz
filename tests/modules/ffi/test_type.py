@@ -1,49 +1,31 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.modules.ffi.type import (ffi_types, native_types, aliases,
-                                    W_TypeObject, W_BuiltinObject)
+from topaz.modules.ffi.type import (ffi_types, native_types,
+                                    W_TypeObject)
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.moduleobject import W_ModuleObject
 from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import rffi
 
-primitive_types =  {'INT8': {'size': 1},
-                    'UINT8': {'size': 1},
-                    'INT16': {'size': 2},
-                    'UINT16': {'size': 2},
-                    'INT32': {'size': 4},
-                    'UINT32': {'size': 4},
-                    'INT64': {'size': 8},
-                    'UINT64': {'size': 8},
-                    'LONG': {'size': rffi.sizeof(rffi.LONG)},
-                    'ULONG': {'size': rffi.sizeof(rffi.ULONG)},
-                    'FLOAT32': {'size': 4},
-                    'FLOAT64': {'size': 8},
-                    'VOID': {'size': 1},
-                    'LONGDOUBLE': {'size': 16},
-                    'POINTER': {'size': 8},
-                    'BOOL': {'size': 1},
-                    'VARARGS': {'size': 1}}
-
 def test_aliases():
-    assert aliases['SCHAR'] == 'INT8'
-    assert aliases['CHAR'] == 'INT8'
-    assert aliases['UCHAR'] == 'UINT8'
-    assert aliases['SHORT'] == 'INT16'
-    assert aliases['SSHORT'] == 'INT16'
-    assert aliases['USHORT'] == 'UINT16'
-    assert aliases['INT'] == 'INT32'
-    assert aliases['SINT'] == 'INT32'
-    assert aliases['UINT'] == 'UINT32'
-    assert aliases['LONG_LONG'] == 'INT64'
-    assert aliases['SLONG'] == 'LONG'
-    assert aliases['SLONG_LONG'] == 'INT64'
-    assert aliases['ULONG_LONG'] == 'UINT64'
-    assert aliases['FLOAT'] == 'FLOAT32'
-    assert aliases['DOUBLE'] == 'FLOAT64'
-    assert aliases['STRING'] == 'POINTER'
-    assert aliases['BUFFER_IN'] == 'POINTER'
-    assert aliases['BUFFER_OUT'] == 'POINTER'
-    assert aliases['BUFFER_INOUT'] == 'POINTER'
+    assert ffi_types['SCHAR'] == ffi_types['INT8']
+    assert ffi_types['CHAR'] == ffi_types['INT8']
+    assert ffi_types['UCHAR'] == ffi_types['UINT8']
+    assert ffi_types['SHORT'] == ffi_types['INT16']
+    assert ffi_types['SSHORT'] == ffi_types['INT16']
+    assert ffi_types['USHORT'] == ffi_types['UINT16']
+    assert ffi_types['INT'] == ffi_types['INT32']
+    assert ffi_types['SINT'] == ffi_types['INT32']
+    assert ffi_types['UINT'] == ffi_types['UINT32']
+    assert ffi_types['LONG_LONG'] == ffi_types['INT64']
+    assert ffi_types['SLONG'] == ffi_types['LONG']
+    assert ffi_types['SLONG_LONG'] == ffi_types['INT64']
+    assert ffi_types['ULONG_LONG'] == ffi_types['UINT64']
+    assert ffi_types['FLOAT'] == ffi_types['FLOAT32']
+    assert ffi_types['DOUBLE'] == ffi_types['FLOAT64']
+    assert ffi_types['STRING'] == ffi_types['POINTER']
+    assert ffi_types['BUFFER_IN'] == ffi_types['POINTER']
+    assert ffi_types['BUFFER_OUT'] == ffi_types['POINTER']
+    assert ffi_types['BUFFER_INOUT'] == ffi_types['POINTER']
 
 class TestType(BaseFFITest):
     def test_it_is_a_class(self, space):
@@ -62,13 +44,9 @@ class TestFFI__TestType(BaseFFITest):
             assert self.ask(space, "FFI::NativeType::%s.is_a? FFI::Type"
                             %typename)
 
-class TestFFI__Type__Builtin(BaseFFITest):
-    def test_Builtin_is_a_direct_subclass_of_Type(self, space):
-        assert self.ask(space, "FFI::Type::Builtin.superclass.equal? FFI::Type")
-
-    def test_it_has_these_instances_defined_under_Type(self, space):
+    def test_it_has_these_instances_defined_as_constants(self, space):
         for typename in ffi_types:
-            assert self.ask(space, "FFI::Type::%s.is_a? FFI::Type::Builtin"
+            assert self.ask(space, "FFI::Type::%s.is_a? FFI::Type"
                             % typename)
 
     def test_its_instances_can_be_accessed_in_different_ways(self, space):
@@ -78,10 +56,6 @@ class TestFFI__Type__Builtin(BaseFFITest):
             w_t3 = space.execute('FFI::NativeType::%s' % typename)
             assert w_t1 == w_t2
             assert w_t2 == w_t3
-        for typename in aliases:
-            w_ac = space.execute('FFI::Type::%s' % typename)
-            w_ex = space.execute('FFI::Type::%s' % aliases[typename])
-            assert w_ac == w_ex
 
 class TestFFI__Type_get_ffi_type(BaseFFITest):
     def test_it_looks_up_the_ffi_type(self, space):
