@@ -1,6 +1,4 @@
 fails:String#index with object tries to convert obj to a string via to_str
-fails:String#index with String behaves the same as String#index(char) for one-character strings
-fails:String#index with String ignores string subclasses
 fails:String#index with String starts the search at the given offset
 fails:String#index with String starts the search at offset + self.length if offset is negative
 fails:String#index with String returns nil if the substring isn't found

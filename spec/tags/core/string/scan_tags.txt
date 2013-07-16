@@ -2,5 +2,4 @@ fails:String#scan respects $KCODE when the pattern collapses to nothing
 fails:String#scan sets $~ to MatchData of last match and nil when there's none
 fails:String#scan supports \G which matches the end of the previous match / string start for first match
 fails:String#scan with pattern and block sets $~ for access from the block
-fails:String#scan with pattern and block restores $~ after leaving the block
 fails:String#scan with pattern and block sets $~ to MatchData of last match and nil when there's none for access from outside
