@@ -6,11 +6,5 @@ fails:Array#to_s returns a US-ASCII string for an empty Array
 fails:Array#to_s copies the ASCII-compatible encoding of the result of inspecting the first element
 fails:Array#to_s copies the ASCII-incompatible encoding of the result of inspecting the first element
 fails:Array#to_s raises if inspecting two elements produces incompatible encodings
-fails:Array#to_s returns a string
-fails:Array#to_s returns '[]' for an empty Array
-fails:Array#to_s calls inspect on its elements and joins the results with commas
-fails:Array#to_s represents a recursive element with '[...]'
-fails:Array#to_s does not taint the result if the Array is tainted but empty
-fails:Array#to_s does not untrust the result if the Array is untrusted but empty
 fails:Array#to_s use the default external encoding if it is ascii compatible
 fails:Array#to_s use US-ASCII encoding if the default external encoding is not ascii compatible
