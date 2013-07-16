@@ -10,11 +10,13 @@ from topaz.objects.functionobject import W_BuiltinFunction
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
+from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rbigint import rbigint
 
-unrolling_types = unrolling_iterable([rffi.INT,
+unrolling_types = unrolling_iterable([
+                                      rffi.INT,
                                       rffi.DOUBLE,
-                                      rffi.VOIDP])
+                                    ])
 
 class W_FunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
@@ -71,18 +73,14 @@ class W_FunctionObject(W_PointerObject):
 
     @classdef.method('call')
     def method_call(self, space, args_w):
-        # NOT RPYTHON
         w_ret_type = self.w_ret_type
         arg_types_w = self.arg_types_w
-        native_arg_types = [t.get_native_type() for t in arg_types_w]
         native_ret_type = w_ret_type.get_native_type()
-        args = [space.float_w(w_x) for w_x in args_w]
-        for i, argval in enumerate(args):
-            argtype = native_arg_types[i]
+        for i in range(len(args_w)):
             for t in unrolling_types:
+                argtype = arg_types_w[i].get_native_type()
                 if t is argtype:
-                    casted_val = rffi.cast(t, argval)
-                    self.ptr.push_arg(casted_val)
+                    self._push_arg(space, args_w[i], argtype)
         for t in unrolling_types:
             if t is native_ret_type:
                 if t is not rffi.VOIDP:
@@ -93,11 +91,16 @@ class W_FunctionObject(W_PointerObject):
                         return space.newbigint_fromrbigint(bigres)
                     elif t is rffi.DOUBLE:
                         return space.newfloat(result)
-                    return space.newfloat(1.0)
                 else:
                     return space.w_nil
-        assert 0
+        assert False
         return space.w_nil
+
+    @specialize.arg(3)
+    def _push_arg(self, space, arg, argtype):
+        argval = space.float_w(arg)
+        casted_val = rffi.cast(argtype, argval)
+        self.ptr.push_arg(casted_val)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

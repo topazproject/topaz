@@ -96,3 +96,12 @@ class TestFFI__Type_get_native_type(BaseFFITest):
             w_type = space.execute("FFI::Type::%s" %typename)
             t = w_type.get_native_type()
             assert t is native_types[typename]
+
+class TestFFI__Type_size(BaseFFITest):
+    def test_it_returns_the_size_type(self, space):
+        w_res = space.execute("FFI::Type::INT8.size")
+        assert self.unwrap(space, w_res) == 1
+        w_res = space.execute("FFI::Type::INT16.size")
+        assert self.unwrap(space, w_res) == 2
+        w_res = space.execute("FFI::Type::INT32.size")
+        assert self.unwrap(space, w_res) == 4

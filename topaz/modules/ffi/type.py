@@ -100,11 +100,8 @@ class W_TypeObject(W_Object):
         return ffi_types[self.get_name()]
 
     @classdef.method('size')
-
-    def get_native_type(self):
-        return native_types[self.name]
     def method_size(self, space):
-        r_uint_size = self.ffi_type.c_size
+        r_uint_size = self.get_ffi_type().c_size
         rbigint_size = rbigint.fromrarith_int(r_uint_size)
         size = rbigint.toint(rbigint_size)
         return space.newint(size)
