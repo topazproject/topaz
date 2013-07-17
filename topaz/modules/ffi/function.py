@@ -1,6 +1,6 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
-from topaz.modules.ffi.type import W_TypeObject
+from topaz.modules.ffi.type import W_TypeObject, native_types
 from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.error import RubyError
@@ -14,8 +14,8 @@ from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rbigint import rbigint
 
 unrolling_types = unrolling_iterable([
-                                      rffi.INT,
-                                      rffi.DOUBLE,
+                                      'INT32',
+                                      'FLOAT64'
                                     ])
 
 class W_FunctionObject(W_PointerObject):
@@ -75,32 +75,32 @@ class W_FunctionObject(W_PointerObject):
     def method_call(self, space, args_w):
         w_ret_type = self.w_ret_type
         arg_types_w = self.arg_types_w
-        native_ret_type = w_ret_type.get_native_type()
+        ret_type_name = w_ret_type.name
         for i in range(len(args_w)):
             for t in unrolling_types:
-                argtype = arg_types_w[i].get_native_type()
-                if t is argtype:
-                    self._push_arg(space, args_w[i], argtype)
+                argtype_name = arg_types_w[i].name
+                if t == argtype_name:
+                    self._push_arg(space, args_w[i], t)
         for t in unrolling_types:
-            if t is native_ret_type:
-                if t is not rffi.VOIDP:
-                    result = self.ptr.call(t)
-                    result = rffi.cast(t, result)
-                    if t is rffi.INT:
-                        bigres = rbigint.fromrarith_int(result)
-                        return space.newbigint_fromrbigint(bigres)
-                    elif t is rffi.DOUBLE:
-                        return space.newfloat(result)
-                else:
-                    return space.w_nil
+            if t == ret_type_name:
+                result = self.ptr.call(native_types[t])
+                # Is this really necessary? Maybe call does this anyway:
+                result = rffi.cast(native_types[t], result)
+                if t == 'INT32':
+                    bigres = rbigint.fromrarith_int(result)
+                    return space.newbigint_fromrbigint(bigres)
+                elif t == 'FLOAT64':
+                    return space.newfloat(result)
+            #else:
+            #    return space.w_nil
         assert False
         return space.w_nil
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
-        if argtype is rffi.INT:
+        if argtype == 'INT32':
             argval = space.int_w(arg)
-        elif argtype is rffi.DOUBLE:
+        elif argtype == 'FLOAT64':
             argval = space.float_w(arg)
         else:
             assert False
