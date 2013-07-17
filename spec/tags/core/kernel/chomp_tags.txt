@@ -1,2 +1,0 @@
-fails:Kernel.chomp removes only the final newline of $_
-fails:Kernel#chomp removes only the final newline of $_
