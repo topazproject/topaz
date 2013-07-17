@@ -214,8 +214,22 @@ class MutableStringStrategy(StringStrategy):
     def chomp(self, storage, newline=None):
         storage = self.unerase(storage)
         changed = False
+        linebreaks = ["\n", "\r"]
         if len(storage) == 0:
             return changed
+        elif newline is not None and len(newline) is 0:
+            ch = storage[-1]
+            i = len(storage) - 1
+            while i >= 1 and ch in linebreaks:
+                i -= 1
+                ch = storage[i]
+            if i < len(storage) - 1:
+                i += 1
+                changed = True
+                if i > 0:
+                    del storage[i:]
+                else:
+                    del storage[:]
         elif newline is not None and len(storage) >= len(newline):
             for i in xrange(len(newline) - 1, -1, -1):
                 if newline[i] != storage[len(storage) - len(newline) + i]:
@@ -227,7 +241,8 @@ class MutableStringStrategy(StringStrategy):
         elif newline is None:
             ch = storage[-1]
             i = len(storage) - 1
-            while i >= 0 and ch in "\n\r":
+            while i >= 0 and linebreaks and ch in linebreaks:
+                linebreaks.remove(ch)
                 i -= 1
                 ch = storage[i]
             if i < len(storage) - 1:
@@ -1172,7 +1187,7 @@ class W_StringObject(W_Object):
         if w_newline is space.w_nil:
             return self
         newline = space.str_w(space.convert_type(w_newline, space.w_string, "to_str"))
-        if newline in "\n\r":
+        if newline in "\n\r" and len(newline) is not 0:
             newline = None
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chomp(self.str_storage, newline)
