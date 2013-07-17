@@ -217,7 +217,7 @@ class MutableStringStrategy(StringStrategy):
         linebreaks = ["\n", "\r"]
         if len(storage) == 0:
             return changed
-        elif newline is not None and len(newline) is 0:
+        elif newline is not None and len(newline) == 0:
             ch = storage[-1]
             i = len(storage) - 1
             while i >= 1 and ch in linebreaks:
@@ -1187,7 +1187,7 @@ class W_StringObject(W_Object):
         if w_newline is space.w_nil:
             return self
         newline = space.str_w(space.convert_type(w_newline, space.w_string, "to_str"))
-        if newline in "\n\r" and len(newline) is not 0:
+        if newline in "\n\r" and len(newline) != 0:
             newline = None
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chomp(self.str_storage, newline)
