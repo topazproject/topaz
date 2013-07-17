@@ -1187,7 +1187,7 @@ class W_StringObject(W_Object):
         if w_newline is space.w_nil:
             return self
         newline = space.str_w(space.convert_type(w_newline, space.w_string, "to_str"))
-        if newline and newline in "\n\r": 
+        if newline and newline in "\n\r":
             newline = None
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chomp(self.str_storage, newline)
