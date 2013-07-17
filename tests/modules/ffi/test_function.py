@@ -1,6 +1,8 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.objects.classobject import W_ClassObject
 from topaz.modules.ffi.function import W_FunctionObject
+from topaz.modules.ffi.type import ffi_types, aliases
+
 from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import rffi
 
@@ -9,18 +11,23 @@ libm = clibffi.CDLL('libm.so')
 class TestFunction(BaseFFITest):
 
     def test_ensure_w_type(self, space):
-        w_type_object = space.execute("FFI::Type::VOID")
-        w_type_symbol = space.execute(":void")
-        w_some_int = space.execute("1")
-        w_unknown_type = space.execute(":int42")
-        assert (W_FunctionObject.ensure_w_type(space, w_type_object)
-                is w_type_object)
-        assert (W_FunctionObject.ensure_w_type(space, w_type_symbol)
-                is w_type_object)
+        ensure_w_type = W_FunctionObject.ensure_w_type
+        for typename in ffi_types:
+            w_type_object = space.execute("FFI::Type::%s" % typename)
+            assert (ensure_w_type(space, w_type_object)
+                    is w_type_object)
+            w_type_symbol = space.newsymbol(typename.lower())
+            assert (ensure_w_type(space, w_type_symbol)
+                    is w_type_object)
+            for alias in aliases[typename]:
+                assert (ensure_w_type(space, space.newsymbol(alias.lower()))
+                        is space.execute("FFI::Type::%s" % typename))
+
+    def test_ensure_w_type_errors(self, space):
         with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
-            W_FunctionObject.ensure_w_type(space, w_some_int)
+            W_FunctionObject.ensure_w_type(space, space.newint(1))
         with self.raises(space, "TypeError", "can't convert Symbol into Type"):
-            W_FunctionObject.ensure_w_type(space, w_unknown_type)
+            W_FunctionObject.ensure_w_type(space, space.newsymbol('int42'))
 
     def test_it_has_FFI_Pointer_as_ancestor(self, space):
         assert self.ask(space, "FFI::Function.ancestors.include? FFI::Pointer")

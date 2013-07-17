@@ -6,45 +6,28 @@ from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rlib.rarithmetic import intmask
 
-ffi_types = {'VOID':clibffi.ffi_type_void,
-             'INT8': clibffi.ffi_type_sint8,
-             'UINT8': clibffi.ffi_type_uint8,
-             'INT16': clibffi.ffi_type_sint16,
-             'UINT16': clibffi.ffi_type_uint16,
-             'INT32': clibffi.ffi_type_sint32,
-             'UINT32': clibffi.ffi_type_uint32,
-             'INT64': clibffi.ffi_type_sint64,
-             'UINT64': clibffi.ffi_type_uint64,
-             'LONG': clibffi.cast_type_to_ffitype(rffi.LONG),
-             'ULONG': clibffi.cast_type_to_ffitype(rffi.ULONG),
-             'FLOAT32': clibffi.ffi_type_float,
-             'FLOAT64': clibffi.ffi_type_double,
-             'LONGDOUBLE': clibffi.ffi_type_longdouble,
-             'POINTER': clibffi.ffi_type_pointer,
-             'BOOL': clibffi.ffi_type_uchar,
-             'VARARGS': clibffi.ffi_type_void}
+ffi_types = {
+                'VOID':clibffi.ffi_type_void,
+                'INT8': clibffi.ffi_type_sint8,
+                'UINT8': clibffi.ffi_type_uint8,
+                'INT16': clibffi.ffi_type_sint16,
+                'UINT16': clibffi.ffi_type_uint16,
+                'INT32': clibffi.ffi_type_sint32,
+                'UINT32': clibffi.ffi_type_uint32,
+                'INT64': clibffi.ffi_type_sint64,
+                'UINT64': clibffi.ffi_type_uint64,
+                'LONG': clibffi.cast_type_to_ffitype(rffi.LONG),
+                'ULONG': clibffi.cast_type_to_ffitype(rffi.ULONG),
+                'FLOAT32': clibffi.ffi_type_float,
+                'FLOAT64': clibffi.ffi_type_double,
+                'LONGDOUBLE': clibffi.ffi_type_longdouble,
+                'POINTER': clibffi.ffi_type_pointer,
+                'BOOL': clibffi.ffi_type_uchar,
+                'VARARGS': clibffi.ffi_type_void
+            }
 
-ffi_types['SCHAR'] = ffi_types['INT8']
-ffi_types['CHAR'] = ffi_types['INT8']
-ffi_types['UCHAR'] = ffi_types['UINT8']
-ffi_types['SHORT'] = ffi_types['INT16']
-ffi_types['SSHORT'] = ffi_types['INT16']
-ffi_types['USHORT'] = ffi_types['UINT16']
-ffi_types['INT'] = ffi_types['INT32']
-ffi_types['SINT'] = ffi_types['INT32']
-ffi_types['UINT'] = ffi_types['UINT32']
-ffi_types['LONG_LONG'] = ffi_types['INT64']
-ffi_types['SLONG'] = ffi_types['LONG']
-ffi_types['SLONG_LONG'] = ffi_types['INT64']
-ffi_types['ULONG_LONG'] = ffi_types['UINT64']
-ffi_types['FLOAT'] = ffi_types['FLOAT32']
-ffi_types['DOUBLE'] = ffi_types['FLOAT64']
-ffi_types['STRING'] = ffi_types['POINTER']
-ffi_types['BUFFER_IN'] = ffi_types['POINTER']
-ffi_types['BUFFER_OUT'] = ffi_types['POINTER']
-ffi_types['BUFFER_INOUT'] = ffi_types['POINTER']
-
-native_types = {'VOID': rffi.VOIDP,
+native_types = {
+                'VOID': rffi.VOIDP,
                 'INT8': rffi.CHAR,
                 'UINT8': rffi.UCHAR,
                 'INT16': rffi.SHORT,
@@ -60,27 +43,28 @@ native_types = {'VOID': rffi.VOIDP,
                 'LONGDOUBLE': rffi.LONGDOUBLE,
                 'POINTER': rffi.LONG,
                 'BOOL': rffi.CHAR,
-                'VARARGS': rffi.CHAR}
+                'VARARGS': rffi.CHAR
+               }
 
-native_types['SCHAR'] = native_types['INT8']
-native_types['CHAR'] = native_types['INT8']
-native_types['UCHAR'] = native_types['UINT8']
-native_types['SHORT'] = native_types['INT16']
-native_types['SSHORT'] = native_types['INT16']
-native_types['USHORT'] = native_types['UINT16']
-native_types['INT'] = native_types['INT32']
-native_types['SINT'] = native_types['INT32']
-native_types['UINT'] = native_types['UINT32']
-native_types['LONG_LONG'] = native_types['INT64']
-native_types['SLONG'] = native_types['LONG']
-native_types['SLONG_LONG'] = native_types['INT64']
-native_types['ULONG_LONG'] = native_types['UINT64']
-native_types['FLOAT'] = native_types['FLOAT32']
-native_types['DOUBLE'] = native_types['FLOAT64']
-native_types['STRING'] = native_types['POINTER']
-native_types['BUFFER_IN'] = native_types['POINTER']
-native_types['BUFFER_OUT'] = native_types['POINTER']
-native_types['BUFFER_INOUT'] = native_types['POINTER']
+aliases = {
+            'VOID': [],
+            'INT8': ['CHAR', 'SCHAR'],
+            'UINT8': ['UCHAR'],
+            'INT16': ['SHORT', 'SSHORT'],
+            'UINT16': ['USHORT'],
+            'INT32': ['INT', 'SINT'],
+            'UINT32': ['UINT'],
+            'LONG': ['SLONG'],
+            'ULONG': [],
+            'INT64': ['LONG_LONG', 'SLONG_LONG'],
+            'UINT64': ['ULONG_LONG'],
+            'FLOAT32': ['FLOAT'],
+            'FLOAT64': ['DOUBLE'],
+            'LONGDOUBLE': [],
+            'POINTER': ['STRING', 'BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT'],
+            'BOOL': [],
+            'VARARGS': []
+          }
 
 class W_TypeObject(W_Object):
     classdef = ClassDef('Type', W_Object.classdef)
@@ -91,6 +75,8 @@ class W_TypeObject(W_Object):
         for typename in ffi_types:
             w_new_type = W_TypeObject(space, typename)
             space.set_const(w_cls, typename, w_new_type)
+            for alias in aliases[typename]:
+                space.set_const(w_cls, alias, w_new_type)
         space.set_const(w_cls, 'Mapped', space.getclassfor(W_MappedObject))
 
     def __init__(self, space, name, klass=None):

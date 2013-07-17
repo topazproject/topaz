@@ -6,27 +6,6 @@ from topaz.objects.moduleobject import W_ModuleObject
 from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import rffi
 
-def test_aliases():
-    assert ffi_types['SCHAR'] == ffi_types['INT8']
-    assert ffi_types['CHAR'] == ffi_types['INT8']
-    assert ffi_types['UCHAR'] == ffi_types['UINT8']
-    assert ffi_types['SHORT'] == ffi_types['INT16']
-    assert ffi_types['SSHORT'] == ffi_types['INT16']
-    assert ffi_types['USHORT'] == ffi_types['UINT16']
-    assert ffi_types['INT'] == ffi_types['INT32']
-    assert ffi_types['SINT'] == ffi_types['INT32']
-    assert ffi_types['UINT'] == ffi_types['UINT32']
-    assert ffi_types['LONG_LONG'] == ffi_types['INT64']
-    assert ffi_types['SLONG'] == ffi_types['LONG']
-    assert ffi_types['SLONG_LONG'] == ffi_types['INT64']
-    assert ffi_types['ULONG_LONG'] == ffi_types['UINT64']
-    assert ffi_types['FLOAT'] == ffi_types['FLOAT32']
-    assert ffi_types['DOUBLE'] == ffi_types['FLOAT64']
-    assert ffi_types['STRING'] == ffi_types['POINTER']
-    assert ffi_types['BUFFER_IN'] == ffi_types['POINTER']
-    assert ffi_types['BUFFER_OUT'] == ffi_types['POINTER']
-    assert ffi_types['BUFFER_INOUT'] == ffi_types['POINTER']
-
 class TestType(BaseFFITest):
     def test_it_is_a_class(self, space):
         assert self.ask(space, "FFI::Type.is_a? Class")
