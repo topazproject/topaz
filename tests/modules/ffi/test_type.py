@@ -36,20 +36,6 @@ class TestFFI__TestType(BaseFFITest):
             assert w_t1 == w_t2
             assert w_t2 == w_t3
 
-class TestFFI__Type_get_ffi_type(BaseFFITest):
-    def test_it_looks_up_the_ffi_type(self, space):
-        for typename in ffi_types:
-            w_type = space.execute("FFI::Type::%s" %typename)
-            t = w_type.get_ffi_type()
-            assert t is ffi_types[typename]
-
-class TestFFI__Type_get_native_type(BaseFFITest):
-    def test_it_looks_up_the_ffi_type(self, space):
-        for typename in native_types:
-            w_type = space.execute("FFI::Type::%s" %typename)
-            t = w_type.get_native_type()
-            assert t is native_types[typename]
-
 class TestFFI__Type_size(BaseFFITest):
     def test_it_returns_the_size_type(self, space):
         w_res = space.execute("FFI::Type::INT8.size")

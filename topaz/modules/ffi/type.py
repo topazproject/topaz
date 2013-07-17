@@ -93,15 +93,9 @@ class W_TypeObject(W_Object):
             return False
         return self.name == other.name
 
-    def get_native_type(self):
-        return native_types[self.name]
-
-    def get_ffi_type(self):
-        return ffi_types[self.name]
-
     @classdef.method('size')
     def method_size(self, space):
-        r_uint_size = self.get_ffi_type().c_size
+        r_uint_size = ffi_types[self.name].c_size
         size = intmask(r_uint_size)
         return space.newint(size)
 

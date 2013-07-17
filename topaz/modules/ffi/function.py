@@ -1,6 +1,6 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
-from topaz.modules.ffi.type import W_TypeObject, native_types
+from topaz.modules.ffi.type import W_TypeObject, native_types, ffi_types
 from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.error import RubyError
@@ -112,8 +112,8 @@ class W_FunctionObject(W_PointerObject):
         arg_types_w = self.arg_types_w
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
         for w_dl in w_ffi_libs.listview(space):
-            ffi_arg_types = [t.get_ffi_type() for t in arg_types_w]
-            ffi_ret_type = w_ret_type.get_ffi_type()
+            ffi_arg_types = [ffi_types[t.name] for t in arg_types_w]
+            ffi_ret_type = ffi_types[w_ret_type.name]
             ptr_key = self.w_name
             assert space.is_kind_of(ptr_key, space.w_symbol)
             try:
