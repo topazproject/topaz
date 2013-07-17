@@ -1,25 +1,6 @@
-fails:String#chomp with separator removes carriage return (except \r) chars multiple times when separator is an empty string
-fails:String#chomp with separator removes carriage return chars (\n, \r, \r\n) when separator is \n
-fails:String#chomp with separator returns subclass instances when called on a subclass
-fails:String#chomp! with separator modifies self in place and returns self
-fails:String#chomp! with separator returns nil if no modifications were made
-fails:String#chomp! with separator raises a RuntimeError on a frozen instance when it is modified
-fails:String#chomp! with separator raises a RuntimeError on a frozen instance when it would not be modified
-fails:String#chomp when passed no argument removes one trailing newline
-fails:String#chomp when passed no argument removes one trailing carriage return
-fails:String#chomp when passed no argument removes one trailing carrige return, newline pair
 fails:String#chomp when passed '' does not remove a final carriage return
-fails:String#chomp when passed '\n' removes one trailing newline
-fails:String#chomp when passed '\n' removes one trailing carriage return
-fails:String#chomp when passed '\n' removes one trailing carrige return, newline pair
-fails:String#chomp! when passed no argument removes one trailing newline
-fails:String#chomp! when passed no argument removes one trailing carriage return
-fails:String#chomp! when passed no argument removes one trailing carrige return, newline pair
 fails:String#chomp! when passed nil returns nil
 fails:String#chomp! when passed nil returns nil when self is empty
 fails:String#chomp! when passed '' does not remove a final carriage return
-fails:String#chomp! when passed '\n' removes one trailing newline
-fails:String#chomp! when passed '\n' removes one trailing carriage return
-fails:String#chomp! when passed '\n' removes one trailing carrige return, newline pair
 fails:String#chomp removes the final carriage return, newline from a non-ASCII String
 fails:String#chomp! removes the final carriage return, newline from a non-ASCII String
