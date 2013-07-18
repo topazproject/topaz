@@ -169,6 +169,7 @@ class W_BignumObject(W_IntegerObject):
         else:
             raise space.error(
                 space.w_TypeError,
-                "%s can't be coerced into Bignum" %
+                "%s can't be coerced into Bignum" % (
                     space.obj_to_s(space.getclass(w_other))
+                )
             )

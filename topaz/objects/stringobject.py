@@ -633,8 +633,7 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" %
-                    space.obj_to_s(space.getclass(w_sub))
+                "type mismatch: %s given" % space.obj_to_s(space.getclass(w_sub))
             )
 
     @classdef.method("rindex", end="int")
@@ -661,8 +660,7 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" %
-                    space.obj_to_s(space.getclass(w_sub))
+                "type mismatch: %s given" % space.obj_to_s(space.getclass(w_sub))
             )
         if idx < 0:
             return space.w_nil
@@ -744,8 +742,9 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" %
+                "wrong argument type %s (expected Regexp)" % (
                     space.obj_to_s(space.getclass(w_sep))
+                )
             )
 
     @classdef.method("swapcase!")
@@ -1040,8 +1039,9 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" %
+                "wrong argument type %s (expected Regexp)" % (
                     space.obj_to_s(space.getclass(w_pattern))
+                )
             )
         if block:
             return self
@@ -1077,8 +1077,9 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" %
+                "wrong argument type %s (expected Regexp)" % (
                     space.obj_to_s(space.getclass(w_replacement))
+                )
             )
 
     def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, first_only):
@@ -1095,9 +1096,9 @@ class W_StringObject(W_Object):
         while pos < len(string) and self.search_context(space, ctx):
             result += string[pos:ctx.match_start]
             if replacement_parts is not None:
-                result += (self.gsub_regexp_subst_string(
-                        space, replacement_parts, w_matchdata, pos
-                ))
+                result += self.gsub_regexp_subst_string(
+                    space, replacement_parts, w_matchdata, pos
+                )
             elif replacement is not None:
                 result += replacement
             elif block:
