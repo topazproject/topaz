@@ -36,9 +36,10 @@ class W_FunctionObject(W_PointerObject):
     def method_initialize(self, space, w_ret_type, w_arg_types,
                           w_name=None, w_options=None):
         if w_options is None: w_options = space.newhash()
-        self.w_ret_type = self.ensure_w_type(space, w_ret_type)
-        self.arg_types_w = [self.ensure_w_type(space, w_type)
-                          for w_type in space.listview(w_arg_types)]
+        w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
+        self.w_ret_type = space.send(w_ffi_mod, 'find_type', [w_ret_type])
+        self.arg_types_w = [space.send(w_ffi_mod, 'find_type', [w_type])
+                            for w_type in space.listview(w_arg_types)]
         self.w_name = self.dlsym_unwrap(space, w_name) if w_name else None
 
     @staticmethod
