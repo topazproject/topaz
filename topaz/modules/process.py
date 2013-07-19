@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 
+import errno
 import os
 
 from topaz.gateway import Coerce
 from topaz.module import ModuleDef
 from topaz.modules.signal import SIGNALS
 from topaz.system import IS_WINDOWS
-from topaz.error import error_for_oserror
+from topaz.error import error_for_oserror, error_for_errno
 
 
 if IS_WINDOWS:
@@ -17,11 +18,15 @@ if IS_WINDOWS:
     def fork():
         raise NotImplementedError("fork on windows")
 
+    def killpg(pid, sigs):
+        raise error_for_errno(errno.EINVAL)
+
     def WEXITSTATUS(status):
         return status
 else:
     geteuid = os.geteuid
     fork = os.fork
+    killpg = os.killpg
     WEXITSTATUS = os.WEXITSTATUS
 
 
@@ -94,7 +99,7 @@ class Process(object):
             for w_arg in args_w:
                 pid = space.int_w(w_arg)
                 try:
-                    os.killpg(pid, -sig)
+                    killpg(pid, -sig)
                 except OSError as e:
                     raise error_for_oserror(space, e)
         else:
