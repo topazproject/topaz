@@ -18,6 +18,9 @@ if IS_WINDOWS:
     def fork():
         raise NotImplementedError("fork on windows")
 
+    def kill(pid, sig):
+        raise NotImplementedError("kill on windows")
+
     def killpg(pid, sigs):
         raise OSError(errno.EINVAL, "group kill not available on windows")
 
@@ -26,6 +29,7 @@ if IS_WINDOWS:
 else:
     geteuid = os.geteuid
     fork = os.fork
+    kill = os.kill
     killpg = os.killpg
     WEXITSTATUS = os.WEXITSTATUS
 
@@ -106,7 +110,7 @@ class Process(object):
             for w_arg in args_w:
                 pid = space.int_w(w_arg)
                 try:
-                    os.kill(pid, sig)
+                    kill(pid, sig)
                 except OSError as e:
                     raise error_for_oserror(space, e)
         return space.newint(len(args_w))
