@@ -7,7 +7,7 @@ from topaz.gateway import Coerce
 from topaz.module import ModuleDef
 from topaz.modules.signal import SIGNALS
 from topaz.system import IS_WINDOWS
-from topaz.error import error_for_oserror, error_for_errno
+from topaz.error import error_for_oserror
 
 
 if IS_WINDOWS:
@@ -19,7 +19,7 @@ if IS_WINDOWS:
         raise NotImplementedError("fork on windows")
 
     def killpg(pid, sigs):
-        raise error_for_errno(errno.EINVAL)
+        raise OSError(errno.EINVAL, "group kill not available on windows")
 
     def WEXITSTATUS(status):
         return status
