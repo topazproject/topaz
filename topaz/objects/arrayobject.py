@@ -117,7 +117,10 @@ class TypedArrayStrategyMixin(object):
         return self.erase(self.unerase(w_ary.array_storage) * n)
 
     def sort(self, space, w_ary, block):
-        raise space.error(space.w_NotImplementedError, "Array#sort")
+        # TODO: this should use an unboxed sorter if <=> has not been
+        # overwritten on the appropriate type
+        self.switch_to_object_strategy(space, w_ary)
+        w_ary.strategy.sort(space, w_ary, block)
 
     def sort_by(self, space, w_ary, block):
         raise space.error(space.w_NotImplementedError, "Array#sort_by")
@@ -148,14 +151,14 @@ class ObjectArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
     def is_correct_type(self, space, w_obj):
         return True
 
-    def to_object_strategy(self, space, w_ary):
-        pass
-
     def listview(self, space, w_ary):
         return self.unerase(w_ary.array_storage)
 
     def extend(self, space, w_ary, other_w):
         self.unerase(w_ary.array_storage).extend(other_w)
+
+    def sort(self, space, w_ary, block):
+        RubySorter(space, self.unerase(w_ary.array_storage), sortblock=block).sort()
 
 
 class FloatArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
@@ -227,6 +230,9 @@ class EmptyArrayStrategy(BaseArrayStrategy):
         w_ary.strategy.extend(space, w_ary, other_w)
 
     def clear(self, space, w_ary):
+        pass
+
+    def sort(self, space, w_ary, block):
         pass
 
 
