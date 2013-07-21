@@ -236,6 +236,9 @@ class EmptyArrayStrategy(BaseArrayStrategy):
     def clear(self, space, w_ary):
         pass
 
+    def reverse(self, space, w_ary):
+        pass
+
     def sort(self, space, w_ary, block):
         pass
 
