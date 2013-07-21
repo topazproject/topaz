@@ -239,6 +239,9 @@ class EmptyArrayStrategy(BaseArrayStrategy):
     def sort(self, space, w_ary, block):
         pass
 
+    def mul(self, w_ary, n):
+        return w_ary.array_storage
+
 
 class W_ArrayObject(W_Object):
     classdef = ClassDef("Array", W_Object.classdef)
