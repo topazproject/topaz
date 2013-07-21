@@ -218,6 +218,9 @@ class EmptyArrayStrategy(BaseArrayStrategy):
     def is_correct_type(self, w_obj):
         return False
 
+    def getslice(self, space, w_ary, start, end):
+        return w_ary.array_storage
+
     def append(self, space, w_ary, w_obj):
         self.switch_to_correct_strategy(space, w_ary, w_obj)
         w_ary.strategy.append(space, w_ary, w_obj)
