@@ -2,6 +2,7 @@ import copy
 
 from rpython.rlib import jit
 from rpython.rlib.listsort import make_timsort_class
+from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rbigint import rbigint
 
@@ -16,6 +17,7 @@ BaseRubySorter = make_timsort_class()
 BaseRubySortBy = make_timsort_class()
 
 
+@specialize.argtype(0)
 def unroll_heuristic(items_w):
     return jit.isconstant(len(items_w)) and len(items_w) <= 20
 
@@ -108,6 +110,7 @@ class TypedArrayStrategyMixin(object):
             self.switch_to_object_strategy(space, w_ary)
             w_ary.strategy.insert(space, w_ary, idx, w_obj)
 
+    @jit.look_inside_iff(lambda self, space, w_ary: unroll_heuristic(self.unerase(w_ary.array_storage)))
     def listview(self, space, w_ary):
         return [self.wrap(space, item) for item in self.unerase(w_ary.array_storage)]
 
