@@ -370,7 +370,8 @@ class W_ArrayObject(W_Object):
             end = min(max(end, 0), self.length())
             delta = (end - start)
             assert delta >= 0
-            data = self.strategy.slice_i(space, self, start, start + delta)
+            data = self.strategy.getslice(space, self, start, start + delta)
+            self.strategy.delslice(space, self, start, start + delta)
             return W_ArrayObject(space, self.strategy, data)
         else:
             return self.strategy.pop(space, self, start)
