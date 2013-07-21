@@ -97,7 +97,11 @@ class TypedArrayStrategyMixin(object):
         self.unerase(w_ary.array_storage).extend(self.unerase(data))
 
     def insert(self, space, w_ary, idx, w_obj):
-        self.unerase(w_ary.array_storage).insert(idx, self.unwrap(space, w_obj))
+        if self.is_correct_type(space, w_obj):
+            self.unerase(w_ary.array_storage).insert(idx, self.unwrap(space, w_obj))
+        else:
+            self.switch_to_object_strategy(space, w_ary)
+            w_ary.strategy.insert(space, w_ary, idx, w_obj)
 
     def listview(self, space, w_ary):
         return [self.wrap(space, item) for item in self.unerase(w_ary.array_storage)]
