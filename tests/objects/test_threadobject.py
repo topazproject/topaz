@@ -61,7 +61,7 @@ class TestThreadObject(object):
         w_res = space.execute("""
         def foo(objs, depth = 0)
           obj = objs.shift
-          Thread.current.recursion_guard_outer(:foo, obj) do
+          Topaz::Thread.recursion_guard_outer(:foo, obj) do
             return foo(objs, depth + 1)
           end
           return [depth, obj]
