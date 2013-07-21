@@ -202,7 +202,7 @@ class TestArrayObject(BaseTopazTest):
         x, y = self.unwrap(space, w_res)
         assert x == [1, 2, 3, 4]
         assert y == [1, 2, 3]
-        
+
     def test_dupf(self, space):
         w_res = space.execute("""
         x = [1.0, 2.0, 3.0]

@@ -84,9 +84,9 @@ class TestRangeObject(BaseTopazTest):
         return r.each {}.equal?(r)
         """)
         assert w_res is space.w_true
-        
+
     def test_array_conversion(self, space):
         w_res = space.execute("""
         return (1..4).to_a
         """)
-        assert self.unwrap(space, w_res) == [1,2,3,4]
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4]

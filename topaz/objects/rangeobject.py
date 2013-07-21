@@ -39,10 +39,3 @@ class W_RangeObject(W_Object):
     @classdef.method("exclude_end?")
     def method_exclude_end(self, space):
         return space.newbool(self.exclusive)
-        
-    @classdef.method("to_a")
-    def method_to_a(self, space):
-        start, end = space.int_w(self.w_start), space.int_w(self.w_end)
-        if not self.exclusive:
-            end += 1
-        return space.newarray([space.newint(i) for i in range(start, end)])
