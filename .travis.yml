@@ -11,6 +11,7 @@ env:
         - TEST_TYPE=translate
         - TEST_TYPE=translate-jit
         - TEST_TYPE=rubyspec_untranslated
+matrix:
     allow_failures:
         - python: "2.7"
           env: TEST_TYPE=rubyspec_untranslated
