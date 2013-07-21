@@ -340,8 +340,6 @@ class W_ArrayObject(W_Object):
         start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
         if nil:
             return space.w_nil
-        elif self.length() == 0:
-            return space.newarray([])
         elif as_range:
             assert start >= 0
             assert end >= 0
@@ -465,7 +463,7 @@ class W_ArrayObject(W_Object):
     @check_frozen()
     def method_shift(self, space, w_n=None):
         if w_n is None:
-            if self.length() > 0:
+            if self.length():
                 return self.strategy.pop(space, self, 0)
             else:
                 return space.w_nil
@@ -504,7 +502,7 @@ class W_ArrayObject(W_Object):
     @check_frozen()
     def method_pop(self, space, w_num=None):
         if w_num is None:
-            if self.length() > 0:
+            if self.length():
                 return self.strategy.pop(space, self, -1)
             else:
                 return space.w_nil
@@ -514,13 +512,11 @@ class W_ArrayObject(W_Object):
             ))
             if num < 0:
                 raise space.error(space.w_ArgumentError, "negative array size")
-            elif self.length() > 0:
+            else:
                 pop_size = max(0, self.length() - num)
                 data = self.strategy.getslice(space, self, pop_size, self.length())
                 self.strategy.delslice(space, self, pop_size, self.length())
                 return W_ArrayObject(space, self.strategy, data)
-            else:
-                return space.newarray([])
 
     @classdef.method("delete_at", idx="int")
     @check_frozen()
