@@ -127,7 +127,10 @@ class TypedArrayStrategyMixin(object):
         w_ary.strategy.sort(space, w_ary, block)
 
     def sort_by(self, space, w_ary, block):
-        raise space.error(space.w_NotImplementedError, "Array#sort_by")
+        # TODO: this should use an unboxed sorter if <=> has not been
+        # overwritten on the appropriate type
+        self.switch_to_object_strategy(space, w_ary)
+        w_ary.strategy.sort_by(space, w_ary, block)
 
     def wrap(self, space, w_obj):
         raise NotImplementedError
@@ -163,6 +166,9 @@ class ObjectArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
 
     def sort(self, space, w_ary, block):
         RubySorter(space, self.unerase(w_ary.array_storage), sortblock=block).sort()
+
+    def sort_by(self, space, w_ary, block):
+        RubySortBy(space, self.unerase(w_ary.array_storage), sortblock=block).sort()
 
 
 class FloatArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
@@ -551,8 +557,8 @@ class W_ArrayObject(W_Object):
         self.strategy.clear(space, self)
         return self
 
-    @check_frozen()
     @classdef.method("sort!")
+    @check_frozen()
     def method_sort_i(self, space, block):
         self.strategy.sort(space, self, block)
         return self
