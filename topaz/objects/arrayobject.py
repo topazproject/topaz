@@ -116,6 +116,9 @@ class TypedArrayStrategyMixin(object):
     def sort(self, space, w_ary, block):
         raise space.error(space.w_NotImplementedError, "Array#sort")
 
+    def sort_by(self, space, w_ary, block):
+        raise space.error(space.w_NotImplementedError, "Array#sort_by")
+
     def wrap(self, space, w_obj):
         raise NotImplementedError
 
