@@ -13,6 +13,7 @@ env:
         - TEST_TYPE=rubyspec_untranslated
 matrix:
     allow_failures:
+        # This times out because untranslated is so slow :/
         - python: "2.7"
           env: TEST_TYPE=rubyspec_untranslated
 install:
