@@ -10,7 +10,10 @@ env:
         - TEST_TYPE=own
         - TEST_TYPE=translate
         - TEST_TYPE=translate-jit
-#         - TEST_TYPE=rubyspec_untranslated
+        - TEST_TYPE=rubyspec_untranslated
+    allow_failures:
+        - python: "2.7"
+          env: TEST_TYPE=rubyspec_untranslated
 install:
     - pip install requests invoke
     - invoke travis.install_requirements
