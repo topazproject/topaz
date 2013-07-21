@@ -93,6 +93,9 @@ class TypedArrayStrategyMixin(object):
         for w_o in other_w:
             w_ary.append(space, w_o)
 
+    def extend_from_storage(self, space, w_ary, data):
+        self.unerase(w_ary.array_storage).extend(self.unerase(data))
+
     def insert(self, space, w_ary, idx, w_obj):
         self.unerase(w_ary.array_storage).insert(idx, self.unwrap(space, w_obj))
 
@@ -559,8 +562,8 @@ class W_ArrayObject(W_Object):
         if n == 0:
             return self
         assert n >= 0
-        self.items_w.extend(self.items_w[:n])
-        del self.items_w[:n]
+        self.strategy.extend_from_storage(space, self, self.strategy.getslice(space, self, 0, n))
+        self.strategy.delslice(space, self, 0, n)
         return self
 
     @classdef.method("insert", i="int")
@@ -582,7 +585,7 @@ class W_ArrayObject(W_Object):
             i += length + 1
         assert i >= 0
         for w_e in args_w:
-            self.items_w.insert(i, w_e)
+            self.strategy.insert(space, self, i, w_e)
             i += 1
         return self
 
