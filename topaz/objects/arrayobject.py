@@ -17,7 +17,7 @@ BaseRubySorter = make_timsort_class()
 BaseRubySortBy = make_timsort_class()
 
 
-@specialize.argtype(0)
+@specialize.call_location()
 def unroll_heuristic(items_w):
     return jit.isconstant(len(items_w)) and len(items_w) <= 20
 
