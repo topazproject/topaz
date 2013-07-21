@@ -16,6 +16,10 @@ BaseRubySorter = make_timsort_class()
 BaseRubySortBy = make_timsort_class()
 
 
+def unroll_heuristic(items_w):
+    return jit.isconstant(len(items_w)) and len(items_w) <= 20
+
+
 class RubySorter(BaseRubySorter):
     def __init__(self, space, list, listlength=None, sortblock=None):
         BaseRubySorter.__init__(self, list, listlength=listlength)
@@ -290,6 +294,7 @@ class W_ArrayObject(W_Object):
         return w_ary
 
     @staticmethod
+    @jit.look_inside_iff(lambda space, items_w: unroll_heuristic(items_w))
     def strategy_for_list(space, items_w):
         if not items_w:
             return space.fromcache(EmptyArrayStrategy)
