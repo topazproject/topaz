@@ -93,6 +93,7 @@ class TypedArrayStrategyMixin(object):
     def append_empty(self, w_ary):
         self.unerase(w_ary.array_storage).append(self.empty_value)
 
+    @jit.look_inside_iff(lambda self, space, w_ary, other_w: unroll_heuristic(other_w))
     def extend(self, space, w_ary, other_w):
         for w_o in other_w:
             w_ary.append(space, w_o)
