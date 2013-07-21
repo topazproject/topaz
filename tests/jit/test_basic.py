@@ -6,7 +6,7 @@ class TestBasic(BaseJITTest):
         traces = self.run(topaz, tmpdir, """
         i = 0
         while i < 10000
-            i += 1
+          i += 1
         end
         """)
         self.assert_matches(traces[0].loop, """
@@ -33,50 +33,11 @@ class TestBasic(BaseJITTest):
         jump(p0, p1, p3, p4, p5, p6, p7, p10, i40, p20, p22, p28, descr=TargetToken(4310781936))
         """)
 
-    def test_ivar_while_loop(self, topaz, tmpdir):
-        traces = self.run(topaz, tmpdir, """
-        @i = 0
-        while @i < 10000
-            @i += 1
-        end
-        """)
-        self.assert_matches(traces[0].loop, """
-        label(p0, p1, p3, p4, p5, p6, p7, p10, p20, p41, p31, p26, descr=TargetToken(4310781936))
-        debug_merge_point(0, 0, '<main> at LOAD_SELF')
-        debug_merge_point(0, 0, '<main> at LOAD_INSTANCE_VAR')
-        debug_merge_point(0, 0, '<main> at LOAD_CONST')
-        debug_merge_point(0, 0, '<main> at SEND')
-        setfield_gc(p20, 23, descr=<FieldS topaz.executioncontext.ExecutionContext.inst_last_instr 24>)
-        guard_not_invalidated(descr=<Guard0x100ff1088>)
-        p43 = force_token()
-        i44 = getfield_gc_pure(p41, descr=<FieldS topaz.objects.intobject.W_FixnumObject.inst_intvalue 8>)
-        i45 = int_lt(i44, 10000)
-        guard_true(i45, descr=<Guard0x100ff1010>)
-        debug_merge_point(0, 0, '<main> at JUMP_IF_FALSE')
-        debug_merge_point(0, 0, '<main> at LOAD_SELF')
-        debug_merge_point(0, 0, '<main> at DUP_TOP')
-        debug_merge_point(0, 0, '<main> at LOAD_INSTANCE_VAR')
-        debug_merge_point(0, 0, '<main> at LOAD_CONST')
-        debug_merge_point(0, 0, '<main> at SEND')
-        p46 = force_token()
-        i47 = int_add(i44, 1)
-        debug_merge_point(0, 0, '<main> at STORE_INSTANCE_VAR')
-        debug_merge_point(0, 0, '<main> at DISCARD_TOP')
-        debug_merge_point(0, 0, '<main> at JUMP')
-        debug_merge_point(0, 0, '<main> at LOAD_SELF')
-        setfield_gc(p20, 39, descr=<FieldS topaz.executioncontext.ExecutionContext.inst_last_instr 24>)
-        p48 = new_with_vtable(4300302336)
-        setfield_gc(p48, i47, descr=<FieldS topaz.objects.intobject.W_FixnumObject.inst_intvalue 8>)
-        setarrayitem_gc(p26, 0, p48, descr=<ArrayP 8>)
-        i49 = arraylen_gc(p26, descr=<ArrayP 8>)
-        jump(p0, p1, p3, p4, p5, p6, p7, p10, p20, p48, p31, p26, descr=TargetToken(4310781936))
-        """)
-
     def test_constant_string(self, topaz, tmpdir):
         traces = self.run(topaz, tmpdir, """
         i = 0
         while i < 10000
-            i += "a".length
+          i += "a".length
         end
         """)
         self.assert_matches(traces[0].loop, """
@@ -110,8 +71,8 @@ class TestBasic(BaseJITTest):
         traces = self.run(topaz, tmpdir, """
         i = 0
         while i < 10000
-            Array.try_convert(1)
-            i += 1
+          Array.try_convert(1)
+          i += 1
         end
         """)
         self.assert_matches(traces[0].loop, """

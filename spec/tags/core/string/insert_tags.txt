@@ -1,1 +1,2 @@
 fails:String#insert with index, other taints self if string to insert is tainted
+fails:String#insert with index, other inserts a character into a multibyte encoded string

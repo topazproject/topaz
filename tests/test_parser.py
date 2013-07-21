@@ -395,8 +395,8 @@ class TestParser(BaseTopazTest):
                         ast.ConstantInt(2),
                         ast.ConstantInt(3),
                     ])),
-                ]
-            )))
+                ])
+            ))
         ]))
         assert space.parse("a = *2, 0") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(
@@ -549,12 +549,10 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
             ]), ast.If(ast.Send(ast.ConstantInt(4), "==", [ast.ConstantInt(2)], None, 4), ast.Block([
-                    ast.Statement(ast.ConstantInt(3))
-                ]), ast.If(ast.Send(ast.ConstantInt(3), "==", [ast.ConstantInt(1)], None, 6), ast.Block([
-                        ast.Statement(ast.ConstantInt(2))
-                    ]), ast.Nil()))
-                )
-            )
+                ast.Statement(ast.ConstantInt(3))
+            ]), ast.If(ast.Send(ast.ConstantInt(3), "==", [ast.ConstantInt(1)], None, 6), ast.Block([
+                ast.Statement(ast.ConstantInt(2))
+            ]), ast.Nil()))))
         ]))
 
     def test_elsif_else(self, space):
@@ -571,11 +569,10 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.If(ast.Nil(), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
             ]), ast.If(ast.Nil(), ast.Block([
-                    ast.Statement(ast.ConstantInt(10)),
-                ]), ast.Block([
-                    ast.Statement(ast.ConstantInt(200))
-                ]))
-            ))
+                ast.Statement(ast.ConstantInt(10)),
+            ]), ast.Block([
+                ast.Statement(ast.ConstantInt(200))
+            ]))))
         ]))
 
     def test_comparison_ops(self, space):
@@ -652,7 +649,8 @@ class TestParser(BaseTopazTest):
                         ast.MultiAssignable([ast.Variable("i", 1)]),
                         ast.Variable("0", 1)
                     ))
-            ])), 1))
+                ])
+            ), 1))
         ]))
 
         res = space.parse("""
@@ -671,7 +669,8 @@ class TestParser(BaseTopazTest):
                     ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
                     ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
                     ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], None, 6)),
-            ])), 3))
+                ])
+            ), 3))
         ]))
 
         res = space.parse("""
@@ -1511,6 +1510,11 @@ HERE
                         ast.Variable("0", 1),
                     ))
                 ]),
+            ), 1))
+        ]))
+        assert space.parse("f { |;x, y| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [], None, None, ast.Nil(),
             ), 1))
         ]))
 

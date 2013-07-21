@@ -3,6 +3,8 @@ class MSpecScript
   Rubyspec = File.expand_path("../../rubyspec", __FILE__)
 
   MSpec.enable_feature :fiber
+  MSpec.enable_feature :fork
+  MSpec.enable_feature :encoding
   core = [
     "#{Rubyspec}/core/",
     # Struct: ``Struct.new(:field)``
@@ -32,7 +34,7 @@ class MSpecScript
 
   language = [
     "#{Rubyspec}/language",
-    # Block local variables: ``[].each {|a; b| }``
+    # Required block arg after *args: ``f {|*a, b| }``
     "^#{Rubyspec}/language/block_spec.rb",
     # Posix character class: ``/[[:alnum:]]/``
     "^#{Rubyspec}/language/regexp/character_classes_spec.rb",

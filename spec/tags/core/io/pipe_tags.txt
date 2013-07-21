@@ -1,5 +1,3 @@
-fails:IO.pipe creates a two-ended pipe
-fails:IO.pipe returns two IO objects
 fails:IO.pipe returns instances of a subclass when called on a subclass
 fails:IO.pipe sets the external encoding of the read end to the default when passed no arguments
 fails:IO.pipe sets the internal encoding of the read end to the default when passed no arguments

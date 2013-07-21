@@ -6,11 +6,5 @@ fails:Array#inspect returns a US-ASCII string for an empty Array
 fails:Array#inspect copies the ASCII-compatible encoding of the result of inspecting the first element
 fails:Array#inspect copies the ASCII-incompatible encoding of the result of inspecting the first element
 fails:Array#inspect raises if inspecting two elements produces incompatible encodings
-fails:Array#inspect returns a string
-fails:Array#inspect returns '[]' for an empty Array
-fails:Array#inspect calls inspect on its elements and joins the results with commas
-fails:Array#inspect represents a recursive element with '[...]'
-fails:Array#inspect does not taint the result if the Array is tainted but empty
-fails:Array#inspect does not untrust the result if the Array is untrusted but empty
 fails:Array#inspect use the default external encoding if it is ascii compatible
 fails:Array#inspect use US-ASCII encoding if the default external encoding is not ascii compatible

@@ -214,8 +214,22 @@ class MutableStringStrategy(StringStrategy):
     def chomp(self, storage, newline=None):
         storage = self.unerase(storage)
         changed = False
+        linebreaks = ["\n", "\r"]
         if len(storage) == 0:
             return changed
+        elif newline is not None and len(newline) == 0:
+            ch = storage[-1]
+            i = len(storage) - 1
+            while i >= 1 and ch in linebreaks:
+                i -= 1
+                ch = storage[i]
+            if i < len(storage) - 1:
+                i += 1
+                changed = True
+                if i > 0:
+                    del storage[i:]
+                else:
+                    del storage[:]
         elif newline is not None and len(storage) >= len(newline):
             for i in xrange(len(newline) - 1, -1, -1):
                 if newline[i] != storage[len(storage) - len(newline) + i]:
@@ -227,7 +241,8 @@ class MutableStringStrategy(StringStrategy):
         elif newline is None:
             ch = storage[-1]
             i = len(storage) - 1
-            while i >= 0 and ch in "\n\r":
+            while i >= 0 and linebreaks and ch in linebreaks:
+                linebreaks.remove(ch)
                 i -= 1
                 ch = storage[i]
             if i < len(storage) - 1:
@@ -618,8 +633,7 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" %
-                    space.obj_to_s(space.getclass(w_sub))
+                "type mismatch: %s given" % space.obj_to_s(space.getclass(w_sub))
             )
 
     @classdef.method("rindex", end="int")
@@ -646,8 +660,7 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "type mismatch: %s given" %
-                    space.obj_to_s(space.getclass(w_sub))
+                "type mismatch: %s given" % space.obj_to_s(space.getclass(w_sub))
             )
         if idx < 0:
             return space.w_nil
@@ -729,8 +742,9 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" %
+                "wrong argument type %s (expected Regexp)" % (
                     space.obj_to_s(space.getclass(w_sep))
+                )
             )
 
     @classdef.method("swapcase!")
@@ -1025,8 +1039,9 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" %
+                "wrong argument type %s (expected Regexp)" % (
                     space.obj_to_s(space.getclass(w_pattern))
+                )
             )
         if block:
             return self
@@ -1062,8 +1077,9 @@ class W_StringObject(W_Object):
         else:
             raise space.error(
                 space.w_TypeError,
-                "wrong argument type %s (expected Regexp)" %
+                "wrong argument type %s (expected Regexp)" % (
                     space.obj_to_s(space.getclass(w_replacement))
+                )
             )
 
     def gsub_regexp(self, space, w_pattern, replacement, w_hash, block, first_only):
@@ -1080,9 +1096,9 @@ class W_StringObject(W_Object):
         while pos < len(string) and self.search_context(space, ctx):
             result += string[pos:ctx.match_start]
             if replacement_parts is not None:
-                result += (self.gsub_regexp_subst_string(
-                        space, replacement_parts, w_matchdata, pos
-                ))
+                result += self.gsub_regexp_subst_string(
+                    space, replacement_parts, w_matchdata, pos
+                )
             elif replacement is not None:
                 result += replacement
             elif block:
@@ -1172,7 +1188,7 @@ class W_StringObject(W_Object):
         if w_newline is space.w_nil:
             return self
         newline = space.str_w(space.convert_type(w_newline, space.w_string, "to_str"))
-        if newline in "\n\r":
+        if newline and newline in "\n\r":
             newline = None
         self.strategy.to_mutable(space, self)
         changed = self.strategy.chomp(self.str_storage, newline)

@@ -836,6 +836,7 @@ CHARSET_ESCAPES = {
 }
 PROPERTIES = {
     "digit": CATEGORY_DIGIT,
+    "alnum": CATEGORY_WORD,
 }
 
 
@@ -1247,23 +1248,26 @@ def _parse_property(source, info, positive, in_set):
     here = source.pos
     if source.match("{"):
         negate = source.match("^")
-        b = StringBuilder(5)
-        found = False
-        while True:
-            ch = source.get()
-            if ch == "}":
-                found = True
-                break
-            elif not ch:
-                break
-            else:
-                b.append(ch)
-        if found:
-            name = b.build()
+        prop_name, name = _parse_property_name(source)
+        if source.match("}"):
             if name in PROPERTIES:
                 return Property(PROPERTIES[name], positive != negate)
     source.pos = here
     return make_character(info, ord("p" if positive else "P"), in_set)
+
+
+def _parse_property_name(source):
+    b = StringBuilder(5)
+    while True:
+        here = source.pos
+        ch = source.get()
+        if ch.isalnum():
+            b.append(ch)
+        else:
+            source.pos = here
+            break
+    name = b.build()
+    return name, name
 
 
 def _parse_numeric_escape(source, info, ch, in_set):
@@ -1271,7 +1275,11 @@ def _parse_numeric_escape(source, info, ch, in_set):
 
 
 def _parse_posix_class(source, info):
-    raise NotImplementedError("_parse_posix_class")
+    negate = source.match("^")
+    prop_name, name = _parse_property_name(source)
+    if not source.match(":]"):
+        raise ParseError
+    return Property(PROPERTIES[name], negate)
 
 
 def _compile_no_cache(pattern, flags):

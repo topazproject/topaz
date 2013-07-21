@@ -5,6 +5,7 @@ from topaz.utils.ll_file import O_BINARY
 
 
 def map_filemode(space, w_mode):
+    encoding = ""
     if w_mode is space.w_nil:
         mode = os.O_RDONLY
     elif isinstance(w_mode, W_StringObject):
@@ -16,7 +17,9 @@ def map_filemode(space, w_mode):
         major_mode_seen = False
         readable = writeable = append = False
 
+        pos = 0
         for ch in mode_str:
+            pos += 1
             if ch == "b":
                 mode |= O_BINARY
             elif ch == "+":
@@ -38,6 +41,9 @@ def map_filemode(space, w_mode):
                 major_mode_seen = True
                 mode |= os.O_TRUNC | os.O_CREAT
                 writeable = True
+            elif ch == ":":
+                encoding = mode_str[pos + 1:]
+                break
             else:
                 raise invalid_error
         if readable and writeable:
@@ -50,4 +56,4 @@ def map_filemode(space, w_mode):
             mode |= os.O_APPEND
     else:
         mode = space.int_w(w_mode)
-    return mode
+    return (mode, encoding)
