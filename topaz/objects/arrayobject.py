@@ -1,7 +1,6 @@
 import copy
 
 from rpython.rlib import jit
-from rpython.rlib.listsort import TimSort
 from rpython.rlib.listsort import make_timsort_class
 from rpython.rlib.rerased import new_static_erasing_pair
 from rpython.rlib.rbigint import rbigint
@@ -89,46 +88,20 @@ class TypedArrayStrategyMixin(object):
     def listview(self, space, w_ary):
         return [self.wrap(space, item) for item in self.unerase(w_ary.array_storage)]
 
-    def padd_assign(self, space, w_ary, delta, start, end, rep_w):
-        storage = self.unerase(w_ary.array_storage)
-        if delta < 0:
-            storage += [self.padding_value] * -delta
-            lim = start + len(rep_w)
-            i = len(storage) - 1
-            while i >= lim:
-                storage[i] = storage[i + delta]
-                i -= 1
-        elif delta > 0:
-            del storage[start:start + delta]
-        storage[start:start + len(rep_w)] = [self.unwrap(space, w_obj) for w_obj in rep_w]
-
     def pop(self, space, w_ary, idx):
         storage = self.unerase(w_ary.array_storage)
         return self.wrap(space, storage.pop(idx))
 
-    def pop_n(self, space, w_ary, num):
-        pop_size = max(0, self.length(w_ary) - num)
-        return self.slice_i(space, w_ary, pop_size, self.length(w_ary))
-
-    def reverse_i(self, space, w_ary):
+    def reverse(self, space, w_ary):
         storage = self.unerase(w_ary.array_storage)
         storage.reverse()
 
     def setitem(self, space, w_ary, idx, w_obj):
         self.unerase(w_ary.array_storage)[idx] = self.unwrap(space, w_obj)
 
-    def slice(self, space, w_ary, start, end):
+    def getslice(self, space, w_ary, start, end):
         items = self.unerase(w_ary.array_storage)[start:end]
         return self.erase(items)
-
-    def slice_i(self, space, w_ary, start, end):
-        storage = self.unerase(w_ary.array_storage)
-        items = storage[start:end]
-        del storage[start:end]
-        return self.erase(items)
-
-    def shift(self, space, w_ary, n):
-        return self.slice_i(space, w_ary, 0, n)
 
     def mul(self, w_ary, n):
         return self.erase(self.unerase(w_ary.array_storage) * n)
@@ -137,9 +110,6 @@ class TypedArrayStrategyMixin(object):
         raise NotImplementedError
 
     def unwrap(self, space, w_obj):
-        raise NotImplementedError
-
-    def store(self, space, items_w):
         raise NotImplementedError
 
     def erase(self, items):
@@ -151,7 +121,6 @@ class TypedArrayStrategyMixin(object):
 
 class ObjectArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
     erase, unerase = new_static_erasing_pair("object")
-    padding_value = None
 
     def wrap(self, space, w_obj):
         return w_obj
@@ -178,7 +147,6 @@ class ObjectArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
 
 class FloatArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
     erase, unerase = new_static_erasing_pair("FloatArrayStrategy")
-    padding_value = 0.0
 
     def wrap(self, space, f):
         return space.newfloat(f)
@@ -196,7 +164,6 @@ class FloatArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
 
 class FixnumArrayStrategy(BaseArrayStrategy, TypedArrayStrategyMixin):
     erase, unerase = new_static_erasing_pair("FixnumArrayStrategy")
-    padding_value = 0
 
     def wrap(self, space, i):
         return space.newint(i)
@@ -352,14 +319,27 @@ class W_ArrayObject(W_Object):
                 rep_w = [w_obj]
             else:
                 rep_w = space.listview(w_converted)
-            for each in rep_w:
-                self.strategy.adapt(space, self, each)
-            delta = (end - start) - len(rep_w)
-            self.strategy.padd_assign(space, self, delta, start, end, rep_w)
+            self._subscript_assign_range(space, start, end, rep_w)
         else:
             self.strategy.adapt(space, self, w_obj)
             self.strategy.setitem(space, self, start, w_obj)
         return w_obj
+
+    def _subscript_assign_range(self, space, start, end, rep_w):
+        assert end >= 0
+        delta = (end - start) - len(rep_w)
+        if delta < 0:
+            for i in xrange(-delta):
+                self.strategy.append_empty(self)
+            lim = start + len(rep_w)
+            i = self.length() - 1
+            while i >= lim:
+                self.strategy.setitem(space, self, i, self.strategy.getitem(space, self, i + delta))
+                i -= 1
+        elif delta > 0:
+            self.strategy.delitems(space, self, start, start + delta)
+        for i, w_obj in enumerate(rep_w):
+            self.strategy.setitem(space, self, i + start, w_obj)
 
     @classdef.method("slice!")
     @check_frozen()
@@ -534,13 +514,7 @@ class W_ArrayObject(W_Object):
     @check_frozen()
     @classdef.method("sort!")
     def method_sort_i(self, space, block):
-        strategy = self.strategy
-        if strategy is space.fromcache(ObjectArrayStrategy):
-            RubySorter(space, strategy.unerase(self.array_storage), sortblock=block).sort()
-        else:
-            items_w = self.listview(space)
-            RubySorter(space, items_w, sortblock=block).sort()
-            self.replace(space, items_w)
+        self.strategy.sort(space, self, block)
         return self
 
     @classdef.method("sort_by!")
@@ -548,13 +522,13 @@ class W_ArrayObject(W_Object):
     def method_sort_by_i(self, space, block):
         if block is None:
             return space.send(self, "enum_for", [space.newsymbol("sort_by!")])
-        RubySortBy(space, self.items_w, sortblock=block).sort()
+        self.strategy.sort_by(space, self, block)
         return self
 
     @classdef.method("reverse!")
     @check_frozen()
     def method_reverse_i(self, space):
-        self.strategy.reverse_i(space, self)
+        self.strategy.reverse(space, self)
         return self
 
     @classdef.method("rotate!", n="int")
