@@ -122,9 +122,10 @@ class TypedArrayStrategyMixin(object):
         return self.erase(items)
 
     def slice_i(self, space, w_ary, start, end):
-        w_items = self.slice(space, w_ary, start, end)
-        del self.unerase(w_ary.array_storage)[start:end]
-        return w_items
+        storage = self.unerase(w_ary.array_storage)
+        items = storage[start:end]
+        del storage[start:end]
+        return self.erase(items)
 
     def shift(self, space, w_ary, n):
         return self.slice_i(space, w_ary, 0, n)
@@ -372,7 +373,8 @@ class W_ArrayObject(W_Object):
             end = min(max(end, 0), self.length())
             delta = (end - start)
             assert delta >= 0
-            return self.strategy.slice_i(space, self, start, start + delta)
+            data = self.strategy.slice_i(space, self, start, start + delta)
+            return W_ArrayObject(space, self.strategy, data)
         else:
             return self.strategy.pop(space, self, start)
 
@@ -437,7 +439,8 @@ class W_ArrayObject(W_Object):
         n = space.int_w(space.convert_type(w_n, space.w_fixnum, "to_int"))
         if n < 0:
             raise space.error(space.w_ArgumentError, "negative array size")
-        return self.strategy.shift(space, self, n)
+        data = self.strategy.shift(space, self, n)
+        return W_ArrayObject(space, self.strategy, data)
 
     @classdef.method("unshift")
     @check_frozen()
@@ -480,7 +483,7 @@ class W_ArrayObject(W_Object):
                 raise space.error(space.w_ArgumentError, "negative array size")
             elif self.length() > 0:
                 data = self.strategy.pop_n(space, self, num)
-                return W_ArrayObject(space, self.strategy, data, space.w_array)
+                return W_ArrayObject(space, self.strategy, data)
             else:
                 return space.newarray([])
 
