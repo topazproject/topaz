@@ -116,3 +116,14 @@ class TestFunction_attach(BaseFFITest):
         """ % self.make_mock_library_code('libc.so.6'))
         res = [x.toint() for x in self.unwrap(space, w_res)]
         assert res == [3, 2, 1, 0, 1, 2, 3]
+
+    def test_it_works_with_strings(self, space):
+        setup_ffi(space)
+        w_res = space.execute("""
+        %s
+        sym_strcat = FFI::DynamicLibrary::Symbol.new(:strcat)
+        func = FFI::Function.new(:string, [:string, :string], sym_strcat, {})
+        func.attach(LibraryMock, 'strcat')
+        LibraryMock.attachments[:strcat].call("Well ", "done!")
+        """ % self.make_mock_library_code('libc.so.6'))
+        assert self.unwrap(space, w_res) == "Well done!"

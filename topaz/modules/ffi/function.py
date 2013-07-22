@@ -7,7 +7,7 @@ from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
-from rpython.rtyper.lltypesystem import rffi
+from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
@@ -15,7 +15,8 @@ from rpython.rlib.rbigint import rbigint
 
 unrolling_types = unrolling_iterable([
                                       'INT32',
-                                      'FLOAT64'
+                                      'FLOAT64',
+                                      'STRING'
                                     ])
 
 class W_FunctionObject(W_PointerObject):
@@ -71,8 +72,8 @@ class W_FunctionObject(W_PointerObject):
                     return space.newbigint_fromrbigint(bigres)
                 elif t == 'FLOAT64':
                     return space.newfloat(result)
-            #else:
-            #    return space.w_nil
+                elif t == 'STRING':
+                    return space.newstr_fromstr(rffi.charp2str(result))
         assert False
         return space.w_nil
 
@@ -82,6 +83,12 @@ class W_FunctionObject(W_PointerObject):
             argval = space.int_w(arg)
         elif argtype == 'FLOAT64':
             argval = space.float_w(arg)
+        elif argtype == 'STRING':
+            string = space.str_w(arg)
+            argval = lltype.malloc(rffi.CArray(rffi.CHAR), len(string),
+                                 flavor='raw')
+            for i in range(len(string)):
+                argval[i] = string[i]
         else:
             assert False
         self.ptr.push_arg(argval)

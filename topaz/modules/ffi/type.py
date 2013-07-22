@@ -23,7 +23,8 @@ ffi_types = {
                 'LONGDOUBLE': clibffi.ffi_type_longdouble,
                 'POINTER': clibffi.ffi_type_pointer,
                 'BOOL': clibffi.ffi_type_uchar,
-                'VARARGS': clibffi.ffi_type_void
+                'VARARGS': clibffi.ffi_type_void,
+                'STRING': clibffi.ffi_type_pointer
             }
 
 native_types = {
@@ -43,7 +44,8 @@ native_types = {
                 'LONGDOUBLE': rffi.LONGDOUBLE,
                 'POINTER': rffi.LONG,
                 'BOOL': rffi.CHAR,
-                'VARARGS': rffi.CHAR
+                'VARARGS': rffi.CHAR,
+                'STRING': rffi.CCHARP
                }
 
 aliases = {
@@ -61,9 +63,10 @@ aliases = {
             'FLOAT32': ['FLOAT'],
             'FLOAT64': ['DOUBLE'],
             'LONGDOUBLE': [],
-            'POINTER': ['STRING', 'BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT'],
+            'POINTER': ['BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT'],
             'BOOL': [],
-            'VARARGS': []
+            'VARARGS': [],
+            'STRING': []
           }
 
 class W_TypeObject(W_Object):
