@@ -6,6 +6,7 @@ Authors
 * Carl Friedrich Bolz
 * Oliver M. Bolzer
 * Dan Buch
+* Philipp Fehre
 * Tim Felgentreff
 * Maciej Fijalkowski
 * Alex Gaynor

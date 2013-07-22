@@ -701,7 +701,7 @@ class Parser(object):
 
     @pg.production("expr : BANG command_call")
     def expr_bang_command_call(self, p):
-        raise NotImplementedError(p)
+        return self.new_call(p[1], self.new_token(p[0], "!", "!"), None)
 
     @pg.production("expr : arg")
     def expr_arg(self, p):

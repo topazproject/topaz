@@ -8,6 +8,7 @@ from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.hashobject import W_HashObject
 from topaz.objects.objectobject import W_Object
 from topaz.objects.ioobject import W_IOObject
+from topaz.objects.timeobject import W_TimeObject
 from topaz.system import IS_WINDOWS
 from topaz.utils.ll_file import O_BINARY, ftruncate, isdir, fchmod
 from topaz.utils.filemode import map_filemode
@@ -134,12 +135,18 @@ class W_FileObject(W_IOObject):
     @classdef.singleton_method("expand_path", path="path")
     def method_expand_path(self, space, path, w_dir=None):
         if path and path[0] == "~":
+            try:
+                home = os.environ["HOME"]
+            except KeyError:
+                raise space.error(space.w_ArgumentError, "couldn't find HOME environment -- expanding")
+            if not home or (not IS_WINDOWS and home[0] != "/"):
+                raise space.error(space.w_ArgumentError, "non-absolute home")
             if len(path) >= 2 and path[1] == "/":
-                path = os.environ["HOME"] + path[1:]
+                path = home + path[1:]
             elif len(path) < 2:
-                return space.newstr_fromstr(os.environ["HOME"])
+                return space.newstr_fromstr(home)
             else:
-                raise NotImplementedError
+                raise space.error(space.w_NotImplementedError, "~user for File.expand_path")
         elif not path or path[0] != "/":
             if w_dir is not None and w_dir is not space.w_nil:
                 dir = space.str_w(space.send(self, "expand_path", [w_dir]))
@@ -152,18 +159,23 @@ class W_FileObject(W_IOObject):
         if IS_WINDOWS:
             path = path.replace("\\", "/")
         parts = path.split("/")
+        was_letter = False
+        first_slash = True
         for part in parts:
-            if part == "..":
-                items.pop()
+            if not part and not was_letter:
+                if not first_slash:
+                    items.append(part)
+                first_slash = False
+            elif part == "..":
+                if len(items) > 0:
+                    items.pop()
             elif part and part != ".":
+                was_letter = True
                 items.append(part)
-
         if not IS_WINDOWS:
             root = "/"
         else:
             root = ""
-        if not items:
-            return space.newstr_fromstr(root)
         return space.newstr_fromstr(root + "/".join(items))
 
     @classdef.singleton_method("join")
@@ -265,6 +277,35 @@ class W_FileObject(W_IOObject):
     @classdef.method("path")
     def method_path(self, space):
         return space.newstr_fromstr(self.filename)
+
+    @classdef.method("mtime")
+    def method_mtime(self, space):
+        try:
+            stat_val = os.stat(self.filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return self._time_at(space, stat_val.st_mtime)
+
+    @classdef.method("atime")
+    def method_atime(self, space):
+        try:
+            stat_val = os.stat(self.filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return self._time_at(space, stat_val.st_atime)
+
+    @classdef.method("ctime")
+    def method_ctime(self, space):
+        try:
+            stat_val = os.stat(self.filename)
+        except OSError as e:
+            raise error_for_oserror(space, e)
+        return self._time_at(space, stat_val.st_ctime)
+
+    def _time_at(self, space, time):
+        return space.send(
+            space.getclassfor(W_TimeObject), "at", [space.newint(int(time))]
+        )
 
     @classdef.method("chmod", mode="int")
     def method_chmod(self, space, mode):

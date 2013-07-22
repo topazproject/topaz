@@ -1912,3 +1912,9 @@ class TestExceptions(BaseTopazTest):
         end
         """)
         assert space.int_w(w_res) == 0
+
+    def test_bang_method_call_without_parens(self, space):
+        w_res = space.execute("""
+        ! respond_to? :asdf
+        """)
+        assert w_res is space.w_true

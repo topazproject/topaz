@@ -6,21 +6,21 @@ from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
-    NAN, INFINITY, isfinite)
+    NAN, INFINITY, isfinite, round_away)
 
 from topaz.error import RubyError
 from topaz.module import ClassDef
 from topaz.objects.exceptionobject import W_ArgumentError
+from topaz.objects.objectobject import W_RootObject
 from topaz.objects.numericobject import W_NumericObject
 
 
-class W_FloatObject(W_NumericObject):
+class W_FloatObject(W_RootObject):
     _immutable_fields_ = ["floatvalue"]
 
     classdef = ClassDef("Float", W_NumericObject.classdef)
 
     def __init__(self, space, floatvalue):
-        W_NumericObject.__init__(self, space)
         self.floatvalue = floatvalue
 
     def __deepcopy__(self, memo):
@@ -141,6 +141,23 @@ class W_FloatObject(W_NumericObject):
             else:
                 raise
 
+    @classdef.method("equal?")
+    def method_equalp(self, space, w_other):
+        if space.is_kind_of(w_other, space.w_float):
+            other = space.float_w(w_other)
+            return space.newbool(
+                self.floatvalue == other or
+                (math.isnan(self.floatvalue) and math.isnan(other))
+            )
+
+        try:
+            return W_NumericObject.retry_binop_coercing(space, self, w_other, "equal?")
+        except RubyError as e:
+            if isinstance(e.w_value, W_ArgumentError):
+                return space.send(w_other, "equal?", [self])
+            else:
+                raise
+
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
         if space.is_kind_of(w_other, space.w_numeric):
@@ -158,6 +175,13 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("hash")
     def method_hash(self, space):
         return space.newint(compute_hash(self.floatvalue))
+
+    @classdef.method("coerce")
+    def method_coerce(self, space, w_other):
+        if space.getclass(w_other) is space.getclass(self):
+            return space.newarray([w_other, self])
+        else:
+            return space.newarray([space.send(self, "Float", [w_other]), self])
 
     @classdef.method("abs")
     def method_abs(self, space):
@@ -240,3 +264,11 @@ class W_FloatObject(W_NumericObject):
     @classdef.method("nan?")
     def method_nan(self, space):
         return space.newbool(math.isnan(self.floatvalue))
+
+    @classdef.method("round")
+    def method_round(self, space):
+        return space.newint(int(round_away(self.floatvalue)))
+
+    @classdef.method("quo")
+    def method_quo(self, space):
+        raise space.error(space.w_NotImplementedError, "Numeric#quo")
