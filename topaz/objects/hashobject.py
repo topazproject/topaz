@@ -100,10 +100,8 @@ class W_HashObject(W_Object):
     def __deepcopy__(self, memo):
         obj = super(W_HashObject, self).__deepcopy__(memo)
         obj.strategy = copy.deepcopy(self.strategy)
-        # deepcopying these two will loop forever
-        obj.dict_storage = self.dict_storage
+        obj.dict_storage = self.strategy.copy(self.dict_storage)
         obj.w_default = self.w_default
-        ##############################
         obj.default_proc = copy.deepcopy(self.default_proc)
         return obj
 
