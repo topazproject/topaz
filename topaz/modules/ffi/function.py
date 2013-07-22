@@ -43,27 +43,6 @@ class W_FunctionObject(W_PointerObject):
         self.w_name = self.dlsym_unwrap(space, w_name) if w_name else None
 
     @staticmethod
-    def ensure_w_type(space, w_type_or_sym):
-        w_type = None
-        if space.is_kind_of(w_type_or_sym, space.getclassfor(W_TypeObject)):
-            w_type = w_type_or_sym
-        else:
-            try:
-                sym = Coerce.symbol(space, w_type_or_sym)
-            except RubyError:
-                tp = w_type_or_sym.getclass(space).name
-                raise space.error(space.w_TypeError,
-                                  "can't convert %s into Type" % tp)
-            try:
-                w_type_cls = space.getclassfor(W_TypeObject)
-                w_type = space.find_const(w_type_cls, sym.upper())
-            except RubyError:
-                raise space.error(space.w_TypeError,
-                                  "can't convert Symbol into Type")
-        assert isinstance(w_type, W_TypeObject)
-        return w_type
-
-    @staticmethod
     def dlsym_unwrap(space, w_name):
         try:
             return space.send(w_name, 'to_sym')

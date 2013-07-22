@@ -20,25 +20,6 @@ def setup_ffi(space):
 
 class TestFunction(BaseFFITest):
 
-    def test_ensure_w_type(self, space):
-        ensure_w_type = W_FunctionObject.ensure_w_type
-        for typename in ffi_types:
-            w_type_object = space.execute("FFI::Type::%s" % typename)
-            assert (ensure_w_type(space, w_type_object)
-                    is w_type_object)
-            w_type_symbol = space.newsymbol(typename.lower())
-            assert (ensure_w_type(space, w_type_symbol)
-                    is w_type_object)
-            for alias in aliases[typename]:
-                assert (ensure_w_type(space, space.newsymbol(alias.lower()))
-                        is space.execute("FFI::Type::%s" % typename))
-
-    def test_ensure_w_type_errors(self, space):
-        with self.raises(space, "TypeError", "can't convert Fixnum into Type"):
-            W_FunctionObject.ensure_w_type(space, space.newint(1))
-        with self.raises(space, "TypeError", "can't convert Symbol into Type"):
-            W_FunctionObject.ensure_w_type(space, space.newsymbol('int42'))
-
     def test_it_has_FFI_Pointer_as_ancestor(self, space):
         assert self.ask(space, "FFI::Function.ancestors.include? FFI::Pointer")
 
