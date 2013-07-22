@@ -6,7 +6,17 @@ from topaz.modules.ffi.type import ffi_types, aliases
 from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import rffi
 
+import os
+
 libm = clibffi.CDLL('libm.so')
+
+def setup_ffi(space):
+    system, _, _, _, cpu = os.uname() # not for windows
+    space.execute("""
+    RUBY_ENGINE = 'topaz'
+    RUBY_PLATFORM = '%s-%s'
+    load 'ffi.rb'
+    """ % (cpu, system.lower()))
 
 class TestFunction(BaseFFITest):
 
@@ -34,11 +44,13 @@ class TestFunction(BaseFFITest):
 
 class TestFunction__new(BaseFFITest):
 
-    def test_it_needs_at_least_a_type_signature(self, ffi_space):
-        ffi_space.execute("FFI::Function.new(:void, [:int8, :int16])")
+    def test_it_needs_at_least_a_type_signature(self, space):
+        setup_ffi(space)
+        space.execute("FFI::Function.new(:void, [:int8, :int16])")
 
-    def test_it_takes_a_DynamicLibrabry__Symbol_as_3_argument(self, ffi_space):
-        ffi_space.execute("""
+    def test_it_takes_a_DynamicLibrabry__Symbol_as_3_argument(self, space):
+        setup_ffi(space)
+        space.execute("""
         dlsym = FFI::DynamicLibrary::Symbol.new(:fname)
         FFI::Function.new(:void, [:int8, :int16], dlsym)
         """)
@@ -46,33 +58,37 @@ class TestFunction__new(BaseFFITest):
                       "can't convert Fixnum into FFI::DynamicLibrary::Symbol"):
             space.execute("FFI::Function.new(:void, [:uint8], 500)")
 
-    def test_it_takes_a_hash_as_4_argument(self, ffi_space):
-        ffi_space.execute("""
+    def test_it_takes_a_hash_as_4_argument(self, space):
+        setup_ffi(space)
+        space.execute("""
         FFI::Function.new(:void, [:int8, :int16],
                           FFI::DynamicLibrary::Symbol.new('x'),
                           {})
         """)
 
-    def test_it_understands_Type_constants_for_the_signature(self, ffi_space):
-        ffi_space.execute("""
+    def test_it_understands_Type_constants_for_the_signature(self, space):
+        setup_ffi(space)
+        space.execute("""
         FFI::Function.new(FFI::Type::VOID,
                           [FFI::Type::INT8, FFI::Type::INT16])
         """)
 
-    def test_it_reacts_to_messy_signature_with_TypeError(self, ffi_space):
-        with self.raises(ffi_space, "TypeError", "unable to resolve type '1'"):
-            ffi_space.execute("FFI::Function.new(1, [])")
-        with self.raises(ffi_space, "TypeError", "unable to resolve type '2'"):
-            ffi_space.execute("FFI::Function.new(:void, [2])")
-        with self.raises(ffi_space, "TypeError",
+    def test_it_reacts_to_messy_signature_with_TypeError(self, space):
+        setup_ffi(space)
+        with self.raises(space, "TypeError", "unable to resolve type '1'"):
+            space.execute("FFI::Function.new(1, [])")
+        with self.raises(space, "TypeError", "unable to resolve type '2'"):
+            space.execute("FFI::Function.new(:void, [2])")
+        with self.raises(space, "TypeError",
                          "unable to resolve type 'null'"):
-            ffi_space.execute("FFI::Function.new(:null, [])")
-        with self.raises(ffi_space, "TypeError",
+            space.execute("FFI::Function.new(:null, [])")
+        with self.raises(space, "TypeError",
                          "unable to resolve type 'array'"):
-            ffi_space.execute("FFI::Function.new(:int32, [:array])")
+            space.execute("FFI::Function.new(:int32, [:array])")
 
-    def test_it_creates_the_following_low_level_data(self, ffi_space):
-        w_function = ffi_space.execute("""
+    def test_it_creates_the_following_low_level_data(self, space):
+        setup_ffi(space)
+        w_function = space.execute("""
         foo = FFI::DynamicLibrary::Symbol.new(:foo)
         FFI::Function.new(:int8, [:int16, :float64], foo, {})
         """)
@@ -95,8 +111,9 @@ class TestFunction_attach(BaseFFITest):
         end
         """ % libname
 
-    def test_it_works_with_pow_from_libm(self, ffi_space):
-        w_res = ffi_space.execute("""
+    def test_it_works_with_pow_from_libm(self, space):
+        setup_ffi(space)
+        w_res = space.execute("""
         %s
         sym_pow = FFI::DynamicLibrary::Symbol.new(:pow)
         func = FFI::Function.new(:float64, [:float64, :float64], sym_pow, {})
@@ -104,10 +121,11 @@ class TestFunction_attach(BaseFFITest):
         LibraryMock.attachments.include? :power
         (0..5).each.map { |x| LibraryMock.attachments[:power].call(x, 2) }
         """ % self.make_mock_library_code('libm.so'))
-        assert self.unwrap(ffi_space, w_res) == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
+        assert self.unwrap(space, w_res) == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
 
-    def test_it_works_with_abs_from_libc(self, ffi_space):
-        w_res = ffi_space.execute("""
+    def test_it_works_with_abs_from_libc(self, space):
+        setup_ffi(space)
+        w_res = space.execute("""
         %s
         sym_abs = FFI::DynamicLibrary::Symbol.new(:abs)
         func = FFI::Function.new(:int32, [:int32], sym_abs, {})
@@ -115,5 +133,5 @@ class TestFunction_attach(BaseFFITest):
         LibraryMock.attachments.include? :abs
         (-3..+3).each.map { |x| LibraryMock.attachments[:abs].call(x) }
         """ % self.make_mock_library_code('libc.so.6'))
-        res = [x.toint() for x in self.unwrap(ffi_space, w_res)]
+        res = [x.toint() for x in self.unwrap(space, w_res)]
         assert res == [3, 2, 1, 0, 1, 2, 3]
