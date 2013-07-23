@@ -1,19 +1,19 @@
 import copy
 import os
 
-def pytest_funcarg__ffi_space(request, space):
-    def build_ffi_space():
-        ffi_space = copy.deepcopy(space)
+def pytest_funcarg__ffis(request, space):
+    def build_ffis():
+        ffis = copy.deepcopy(space)
         system, _, _, _, cpu = os.uname() # not for windows
-        ffi_space.execute("""
+        ffis.execute("""
         RUBY_ENGINE = 'topaz'
         RUBY_PLATFORM = '%s-%s'
         load 'ffi.rb'
         """ % (cpu, system.lower()))
-        return ffi_space
+        return ffis
 
-    ffi_space = request.cached_setup(
-        setup=build_ffi_space,
+    ffis = request.cached_setup(
+        setup=build_ffis,
         scope="session",
     )
-    return copy.deepcopy(ffi_space)
+    return copy.deepcopy(ffis)
