@@ -13,6 +13,12 @@ from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rbigint import rbigint
 
+def type_object(space, w_obj):
+    w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
+    res = space.send(w_ffi_mod, 'find_type', [w_obj])
+    assert isinstance(res, W_TypeObject)
+    return res
+
 unrolling_types = unrolling_iterable([
                                       'INT32',
                                       'FLOAT64',
@@ -37,9 +43,12 @@ class W_FunctionObject(W_PointerObject):
     def method_initialize(self, space, w_ret_type, w_arg_types,
                           w_name=None, w_options=None):
         if w_options is None: w_options = space.newhash()
-        w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
-        self.w_ret_type = space.send(w_ffi_mod, 'find_type', [w_ret_type])
-        self.arg_types_w = [space.send(w_ffi_mod, 'find_type', [w_type])
+        #w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
+        #self.w_ret_type = space.send(w_ffi_mod, 'find_type', [w_ret_type])
+        #self.arg_types_w = [space.send(w_ffi_mod, 'find_type', [w_type])
+        #                    for w_type in space.listview(w_arg_types)]
+        self.w_ret_type = type_object(space, w_ret_type)
+        self.arg_types_w = [type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
         self.w_name = self.dlsym_unwrap(space, w_name) if w_name else None
 
@@ -55,6 +64,7 @@ class W_FunctionObject(W_PointerObject):
     @classdef.method('call')
     def method_call(self, space, args_w):
         w_ret_type = self.w_ret_type
+        assert isinstance(w_ret_type, W_TypeObject)
         arg_types_w = self.arg_types_w
         ret_type_name = w_ret_type.name
         for i in range(len(args_w)):
