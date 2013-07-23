@@ -102,6 +102,16 @@ class W_TypeObject(W_Object):
         size = intmask(r_uint_size)
         return space.newint(size)
 
+def type_object(space, w_obj):
+    w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
+    res = space.send(w_ffi_mod, 'find_type', [w_obj])
+    if not isinstance(res, W_TypeObject):
+        raise space.error(space.w_TypeError,
+                          "This seems to be a bug. find_type should always"
+                           "return an FFI::Type object, but apparently it did"
+                           "not in this case.")
+    return res
+
 class W_MappedObject(W_Object):
     classdef = ClassDef('MappedObject', W_Object.classdef)
 

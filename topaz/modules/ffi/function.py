@@ -1,6 +1,7 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
-from topaz.modules.ffi.type import W_TypeObject, native_types, ffi_types
+from topaz.modules.ffi.type import (W_TypeObject, type_object,
+                                    native_types, ffi_types)
 from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.error import RubyError
@@ -12,12 +13,6 @@ from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rbigint import rbigint
-
-def type_object(space, w_obj):
-    w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
-    res = space.send(w_ffi_mod, 'find_type', [w_obj])
-    assert isinstance(res, W_TypeObject)
-    return res
 
 unrolling_types = unrolling_iterable([
                                       'INT32',
@@ -43,10 +38,6 @@ class W_FunctionObject(W_PointerObject):
     def method_initialize(self, space, w_ret_type, w_arg_types,
                           w_name=None, w_options=None):
         if w_options is None: w_options = space.newhash()
-        #w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
-        #self.w_ret_type = space.send(w_ffi_mod, 'find_type', [w_ret_type])
-        #self.arg_types_w = [space.send(w_ffi_mod, 'find_type', [w_type])
-        #                    for w_type in space.listview(w_arg_types)]
         self.w_ret_type = type_object(space, w_ret_type)
         self.arg_types_w = [type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
