@@ -111,12 +111,22 @@ class TestFunction_attach(BaseFFITest):
         """ % self.make_mock_library_code('libc.so.6'))
         assert self.unwrap(ffis, w_res) == "Well done!"
 
-    def test_it_works_with_shorts(self, ffis, libtest_so):
-        w_res = ffis.execute("""
-        %s
-        sym_add_u16 = FFI::DynamicLibrary::Symbol.new(:add_u16)
-        func = FFI::Function.new(:uint16, [:uint16, :uint16], sym_add_u16, {})
-        func.attach(LibraryMock, 'add_u16')
-        LibraryMock.attachments[:add_u16].call(1, 2)
-        """ % self.make_mock_library_code(libtest_so))
-        assert self.unwrap(ffis, w_res).toint() == 3
+    def make_question_code(self, signchar, size):
+        T = ':%sint%s' %('' if signchar == 's' else 'u', size)
+        fn = 'add_%s%s' %(signchar, size)
+        return """
+        FFI::Function.new(T, [T, T],
+                          FFI::DynamicLibrary::Symbol.new(:fn),
+                          {}).attach(LibraryMock, 'fn')
+        LibraryMock.attachments[:fn].call(1, 2) == 3
+        """.replace('T', T).replace('fn', fn)
+
+    def test_it_works_with_unsigned_shorts(self, ffis, libtest_so):
+        assert self.ask(ffis,
+                        self.make_mock_library_code(libtest_so) +
+                        self.make_question_code('u', '16'))
+
+    def test_it_works_with_signed_shorts(self, ffis, libtest_so):
+        assert self.ask(ffis,
+                        self.make_mock_library_code(libtest_so) +
+                        self.make_question_code('s', '16'))

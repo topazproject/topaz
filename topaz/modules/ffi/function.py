@@ -16,6 +16,7 @@ from rpython.rlib.rbigint import rbigint
 
 unrolling_types = unrolling_iterable([
                                       'UINT16',
+                                      'INT16',
                                       'INT32',
                                       'FLOAT64',
                                       'STRING'
@@ -69,7 +70,7 @@ class W_FunctionObject(W_PointerObject):
                 result = self.ptr.call(native_types[t])
                 # Is this really necessary? Maybe call does this anyway:
                 result = rffi.cast(native_types[t], result)
-                if t == 'UINT16' or t == 'INT32':
+                if t in ['UINT16', 'INT16', 'INT32']:
                     bigres = rbigint.fromrarith_int(result)
                     return space.newbigint_fromrbigint(bigres)
                 elif t == 'FLOAT64':
@@ -81,7 +82,7 @@ class W_FunctionObject(W_PointerObject):
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
-        if argtype == 'UINT16' or argtype == 'INT32':
+        if argtype in ['UINT16', 'INT16', 'INT32']:
             argval = space.int_w(arg)
         elif argtype == 'FLOAT64':
             argval = space.float_w(arg)
