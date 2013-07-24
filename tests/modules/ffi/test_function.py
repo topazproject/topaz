@@ -113,12 +113,13 @@ class TestFunction_attach(BaseFFITest):
     def make_question_code(self, signchar, size):
         T = ':%sint%s' %('' if signchar == 's' else 'u', size)
         fn = 'add_%s%s' %(signchar, size)
+        plus_or_minus = '-' if signchar == 's' else '+'
         return """
         FFI::Function.new(T, [T, T],
                           FFI::DynamicLibrary::Symbol.new(:fn),
                           {}).attach(LibraryMock, 'fn')
-        LibraryMock.attachments[:fn].call(1, 2) == 3
-        """.replace('T', T).replace('fn', fn)
+        LibraryMock.attachments[:fn].call(+|-1, +|-2) == +|-3
+        """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus)
 
     def test_it_works_with_unsigned_chars(self, ffis, libtest_so):
         assert self.ask(ffis,
