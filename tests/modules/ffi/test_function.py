@@ -111,13 +111,7 @@ class TestFunction_attach(BaseFFITest):
         """ % self.make_mock_library_code('libc.so.6'))
         assert self.unwrap(ffis, w_res) == "Well done!"
 
-    def test_it_works_with_shorts(self, ffis):
-        self_dir = os.path.join(os.path.dirname(__file__))
-        rel_to_makefile = os.path.join('libtest', 'GNUmakefile')
-        makefile = os.path.join(self_dir, rel_to_makefile)
-        os.system("make -f " + makefile)
-        rel_to_libtest_so = os.path.join('build', 'libtest.so')
-        libtest_so = os.path.join(self_dir, rel_to_libtest_so)
+    def test_it_works_with_shorts(self, ffis, libtest_so):
         w_res = ffis.execute("""
         %s
         sym_add_u16 = FFI::DynamicLibrary::Symbol.new(:add_u16)
