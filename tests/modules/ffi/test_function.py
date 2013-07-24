@@ -126,7 +126,6 @@ class TestFunction_attach(BaseFFITest):
                         self.make_mock_library_code(libtest_so) +
                         self.make_question_code(typechar, size))
 
-
     def test_it_works_with_unsigned_chars(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 'u', '8')
 
@@ -144,3 +143,9 @@ class TestFunction_attach(BaseFFITest):
 
     def test_it_works_with_signed_ints(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 's', '32')
+
+    def test_it_works_with_unsigned_long_longs(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 'u', '64')
+
+    def test_it_works_with_signed_long_longs(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 's', '64')

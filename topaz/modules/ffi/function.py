@@ -12,7 +12,8 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rarithmetic import intmask, longlongmask
+from rpython.rlib.rbigint import rbigint
 
 unrolling_types = unrolling_iterable([
                                       'UINT8',
@@ -21,6 +22,8 @@ unrolling_types = unrolling_iterable([
                                       'INT16',
                                       'INT32',
                                       'UINT32',
+                                      'INT64',
+                                      'UINT64',
                                       'FLOAT64',
                                       'STRING'
                                     ])
@@ -77,6 +80,10 @@ class W_FunctionObject(W_PointerObject):
                          'UINT16', 'INT16',
                          'UINT32', 'INT32']:
                     return space.newint(intmask(result))
+                elif t in ['INT64', 'UINT64']:
+                    longlong_result = longlongmask(result)
+                    bigint_result = rbigint.fromrarith_int(longlong_result)
+                    return space.newbigint_fromrbigint(bigint_result)
                 elif t == 'FLOAT64':
                     return space.newfloat(result)
                 elif t == 'STRING':
@@ -90,6 +97,8 @@ class W_FunctionObject(W_PointerObject):
                        'UINT16', 'INT16',
                        'UINT32', 'INT32']:
             argval = space.int_w(arg)
+        elif argtype in ['INT64', 'UINT64']:
+            argval = space.bigint_w(arg).tolonglong()
         elif argtype == 'FLOAT64':
             argval = space.float_w(arg)
         elif argtype == 'STRING':
