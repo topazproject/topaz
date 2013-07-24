@@ -121,32 +121,26 @@ class TestFunction_attach(BaseFFITest):
         LibraryMock.attachments[:fn].call(+|-1, +|-2) == +|-3
         """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus)
 
-    def test_it_works_with_unsigned_chars(self, ffis, libtest_so):
-        assert self.ask(ffis,
+    def type_works(self, ffis, libtest_so, typechar, size):
+        return self.ask(ffis,
                         self.make_mock_library_code(libtest_so) +
-                        self.make_question_code('u', '8'))
+                        self.make_question_code(typechar, size))
+
+
+    def test_it_works_with_unsigned_chars(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 'u', '8')
 
     def test_it_works_with_signed_chars(self, ffis, libtest_so):
-        assert self.ask(ffis,
-                        self.make_mock_library_code(libtest_so) +
-                        self.make_question_code('s', '8'))
+        assert self.type_works(ffis, libtest_so, 's', '8')
 
     def test_it_works_with_unsigned_shorts(self, ffis, libtest_so):
-        assert self.ask(ffis,
-                        self.make_mock_library_code(libtest_so) +
-                        self.make_question_code('u', '16'))
+        assert self.type_works(ffis, libtest_so, 'u', '16')
 
     def test_it_works_with_signed_shorts(self, ffis, libtest_so):
-        assert self.ask(ffis,
-                        self.make_mock_library_code(libtest_so) +
-                        self.make_question_code('s', '16'))
+        assert self.type_works(ffis, libtest_so, 's', '16')
 
     def test_it_works_with_unsigned_ints(self, ffis, libtest_so):
-        assert self.ask(ffis,
-                        self.make_mock_library_code(libtest_so) +
-                        self.make_question_code('u', '32'))
+        assert self.type_works(ffis, libtest_so, 'u', '32')
 
     def test_it_works_with_signed_ints(self, ffis, libtest_so):
-        assert self.ask(ffis,
-                        self.make_mock_library_code(libtest_so) +
-                        self.make_question_code('s', '32'))
+        assert self.type_works(ffis, libtest_so, 's', '32')
