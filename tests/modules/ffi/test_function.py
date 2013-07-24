@@ -98,8 +98,7 @@ class TestFunction_attach(BaseFFITest):
         LibraryMock.attachments.include? :abs
         (-3..+3).each.map { |x| LibraryMock.attachments[:abs].call(x) }
         """ % self.make_mock_library_code('libc.so.6'))
-        res = [x.toint() for x in self.unwrap(ffis, w_res)]
-        assert res == [3, 2, 1, 0, 1, 2, 3]
+        assert self.unwrap(ffis, w_res) == [3, 2, 1, 0, 1, 2, 3]
 
     def test_it_works_with_strings(self, ffis):
         w_res = ffis.execute("""
@@ -120,6 +119,16 @@ class TestFunction_attach(BaseFFITest):
                           {}).attach(LibraryMock, 'fn')
         LibraryMock.attachments[:fn].call(1, 2) == 3
         """.replace('T', T).replace('fn', fn)
+
+    def test_it_works_with_unsigned_chars(self, ffis, libtest_so):
+        assert self.ask(ffis,
+                        self.make_mock_library_code(libtest_so) +
+                        self.make_question_code('u', '8'))
+
+    def test_it_works_with_signed_chars(self, ffis, libtest_so):
+        assert self.ask(ffis,
+                        self.make_mock_library_code(libtest_so) +
+                        self.make_question_code('s', '8'))
 
     def test_it_works_with_unsigned_shorts(self, ffis, libtest_so):
         assert self.ask(ffis,

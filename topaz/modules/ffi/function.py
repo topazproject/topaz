@@ -12,9 +12,11 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.rbigint import rbigint
+from rpython.rlib.rarithmetic import intmask
 
 unrolling_types = unrolling_iterable([
+                                      'UINT8',
+                                      'INT8',
                                       'UINT16',
                                       'INT16',
                                       'INT32',
@@ -70,9 +72,8 @@ class W_FunctionObject(W_PointerObject):
                 result = self.ptr.call(native_types[t])
                 # Is this really necessary? Maybe call does this anyway:
                 result = rffi.cast(native_types[t], result)
-                if t in ['UINT16', 'INT16', 'INT32']:
-                    bigres = rbigint.fromrarith_int(result)
-                    return space.newbigint_fromrbigint(bigres)
+                if t in ['INT8', 'UINT8', 'UINT16', 'INT16', 'INT32']:
+                    return space.newint(intmask(result))
                 elif t == 'FLOAT64':
                     return space.newfloat(result)
                 elif t == 'STRING':
@@ -82,7 +83,7 @@ class W_FunctionObject(W_PointerObject):
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
-        if argtype in ['UINT16', 'INT16', 'INT32']:
+        if argtype in ['UINT8', 'INT8', 'UINT16', 'INT16', 'INT32']:
             argval = space.int_w(arg)
         elif argtype == 'FLOAT64':
             argval = space.float_w(arg)

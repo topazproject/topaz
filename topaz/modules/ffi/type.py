@@ -29,7 +29,9 @@ ffi_types = {
 
 native_types = {
                 'VOID': rffi.VOIDP,
-                'INT8': rffi.CHAR,
+                # INT8 is also unsigned because ruby- and clibffi seem to have
+                # different behaviour on rffi.CHAR
+                'INT8': rffi.UCHAR,
                 'UINT8': rffi.UCHAR,
                 'INT16': rffi.SHORT,
                 'UINT16': rffi.USHORT,
