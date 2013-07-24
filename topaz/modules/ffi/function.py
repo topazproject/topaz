@@ -20,6 +20,7 @@ unrolling_types = unrolling_iterable([
                                       'UINT16',
                                       'INT16',
                                       'INT32',
+                                      'UINT32',
                                       'FLOAT64',
                                       'STRING'
                                     ])
@@ -72,7 +73,9 @@ class W_FunctionObject(W_PointerObject):
                 result = self.ptr.call(native_types[t])
                 # Is this really necessary? Maybe call does this anyway:
                 result = rffi.cast(native_types[t], result)
-                if t in ['INT8', 'UINT8', 'UINT16', 'INT16', 'INT32']:
+                if t in ['INT8', 'UINT8',
+                         'UINT16', 'INT16',
+                         'UINT32', 'INT32']:
                     return space.newint(intmask(result))
                 elif t == 'FLOAT64':
                     return space.newfloat(result)
@@ -83,7 +86,9 @@ class W_FunctionObject(W_PointerObject):
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
-        if argtype in ['UINT8', 'INT8', 'UINT16', 'INT16', 'INT32']:
+        if argtype in ['UINT8', 'INT8',
+                       'UINT16', 'INT16',
+                       'UINT32', 'INT32']:
             argval = space.int_w(arg)
         elif argtype == 'FLOAT64':
             argval = space.float_w(arg)

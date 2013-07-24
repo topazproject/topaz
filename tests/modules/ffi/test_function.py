@@ -140,3 +140,13 @@ class TestFunction_attach(BaseFFITest):
         assert self.ask(ffis,
                         self.make_mock_library_code(libtest_so) +
                         self.make_question_code('s', '16'))
+
+    def test_it_works_with_unsigned_ints(self, ffis, libtest_so):
+        assert self.ask(ffis,
+                        self.make_mock_library_code(libtest_so) +
+                        self.make_question_code('u', '32'))
+
+    def test_it_works_with_signed_ints(self, ffis, libtest_so):
+        assert self.ask(ffis,
+                        self.make_mock_library_code(libtest_so) +
+                        self.make_question_code('s', '32'))
