@@ -84,13 +84,9 @@ class DictKey(object):
         self.hash = None
 
     def __eq__(self, other):
-        if hasattr(self.key, 'symbol') and hasattr(other.key, 'symbol'):
-            return self.key.symbol == other.key.symbol
         return self.d.eq_func(self.key, other.key)
 
     def __hash__(self):
-        if hasattr(self.key, 'symbol'):
-            return hash(self.key.symbol) - 1000
         if self.hash is None:
             self.hash = self.d.hash_func(self.key)
         return self.hash

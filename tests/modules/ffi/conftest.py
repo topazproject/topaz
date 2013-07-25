@@ -16,7 +16,18 @@ def pytest_funcarg__ffis(request, space):
         setup=build_ffis,
         scope="session",
     )
-    return copy.deepcopy(ffis)
+    ffis.execute("""
+    class Symbol
+        def eql?(other)
+            self.to_s == other.to_s
+        end
+        def hash
+            self.to_s.hash - 10000
+        end
+    end
+    """)
+    cp = copy.deepcopy(ffis)
+    return cp
 
 def pytest_funcarg__libtest_so():
     self_dir = os.path.join(os.path.dirname(__file__))
