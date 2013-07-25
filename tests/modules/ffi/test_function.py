@@ -110,22 +110,26 @@ class TestFunction_attach(BaseFFITest):
         """ % self.make_mock_library_code('libc.so.6'))
         assert self.unwrap(ffis, w_res) == "Well done!"
 
-    def make_question_code(self, signchar, size, left=1, right=2):
-        T = ':%sint%s' %('' if signchar == 's' else 'u', size)
+    def make_question_code(self, signchar, size, left=1, right=2,
+                           with_name=None):
+        default_T = '%sint%s' %('' if signchar == 's' else 'u', size)
+        T = default_T if with_name is None else with_name
         fn = 'add_%s%s' %(signchar, size)
         plus_or_minus = '-' if signchar == 's' else '+'
         return ("""
-        FFI::Function.new(T, [T, T],
+        FFI::Function.new(:T, [:T, :T],
                           FFI::DynamicLibrary::Symbol.new(:fn),
                           {}).attach(LibraryMock, 'fn')
         LibraryMock.attachments[:fn].call(+|-%s, +|-%s) == +|-%s
         """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus) %
         (left, right, left+right))
 
-    def type_works(self, ffis, libtest_so, typechar, size, left=1, right=2):
+    def type_works(self, ffis, libtest_so, typechar, size, left=1, right=2,
+                   with_name=None):
         return self.ask(ffis,
                         self.make_mock_library_code(libtest_so) +
-                        self.make_question_code(typechar, size, left, right))
+                        self.make_question_code(typechar, size, left, right,
+                                                with_name))
 
     def test_it_works_with_unsigned_int8(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 'u', '8')
@@ -139,17 +143,37 @@ class TestFunction_attach(BaseFFITest):
     def test_it_works_with_signed_int16(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 's', '16')
 
+    def test_it_works_with_unsigned_shorts(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 'u', '16', with_name='short')
+
+    def test_it_works_with_signed_shorts(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 's', '16', with_name='short')
+
     def test_it_works_with_unsigned_int32(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 'u', '32')
 
     def test_it_works_with_signed_int32(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 's', '32')
 
+    def test_it_works_with_unsigned_ints(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 'u', '32', with_name='int')
+
+    def test_it_works_with_signed_ints(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 's', '32', with_name='int')
+
     def test_it_works_with_unsigned_int64(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 'u', '64', 2**61, 2**61)
 
     def test_it_works_with_signed_int64(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 's', '64', 2**61, 2**61)
+
+    def test_it_works_with_unsigned_long_longs(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 'u', '64', 2**61, 2**61,
+                               with_name='long_long')
+
+    def test_it_works_with_signed_long_longs(self, ffis, libtest_so):
+        assert self.type_works(ffis, libtest_so, 's', '64', 2**61, 2**61,
+                               with_name='long_long')
 
     def test_it_returns_nil_for_void(self, ffis, libtest_so):
         w_res = ffis.execute("""
