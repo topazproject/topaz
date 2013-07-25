@@ -3,7 +3,7 @@ from topaz.module import ClassDef
 
 from rpython.rlib import clibffi
 from rpython.rlib.rbigint import rbigint
-from rpython.rtyper.lltypesystem import rffi
+from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 
 ffi_types = {
@@ -28,7 +28,7 @@ ffi_types = {
             }
 
 native_types = {
-                'VOID': rffi.VOIDP,
+                'VOID': lltype.Void,
                 # the next one might seem a bit weird but that's ruby ffi's
                 # behaviour: When the result is -3 it should be that, and not
                 # chr(256 -3) (which rffi.CHAR would give you)

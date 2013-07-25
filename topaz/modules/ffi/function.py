@@ -15,18 +15,20 @@ from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import intmask, longlongmask
 from rpython.rlib.rbigint import rbigint
 
-unrolling_types = unrolling_iterable([
-                                      'UINT8',
-                                      'INT8',
-                                      'UINT16',
-                                      'INT16',
-                                      'INT32',
-                                      'UINT32',
-                                      'INT64',
-                                      'UINT64',
-                                      'FLOAT64',
-                                      'STRING'
-                                    ])
+valid_argtypes = [
+                  'UINT8',
+                  'INT8',
+                  'UINT16',
+                  'INT16',
+                  'INT32',
+                  'UINT32',
+                  'INT64',
+                  'UINT64',
+                  'FLOAT64',
+                  'STRING'
+                 ]
+unrolling_argtypes = unrolling_iterable(valid_argtypes)
+unrolling_rettypes = unrolling_iterable(valid_argtypes + ['VOID'])
 
 class W_FunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
@@ -67,11 +69,11 @@ class W_FunctionObject(W_PointerObject):
         arg_types_w = self.arg_types_w
         ret_type_name = w_ret_type.name
         for i in range(len(args_w)):
-            for t in unrolling_types:
+            for t in unrolling_argtypes:
                 argtype_name = arg_types_w[i].name
                 if t == argtype_name:
                     self._push_arg(space, args_w[i], t)
-        for t in unrolling_types:
+        for t in unrolling_rettypes:
             if t == ret_type_name:
                 result = self.ptr.call(native_types[t])
                 # Is this really necessary? Maybe call does this anyway:
@@ -88,6 +90,8 @@ class W_FunctionObject(W_PointerObject):
                     return space.newfloat(result)
                 elif t == 'STRING':
                     return space.newstr_fromstr(rffi.charp2str(result))
+                elif t == 'VOID':
+                    return space.w_nil
         assert False
         return space.w_nil
 

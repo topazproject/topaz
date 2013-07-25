@@ -150,3 +150,13 @@ class TestFunction_attach(BaseFFITest):
 
     def test_it_works_with_signed_long_longs(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 's', '64', 2**61, 2**61)
+
+    def test_it_returns_nil_for_void(self, ffis, libtest_so):
+        w_res = ffis.execute("""
+        %s
+        func = FFI::Function.new(:void, [:uint8],
+                                 FFI::DynamicLibrary::Symbol.new(:set_u8),
+                                 {}).attach(LibraryMock, 'do_nothing')
+        LibraryMock.attachments[:do_nothing].call(0)
+        """ % self.make_mock_library_code(libtest_so))
+        assert w_res is ffis.w_nil
