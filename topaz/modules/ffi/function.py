@@ -25,6 +25,7 @@ valid_argtypes = [
                   'INT64',
                   'UINT64',
                   'FLOAT64',
+                  'BOOL',
                   'STRING'
                  ]
 unrolling_argtypes = unrolling_iterable(valid_argtypes)
@@ -88,6 +89,8 @@ class W_FunctionObject(W_PointerObject):
                     return space.newbigint_fromrbigint(bigint_result)
                 elif t == 'FLOAT64':
                     return space.newfloat(result)
+                elif t == 'BOOL':
+                    return space.newbool(result)
                 elif t == 'STRING':
                     return space.newstr_fromstr(rffi.charp2str(result))
                 elif t == 'VOID':
@@ -105,6 +108,8 @@ class W_FunctionObject(W_PointerObject):
             argval = space.bigint_w(arg).tolonglong()
         elif argtype == 'FLOAT64':
             argval = space.float_w(arg)
+        elif argtype == 'BOOL':
+            argval = space.is_true(arg)
         elif argtype == 'STRING':
             string = space.str_w(arg)
             argval = lltype.malloc(rffi.CArray(rffi.CHAR), len(string),

@@ -22,7 +22,7 @@ ffi_types = {
                 'FLOAT64': clibffi.ffi_type_double,
                 'LONGDOUBLE': clibffi.ffi_type_longdouble,
                 'POINTER': clibffi.ffi_type_pointer,
-                'BOOL': clibffi.ffi_type_uchar,
+                'BOOL': clibffi.cast_type_to_ffitype(lltype.Bool),
                 'VARARGS': clibffi.ffi_type_void,
                 'STRING': clibffi.ffi_type_pointer
             }
@@ -46,7 +46,7 @@ native_types = {
                 'FLOAT64': rffi.DOUBLE,
                 'LONGDOUBLE': rffi.LONGDOUBLE,
                 'POINTER': rffi.LONG,
-                'BOOL': rffi.CHAR,
+                'BOOL': lltype.Bool,
                 'VARARGS': rffi.CHAR,
                 'STRING': rffi.CCHARP
                }

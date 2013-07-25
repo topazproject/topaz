@@ -160,3 +160,15 @@ class TestFunction_attach(BaseFFITest):
         LibraryMock.attachments[:do_nothing].call(0)
         """ % self.make_mock_library_code(libtest_so))
         assert w_res is ffis.w_nil
+
+    def test_it_works_with_bools(self, ffis, libtest_so):
+        ffis.execute("""
+        %s
+        func = FFI::Function.new(:bool, [:bool],
+                                 FFI::DynamicLibrary::Symbol.new(:bool_reverse_val),
+                                 {}).attach(LibraryMock, 'not')
+        """ % self.make_mock_library_code(libtest_so))
+        w_res = ffis.execute("LibraryMock.attachments[:not].call(true)")
+        assert w_res is ffis.w_false
+        w_res = ffis.execute("LibraryMock.attachments[:not].call(false)")
+        assert w_res is ffis.w_true
