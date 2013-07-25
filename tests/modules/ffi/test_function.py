@@ -110,21 +110,22 @@ class TestFunction_attach(BaseFFITest):
         """ % self.make_mock_library_code('libc.so.6'))
         assert self.unwrap(ffis, w_res) == "Well done!"
 
-    def make_question_code(self, signchar, size):
+    def make_question_code(self, signchar, size, left=1, right=2):
         T = ':%sint%s' %('' if signchar == 's' else 'u', size)
         fn = 'add_%s%s' %(signchar, size)
         plus_or_minus = '-' if signchar == 's' else '+'
-        return """
+        return ("""
         FFI::Function.new(T, [T, T],
                           FFI::DynamicLibrary::Symbol.new(:fn),
                           {}).attach(LibraryMock, 'fn')
-        LibraryMock.attachments[:fn].call(+|-1, +|-2) == +|-3
-        """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus)
+        LibraryMock.attachments[:fn].call(+|-%s, +|-%s) == +|-%s
+        """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus) %
+        (left, right, left+right))
 
-    def type_works(self, ffis, libtest_so, typechar, size):
+    def type_works(self, ffis, libtest_so, typechar, size, left=1, right=2):
         return self.ask(ffis,
                         self.make_mock_library_code(libtest_so) +
-                        self.make_question_code(typechar, size))
+                        self.make_question_code(typechar, size, left, right))
 
     def test_it_works_with_unsigned_chars(self, ffis, libtest_so):
         assert self.type_works(ffis, libtest_so, 'u', '8')
@@ -145,7 +146,7 @@ class TestFunction_attach(BaseFFITest):
         assert self.type_works(ffis, libtest_so, 's', '32')
 
     def test_it_works_with_unsigned_long_longs(self, ffis, libtest_so):
-        assert self.type_works(ffis, libtest_so, 'u', '64')
+        assert self.type_works(ffis, libtest_so, 'u', '64', 2**61, 2**61)
 
     def test_it_works_with_signed_long_longs(self, ffis, libtest_so):
-        assert self.type_works(ffis, libtest_so, 's', '64')
+        assert self.type_works(ffis, libtest_so, 's', '64', 2**61, 2**61)
