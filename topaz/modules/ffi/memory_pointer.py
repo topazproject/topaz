@@ -33,3 +33,8 @@ class W_MemoryPointerObject(W_PointerObject):
                 self.content[begin + i] = val
             except:
                 assert False
+
+    @classdef.method('get_array_of_int32', begin='int', length='int')
+    def method_get_array_of_int32(self, space, begin, length):
+        arr = self.content[begin : begin + length]
+        return space.newarray([space.newint(x) for x in arr])
