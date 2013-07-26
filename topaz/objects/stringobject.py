@@ -493,7 +493,9 @@ class W_StringObject(W_Object):
 
     @classdef.method("inspect")
     def method_inspect(self, space):
-        return space.newstr_fromstr('"%s"' % self.str_w(space))
+        s = space.newstr_fromstr('"%s"' % self.str_w(space))
+        space.infect(s, self)
+        return s
 
     @classdef.method("+")
     def method_plus(self, space, w_obj):
