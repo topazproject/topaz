@@ -26,6 +26,11 @@ class W_MemoryPointerObject(W_PointerObject):
 
     @classdef.method('put_array_of_int32', begin='int', arr_w='array')
     def method_put_array_of_int32(self, space, begin, arr_w):
+        if(begin < 0 or len(self.content) <= begin or
+           len(self.content) < begin + len(arr_w)):
+            errmsg = ("Memory access offset=%s size=%s is out of bounds"
+                      % (begin, 4*len(arr_w)))
+            raise space.error(space.w_IndexError, errmsg)
         for i, w_obj in enumerate(arr_w):
             try:
                 someint = Coerce.int(space, w_obj)
