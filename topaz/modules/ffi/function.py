@@ -100,22 +100,24 @@ class W_FunctionObject(W_PointerObject):
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
-        if argtype in ['UINT8', 'INT8',
-                       'UINT16', 'INT16',
-                       'UINT32', 'INT32']:
-            argval = space.int_w(arg)
-        elif argtype in ['INT64', 'UINT64']:
-            argval = space.bigint_w(arg).tolonglong()
-        elif argtype == 'FLOAT64':
-            argval = space.float_w(arg)
-        elif argtype == 'BOOL':
-            argval = space.is_true(arg)
-        elif argtype == 'STRING':
-            string = space.str_w(arg)
-            argval = rffi.str2charp(string)
-        else:
-            assert False
-        self.ptr.push_arg(argval)
+       if argtype == 'STRING':
+           arg_as_string = space.str_w(arg)
+           arg_as_ccharp = rffi.str2charp(arg_as_string)
+           self.ptr.push_arg(arg_as_ccharp)
+       else:
+           if argtype in ['UINT8', 'INT8',
+                          'UINT16', 'INT16',
+                          'UINT32', 'INT32']:
+               argval = space.int_w(arg)
+           elif argtype in ['INT64', 'UINT64']:
+               argval = space.bigint_w(arg).tolonglong()
+           elif argtype == 'FLOAT64':
+               argval = space.float_w(arg)
+           elif argtype == 'BOOL':
+               argval = space.is_true(arg)
+           else:
+               assert False
+           self.ptr.push_arg(argval)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
