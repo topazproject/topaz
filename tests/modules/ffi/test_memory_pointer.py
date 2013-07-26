@@ -15,3 +15,12 @@ class TestMemoryPointer__new(BaseFFITest):
     def test_it_sets_up_a_fixed_size_list(self, ffis):
         w_mem_ptr = ffis.execute("FFI::MemoryPointer.new(:int8, 5)")
         assert w_mem_ptr.content == [0]*5
+
+class TestMemoryPointer__put_methods(BaseFFITest):
+    def test_put_array_of_int32_fills_up_array(self, ffis):
+        w_mem_ptr = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int32, 10)
+        mem_ptr.put_array_of_int32(0, (0..9).to_a)
+        mem_ptr
+        """)
+        assert w_mem_ptr.content == range(10)
