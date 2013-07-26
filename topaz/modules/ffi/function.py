@@ -112,10 +112,7 @@ class W_FunctionObject(W_PointerObject):
             argval = space.is_true(arg)
         elif argtype == 'STRING':
             string = space.str_w(arg)
-            argval = lltype.malloc(rffi.CArray(rffi.CHAR), len(string),
-                                 flavor='raw')
-            for i in range(len(string)):
-                argval[i] = string[i]
+            argval = rffi.str2charp(string)
         else:
             assert False
         self.ptr.push_arg(argval)
