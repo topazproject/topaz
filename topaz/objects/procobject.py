@@ -63,7 +63,7 @@ class W_ProcObject(W_Object):
 
     @classdef.method("arity")
     def method_arity(self, space):
-        return space.newint(self.bytecode.arity())
+        return space.newint(self.bytecode.arity(negative_defaults=True))
 
     @classdef.method("binding")
     def method_binding(self, space):
