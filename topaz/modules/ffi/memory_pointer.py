@@ -42,7 +42,6 @@ class W_MemoryPointerObject(W_PointerObject):
 
     @classdef.method('get_array_of_int32', begin='int', length='int')
     def method_get_array_of_int32(self, space, begin, length):
-        #arr = self.content[begin : begin + length]
         arr_w = []
         for i in range(begin, begin + length):
             val = self.ptr[i]
