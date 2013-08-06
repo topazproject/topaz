@@ -14,7 +14,7 @@ class BaseFrame(object):
 
 
 class Frame(BaseFrame):
-    _virtualizable2_ = [
+    _virtualizable_ = [
         "bytecode", "localsstack_w[*]", "stackpos", "w_self", "block",
         "cells[*]", "lastblock", "lexical_scope", "last_instr", "parent_interp",
         "top_parent_interp",
