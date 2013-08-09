@@ -46,7 +46,12 @@ class W_TimeObject(W_Object):
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
-        result = cmp(self.epoch_seconds, w_other.epoch_seconds)
+        assert isinstance(w_other, W_TimeObject)
+        result = 0
+        if self.epoch_seconds > w_other.epoch_seconds:
+            result = 1
+        elif self.epoch_seconds < w_other.epoch_seconds:
+            result = -1
         return space.newint(result)
 
     @classdef.method("to_i")
