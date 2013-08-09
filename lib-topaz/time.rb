@@ -11,4 +11,8 @@ class Time
   def tv_sec
     self.to_f.floor
   end
+
+  def succ
+    Time.at(self.to_i + 1)
+  end
 end
