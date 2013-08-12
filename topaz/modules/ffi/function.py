@@ -26,7 +26,8 @@ valid_argtypes = [
                   'UINT64',
                   'FLOAT64',
                   'BOOL',
-                  'STRING'
+                  'STRING',
+                  'POINTER'
                  ]
 unrolling_argtypes = unrolling_iterable(valid_argtypes)
 unrolling_rettypes = unrolling_iterable(valid_argtypes + ['VOID'])
@@ -93,6 +94,8 @@ class W_FunctionObject(W_PointerObject):
                     return space.newbool(result)
                 elif t == 'STRING':
                     return space.newstr_fromstr(rffi.charp2str(result))
+                elif t == 'POINTER':
+                    return W_PointerObject(space, result)
                 elif t == 'VOID':
                     return space.w_nil
         assert False
@@ -100,24 +103,28 @@ class W_FunctionObject(W_PointerObject):
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
-       if argtype == 'STRING':
-           arg_as_string = space.str_w(arg)
-           arg_as_ccharp = rffi.str2charp(arg_as_string)
-           self.ptr.push_arg(arg_as_ccharp)
-       else:
-           if argtype in ['UINT8', 'INT8',
-                          'UINT16', 'INT16',
-                          'UINT32', 'INT32']:
-               argval = space.int_w(arg)
-           elif argtype in ['INT64', 'UINT64']:
-               argval = space.bigint_w(arg).tolonglong()
-           elif argtype == 'FLOAT64':
-               argval = space.float_w(arg)
-           elif argtype == 'BOOL':
-               argval = space.is_true(arg)
-           else:
-               assert False
-           self.ptr.push_arg(argval)
+        if argtype == 'STRING':
+            arg_as_string = space.str_w(arg)
+            arg_as_ccharp = rffi.str2charp(arg_as_string)
+            self.ptr.push_arg(arg_as_ccharp)
+        elif argtype == 'POINTER':
+            pointer = arg.ptr
+            void_ptr = rffi.cast(rffi.VOIDP, pointer)
+            self.ptr.push_arg(void_ptr)
+        else:
+            if argtype in ['UINT8', 'INT8',
+                           'UINT16', 'INT16',
+                           'UINT32', 'INT32']:
+                argval = space.int_w(arg)
+            elif argtype in ['INT64', 'UINT64']:
+                argval = space.bigint_w(arg).tolonglong()
+            elif argtype == 'FLOAT64':
+                argval = space.float_w(arg)
+            elif argtype == 'BOOL':
+                argval = space.is_true(arg)
+            else:
+                assert False
+            self.ptr.push_arg(argval)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

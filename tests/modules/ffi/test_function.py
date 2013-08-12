@@ -178,9 +178,9 @@ class TestFunction_attach(BaseFFITest):
     def test_it_returns_nil_for_void(self, ffis, libtest_so):
         w_res = ffis.execute("""
         %s
-        func = FFI::Function.new(:void, [:uint8],
-                                 FFI::DynamicLibrary::Symbol.new(:set_u8),
-                                 {}).attach(LibraryMock, 'do_nothing')
+        FFI::Function.new(:void, [:uint8],
+                          FFI::DynamicLibrary::Symbol.new(:set_u8),
+                          {}).attach(LibraryMock, 'do_nothing')
         LibraryMock.attachments[:do_nothing].call(0)
         """ % self.make_mock_library_code(libtest_so))
         assert w_res is ffis.w_nil
@@ -188,11 +188,35 @@ class TestFunction_attach(BaseFFITest):
     def test_it_works_with_bools(self, ffis, libtest_so):
         ffis.execute("""
         %s
-        func = FFI::Function.new(:bool, [:bool],
-                                 FFI::DynamicLibrary::Symbol.new(:bool_reverse_val),
-                                 {}).attach(LibraryMock, 'not')
+        FFI::Function.new(:bool, [:bool],
+                          FFI::DynamicLibrary::Symbol.new(:bool_reverse_val),
+                          {}).attach(LibraryMock, 'not')
         """ % self.make_mock_library_code(libtest_so))
         w_res = ffis.execute("LibraryMock.attachments[:not].call(true)")
         assert w_res is ffis.w_false
         w_res = ffis.execute("LibraryMock.attachments[:not].call(false)")
         assert w_res is ffis.w_true
+
+    def test_it_works_with_pointer_argument(self, ffis, libtest_so):
+        w_res = ffis.execute("""
+        %s
+        FFI::Function.new(:void, [:int, :int, :pointer],
+                          FFI::DynamicLibrary::Symbol.new(:ref_add_int32_t),
+                          {}).attach(LibraryMock, 'add')
+        res = FFI::MemoryPointer.new(:int, 1)
+        LibraryMock.attachments[:add].call(1, 2, res)
+        res.get_array_of_int32(0, 1)[0]
+        """ % self.make_mock_library_code(libtest_so))
+        assert self.unwrap(ffis, w_res) == 3
+
+    def test_it_returns_pointer_object(self, ffis, libtest_so):
+        ffis.execute("""
+        %s
+        #name = FFI::DynamicLibrary::Symbol.new(:ptr_return_array_element)
+        FFI::Function.new(:pointer, [:int],
+                          FFI::DynamicLibrary::Symbol.new(:ptr_malloc),
+                          {}).attach(LibraryMock, 'malloc')
+        """ % self.make_mock_library_code(libtest_so))
+        assert self.ask(ffis, """
+        LibraryMock.attachments[:malloc].call(8).kind_of?(FFI::Pointer)
+        """)

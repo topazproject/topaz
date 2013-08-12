@@ -6,9 +6,9 @@ from rpython.rtyper.lltypesystem import rffi
 class W_PointerObject(W_Object):
     classdef = ClassDef('Pointer', W_Object.classdef)
 
-    def __init__(self, space):
+    def __init__(self, space, ptr=rffi.NULL):
         W_Object.__init__(self, space)
-        self.ptr = rffi.NULL
+        self.ptr = ptr
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):

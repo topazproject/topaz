@@ -45,7 +45,7 @@ native_types = {
                 'FLOAT32': rffi.FLOAT,
                 'FLOAT64': rffi.DOUBLE,
                 'LONGDOUBLE': rffi.LONGDOUBLE,
-                'POINTER': rffi.LONG,
+                'POINTER': rffi.VOIDP,
                 'BOOL': lltype.Bool,
                 'VARARGS': rffi.CHAR,
                 'STRING': rffi.CCHARP
