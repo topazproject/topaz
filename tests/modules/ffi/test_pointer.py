@@ -45,6 +45,10 @@ class TestPointer_autorelease(BaseFFITest):
             assert self.ask(space, question)
 
 class TestPointer(BaseFFITest):
+    def test_its_superclass_is_AbstractMemory(self, space):
+        assert self.ask(space,
+        "FFI::Pointer.superclass.equal?(FFI::AbstractMemory)")
+
     def test_it_has_these_methods(self, space):
         # but they don't do anything yet...
         space.execute("FFI::Pointer.new.address")
