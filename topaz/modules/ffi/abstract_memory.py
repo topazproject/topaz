@@ -10,6 +10,38 @@ def new_cast_method(ctype):
         return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
+def new_put_method(cast_method, cast_type):
+    def put_method(self, space, offset, value):
+        val = rffi.cast(cast_type, value)
+        casted_ptr = cast_method(self)
+        try:
+            casted_ptr[offset] = val
+        except IndexError:
+            raise memory_index_error(space, offset, 4)
+    return put_method
+
+def new_write_method(type_str):
+    put_method_name = 'put_' + type_str
+    def write_method(self, space, w_value):
+        space.send(self, put_method_name, [space.newint(0), w_value])
+    return write_method
+
+def new_get_method(cast_method):
+    def get_method(self, space, offset):
+        casted_ptr = cast_method(self)
+        try:
+            val = casted_ptr[offset]
+            return space.newint(val)
+        except IndexError:
+            raise memory_index_error(space, offset, 4)
+    return get_method
+
+def new_read_method(type_str):
+    get_method_name = 'get_' + type_str
+    def read_method(self, space):
+        return space.send(self, get_method_name, [space.newint(0)])
+    return read_method
+
 def memory_index_error(space, offset, size):
     return space.error(space.w_IndexError,
                        "Memory access offset=%s size=%s is out of bounds"
@@ -35,31 +67,17 @@ class W_AbstractMemoryObject(W_Object):
     def short_size(self): return self.size / 2
     def int_size(self):   return self.size / 4
 
-    @classdef.method('put_int32', offset='int', value='int')
-    def method_put_int32(self, space, offset, value):
-        val = rffi.cast(rffi.INT, value)
-        int_ptr = self.int_cast()
-        try:
-            int_ptr[offset] = val
-        except IndexError:
-            raise memory_index_error(space, offset, 4)
+    method_put_int32 = classdef.method('put_int32', offset='int', value='int')(
+                       new_put_method(int_cast, rffi.INT))
 
-    @classdef.method('write_int32')
-    def method_write_int32(self, space, w_value):
-        space.send(self, 'put_int32', [space.newint(0), w_value])
+    method_write_int32 = classdef.method('write_int32')(
+                         new_write_method('int32'))
 
-    @classdef.method('get_int32', offset='int')
-    def method_get_int32(self, space, offset):
-        int_ptr = self.int_cast()
-        try:
-            val = int_ptr[offset]
-            return space.newint(val)
-        except IndexError:
-            raise memory_index_error(space, offset, 4)
+    method_get_int32 = classdef.method('get_int32', offset='int')(
+                       new_get_method(int_cast))
 
-    @classdef.method('read_int32')
-    def method_read_int32(self, space):
-        return space.send(self, 'get_int32', [space.newint(0)])
+    method_read_int32 = classdef.method('read_int32')(
+                        new_read_method('int32'))
 
     @classdef.method('put_array_of_int32', begin='int', arr_w='array')
     def method_put_array_of_int32(self, space, begin, arr_w):
