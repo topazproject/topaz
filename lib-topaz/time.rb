@@ -1,7 +1,6 @@
 class Time
   def usec
-    float = self.to_f
-    (float - float.floor) * 1e6
+    (self.to_f * 1e6 % 1e6).floor
   end
 
   def tv_usec
