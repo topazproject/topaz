@@ -1,5 +1,17 @@
 from tests.modules.ffi.base import BaseFFITest
 
+class TestAbstractMemory__put_int32(BaseFFITest):
+    def test_it_writes_a_single_int32_into_memory(self, ffis):
+        w_mem_ptr = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int32, 2)
+        mem_ptr.put_int32(0, 2**31 - 1)
+        mem_ptr.put_int32(1, 2**31)
+        mem_ptr
+        """)
+        int_ptr = w_mem_ptr.int_cast()
+        assert int_ptr[0] == 2**31 - 1
+        assert int_ptr[1] == -2**31
+
 class TestAbstractMemory__put_array_of_int32(BaseFFITest):
     def test_it_writes_into_array(self, ffis):
         w_mem_ptr = ffis.execute("""
@@ -7,7 +19,9 @@ class TestAbstractMemory__put_array_of_int32(BaseFFITest):
         mem_ptr.put_array_of_int32(0, (0..9).to_a)
         mem_ptr
         """)
-        assert w_mem_ptr.ptr._obj.items == range(10)
+        int_ptr = w_mem_ptr.int_cast()
+        for i in range(10):
+            assert int_ptr[i] == i
 
     def test_it_refuses_negative_offset(self, ffis):
         with self.raises(ffis, 'IndexError',
