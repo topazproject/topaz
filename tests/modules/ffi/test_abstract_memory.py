@@ -26,6 +26,15 @@ class TestAbstractMemory__put_int32(BaseFFITest):
             FFI::MemoryPointer.new(:int32, 3).put_int32(3, 1073741809)
             """)
 
+class TestAbstractMemory__write_int32(BaseFFITest):
+    def test_it_is_like_calling_put_int32_with_0_as_1st_arg(self, ffis):
+        w_mem_ptr = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int32, 1)
+        mem_ptr.write_int32(2**29)
+        mem_ptr
+        """)
+        assert w_mem_ptr.int_cast()[0] == 2**29
+
 class TestAbstractMemory__get_int32(BaseFFITest):
     def test_it_gets_a_single_int32_from_the_given_offset(self, ffis):
         w_res = ffis.execute("""
@@ -48,6 +57,15 @@ class TestAbstractMemory__get_int32(BaseFFITest):
             ffis.execute("""
             FFI::MemoryPointer.new(:int32, 6).get_int32(6)
             """)
+
+class TestAbstractMemory__read_int32(BaseFFITest):
+    def test_it_is_like_calling_get_int32_with_0(self, ffis):
+        w_res = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int32, 1)
+        mem_ptr.write_int32(2**29)
+        mem_ptr.read_int32
+        """)
+        assert self.unwrap(ffis, w_res) == 2**29
 
 class TestAbstractMemory__put_array_of_int32(BaseFFITest):
     def test_it_writes_into_array(self, ffis):

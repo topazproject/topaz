@@ -44,6 +44,10 @@ class W_AbstractMemoryObject(W_Object):
         except IndexError:
             raise memory_index_error(space, offset, 4)
 
+    @classdef.method('write_int32')
+    def method_write_int32(self, space, w_value):
+        space.send(self, 'put_int32', [space.newint(0), w_value])
+
     @classdef.method('get_int32', offset='int')
     def method_get_int32(self, space, offset):
         int_ptr = self.int_cast()
@@ -52,6 +56,10 @@ class W_AbstractMemoryObject(W_Object):
             return space.newint(val)
         except IndexError:
             raise memory_index_error(space, offset, 4)
+
+    @classdef.method('read_int32')
+    def method_read_int32(self, space):
+        return space.send(self, 'get_int32', [space.newint(0)])
 
     @classdef.method('put_array_of_int32', begin='int', arr_w='array')
     def method_put_array_of_int32(self, space, begin, arr_w):
