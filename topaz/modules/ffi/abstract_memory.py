@@ -13,6 +13,11 @@ def new_cast_method(ctype):
             return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
+def memory_index_error(space, offset, size):
+    return space.error(space.w_IndexError,
+                       "Memory access offset=%s size=%s is out of bounds"
+                       % (offset, size))
+
 class W_AbstractMemoryObject(W_Object):
     classdef = ClassDef('Pointer', W_Object.classdef)
 
@@ -33,19 +38,29 @@ class W_AbstractMemoryObject(W_Object):
     def short_size(self): return self.size / 2
     def int_size(self):   return self.size / 4
 
-    @classdef.method('put_int32', index='int', value='int')
-    def method_put_int32(self, space, index, value):
+    @classdef.method('put_int32', offset='int', value='int')
+    def method_put_int32(self, space, offset, value):
         val = rffi.cast(rffi.INT, value)
         int_ptr = self.int_cast()
-        int_ptr[index] = val
+        try:
+            int_ptr[offset] = val
+        except IndexError:
+            raise memory_index_error(space, offset, 4)
+
+    @classdef.method('get_int32', offset='int')
+    def method_get_int32(self, space, offset):
+        int_ptr = self.int_cast()
+        try:
+            val = int_ptr[offset]
+            return space.newint(val)
+        except IndexError:
+            raise memory_index_error(space, offset, 4)
 
     @classdef.method('put_array_of_int32', begin='int', arr_w='array')
     def method_put_array_of_int32(self, space, begin, arr_w):
         if(begin < 0 or self.int_size() <= begin or
            self.int_size() < begin + len(arr_w)):
-            errmsg = ("Memory access offset=%s size=%s is out of bounds"
-                      % (begin, 4*len(arr_w)))
-            raise space.error(space.w_IndexError, errmsg)
+            raise memory_index_error(space, begin, 4*len(arr_w))
         for i, w_obj in enumerate(arr_w):
             try:
                 someint = Coerce.int(space, w_obj)
