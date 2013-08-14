@@ -14,14 +14,14 @@ class TestMemoryPointer__new(BaseFFITest):
         w_mem_ptr = ffis.execute("FFI::MemoryPointer.new(:int32, 1)")
         assert w_mem_ptr.w_type == ffis.execute("FFI::Type::INT32")
 
-    def test_it_lets_you_gc_cast_its_content(self, ffis):
+    def test_it_lets_you_cast_its_content(self, ffis):
         w_ptr = ffis.execute("FFI::MemoryPointer.new(:int16, 4)")
         for ptr, rffi_t in [
                                 (w_ptr.char_cast(), rffi.CHAR),
                                 (w_ptr.short_cast(), rffi.SHORT),
                                 (w_ptr.int_cast(), rffi.INT)
                                   ]:
-            assert ptr._TYPE.TO == lltype.GcArray(rffi_t)
+            assert ptr._TYPE.TO == rffi.CArray(rffi_t)
 
     def test_it_lets_you_convert_its_size_into_different_units(self, ffis):
         w_mem_ptr = ffis.execute("FFI::MemoryPointer.new(:int16, 4)")

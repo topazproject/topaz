@@ -20,6 +20,6 @@ class W_MemoryPointerObject(W_PointerObject):
     @classdef.method('initialize', size='int')
     def method_initialize(self, space, w_type_hint, size):
         self.w_type = type_object(space, w_type_hint)
-        array_type = lltype.GcArray(native_types[self.w_type.name])
-        self.ptr = lltype.malloc(array_type, size)
+        array_type = rffi.CArray(native_types[self.w_type.name])
+        self.ptr = lltype.malloc(array_type, size, flavor='raw')
         self.size = size * space.int_w(space.send(self.w_type, 'size'))

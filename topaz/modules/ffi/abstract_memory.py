@@ -7,10 +7,7 @@ from rpython.rtyper.lltypesystem import lltype
 
 def new_cast_method(ctype):
     def cast_method(memory):
-        if isinstance(memory.ptr._TYPE.TO, lltype.GcArray):
-            return rffi.cast(lltype.Ptr(lltype.GcArray(ctype)), memory.ptr)
-        else:
-            return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
+        return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
 def memory_index_error(space, offset, size):

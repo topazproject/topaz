@@ -204,10 +204,10 @@ class TestFunction_attach(BaseFFITest):
                           FFI::DynamicLibrary::Symbol.new(:ref_add_int32_t),
                           {}).attach(LibraryMock, 'add')
         res = FFI::MemoryPointer.new(:int, 1)
-        LibraryMock.attachments[:add].call(1, 2, res)
-        res.get_array_of_int32(0, 1)[0]
+        LibraryMock.attachments[:add].call(4, 6, res)
+        res.read_int32
         """ % self.make_mock_library_code(libtest_so))
-        assert self.unwrap(ffis, w_res) == 3
+        assert self.unwrap(ffis, w_res) == 10
 
     def test_it_returns_pointer_object(self, ffis, libtest_so):
         ffis.execute("""
