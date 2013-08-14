@@ -5,19 +5,22 @@ from topaz.coerce import Coerce
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
 
+# Check, whether is will be inlined
 def new_cast_method(ctype):
     def cast_method(memory):
         return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
-def new_put_method(cast_method, cast_type):
+def new_put_method(rffi_type):
+    cast_method = new_cast_method(rffi_type)
+    sizeof_type = rffi.sizeof(rffi_type)
     def put_method(self, space, offset, value):
-        val = rffi.cast(cast_type, value)
+        val = rffi.cast(rffi_type, value)
         casted_ptr = cast_method(self)
         try:
             casted_ptr[offset] = val
         except IndexError:
-            raise memory_index_error(space, offset, 4)
+            raise memory_index_error(space, offset, sizeof_type)
     return put_method
 
 def new_write_method(type_str):
@@ -26,14 +29,16 @@ def new_write_method(type_str):
         space.send(self, put_method_name, [space.newint(0), w_value])
     return write_method
 
-def new_get_method(cast_method):
+def new_get_method(rffi_type):
+    cast_method = new_cast_method(rffi_type)
+    sizeof_type = rffi.sizeof(rffi_type)
     def get_method(self, space, offset):
         casted_ptr = cast_method(self)
         try:
             val = casted_ptr[offset]
             return space.newint(val)
         except IndexError:
-            raise memory_index_error(space, offset, 4)
+            raise memory_index_error(space, offset, sizeof_type)
     return get_method
 
 def new_read_method(type_str):
@@ -64,17 +69,17 @@ class W_AbstractMemoryObject(W_Object):
     int_cast   = new_cast_method(rffi.INT)
 
     def char_size(self):  return self.size
-    def short_size(self): return self.size / 2
-    def int_size(self):   return self.size / 4
+    def short_size(self): return self.size / rffi.sizeof(rffi.SHORT)
+    def int_size(self):   return self.size / rffi.sizeof(rffi.INT)
 
     method_put_int32 = classdef.method('put_int32', offset='int', value='int')(
-                       new_put_method(int_cast, rffi.INT))
+                       new_put_method(rffi.INT))
 
     method_write_int32 = classdef.method('write_int32')(
                          new_write_method('int32'))
 
     method_get_int32 = classdef.method('get_int32', offset='int')(
-                       new_get_method(int_cast))
+                       new_get_method(rffi.INT))
 
     method_read_int32 = classdef.method('read_int32')(
                         new_read_method('int32'))
