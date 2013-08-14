@@ -1,5 +1,58 @@
 from tests.modules.ffi.base import BaseFFITest
 
+class TestAbstractMemory__put_int8(BaseFFITest):
+    def test_it_puts_a_single_int8_into_the_given_offset(self, ffis):
+        w_mem_ptr = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int8, 2)
+        mem_ptr.put_int8(0, 111)
+        mem_ptr.put_int8(1, 107)
+        mem_ptr
+        """)
+        int_ptr = w_mem_ptr.char_cast()
+        assert int_ptr[0] == 'o'
+        assert int_ptr[1] == 'k'
+
+    def test_it_refuses_negative_offset(self, ffis):
+        with self.raises(ffis, 'IndexError',
+                         "Memory access offset=-1 size=1 is out of bounds"):
+            ffis.execute("""
+            FFI::MemoryPointer.new(:int8, 1).put_int8(-1, 230)
+            """)
+
+class TestAbstractMemory__write_int8(BaseFFITest):
+    def test_it_is_like_calling_put_int8_with_0_as_1st_arg(self, ffis):
+        w_mem_ptr = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int8, 1)
+        mem_ptr.write_int8(121)
+        mem_ptr
+        """)
+        assert w_mem_ptr.char_cast()[0] == 'y'
+
+class TestAbstractMemory__get_int8(BaseFFITest):
+    def test_it_gets_a_single_int8_from_the_given_offset(self, ffis):
+        w_res = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int8, 5)
+        mem_ptr.put_int8(4, 0)
+        mem_ptr.get_int8(4)
+        """)
+        assert self.unwrap(ffis, w_res) == 0
+
+class TestAbstractMemory__read_int8(BaseFFITest):
+    def test_it_is_like_calling_get_int8_with_0(self, ffis):
+        w_res = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int8, 1)
+        mem_ptr.write_int8(1)
+        mem_ptr.read_int8
+        """)
+        assert self.unwrap(ffis, w_res) == 1
+
+    def test_it_refuses_negative_offset(self, ffis):
+        with self.raises(ffis, 'IndexError',
+                         "Memory access offset=-1 size=1 is out of bounds"):
+            ffis.execute("""
+            FFI::MemoryPointer.new(:int8, 1).get_int8(-1)
+            """)
+
 class TestAbstractMemory__put_int32(BaseFFITest):
     def test_it_puts_a_single_int32_into_the_given_offset(self, ffis):
         w_mem_ptr = ffis.execute("""

@@ -36,7 +36,10 @@ def new_get_method(rffi_type):
         casted_ptr = cast_method(self)
         try:
             val = casted_ptr[offset]
-            return space.newint(val)
+            if isinstance(val, str):
+                return space.newint(ord(val))
+            else:
+                return space.newint(val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return get_method
@@ -71,6 +74,18 @@ class W_AbstractMemoryObject(W_Object):
     def char_size(self):  return self.size
     def short_size(self): return self.size / rffi.sizeof(rffi.SHORT)
     def int_size(self):   return self.size / rffi.sizeof(rffi.INT)
+
+    method_put_int8 = classdef.method('put_int8', offset='int', value='int')(
+                      new_put_method(rffi.CHAR))
+
+    method_write_int8 = classdef.method('write_int8')(
+                        new_write_method('int8'))
+
+    method_get_int8 = classdef.method('get_int8', offset='int')(
+                      new_get_method(rffi.CHAR))
+
+    method_read_int8 = classdef.method('read_int8')(
+                      new_read_method('int8'))
 
     method_put_int32 = classdef.method('put_int32', offset='int', value='int')(
                        new_put_method(rffi.INT))
