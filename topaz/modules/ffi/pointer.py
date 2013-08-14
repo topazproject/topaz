@@ -2,6 +2,7 @@ from topaz.modules.ffi.abstract_memory import W_AbstractMemoryObject
 from topaz.module import ClassDef
 
 from rpython.rtyper.lltypesystem import rffi
+from rpython.rtyper.lltypesystem import lltype
 
 class W_PointerObject(W_AbstractMemoryObject):
     classdef = ClassDef('Pointer', W_AbstractMemoryObject.classdef)
@@ -23,6 +24,10 @@ class W_PointerObject(W_AbstractMemoryObject):
             w_pointer = space.send(self, 'allocate')
             space.send(w_pointer, 'initialize', args_w)
             return w_pointer
+
+    @classdef.method('free')
+    def method_free(self, space):
+        lltype.free(self.ptr, flavor='raw')
 
     @classdef.method('null?')
     def method_null_p(self, space):

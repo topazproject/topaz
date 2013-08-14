@@ -13,6 +13,9 @@ class W_MemoryPointerObject(W_PointerObject):
         W_PointerObject.__init__(self, space)
         self.w_type = W_TypeObject(space, 'DUMMY')
 
+    def __del__(self):
+        lltype.free(self.ptr, flavor='raw')
+
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
         return W_MemoryPointerObject(space)
