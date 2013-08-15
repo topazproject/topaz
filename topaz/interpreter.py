@@ -223,7 +223,7 @@ class Interpreter(object):
         frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
-        w_res = space._find_lexical_const(jit.promote(frame.lexical_scope), name)
+        w_res = space._find_lexical_const(jit.promote(frame.lexical_scope), name, autoload=False)
         if w_res is None:
             frame.push(space.w_nil)
         else:

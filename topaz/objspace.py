@@ -544,7 +544,7 @@ class ObjectSpace(object):
         module.set_const(self, name, w_value)
 
     @jit.unroll_safe
-    def _find_lexical_const(self, lexical_scope, name):
+    def _find_lexical_const(self, lexical_scope, name, autoload=True):
         w_res = None
         scope = lexical_scope
         # perform lexical search but skip Object
@@ -552,7 +552,7 @@ class ObjectSpace(object):
             w_mod = scope.w_mod
             if w_mod is self.w_top_self:
                 break
-            w_res = w_mod.find_local_const(self, name, autoload=True)
+            w_res = w_mod.find_local_const(self, name, autoload=autoload)
             if w_res is not None:
                 return w_res
             scope = scope.backscope
@@ -568,7 +568,7 @@ class ObjectSpace(object):
                 # as fallback
                 if w_mod is self.w_basicobject and not object_seen:
                     fallback_scope = None
-                w_res = w_mod.find_const(self, name, autoload=True)
+                w_res = w_mod.find_const(self, name, autoload=autoload)
                 if w_res is not None:
                     return w_res
                 if isinstance(w_mod, W_ClassObject):
@@ -577,7 +577,7 @@ class ObjectSpace(object):
                     break
 
         if fallback_scope is not None:
-            w_res = fallback_scope.find_const(self, name, autoload=True)
+            w_res = fallback_scope.find_const(self, name, autoload=autoload)
         return w_res
 
     @jit.unroll_safe

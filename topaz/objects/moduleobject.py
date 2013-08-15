@@ -86,15 +86,15 @@ class DefineMethodMethod(W_FunctionObject):
 
 
 class W_Autoload(W_RootObject):
-    def __init__(self, space, w_path):
+    def __init__(self, space, path):
         self.space = space
-        self.w_path = w_path
+        self.path = path
 
     def load(self):
         self.space.send(
             self.space.w_kernel,
             "require",
-            [self.w_path]
+            [self.space.newstr_fromstr(self.path)]
         )
 
 
@@ -648,7 +648,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("remove_const", name="str")
     def method_remove_const(self, space, name):
         space._check_const_name(name)
-        w_res = self.find_local_const(space, name)
+        w_res = self.find_local_const(space, name, autoload=False)
         if w_res is None:
             self_name = space.obj_to_s(self)
             raise space.error(space.w_NameError,
@@ -815,10 +815,21 @@ class W_ModuleObject(W_RootObject):
     def method_method_removed(self, space, w_name):
         return space.w_nil
 
-    @classdef.method("autoload", name="symbol")
-    def method_autoload(self, space, name, w_path):
-        space.set_const(self, name, W_Autoload(space, w_path))
+    @classdef.method("autoload", name="symbol", path="path")
+    def method_autoload(self, space, name, path):
+        if len(path) == 0:
+            raise space.error(space.w_ArgumentError, "empty file name")
+        if not self.find_const(space, name):
+            space.set_const(self, name, W_Autoload(space, path))
         return space.w_nil
+
+    @classdef.method("autoload?", name="symbol")
+    def method_autoload(self, space, name):
+        w_autoload = self.constants_w.get(name, None)
+        if isinstance(w_autoload, W_Autoload):
+            return space.newstr_fromstr(w_autoload.path)
+        else:
+            return space.w_nil
 
     @classdef.method("class_exec")
     @classdef.method("module_exec")
