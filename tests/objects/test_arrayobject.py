@@ -203,6 +203,17 @@ class TestArrayObject(BaseTopazTest):
         assert x == [1, 2, 3, 4]
         assert y == [1, 2, 3]
 
+    def test_dupf(self, space):
+        w_res = space.execute("""
+        x = [1.0, 2.0, 3.0]
+        y = x.dup
+        x << 4
+        return [x, y]
+        """)
+        x, y = self.unwrap(space, w_res)
+        assert x == [1.0, 2.0, 3.0, 4]
+        assert y == [1.0, 2.0, 3.0]
+
     def test_compact(self, space):
         w_res = space.execute("return ['a', nil, 'b', nil, 'c'].compact")
         assert self.unwrap(space, w_res) == ['a', 'b', 'c']

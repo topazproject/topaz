@@ -393,7 +393,7 @@ class ObjectSpace(object):
         return W_StringObject.newstr_fromstrs(self, strs_w)
 
     def newarray(self, items_w):
-        return W_ArrayObject(self, items_w)
+        return W_ArrayObject.newarray(self, items_w)
 
     def newhash(self):
         return W_HashObject(self)
