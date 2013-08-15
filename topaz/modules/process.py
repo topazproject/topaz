@@ -88,7 +88,7 @@ class Process(object):
         )
         return space.send(
             tms,
-            space.newsymbol("new"),
+            "new",
             [space.newfloat(t) for t in list(os.times()[0:4])]
         )
 
