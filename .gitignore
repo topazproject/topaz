@@ -1,2 +1,4 @@
 *.py[co]
 _build/
+bin/topaz
+bin/topaz.exe

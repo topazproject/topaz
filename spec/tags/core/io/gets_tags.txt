@@ -18,8 +18,5 @@ fails:IO#gets raises an IOError if the stream is opened for writing only
 fails:IO#gets calls #to_int to convert a single object argument to an Integer limit
 fails:IO#gets calls #to_int to convert the second object argument to an Integer limit
 fails:IO#gets calls #to_str to convert the first argument to a String when passed a limit
-fails:IO#gets reads to the default seperator when passed a single argument greater than the number of bytes to the separator
-fails:IO#gets reads limit bytes when passed a single argument less than the number of bytes to the default separator
 fails:IO#gets reads limit bytes when passed nil and a limit
 fails:IO#gets reads until the next paragraph when passed '' and a limit greater than the next paragraph
-fails:IO#gets reads limit bytes when passed '' and a limit less than the next paragraph

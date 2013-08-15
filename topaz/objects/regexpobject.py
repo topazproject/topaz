@@ -47,7 +47,7 @@ class RegexpCache(object):
 
 
 class W_RegexpObject(W_Object):
-    classdef = ClassDef("Regexp", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Regexp", W_Object.classdef)
 
     def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
@@ -72,6 +72,11 @@ class W_RegexpObject(W_Object):
         space.globals.define_virtual("$+", cls._get_last_match)
         space.globals.define_virtual("$`", cls._get_pre_match)
         space.globals.define_virtual("$'", cls._get_post_match)
+        space.set_const(w_cls, "IGNORECASE", space.newint(regexp.IGNORE_CASE))
+        space.set_const(w_cls, "EXTENDED", space.newint(regexp.EXTENDED))
+        space.set_const(w_cls, "MULTILINE", space.newint(regexp.DOT_ALL))
+        space.set_const(w_cls, "FIXEDENCODING", space.newint(regexp.FIXED_ENCODING))
+        space.set_const(w_cls, "NOENCODING", space.newint(regexp.NO_ENCODING))
 
     @staticmethod
     def _get_regexp_cell(space):
@@ -95,7 +100,7 @@ class W_RegexpObject(W_Object):
             if w_match is None:
                 return space.w_nil
             else:
-                return space.send(w_match, space.newsymbol("[]"), [space.newint(n)])
+                return space.send(w_match, "[]", [space.newint(n)])
         return getter
 
     @staticmethod
@@ -104,9 +109,9 @@ class W_RegexpObject(W_Object):
         if w_match is None:
             return space.w_nil
         else:
-            w_size = space.send(w_match, space.newsymbol("size"))
-            w_last = space.send(w_size, space.newsymbol("-"), [space.newint(1)])
-            return space.send(w_match, space.newsymbol("[]"), [w_last])
+            w_size = space.send(w_match, "size")
+            w_last = space.send(w_size, "-", [space.newint(1)])
+            return space.send(w_match, "[]", [w_last])
 
     @staticmethod
     def _get_pre_match(space):
@@ -114,7 +119,7 @@ class W_RegexpObject(W_Object):
         if w_match is None:
             return space.w_nil
         else:
-            return space.send(w_match, space.newsymbol("pre_match"))
+            return space.send(w_match, "pre_match")
 
     @staticmethod
     def _get_post_match(space):
@@ -122,7 +127,7 @@ class W_RegexpObject(W_Object):
         if w_match is None:
             return space.w_nil
         else:
-            return space.send(w_match, space.newsymbol("post_match"))
+            return space.send(w_match, "post_match")
 
     def _check_initialized(self, space):
         if self.source is None:
@@ -145,22 +150,22 @@ class W_RegexpObject(W_Object):
         endpos = len(s)
         return rsre_core.StrMatchContext(self.code, s, offset, endpos, self.flags)
 
-    def get_match_result(self, space, ctx, found):
+    def get_match_result(self, space, ctx, target, found):
         if found:
-            w_match = W_MatchDataObject(space, self, ctx)
+            w_match = W_MatchDataObject(space, self, ctx, target)
         else:
             w_match = space.w_nil
         space.globals.set(space, "$~", w_match)
         return w_match
 
     @classdef.singleton_method("allocate")
-    def method_allocate(self, space, args_w):
+    def method_allocate(self, space):
         return W_RegexpObject(space, None, 0)
 
     @classdef.singleton_method("compile")
     def method_compile(self, space, args_w):
-        w_obj = space.send(self, space.newsymbol("allocate"), args_w)
-        return space.send(w_obj, space.newsymbol("initialize"), args_w)
+        w_obj = space.send(self, "allocate")
+        return space.send(w_obj, "initialize", args_w)
 
     @classdef.method("initialize", flags="int")
     def method_initialize(self, space, w_source, flags=0):
@@ -176,17 +181,14 @@ class W_RegexpObject(W_Object):
     @classdef.method("to_s")
     def method_to_s(self, space):
         flags = missing_flags = ""
-        for c, f in [
-            ("m", regexp.DOT_ALL),
-            ("i", regexp.IGNORE_CASE),
-            ("x", regexp.EXTENDED),
-        ]:
+        for c, f in regexp.FLAGS_MAP:
             if self.flags & f:
                 flags += c
             else:
                 missing_flags += c
         return space.newstr_fromstr("(?%s-%s:%s)" % (flags, missing_flags, self.source))
 
+    @classdef.method("eql?")
     @classdef.method("==")
     def method_equal(self, space, w_other):
         if self is w_other:
@@ -195,34 +197,44 @@ class W_RegexpObject(W_Object):
             return space.w_false
         self._check_initialized(space)
         w_other._check_initialized(space)
-        return space.newbool(self.source == w_other.source)
+        return space.newbool(self.source == w_other.source and (self.flags | regexp.NO_ENCODING) == (w_other.flags | regexp.NO_ENCODING))
 
     @classdef.method("source")
     def method_source(self, space):
         self._check_initialized(space)
         return space.newstr_fromstr(self.source)
 
-    @classdef.method("=~", s="str")
-    def method_match_operator(self, space, s):
+    @classdef.method("=~")
+    def method_match_operator(self, space, w_s):
+        if w_s is space.w_nil:
+            return space.w_nil
+        s = Coerce.str(space, w_s)
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
-        self.get_match_result(space, ctx, matched)
+        self.get_match_result(space, ctx, s, matched)
         if matched:
             return space.newint(ctx.match_start)
         else:
             return space.w_nil
 
-    @classdef.method("match", s="str")
-    def method_match(self, space, s):
-        ctx = self.make_ctx(s)
+    @classdef.method("match")
+    def method_match(self, space, w_s, w_offset=None):
+        if w_s is space.w_nil:
+            return space.w_nil
+        s = Coerce.str(space, w_s)
+        if w_offset is not None:
+            offset = Coerce.int(space, w_offset)
+        else:
+            offset = 0
+        ctx = self.make_ctx(s, offset)
         matched = rsre_core.search_context(ctx)
-        return self.get_match_result(space, ctx, matched)
+        return self.get_match_result(space, ctx, s, matched)
 
     @classdef.method("===", s="str")
     def method_eqeqeq(self, space, s):
         ctx = self.make_ctx(s)
         matched = rsre_core.search_context(ctx)
-        self.get_match_result(space, ctx, matched)
+        self.get_match_result(space, ctx, s, matched)
         return space.newbool(matched)
 
     @classdef.method("casefold?")
@@ -237,14 +249,23 @@ class W_RegexpObject(W_Object):
             result += RE_ESCAPE_TABLE[ord(ch)]
         return space.newstr_fromchars(result)
 
+    @classdef.method("options")
+    def method_options(self, space):
+        return space.newint(self.flags)
+
+    @classdef.method("fixed_encoding?")
+    def method_fixed_encodingp(self, space):
+        return space.newbool(bool(self.flags & regexp.FIXED_ENCODING))
+
 
 class W_MatchDataObject(W_Object):
-    classdef = ClassDef("MatchData", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("MatchData", W_Object.classdef)
 
-    def __init__(self, space, regexp, ctx):
+    def __init__(self, space, regexp, ctx, target):
         W_Object.__init__(self, space)
         self.regexp = regexp
         self.ctx = ctx
+        self.target = target
         self._flatten_cache = None
 
     def size(self):
@@ -275,6 +296,16 @@ class W_MatchDataObject(W_Object):
         assert idx >= 0
         return fmarks[idx], fmarks[idx + 1]
 
+    @classdef.method("regexp")
+    def method_regexp(self, space):
+        return self.regexp
+
+    @classdef.method("string")
+    def method_string(self, space):
+        res = space.newstr_fromstr(self.target)
+        space.send(res, "freeze")
+        return res
+
     @classdef.method("[]", n="int")
     def method_subscript(self, space, n):
         if n == 0:
@@ -288,11 +319,18 @@ class W_MatchDataObject(W_Object):
         else:
             return space.w_nil
 
+    @classdef.method("captures")
+    def method_captures(self, space):
+        res_w = []
+        for i in xrange(1, self.size()):
+            res_w.append(space.send(self, "[]", [space.newint(i)]))
+        return space.newarray(res_w)
+
     @classdef.method("to_a")
     def method_to_a(self, space):
         res_w = []
         for i in xrange(self.size()):
-            res_w.append(space.send(self, space.newsymbol("[]"), [space.newint(i)]))
+            res_w.append(space.send(self, "[]", [space.newint(i)]))
         return space.newarray(res_w)
 
     @classdef.method("begin", n="int")
@@ -333,7 +371,5 @@ class W_MatchDataObject(W_Object):
     @classdef.method("values_at")
     def method_values_at(self, space, args_w):
         return space.send(
-            space.send(self, space.newsymbol("to_a")),
-            space.newsymbol("values_at"),
-            args_w
+            space.send(self, "to_a"), "values_at", args_w
         )

@@ -32,3 +32,19 @@ fails:The defined? keyword for variables when a Regexp does not match a String r
 fails:The defined? keyword for variables when a Regexp does not match a String returns nil for $+
 fails:The defined? keyword for variables when a Regexp does not match a String returns nil for $1-$9
 fails:The defined? keyword for variables when a Regexp matches a String returns nil for non-captures
+fails:The defined? keyword for a scoped constant returns nil when the undefined constant is scoped to an undefined constant
+fails:The defined? keyword for a scoped constant returns nil when an undefined constant is scoped to a defined constant
+fails:The defined? keyword for a top-level scoped constant returns nil when the undefined constant is scoped to an undefined constant
+fails:The defined? keyword for a top-level scoped constant returns nil when an undefined constant is scoped to a defined constant
+fails:The defined? keyword for a self-send method call scoped constant returns nil if the middle constant is not defined in the scope chain
+fails:The defined? keyword for a receiver method call scoped constant returns nil if the middle constant is not defined in the scope chain
+fails:The defined? keyword for a module method call scoped constant returns nil if the middle constant in the scope chain is not defined
+fails:The defined? keyword for a module method call scoped constant returns nil if the outer scope constant in the receiver is not defined
+fails:The defined? keyword for a module method call scoped constant returns nil if the scoped constant in the receiver is not defined
+fails:The defined? keyword for super returns nil when a superclass undef's the method
+fails:The defined? keyword for super for a method taking no arguments returns 'super' from a block when a superclass method exists
+fails:The defined? keyword for super for a method taking no arguments returns 'super' from a #define_method when a superclass method exists
+fails:The defined? keyword for super for a method taking no arguments returns 'super' from a block in a #define_method when a superclass method exists
+fails:The defined? keyword for super for a method taking arguments returns 'super' from a block when a superclass method exists
+fails:The defined? keyword for super for a method taking arguments returns 'super' from a #define_method when a superclass method exists
+fails:The defined? keyword for super for a method taking arguments returns 'super' from a block in a #define_method when a superclass method exists

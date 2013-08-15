@@ -1,5 +1,3 @@
-fails:Array#pack with format 'N' taints the output string if the format string is tainted
-fails:Array#pack with format 'n' taints the output string if the format string is tainted
 fails:Array#pack with format 'N' returns an ASCII-8BIT string
 fails:Array#pack with format 'N' encodes all remaining elements when passed the '*' modifier
 fails:Array#pack with format 'n' returns an ASCII-8BIT string

@@ -262,9 +262,6 @@ class CompilerContext(object):
     def create_symbol_const(self, symbol):
         return self.create_const(self.space.newsymbol(symbol))
 
-    def create_string_const(self, strvalue):
-        return self.create_const(self.space.newstr_fromstr(strvalue))
-
 
 class Block(object):
     def __init__(self):

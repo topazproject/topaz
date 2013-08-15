@@ -15,27 +15,27 @@ from topaz.system import IS_WINDOWS, IS_64BIT
 
 USAGE = "\n".join([
     """Usage: topaz [switches] [--] [programfile] [arguments]""",
-#   """  -0[octal]       specify record separator (\0, if no argument)""",
-#   """  -a              autosplit mode with -n or -p (splits $_ into $F)""",
-#   """  -c              check syntax only""",
-#   """  -Cdirectory     cd to directory, before executing your script""",
+    # """  -0[octal]       specify record separator (\0, if no argument)""",
+    # """  -a              autosplit mode with -n or -p (splits $_ into $F)""",
+    # """  -c              check syntax only""",
+    # """  -Cdirectory     cd to directory, before executing your script""",
     """  -d              set debugging flags (set $DEBUG to true)""",
     """  -e 'command'    one line of script. Several -e's allowed. Omit [programfile]""",
-#   """  -Eex[:in]       specify the default external and internal character encodings""",
-#   """  -Fpattern       split() pattern for autosplit (-a)""",
-#   """  -i[extension]   edit ARGV files in place (make backup if extension supplied)""",
+    # """  -Eex[:in]       specify the default external and internal character encodings""",
+    # """  -Fpattern       split() pattern for autosplit (-a)""",
+    # """  -i[extension]   edit ARGV files in place (make backup if extension supplied)""",
     """  -Idirectory     specify $LOAD_PATH directory (may be used more than once)""",
-#   """  -l              enable line ending processing""",
+    # """  -l              enable line ending processing""",
     """  -n              assume 'while gets(); ... end' loop around your script""",
     """  -p              assume loop like -n but print line also like sed""",
     """  -rlibrary       require the library, before executing your script""",
     """  -s              enable some switch parsing for switches after script name""",
     """  -S              look for the script using PATH environment variable""",
-#   """  -T[level=1]     turn on tainting checks""",
+    # """  -T[level=1]     turn on tainting checks""",
     """  -v              print version number, then turn on verbose mode""",
     """  -w              turn warnings on for your script""",
     """  -W[level=2]     set warning level; 0=silence, 1=medium, 2=verbose""",
-#   """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
+    # """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
     """  --copyright     print the copyright""",
     """  --version       print the version""",
     ""
@@ -110,7 +110,7 @@ def _parse_argv(space, argv):
             raise ShortCircuitError("%s\n" % space.str_w(
                 space.send(
                     space.w_object,
-                    space.newsymbol("const_get"),
+                    "const_get",
                     [space.newstr_fromstr("RUBY_DESCRIPTION")]
                 )
             ))
@@ -233,13 +233,13 @@ def _entry_point(space, argv):
     for path_entry in load_path_entries:
         space.send(
             space.w_load_path,
-            space.newsymbol("<<"),
+            "<<",
             [space.newstr_fromstr(path_entry)]
         )
     for required_lib in reqs:
         space.send(
             space.w_kernel,
-            space.newsymbol("require"),
+            "require",
             [space.newstr_fromstr(required_lib)]
         )
 
@@ -302,13 +302,13 @@ def _entry_point(space, argv):
             bc = space.compile(source, path)
             frame = space.create_frame(bc)
             while True:
-                w_line = space.send(space.w_kernel, space.newsymbol("gets"))
+                w_line = space.send(space.w_kernel, "gets")
                 if w_line is space.w_nil:
                     break
                 with space.getexecutioncontext().visit_frame(frame):
                     w_res = space.execute_frame(frame, bc)
                     if print_after:
-                        space.send(space.w_kernel, space.newsymbol("print"), [w_res])
+                        space.send(space.w_kernel, "print", [w_res])
         else:
             space.execute(source, filepath=path)
     except RubyError as e:

@@ -8,3 +8,4 @@ fails:IO.binwrite doesn't truncate and writes at the given offset after passing 
 fails:IO.binwrite accepts a :mode option
 fails:IO.binwrite raises an error if readonly mode is specified
 fails:IO.binwrite truncates if empty :opts provided and offset skipped
+fails:IO.binwrite uses encoding from given options, if provided

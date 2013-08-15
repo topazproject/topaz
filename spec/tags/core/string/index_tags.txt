@@ -1,6 +1,4 @@
 fails:String#index with object tries to convert obj to a string via to_str
-fails:String#index with String behaves the same as String#index(char) for one-character strings
-fails:String#index with String ignores string subclasses
 fails:String#index with String starts the search at the given offset
 fails:String#index with String starts the search at offset + self.length if offset is negative
 fails:String#index with String returns nil if the substring isn't found
@@ -11,3 +9,10 @@ fails:String#index with Regexp starts the search at offset + self.length if offs
 fails:String#index with Regexp returns nil if the substring isn't found
 fails:String#index with Regexp supports \G which matches at the given start offset
 fails:String#index calls #to_str to convert the first argument
+fails:String#index with String returns the character index of a multibyte character
+fails:String#index with String returns the character index after offset
+fails:String#index with String raises an Encoding::CompatibilityError if the encodings are incompatible
+fails:String#index with Regexp returns the character index of a multibyte character
+fails:String#index with Regexp returns the character index after offset
+fails:String#index with Regexp treats the offset as a character index
+fails:String#index with Regexp raises an Encoding::CompatibilityError if the encodings are incompatible

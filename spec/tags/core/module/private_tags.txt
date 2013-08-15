@@ -1,4 +1,3 @@
 fails:Module#private makes the target method uncallable from other types
 fails:Module#private makes a public Object instance method private in a new module
 fails:Module#private makes a public Object instance method private in Kernel
-fails:Module#private returns self

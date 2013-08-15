@@ -219,7 +219,7 @@ class TestKernel(BaseTopazTest):
 
     def test_trust(self, space):
         w_res = space.execute("return 'a'.untrusted?")
-        assert self.unwrap(space, w_res) == False
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         a = 'a'
         a.untrust
@@ -236,7 +236,7 @@ class TestKernel(BaseTopazTest):
 
     def test_taint(self, space):
         w_res = space.execute("return 'a'.tainted?")
-        assert self.unwrap(space, w_res) == False
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         a = 'a'
         a.taint
@@ -253,7 +253,7 @@ class TestKernel(BaseTopazTest):
 
     def test_freeze(self, space):
         w_res = space.execute("return 'a'.frozen?")
-        assert self.unwrap(space, w_res) == False
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         a = 'a'
         a.freeze

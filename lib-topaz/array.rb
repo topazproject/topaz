@@ -1,14 +1,10 @@
 class Array
   def initialize(size_or_arr = nil, obj = nil, &block)
     self.clear
-    if size_or_arr.nil?
-      return self
-    end
+    return self if size_or_arr.nil?
     if obj.nil?
-      if size_or_arr.kind_of?(Array)
-        return self.replace(size_or_arr)
-      elsif size_or_arr.respond_to?(:to_ary)
-        return self.replace(size_or_arr.to_ary)
+      if ary = Topaz.try_convert_type(size_or_arr, Array, :to_ary)
+        return self.replace(ary)
       end
     end
     length = Topaz.convert_type(size_or_arr, Fixnum, :to_int)
@@ -43,16 +39,6 @@ class Array
   end
 
   alias :to_s :inspect
-
-  def -(other)
-    res = []
-    self.each do |x|
-      if !other.include?(x)
-        res << x
-      end
-    end
-    res
-  end
 
   def at(idx)
     self[idx]
@@ -256,9 +242,11 @@ class Array
 
   def hash
     res = 0x345678
-    self.each do |x|
-      # We want to keep this within a fixnum range.
-      res = Topaz.intmask((1000003 * res) ^ x.hash)
+    Thread.current.recursion_guard(:array_hash, self) do
+      self.each do |x|
+        # We want to keep this within a fixnum range.
+        res = Topaz.intmask((1000003 * res) ^ x.hash)
+      end
     end
     return res
   end
@@ -304,7 +292,16 @@ class Array
   end
 
   def values_at(*args)
-    args.map { |n| self[n] }
+    out = []
+    args.each do |arg|
+      if arg.is_a?(Range)
+        v = self[arg]
+        out.concat(v) if v
+      else
+        out << self[arg]
+      end
+    end
+    out
   end
 
   def each_index(&block)
@@ -339,8 +336,12 @@ class Array
 
   def rindex(obj = nil, &block)
     return self.enum_for(:rindex) if !obj && !block
-    reverse.each_with_index do |e, i|
-      return length - i - 1 if obj ? (e == obj) : block.call(e)
+    i = size - 1
+    while i >= 0
+      e = self[i]
+      return i if obj ? (e == obj) : block.call(e)
+      i = size if i > size
+      i -= 1
     end
     nil
   end
@@ -381,5 +382,184 @@ class Array
 
   def to_a
     self.instance_of?(Array) ? self : Array.new(self)
+  end
+
+  def &(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    h = {}
+    other.each { |e| h[e] = true }
+    self.select { |e| h.delete(e) }
+  end
+
+  def |(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    h = {}
+    self.each { |e| h[e] = true }
+    other.each { |e| h.fetch(e) { |v| h[v] = true } }
+    h.keys
+  end
+
+  def -(other)
+    other = Topaz.convert_type(other, Array, :to_ary)
+    h = {}
+    other.each { |e| h[e] = true }
+    self.reject { |e| h.has_key?(e) }
+  end
+
+  def permutation(r = nil, &block)
+    return self.enum_for(:permutation, r) unless block
+    r = r ? Topaz.convert_type(r, Fixnum, :to_int) : self.size
+    Topaz::Array.permutation(self, r, &block)
+    self
+  end
+
+  def combination(r = nil, &block)
+    return self.enum_for(:combination, r) unless block
+    r = r ? Topaz.convert_type(r, Fixnum, :to_int) : self.size
+    Topaz::Array.combination(self, r, &block)
+    self
+  end
+
+  def repeated_combination(r, &block)
+    return self.enum_for(:repeated_combination, r) unless block
+    r = Topaz.convert_type(r, Fixnum, :to_int)
+    Topaz::Array.repeated_combination(self, r, &block)
+    self
+  end
+
+  def repeated_permutation(r, &block)
+    return self.enum_for(:repeated_permutation, r) unless block
+    r = Topaz.convert_type(r, Fixnum, :to_int)
+    Topaz::Array.repeated_permutation(self, r, &block)
+    self
+  end
+
+  def fill(*args, &block)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+
+    if block
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 0..2)") if args.size > 2
+      one, two = args
+    else
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 1..3)") if args.empty? || args.size > 3
+      obj, one, two = args
+    end
+
+    if one.kind_of?(Range)
+      raise TypeError.new("no implicit conversion of Range into Integer") if two
+
+      left = Topaz.convert_type(one.begin, Fixnum, :to_int)
+      left += size if left < 0
+      raise RangeError.new("#{one} out of range") if left < 0
+
+      right = Topaz.convert_type(one.end, Fixnum, :to_int)
+      right += size if right < 0
+      right += 1 unless one.exclude_end?
+      return self if right <= left
+
+    elsif one
+      left = Topaz.convert_type(one, Fixnum, :to_int)
+      left += size if left < 0
+      left = 0 if left < 0
+
+      if two
+        right = Topaz.convert_type(two, Fixnum, :to_int)
+        return self if right == 0
+        right += left
+      else
+        right = size
+      end
+    else
+      left = 0
+      right = size
+    end
+
+    right_bound = (right > size) ? size : right
+
+    i = left
+    while i < right_bound
+      self[i] = block ? yield(i) : obj
+      i += 1
+    end
+
+    if left > size
+      self.concat([nil] * (left - size))
+      i = size
+    end
+
+    while i < right
+      self << (block ? yield(i) : obj)
+      i += 1
+    end
+
+    self
+  end
+
+  def transpose
+    return [] if self.empty?
+
+    max = nil
+    lists = self.map do |ary|
+      ary = Topaz.convert_type(ary, Array, :to_ary)
+      max ||= ary.size
+      raise IndexError.new("element size differs (#{ary.size} should be #{max})") if ary.size != max
+      ary
+    end
+
+    out = []
+    max.times do |i|
+      out << lists.map { |l| l[i] }
+    end
+    out
+  end
+
+  def sample(*args)
+    case args.size
+    when 0
+      return self[Kernel.rand(size)]
+    when 1
+      arg = args[0]
+      if o = Topaz.try_convert_type(arg, Hash, :to_hash)
+        options = o
+        count = nil
+      else
+        options = nil
+        count = Topaz.convert_type(arg, Fixnum, :to_int)
+      end
+    when 2
+      count = Topaz.convert_type(args[0], Fixnum, :to_int)
+      options = Topaz.convert_type(args[1], Hash, :to_hash)
+    else
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 1)")
+    end
+
+    raise ArgumentError.new("negative sample number") if count and count < 0
+
+    rng = options[:random] if options
+    rng = Kernel unless rng && rng.respond_to?(:rand)
+
+    unless count
+      random = Topaz.convert_type(rng.rand, Float, :to_f)
+      raise RangeError.new("random number too big #{random}") if random < 0 || random >= 1.0
+
+      return self[random * size]
+    end
+
+    count = size if count > size
+    out = Array.new(self)
+
+    count.times do |i|
+      random = Topaz.convert_type(rng.rand, Float, :to_f)
+      raise RangeError.new("random number too big #{random}") if random < 0 || random >= 1.0
+
+      r = (random * size).to_i
+      out[i], out[r] = out[r], out[i]
+    end
+
+    return (count == size) ? out : out[0, count]
+  end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, Array, :to_ary)
   end
 end

@@ -15,6 +15,26 @@ EXTENDED = 1 << 1
 DOT_ALL = 1 << 2
 ONCE = 1 << 3
 
+FIXED_ENCODING = 1 << 4
+NO_ENCODING = 1 << 5
+
+OPTIONS_MAP = {
+    "i": IGNORE_CASE,
+    "x": EXTENDED,
+    "m": DOT_ALL,
+    "o": ONCE,
+    "u": FIXED_ENCODING,
+    "n": NO_ENCODING,
+    "e": FIXED_ENCODING,
+    "s": FIXED_ENCODING,
+}
+
+FLAGS_MAP = [
+    ("m", DOT_ALL),
+    ("i", IGNORE_CASE),
+    ("x", EXTENDED),
+]
+
 SPECIAL_CHARS = "()|?*+{^$.[\\#"
 
 CHARACTER_ESCAPES = {
@@ -187,8 +207,6 @@ class Info(object):
 
     def new_group(self, name=None):
         if name in self.group_index:
-            if self.group_index[name] in self.used_groups:
-                raise RegexpError("duplicate group")
             group = self.group_index[name]
         else:
             while True:
@@ -341,16 +359,17 @@ class ZeroWidthBase(RegexpBase):
         return self
 
 
-class StartOfString(ZeroWidthBase):
+class AtPosition(ZeroWidthBase):
+    def __init__(self, code):
+        ZeroWidthBase.__init__(self)
+        self.code = code
+
+    def can_be_affix(self):
+        return True
+
     def compile(self, ctx):
         ctx.emit(OPCODE_AT)
-        ctx.emit(AT_BEGINNING_STRING)
-
-
-class EndOfString(ZeroWidthBase):
-    def compile(self, ctx):
-        ctx.emit(OPCODE_AT)
-        ctx.emit(AT_END_STRING)
+        ctx.emit(self.code)
 
 
 class Property(RegexpBase):
@@ -805,14 +824,19 @@ class SetIntersection(SetBase):
 
 
 POSITION_ESCAPES = {
-    "A": StartOfString(),
-    "z": EndOfString(),
+    "A": AtPosition(AT_BEGINNING_STRING),
+    "z": AtPosition(AT_END_STRING),
+
+    "b": AtPosition(AT_BOUNDARY),
+    "B": AtPosition(AT_NON_BOUNDARY),
 }
 CHARSET_ESCAPES = {
     "d": Property(CATEGORY_DIGIT),
+    "w": Property(CATEGORY_WORD),
 }
 PROPERTIES = {
     "digit": CATEGORY_DIGIT,
+    "alnum": CATEGORY_WORD,
 }
 
 
@@ -908,9 +932,9 @@ def _parse_element(source, info):
         elif ch == "[":
             return _parse_set(source, info)
         elif ch == "^":
-            return StartOfString()
+            return AtPosition(AT_BEGINNING_STRING)
         elif ch == "$":
-            return EndOfString()
+            return AtPosition(AT_END_STRING)
         elif ch == "{":
             here2 = source.pos
             counts = _parse_quantifier(source, info)
@@ -978,6 +1002,11 @@ def _parse_paren(source, info):
         elif source.match(">"):
             return _parse_atomic(source, info)
         elif source.match(":"):
+            subpattern = _parse_pattern(source, info)
+            source.expect(")")
+            return subpattern
+        elif source.match("-") or source.match("m") or source.match("i") or source.match("x"):
+            # TODO: parse plain here flags = _parse_plain_flags(source)
             subpattern = _parse_pattern(source, info)
             source.expect(")")
             return subpattern
@@ -1104,7 +1133,7 @@ def _parse_escape(source, info, in_set):
             source.pos = here
         return make_character(info, ord(ch[0]), in_set)
     elif ch == "G" and not in_set:
-        return StartOfString()
+        return AtPosition(AT_BEGINNING)
     elif ch in "pP":
         return _parse_property(source, info, ch == "p", in_set)
     elif ch.isalpha():
@@ -1113,7 +1142,7 @@ def _parse_escape(source, info, in_set):
                 return POSITION_ESCAPES[ch]
         if ch in CHARSET_ESCAPES:
             return CHARSET_ESCAPES[ch]
-        if ch in CHARACTER_ESCAPES:
+        elif ch in CHARACTER_ESCAPES:
             return Character(ord(CHARACTER_ESCAPES[ch]))
         return make_character(info, ord(ch[0]), in_set)
     elif ch.isdigit():
@@ -1195,6 +1224,17 @@ def _parse_name(source):
     return b.build()
 
 
+def _parse_plain_flags(source):
+    b = StringBuilder(4)
+    while True:
+        ch = source.get()
+        if ch == ":":
+            break
+        else:
+            b.append(ch)
+    return b.build()
+
+
 def _parse_group_ref(source, info):
     source.expect("<")
     name = _parse_name(source)
@@ -1208,23 +1248,26 @@ def _parse_property(source, info, positive, in_set):
     here = source.pos
     if source.match("{"):
         negate = source.match("^")
-        b = StringBuilder(5)
-        found = False
-        while True:
-            ch = source.get()
-            if ch == "}":
-                found = True
-                break
-            elif not ch:
-                break
-            else:
-                b.append(ch)
-        if found:
-            name = b.build()
+        prop_name, name = _parse_property_name(source)
+        if source.match("}"):
             if name in PROPERTIES:
                 return Property(PROPERTIES[name], positive != negate)
     source.pos = here
     return make_character(info, ord("p" if positive else "P"), in_set)
+
+
+def _parse_property_name(source):
+    b = StringBuilder(5)
+    while True:
+        here = source.pos
+        ch = source.get()
+        if ch.isalnum():
+            b.append(ch)
+        else:
+            source.pos = here
+            break
+    name = b.build()
+    return name, name
 
 
 def _parse_numeric_escape(source, info, ch, in_set):
@@ -1232,22 +1275,19 @@ def _parse_numeric_escape(source, info, ch, in_set):
 
 
 def _parse_posix_class(source, info):
-    raise NotImplementedError("_parse_posix_class")
+    negate = source.match("^")
+    prop_name, name = _parse_property_name(source)
+    if not source.match(":]"):
+        raise ParseError
+    return Property(PROPERTIES[name], negate)
 
 
 def _compile_no_cache(pattern, flags):
-    global_flags = flags
-    while True:
-        source = Source(pattern)
-        if flags & EXTENDED:
-            source.ignore_space = True
-        info = Info(flags)
-        try:
-            parsed = _parse_pattern(source, info)
-        except UnscopedFlagSet as e:
-            global_flags = e.flags | flags
-        else:
-            break
+    source = Source(pattern)
+    if flags & EXTENDED:
+        source.ignore_space = True
+    info = Info(flags)
+    parsed = _parse_pattern(source, info)
 
     if not source.at_end():
         raise RegexpError("trailing characters in pattern")

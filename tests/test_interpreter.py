@@ -1,11 +1,6 @@
 import math
 
-import pytest
-
-from topaz.modules.kernel import Kernel
-from topaz.objects.boolobject import W_TrueObject
 from topaz.objects.moduleobject import W_ModuleObject
-from topaz.objects.objectobject import W_Object, W_BaseObject
 
 from .base import BaseTopazTest
 
@@ -930,7 +925,7 @@ class TestInterpreter(BaseTopazTest):
 
     def test_class_variable_access_has_static_scope(self, space):
         with self.raises(space, "NameError"):
-            w_res = space.execute("""
+            space.execute("""
             class A
               def get
                 @@foo
@@ -1577,6 +1572,39 @@ class TestBlocks(BaseTopazTest):
         """)
         assert space.int_w(w_res) == 1
 
+    def test_nested_block_dead_frame_return(self, space):
+        w_res = space.execute("""
+        class SavedInnerBlock
+          attr_accessor :record
+
+          def outer
+            yield
+            @block.call
+          end
+
+          def inner
+            yield
+          end
+
+          def start
+            outer do
+              inner do
+                @block = proc do
+                  self.record = :before_return
+                  return :return_value
+                end
+              end
+            end
+            self.record = :bottom_of_start
+            return false
+          end
+        end
+
+        sib = SavedInnerBlock.new
+        return [sib.start, sib.record]
+        """)
+        assert self.unwrap(space, w_res) == ["return_value", "before_return"]
+
     def test_break_block(self, space):
         w_res = space.execute("""
         def f(res, &a)
@@ -1623,7 +1651,7 @@ class TestBlocks(BaseTopazTest):
         assert self.unwrap(space, w_res) == ["begin", "ensure", "begin", "begin_end", "ensure", "after", "begin", "ensure"]
 
     def test_break_block_frame_exited(self, space):
-        w_res = space.execute("""
+        space.execute("""
         def create_block
           b = capture_block do
             break
@@ -1700,6 +1728,18 @@ class TestBlocks(BaseTopazTest):
             1, 2, 3, ["ignored"], 4,
             None, None, None, None, None
         ]
+
+    def test_block_local_var(self, space):
+        w_res = space.execute("""
+        def f
+            yield
+        end
+
+        x = 3
+        f { |;x| x = 5 }
+        return x
+        """)
+        assert space.int_w(w_res) == 3
 
 
 class TestExceptions(BaseTopazTest):
@@ -1872,3 +1912,9 @@ class TestExceptions(BaseTopazTest):
         end
         """)
         assert space.int_w(w_res) == 0
+
+    def test_bang_method_call_without_parens(self, space):
+        w_res = space.execute("""
+        ! respond_to? :asdf
+        """)
+        assert w_res is space.w_true

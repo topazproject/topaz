@@ -32,11 +32,7 @@ class String
   end
 
   def casecmp(other)
-    unless other.respond_to?(:to_str)
-      raise TypeError.new("can't convert #{other.class} into String")
-    end
-
-    other = other.to_str
+    other = Topaz.convert_type(other, String, :to_str)
     diff = self.length - other.length
     short = diff < 0
     long = diff > 0
@@ -59,8 +55,8 @@ class String
 
   def start_with?(*prefixes)
     prefixes.any? do |prefix|
-      next false unless prefix.respond_to?(:to_str)
-      prefix = prefix.to_str
+      prefix = Topaz.try_convert_type(prefix, String, :to_str)
+      next false unless prefix
       prelen = prefix.length
       next false if prelen > self.length
       0.upto(prelen - 1).all? { |index| self[index] == prefix[index] }
@@ -69,8 +65,8 @@ class String
 
   def end_with?(*suffixes)
     suffixes.any? do |suffix|
-      next false unless suffix.respond_to?(:to_str)
-      suffix = suffix.to_str
+      suffix = Topaz.try_convert_type(suffix, String, :to_str)
+      next false unless suffix
       suflen = suffix.length
       next false if suflen > self.length
       (-suflen).upto(-1).all? { |index| self[index] == suffix[index] }
@@ -161,5 +157,21 @@ class String
     duplicate = self.dup
     duplicate.strip!
     duplicate
+  end
+
+  def chr
+    self.dup[0] || self.dup
+  end
+
+  def replace(other)
+    raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
+    other = Topaz.convert_type(other, String, :to_str)
+    Topaz.infect(self, other)
+    clear
+    insert(0, other)
+  end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, String, :to_str)
   end
 end

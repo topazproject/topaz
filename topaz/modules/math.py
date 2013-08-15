@@ -9,7 +9,7 @@ from topaz.objects.exceptionobject import W_StandardError, new_exception_allocat
 
 
 class Math(object):
-    moduledef = ModuleDef("Math", filepath=__file__)
+    moduledef = ModuleDef("Math")
 
     @moduledef.setup_module
     def setup_module(space, w_mod):
@@ -108,8 +108,7 @@ class Math(object):
         except (ValueError, OverflowError):
             res = rfloat.INFINITY
         gamma = (1 if value == -1 or math.isnan(value) else
-                 space.float_w(space.send(self, space.newsymbol("gamma"),
-                               [space.newfloat(value)])))
+                 space.float_w(space.send(self, "gamma", [space.newfloat(value)])))
         sign = 1 if gamma > 0 else -1 if gamma < 0 else 0
         return space.newarray([space.newfloat(res), space.newint(sign)])
 
@@ -199,5 +198,5 @@ class Math(object):
 
 
 class W_DomainError(W_StandardError):
-    classdef = ClassDef("Math::DomainError", W_StandardError.classdef, filepath=__file__)
+    classdef = ClassDef("Math::DomainError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)

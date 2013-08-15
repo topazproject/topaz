@@ -54,7 +54,7 @@ class ExecutionContext(object):
             try:
                 if frame is None:
                     frame = self.gettoprubyframe()
-                space.send(self.w_trace_proc, space.newsymbol("call"), [
+                space.send(self.w_trace_proc, "call", [
                     space.newstr_fromstr(event),
                     space.newstr_fromstr(frame.bytecode.filepath),
                     space.newint(frame.bytecode.lineno_table[frame.last_instr]),

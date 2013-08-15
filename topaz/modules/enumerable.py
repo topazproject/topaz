@@ -4,4 +4,4 @@ from topaz.module import ModuleDef
 
 
 class Enumerable(object):
-    moduledef = ModuleDef("Enumerable", filepath=__file__)
+    moduledef = ModuleDef("Enumerable")

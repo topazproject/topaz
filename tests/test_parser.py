@@ -395,8 +395,8 @@ class TestParser(BaseTopazTest):
                         ast.ConstantInt(2),
                         ast.ConstantInt(3),
                     ])),
-                ]
-            )))
+                ])
+            ))
         ]))
         assert space.parse("a = *2, 0") == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(
@@ -549,12 +549,10 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
             ]), ast.If(ast.Send(ast.ConstantInt(4), "==", [ast.ConstantInt(2)], None, 4), ast.Block([
-                    ast.Statement(ast.ConstantInt(3))
-                ]), ast.If(ast.Send(ast.ConstantInt(3), "==", [ast.ConstantInt(1)], None, 6), ast.Block([
-                        ast.Statement(ast.ConstantInt(2))
-                    ]), ast.Nil()))
-                )
-            )
+                ast.Statement(ast.ConstantInt(3))
+            ]), ast.If(ast.Send(ast.ConstantInt(3), "==", [ast.ConstantInt(1)], None, 6), ast.Block([
+                ast.Statement(ast.ConstantInt(2))
+            ]), ast.Nil()))))
         ]))
 
     def test_elsif_else(self, space):
@@ -571,11 +569,10 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.If(ast.Nil(), ast.Block([
                 ast.Statement(ast.ConstantInt(5))
             ]), ast.If(ast.Nil(), ast.Block([
-                    ast.Statement(ast.ConstantInt(10)),
-                ]), ast.Block([
-                    ast.Statement(ast.ConstantInt(200))
-                ]))
-            ))
+                ast.Statement(ast.ConstantInt(10)),
+            ]), ast.Block([
+                ast.Statement(ast.ConstantInt(200))
+            ]))))
         ]))
 
     def test_comparison_ops(self, space):
@@ -613,7 +610,7 @@ class TestParser(BaseTopazTest):
         """)
         assert res == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Variable("i", 2), ast.ConstantInt(0))),
-            ast.Statement(ast.While(ast.Send(ast.Variable("i", 3),  "<", [ast.ConstantInt(10)], None, 3), ast.Block([
+            ast.Statement(ast.While(ast.Send(ast.Variable("i", 3), "<", [ast.ConstantInt(10)], None, 3), ast.Block([
                 ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
                 ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
                 ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], None, 6)),
@@ -652,7 +649,8 @@ class TestParser(BaseTopazTest):
                         ast.MultiAssignable([ast.Variable("i", 1)]),
                         ast.Variable("0", 1)
                     ))
-            ])), 1))
+                ])
+            ), 1))
         ]))
 
         res = space.parse("""
@@ -671,7 +669,8 @@ class TestParser(BaseTopazTest):
                     ast.Statement(ast.Send(ast.Self(4), "puts", [ast.Variable("i", 4)], None, 4)),
                     ast.Statement(ast.Send(ast.Self(5), "puts", [ast.ConstantInt(1)], None, 5)),
                     ast.Statement(ast.Send(ast.Self(6), "puts", [ast.Variable("i", 6)], None, 6)),
-            ])), 3))
+                ])
+            ), 3))
         ]))
 
         res = space.parse("""
@@ -848,6 +847,15 @@ class TestParser(BaseTopazTest):
             ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
         ]))
 
+        r = space.parse("""
+        def
+        f
+        end
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil()))
+        ]))
+
         assert space.parse("def []; end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "[]", [], None, None, ast.Nil()))
         ]))
@@ -858,7 +866,7 @@ class TestParser(BaseTopazTest):
 
         assert space.parse("def f(a, b) a + b end") == ast.Main(ast.Block([
             ast.Statement(ast.Function(None, "f", [ast.Argument("a"), ast.Argument("b")], None, None, ast.Block([
-                ast.Statement(ast.Send(ast.Variable("a", 1),  "+", [ast.Variable("b", 1)], None, 1))
+                ast.Statement(ast.Send(ast.Variable("a", 1), "+", [ast.Variable("b", 1)], None, 1))
             ])))
         ]))
 
@@ -1087,6 +1095,7 @@ class TestParser(BaseTopazTest):
         assert space.parse('"\w"') == const_string("w")
         assert space.parse('"\M-a"') == const_string("\xe1")
         assert space.parse('"#$abc#@a#@@ab"') == dyn_string(ast.Global("$abc"), ast.InstanceVariable("@a"), ast.ClassVariable("@@ab", 1))
+        assert space.parse('"#test"') == const_string("#test")
 
     def test_percent_terms(self, space):
         const_string = lambda strvalue: ast.Main(ast.Block([
@@ -1239,6 +1248,14 @@ HERE
         end""")
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Class(ast.Scope(2), "X", None, ast.Nil()))
+        ]))
+
+        r = space.parse("""
+        class
+        X
+        end""")
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Class(ast.Scope(3), "X", None, ast.Nil()))
         ]))
 
         r = space.parse("""
@@ -1493,6 +1510,11 @@ HERE
                         ast.Variable("0", 1),
                     ))
                 ]),
+            ), 1))
+        ]))
+        assert space.parse("f { |;x, y| }") == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Self(1), "f", [], ast.SendBlock(
+                [], None, None, ast.Nil(),
             ), 1))
         ]))
 
@@ -2127,6 +2149,8 @@ HERE
         assert space.parse("$-w") == simple_global("$-w")
         assert space.parse("$@") == simple_global("$@")
         assert space.parse("$;") == simple_global("$;")
+        assert space.parse("$<") == simple_global("$<")
+        assert space.parse("$.") == simple_global("$.")
 
     def test_comments(self, space):
         r = space.parse("""
@@ -2380,6 +2404,16 @@ HERE
         r = space.parse("""
         0 ? (0) :
                  0
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.If(ast.ConstantInt(0),
+                ast.Block([ast.Statement(ast.ConstantInt(0))]),
+                ast.ConstantInt(0),
+            ))
+        ]))
+        r = space.parse("""
+        0 ?
+        (0) : 0
         """)
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.If(ast.ConstantInt(0),
@@ -2723,3 +2757,27 @@ foo bar
 
         with self.raises(space, 'SyntaxError'):
             space.parse("=begin\nbar\n=foo")
+
+    def test_multiline_comments_lineno(self, space):
+        r = space.parse("""
+=begin
+some
+lines
+=end
+        1 + 1
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.ConstantInt(1), "+", [ast.ConstantInt(1)], None, 6))
+        ]))
+
+    def test_call_no_space_symbol(self, space):
+        r = space.parse("""
+        def f
+        end
+
+        f:bar
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Function(None, "f", [], None, None, ast.Nil())),
+            ast.Statement(ast.Send(ast.Self(5), "f", [ast.ConstantSymbol("bar")], None, 5))
+        ]))

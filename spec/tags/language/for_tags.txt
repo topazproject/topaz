@@ -1,2 +1,1 @@
-fails:The for expression iterates over an Hash passing each key-value pair to the block
 fails:The for expression repeats current iteration with 'redo'

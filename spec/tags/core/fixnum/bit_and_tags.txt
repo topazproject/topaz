@@ -1,3 +1,1 @@
-fails:Fixnum#& returns self bitwise AND other
-fails:Fixnum#& returns self bitwise AND a Bignum
 fails:Fixnum#& raises a TypeError when passed a Float
