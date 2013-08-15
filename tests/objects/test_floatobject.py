@@ -49,6 +49,12 @@ class TestFloatObject(BaseTopazTest):
         w_res = space.execute("return 2.4 == 2.3")
         assert w_res is space.w_false
 
+    def test_equal_method(self, space):
+        w_res = space.execute("return 2.3.equal?(2.3)")
+        assert w_res is space.w_true
+        w_res = space.execute("return Float::NAN.equal?(Float::NAN)")
+        assert w_res is space.w_true
+
     def test_hashability(self, space):
         w_res = space.execute("return 1.0.hash == 1.0.hash")
         assert w_res is space.w_true
@@ -103,11 +109,11 @@ class TestFloatObject(BaseTopazTest):
         w_res = space.execute("return -123.534.abs")
         assert space.float_w(w_res) == 123.534
 
-    def test_nan(self, space):
+    def test_zero_division_nan(self, space):
         w_res = space.execute("return 0.0 / 0.0")
         assert math.isnan(self.unwrap(space, w_res))
 
-    def test_infinity(self, space):
+    def test_zero_division_inf(self, space):
         w_res = space.execute("return 1.0 / 0.0")
         assert self.unwrap(space, w_res) == float('inf')
         w_res = space.execute("return -1.0 / 0.0")

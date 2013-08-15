@@ -1,8 +1,2 @@
 fails:Array#slice raises a RangeError when the start index is out of range of Fixnum
 fails:Array#slice raises a RangeError when the length is out of range of Fixnum
-fails:Array#slice with a subclass of Array returns a subclass instance with [n, m]
-fails:Array#slice with a subclass of Array returns a subclass instance with [-n, m]
-fails:Array#slice with a subclass of Array returns a subclass instance with [n..m]
-fails:Array#slice with a subclass of Array returns a subclass instance with [n...m]
-fails:Array#slice with a subclass of Array returns a subclass instance with [-n..-m]
-fails:Array#slice with a subclass of Array returns a subclass instance with [-n...-m]

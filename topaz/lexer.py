@@ -143,8 +143,14 @@ class Lexer(object):
             elif ch in "\r\n":
                 space_seen = newline_seen = True
                 self.newline(ch)
-                if self.state not in [self.EXPR_BEG, self.EXPR_DOT]:
+                if self.state not in [self.EXPR_BEG, self.EXPR_DOT,
+                                      self.EXPR_VALUE, self.EXPR_FNAME,
+                                      self.EXPR_CLASS]:
                     self.add("\n")
+                    while self.peek() in "\r\n ":
+                        ch = self.read()
+                        if ch in "\r\n":
+                            self.newline(ch)
                     self.command_start = True
                     self.state = self.EXPR_BEG
                     yield self.emit("LITERAL_NEWLINE")
@@ -374,6 +380,7 @@ class Lexer(object):
             if ch == self.EOF:
                 self.error("embedded document meets end of file")
             if ch in "\r\n":
+                self.newline(ch)
                 if (self.read() == "=" and
                     self.read() == "e" and
                     self.read() == "n" and
@@ -533,7 +540,7 @@ class Lexer(object):
         self.add(ch)
         self.state = self.EXPR_END
         ch = self.read()
-        if ch in "$>:?\\!\"~&`'+/,@;":
+        if ch in "$<>:?\\!\"~&`'+/.,@;":
             self.add(ch)
             yield self.emit("GVAR")
         elif ch == "-" and self.peek().isalnum():
@@ -934,9 +941,7 @@ class Lexer(object):
                 if len(buf) > 3 and character_escape:
                     self.error()
             if octal:
-                codepoint = int(buf, 8)
-                if codepoint > 255:
-                    codepoint = codepoint - 256
+                codepoint = int(buf, 8) & 255
                 return [chr(codepoint)]
             else:
                 buf = "0" * (len(buf) - 3) + buf
@@ -945,9 +950,7 @@ class Lexer(object):
                     if buf[i] not in string.octdigits:
                         prefix_idx = i
                         break
-                codepoint = int(buf[0:prefix_idx], 8)
-                if codepoint > 255:
-                    codepoint -= 256
+                codepoint = int(buf[:prefix_idx], 8) & 255
                 unicode_chars = [chr(codepoint)]
                 unicode_chars += buf[prefix_idx:]
                 return unicode_chars
@@ -959,7 +962,7 @@ class Lexer(object):
                 c = self.read_escape()
                 if len(c) != 1:
                     self.error()
-                return [chr(ord(c[0]) & 0x80)]
+                return [chr(ord(c[0]) | 0x80)]
             elif c == self.EOF:
                 self.error()
             else:
@@ -1280,8 +1283,6 @@ class StringTerm(BaseStringTerm):
             elif ch == "{":
                 self.lexer.add(ch)
                 return self.lexer.emit("STRING_DBEG")
-            else:
-                self.lexer.add("#")
         self.lexer.unread()
 
         while True:
@@ -1335,7 +1336,7 @@ class StringTerm(BaseStringTerm):
                 if ch == self.lexer.EOF or not ch.isalpha():
                     self.lexer.unread()
                     break
-                elif ch in "ixmo":
+                elif ch in "ixmouesn":
                     if ch not in flags:
                         flags += ch
                         self.lexer.add(ch)

@@ -1,7 +1,5 @@
-fails:Array#pack with format 'D' taints the output string if the format string is tainted
 fails:Array#pack with format 'D' raises a ArgumentError if a String does not represent a floating point number
 fails:Array#pack with format 'D' calls #to_f to convert an object to a float
-fails:Array#pack with format 'd' taints the output string if the format string is tainted
 fails:Array#pack with format 'd' raises a ArgumentError if a String does not represent a floating point number
 fails:Array#pack with format 'd' calls #to_f to convert an object to a float
 fails:Array#pack with format 'D' returns an ASCII-8BIT string

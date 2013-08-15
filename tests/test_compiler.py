@@ -277,6 +277,26 @@ class TestCompiler(object):
         RETURN
         """)
 
+    def test_for_loop_over_send_block(self, space):
+        self.assert_compiles(space, """
+        for k in f { 1 }
+          2
+        end
+        """, """
+        LOAD_SELF
+        LOAD_CONST 0
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 1 1
+
+        LOAD_CONST 2
+        LOAD_CLOSURE 0
+        BUILD_BLOCK 1
+        SEND_BLOCK 3 1
+
+        RETURN
+        """)
+
     def test_until(self, space):
         self.assert_compiles(space, "until false do 5 end", """
         SETUP_LOOP 20
@@ -385,7 +405,7 @@ class TestCompiler(object):
     def test_string(self, space):
         self.assert_compiles(space, '"abc"', """
         LOAD_CONST 0
-        COPY_STRING
+        COERCE_STRING
 
         RETURN
         """)
@@ -399,11 +419,11 @@ class TestCompiler(object):
         STORE_DEREF 0
         DISCARD_TOP
         LOAD_CONST 1
-        COPY_STRING
+        COERCE_STRING
         LOAD_DEREF 0
         SEND 2 0
         LOAD_CONST 3
-        COPY_STRING
+        COERCE_STRING
         BUILD_STRING 3
 
         RETURN
@@ -1102,7 +1122,7 @@ class TestCompiler(object):
         DISCARD_TOP
         LOAD_SELF
         LOAD_CONST 5
-        COPY_STRING
+        COERCE_STRING
         SEND 6 1
         JUMP 55
         END_FINALLY
@@ -1183,7 +1203,7 @@ class TestCompiler(object):
         LOAD_CONST 3
         LOAD_SELF
         LOAD_CONST 4
-        COPY_STRING
+        COERCE_STRING
         SEND 5 1
         DISCARD_TOP
         END_FINALLY

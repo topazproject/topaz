@@ -1,1 +1,0 @@
-fails:Module#append_features raises an ArgumentError on a cyclic include

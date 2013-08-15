@@ -60,26 +60,32 @@ class Hash
   end
 
   def ==(other)
-    if self.equal?(other)
-      return true
-    end
-    if !other.kind_of?(Hash)
-      return false
-    end
-    if self.size != other.size
-      return false
-    end
-    self.each do |key, value|
-      if !other.has_key?(key) || other[key] != value
-        return false
+    return true if self.equal?(other)
+    return false unless other.kind_of?(Hash)
+    return false unless self.size == other.size
+    Thread.current.recursion_guard(:hash_compare, self) do
+      self.each do |key, value|
+        return false unless other.has_key?(key) && value == other[key]
       end
     end
-    return true
+    true
+  end
+
+  def eql?(other)
+    return true if self.equal?(other)
+    return false unless other.kind_of?(Hash)
+    return false unless self.size == other.size
+    Thread.current.recursion_guard(:hash_eql, self) do
+      self.each do |key, value|
+        return false unless other.has_key?(key) && value.eql?(other[key])
+      end
+    end
+    true
   end
 
   def merge!(other, &block)
     raise RuntimeError.new("can't modify frozen #{self.class}") if frozen?
-    other = other.to_hash unless other.kind_of? Hash
+    other = Topaz.convert_type(other, Hash, :to_hash)
     if block
       other.each do |key, val|
         if has_key? key
@@ -217,5 +223,9 @@ class Hash
     out = []
     Topaz::Array.flatten(self, out, level)
     out
+  end
+
+  def self.try_convert(arg)
+    Topaz.try_convert_type(arg, Hash, :to_hash)
   end
 end

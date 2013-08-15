@@ -12,6 +12,7 @@ from topaz.utils import regexp
 class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
+        self._hidden_scopes = []
 
     def parse(self):
         l = LexerWrapper(self.lexer.tokenize())
@@ -34,6 +35,13 @@ class Parser(object):
         child_symtable = self.lexer.symtable
         child_symtable.parent_symtable.add_subscope(node, child_symtable)
         self.lexer.symtable = child_symtable.parent_symtable
+
+    def hide_scope(self):
+        self._hidden_scopes.append(self.lexer.symtable)
+        self.lexer.symtable = self.lexer.symtable.parent_symtable
+
+    def unhide_scope(self):
+        self.lexer.symtable = self._hidden_scopes.pop()
 
     def new_token(self, orig, name, value):
         return Token(name, value, orig.getsourcepos())
@@ -693,7 +701,7 @@ class Parser(object):
 
     @pg.production("expr : BANG command_call")
     def expr_bang_command_call(self, p):
-        raise NotImplementedError(p)
+        return self.new_call(p[1], self.new_token(p[0], "!", "!"), None)
 
     @pg.production("expr : arg")
     def expr_arg(self, p):
@@ -1677,10 +1685,12 @@ class Parser(object):
     @pg.production("post_for_in : ")
     def post_for_in(self, p):
         self.lexer.condition_state.begin()
+        self.hide_scope()
 
     @pg.production("post_for_do : ")
     def post_for_do(self, p):
         self.lexer.condition_state.end()
+        self.unhide_scope()
 
     @pg.production("primary : CLASS cpath superclass push_local_scope bodystmt END")
     def primary_class(self, p):
@@ -1999,12 +2009,7 @@ class Parser(object):
 
     @pg.production("block_param_def : PIPE opt_bv_decl PIPE")
     def block_param_def_pipe_opt_bv_decl_pipe(self, p):
-        """
-        tPIPE opt_bv_decl tPIPE {
-                    $$ = support.new_args($1.getPosition(), null, null, null, null, null);
-                }
-        """
-        raise NotImplementedError(p)
+        return self.new_args()
 
     @pg.production("block_param_def : OROP")
     def block_param_def_orop(self, p):
@@ -2032,12 +2037,7 @@ class Parser(object):
 
     @pg.production("bvar : IDENTIFIER")
     def bvar_identifier(self, p):
-        """
-        tIDENTIFIER {
-                    support.new_bv($1);
-                }
-        """
-        raise NotImplementedError(p)
+        self.lexer.symtable.declare_local(p[0].getstr())
 
     @pg.production("bvar : f_bad_arg")
     def bvar_f_bad_arg(self, p):
@@ -2275,12 +2275,7 @@ class Parser(object):
         str_flags = p[2].getstr()
         flags = 0
         for f in str_flags:
-            flags |= {
-                "m": regexp.DOT_ALL,
-                "i": regexp.IGNORE_CASE,
-                "o": regexp.ONCE,
-                "x": regexp.EXTENDED,
-            }[f]
+            flags |= regexp.OPTIONS_MAP[f]
         if p[1] is not None:
             n = p[1].getast()
             if isinstance(n, ast.ConstantString):
@@ -2379,7 +2374,10 @@ class Parser(object):
         self.lexer.condition_state.restart()
         self.lexer.cmd_argument_state.restart()
         self.lexer.str_term = p[0].getstrterm()
-        return BoxAST(ast.DynamicString([ast.Block(p[1].getastlist())]))
+        if p[1]:
+            return BoxAST(ast.DynamicString([ast.Block(p[1].getastlist())]))
+        else:
+            return None
 
     @pg.production("string_dbeg : STRING_DBEG")
     def string_dbeg(self, p):

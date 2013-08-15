@@ -1,0 +1,2 @@
+fails:MatchData#post_match sets the encoding to the encoding of the source String
+fails:MatchData#post_match sets an empty result to the encoding of the source String

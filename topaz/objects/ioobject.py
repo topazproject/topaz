@@ -9,7 +9,7 @@ from topaz.utils.filemode import map_filemode
 
 
 class W_IOObject(W_Object):
-    classdef = ClassDef("IO", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("IO", W_Object.classdef)
 
     def __init__(self, space):
         W_Object.__init__(self, space)
@@ -34,17 +34,17 @@ class W_IOObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        w_stdin = space.send(w_cls, space.newsymbol("new"), [space.newint(0)])
+        w_stdin = space.send(w_cls, "new", [space.newint(0)])
         space.globals.set(space, "$stdin", w_stdin)
         space.set_const(space.w_object, "STDIN", w_stdin)
 
-        w_stdout = space.send(w_cls, space.newsymbol("new"), [space.newint(1)])
+        w_stdout = space.send(w_cls, "new", [space.newint(1)])
         space.globals.set(space, "$stdout", w_stdout)
         space.globals.set(space, "$>", w_stdout)
         space.globals.set(space, "$/", space.newstr_fromstr("\n"))
         space.set_const(space.w_object, "STDOUT", w_stdout)
 
-        w_stderr = space.send(w_cls, space.newsymbol("new"), [space.newint(2)])
+        w_stderr = space.send(w_cls, "new", [space.newint(2)])
         space.globals.set(space, "$stderr", w_stderr)
         space.set_const(space.w_object, "STDERR", w_stderr)
 
@@ -61,7 +61,7 @@ class W_IOObject(W_Object):
         perm = 0666
         mode = os.O_RDONLY
         if w_mode_str_or_int is not None:
-            mode = map_filemode(space, w_mode_str_or_int)
+            mode, encoding = map_filemode(space, w_mode_str_or_int)
         if w_perm is not None and w_perm is not space.w_nil:
             perm = space.int_w(w_perm)
         path = Coerce.path(space, w_path)
@@ -80,8 +80,6 @@ class W_IOObject(W_Object):
             fd = Coerce.int(space, w_fd_or_io)
         if isinstance(w_mode_str_or_int, W_StringObject):
             mode = space.str_w(w_mode_str_or_int)
-            if ":" in mode:
-                raise space.error(space.w_NotImplementedError, "encoding for IO.new")
         elif w_mode_str_or_int is None:
             mode = None
         else:
@@ -111,7 +109,10 @@ class W_IOObject(W_Object):
                 max_read = int(length - read_bytes)
             else:
                 max_read = 8192
-            current_read = os.read(self.fd, max_read)
+            try:
+                current_read = os.read(self.fd, max_read)
+            except OSError as e:
+                raise error_for_oserror(space, e)
             if len(current_read) == 0:
                 break
             read_bytes += len(current_read)
@@ -130,8 +131,11 @@ class W_IOObject(W_Object):
     @classdef.method("write")
     def method_write(self, space, w_str):
         self.ensure_not_closed(space)
-        string = space.str_w(space.send(w_str, space.newsymbol("to_s")))
-        bytes_written = os.write(self.fd, string)
+        string = space.str_w(space.send(w_str, "to_s"))
+        try:
+            bytes_written = os.write(self.fd, string)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         return space.newint(bytes_written)
 
     @classdef.method("flush")
@@ -169,15 +173,15 @@ class W_IOObject(W_Object):
                 args_w.append(w_last)
         w_sep = space.globals.get(space, "$,")
         if w_sep:
-            sep = space.str_w(space.send(w_sep, space.newsymbol("to_s")))
+            sep = space.str_w(space.send(w_sep, "to_s"))
         else:
             sep = ""
         w_end = space.globals.get(space, "$\\")
         if w_end:
-            end = space.str_w(space.send(w_end, space.newsymbol("to_s")))
+            end = space.str_w(space.send(w_end, "to_s"))
         else:
             end = ""
-        strings = [space.str_w(space.send(w_arg, space.newsymbol("to_s"))) for w_arg in args_w]
+        strings = [space.str_w(space.send(w_arg, "to_s")) for w_arg in args_w]
         os.write(self.fd, sep.join(strings))
         os.write(self.fd, end)
         return space.w_nil
@@ -185,7 +189,10 @@ class W_IOObject(W_Object):
     @classdef.method("getc")
     def method_getc(self, space):
         self.ensure_not_closed(space)
-        c = os.read(self.fd, 1)
+        try:
+            c = os.read(self.fd, 1)
+        except OSError as e:
+            raise error_for_oserror(space, e)
         if not c:
             return space.w_nil
         return space.newstr_fromstr(c)
@@ -194,16 +201,16 @@ class W_IOObject(W_Object):
     def method_pipe(self, space, block=None):
         r, w = os.pipe()
         pipes_w = [
-            space.send(self, space.newsymbol("new"), [space.newint(r)]),
-            space.send(self, space.newsymbol("new"), [space.newint(w)])
+            space.send(self, "new", [space.newint(r)]),
+            space.send(self, "new", [space.newint(w)])
         ]
         if block is not None:
             try:
                 return space.invoke_block(block, pipes_w)
             finally:
                 for pipe_w in pipes_w:
-                    if not space.is_true(space.send(pipe_w, space.newsymbol("closed?"))):
-                        space.send(pipe_w, space.newsymbol("close"))
+                    if not space.is_true(space.send(pipe_w, "closed?")):
+                        space.send(pipe_w, "close")
         else:
             return space.newarray(pipes_w)
 
@@ -214,7 +221,7 @@ class W_IOObject(W_Object):
         if w_io is space.w_nil:
             from topaz.objects.fileobject import W_FileObject
             args = [w_arg] if w_mode is None else [w_arg, w_mode]
-            w_io = space.send(space.getclassfor(W_FileObject), space.newsymbol("new"), args)
+            w_io = space.send(space.getclassfor(W_FileObject), "new", args)
         assert isinstance(w_io, W_IOObject)
         w_io.ensure_not_closed(space)
         os.close(self.fd)

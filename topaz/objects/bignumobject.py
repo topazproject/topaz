@@ -1,5 +1,6 @@
 from rpython.rlib.rbigint import rbigint
 from rpython.rlib.rfloat import INFINITY
+from rpython.rtyper.lltypesystem import lltype, rffi
 
 from topaz.module import ClassDef
 from topaz.objects.integerobject import W_IntegerObject
@@ -7,7 +8,7 @@ from topaz.objects.numericobject import W_NumericObject
 
 
 class W_BignumObject(W_IntegerObject):
-    classdef = ClassDef("Bignum", W_IntegerObject.classdef, filepath=__file__)
+    classdef = ClassDef("Bignum", W_IntegerObject.classdef)
 
     def __init__(self, space, bigint):
         W_IntegerObject.__init__(self, space)
@@ -36,6 +37,18 @@ class W_BignumObject(W_IntegerObject):
 
     def float_w(self, space):
         return self.bigint.tofloat()
+
+    def intmask_w(self, space):
+        return rffi.cast(lltype.Signed, self.uintmask_w((space)))
+
+    def uintmask_w(self, space):
+        return self.bigint.uintmask()
+
+    def longlongmask_w(self, space):
+        return rffi.cast(lltype.SignedLongLong, self.ulonglongmask_w((space)))
+
+    def ulonglongmask_w(self, space):
+        return self.bigint.ulonglongmask()
 
     @classdef.method("to_s")
     def method_to_s(self, space):
@@ -74,9 +87,13 @@ class W_BignumObject(W_IntegerObject):
         elif space.is_kind_of(w_other, space.w_bignum):
             return self.floordiv(space, space.bigint_w(w_other))
         elif space.is_kind_of(w_other, space.w_float):
-            return space.send(space.newfloat(space.float_w(self)), space.newsymbol("/"), [w_other])
+            return space.send(space.newfloat(space.float_w(self)), "/", [w_other])
         else:
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "/")
+
+    @classdef.method("fdiv")
+    def method_fdiv(self, space, w_other):
+        raise space.error(space.w_NotImplementedError, "Bignum#fdiv")
 
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
@@ -146,12 +163,13 @@ class W_BignumObject(W_IntegerObject):
                 return space.newfloat(INFINITY)
             return space.send(
                 space.newfloat(float_value),
-                space.newsymbol("**"),
+                "**",
                 [w_other]
             )
         else:
             raise space.error(
                 space.w_TypeError,
-                "%s can't be coerced into Bignum" %
+                "%s can't be coerced into Bignum" % (
                     space.obj_to_s(space.getclass(w_other))
+                )
             )

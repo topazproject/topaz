@@ -5,7 +5,7 @@ from topaz.objects.objectobject import W_Object
 
 class W_SymbolObject(W_Object):
     _immutable_fields_ = ["symbol"]
-    classdef = ClassDef("Symbol", W_Object.classdef, filepath=__file__)
+    classdef = ClassDef("Symbol", W_Object.classdef)
     classdef.include_module(Comparable)
 
     def __init__(self, space, symbol):
@@ -23,12 +23,14 @@ class W_SymbolObject(W_Object):
     def str_w(self, space):
         return self.symbol
 
-    def getsingletonclass(self, space):
-        raise space.error(space.w_TypeError, "can't define singleton")
-
     @classdef.singleton_method("all_symbols")
     def singleton_method_all_symbols(self, space):
         return space.newarray(space.symbol_cache.values())
+
+    @classdef.method("extend")
+    @classdef.method("singleton_class")
+    def method_singleton_class(self, space):
+        raise space.error(space.w_TypeError, "can't define singleton")
 
     @classdef.method("to_s")
     def method_to_s(self, space):

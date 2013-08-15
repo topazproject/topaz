@@ -1,5 +1,0 @@
-fails:ENV.[]= returns the value
-fails:ENV.[]= deletes the environment variable when the value is nil
-fails:ENV.[]= raises Errno::EINVAL when the key contains the '=' character
-fails:ENV.[]= raises Errno::EINVAL when the key is an empty string
-fails:ENV.[]= does nothing when the key is not a valid environment variable key and the value is nil

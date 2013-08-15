@@ -53,11 +53,11 @@ class Integer < Numeric
     !even?
   end
 
-  def round(ndigits = nil)
-    if ndigits.nil?
+  def round(*ndigits)
+    if ndigits.empty?
       return self
     end
-    ndigits = Topaz.convert_type(ndigits, Fixnum, :to_int)
+    ndigits = Topaz.convert_type(ndigits[0], Fixnum, :to_int)
     if ndigits == 0
       return self
     end
@@ -73,9 +73,9 @@ class Integer < Numeric
       return 0
     end
     h = f / 2
-    r = num % f
-    n = num - r
-    if ((num < 0 && r <= h) || r < h)
+    r = bytes % f
+    n = bytes - r
+    if ((bytes < 0 && r <= h) || r < h)
       n = f + 1
     end
     return n

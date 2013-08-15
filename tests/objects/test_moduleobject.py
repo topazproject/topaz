@@ -72,6 +72,19 @@ class TestModuleObject(BaseTopazTest):
         """)
         assert self.unwrap(space, w_res) == 3
 
+    def test_alias_method_builtin(self, space):
+        w_res = space.execute("""
+        class Fixnum
+          alias_method :comparator, :<=>
+          def <=>(*args)
+            comparator(*args)
+          end
+        end
+
+        return 1 <=> 1
+        """)
+        assert self.unwrap(space, w_res) == 0
+
     def test_define_method_with_block(self, space):
         w_res = space.execute("""
         class X
@@ -400,6 +413,28 @@ class TestModuleObject(BaseTopazTest):
         w_res = space.execute("return Module.new.name")
         assert w_res is space.w_nil
 
+    def test_definedp(self, space):
+        w_res = space.execute("""
+        module A
+          def self.foo_defined?
+            defined?(@foo)
+          end
+        end
+        return A.foo_defined? ? 'yes' : 'no'
+        """)
+        assert self.unwrap(space, w_res) == 'no'
+        w_res = space.execute("""
+        module A
+          @foo = nil
+
+          def foo_defined?
+            defined?(@foo)
+          end
+        end
+        return A.foo_defined? ? 'yes' : 'no'
+        """)
+        assert self.unwrap(space, w_res) == 'yes'
+
 
 class TestMethodVisibility(object):
     def test_private(self, space):
@@ -430,7 +465,7 @@ class TestMethodVisibility(object):
     def test_private_class_method(self, space):
         space.execute("""
         class X
-          def m
+          def self.m
           end
           private_class_method :m
         end
@@ -439,8 +474,15 @@ class TestMethodVisibility(object):
     def test_public_class_method(self, space):
         space.execute("""
         class X
-          def m
+          def self.m
           end
           public_class_method :m
+        end
+        """)
+
+    def test_private_builtin(self, space):
+        space.execute("""
+        class X < Array
+          public :<<
         end
         """)

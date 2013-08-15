@@ -362,7 +362,7 @@ module Enumerable
     out = []
     self.each do |e|
       v = yield(e)
-      if v.respond_to?(:to_ary) && ary = Array.try_convert(v)
+      if ary = Array.try_convert(v)
         out.concat(ary)
       else
         out << v
@@ -436,5 +436,69 @@ module Enumerable
       end
     end
     ret
+  end
+
+  def chunk(initial_state = nil, &original_block)
+    raise ArgumentError.new("no block given") unless original_block
+    ::Enumerator.new do |yielder|
+      previous = nil
+      accumulate = []
+      block = initial_state.nil? ? original_block : Proc.new{ |val| original_block.yield(val, initial_state.clone)}
+      each do |val|
+        key = block.yield(val)
+        if key.nil? || (key.is_a?(Symbol) && key.to_s[0, 1] == "_")
+          yielder.yield [previous, accumulate] unless accumulate.empty?
+          accumulate = []
+          previous = nil
+          case key
+          when nil, :_separator
+          when :_alone
+            yielder.yield [key, [val]]
+          else
+            raise RuntimeError.new("symbols beginning with an underscore are reserved")
+          end
+        else
+          if previous.nil? || previous == key
+            accumulate << val
+          else
+            yielder.yield [previous, accumulate] unless accumulate.empty?
+            accumulate = [val]
+          end
+          previous = key
+        end
+      end
+      yielder.yield [previous, accumulate] unless accumulate.empty?
+    end
+  end
+
+  def slice_before(*args, &block)
+    arg = nil
+    if block
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 0..1)") if args.size > 1
+      if args.size == 1
+        has_init = true
+        arg = args[0]
+      end
+    else
+      raise ArgumentError.new("wrong number of arguments (#{args.size} for 1)") if args.size > 1
+      raise ArgumentError.new("wrong number of arguments (0 for 1)") if args.empty?
+      arg = args[0]
+      block = Proc.new{ |elem| arg === elem }
+    end
+    ::Enumerator.new do |yielder|
+      init = arg.dup if has_init
+      accumulator = nil
+      each do |elem|
+        start_new = has_init ? block.yield(elem, init) : block.yield(elem)
+        if start_new
+          yielder.yield accumulator if accumulator
+          accumulator = [elem]
+        else
+          accumulator ||= []
+          accumulator << elem
+        end
+      end
+      yielder.yield accumulator if accumulator
+    end
   end
 end

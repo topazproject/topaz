@@ -71,7 +71,7 @@ class TestUnboundObject(BaseTopazTest):
 
     def test_allocate(self, space):
         with self.raises(space, "TypeError", "allocator undefined for UnboundMethod"):
-            w_res = space.execute("return UnboundMethod.allocate")
+            space.execute("return UnboundMethod.allocate")
 
     def test_owner(self, space):
         w_res = space.execute("return 'test'.method(:to_s).owner")

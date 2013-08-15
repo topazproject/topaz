@@ -69,6 +69,12 @@ class OrderedDict(object):
     def clear(self):
         self.contents.clear()
 
+    def copy(self):
+        d = OrderedDict(self.eq_func, self.hash_func)
+        for k, v in self.iteritems():
+            d[k] = v
+        return d
+
 
 class DictKey(object):
     def __init__(self, d, key):
@@ -159,6 +165,9 @@ class SomeOrderedDict(model.SomeObject):
     def method_update(self, s_dict):
         assert isinstance(s_dict, SomeOrderedDict)
         self.dictdef.union(s_dict.dictdef)
+
+    def method_copy(self):
+        return SomeOrderedDict(self.bookkeeper, self.dictdef)
 
     def method_clear(self):
         pass
@@ -348,6 +357,10 @@ class OrderedDictRepr(Repr):
     def rtype_method_clear(self, hop):
         [v_dict] = hop.inputargs(self)
         return hop.gendirectcall(LLOrderedDict.ll_clear, v_dict)
+
+    def rtype_method_copy(self, hop):
+        [v_dict] = hop.inputargs(self)
+        return hop.gendirectcall(LLOrderedDict.ll_copy, v_dict)
 
 
 class OrderedDictIteratorRepr(IteratorRepr):
@@ -734,6 +747,32 @@ class LLOrderedDict(object):
         d.first_entry = -1
         d.last_entry = -1
         d.resize_counter = LLOrderedDict.INIT_SIZE * 2
+
+    @staticmethod
+    def ll_copy(d):
+        DICT = lltype.typeOf(d).TO
+        new_d = lltype.malloc(DICT)
+        new_d.entries = lltype.malloc(DICT.entries.TO, len(d.entries), zero=True)
+        new_d.num_items = d.num_items
+        new_d.resize_counter = d.resize_counter
+        new_d.first_entry = d.first_entry
+        new_d.last_entry = d.last_entry
+        if hasattr(DICT, "hashkey_func"):
+            new_d.hashkey_func = d.hashkey_func
+        if hasattr(DICT, "keyeq_func"):
+            new_d.keyeq_func = d.keyeq_func
+        for i in xrange(len(d.entries)):
+            entry = d.entries[i]
+            new_entry = new_d.entries[i]
+            new_entry.key = entry.key
+            new_entry.value = entry.value
+            new_entry.next = entry.next
+            new_entry.prev = entry.prev
+            new_entry.everused = entry.everused
+            new_entry.valid = entry.valid
+            if hasattr(DICT.entries.TO.OF, "hash"):
+                new_entry.hash = entry.hash
+        return new_d
 
     @staticmethod
     def ll_newdictiter(ITER, d):
