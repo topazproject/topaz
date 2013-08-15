@@ -3,108 +3,45 @@ class MSpecScript
   Rubyspec = File.expand_path("../../rubyspec", __FILE__)
 
   MSpec.enable_feature :fiber
-  core = ["#{Rubyspec}/core/",
-          "^#{Rubyspec}/core/string/unpack/",
-          "^#{Rubyspec}/core/string/chomp_spec.rb",
-          "^#{Rubyspec}/core/string/split_spec.rb",
-          "^#{Rubyspec}/core/string/slice_spec.rb",
-          "^#{Rubyspec}/core/string/crypt_spec.rb",
-          "^#{Rubyspec}/core/string/byteslice_spec.rb",
-          "^#{Rubyspec}/core/string/element_reference_spec.rb",
-          "^#{Rubyspec}/core/signal/list_spec.rb",
-          "^#{Rubyspec}/core/regexp/union_spec.rb",
-          "^#{Rubyspec}/core/regexp/names_spec.rb",
-          "^#{Rubyspec}/core/regexp/named_captures_spec.rb",
-          "^#{Rubyspec}/core/regexp/new_spec.rb",
-          "^#{Rubyspec}/core/regexp/to_s_spec.rb",
-          "^#{Rubyspec}/core/regexp/try_convert_spec.rb",
-          "^#{Rubyspec}/core/regexp/kcode_spec.rb",
-          "^#{Rubyspec}/core/regexp/encoding_spec.rb",
-          "^#{Rubyspec}/core/regexp/options_spec.rb",
-          "^#{Rubyspec}/core/regexp/hash_spec.rb",
-          "^#{Rubyspec}/core/regexp/fixed_encoding_spec.rb",
-          "^#{Rubyspec}/core/regexp/eql_spec.rb",
-          "^#{Rubyspec}/core/regexp/compile_spec.rb",
-          "^#{Rubyspec}/core/regexp/equal_value_spec.rb",
-          "^#{Rubyspec}/core/regexp/inspect_spec.rb",
-          "^#{Rubyspec}/core/process/detach_spec.rb",
-          "^#{Rubyspec}/core/gc/profiler/",
-          "^#{Rubyspec}/core/object/instance_exec_spec.rb",
-          "^#{Rubyspec}/core/method/parameters_spec.rb",
-          "^#{Rubyspec}/core/matchdata/names_spec.rb",
-          "^#{Rubyspec}/core/matchdata/begin_spec.rb",
-          "^#{Rubyspec}/core/matchdata/end_spec.rb",
-          "^#{Rubyspec}/core/matchdata/offset_spec.rb",
-          "^#{Rubyspec}/core/matchdata/element_reference_spec.rb",
-          "^#{Rubyspec}/core/marshal/dump_spec.rb",
-          "^#{Rubyspec}/core/marshal/load_spec.rb",
-          "^#{Rubyspec}/core/marshal/restore_spec.rb",
-          "^#{Rubyspec}/core/kernel/autoload_spec.rb",
-          "^#{Rubyspec}/core/kernel/define_singleton_method_spec.rb",
-          "^#{Rubyspec}/core/kernel/p_spec.rb",
-          "^#{Rubyspec}/core/main/public_spec.rb",
-          "^#{Rubyspec}/core/main/private_spec.rb",
-          "^#{Rubyspec}/core/main/include_spec.rb",
-          "^#{Rubyspec}/core/main/def_spec.rb",
-          "^#{Rubyspec}/core/filetest",
-          "^#{Rubyspec}/core/io/reopen_spec.rb",
-          "^#{Rubyspec}/core/io/lineno_spec.rb",
-          "^#{Rubyspec}/core/io/each_spec.rb",
-          "^#{Rubyspec}/core/io/each_line_spec.rb",
-          "^#{Rubyspec}/core/io/foreach_spec.rb",
-          "^#{Rubyspec}/core/file/stat/ftype_spec.rb",
-          "^#{Rubyspec}/core/file/socket_spec.rb",
-          "^#{Rubyspec}/core/file/ftype_spec.rb",
-          "^#{Rubyspec}/core/file/open_spec.rb",
-          "^#{Rubyspec}/core/io/sysopen_spec.rb",
-          "^#{Rubyspec}/core/method/arity_spec.rb",
-          "^#{Rubyspec}/core/method/call_spec.rb",
-          "^#{Rubyspec}/core/method/clone_spec.rb",
-          "^#{Rubyspec}/core/method/element_reference_spec.rb",
-          "^#{Rubyspec}/core/method/eql_spec.rb",
-          "^#{Rubyspec}/core/method/equal_value_spec.rb",
-          "^#{Rubyspec}/core/method/inspect_spec.rb",
-          "^#{Rubyspec}/core/method/name_spec.rb",
-          "^#{Rubyspec}/core/method/owner_spec.rb",
-          "^#{Rubyspec}/core/method/receiver_spec.rb",
-          "^#{Rubyspec}/core/method/source_location_spec.rb",
-          "^#{Rubyspec}/core/method/to_proc_spec.rb",
-          "^#{Rubyspec}/core/method/to_s_spec.rb",
-          "^#{Rubyspec}/core/method/unbind_spec.rb",
-          "^#{Rubyspec}/core/numeric/to_c_spec.rb",
-          "^#{Rubyspec}/core/process/status/exited_spec.rb",
-          "^#{Rubyspec}/core/process/status/exitstatus_spec.rb",
-          "^#{Rubyspec}/core/process/status/pid_spec.rb",
-          "^#{Rubyspec}/core/process/status/signaled_spec.rb",
-          "^#{Rubyspec}/core/process/status/success_spec.rb",
-          "^#{Rubyspec}/core/process/status/termsig_spec.rb",
-          "^#{Rubyspec}/core/process/wait2_spec.rb",
-          "^#{Rubyspec}/core/process/wait_spec.rb",
-          "^#{Rubyspec}/core/process/waitall_spec.rb",
-          "^#{Rubyspec}/core/file/ctime_spec.rb"
+  MSpec.enable_feature :fork
+  MSpec.enable_feature :encoding
+  core = [
+    "#{Rubyspec}/core/",
+    # Struct: ``Struct.new(:field)``
+    "^#{Rubyspec}/core/string/chomp_spec.rb",
+    # timeout: ``require 'timeout'``
+    "^#{Rubyspec}/core/process/detach_spec.rb",
+    # GC: ``GC``
+    "^#{Rubyspec}/core/gc/profiler/",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/dump_spec.rb",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/load_spec.rb",
+    # openssl: ``require 'openssl'``
+    "^#{Rubyspec}/core/marshal/restore_spec.rb",
+    # autoload: ``autoload :Class, "file.rb"``
+    "^#{Rubyspec}/core/kernel/autoload_spec.rb",
+    # FileTest: ``FileTest``
+    "^#{Rubyspec}/core/filetest",
+    # fcntl: ``require 'fcntl'``
+    "^#{Rubyspec}/core/io/reopen_spec.rb",
+    # socket: ``require 'socket'``
+    "^#{Rubyspec}/core/file/socket_spec.rb",
+    # Rational: ``Rational(2, 3)``
+    "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
 
-  language = ["#{Rubyspec}/language",
-              "^#{Rubyspec}/language/block_spec.rb",
-              "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
-              "^#{Rubyspec}/language/send_spec.rb",
-              "^#{Rubyspec}/language/constants_spec.rb",
-              "^#{Rubyspec}/language/precedence_spec.rb",
-              "^#{Rubyspec}/language/predefined_spec.rb",
-              "^#{Rubyspec}/language/predefined/data_spec.rb",
-              "^#{Rubyspec}/language/regexp/encoding_spec.rb",
-              "^#{Rubyspec}/language/regexp/escapes_spec.rb",
-              "^#{Rubyspec}/language/regexp/interpolation_spec.rb",
-              "^#{Rubyspec}/language/regexp/modifiers_spec.rb",
-              "^#{Rubyspec}/language/BEGIN_spec.rb",
-              "^#{Rubyspec}/language/alias_spec.rb",
-              "^#{Rubyspec}/language/break_spec.rb",
-              "^#{Rubyspec}/language/def_spec.rb",
-              "^#{Rubyspec}/language/defined_spec.rb",
-              "^#{Rubyspec}/language/or_spec.rb",
-              "^#{Rubyspec}/language/retry_spec.rb",
-              "^#{Rubyspec}/language/return_spec.rb",
-              "^#{Rubyspec}/language/super_spec.rb"]
+  language = [
+    "#{Rubyspec}/language",
+    # Required block arg after *args: ``f {|*a, b| }``
+    "^#{Rubyspec}/language/block_spec.rb",
+    # Posix character class: ``/[[:alnum:]]/``
+    "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
+    # Required arg after *arg: ``def f(a, *b, c); end``
+    "^#{Rubyspec}/language/send_spec.rb",
+    # stringio: ``require 'stringio'``
+    "^#{Rubyspec}/language/predefined_spec.rb",
+  ]
 
   command_line = ["#{Rubyspec}/command_line"]
 

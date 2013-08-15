@@ -19,12 +19,12 @@ def clear_gcflag_extra(pending):
 
 
 class ObjectSpace(object):
-    moduledef = ModuleDef("ObjectSpace", filepath=__file__)
+    moduledef = ModuleDef("ObjectSpace")
 
     @moduledef.function("each_object")
     def method_each_object(self, space, w_mod, block):
         if block is None:
-            return space.send(self, space.newsymbol("enum_for"), [space.newsymbol("each_object"), w_mod], block)
+            return space.send(self, "enum_for", [space.newsymbol("each_object"), w_mod], block)
         match_w = []
         roots = [gcref for gcref in rgc.get_rpy_roots() if gcref]
         pending = roots[:]

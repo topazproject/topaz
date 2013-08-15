@@ -1,4 +1,4 @@
-from invoke import task, run as run_
+import invoke
 
 from .base import BaseTest
 
@@ -13,7 +13,7 @@ class Rubyspecs(BaseTest):
         self.download_rubyspec()
 
     def mspec(self, args):
-        run_("../mspec/bin/mspec %s -t %s --config=topaz.mspec %s" % (args, self.exe, self.files), echo=True)
+        invoke.run("../mspec/bin/mspec %s -t %s --config=topaz.mspec %s" % (args, self.exe, self.files), echo=True)
 
     def run(self):
         self.mspec("run -G fails %s" % self.options)
@@ -30,7 +30,7 @@ def generate_spectask(taskname):
         runner = Rubyspecs(files, options, untranslated=untranslated)
         getattr(runner, taskname)()
     spectask.__name__ = taskname
-    return task(spectask)
+    return invoke.task(spectask)
 
 
 run = generate_spectask("run")

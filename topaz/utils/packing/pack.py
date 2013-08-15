@@ -130,7 +130,7 @@ def pack_move_to(space, packer, position):
         packer.result.extend(["\0"] * (position - len(packer.result)))
     else:
         assert position >= 0
-        packer.result[position:len(packer.result)] = []
+        del packer.result[position:]
 
 
 def pack_back_up(space, packer, repetitions):
@@ -140,7 +140,7 @@ def pack_back_up(space, packer, repetitions):
     else:
         begin = size - repetitions
         assert begin >= 0
-        packer.result[begin:size] = []
+        del packer.result[begin:]
 
 
 def pack_padding(space, packer, repetitions):

@@ -1,10 +1,4 @@
-fails:Regexp#=~ returns nil if the object is nil
-fails:Regexp#match returns nil if the object is nil
-fails:Regexp#match returns a MatchData object
-fails:Regexp#match matches the input at a given position
 fails:Regexp#match resets $~ if passed nil
 fails:Regexp#match when passed a block yields the MatchData
 fails:Regexp#match when passed a block returns the block result
-fails:Regexp#~ matches against the contents of $_
-fails:Regexp#match returns a MatchData object, when argument is a Symbol
 fails:Regexp#match uses the start as a character offset

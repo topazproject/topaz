@@ -1,15 +1,17 @@
 from __future__ import absolute_import
 
+import gc
 import os
 import sys
 import weakref
 
 from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
-from rpython.rlib.objectmodel import specialize
+from rpython.rlib.objectmodel import specialize, compute_unique_id
 from rpython.rlib.signature import signature
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rbigint import rbigint
+from rpython.rtyper.lltypesystem import llmemory, rffi
 
 from rply.errors import ParsingError
 
@@ -63,7 +65,7 @@ from topaz.objects.objectobject import W_Object, W_BaseObject, W_Root
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.rangeobject import W_RangeObject
-from topaz.objects.regexpobject import W_RegexpObject
+from topaz.objects.regexpobject import W_RegexpObject, W_MatchDataObject
 from topaz.objects.stringobject import W_StringObject
 from topaz.objects.symbolobject import W_SymbolObject
 from topaz.objects.threadobject import W_ThreadObject
@@ -105,11 +107,14 @@ class ObjectSpace(object):
         self.w_class = self.getclassfor(W_ClassObject)
         # We replace the one reference to our FakeClass with the real class.
         self.w_basicobject.klass.superclass = self.w_class
+
+        gc.collect()
         assert cls_reference() is None
 
         self.w_symbol = self.getclassfor(W_SymbolObject)
         self.w_array = self.getclassfor(W_ArrayObject)
         self.w_proc = self.getclassfor(W_ProcObject)
+        self.w_binding = self.getclassfor(W_BindingObject)
         self.w_numeric = self.getclassfor(W_NumericObject)
         self.w_fixnum = self.getclassfor(W_FixnumObject)
         self.w_float = self.getclassfor(W_FloatObject)
@@ -154,7 +159,7 @@ class ObjectSpace(object):
             self.w_numeric, self.w_fixnum, self.w_bignum, self.w_float,
             self.w_string, self.w_symbol, self.w_class, self.w_module,
             self.w_hash, self.w_regexp, self.w_method, self.w_unbound_method,
-            self.w_io,
+            self.w_io, self.w_binding,
 
             self.w_NoMethodError, self.w_ArgumentError, self.w_TypeError,
             self.w_ZeroDivisionError, self.w_SystemExit, self.w_RangeError,
@@ -163,7 +168,7 @@ class ObjectSpace(object):
             self.w_NameError, self.w_StandardError, self.w_LocalJumpError,
             self.w_IndexError, self.w_IOError, self.w_NotImplementedError,
             self.w_EOFError, self.w_FloatDomainError, self.w_FiberError,
-            self.w_SystemStackError,
+            self.w_SystemStackError, self.w_KeyError,
 
             self.w_kernel, self.w_topaz,
 
@@ -181,6 +186,7 @@ class ObjectSpace(object):
             self.getclassfor(W_MethodObject),
             self.getclassfor(W_UnboundMethodObject),
             self.getclassfor(W_FiberObject),
+            self.getclassfor(W_MatchDataObject),
 
             self.getclassfor(W_ExceptionObject),
             self.getclassfor(W_ThreadError),
@@ -194,7 +200,7 @@ class ObjectSpace(object):
         ]:
             self.set_const(
                 self.w_object,
-                self.str_w(self.send(w_cls, self.newsymbol("name"))),
+                self.str_w(self.send(w_cls, "name")),
                 w_cls
             )
 
@@ -203,18 +209,22 @@ class ObjectSpace(object):
         ]:
             self.set_const(
                 self.w_topaz,
-                self.str_w(self.send(w_cls, self.newsymbol("name"))),
+                self.str_w(self.send(w_cls, "name")),
                 w_cls
             )
 
+        self.set_const(self.w_basicobject, "BasicObject", self.w_basicobject)
+
         # This is bootstrap. We have to delay sending until true, false and nil
         # are defined
-        self.send(self.w_object, self.newsymbol("include"), [self.w_kernel])
+        self.send(self.w_object, "include", [self.w_kernel])
         self.bootstrap = False
 
         self.w_load_path = self.newarray([])
         self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
         self.globals.define_virtual("$:", lambda space: space.w_load_path)
+
+        self.globals.define_virtual("$$", lambda space: space.send(space.getmoduleobject(Process.moduledef), "pid"))
 
         self.w_loaded_features = self.newarray([])
         self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
@@ -258,13 +268,13 @@ class ObjectSpace(object):
                 lib_path = os.path.join(path, "lib-ruby")
                 kernel_path = os.path.join(path, "lib-topaz")
                 break
-        self.send(self.w_load_path, self.newsymbol("unshift"), [self.newstr_fromstr(lib_path)])
+        self.send(self.w_load_path, "unshift", [self.newstr_fromstr(lib_path)])
         self.load_kernel(kernel_path)
 
     def load_kernel(self, kernel_path):
         self.send(
             self.w_kernel,
-            self.newsymbol("load"),
+            "load",
             [self.newstr_fromstr(os.path.join(kernel_path, "bootstrap.rb"))]
         )
 
@@ -315,13 +325,17 @@ class ObjectSpace(object):
         return ec
 
     def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
-                     parent_interp=None, regexp_match_cell=None):
+                     parent_interp=None, top_parent_interp=None,
+                     regexp_match_cell=None):
 
         if w_self is None:
             w_self = self.w_top_self
         if regexp_match_cell is None:
             regexp_match_cell = ClosureCell(None)
-        return Frame(jit.promote(bc), w_self, lexical_scope, block, parent_interp, regexp_match_cell)
+        return Frame(
+            jit.promote(bc), w_self, lexical_scope, block, parent_interp,
+            top_parent_interp, regexp_match_cell
+        )
 
     def execute_frame(self, frame, bc):
         return Interpreter().interpret(self, frame, bc)
@@ -394,14 +408,14 @@ class ObjectSpace(object):
         complete_name = self.buildname(name, w_scope)
         return W_ModuleObject(self, complete_name)
 
-    def newclass(self, name, superclass, is_singleton=False, w_scope=None):
+    def newclass(self, name, superclass, is_singleton=False, w_scope=None, attached=None):
         complete_name = self.buildname(name, w_scope)
-        return W_ClassObject(self, complete_name, superclass, is_singleton=is_singleton)
+        return W_ClassObject(self, complete_name, superclass, is_singleton=is_singleton, attached=attached)
 
-    def newfunction(self, w_name, w_code, lexical_scope):
+    def newfunction(self, w_name, w_code, lexical_scope, visibility):
         name = self.symbol_w(w_name)
         assert isinstance(w_code, W_CodeObject)
-        return W_UserFunction(name, w_code, lexical_scope)
+        return W_UserFunction(name, w_code, lexical_scope, visibility)
 
     def newmethod(self, name, w_cls):
         w_function = w_cls.find_method(self, name)
@@ -415,10 +429,11 @@ class ObjectSpace(object):
             return W_UnboundMethodObject(self, w_cls, w_function)
 
     def newproc(self, bytecode, w_self, lexical_scope, cells, block,
-                parent_interp, regexp_match_cell, is_lambda=False):
+                parent_interp, top_parent_interp, regexp_match_cell,
+                is_lambda=False):
         return W_ProcObject(
             self, bytecode, w_self, lexical_scope, cells, block, parent_interp,
-            regexp_match_cell, is_lambda=False
+            top_parent_interp, regexp_match_cell, is_lambda=False
         )
 
     @jit.unroll_safe
@@ -440,7 +455,7 @@ class ObjectSpace(object):
         if w_scope is not None:
             assert isinstance(w_scope, W_ModuleObject)
             if w_scope is not self.w_object:
-                complete_name = "%s::%s" % (w_scope.name, name)
+                complete_name = "%s::%s" % (self.obj_to_s(w_scope), name)
         return complete_name
 
     def int_w(self, w_obj):
@@ -505,7 +520,7 @@ class ObjectSpace(object):
     def find_const(self, w_module, name):
         w_res = w_module.find_const(self, name)
         if w_res is None:
-            w_res = self.send(w_module, self.newsymbol("const_missing"), [self.newsymbol(name)])
+            w_res = self.send(w_module, "const_missing", [self.newsymbol(name)])
         return w_res
 
     @jit.elidable
@@ -529,25 +544,51 @@ class ObjectSpace(object):
         module.set_const(self, name, w_value)
 
     @jit.unroll_safe
-    def find_lexical_const(self, lexical_scope, name):
+    def _find_lexical_const(self, lexical_scope, name):
         w_res = None
         scope = lexical_scope
+        # perform lexical search but skip Object
         while scope is not None:
             w_mod = scope.w_mod
+            if w_mod is self.w_top_self:
+                break
             w_res = w_mod.find_local_const(self, name)
             if w_res is not None:
                 return w_res
             scope = scope.backscope
+
+        object_seen = False
+        fallback_scope = self.w_object
+
         if lexical_scope is not None:
-            w_res = lexical_scope.w_mod.find_const(self, name)
-        if w_res is None:
-            w_res = self.w_object.find_const(self, name)
+            w_mod = lexical_scope.w_mod
+            while w_mod is not None:
+                object_seen = w_mod is self.w_object
+                # BasicObject was our starting point, do not use Object
+                # as fallback
+                if w_mod is self.w_basicobject and not object_seen:
+                    fallback_scope = None
+                w_res = w_mod.find_const(self, name)
+                if w_res is not None:
+                    return w_res
+                if isinstance(w_mod, W_ClassObject):
+                    w_mod = w_mod.superclass
+                else:
+                    break
+
+        if fallback_scope is not None:
+            w_res = fallback_scope.find_const(self, name)
+        return w_res
+
+    @jit.unroll_safe
+    def find_lexical_const(self, lexical_scope, name):
+        w_res = self._find_lexical_const(lexical_scope, name)
         if w_res is None:
             if lexical_scope is not None:
                 w_mod = lexical_scope.w_mod
             else:
                 w_mod = self.w_object
-            w_res = self.send(w_mod, self.newsymbol("const_missing"), [self.newsymbol(name)])
+            w_res = self.send(w_mod, "const_missing", [self.newsymbol(name)])
         return w_res
 
     def find_instance_var(self, w_obj, name):
@@ -569,30 +610,32 @@ class ObjectSpace(object):
     def set_class_var(self, w_module, name, w_value):
         w_module.set_class_var(self, name, w_value)
 
-    def send(self, w_receiver, w_method, args_w=None, block=None):
+    def send(self, w_receiver, name, args_w=None, block=None):
         if args_w is None:
             args_w = []
-        name = self.symbol_w(w_method)
 
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
-        return self._send_raw(w_method, raw_method, w_receiver, w_cls, args_w, block)
+        return self._send_raw(name, raw_method, w_receiver, w_cls, args_w, block)
 
-    def send_super(self, w_cls, w_receiver, w_method, args_w, block=None):
-        name = self.symbol_w(w_method)
+    def send_super(self, w_cls, w_receiver, name, args_w, block=None):
         raw_method = w_cls.find_method_super(self, name)
-        return self._send_raw(w_method, raw_method, w_receiver, w_cls, args_w, block)
+        return self._send_raw(name, raw_method, w_receiver, w_cls, args_w, block)
 
-    def _send_raw(self, w_method, raw_method, w_receiver, w_cls, args_w, block):
+    def _send_raw(self, name, raw_method, w_receiver, w_cls, args_w, block):
         if raw_method is None:
             method_missing = w_cls.find_method(self, "method_missing")
-            assert method_missing is not None
-            args_w.insert(0, w_method)
-            return method_missing.call(self, w_receiver, args_w, block)
+            if method_missing is None:
+                class_name = self.str_w(self.send(w_cls, "to_s"))
+                raise self.error(self.w_NoMethodError,
+                    "undefined method `%s' for %s" % (name, class_name)
+                )
+            else:
+                args_w = [self.newsymbol(name)] + args_w
+                return method_missing.call(self, w_receiver, args_w, block)
         return raw_method.call(self, w_receiver, args_w, block)
 
-    def respond_to(self, w_receiver, w_method):
-        name = self.symbol_w(w_method)
+    def respond_to(self, w_receiver, name):
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
         return raw_method is not None
@@ -606,10 +649,14 @@ class ObjectSpace(object):
         frame = self.create_frame(
             bc, w_self=block.w_self, lexical_scope=block.lexical_scope,
             block=block.block, parent_interp=block.parent_interp,
+            top_parent_interp=block.top_parent_interp,
             regexp_match_cell=block.regexp_match_cell,
         )
-        if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
-            frame.handle_block_args(self, bc, args_w, block_arg)
+        if block.is_lambda:
+            frame.handle_args(self, bc, args_w, block_arg)
+        else:
+            if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
+                frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
         for i in xrange(len(bc.freevars)):
             frame.cells[len(bc.cellvars) + i] = block.cells[i]
@@ -618,23 +665,21 @@ class ObjectSpace(object):
             return self.execute_frame(frame, bc)
 
     def invoke_function(self, w_function, w_receiver, args_w, block):
-        w_name = self.newstr_fromstr(w_function.name)
-        return self._send_raw(w_name, w_function, w_receiver, self.getclass(w_receiver), args_w, block)
+        return self._send_raw(w_function.name, w_function, w_receiver, self.getclass(w_receiver), args_w, block)
 
     def error(self, w_type, msg="", optargs=None):
         if not optargs:
             optargs = []
-        w_new_sym = self.newsymbol("new")
         args_w = [self.newstr_fromstr(msg)] + optargs
-        w_exc = self.send(w_type, w_new_sym, args_w)
+        w_exc = self.send(w_type, "new", args_w)
         assert isinstance(w_exc, W_ExceptionObject)
         return RubyError(w_exc)
 
     def hash_w(self, w_obj):
-        return self.int_w(self.send(w_obj, self.newsymbol("hash")))
+        return self.int_w(self.send(w_obj, "hash"))
 
     def eq_w(self, w_obj1, w_obj2):
-        return self.is_true(self.send(w_obj2, self.newsymbol("eql?"), [w_obj1]))
+        return self.is_true(self.send(w_obj2, "eql?", [w_obj1]))
 
     def register_exit_handler(self, w_proc):
         self.exit_handlers_w.append(w_proc)
@@ -644,7 +689,7 @@ class ObjectSpace(object):
         while self.exit_handlers_w:
             w_proc = self.exit_handlers_w.pop()
             try:
-                self.send(w_proc, self.newsymbol("call"))
+                self.send(w_proc, "call")
             except RubyError as e:
                 w_exc = e.w_value
                 if isinstance(w_exc, W_SystemExit):
@@ -657,6 +702,7 @@ class ObjectSpace(object):
         inclusive = False
         as_range = False
         end = 0
+        nil = False
 
         if isinstance(w_idx, W_RangeObject) and not w_count:
             start = self.int_w(self.convert_type(w_idx.w_start, self.w_fixnum, "to_int"))
@@ -669,9 +715,14 @@ class ObjectSpace(object):
                 end = self.int_w(self.convert_type(w_count, self.w_fixnum, "to_int"))
                 if end >= 0:
                     as_range = True
+                else:
+                    if start < 0:
+                        start += length
+                    return (start, end, False, True)
 
         if start < 0:
             start += length
+
         if as_range:
             if w_count:
                 end += start
@@ -683,9 +734,10 @@ class ObjectSpace(object):
                 end = start
             elif end > length:
                 end = length
+            nil = start < 0 or end < 0 or start > length
+        else:
+            nil = start < 0 or start >= length
 
-        nil = ((not as_range and start >= length) or
-            start < 0 or end < 0 or (start > 0 and start > length))
         return (start, end, as_range, nil)
 
     def convert_type(self, w_obj, w_cls, method, raise_error=True):
@@ -693,7 +745,7 @@ class ObjectSpace(object):
             return w_obj
 
         try:
-            w_res = self.send(w_obj, self.newsymbol(method))
+            w_res = self.send(w_obj, method)
         except RubyError:
             if not raise_error:
                 return self.w_nil
@@ -717,18 +769,48 @@ class ObjectSpace(object):
         else:
             return w_res
 
+    def infect(self, w_dest, w_src, taint=True, untrust=True, freeze=False):
+        """
+        By default copies tainted and untrusted state from src to dest.
+        Frozen state isn't copied by default, as this is the rarer case MRI.
+        """
+        if taint and self.is_true(w_src.get_flag(self, "tainted?")):
+            w_dest.set_flag(self, "tainted?")
+        if untrust and self.is_true(w_src.get_flag(self, "untrusted?")):
+            w_dest.set_flag(self, "untrusted?")
+        if freeze and self.is_true(w_src.get_flag(self, "frozen?")):
+            w_dest.set_flag(self, "frozen?")
+
+    def getaddrstring(self, w_obj):
+        w_id = self.newint_or_bigint(compute_unique_id(w_obj))
+        w_4 = self.newint(4)
+        w_0x0F = self.newint(0x0F)
+        i = 2 * rffi.sizeof(llmemory.Address)
+        addrstring = [" "] * i
+        while True:
+            n = self.int_w(self.send(w_id, "&", [w_0x0F]))
+            n += ord("0")
+            if n > ord("9"):
+                n += (ord("a") - ord("9") - 1)
+            i -= 1
+            addrstring[i] = chr(n)
+            if i == 0:
+                break
+            w_id = self.send(w_id, ">>", [w_4])
+        return "".join(addrstring)
+
     def any_to_s(self, w_obj):
-        return "#<%s:0x%x>" % (
+        return "#<%s:0x%s>" % (
             self.obj_to_s(self.getnonsingletonclass(w_obj)),
-            self.int_w(self.send(w_obj, self.newsymbol("__id__")))
+            self.getaddrstring(w_obj)
         )
 
     def obj_to_s(self, w_obj):
-        return self.str_w(self.send(w_obj, self.newsymbol("to_s")))
+        return self.str_w(self.send(w_obj, "to_s"))
 
     def compare(self, w_a, w_b, block=None):
         if block is None:
-            w_cmp_res = self.send(w_a, self.newsymbol("<=>"), [w_b])
+            w_cmp_res = self.send(w_a, "<=>", [w_b])
         else:
             w_cmp_res = self.invoke_block(block, [w_a, w_b])
         if w_cmp_res is self.w_nil:

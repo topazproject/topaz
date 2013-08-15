@@ -3,7 +3,6 @@ fails:Kernel#exec with a command array raises Argument error if the Array does n
 fails:Kernel.exec raises an ArgumentError if the command includes a null byte
 fails:Kernel.exec with a command array raises Argument error if the Array does not have exactly two elements
 fails:Kernel#exec is a private method
-fails:Kernel#exec raises Errno::ENOENT for an empty string
 fails:Kernel#exec raises Errno::ENOENT for a command which does not exist
 fails:Kernel#exec raises Errno::EACCES when the file does not have execute permissions
 fails:Kernel#exec raises Errno::EACCES when passed a directory

@@ -6,3 +6,6 @@ fails:String#tr translates chars not in from_string when it starts with a ^
 fails:String#tr returns subclass instances when called on a subclass
 fails:String#tr taints the result when self is tainted
 fails:String#tr!
+fails:String#tr can replace a 7-bit ASCII character with a multibyte one
+fails:String#tr can replace a multibyte character with a single byte one
+fails:String#tr does not replace a multibyte character where part of the bytes match the tr string

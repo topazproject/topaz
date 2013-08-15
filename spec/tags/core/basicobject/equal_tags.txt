@@ -1,1 +1,0 @@
-fails:BasicObject#equal? is a public instance method

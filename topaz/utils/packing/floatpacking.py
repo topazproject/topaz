@@ -1,3 +1,4 @@
+from rpython.rlib import rfloat
 from rpython.rlib.rstruct.ieee import float_pack
 
 from topaz.objects.floatobject import W_FloatObject
@@ -16,7 +17,10 @@ def make_float_packer(size, bigendian):
                 )
             doubleval = space.float_w(w_item)
             l = ["\0"] * size
-            unsigned = float_pack(doubleval, size)
+            try:
+                unsigned = float_pack(doubleval, size)
+            except OverflowError:
+                unsigned = float_pack(rfloat.copysign(rfloat.INFINITY, doubleval), size)
             for i in xrange(size):
                 l[i] = chr((unsigned >> (i * 8)) & 0xff)
             if bigendian:

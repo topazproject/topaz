@@ -11,4 +11,3 @@ fails:Float#quo returns -0.0 when the argument is -Infinity
 fails:Float#quo performs floating-point division between self and a Rational
 fails:Float#quo performs floating-point division between self and a Complex
 fails:Float#quo raises a TypeError when argument isn't numeric
-fails:Float#quo raises an ArgumentError when passed multiple arguments

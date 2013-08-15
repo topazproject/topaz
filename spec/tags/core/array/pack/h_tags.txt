@@ -18,5 +18,3 @@ fails:returns an ASCII-8BIT string
 fails:encodes the first character as the least significant nibble when passed no count modifier
 fails:Array#pack with format 'h' encodes the first character as the least significant nibble of a hex value
 fails:Array#pack with format 'h' encodes the second character as the most significant nibble of a hex value
-fails:Array#pack with format 'h' raises a TypeError when passed an Integer
-fails:Array#pack with format 'h' raises a TypeError when passed nil

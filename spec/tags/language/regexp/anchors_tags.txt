@@ -1,4 +1,3 @@
-fails:Regexps with anchors supports B (non-word-boundary)
 fails:Regexps with anchors supports Z (string end anchor, including before trailing \n)
 fails:Regexps with anchors supports A (string start anchor)
 fails:Regexps with anchors supports $ (line end anchor)

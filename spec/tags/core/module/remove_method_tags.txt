@@ -1,3 +1,0 @@
-fails:Module#remove_method removes the method from a class
-fails:Module#remove_method removes method from subclass, but not parent
-fails:Module#remove_method raises RuntimeError when frozen

@@ -6,11 +6,13 @@ Authors
 * Carl Friedrich Bolz
 * Oliver M. Bolzer
 * Dan Buch
+* Philipp Fehre
 * Tim Felgentreff
 * Maciej Fijalkowski
 * Alex Gaynor
 * Magnus Holm
 * Kenichi Kamiya
+* Marjan Krekoten'
 * Ryan Levick
 * Konstantin Makarchev
 * Curt Micol
@@ -23,4 +25,5 @@ Authors
 * David Schneider
 * Robin Schreiber
 * Jan Stępień
+* Andrew Thompson
 * Jeremy Thurgood

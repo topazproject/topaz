@@ -6,3 +6,4 @@ Blog
 
    announcing-topaz
    one-year
+   type-specialized-instance-variables

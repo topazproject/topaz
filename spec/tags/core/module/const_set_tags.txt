@@ -1,1 +1,0 @@
-fails:Module#const_set sets the name of an anonymous module
