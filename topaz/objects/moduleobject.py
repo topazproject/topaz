@@ -253,8 +253,14 @@ class W_ModuleObject(W_RootObject):
         w_res = self.constants_w.get(name, None)
         if autoload and isinstance(w_res, W_Autoload):
             self.constants_w[name] = None
-            w_res.load()
-            return self.constants_w.get(name, None)
+            try:
+                w_res.load()
+            finally:
+                w_new_res = self.constants_w.get(name, None)
+                if not w_res:
+                    self.constants_w[name] = w_res
+                w_res = w_new_res
+            return w_res
         else:
             return w_res
 
