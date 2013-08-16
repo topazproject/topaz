@@ -2,8 +2,8 @@ from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
 
-from rpython.rtyper.lltypesystem import rffi
-from rpython.rtyper.lltypesystem import lltype
+from rpython.rtyper.lltypesystem import rffi, lltype
+from rpython.rlib.rarithmetic import intmask
 
 # Check, whether is will be inlined
 def new_cast_method(ctype):
@@ -32,14 +32,15 @@ def new_write_method(type_str):
 def new_get_method(rffi_type):
     cast_method = new_cast_method(rffi_type)
     sizeof_type = rffi.sizeof(rffi_type)
+    if rffi_type is rffi.CHAR:
+        to_int = ord
+    else:
+        to_int = intmask
     def get_method(self, space, offset):
         casted_ptr = cast_method(self)
         try:
             val = casted_ptr[offset]
-            if isinstance(val, str):
-                return space.newint(ord(val))
-            else:
-                return space.newint(val)
+            return space.newint(to_int(val))
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return get_method
