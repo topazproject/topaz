@@ -8,7 +8,6 @@ class MSpecScript
   core = [
     "#{Rubyspec}/core/",
     # Struct: ``Struct.new(:field)``
-    "^#{Rubyspec}/core/struct",
     "^#{Rubyspec}/core/string/chomp_spec.rb",
     # timeout: ``require 'timeout'``
     "^#{Rubyspec}/core/process/detach_spec.rb",

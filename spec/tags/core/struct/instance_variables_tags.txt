@@ -1,0 +1,1 @@
+fails:Struct#instance_variables returns an array with one name if an instance variable is added
