@@ -1,29 +1,61 @@
 from topaz.modules.ffi.abstract_memory import W_AbstractMemoryObject
 from topaz.module import ClassDef
+from topaz.coerce import Coerce
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
 
+def coerce_address(space, w_addressable):
+    if space.is_kind_of(w_addressable, space.w_fixnum):
+        w_address = w_addressable
+    elif space.is_kind_of(w_addressable,
+                          space.getclassfor(W_PointerObject)):
+        w_address = space.send(w_addressable, 'address')
+    return Coerce.int(space, w_address)
+
 class W_PointerObject(W_AbstractMemoryObject):
     classdef = ClassDef('Pointer', W_AbstractMemoryObject.classdef)
 
+    def __init__(self, space):
+        W_AbstractMemoryObject.__init__(self, space)
+        self.address = -1
+        self.ptr = rffi.NULL
+        self.type_size = -1
+        self.size = -1
+
+    def __deepcopy__(self, memo):
+        obj = super(W_AbstractMemoryObject, self).__deepcopy__(memo)
+        obj.address = self.address
+        obj.size = self.size
+        return obj
+
     @classdef.singleton_method('allocate')
-    def singleton_method_allocate(self, space, args_w):
+    def singleton_method_allocate(self, space):
         return W_PointerObject(space)
+
+    @classdef.method('initialize')
+    def method_initialize(self, space, args_w):
+        if len(args_w) == 1:
+            address = coerce_address(space, args_w[0])
+            return self._initialize(space, address)
+        elif len(args_w) == 2:
+            type_size = Coerce.int(space, args_w[0])
+            address = coerce_address(space, args_w[1])
+            return self._initialize(space, address, type_size)
+
+    def _initialize(self, space, address, type_size=1):
+        W_AbstractMemoryObject.__init__(self, space)
+        self.address = address
+        self.ptr = rffi.cast(rffi.CCHARP, address)
+        self.type_size = type_size
+        self.size = 0
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        space.set_const(w_cls, 'NULL', W_PointerObject(space))
-
-    @classdef.singleton_method('new')
-    def singleton_method_new(self, space, args_w):
-        if(len(args_w) == 1 and space.is_kind_of(args_w[0], space.w_fixnum)
-           and space.int_w(args_w[0]) == 0):
-            return space.find_const(self, 'NULL')
-        else:
-            w_pointer = space.send(self, 'allocate')
-            space.send(w_pointer, 'initialize', args_w)
-            return w_pointer
+        w_null = space.send(w_cls, 'new', [space.newint(0)])
+        space.set_const(w_cls, 'NULL', w_null)
+        space.send(w_cls, 'alias_method', [space.newsymbol('to_i'),
+                                           space.newsymbol('address')])
 
     @classdef.method('free')
     def method_free(self, space):
@@ -31,16 +63,20 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('null?')
     def method_null_p(self, space):
-        w_null_instance = space.find_const(self.getclass(space), 'NULL')
-        return space.newbool(self is w_null_instance)
+        return space.newbool(self.address == 0)
 
     @classdef.method('address')
     def method_address(self, space):
-        return space.newint(0)
+        return space.newint(self.address)
 
-    @classdef.method('+')
-    def method_plus(self, space, w_other):
-        return space.newint(0)
+    @classdef.method('==')
+    def method_eq(self, space, w_other):
+        return space.newbool(self.address == w_other.address)
+
+    @classdef.method('+', other='int')
+    def method_plus(self, space, other):
+        w_ptr_sum = space.newint(self.address + other)
+        return space.send(space.getclass(self), 'new', [w_ptr_sum])
 
     # TODO: actually all Numerics should be accepted
     @classdef.method('slice', offset='int', length='int')
@@ -71,4 +107,4 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('type_size')
     def method_type_size(self, space):
-        return space.newint(0)
+        return self.type_size

@@ -8,7 +8,7 @@ from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
-from rpython.rtyper.lltypesystem import rffi, lltype
+from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
 from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
@@ -44,7 +44,6 @@ class W_FunctionObject(W_PointerObject):
         self.w_ret_type = W_TypeObject(space, 'DUMMY')
         self.arg_types_w = []
         self.w_name = space.newsymbol('')
-        self.ptr = None
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
@@ -77,7 +76,11 @@ class W_FunctionObject(W_PointerObject):
                     self._push_arg(space, args_w[i], t)
         for t in unrolling_rettypes:
             if t == ret_type_name:
-                result = self.ptr.call(native_types[t])
+                if self.ptr != rffi.NULL:
+                    result = self.ptr.call(native_types[t])
+                else:
+                    raise Exception("%s was called before being attached."
+                                    % self)
                 # Is this really necessary? Maybe call does this anyway:
                 result = rffi.cast(native_types[t], result)
                 if t in ['INT8', 'UINT8',
@@ -95,7 +98,11 @@ class W_FunctionObject(W_PointerObject):
                 elif t == 'STRING':
                     return space.newstr_fromstr(rffi.charp2str(result))
                 elif t == 'POINTER':
-                    return W_PointerObject(space, result)
+                    adr_res = llmemory.cast_ptr_to_adr(result)
+                    int_res = llmemory.cast_adr_to_int(adr_res)
+                    w_FFI = space.find_const(space.w_kernel, 'FFI')
+                    w_Pointer = space.find_const(w_FFI, 'Pointer')
+                    return space.send(w_Pointer, 'new', [space.newint(int_res)])
                 elif t == 'VOID':
                     return space.w_nil
         assert False

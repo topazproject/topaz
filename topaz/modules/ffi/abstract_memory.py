@@ -59,13 +59,8 @@ def memory_index_error(space, offset, size):
 class W_AbstractMemoryObject(W_Object):
     classdef = ClassDef('Pointer', W_Object.classdef)
 
-    def __init__(self, space, ptr=rffi.NULL):
-        W_Object.__init__(self, space)
-        self.ptr = ptr
-        self.size = 0
-
     @classdef.singleton_method('allocate')
-    def singleton_method_allocate(self, space, args_w):
+    def singleton_method_allocate(self, space):
         return W_AbstractMemoryObject(space)
 
     char_cast  = new_cast_method(rffi.CHAR)
