@@ -19,6 +19,11 @@ class AttributeReader(W_FunctionObject):
         W_FunctionObject.__init__(self, varname)
         self.varname = varname
 
+    def __deepcopy__(self, memo):
+        obj = super(W_FunctionObject, self).__deepcopy__(memo)
+        obj.varname = self.varname
+        return obj
+
     def call(self, space, w_obj, args_w, block):
         return space.find_instance_var(w_obj, self.varname)
 
@@ -29,6 +34,11 @@ class AttributeWriter(W_FunctionObject):
     def __init__(self, varname):
         W_FunctionObject.__init__(self, varname)
         self.varname = varname
+
+    def __deepcopy__(self, memo):
+        obj = super(W_FunctionObject, self).__deepcopy__(memo)
+        obj.varname = self.varname
+        return obj
 
     def call(self, space, w_obj, args_w, block):
         [w_value] = args_w
