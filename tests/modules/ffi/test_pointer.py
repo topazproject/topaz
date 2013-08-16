@@ -88,6 +88,29 @@ class TestPointer_plus(BaseFFITest):
         w_res = space.execute("(FFI::Pointer.new(3) + 2).address")
         assert self.unwrap(space, w_res) == 5
 
+    def test_it_is_aliased_by_plus(self, space):
+        assert self.ask(space, """
+        FFI::Pointer.instance_method(:[]) ==
+        FFI::Pointer.instance_method(:+)
+        """)
+
+class TestPointer_slice(BaseFFITest):
+    def test_its_1st_arg_is_the_offset(self, space):
+        w_res = space.execute("FFI::Pointer.new(14).slice(6, 0).address")
+        assert self.unwrap(space, w_res) == 20
+
+    def test_its_2nd_arg_is_the_size(self, space):
+        w_res = space.execute("FFI::Pointer.new(3).slice(0, 4).size")
+        assert self.unwrap(space, w_res) == 4
+
+    def test_it_raises_TypeError_on_nonsense_args(self, space):
+        with self.raises(space, 'TypeError',
+                         "can't convert String into Integer"):
+            space.execute("FFI::Pointer.new(0).slice('15', 5)")
+        with self.raises(space, 'TypeError',
+                         "can't convert Symbol into Integer"):
+            space.execute("FFI::Pointer.new(0).slice(0, :bar)")
+
 class TestPointer(BaseFFITest):
     def test_its_superclass_is_AbstractMemory(self, space):
         assert self.ask(space,
@@ -95,11 +118,6 @@ class TestPointer(BaseFFITest):
 
     def test_it_has_these_methods(self, space):
         # but they don't do anything yet...
-        space.execute("FFI::Pointer.new(0).slice(0, 5)")
-        with self.raises(space, "TypeError",
-                         "can't convert String into Integer"):
-            space.execute("FFI::Pointer.new(0).slice('foo', 5)")
-            space.execute("FFI::Pointer.new(0).slice(0, 'bar')")
         space.execute("FFI::Pointer.new(0).order(:big)")
         with self.raises(space, "TypeError", "42 is not a symbol"):
             space.execute("FFI::Pointer.new(0).order(42)")

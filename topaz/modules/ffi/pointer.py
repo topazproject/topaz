@@ -56,6 +56,8 @@ class W_PointerObject(W_AbstractMemoryObject):
         space.set_const(w_cls, 'NULL', w_null)
         space.send(w_cls, 'alias_method', [space.newsymbol('to_i'),
                                            space.newsymbol('address')])
+        space.send(w_cls, 'alias_method', [space.newsymbol('[]'),
+                                           space.newsymbol('+')])
 
     @classdef.method('free')
     def method_free(self, space):
@@ -69,6 +71,10 @@ class W_PointerObject(W_AbstractMemoryObject):
     def method_address(self, space):
         return space.newint(self.address)
 
+    @classdef.method('size')
+    def method_size(self, space):
+        return space.newint(self.size)
+
     @classdef.method('==')
     def method_eq(self, space, w_other):
         return space.newbool(self.address == w_other.address)
@@ -78,10 +84,11 @@ class W_PointerObject(W_AbstractMemoryObject):
         w_ptr_sum = space.newint(self.address + other)
         return space.send(space.getclass(self), 'new', [w_ptr_sum])
 
-    # TODO: actually all Numerics should be accepted
-    @classdef.method('slice', offset='int', length='int')
-    def method_address(self, space, offset, length):
-        return space.newint(0)
+    @classdef.method('slice', size='int')
+    def method_address(self, space, w_offset, size):
+        w_pointer = space.send(self, '+', [w_offset])
+        w_pointer.size = size
+        return w_pointer
 
     @classdef.method('to_i')
     def method_to_i(self, space):
