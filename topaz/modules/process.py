@@ -80,6 +80,18 @@ class Process(object):
         else:
             return space.newint(pid)
 
+    @moduledef.function("times")
+    def method_times(self, space):
+        tms = space.find_const(
+            space.find_const(space.w_object, "Struct"),
+            "Tms"
+        )
+        return space.send(
+            tms,
+            "new",
+            [space.newfloat(t) for t in list(os.times()[0:4])]
+        )
+
     @moduledef.function("kill")
     def method_kill(self, space, w_signal, args_w):
         if not args_w:
