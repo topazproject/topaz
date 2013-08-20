@@ -79,7 +79,10 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('==')
     def method_eq(self, space, w_other):
-        return space.newbool(self.address == w_other.address)
+        if isinstance(w_other, W_PointerObject):
+            return space.newbool(self.address == w_other.address)
+        else:
+            return space.newbool(False)
 
     @classdef.method('+', other='int')
     def method_plus(self, space, other):
