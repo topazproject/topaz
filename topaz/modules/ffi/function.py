@@ -79,8 +79,12 @@ class W_FunctionObject(W_PointerObject):
                     arg_pointers.append(argptr)
         for t in unrolling_rettypes:
             if t == ret_type_name:
-                result = self._call_ptr(arg_pointers, t)
-                return self._ruby_wrap(space, result, t)
+                if t == 'VOID':
+                    self._call_ptr_without_result(arg_pointers)
+                    return space.w_nil
+                else:
+                    result = self._call_ptr(arg_pointers, t)
+                    return self._ruby_wrap(space, result, t)
 
     @specialize.arg(3)
     def _get_argptr(self, space, arg, argtype):
@@ -107,24 +111,24 @@ class W_FunctionObject(W_PointerObject):
         arg_ptr[0] = rffi.cast(native_types[argtype], argval)
         return arg_ptr
 
-    @specialize.arg(3)
+    @specialize.arg(2)
     def _call_ptr(self, arg_pointers, restype):
-        if restype != 'VOID':
-            if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
-                result_ptr = lltype.malloc(rffi.CArray(native_types[restype]),
-                                           1, flavor='raw')
-                self.funcptr.call(arg_pointers, result_ptr)
-                result = result_ptr[0]
-                lltype.free(result_ptr, flavor='raw')
-            else:
-                raise Exception("%s was called before being attached."
-                            % self)
-            # Is this really necessary (untranslated, it's not)?
-            # Maybe call does this anyway:
-            casted_result = rffi.cast(native_types[restype], result)
-            return result
+        if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
+            result_ptr = lltype.malloc(rffi.CArray(native_types[restype]),
+                                       1, flavor='raw')
+            self.funcptr.call(arg_pointers, result_ptr)
+            result = result_ptr[0]
+            lltype.free(result_ptr, flavor='raw')
         else:
-            self.funcptr.call(arg_pointers, lltype.nullptr(rffi.VOIDP.TO))
+            raise Exception("%s was called before being attached."
+                        % self)
+        # Is this really necessary (untranslated, it's not)?
+        # Maybe call does this anyway:
+        casted_result = rffi.cast(native_types[restype], result)
+        return result
+
+    def _call_ptr_without_result(self, arg_pointers):
+        self.funcptr.call(arg_pointers, lltype.nullptr(rffi.VOIDP.TO))
 
     @specialize.arg(3)
     def _ruby_wrap(self, space, res, restype):
@@ -148,8 +152,6 @@ class W_FunctionObject(W_PointerObject):
             w_FFI = space.find_const(space.w_kernel, 'FFI')
             w_Pointer = space.find_const(w_FFI, 'Pointer')
             return space.send(w_Pointer, 'new', [space.newint(int_res)])
-        elif restype == 'VOID':
-            return space.w_nil
         raise Exception("Bug in FFI: unknown Type %s" % t)
 
     @classdef.method('attach', name='str')
