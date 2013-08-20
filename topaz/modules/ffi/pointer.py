@@ -92,10 +92,6 @@ class W_PointerObject(W_AbstractMemoryObject):
         w_pointer.size = size
         return w_pointer
 
-    @classdef.method('to_i')
-    def method_to_i(self, space):
-        return space.newint(0)
-
     @classdef.method('order', endianness='symbol')
     def method_order(self, space, endianness):
         return space.newint(0)
