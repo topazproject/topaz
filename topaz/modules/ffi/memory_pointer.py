@@ -24,5 +24,6 @@ class W_MemoryPointerObject(W_PointerObject):
     def method_initialize(self, space, w_type_hint, size):
         self.w_type = type_object(space, w_type_hint)
         array_type = rffi.CArray(native_types[self.w_type.name])
-        self.ptr = lltype.malloc(array_type, size, flavor='raw')
+        memory = lltype.malloc(array_type, size, flavor='raw')
+        self.ptr = rffi.cast(rffi.VOIDP, memory)
         self.size = size * space.int_w(space.send(self.w_type, 'size'))

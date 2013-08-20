@@ -110,10 +110,10 @@ class W_FunctionObject(W_PointerObject):
     @specialize.arg(3)
     def _call_ptr(self, arg_pointers, restype):
         if restype != 'VOID':
-            if self.ptr != rffi.NULL:
+            if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
                 result_ptr = lltype.malloc(rffi.CArray(native_types[restype]),
                                            1, flavor='raw')
-                self.ptr.call(arg_pointers, result_ptr)
+                self.funcptr.call(arg_pointers, result_ptr)
                 result = result_ptr[0]
                 lltype.free(result_ptr, flavor='raw')
             else:
@@ -124,7 +124,7 @@ class W_FunctionObject(W_PointerObject):
             casted_result = rffi.cast(native_types[restype], result)
             return result
         else:
-            self.ptr.call(arg_pointers, lltype.nullptr(rffi.VOIDP.TO))
+            self.funcptr.call(arg_pointers, lltype.nullptr(rffi.VOIDP.TO))
 
     @specialize.arg(3)
     def _ruby_wrap(self, space, res, restype):
@@ -163,9 +163,10 @@ class W_FunctionObject(W_PointerObject):
             ptr_key = self.w_name
             assert space.is_kind_of(ptr_key, space.w_symbol)
             try:
-                self.ptr = w_dl.getrawpointer(space.symbol_w(ptr_key),
-                                              ffi_arg_types,
-                                              ffi_ret_type)
+                self.funcptr = w_dl.getrawpointer(space.symbol_w(ptr_key),
+                                                  ffi_arg_types,
+                                                  ffi_ret_type)
+                self.ptr = self.funcptr.funcsym
                 w_attachments = space.send(w_lib, 'attachments')
                 space.send(w_attachments, '[]=', [space.newsymbol(name), self])
             except KeyError: pass

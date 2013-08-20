@@ -4,7 +4,7 @@ from topaz.coerce import Coerce
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
-
+lltype.nullptr(rffi.VOIDP.TO)
 def coerce_address(space, w_addressable):
     if space.is_kind_of(w_addressable, space.w_fixnum):
         w_address = w_addressable
@@ -21,7 +21,7 @@ class W_PointerObject(W_AbstractMemoryObject):
     def __init__(self, space):
         W_AbstractMemoryObject.__init__(self, space)
         self.address = -1
-        self.ptr = rffi.NULL
+        self.ptr = lltype.nullptr(rffi.VOIDP.TO)
         self.type_size = -1
         self.size = -1
 
@@ -48,7 +48,7 @@ class W_PointerObject(W_AbstractMemoryObject):
     def _initialize(self, space, address, type_size=1):
         W_AbstractMemoryObject.__init__(self, space)
         self.address = address
-        self.ptr = rffi.cast(rffi.CCHARP, address)
+        self.ptr = rffi.cast(rffi.VOIDP, address)
         self.type_size = type_size
         self.size = 0
 
