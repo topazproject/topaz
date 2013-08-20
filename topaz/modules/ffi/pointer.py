@@ -11,6 +11,8 @@ def coerce_address(space, w_addressable):
     elif space.is_kind_of(w_addressable,
                           space.getclassfor(W_PointerObject)):
         w_address = space.send(w_addressable, 'address')
+    else:
+        assert False #TODO: raise better exception
     return Coerce.int(space, w_address)
 
 class W_PointerObject(W_AbstractMemoryObject):
@@ -114,4 +116,4 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('type_size')
     def method_type_size(self, space):
-        return self.type_size
+        return space.newint(self.type_size)

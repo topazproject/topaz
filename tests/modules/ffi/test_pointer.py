@@ -52,7 +52,8 @@ class TestPointer__new(BaseFFITest):
         ptr_obj = space.execute("""
         ptr = FFI::Pointer.new(2, %s)
         """ % aint)
-        assert space.send(ptr_obj, 'type_size') == 2
+        type_size = space.send(ptr_obj, 'type_size')
+        assert self.unwrap(space, type_size) == 2
         adr = llmemory.cast_ptr_to_adr(ptr_obj.ptr)
         assert llmemory.cast_adr_to_int(adr) == aint
 
