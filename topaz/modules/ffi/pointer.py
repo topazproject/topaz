@@ -92,6 +92,7 @@ class W_PointerObject(W_AbstractMemoryObject):
     @classdef.method('slice', size='int')
     def method_address(self, space, w_offset, size):
         w_pointer = space.send(self, '+', [w_offset])
+        assert isinstance(w_pointer, W_PointerObject)
         w_pointer.size = size
         return w_pointer
 
