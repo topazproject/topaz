@@ -118,7 +118,12 @@ class TestPointer(BaseFFITest):
 
     def test_it_has_these_methods(self, space):
         # but they don't do anything yet...
+        space.execute("FFI::Pointer.new(0).free")
+        # order returns the endianess flag without argument
+        # and sets the endianess flag if the 1st arg is valid
+        # (meaning :big, :little, :network (which is also :big))
+        # If the first arg is rubish it just returns self
+        # Right now, it doesn't seen necessary to implement it.
         space.execute("FFI::Pointer.new(0).order(:big)")
         with self.raises(space, "TypeError", "42 is not a symbol"):
             space.execute("FFI::Pointer.new(0).order(42)")
-        space.execute("FFI::Pointer.new(0).free")
