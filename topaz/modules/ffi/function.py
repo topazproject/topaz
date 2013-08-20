@@ -70,24 +70,27 @@ class W_FunctionObject(W_PointerObject):
         assert isinstance(w_ret_type, W_TypeObject)
         arg_types_w = self.arg_types_w
         ret_type_name = w_ret_type.name
-        arg_pointers = []
         for i in range(len(args_w)):
             for t in unrolling_argtypes:
                 argtype_name = arg_types_w[i].name
                 if t == argtype_name:
-                    argptr = self._get_argptr(space, args_w[i], t)
-                    arg_pointers.append(argptr)
+                    arg = self._get_arg(space, args_w[i], t)
+                    self.funcptr.push_arg(arg)
         for t in unrolling_rettypes:
             if t == ret_type_name:
-                if t == 'VOID':
-                    self._call_ptr_without_result(arg_pointers)
-                    return space.w_nil
+                if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
+                    if t == 'VOID':
+                        self._call_ptr_without_result()
+                        return space.w_nil
+                    else:
+                        result = self._call_ptr(t)
+                        return self._ruby_wrap(space, result, t)
                 else:
-                    result = self._call_ptr(arg_pointers, t)
-                    return self._ruby_wrap(space, result, t)
+                    raise Exception("%s was called before being attached."
+                                    % self)
 
     @specialize.arg(3)
-    def _get_argptr(self, space, arg, argtype):
+    def _get_arg(self, space, arg, argtype):
         if argtype == 'STRING':
             arg_as_string = space.str_w(arg)
             argval = rffi.str2charp(arg_as_string)
@@ -106,29 +109,18 @@ class W_FunctionObject(W_PointerObject):
                 argval = space.is_true(arg)
             else:
                 assert False
-        arg_ptr = lltype.malloc(rffi.CArray(native_types[argtype]),
-                                1, flavor='raw')
-        arg_ptr[0] = rffi.cast(native_types[argtype], argval)
-        return arg_ptr
+        return argval
 
-    @specialize.arg(2)
-    def _call_ptr(self, arg_pointers, restype):
-        if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
-            result_ptr = lltype.malloc(rffi.CArray(native_types[restype]),
-                                       1, flavor='raw')
-            self.funcptr.call(arg_pointers, result_ptr)
-            result = result_ptr[0]
-            lltype.free(result_ptr, flavor='raw')
-        else:
-            raise Exception("%s was called before being attached."
-                        % self)
+    @specialize.arg(1)
+    def _call_ptr(self, restype):
+        result = self.funcptr.call(native_types[restype])
         # Is this really necessary (untranslated, it's not)?
         # Maybe call does this anyway:
         casted_result = rffi.cast(native_types[restype], result)
-        return result
+        return casted_result
 
-    def _call_ptr_without_result(self, arg_pointers):
-        self.funcptr.call(arg_pointers, lltype.nullptr(rffi.VOIDP.TO))
+    def _call_ptr_without_result(self):
+        self.funcptr.call(lltype.Void)
 
     @specialize.arg(3)
     def _ruby_wrap(self, space, res, restype):
@@ -165,9 +157,9 @@ class W_FunctionObject(W_PointerObject):
             ptr_key = self.w_name
             assert space.is_kind_of(ptr_key, space.w_symbol)
             try:
-                self.funcptr = w_dl.getrawpointer(space.symbol_w(ptr_key),
-                                                  ffi_arg_types,
-                                                  ffi_ret_type)
+                self.funcptr = w_dl.getpointer(space.symbol_w(ptr_key),
+                                               ffi_arg_types,
+                                               ffi_ret_type)
                 self.ptr = self.funcptr.funcsym
                 w_attachments = space.send(w_lib, 'attachments')
                 space.send(w_attachments, '[]=', [space.newsymbol(name), self])
