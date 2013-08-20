@@ -29,6 +29,7 @@ valid_argtypes = [
                   'STRING',
                   'POINTER'
                  ]
+
 unrolling_argtypes = unrolling_iterable(valid_argtypes)
 unrolling_rettypes = unrolling_iterable(valid_argtypes + ['VOID'])
 
@@ -69,55 +70,25 @@ class W_FunctionObject(W_PointerObject):
         assert isinstance(w_ret_type, W_TypeObject)
         arg_types_w = self.arg_types_w
         ret_type_name = w_ret_type.name
+        arg_pointers = []
         for i in range(len(args_w)):
             for t in unrolling_argtypes:
                 argtype_name = arg_types_w[i].name
                 if t == argtype_name:
-                    self._push_arg(space, args_w[i], t)
+                    argptr = self._get_argptr(space, args_w[i], t)
+                    arg_pointers.append(argptr)
         for t in unrolling_rettypes:
             if t == ret_type_name:
-                if self.ptr != rffi.NULL:
-                    result = self.ptr.call(native_types[t])
-                else:
-                    raise Exception("%s was called before being attached."
-                                    % self)
-                # Is this really necessary? Maybe call does this anyway:
-                result = rffi.cast(native_types[t], result)
-                if t in ['INT8', 'UINT8',
-                         'UINT16', 'INT16',
-                         'UINT32', 'INT32']:
-                    return space.newint(intmask(result))
-                elif t in ['INT64', 'UINT64']:
-                    longlong_result = longlongmask(result)
-                    bigint_result = rbigint.fromrarith_int(longlong_result)
-                    return space.newbigint_fromrbigint(bigint_result)
-                elif t == 'FLOAT64':
-                    return space.newfloat(result)
-                elif t == 'BOOL':
-                    return space.newbool(result)
-                elif t == 'STRING':
-                    return space.newstr_fromstr(rffi.charp2str(result))
-                elif t == 'POINTER':
-                    adr_res = llmemory.cast_ptr_to_adr(result)
-                    int_res = llmemory.cast_adr_to_int(adr_res)
-                    w_FFI = space.find_const(space.w_kernel, 'FFI')
-                    w_Pointer = space.find_const(w_FFI, 'Pointer')
-                    return space.send(w_Pointer, 'new', [space.newint(int_res)])
-                elif t == 'VOID':
-                    return space.w_nil
-        assert False
-        return space.w_nil
+                result = self._call_ptr(arg_pointers, t)
+                return self._ruby_wrap(space, result, t)
 
     @specialize.arg(3)
-    def _push_arg(self, space, arg, argtype):
+    def _get_argptr(self, space, arg, argtype):
         if argtype == 'STRING':
             arg_as_string = space.str_w(arg)
-            arg_as_ccharp = rffi.str2charp(arg_as_string)
-            self.ptr.push_arg(arg_as_ccharp)
+            argval = rffi.str2charp(arg_as_string)
         elif argtype == 'POINTER':
-            pointer = arg.ptr
-            void_ptr = rffi.cast(rffi.VOIDP, pointer)
-            self.ptr.push_arg(void_ptr)
+            argval = arg.ptr
         else:
             if argtype in ['UINT8', 'INT8',
                            'UINT16', 'INT16',
@@ -131,7 +102,55 @@ class W_FunctionObject(W_PointerObject):
                 argval = space.is_true(arg)
             else:
                 assert False
-            self.ptr.push_arg(argval)
+        arg_ptr = lltype.malloc(rffi.CArray(native_types[argtype]),
+                                1, flavor='raw')
+        arg_ptr[0] = rffi.cast(native_types[argtype], argval)
+        return arg_ptr
+
+    @specialize.arg(3)
+    def _call_ptr(self, arg_pointers, restype):
+        if restype != 'VOID':
+            if self.ptr != rffi.NULL:
+                result_ptr = lltype.malloc(rffi.CArray(native_types[restype]),
+                                           1, flavor='raw')
+                self.ptr.call(arg_pointers, result_ptr)
+                result = result_ptr[0]
+                lltype.free(result_ptr, flavor='raw')
+            else:
+                raise Exception("%s was called before being attached."
+                            % self)
+            # Is this really necessary (untranslated, it's not)?
+            # Maybe call does this anyway:
+            casted_result = rffi.cast(native_types[restype], result)
+            return result
+        else:
+            self.ptr.call(arg_pointers, lltype.nullptr(rffi.VOIDP.TO))
+
+    @specialize.arg(3)
+    def _ruby_wrap(self, space, res, restype):
+        if restype in ['INT8', 'UINT8',
+                       'UINT16', 'INT16',
+                       'UINT32', 'INT32']:
+            return space.newint(intmask(res))
+        elif restype in ['INT64', 'UINT64']:
+            longlong_res = longlongmask(res)
+            bigint_res = rbigint.fromrarith_int(longlong_res)
+            return space.newbigint_fromrbigint(bigint_res)
+        elif restype == 'FLOAT64':
+            return space.newfloat(res)
+        elif restype == 'BOOL':
+            return space.newbool(res)
+        elif restype == 'STRING':
+            return space.newstr_fromstr(rffi.charp2str(res))
+        elif restype == 'POINTER':
+            adr_res = llmemory.cast_ptr_to_adr(res)
+            int_res = llmemory.cast_adr_to_int(adr_res)
+            w_FFI = space.find_const(space.w_kernel, 'FFI')
+            w_Pointer = space.find_const(w_FFI, 'Pointer')
+            return space.send(w_Pointer, 'new', [space.newint(int_res)])
+        elif restype == 'VOID':
+            return space.w_nil
+        raise Exception("Bug in FFI: unknown Type %s" % t)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
@@ -144,9 +163,9 @@ class W_FunctionObject(W_PointerObject):
             ptr_key = self.w_name
             assert space.is_kind_of(ptr_key, space.w_symbol)
             try:
-                self.ptr = w_dl.getpointer(space.symbol_w(ptr_key),
-                                           ffi_arg_types,
-                                           ffi_ret_type)
+                self.ptr = w_dl.getrawpointer(space.symbol_w(ptr_key),
+                                              ffi_arg_types,
+                                              ffi_ret_type)
                 w_attachments = space.send(w_lib, 'attachments')
                 space.send(w_attachments, '[]=', [space.newsymbol(name), self])
             except KeyError: pass

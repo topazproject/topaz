@@ -32,10 +32,10 @@ class W_DynamicLibraryObject(W_Object):
                               "Could not open library %s" % namestr)
         self.set_instance_var(space, '@name', space.newsymbol(namestr))
 
-    def getpointer(self, name, ffi_arg_types, ffi_ret_types):
-        return self.cdll.getpointer(name,
-                                    ffi_arg_types,
-                                    ffi_ret_types)
+    def getrawpointer(self, name, ffi_arg_types, ffi_ret_types):
+        return self.cdll.getrawpointer(name,
+                                       ffi_arg_types,
+                                       ffi_ret_types)
 
     @classdef.singleton_method('new', flags='int')
     def singleton_method_new(self, space, w_name, flags=0):
