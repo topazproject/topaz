@@ -29,13 +29,13 @@ class W_PointerObject(W_AbstractMemoryObject):
         W_AbstractMemoryObject.__init__(self, space)
         self.address = -1
         self.ptr = lltype.nullptr(rffi.VOIDP.TO)
-        self.type_size = -1
-        self.size = -1
+        self.sizeof_type = -1
+        self.sizeof_memory = -1
 
     def __deepcopy__(self, memo):
         obj = super(W_AbstractMemoryObject, self).__deepcopy__(memo)
         obj.address = self.address
-        obj.size = self.size
+        obj.sizeof_memory = self.sizeof_memory
         return obj
 
     @classdef.singleton_method('allocate')
@@ -48,16 +48,16 @@ class W_PointerObject(W_AbstractMemoryObject):
             address = coerce_address(space, args_w[0])
             return self._initialize(space, address)
         elif len(args_w) == 2:
-            type_size = Coerce.int(space, args_w[0])
+            sizeof_type = Coerce.int(space, args_w[0])
             address = coerce_address(space, args_w[1])
-            return self._initialize(space, address, type_size)
+            return self._initialize(space, address, sizeof_type)
 
-    def _initialize(self, space, address, type_size=1):
+    def _initialize(self, space, address, sizeof_type=1):
         W_AbstractMemoryObject.__init__(self, space)
         self.address = address
         self.ptr = rffi.cast(rffi.VOIDP, address)
-        self.type_size = type_size
-        self.size = 0
+        self.sizeof_type = sizeof_type
+        self.sizeof_memory = 0
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -82,7 +82,7 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('size')
     def method_size(self, space):
-        return space.newint(self.size)
+        return space.newint(self.sizeof_memory)
 
     @classdef.method('==')
     def method_eq(self, space, w_other):
@@ -100,7 +100,7 @@ class W_PointerObject(W_AbstractMemoryObject):
     def method_address(self, space, w_offset, size):
         w_pointer = space.send(self, '+', [w_offset])
         assert isinstance(w_pointer, W_PointerObject)
-        w_pointer.size = size
+        w_pointer.sizeof_memory = size
         return w_pointer
 
     @classdef.method('order', endianness='symbol')
@@ -123,4 +123,4 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('type_size')
     def method_type_size(self, space):
-        return space.newint(self.type_size)
+        return space.newint(self.sizeof_type)

@@ -67,9 +67,9 @@ class W_AbstractMemoryObject(W_Object):
     short_cast = new_cast_method(rffi.SHORT)
     int_cast   = new_cast_method(rffi.INT)
 
-    def char_size(self):  return self.size
-    def short_size(self): return self.size / rffi.sizeof(rffi.SHORT)
-    def int_size(self):   return self.size / rffi.sizeof(rffi.INT)
+    def char_size(self):  return self.sizeof_memory
+    def short_size(self): return self.sizeof_memory / rffi.sizeof(rffi.SHORT)
+    def int_size(self):   return self.sizeof_memory / rffi.sizeof(rffi.INT)
 
     method_put_int8 = classdef.method('put_int8', offset='int', value='int')(
                       new_put_method(rffi.CHAR))
