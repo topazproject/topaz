@@ -3,7 +3,7 @@ from topaz.module import ClassDef
 from topaz.modules.ffi.type import (W_TypeObject, type_object,
                                     native_types, ffi_types)
 from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
-from topaz.modules.ffi.pointer import W_PointerObject
+from topaz.modules.ffi.pointer import W_PointerObject, coerce_pointer
 from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
@@ -74,28 +74,30 @@ class W_FunctionObject(W_PointerObject):
             for t in unrolling_argtypes:
                 argtype_name = arg_types_w[i].name
                 if t == argtype_name:
-                    arg = self._get_arg(space, args_w[i], t)
-                    self.funcptr.push_arg(arg)
-        for t in unrolling_rettypes:
-            if t == ret_type_name:
-                if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
-                    if t == 'VOID':
-                        self._call_ptr_without_result()
-                        return space.w_nil
-                    else:
-                        result = self._call_ptr(t)
-                        return self._ruby_wrap(space, result, t)
-                else:
-                    raise Exception("%s was called before being attached."
-                                    % self)
+                    self._push_arg(space, args_w[i], t)
+        if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
+            if ret_type_name == 'VOID':
+                self.funcptr.call(lltype.Void)
+                return space.w_nil
+            for t in unrolling_argtypes:
+                if t == ret_type_name:
+                    result = self.funcptr.call(native_types[t])
+                    # Is this really necessary (untranslated, it's not)?
+                    # Maybe call does this anyway:
+                    res = rffi.cast(native_types[t], result)
+                    return self._ruby_wrap(space, res, t)
+            raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
+        else:
+            raise Exception("%s was called before being attached."
+                            % self)
 
     @specialize.arg(3)
-    def _get_arg(self, space, arg, argtype):
+    def _push_arg(self, space, arg, argtype):
         if argtype == 'STRING':
             arg_as_string = space.str_w(arg)
-            argval = rffi.str2charp(arg_as_string)
+            argval = rffi.cast(rffi.VOIDP, rffi.str2charp(arg_as_string))
         elif argtype == 'POINTER':
-            argval = arg.ptr
+                argval = coerce_pointer(space, arg)
         else:
             if argtype in ['UINT8', 'INT8',
                            'UINT16', 'INT16',
@@ -109,18 +111,7 @@ class W_FunctionObject(W_PointerObject):
                 argval = space.is_true(arg)
             else:
                 assert False
-        return argval
-
-    @specialize.arg(1)
-    def _call_ptr(self, restype):
-        result = self.funcptr.call(native_types[restype])
-        # Is this really necessary (untranslated, it's not)?
-        # Maybe call does this anyway:
-        casted_result = rffi.cast(native_types[restype], result)
-        return casted_result
-
-    def _call_ptr_without_result(self):
-        self.funcptr.call(lltype.Void)
+        self.funcptr.push_arg(argval)
 
     @specialize.arg(3)
     def _ruby_wrap(self, space, res, restype):
@@ -144,7 +135,7 @@ class W_FunctionObject(W_PointerObject):
             w_FFI = space.find_const(space.w_kernel, 'FFI')
             w_Pointer = space.find_const(w_FFI, 'Pointer')
             return space.send(w_Pointer, 'new', [space.newint(int_res)])
-        raise Exception("Bug in FFI: unknown Type %s" % t)
+        raise Exception("Bug in FFI: unknown Type %s" % restype)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

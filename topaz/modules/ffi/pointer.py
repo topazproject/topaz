@@ -4,7 +4,14 @@ from topaz.coerce import Coerce
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
-lltype.nullptr(rffi.VOIDP.TO)
+
+def coerce_pointer(space, w_pointer):
+    if isinstance(w_pointer, W_PointerObject):
+        return w_pointer.ptr
+    else:
+        raise space.error(space.w_TypeError,
+                          "%s is not a pointer." % w_pointer)
+
 def coerce_address(space, w_addressable):
     if space.is_kind_of(w_addressable, space.w_fixnum):
         w_address = w_addressable
