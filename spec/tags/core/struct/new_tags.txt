@@ -1,0 +1,4 @@
+fails:Struct.new creates a constant in Struct namespace with string as first argument
+fails:Struct.new calls to_str on its first argument (constant name)
+fails:Struct.new creates reader methods
+fails:Struct.new creates writer methods
