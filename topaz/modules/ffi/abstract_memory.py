@@ -17,6 +17,8 @@ def new_put_method(rffi_type):
     def put_method(self, space, offset, value):
         val = rffi.cast(rffi_type, value)
         casted_ptr = cast_method(self)
+        if offset >= self.sizeof_memory / rffi.sizeof(rffi_type):
+            raise memory_index_error(space, offset, sizeof_type)
         try:
             casted_ptr[offset] = val
         except IndexError:
@@ -38,6 +40,8 @@ def new_get_method(rffi_type):
         to_int = intmask
     def get_method(self, space, offset):
         casted_ptr = cast_method(self)
+        if offset >= self.sizeof_memory / rffi.sizeof(rffi_type):
+            raise memory_index_error(space, offset, sizeof_type)
         try:
             val = casted_ptr[offset]
             return space.newint(to_int(val))
