@@ -66,26 +66,29 @@ class W_FunctionObject(W_PointerObject):
 
     @classdef.method('call')
     def method_call(self, space, args_w):
-        w_ret_type = self.w_ret_type
-        assert isinstance(w_ret_type, W_TypeObject)
-        arg_types_w = self.arg_types_w
-        ret_type_name = w_ret_type.name
-        for i in range(len(args_w)):
-            for t in unrolling_argtypes:
-                argtype_name = arg_types_w[i].name
-                if t == argtype_name:
-                    self._push_arg(space, args_w[i], t)
         if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
+            w_ret_type = self.w_ret_type
+            assert isinstance(w_ret_type, W_TypeObject)
+            arg_types_w = self.arg_types_w
+            ret_type_name = w_ret_type.name
+
+            for i in range(len(args_w)):
+                for t in unrolling_argtypes:
+                    argtype_name = arg_types_w[i].name
+                    if t == argtype_name:
+                        self._push_arg(space, args_w[i], t)
             if ret_type_name == 'VOID':
                 self.funcptr.call(lltype.Void)
                 return space.w_nil
             for t in unrolling_argtypes:
                 if t == ret_type_name:
                     result = self.funcptr.call(native_types[t])
-                    # Is this really necessary (untranslated, it's not)?
-                    # Maybe call does this anyway:
-                    res = rffi.cast(native_types[t], result)
-                    return self._ruby_wrap(space, res, t)
+                    if t == 'STRING':
+                        return self._ruby_wrap_STRING(space, result)
+                    if t == 'POINTER':
+                        return self._ruby_wrap_POINTER(space, result)
+                    else:
+                        return self._ruby_wrap_number(space, result, t)
             raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
         else:
             raise Exception("%s was called before being attached."
@@ -94,8 +97,9 @@ class W_FunctionObject(W_PointerObject):
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
         if argtype == 'STRING':
-            arg_as_string = space.str_w(arg)
-            argval = rffi.cast(rffi.VOIDP, rffi.str2charp(arg_as_string))
+            string_arg = space.str_w(arg)
+            charp_arg = rffi.str2charp(string_arg)
+            argval = rffi.cast(rffi.VOIDP, charp_arg)
         elif argtype == 'POINTER':
                 argval = coerce_pointer(space, arg)
         else:
@@ -114,7 +118,7 @@ class W_FunctionObject(W_PointerObject):
         self.funcptr.push_arg(argval)
 
     @specialize.arg(3)
-    def _ruby_wrap(self, space, res, restype):
+    def _ruby_wrap_number(self, space, res, restype):
         if restype in ['INT8', 'UINT8',
                        'UINT16', 'INT16',
                        'UINT32', 'INT32']:
@@ -127,15 +131,19 @@ class W_FunctionObject(W_PointerObject):
             return space.newfloat(res)
         elif restype == 'BOOL':
             return space.newbool(res)
-        elif restype == 'STRING':
-            return space.newstr_fromstr(rffi.charp2str(res))
-        elif restype == 'POINTER':
-            adr_res = llmemory.cast_ptr_to_adr(res)
-            int_res = llmemory.cast_adr_to_int(adr_res)
-            w_FFI = space.find_const(space.w_kernel, 'FFI')
-            w_Pointer = space.find_const(w_FFI, 'Pointer')
-            return space.send(w_Pointer, 'new', [space.newint(int_res)])
         raise Exception("Bug in FFI: unknown Type %s" % restype)
+
+    def _ruby_wrap_STRING(self, space, res):
+        str_res = rffi.charp2str(res)
+        return space.newstr_fromstr(str_res)
+
+    def _ruby_wrap_POINTER(self, space, res):
+        adr_res = llmemory.cast_ptr_to_adr(res)
+        int_res = llmemory.cast_adr_to_int(adr_res)
+        w_FFI = space.find_const(space.w_kernel, 'FFI')
+        w_Pointer = space.find_const(w_FFI, 'Pointer')
+        return space.send(w_Pointer, 'new',
+                          [space.newint(int_res)])
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

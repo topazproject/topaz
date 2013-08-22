@@ -95,25 +95,25 @@ class W_AbstractMemoryObject(W_Object):
     method_read_int32 = classdef.method('read_int32')(
                         new_read_method('int32'))
 
-    @classdef.method('put_array_of_int32', begin='int', arr_w='array')
-    def method_put_array_of_int32(self, space, begin, arr_w):
-        if(begin < 0 or self.int_size() <= begin or
-           self.int_size() < begin + len(arr_w)):
-            raise memory_index_error(space, begin, 4*len(arr_w))
-        for i, w_obj in enumerate(arr_w):
-            try:
-                someint = Coerce.int(space, w_obj)
-                val = rffi.cast(rffi.INT, someint)
-                int_ptr = self.int_cast()
-                int_ptr[begin + i] = val
-            except:
-                assert False
+    #@classdef.method('put_array_of_int32', begin='int', arr_w='array')
+    #def method_put_array_of_int32(self, space, begin, arr_w):
+    #    if(begin < 0 or self.int_size() <= begin or
+    #       self.int_size() < begin + len(arr_w)):
+    #        raise memory_index_error(space, begin, 4*len(arr_w))
+    #    for i, w_obj in enumerate(arr_w):
+    #        try:
+    #            someint = Coerce.int(space, w_obj)
+    #            val = rffi.cast(rffi.INT, someint)
+    #            int_ptr = self.int_cast()
+    #            int_ptr[begin + i] = val
+    #        except:
+    #            assert False
 
-    @classdef.method('get_array_of_int32', begin='int', length='int')
-    def method_get_array_of_int32(self, space, begin, length):
-        arr_w = []
-        for i in range(begin, begin + length):
-            int_ptr = self.int_cast()
-            val = int_ptr[i]
-            arr_w.append(space.newint(val))
-        return space.newarray(arr_w)
+    #@classdef.method('get_array_of_int32', begin='int', length='int')
+    #def method_get_array_of_int32(self, space, begin, length):
+    #    arr_w = []
+    #    for i in range(begin, begin + length):
+    #        int_ptr = self.int_cast()
+    #        val = int_ptr[i]
+    #        arr_w.append(space.newint(val))
+    #    return space.newarray(arr_w)
