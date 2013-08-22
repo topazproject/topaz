@@ -28,3 +28,9 @@ class TestMemoryPointer__new(BaseFFITest):
         assert w_mem_ptr.char_size() == 8
         assert w_mem_ptr.short_size() == 4
         assert w_mem_ptr.int_size() == 2
+
+    def test_its_size_argument_defaults_to_1(self, ffis):
+        for t in ['char', 'short', 'int']:
+            w_ptr1 = ffis.execute("FFI::MemoryPointer.new(:%s, 1)" % t)
+            w_ptr2 = ffis.execute("FFI::MemoryPointer.new(:%s)" % t)
+            assert w_ptr1.sizeof_memory == w_ptr2.sizeof_memory

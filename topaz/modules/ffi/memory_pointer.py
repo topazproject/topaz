@@ -21,7 +21,7 @@ class W_MemoryPointerObject(W_PointerObject):
         return W_MemoryPointerObject(space)
 
     @classdef.method('initialize', size='int')
-    def method_initialize(self, space, w_type_hint, size):
+    def method_initialize(self, space, w_type_hint, size=1):
         self.w_type = type_object(space, w_type_hint)
         sizeof_type = space.int_w(space.send(self.w_type, 'size'))
         self.sizeof_memory = size * sizeof_type
