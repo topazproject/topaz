@@ -79,38 +79,6 @@ class W_AbstractMemoryObject(W_Object):
     def singleton_method_allocate(self, space):
         return W_AbstractMemoryObject(space)
 
-    int8_cast  = new_cast_method('int8')
-    int16_cast = new_cast_method('int16')
-    int32_cast   = new_cast_method('int32')
-
-    int8_size  = new_numberof_method('int8')
-    int16_size = new_numberof_method('int16')
-    int32_size   = new_numberof_method('int32')
-
-    method_put_int8 = classdef.method('put_int8', offset='int', value='int')(
-                      new_put_method('int8'))
-
-    method_write_int8 = classdef.method('write_int8')(
-                        new_write_method('int8'))
-
-    method_get_int8 = classdef.method('get_int8', offset='int')(
-                      new_get_method('int8'))
-
-    method_read_int8 = classdef.method('read_int8')(
-                      new_read_method('int8'))
-
-    method_put_int32 = classdef.method('put_int32', offset='int', value='int')(
-                       new_put_method('int32'))
-
-    method_write_int32 = classdef.method('write_int32')(
-                         new_write_method('int32'))
-
-    method_get_int32 = classdef.method('get_int32', offset='int')(
-                       new_get_method('int32'))
-
-    method_read_int32 = classdef.method('read_int32')(
-                        new_read_method('int32'))
-
     #@classdef.method('put_array_of_int32', begin='int', arr_w='array')
     #def method_put_array_of_int32(self, space, begin, arr_w):
     #    if(begin < 0 or self.int_size() <= begin or
@@ -133,3 +101,20 @@ class W_AbstractMemoryObject(W_Object):
     #        val = int_ptr[i]
     #        arr_w.append(space.newint(val))
     #    return space.newarray(arr_w)
+
+W_AMO = W_AbstractMemoryObject
+for t in ['int8', 'int16', 'int32']:
+    setattr(W_AMO, t + '_cast', new_cast_method(t))
+    setattr(W_AMO, t + '_size', new_numberof_method(t))
+    setattr(W_AMO, 'method_put_' + t,
+            W_AMO.classdef.method('put_' + t, offset='int', value='int')(
+            new_put_method(t)))
+    setattr(W_AMO, 'method_write_' + t,
+            W_AMO.classdef.method('write_' + t, offset='int', value='int')(
+            new_write_method(t)))
+    setattr(W_AMO, 'method_get_' + t,
+            W_AMO.classdef.method('get_' + t, offset='int', value='int')(
+            new_get_method(t)))
+    setattr(W_AMO, 'method_read_' + t,
+            W_AMO.classdef.method('read_' + t, offset='int', value='int')(
+            new_read_method(t)))
