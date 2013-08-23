@@ -119,9 +119,14 @@ class W_FunctionObject(W_PointerObject):
 
     @specialize.arg(3)
     def _ruby_wrap_number(self, space, res, restype):
-        if restype in ['INT8', 'UINT8',
-                       'UINT16', 'INT16',
-                       'UINT32', 'INT32']:
+        if restype == 'INT8':
+            int_res = ord(res)
+            if int_res >= 128:
+                int_res -= 256
+            return space.newint(int_res)
+        elif restype in ['UINT8',
+                         'UINT16', 'INT16',
+                         'UINT32', 'INT32']:
             return space.newint(intmask(res))
         elif restype in ['INT64', 'UINT64']:
             longlong_res = longlongmask(res)

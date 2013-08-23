@@ -49,22 +49,15 @@ class FFI(object):
 
         # setup Platform
         w_platform = space.newmodule('Platform', None)
-        space.set_const(w_platform, 'INT8_SIZE',
-                        space.newint(rffi.sizeof(rffi.CHAR)))
-        space.set_const(w_platform, 'INT16_SIZE',
-                        space.newint(rffi.sizeof(rffi.SHORT)))
-        space.set_const(w_platform, 'INT32_SIZE',
-                        space.newint(rffi.sizeof(rffi.INT)))
-        space.set_const(w_platform, 'INT64_SIZE',
-                        space.newint(rffi.sizeof(rffi.LONGLONG)))
-        space.set_const(w_platform, 'LONG_SIZE',
-                        space.newint(rffi.sizeof(rffi.LONG)))
-        space.set_const(w_platform, 'FLOAT_SIZE',
-                        space.newint(rffi.sizeof(rffi.FLOAT)))
-        space.set_const(w_platform, 'DOUBLE_SIZE',
-                        space.newint(rffi.sizeof(rffi.DOUBLE)))
+        name_postfix = '_SIZE'
+        for name_prefix in ['INT8', 'INT16', 'INT32', 'INT64',
+                            'LONG', 'FLOAT', 'DOUBLE']:
+            w_type = space.find_const(w_mod, 'Type')
+            w_tp = space.find_const(w_type, name_prefix)
+            space.set_const(w_platform, name_prefix + name_postfix,
+                            space.send(w_tp, 'size'))
         space.set_const(w_platform, 'ADDRESS_SIZE',
-                        space.newint(rffi.sizeof(rffi.VOIDP)))
+                        space.newint(rffi.sizeof(native_types['POINTER'])))
         space.set_const(w_mod, 'Platform', w_platform)
 
         # setup StructLayout

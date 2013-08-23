@@ -8,7 +8,7 @@ class TestAbstractMemory__put_int8(BaseFFITest):
         mem_ptr.put_int8(1, 107)
         mem_ptr
         """)
-        int_ptr = w_mem_ptr.char_cast()
+        int_ptr = w_mem_ptr.int8_cast()
         assert int_ptr[0] == 'o'
         assert int_ptr[1] == 'k'
 
@@ -26,7 +26,7 @@ class TestAbstractMemory__write_int8(BaseFFITest):
         mem_ptr.write_int8(121)
         mem_ptr
         """)
-        assert w_mem_ptr.char_cast()[0] == 'y'
+        assert w_mem_ptr.int8_cast()[0] == 'y'
 
 class TestAbstractMemory__get_int8(BaseFFITest):
     def test_it_gets_a_single_int8_from_the_given_offset(self, ffis):
@@ -61,7 +61,7 @@ class TestAbstractMemory__put_int32(BaseFFITest):
         mem_ptr.put_int32(1, 2**31)
         mem_ptr
         """)
-        int_ptr = w_mem_ptr.int_cast()
+        int_ptr = w_mem_ptr.int32_cast()
         assert int_ptr[0] == 2**31 - 1
         assert int_ptr[1] == -2**31
 
@@ -86,7 +86,7 @@ class TestAbstractMemory__write_int32(BaseFFITest):
         mem_ptr.write_int32(2**29)
         mem_ptr
         """)
-        assert w_mem_ptr.int_cast()[0] == 2**29
+        assert w_mem_ptr.int32_cast()[0] == 2**29
 
 class TestAbstractMemory__get_int32(BaseFFITest):
     def test_it_gets_a_single_int32_from_the_given_offset(self, ffis):
@@ -127,7 +127,7 @@ class TestAbstractMemory__read_int32(BaseFFITest):
 #        mem_ptr.put_array_of_int32(0, (0..9).to_a)
 #        mem_ptr
 #        """)
-#        int_ptr = w_mem_ptr.int_cast()
+#        int_ptr = w_mem_ptr.int32_cast()
 #        for i in range(10):
 #            assert int_ptr[i] == i
 #

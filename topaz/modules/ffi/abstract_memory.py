@@ -1,23 +1,33 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
+from topaz.modules.ffi.type import native_types
 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 
 # Check, whether is will be inlined
-def new_cast_method(ctype):
+def new_cast_method(type_str):
+    ctype = native_types[type_str.upper()]
     def cast_method(memory):
         return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
-def new_put_method(rffi_type):
-    cast_method = new_cast_method(rffi_type)
-    sizeof_type = rffi.sizeof(rffi_type)
+def new_numberof_method(type_str):
+    ctype = native_types[type_str.upper()]
+    def numberof_method(self):
+        return self.sizeof_memory / rffi.sizeof(ctype)
+    return numberof_method
+
+def new_put_method(type_str):
+    ctype = native_types[type_str.upper()]
+    cast_method = new_cast_method(type_str)
+    numberof_method = new_numberof_method(type_str)
+    sizeof_type = rffi.sizeof(ctype)
     def put_method(self, space, offset, value):
-        val = rffi.cast(rffi_type, value)
+        val = rffi.cast(ctype, value)
         casted_ptr = cast_method(self)
-        if offset >= self.sizeof_memory / rffi.sizeof(rffi_type):
+        if offset >= numberof_method(self):
             raise memory_index_error(space, offset, sizeof_type)
         try:
             casted_ptr[offset] = val
@@ -31,16 +41,18 @@ def new_write_method(type_str):
         space.send(self, put_method_name, [space.newint(0), w_value])
     return write_method
 
-def new_get_method(rffi_type):
-    cast_method = new_cast_method(rffi_type)
-    sizeof_type = rffi.sizeof(rffi_type)
-    if rffi_type is rffi.CHAR:
+def new_get_method(type_str):
+    ctype = native_types[type_str.upper()]
+    cast_method = new_cast_method(type_str)
+    numberof_method = new_numberof_method(type_str)
+    sizeof_type = rffi.sizeof(ctype)
+    if ctype is rffi.CHAR:
         to_int = ord
     else:
         to_int = intmask
     def get_method(self, space, offset):
         casted_ptr = cast_method(self)
-        if offset >= self.sizeof_memory / rffi.sizeof(rffi_type):
+        if offset >= numberof_method(self):
             raise memory_index_error(space, offset, sizeof_type)
         try:
             val = casted_ptr[offset]
@@ -67,34 +79,34 @@ class W_AbstractMemoryObject(W_Object):
     def singleton_method_allocate(self, space):
         return W_AbstractMemoryObject(space)
 
-    char_cast  = new_cast_method(rffi.CHAR)
-    short_cast = new_cast_method(rffi.SHORT)
-    int_cast   = new_cast_method(rffi.INT)
+    int8_cast  = new_cast_method('int8')
+    int16_cast = new_cast_method('int16')
+    int32_cast   = new_cast_method('int32')
 
-    def char_size(self):  return self.sizeof_memory
-    def short_size(self): return self.sizeof_memory / rffi.sizeof(rffi.SHORT)
-    def int_size(self):   return self.sizeof_memory / rffi.sizeof(rffi.INT)
+    int8_size  = new_numberof_method('int8')
+    int16_size = new_numberof_method('int16')
+    int32_size   = new_numberof_method('int32')
 
     method_put_int8 = classdef.method('put_int8', offset='int', value='int')(
-                      new_put_method(rffi.CHAR))
+                      new_put_method('int8'))
 
     method_write_int8 = classdef.method('write_int8')(
                         new_write_method('int8'))
 
     method_get_int8 = classdef.method('get_int8', offset='int')(
-                      new_get_method(rffi.CHAR))
+                      new_get_method('int8'))
 
     method_read_int8 = classdef.method('read_int8')(
                       new_read_method('int8'))
 
     method_put_int32 = classdef.method('put_int32', offset='int', value='int')(
-                       new_put_method(rffi.INT))
+                       new_put_method('int32'))
 
     method_write_int32 = classdef.method('write_int32')(
                          new_write_method('int32'))
 
     method_get_int32 = classdef.method('get_int32', offset='int')(
-                       new_get_method(rffi.INT))
+                       new_get_method('int32'))
 
     method_read_int32 = classdef.method('read_int32')(
                         new_read_method('int32'))
@@ -107,7 +119,7 @@ class W_AbstractMemoryObject(W_Object):
     #    for i, w_obj in enumerate(arr_w):
     #        try:
     #            someint = Coerce.int(space, w_obj)
-    #            val = rffi.cast(rffi.INT, someint)
+    #            val = rffi.cast(rffi.SIGNED, someint)
     #            int_ptr = self.int_cast()
     #            int_ptr[begin + i] = val
     #        except:

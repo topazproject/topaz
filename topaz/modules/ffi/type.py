@@ -29,10 +29,7 @@ ffi_types = {
 
 native_types = {
                 'VOID': lltype.Void,
-                # the next one might seem a bit weird but that's ruby ffi's
-                # behaviour: When the result is -3 it should be that, and not
-                # chr(256 -3) (which rffi.CHAR would give you)
-                'INT8': rffi.SHORT,
+                'INT8': rffi.CHAR,
                 'UINT8': rffi.UCHAR,
                 'INT16': rffi.SHORT,
                 'UINT16': rffi.USHORT,
