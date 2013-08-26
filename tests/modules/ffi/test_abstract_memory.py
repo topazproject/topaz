@@ -77,14 +77,7 @@ class TestAbstractMemory_get_methods(BaseFFITest):
             """.replace('T', t).
                 replace('MIN', str(minval[t])).
                 replace('MAX', str(maxval[t])))
-            if t == 'int8':
-                # TODO: This (the 128 instead of -128) is actually a bug
-                # but right now I'm just testing whether int8 gets from the
-                # correct index and the correct number of bytes.
-                # However, remember to fix this bug later.
-                assert self.unwrap(ffis, w_res) == [128, 127]
-            else:
-                assert self.unwrap(ffis, w_res) == [minval[t], maxval[t]]
+            assert self.unwrap(ffis, w_res) == [minval[t], maxval[t]]
 
 class TestAbstractMemory_read_methods(BaseFFITest):
     def test_they_are_like_calling_get_with_0(self, ffis):

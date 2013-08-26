@@ -47,7 +47,7 @@ def new_get_method(type_str):
     numberof_method = new_numberof_method(type_str)
     sizeof_type = rffi.sizeof(ctype)
     if ctype is rffi.CHAR:
-        to_int = ord
+        to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
     else:
         to_int = intmask
     def get_method(self, space, offset):
