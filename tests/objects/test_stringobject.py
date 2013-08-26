@@ -549,8 +549,14 @@ class TestStringObject(BaseTopazTest):
     def test_slice(self, space):
         w_res = space.execute('return "this is a string".slice(2)')
         assert space.str_w(w_res) == "i"
+        w_res = space.execute('return "hello".slice(2, 3)')
+        assert space.str_w(w_res) == "llo"
 
     def test_slice_i(self, space):
+        w_res = space.execute('return "this is a string".slice!(2)')
+        assert space.str_w(w_res) == "i"
+        w_res = space.execute('return "this is a string".slice!(2, 5)')
+        assert space.str_w(w_res) == "is is"
         w_res = space.execute("""
         string = "this is a string"
         string.slice!(2)
