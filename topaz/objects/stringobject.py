@@ -557,6 +557,7 @@ class W_StringObject(W_Object):
             return space.newstr_fromstr(self.strategy.getitem(self.str_storage, start))
 
     @classdef.method("slice!")
+    @check_frozen()
     def method_slice_i(self, space, w_idx, w_count=None):
         start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
         if nil:
