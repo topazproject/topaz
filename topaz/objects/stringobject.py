@@ -133,6 +133,9 @@ class MutableStringStrategy(StringStrategy):
     def getslice(self, space, storage, start, end):
         return space.newstr_fromchars(self.unerase(storage)[start:end])
 
+    def delslice(self, space, storage, start, end):
+        del self.unerase(storage)[start:end]
+
     def hash(self, storage):
         storage = self.unerase(storage)
         length = len(storage)
@@ -552,6 +555,26 @@ class W_StringObject(W_Object):
             return self.strategy.getslice(space, self.str_storage, start, end)
         else:
             return space.newstr_fromstr(self.strategy.getitem(self.str_storage, start))
+
+    @classdef.method("slice!")
+    @check_frozen()
+    def method_slice_i(self, space, w_idx, w_count=None):
+        start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
+        if nil:
+            return space.w_nil
+        elif as_range:
+            assert start >= 0
+            assert end >= 0
+            self.strategy.to_mutable(space, self)
+            w_string = self.strategy.getslice(space, self.str_storage, start, end)
+            self.strategy.delslice(space, self.str_storage, start, end)
+            return w_string
+        else:
+            assert start >= 0
+            self.strategy.to_mutable(space, self)
+            w_string = self.strategy.getslice(space, self.str_storage, start, start + 1)
+            self.strategy.delslice(space, self.str_storage, start, start + 1)
+            return w_string
 
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
