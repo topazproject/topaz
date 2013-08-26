@@ -3,11 +3,11 @@ from topaz.modules.ffi.type import native_types
 
 from rpython.rtyper.lltypesystem import rffi
 
-supported_type_names = ['int8', 'int16', 'int32']
+supported_type_names = ['int8', 'int16', 'int32', 'int64']
 
 minval = {}
 maxval = {}
-for bits in [8, 16, 32]:
+for bits in [8, 16, 32, 64]:
     minval['int' + str(bits)] = -2**(bits-1)
     minval['uint' + str(bits)] = 0
     maxval['int' + str(bits)] = 2**(bits-1) - 1

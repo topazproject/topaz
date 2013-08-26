@@ -103,7 +103,7 @@ class W_AbstractMemoryObject(W_Object):
     #    return space.newarray(arr_w)
 
 W_AMO = W_AbstractMemoryObject
-for t in ['int8', 'int16', 'int32']:
+for t in ['int8', 'int16', 'int32', 'int64']:
     setattr(W_AMO, t + '_cast', new_cast_method(t))
     setattr(W_AMO, t + '_size', new_numberof_method(t))
     setattr(W_AMO, 'method_put_' + t,
