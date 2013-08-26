@@ -545,6 +545,19 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(w_res) == "AAAA0000"
         w_res = space.execute('return "***".succ')
         assert space.str_w(w_res) == "**+"
+        
+    def test_slice(self, space):
+        w_res = space.execute('return "this is a string".slice(2)')
+        assert space.str_w(w_res) == "i"
+        
+    def test_slice_i(self, space):
+        w_res = space.execute(""" 
+        string = "this is a string"
+        string.slice!(2)
+        string.slice!(3..6)
+        return string
+        """)
+        assert space.str_w(w_res) == "thsa string"
 
 
 class TestStringMod(object):
