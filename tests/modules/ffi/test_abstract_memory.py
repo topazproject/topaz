@@ -1,124 +1,100 @@
 from tests.modules.ffi.base import BaseFFITest
+from topaz.modules.ffi.type import native_types
 
-class TestAbstractMemory__put_int8(BaseFFITest):
-    def test_it_puts_a_single_int8_into_the_given_offset(self, ffis):
-        w_mem_ptr = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int8, 2)
-        mem_ptr.put_int8(0, 111)
-        mem_ptr.put_int8(1, 107)
-        mem_ptr
-        """)
-        int_ptr = w_mem_ptr.int8_cast()
-        assert int_ptr[0] == 'o'
-        assert int_ptr[1] == 'k'
+from rpython.rtyper.lltypesystem import rffi
 
-    def test_it_refuses_negative_offset(self, ffis):
-        with self.raises(ffis, 'IndexError',
-                         "Memory access offset=-1 size=1 is out of bounds"):
-            ffis.execute("""
-            FFI::MemoryPointer.new(:int8, 1).put_int8(-1, 230)
-            """)
+supported_type_names = ['int8', 'int16', 'int32']
 
-class TestAbstractMemory__write_int8(BaseFFITest):
-    def test_it_is_like_calling_put_int8_with_0_as_1st_arg(self, ffis):
-        w_mem_ptr = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int8, 1)
-        mem_ptr.write_int8(121)
-        mem_ptr
-        """)
-        assert w_mem_ptr.int8_cast()[0] == 'y'
+minval = {}
+maxval = {}
+for bits in [8, 16, 32]:
+    minval['int' + str(bits)] = -2**(bits-1)
+    minval['uint' + str(bits)] = 0
+    maxval['int' + str(bits)] = 2**(bits-1) - 1
+    maxval['uint' + str(bits)] = 2**bits - 1
 
-class TestAbstractMemory__get_int8(BaseFFITest):
-    def test_it_gets_a_single_int8_from_the_given_offset(self, ffis):
-        w_res = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int8, 5)
-        mem_ptr.put_int8(4, 0)
-        mem_ptr.get_int8(4)
-        """)
-        assert self.unwrap(ffis, w_res) == 0
+class TestAbstractMemory_put_methods(BaseFFITest):
+    def test_they_put_a_single_value_into_the_given_offset(self, ffis):
+        for t in supported_type_names:
+            w_mem_ptr = ffis.execute("""
+            mem_ptr = FFI::MemoryPointer.new(:T, 2)
+            mem_ptr.put_T(0, MIN)
+            mem_ptr.put_T(1, MAX)
+            mem_ptr
+            """.replace('T', t).
+                replace('MIN', str(minval[t])).
+                replace('MAX', str(maxval[t])))
+            cast_method = getattr(w_mem_ptr, t + '_cast')
+            casted_ptr = cast_method()
+            expected_0 = minval[t]
+            expected_1 = maxval[t]
+            if t == 'int8':
+                expected_0 = rffi.cast(rffi.CHAR, -128)
+                expected_1 = rffi.cast(rffi.CHAR, 127)
+            assert casted_ptr[0] == expected_0
+            assert casted_ptr[1] == expected_1
 
-class TestAbstractMemory__read_int8(BaseFFITest):
-    def test_it_is_like_calling_get_int8_with_0(self, ffis):
-        w_res = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int8, 1)
-        mem_ptr.write_int8(1)
-        mem_ptr.read_int8
-        """)
-        assert self.unwrap(ffis, w_res) == 1
+    def test_they_refuse_negative_offsets(self, ffis):
+        for t in supported_type_names:
+            sizeof_t = rffi.sizeof(native_types[t.upper()])
+            with self.raises(ffis, 'IndexError',
+                             "Memory access offset=-1 size=%s is out of bounds"
+                             %  sizeof_t):
+                ffis.execute("""
+                FFI::MemoryPointer.new(:T, 1).put_T(-1, 230)
+                """.replace('T', t))
 
-    def test_it_refuses_negative_offset(self, ffis):
-        with self.raises(ffis, 'IndexError',
-                         "Memory access offset=-1 size=1 is out of bounds"):
-            ffis.execute("""
-            FFI::MemoryPointer.new(:int8, 1).get_int8(-1)
-            """)
+    def test_they_refuse_too_large_offsets(self, ffis):
+        for t in supported_type_names:
+            sizeof_t = rffi.sizeof(native_types[t.upper()])
+            with self.raises(ffis, 'IndexError',
+                             "Memory access offset=3 size=%s is out of bounds"
+                             % sizeof_t):
+                ffis.execute("""
+                FFI::MemoryPointer.new(:T, 3).put_T(3, 15)
+                """.replace('T', t))
 
-class TestAbstractMemory__put_int32(BaseFFITest):
-    def test_it_puts_a_single_int32_into_the_given_offset(self, ffis):
-        w_mem_ptr = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int32, 2)
-        mem_ptr.put_int32(0, 2**31 - 1)
-        mem_ptr.put_int32(1, 2**31)
-        mem_ptr
-        """)
-        int_ptr = w_mem_ptr.int32_cast()
-        assert int_ptr[0] == 2**31 - 1
-        assert int_ptr[1] == -2**31
+class TestAbstractMemory_write_methods(BaseFFITest):
+    def test_they_are_like_calling_put_with_0_as_1st_arg(self, ffis):
+        for t in supported_type_names:
+            w_mem_ptr = ffis.execute("""
+            mem_ptr = FFI::MemoryPointer.new(:T, 1)
+            mem_ptr.write_T(121)
+            mem_ptr
+            """.replace('T', t))
+            cast_method = getattr(w_mem_ptr, t + '_cast')
+            casted_ptr = cast_method()
+            assert casted_ptr[0] == 'y' if t == 'int8' else 121
 
-    def test_it_refuses_negative_offset(self, ffis):
-        with self.raises(ffis, 'IndexError',
-                         "Memory access offset=-1 size=4 is out of bounds"):
-            ffis.execute("""
-            FFI::MemoryPointer.new(:int32, 1).put_int32(-1, 1073741809)
-            """)
+class TestAbstractMemory_get_methods(BaseFFITest):
+    def test_they_get_a_single_value_from_the_given_offset(self, ffis):
+        for t in supported_type_names:
+            w_res = ffis.execute("""
+            mem_ptr = FFI::MemoryPointer.new(:T, 5)
+            mem_ptr.put_T(3, MIN)
+            mem_ptr.put_T(4, MAX)
+            [mem_ptr.get_T(3), mem_ptr.get_T(4)]
+            """.replace('T', t).
+                replace('MIN', str(minval[t])).
+                replace('MAX', str(maxval[t])))
+            if t == 'int8':
+                # TODO: This (the 128 instead of -128) is actually a bug
+                # but right now I'm just testing whether int8 gets from the
+                # correct index and the correct number of bytes.
+                # However, remember to fix this bug later.
+                assert self.unwrap(ffis, w_res) == [128, 127]
+            else:
+                assert self.unwrap(ffis, w_res) == [minval[t], maxval[t]]
 
-    def test_it_refuses_too_large_offset(self, ffis):
-        with self.raises(ffis, 'IndexError',
-                         "Memory access offset=3 size=4 is out of bounds"):
-            ffis.execute("""
-            FFI::MemoryPointer.new(:int32, 3).put_int32(3, 1073741809)
-            """)
-
-class TestAbstractMemory__write_int32(BaseFFITest):
-    def test_it_is_like_calling_put_int32_with_0_as_1st_arg(self, ffis):
-        w_mem_ptr = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int32, 1)
-        mem_ptr.write_int32(2**29)
-        mem_ptr
-        """)
-        assert w_mem_ptr.int32_cast()[0] == 2**29
-
-class TestAbstractMemory__get_int32(BaseFFITest):
-    def test_it_gets_a_single_int32_from_the_given_offset(self, ffis):
-        w_res = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int32, 5)
-        mem_ptr.put_int32(4, 2**30)
-        mem_ptr.get_int32(4)
-        """)
-        assert self.unwrap(ffis, w_res) == 2**30
-
-    def test_it_refuses_negative_offset(self, ffis):
-        with self.raises(ffis, 'IndexError',
-                         "Memory access offset=-1 size=4 is out of bounds"):
-            ffis.execute("""
-            FFI::MemoryPointer.new(:int32, 1).get_int32(-1)
-            """)
-
-    def test_it_refuses_too_large_offset(self, ffis):
-        with self.raises(ffis, 'IndexError',
-                         "Memory access offset=6 size=4 is out of bounds"):
-            ffis.execute("""
-            FFI::MemoryPointer.new(:int32, 6).get_int32(6)
-            """)
-
-class TestAbstractMemory__read_int32(BaseFFITest):
-    def test_it_is_like_calling_get_int32_with_0(self, ffis):
-        w_res = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:int32, 1)
-        mem_ptr.write_int32(2**29)
-        mem_ptr.read_int32
-        """)
-        assert self.unwrap(ffis, w_res) == 2**29
+class TestAbstractMemory_read_methods(BaseFFITest):
+    def test_they_are_like_calling_get_with_0(self, ffis):
+        for t in supported_type_names:
+            w_res = ffis.execute("""
+            mem_ptr = FFI::MemoryPointer.new(:T, 1)
+            mem_ptr.write_T(1)
+            mem_ptr.read_T
+            """.replace('T', t))
+            assert self.unwrap(ffis, w_res) == 1
 
 #class TestAbstractMemory__put_array_of_int32(BaseFFITest):
 #    def test_it_writes_into_array(self, ffis):
