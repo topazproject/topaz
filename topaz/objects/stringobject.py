@@ -575,7 +575,6 @@ class W_StringObject(W_Object):
             self.strategy.delslice(space, self.str_storage, start, start + 1)
             return w_string
 
-
     @classdef.method("<=>")
     def method_comparator(self, space, w_other):
         if isinstance(w_other, W_StringObject):
