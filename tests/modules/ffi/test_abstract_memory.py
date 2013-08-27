@@ -1,4 +1,5 @@
 from tests.modules.ffi.base import BaseFFITest
+from topaz.modules.ffi.abstract_memory import new_cast_method
 from topaz.modules.ffi.type import native_types
 
 from rpython.rtyper.lltypesystem import rffi
@@ -13,6 +14,23 @@ for bits in [8, 16, 32, 64]:
     minval['uint' + str(bits)] = 0
     maxval['int' + str(bits)] = 2**(bits-1) - 1
     maxval['uint' + str(bits)] = 2**bits - 1
+
+class TestAbstractMemory_put_pointer(BaseFFITest):
+    def test_it_puts_a_single_pointer_into_the_given_offset(self, ffis):
+        w_results = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:pointer, 2)
+        ptr1 = FFI::MemoryPointer.new(:int32, 1)
+        ptr1.write_int32(1)
+        ptr2 = FFI::MemoryPointer.new(:int32, 1)
+        ptr2.write_int32(2)
+        mem_ptr.put_pointer(0, ptr1)
+        mem_ptr.put_pointer(1, ptr2)
+        [mem_ptr, ptr1, ptr2]
+        """)
+        w_mem_ptr, w_ptr1, w_ptr2 = ffis.listview(w_results)
+        w_mem_voidptr = new_cast_method('pointer')(w_mem_ptr)
+        assert w_mem_voidptr[0] == w_ptr1.ptr
+        assert w_mem_voidptr[1] == w_ptr2.ptr
 
 class TestAbstractMemory_put_methods(BaseFFITest):
     def test_they_put_a_single_value_into_the_given_offset(self, ffis):

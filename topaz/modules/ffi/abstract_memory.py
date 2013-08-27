@@ -4,6 +4,8 @@ from topaz.coerce import Coerce
 from topaz.modules.ffi.type import native_types
 
 from rpython.rtyper.lltypesystem import rffi, lltype
+from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
+                                                  cast_adr_to_int as adr2int)
 from rpython.rlib.rarithmetic import intmask
 
 # Check, whether is will be inlined
@@ -78,6 +80,10 @@ class W_AbstractMemoryObject(W_Object):
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space):
         return W_AbstractMemoryObject(space)
+
+    method_put_pointer = classdef.method('put_pointer', offset='int',
+                                                        value='ffi_pointer')(
+                         new_put_method('pointer'))
 
     #@classdef.method('put_array_of_int32', begin='int', arr_w='array')
     #def method_put_array_of_int32(self, space, begin, arr_w):

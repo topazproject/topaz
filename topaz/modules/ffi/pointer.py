@@ -12,6 +12,8 @@ def coerce_pointer(space, w_pointer):
         raise space.error(space.w_TypeError,
                           "%s is not a pointer." % w_pointer)
 
+setattr(Coerce, 'ffi_pointer', staticmethod(coerce_pointer))
+
 def coerce_address(space, w_addressable):
     if space.is_kind_of(w_addressable, space.w_fixnum):
         w_address = w_addressable
