@@ -24,6 +24,8 @@ def coerce_address(space, w_addressable):
         assert False #TODO: raise better exception
     return Coerce.int(space, w_address)
 
+setattr(Coerce, 'ffi_address', staticmethod(coerce_address))
+
 class W_PointerObject(W_AbstractMemoryObject):
     classdef = ClassDef('Pointer', W_AbstractMemoryObject.classdef)
 
@@ -59,7 +61,7 @@ class W_PointerObject(W_AbstractMemoryObject):
         self.address = address
         self.ptr = rffi.cast(rffi.VOIDP, address)
         self.sizeof_type = sizeof_type
-        self.sizeof_memory = 0
+        self.sizeof_memory = 2**63
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -84,7 +86,7 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('size')
     def method_size(self, space):
-        return space.newint(self.sizeof_memory)
+        return space.newint_or_bigint(self.sizeof_memory)
 
     @classdef.method('==')
     def method_eq(self, space, w_other):

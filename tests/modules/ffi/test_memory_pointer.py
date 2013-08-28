@@ -2,6 +2,8 @@ from tests.modules.ffi.base import BaseFFITest
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
+from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
+                                                  cast_adr_to_int as adr2int)
 
 class TestMemoryPointer(BaseFFITest):
 
@@ -34,3 +36,11 @@ class TestMemoryPointer__new(BaseFFITest):
             w_ptr1 = ffis.execute("FFI::MemoryPointer.new(:%s, 1)" % t)
             w_ptr2 = ffis.execute("FFI::MemoryPointer.new(:%s)" % t)
             assert w_ptr1.sizeof_memory == w_ptr2.sizeof_memory
+
+    def test_it_also_lets_you_read_its_address(self, ffis):
+        w_results = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:int8, 1)
+        [mem_ptr, mem_ptr.address]
+        """)
+        w_mem_ptr, w_address = ffis.listview(w_results)
+        assert adr2int(ptr2adr(w_mem_ptr.ptr)) == self.unwrap(ffis, w_address)

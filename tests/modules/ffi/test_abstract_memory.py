@@ -15,23 +15,6 @@ for bits in [8, 16, 32, 64]:
     maxval['int' + str(bits)] = 2**(bits-1) - 1
     maxval['uint' + str(bits)] = 2**bits - 1
 
-class TestAbstractMemory_put_pointer(BaseFFITest):
-    def test_it_puts_a_single_pointer_into_the_given_offset(self, ffis):
-        w_results = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:pointer, 2)
-        ptr1 = FFI::MemoryPointer.new(:int32, 1)
-        ptr1.write_int32(1)
-        ptr2 = FFI::MemoryPointer.new(:int32, 1)
-        ptr2.write_int32(2)
-        mem_ptr.put_pointer(0, ptr1)
-        mem_ptr.put_pointer(1, ptr2)
-        [mem_ptr, ptr1, ptr2]
-        """)
-        w_mem_ptr, w_ptr1, w_ptr2 = ffis.listview(w_results)
-        w_mem_voidptr = new_cast_method('pointer')(w_mem_ptr)
-        assert w_mem_voidptr[0] == w_ptr1.ptr
-        assert w_mem_voidptr[1] == w_ptr2.ptr
-
 class TestAbstractMemory_put_methods(BaseFFITest):
     def test_they_put_a_single_value_into_the_given_offset(self, ffis):
         for t in supported_type_names:
@@ -84,6 +67,48 @@ class TestAbstractMemory_write_methods(BaseFFITest):
             cast_method = getattr(w_mem_ptr, t + '_cast')
             casted_ptr = cast_method()
             assert casted_ptr[0] == 'y' if t == 'int8' else 121
+
+class TestAbstractMemory_put_pointer(BaseFFITest):
+    def test_it_puts_a_single_pointer_into_the_given_offset(self, ffis):
+        w_mem_ptr = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:pointer, 2)
+        ptr1 = FFI::Pointer.new(88)
+        ptr2 = FFI::Pointer.new(55)
+        mem_ptr.put_pointer(0, ptr1)
+        mem_ptr.put_pointer(1, ptr2)
+        mem_ptr
+        """)
+        w_adr_ptr = new_cast_method('int32')(w_mem_ptr)
+        assert w_adr_ptr[0] == 88
+        assert w_adr_ptr[1] == 55
+
+class TestAbstractMemory_get_pointer(BaseFFITest):
+    def test_it_gets_a_single_pointer_from_the_given_offset(self, ffis):
+        assert self.ask(ffis, """
+        mem_ptr = FFI::MemoryPointer.new(:pointer, 4)
+        mem_ptr.put_pointer(3, FFI::Pointer.new(67))
+        ptr = mem_ptr.get_pointer(3)
+        ptr.class.equal?(FFI::Pointer) and ptr.address == 67
+        """)
+
+    def test_it_always_returns_a_simple_pointer(self, ffis):
+        assert self.ask(ffis, """
+        outer_mem_ptr = FFI::MemoryPointer.new(:pointer, 1)
+        inner_mem_ptr = FFI::MemoryPointer.new(:int8, 1)
+        outer_mem_ptr.put_pointer(0, inner_mem_ptr)
+        ! outer_mem_ptr.get_pointer(0).class.equal? FFI::MemoryPointer
+        outer_mem_ptr.get_pointer(0).class.equal? FFI::Pointer
+        """)
+
+    def test_it_doesnt_loose_the_content(self, ffis):
+        w_res = ffis.execute("""
+        outer_mem_ptr = FFI::MemoryPointer.new(:pointer, 1)
+        inner_mem_ptr = FFI::MemoryPointer.new(:int16, 1)
+        inner_mem_ptr.write_int16(300)
+        outer_mem_ptr.put_pointer(0, inner_mem_ptr)
+        outer_mem_ptr.get_pointer(0).read_int16
+        """)
+        assert self.unwrap(ffis, w_res) == 300
 
 class TestAbstractMemory_get_methods(BaseFFITest):
     def test_they_get_a_single_value_from_the_given_offset(self, ffis):

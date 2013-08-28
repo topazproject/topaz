@@ -5,6 +5,8 @@ from topaz.modules.ffi.type import native_types, W_TypeObject, type_object
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
+from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
+                                                  cast_adr_to_int as adr2int)
 
 class W_MemoryPointerObject(W_PointerObject):
     classdef = ClassDef('MemoryPointer', W_PointerObject.classdef)
@@ -28,3 +30,4 @@ class W_MemoryPointerObject(W_PointerObject):
         memory = lltype.malloc(rffi.CArray(rffi.CHAR), self.sizeof_memory,
                                flavor='raw')
         self.ptr = rffi.cast(rffi.VOIDP, memory)
+        self.address = adr2int(ptr2adr(self.ptr))

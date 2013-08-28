@@ -48,7 +48,7 @@ def new_get_method(type_str):
     cast_method = new_cast_method(type_str)
     numberof_method = new_numberof_method(type_str)
     sizeof_type = rffi.sizeof(ctype)
-    if ctype is rffi.CHAR:
+    if type_str == 'int8':
         to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
     else:
         to_int = intmask
@@ -58,7 +58,15 @@ def new_get_method(type_str):
             raise memory_index_error(space, offset, sizeof_type)
         try:
             val = casted_ptr[offset]
-            return space.newint(to_int(val))
+            w_val = space.newint(to_int(val))
+            if type_str == 'pointer':
+                w_ffi = space.find_const(space.w_kernel, 'FFI')
+                w_pointer = space.find_const(w_ffi, 'Pointer')
+                w_res = space.send(w_pointer, 'new', [w_val])
+                w_res.sizeof_memory = 32
+                return w_res
+            else:
+                return w_val
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return get_method
@@ -81,9 +89,30 @@ class W_AbstractMemoryObject(W_Object):
     def singleton_method_allocate(self, space):
         return W_AbstractMemoryObject(space)
 
-    method_put_pointer = classdef.method('put_pointer', offset='int',
-                                                        value='ffi_pointer')(
-                         new_put_method('pointer'))
+    @classdef.method('put_pointer', offset='int', value='ffi_address')
+    def method_put_pointer(self, space, offset, value):
+        val = rffi.cast(rffi.INT, value)
+        casted_ptr = self.int32_cast()
+        if offset >= self.int32_size():
+            raise memory_index_error(space, offset, sizeof_type)
+        try:
+            casted_ptr[offset] = val
+        except IndexError:
+            raise memory_index_error(space, offset, sizeof_type)
+
+    @classdef.method('get_pointer', offset='int')
+    def get_method(self, space, offset):
+        casted_ptr = self.int32_cast()
+        if offset >= self.int32_size():
+            raise memory_index_error(space, offset, sizeof_type)
+        try:
+            address = casted_ptr[offset]
+            w_address = space.newint(address)
+            w_ffi = space.find_const(space.w_kernel, 'FFI')
+            w_pointer = space.find_const(w_ffi, 'Pointer')
+            return space.send(w_pointer, 'new', [w_address])
+        except IndexError:
+            raise memory_index_error(space, offset, sizeof_type)
 
     #@classdef.method('put_array_of_int32', begin='int', arr_w='array')
     #def method_put_array_of_int32(self, space, begin, arr_w):

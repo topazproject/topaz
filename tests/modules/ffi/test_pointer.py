@@ -26,9 +26,7 @@ class TestPointer__NULL(BaseFFITest):
 
 class TestPointer__new(BaseFFITest):
     def test_it_returns_an_object_eq_to_NULL_when_given_0(self, space):
-        question = "FFI::Pointer.new(0) == FFI::Pointer::NULL"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        assert self.ask(space, "FFI::Pointer.new(0) == FFI::Pointer::NULL")
 
     def test_it_serves_as_a_copy_constructor(self, space):
         assert self.ask(space, """
@@ -45,6 +43,15 @@ class TestPointer__new(BaseFFITest):
         adr = llmemory.cast_ptr_to_adr(ptr_obj.ptr)
         assert llmemory.cast_adr_to_int(adr) == aint
 
+    # TODO: This test doesn't work yet, because only addresses in uint range
+    # are supported so far.
+    #def test_it_also_accepts_negative_values(self, space):
+    ## A negative value x is interpreted as 2**63 - x.
+    #    for x in range(100):
+    #        assert self.ask(space, """
+    #        FFI::Pointer.new(X) == FFI::Pointer.new(2**63 - X)
+    #        """.replace('X', str(x)))
+
     def test_it_can_also_be_called_with_a_type_size(self, space):
         char_ptr = lltype.malloc(rffi.CArray(rffi.SHORT), 1, flavor='raw')
         adr = llmemory.cast_ptr_to_adr(char_ptr)
@@ -56,6 +63,12 @@ class TestPointer__new(BaseFFITest):
         assert self.unwrap(space, type_size) == 2
         adr = llmemory.cast_ptr_to_adr(ptr_obj.ptr)
         assert llmemory.cast_adr_to_int(adr) == aint
+
+class TestPointer_size(BaseFFITest):
+    def test_it_is_always_2_pow_63(self, space):
+        for adr in range(100):
+            w_res = space.execute("FFI::Pointer.new(%s).size" % adr)
+            assert self.unwrap(space, w_res).toulonglong() == 2**63
 
 class TestPointer_autorelease(BaseFFITest):
     def test_it(self, space):
