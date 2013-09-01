@@ -272,3 +272,22 @@ class W_FloatObject(W_RootObject):
     @classdef.method("quo")
     def method_quo(self, space):
         raise space.error(space.w_NotImplementedError, "Numeric#quo")
+        
+    @classdef.method("%")
+    @classdef.method("modulo")
+    def method_mod(self, space, w_other):
+        if (space.getclass(w_other) is space.w_fixnum or 
+            space.getclass(w_other) is space.w_bignum or 
+            space.getclass(w_other) is space.w_float):
+            return self.method_mod_float_impl(space, space.float_w(w_other))
+        else:
+            raise space.error(space.w_TypeError,
+                              "%s can't be coerced into Float" %
+                              space.obj_to_s(space.getclass(w_other)))
+                              
+    def method_mod_float_impl(self, space, other):
+        if other == 0.0:
+            raise space.error(space.w_ZeroDivisionError, "devided by 0")
+        elif self.floatvalue == -0.0:
+            return space.newfloat(-0.0)
+        return space.newfloat(self.floatvalue % other)

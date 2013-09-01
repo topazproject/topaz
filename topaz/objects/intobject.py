@@ -221,25 +221,21 @@ class W_FixnumObject(W_RootObject):
     @classdef.method("%")
     @classdef.method("modulo")
     def method_mod(self, space, w_other):
-        # Corece does a similar check, but the error message is different
-        # so we need to do this by hand here
         if space.getclass(w_other) is space.w_fixnum:
-            modulus = rbigint.fromint(space.int_w(w_other))
+            return self.method_mod_int_impl(space, space.int_w(w_other))
         elif space.getclass(w_other) is space.w_float:
-            modulus = rbigint.fromfloat(space.float_w(w_other))
+            return space.send(self.method_to_f(space), "%", [w_other])
         elif space.getclass(w_other) is space.w_bignum:
-            modulus = space.bigint_w(w_other)
+            return space.send(space.newbigint_fromint(self.intvalue), "%", [w_other])
         else:
             raise space.error(space.w_TypeError,
                               "%s can't be coerced into Fixnum" %
                               space.obj_to_s(space.getclass(w_other)))
-        if not modulus.tobool():
+                              
+    def method_mod_int_impl(self, space, other):
+        if other == 0:
             raise space.error(space.w_ZeroDivisionError, "devided by 0")
-        remainder = rbigint.fromint(self.intvalue).mod(modulus)
-        try:
-            return space.newint(ramainder.toint())
-        except OverflowError:
-            return space.newbigint_fromrbigint(remainder)
+        return space.newint(self.intvalue % other)
 
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):

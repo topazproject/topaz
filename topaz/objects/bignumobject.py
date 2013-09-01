@@ -173,3 +173,23 @@ class W_BignumObject(W_IntegerObject):
                     space.obj_to_s(space.getclass(w_other))
                 )
             )
+
+    @classdef.method("%")
+    @classdef.method("modulo")
+    def method_mod(self, space, w_other):
+        if space.getclass(w_other) is space.w_fixnum:
+            return space.newint(space.int_w(self.method_mod_bigint_impl(
+                                            space, space.bigint_w(w_other))))
+        elif space.getclass(w_other) is space.w_float:
+            return space.send(self.method_to_f(space), "%", [w_other])
+        elif space.getclass(w_other) is space.w_bignum:
+            return self.method_mod_bigint_impl(space, space.bigint_w(w_other))
+        else:
+            raise space.error(space.w_TypeError,
+                              "%s can't be coerced into Bignum" %
+                              space.obj_to_s(space.getclass(w_other)))
+                              
+    def method_mod_bigint_impl(self, space, other):
+        if not other.tobool():
+            raise space.error(space.w_ZeroDivisionError, "devided by 0")
+        return space.newbigint_fromrbigint(self.bigint.mod(other))
