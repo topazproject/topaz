@@ -230,12 +230,16 @@ class W_FixnumObject(W_RootObject):
         elif space.getclass(w_other) is space.w_bignum:
             modulus = space.bigint_w(w_other)
         else:
-            raise space.error(space.w_TypeError, 
-                              "%s can't be coerced into Fixnum" % 
+            raise space.error(space.w_TypeError,
+                              "%s can't be coerced into Fixnum" %
                               space.obj_to_s(space.getclass(w_other)))
         if not modulus.tobool():
             raise space.error(space.w_ZeroDivisionError, "devided by 0")
-        return space.newbigint_fromrbigint(rbigint.fromint(self.intvalue).mod(modulus))
+        remainder = rbigint.fromint(self.intvalue).mod(modulus)
+        try:
+            return space.newint(ramainder.toint())
+        except OverflowError:
+            return space.newbigint_fromrbigint(remainder)
 
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
