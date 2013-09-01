@@ -24,11 +24,6 @@ class Numeric
     (self / other).floor
   end
 
-  def %(other)
-    self - other * self.div(other)
-  end
-  alias modulo %
-
   def divmod(other)
     [div(other), self % other]
   end

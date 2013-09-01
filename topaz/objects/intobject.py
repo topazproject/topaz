@@ -218,9 +218,24 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.send(space.newfloat(float(temp)), "**", [w_other])
 
-    @classdef.method("%", other="int")
-    def method_mod(self, space, other):
-        return space.newint(self.intvalue % other)
+    @classdef.method("%")
+    @classdef.method("modulo")
+    def method_mod(self, space, w_other):
+        # Corece does a similar check, but the error message is different
+        # so we need to do this by hand here
+        if space.getclass(w_other) is space.w_fixnum:
+            modulus = rbigint.fromint(space.int_w(w_other))
+        elif space.getclass(w_other) is space.w_float:
+            modulus = rbigint.fromfloat(space.float_w(w_other))
+        elif space.getclass(w_other) is space.w_bignum:
+            modulus = space.bigint_w(w_other)
+        else:
+            raise space.error(space.w_TypeError, 
+                              "%s can't be coerced into Fixnum" % 
+                              space.obj_to_s(space.getclass(w_other)))
+        if not modulus.tobool():
+            raise space.error(space.w_ZeroDivisionError, "devided by 0")
+        return space.newbigint_fromrbigint(rbigint.fromint(self.intvalue).mod(modulus))
 
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
