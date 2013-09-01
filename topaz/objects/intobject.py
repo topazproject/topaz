@@ -231,7 +231,7 @@ class W_FixnumObject(W_RootObject):
             raise space.error(space.w_TypeError,
                               "%s can't be coerced into Fixnum" %
                               space.obj_to_s(space.getclass(w_other)))
-                              
+
     def method_mod_int_impl(self, space, other):
         if other == 0:
             raise space.error(space.w_ZeroDivisionError, "devided by 0")
