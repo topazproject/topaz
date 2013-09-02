@@ -272,14 +272,36 @@ class W_FloatObject(W_RootObject):
     @classdef.method("quo")
     def method_quo(self, space):
         raise space.error(space.w_NotImplementedError, "Numeric#quo")
-        
+
     @classdef.method("divmod")
     def method_divmod(self, space, w_other):
         if (space.getclass(w_other) is space.w_fixnum or
             space.getclass(w_other) is space.w_bignum or
             space.getclass(w_other) is space.w_float):
-            res = divmod(self.floatvalue, space.float_w(w_other))
-            return space.newarray([space.newint(int(res[0])), space.newfloat(res[1])])
+            x = self.floatvalue
+            y = space.float_w(w_other)
+            mod = space.float_w(self.method_mod_float_impl(space, y))
+            # TAKEN FROM: pypy/module/cpytext/floatobject.py
+            div = (x - mod) / y
+            if (mod):
+                # ensure the remainder has the same sign as the denominator
+                if ((y < 0.0) != (mod < 0.0)):
+                    mod += y
+                    div -= 1.0
+            else:
+                mod *= mod  # hide "mod = +0" from optimizer
+                if y < 0.0:
+                    mod = -mod
+            # snap quotient to nearest integral value
+            if div:
+                floordiv = math.floor(div)
+                if (div - floordiv > 0.5):
+                    floordiv += 1.0
+            else:
+                # div is zero - get the same sign as the true quotient
+                div *= div  # hide "div = +0" from optimizers
+                floordiv = div * x / y  # zero w/ sign of vx/wx
+            return space.newarray([space.newint(int(div)), space.newfloat(mod)])
         else:
             raise space.error(space.w_TypeError,
                               "%s can't be coerced into Float" %
