@@ -25,6 +25,13 @@ class Fixnum < Integer
     self % 2 != 0
   end
 
+  def %(other)
+    raise ZeroDivisionError if other.eql?(0.0)
+    raise TypeError unless other.kind_of? Numeric
+    self - other.to_int * self.div(other.to_int)
+  end
+  alias modulo %
+
   def __id__
     self * 2 + 1
   end

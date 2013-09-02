@@ -218,10 +218,6 @@ class W_FixnumObject(W_RootObject):
         else:
             return space.send(space.newfloat(float(temp)), "**", [w_other])
 
-    @classdef.method("%", other="int")
-    def method_mod(self, space, other):
-        return space.newint(self.intvalue % other)
-
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
         if other < 0:
