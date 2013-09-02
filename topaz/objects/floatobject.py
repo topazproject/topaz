@@ -272,6 +272,18 @@ class W_FloatObject(W_RootObject):
     @classdef.method("quo")
     def method_quo(self, space):
         raise space.error(space.w_NotImplementedError, "Numeric#quo")
+        
+    @classdef.method("divmod")
+    def method_divmod(self, space, w_other):
+        if (space.getclass(w_other) is space.w_fixnum or
+            space.getclass(w_other) is space.w_bignum or
+            space.getclass(w_other) is space.w_float):
+            res = divmod(self.floatvalue, space.float_w(w_other))
+            return space.newarray([space.newint(int(res[0])), space.newfloat(res[1])])
+        else:
+            raise space.error(space.w_TypeError,
+                              "%s can't be coerced into Float" %
+                              space.obj_to_s(space.getclass(w_other)))
 
     @classdef.method("%")
     @classdef.method("modulo")
