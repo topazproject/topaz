@@ -290,4 +290,8 @@ class W_FloatObject(W_RootObject):
             raise space.error(space.w_ZeroDivisionError, "devided by 0")
         elif self.floatvalue == -0.0:
             return space.newfloat(-0.0)
+        elif math.isinf(other) and other < 0.0:
+            return space.newfloat(other)
+        elif math.isnan(self.floatvalue) or math.isinf(self.floatvalue):
+            return space.newfloat(NAN)
         return space.newfloat(math.fmod(self.floatvalue, other))
