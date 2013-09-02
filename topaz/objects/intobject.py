@@ -7,6 +7,7 @@ from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import (r_uint, r_longlong, r_ulonglong,
     ovfcheck, LONG_BIT)
 from rpython.rlib.rbigint import rbigint
+from rpython.rlib.rfloat import round_away
 from rpython.rtyper.lltypesystem import lltype, rffi
 
 from topaz.coerce import Coerce
@@ -217,6 +218,22 @@ class W_FixnumObject(W_RootObject):
             return space.newint(ix)
         else:
             return space.send(space.newfloat(float(temp)), "**", [w_other])
+            
+    @classdef.method("divmod")
+    def method_divmod(self, space, w_other):
+        if space.getclass(w_other) is space.w_float:
+            return space.send(self.method_to_f(space), "divmod", [w_other])
+        elif space.getclass(w_other) is space.w_bignum:
+            return space.send(space.newbigint_fromint(self.intvalue), "divmod", [w_other])
+        elif space.getclass(w_other) is space.w_fixnum:
+            y = space.int_w(w_other)
+            mod = space.int_w(self.method_mod_int_impl(space, y))
+            div = (self.intvalue - mod) / y
+            return space.newarray([space.newint(int(round_away(div))), space.newfloat(mod)])
+        else:
+            raise space.error(space.w_TypeError,
+                              "%s can't be coerced into Fixnum" %
+                              space.obj_to_s(space.getclass(w_other)))
 
     @classdef.method("%")
     @classdef.method("modulo")

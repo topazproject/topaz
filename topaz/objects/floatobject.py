@@ -275,11 +275,17 @@ class W_FloatObject(W_RootObject):
 
     @classdef.method("divmod")
     def method_divmod(self, space, w_other):
+        if math.isnan(self.floatvalue) or math.isinf(self.floatvalue):
+            raise space.error(space.w_FloatDomainError,
+                              space.obj_to_s(space.getclass(w_other)))
         if (space.getclass(w_other) is space.w_fixnum or
             space.getclass(w_other) is space.w_bignum or
             space.getclass(w_other) is space.w_float):
-            x = self.floatvalue
             y = space.float_w(w_other)
+            if math.isnan(y):
+                raise space.error(space.w_FloatDomainError,
+                                  space.obj_to_s(space.getclass(w_other)))
+            x = self.floatvalue
             mod = space.float_w(self.method_mod_float_impl(space, y))
             # TAKEN FROM: pypy/module/cpytext/floatobject.py
             div = (x - mod) / y
@@ -301,7 +307,10 @@ class W_FloatObject(W_RootObject):
                 # div is zero - get the same sign as the true quotient
                 div *= div  # hide "div = +0" from optimizers
                 floordiv = div * x / y  # zero w/ sign of vx/wx
-            return space.newarray([space.newint(int(div)), space.newfloat(mod)])
+            try:
+                return space.newarray([self.float_to_w_int(space, round_away(div)), space.newfloat(mod)])
+            except OverflowError:
+                return space.newarray([space.newbigint_fromfloat(div), space.newfloat(mod)])
         else:
             raise space.error(space.w_TypeError,
                               "%s can't be coerced into Float" %
