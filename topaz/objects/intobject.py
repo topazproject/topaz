@@ -229,19 +229,19 @@ class W_FixnumObject(W_RootObject):
             y = space.int_w(w_other)
             if y == 0:
                 raise space.error(
-                          space.w_ZeroDivisionError, 
-                          "devided by 0"
-                      )
+                    space.w_ZeroDivisionError,
+                    "devided by 0"
+                )
             mod = space.int_w(self.method_mod_int_impl(space, y))
             div = (self.intvalue - mod) / y
             return space.newarray([space.newint(int(round_away(div))), space.newfloat(mod)])
         else:
             raise space.error(
-                      space.w_TypeError,
-                      "%s can't be coerced into Fixnum" % (
-                          space.obj_to_s(space.getclass(w_other))
-                      )
-                  )
+                space.w_TypeError,
+                "%s can't be coerced into Fixnum" % (
+                    space.obj_to_s(space.getclass(w_other))
+                )
+            )
 
     @classdef.method("%")
     @classdef.method("modulo")
@@ -254,11 +254,11 @@ class W_FixnumObject(W_RootObject):
             return space.send(space.newbigint_fromint(self.intvalue), "%", [w_other])
         else:
             raise space.error(
-                      space.w_TypeError,
-                      "%s can't be coerced into Fixnum" % (
-                          space.obj_to_s(space.getclass(w_other))
-                      )
-                  )
+                space.w_TypeError,
+                "%s can't be coerced into Fixnum" % (
+                    space.obj_to_s(space.getclass(w_other))
+                )
+            )
 
     def method_mod_int_impl(self, space, other):
         if other == 0:
