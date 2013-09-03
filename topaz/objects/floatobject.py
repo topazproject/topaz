@@ -272,3 +272,79 @@ class W_FloatObject(W_RootObject):
     @classdef.method("quo")
     def method_quo(self, space):
         raise space.error(space.w_NotImplementedError, "Numeric#quo")
+
+    @classdef.method("divmod")
+    def method_divmod(self, space, w_other):
+        if math.isnan(self.floatvalue) or math.isinf(self.floatvalue):
+            raise space.error(
+                space.w_FloatDomainError,
+                space.obj_to_s(space.getclass(w_other))
+            )
+        if (space.is_kind_of(w_other, space.w_fixnum) or
+            space.is_kind_of(w_other, space.w_bignum) or
+            space.is_kind_of(w_other, space.w_float)):
+            y = space.float_w(w_other)
+            if math.isnan(y):
+                raise space.error(
+                    space.w_FloatDomainError,
+                    space.obj_to_s(space.getclass(w_other))
+                )
+            x = self.floatvalue
+            mod = space.float_w(self.method_mod_float_impl(space, y))
+            # TAKEN FROM: pypy/module/cpytext/floatobject.py
+            div = (x - mod) / y
+            if (mod):
+                # ensure the remainder has the same sign as the denominator
+                if ((y < 0.0) != (mod < 0.0)):
+                    mod += y
+                    div -= 1.0
+            else:
+                mod *= mod  # hide "mod = +0" from optimizer
+                if y < 0.0:
+                    mod = -mod
+            # snap quotient to nearest integral value
+            if div:
+                floordiv = math.floor(div)
+                if (div - floordiv > 0.5):
+                    floordiv += 1.0
+            else:
+                # div is zero - get the same sign as the true quotient
+                div *= div  # hide "div = +0" from optimizers
+                floordiv = div * x / y  # zero w/ sign of vx/wx
+            try:
+                return space.newarray([self.float_to_w_int(space, round_away(div)), space.newfloat(mod)])
+            except OverflowError:
+                return space.newarray([space.newbigint_fromfloat(div), space.newfloat(mod)])
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "%s can't be coerced into Float" % (
+                    space.obj_to_s(space.getclass(w_other))
+                )
+            )
+
+    @classdef.method("%")
+    @classdef.method("modulo")
+    def method_mod(self, space, w_other):
+        if (space.is_kind_of(w_other, space.w_fixnum) or
+            space.is_kind_of(w_other, space.w_bignum) or
+            space.is_kind_of(w_other, space.w_float)):
+            return self.method_mod_float_impl(space, space.float_w(w_other))
+        else:
+            raise space.error(
+                space.w_TypeError,
+                "%s can't be coerced into Float" % (
+                    space.obj_to_s(space.getclass(w_other))
+                )
+            )
+
+    def method_mod_float_impl(self, space, other):
+        if other == 0.0:
+            raise space.error(space.w_ZeroDivisionError, "devided by 0")
+        elif self.floatvalue == -0.0:
+            return space.newfloat(-0.0)
+        elif math.isinf(other) and other < 0.0:
+            return space.newfloat(other)
+        elif math.isnan(self.floatvalue) or math.isinf(self.floatvalue):
+            return space.newfloat(NAN)
+        return space.newfloat(math.fmod(self.floatvalue, other))
