@@ -218,7 +218,7 @@ class W_FixnumObject(W_RootObject):
             return space.newint(ix)
         else:
             return space.send(space.newfloat(float(temp)), "**", [w_other])
-            
+
     @classdef.method("divmod")
     def method_divmod(self, space, w_other):
         if space.getclass(w_other) is space.w_float:
@@ -227,6 +227,8 @@ class W_FixnumObject(W_RootObject):
             return space.send(space.newbigint_fromint(self.intvalue), "divmod", [w_other])
         elif space.getclass(w_other) is space.w_fixnum:
             y = space.int_w(w_other)
+            if y == 0:
+                raise space.error(space.w_ZeroDivisionError, "devided by 0")
             mod = space.int_w(self.method_mod_int_impl(space, y))
             div = (self.intvalue - mod) / y
             return space.newarray([space.newint(int(round_away(div))), space.newfloat(mod)])

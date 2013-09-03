@@ -173,15 +173,18 @@ class W_BignumObject(W_IntegerObject):
                     space.obj_to_s(space.getclass(w_other))
                 )
             )
-            
+
     @classdef.method("divmod")
     def method_divmod(self, space, w_other):
         if space.getclass(w_other) is space.w_float:
             return space.send(self.method_to_f(space), "divmod", [w_other])
         elif(space.getclass(w_other) is space.w_bignum or
              space.getclass(w_other) is space.w_fixnum):
-            div, mod = self.bigint.divmod(space.bigint_w(w_other))
-            return space.newarray([space.newbigint_fromrbigint(div), 
+            other = space.bigint_w(w_other)
+            if not other.tobool():
+                raise space.error(space.w_ZeroDivisionError, "devided by 0")
+            div, mod = self.bigint.divmod(other)
+            return space.newarray([space.newbigint_fromrbigint(div),
                                    space.newbigint_fromrbigint(mod)])
         else:
             raise space.error(space.w_TypeError,
