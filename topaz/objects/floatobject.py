@@ -276,15 +276,19 @@ class W_FloatObject(W_RootObject):
     @classdef.method("divmod")
     def method_divmod(self, space, w_other):
         if math.isnan(self.floatvalue) or math.isinf(self.floatvalue):
-            raise space.error(space.w_FloatDomainError,
-                              space.obj_to_s(space.getclass(w_other)))
-        if (space.getclass(w_other) is space.w_fixnum or
-            space.getclass(w_other) is space.w_bignum or
-            space.getclass(w_other) is space.w_float):
+            raise space.error(
+                      space.w_FloatDomainError,
+                      space.obj_to_s(space.getclass(w_other))
+                  )
+        if (space.is_kind_of(w_other, space.w_fixnum) or
+            space.is_kind_of(w_other, space.w_bignum) or
+            space.is_kind_of(w_other, space.w_float)):
             y = space.float_w(w_other)
             if math.isnan(y):
-                raise space.error(space.w_FloatDomainError,
-                                  space.obj_to_s(space.getclass(w_other)))
+                raise space.error(
+                          space.w_FloatDomainError,
+                          space.obj_to_s(space.getclass(w_other))
+                      )
             x = self.floatvalue
             mod = space.float_w(self.method_mod_float_impl(space, y))
             # TAKEN FROM: pypy/module/cpytext/floatobject.py
@@ -312,21 +316,27 @@ class W_FloatObject(W_RootObject):
             except OverflowError:
                 return space.newarray([space.newbigint_fromfloat(div), space.newfloat(mod)])
         else:
-            raise space.error(space.w_TypeError,
-                              "%s can't be coerced into Float" %
-                              space.obj_to_s(space.getclass(w_other)))
+            raise space.error(
+                      space.w_TypeError,
+                      "%s can't be coerced into Float" % (
+                          space.obj_to_s(space.getclass(w_other))
+                      )
+                  )
 
     @classdef.method("%")
     @classdef.method("modulo")
     def method_mod(self, space, w_other):
-        if (space.getclass(w_other) is space.w_fixnum or
-            space.getclass(w_other) is space.w_bignum or
-            space.getclass(w_other) is space.w_float):
+        if (space.is_kind_of(w_other, space.w_fixnum) or
+            space.is_kind_of(w_other, space.w_bignum) or
+            space.is_kind_of(w_other, space.w_float)):
             return self.method_mod_float_impl(space, space.float_w(w_other))
         else:
-            raise space.error(space.w_TypeError,
-                              "%s can't be coerced into Float" %
-                              space.obj_to_s(space.getclass(w_other)))
+            raise space.error(
+                      space.w_TypeError,
+                      "%s can't be coerced into Float" % (
+                          space.obj_to_s(space.getclass(w_other))
+                      )
+                  )
 
     def method_mod_float_impl(self, space, other):
         if other == 0.0:

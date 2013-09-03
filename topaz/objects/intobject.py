@@ -221,35 +221,44 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.method("divmod")
     def method_divmod(self, space, w_other):
-        if space.getclass(w_other) is space.w_float:
+        if space.is_kind_of(w_other, space.w_float):
             return space.send(self.method_to_f(space), "divmod", [w_other])
-        elif space.getclass(w_other) is space.w_bignum:
+        elif space.is_kind_of(w_other, space.w_bignum):
             return space.send(space.newbigint_fromint(self.intvalue), "divmod", [w_other])
-        elif space.getclass(w_other) is space.w_fixnum:
+        elif space.is_kind_of(w_other, space.w_fixnum):
             y = space.int_w(w_other)
             if y == 0:
-                raise space.error(space.w_ZeroDivisionError, "devided by 0")
+                raise space.error(
+                          space.w_ZeroDivisionError, 
+                          "devided by 0"
+                      )
             mod = space.int_w(self.method_mod_int_impl(space, y))
             div = (self.intvalue - mod) / y
             return space.newarray([space.newint(int(round_away(div))), space.newfloat(mod)])
         else:
-            raise space.error(space.w_TypeError,
-                              "%s can't be coerced into Fixnum" %
-                              space.obj_to_s(space.getclass(w_other)))
+            raise space.error(
+                      space.w_TypeError,
+                      "%s can't be coerced into Fixnum" % (
+                          space.obj_to_s(space.getclass(w_other))
+                      )
+                  )
 
     @classdef.method("%")
     @classdef.method("modulo")
     def method_mod(self, space, w_other):
-        if space.getclass(w_other) is space.w_fixnum:
+        if space.is_kind_of(w_other, space.w_fixnum):
             return self.method_mod_int_impl(space, space.int_w(w_other))
-        elif space.getclass(w_other) is space.w_float:
+        elif space.is_kind_of(w_other, space.w_float):
             return space.send(self.method_to_f(space), "%", [w_other])
-        elif space.getclass(w_other) is space.w_bignum:
+        elif space.is_kind_of(w_other, space.w_bignum):
             return space.send(space.newbigint_fromint(self.intvalue), "%", [w_other])
         else:
-            raise space.error(space.w_TypeError,
-                              "%s can't be coerced into Fixnum" %
-                              space.obj_to_s(space.getclass(w_other)))
+            raise space.error(
+                      space.w_TypeError,
+                      "%s can't be coerced into Fixnum" % (
+                          space.obj_to_s(space.getclass(w_other))
+                      )
+                  )
 
     def method_mod_int_impl(self, space, other):
         if other == 0:
