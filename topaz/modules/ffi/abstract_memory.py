@@ -101,7 +101,7 @@ class W_AbstractMemoryObject(W_Object):
             raise memory_index_error(space, offset, sizeof_type)
 
     @classdef.method('get_pointer', offset='int')
-    def get_method(self, space, offset):
+    def method_get_pointer(self, space, offset):
         casted_ptr = self.int32_cast()
         if offset >= self.int32_size():
             raise memory_index_error(space, offset, sizeof_type)
@@ -113,6 +113,12 @@ class W_AbstractMemoryObject(W_Object):
             return space.send(w_pointer, 'new', [w_address])
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
+
+    method_write_pointer = classdef.method('write_pointer')(
+                           new_write_method('pointer'))
+
+    method_read_pointer = classdef.method('read_pointer')(
+                          new_read_method('pointer'))
 
     #@classdef.method('put_array_of_int32', begin='int', arr_w='array')
     #def method_put_array_of_int32(self, space, begin, arr_w):

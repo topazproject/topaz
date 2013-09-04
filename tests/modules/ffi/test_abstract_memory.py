@@ -68,6 +68,29 @@ class TestAbstractMemory_write_methods(BaseFFITest):
             casted_ptr = cast_method()
             assert casted_ptr[0] == 'y' if t == 'int8' else 121
 
+class TestAbstractMemory_get_methods(BaseFFITest):
+    def test_they_get_a_single_value_from_the_given_offset(self, ffis):
+        for t in supported_type_names:
+            w_res = ffis.execute("""
+            mem_ptr = FFI::MemoryPointer.new(:T, 5)
+            mem_ptr.put_T(3, MIN)
+            mem_ptr.put_T(4, MAX)
+            [mem_ptr.get_T(3), mem_ptr.get_T(4)]
+            """.replace('T', t).
+                replace('MIN', str(minval[t])).
+                replace('MAX', str(maxval[t])))
+            assert self.unwrap(ffis, w_res) == [minval[t], maxval[t]]
+
+class TestAbstractMemory_read_methods(BaseFFITest):
+    def test_they_are_like_calling_get_with_0(self, ffis):
+        for t in supported_type_names:
+            w_res = ffis.execute("""
+            mem_ptr = FFI::MemoryPointer.new(:T, 1)
+            mem_ptr.write_T(1)
+            mem_ptr.read_T
+            """.replace('T', t))
+            assert self.unwrap(ffis, w_res) == 1
+
 class TestAbstractMemory_put_pointer(BaseFFITest):
     def test_it_puts_a_single_pointer_into_the_given_offset(self, ffis):
         w_mem_ptr = ffis.execute("""
@@ -110,28 +133,23 @@ class TestAbstractMemory_get_pointer(BaseFFITest):
         """)
         assert self.unwrap(ffis, w_res) == 300
 
-class TestAbstractMemory_get_methods(BaseFFITest):
-    def test_they_get_a_single_value_from_the_given_offset(self, ffis):
-        for t in supported_type_names:
-            w_res = ffis.execute("""
-            mem_ptr = FFI::MemoryPointer.new(:T, 5)
-            mem_ptr.put_T(3, MIN)
-            mem_ptr.put_T(4, MAX)
-            [mem_ptr.get_T(3), mem_ptr.get_T(4)]
-            """.replace('T', t).
-                replace('MIN', str(minval[t])).
-                replace('MAX', str(maxval[t])))
-            assert self.unwrap(ffis, w_res) == [minval[t], maxval[t]]
+class TestAbstractMemory_write_pointer(BaseFFITest):
+    def test_it_is_like_calling_put_pointer_with_0_as_1st_arg(self, ffis):
+        w_res = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:pointer, 1)
+        mem_ptr.write_pointer(FFI::Pointer.new(11))
+        mem_ptr.get_pointer(0).address
+        """)
+        assert self.unwrap(ffis, w_res) == 11
 
-class TestAbstractMemory_read_methods(BaseFFITest):
-    def test_they_are_like_calling_get_with_0(self, ffis):
-        for t in supported_type_names:
-            w_res = ffis.execute("""
-            mem_ptr = FFI::MemoryPointer.new(:T, 1)
-            mem_ptr.write_T(1)
-            mem_ptr.read_T
-            """.replace('T', t))
-            assert self.unwrap(ffis, w_res) == 1
+class TestAbstractMemory_read_pointer(BaseFFITest):
+    def test_it_is_like_calling_get_pointer_with_0(self, ffis):
+        w_res = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:pointer, 1)
+        mem_ptr.put_pointer(0, FFI::Pointer.new(13))
+        mem_ptr.read_pointer.address
+        """)
+        assert self.unwrap(ffis, w_res) == 13
 
 #class TestAbstractMemory__put_array_of_int32(BaseFFITest):
 #    def test_it_writes_into_array(self, ffis):
