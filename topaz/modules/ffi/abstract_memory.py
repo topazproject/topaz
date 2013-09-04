@@ -58,15 +58,7 @@ def new_get_method(type_str):
             raise memory_index_error(space, offset, sizeof_type)
         try:
             val = casted_ptr[offset]
-            w_val = space.newint(to_int(val))
-            if type_str == 'pointer':
-                w_ffi = space.find_const(space.w_kernel, 'FFI')
-                w_pointer = space.find_const(w_ffi, 'Pointer')
-                w_res = space.send(w_pointer, 'new', [w_val])
-                w_res.sizeof_memory = 32
-                return w_res
-            else:
-                return w_val
+            return space.newint(to_int(val))
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return get_method
