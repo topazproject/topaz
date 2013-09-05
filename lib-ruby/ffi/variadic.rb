@@ -50,8 +50,9 @@ module FFI
       invoker = self
       params = "*args"
       call = "call"
+      atat_mname = ('@@' << mname.to_s).to_sym
+      mod.class_variable_set(atat_mname, invoker)
       mod.module_eval <<-code
-      @@#{mname} = invoker
       def self.#{mname}(#{params})
         @@#{mname}.#{call}(#{params})
       end
