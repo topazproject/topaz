@@ -155,7 +155,7 @@ class W_FunctionObject(W_PointerObject):
         w_ret_type = self.w_ret_type
         arg_types_w = self.arg_types_w
         w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
-        for w_dl in w_ffi_libs.listview(space):
+        for w_dl in space.listview(w_ffi_libs):
             ffi_arg_types = [ffi_types[t.name] for t in arg_types_w]
             ffi_ret_type = ffi_types[w_ret_type.name]
             ptr_key = self.w_name

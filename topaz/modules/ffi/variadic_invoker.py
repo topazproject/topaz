@@ -27,3 +27,7 @@ class W_VariadicInvokerObject(W_Object):
             raise space.error(space.w_TypeError,
                             "can't convert %s into FFI::DynamicLibrary::Symbol"
                               % w_name.getclass(space).name)
+
+    @classdef.method('invoke')
+    def method_invoke(self, space, args_w):
+        return space.w_nil
