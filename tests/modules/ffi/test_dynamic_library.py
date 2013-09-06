@@ -1,4 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
+from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
+
 from rpython.rlib import clibffi
 
 class TestDynamicLibrary(BaseFFITest):
@@ -46,13 +48,10 @@ class TestDynamicLibrary__new(BaseFFITest):
                                "FFI::DynamicLibrary.method(:open)")
 
 class TestDynamicLibrary__Symbol(BaseFFITest):
-    def test_its_a_wrapper_around_a_symbol(self, space):
-        w_lib_sym = space.execute("FFI::DynamicLibrary::Symbol.new(:sym)")
-        assert w_lib_sym.getclass(space) != space.w_symbol
-        assert w_lib_sym.symbol == 'sym'
-
-    def test_it_is_null(self, space): # null, NOT nil
-        assert self.ask(space, "FFI::DynamicLibrary::Symbol.new(:sym).null?")
+    def test_its_a_wrapper_around_a_function_symbol(self, space):
+        exp_ptr = clibffi.CDLL('libm.so').getaddressindll('exp')
+        w_dl_sym = W_DL_SymbolObject(space, exp_ptr)
+        assert w_dl_sym.funcsym == exp_ptr
 
 class TestDynamicLibrary_find_variable(BaseFFITest):
     def test_it_returns_a_DynamicLibrary__Symbol(self, space):

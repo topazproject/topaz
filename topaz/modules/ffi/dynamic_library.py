@@ -3,6 +3,9 @@ from topaz.objects.objectobject import W_Object
 from topaz.coerce import Coerce
 
 from rpython.rlib import clibffi
+from rpython.rtyper.lltypesystem import rffi
+from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
+                                                  cast_adr_to_int as adr2int)
 
 class W_DynamicLibraryObject(W_Object):
     classdef = ClassDef('DynamicLibrary', W_Object.classdef)
@@ -47,28 +50,30 @@ class W_DynamicLibraryObject(W_Object):
 
     @classdef.method('find_variable', name='symbol')
     def method_find_variable(self, space, name):
+        funcsym = self.cdll.getaddressindll(name)
         w_sym = space.find_const(space.getclass(self), 'Symbol')
-        return space.send(w_sym, 'new', [space.newsymbol(name)])
+        return W_DL_SymbolObject(space, funcsym)
 
 class W_DL_SymbolObject(W_Object):
     classdef = ClassDef('Symbol', W_Object.classdef)
 
-    def __init__(self, space, klass=None):
+    def __init__(self, space, funcsym, klass=None):
         W_Object.__init__(self, space, klass)
-        self.symbol = ''
+        self.funcsym = funcsym
 
-    @classdef.singleton_method('allocate')
-    def singleton_method_allocate(self, space, args_w):
-        return W_DL_SymbolObject(space)
+    # TODO: new method should be private!
+    #       or: should take an int and try to make a voidptr out of it.
 
-    @classdef.method('initialize', symbol='symbol')
-    def method_initialize(self, space, symbol):
-        self.symbol = symbol
+    #@classdef.singleton_method('allocate')
+    #def singleton_method_allocate(self, space, args_w):
+    #    return W_DL_SymbolObject(space)
 
-    @classdef.method('to_sym')
-    def method_to_sym(self, space):
-        return space.newsymbol(self.symbol)
+    # TODO: fix these methods
 
-    @classdef.method('null?')
-    def method_null_p(self, space):
-        return space.newbool(True)
+    #@classdef.method('to_sym')
+    #def method_to_sym(self, space):
+    #    return space.newsymbol(str(self.funcsym))
+
+    #@classdef.method('null?')
+    #def method_null_p(self, space):
+    #    return space.newbool(True)

@@ -9,6 +9,8 @@ from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
 from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
+from rpython.rtyper.lltypesystem.llmemory import (cast_int_to_adr as int2adr,
+                                                  cast_adr_to_ptr as adr2ptr)
 from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
@@ -44,7 +46,7 @@ class W_FunctionObject(W_PointerObject):
         W_PointerObject.__init__(self, space)
         self.w_ret_type = W_TypeObject(space, 'DUMMY')
         self.arg_types_w = []
-        self.w_name = space.newsymbol('')
+        self.funcsym = rffi.NULL
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
@@ -53,13 +55,13 @@ class W_FunctionObject(W_PointerObject):
         self.w_ret_type = type_object(space, w_ret_type)
         self.arg_types_w = [type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
-        self.w_name = self.dlsym_unwrap(space, w_name) if w_name else None
+        self.funcsym = self.dlsym_unwrap(space, w_name) if w_name else None
 
     @staticmethod
     def dlsym_unwrap(space, w_name):
-        try:
-            return space.send(w_name, 'to_sym')
-        except RubyError:
+        if space.is_kind_of(w_name, space.getclassfor(W_DL_SymbolObject)):
+            return w_name.funcsym
+        else:
             raise space.error(space.w_TypeError,
                             "can't convert %s into FFI::DynamicLibrary::Symbol"
                               % w_name.getclass(space).name)
@@ -158,13 +160,12 @@ class W_FunctionObject(W_PointerObject):
         for w_dl in space.listview(w_ffi_libs):
             ffi_arg_types = [ffi_types[t.name] for t in arg_types_w]
             ffi_ret_type = ffi_types[w_ret_type.name]
-            ptr_key = self.w_name
-            assert space.is_kind_of(ptr_key, space.w_symbol)
+            ptr_key = self.funcsym
             try:
-                self.funcptr = w_dl.getpointer(space.symbol_w(ptr_key),
-                                               ffi_arg_types,
-                                               ffi_ret_type)
-                self.ptr = self.funcptr.funcsym
+                self.funcptr = clibffi.FuncPtr(name,
+                                               ffi_arg_types, ffi_ret_type,
+                                               self.funcsym)
+                self.ptr = self.funcsym
                 w_attachments = space.send(w_lib, 'attachments')
                 space.send(w_attachments, '[]=', [space.newsymbol(name), self])
             except KeyError: pass

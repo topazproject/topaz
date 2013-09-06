@@ -20,9 +20,9 @@ class TestFunction__new(BaseFFITest):
     def test_it_needs_at_least_a_type_signature(self, ffis):
         ffis.execute("FFI::Function.new(:void, [:int8, :int16])")
 
-    def test_it_takes_a_DynamicLibrabry__Symbol_as_3_argument(self, ffis):
+    def test_it_takes_a_DynamicLibrabry__Symbol_as_3rd_argument(self, ffis):
         ffis.execute("""
-        dlsym = FFI::DynamicLibrary::Symbol.new(:fname)
+        dlsym = FFI::DynamicLibrary.open('libm.so').find_function(:sin)
         FFI::Function.new(:void, [:int8, :int16], dlsym)
         """)
         with self.raises(ffis, "TypeError",
@@ -32,7 +32,7 @@ class TestFunction__new(BaseFFITest):
     def test_it_takes_a_hash_as_4_argument(self, ffis):
         ffis.execute("""
         FFI::Function.new(:void, [:int8, :int16],
-                          FFI::DynamicLibrary::Symbol.new('x'),
+                          FFI::DynamicLibrary.open('libm.so').find_function(:cos),
                           {})
         """)
 
@@ -56,15 +56,16 @@ class TestFunction__new(BaseFFITest):
 
     def test_it_creates_the_following_low_level_data(self, ffis):
         w_function = ffis.execute("""
-        foo = FFI::DynamicLibrary::Symbol.new(:foo)
-        FFI::Function.new(:int8, [:int16, :float64], foo, {})
+        tan = FFI::DynamicLibrary.open('libm.so').find_function(:tan)
+        FFI::Function.new(:float64, [:float64], tan, {})
         """)
-        w_int16 = ffis.execute("FFI::Type::INT16")
         w_float64 = ffis.execute("FFI::Type::FLOAT64")
-        w_int8 = ffis.execute("FFI::Type::INT8")
-        assert w_function.arg_types_w == [w_int16, w_float64]
-        assert w_function.w_ret_type == w_int8
-        assert self.unwrap(ffis, w_function.w_name) == 'foo'
+        assert w_function.arg_types_w == [w_float64]
+        assert w_function.w_ret_type == w_float64
+        tan = clibffi.CDLL('libm.so').getpointer('tan',
+                                                 [clibffi.ffi_type_double],
+                                                 clibffi.ffi_type_double)
+        assert w_function.funcsym == tan.funcsym
 
 class TestFunction_attach(BaseFFITest):
 
@@ -75,13 +76,17 @@ class TestFunction_attach(BaseFFITest):
             @ffi_libs = [FFI::DynamicLibrary.open('%s', local)]
             @attachments = {}
             self.singleton_class.attr_reader :attachments
+
+            def self.find_function(name)
+                @ffi_libs[0].find_function(name)
+            end
         end
         """ % libname
 
     def test_it_works_with_pow_from_libm(self, ffis):
         w_res = ffis.execute("""
         %s
-        sym_pow = FFI::DynamicLibrary::Symbol.new(:pow)
+        sym_pow = LibraryMock.find_function(:pow)
         func = FFI::Function.new(:float64, [:float64, :float64], sym_pow, {})
         func.attach(LibraryMock, 'power')
         LibraryMock.attachments.include? :power
@@ -92,7 +97,7 @@ class TestFunction_attach(BaseFFITest):
     def test_it_works_with_abs_from_libc(self, ffis):
         w_res = ffis.execute("""
         %s
-        sym_abs = FFI::DynamicLibrary::Symbol.new(:abs)
+        sym_abs = LibraryMock.find_function(:abs)
         func = FFI::Function.new(:int32, [:int32], sym_abs, {})
         func.attach(LibraryMock, 'abs')
         LibraryMock.attachments.include? :abs
@@ -103,7 +108,7 @@ class TestFunction_attach(BaseFFITest):
     def test_it_works_with_strings(self, ffis):
         w_res = ffis.execute("""
         %s
-        sym_strcat = FFI::DynamicLibrary::Symbol.new(:strcat)
+        sym_strcat = LibraryMock.find_function(:strcat)
         func = FFI::Function.new(:string, [:string, :string], sym_strcat, {})
         func.attach(LibraryMock, 'strcat')
         LibraryMock.attachments[:strcat].call("Well ", "done!")
@@ -118,7 +123,7 @@ class TestFunction_attach(BaseFFITest):
         plus_or_minus = '-' if signchar == 's' else '+'
         return ("""
         FFI::Function.new(:T, [:T, :T],
-                          FFI::DynamicLibrary::Symbol.new(:fn),
+                          LibraryMock.find_function(:fn),
                           {}).attach(LibraryMock, 'fn')
         LibraryMock.attachments[:fn].call(+|-%s, +|-%s) == +|-%s
         """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus) %
@@ -179,7 +184,7 @@ class TestFunction_attach(BaseFFITest):
         w_res = ffis.execute("""
         %s
         FFI::Function.new(:void, [:uint8],
-                          FFI::DynamicLibrary::Symbol.new(:set_u8),
+                          LibraryMock.find_function(:set_u8),
                           {}).attach(LibraryMock, 'do_nothing')
         LibraryMock.attachments[:do_nothing].call(0)
         """ % self.make_mock_library_code(libtest_so))
@@ -189,7 +194,7 @@ class TestFunction_attach(BaseFFITest):
         ffis.execute("""
         %s
         FFI::Function.new(:bool, [:bool],
-                          FFI::DynamicLibrary::Symbol.new(:bool_reverse_val),
+                          LibraryMock.find_function(:bool_reverse_val),
                           {}).attach(LibraryMock, 'not')
         """ % self.make_mock_library_code(libtest_so))
         w_res = ffis.execute("LibraryMock.attachments[:not].call(true)")
@@ -201,7 +206,7 @@ class TestFunction_attach(BaseFFITest):
         w_res = ffis.execute("""
         %s
         FFI::Function.new(:void, [:int, :int, :pointer],
-                          FFI::DynamicLibrary::Symbol.new(:ref_add_int32_t),
+                          LibraryMock.find_function(:ref_add_int32_t),
                           {}).attach(LibraryMock, 'add')
         res = FFI::MemoryPointer.new(:int, 1)
         LibraryMock.attachments[:add].call(4, 6, res)
@@ -212,9 +217,8 @@ class TestFunction_attach(BaseFFITest):
     def test_it_returns_pointer_object(self, ffis, libtest_so):
         ffis.execute("""
         %s
-        #name = FFI::DynamicLibrary::Symbol.new(:ptr_return_array_element)
         FFI::Function.new(:pointer, [:int],
-                          FFI::DynamicLibrary::Symbol.new(:ptr_malloc),
+                          LibraryMock.find_function(:ptr_malloc),
                           {}).attach(LibraryMock, 'malloc')
         """ % self.make_mock_library_code(libtest_so))
         assert self.ask(ffis, """
