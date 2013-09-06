@@ -17,7 +17,7 @@ class W_VariadicInvokerObject(W_Object):
         self.w_ret_type = type_object(space, w_ret_type)
         self.arg_types_w = [type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
-        self.w_name = coerce_dl_symbol(space, w_name) if w_name else None
+        self.funcsym = coerce_dl_symbol(space, w_name) if w_name else None
         space.send(self, 'init', [w_arg_types, space.newhash()])
 
     @classdef.method('invoke')

@@ -17,7 +17,8 @@ class TestVariadicInvoker(BaseFFITest):
             local = FFI::DynamicLibrary::RTLD_LOCAL
             @ffi_libs = [FFI::DynamicLibrary.open('libc.so.6', local)]
         end
-        sym_printf = FFI::DynamicLibrary::Symbol.new('printf')
+        libc = FFI::DynamicLibrary.new('libc.so.6')
+        sym_printf = libc.find_function(:printf)
         printf = FFI::VariadicInvoker.new(sym_printf,
                                           [FFI::Type::STRING],
                                           FFI::Type::INT32)
