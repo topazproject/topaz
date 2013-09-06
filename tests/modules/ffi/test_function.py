@@ -65,7 +65,7 @@ class TestFunction__new(BaseFFITest):
         tan = clibffi.CDLL('libm.so').getpointer('tan',
                                                  [clibffi.ffi_type_double],
                                                  clibffi.ffi_type_double)
-        assert w_function.funcsym == tan.funcsym
+        assert w_function.ptr == tan.funcsym
 
 class TestFunction_attach(BaseFFITest):
 

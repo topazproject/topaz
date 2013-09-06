@@ -54,6 +54,14 @@ class W_DynamicLibraryObject(W_Object):
         w_sym = space.find_const(space.getclass(self), 'Symbol')
         return W_DL_SymbolObject(space, funcsym)
 
+def coerce_dl_symbol(space, w_name):
+    if space.is_kind_of(w_name, space.getclassfor(W_DL_SymbolObject)):
+        return w_name.funcsym
+    else:
+        raise space.error(space.w_TypeError,
+                        "can't convert %s into FFI::DynamicLibrary::Symbol"
+                          % w_name.getclass(space).name)
+
 class W_DL_SymbolObject(W_Object):
     classdef = ClassDef('Symbol', W_Object.classdef)
 

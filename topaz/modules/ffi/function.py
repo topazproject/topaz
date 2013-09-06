@@ -2,7 +2,8 @@ from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.modules.ffi.type import (W_TypeObject, type_object,
                                     native_types, ffi_types)
-from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
+from topaz.modules.ffi.dynamic_library import (W_DL_SymbolObject,
+                                               coerce_dl_symbol)
 from topaz.modules.ffi.pointer import W_PointerObject, coerce_pointer
 from topaz.error import RubyError
 from topaz.coerce import Coerce
@@ -46,7 +47,8 @@ class W_FunctionObject(W_PointerObject):
         W_PointerObject.__init__(self, space)
         self.w_ret_type = W_TypeObject(space, 'DUMMY')
         self.arg_types_w = []
-        self.funcsym = rffi.NULL
+        self.funcptr = None
+        self.ptr = rffi.NULL
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
@@ -55,46 +57,38 @@ class W_FunctionObject(W_PointerObject):
         self.w_ret_type = type_object(space, w_ret_type)
         self.arg_types_w = [type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
-        self.funcsym = self.dlsym_unwrap(space, w_name) if w_name else None
-
-    @staticmethod
-    def dlsym_unwrap(space, w_name):
-        if space.is_kind_of(w_name, space.getclassfor(W_DL_SymbolObject)):
-            return w_name.funcsym
-        else:
-            raise space.error(space.w_TypeError,
-                            "can't convert %s into FFI::DynamicLibrary::Symbol"
-                              % w_name.getclass(space).name)
+        self.ptr = coerce_dl_symbol(space, w_name) if w_name else None
+        ffi_arg_types = [ffi_types[t.name] for t in self.arg_types_w]
+        ffi_ret_type = ffi_types[self.w_ret_type.name]
+        self.funcptr = clibffi.FuncPtr('unattached',
+                                       ffi_arg_types, ffi_ret_type,
+                                       self.ptr)
 
     @classdef.method('call')
     def method_call(self, space, args_w):
-        if self.ptr != lltype.nullptr(rffi.VOIDP.TO):
-            w_ret_type = self.w_ret_type
-            assert isinstance(w_ret_type, W_TypeObject)
-            arg_types_w = self.arg_types_w
-            ret_type_name = w_ret_type.name
+        w_ret_type = self.w_ret_type
+        assert isinstance(w_ret_type, W_TypeObject)
+        arg_types_w = self.arg_types_w
+        ret_type_name = w_ret_type.name
 
-            for i in range(len(args_w)):
-                for t in unrolling_argtypes:
-                    argtype_name = arg_types_w[i].name
-                    if t == argtype_name:
-                        self._push_arg(space, args_w[i], t)
-            if ret_type_name == 'VOID':
-                self.funcptr.call(lltype.Void)
-                return space.w_nil
+        for i in range(len(args_w)):
             for t in unrolling_argtypes:
-                if t == ret_type_name:
-                    result = self.funcptr.call(native_types[t])
-                    if t == 'STRING':
-                        return self._ruby_wrap_STRING(space, result)
-                    if t == 'POINTER':
-                        return self._ruby_wrap_POINTER(space, result)
-                    else:
-                        return self._ruby_wrap_number(space, result, t)
-            raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
-        else:
-            raise Exception("%s was called before being attached."
-                            % self)
+                argtype_name = arg_types_w[i].name
+                if t == argtype_name:
+                    self._push_arg(space, args_w[i], t)
+        if ret_type_name == 'VOID':
+            self.funcptr.call(lltype.Void)
+            return space.w_nil
+        for t in unrolling_argtypes:
+            if t == ret_type_name:
+                result = self.funcptr.call(native_types[t])
+                if t == 'STRING':
+                    return self._ruby_wrap_STRING(space, result)
+                if t == 'POINTER':
+                    return self._ruby_wrap_POINTER(space, result)
+                else:
+                    return self._ruby_wrap_number(space, result, t)
+        raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
 
     @specialize.arg(3)
     def _push_arg(self, space, arg, argtype):
@@ -154,18 +148,6 @@ class W_FunctionObject(W_PointerObject):
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
-        w_ret_type = self.w_ret_type
-        arg_types_w = self.arg_types_w
-        w_ffi_libs = space.find_instance_var(w_lib, '@ffi_libs')
-        for w_dl in space.listview(w_ffi_libs):
-            ffi_arg_types = [ffi_types[t.name] for t in arg_types_w]
-            ffi_ret_type = ffi_types[w_ret_type.name]
-            ptr_key = self.funcsym
-            try:
-                self.funcptr = clibffi.FuncPtr(name,
-                                               ffi_arg_types, ffi_ret_type,
-                                               self.funcsym)
-                self.ptr = self.funcsym
-                w_attachments = space.send(w_lib, 'attachments')
-                space.send(w_attachments, '[]=', [space.newsymbol(name), self])
-            except KeyError: pass
+        self.funcptr.name = name
+        w_attachments = space.send(w_lib, 'attachments')
+        space.send(w_attachments, '[]=', [space.newsymbol(name), self])
