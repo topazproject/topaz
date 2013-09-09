@@ -44,3 +44,10 @@ class TestFFI__Type_size(BaseFFITest):
         assert self.unwrap(space, w_res) == 2
         w_res = space.execute("FFI::Type::INT32.size")
         assert self.unwrap(space, w_res) == 4
+
+class TestFFI__Type_eq(BaseFFITest):
+    def test_it_compares_the_names(self, space):
+        type1 = W_TypeObject(space, "some name")
+        type2 = W_TypeObject(space, "some name")
+        w_assertion = space.send(type1, '==', [type2])
+        assert self.unwrap(space, w_assertion)

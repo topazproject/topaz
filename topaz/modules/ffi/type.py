@@ -91,10 +91,16 @@ class W_TypeObject(W_Object):
         obj.name = self.name
         return obj
 
-    def __eq__(self, other):
-        if not isinstance(other, W_TypeObject):
+    def eq(self, w_other):
+        if not isinstance(w_other, W_TypeObject):
             return False
-        return self.name == other.name
+        return self.name == w_other.name
+
+    __eq__ = eq
+
+    @classdef.method('==')
+    def method_eq(self, space, w_other):
+        return space.newbool(self.eq(w_other))
 
     @classdef.method('size')
     def method_size(self, space):
