@@ -18,11 +18,14 @@ class TestVariadicInvoker(BaseFFITest):
             @ffi_libs = [FFI::DynamicLibrary.open('libc.so.6', local)]
         end
         libc = FFI::DynamicLibrary.new('libc.so.6')
-        sym_printf = libc.find_function(:printf)
-        printf = FFI::VariadicInvoker.new(sym_printf,
-                                          [FFI::Type::STRING],
-                                          FFI::Type::INT32)
-        printf.attach(Lib, :printf)
-        Lib.printf("%i, %f, %s", :int32, 1, :float, 2.0, :string, 'three')
+        sym_sprintf = libc.find_function(:sprintf)
+        sprintf = FFI::VariadicInvoker.new(sym_sprintf,
+                                           [FFI::Type::POINTER, FFI::Type::STRING],
+                                           FFI::Type::INT32)
+        sprintf.attach(Lib, :sprintf)
+        result = FFI::MemoryPointer.new(:int8, 14)
+        Lib.sprintf(result, "%i, %f", :int32, 1, :float64, 2.0)
+        chars = 0.upto(5).map { |x| result.get_int8(x).chr }
+        chars.inject('') { |str, c| str << c }
         """)
-        assert self.unwrap(ffis, w_res) == "1, 2.0, three"
+        assert self.unwrap(ffis, w_res) == "1, 2.0"
