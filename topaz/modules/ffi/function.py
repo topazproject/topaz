@@ -48,7 +48,7 @@ class W_FunctionObject(W_PointerObject):
         self.w_ret_type = W_TypeObject(space, 'DUMMY')
         self.arg_types_w = []
         self.funcptr = None
-        self.ptr = rffi.NULL
+        self.ptr = lltype.nullptr(rffi.VOIDP.TO)
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
@@ -57,9 +57,10 @@ class W_FunctionObject(W_PointerObject):
         self.w_ret_type = type_object(space, w_ret_type)
         self.arg_types_w = [type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
-        self.ptr = coerce_dl_symbol(space, w_name) if w_name else None
-        ffi_arg_types = [ffi_types[t.name] for t in self.arg_types_w]
-        ffi_ret_type = ffi_types[self.w_ret_type.name]
+        self.ptr = (coerce_dl_symbol(space, w_name) if w_name
+                    else lltype.nullptr(rffi.VOIDP.TO))
+        ffi_arg_types = [ffi_types[t.typename] for t in self.arg_types_w]
+        ffi_ret_type = ffi_types[self.w_ret_type.typename]
         self.funcptr = clibffi.FuncPtr('unattached',
                                        ffi_arg_types, ffi_ret_type,
                                        self.ptr)
@@ -69,11 +70,11 @@ class W_FunctionObject(W_PointerObject):
         w_ret_type = self.w_ret_type
         assert isinstance(w_ret_type, W_TypeObject)
         arg_types_w = self.arg_types_w
-        ret_type_name = w_ret_type.name
+        ret_type_name = w_ret_type.typename
 
         for i in range(len(args_w)):
             for t in unrolling_argtypes:
-                argtype_name = arg_types_w[i].name
+                argtype_name = arg_types_w[i].typename
                 if t == argtype_name:
                     self._push_arg(space, args_w[i], t)
         if ret_type_name == 'VOID':

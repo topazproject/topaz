@@ -61,7 +61,7 @@ class W_PointerObject(W_AbstractMemoryObject):
         self.address = address
         self.ptr = rffi.cast(rffi.VOIDP, address)
         self.sizeof_type = sizeof_type
-        self.sizeof_memory = 2**63
+        self.sizeof_memory = 2**31#2**63
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):

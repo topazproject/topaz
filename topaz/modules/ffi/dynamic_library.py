@@ -55,7 +55,7 @@ class W_DynamicLibraryObject(W_Object):
         return W_DL_SymbolObject(space, funcsym)
 
 def coerce_dl_symbol(space, w_name):
-    if space.is_kind_of(w_name, space.getclassfor(W_DL_SymbolObject)):
+    if isinstance(w_name, W_DL_SymbolObject):
         return w_name.funcsym
     else:
         raise space.error(space.w_TypeError,

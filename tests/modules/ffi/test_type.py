@@ -12,7 +12,7 @@ class TestType(BaseFFITest):
 
     def test_it_has_these_attributes_on_the_low_level(self, space):
         w_type = W_TypeObject(space, 'TYPENAME')
-        assert w_type.name == 'TYPENAME'
+        assert w_type.typename == 'TYPENAME'
 
 class TestFFI__TestType(BaseFFITest):
     def test_it_is_a_Module(self, space):

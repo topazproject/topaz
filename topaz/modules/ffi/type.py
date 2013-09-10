@@ -84,17 +84,21 @@ class W_TypeObject(W_Object):
 
     def __init__(self, space, name, klass=None):
         W_Object.__init__(self, space, klass)
-        self.name = name
+        self.typename = name
+
+    @classdef.singleton_method('allocate')
+    def singleton_method_allocate(self, space, args_w):
+        return W_TypeObject(space, 'NEWTYPE')
 
     def __deepcopy__(self, memo):
         obj = super(W_TypeObject, self).__deepcopy__(memo)
-        obj.name = self.name
+        obj.typename = self.typename
         return obj
 
     def eq(self, w_other):
         if not isinstance(w_other, W_TypeObject):
             return False
-        return self.name == w_other.name
+        return self.typename == w_other.typename
 
     __eq__ = eq
 
@@ -104,19 +108,19 @@ class W_TypeObject(W_Object):
 
     @classdef.method('size')
     def method_size(self, space):
-        r_uint_size = ffi_types[self.name].c_size
+        r_uint_size = ffi_types[self.typename].c_size
         size = intmask(r_uint_size)
         return space.newint(size)
 
 def type_object(space, w_obj):
     w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
-    res = space.send(w_ffi_mod, 'find_type', [w_obj])
-    if not isinstance(res, W_TypeObject):
+    w_type = space.send(w_ffi_mod, 'find_type', [w_obj])
+    if not isinstance(w_type, W_TypeObject):
         raise space.error(space.w_TypeError,
                           "This seems to be a bug. find_type should always"
                            "return an FFI::Type object, but apparently it did"
                            "not in this case.")
-    return res
+    return w_type
 
 class W_MappedObject(W_Object):
     classdef = ClassDef('MappedObject', W_Object.classdef)

@@ -15,6 +15,7 @@ def new_cast_method(type_str):
         return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
+# TODO: Something seems to be wrong here...
 def new_numberof_method(type_str):
     ctype = native_types[type_str.upper()]
     def numberof_method(self):
@@ -83,28 +84,30 @@ class W_AbstractMemoryObject(W_Object):
 
     @classdef.method('put_pointer', offset='int', value='ffi_address')
     def method_put_pointer(self, space, offset, value):
-        val = rffi.cast(rffi.INT, value)
+        like_ptr = rffi.INT # probably not, but take this as a start
+        val = rffi.cast(like_ptr, value)
         casted_ptr = self.int32_cast()
         if offset >= self.int32_size():
-            raise memory_index_error(space, offset, sizeof_type)
+            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
         try:
             casted_ptr[offset] = val
         except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
+            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
 
     @classdef.method('get_pointer', offset='int')
     def method_get_pointer(self, space, offset):
+        like_ptr = rffi.INT # probably not, but take this as a start
         casted_ptr = self.int32_cast()
         if offset >= self.int32_size():
-            raise memory_index_error(space, offset, sizeof_type)
+            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
         try:
             address = casted_ptr[offset]
-            w_address = space.newint(address)
+            w_address = space.newint(intmask(address))
             w_ffi = space.find_const(space.w_kernel, 'FFI')
             w_pointer = space.find_const(w_ffi, 'Pointer')
             return space.send(w_pointer, 'new', [w_address])
         except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
+            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
 
     method_write_pointer = classdef.method('write_pointer')(
                            new_write_method('pointer'))

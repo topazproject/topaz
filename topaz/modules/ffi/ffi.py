@@ -32,7 +32,7 @@ class FFI(object):
             space.set_const(w_native_type, typename, w_new_type)
         space.set_const(w_mod, 'NativeType', w_native_type)
 
-        ## setup modules from other files
+        # setup modules from other files
         space.set_const(w_mod, 'Type', space.getclassfor(W_TypeObject))
         space.set_const(w_mod, 'DynamicLibrary',
                         space.getclassfor(W_DynamicLibraryObject))
