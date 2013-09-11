@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #endif
+// DIFF Needed for the last test.
+#include <stdbool.h>
 
 int testAdd(int a, int b)
 {
@@ -55,4 +57,11 @@ void testAsyncCallback(void (*fn)(int), int value)
 #else
     (*fn)(value);
 #endif
-} 
+}
+
+// DIFF: Added a test here
+// It's needed to test whether nil will be transformed into NULL by the FFI.
+bool testIsNULL(void* ptr)
+{
+    return ptr == NULL;
+}

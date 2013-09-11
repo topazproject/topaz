@@ -202,6 +202,15 @@ class TestFunction_attach(BaseFFITest):
         w_res = ffis.execute("LibraryMock.attachments[:not].call(false)")
         assert w_res is ffis.w_true
 
+    def test_it_can_convert_nil_to_NULL(self, ffis, libtest_so):
+        self.ask(ffis, """
+        %s
+        FFI::Function.new(:bool, [:pointer],
+                          LibraryMock.find_function(:testIsNULL),
+                          {}).attach(LibraryMock, 'test_is_NULL')
+        LibraryMock.attachments[:test_is_NULL].call(nil)
+        """ % self.make_mock_library_code(libtest_so))
+
     def test_it_works_with_pointer_argument(self, ffis, libtest_so):
         w_res = ffis.execute("""
         %s

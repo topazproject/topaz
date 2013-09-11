@@ -76,7 +76,13 @@ class W_FunctionObject(W_PointerObject):
             for t in unrolling_argtypes:
                 argtype_name = arg_types_w[i].typename
                 if t == argtype_name:
-                    self._push_arg(space, args_w[i], t)
+                    if args_w[i] is not space.w_nil:
+                        w_next_arg = args_w[i]
+                    else:
+                        w_FFI = space.find_const(space.w_kernel, 'FFI')
+                        w_Pointer = space.find_const(w_FFI, 'Pointer')
+                        w_next_arg = space.find_const(w_Pointer, 'NULL')
+                    self._push_arg(space, w_next_arg, t)
         if ret_type_name == 'VOID':
             self.funcptr.call(lltype.Void)
             return space.w_nil
@@ -92,24 +98,24 @@ class W_FunctionObject(W_PointerObject):
         raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
 
     @specialize.arg(3)
-    def _push_arg(self, space, arg, argtype):
+    def _push_arg(self, space, w_arg, argtype):
         if argtype == 'STRING':
-            string_arg = space.str_w(arg)
+            string_arg = space.str_w(w_arg)
             charp_arg = rffi.str2charp(string_arg)
             argval = rffi.cast(rffi.VOIDP, charp_arg)
         elif argtype == 'POINTER':
-                argval = coerce_pointer(space, arg)
+                argval = coerce_pointer(space, w_arg)
         else:
             if argtype in ['UINT8', 'INT8',
                            'UINT16', 'INT16',
                            'UINT32', 'INT32']:
-                argval = space.int_w(arg)
+                argval = space.int_w(w_arg)
             elif argtype in ['INT64', 'UINT64']:
-                argval = space.bigint_w(arg).tolonglong()
+                argval = space.bigint_w(w_arg).tolonglong()
             elif argtype == 'FLOAT64':
-                argval = space.float_w(arg)
+                argval = space.float_w(w_arg)
             elif argtype == 'BOOL':
-                argval = space.is_true(arg)
+                argval = space.is_true(w_arg)
             else:
                 assert False
         self.funcptr.push_arg(argval)

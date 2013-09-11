@@ -39,6 +39,8 @@ class W_PointerObject(W_AbstractMemoryObject):
     def __deepcopy__(self, memo):
         obj = super(W_AbstractMemoryObject, self).__deepcopy__(memo)
         obj.address = self.address
+        obj.ptr = self.ptr
+        obj.sizeof_type = self.sizeof_type
         obj.sizeof_memory = self.sizeof_memory
         return obj
 
