@@ -94,6 +94,21 @@ class W_AbstractMemoryObject(W_Object):
         except IndexError:
             raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
 
+    @classdef.setup_class
+    def setup_class(cls, space, w_cls):
+        for orig, alias in [
+                            ('int8', 'char'),
+                            ('uint8', 'uchar'),
+                            ('int16', 'short'),
+                            ('uint16', 'ushort'),
+                            ('int32', 'int'),
+                            ('uint32', 'uint')
+                           ]:
+            for prefix in ['put_', 'get_', 'write_', 'read_']:
+                space.send(w_cls, 'alias_method',
+                           [space.newsymbol(prefix + alias),
+                            space.newsymbol(prefix + orig)])
+
     @classdef.method('get_pointer', offset='int')
     def method_get_pointer(self, space, offset):
         like_ptr = rffi.INT # probably not, but take this as a start

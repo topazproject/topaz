@@ -151,6 +151,33 @@ class TestAbstractMemory_read_pointer(BaseFFITest):
         """)
         assert self.unwrap(ffis, w_res) == 13
 
+class TestAbstractMemory(BaseFFITest):
+    def test_it_defines_the_following_aliases(self, space):
+        for aliases in [
+                        ('int8', 'char'),
+                        ('uint8', 'uchar'),
+                        ('int16', 'short'),
+                        ('uint16', 'ushort'),
+                        ('int32', 'int'),
+                        ('uint32', 'uint')
+                       ]:
+            assert self.ask(space, """
+            FFI::AbstractMemory.instance_method(:put_%s) ==
+            FFI::AbstractMemory.instance_method(:put_%s)
+            """ % aliases)
+            assert self.ask(space, """
+            FFI::AbstractMemory.instance_method(:get_%s) ==
+            FFI::AbstractMemory.instance_method(:get_%s)
+            """ % aliases)
+            assert self.ask(space, """
+            FFI::AbstractMemory.instance_method(:write_%s) ==
+            FFI::AbstractMemory.instance_method(:write_%s)
+            """ % aliases)
+            assert self.ask(space, """
+            FFI::AbstractMemory.instance_method(:read_%s) ==
+            FFI::AbstractMemory.instance_method(:read_%s)
+            """ % aliases)
+
 #class TestAbstractMemory__put_array_of_int32(BaseFFITest):
 #    def test_it_writes_into_array(self, ffis):
 #        w_mem_ptr = ffis.execute("""
