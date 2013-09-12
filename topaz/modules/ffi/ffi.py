@@ -20,18 +20,6 @@ class FFI(object):
 
     @moduledef.setup_module
     def setup_module(space, w_mod):
-        # setup type constants
-        for typename in ffi_types:
-            w_new_type = W_TypeObject(space, typename)
-            space.set_const(w_mod, 'TYPE_' + typename, w_new_type)
-
-        # setup NativeType
-        w_native_type = space.newmodule('NativeType')
-        for typename in ffi_types:
-            w_new_type = W_TypeObject(space, typename)
-            space.set_const(w_native_type, typename, w_new_type)
-        space.set_const(w_mod, 'NativeType', w_native_type)
-
         # setup modules from other files
         space.set_const(w_mod, 'Type', space.getclassfor(W_TypeObject))
         space.set_const(w_mod, 'DynamicLibrary',
@@ -47,6 +35,17 @@ class FFI(object):
                         space.getclassfor(W_MemoryPointerObject))
         space.set_const(w_mod, 'DataConverter',
                         space.getmoduleobject(DataConverter.moduledef))
+
+        w_native_type = space.newmodule('NativeType')
+        # This assumes that FFI::Type and the type constants already exist
+        for typename in ffi_types:
+            w_Type = space.find_const(w_mod, 'Type')
+            w_ffi_type = space.find_const(w_Type, typename)
+            # setup type constants
+            space.set_const(w_mod, 'TYPE_' + typename, w_ffi_type)
+            # setup NativeType
+            space.set_const(w_native_type, typename, w_ffi_type)
+        space.set_const(w_mod, 'NativeType', w_native_type)
 
         # setup Platform
         w_platform = space.newmodule('Platform', None)

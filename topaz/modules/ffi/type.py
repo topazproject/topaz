@@ -74,7 +74,6 @@ class W_TypeObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        w_builtin = space.newclass('Builtin', w_cls)
         for typename in ffi_types:
             w_new_type = W_TypeObject(space, typename)
             space.set_const(w_cls, typename, w_new_type)
