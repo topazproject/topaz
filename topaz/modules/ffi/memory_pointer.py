@@ -1,5 +1,4 @@
 from topaz.modules.ffi.pointer import W_PointerObject
-from topaz.modules.ffi.buffer import W_BufferObject
 from topaz.module import ClassDef
 from topaz.modules.ffi.type import native_types, W_TypeObject, type_object
 
