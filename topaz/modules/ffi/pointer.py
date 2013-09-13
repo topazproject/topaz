@@ -2,6 +2,7 @@ from topaz.modules.ffi.abstract_memory import W_AbstractMemoryObject
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
 
+from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
 
@@ -15,14 +16,15 @@ def coerce_pointer(space, w_pointer):
 setattr(Coerce, 'ffi_pointer', staticmethod(coerce_pointer))
 
 def coerce_address(space, w_addressable):
-    if space.is_kind_of(w_addressable, space.w_fixnum):
+    if(space.is_kind_of(w_addressable, space.w_fixnum) or
+       space.is_kind_of(w_addressable, space.w_bignum)):
         w_address = w_addressable
     elif space.is_kind_of(w_addressable,
                           space.getclassfor(W_PointerObject)):
         w_address = space.send(w_addressable, 'address')
     else:
         assert False #TODO: raise better exception
-    return Coerce.int(space, w_address)
+    return Coerce.bigint(space, w_address)
 
 setattr(Coerce, 'ffi_address', staticmethod(coerce_address))
 
@@ -31,10 +33,10 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     def __init__(self, space):
         W_AbstractMemoryObject.__init__(self, space)
-        self.address = -1
+        self.address = rbigint.fromint(0)
         self.ptr = lltype.nullptr(rffi.VOIDP.TO)
-        self.sizeof_type = -1
-        self.sizeof_memory = -1
+        self.sizeof_type = 0
+        self.sizeof_memory = rbigint.fromint(0)
 
     def __deepcopy__(self, memo):
         obj = super(W_AbstractMemoryObject, self).__deepcopy__(memo)
@@ -58,16 +60,16 @@ class W_PointerObject(W_AbstractMemoryObject):
             address = coerce_address(space, args_w[1])
             return self._initialize(space, address, sizeof_type)
 
-    def _initialize(self, space, address, sizeof_type=1):
+    def _initialize(self, space, address, sizeof_type=rbigint.fromint(1)):
         W_AbstractMemoryObject.__init__(self, space)
         self.address = address
-        self.ptr = rffi.cast(rffi.VOIDP, address)
+        self.ptr = rffi.cast(rffi.VOIDP, address.tolong())
         self.sizeof_type = sizeof_type
-        self.sizeof_memory = 2**31#2**63
+        self.sizeof_memory = rbigint.fromlong(2**63)
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        w_null = space.send(w_cls, 'new', [space.newint(0)])
+        w_null = space.send(w_cls, 'new', [space.newbigint_fromint(0)])
         space.set_const(w_cls, 'NULL', w_null)
         space.send(w_cls, 'alias_method', [space.newsymbol('to_i'),
                                            space.newsymbol('address')])
@@ -80,26 +82,26 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('null?')
     def method_null_p(self, space):
-        return space.newbool(self.address == 0)
+        return space.newbool(self.address.eq(rbigint.fromint(0)))
 
     @classdef.method('address')
     def method_address(self, space):
-        return space.newint(self.address)
+        return space.newbigint_fromrbigint(self.address)
 
     @classdef.method('size')
     def method_size(self, space):
-        return space.newint_or_bigint(self.sizeof_memory)
+        return space.newbigint_fromrbigint(self.sizeof_memory)
 
     @classdef.method('==')
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_PointerObject):
-            return space.newbool(self.address == w_other.address)
+            return space.newbool(self.address.eq(w_other.address))
         else:
             return space.newbool(False)
 
-    @classdef.method('+', other='int')
+    @classdef.method('+', other='bigint')
     def method_plus(self, space, other):
-        w_ptr_sum = space.newint(self.address + other)
+        w_ptr_sum = space.newbigint_fromrbigint(self.address.add(other))
         return space.send(space.getclass(self), 'new', [w_ptr_sum])
 
     @classdef.method('slice', size='int')

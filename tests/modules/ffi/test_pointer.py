@@ -89,7 +89,7 @@ class TestPointer_autorelease(BaseFFITest):
 class TestPointer_address(BaseFFITest):
     def test_it_returns_the_address(self, space):
         w_res = space.execute("FFI::Pointer.new(42).address")
-        assert self.unwrap(space, w_res) == 42
+        assert self.unwrap(space, w_res).toint() == 42
 
     def test_it_is_aliased_by_to_i(self, space):
         assert self.ask(space, """
@@ -100,7 +100,7 @@ class TestPointer_address(BaseFFITest):
 class TestPointer_plus(BaseFFITest):
     def test_it_increases_the_address_by_the_2nd_arg(self, space):
         w_res = space.execute("(FFI::Pointer.new(3) + 2).address")
-        assert self.unwrap(space, w_res) == 5
+        assert self.unwrap(space, w_res).toint() == 5
 
     def test_it_is_aliased_by_plus(self, space):
         assert self.ask(space, """
@@ -111,7 +111,7 @@ class TestPointer_plus(BaseFFITest):
 class TestPointer_slice(BaseFFITest):
     def test_its_1st_arg_is_the_offset(self, space):
         w_res = space.execute("FFI::Pointer.new(14).slice(6, 0).address")
-        assert self.unwrap(space, w_res) == 20
+        assert self.unwrap(space, w_res).toint() == 20
 
     def test_its_2nd_arg_is_the_size(self, space):
         w_res = space.execute("FFI::Pointer.new(3).slice(0, 4).size")
