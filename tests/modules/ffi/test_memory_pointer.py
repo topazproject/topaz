@@ -43,4 +43,6 @@ class TestMemoryPointer__new(BaseFFITest):
         [mem_ptr, mem_ptr.address]
         """)
         w_mem_ptr, w_address = ffis.listview(w_results)
-        assert adr2int(ptr2adr(w_mem_ptr.ptr)) == self.unwrap(ffis, w_address)
+        expected = adr2int(ptr2adr(w_mem_ptr.ptr))
+        actual = self.unwrap(ffis, w_address).toint()
+        assert expected == actual

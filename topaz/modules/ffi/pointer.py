@@ -16,15 +16,17 @@ def coerce_pointer(space, w_pointer):
 setattr(Coerce, 'ffi_pointer', staticmethod(coerce_pointer))
 
 def coerce_address(space, w_addressable):
-    if(space.is_kind_of(w_addressable, space.w_fixnum) or
-       space.is_kind_of(w_addressable, space.w_bignum)):
-        w_address = w_addressable
+    if space.is_kind_of(w_addressable, space.w_bignum):
+        return Coerce.bigint(space, w_addressable)
+    elif space.is_kind_of(w_addressable, space.w_fixnum):
+        int32_address = Coerce.int(space, w_addressable)
+        return rbigint.fromint(int32_address)
     elif space.is_kind_of(w_addressable,
                           space.getclassfor(W_PointerObject)):
         w_address = space.send(w_addressable, 'address')
+        return coerce_address(space, w_address)
     else:
         assert False #TODO: raise better exception
-    return Coerce.bigint(space, w_address)
 
 setattr(Coerce, 'ffi_address', staticmethod(coerce_address))
 

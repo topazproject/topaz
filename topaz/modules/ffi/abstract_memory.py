@@ -7,6 +7,7 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
                                                   cast_adr_to_int as adr2int)
 from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rbigint import rbigint
 
 # Check, whether is will be inlined
 def new_cast_method(type_str):
@@ -19,7 +20,7 @@ def new_cast_method(type_str):
 def new_numberof_method(type_str):
     ctype = native_types[type_str.upper()]
     def numberof_method(self):
-        return self.sizeof_memory / rffi.sizeof(ctype)
+        return self.sizeof_memory.tolong() / rffi.sizeof(ctype)
     return numberof_method
 
 def new_put_method(type_str):
@@ -82,18 +83,6 @@ class W_AbstractMemoryObject(W_Object):
     def singleton_method_allocate(self, space):
         return W_AbstractMemoryObject(space)
 
-    @classdef.method('put_pointer', offset='int', value='ffi_address')
-    def method_put_pointer(self, space, offset, value):
-        like_ptr = rffi.INT # probably not, but take this as a start
-        val = rffi.cast(like_ptr, value)
-        casted_ptr = self.int32_cast()
-        if offset >= self.int32_size():
-            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
-        try:
-            casted_ptr[offset] = val
-        except IndexError:
-            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
-
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
         for orig, alias in [
@@ -109,15 +98,27 @@ class W_AbstractMemoryObject(W_Object):
                            [space.newsymbol(prefix + alias),
                             space.newsymbol(prefix + orig)])
 
+    @classdef.method('put_pointer', offset='int', value='ffi_address')
+    def method_put_pointer(self, space, offset, value):
+        like_ptr = native_types['UINT64']
+        val = rffi.cast(like_ptr, value.tolong())
+        casted_ptr = self.uint64_cast()
+        if offset >= self.uint64_size():
+            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
+        try:
+            casted_ptr[offset] = val
+        except IndexError:
+            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
+
     @classdef.method('get_pointer', offset='int')
     def method_get_pointer(self, space, offset):
-        like_ptr = rffi.INT # probably not, but take this as a start
-        casted_ptr = self.int32_cast()
-        if offset >= self.int32_size():
+        like_ptr = native_types['UINT64']
+        casted_ptr = self.uint64_cast()
+        if offset >= self.uint64_size():
             raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
         try:
             address = casted_ptr[offset]
-            w_address = space.newint(intmask(address))
+            w_address = space.newbigint_fromrbigint(rbigint.fromlong(address))
             w_ffi = space.find_const(space.w_kernel, 'FFI')
             w_pointer = space.find_const(w_ffi, 'Pointer')
             return space.send(w_pointer, 'new', [w_address])
@@ -155,7 +156,7 @@ class W_AbstractMemoryObject(W_Object):
 
 W_AMO = W_AbstractMemoryObject
 for t in ['int8', 'int16', 'int32', 'int64',
-          'uint8', 'uint16', 'uint32']:
+          'uint8', 'uint16', 'uint32', 'uint64']:
     setattr(W_AMO, t + '_cast', new_cast_method(t))
     setattr(W_AMO, t + '_size', new_numberof_method(t))
     setattr(W_AMO, 'method_put_' + t,

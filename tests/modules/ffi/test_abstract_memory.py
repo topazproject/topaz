@@ -101,7 +101,7 @@ class TestAbstractMemory_put_pointer(BaseFFITest):
         mem_ptr.put_pointer(1, ptr2)
         mem_ptr
         """)
-        w_adr_ptr = new_cast_method('int32')(w_mem_ptr)
+        w_adr_ptr = new_cast_method('uint64')(w_mem_ptr)
         assert w_adr_ptr[0] == 88
         assert w_adr_ptr[1] == 55
 
@@ -140,7 +140,7 @@ class TestAbstractMemory_write_pointer(BaseFFITest):
         mem_ptr.write_pointer(FFI::Pointer.new(11))
         mem_ptr.get_pointer(0).address
         """)
-        assert self.unwrap(ffis, w_res) == 11
+        assert self.unwrap(ffis, w_res).toint() == 11
 
 class TestAbstractMemory_read_pointer(BaseFFITest):
     def test_it_is_like_calling_get_pointer_with_0(self, ffis):
@@ -149,7 +149,7 @@ class TestAbstractMemory_read_pointer(BaseFFITest):
         mem_ptr.put_pointer(0, FFI::Pointer.new(13))
         mem_ptr.read_pointer.address
         """)
-        assert self.unwrap(ffis, w_res) == 13
+        assert self.unwrap(ffis, w_res).toint() == 13
 
 class TestAbstractMemory(BaseFFITest):
     def test_it_defines_the_following_aliases(self, space):

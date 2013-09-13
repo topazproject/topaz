@@ -6,6 +6,7 @@ from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
 from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
                                                   cast_adr_to_int as adr2int)
+from rpython.rlib.rbigint import rbigint
 
 class W_MemoryPointerObject(W_PointerObject):
     classdef = ClassDef('MemoryPointer', W_PointerObject.classdef)
@@ -25,8 +26,9 @@ class W_MemoryPointerObject(W_PointerObject):
     def method_initialize(self, space, w_type_hint, size=1):
         self.w_type = type_object(space, w_type_hint)
         sizeof_type = space.int_w(space.send(self.w_type, 'size'))
-        self.sizeof_memory = size * sizeof_type
-        memory = lltype.malloc(rffi.CArray(rffi.CHAR), self.sizeof_memory,
+        self.sizeof_memory = rbigint.fromint(size * sizeof_type)
+        memory = lltype.malloc(rffi.CArray(rffi.CHAR),
+                               self.sizeof_memory.toint(),
                                flavor='raw')
         self.ptr = rffi.cast(rffi.VOIDP, memory)
-        self.address = adr2int(ptr2adr(self.ptr))
+        self.address = rbigint.fromint(adr2int(ptr2adr(self.ptr)))
