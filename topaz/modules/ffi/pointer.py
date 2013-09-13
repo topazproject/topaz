@@ -60,8 +60,10 @@ class W_PointerObject(W_AbstractMemoryObject):
             address = coerce_address(space, args_w[1])
             return self._initialize(space, address, sizeof_type)
 
-    def _initialize(self, space, address, sizeof_type=rbigint.fromint(1)):
+    def _initialize(self, space, address, sizeof_type=1):
         W_AbstractMemoryObject.__init__(self, space)
+        if address.lt(rbigint.fromint(0)):
+            address = rbigint.fromlong(2**63).add(address)
         self.address = address
         self.ptr = rffi.cast(rffi.VOIDP, address.tolong())
         self.sizeof_type = sizeof_type

@@ -37,14 +37,11 @@ class TestPointer__new(BaseFFITest):
         adr = llmemory.cast_ptr_to_adr(ptr_obj.ptr)
         assert llmemory.cast_adr_to_int(adr) == aint
 
-    # TODO: This test doesn't work yet, because only addresses in uint range
-    # are supported so far.
-    #def test_it_also_accepts_negative_values(self, space):
-    ## A negative value x is interpreted as 2**63 - x.
-    #    for x in range(100):
-    #        assert self.ask(space, """
-    #        FFI::Pointer.new(X) == FFI::Pointer.new(2**63 - X)
-    #        """.replace('X', str(x)))
+    def test_it_also_accepts_negative_values(self, space):
+        for x in range(1, 100):
+            assert self.ask(space, """
+            FFI::Pointer.new(-X) == FFI::Pointer.new(2**63 - X)
+            """.replace('X', str(x)))
 
     def test_it_can_also_be_called_with_a_type_size(self, space):
         char_ptr = lltype.malloc(rffi.CArray(rffi.SHORT), 1, flavor='raw')
