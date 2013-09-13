@@ -5,19 +5,13 @@ from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
 
 class TestPointer__NULL(BaseFFITest):
     def test_it_is_null(self, space):
-        question = "FFI::Pointer::NULL.null?"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        self.ask(space, "FFI::Pointer::NULL.null?")
 
     def test_it_is_instance_of_Pointer(self, space):
-        question = "FFI::Pointer::NULL.class.equal? FFI::Pointer"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        self.ask(space, "FFI::Pointer::NULL.class.equal? FFI::Pointer")
 
     def test_it_eq_nil(self, space):
-        question = "FFI::Pointer::NULL == nil"
-        w_answer = space.execute(question)
-        assert self.unwrap(space, w_answer)
+        self.ask(space, "FFI::Pointer::NULL == nil")
 
     def test_it_raises_NullPointerError_on_read_write_methods(self, space):
         with self.raises(space, 'FFI::NullPointerError',
