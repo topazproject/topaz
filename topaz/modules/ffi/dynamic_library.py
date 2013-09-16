@@ -1,5 +1,6 @@
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
+from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.coerce import Coerce
 
 from rpython.rlib import clibffi
@@ -56,18 +57,18 @@ class W_DynamicLibraryObject(W_Object):
 
 def coerce_dl_symbol(space, w_name):
     if isinstance(w_name, W_DL_SymbolObject):
-        return w_name.funcsym
+        return w_name.ptr
     else:
         raise space.error(space.w_TypeError,
                         "can't convert %s into FFI::DynamicLibrary::Symbol"
                           % w_name.getclass(space).name)
 
-class W_DL_SymbolObject(W_Object):
-    classdef = ClassDef('Symbol', W_Object.classdef)
+class W_DL_SymbolObject(W_PointerObject):
+    classdef = ClassDef('Symbol', W_PointerObject.classdef)
 
     def __init__(self, space, funcsym, klass=None):
-        W_Object.__init__(self, space, klass)
-        self.funcsym = funcsym
+        W_PointerObject.__init__(self, space, klass)
+        self.ptr = funcsym
 
     # TODO: new method should be private!
     #       or: should take an int and try to make a voidptr out of it.
@@ -75,13 +76,3 @@ class W_DL_SymbolObject(W_Object):
     #@classdef.singleton_method('allocate')
     #def singleton_method_allocate(self, space, args_w):
     #    return W_DL_SymbolObject(space)
-
-    # TODO: fix these methods
-
-    #@classdef.method('to_sym')
-    #def method_to_sym(self, space):
-    #    return space.newsymbol(str(self.funcsym))
-
-    #@classdef.method('null?')
-    #def method_null_p(self, space):
-    #    return space.newbool(True)

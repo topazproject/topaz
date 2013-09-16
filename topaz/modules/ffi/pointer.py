@@ -5,13 +5,15 @@ from topaz.coerce import Coerce
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
+from rpython.rtyper.lltypesystem.llmemory import (cast_int_to_adr as int2adr,
+                                                  cast_adr_to_ptr as adr2ptr)
 
 def coerce_pointer(space, w_pointer):
     if isinstance(w_pointer, W_PointerObject):
         return w_pointer.ptr
     else:
         raise space.error(space.w_TypeError,
-                          "%s is not a pointer." % w_pointer)
+                          "%s is not an FFI::Pointer." % w_pointer)
 
 setattr(Coerce, 'ffi_pointer', staticmethod(coerce_pointer))
 
@@ -26,15 +28,17 @@ def coerce_address(space, w_addressable):
         w_address = space.send(w_addressable, 'address')
         return coerce_address(space, w_address)
     else:
-        assert False #TODO: raise better exception
+        errmsg = ("can't convert %s into FFI::Pointer" %
+                  space.getclass(w_addressable).name)
+        raise space.error(space.w_TypeError, errmsg)
 
 setattr(Coerce, 'ffi_address', staticmethod(coerce_address))
 
 class W_PointerObject(W_AbstractMemoryObject):
     classdef = ClassDef('Pointer', W_AbstractMemoryObject.classdef)
 
-    def __init__(self, space):
-        W_AbstractMemoryObject.__init__(self, space)
+    def __init__(self, space, klass=None):
+        W_AbstractMemoryObject.__init__(self, space, klass)
         self.address = rbigint.fromint(0)
         self.ptr = lltype.nullptr(rffi.VOIDP.TO)
         self.sizeof_type = 0
@@ -64,12 +68,14 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     def _initialize(self, space, address, sizeof_type=1):
         W_AbstractMemoryObject.__init__(self, space)
+        pow_2_63 = rbigint.fromint(2).pow(rbigint.fromint(63))
         if address.lt(rbigint.fromint(0)):
-            address = rbigint.fromlong(2**63).add(address)
+            address = pow_2_63.add(address)
         self.address = address
-        self.ptr = rffi.cast(rffi.VOIDP, address.tolong())
+        self.ptr = rffi.cast(rffi.VOIDP, address.toulonglong())
+        #self.ptr = adr2ptr(int2adr(address.toulonglong()))
         self.sizeof_type = sizeof_type
-        self.sizeof_memory = rbigint.fromlong(2**63)
+        self.sizeof_memory = pow_2_63
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -106,9 +112,10 @@ class W_PointerObject(W_AbstractMemoryObject):
     @classdef.method('+', other='bigint')
     def method_plus(self, space, other):
         w_ptr_sum = space.newbigint_fromrbigint(self.address.add(other))
-        return space.send(space.getclass(self), 'new', [w_ptr_sum])
+        w_res = space.send(space.getclass(self), 'new', [w_ptr_sum])
+        return w_res
 
-    @classdef.method('slice', size='int')
+    @classdef.method('slice', size='bigint')
     def method_address(self, space, w_offset, size):
         w_pointer = space.send(self, '+', [w_offset])
         assert isinstance(w_pointer, W_PointerObject)
@@ -128,10 +135,10 @@ class W_PointerObject(W_AbstractMemoryObject):
     def method_autorelease_p(self, space):
         return space.newbool(self.autorelease)
 
-    @classdef.method('free')
-    def method_free(self, space):
-        # TODO: Free stuff self is pointing at here
-        return self
+    #@classdef.method('free')
+    #def method_free(self, space):
+    #    # TODO: Free stuff self is pointing at here
+    #    return self
 
     @classdef.method('type_size')
     def method_type_size(self, space):

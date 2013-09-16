@@ -10,8 +10,6 @@ from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
 from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
-from rpython.rtyper.lltypesystem.llmemory import (cast_int_to_adr as int2adr,
-                                                  cast_adr_to_ptr as adr2ptr)
 from rpython.rlib import clibffi
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize

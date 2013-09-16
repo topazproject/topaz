@@ -1,7 +1,8 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.modules.ffi.pointer import W_PointerObject
+from topaz.modules.ffi.pointer import W_PointerObject, coerce_address
 
 from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
+from rpython.rtyper.lltypesystem.ll2ctypes import ALLOCATED
 
 class TestPointer__NULL(BaseFFITest):
     def test_it_is_null(self, space):
@@ -28,14 +29,16 @@ class TestPointer__new(BaseFFITest):
         """)
 
     def test_it_saves_a_pointer_to_whatever_address_was_given(self, space):
-        char_ptr = lltype.malloc(rffi.CArray(rffi.CHAR), 1, flavor='raw')
-        adr = llmemory.cast_ptr_to_adr(char_ptr)
-        aint = llmemory.cast_adr_to_int(adr)
-        ptr_obj = space.execute("""
+        int8_ptr = lltype.malloc(rffi.CArray(rffi.CHAR), 1, flavor='raw')
+        adr = llmemory.cast_ptr_to_adr(int8_ptr)
+        aint = llmemory.cast_adr_to_int(adr, mode='forced')
+        w_ptr_obj = space.execute("""
         ptr = FFI::Pointer.new(%s)
         """ % aint)
-        adr = llmemory.cast_ptr_to_adr(ptr_obj.ptr)
-        assert llmemory.cast_adr_to_int(adr) == aint
+        adr = llmemory.cast_ptr_to_adr(w_ptr_obj.ptr)
+        assert llmemory.cast_adr_to_int(adr, mode='forced') == aint
+        lltype.free(int8_ptr, flavor='raw')
+        assert not aint in ALLOCATED
 
     def test_it_also_accepts_negative_values(self, space):
         for x in range(1, 100):
@@ -44,16 +47,20 @@ class TestPointer__new(BaseFFITest):
             """.replace('X', str(x)))
 
     def test_it_can_also_be_called_with_a_type_size(self, space):
-        char_ptr = lltype.malloc(rffi.CArray(rffi.SHORT), 1, flavor='raw')
-        adr = llmemory.cast_ptr_to_adr(char_ptr)
-        aint = llmemory.cast_adr_to_int(adr)
+        int16_ptr = lltype.malloc(rffi.CArray(rffi.SHORT), 1, flavor='raw')
+        adr = llmemory.cast_ptr_to_adr(int16_ptr)
+        aint = llmemory.cast_adr_to_int(adr, mode='forced')
+        # be careful: the first argument is the type size and the second the
+        #             address, not vice versa
         ptr_obj = space.execute("""
         ptr = FFI::Pointer.new(2, %s)
         """ % aint)
         type_size = space.send(ptr_obj, 'type_size')
         assert self.unwrap(space, type_size) == 2
         adr = llmemory.cast_ptr_to_adr(ptr_obj.ptr)
-        assert llmemory.cast_adr_to_int(adr) == aint
+        assert llmemory.cast_adr_to_int(adr, mode='forced') == aint
+        lltype.free(int16_ptr, flavor='raw')
+        assert not aint in ALLOCATED
 
 class TestPointer_size(BaseFFITest):
     def test_it_is_always_2_pow_63(self, space):
@@ -106,7 +113,7 @@ class TestPointer_slice(BaseFFITest):
 
     def test_its_2nd_arg_is_the_size(self, space):
         w_res = space.execute("FFI::Pointer.new(3).slice(0, 4).size")
-        assert self.unwrap(space, w_res) == 4
+        assert self.unwrap(space, w_res).toint() == 4
 
     def test_it_raises_TypeError_on_nonsense_args(self, space):
         with self.raises(space, 'TypeError',
@@ -116,6 +123,14 @@ class TestPointer_slice(BaseFFITest):
                          "can't convert Symbol into Integer"):
             space.execute("FFI::Pointer.new(0).slice(0, :bar)")
 
+class TestPointer_free(BaseFFITest):
+    def test_it_frees_whatever_the_Pointer_is_referencing(self, space):
+        int16_ptr = lltype.malloc(rffi.CArray(rffi.SHORT), 1, flavor='raw')
+        adr = llmemory.cast_ptr_to_adr(int16_ptr)
+        aint = llmemory.cast_adr_to_int(adr, mode='forced')
+        space.execute("FFI::Pointer.new(%s).free" % aint)
+        assert not aint in ALLOCATED
+
 class TestPointer(BaseFFITest):
     def test_its_superclass_is_AbstractMemory(self, space):
         assert self.ask(space,
@@ -123,7 +138,6 @@ class TestPointer(BaseFFITest):
 
     def test_it_has_these_methods(self, space):
         # but they don't do anything yet...
-        space.execute("FFI::Pointer.new(0).free")
         # order returns the endianess flag without argument
         # and sets the endianess flag if the 1st arg is valid
         # (meaning :big, :little, :network (which is also :big))
@@ -132,3 +146,19 @@ class TestPointer(BaseFFITest):
         space.execute("FFI::Pointer.new(0).order(:big)")
         with self.raises(space, "TypeError", "42 is not a symbol"):
             space.execute("FFI::Pointer.new(0).order(42)")
+
+class Test_coerce_address(BaseFFITest):
+    def test_it_accepts_ruby_Fixnum_as_address(self, space):
+        assert coerce_address(space, space.newint(2)).toint() == 2
+
+    def test_it_accepts_ruby_Bignum_as_address(self, space):
+        assert coerce_address(space, space.newbigint_fromint(1)).toint() == 1
+
+    def test_it_accepts_FFI__Pointer_as_address(self, space):
+        w_ptr = space.execute("FFI::Pointer.new(6)")
+        assert coerce_address(space, w_ptr).toint() == 6
+
+    def test_it_raises_ruby_TypeError_on_anything_else(self, space):
+        with self.raises(space, "TypeError",
+                         "can't convert Symbol into FFI::Pointer"):
+            coerce_address(space, space.newsymbol('error'))

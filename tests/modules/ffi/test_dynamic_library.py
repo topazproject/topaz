@@ -51,7 +51,7 @@ class TestDynamicLibrary__Symbol(BaseFFITest):
     def test_its_a_wrapper_around_a_function_symbol(self, space):
         exp_ptr = clibffi.CDLL('libm.so').getaddressindll('exp')
         w_dl_sym = W_DL_SymbolObject(space, exp_ptr)
-        assert w_dl_sym.funcsym == exp_ptr
+        assert w_dl_sym.ptr == exp_ptr
 
 class TestDynamicLibrary_find_variable(BaseFFITest):
     def test_it_returns_a_DynamicLibrary__Symbol(self, space):

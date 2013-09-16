@@ -16,11 +16,10 @@ def new_cast_method(type_str):
         return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
-# TODO: Something seems to be wrong here...
 def new_numberof_method(type_str):
     ctype = native_types[type_str.upper()]
     def numberof_method(self):
-        return self.sizeof_memory.tolong() / rffi.sizeof(ctype)
+        return self.sizeof_memory.toulonglong() / rffi.sizeof(ctype)
     return numberof_method
 
 def new_put_method(type_str):
@@ -31,8 +30,8 @@ def new_put_method(type_str):
     def put_method(self, space, offset, value):
         val = rffi.cast(ctype, value)
         casted_ptr = cast_method(self)
-        if offset >= numberof_method(self):
-            raise memory_index_error(space, offset, sizeof_type)
+        raise_if_out_of_bounds(space, offset, numberof_method(self),
+                               memory_index_error(space, offset, sizeof_type))
         try:
             casted_ptr[offset] = val
         except IndexError:
@@ -56,8 +55,8 @@ def new_get_method(type_str):
         to_int = intmask
     def get_method(self, space, offset):
         casted_ptr = cast_method(self)
-        if offset >= numberof_method(self):
-            raise memory_index_error(space, offset, sizeof_type)
+        raise_if_out_of_bounds(space, offset, numberof_method(self),
+                               memory_index_error(space, offset, sizeof_type))
         try:
             val = casted_ptr[offset]
             return space.newint(to_int(val))
@@ -70,6 +69,13 @@ def new_read_method(type_str):
     def read_method(self, space):
         return space.send(self, get_method_name, [space.newint(0)])
     return read_method
+
+def raise_if_out_of_bounds(space, offset, size, error):
+    if offset < 0:
+        raise error
+    else:
+        if offset >= size:
+            raise error
 
 def memory_index_error(space, offset, size):
     return space.error(space.w_IndexError,
@@ -101,29 +107,32 @@ class W_AbstractMemoryObject(W_Object):
     @classdef.method('put_pointer', offset='int', value='ffi_address')
     def method_put_pointer(self, space, offset, value):
         like_ptr = native_types['UINT64']
-        val = rffi.cast(like_ptr, value.tolong())
+        val = rffi.cast(like_ptr, value.toulonglong())
         casted_ptr = self.uint64_cast()
-        if offset >= self.uint64_size():
-            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
+        sizeof_type = rffi.sizeof(like_ptr)
+        raise_if_out_of_bounds(space, offset, self.uint64_size(),
+                               memory_index_error(space, offset, sizeof_type))
         try:
             casted_ptr[offset] = val
         except IndexError:
-            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
+            raise memory_index_error(space, offset, sizeof_type)
 
     @classdef.method('get_pointer', offset='int')
     def method_get_pointer(self, space, offset):
         like_ptr = native_types['UINT64']
         casted_ptr = self.uint64_cast()
-        if offset >= self.uint64_size():
-            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
+        sizeof_type = rffi.sizeof(like_ptr)
+        raise_if_out_of_bounds(space, offset, self.uint64_size(),
+                               memory_index_error(space, offset, sizeof_type))
         try:
             address = casted_ptr[offset]
-            w_address = space.newbigint_fromrbigint(rbigint.fromlong(address))
+            rbigint_address = rbigint.fromrarith_int(address)
+            w_address = space.newbigint_fromrbigint(rbigint_address)
             w_ffi = space.find_const(space.w_kernel, 'FFI')
             w_pointer = space.find_const(w_ffi, 'Pointer')
             return space.send(w_pointer, 'new', [w_address])
         except IndexError:
-            raise memory_index_error(space, offset, rffi.sizeof(like_ptr))
+            raise memory_index_error(space, offset, sizeof_type)
 
     method_write_pointer = classdef.method('write_pointer')(
                            new_write_method('pointer'))
