@@ -6,6 +6,27 @@ from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 
+typechars = {
+    'VOID': 'v',
+    'INT8': 'C',
+    'UINT8': 'c',
+    'INT16': 'S',
+    'UINT16': 's',
+    'INT32': 'I',
+    'UINT32': 'i',
+    'INT64': 'L',
+    'UINT64': 'l',
+    'LONG': 'W',
+    'ULONG': 'w',
+    'FLOAT32': 'f',
+    'FLOAT64': 'd',
+    'LONGDOUBLE': 'D',
+    'POINTER': '>',
+    'BOOL': '?',
+    'VARARGS': '*',
+    'STRING': '"'
+}
+
 ffi_types = {
                 'VOID':clibffi.ffi_type_void,
                 'INT8': clibffi.ffi_type_sint8,
@@ -35,10 +56,10 @@ native_types = {
                 'UINT16': rffi.USHORT,
                 'INT32': rffi.INT,
                 'UINT32': rffi.UINT,
-                'LONG': rffi.LONG,
-                'ULONG': rffi.ULONG,
                 'INT64': rffi.LONGLONG,
                 'UINT64': rffi.ULONGLONG,
+                'LONG': rffi.LONG,
+                'ULONG': rffi.ULONG,
                 'FLOAT32': rffi.FLOAT,
                 'FLOAT64': rffi.DOUBLE,
                 'LONGDOUBLE': rffi.LONGDOUBLE,
@@ -81,9 +102,9 @@ class W_TypeObject(W_Object):
                 space.set_const(w_cls, alias, w_new_type)
         space.set_const(w_cls, 'Mapped', space.getclassfor(W_MappedObject))
 
-    def __init__(self, space, name, klass=None):
+    def __init__(self, space, typename, klass=None):
         W_Object.__init__(self, space, klass)
-        self.typename = name
+        self.typename = typename
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):

@@ -1,7 +1,7 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.modules.ffi.type import (W_TypeObject, type_object,
-                                    native_types, ffi_types)
+                                    typechars, native_types, ffi_types)
 from topaz.modules.ffi.dynamic_library import (W_DL_SymbolObject,
                                                coerce_dl_symbol)
 from topaz.modules.ffi.pointer import W_PointerObject, coerce_pointer
@@ -16,23 +16,25 @@ from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import intmask, longlongmask
 from rpython.rlib.rbigint import rbigint
 
-valid_argtypes = [
-                  'UINT8',
-                  'INT8',
-                  'UINT16',
-                  'INT16',
-                  'INT32',
-                  'UINT32',
-                  'INT64',
-                  'UINT64',
-                  'FLOAT64',
-                  'BOOL',
-                  'STRING',
-                  'POINTER'
-                 ]
+INT8 = typechars['INT8']
+UINT8 = typechars['UINT8']
+INT16 = typechars['INT16']
+UINT16 = typechars['UINT16']
+INT32 = typechars['INT32']
+UINT32 = typechars['UINT32']
+INT64 = typechars['INT64']
+UINT64 = typechars['UINT64']
+FLOAT32 = typechars['FLOAT32']
+FLOAT64 = typechars['FLOAT64']
+BOOL = typechars['BOOL']
+STRING = typechars['STRING']
+POINTER = typechars['POINTER']
+VOID = typechars['VOID']
 
-unrolling_argtypes = unrolling_iterable(valid_argtypes)
-unrolling_rettypes = unrolling_iterable(valid_argtypes + ['VOID'])
+unrolling_typechars = unrolling_iterable(typechars.values())
+
+char_native_type_pair = [(typechars[n], native_types[n]) for n in typechars]
+unrolling_char_native_type_pair = unrolling_iterable(char_native_type_pair)
 
 class W_FunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
@@ -71,9 +73,9 @@ class W_FunctionObject(W_PointerObject):
         ret_type_name = w_ret_type.typename
 
         for i in range(len(args_w)):
-            for t in unrolling_argtypes:
+            for t in unrolling_typechars:
                 argtype_name = arg_types_w[i].typename
-                if t == argtype_name:
+                if t == typechars[argtype_name]:
                     if args_w[i] is not space.w_nil:
                         w_next_arg = args_w[i]
                     else:
@@ -81,61 +83,73 @@ class W_FunctionObject(W_PointerObject):
                         w_Pointer = space.find_const(w_FFI, 'Pointer')
                         w_next_arg = space.find_const(w_Pointer, 'NULL')
                     self._push_arg(space, w_next_arg, t)
-        if ret_type_name == 'VOID':
+        if typechars[ret_type_name] == VOID:
             self.funcptr.call(lltype.Void)
             return space.w_nil
-        for t in unrolling_argtypes:
-            if t == ret_type_name:
-                result = self.funcptr.call(native_types[t])
-                if t == 'STRING':
+        for t, nt in unrolling_char_native_type_pair:
+            if t == typechars[ret_type_name]:
+                result = self.funcptr.call(nt)
+                if t == STRING:
                     return self._ruby_wrap_STRING(space, result)
-                if t == 'POINTER':
+                if t == POINTER:
                     return self._ruby_wrap_POINTER(space, result)
                 else:
                     return self._ruby_wrap_number(space, result, t)
         raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
 
     @specialize.arg(3)
-    def _push_arg(self, space, w_arg, argtype):
-        if argtype == 'STRING':
-            string_arg = space.str_w(w_arg)
-            charp_arg = rffi.str2charp(string_arg)
-            argval = rffi.cast(rffi.VOIDP, charp_arg)
-        elif argtype == 'POINTER':
-                argval = coerce_pointer(space, w_arg)
-        else:
-            if argtype in ['UINT8', 'INT8',
-                           'UINT16', 'INT16',
-                           'UINT32', 'INT32']:
-                argval = space.int_w(w_arg)
-            elif argtype in ['INT64', 'UINT64']:
-                argval = space.bigint_w(w_arg).tolonglong()
-            elif argtype == 'FLOAT64':
-                argval = space.float_w(w_arg)
-            elif argtype == 'BOOL':
-                argval = space.is_true(w_arg)
-            else:
-                assert False
-        self.funcptr.push_arg(argval)
+    def _push_arg(self, space, w_arg, typechar):
+        for t, nt in unrolling_char_native_type_pair:
+            if typechar == t:
+                if t == STRING:
+                    string_arg = space.str_w(w_arg)
+                    charp_arg = rffi.str2charp(string_arg)
+                    # XXX: The cast is a workaround because clibffi's
+                    # FuncPtr.push_arg (used at the bottom of this function)
+                    # has a bug.
+                    arg_ll = rffi.cast(rffi.VOIDP, charp_arg)
+                elif t == POINTER:
+                    arg_ll = coerce_pointer(space, w_arg)
+                else:
+                    if(t == UINT8 or
+                       t == INT8 or
+                       t == UINT16 or
+                       t == INT16 or
+                       t == UINT32 or
+                       t == INT32):
+                        py_arg = space.int_w(w_arg)
+                    elif t == INT64 or t == UINT64:
+                        py_arg = space.bigint_w(w_arg).tolonglong()
+                    elif t == FLOAT32 or t == FLOAT64:
+                        py_arg = space.float_w(w_arg)
+                    elif t == BOOL:
+                        py_arg = space.is_true(w_arg)
+                    else:
+                        assert False
+                    arg_ll = rffi.cast(nt, py_arg)
+                self.funcptr.push_arg(arg_ll)
 
     @specialize.arg(3)
     def _ruby_wrap_number(self, space, res, restype):
-        if restype == 'INT8':
+        if restype == INT8:
             int_res = ord(res)
             if int_res >= 128:
                 int_res -= 256
             return space.newint(int_res)
-        elif restype in ['UINT8',
-                         'UINT16', 'INT16',
-                         'UINT32', 'INT32']:
+        elif (restype == UINT8 or
+              restype == UINT16 or
+              restype == UINT16 or
+              restype == INT16 or
+              restype == UINT32 or
+              restype == INT32):
             return space.newint(intmask(res))
-        elif restype in ['INT64', 'UINT64']:
+        elif restype == INT64 or restype == UINT64:
             longlong_res = longlongmask(res)
             bigint_res = rbigint.fromrarith_int(longlong_res)
             return space.newbigint_fromrbigint(bigint_res)
-        elif restype == 'FLOAT64':
-            return space.newfloat(res)
-        elif restype == 'BOOL':
+        elif restype == FLOAT32 or restype == FLOAT64:
+            return space.newfloat(float(res))
+        elif restype == BOOL:
             return space.newbool(res)
         raise Exception("Bug in FFI: unknown Type %s" % restype)
 

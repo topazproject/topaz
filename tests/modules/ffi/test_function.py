@@ -115,6 +115,16 @@ class TestFunction_attach(BaseFFITest):
         """ % self.make_mock_library_code('libc.so.6'))
         assert self.unwrap(ffis, w_res) == "Well done!"
 
+    def test_it_works_with_float(self, ffis, libtest_so):
+        w_res = ffis.execute("""
+        %s
+        sym_add_float = LibraryMock.find_function(:add_float)
+        func = FFI::Function.new(:float32, [:float32, :float32], sym_add_float, {})
+        func.attach(LibraryMock, 'add_float')
+        LibraryMock.attachments[:add_float].call(1.5, 2.25)
+        """ % self.make_mock_library_code(libtest_so))
+        assert self.unwrap(ffis, w_res) == 3.75
+
     def make_question_code(self, signchar, size, left=1, right=2,
                            with_name=None):
         default_T = '%sint%s' %('' if signchar == 's' else 'u', size)
