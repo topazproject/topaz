@@ -6,9 +6,18 @@ from topaz.modules.ffi.type import ffi_types, aliases
 from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import rffi
 
+import sys
 import os
 
-libm = clibffi.CDLL('libm.so')
+
+if sys.platform == 'darwin':
+    ext = 'dylib'
+    libm = 'libm.' + ext
+    libc = 'libc.' + ext
+else:
+    libm = 'libm.so'
+    libc = 'libc.so.6'
+
 
 class TestFunction(BaseFFITest):
 
@@ -22,9 +31,9 @@ class TestFunction__new(BaseFFITest):
 
     def test_it_takes_a_DynamicLibrabry__Symbol_as_3rd_argument(self, ffis):
         ffis.execute("""
-        dlsym = FFI::DynamicLibrary.open('libm.so').find_function(:sin)
+        dlsym = FFI::DynamicLibrary.open('%s').find_function(:sin)
         FFI::Function.new(:void, [:int8, :int16], dlsym)
-        """)
+        """ % libm)
         with self.raises(ffis, "TypeError",
                       "can't convert Fixnum into FFI::DynamicLibrary::Symbol"):
             ffis.execute("FFI::Function.new(:void, [:uint8], 500)")
@@ -32,9 +41,9 @@ class TestFunction__new(BaseFFITest):
     def test_it_takes_a_hash_as_4_argument(self, ffis):
         ffis.execute("""
         FFI::Function.new(:void, [:int8, :int16],
-                          FFI::DynamicLibrary.open('libm.so').find_function(:cos),
+                          FFI::DynamicLibrary.open('%s').find_function(:cos),
                           {})
-        """)
+        """ % libm)
 
     def test_it_understands_Type_constants_for_the_signature(self, ffis):
         ffis.execute("""
@@ -56,13 +65,13 @@ class TestFunction__new(BaseFFITest):
 
     def test_it_creates_the_following_low_level_data(self, ffis):
         w_function = ffis.execute("""
-        tan = FFI::DynamicLibrary.open('libm.so').find_function(:tan)
+        tan = FFI::DynamicLibrary.open('%s').find_function(:tan)
         FFI::Function.new(:float64, [:float64], tan, {})
-        """)
+        """ % libm)
         w_float64 = ffis.execute("FFI::Type::FLOAT64")
         assert w_function.arg_types_w == [w_float64]
         assert w_function.w_ret_type == w_float64
-        tan = clibffi.CDLL('libm.so').getpointer('tan',
+        tan = clibffi.CDLL(libm).getpointer('tan',
                                                  [clibffi.ffi_type_double],
                                                  clibffi.ffi_type_double)
         assert w_function.ptr == tan.funcsym
@@ -91,7 +100,7 @@ class TestFunction_attach(BaseFFITest):
         func.attach(LibraryMock, 'power')
         LibraryMock.attachments.include? :power
         (0..5).each.map { |x| LibraryMock.attachments[:power].call(x, 2) }
-        """ % self.make_mock_library_code('libm.so'))
+        """ % self.make_mock_library_code(libm))
         assert self.unwrap(ffis, w_res) == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
 
     def test_it_works_with_abs_from_libc(self, ffis):
@@ -102,7 +111,7 @@ class TestFunction_attach(BaseFFITest):
         func.attach(LibraryMock, 'abs')
         LibraryMock.attachments.include? :abs
         (-3..+3).each.map { |x| LibraryMock.attachments[:abs].call(x) }
-        """ % self.make_mock_library_code('libc.so.6'))
+        """ % self.make_mock_library_code(libc))
         assert self.unwrap(ffis, w_res) == [3, 2, 1, 0, 1, 2, 3]
 
     def test_it_works_with_strings(self, ffis):
@@ -112,7 +121,7 @@ class TestFunction_attach(BaseFFITest):
         func = FFI::Function.new(:string, [:string, :string], sym_strcat, {})
         func.attach(LibraryMock, 'strcat')
         LibraryMock.attachments[:strcat].call("Well ", "done!")
-        """ % self.make_mock_library_code('libc.so.6'))
+        """ % self.make_mock_library_code(libc))
         assert self.unwrap(ffis, w_res) == "Well done!"
 
     def test_it_works_with_float(self, ffis, libtest_so):
