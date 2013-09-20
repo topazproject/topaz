@@ -78,12 +78,7 @@ class W_FunctionObject(W_PointerObject):
             for t in unrolling_typechars:
                 argtype_name = arg_types_w[i].typename
                 if t == typechars[argtype_name]:
-                    if args_w[i] is not space.w_nil:
-                        w_next_arg = args_w[i]
-                    else:
-                        w_FFI = space.find_const(space.w_kernel, 'FFI')
-                        w_Pointer = space.find_const(w_FFI, 'Pointer')
-                        w_next_arg = space.find_const(w_Pointer, 'NULL')
+                    w_next_arg = self._convert_to_NULL_if_nil(space, args_w[i])
                     self._push_arg(space, w_next_arg, t)
         if typechars[ret_type_name] == VOID:
             self.funcptr.call(lltype.Void)
@@ -98,6 +93,14 @@ class W_FunctionObject(W_PointerObject):
                 else:
                     return self._ruby_wrap_number(space, result, t)
         raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
+
+    def _convert_to_NULL_if_nil(self, space, w_arg):
+        if w_arg is space.w_nil:
+            w_FFI = space.find_const(space.w_kernel, 'FFI')
+            w_Pointer = space.find_const(w_FFI, 'Pointer')
+            return space.find_const(w_Pointer, 'NULL')
+        else:
+            return w_arg
 
     @specialize.arg(3)
     def _push_arg(self, space, w_arg, typechar):
