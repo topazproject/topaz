@@ -172,11 +172,11 @@ for t in ['int8', 'int16', 'int32', 'int64',
             W_AMO.classdef.method('put_' + t, offset='int', value='int')(
             new_put_method(t)))
     setattr(W_AMO, 'method_write_' + t,
-            W_AMO.classdef.method('write_' + t, offset='int', value='int')(
+            W_AMO.classdef.method('write_' + t, value='int')(
             new_write_method(t)))
     setattr(W_AMO, 'method_get_' + t,
-            W_AMO.classdef.method('get_' + t, offset='int', value='int')(
+            W_AMO.classdef.method('get_' + t, offset='int')(
             new_get_method(t)))
     setattr(W_AMO, 'method_read_' + t,
-            W_AMO.classdef.method('read_' + t, offset='int', value='int')(
+            W_AMO.classdef.method('read_' + t)(
             new_read_method(t)))
