@@ -9,7 +9,7 @@ from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rbigint import rbigint
 
-# Check, whether is will be inlined
+# Check, whether this will be inlined
 def new_cast_method(type_str):
     ctype = native_types[type_str.upper()]
     def cast_method(memory):
@@ -53,13 +53,17 @@ def new_get_method(type_str):
         to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
     else:
         to_int = intmask
+    if type_str == 'float64':
+        wrap = lambda space, val: space.newfloat(float(val))
+    else:
+        wrap = lambda space, val: space.newint(to_int(val))
     def get_method(self, space, offset):
         casted_ptr = cast_method(self)
         raise_if_out_of_bounds(space, offset, numberof_method(self),
                                memory_index_error(space, offset, sizeof_type))
         try:
             val = casted_ptr[offset]
-            return space.newint(to_int(val))
+            return wrap(space, val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return get_method
@@ -173,6 +177,21 @@ for t in ['int8', 'int16', 'int32', 'int64',
             new_put_method(t)))
     setattr(W_AMO, 'method_write_' + t,
             W_AMO.classdef.method('write_' + t, value='int')(
+            new_write_method(t)))
+    setattr(W_AMO, 'method_get_' + t,
+            W_AMO.classdef.method('get_' + t, offset='int')(
+            new_get_method(t)))
+    setattr(W_AMO, 'method_read_' + t,
+            W_AMO.classdef.method('read_' + t)(
+            new_read_method(t)))
+for t in ['float64']:
+    setattr(W_AMO, t + '_cast', new_cast_method(t))
+    setattr(W_AMO, t + '_size', new_numberof_method(t))
+    setattr(W_AMO, 'method_put_' + t,
+            W_AMO.classdef.method('put_' + t, offset='int', value='float')(
+            new_put_method(t)))
+    setattr(W_AMO, 'method_write_' + t,
+            W_AMO.classdef.method('write_' + t, value='float')(
             new_write_method(t)))
     setattr(W_AMO, 'method_get_' + t,
             W_AMO.classdef.method('get_' + t, offset='int')(

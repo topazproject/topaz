@@ -4,8 +4,11 @@ from topaz.modules.ffi.type import native_types
 
 from rpython.rtyper.lltypesystem import rffi
 
-supported_type_names = ['int8', 'int16', 'int32', 'int64',
-                        'uint8', 'uint16', 'uint32']
+import sys
+
+supported_type_names = ['int16', 'int32', 'int64',
+                        'uint8', 'uint16', 'uint32',
+                        'float64']
 
 minval = {}
 maxval = {}
@@ -14,27 +17,45 @@ for bits in [8, 16, 32, 64]:
     minval['uint' + str(bits)] = 0
     maxval['int' + str(bits)] = 2**(bits-1) - 1
     maxval['uint' + str(bits)] = 2**bits - 1
+minval['float64'] = sys.float_info.min
+maxval['float64'] = sys.float_info.max
+
+def put_method_test_code(typename):
+    # For some reason, str(some_float) cuts off a few digits.
+    # Only repr prints the entire float.
+    strfunc = ((lambda x: repr(x)) if typename == 'float64' else
+               (lambda x: str(x)))
+    return ("""
+    mem_ptr = FFI::MemoryPointer.new(:T, 2)
+    mem_ptr.put_T(0, MIN)
+    mem_ptr.put_T(1, MAX)
+    mem_ptr
+    """.replace('T', typename).
+        replace('MIN', strfunc(minval[typename])).
+        replace('MAX', strfunc(maxval[typename])))
+
+def get_method_test_code(typename):
+    strfunc = ((lambda x: repr(x)) if typename == 'float64' else
+               (lambda x: str(x)))
+    return ("""
+    mem_ptr = FFI::MemoryPointer.new(:T, 5)
+    mem_ptr.put_T(3, MIN)
+    mem_ptr.put_T(4, MAX)
+    [mem_ptr.get_T(3), mem_ptr.get_T(4)]
+    """.replace('T', typename).
+        replace('MIN', strfunc(minval[typename])).
+        replace('MAX', strfunc(maxval[typename])))
 
 class TestAbstractMemory_put_methods(BaseFFITest):
     def test_they_put_a_single_value_into_the_given_offset(self, ffis):
         for t in supported_type_names:
-            w_mem_ptr = ffis.execute("""
-            mem_ptr = FFI::MemoryPointer.new(:T, 2)
-            mem_ptr.put_T(0, MIN)
-            mem_ptr.put_T(1, MAX)
-            mem_ptr
-            """.replace('T', t).
-                replace('MIN', str(minval[t])).
-                replace('MAX', str(maxval[t])))
+            w_mem_ptr = ffis.execute(put_method_test_code(t))
             cast_method = getattr(w_mem_ptr, t + '_cast')
             casted_ptr = cast_method()
             expected_0 = minval[t]
             expected_1 = maxval[t]
-            if t == 'int8':
-                expected_0 = rffi.cast(rffi.CHAR, -128)
-                expected_1 = rffi.cast(rffi.CHAR, 127)
-            assert casted_ptr[0] == expected_0
-            assert casted_ptr[1] == expected_1
+            assert expected_0 == casted_ptr[0]
+            assert expected_1 == casted_ptr[1]
 
     def test_they_refuse_negative_offsets(self, ffis):
         for t in supported_type_names:
@@ -71,14 +92,7 @@ class TestAbstractMemory_write_methods(BaseFFITest):
 class TestAbstractMemory_get_methods(BaseFFITest):
     def test_they_get_a_single_value_from_the_given_offset(self, ffis):
         for t in supported_type_names:
-            w_res = ffis.execute("""
-            mem_ptr = FFI::MemoryPointer.new(:T, 5)
-            mem_ptr.put_T(3, MIN)
-            mem_ptr.put_T(4, MAX)
-            [mem_ptr.get_T(3), mem_ptr.get_T(4)]
-            """.replace('T', t).
-                replace('MIN', str(minval[t])).
-                replace('MAX', str(maxval[t])))
+            w_res = ffis.execute(get_method_test_code(t))
             assert self.unwrap(ffis, w_res) == [minval[t], maxval[t]]
 
 class TestAbstractMemory_read_methods(BaseFFITest):
@@ -90,6 +104,13 @@ class TestAbstractMemory_read_methods(BaseFFITest):
             mem_ptr.read_T
             """.replace('T', t))
             assert self.unwrap(ffis, w_res) == 1
+
+class TestAbstractMemory_put_int8(BaseFFITest):
+    def test_it_puts_a_single_int8_into_the_given_offset(self, ffis):
+        w_mem_ptr = ffis.execute(put_method_test_code('int8'))
+        casted_ptr = w_mem_ptr.int8_cast()
+        assert casted_ptr[0] == rffi.cast(rffi.CHAR, -128)
+        assert casted_ptr[1] == rffi.cast(rffi.CHAR, 127)
 
 class TestAbstractMemory_put_pointer(BaseFFITest):
     def test_it_puts_a_single_pointer_into_the_given_offset(self, ffis):
