@@ -190,6 +190,28 @@ class TestFunction_attach(BaseFFITest):
         assert self.type_works(ffis, libtest_so, 's', '64', 2**61, 2**61,
                                with_name='long_long')
 
+    def test_it_works_with_long(self, ffis, libtest_so):
+        w_res = ffis.execute("""
+        %s
+        sym_add_long = LibraryMock.find_function(:add_long)
+        func = FFI::Function.new(:long, [:long, :long], sym_add_long, {})
+        func.attach(LibraryMock, 'add_long')
+        LibraryMock.attachments[:add_long].call(-2, -10)
+        """ % self.make_mock_library_code(libtest_so))
+        res = self.unwrap(ffis, w_res)
+        assert (res == -12 if isinstance(res, int) else res.toint() == -12)
+
+    def test_it_works_with_ulong(self, ffis, libtest_so):
+        w_res = ffis.execute("""
+        %s
+        sym_add_ulong = LibraryMock.find_function(:add_ulong)
+        func = FFI::Function.new(:ulong, [:ulong, :ulong], sym_add_ulong, {})
+        func.attach(LibraryMock, 'add_ulong')
+        LibraryMock.attachments[:add_ulong].call(2, 10)
+        """ % self.make_mock_library_code(libtest_so))
+        res = self.unwrap(ffis, w_res)
+        assert (res == 12 if isinstance(res, int) else res.toint() == 12)
+
     def test_it_returns_nil_for_void(self, ffis, libtest_so):
         w_res = ffis.execute("""
         %s

@@ -24,6 +24,8 @@ INT32 = typechars['INT32']
 UINT32 = typechars['UINT32']
 INT64 = typechars['INT64']
 UINT64 = typechars['UINT64']
+LONG = typechars['LONG']
+ULONG = typechars['ULONG']
 FLOAT32 = typechars['FLOAT32']
 FLOAT64 = typechars['FLOAT64']
 BOOL = typechars['BOOL']
@@ -122,6 +124,11 @@ class W_FunctionObject(W_PointerObject):
                         py_arg = space.bigint_w(w_arg).tolonglong()
                     elif t == FLOAT32 or t == FLOAT64:
                         py_arg = space.float_w(w_arg)
+                    elif t == LONG or t == ULONG:
+                        if rffi.sizeof(nt) < 8:
+                            py_arg = intmask(space.int_w(w_arg))
+                        else:
+                            py_arg = space.bigint_w(w_arg).tolonglong()
                     elif t == BOOL:
                         py_arg = space.is_true(w_arg)
                     else:
@@ -144,9 +151,14 @@ class W_FunctionObject(W_PointerObject):
               restype == INT32):
             return space.newint(intmask(res))
         elif restype == INT64 or restype == UINT64:
-            longlong_res = longlongmask(res)
-            bigint_res = rbigint.fromrarith_int(longlong_res)
+            bigint_res = rbigint.fromrarith_int(longlongmask(res))
             return space.newbigint_fromrbigint(bigint_res)
+        elif restype == LONG or restype == ULONG:
+            if rffi.sizeof(rffi.LONG) < 8:
+                return space.newint(intmask(res))
+            else:
+                bigint_res = rbigint.fromrarith_int(longlongmask(res))
+                return space.newbigint_fromrbigint(bigint_res)
         elif restype == FLOAT32 or restype == FLOAT64:
             return space.newfloat(float(res))
         elif restype == BOOL:
