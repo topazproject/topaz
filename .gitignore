@@ -2,3 +2,4 @@
 _build/
 bin/topaz
 bin/topaz.exe
+tests/modules/ffi/build/
