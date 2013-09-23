@@ -13,7 +13,7 @@ class W_MemoryPointerObject(W_PointerObject):
 
     def __init__(self, space):
         W_PointerObject.__init__(self, space)
-        self.w_type = W_TypeObject(space, 'DUMMY')
+        self.w_type = None
 
     def __del__(self):
         lltype.free(self.ptr, flavor='raw')
