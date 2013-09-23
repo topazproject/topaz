@@ -1,6 +1,6 @@
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
-from topaz.modules.ffi.type import type_object, ffi_types, W_TypeObject
+from topaz.modules.ffi.type import type_object, ffi_types, W_TypeObject, VOID
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
 from topaz.modules.ffi.function import W_FunctionObject
 
@@ -12,7 +12,7 @@ class W_VariadicInvokerObject(W_Object):
 
     def __init__(self, space):
         W_Object.__init__(self, space)
-        self.w_ret_type = W_TypeObject(space, 'DUMMY')
+        self.w_ret_type = W_TypeObject(space, VOID)
         self.arg_types_w = []
         self.funcsym = lltype.nullptr(rffi.VOIDP.TO)
 
@@ -27,8 +27,7 @@ class W_VariadicInvokerObject(W_Object):
         self.w_ret_type = type_object(space, w_ret_type)
         self.arg_types_w = [type_object(space, w_type)
                             for w_type in arg_types_w]
-        self.funcsym = (coerce_dl_symbol(space, w_name) if w_name
-                        else lltype.nullptr(rffi.VOIDP.TO))
+        self.w_name = w_name
         space.send(self, 'init', [space.newarray(arg_types_w), space.newhash()])
 
     @classdef.method('invoke', arg_types_w='array', arg_values_w='array')

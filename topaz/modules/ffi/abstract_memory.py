@@ -1,8 +1,7 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
-from topaz.modules.ffi.type import native_types
-
+from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
                                                   cast_adr_to_int as adr2int)
@@ -11,19 +10,19 @@ from rpython.rlib.rbigint import rbigint
 
 # Check, whether is will be inlined
 def new_cast_method(type_str):
-    ctype = native_types[type_str.upper()]
+    ctype = lltype_for_name(type_str.upper())
     def cast_method(memory):
         return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
 def new_numberof_method(type_str):
-    ctype = native_types[type_str.upper()]
+    ctype = lltype_for_name(type_str.upper())
     def numberof_method(self):
         return self.sizeof_memory.toulonglong() / rffi.sizeof(ctype)
     return numberof_method
 
 def new_put_method(type_str):
-    ctype = native_types[type_str.upper()]
+    ctype = lltype_for_name(type_str.upper())
     cast_method = new_cast_method(type_str)
     numberof_method = new_numberof_method(type_str)
     sizeof_type = rffi.sizeof(ctype)
@@ -45,7 +44,7 @@ def new_write_method(type_str):
     return write_method
 
 def new_get_method(type_str):
-    ctype = native_types[type_str.upper()]
+    ctype = lltype_for_name(type_str.upper())
     cast_method = new_cast_method(type_str)
     numberof_method = new_numberof_method(type_str)
     sizeof_type = rffi.sizeof(ctype)
@@ -106,10 +105,10 @@ class W_AbstractMemoryObject(W_Object):
 
     @classdef.method('put_pointer', offset='int', value='ffi_address')
     def method_put_pointer(self, space, offset, value):
-        like_ptr = native_types['UINT64']
+        like_ptr = lltypes[UINT64]
+        sizeof_type = lltype_sizes[UINT64]
         val = rffi.cast(like_ptr, value.toulonglong())
         casted_ptr = self.uint64_cast()
-        sizeof_type = rffi.sizeof(like_ptr)
         raise_if_out_of_bounds(space, offset, self.uint64_size(),
                                memory_index_error(space, offset, sizeof_type))
         try:
@@ -119,9 +118,9 @@ class W_AbstractMemoryObject(W_Object):
 
     @classdef.method('get_pointer', offset='int')
     def method_get_pointer(self, space, offset):
-        like_ptr = native_types['UINT64']
+        like_ptr = lltypes[UINT64]
+        sizeof_type = lltype_sizes[UINT64]
         casted_ptr = self.uint64_cast()
-        sizeof_type = rffi.sizeof(like_ptr)
         raise_if_out_of_bounds(space, offset, self.uint64_size(),
                                memory_index_error(space, offset, sizeof_type))
         try:

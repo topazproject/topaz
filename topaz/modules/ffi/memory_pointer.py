@@ -1,6 +1,6 @@
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.module import ClassDef
-from topaz.modules.ffi.type import native_types, W_TypeObject, type_object
+from topaz.modules.ffi.type import W_TypeObject, type_object
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype

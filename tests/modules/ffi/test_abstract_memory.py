@@ -1,6 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.abstract_memory import new_cast_method
-from topaz.modules.ffi.type import native_types
+from topaz.modules.ffi.type import size_for_name
 
 from rpython.rtyper.lltypesystem import rffi
 
@@ -38,7 +38,7 @@ class TestAbstractMemory_put_methods(BaseFFITest):
 
     def test_they_refuse_negative_offsets(self, ffis):
         for t in supported_type_names:
-            sizeof_t = rffi.sizeof(native_types[t.upper()])
+            sizeof_t = size_for_name(t.upper())
             with self.raises(ffis, 'IndexError',
                              "Memory access offset=-1 size=%s is out of bounds"
                              %  sizeof_t):
@@ -48,7 +48,7 @@ class TestAbstractMemory_put_methods(BaseFFITest):
 
     def test_they_refuse_too_large_offsets(self, ffis):
         for t in supported_type_names:
-            sizeof_t = rffi.sizeof(native_types[t.upper()])
+            sizeof_t = size_for_name(t.upper())
             with self.raises(ffis, 'IndexError',
                              "Memory access offset=3 size=%s is out of bounds"
                              % sizeof_t):
