@@ -6,9 +6,15 @@ from rpython.rtyper.lltypesystem import rffi
 
 import sys
 
-std_test_group = ['int16', 'int32', 'int64',
-                  'uint8', 'uint16', 'uint32',
-                  'float64']
+test_put_method_group = ['int16', 'int32', 'int64',
+                         'uint8', 'uint16', 'uint32', 'uint64',
+                         'float64']
+test_get_method_group = ['int8', 'int16', 'int32', 'int64',
+                         'uint8', 'uint16', 'uint32',
+                         'float64']
+test_rw_method_group = ['int8', 'int16', 'int32', 'int64',
+                        'uint8', 'uint16', 'uint32',
+                        'float32', 'float64']
 
 minval = {}
 maxval = {}
@@ -54,7 +60,7 @@ def get_method_test_code(typename):
 
 class TestAbstractMemory_put_methods(BaseFFITest):
     def test_they_put_a_single_value_into_the_given_offset(self, ffis):
-        for t in std_test_group:
+        for t in test_put_method_group:
             w_mem_ptr = ffis.execute(put_method_test_code(t))
             cast_method = getattr(w_mem_ptr, t + '_cast')
             casted_ptr = cast_method()
@@ -64,7 +70,7 @@ class TestAbstractMemory_put_methods(BaseFFITest):
             assert expected_1 == casted_ptr[1]
 
     def test_they_refuse_negative_offsets(self, ffis):
-        for t in std_test_group:
+        for t in test_put_method_group:
             sizeof_t = rffi.sizeof(native_types[t.upper()])
             with self.raises(ffis, 'IndexError',
                              "Memory access offset=-1 size=%s is out of bounds"
@@ -74,7 +80,7 @@ class TestAbstractMemory_put_methods(BaseFFITest):
                 """.replace('T', t))
 
     def test_they_refuse_too_large_offsets(self, ffis):
-        for t in std_test_group:
+        for t in test_put_method_group:
             sizeof_t = rffi.sizeof(native_types[t.upper()])
             with self.raises(ffis, 'IndexError',
                              "Memory access offset=3 size=%s is out of bounds"
@@ -85,7 +91,7 @@ class TestAbstractMemory_put_methods(BaseFFITest):
 
 class TestAbstractMemory_write_methods(BaseFFITest):
     def test_they_are_like_calling_put_with_0_as_1st_arg(self, ffis):
-        for t in std_test_group:
+        for t in test_rw_method_group:
             w_mem_ptr = ffis.execute("""
             mem_ptr = FFI::MemoryPointer.new(:T, 1)
             mem_ptr.write_T(121)
@@ -97,13 +103,13 @@ class TestAbstractMemory_write_methods(BaseFFITest):
 
 class TestAbstractMemory_get_methods(BaseFFITest):
     def test_they_get_a_single_value_from_the_given_offset(self, ffis):
-        for t in std_test_group:
+        for t in test_get_method_group:
             w_res = ffis.execute(get_method_test_code(t))
             assert self.unwrap(ffis, w_res) == [minval[t], maxval[t]]
 
 class TestAbstractMemory_read_methods(BaseFFITest):
     def test_they_are_like_calling_get_with_0(self, ffis):
-        for t in std_test_group:
+        for t in test_rw_method_group:
             w_res = ffis.execute("""
             mem_ptr = FFI::MemoryPointer.new(:T, 1)
             mem_ptr.write_T(1)
@@ -127,6 +133,20 @@ class TestAbstractMemory_put_float32(BaseFFITest):
         assert abs((minval['float32'] - res0) / res0) < 1e-9
         assert abs((maxval['float32'] - res1) / res1) < 1e-9
 
+class TestAbstractMemory_put_pointer(BaseFFITest):
+    def test_it_puts_a_single_pointer_into_the_given_offset(self, ffis):
+        w_mem_ptr = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:pointer, 2)
+        ptr1 = FFI::Pointer.new(88)
+        ptr2 = FFI::Pointer.new(55)
+        mem_ptr.put_pointer(0, ptr1)
+        mem_ptr.put_pointer(1, ptr2)
+        mem_ptr
+        """)
+        w_adr_ptr = new_cast_method('uint64')(w_mem_ptr)
+        assert w_adr_ptr[0] == 88
+        assert w_adr_ptr[1] == 55
+
 class TestAbstractMemory_get_float32(BaseFFITest):
     def test_it_gets_only_one_float32_from_the_given_offset(self, ffis):
         w_res = ffis.execute(get_method_test_code('float32'))
@@ -141,20 +161,6 @@ class TestAbstractMemory_get_uint64(BaseFFITest):
         res = self.unwrap(ffis, w_res)
         assert res[0].tolong() == minval['uint64']
         assert res[1].tolong() == maxval['uint64']
-
-class TestAbstractMemory_put_pointer(BaseFFITest):
-    def test_it_puts_a_single_pointer_into_the_given_offset(self, ffis):
-        w_mem_ptr = ffis.execute("""
-        mem_ptr = FFI::MemoryPointer.new(:pointer, 2)
-        ptr1 = FFI::Pointer.new(88)
-        ptr2 = FFI::Pointer.new(55)
-        mem_ptr.put_pointer(0, ptr1)
-        mem_ptr.put_pointer(1, ptr2)
-        mem_ptr
-        """)
-        w_adr_ptr = new_cast_method('uint64')(w_mem_ptr)
-        assert w_adr_ptr[0] == 88
-        assert w_adr_ptr[1] == 55
 
 class TestAbstractMemory_get_pointer(BaseFFITest):
     def test_it_gets_a_single_pointer_from_the_given_offset(self, ffis):
@@ -193,6 +199,15 @@ class TestAbstractMemory_write_pointer(BaseFFITest):
         """)
         assert self.unwrap(ffis, w_res).toint() == 11
 
+class TestAbstractMemory_write_uint64(BaseFFITest):
+    def test_it_is_like_calling_put_uint64_with_0_as_1st_arg(self, ffis):
+        w_res = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:uint64, 1)
+        mem_ptr.write_uint64(14)
+        mem_ptr.get_uint64(0)
+        """)
+        assert self.unwrap(ffis, w_res).toint() == 14
+
 class TestAbstractMemory_read_pointer(BaseFFITest):
     def test_it_is_like_calling_get_pointer_with_0(self, ffis):
         w_res = ffis.execute("""
@@ -201,6 +216,15 @@ class TestAbstractMemory_read_pointer(BaseFFITest):
         mem_ptr.read_pointer.address
         """)
         assert self.unwrap(ffis, w_res).toint() == 13
+
+class TestAbstractMemory_read_uint64(BaseFFITest):
+    def test_it_is_like_calling_get_uint64_with_0(self, ffis):
+        w_res = ffis.execute("""
+        mem_ptr = FFI::MemoryPointer.new(:uint64, 1)
+        mem_ptr.put_uint64(0, 12)
+        mem_ptr.read_uint64
+        """)
+        assert self.unwrap(ffis, w_res).toint() == 12
 
 class TestAbstractMemory(BaseFFITest):
     def test_it_defines_the_following_aliases(self, space):
