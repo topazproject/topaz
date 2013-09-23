@@ -1,7 +1,9 @@
+import sys
+
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
-from topaz.modules.ffi.type import (W_TypeObject, type_object,
-                                    typechars, native_types, ffi_types)
+from topaz.modules.ffi import type as ffitype
+from topaz.modules.ffi.type import (ffi_types, W_TypeObject, type_object)
 from topaz.modules.ffi.dynamic_library import (W_DL_SymbolObject,
                                                coerce_dl_symbol)
 from topaz.modules.ffi.pointer import W_PointerObject, coerce_pointer
@@ -10,33 +12,43 @@ from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
 from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
+from rpython.rtyper.lltypesystem.lltype import scoped_alloc
 from rpython.rlib import clibffi
+from rpython.rlib.jit_libffi import CIF_DESCRIPTION, CIF_DESCRIPTION_P
+from rpython.rlib.jit_libffi import FFI_TYPE_P, FFI_TYPE_PP
+from rpython.rlib.jit_libffi import SIZE_OF_FFI_ARG
+from rpython.rlib.jit_libffi import jit_ffi_call
+from rpython.rlib.jit_libffi import jit_ffi_prep_cif
 from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import intmask, longlongmask
 from rpython.rlib.rbigint import rbigint
+from rpython.rlib.objectmodel import we_are_translated
 
-INT8 = typechars['INT8']
-UINT8 = typechars['UINT8']
-INT16 = typechars['INT16']
-UINT16 = typechars['UINT16']
-INT32 = typechars['INT32']
-UINT32 = typechars['UINT32']
-INT64 = typechars['INT64']
-UINT64 = typechars['UINT64']
-LONG = typechars['LONG']
-ULONG = typechars['ULONG']
-FLOAT32 = typechars['FLOAT32']
-FLOAT64 = typechars['FLOAT64']
-BOOL = typechars['BOOL']
-STRING = typechars['STRING']
-POINTER = typechars['POINTER']
-VOID = typechars['VOID']
+# XXX maybe move to rlib/jit_libffi
+from pypy.module._cffi_backend import misc
 
-unrolling_typechars = unrolling_iterable(typechars.values())
+BIG_ENDIAN = sys.byteorder == 'big'
 
-char_native_type_pair = [(typechars[n], native_types[n]) for n in typechars]
-unrolling_char_native_type_pair = unrolling_iterable(char_native_type_pair)
+INT8 =  ffitype.INT8
+UINT8 =  ffitype.UINT8
+INT16 =  ffitype.INT16
+UINT16 =  ffitype.UINT16
+INT32 =  ffitype.INT32
+UINT32 =  ffitype.UINT32
+INT64 =  ffitype.INT64
+UINT64 =  ffitype.UINT64
+LONG =  ffitype.LONG
+ULONG =  ffitype.ULONG
+FLOAT32 =  ffitype.FLOAT32
+FLOAT64 =  ffitype.FLOAT64
+BOOL =  ffitype.BOOL
+STRING =  ffitype.STRING
+POINTER =  ffitype.POINTER
+VOID =  ffitype.VOID
+
+unrolling_types = unrolling_iterable(range(len(ffitype.type_names)))
+
 
 class W_FunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
@@ -47,52 +59,161 @@ class W_FunctionObject(W_PointerObject):
 
     def __init__(self, space):
         W_PointerObject.__init__(self, space)
-        self.w_ret_type = W_TypeObject(space, 'DUMMY')
+        self.w_ret_type = None
         self.arg_types_w = []
-        self.funcptr = None
         self.ptr = lltype.nullptr(rffi.VOIDP.TO)
+        #
+        self.cif_descr = lltype.nullptr(CIF_DESCRIPTION)
+        self.atypes = lltype.nullptr(FFI_TYPE_PP.TO)
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
                           w_name=None, w_options=None):
-        if w_options is None: w_options = space.newhash()
+        if w_options is None:
+            w_options = space.newhash()
+
         self.w_ret_type = type_object(space, w_ret_type)
         self.arg_types_w = [type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
+        self.setup(space, w_name)
+
+    def setup(self, space, w_name):
         self.ptr = (coerce_dl_symbol(space, w_name) if w_name
                     else lltype.nullptr(rffi.VOIDP.TO))
-        ffi_arg_types = [ffi_types[t.typename] for t in self.arg_types_w]
-        ffi_ret_type = ffi_types[self.w_ret_type.typename]
-        self.funcptr = clibffi.FuncPtr('unattached',
-                                       ffi_arg_types, ffi_ret_type,
-                                       self.ptr)
+        ffi_arg_types = [ffi_types[t.typeindex] for t in self.arg_types_w]
+        ffi_ret_type = ffi_types[self.w_ret_type.typeindex]
+        self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
+
+    def initialize_variadic(self, space, w_name, w_ret_type, arg_types_w):
+        self.w_ret_type = w_ret_type
+        self.arg_types_w = arg_types_w
+        self.setup(space, w_name)
+
+    def align_arg(self, n):
+        return (n + 7) & ~7
+
+    def build_cif_descr(self, space, ffi_arg_types, ffi_ret_type):
+        nargs = len(ffi_arg_types)
+        # XXX combine both mallocs with alignment
+        size = llmemory.raw_malloc_usage(llmemory.sizeof(CIF_DESCRIPTION, nargs))
+        if we_are_translated():
+            cif_descr = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+            cif_descr = rffi.cast(CIF_DESCRIPTION_P, cif_descr)
+        else:
+            # gross overestimation of the length below, but too bad
+            cif_descr = lltype.malloc(CIF_DESCRIPTION_P.TO, size, flavor='raw')
+        assert cif_descr
+        #
+        size = rffi.sizeof(FFI_TYPE_P) * nargs
+        atypes = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+        atypes = rffi.cast(FFI_TYPE_PP, atypes)
+        assert atypes
+        #
+        cif_descr.abi = clibffi.FFI_DEFAULT_ABI
+        cif_descr.nargs = nargs
+        cif_descr.rtype = ffi_ret_type
+        cif_descr.atypes = atypes
+        #
+        # first, enough room for an array of 'nargs' pointers
+        exchange_offset = rffi.sizeof(rffi.CCHARP) * nargs
+        exchange_offset = self.align_arg(exchange_offset)
+        cif_descr.exchange_result = exchange_offset
+        cif_descr.exchange_result_libffi = exchange_offset
+        #
+        if BIG_ENDIAN:
+            assert 0, 'missing support'
+            # see _cffi_backend in pypy
+        # then enough room for the result, rounded up to sizeof(ffi_arg)
+        exchange_offset += max(rffi.getintfield(ffi_ret_type, 'c_size'),
+                               SIZE_OF_FFI_ARG)
+
+        # loop over args
+        for i, ffi_arg in enumerate(ffi_arg_types):
+            # XXX do we need the "must free" logic?
+            exchange_offset = self.align_arg(exchange_offset)
+            cif_descr.exchange_args[i] = exchange_offset
+            atypes[i] = ffi_arg
+            exchange_offset += rffi.getintfield(ffi_arg, 'c_size')
+
+        # store the exchange data size
+        cif_descr.exchange_size = exchange_offset
+        #
+        self.cif_descr = cif_descr
+        self.atypes = atypes
+        #
+        res = jit_ffi_prep_cif(cif_descr)
+        #
+        if res != clibffi.FFI_OK:
+            raise space.error(space.w_RuntimeError,
+                    "libffi failed to build this function type")
+
+    def __del__(self):
+        if self.cif_descr:
+            lltype.free(self.cif_descr, flavor='raw')
+        if self.atypes:
+            lltype.free(self.atypes, flavor='raw')
+
 
     @classdef.method('call')
     def method_call(self, space, args_w):
-        w_ret_type = self.w_ret_type
-        assert isinstance(w_ret_type, W_TypeObject)
-        arg_types_w = self.arg_types_w
-        ret_type_name = w_ret_type.typename
-
+        cif_descr = self.cif_descr
+        size = cif_descr.exchange_size
+        mustfree_max_plus_1 = 0
+        buffer = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
         for i in range(len(args_w)):
-            for t in unrolling_typechars:
-                argtype_name = arg_types_w[i].typename
-                if t == typechars[argtype_name]:
-                    w_next_arg = self._convert_to_NULL_if_nil(space, args_w[i])
-                    self._push_arg(space, w_next_arg, t)
-        if typechars[ret_type_name] == VOID:
-            self.funcptr.call(lltype.Void)
+            data = rffi.ptradd(buffer, cif_descr.exchange_args[i])
+            w_obj = args_w[i]
+            argtype = self.arg_types_w[i]
+            typeindex = argtype.typeindex
+            for c in unrolling_types:
+                if c == typeindex:
+                    self._push_arg(space, w_obj, data, c)
+
+        #ec = cerrno.get_errno_container(space)
+        #cerrno.restore_errno_from(ec)
+        jit_ffi_call(cif_descr, rffi.cast(rffi.VOIDP, self.ptr),
+                                buffer)
+        #e = cerrno.get_real_errno()
+        #cerrno.save_errno_into(ec, e)
+
+        resultdata = rffi.ptradd(buffer, cif_descr.exchange_result)
+
+        typeindex = self.w_ret_type.typeindex
+        for c in unrolling_types:
+            if c == typeindex:
+                return self._read_result(space, resultdata, c)
+
+
+    @specialize.arg(3)
+    def _read_result(self, space, data, typeindex):
+        if typeindex == VOID:
             return space.w_nil
-        for t, nt in unrolling_char_native_type_pair:
-            if t == typechars[ret_type_name]:
-                result = self.funcptr.call(nt)
-                if t == STRING:
+        typesize = ffitype.lltype_sizes[typeindex]
+        for t in unrolling_types:
+            if t == typeindex:
+                # XXX refactor
+                if t == FLOAT64 or t == FLOAT32:
+                    result = misc.read_raw_float_data(data, typesize)
+                    return self._ruby_wrap_number(space, result, t)
+                elif t == LONG or t == INT64 or t == INT32 or t == INT16 or t == INT8:
+                    result = misc.read_raw_signed_data(data, typesize)
+                    return self._ruby_wrap_number(space, result, t)
+                elif t == BOOL:
+                    result = bool(misc.read_raw_signed_data(data, typesize))
+                    return self._ruby_wrap_number(space, result, t)
+                elif t == ULONG or t == UINT64 or t == UINT32 or t == UINT16 or t == UINT8:
+                    result = misc.read_raw_unsigned_data(data, typesize)
+                    return self._ruby_wrap_number(space, result, t)
+                elif t == STRING:
+                    result = misc.read_raw_unsigned_data(data, typesize)
+                    result = rffi.cast(rffi.CCHARP, result)
                     return self._ruby_wrap_STRING(space, result)
-                if t == POINTER:
+                elif t == POINTER:
+                    result = misc.read_raw_unsigned_data(data, typesize)
+                    result = rffi.cast(rffi.VOIDP, result)
                     return self._ruby_wrap_POINTER(space, result)
                 else:
-                    return self._ruby_wrap_number(space, result, t)
-        raise Exception("Bug in FFI: unknown Type %s" % ret_type_name)
+                    raise Exception("Bug in FFI: unknown Type %s" % ffitype.type_names[typeindex])
 
     def _convert_to_NULL_if_nil(self, space, w_arg):
         if w_arg is space.w_nil:
@@ -102,50 +223,44 @@ class W_FunctionObject(W_PointerObject):
         else:
             return w_arg
 
-    @specialize.arg(3)
-    def _push_arg(self, space, w_arg, typechar):
-        for t, nt in unrolling_char_native_type_pair:
-            if typechar == t:
-                if t == STRING:
-                    string_arg = space.str_w(w_arg)
-                    charp_arg = rffi.str2charp(string_arg)
-                    # XXX: The cast is a workaround because clibffi's
-                    # FuncPtr.push_arg (used at the bottom of this function)
-                    # has a bug.
-                    arg_ll = rffi.cast(rffi.VOIDP, charp_arg)
+    @specialize.arg(4)
+    def _push_arg(self, space, w_arg, data, typeindex):
+        typesize = ffitype.lltype_sizes[typeindex]
+        for t in unrolling_types:
+            # XXX refactor
+            if typeindex == t:
+                if t == FLOAT32 or t == FLOAT64:
+                    arg = space.float_w(w_arg)
+                    misc.write_raw_float_data(data, arg, typesize)
+                elif t == LONG or t == INT64 or t == INT8 or t == INT16 or t == INT32:
+                    arg = space.int_w(w_arg)
+                    misc.write_raw_signed_data(data, arg, typesize)
+                elif t == ULONG or t == UINT64 or t == UINT8 or t == UINT16 or t == UINT32:
+                    arg = space.int_w(w_arg)
+                    misc.write_raw_unsigned_data(data, arg, typesize)
+                elif t == STRING:
+                    arg = space.str_w(w_arg)
+                    arg = rffi.str2charp(arg)
+                    arg = rffi.cast(lltype.Unsigned, arg)
+                    misc.write_raw_unsigned_data(data, arg, typesize)
+                elif t == BOOL:
+                    arg = space.is_true(w_arg)
+                    misc.write_raw_unsigned_data(data, arg, typesize)
                 elif t == POINTER:
-                    arg_ll = coerce_pointer(space, w_arg)
+                    w_arg = self._convert_to_NULL_if_nil(space, w_arg)
+                    arg = coerce_pointer(space, w_arg)
+                    arg = rffi.cast(lltype.Unsigned, arg)
+                    misc.write_raw_unsigned_data(data, arg, typesize)
                 else:
-                    if(t == UINT8 or
-                       t == INT8 or
-                       t == UINT16 or
-                       t == INT16 or
-                       t == UINT32 or
-                       t == INT32):
-                        py_arg = space.int_w(w_arg)
-                    elif t == INT64 or t == UINT64:
-                        py_arg = space.bigint_w(w_arg).tolonglong()
-                    elif t == FLOAT32 or t == FLOAT64:
-                        py_arg = space.float_w(w_arg)
-                    elif t == LONG or t == ULONG:
-                        if rffi.sizeof(nt) < 8:
-                            py_arg = intmask(space.int_w(w_arg))
-                        else:
-                            py_arg = space.bigint_w(w_arg).tolonglong()
-                    elif t == BOOL:
-                        py_arg = space.is_true(w_arg)
-                    else:
-                        assert False
-                    arg_ll = rffi.cast(nt, py_arg)
-                self.funcptr.push_arg(arg_ll)
+                    assert 0
+        return
 
     @specialize.arg(3)
     def _ruby_wrap_number(self, space, res, restype):
         if restype == INT8:
-            int_res = ord(res)
-            if int_res >= 128:
-                int_res -= 256
-            return space.newint(int_res)
+            if res >= 128:
+                res -= 256
+            return space.newint(res)
         elif (restype == UINT8 or
               restype == UINT16 or
               restype == UINT16 or
@@ -182,6 +297,5 @@ class W_FunctionObject(W_PointerObject):
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
-        self.funcptr.name = name
         w_attachments = space.send(w_lib, 'attachments')
         space.send(w_attachments, '[]=', [space.newsymbol(name), self])

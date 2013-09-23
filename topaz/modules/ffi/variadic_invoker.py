@@ -33,12 +33,7 @@ class W_VariadicInvokerObject(W_Object):
     @classdef.method('invoke', arg_types_w='array', arg_values_w='array')
     def method_invoke(self, space, arg_types_w, arg_values_w):
         w_function = W_FunctionObject(space)
-        w_function.arg_types_w = [type_object(space, t) for t in arg_types_w]
-        w_function.w_ret_type = self.w_ret_type
-        ffi_arg_types = [ffi_types[t.typename] for t in w_function.arg_types_w]
-        ffi_ret_type = ffi_types[w_function.w_ret_type.typename]
-        w_function.ptr = self.funcsym
-        w_function.funcptr = clibffi.FuncPtr('variadic',
-                                             ffi_arg_types, ffi_ret_type,
-                                             w_function.ptr)
+        arg_types_w = [type_object(space, t) for t in arg_types_w]
+        w_ret_type = self.w_ret_type
+        w_function.initialize_variadic(space, self.w_name, w_ret_type, arg_types_w)
         return space.send(w_function, 'call', arg_values_w)
