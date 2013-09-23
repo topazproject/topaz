@@ -115,6 +115,9 @@ class W_TypeObject(W_Object):
         obj.typename = self.typename
         return obj
 
+    def __repr__(self):
+        return '<W_TypeObject %s(%s)>' % (self.typename, self.typechar)
+
     def eq(self, w_other):
         if not isinstance(w_other, W_TypeObject):
             return False
