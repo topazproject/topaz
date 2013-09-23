@@ -1,127 +1,114 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
+from rpython.rlib.jit_libffi import FFI_TYPE_P
 
 from rpython.rlib import clibffi
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 
-typechars = {
-    'VOID': 'v',
-    'INT8': 'C',
-    'UINT8': 'c',
-    'INT16': 'S',
-    'UINT16': 's',
-    'INT32': 'I',
-    'UINT32': 'i',
-    'INT64': 'L',
-    'UINT64': 'l',
-    'LONG': 'W',
-    'ULONG': 'w',
-    'FLOAT32': 'f',
-    'FLOAT64': 'd',
-    'LONGDOUBLE': 'D',
-    'POINTER': '>',
-    'BOOL': '?',
-    'VARARGS': '*',
-    'STRING': '"'
-}
+_native_types = [
+    ('VOID',       clibffi.ffi_type_void,                     lltype.Void,     []),
+    ('INT8',       clibffi.ffi_type_sint8,                    rffi.CHAR,       ['CHAR', 'SCHAR']),
+    ('UINT8',      clibffi.ffi_type_uint8,                    rffi.UCHAR,      ['UCHAR']),
+    ('INT16',      clibffi.ffi_type_sint16,                   rffi.SHORT,      ['SHORT', 'SSHORT']),
+    ('UINT16',     clibffi.ffi_type_uint16,                   rffi.USHORT,     ['USHORT']),
+    ('INT32',      clibffi.ffi_type_sint32,                   rffi.INT,        ['INT', 'SINT']),
+    ('UINT32',     clibffi.ffi_type_uint32,                   rffi.UINT,       ['UINT']),
+    ('INT64',      clibffi.ffi_type_sint64,                   rffi.LONGLONG,   ['LONG_LONG', 'SLONG_LONG']),
+    ('UINT64',     clibffi.ffi_type_uint64,                   rffi.ULONGLONG,  ['ULONG_LONG']),
+    ('LONG',       clibffi.cast_type_to_ffitype(rffi.LONG),   rffi.LONG,       ['SLONG']),
+    ('ULONG',      clibffi.cast_type_to_ffitype(rffi.ULONG),  rffi.ULONG,      []),
+    ('FLOAT32',    clibffi.ffi_type_float,                    rffi.FLOAT,      ['FLOAT']),
+    ('FLOAT64',    clibffi.ffi_type_double,                   rffi.DOUBLE,     ['DOUBLE']),
+    ('LONGDOUBLE', clibffi.ffi_type_longdouble,               rffi.LONGDOUBLE, []),
+    ('POINTER',    clibffi.ffi_type_pointer,                  rffi.VOIDP,      []),
+    ('CALLBACK',),
+    ('FUNCTION',),
+    ('BUFFER_IN',),
+    ('BUFFER_OUT',),
+    ('BUFFER_INOUT',),
+    ('CHAR_ARRAY',),
+    ('BOOL',       clibffi.cast_type_to_ffitype(lltype.Bool), lltype.Bool,     []),
+    ('STRING',     clibffi.ffi_type_pointer,                  rffi.CCHARP,     []),
+    ('VARARGS',    clibffi.ffi_type_void,                     rffi.CHAR,       []),
+    ('NATIVE_VARARGS',),
+    ('NATIVE_STRUCT',),
+    ('NATIVE_ARRAY',),
+    ('NATIVE_MAPPED',),
+]
 
-ffi_types = {
-                'VOID':clibffi.ffi_type_void,
-                'INT8': clibffi.ffi_type_sint8,
-                'UINT8': clibffi.ffi_type_uint8,
-                'INT16': clibffi.ffi_type_sint16,
-                'UINT16': clibffi.ffi_type_uint16,
-                'INT32': clibffi.ffi_type_sint32,
-                'UINT32': clibffi.ffi_type_uint32,
-                'INT64': clibffi.ffi_type_sint64,
-                'UINT64': clibffi.ffi_type_uint64,
-                'LONG': clibffi.cast_type_to_ffitype(rffi.LONG),
-                'ULONG': clibffi.cast_type_to_ffitype(rffi.ULONG),
-                'FLOAT32': clibffi.ffi_type_float,
-                'FLOAT64': clibffi.ffi_type_double,
-                'LONGDOUBLE': clibffi.ffi_type_longdouble,
-                'POINTER': clibffi.ffi_type_pointer,
-                'BOOL': clibffi.cast_type_to_ffitype(lltype.Bool),
-                'VARARGS': clibffi.ffi_type_void,
-                'STRING': clibffi.ffi_type_pointer
-            }
+ffi_types = []
+type_names = []
+lltypes = []
+lltype_sizes = []
+aliases = []
 
-native_types = {
-                'VOID': lltype.Void,
-                'INT8': rffi.CHAR,
-                'UINT8': rffi.UCHAR,
-                'INT16': rffi.SHORT,
-                'UINT16': rffi.USHORT,
-                'INT32': rffi.INT,
-                'UINT32': rffi.UINT,
-                'INT64': rffi.LONGLONG,
-                'UINT64': rffi.ULONGLONG,
-                'LONG': rffi.LONG,
-                'ULONG': rffi.ULONG,
-                'FLOAT32': rffi.FLOAT,
-                'FLOAT64': rffi.DOUBLE,
-                'LONGDOUBLE': rffi.LONGDOUBLE,
-                'POINTER': rffi.VOIDP,
-                'BOOL': lltype.Bool,
-                'VARARGS': rffi.CHAR,
-                'STRING': rffi.CCHARP
-               }
+for i, typ in enumerate(_native_types):
+    type_names.append(typ[0])
+    globals()[typ[0]] = i
+    if len(typ) == 1:
+        ffi_types.append(lltype.nullptr(FFI_TYPE_P.TO))
+        lltype_sizes.append(0)
+        aliases.append([])
+        continue
+    ffi_types.append(typ[1])
+    lltypes.append(typ[2])
+    aliases.append(typ[3])
+    if typ[0] == 'VOID':
+        lltype_sizes.append(-1)
+    else:
+        lltype_sizes.append(rffi.sizeof(lltypes[-1]))
 
-aliases = {
-            'VOID': [],
-            'INT8': ['CHAR', 'SCHAR'],
-            'UINT8': ['UCHAR'],
-            'INT16': ['SHORT', 'SSHORT'],
-            'UINT16': ['USHORT'],
-            'INT32': ['INT', 'SINT'],
-            'UINT32': ['UINT'],
-            'LONG': ['SLONG'],
-            'ULONG': [],
-            'INT64': ['LONG_LONG', 'SLONG_LONG'],
-            'UINT64': ['ULONG_LONG'],
-            'FLOAT32': ['FLOAT'],
-            'FLOAT64': ['DOUBLE'],
-            'LONGDOUBLE': [],
-            'POINTER': ['BUFFER_IN', 'BUFFER_OUT', 'BUFFER_INOUT'],
-            'BOOL': [],
-            'VARARGS': [],
-            'STRING': []
-          }
+del _native_types
+
+def lltype_for_name(name):
+    """NOT_RPYTHON"""
+    # XXX maybe use a dictionary
+    return lltypes[type_names.index(name)]
+
+def size_for_name(name):
+    """NOT_RPYTHON"""
+    # XXX maybe use a dictionary
+    return lltype_sizes[type_names.index(name)]
+
 
 class W_TypeObject(W_Object):
+    _immutable_fields_ = ['typename']
     classdef = ClassDef('Type', W_Object.classdef)
+    typeindex = 0
+
+    def __init__(self, space, typeindex=0, klass=None):
+        assert isinstance(typeindex, int)
+        W_Object.__init__(self, space, klass)
+        self.typeindex = typeindex
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        for typename in ffi_types:
-            w_new_type = W_TypeObject(space, typename)
+        for i in range(len(ffi_types)):
+            typename = type_names[i]
+            w_new_type = W_BuiltinType(space, i)
             space.set_const(w_cls, typename, w_new_type)
-            for alias in aliases[typename]:
+            for alias in aliases[i]:
                 space.set_const(w_cls, alias, w_new_type)
         space.set_const(w_cls, 'Mapped', space.getclassfor(W_MappedObject))
 
-    def __init__(self, space, typename, klass=None):
-        W_Object.__init__(self, space, klass)
-        self.typename = typename
-
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
-        return W_TypeObject(space, 'NEWTYPE')
+        return W_TypeObject(space, VOID)
 
     def __deepcopy__(self, memo):
         obj = super(W_TypeObject, self).__deepcopy__(memo)
-        obj.typename = self.typename
+        obj.typeindex = self.typeindex
         return obj
 
     def __repr__(self):
-        return '<W_TypeObject %s(%s)>' % (self.typename, self.typechar)
+        return '<W_TypeObject %s(%s)>' % (type_names[self.typeindex], lltype_sizes[self.typeindex])
 
     def eq(self, w_other):
         if not isinstance(w_other, W_TypeObject):
             return False
-        return self.typename == w_other.typename
+        return self.typeindex == w_other.typeindex
 
     __eq__ = eq
 
@@ -131,9 +118,23 @@ class W_TypeObject(W_Object):
 
     @classdef.method('size')
     def method_size(self, space):
-        r_uint_size = ffi_types[self.typename].c_size
+        r_uint_size = lltype_sizes[self.typeindex]
         size = intmask(r_uint_size)
         return space.newint(size)
+
+class W_BuiltinType(W_TypeObject):
+    classdef = ClassDef('Builtin', W_TypeObject.classdef)
+
+    def __init__(self, space, typeindex):
+        W_TypeObject.__init__(self, space, typeindex)
+
+    @classdef.singleton_method('allocate')
+    def singleton_method_allocate(self, space, args_w):
+        raise NotImplementedError
+
+    @classdef.singleton_method('allocate')
+    def singleton_method_allocate(self, space, args_w):
+        raise NotImplementedError
 
 def type_object(space, w_obj):
     w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
