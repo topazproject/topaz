@@ -9,7 +9,6 @@ from rpython.rtyper.lltypesystem import rffi
 import sys
 import os
 
-
 if sys.platform == 'darwin':
     ext = 'dylib'
     libm = 'libm.' + ext

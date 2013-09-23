@@ -1,4 +1,10 @@
 from tests.modules.ffi.base import BaseFFITest
+import sys
+
+if sys.platform == 'darwin':
+    libc = 'libc.dylib'
+else:
+    libc = 'libc.so.6'
 
 class TestVariadicInvoker(BaseFFITest):
     def test_it_is_not_a_function(self, ffis):
@@ -15,17 +21,17 @@ class TestVariadicInvoker(BaseFFITest):
         w_res = ffis.execute("""
         module Lib
             local = FFI::DynamicLibrary::RTLD_LOCAL
-            @ffi_libs = [FFI::DynamicLibrary.open('libc.so.6', local)]
+            @ffi_libs = [FFI::DynamicLibrary.open('%(libname)s', local)]
         end
-        libc = FFI::DynamicLibrary.new('libc.so.6')
+        libc = FFI::DynamicLibrary.new('%(libname)s')
         sym_sprintf = libc.find_function(:sprintf)
         sprintf = FFI::VariadicInvoker.new(sym_sprintf,
                                            [FFI::Type::POINTER, FFI::Type::STRING],
                                            FFI::Type::INT32)
         sprintf.attach(Lib, :sprintf)
         result = FFI::MemoryPointer.new(:int8, 14)
-        Lib.sprintf(result, "%i, %f", :int32, 1, :float64, 2.0)
+        Lib.sprintf(result, "%%i, %%f", :int32, 1, :float64, 2.0)
         chars = 0.upto(5).map { |x| result.get_int8(x).chr }
         chars.inject('') { |str, c| str << c }
-        """)
+        """ % {'libname':libc})
         assert self.unwrap(ffis, w_res) == "1, 2.0"
