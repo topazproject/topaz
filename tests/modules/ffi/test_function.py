@@ -1,13 +1,8 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.objects.classobject import W_ClassObject
-from topaz.modules.ffi.function import W_FunctionObject
-from topaz.modules.ffi.type import ffi_types, aliases
 
 from rpython.rlib import clibffi
-from rpython.rtyper.lltypesystem import rffi
 
 import sys
-import os
 
 if sys.platform == 'darwin':
     ext = 'dylib'

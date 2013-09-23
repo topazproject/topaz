@@ -1,8 +1,4 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.objects.hashobject import W_HashObject
-from topaz.objects.classobject import W_ClassObject
-from topaz.objects.moduleobject import W_ModuleObject
-from topaz.modules.ffi.type import W_TypeObject
 
 from rpython.rtyper.lltypesystem import rffi
 

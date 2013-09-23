@@ -1,7 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
 
 from rpython.rtyper.lltypesystem import rffi
-from rpython.rtyper.lltypesystem import lltype
 from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
                                                   cast_adr_to_int as adr2int)
 

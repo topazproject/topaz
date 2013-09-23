@@ -1,10 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.type import (ffi_types, native_types,
                                     W_TypeObject)
-from topaz.objects.classobject import W_ClassObject
-from topaz.objects.moduleobject import W_ModuleObject
-from rpython.rlib import clibffi
-from rpython.rtyper.lltypesystem import rffi
 
 class TestType(BaseFFITest):
     def test_it_is_a_class(self, space):
