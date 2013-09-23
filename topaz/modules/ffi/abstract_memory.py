@@ -53,7 +53,7 @@ def new_get_method(type_str):
         to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
     else:
         to_int = intmask
-    if type_str == 'float64':
+    if type_str in ['float32', 'float64']:
         wrap = lambda space, val: space.newfloat(float(val))
     else:
         wrap = lambda space, val: space.newint(to_int(val))
@@ -95,18 +95,57 @@ class W_AbstractMemoryObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
+        long_in_bits = 8 * rffi.sizeof(rffi.LONG)
         for orig, alias in [
                             ('int8', 'char'),
                             ('uint8', 'uchar'),
                             ('int16', 'short'),
                             ('uint16', 'ushort'),
                             ('int32', 'int'),
-                            ('uint32', 'uint')
+                            ('uint32', 'uint'),
+                            ('int64', 'long_long'),
+                            ('uint64', 'ulong_long'),
+                            ('float32', 'float'),
+                            ('float64', 'double'),
+                            ('int' + str(long_in_bits), 'long'),
+                            ('uint' + str(long_in_bits), 'ulong')
                            ]:
             for prefix in ['put_', 'get_', 'write_', 'read_']:
                 space.send(w_cls, 'alias_method',
                            [space.newsymbol(prefix + alias),
                             space.newsymbol(prefix + orig)])
+
+    @classdef.method('put_uint64', offset='int', value='bigint')
+    def method_put_uint64(self, space, offset, value):
+        like_ptr = native_types['UINT64']
+        val = rffi.cast(like_ptr, value.toulonglong())
+        casted_ptr = self.uint64_cast()
+        sizeof_type = rffi.sizeof(like_ptr)
+        raise_if_out_of_bounds(space, offset, self.uint64_size(),
+                               memory_index_error(space, offset, sizeof_type))
+        try:
+            casted_ptr[offset] = val
+        except IndexError:
+            raise memory_index_error(space, offset, sizeof_type)
+
+    @classdef.method('get_uint64', offset='int')
+    def method_get_pointer(self, space, offset):
+        like_ptr = native_types['UINT64']
+        casted_ptr = self.uint64_cast()
+        sizeof_type = rffi.sizeof(like_ptr)
+        raise_if_out_of_bounds(space, offset, self.uint64_size(),
+                               memory_index_error(space, offset, sizeof_type))
+        try:
+            val = casted_ptr[offset]
+            return space.newbigint_fromrbigint(rbigint.fromrarith_int(val))
+        except IndexError:
+            raise memory_index_error(space, offset, sizeof_type)
+
+    method_write_uint64 = classdef.method('write_uint64')(
+                           new_write_method('uint64'))
+
+    method_read_uint64 = classdef.method('read_uint64')(
+                          new_read_method('uint64'))
 
     @classdef.method('put_pointer', offset='int', value='ffi_address')
     def method_put_pointer(self, space, offset, value):
@@ -169,9 +208,12 @@ class W_AbstractMemoryObject(W_Object):
 
 W_AMO = W_AbstractMemoryObject
 for t in ['int8', 'int16', 'int32', 'int64',
-          'uint8', 'uint16', 'uint32', 'uint64']:
+          'uint8', 'uint16', 'uint32', 'uint64',
+          'float32', 'float64']:
     setattr(W_AMO, t + '_cast', new_cast_method(t))
     setattr(W_AMO, t + '_size', new_numberof_method(t))
+for t in ['int8', 'int16', 'int32', 'int64',
+          'uint8', 'uint16', 'uint32']:
     setattr(W_AMO, 'method_put_' + t,
             W_AMO.classdef.method('put_' + t, offset='int', value='int')(
             new_put_method(t)))
@@ -184,9 +226,7 @@ for t in ['int8', 'int16', 'int32', 'int64',
     setattr(W_AMO, 'method_read_' + t,
             W_AMO.classdef.method('read_' + t)(
             new_read_method(t)))
-for t in ['float64']:
-    setattr(W_AMO, t + '_cast', new_cast_method(t))
-    setattr(W_AMO, t + '_size', new_numberof_method(t))
+for t in ['float32', 'float64']:
     setattr(W_AMO, 'method_put_' + t,
             W_AMO.classdef.method('put_' + t, offset='int', value='float')(
             new_put_method(t)))
