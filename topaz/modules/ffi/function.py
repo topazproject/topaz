@@ -30,22 +30,8 @@ from pypy.module._cffi_backend import misc
 
 BIG_ENDIAN = sys.byteorder == 'big'
 
-INT8 =  ffitype.INT8
-UINT8 =  ffitype.UINT8
-INT16 =  ffitype.INT16
-UINT16 =  ffitype.UINT16
-INT32 =  ffitype.INT32
-UINT32 =  ffitype.UINT32
-INT64 =  ffitype.INT64
-UINT64 =  ffitype.UINT64
-LONG =  ffitype.LONG
-ULONG =  ffitype.ULONG
-FLOAT32 =  ffitype.FLOAT32
-FLOAT64 =  ffitype.FLOAT64
-BOOL =  ffitype.BOOL
-STRING =  ffitype.STRING
-POINTER =  ffitype.POINTER
-VOID =  ffitype.VOID
+for i, name in enumerate(ffitype.type_names):
+    globals()[name] = i
 
 unrolling_types = unrolling_iterable(range(len(ffitype.type_names)))
 
