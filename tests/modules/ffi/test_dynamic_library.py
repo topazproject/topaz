@@ -3,6 +3,13 @@ from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
 
 from rpython.rlib import clibffi
 
+import sys
+
+if sys.platform == 'darwin':
+    libm = 'libm.dylib'
+else:
+    libm = 'libm.so'
+
 class TestDynamicLibrary(BaseFFITest):
     def test_consts(self, space):
         consts = {'LAZY':1 , 'NOW':2, 'GLOBAL':257, 'LOCAL':0}
@@ -12,15 +19,15 @@ class TestDynamicLibrary(BaseFFITest):
 
 class TestDynamicLibrary__new(BaseFFITest):
     def test_it_opens_a_dynamic_library(self, space):
-        w_res = space.execute("FFI::DynamicLibrary.new('libm.so', 1)")
-        assert w_res.cdll.lib == clibffi.dlopen('libm.so', 1)
-        w_res = space.execute("FFI::DynamicLibrary.new('libm.so', 0)")
-        assert w_res.cdll.lib == clibffi.dlopen('libm.so', 0)
+        w_res = space.execute("FFI::DynamicLibrary.new('%s', 1)" % libm)
+        assert w_res.cdll.lib == clibffi.dlopen(libm, 1)
+        w_res = space.execute("FFI::DynamicLibrary.new('%s', 0)" % libm)
+        assert w_res.cdll.lib == clibffi.dlopen(libm, 0)
 
     def test_it_stores_the_name_of_the_opened_lib(self, space):
-        w_res = space.execute("FFI::DynamicLibrary.new('libm.so', 1)")
+        w_res = space.execute("FFI::DynamicLibrary.new('%s', 1)" % libm)
         w_name = space.find_instance_var(w_res, '@name')
-        assert self.unwrap(space, w_name) == 'libm.so'
+        assert self.unwrap(space, w_name) == libm
 
     def test_it_accepts_nil_as_library_name(self, space):
         w_res = space.execute("FFI::DynamicLibrary.new(nil, 2)")
@@ -49,7 +56,7 @@ class TestDynamicLibrary__new(BaseFFITest):
 
 class TestDynamicLibrary__Symbol(BaseFFITest):
     def test_its_a_wrapper_around_a_function_symbol(self, space):
-        exp_ptr = clibffi.CDLL('libm.so').getaddressindll('exp')
+        exp_ptr = clibffi.CDLL( libm).getaddressindll('exp')
         w_dl_sym = W_DL_SymbolObject(space, exp_ptr)
         assert w_dl_sym.ptr == exp_ptr
 
@@ -57,12 +64,12 @@ class TestDynamicLibrary_find_variable(BaseFFITest):
     def test_it_returns_a_DynamicLibrary__Symbol(self, space):
         w_dl_sym = space.execute("FFI::DynamicLibrary::Symbol")
         w_res = space.execute("""
-        FFI::DynamicLibrary.new('libm.so').find_variable(:sin)
-        """)
+        FFI::DynamicLibrary.new('%s').find_variable(:sin)
+        """ % libm)
         assert w_res.getclass(space) is w_dl_sym
 
     def test_it_also_known_as_find_function(self, space):
         assert self.ask(space, """
-        dl = FFI::DynamicLibrary.new('libm.so')
+        dl = FFI::DynamicLibrary.new('%s')
         dl.method(:find_function) == dl.method(:find_variable)
-        """)
+        """ % libm) 

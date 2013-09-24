@@ -1,5 +1,5 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.modules.ffi.pointer import W_PointerObject, coerce_address
+from topaz.modules.ffi.pointer import coerce_address
 
 from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
 from rpython.rtyper.lltypesystem.ll2ctypes import ALLOCATED

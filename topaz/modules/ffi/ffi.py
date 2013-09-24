@@ -3,8 +3,8 @@ from __future__ import absolute_import
 from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
-from topaz.modules.ffi.type import (native_types, ffi_types,
-                                    W_TypeObject)
+from topaz.modules.ffi.type import (POINTER, lltype_sizes, W_TypeObject,
+                                    type_names, W_BuiltinType)
 from topaz.modules.ffi.function import W_FunctionObject
 from topaz.modules.ffi.variadic_invoker import W_VariadicInvokerObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
@@ -21,7 +21,9 @@ class FFI(object):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         # setup modules from other files
-        space.set_const(w_mod, 'Type', space.getclassfor(W_TypeObject))
+        w_type_class = space.getclassfor(W_TypeObject)
+        space.set_const(w_mod, 'Type', w_type_class)
+        space.set_const(w_type_class, 'Builtin', space.getclassfor(W_BuiltinType))
         space.set_const(w_mod, 'DynamicLibrary',
                         space.getclassfor(W_DynamicLibraryObject))
         space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
@@ -38,7 +40,7 @@ class FFI(object):
 
         w_native_type = space.newmodule('NativeType')
         # This assumes that FFI::Type and the type constants already exist
-        for typename in ffi_types:
+        for typename in type_names:
             w_Type = space.find_const(w_mod, 'Type')
             w_ffi_type = space.find_const(w_Type, typename)
             # setup type constants
@@ -57,7 +59,8 @@ class FFI(object):
             space.set_const(w_platform, name_prefix + name_postfix,
                             space.send(w_tp, 'size'))
         space.set_const(w_platform, 'ADDRESS_SIZE',
-                        space.newint(rffi.sizeof(native_types['POINTER'])))
+                        space.newint(
+                            lltype_sizes[POINTER]))
         space.set_const(w_mod, 'Platform', w_platform)
 
         # setup StructLayout

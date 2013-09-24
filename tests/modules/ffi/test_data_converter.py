@@ -1,5 +1,4 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.objects.moduleobject import W_ModuleObject
 
 class TestDataConverter(BaseFFITest):
     def test_it_is_a_Module(self, space):
