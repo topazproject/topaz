@@ -274,8 +274,7 @@ class W_FunctionObject(W_PointerObject):
         return space.newstr_fromstr(str_res)
 
     def _ruby_wrap_POINTER(self, space, res):
-        adr_res = llmemory.cast_ptr_to_adr(res)
-        int_res = llmemory.cast_adr_to_int(adr_res)
+        int_res = rffi.cast(lltype.Signed, res)
         w_FFI = space.find_const(space.w_kernel, 'FFI')
         w_Pointer = space.find_const(w_FFI, 'Pointer')
         return space.send(w_Pointer, 'new',
