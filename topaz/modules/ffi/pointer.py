@@ -5,8 +5,6 @@ from topaz.coerce import Coerce
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
-from rpython.rtyper.lltypesystem.llmemory import (cast_int_to_adr as int2adr,
-                                                  cast_adr_to_ptr as adr2ptr)
 
 def coerce_pointer(space, w_pointer):
     if isinstance(w_pointer, W_PointerObject):
@@ -73,7 +71,6 @@ class W_PointerObject(W_AbstractMemoryObject):
             address = pow_2_63.add(address)
         self.address = address
         self.ptr = rffi.cast(rffi.VOIDP, address.toulonglong())
-        #self.ptr = adr2ptr(int2adr(address.toulonglong()))
         self.sizeof_type = sizeof_type
         self.sizeof_memory = pow_2_63
 

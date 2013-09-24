@@ -3,7 +3,6 @@ import sys
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
-from topaz.modules.ffi.type import (ffi_types, W_TypeObject, type_object)
 from topaz.modules.ffi.dynamic_library import (W_DL_SymbolObject,
                                                coerce_dl_symbol)
 from topaz.modules.ffi.pointer import W_PointerObject, coerce_pointer
@@ -58,16 +57,16 @@ class W_FunctionObject(W_PointerObject):
         if w_options is None:
             w_options = space.newhash()
 
-        self.w_ret_type = type_object(space, w_ret_type)
-        self.arg_types_w = [type_object(space, w_type)
+        self.w_ret_type = ffitype.type_object(space, w_ret_type)
+        self.arg_types_w = [ffitype.type_object(space, w_type)
                             for w_type in space.listview(w_arg_types)]
         self.setup(space, w_name)
 
     def setup(self, space, w_name):
         self.ptr = (coerce_dl_symbol(space, w_name) if w_name
                     else lltype.nullptr(rffi.VOIDP.TO))
-        ffi_arg_types = [ffi_types[t.typeindex] for t in self.arg_types_w]
-        ffi_ret_type = ffi_types[self.w_ret_type.typeindex]
+        ffi_arg_types = [ffitype.ffi_types[t.typeindex] for t in self.arg_types_w]
+        ffi_ret_type = ffitype.ffi_types[self.w_ret_type.typeindex]
         self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
 
     def initialize_variadic(self, space, w_name, w_ret_type, arg_types_w):

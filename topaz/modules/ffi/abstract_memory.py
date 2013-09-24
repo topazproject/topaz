@@ -3,8 +3,6 @@ from topaz.module import ClassDef
 from topaz.coerce import Coerce
 from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes 
 from rpython.rtyper.lltypesystem import rffi, lltype
-from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
-                                                  cast_adr_to_int as adr2int)
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rbigint import rbigint
 

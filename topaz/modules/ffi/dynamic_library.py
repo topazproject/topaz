@@ -5,8 +5,6 @@ from topaz.coerce import Coerce
 
 from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import rffi
-from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
-                                                  cast_adr_to_int as adr2int)
 
 class W_DynamicLibraryObject(W_Object):
     classdef = ClassDef('DynamicLibrary', W_Object.classdef)
