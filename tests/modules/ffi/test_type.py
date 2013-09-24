@@ -27,6 +27,8 @@ class TestFFI__TestType(BaseFFITest):
         for typename in type_names:
             assert self.ask(space, "FFI::Type::%s.is_a? FFI::Type"
                             % typename)
+            assert self.ask(space, "FFI::Type::%s.is_a? FFI::Type::Builtin"
+                            % typename)
 
     def test_its_instances_can_be_accessed_in_different_ways(self, space):
         for typename in type_names:
