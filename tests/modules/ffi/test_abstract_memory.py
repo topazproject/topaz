@@ -1,6 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.abstract_memory import new_cast_method
-from topaz.modules.ffi.type import size_for_name
+from topaz.modules.ffi.type import size_for_name, UINT64
 
 from rpython.rtyper.lltypesystem import rffi
 
@@ -143,7 +143,7 @@ class TestAbstractMemory_put_pointer(BaseFFITest):
         mem_ptr.put_pointer(1, ptr2)
         mem_ptr
         """)
-        w_adr_ptr = new_cast_method('uint64')(w_mem_ptr)
+        w_adr_ptr = new_cast_method(UINT64)(w_mem_ptr)
         assert w_adr_ptr[0] == 88
         assert w_adr_ptr[1] == 55
 
