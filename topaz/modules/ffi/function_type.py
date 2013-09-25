@@ -16,7 +16,11 @@ class W_FunctionTypeObject(W_TypeObject):
         return W_FunctionTypeObject(space)
 
     @classdef.method('initialize', arg_types_w='array')
-    def method_initialize(self, space, w_ret_type, arg_types_w):
+    def method_initialize(self, space, w_ret_type, arg_types_w, w_options=None):
+        if w_options is None:
+            w_options = space.newhash()
+        self.w_options = w_options
+
         raise_TypeError_if_not_TypeObject(space, w_ret_type)
         for w_arg_type in arg_types_w:
             raise_TypeError_if_not_TypeObject(space, w_arg_type)

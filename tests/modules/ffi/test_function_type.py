@@ -27,3 +27,20 @@ class TestFunctionType__new(BaseFFITest):
         with self.raises(space, 'TypeError',
                          "Invalid parameter type (:float64)"):
             space.execute("FFI::FunctionType.new(FFI::Type::INT8, [:float64])")
+
+    def test_it_has_a_Hash_as_optional_3rd_argument(self, space):
+        w_function_type = space.execute("""
+        FFI::FunctionType.new(FFI::Type::VOID, [], {convention: :default})
+        """)
+        w_res = space.send(w_function_type.w_options, '[]',
+                           [space.newsymbol('convention')])
+        assert self.unwrap(space, w_res) == 'default'
+
+    def test_it_creates_an_empty_hash_if_no_options_were_given(self, space):
+        w_function_type = space.execute("""
+        FFI::FunctionType.new(FFI::Type::VOID, [])
+        """)
+        assert space.is_true(space.send(w_function_type.w_options, 'empty?'))
+
+    # If you don't use a Hash as a third argument anything might happen (e.g.
+    # segfault). This is also the behaviour of the original ruby ffi.
