@@ -17,7 +17,7 @@ def new_cast_method(typ):
 def new_numberof_method(typ):
     csize = ffitype.lltype_sizes[typ]
     def numberof_method(self):
-        return self.sizeof_memory.toulonglong() / csize
+        return self.sizeof_memory / csize
     return numberof_method
 
 def new_put_method(typ):

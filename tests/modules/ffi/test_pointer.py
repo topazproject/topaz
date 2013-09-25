@@ -1,3 +1,5 @@
+import sys
+
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.pointer import coerce_address
 
@@ -66,7 +68,7 @@ class TestPointer_size(BaseFFITest):
     def test_it_is_always_2_pow_63(self, space):
         for adr in range(100):
             w_res = space.execute("FFI::Pointer.new(%s).size" % adr)
-            assert self.unwrap(space, w_res).toulonglong() == 2**63
+            assert self.unwrap(space, w_res) == sys.maxint
 
 class TestPointer_autorelease(BaseFFITest):
     def test_it(self, space):
@@ -113,7 +115,7 @@ class TestPointer_slice(BaseFFITest):
 
     def test_its_2nd_arg_is_the_size(self, space):
         w_res = space.execute("FFI::Pointer.new(3).slice(0, 4).size")
-        assert self.unwrap(space, w_res).toint() == 4
+        assert self.unwrap(space, w_res) == 4
 
     def test_it_raises_TypeError_on_nonsense_args(self, space):
         with self.raises(space, 'TypeError',

@@ -6,6 +6,8 @@ from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
 
+import sys
+
 def coerce_pointer(space, w_pointer):
     if isinstance(w_pointer, W_PointerObject):
         return w_pointer.ptr
@@ -39,7 +41,7 @@ class W_PointerObject(W_AbstractMemoryObject):
         W_AbstractMemoryObject.__init__(self, space, klass)
         self.address = rbigint.fromint(0)
         self.sizeof_type = 0
-        self.sizeof_memory = rbigint.fromint(0)
+        self.sizeof_memory = 0
 
     def __deepcopy__(self, memo):
         obj = super(W_AbstractMemoryObject, self).__deepcopy__(memo)
@@ -71,7 +73,7 @@ class W_PointerObject(W_AbstractMemoryObject):
         self.address = address
         self.ptr = rffi.cast(rffi.VOIDP, address.toulonglong())
         self.sizeof_type = sizeof_type
-        self.sizeof_memory = pow_2_63
+        self.sizeof_memory = sys.maxint
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -96,7 +98,7 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('size')
     def method_size(self, space):
-        return space.newbigint_fromrbigint(self.sizeof_memory)
+        return space.newint_or_bigint(self.sizeof_memory)
 
     @classdef.method('==')
     def method_eq(self, space, w_other):
@@ -111,7 +113,7 @@ class W_PointerObject(W_AbstractMemoryObject):
         w_res = space.send(space.getclass(self), 'new', [w_ptr_sum])
         return w_res
 
-    @classdef.method('slice', size='bigint')
+    @classdef.method('slice', size='int')
     def method_address(self, space, w_offset, size):
         w_pointer = space.send(self, '+', [w_offset])
         assert isinstance(w_pointer, W_PointerObject)
