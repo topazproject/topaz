@@ -12,7 +12,7 @@ from topaz.objects.functionobject import W_BuiltinFunction
 
 from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
 from rpython.rtyper.lltypesystem.lltype import scoped_alloc
-from rpython.rlib import clibffi
+from rpython.rlib import clibffi, jit
 from rpython.rlib.jit_libffi import CIF_DESCRIPTION, CIF_DESCRIPTION_P
 from rpython.rlib.jit_libffi import FFI_TYPE_P, FFI_TYPE_PP
 from rpython.rlib.jit_libffi import SIZE_OF_FFI_ARG
@@ -37,6 +37,7 @@ unrolling_types = unrolling_iterable(range(len(ffitype.type_names)))
 
 class W_FunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
+    _immutable_fields_ = ['cif_descr', 'atypes', 'ptr', 'arg_types_w', 'w_ret_type']
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -77,6 +78,7 @@ class W_FunctionObject(W_PointerObject):
     def align_arg(self, n):
         return (n + 7) & ~7
 
+    @jit.dont_look_inside
     def build_cif_descr(self, space, ffi_arg_types, ffi_ret_type):
         nargs = len(ffi_arg_types)
         # XXX combine both mallocs with alignment
@@ -139,27 +141,35 @@ class W_FunctionObject(W_PointerObject):
             lltype.free(self.atypes, flavor='raw')
 
 
+    #XXX eventually we need a dont look inside for vararg calls
     @classdef.method('call')
+    @jit.unroll_safe
     def method_call(self, space, args_w):
+        self = jit.promote(self)
         cif_descr = self.cif_descr
+
+        nargs = len(args_w)
+        assert nargs == cif_descr.nargs
+        #
         size = cif_descr.exchange_size
-        with scoped_alloc(rffi.CCHARP.TO, size) as buffer:
+        buffer = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+        try:
             for i in range(len(args_w)):
                 data = rffi.ptradd(buffer, cif_descr.exchange_args[i])
                 w_obj = args_w[i]
-                argtype = self.arg_types_w[i]
-                typeindex = argtype.typeindex
-                self._put_arg(space, w_obj, argtype, data)
+                self._put_arg(space, data, i, w_obj)
 
             #ec = cerrno.get_errno_container(space)
             #cerrno.restore_errno_from(ec)
-            jit_ffi_call(cif_descr, rffi.cast(rffi.VOIDP, self.ptr),
-                                    buffer)
+            jit_ffi_call(cif_descr, rffi.cast(rffi.VOIDP, self.ptr), buffer)
             #e = cerrno.get_real_errno()
             #cerrno.save_errno_into(ec, e)
 
             resultdata = rffi.ptradd(buffer, cif_descr.exchange_result)
-            return self._get_result(space, resultdata)
+            w_res =  self._get_result(space, resultdata)
+        finally:
+            lltype.free(buffer, flavor='raw')
+        return w_res
 
     def _get_result(self, space, resultdata):
         typeindex = self.w_ret_type.typeindex
@@ -206,7 +216,8 @@ class W_FunctionObject(W_PointerObject):
         else:
             return w_arg
 
-    def _put_arg(self, space, w_obj, argtype, data):
+    def _put_arg(self, space, data, i, w_obj):
+        argtype = self.arg_types_w[i]
         typeindex = argtype.typeindex
         for c in unrolling_types:
             if c == typeindex:

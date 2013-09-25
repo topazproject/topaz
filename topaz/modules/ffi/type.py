@@ -74,9 +74,10 @@ def size_for_name(name):
 
 
 class W_TypeObject(W_Object):
-    _immutable_fields_ = ['typename']
     classdef = ClassDef('Type', W_Object.classdef)
+
     typeindex = 0
+    _immutable_fields_ = ['typeindex']
 
     def __init__(self, space, typeindex=0, klass=None):
         assert isinstance(typeindex, int)

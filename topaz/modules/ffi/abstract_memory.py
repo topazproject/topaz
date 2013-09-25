@@ -85,6 +85,8 @@ def memory_index_error(space, offset, size):
 
 class W_AbstractMemoryObject(W_Object):
     classdef = ClassDef('Pointer', W_Object.classdef)
+    ptr = lltype.nullptr(rffi.VOIDP.TO)
+    _immutable_fields_ = ['ptr']
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space):
