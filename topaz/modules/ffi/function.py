@@ -51,15 +51,15 @@ class W_FunctionObject(W_PointerObject):
         self.cif_descr = lltype.nullptr(CIF_DESCRIPTION)
         self.atypes = lltype.nullptr(FFI_TYPE_PP.TO)
 
-    @classdef.method('initialize')
-    def method_initialize(self, space, w_ret_type, w_arg_types,
+    @classdef.method('initialize', arg_types_w='array')
+    def method_initialize(self, space, w_ret_type, arg_types_w,
                           w_name=None, w_options=None):
         if w_options is None:
             w_options = space.newhash()
 
         self.w_ret_type = ffitype.type_object(space, w_ret_type)
         self.arg_types_w = [ffitype.type_object(space, w_type)
-                            for w_type in space.listview(w_arg_types)]
+                            for w_type in arg_types_w]
         self.setup(space, w_name)
 
     def setup(self, space, w_name):
