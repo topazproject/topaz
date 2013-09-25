@@ -1,6 +1,8 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi import type as ffitype
 
+from rpython.rtyper.lltypesystem import rffi
+
 class TestFunctionType(BaseFFITest):
     def test_it_has_Type_as_a_superclass(self, space):
         self.ask(space, "FFI::FunctionType.superclass.equal? FFI::Type")
@@ -44,3 +46,16 @@ class TestFunctionType__new(BaseFFITest):
 
     # If you don't use a Hash as a third argument anything might happen (e.g.
     # segfault). This is also the behaviour of the original ruby ffi.
+
+class TestFunctionType_py_invoke(BaseFFITest):
+    def test_it_invokes_the_given_proc_with_ll_args(self, space):
+        w_func_type = space.execute("""
+        int32 = FFI::Type::INT32
+        func_type = FFI::FunctionType.new(int32,
+                    [int32, int32])
+        """)
+        w_proc = space.execute("proc { |x, y| x + y }")
+        int_1 = rffi.cast(rffi.INT, 1)
+        int_2 = rffi.cast(rffi.INT, 2)
+        w_res = w_func_type.invoke(space, w_proc, int_1, int_2)
+        assert self.unwrap(space, w_res) == 3
