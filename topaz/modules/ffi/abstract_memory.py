@@ -4,7 +4,6 @@ from topaz.coerce import Coerce
 from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
-from rpython.rlib.rbigint import rbigint
 
 from topaz.modules.ffi import type as ffitype
 
@@ -116,11 +115,11 @@ class W_AbstractMemoryObject(W_Object):
                            [space.newsymbol(prefix + alias),
                             space.newsymbol(prefix + orig)])
 
-    @classdef.method('put_uint64', offset='int', value='bigint')
+    @classdef.method('put_uint64', offset='int', value='int')
     def method_put_uint64(self, space, offset, value):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        val = rffi.cast(like_ptr, value.toulonglong())
+        val = rffi.cast(like_ptr, value)
         casted_ptr = self.uint64_cast()
         raise_if_out_of_bounds(space, offset, self.uint64_size(),
                                memory_index_error(space, offset, sizeof_type))
@@ -138,7 +137,7 @@ class W_AbstractMemoryObject(W_Object):
                                memory_index_error(space, offset, sizeof_type))
         try:
             val = casted_ptr[offset]
-            return space.newbigint_fromrbigint(rbigint.fromrarith_int(val))
+            return space.newint(intmask(val))
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 
@@ -170,8 +169,7 @@ class W_AbstractMemoryObject(W_Object):
                                memory_index_error(space, offset, sizeof_type))
         try:
             address = casted_ptr[offset]
-            rbigint_address = rbigint.fromrarith_int(address)
-            w_address = space.newbigint_fromrbigint(rbigint_address)
+            w_address = space.newint_or_bigint(intmask(address))
             w_ffi = space.find_const(space.w_kernel, 'FFI')
             w_pointer = space.find_const(w_ffi, 'Pointer')
             return space.send(w_pointer, 'new', [w_address])

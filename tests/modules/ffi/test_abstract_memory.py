@@ -206,7 +206,7 @@ class TestAbstractMemory_write_uint64(BaseFFITest):
         mem_ptr.write_uint64(14)
         mem_ptr.get_uint64(0)
         """)
-        assert self.unwrap(ffis, w_res).toint() == 14
+        assert self.unwrap(ffis, w_res) == 14
 
 class TestAbstractMemory_read_pointer(BaseFFITest):
     def test_it_is_like_calling_get_pointer_with_0(self, ffis):
@@ -224,7 +224,7 @@ class TestAbstractMemory_read_uint64(BaseFFITest):
         mem_ptr.put_uint64(0, 12)
         mem_ptr.read_uint64
         """)
-        assert self.unwrap(ffis, w_res).toint() == 12
+        assert self.unwrap(ffis, w_res) == 12
 
 class TestAbstractMemory(BaseFFITest):
     def test_it_defines_the_following_aliases(self, space):
