@@ -6,6 +6,7 @@ from topaz.objects.exceptionobject import W_StandardError, new_exception_allocat
 from topaz.modules.ffi.type import (POINTER, lltype_sizes, W_TypeObject,
                                     type_names, W_BuiltinType)
 from topaz.modules.ffi.function import W_FunctionObject
+from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi.variadic_invoker import W_VariadicInvokerObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
 from topaz.modules.ffi.abstract_memory import W_AbstractMemoryObject
@@ -21,12 +22,16 @@ class FFI(object):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         # setup modules from other files
-        w_type_class = space.getclassfor(W_TypeObject)
-        space.set_const(w_mod, 'Type', w_type_class)
-        space.set_const(w_type_class, 'Builtin', space.getclassfor(W_BuiltinType))
+        w_Type = space.getclassfor(W_TypeObject)
+        space.set_const(w_mod, 'Type', w_Type)
+        space.set_const(w_Type, 'Builtin', space.getclassfor(W_BuiltinType))
         space.set_const(w_mod, 'DynamicLibrary',
                         space.getclassfor(W_DynamicLibraryObject))
         space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
+        w_FunctionType = space.getclassfor(W_FunctionTypeObject)
+        space.set_const(w_mod, 'FunctionType', w_FunctionType)
+        space.set_const(w_mod, 'FunctionInfo', w_FunctionType)
+        space.set_const(w_mod, 'CallbackInfo', w_FunctionType)
         space.set_const(w_mod, 'VariadicInvoker',
                         space.getclassfor(W_VariadicInvokerObject))
         space.set_const(w_mod, 'AbstractMemory',
@@ -41,7 +46,6 @@ class FFI(object):
         w_native_type = space.newmodule('NativeType')
         # This assumes that FFI::Type and the type constants already exist
         for typename in type_names:
-            w_Type = space.find_const(w_mod, 'Type')
             w_ffi_type = space.find_const(w_Type, typename)
             # setup type constants
             space.set_const(w_mod, 'TYPE_' + typename, w_ffi_type)
