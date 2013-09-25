@@ -4,7 +4,6 @@ from topaz.modules.ffi.type import W_TypeObject, type_object
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
-from rpython.rlib.rbigint import rbigint
 
 class W_MemoryPointerObject(W_PointerObject):
     classdef = ClassDef('MemoryPointer', W_PointerObject.classdef)
@@ -29,4 +28,4 @@ class W_MemoryPointerObject(W_PointerObject):
                                self.sizeof_memory,
                                flavor='raw')
         self.ptr = rffi.cast(rffi.VOIDP, memory)
-        self.address = rbigint.fromint(rffi.cast(lltype.Signed, memory))
+        self.address = rffi.cast(lltype.Signed, memory)

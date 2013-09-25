@@ -2,7 +2,6 @@ from topaz.modules.ffi.abstract_memory import W_AbstractMemoryObject
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
 
-from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
 
@@ -19,10 +18,9 @@ setattr(Coerce, 'ffi_pointer', staticmethod(coerce_pointer))
 
 def coerce_address(space, w_addressable):
     if space.is_kind_of(w_addressable, space.w_bignum):
-        return Coerce.bigint(space, w_addressable)
+        return Coerce.int(space, w_addressable)
     elif space.is_kind_of(w_addressable, space.w_fixnum):
-        int32_address = Coerce.int(space, w_addressable)
-        return rbigint.fromint(int32_address)
+        return Coerce.int(space, w_addressable)
     elif space.is_kind_of(w_addressable,
                           space.getclassfor(W_PointerObject)):
         w_address = space.send(w_addressable, 'address')
@@ -39,7 +37,7 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     def __init__(self, space, klass=None):
         W_AbstractMemoryObject.__init__(self, space, klass)
-        self.address = rbigint.fromint(0)
+        self.address = 0
         self.sizeof_type = 0
         self.sizeof_memory = 0
 
@@ -67,17 +65,14 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     def _initialize(self, space, address, sizeof_type=1):
         W_AbstractMemoryObject.__init__(self, space)
-        pow_2_63 = rbigint.fromint(2).pow(rbigint.fromint(63))
-        if address.lt(rbigint.fromint(0)):
-            address = pow_2_63.add(address)
         self.address = address
-        self.ptr = rffi.cast(rffi.VOIDP, address.toulonglong())
+        self.ptr = rffi.cast(rffi.VOIDP, address)
         self.sizeof_type = sizeof_type
         self.sizeof_memory = sys.maxint
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        w_null = space.send(w_cls, 'new', [space.newbigint_fromint(0)])
+        w_null = space.send(w_cls, 'new', [space.newint(0)])
         space.set_const(w_cls, 'NULL', w_null)
         space.send(w_cls, 'alias_method', [space.newsymbol('to_i'),
                                            space.newsymbol('address')])
@@ -90,11 +85,11 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('null?')
     def method_null_p(self, space):
-        return space.newbool(self.address.eq(rbigint.fromint(0)))
+        return space.newbool(self.address == 0)
 
     @classdef.method('address')
     def method_address(self, space):
-        return space.newbigint_fromrbigint(self.address)
+        return space.newint_or_bigint(self.address)
 
     @classdef.method('size')
     def method_size(self, space):
@@ -103,13 +98,13 @@ class W_PointerObject(W_AbstractMemoryObject):
     @classdef.method('==')
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_PointerObject):
-            return space.newbool(self.address.eq(w_other.address))
+            return space.newbool(self.address == w_other.address)
         else:
             return space.newbool(False)
 
-    @classdef.method('+', other='bigint')
+    @classdef.method('+', other='int')
     def method_plus(self, space, other):
-        w_ptr_sum = space.newbigint_fromrbigint(self.address.add(other))
+        w_ptr_sum = space.newint_or_bigint(self.address + other)
         w_res = space.send(space.getclass(self), 'new', [w_ptr_sum])
         return w_res
 

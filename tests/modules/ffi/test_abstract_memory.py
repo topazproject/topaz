@@ -197,7 +197,7 @@ class TestAbstractMemory_write_pointer(BaseFFITest):
         mem_ptr.write_pointer(FFI::Pointer.new(11))
         mem_ptr.get_pointer(0).address
         """)
-        assert self.unwrap(ffis, w_res).toint() == 11
+        assert self.unwrap(ffis, w_res) == 11
 
 class TestAbstractMemory_write_uint64(BaseFFITest):
     def test_it_is_like_calling_put_uint64_with_0_as_1st_arg(self, ffis):
@@ -215,7 +215,7 @@ class TestAbstractMemory_read_pointer(BaseFFITest):
         mem_ptr.put_pointer(0, FFI::Pointer.new(13))
         mem_ptr.read_pointer.address
         """)
-        assert self.unwrap(ffis, w_res).toint() == 13
+        assert self.unwrap(ffis, w_res) == 13
 
 class TestAbstractMemory_read_uint64(BaseFFITest):
     def test_it_is_like_calling_get_uint64_with_0(self, ffis):

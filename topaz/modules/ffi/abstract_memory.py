@@ -151,7 +151,7 @@ class W_AbstractMemoryObject(W_Object):
     def method_put_pointer(self, space, offset, value):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        val = rffi.cast(like_ptr, value.toulonglong())
+        val = rffi.cast(like_ptr, value)
         casted_ptr = self.uint64_cast()
         raise_if_out_of_bounds(space, offset, self.uint64_size(),
                                memory_index_error(space, offset, sizeof_type))
