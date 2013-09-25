@@ -38,7 +38,6 @@ class W_PointerObject(W_AbstractMemoryObject):
     def __init__(self, space, klass=None):
         W_AbstractMemoryObject.__init__(self, space, klass)
         self.address = rbigint.fromint(0)
-        self.ptr = lltype.nullptr(rffi.VOIDP.TO)
         self.sizeof_type = 0
         self.sizeof_memory = rbigint.fromint(0)
 
