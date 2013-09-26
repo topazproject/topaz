@@ -1,7 +1,7 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi import type as ffitype
 
-from rpython.rtyper.lltypesystem import rffi
+from rpython.rtyper.lltypesystem import rffi, lltype
 
 class TestFunctionType(BaseFFITest):
     def test_it_has_Type_as_a_superclass(self, space):
@@ -55,7 +55,13 @@ class TestFunctionType_py_invoke(BaseFFITest):
                     [int32, int32])
         """)
         w_proc = space.execute("proc { |x, y| x + y }")
-        int_1 = rffi.cast(rffi.INT, 1)
-        int_2 = rffi.cast(rffi.INT, 2)
-        w_res = w_func_type.invoke(space, w_proc, [int_1, int_2])
-        assert self.unwrap(space, w_res) == 3
+        intp1 = lltype.malloc(rffi.INTP.TO, 1, flavor='raw')
+        intp2 = lltype.malloc(rffi.INTP.TO, 1, flavor='raw')
+        try:
+            intp1[0] = rffi.cast(rffi.INT, 1)
+            intp2[0] = rffi.cast(rffi.INT, 2)
+            w_res = w_func_type.invoke(space, w_proc, [intp1, intp2])
+            assert self.unwrap(space, w_res) == 3
+        finally:
+            lltype.free(intp1, flavor='raw')
+            lltype.free(intp2, flavor='raw')

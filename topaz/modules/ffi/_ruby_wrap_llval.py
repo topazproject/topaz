@@ -5,8 +5,39 @@ from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import intmask, longlongmask
 from rpython.rlib.rbigint import rbigint
 
+# XXX maybe move to rlib/jit_libffi
+from pypy.module._cffi_backend import misc
+
 for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
+
+@specialize.arg(2)
+def _ruby_wrap_llpointer_content(space, data, t):
+    if t == VOID:
+        return space.w_nil
+    typesize = ffitype.lltype_sizes[t]
+    # XXX refactor
+    if t == FLOAT64 or t == FLOAT32:
+        result = misc.read_raw_float_data(data, typesize)
+        return _ruby_wrap_number(space, result, t)
+    elif t == LONG or t == INT64 or t == INT32 or t == INT16 or t == INT8:
+        result = misc.read_raw_signed_data(data, typesize)
+        return _ruby_wrap_number(space, result, t)
+    elif t == BOOL:
+        result = bool(misc.read_raw_signed_data(data, typesize))
+        return _ruby_wrap_number(space, result, t)
+    elif t == ULONG or t == UINT64 or t == UINT32 or t == UINT16 or t == UINT8:
+        result = misc.read_raw_unsigned_data(data, typesize)
+        return _ruby_wrap_number(space, result, t)
+    elif t == STRING:
+        result = misc.read_raw_unsigned_data(data, typesize)
+        result = rffi.cast(rffi.CCHARP, result)
+        return _ruby_wrap_STRING(space, result)
+    elif t == POINTER:
+        result = misc.read_raw_unsigned_data(data, typesize)
+        result = rffi.cast(rffi.VOIDP, result)
+        return _ruby_wrap_POINTER(space, result)
+    raise Exception("Bug in FFI: unknown Type %s" % ffitype.type_names[t])
 
 @specialize.arg(2)
 def _ruby_wrap_number(space, res, restype):

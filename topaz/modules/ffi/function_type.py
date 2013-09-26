@@ -2,7 +2,8 @@ from topaz.modules.ffi.type import W_TypeObject
 from topaz.modules.ffi import type as ffitype
 from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
                                                 _ruby_wrap_POINTER,
-                                                _ruby_wrap_STRING)
+                                                _ruby_wrap_STRING,
+                                                _ruby_wrap_llpointer_content)
 from topaz.module import ClassDef
 
 def raise_TypeError_if_not_TypeObject(space, w_candidate):
@@ -31,17 +32,12 @@ class W_FunctionTypeObject(W_TypeObject):
         self.w_ret_type = w_ret_type
         self.arg_types_w = arg_types_w
 
-    def invoke(self, space, w_proc, ll_args):
+    def invoke(self, space, w_proc, args_llp):
         args_w = []
         for i in range(len(self.arg_types_w)):
             w_arg_type = self.arg_types_w[i]
-            ll_arg = ll_args[i]
+            llp_arg = args_llp[i]
             t = w_arg_type.typeindex
-            if t == ffitype.STRING:
-                w_arg = _ruby_wrap_STRING(space, ll_arg)
-            elif t == ffitype.POINTER:
-                w_arg = _ruby_wrap_POINTER(space, ll_arg)
-            else:
-                w_arg = _ruby_wrap_number(space, ll_arg, t)
+            w_arg = _ruby_wrap_llpointer_content(space, llp_arg, t)
             args_w.append(w_arg)
         return space.send(w_proc, 'call', args_w)
