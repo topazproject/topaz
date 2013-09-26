@@ -37,8 +37,7 @@ def new_put_method(typ):
     def put_method(self, space, offset, value):
         val = rffi.cast(ctype, value)
         casted_ptr = cast_method(self)
-        raise_if_out_of_bounds(space, offset, numberof_method(self),
-                               memory_index_error(space, offset, sizeof_type))
+        raise_if_out_of_bounds(space, offset, numberof_method(self), sizeof_type)
         try:
             casted_ptr[offset] = val
         except IndexError:
@@ -60,8 +59,7 @@ def new_get_method(typ):
         wrap = lambda space, val: space.newint(to_int(val))
     def get_method(self, space, offset):
         casted_ptr = cast_method(self)
-        raise_if_out_of_bounds(space, offset, numberof_method(self),
-                               memory_index_error(space, offset, sizeof_type))
+        raise_if_out_of_bounds(space, offset, numberof_method(self), sizeof_type)
         try:
             val = casted_ptr[offset]
             return wrap(space, val)
@@ -81,12 +79,12 @@ def new_read_method(type_str):
         return space.send(self, get_method_name, [space.newint(0)])
     return read_method
 
-def raise_if_out_of_bounds(space, offset, size, error):
+def raise_if_out_of_bounds(space, offset, size, sizeof_type):
     if offset < 0:
-        raise error
+        raise memory_index_error(space, offset, sizeof_type)
     else:
         if offset >= size:
-            raise error
+            raise memory_index_error(space, offset, sizeof_type)
 
 def memory_index_error(space, offset, size):
     return space.error(space.w_IndexError,
@@ -130,8 +128,7 @@ class W_AbstractMemoryObject(W_Object):
         sizeof_type = lltype_sizes[UINT64]
         val = rffi.cast(like_ptr, value.toulonglong())
         casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(),
-                               memory_index_error(space, offset, sizeof_type))
+        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
         try:
             casted_ptr[offset] = val
         except IndexError:
@@ -142,8 +139,7 @@ class W_AbstractMemoryObject(W_Object):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
         casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(),
-                               memory_index_error(space, offset, sizeof_type))
+        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
         try:
             val = casted_ptr[offset]
             return space.newint_or_bigint_fromunsigned(val)
@@ -162,8 +158,7 @@ class W_AbstractMemoryObject(W_Object):
         sizeof_type = lltype_sizes[UINT64]
         val = rffi.cast(like_ptr, value)
         casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(),
-                               memory_index_error(space, offset, sizeof_type))
+        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
         try:
             casted_ptr[offset] = val
         except IndexError:
@@ -174,8 +169,7 @@ class W_AbstractMemoryObject(W_Object):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
         casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(),
-                               memory_index_error(space, offset, sizeof_type))
+        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
         try:
             address = casted_ptr[offset]
             w_address = space.newint_or_bigint(intmask(address))
