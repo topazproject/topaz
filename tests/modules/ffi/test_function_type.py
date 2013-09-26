@@ -57,5 +57,5 @@ class TestFunctionType_py_invoke(BaseFFITest):
         w_proc = space.execute("proc { |x, y| x + y }")
         int_1 = rffi.cast(rffi.INT, 1)
         int_2 = rffi.cast(rffi.INT, 2)
-        w_res = w_func_type.invoke(space, w_proc, int_1, int_2)
+        w_res = w_func_type.invoke(space, w_proc, [int_1, int_2])
         assert self.unwrap(space, w_res) == 3

@@ -31,7 +31,7 @@ class W_FunctionTypeObject(W_TypeObject):
         self.w_ret_type = w_ret_type
         self.arg_types_w = arg_types_w
 
-    def invoke(self, space, w_proc, *ll_args):
+    def invoke(self, space, w_proc, ll_args):
         args_w = []
         for i in range(len(self.arg_types_w)):
             w_arg_type = self.arg_types_w[i]
