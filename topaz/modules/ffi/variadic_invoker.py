@@ -14,7 +14,6 @@ class W_VariadicInvokerObject(W_Object):
         W_Object.__init__(self, space)
         self.w_ret_type = W_TypeObject(space, VOID)
         self.arg_types_w = []
-        self.funcsym = lltype.nullptr(rffi.VOIDP.TO)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -34,6 +33,9 @@ class W_VariadicInvokerObject(W_Object):
     def method_invoke(self, space, arg_types_w, arg_values_w):
         w_function = W_FunctionObject(space)
         arg_types_w = [type_object(space, t) for t in arg_types_w]
+        # XXX we are missing argument promotion for the variadic arguments here
+        # see
+        # http://stackoverflow.com/questions/1255775/default-argument-promotions-in-c-function-calls
         w_ret_type = self.w_ret_type
         w_function.initialize_variadic(space, self.w_name, w_ret_type, arg_types_w)
         return space.send(w_function, 'call', arg_values_w)

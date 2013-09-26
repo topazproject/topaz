@@ -1,29 +1,33 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
-from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes 
+from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes
 from rpython.rtyper.lltypesystem import rffi, lltype
-from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rarithmetic import intmask, r_longlong, r_ulonglong
 from rpython.rlib.rbigint import rbigint
 
+from topaz.modules.ffi import type as ffitype
+
+import sys
+
 # Check, whether this will be inlined
-def new_cast_method(type_str):
-    ctype = lltype_for_name(type_str.upper())
+def new_cast_method(typ):
+    ctype = ffitype.lltypes[typ]
     def cast_method(memory):
         return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
     return cast_method
 
-def new_numberof_method(type_str):
-    ctype = lltype_for_name(type_str.upper())
+def new_numberof_method(typ):
+    csize = ffitype.lltype_sizes[typ]
     def numberof_method(self):
-        return self.sizeof_memory.toulonglong() / rffi.sizeof(ctype)
+        return self.sizeof_memory / csize
     return numberof_method
 
-def new_put_method(type_str):
-    ctype = lltype_for_name(type_str.upper())
-    cast_method = new_cast_method(type_str)
-    numberof_method = new_numberof_method(type_str)
-    sizeof_type = rffi.sizeof(ctype)
+def new_put_method(typ):
+    ctype = ffitype.lltypes[typ]
+    cast_method = new_cast_method(typ)
+    numberof_method = new_numberof_method(typ)
+    sizeof_type  = ffitype.lltype_sizes[typ]
     def put_method(self, space, offset, value):
         val = rffi.cast(ctype, value)
         casted_ptr = cast_method(self)
@@ -35,22 +39,16 @@ def new_put_method(type_str):
             raise memory_index_error(space, offset, sizeof_type)
     return put_method
 
-def new_write_method(type_str):
-    put_method_name = 'put_' + type_str
-    def write_method(self, space, w_value):
-        space.send(self, put_method_name, [space.newint(0), w_value])
-    return write_method
-
-def new_get_method(type_str):
-    ctype = lltype_for_name(type_str.upper())
-    cast_method = new_cast_method(type_str)
-    numberof_method = new_numberof_method(type_str)
-    sizeof_type = rffi.sizeof(ctype)
-    if type_str == 'int8':
+def new_get_method(typ):
+    ctype = ffitype.lltypes[typ]
+    cast_method = new_cast_method(typ)
+    numberof_method = new_numberof_method(typ)
+    sizeof_type  = ffitype.lltype_sizes[typ]
+    if typ == ffitype.INT8:
         to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
     else:
         to_int = intmask
-    if type_str in ['float32', 'float64']:
+    if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
         wrap = lambda space, val: space.newfloat(float(val))
     else:
         wrap = lambda space, val: space.newint(to_int(val))
@@ -64,6 +62,12 @@ def new_get_method(type_str):
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return get_method
+
+def new_write_method(type_str):
+    put_method_name = 'put_' + type_str
+    def write_method(self, space, w_value):
+        space.send(self, put_method_name, [space.newint(0), w_value])
+    return write_method
 
 def new_read_method(type_str):
     get_method_name = 'get_' + type_str
@@ -128,7 +132,7 @@ class W_AbstractMemoryObject(W_Object):
             raise memory_index_error(space, offset, sizeof_type)
 
     @classdef.method('get_uint64', offset='int')
-    def method_get_pointer(self, space, offset):
+    def method_get_uint64(self, space, offset):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
         casted_ptr = self.uint64_cast()
@@ -136,7 +140,7 @@ class W_AbstractMemoryObject(W_Object):
                                memory_index_error(space, offset, sizeof_type))
         try:
             val = casted_ptr[offset]
-            return space.newbigint_fromrbigint(rbigint.fromrarith_int(val))
+            return space.newint_or_bigint_fromunsigned(val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 
@@ -150,7 +154,7 @@ class W_AbstractMemoryObject(W_Object):
     def method_put_pointer(self, space, offset, value):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        val = rffi.cast(like_ptr, value.toulonglong())
+        val = rffi.cast(like_ptr, value)
         casted_ptr = self.uint64_cast()
         raise_if_out_of_bounds(space, offset, self.uint64_size(),
                                memory_index_error(space, offset, sizeof_type))
@@ -168,8 +172,7 @@ class W_AbstractMemoryObject(W_Object):
                                memory_index_error(space, offset, sizeof_type))
         try:
             address = casted_ptr[offset]
-            rbigint_address = rbigint.fromrarith_int(address)
-            w_address = space.newbigint_fromrbigint(rbigint_address)
+            w_address = space.newint_or_bigint(intmask(address))
             w_ffi = space.find_const(space.w_kernel, 'FFI')
             w_pointer = space.find_const(w_ffi, 'Pointer')
             return space.send(w_pointer, 'new', [w_address])
@@ -206,35 +209,39 @@ class W_AbstractMemoryObject(W_Object):
     #    return space.newarray(arr_w)
 
 W_AMO = W_AbstractMemoryObject
-for t in ['int8', 'int16', 'int32', 'int64',
-          'uint8', 'uint16', 'uint32', 'uint64',
-          'float32', 'float64']:
-    setattr(W_AMO, t + '_cast', new_cast_method(t))
-    setattr(W_AMO, t + '_size', new_numberof_method(t))
-for t in ['int8', 'int16', 'int32', 'int64',
-          'uint8', 'uint16', 'uint32']:
-    setattr(W_AMO, 'method_put_' + t,
-            W_AMO.classdef.method('put_' + t, offset='int', value='int')(
+for t in [ffitype.INT8, ffitype.INT16, ffitype.INT32, ffitype.INT64,
+         ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.UINT64,
+         ffitype.FLOAT32, ffitype.FLOAT64]:
+    tn = ffitype.type_names[t].lower()
+    setattr(W_AMO, tn + '_cast', new_cast_method(t))
+    setattr(W_AMO, tn + '_size', new_numberof_method(t))
+
+for t in [ffitype.INT8, ffitype.INT16, ffitype.INT32, ffitype.INT64,
+          ffitype.UINT8, ffitype.UINT16, ffitype.UINT32]:
+    tn = ffitype.type_names[t].lower()
+    setattr(W_AMO, 'method_put_' + tn,
+            W_AMO.classdef.method('put_' + tn, offset='int', value='int')(
             new_put_method(t)))
-    setattr(W_AMO, 'method_write_' + t,
-            W_AMO.classdef.method('write_' + t, value='int')(
-            new_write_method(t)))
-    setattr(W_AMO, 'method_get_' + t,
-            W_AMO.classdef.method('get_' + t, offset='int')(
+    setattr(W_AMO, 'method_write_' + tn,
+            W_AMO.classdef.method('write_' + tn, value='int')(
+            new_write_method(tn)))
+    setattr(W_AMO, 'method_get_' + tn,
+            W_AMO.classdef.method('get_' + tn, offset='int')(
             new_get_method(t)))
-    setattr(W_AMO, 'method_read_' + t,
-            W_AMO.classdef.method('read_' + t)(
-            new_read_method(t)))
-for t in ['float32', 'float64']:
-    setattr(W_AMO, 'method_put_' + t,
-            W_AMO.classdef.method('put_' + t, offset='int', value='float')(
+    setattr(W_AMO, 'method_read_' + tn,
+            W_AMO.classdef.method('read_' + tn)(
+            new_read_method(tn)))
+for t in [ffitype.FLOAT32, ffitype.FLOAT64]:
+    tn = ffitype.type_names[t].lower()
+    setattr(W_AMO, 'method_put_' + tn,
+            W_AMO.classdef.method('put_' + tn, offset='int', value='float')(
             new_put_method(t)))
-    setattr(W_AMO, 'method_write_' + t,
-            W_AMO.classdef.method('write_' + t, value='float')(
-            new_write_method(t)))
-    setattr(W_AMO, 'method_get_' + t,
-            W_AMO.classdef.method('get_' + t, offset='int')(
+    setattr(W_AMO, 'method_write_' + tn,
+            W_AMO.classdef.method('write_' + tn, value='float')(
+            new_write_method(tn)))
+    setattr(W_AMO, 'method_get_' + tn,
+            W_AMO.classdef.method('get_' + tn, offset='int')(
             new_get_method(t)))
-    setattr(W_AMO, 'method_read_' + t,
-            W_AMO.classdef.method('read_' + t)(
-            new_read_method(t)))
+    setattr(W_AMO, 'method_read_' + tn,
+            W_AMO.classdef.method('read_' + tn)(
+            new_read_method(tn)))

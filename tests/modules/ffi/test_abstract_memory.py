@@ -1,6 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.abstract_memory import new_cast_method
-from topaz.modules.ffi.type import size_for_name
+from topaz.modules.ffi.type import size_for_name, UINT64
 
 from rpython.rtyper.lltypesystem import rffi
 
@@ -143,7 +143,7 @@ class TestAbstractMemory_put_pointer(BaseFFITest):
         mem_ptr.put_pointer(1, ptr2)
         mem_ptr
         """)
-        w_adr_ptr = new_cast_method('uint64')(w_mem_ptr)
+        w_adr_ptr = new_cast_method(UINT64)(w_mem_ptr)
         assert w_adr_ptr[0] == 88
         assert w_adr_ptr[1] == 55
 
@@ -159,7 +159,7 @@ class TestAbstractMemory_get_uint64(BaseFFITest):
     def test_it_gets_a_single_uint64_from_the_given_offset(self, ffis):
         w_res = ffis.execute(get_method_test_code('uint64'))
         res = self.unwrap(ffis, w_res)
-        assert res[0].tolong() == minval['uint64']
+        assert res[0] == minval['uint64']
         assert res[1].tolong() == maxval['uint64']
 
 class TestAbstractMemory_get_pointer(BaseFFITest):
@@ -197,7 +197,7 @@ class TestAbstractMemory_write_pointer(BaseFFITest):
         mem_ptr.write_pointer(FFI::Pointer.new(11))
         mem_ptr.get_pointer(0).address
         """)
-        assert self.unwrap(ffis, w_res).toint() == 11
+        assert self.unwrap(ffis, w_res) == 11
 
 class TestAbstractMemory_write_uint64(BaseFFITest):
     def test_it_is_like_calling_put_uint64_with_0_as_1st_arg(self, ffis):
@@ -206,7 +206,7 @@ class TestAbstractMemory_write_uint64(BaseFFITest):
         mem_ptr.write_uint64(14)
         mem_ptr.get_uint64(0)
         """)
-        assert self.unwrap(ffis, w_res).toint() == 14
+        assert self.unwrap(ffis, w_res) == 14
 
 class TestAbstractMemory_read_pointer(BaseFFITest):
     def test_it_is_like_calling_get_pointer_with_0(self, ffis):
@@ -215,7 +215,7 @@ class TestAbstractMemory_read_pointer(BaseFFITest):
         mem_ptr.put_pointer(0, FFI::Pointer.new(13))
         mem_ptr.read_pointer.address
         """)
-        assert self.unwrap(ffis, w_res).toint() == 13
+        assert self.unwrap(ffis, w_res) == 13
 
 class TestAbstractMemory_read_uint64(BaseFFITest):
     def test_it_is_like_calling_get_uint64_with_0(self, ffis):
@@ -224,7 +224,7 @@ class TestAbstractMemory_read_uint64(BaseFFITest):
         mem_ptr.put_uint64(0, 12)
         mem_ptr.read_uint64
         """)
-        assert self.unwrap(ffis, w_res).toint() == 12
+        assert self.unwrap(ffis, w_res) == 12
 
 class TestAbstractMemory(BaseFFITest):
     def test_it_defines_the_following_aliases(self, space):
