@@ -1,11 +1,14 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
-from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes 
+from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes
 from rpython.rtyper.lltypesystem import rffi, lltype
-from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rarithmetic import intmask, r_longlong, r_ulonglong
+from rpython.rlib.rbigint import rbigint
 
 from topaz.modules.ffi import type as ffitype
+
+import sys
 
 # Check, whether this will be inlined
 def new_cast_method(typ):
@@ -115,11 +118,11 @@ class W_AbstractMemoryObject(W_Object):
                            [space.newsymbol(prefix + alias),
                             space.newsymbol(prefix + orig)])
 
-    @classdef.method('put_uint64', offset='int', value='int')
+    @classdef.method('put_uint64', offset='int', value='bigint')
     def method_put_uint64(self, space, offset, value):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        val = rffi.cast(like_ptr, value)
+        val = rffi.cast(like_ptr, value.toulonglong())
         casted_ptr = self.uint64_cast()
         raise_if_out_of_bounds(space, offset, self.uint64_size(),
                                memory_index_error(space, offset, sizeof_type))
@@ -129,7 +132,7 @@ class W_AbstractMemoryObject(W_Object):
             raise memory_index_error(space, offset, sizeof_type)
 
     @classdef.method('get_uint64', offset='int')
-    def method_get_pointer(self, space, offset):
+    def method_get_uint64(self, space, offset):
         like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
         casted_ptr = self.uint64_cast()
@@ -137,7 +140,10 @@ class W_AbstractMemoryObject(W_Object):
                                memory_index_error(space, offset, sizeof_type))
         try:
             val = casted_ptr[offset]
-            return space.newint(intmask(val))
+            if 0 <= val <= sys.maxint:
+                return space.newint(intmask(val))
+            else:
+                return space.newbigint_fromrbigint(rbigint.fromrarith_int(val))
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 

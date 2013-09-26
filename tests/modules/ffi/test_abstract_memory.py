@@ -159,7 +159,7 @@ class TestAbstractMemory_get_uint64(BaseFFITest):
     def test_it_gets_a_single_uint64_from_the_given_offset(self, ffis):
         w_res = ffis.execute(get_method_test_code('uint64'))
         res = self.unwrap(ffis, w_res)
-        assert res[0].tolong() == minval['uint64']
+        assert res[0] == minval['uint64']
         assert res[1].tolong() == maxval['uint64']
 
 class TestAbstractMemory_get_pointer(BaseFFITest):
