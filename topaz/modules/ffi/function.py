@@ -144,7 +144,7 @@ class W_FunctionObject(W_PointerObject):
     #XXX eventually we need a dont look inside for vararg calls
     @classdef.method('call')
     @jit.unroll_safe
-    def method_call(self, space, args_w):
+    def method_call(self, space, args_w, block=None):
         self = jit.promote(self)
         cif_descr = self.cif_descr
 
