@@ -373,6 +373,15 @@ class ObjectSpace(object):
         else:
             return self.newbigint_fromrbigint(rbigint.fromrarith_int(someinteger))
 
+    @specialize.argtype(1)
+    def newint_or_bigint_fromunsigned(self, someunsigned):
+        #XXX somehow combine with above
+        if 0 <= someunsigned <= sys.maxint:
+            return self.newint(intmask(someunsigned))
+        else:
+            return self.newbigint_fromrbigint(
+                        rbigint.fromrarith_int(someunsigned))
+
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
 

@@ -140,10 +140,7 @@ class W_AbstractMemoryObject(W_Object):
                                memory_index_error(space, offset, sizeof_type))
         try:
             val = casted_ptr[offset]
-            if 0 <= val <= sys.maxint:
-                return space.newint(intmask(val))
-            else:
-                return space.newbigint_fromrbigint(rbigint.fromrarith_int(val))
+            return space.newint_or_bigint_fromunsigned(val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 
