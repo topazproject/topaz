@@ -19,8 +19,14 @@ def new_cast_method(typ):
 
 def new_numberof_method(typ):
     csize = ffitype.lltype_sizes[typ]
-    def numberof_method(self):
-        return self.sizeof_memory / csize
+    if csize & (csize - 1) == 0:  # csize is a power of 2
+        shift = 0
+        while 1 << shift < csize: shift += 1
+        def numberof_method(self):
+            return self.sizeof_memory >> shift
+    else:
+        def numberof_method(self):
+            return self.sizeof_memory / csize
     return numberof_method
 
 def new_put_method(typ):
