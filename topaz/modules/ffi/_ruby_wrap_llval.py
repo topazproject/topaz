@@ -4,12 +4,15 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rarithmetic import intmask, longlongmask
 from rpython.rlib.rbigint import rbigint
+from rpython.rlib.unroll import unrolling_iterable
 
 # XXX maybe move to rlib/jit_libffi
 from pypy.module._cffi_backend import misc
 
 for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
+
+unrolling_types = unrolling_iterable(range(len(ffitype.type_names)))
 
 @specialize.arg(2)
 def _ruby_wrap_llpointer_content(space, data, t):
@@ -77,3 +80,35 @@ def _ruby_wrap_POINTER(space, res):
     w_Pointer = space.find_const(w_FFI, 'Pointer')
     return space.send(w_Pointer, 'new',
                       [space.newint(int_res)])
+
+@specialize.arg(3)
+def _ruby_unwrap_llpointer_content(space, w_arg, data, typeindex):
+    typesize = ffitype.lltype_sizes[typeindex]
+    for t in unrolling_types:
+        # XXX refactor
+        if typeindex == t:
+            if t == FLOAT32 or t == FLOAT64:
+                arg = space.float_w(w_arg)
+                misc.write_raw_float_data(data, arg, typesize)
+            elif t == LONG or t == INT64 or t == INT8 or t == INT16 or t == INT32:
+                arg = space.int_w(w_arg)
+                misc.write_raw_signed_data(data, arg, typesize)
+            elif t == ULONG or t == UINT64 or t == UINT8 or t == UINT16 or t == UINT32:
+                arg = space.int_w(w_arg)
+                misc.write_raw_unsigned_data(data, arg, typesize)
+            elif t == STRING:
+                arg = space.str_w(w_arg)
+                arg = rffi.str2charp(arg)
+                arg = rffi.cast(lltype.Unsigned, arg)
+                misc.write_raw_unsigned_data(data, arg, typesize)
+            elif t == BOOL:
+                arg = space.is_true(w_arg)
+                misc.write_raw_unsigned_data(data, arg, typesize)
+            elif t == POINTER:
+                w_arg = self._convert_to_NULL_if_nil(space, w_arg)
+                arg = coerce_pointer(space, w_arg)
+                arg = rffi.cast(lltype.Unsigned, arg)
+                misc.write_raw_unsigned_data(data, arg, typesize)
+            else:
+                assert 0
+    return
