@@ -7,6 +7,8 @@ from rpython.rtyper.lltypesystem import lltype
 
 import sys
 
+NULLPTR = lltype.nullptr(rffi.VOIDP.TO)
+
 def coerce_pointer(space, w_pointer):
     if isinstance(w_pointer, W_PointerObject):
         return w_pointer.ptr
@@ -37,13 +39,11 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     def __init__(self, space, klass=None):
         W_AbstractMemoryObject.__init__(self, space, klass)
-        self.address = 0
         self.sizeof_type = 0
         self.sizeof_memory = 0
 
     def __deepcopy__(self, memo):
         obj = super(W_AbstractMemoryObject, self).__deepcopy__(memo)
-        obj.address = self.address
         obj.ptr = self.ptr
         obj.sizeof_type = self.sizeof_type
         obj.sizeof_memory = self.sizeof_memory
@@ -65,7 +65,6 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     def _initialize(self, space, address, sizeof_type=1):
         W_AbstractMemoryObject.__init__(self, space)
-        self.address = address
         self.ptr = rffi.cast(rffi.VOIDP, address)
         self.sizeof_type = sizeof_type
         self.sizeof_memory = sys.maxint
@@ -85,11 +84,12 @@ class W_PointerObject(W_AbstractMemoryObject):
 
     @classdef.method('null?')
     def method_null_p(self, space):
-        return space.newbool(self.address == 0)
+        return space.newbool(self.ptr == NULLPTR)
 
     @classdef.method('address')
     def method_address(self, space):
-        return space.newint_or_bigint(self.address)
+        addr = rffi.cast(lltype.Unsigned, self.ptr)
+        return space.newint_or_bigint_fromunsigned(addr)
 
     @classdef.method('size')
     def method_size(self, space):
@@ -98,14 +98,16 @@ class W_PointerObject(W_AbstractMemoryObject):
     @classdef.method('==')
     def method_eq(self, space, w_other):
         if isinstance(w_other, W_PointerObject):
-            return space.newbool(self.address == w_other.address)
+            return space.newbool(self.ptr == w_other.ptr)
         else:
             return space.newbool(False)
 
     @classdef.method('+', other='int')
     def method_plus(self, space, other):
-        w_ptr_sum = space.newint_or_bigint(self.address + other)
-        w_res = space.send(space.getclass(self), 'new', [w_ptr_sum])
+        ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), other)
+        ptr_val = rffi.cast(lltype.Unsigned, ptr)
+        w_ptr_val = space.newint_or_bigint_fromunsigned(ptr_val)
+        w_res = space.send(space.getclass(self), 'new', [w_ptr_val])
         return w_res
 
     @classdef.method('slice', size='int')
