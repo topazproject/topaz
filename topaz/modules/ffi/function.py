@@ -8,7 +8,9 @@ from topaz.modules.ffi.dynamic_library import (W_DL_SymbolObject,
 from topaz.modules.ffi.pointer import W_PointerObject, coerce_pointer
 from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
                                                 _ruby_wrap_POINTER,
-                                                _ruby_wrap_STRING)
+                                                _ruby_wrap_STRING,
+                                                _ruby_wrap_llpointer_content as
+                                                _read_result)
 from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
@@ -176,38 +178,10 @@ class W_FunctionObject(W_PointerObject):
         typeindex = self.w_ret_type.typeindex
         for c in unrolling_types:
             if c == typeindex:
-                return self._read_result(space, resultdata, c)
+                return _read_result(space, resultdata, c)
         assert 0
 
 
-
-    @specialize.arg(3)
-    def _read_result(self, space, data, t):
-        if t == VOID:
-            return space.w_nil
-        typesize = ffitype.lltype_sizes[t]
-        # XXX refactor
-        if t == FLOAT64 or t == FLOAT32:
-            result = misc.read_raw_float_data(data, typesize)
-            return _ruby_wrap_number(space, result, t)
-        elif t == LONG or t == INT64 or t == INT32 or t == INT16 or t == INT8:
-            result = misc.read_raw_signed_data(data, typesize)
-            return _ruby_wrap_number(space, result, t)
-        elif t == BOOL:
-            result = bool(misc.read_raw_signed_data(data, typesize))
-            return _ruby_wrap_number(space, result, t)
-        elif t == ULONG or t == UINT64 or t == UINT32 or t == UINT16 or t == UINT8:
-            result = misc.read_raw_unsigned_data(data, typesize)
-            return _ruby_wrap_number(space, result, t)
-        elif t == STRING:
-            result = misc.read_raw_unsigned_data(data, typesize)
-            result = rffi.cast(rffi.CCHARP, result)
-            return _ruby_wrap_STRING(space, result)
-        elif t == POINTER:
-            result = misc.read_raw_unsigned_data(data, typesize)
-            result = rffi.cast(rffi.VOIDP, result)
-            return _ruby_wrap_POINTER(space, result)
-        raise Exception("Bug in FFI: unknown Type %s" % ffitype.type_names[t])
 
     def _convert_to_NULL_if_nil(self, space, w_arg):
         if w_arg is space.w_nil:
