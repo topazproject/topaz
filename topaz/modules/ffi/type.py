@@ -1,11 +1,12 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
-from rpython.rlib.jit_libffi import FFI_TYPE_P
 
+from rpython.rlib.jit_libffi import FFI_TYPE_P
 from rpython.rlib import clibffi
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.unroll import unrolling_iterable
 
 _native_types = [
     ('VOID',       clibffi.ffi_type_void,                     lltype.Void,     []),
@@ -61,6 +62,8 @@ for i, typ in enumerate(_native_types):
         lltype_sizes.append(rffi.sizeof(lltypes[-1]))
 
 del _native_types
+
+unrolling_types = unrolling_iterable(range(len(type_names)))
 
 def lltype_for_name(name):
     """NOT_RPYTHON"""

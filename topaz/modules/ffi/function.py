@@ -25,7 +25,6 @@ from rpython.rlib.jit_libffi import FFI_TYPE_P, FFI_TYPE_PP
 from rpython.rlib.jit_libffi import SIZE_OF_FFI_ARG
 from rpython.rlib.jit_libffi import jit_ffi_call
 from rpython.rlib.jit_libffi import jit_ffi_prep_cif
-from rpython.rlib.unroll import unrolling_iterable
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.objectmodel import we_are_translated
 
@@ -36,9 +35,6 @@ BIG_ENDIAN = sys.byteorder == 'big'
 
 for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
-
-unrolling_types = unrolling_iterable(range(len(ffitype.type_names)))
-
 
 class W_FunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
@@ -178,7 +174,7 @@ class W_FunctionObject(W_PointerObject):
 
     def _get_result(self, space, resultdata):
         typeindex = self.w_ret_type.typeindex
-        for c in unrolling_types:
+        for c in ffitype.unrolling_types:
             if c == typeindex:
                 return _read_result(space, resultdata, c)
         assert 0
@@ -186,10 +182,9 @@ class W_FunctionObject(W_PointerObject):
     def _put_arg(self, space, data, i, w_obj):
         argtype = self.arg_types_w[i]
         typeindex = argtype.typeindex
-        for c in unrolling_types:
+        for c in ffitype.unrolling_types:
             if c == typeindex:
-                return _push_arg(space, w_obj, data, c)
-        assert 0
+                _push_arg(space, w_obj, data, c)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

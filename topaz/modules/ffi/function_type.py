@@ -7,6 +7,8 @@ from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
                                                 _ruby_unwrap_llpointer_content)
 from topaz.module import ClassDef
 
+from rpython.rtyper.lltypesystem import rffi
+
 def raise_TypeError_if_not_TypeObject(space, w_candidate):
     if not isinstance(w_candidate, W_TypeObject):
         raise space.error(space.w_TypeError,
@@ -38,13 +40,25 @@ class W_FunctionTypeObject(W_TypeObject):
         args_w = []
         for i in range(len(self.arg_types_w)):
             w_arg_type = self.arg_types_w[i]
-            llp_arg = args_llp[i]
-            assert isinstance(w_arg_type, W_TypeObject)
-            t = w_arg_type.typeindex
-            w_arg = _ruby_wrap_llpointer_content(space, llp_arg, t)
+            llp_arg = rffi.cast(rffi.CCHARP, args_llp[i])
+            w_arg = self._read_and_wrap_llpointer(space, llp_arg, w_arg_type)
             args_w.append(w_arg)
         w_res = space.send(w_proc, 'call', args_w)
+        self._unwrap_and_write_rubyobj(space, w_res, llp_res)
+
+    def _read_and_wrap_llpointer(self, space, llp, w_arg_type):
+        assert isinstance(w_arg_type, W_TypeObject)
+        typeindex = w_arg_type.typeindex
+        for t in ffitype.unrolling_types:
+            if t == typeindex:
+                return _ruby_wrap_llpointer_content(space, llp, t)
+        assert 0
+
+    def _unwrap_and_write_rubyobj(self, space, w_obj, llp_val):
+        llp_val = rffi.cast(rffi.CCHARP, llp_val)
         w_ret_type = self.w_ret_type
         assert isinstance(w_ret_type, W_TypeObject)
-        t = w_ret_type.typeindex
-        _ruby_unwrap_llpointer_content(space, w_res, llp_res, t)
+        typeindex = w_ret_type.typeindex
+        for t in ffitype.unrolling_types:
+            if t == typeindex:
+                _ruby_unwrap_llpointer_content(space, w_obj, llp_val, t)
