@@ -1,4 +1,5 @@
 from topaz.modules.ffi import type as ffitype
+from topaz.modules.ffi.pointer import coerce_pointer
 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.objectmodel import specialize
@@ -105,10 +106,18 @@ def _ruby_unwrap_llpointer_content(space, w_arg, data, typeindex):
                 arg = space.is_true(w_arg)
                 misc.write_raw_unsigned_data(data, arg, typesize)
             elif t == POINTER:
-                w_arg = self._convert_to_NULL_if_nil(space, w_arg)
+                w_arg = _convert_to_NULL_if_nil(space, w_arg)
                 arg = coerce_pointer(space, w_arg)
                 arg = rffi.cast(lltype.Unsigned, arg)
                 misc.write_raw_unsigned_data(data, arg, typesize)
             else:
                 assert 0
     return
+
+def _convert_to_NULL_if_nil(space, w_arg):
+    if w_arg is space.w_nil:
+        w_FFI = space.find_const(space.w_kernel, 'FFI')
+        w_Pointer = space.find_const(w_FFI, 'Pointer')
+        return space.find_const(w_Pointer, 'NULL')
+    else:
+        return w_arg
