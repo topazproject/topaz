@@ -8,13 +8,14 @@ from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
 from topaz.module import ClassDef
 
 def raise_TypeError_if_not_TypeObject(space, w_candidate):
-    if not space.is_kind_of(w_candidate, space.getclassfor(W_TypeObject)):
+    if not isinstance(w_candidate, W_TypeObject):
         raise space.error(space.w_TypeError,
                           "Invalid parameter type (%s)" %
                           space.str_w(space.send(w_candidate, 'inspect')))
 
 class W_FunctionTypeObject(W_TypeObject):
     classdef = ClassDef('FunctionType', W_TypeObject.classdef)
+    _immutable_fields_ = ['arg_types_w', 'w_ret_type']
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -38,9 +39,12 @@ class W_FunctionTypeObject(W_TypeObject):
         for i in range(len(self.arg_types_w)):
             w_arg_type = self.arg_types_w[i]
             llp_arg = args_llp[i]
+            assert isinstance(w_arg_type, W_TypeObject)
             t = w_arg_type.typeindex
             w_arg = _ruby_wrap_llpointer_content(space, llp_arg, t)
             args_w.append(w_arg)
         w_res = space.send(w_proc, 'call', args_w)
-        t = self.w_ret_type.typeindex
+        w_ret_type = self.w_ret_type
+        assert isinstance(w_ret_type, W_TypeObject)
+        t = w_ret_type.typeindex
         _ruby_unwrap_llpointer_content(space, w_res, llp_res, t)
