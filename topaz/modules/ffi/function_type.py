@@ -28,6 +28,7 @@ class W_FunctionTypeObject(W_TypeObject):
         if w_options is None:
             w_options = space.newhash()
         self.w_options = w_options
+        self.space = space
 
         raise_TypeError_if_not_TypeObject(space, w_ret_type)
         for w_arg_type in arg_types_w:
@@ -36,7 +37,8 @@ class W_FunctionTypeObject(W_TypeObject):
         self.w_ret_type = w_ret_type
         self.arg_types_w = arg_types_w
 
-    def invoke(self, space, w_proc, args_llp, llp_res):
+    def invoke(self, w_proc, args_llp, llp_res):
+        space = self.space
         args_w = []
         for i in range(len(self.arg_types_w)):
             w_arg_type = self.arg_types_w[i]
