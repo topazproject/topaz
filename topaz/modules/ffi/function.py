@@ -149,6 +149,8 @@ class W_FunctionObject(W_PointerObject):
         self = jit.promote(self)
         cif_descr = self.cif_descr
 
+        if block is not None:
+            args_w.append(block)
         nargs = len(args_w)
         assert nargs == cif_descr.nargs
         #
