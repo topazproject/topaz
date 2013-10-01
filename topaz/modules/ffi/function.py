@@ -13,6 +13,7 @@ from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
                                                 as _read_result,
                                                 _ruby_unwrap_llpointer_content
                                                 as _push_arg)
+from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
@@ -183,6 +184,15 @@ class W_FunctionObject(W_PointerObject):
 
     def _put_arg(self, space, data, i, w_obj):
         argtype = self.arg_types_w[i]
+        if isinstance(argtype, W_FunctionTypeObject):
+            self._push_callback(space, data, argtype, w_obj)
+        else:
+            self._push_ordinary(space, data, argtype, w_obj)
+
+    def _push_callback(self, space, data, argtype, w_proc):
+        raise NotImplementedError
+
+    def _push_ordinary(self, space, data, argtype, w_obj):
         typeindex = argtype.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
