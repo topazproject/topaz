@@ -268,3 +268,29 @@ class TestFunction_attach(BaseFFITest):
         assert self.ask(ffis, """
         LibraryMock.attachments[:malloc].call(8).kind_of?(FFI::Pointer)
         """)
+
+    def test_it_can_use_procs_as_callbacks(self, ffis):
+        source = """
+        %s
+        comparator = FFI::CallbackInfo.new(FFI::Type::INT,
+                                           [FFI::Type::POINTER,
+                                            FFI::Type::POINTER])
+        FFI::Function.new(FFI::Type::INT,
+                          [FFI::Type::POINTER,
+                           FFI::Type::ULONG,
+                           FFI::Type::ULONG,
+                           comparator],
+                          LibraryMock.find_function(:qsort),
+                          {}).attach(LibraryMock, 'qsort')
+        p = FFI::MemoryPointer.new(:int32, 2)
+        p.put_int32(0, 5)
+        p.put_int32(1, 3)
+        LibraryMock.attachments[:qsort].call(p, 2, 4) do |p1, p2|
+          i1 = p1.get_int32(0)
+          i2 = p2.get_int32(0)
+          i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
+        end
+        [p.get_int32(0), p.get_int32(1)]
+        """ % self.make_mock_library_code(libc)
+        w_res = ffis.execute(source)
+        assert self.unwrap(ffis, w_res) == [3, 5]
