@@ -1,3 +1,4 @@
+# This will definitely leak memory
 registration = {}
 
 def invoke(ll_cif, args_ll, ll_res, ll_data):
