@@ -54,28 +54,29 @@ class W_FunctionObject(W_PointerObject):
         self.cif_descr = lltype.nullptr(CIF_DESCRIPTION)
         self.atypes = lltype.nullptr(FFI_TYPE_PP.TO)
 
-    @classdef.method('initialize', arg_types_w='array')
-    def method_initialize(self, space, w_ret_type, arg_types_w,
+    @classdef.method('initialize')
+    def method_initialize(self, space, w_ret_type, w_arg_types,
                           w_name=None, w_options=None):
         if w_options is None:
             w_options = space.newhash()
 
-        self.w_ret_type = ffitype.type_object(space, w_ret_type)
-        self.arg_types_w = [ffitype.type_object(space, w_type)
-                            for w_type in arg_types_w]
+        self.w_info = space.send(space.getclassfor(W_FunctionTypeObject),
+                                 'new', [w_ret_type, w_arg_types, w_options])
         self.setup(space, w_name)
 
     def setup(self, space, w_name):
         self.ptr = (coerce_dl_symbol(space, w_name) if w_name
                     else lltype.nullptr(rffi.VOIDP.TO))
-        ffi_arg_types = [ffitype.ffi_types[t.typeindex] for t in self.arg_types_w]
-        ffi_ret_type = ffitype.ffi_types[self.w_ret_type.typeindex]
+        ffi_arg_types = [ffitype.ffi_types[t.typeindex]
+                         for t in self.w_info.arg_types_w]
+        ffi_ret_type = ffitype.ffi_types[self.w_info.w_ret_type.typeindex]
         self.cif_descr = self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
         self.atypes = self.cif_descr.atypes
 
     def initialize_variadic(self, space, w_name, w_ret_type, arg_types_w):
-        self.w_ret_type = w_ret_type
-        self.arg_types_w = arg_types_w
+        self.w_info = space.send(space.getclassfor(W_FunctionTypeObject),
+                                 'new',
+                                 [w_ret_type, space.newarray(arg_types_w)])
         self.setup(space, w_name)
 
     def align_arg(self, n):
@@ -176,16 +177,16 @@ class W_FunctionObject(W_PointerObject):
         return w_res
 
     def _get_result(self, space, resultdata):
-        typeindex = self.w_ret_type.typeindex
+        typeindex = self.w_info.w_ret_type.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
                 return _read_result(space, resultdata, c)
         assert 0
 
     def _put_arg(self, space, data, i, w_obj):
-        argtype = self.arg_types_w[i]
-        if isinstance(argtype, W_FunctionTypeObject):
-            self._push_callback(space, data, argtype, w_obj)
+        w_argtype = self.w_info.arg_types_w[i]
+        if isinstance(w_argtype, W_FunctionTypeObject):
+            self._push_callback(space, data, w_argtype, w_obj)
         else:
             self._push_ordinary(space, data, argtype, w_obj)
 
