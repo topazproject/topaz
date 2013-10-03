@@ -70,7 +70,8 @@ class W_FunctionObject(W_PointerObject):
                     else lltype.nullptr(rffi.VOIDP.TO))
         ffi_arg_types = [ffitype.ffi_types[t.typeindex] for t in self.arg_types_w]
         ffi_ret_type = ffitype.ffi_types[self.w_ret_type.typeindex]
-        self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
+        self.cif_descr = self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
+        self.atypes = self.cif_descr.atypes
 
     def initialize_variadic(self, space, w_name, w_ret_type, arg_types_w):
         self.w_ret_type = w_ret_type
@@ -127,14 +128,13 @@ class W_FunctionObject(W_PointerObject):
         # store the exchange data size
         cif_descr.exchange_size = exchange_offset
         #
-        self.cif_descr = cif_descr
-        self.atypes = atypes
-        #
         res = jit_ffi_prep_cif(cif_descr)
         #
         if res != clibffi.FFI_OK:
             raise space.error(space.w_RuntimeError,
                     "libffi failed to build this function type")
+        #
+        return cif_descr
 
     def __del__(self):
         if self.cif_descr:
