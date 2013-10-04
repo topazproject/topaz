@@ -55,15 +55,19 @@ class TestFunctionType_py_invoke(BaseFFITest):
                     [int32, int32])
         """)
         w_proc = space.execute("proc { |x, y| x + y }")
-        p_arg1 = lltype.malloc(rffi.INTP.TO, 1, flavor='raw')
-        p_arg2 = lltype.malloc(rffi.INTP.TO, 1, flavor='raw')
+        p_arg1 = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
+        p_arg2 = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
+        p_args = lltype.malloc(rffi.CCHARPP.TO, 2, flavor='raw')
         p_res = lltype.malloc(rffi.INTP.TO, 1, flavor='raw')
         try:
-            p_arg1[0] = rffi.cast(rffi.INT, 1)
-            p_arg2[0] = rffi.cast(rffi.INT, 2)
-            w_func_type.invoke(w_proc, [p_arg1, p_arg2], p_res)
+            p_arg1[0] = rffi.cast(rffi.CHAR, 1)
+            p_arg2[0] = rffi.cast(rffi.CHAR, 2)
+            p_args[0] = p_arg1
+            p_args[1] = p_arg2
+            w_func_type.invoke(w_proc, p_args, p_res)
             assert p_res[0] == 3
         finally:
             lltype.free(p_arg1, flavor='raw')
             lltype.free(p_arg2, flavor='raw')
+            lltype.free(p_args, flavor='raw')
             lltype.free(p_res, flavor='raw')
