@@ -30,11 +30,13 @@ def test_invoke(space):
         p_arg2[0] = rffi.cast(rffi.CHAR, 7)
         p_args[0] = p_arg1
         p_args[1] = p_arg2
-        _callback.invoke(cif_descr, p_args,
+        _callback.invoke(cif_descr,
+                         rffi.cast(rffi.VOIDPP, p_args),
                          rffi.cast(rffi.VOIDP, p_res),
                          rffi.cast(rffi.VOIDP, id_mul))
         assert p_res[0] == 42
-        _callback.invoke(cif_descr, p_args,
+        _callback.invoke(cif_descr,
+                         rffi.cast(rffi.VOIDPP, p_args),
                          rffi.cast(rffi.VOIDP, p_res),
                          rffi.cast(rffi.VOIDP, id_diff))
         assert p_res[0] == 1
