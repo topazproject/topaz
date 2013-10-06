@@ -433,11 +433,14 @@ class TestStringObject(BaseTopazTest):
         assert space.str_w(space.execute('return "hello\\r\\n".chomp')) == "hello"
         assert space.str_w(space.execute('return "hello\\n\\r".chomp')) == "hello"
         assert space.str_w(space.execute('return "hello\\r".chomp')) == "hello"
+        assert space.str_w(space.execute('return "hello\\r".chomp("")')) == "hello\r"
         assert space.str_w(space.execute('return "hello \\n there".chomp')) == "hello \n there"
         assert space.str_w(space.execute('return "hello".chomp("llo")')) == "he"
         w_res = space.execute('return "hello".chomp!')
         assert w_res is space.w_nil
         w_res = space.execute('return "".chomp!')
+        assert w_res is space.w_nil
+        w_res = space.execute('return "abc\\r".chomp!("")')
         assert w_res is space.w_nil
 
     def test_chop(self, space):
