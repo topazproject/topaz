@@ -440,6 +440,8 @@ class TestStringObject(BaseTopazTest):
         assert w_res is space.w_nil
         w_res = space.execute('return "".chomp!')
         assert w_res is space.w_nil
+        w_res = space.execute('return "abc".chomp!(nil)')
+        assert w_res is space.w_nil
         w_res = space.execute('return "abc\\r".chomp!("")')
         assert w_res is space.w_nil
 
