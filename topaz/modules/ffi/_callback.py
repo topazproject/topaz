@@ -1,3 +1,8 @@
+from topaz.modules.ffi import type as ffitype
+from topaz.modules.ffi.type import W_TypeObject
+from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_llpointer_content,
+                                                _ruby_unwrap_llpointer_content)
+
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.objectmodel import compute_unique_id
 from rpython.rlib import clibffi, jit
@@ -8,15 +13,16 @@ from pypy.module._cffi_backend import misc
 registration = {}
 
 class Data(object):
-    def __init__(self, w_proc, w_callback_info):
+    def __init__(self, space, w_proc, w_callback_info):
+        self.space = space
         self.w_proc = w_proc
         self.w_callback_info = w_callback_info
 
     def invoke(self, ll_args, ll_res):
         space = self.space
         args_w = []
-        for i in range(len(self.arg_types_w)):
-            w_arg_type = self.arg_types_w[i]
+        for i in range(len(self.w_callback_info.arg_types_w)):
+            w_arg_type = self.w_callback_info.arg_types_w[i]
             ll_arg = rffi.cast(rffi.CCHARP, ll_args[i])
             w_arg = self._read_and_wrap_llpointer(space, ll_arg, w_arg_type)
             args_w.append(w_arg)
@@ -33,7 +39,7 @@ class Data(object):
 
     def _unwrap_and_write_rubyobj(self, space, w_obj, ll_val):
         ll_val = rffi.cast(rffi.CCHARP, ll_val)
-        w_ret_type = self.w_ret_type
+        w_ret_type = self.w_callback_info.w_ret_type
         assert isinstance(w_ret_type, W_TypeObject)
         typeindex = w_ret_type.typeindex
         for t in ffitype.unrolling_types:

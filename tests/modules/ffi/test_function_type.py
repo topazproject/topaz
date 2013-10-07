@@ -46,28 +46,3 @@ class TestFunctionType__new(BaseFFITest):
 
     # If you don't use a Hash as a third argument anything might happen (e.g.
     # segfault). This is also the behaviour of the original ruby ffi.
-
-class TestFunctionType_py_invoke(BaseFFITest):
-    def test_it_invokes_the_given_proc_with_ll_args(self, space):
-        w_func_type = space.execute("""
-        int32 = FFI::Type::INT32
-        func_type = FFI::FunctionType.new(int32,
-                    [int32, int32])
-        """)
-        w_proc = space.execute("proc { |x, y| x + y }")
-        p_arg1 = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
-        p_arg2 = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
-        p_args = lltype.malloc(rffi.CCHARPP.TO, 2, flavor='raw')
-        p_res = lltype.malloc(rffi.INTP.TO, 1, flavor='raw')
-        try:
-            p_arg1[0] = rffi.cast(rffi.CHAR, 1)
-            p_arg2[0] = rffi.cast(rffi.CHAR, 2)
-            p_args[0] = p_arg1
-            p_args[1] = p_arg2
-            w_func_type.invoke(w_proc, p_res, p_args)
-            assert p_res[0] == 3
-        finally:
-            lltype.free(p_arg1, flavor='raw')
-            lltype.free(p_arg2, flavor='raw')
-            lltype.free(p_args, flavor='raw')
-            lltype.free(p_res, flavor='raw')
