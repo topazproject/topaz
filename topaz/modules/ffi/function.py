@@ -19,21 +19,16 @@ from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
 
-from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
+from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rtyper.lltypesystem.lltype import scoped_alloc
-from rpython.rlib import clibffi, jit
-from rpython.rlib.jit_libffi import CIF_DESCRIPTION, CIF_DESCRIPTION_P
-from rpython.rlib.jit_libffi import FFI_TYPE_P, FFI_TYPE_PP
-from rpython.rlib.jit_libffi import SIZE_OF_FFI_ARG
+from rpython.rlib import jit
+from rpython.rlib.jit_libffi import CIF_DESCRIPTION
+from rpython.rlib.jit_libffi import FFI_TYPE_PP
 from rpython.rlib.jit_libffi import jit_ffi_call
-from rpython.rlib.jit_libffi import jit_ffi_prep_cif
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.objectmodel import we_are_translated, compute_unique_id
 
 # XXX maybe move to rlib/jit_libffi
 from pypy.module._cffi_backend import misc
-
-BIG_ENDIAN = sys.byteorder == 'big'
 
 for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
@@ -68,10 +63,7 @@ class W_FunctionObject(W_PointerObject):
     def setup(self, space, w_name):
         self.ptr = (coerce_dl_symbol(space, w_name) if w_name
                     else lltype.nullptr(rffi.VOIDP.TO))
-        ffi_arg_types = [ffitype.ffi_types[t.typeindex]
-                         for t in self.w_info.arg_types_w]
-        ffi_ret_type = ffitype.ffi_types[self.w_info.w_ret_type.typeindex]
-        self.cif_descr = self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
+        self.cif_descr = self.w_info.build_cif_descr(space)
         self.atypes = self.cif_descr.atypes
 
     def initialize_variadic(self, space, w_name, w_ret_type, arg_types_w):
@@ -79,64 +71,6 @@ class W_FunctionObject(W_PointerObject):
                                  'new',
                                  [w_ret_type, space.newarray(arg_types_w)])
         self.setup(space, w_name)
-
-    def align_arg(self, n):
-        return (n + 7) & ~7
-
-    @jit.dont_look_inside
-    def build_cif_descr(self, space, ffi_arg_types, ffi_ret_type):
-        nargs = len(ffi_arg_types)
-        # XXX combine both mallocs with alignment
-        size = llmemory.raw_malloc_usage(llmemory.sizeof(CIF_DESCRIPTION, nargs))
-        if we_are_translated():
-            cif_descr = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
-            cif_descr = rffi.cast(CIF_DESCRIPTION_P, cif_descr)
-        else:
-            # gross overestimation of the length below, but too bad
-            cif_descr = lltype.malloc(CIF_DESCRIPTION_P.TO, size, flavor='raw')
-        assert cif_descr
-        #
-        size = rffi.sizeof(FFI_TYPE_P) * nargs
-        atypes = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
-        atypes = rffi.cast(FFI_TYPE_PP, atypes)
-        assert atypes
-        #
-        cif_descr.abi = clibffi.FFI_DEFAULT_ABI
-        cif_descr.nargs = nargs
-        cif_descr.rtype = ffi_ret_type
-        cif_descr.atypes = atypes
-        #
-        # first, enough room for an array of 'nargs' pointers
-        exchange_offset = rffi.sizeof(rffi.CCHARP) * nargs
-        exchange_offset = self.align_arg(exchange_offset)
-        cif_descr.exchange_result = exchange_offset
-        cif_descr.exchange_result_libffi = exchange_offset
-        #
-        if BIG_ENDIAN:
-            assert 0, 'missing support'
-            # see _cffi_backend in pypy
-        # then enough room for the result, rounded up to sizeof(ffi_arg)
-        exchange_offset += max(rffi.getintfield(ffi_ret_type, 'c_size'),
-                               SIZE_OF_FFI_ARG)
-
-        # loop over args
-        for i, ffi_arg in enumerate(ffi_arg_types):
-            # XXX do we need the "must free" logic?
-            exchange_offset = self.align_arg(exchange_offset)
-            cif_descr.exchange_args[i] = exchange_offset
-            atypes[i] = ffi_arg
-            exchange_offset += rffi.getintfield(ffi_arg, 'c_size')
-
-        # store the exchange data size
-        cif_descr.exchange_size = exchange_offset
-        #
-        res = jit_ffi_prep_cif(cif_descr)
-        #
-        if res != clibffi.FFI_OK:
-            raise space.error(space.w_RuntimeError,
-                    "libffi failed to build this function type")
-        #
-        return cif_descr
 
     def __del__(self):
         if self.cif_descr:
@@ -192,10 +126,7 @@ class W_FunctionObject(W_PointerObject):
             self._push_ordinary(space, data, w_argtype, w_obj)
 
     def _push_callback(self, space, data, w_func_type, w_proc):
-        ffi_arg_types = [ffitype.ffi_types[w_arg_type.typeindex]
-                         for w_arg_type in w_func_type.arg_types_w]
-        ffi_ret_type = ffitype.ffi_types[w_func_type.w_ret_type.typeindex]
-        cif_descr = self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
+        cif_descr = w_func_type.build_cif_descr(space)
         callback_data = _callback.Data(w_proc, w_func_type)
         self.closure = _callback.Closure(cif_descr, callback_data)
         self.closure.write(data)
