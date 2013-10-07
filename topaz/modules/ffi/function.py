@@ -118,7 +118,7 @@ class W_FunctionObject(W_PointerObject):
     def _push_callback(self, space, data, w_func_type, w_proc):
         cif_descr = w_func_type.build_cif_descr(space)
         callback_data = _callback.Data(space, w_proc, w_func_type)
-        self.closure = _callback.Closure(cif_descr, callback_data)
+        self.closure = _callback.Closure(callback_data)
         self.closure.write(data)
 
     def _push_ordinary(self, space, data, argtype, w_obj):

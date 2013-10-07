@@ -47,10 +47,12 @@ class Data(object):
                 _ruby_unwrap_llpointer_content(space, w_obj, ll_val, t)
 
 class Closure(object):
-    def __init__(self, cif_descr, callback_data):
+    def __init__(self, callback_data):
         self.heap = clibffi.closureHeap.alloc()
-        self.cif_descr = cif_descr
         self.callback_data = callback_data
+        w_callback_info = self.callback_data.w_callback_info
+        space = self.callback_data.space
+        self.cif_descr = w_callback_info.build_cif_descr(space)
         self.uid = compute_unique_id(self.callback_data)
         registration[self.uid] = self.callback_data
         res = clibffi.c_ffi_prep_closure(rffi.cast(clibffi.FFI_CLOSUREP, self.heap),
