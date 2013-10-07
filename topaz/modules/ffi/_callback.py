@@ -64,6 +64,12 @@ class Closure(object):
             raise space.error(space.w_RuntimeError,
                               "libffi failed to build this callback type")
 
+    def __del__(self):
+        if self.heap:
+            clibffi.closureHeap.free(self.heap)
+        if self.cif_descr:
+            lltype.free(self.cif_descr, flavor='raw')
+
     def write(self, data):
         misc.write_raw_unsigned_data(data, rffi.cast(rffi.CCHARP, self.heap),
                                     rffi.sizeof(clibffi.FFI_CLOSUREP))
