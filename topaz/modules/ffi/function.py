@@ -1,31 +1,21 @@
 import sys
 
-from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
 from topaz.modules.ffi.pointer import W_PointerObject
-from topaz.modules.ffi.dynamic_library import (W_DL_SymbolObject,
-                                               coerce_dl_symbol)
-from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
-                                                _ruby_wrap_POINTER,
-                                                _ruby_wrap_STRING,
-                                                _ruby_wrap_llpointer_content
+from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
+from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_llpointer_content
                                                 as _read_result,
                                                 _ruby_unwrap_llpointer_content
                                                 as _push_arg)
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi import _callback
-from topaz.error import RubyError
-from topaz.coerce import Coerce
-from topaz.objects.functionobject import W_BuiltinFunction
 
 from rpython.rtyper.lltypesystem import rffi, lltype
-from rpython.rtyper.lltypesystem.lltype import scoped_alloc
 from rpython.rlib import jit
 from rpython.rlib.jit_libffi import CIF_DESCRIPTION
 from rpython.rlib.jit_libffi import FFI_TYPE_PP
 from rpython.rlib.jit_libffi import jit_ffi_call
-from rpython.rlib.objectmodel import specialize
 
 # XXX maybe move to rlib/jit_libffi
 from pypy.module._cffi_backend import misc

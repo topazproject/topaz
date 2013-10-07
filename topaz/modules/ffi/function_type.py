@@ -1,11 +1,6 @@
 import sys
 from topaz.modules.ffi.type import W_TypeObject
 from topaz.modules.ffi import type as ffitype
-from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
-                                                _ruby_wrap_POINTER,
-                                                _ruby_wrap_STRING,
-                                                _ruby_wrap_llpointer_content,
-                                                _ruby_unwrap_llpointer_content)
 from topaz.module import ClassDef
 
 from rpython.rtyper.lltypesystem import rffi, llmemory, lltype
