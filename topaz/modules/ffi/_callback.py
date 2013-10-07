@@ -12,8 +12,33 @@ class Data(object):
         self.w_proc = w_proc
         self.w_callback_info = w_callback_info
 
-    def invoke(self, args_ll, ll_res):
-        self.w_callback_info.invoke(self.w_proc, ll_res, args_ll)
+    def invoke(self, ll_args, ll_res):
+        space = self.space
+        args_w = []
+        for i in range(len(self.arg_types_w)):
+            w_arg_type = self.arg_types_w[i]
+            ll_arg = rffi.cast(rffi.CCHARP, ll_args[i])
+            w_arg = self._read_and_wrap_llpointer(space, ll_arg, w_arg_type)
+            args_w.append(w_arg)
+        w_res = space.send(self.w_proc, 'call', args_w)
+        self._unwrap_and_write_rubyobj(space, w_res, ll_res)
+
+    def _read_and_wrap_llpointer(self, space, llp, w_arg_type):
+        assert isinstance(w_arg_type, W_TypeObject)
+        typeindex = w_arg_type.typeindex
+        for t in ffitype.unrolling_types:
+            if t == typeindex:
+                return _ruby_wrap_llpointer_content(space, llp, t)
+        assert 0
+
+    def _unwrap_and_write_rubyobj(self, space, w_obj, ll_val):
+        ll_val = rffi.cast(rffi.CCHARP, ll_val)
+        w_ret_type = self.w_ret_type
+        assert isinstance(w_ret_type, W_TypeObject)
+        typeindex = w_ret_type.typeindex
+        for t in ffitype.unrolling_types:
+            if t == typeindex:
+                _ruby_unwrap_llpointer_content(space, w_obj, ll_val, t)
 
 class Closure(object):
     def __init__(self, cif_descr, callback_data):
@@ -30,7 +55,6 @@ class Closure(object):
             raise Exception("preparing the closure failed!")
 
     def write(self, data):
-        #rffi.cast(rffi.CCHARPP, data)[0] = rffi.cast(rffi.CCHARP, self.heap)
         misc.write_raw_unsigned_data(data, rffi.cast(rffi.CCHARP, self.heap),
                                     rffi.sizeof(clibffi.FFI_CLOSUREP))
 
