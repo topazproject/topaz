@@ -58,7 +58,9 @@ class Closure(object):
                                          invoke,
                                          rffi.cast(rffi.VOIDP, self.uid))
         if rffi.cast(lltype.Signed, res) != clibffi.FFI_OK:
-            raise Exception("preparing the closure failed!")
+            space = self.callback_data.space
+            raise space.error(space.w_RuntimeError,
+                              "libffi failed to build this callback type")
 
     def write(self, data):
         misc.write_raw_unsigned_data(data, rffi.cast(rffi.CCHARP, self.heap),
