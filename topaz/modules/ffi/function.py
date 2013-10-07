@@ -14,6 +14,7 @@ from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_number,
                                                 _ruby_unwrap_llpointer_content
                                                 as _push_arg)
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
+from topaz.modules.ffi import _callback
 from topaz.error import RubyError
 from topaz.coerce import Coerce
 from topaz.objects.functionobject import W_BuiltinFunction
@@ -27,7 +28,7 @@ from rpython.rlib.jit_libffi import SIZE_OF_FFI_ARG
 from rpython.rlib.jit_libffi import jit_ffi_call
 from rpython.rlib.jit_libffi import jit_ffi_prep_cif
 from rpython.rlib.objectmodel import specialize
-from rpython.rlib.objectmodel import we_are_translated
+from rpython.rlib.objectmodel import we_are_translated, compute_unique_id
 
 # XXX maybe move to rlib/jit_libffi
 from pypy.module._cffi_backend import misc
@@ -188,10 +189,16 @@ class W_FunctionObject(W_PointerObject):
         if isinstance(w_argtype, W_FunctionTypeObject):
             self._push_callback(space, data, w_argtype, w_obj)
         else:
-            self._push_ordinary(space, data, argtype, w_obj)
+            self._push_ordinary(space, data, w_argtype, w_obj)
 
-    def _push_callback(self, space, data, argtype, w_proc):
-        raise NotImplementedError
+    def _push_callback(self, space, data, w_func_type, w_proc):
+        ffi_arg_types = [ffitype.ffi_types[w_arg_type.typeindex]
+                         for w_arg_type in w_func_type.arg_types_w]
+        ffi_ret_type = ffitype.ffi_types[w_func_type.w_ret_type.typeindex]
+        cif_descr = self.build_cif_descr(space, ffi_arg_types, ffi_ret_type)
+        callback_data = _callback.Data(w_proc, w_func_type)
+        self.closure = _callback.Closure(cif_descr, callback_data)
+        self.closure.write(data)
 
     def _push_ordinary(self, space, data, argtype, w_obj):
         typeindex = argtype.typeindex

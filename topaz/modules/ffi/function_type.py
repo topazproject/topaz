@@ -19,6 +19,9 @@ class W_FunctionTypeObject(W_TypeObject):
     classdef = ClassDef('FunctionType', W_TypeObject.classdef)
     _immutable_fields_ = ['arg_types_w', 'w_ret_type']
 
+    def __init__(self, space):
+        W_TypeObject.__init__(self, space, ffitype.FUNCTION)
+
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
         return W_FunctionTypeObject(space)
@@ -37,16 +40,16 @@ class W_FunctionTypeObject(W_TypeObject):
         self.w_ret_type = w_ret_type
         self.arg_types_w = arg_types_w
 
-    def invoke(self, w_proc, args_llp, llp_res):
+    def invoke(self, w_proc, ll_res, ll_args):
         space = self.space
         args_w = []
         for i in range(len(self.arg_types_w)):
             w_arg_type = self.arg_types_w[i]
-            llp_arg = rffi.cast(rffi.CCHARP, args_llp[i])
-            w_arg = self._read_and_wrap_llpointer(space, llp_arg, w_arg_type)
+            ll_arg = rffi.cast(rffi.CCHARP, ll_args[i])
+            w_arg = self._read_and_wrap_llpointer(space, ll_arg, w_arg_type)
             args_w.append(w_arg)
         w_res = space.send(w_proc, 'call', args_w)
-        self._unwrap_and_write_rubyobj(space, w_res, llp_res)
+        self._unwrap_and_write_rubyobj(space, w_res, ll_res)
 
     def _read_and_wrap_llpointer(self, space, llp, w_arg_type):
         assert isinstance(w_arg_type, W_TypeObject)
@@ -56,11 +59,11 @@ class W_FunctionTypeObject(W_TypeObject):
                 return _ruby_wrap_llpointer_content(space, llp, t)
         assert 0
 
-    def _unwrap_and_write_rubyobj(self, space, w_obj, llp_val):
-        llp_val = rffi.cast(rffi.CCHARP, llp_val)
+    def _unwrap_and_write_rubyobj(self, space, w_obj, ll_val):
+        ll_val = rffi.cast(rffi.CCHARP, ll_val)
         w_ret_type = self.w_ret_type
         assert isinstance(w_ret_type, W_TypeObject)
         typeindex = w_ret_type.typeindex
         for t in ffitype.unrolling_types:
             if t == typeindex:
-                _ruby_unwrap_llpointer_content(space, w_obj, llp_val, t)
+                _ruby_unwrap_llpointer_content(space, w_obj, ll_val, t)

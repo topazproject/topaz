@@ -64,7 +64,7 @@ class TestFunctionType_py_invoke(BaseFFITest):
             p_arg2[0] = rffi.cast(rffi.CHAR, 2)
             p_args[0] = p_arg1
             p_args[1] = p_arg2
-            w_func_type.invoke(w_proc, p_args, p_res)
+            w_func_type.invoke(w_proc, p_res, p_args)
             assert p_res[0] == 3
         finally:
             lltype.free(p_arg1, flavor='raw')
