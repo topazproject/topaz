@@ -16,7 +16,7 @@ for i, name in enumerate(ffitype.type_names):
 unrolling_types = unrolling_iterable(range(len(ffitype.type_names)))
 
 @specialize.arg(2)
-def _ruby_wrap_llpointer_content(space, data, t):
+def read_and_wrap_from_address(space, data, t):
     if t == VOID:
         return space.w_nil
     typesize = ffitype.lltype_sizes[t]
@@ -83,7 +83,7 @@ def _ruby_wrap_POINTER(space, res):
                       [space.newint(int_res)])
 
 @specialize.arg(3)
-def _ruby_unwrap_llpointer_content(space, w_arg, data, typeindex):
+def unwrap_and_write_to_address(space, w_arg, data, typeindex):
     typesize = ffitype.lltype_sizes[typeindex]
     for t in unrolling_types:
         # XXX refactor

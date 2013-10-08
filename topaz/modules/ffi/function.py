@@ -4,10 +4,8 @@ from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
-from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_llpointer_content
-                                                as _read_result,
-                                                _ruby_unwrap_llpointer_content
-                                                as _push_arg)
+from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
+                                              unwrap_and_write_to_address)
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi import _callback
 
@@ -105,7 +103,7 @@ class W_FunctionObject(W_PointerObject):
         typeindex = self.w_info.w_ret_type.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
-                return _read_result(space, resultdata, c)
+                return read_and_wrap_from_address(space, resultdata, c)
         assert 0
 
     def _put_arg(self, space, data, i, w_obj):
@@ -125,7 +123,7 @@ class W_FunctionObject(W_PointerObject):
         typeindex = argtype.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
-                _push_arg(space, w_obj, data, c)
+                unwrap_and_write_to_address(space, w_obj, data, c)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

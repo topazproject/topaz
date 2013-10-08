@@ -1,7 +1,7 @@
 from topaz.modules.ffi import type as ffitype
 from topaz.modules.ffi.type import W_TypeObject
-from topaz.modules.ffi._ruby_wrap_llval import (_ruby_wrap_llpointer_content,
-                                                _ruby_unwrap_llpointer_content)
+from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
+                                              unwrap_and_write_to_address)
 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.objectmodel import compute_unique_id
@@ -29,22 +29,22 @@ class Data(object):
         w_res = space.send(self.w_proc, 'call', args_w)
         self._unwrap_and_write_rubyobj(space, w_res, ll_res)
 
-    def _read_and_wrap_llpointer(self, space, llp, w_arg_type):
+    def _read_and_wrap_llpointer(self, space, ll_adr, w_arg_type):
         assert isinstance(w_arg_type, W_TypeObject)
         typeindex = w_arg_type.typeindex
         for t in ffitype.unrolling_types:
             if t == typeindex:
-                return _ruby_wrap_llpointer_content(space, llp, t)
+                return read_and_wrap_from_address(space, ll_adr, t)
         assert 0
 
-    def _unwrap_and_write_rubyobj(self, space, w_obj, ll_val):
-        ll_val = rffi.cast(rffi.CCHARP, ll_val)
+    def _unwrap_and_write_rubyobj(self, space, w_obj, ll_adr):
+        ll_adr = rffi.cast(rffi.CCHARP, ll_adr)
         w_ret_type = self.w_callback_info.w_ret_type
         assert isinstance(w_ret_type, W_TypeObject)
         typeindex = w_ret_type.typeindex
         for t in ffitype.unrolling_types:
             if t == typeindex:
-                _ruby_unwrap_llpointer_content(space, w_obj, ll_val, t)
+                unwrap_and_write_to_address(space, w_obj, ll_adr, t)
 
 class Closure(object):
     def __init__(self, callback_data):
