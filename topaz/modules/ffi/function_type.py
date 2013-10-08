@@ -46,9 +46,16 @@ class W_FunctionTypeObject(W_TypeObject):
 
     @jit.dont_look_inside
     def build_cif_descr(self, space):
-        ffi_arg_types = [ffitype.ffi_types[t.typeindex]
-                         for t in self.arg_types_w]
-        ffi_ret_type = ffitype.ffi_types[self.w_ret_type.typeindex]
+        arg_types_w = self.arg_types_w
+        w_ret_type = self.w_ret_type
+        assert isinstance(w_ret_type, W_TypeObject)
+
+        ffi_arg_types = []
+        for w_arg_type in arg_types_w:
+            assert isinstance(w_arg_type, W_TypeObject)
+            ffi_arg_type = ffitype.ffi_types[w_arg_type.typeindex]
+            ffi_arg_types.append(ffi_arg_type)
+        ffi_ret_type = ffitype.ffi_types[w_ret_type.typeindex]
 
         nargs = len(ffi_arg_types)
         # XXX combine both mallocs with alignment

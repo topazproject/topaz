@@ -2,6 +2,7 @@ import sys
 
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
+from topaz.modules.ffi.type import W_TypeObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
 from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
@@ -100,14 +101,20 @@ class W_FunctionObject(W_PointerObject):
         return w_res
 
     def _get_result(self, space, resultdata):
-        typeindex = self.w_info.w_ret_type.typeindex
+        w_info = self.w_info
+        assert isinstance(w_info, W_FunctionTypeObject)
+        w_ret_type = w_info.w_ret_type
+        assert isinstance(w_ret_type, W_TypeObject)
+        typeindex = w_ret_type.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
                 return read_and_wrap_from_address(space, resultdata, c)
         assert 0
 
     def _put_arg(self, space, data, i, w_obj):
-        w_argtype = self.w_info.arg_types_w[i]
+        w_info = self.w_info
+        assert isinstance(w_info, W_FunctionTypeObject)
+        w_argtype = w_info.arg_types_w[i]
         if isinstance(w_argtype, W_FunctionTypeObject):
             self._push_callback(space, data, w_argtype, w_obj)
         else:
@@ -119,8 +126,9 @@ class W_FunctionObject(W_PointerObject):
         self.closure = _callback.Closure(callback_data)
         self.closure.write(data)
 
-    def _push_ordinary(self, space, data, argtype, w_obj):
-        typeindex = argtype.typeindex
+    def _push_ordinary(self, space, data, w_argtype, w_obj):
+        assert isinstance(w_argtype, W_TypeObject)
+        typeindex = w_argtype.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
                 unwrap_and_write_to_address(space, w_obj, data, c)
