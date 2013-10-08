@@ -223,9 +223,10 @@ class MutableStringStrategy(StringStrategy):
         elif newline is not None and len(newline) == 0:
             ch = storage[-1]
             i = len(storage) - 1
-            while i >= 1 and ch in linebreaks:
-                i -= 1
-                ch = storage[i]
+            if ch != "\r":
+                while i >= 1 and ch in linebreaks:
+                    i -= 1
+                    ch = storage[i]
             if i < len(storage) - 1:
                 i += 1
                 changed = True
