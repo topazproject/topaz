@@ -51,11 +51,14 @@ def get_method_test_code(typename):
     strfunc = ((lambda x: repr(x)) if 'float' in typename else
                (lambda x: str(x)))
     return ("""
-    mem_ptr = FFI::MemoryPointer.new(:T, 5)
-    mem_ptr.put_T(3, MIN)
-    mem_ptr.put_T(4, MAX)
-    [mem_ptr.get_T(3), mem_ptr.get_T(4)]
-    """.replace('T', typename).
+    mem_ptr = FFI::MemoryPointer.new(:TYPE, 5)
+    pos_3 = FFI::Type::UPPER.size * 3
+    pos_4 = FFI::Type::UPPER.size * 4
+    mem_ptr.put_TYPE(pos_3, MIN)
+    mem_ptr.put_TYPE(pos_4, MAX)
+    [mem_ptr.get_TYPE(pos_3), mem_ptr.get_TYPE(pos_4)]
+    """.replace('TYPE', typename).
+        replace('UPPER', typename.upper()).
         replace('MIN', strfunc(minval[typename])).
         replace('MAX', strfunc(maxval[typename])))
 

@@ -55,24 +55,34 @@ def new_put_method(typ):
             raise memory_index_error(space, offset, sizeof_type)
     return put_method
 
+# TODO: See the todo above new_put_method
 def new_get_method(typ):
     ctype = ffitype.lltypes[typ]
     cast_method = new_cast_method(typ)
     numberof_method = new_numberof_method(typ)
     sizeof_type  = ffitype.lltype_sizes[typ]
-    if typ == ffitype.INT8:
-        to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
-    else:
-        to_int = intmask
+    # This might be needed again, when working on the todo
+    #if typ == ffitype.INT8:
+    #    to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
+    #else:
+    #    to_int = intmask
+    to_int = intmask
     if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
         wrap = lambda space, val: space.newfloat(float(val))
     else:
         wrap = lambda space, val: space.newint(to_int(val))
+    if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
+        read = misc.read_raw_float_data
+    elif typ in [ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.ULONG]:
+        read = misc.read_raw_unsigned_data
+    elif typ in [ffitype.INT8, ffitype.INT16, ffitype.INT32,
+                 ffitype.INT64, ffitype.LONG]:
+        read = misc.read_raw_signed_data
     def get_method(self, space, offset):
-        casted_ptr = cast_method(self)
-        raise_if_out_of_bounds(space, offset, numberof_method(self), sizeof_type)
+        offset_ptr = rffi.ptradd(self.ptr, offset)
+        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            val = casted_ptr[offset]
+            val = read(offset_ptr, sizeof_type)
             return wrap(space, val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
@@ -146,12 +156,11 @@ class W_AbstractMemoryObject(W_Object):
 
     @classdef.method('get_uint64', offset='int')
     def method_get_uint64(self, space, offset):
-        like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
+        offset_ptr = rffi.ptradd(self.ptr, offset)
+        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            val = casted_ptr[offset]
+            val = misc.read_raw_unsigned_data(offset_ptr, sizeof_type)
             return space.newint_or_bigint_fromunsigned(val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
