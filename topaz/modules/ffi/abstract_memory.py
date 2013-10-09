@@ -6,6 +6,8 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask, r_longlong, r_ulonglong
 from rpython.rlib.rbigint import rbigint
 
+from pypy.module._cffi_backend import misc
+
 from topaz.modules.ffi import type as ffitype
 
 import sys
@@ -29,17 +31,26 @@ def new_numberof_method(typ):
             return self.sizeof_memory / csize
     return numberof_method
 
+# TODO: Instead of using misc.write... the offset_ptr could be casted
+#       according to typ.
+#       Then "casted_ptr[0] = val" should be just as good as
+#       "write(offset_ptr, val, sizeof_type)"
 def new_put_method(typ):
     ctype = ffitype.lltypes[typ]
-    cast_method = new_cast_method(typ)
-    numberof_method = new_numberof_method(typ)
     sizeof_type  = ffitype.lltype_sizes[typ]
+    if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
+        write = misc.write_raw_float_data
+    elif typ in [ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.ULONG]:
+        write = misc.write_raw_unsigned_data
+    elif typ in [ffitype.INT8, ffitype.INT16, ffitype.INT32,
+                 ffitype.INT64, ffitype.LONG]:
+        write = misc.write_raw_signed_data
     def put_method(self, space, offset, value):
         val = rffi.cast(ctype, value)
-        casted_ptr = cast_method(self)
-        raise_if_out_of_bounds(space, offset, numberof_method(self), sizeof_type)
+        offset_ptr = rffi.ptradd(self.ptr, offset)
+        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            casted_ptr[offset] = val
+            write(offset_ptr, val, sizeof_type)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return put_method
@@ -124,13 +135,12 @@ class W_AbstractMemoryObject(W_Object):
 
     @classdef.method('put_uint64', offset='int', value='bigint')
     def method_put_uint64(self, space, offset, value):
-        like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        val = rffi.cast(like_ptr, value.toulonglong())
-        casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
+        val = rffi.cast(lltypes[UINT64], value.toulonglong())
+        offset_ptr = rffi.ptradd(self.ptr, offset)
+        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            casted_ptr[offset] = val
+            misc.write_raw_unsigned_data(offset_ptr, val, sizeof_type)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 

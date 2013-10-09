@@ -38,11 +38,12 @@ def put_method_test_code(typename):
     strfunc = ((lambda x: repr(x)) if 'float' in typename else
                (lambda x: str(x)))
     return ("""
-    mem_ptr = FFI::MemoryPointer.new(:T, 2)
-    mem_ptr.put_T(0, MIN)
-    mem_ptr.put_T(1, MAX)
+    mem_ptr = FFI::MemoryPointer.new(:TYPE, 2)
+    mem_ptr.put_TYPE(0, MIN)
+    mem_ptr.put_TYPE(FFI::Type::UPPER.size, MAX)
     mem_ptr
-    """.replace('T', typename).
+    """.replace('TYPE', typename).
+        replace('UPPER', typename.upper()).
         replace('MIN', strfunc(minval[typename])).
         replace('MAX', strfunc(maxval[typename])))
 
@@ -83,10 +84,10 @@ class TestAbstractMemory_put_methods(BaseFFITest):
         for t in test_put_method_group:
             sizeof_t = size_for_name(t.upper())
             with self.raises(ffis, 'IndexError',
-                             "Memory access offset=3 size=%s is out of bounds"
+                             "Memory access offset=1000 size=%s is out of bounds"
                              % sizeof_t):
                 ffis.execute("""
-                FFI::MemoryPointer.new(:T, 3).put_T(3, 15)
+                FFI::MemoryPointer.new(:T, 3).put_T(1000, 15)
                 """.replace('T', t))
 
 class TestAbstractMemory_write_methods(BaseFFITest):
