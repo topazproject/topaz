@@ -144,7 +144,7 @@ class TestAbstractMemory_put_pointer(BaseFFITest):
         ptr1 = FFI::Pointer.new(88)
         ptr2 = FFI::Pointer.new(55)
         mem_ptr.put_pointer(0, ptr1)
-        mem_ptr.put_pointer(1, ptr2)
+        mem_ptr.put_pointer(FFI::Type::POINTER.size, ptr2)
         mem_ptr
         """)
         w_adr_ptr = new_cast_method(UINT64)(w_mem_ptr)
@@ -170,8 +170,9 @@ class TestAbstractMemory_get_pointer(BaseFFITest):
     def test_it_gets_a_single_pointer_from_the_given_offset(self, ffis):
         assert self.ask(ffis, """
         mem_ptr = FFI::MemoryPointer.new(:pointer, 4)
-        mem_ptr.put_pointer(3, FFI::Pointer.new(67))
-        ptr = mem_ptr.get_pointer(3)
+        pos_3 = FFI::Type::POINTER.size * 3
+        mem_ptr.put_pointer(pos_3, FFI::Pointer.new(67))
+        ptr = mem_ptr.get_pointer(pos_3)
         ptr.class.equal?(FFI::Pointer) and ptr.address == 67
         """)
 

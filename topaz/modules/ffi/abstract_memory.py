@@ -173,24 +173,22 @@ class W_AbstractMemoryObject(W_Object):
 
     @classdef.method('put_pointer', offset='int', value='ffi_address')
     def method_put_pointer(self, space, offset, value):
-        like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        val = rffi.cast(like_ptr, value)
-        casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
+        val = rffi.cast(lltypes[UINT64], value)
+        offset_ptr = rffi.ptradd(self.ptr, offset)
+        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            casted_ptr[offset] = val
+            misc.write_raw_unsigned_data(offset_ptr, val, sizeof_type)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 
     @classdef.method('get_pointer', offset='int')
     def method_get_pointer(self, space, offset):
-        like_ptr = lltypes[UINT64]
         sizeof_type = lltype_sizes[UINT64]
-        casted_ptr = self.uint64_cast()
-        raise_if_out_of_bounds(space, offset, self.uint64_size(), sizeof_type)
+        offset_ptr = rffi.ptradd(self.ptr, offset)
+        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            address = casted_ptr[offset]
+            address = misc.read_raw_unsigned_data(offset_ptr, sizeof_type)
             w_address = space.newint_or_bigint(intmask(address))
             w_ffi = space.find_const(space.w_kernel, 'FFI')
             w_pointer = space.find_const(w_ffi, 'Pointer')
