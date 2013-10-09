@@ -150,8 +150,8 @@ def type_object(space, w_obj):
                            "not in this case.")
     return w_type
 
-class W_MappedObject(W_Object):
-    classdef = ClassDef('MappedObject', W_Object.classdef)
+class W_MappedObject(W_TypeObject):
+    classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 
     def __init__(self, space, klass=None):
         W_Object.__init__(self, space, klass)

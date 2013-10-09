@@ -53,3 +53,7 @@ class TestFFI__Type_eq(BaseFFITest):
         type2 = W_TypeObject(space, VOID)
         w_assertion = space.send(type1, '==', [type2])
         assert self.unwrap(space, w_assertion)
+
+class TestFFI__MappedObject(BaseFFITest):
+    def test_its_superclass_is_Type(self, space):
+        assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")
