@@ -31,58 +31,39 @@ def new_numberof_method(typ):
             return self.sizeof_memory / csize
     return numberof_method
 
-# TODO: Instead of using misc.write... the offset_ptr could be casted
-#       according to typ.
-#       Then "casted_ptr[0] = val" should be just as good as
-#       "write(offset_ptr, val, sizeof_type)"
 def new_put_method(typ):
     ctype = ffitype.lltypes[typ]
     sizeof_type  = ffitype.lltype_sizes[typ]
-    if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
-        write = misc.write_raw_float_data
-    elif typ in [ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.ULONG]:
-        write = misc.write_raw_unsigned_data
-    elif typ in [ffitype.INT8, ffitype.INT16, ffitype.INT32,
-                 ffitype.INT64, ffitype.LONG]:
-        write = misc.write_raw_signed_data
     def put_method(self, space, offset, value):
         val = rffi.cast(ctype, value)
         offset_ptr = rffi.ptradd(self.ptr, offset)
+        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            write(offset_ptr, val, sizeof_type)
+            casted_ptr[0] = val
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
     return put_method
 
-# TODO: See the todo above new_put_method
 def new_get_method(typ):
     ctype = ffitype.lltypes[typ]
     cast_method = new_cast_method(typ)
     numberof_method = new_numberof_method(typ)
     sizeof_type  = ffitype.lltype_sizes[typ]
-    # This might be needed again, when working on the todo
-    #if typ == ffitype.INT8:
-    #    to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
-    #else:
-    #    to_int = intmask
-    to_int = intmask
+    if typ == ffitype.INT8:
+        to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
+    else:
+        to_int = intmask
     if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
         wrap = lambda space, val: space.newfloat(float(val))
     else:
         wrap = lambda space, val: space.newint(to_int(val))
-    if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
-        read = misc.read_raw_float_data
-    elif typ in [ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.ULONG]:
-        read = misc.read_raw_unsigned_data
-    elif typ in [ffitype.INT8, ffitype.INT16, ffitype.INT32,
-                 ffitype.INT64, ffitype.LONG]:
-        read = misc.read_raw_signed_data
     def get_method(self, space, offset):
         offset_ptr = rffi.ptradd(self.ptr, offset)
+        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            val = read(offset_ptr, sizeof_type)
+            val = casted_ptr[0]
             return wrap(space, val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
@@ -146,21 +127,25 @@ class W_AbstractMemoryObject(W_Object):
     @classdef.method('put_uint64', offset='int', value='bigint')
     def method_put_uint64(self, space, offset, value):
         sizeof_type = lltype_sizes[UINT64]
+        ctype = ffitype.lltypes[UINT64]
         val = rffi.cast(lltypes[UINT64], value.toulonglong())
         offset_ptr = rffi.ptradd(self.ptr, offset)
+        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            misc.write_raw_unsigned_data(offset_ptr, val, sizeof_type)
+            casted_ptr[0] = val
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 
     @classdef.method('get_uint64', offset='int')
     def method_get_uint64(self, space, offset):
         sizeof_type = lltype_sizes[UINT64]
+        ctype = ffitype.lltypes[UINT64]
         offset_ptr = rffi.ptradd(self.ptr, offset)
+        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            val = misc.read_raw_unsigned_data(offset_ptr, sizeof_type)
+            val = casted_ptr[0]
             return space.newint_or_bigint_fromunsigned(val)
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
@@ -174,21 +159,25 @@ class W_AbstractMemoryObject(W_Object):
     @classdef.method('put_pointer', offset='int', value='ffi_address')
     def method_put_pointer(self, space, offset, value):
         sizeof_type = lltype_sizes[UINT64]
+        ctype = ffitype.lltypes[UINT64]
         val = rffi.cast(lltypes[UINT64], value)
         offset_ptr = rffi.ptradd(self.ptr, offset)
+        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            misc.write_raw_unsigned_data(offset_ptr, val, sizeof_type)
+            casted_ptr[0] = val
         except IndexError:
             raise memory_index_error(space, offset, sizeof_type)
 
     @classdef.method('get_pointer', offset='int')
     def method_get_pointer(self, space, offset):
         sizeof_type = lltype_sizes[UINT64]
+        ctype = ffitype.lltypes[UINT64]
         offset_ptr = rffi.ptradd(self.ptr, offset)
+        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
-            address = misc.read_raw_unsigned_data(offset_ptr, sizeof_type)
+            address = casted_ptr[0]
             w_address = space.newint_or_bigint(intmask(address))
             w_ffi = space.find_const(space.w_kernel, 'FFI')
             w_pointer = space.find_const(w_ffi, 'Pointer')
