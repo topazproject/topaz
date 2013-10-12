@@ -83,35 +83,32 @@ def _ruby_wrap_POINTER(space, res):
                       [space.newint(int_res)])
 
 @specialize.arg(3)
-def unwrap_and_write_to_address(space, w_arg, data, typeindex):
-    typesize = ffitype.lltype_sizes[typeindex]
-    for t in unrolling_types:
-        # XXX refactor
-        if typeindex == t:
-            if t == FLOAT32 or t == FLOAT64:
-                arg = space.float_w(w_arg)
-                misc.write_raw_float_data(data, arg, typesize)
-            elif t == LONG or t == INT64 or t == INT8 or t == INT16 or t == INT32:
-                arg = space.int_w(w_arg)
-                misc.write_raw_signed_data(data, arg, typesize)
-            elif t == ULONG or t == UINT64 or t == UINT8 or t == UINT16 or t == UINT32:
-                arg = space.int_w(w_arg)
-                misc.write_raw_unsigned_data(data, arg, typesize)
-            elif t == STRING:
-                arg = space.str_w(w_arg)
-                arg = rffi.str2charp(arg)
-                arg = rffi.cast(lltype.Unsigned, arg)
-                misc.write_raw_unsigned_data(data, arg, typesize)
-            elif t == BOOL:
-                arg = space.is_true(w_arg)
-                misc.write_raw_unsigned_data(data, arg, typesize)
-            elif t == POINTER:
-                w_arg = _convert_to_NULL_if_nil(space, w_arg)
-                arg = coerce_pointer(space, w_arg)
-                arg = rffi.cast(lltype.Unsigned, arg)
-                misc.write_raw_unsigned_data(data, arg, typesize)
-            else:
-                assert 0
+def unwrap_and_write_to_address(space, w_arg, data, t):
+    typesize = ffitype.lltype_sizes[t]
+    if t == FLOAT32 or t == FLOAT64:
+        arg = space.float_w(w_arg)
+        misc.write_raw_float_data(data, arg, typesize)
+    elif t == LONG or t == INT64 or t == INT8 or t == INT16 or t == INT32:
+        arg = space.int_w(w_arg)
+        misc.write_raw_signed_data(data, arg, typesize)
+    elif t == ULONG or t == UINT64 or t == UINT8 or t == UINT16 or t == UINT32:
+        arg = space.int_w(w_arg)
+        misc.write_raw_unsigned_data(data, arg, typesize)
+    elif t == STRING:
+        arg = space.str_w(w_arg)
+        arg = rffi.str2charp(arg)
+        arg = rffi.cast(lltype.Unsigned, arg)
+        misc.write_raw_unsigned_data(data, arg, typesize)
+    elif t == BOOL:
+        arg = space.is_true(w_arg)
+        misc.write_raw_unsigned_data(data, arg, typesize)
+    elif t == POINTER:
+        w_arg = _convert_to_NULL_if_nil(space, w_arg)
+        arg = coerce_pointer(space, w_arg)
+        arg = rffi.cast(lltype.Unsigned, arg)
+        misc.write_raw_unsigned_data(data, arg, typesize)
+    else:
+        assert 0
     return
 
 def _convert_to_NULL_if_nil(space, w_arg):
