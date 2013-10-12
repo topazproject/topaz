@@ -294,12 +294,12 @@ class TestFunction_attach(BaseFFITest):
                           attach(LibraryMock, 'qsort')
         p = FFI::MemoryPointer.new({int32}, 2)
         p.put_int32(0, 5)
-        p.put_int32(1, 3)
+        p.put_int32(4, 3)
         LibraryMock.attachments[:qsort].call(p, 2, 4) do |p1, p2|
           i1 = p1.get_int32(0)
           i2 = p2.get_int32(0)
           i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
         end
-        [p.get_int32(0), p.get_int32(1)]
+        [p.get_int32(0), p.get_int32(4)]
         """ % self.make_mock_library_code(libc)))
         assert self.unwrap(ffis, w_res) == [3, 5]
