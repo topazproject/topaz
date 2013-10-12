@@ -109,7 +109,6 @@ def unwrap_and_write_to_address(space, w_arg, data, t):
         misc.write_raw_unsigned_data(data, arg, typesize)
     else:
         assert 0
-    return
 
 def _convert_to_NULL_if_nil(space, w_arg):
     if w_arg is space.w_nil:
