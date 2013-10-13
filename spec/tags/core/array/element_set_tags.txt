@@ -1,6 +1,4 @@
 fails:Array#[]= sets elements in the range arguments when passed ranges
 fails:Array#[]= raises an IndexError when passed indexes out of bounds
-fails:Array#[]= does not call to_ary on rhs array subclasses for multi-element sets
 fails:Array#[]= with [index, count] pads the Array with nils if the span is past the end
 fails:Array#[]= with [index, count] inserts other section in place defined by idx
-fails:Array#[] after a shift works for insertion
