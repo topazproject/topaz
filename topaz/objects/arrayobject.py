@@ -108,9 +108,6 @@ class W_ArrayObject(W_Object):
                     -self.length()
                 )
             )
-        elif start >= self.length():
-            self.items_w += [space.w_nil] * (start - self.length() + 1)
-            self.items_w[start] = w_obj
         elif as_range:
             w_converted = space.convert_type(w_obj, space.w_array, "to_ary", raise_error=False)
             if w_converted is space.w_nil:
@@ -118,6 +115,9 @@ class W_ArrayObject(W_Object):
             else:
                 rep_w = space.listview(w_converted)
             self._subscript_assign_range(space, start, end, rep_w)
+        elif start >= self.length():
+            self.items_w += [space.w_nil] * (start - self.length() + 1)
+            self.items_w[start] = w_obj
         else:
             self.items_w[start] = w_obj
         return w_obj
