@@ -166,7 +166,7 @@ class W_MappedObject(W_TypeObject):
             if not space.respond_to(w_data_converter, required):
                 raise space.error(space.w_NoMethodError,
                                   "%s method not implemented" % required)
-        self.data_converter = w_data_converter
+        self.w_data_converter = w_data_converter
         w_type = space.send(w_data_converter, 'native_type')
         if isinstance(w_type, W_TypeObject):
             self.ffi_type = ffi_types[w_type.typeindex]
@@ -174,3 +174,7 @@ class W_MappedObject(W_TypeObject):
             raise space.error(space.w_TypeError,
                               "native_type did not return instance of "
                               "FFI::Type")
+
+    @classdef.method('to_native')
+    def method_to_native(self, space, args_w):
+        return space.send(self.w_data_converter, 'to_native', args_w)

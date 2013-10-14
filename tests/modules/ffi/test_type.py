@@ -90,7 +90,7 @@ class TestFFI__Type__MappedObject__new(BaseFFITest):
         end
         FFI::Type::Mapped.new(DataConverter.new)
         """)
-        assert space.getclass(w_res.data_converter).name == 'DataConverter'
+        assert space.getclass(w_res.w_data_converter).name == 'DataConverter'
 
     def test_it_derives_the_ffi_type_from_the_data_converter(self, space):
         w_res = space.execute("""
@@ -114,3 +114,16 @@ class TestFFI__Type__MappedObject__new(BaseFFITest):
             end
             FFI::Type::Mapped.new(DataConverter.new)
             """)
+
+class TestFFI__Type__MappedObject_to_native(BaseFFITest):
+    def test_it_delegates_to_the_data_converter(self, space):
+        w_res = space.execute("""
+        class DataConverter
+          def native_type; FFI::Type::VOID; end
+          def to_native; :success; end
+          def from_native; nil; end
+        end
+        mapped = FFI::Type::Mapped.new(DataConverter.new)
+        mapped.to_native
+        """)
+        assert self.unwrap(space, w_res) == 'success'
