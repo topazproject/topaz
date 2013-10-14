@@ -12,9 +12,9 @@ class DataConverter(object):
     @moduledef.function('native_type')
     def native_type(self, space, args_w): pass
 
-    # TODO: Should have arguments value and ctx and return first argument (value)
     @moduledef.function('to_native')
-    def to_native(self, space): pass
+    def to_native(self, space, w_value, w_ctx):
+        return w_value
 
     # TODO: Should have arguments value and ctx and return first argument (value)
     @moduledef.function('from_native')
