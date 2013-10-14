@@ -1,6 +1,8 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.type import type_names, W_TypeObject, VOID
 
+from rpython.rlib import clibffi
+
 class TestType(BaseFFITest):
     def test_it_is_a_class(self, space):
         assert self.ask(space, "FFI::Type.is_a? Class")
@@ -54,6 +56,61 @@ class TestFFI__Type_eq(BaseFFITest):
         w_assertion = space.send(type1, '==', [type2])
         assert self.unwrap(space, w_assertion)
 
-class TestFFI__MappedObject(BaseFFITest):
+class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
         assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")
+
+class TestFFI__Type__MappedObject__new(BaseFFITest):
+    def test_it_takes_a_data_converter_as_argument(self, space):
+        with self.raises(space, "NoMethodError",
+                         "native_type method not implemented"):
+            space.execute("FFI::Type::Mapped.new(0)")
+        with self.raises(space, "NoMethodError",
+                         "to_native method not implemented"):
+            space.execute("""
+            class DataConverter
+              def native_type; nil; end
+            end
+            FFI::Type::Mapped.new(DataConverter.new)
+            """)
+        with self.raises(space, "NoMethodError",
+                         "from_native method not implemented"):
+            space.execute("""
+            class DataConverter
+              def native_type; nil; end
+              def to_native; nil; end
+            end
+            FFI::Type::Mapped.new(DataConverter.new)
+            """)
+        w_res = space.execute("""
+        class DataConverter
+          def native_type; FFI::Type::VOID; end
+          def to_native; nil; end
+          def from_native; nil; end
+        end
+        FFI::Type::Mapped.new(DataConverter.new)
+        """)
+        assert space.getclass(w_res.data_converter).name == 'DataConverter'
+
+    def test_it_derives_the_ffi_type_from_the_data_converter(self, space):
+        w_res = space.execute("""
+        class DataConverter
+          def native_type
+            FFI::Type::UINT16
+          end
+          def to_native; nil; end
+          def from_native; nil; end
+        end
+        FFI::Type::Mapped.new(DataConverter.new)
+        """)
+        assert w_res.ffi_type == clibffi.ffi_type_uint16
+        with self.raises(space, "TypeError",
+                         "native_type did not return instance of FFI::Type"):
+            space.execute("""
+            class DataConverter
+              def native_type; nil; end
+              def to_native; nil; end
+              def from_native; nil; end
+            end
+            FFI::Type::Mapped.new(DataConverter.new)
+            """)

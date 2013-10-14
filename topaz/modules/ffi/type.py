@@ -36,7 +36,7 @@ _native_types = [
     ('NATIVE_VARARGS',),
     ('NATIVE_STRUCT',),
     ('NATIVE_ARRAY',),
-    ('NATIVE_MAPPED',),
+    ('NATIVE_MAPPED', clibffi.ffi_type_void,                  rffi.CCHARP,     []),
 ]
 
 ffi_types = []
@@ -154,11 +154,23 @@ class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 
     def __init__(self, space, klass=None):
-        W_Object.__init__(self, space, klass)
+        W_TypeObject.__init__(self, space, NATIVE_MAPPED)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
         return W_MappedObject(space)
 
     @classdef.method('initialize')
-    def method_initialize(self, space, args_w): pass
+    def method_initialize(self, space, w_data_converter):
+        for required in ['native_type', 'to_native', 'from_native']:
+            if not space.respond_to(w_data_converter, required):
+                raise space.error(space.w_NoMethodError,
+                                  "%s method not implemented" % required)
+        self.data_converter = w_data_converter
+        w_type = space.send(w_data_converter, 'native_type')
+        if isinstance(w_type, W_TypeObject):
+            self.ffi_type = ffi_types[w_type.typeindex]
+        else:
+            raise space.error(space.w_TypeError,
+                              "native_type did not return instance of "
+                              "FFI::Type")
