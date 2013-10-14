@@ -5,7 +5,7 @@ from topaz.modules.ffi.type import type_object
 class DataConverter(object):
     moduledef = ModuleDef('DataConverter')
 
-    @moduledef.function('native_type')
+    @moduledef.method('native_type')
     def native_type(self, space, args_w):
         if len(args_w) == 0:
             raise space.error(space.w_NotImplementedError,
@@ -17,10 +17,10 @@ class DataConverter(object):
             return w_arg_as_type
         raise space.error(space.w_ArgumentError, "incorrect arguments")
 
-    @moduledef.function('to_native')
+    @moduledef.method('to_native')
     def to_native(self, space, w_value, w_ctx):
         return w_value
 
-    @moduledef.function('from_native')
+    @moduledef.method('from_native')
     def from_native(self, space, w_value, w_ctx):
         return w_value
