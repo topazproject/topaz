@@ -14,7 +14,8 @@ def coerce_pointer(space, w_pointer):
         return w_pointer.ptr
     else:
         raise space.error(space.w_TypeError,
-                          "%s is not an FFI::Pointer." % w_pointer)
+                          "%s is not an FFI::Pointer." %
+                          space.str_w(space.send(w_pointer, 'inspect')))
 
 setattr(Coerce, 'ffi_pointer', staticmethod(coerce_pointer))
 
