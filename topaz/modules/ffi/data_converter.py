@@ -16,6 +16,6 @@ class DataConverter(object):
     def to_native(self, space, w_value, w_ctx):
         return w_value
 
-    # TODO: Should have arguments value and ctx and return first argument (value)
     @moduledef.function('from_native')
-    def from_native(self, space): pass
+    def from_native(self, space, w_value, w_ctx):
+        return w_value
