@@ -1,3 +1,4 @@
+import pytest
 from tests.modules.ffi.base import BaseFFITest
 
 class TestDataConverter(BaseFFITest):
@@ -31,10 +32,11 @@ end
 
 class TestDataConverter__native_type(BaseFFITest):
 
+    @pytest.mark.xfail
     def test_it_raises_NotImplementedError_without_args(self, space):
         space.execute(code_DataConverterImplementation)
         with self.raises(space, "NotImplementedError",
-                                "native_type method not overridden and no"
+                                "native_type method not overridden and no "
                                 "native_type set"):
             space.execute("""
             DataConverterImplementation.new.impl_native_type
