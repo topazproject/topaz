@@ -178,3 +178,7 @@ class W_MappedObject(W_TypeObject):
     @classdef.method('to_native')
     def method_to_native(self, space, args_w):
         return space.send(self.w_data_converter, 'to_native', args_w)
+
+    @classdef.method('from_native')
+    def method_to_native(self, space, args_w):
+        return space.send(self.w_data_converter, 'from_native', args_w)

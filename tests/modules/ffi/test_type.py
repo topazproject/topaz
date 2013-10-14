@@ -127,3 +127,16 @@ class TestFFI__Type__MappedObject_to_native(BaseFFITest):
         mapped.to_native
         """)
         assert self.unwrap(space, w_res) == 'success'
+
+class TestFFI__Type__MappedObject_from_native(BaseFFITest):
+    def test_it_delegates_from_the_data_converter(self, space):
+        w_res = space.execute("""
+        class DataConverter
+          def native_type; FFI::Type::VOID; end
+          def to_native; nil; end
+          def from_native; :success; end
+        end
+        mapped = FFI::Type::Mapped.new(DataConverter.new)
+        mapped.from_native
+        """)
+        assert self.unwrap(space, w_res) == 'success'
