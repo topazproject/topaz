@@ -131,7 +131,8 @@ class W_FunctionObject(W_PointerObject):
         typeindex = w_argtype.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
-                unwrap_and_write_to_address(space, w_obj, data, c)
+                unwrap_and_write_to_address(space, w_obj, data, c,
+                                            self.w_info.w_options)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

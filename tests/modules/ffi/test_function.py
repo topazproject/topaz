@@ -303,3 +303,18 @@ class TestFunction_attach(BaseFFITest):
         [p.get_int32(0), p.get_int32(4)]
         """ % self.make_mock_library_code(libc)))
         assert self.unwrap(ffis, w_res) == [3, 5]
+
+    def test_it_can_use_enums(self, ffis, libtest_so):
+        w_res = ffis.execute(typeformat("""
+        %s
+        color_enum = FFI::Enum.new([:black, 0,
+                                     :white, 255,
+                                     :gray, 128])
+        Color = FFI::Type::Mapped.new(color_enum)
+        options = \{:type_map => \{color_enum => Color\}\}
+        FFI::Function.new({uint8}, [Color, Color],
+                          LibraryMock.find_function(:add_u8), options).
+                          attach(LibraryMock, 'add_color')
+        col1 = LibraryMock.attachments[:add_color].call(:black, :white)
+        """ % self.make_mock_library_code(libtest_so)))
+        assert self.unwrap(ffis, w_res) == 255
