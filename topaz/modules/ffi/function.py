@@ -2,7 +2,7 @@ import sys
 
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
-from topaz.modules.ffi.type import W_TypeObject
+from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
 from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
@@ -117,6 +117,8 @@ class W_FunctionObject(W_PointerObject):
         w_argtype = w_info.arg_types_w[i]
         if isinstance(w_argtype, W_FunctionTypeObject):
             self._push_callback(space, data, w_argtype, w_obj)
+        elif isinstance(w_argtype, W_MappedObject):
+            self._push_mapped(space, data, w_argtype, w_obj)
         else:
             self._push_ordinary(space, data, w_argtype, w_obj)
 
@@ -126,13 +128,25 @@ class W_FunctionObject(W_PointerObject):
         self.closure = _callback.Closure(callback_data)
         self.closure.write(data)
 
+    def _push_mapped(self, space, data, w_mapped, w_obj):
+        w_options = self.w_info.w_options
+        w_type_map = space.send(w_options, '[]', [space.newsymbol('type_map')])
+        typedefs_w = space.listview(space.send(w_type_map, 'keys'))
+        enums_w = [w_td for w_td in typedefs_w
+                   if space.getclass(w_td).name == 'FFI::Enum']
+        for w_enum in enums_w:
+            w_lookup = space.send(w_enum, '[]', [w_obj])
+            if space.is_kind_of(w_lookup, space.w_fixnum):
+                unwrap_and_write_to_address(space, w_lookup, data, UINT8)
+                return
+        raise Exception("Enum constant not found")
+
     def _push_ordinary(self, space, data, w_argtype, w_obj):
         assert isinstance(w_argtype, W_TypeObject)
         typeindex = w_argtype.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
-                unwrap_and_write_to_address(space, w_obj, data, c,
-                                            self.w_info.w_options)
+                unwrap_and_write_to_address(space, w_obj, data, c)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

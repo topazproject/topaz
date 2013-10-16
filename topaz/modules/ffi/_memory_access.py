@@ -83,7 +83,7 @@ def _ruby_wrap_POINTER(space, res):
                       [space.newint(int_res)])
 
 @specialize.arg(3)
-def unwrap_and_write_to_address(space, w_arg, data, t, w_options=None):
+def unwrap_and_write_to_address(space, w_arg, data, t):
     typesize = ffitype.lltype_sizes[t]
     if t == FLOAT32 or t == FLOAT64:
         arg = space.float_w(w_arg)
@@ -107,17 +107,6 @@ def unwrap_and_write_to_address(space, w_arg, data, t, w_options=None):
         arg = coerce_pointer(space, w_arg)
         arg = rffi.cast(lltype.Unsigned, arg)
         misc.write_raw_unsigned_data(data, arg, typesize)
-    elif t == NATIVE_MAPPED:
-        w_type_map = space.send(w_options, '[]', [space.newsymbol('type_map')])
-        typedefs_w = space.listview(space.send(w_type_map, 'keys'))
-        enums_w = [w_td for w_td in typedefs_w
-                   if space.getclass(w_td).name == 'FFI::Enum']
-        for w_enum in enums_w:
-            w_lookup = space.send(w_enum, '[]', [w_arg])
-            if space.is_kind_of(w_lookup, space.w_fixnum):
-                unwrap_and_write_to_address(space, w_lookup, data, UINT8)
-                return
-        raise Exception("Enum constant not found")
     else:
         assert 0
 
