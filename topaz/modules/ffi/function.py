@@ -9,6 +9,7 @@ from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
                                               unwrap_and_write_to_address)
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi import _callback
+from topaz.error import RubyError
 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib import jit
@@ -132,8 +133,10 @@ class W_FunctionObject(W_PointerObject):
         try:
             w_lookup = space.send(w_mapped, 'to_native', [w_obj, space.w_nil])
             unwrap_and_write_to_address(space, w_lookup, data, UINT8)
-        except e:
-            raise Exception("Enum constant not found")
+        except RubyError, argument_error:
+            raise space.error(space.w_TypeError,
+                              "`to_native': %s (ArgumentError)" %
+                              argument_error.w_value.msg)
 
     def _push_ordinary(self, space, data, w_argtype, w_obj):
         assert isinstance(w_argtype, W_TypeObject)
