@@ -129,17 +129,11 @@ class W_FunctionObject(W_PointerObject):
         self.closure.write(data)
 
     def _push_mapped(self, space, data, w_mapped, w_obj):
-        w_options = self.w_info.w_options
-        w_type_map = space.send(w_options, '[]', [space.newsymbol('type_map')])
-        typedefs_w = space.listview(space.send(w_type_map, 'keys'))
-        enums_w = [w_td for w_td in typedefs_w
-                   if space.getclass(w_td).name == 'FFI::Enum']
-        for w_enum in enums_w:
-            w_lookup = space.send(w_enum, '[]', [w_obj])
-            if space.is_kind_of(w_lookup, space.w_fixnum):
-                unwrap_and_write_to_address(space, w_lookup, data, UINT8)
-                return
-        raise Exception("Enum constant not found")
+        try:
+            w_lookup = space.send(w_mapped, 'to_native', [w_obj, space.w_nil])
+            unwrap_and_write_to_address(space, w_lookup, data, UINT8)
+        except e:
+            raise Exception("Enum constant not found")
 
     def _push_ordinary(self, space, data, w_argtype, w_obj):
         assert isinstance(w_argtype, W_TypeObject)
