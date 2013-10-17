@@ -133,7 +133,9 @@ class W_FunctionObject(W_PointerObject):
         try:
             w_lookup = space.send(w_mapped, 'to_native', [w_obj, space.w_nil])
             enum_t = w_mapped.typeindex
-            unwrap_and_write_to_address(space, w_lookup, data, enum_t)
+            for t in ffitype.unrolling_types:
+                if t == enum_t:
+                    unwrap_and_write_to_address(space, w_lookup, data, t)
         except RubyError, argument_error:
             raise space.error(space.w_TypeError,
                               "`to_native': %s (ArgumentError)" %
