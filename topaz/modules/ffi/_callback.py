@@ -34,7 +34,7 @@ class Data(object):
         typeindex = w_arg_type.typeindex
         for t in ffitype.unrolling_types:
             if t == typeindex:
-                return read_and_wrap_from_address(space, ll_adr, t)
+                return read_and_wrap_from_address(space, ll_adr, t, out=False)
         assert 0
 
     def _unwrap_and_write_rubyobj(self, space, w_obj, ll_adr):
@@ -44,7 +44,7 @@ class Data(object):
         typeindex = w_ret_type.typeindex
         for t in ffitype.unrolling_types:
             if t == typeindex:
-                unwrap_and_write_to_address(space, w_obj, ll_adr, t)
+                unwrap_and_write_to_address(space, w_obj, ll_adr, t, out=True)
 
 class Closure(object):
     def __init__(self, callback_data):

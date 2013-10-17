@@ -15,10 +15,15 @@ for i, name in enumerate(ffitype.type_names):
 
 unrolling_types = unrolling_iterable(range(len(ffitype.type_names)))
 
-@specialize.arg(2)
-def read_and_wrap_from_address(space, data, t):
+# TODO: Get rid of this big switch by using polymorphic OOP design
+@specialize.arg(2, 3)
+def read_and_wrap_from_address(space, data, t, out):
     if t == VOID:
-        return space.w_nil
+        if out:
+            return space.w_nil
+        else:
+            raise space.error(space.w_ArgumentError,
+                              "Invalid parameter type: 0")
     typesize = ffitype.lltype_sizes[t]
     # XXX refactor
     if t == FLOAT64 or t == FLOAT32:
@@ -82,9 +87,16 @@ def _ruby_wrap_POINTER(space, res):
     return space.send(w_Pointer, 'new',
                       [space.newint(int_res)])
 
-@specialize.arg(3)
-def unwrap_and_write_to_address(space, w_arg, data, t):
+# TODO: Get rid of this big switch by using polymorphic OOP design
+@specialize.arg(3, 4)
+def unwrap_and_write_to_address(space, w_arg, data, t, out):
     typesize = ffitype.lltype_sizes[t]
+    if t == VOID:
+        if out:
+            return
+        else:
+            raise space.error(space.w_ArgumentError,
+                              "Invalid parameter type: 0")
     if t == FLOAT32 or t == FLOAT64:
         arg = space.float_w(w_arg)
         misc.write_raw_float_data(data, arg, typesize)

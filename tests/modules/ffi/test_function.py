@@ -324,3 +324,13 @@ class TestFunction_attach(BaseFFITest):
             ffis.execute("""
             LibraryMock.attachments[:add_color].call(:gray, :red)
             """)
+
+    def test_it_raises_ArgumentError_calling_func_with_void_arg(self, space):
+        with self.raises(space, 'ArgumentError', "Invalid parameter type: 0"):
+            w_res = space.execute(typeformat("""
+            %s
+            FFI::Function.new({uint32}, [{void}],
+                              LibraryMock.find_function(:abs)).
+                              attach(LibraryMock, 'abs')
+            LibraryMock.attachments[:abs].call(-7)
+            """ % self.make_mock_library_code(libc)))

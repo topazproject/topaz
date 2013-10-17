@@ -109,7 +109,8 @@ class W_FunctionObject(W_PointerObject):
         typeindex = w_ret_type.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
-                return read_and_wrap_from_address(space, resultdata, c)
+                return read_and_wrap_from_address(space, resultdata, c,
+                                                  out=True)
         assert 0
 
     def _put_arg(self, space, data, i, w_obj):
@@ -135,7 +136,8 @@ class W_FunctionObject(W_PointerObject):
             enum_t = w_mapped.typeindex
             for t in ffitype.unrolling_types:
                 if t == enum_t:
-                    unwrap_and_write_to_address(space, w_lookup, data, t)
+                    unwrap_and_write_to_address(space, w_lookup, data, t,
+                                                out=False)
         except RubyError, argument_error:
             raise space.error(space.w_TypeError,
                               "`to_native': %s (ArgumentError)" %
@@ -146,7 +148,7 @@ class W_FunctionObject(W_PointerObject):
         typeindex = w_argtype.typeindex
         for c in ffitype.unrolling_types:
             if c == typeindex:
-                unwrap_and_write_to_address(space, w_obj, data, c)
+                unwrap_and_write_to_address(space, w_obj, data, c, out=False)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
