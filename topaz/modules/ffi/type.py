@@ -169,7 +169,7 @@ class W_MappedObject(W_TypeObject):
         self.w_data_converter = w_data_converter
         w_type = space.send(w_data_converter, 'native_type')
         if isinstance(w_type, W_TypeObject):
-            self.ffi_type = ffi_types[w_type.typeindex]
+            self.typeindex = w_type.typeindex
         else:
             raise space.error(space.w_TypeError,
                               "native_type did not return instance of "

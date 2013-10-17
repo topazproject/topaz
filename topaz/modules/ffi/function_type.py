@@ -1,5 +1,5 @@
 import sys
-from topaz.modules.ffi.type import W_TypeObject
+from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
 from topaz.modules.ffi import type as ffitype
 from topaz.module import ClassDef
 

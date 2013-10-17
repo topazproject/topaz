@@ -132,7 +132,8 @@ class W_FunctionObject(W_PointerObject):
     def _push_mapped(self, space, data, w_mapped, w_obj):
         try:
             w_lookup = space.send(w_mapped, 'to_native', [w_obj, space.w_nil])
-            unwrap_and_write_to_address(space, w_lookup, data, UINT8)
+            enum_t = w_mapped.typeindex
+            unwrap_and_write_to_address(space, w_lookup, data, enum_t)
         except RubyError, argument_error:
             raise space.error(space.w_TypeError,
                               "`to_native': %s (ArgumentError)" %
