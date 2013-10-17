@@ -92,7 +92,7 @@ class TestFFI__Type__MappedObject__new(BaseFFITest):
         """)
         assert space.getclass(w_res.w_data_converter).name == 'DataConverter'
 
-    def test_it_derives_the_ffi_type_from_the_data_converter(self, space):
+    def test_it_derives_the_typeindex_from_the_data_converter(self, space):
         w_res = space.execute("""
         class DataConverter
           def native_type
@@ -103,7 +103,7 @@ class TestFFI__Type__MappedObject__new(BaseFFITest):
         end
         FFI::Type::Mapped.new(DataConverter.new)
         """)
-        assert w_res.ffi_type == clibffi.ffi_type_uint16
+        assert type_names[w_res.typeindex] == "UINT16"
         with self.raises(space, "TypeError",
                          "native_type did not return instance of FFI::Type"):
             space.execute("""
