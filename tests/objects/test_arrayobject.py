@@ -60,6 +60,8 @@ class TestArrayObject(BaseTopazTest):
             space.execute("a = [1]; a[-2] = 42")
         w_res = space.execute("a = [1, 2]; a[0, 0] = 42; return a")
         assert self.unwrap(space, w_res) == [42, 1, 2]
+        w_res = space.execute("a = []; a[0, 0] = [3, 4, 5]; return a")
+        assert self.unwrap(space, w_res) == [3, 4, 5]
         w_res = space.execute("a = [1, 2]; a[0, 1] = 42; return a")
         assert self.unwrap(space, w_res) == [42, 2]
         w_res = space.execute("a = [1, 2]; a[0, 5] = 42; return a")

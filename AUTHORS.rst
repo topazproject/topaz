@@ -27,3 +27,4 @@ Authors
 * Jan Stępień
 * Andrew Thompson
 * Jeremy Thurgood
+* Dan Shultz

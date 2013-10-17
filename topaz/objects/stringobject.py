@@ -1212,7 +1212,7 @@ class W_StringObject(W_Object):
         if w_newline is None:
             w_newline = space.globals.get(space, "$/")
         if w_newline is space.w_nil:
-            return self
+            return space.w_nil
         newline = space.str_w(space.convert_type(w_newline, space.w_string, "to_str"))
         if newline and newline in "\n\r":
             newline = None
