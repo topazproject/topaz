@@ -150,6 +150,9 @@ class W_FunctionObject(W_PointerObject):
             if c == typeindex:
                 unwrap_and_write_to_address(space, w_obj, data, c, out=False)
 
+    # TODO: Write a W_FFIFunction inheriting from topaz.objects.W_FunctionObject and having a
+    # an topaz.modules.ffi.W_FunctionObject as component (delegating call to
+    # it). Attach this (maybe via define_method in W_ModuleObject ?)
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
         w_attachments = space.send(w_lib, 'attachments')
