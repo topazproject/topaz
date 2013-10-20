@@ -683,6 +683,9 @@ class LookAround(RegexpBase):
     def fix_groups(self):
         self.subpattern.fix_groups()
 
+    def can_be_affix(self):
+        return self.subpattern.can_be_affix()
+
     def optimize(self, info, in_set=False):
         return LookAround(self.subpattern.optimize(info), self.behind, self.positive)
 
