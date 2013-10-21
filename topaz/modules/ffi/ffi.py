@@ -5,7 +5,7 @@ from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
 from topaz.modules.ffi.type import (POINTER, lltype_sizes, W_TypeObject,
                                     type_names, W_BuiltinType)
-from topaz.modules.ffi.function import W_FunctionObject
+from topaz.modules.ffi.function import W_FFIFunctionObject
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi.variadic_invoker import W_VariadicInvokerObject
 from topaz.modules.ffi.dynamic_library import W_DynamicLibraryObject
@@ -27,7 +27,8 @@ class FFI(object):
         space.set_const(w_Type, 'Builtin', space.getclassfor(W_BuiltinType))
         space.set_const(w_mod, 'DynamicLibrary',
                         space.getclassfor(W_DynamicLibraryObject))
-        space.set_const(w_mod, 'Function', space.getclassfor(W_FunctionObject))
+        space.set_const(w_mod, 'Function',
+                        space.getclassfor(W_FFIFunctionObject))
         w_FunctionType = space.getclassfor(W_FunctionTypeObject)
         space.set_const(w_mod, 'FunctionType', w_FunctionType)
         space.set_const(w_mod, 'FunctionInfo', w_FunctionType)

@@ -10,7 +10,7 @@ from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi import _callback
 from topaz.error import RubyError
-from topaz.objects.moduleobject import W_FunctionObject as W_RubyFunctionObject
+from topaz.objects.moduleobject import W_FunctionObject
 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib import jit
@@ -24,13 +24,13 @@ from pypy.module._cffi_backend import misc
 for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
 
-class W_FunctionObject(W_PointerObject):
+class W_FFIFunctionObject(W_PointerObject):
     classdef = ClassDef('Function', W_PointerObject.classdef)
     _immutable_fields_ = ['cif_descr', 'atypes', 'ptr', 'arg_types_w', 'w_ret_type']
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
-        return W_FunctionObject(space)
+        return W_FFIFunctionObject(space)
 
     def __init__(self, space):
         W_PointerObject.__init__(self, space)
@@ -155,11 +155,11 @@ class W_FunctionObject(W_PointerObject):
     def method_attach(self, space, w_lib, name):
         w_lib.attach_method(space, name, W_MethodAdapter(name, self))
 
-class W_MethodAdapter(W_RubyFunctionObject):
+class W_MethodAdapter(W_FunctionObject):
     _immutable_fields_ = ['name', 'w_ffi_func']
 
     def __init__(self, name, w_ffi_func):
-        W_RubyFunctionObject.__init__(self, name)
+        W_FunctionObject.__init__(self, name)
         self.name = name
         self.w_ffi_func = w_ffi_func
 

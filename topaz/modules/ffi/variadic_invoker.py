@@ -2,7 +2,7 @@ from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.modules.ffi.type import type_object, ffi_types, W_TypeObject, VOID
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
-from topaz.modules.ffi.function import W_FunctionObject
+from topaz.modules.ffi.function import W_FFIFunctionObject
 
 from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import lltype, rffi
@@ -31,7 +31,7 @@ class W_VariadicInvokerObject(W_Object):
 
     @classdef.method('invoke', arg_types_w='array', arg_values_w='array')
     def method_invoke(self, space, arg_types_w, arg_values_w):
-        w_function = W_FunctionObject(space)
+        w_function = W_FFIFunctionObject(space)
         arg_types_w = [type_object(space, t) for t in arg_types_w]
         # XXX we are missing argument promotion for the variadic arguments here
         # see
