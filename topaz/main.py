@@ -47,6 +47,23 @@ RUBY_REVISION = subprocess.check_output([
     "rev-parse", "--short", "HEAD"
 ]).rstrip()
 
+if IS_WINDOWS:
+    # A simple STDIN stream implementation for Windows users
+    class _STDINStream():
+        def readall(self):
+            # Copied from streamio
+            bufsize = 8192
+            result = []
+            while True:
+                data = os.read(0, bufsize)
+                if not data:
+                    break
+                result.append(data)
+                if bufsize < 4194304:    # 4 Megs
+                    bufsize <<= 1
+            return ''.join(result)
+    def WinStdinStream():
+        return _STDINStream()
 
 @specialize.memo()
 def getspace(config):
@@ -273,10 +290,10 @@ def _entry_point(space, argv):
         return 0
     else:
         if IS_WINDOWS:
-            raise NotImplementedError("executing from stdin on Windows")
+            source = WinStdinStream().readall()
         else:
             source = fdopen_as_stream(0, "r").readall()
-            path = "-"
+        path = "-"
 
     for globalized_switch in globalized_switches:
         value = None
