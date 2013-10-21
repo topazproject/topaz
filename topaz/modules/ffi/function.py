@@ -10,6 +10,7 @@ from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi import _callback
 from topaz.error import RubyError
+from topaz.objects.moduleobject import W_FunctionObject as W_RubyFunctionObject
 
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib import jit
@@ -150,10 +151,17 @@ class W_FunctionObject(W_PointerObject):
             if c == typeindex:
                 unwrap_and_write_to_address(space, w_obj, data, c, out=False)
 
-    # TODO: Write a W_FFIFunction inheriting from topaz.objects.W_FunctionObject and having a
-    # an topaz.modules.ffi.W_FunctionObject as component (delegating call to
-    # it). Attach this (maybe via define_method in W_ModuleObject ?)
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
-        w_attachments = space.send(w_lib, 'attachments')
-        space.send(w_attachments, '[]=', [space.newsymbol(name), self])
+        w_lib.attach_method(space, name, W_MethodAdapter(name, self))
+
+class W_MethodAdapter(W_RubyFunctionObject):
+    _immutable_fields_ = ['name', 'w_ffi_func']
+
+    def __init__(self, name, w_ffi_func):
+        W_RubyFunctionObject.__init__(self, name)
+        self.name = name
+        self.w_ffi_func = w_ffi_func
+
+    def call(self, space, w_receiver, args_w, block):
+        return space.send(self.w_ffi_func, 'call', args_w, block)

@@ -101,7 +101,7 @@ class TestFunction_attach(BaseFFITest):
         func = FFI::Function.new({float64}, [{float64}, {float64}], sym_pow)
         func.attach(LibraryMock, 'power')
         LibraryMock.attachments.include? :power
-        (0..5).each.map \{ |x| LibraryMock.attachments[:power].call(x, 2) \}
+        (0..5).each.map \{ |x| LibraryMock.power(x, 2) \}
         """ % self.make_mock_library_code(libm)))
         assert self.unwrap(space, w_res) == [0.0, 1.0, 4.0, 9.0, 16.0, 25.0]
 
@@ -112,7 +112,7 @@ class TestFunction_attach(BaseFFITest):
         func = FFI::Function.new({int32}, [{int32}], sym_abs)
         func.attach(LibraryMock, 'abs')
         LibraryMock.attachments.include? :abs
-        (-3..+3).each.map \{ |x| LibraryMock.attachments[:abs].call(x) \}
+        (-3..+3).each.map \{ |x| LibraryMock.abs(x) \}
         """ % self.make_mock_library_code(libc)))
         assert self.unwrap(space, w_res) == [3, 2, 1, 0, 1, 2, 3]
 
@@ -122,7 +122,7 @@ class TestFunction_attach(BaseFFITest):
         sym_strcat = LibraryMock.find_function(:strcat)
         func = FFI::Function.new({string}, [{string}, {string}], sym_strcat)
         func.attach(LibraryMock, 'strcat')
-        LibraryMock.attachments[:strcat].call("Well ", "done!")
+        LibraryMock.strcat("Well ", "done!")
         """ % self.make_mock_library_code(libc)))
         assert self.unwrap(space, w_res) == "Well done!"
 
@@ -133,7 +133,7 @@ class TestFunction_attach(BaseFFITest):
         func = FFI::Function.new({float32}, [{float32}, {float32}],
                                  sym_add_float)
         func.attach(LibraryMock, 'add_float')
-        LibraryMock.attachments[:add_float].call(1.5, 2.25)
+        LibraryMock.add_float(1.5, 2.25)
         """ % self.make_mock_library_code(libtest_so)))
         assert self.unwrap(space, w_res) == 3.75
 
@@ -147,7 +147,7 @@ class TestFunction_attach(BaseFFITest):
         FFI::Function.new({T}, [{T}, {T}],
                           LibraryMock.find_function(:fn)).
                           attach(LibraryMock, 'fn')
-        LibraryMock.attachments[:fn].call(+|-%s, +|-%s) == +|-%s
+        LibraryMock.fn(+|-%s, +|-%s) == +|-%s
         """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus) %
         (left, right, left+right))
 
@@ -209,7 +209,7 @@ class TestFunction_attach(BaseFFITest):
         sym_add_long = LibraryMock.find_function(:add_long)
         func = FFI::Function.new({long}, [{long}, {long}], sym_add_long)
         func.attach(LibraryMock, 'add_long')
-        LibraryMock.attachments[:add_long].call(-2, -10)
+        LibraryMock.add_long(-2, -10)
         """ % self.make_mock_library_code(libtest_so)))
         res = self.unwrap(space, w_res)
         assert (res == -12 if isinstance(res, int) else res.toint() == -12)
@@ -220,7 +220,7 @@ class TestFunction_attach(BaseFFITest):
         sym_add_ulong = LibraryMock.find_function(:add_ulong)
         func = FFI::Function.new({ulong}, [{ulong}, {ulong}], sym_add_ulong)
         func.attach(LibraryMock, 'add_ulong')
-        LibraryMock.attachments[:add_ulong].call(2, 10)
+        LibraryMock.add_ulong(2, 10)
         """ % self.make_mock_library_code(libtest_so)))
         res = self.unwrap(space, w_res)
         assert (res == 12 if isinstance(res, int) else res.toint() == 12)
@@ -231,7 +231,7 @@ class TestFunction_attach(BaseFFITest):
         FFI::Function.new({void}, [{uint8}],
                           LibraryMock.find_function(:set_u8)).
                           attach(LibraryMock, 'do_nothing')
-        LibraryMock.attachments[:do_nothing].call(0)
+        LibraryMock.do_nothing(0)
         """ % self.make_mock_library_code(libtest_so)))
         assert w_res is space.w_nil
 
@@ -242,9 +242,9 @@ class TestFunction_attach(BaseFFITest):
                           LibraryMock.find_function(:bool_reverse_val)).
                           attach(LibraryMock, 'not')
         """ % self.make_mock_library_code(libtest_so)))
-        w_res = space.execute("LibraryMock.attachments[:not].call(true)")
+        w_res = space.execute("LibraryMock.not(true)")
         assert w_res is space.w_false
-        w_res = space.execute("LibraryMock.attachments[:not].call(false)")
+        w_res = space.execute("LibraryMock.not(false)")
         assert w_res is space.w_true
 
     def test_it_can_convert_nil_to_NULL(self, space, libtest_so):
@@ -253,7 +253,7 @@ class TestFunction_attach(BaseFFITest):
         FFI::Function.new({bool}, [{pointer}],
                           LibraryMock.find_function(:testIsNULL)).
                           attach(LibraryMock, 'test_is_NULL')
-        LibraryMock.attachments[:test_is_NULL].call(nil)
+        LibraryMock.test_is_NULL(nil)
         """ % self.make_mock_library_code(libtest_so)))
 
     def test_it_works_with_pointer_argument(self, ffis, libtest_so):
@@ -263,7 +263,7 @@ class TestFunction_attach(BaseFFITest):
                           LibraryMock.find_function(:ref_add_int32_t)).
                           attach(LibraryMock, 'add')
         res = FFI::MemoryPointer.new({int}, 1)
-        LibraryMock.attachments[:add].call(4, 6, res)
+        LibraryMock.add(4, 6, res)
         res.read_int32
         """ % self.make_mock_library_code(libtest_so)))
         assert self.unwrap(ffis, w_res) == 10
@@ -276,7 +276,7 @@ class TestFunction_attach(BaseFFITest):
                           attach(LibraryMock, 'malloc')
         """ % self.make_mock_library_code(libtest_so)))
         assert self.ask(space, """
-        LibraryMock.attachments[:malloc].call(8).kind_of?(FFI::Pointer)
+        LibraryMock.malloc(8).kind_of?(FFI::Pointer)
         """)
 
     def test_it_can_use_procs_as_callbacks(self, ffis):
@@ -295,7 +295,7 @@ class TestFunction_attach(BaseFFITest):
         p = FFI::MemoryPointer.new({int32}, 2)
         p.put_int32(0, 5)
         p.put_int32(4, 3)
-        LibraryMock.attachments[:qsort].call(p, 2, 4) do |p1, p2|
+        LibraryMock.qsort(p, 2, 4) do |p1, p2|
           i1 = p1.get_int32(0)
           i2 = p2.get_int32(0)
           i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
@@ -315,14 +315,14 @@ class TestFunction_attach(BaseFFITest):
         FFI::Function.new({uint8}, [Color, Color],
                           LibraryMock.find_function(:add_u8), options).
                           attach(LibraryMock, 'add_color')
-        col1 = LibraryMock.attachments[:add_color].call(:black, :white)
+        col1 = LibraryMock.add_color(:black, :white)
         """ % self.make_mock_library_code(libtest_so)))
         assert self.unwrap(ffis, w_res) == 255
         with self.raises(ffis, "TypeError",
                          "`to_native': invalid enum value, :red "
                          "(ArgumentError)"):
             ffis.execute("""
-            LibraryMock.attachments[:add_color].call(:gray, :red)
+            LibraryMock.add_color(:gray, :red)
             """)
 
     def test_it_raises_ArgumentError_calling_func_with_void_arg(self, space):
@@ -332,5 +332,5 @@ class TestFunction_attach(BaseFFITest):
             FFI::Function.new({uint32}, [{void}],
                               LibraryMock.find_function(:abs)).
                               attach(LibraryMock, 'abs')
-            LibraryMock.attachments[:abs].call(-7)
+            LibraryMock.abs(-7)
             """ % self.make_mock_library_code(libc)))
