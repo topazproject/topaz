@@ -48,22 +48,18 @@ RUBY_REVISION = subprocess.check_output([
 ]).rstrip()
 
 if IS_WINDOWS:
-    # A simple STDIN stream implementation for Windows users
-    class _STDINStream():
-        def readall(self):
-            # Copied from streamio
-            bufsize = 8192
-            result = []
-            while True:
-                data = os.read(0, bufsize)
-                if not data:
-                    break
-                result.append(data)
-                if bufsize < 4194304:    # 4 Megs
-                    bufsize <<= 1
-            return ''.join(result)
     def WinStdinStream():
-        return _STDINStream()
+        # Copied from streamio
+        bufsize = 8192
+        result = []
+        while True:
+            data = os.read(0, bufsize)
+            if not data:
+                break
+            result.append(data)
+            if bufsize < 4194304:    # 4 Megs
+                bufsize <<= 1
+        return ''.join(result)
 
 @specialize.memo()
 def getspace(config):
