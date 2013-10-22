@@ -52,6 +52,7 @@ class TestRegexpObject(BaseTopazTest):
         /(?<=b)/
         /\\A|\\z/
         /[[:alnum:]]/
+        /(?=a)|b/
         """)
 
     def test_regexp_syntax_errors(self, space):
