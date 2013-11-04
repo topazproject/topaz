@@ -1,20 +1,33 @@
 #
 # Copyright (C) 2008-2010 Wayne Meissner
-# All rights reserved.
+# Copyright (c) 2007, 2008 Evan Phoenix
 #
 # This file is part of ruby-ffi.
 #
-# This code is free software: you can redistribute it and/or modify it under
-# the terms of the GNU Lesser General Public License version 3 only, as
-# published by the Free Software Foundation.
+# All rights reserved.
 #
-# This code is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
-# version 3 for more details.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
 #
-# You should have received a copy of the GNU Lesser General Public License
-# version 3 along with this work.  If not, see <http://www.gnu.org/licenses/>.
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+# * Redistributions in binary form must reproduce the above copyright notice
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# * Neither the name of the Ruby FFI project nor the names of its contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
 # see {file:README}
@@ -58,11 +71,85 @@ module FFI
     end
   end
 
-  # DIFF: simplified the original code
-  Type.constants.each do |typename|
-    TypeDefs[typename.downcase] = Type.const_get(typename)
-  end
+  # List of type definitions
+  TypeDefs.merge!({
+      # The C void type; only useful for function return types
+      :void => Type::VOID,
 
+      # C boolean type
+      :bool => Type::BOOL,
+
+      # C nul-terminated string
+      :string => Type::STRING,
+
+      # C signed char
+      :char => Type::CHAR,
+      # C unsigned char
+      :uchar => Type::UCHAR,
+
+      # C signed short
+      :short => Type::SHORT,
+      # C unsigned short
+      :ushort => Type::USHORT,
+
+      # C signed int
+      :int => Type::INT,
+      # C unsigned int
+      :uint => Type::UINT,
+
+      # C signed long
+      :long => Type::LONG,
+
+      # C unsigned long
+      :ulong => Type::ULONG,
+
+      # C signed long long integer
+      :long_long => Type::LONG_LONG,
+
+      # C unsigned long long integer
+      :ulong_long => Type::ULONG_LONG,
+
+      # C single precision float
+      :float => Type::FLOAT,
+
+      # C double precision float
+      :double => Type::DOUBLE,
+
+      # C long double
+      :long_double => Type::LONGDOUBLE,
+
+      # Native memory address
+      :pointer => Type::POINTER,
+
+      # 8 bit signed integer
+      :int8 => Type::INT8,
+      # 8 bit unsigned integer
+      :uint8 => Type::UINT8,
+
+      # 16 bit signed integer
+      :int16 => Type::INT16,
+      # 16 bit unsigned integer
+      :uint16 => Type::UINT16,
+
+      # 32 bit signed integer
+      :int32 => Type::INT32,
+      # 32 bit unsigned integer
+      :uint32 => Type::UINT32,
+
+      # 64 bit signed integer
+      :int64 => Type::INT64,
+      # 64 bit unsigned integer
+      :uint64 => Type::UINT64,
+
+      :buffer_in => Type::BUFFER_IN,
+      :buffer_out => Type::BUFFER_OUT,
+      :buffer_inout => Type::BUFFER_INOUT,
+
+      # Used in function prototypes to indicate the arguments are variadic
+      :varargs => Type::VARARGS,
+  })
+
+  
   class StrPtrConverter
     extend DataConverter
     native_type Type::POINTER

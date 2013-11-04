@@ -1,6 +1,6 @@
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.module import ClassDef
-from topaz.modules.ffi.type import W_TypeObject, type_object
+from topaz.modules.ffi.type import W_TypeObject
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
@@ -19,9 +19,11 @@ class W_MemoryPointerObject(W_PointerObject):
     def singleton_method_allocate(self, space, args_w):
         return W_MemoryPointerObject(space)
 
-    @classdef.method('initialize', size='int')
-    def method_initialize(self, space, w_type_hint, size=1):
-        self.w_type = type_object(space, w_type_hint)
+    @classdef.method('initialize', type_hint='symbol', size='int')
+    def method_initialize(self, space, type_hint, size=1):
+        w_FFI = space.find_const(space.w_kernel, 'FFI')
+        w_Type = space.find_const(w_FFI, 'Type')
+        self.w_type = space.find_const(w_Type, type_hint.upper())
         sizeof_type = space.int_w(space.send(self.w_type, 'size'))
         self.sizeof_memory = size * sizeof_type
         memory = lltype.malloc(rffi.CArray(rffi.CHAR),

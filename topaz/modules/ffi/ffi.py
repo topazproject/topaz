@@ -16,6 +16,8 @@ from topaz.modules.ffi.data_converter import DataConverter
 
 from rpython.rtyper.lltypesystem import rffi
 
+import platform
+
 class FFI(object):
     moduledef = ModuleDef("FFI")
 
@@ -57,7 +59,9 @@ class FFI(object):
         space.set_const(w_mod, 'NativeType', w_native_type)
 
         # setup Platform
-        w_platform = space.newmodule('Platform', None)
+        w_platform = space.newmodule('Platform')
+        w_cpu = space.newstr_fromstr(platform.machine())
+        space.set_const(w_platform, 'CPU', w_cpu)
         name_postfix = '_SIZE'
         for name_prefix in ['INT8', 'INT16', 'INT32', 'INT64',
                             'LONG', 'FLOAT', 'DOUBLE']:

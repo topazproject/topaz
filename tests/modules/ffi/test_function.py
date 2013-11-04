@@ -262,7 +262,7 @@ class TestFunction_attach(BaseFFITest):
         FFI::Function.new({void}, [{int}, {int}, {pointer}],
                           LibraryMock.find_function(:ref_add_int32_t)).
                           attach(LibraryMock, 'add')
-        res = FFI::MemoryPointer.new({int}, 1)
+        res = FFI::MemoryPointer.new(:int, 1)
         LibraryMock.add(4, 6, res)
         res.read_int32
         """ % self.make_mock_library_code(libtest_so)))
@@ -292,7 +292,7 @@ class TestFunction_attach(BaseFFITest):
                            comparator],
                           LibraryMock.find_function(:qsort)).
                           attach(LibraryMock, 'qsort')
-        p = FFI::MemoryPointer.new({int32}, 2)
+        p = FFI::MemoryPointer.new(:int32, 2)
         p.put_int32(0, 5)
         p.put_int32(4, 3)
         LibraryMock.qsort(p, 2, 4) do |p1, p2|

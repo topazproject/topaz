@@ -30,7 +30,8 @@ class TestVariadicInvoker(BaseFFITest):
                                            FFI::Type::INT32)
         sprintf.attach(Lib, :sprintf)
         result = FFI::MemoryPointer.new(:int8, 14)
-        Lib.sprintf(result, "%%i, %%f", :int32, 1, :float64, 2.0)
+        Lib.sprintf(result, "%%i, %%f", FFI::Type::INT32, 1,
+                                        FFI::Type::FLOAT64, 2.0)
         chars = 0.upto(5).map { |x| result.get_int8(x).chr }
         chars.inject('') { |str, c| str << c }
         """ % {'libname':libc})
