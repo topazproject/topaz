@@ -43,25 +43,22 @@ class W_FFIFunctionObject(W_PointerObject):
 
     @classdef.method('initialize')
     def method_initialize(self, space, w_ret_type, w_arg_types,
-                          w_name=None, w_options=None):
-        if w_options is None:
-            w_options = space.newhash()
-
+                          w_handle=None, w_options=None):
         self.w_info = space.send(space.getclassfor(W_FunctionTypeObject),
                                  'new', [w_ret_type, w_arg_types, w_options])
-        self.setup(space, w_name)
+        self.setup(space, w_handle)
 
-    def setup(self, space, w_name):
-        self.ptr = (coerce_dl_symbol(space, w_name) if w_name
+    def setup(self, space, w_handle):
+        self.ptr = (coerce_dl_symbol(space, w_handle) if w_handle
                     else lltype.nullptr(rffi.VOIDP.TO))
         self.cif_descr = self.w_info.build_cif_descr(space)
         self.atypes = self.cif_descr.atypes
 
-    def initialize_variadic(self, space, w_name, w_ret_type, arg_types_w):
+    def initialize_variadic(self, space, w_handle, w_ret_type, arg_types_w):
         self.w_info = space.send(space.getclassfor(W_FunctionTypeObject),
                                  'new',
                                  [w_ret_type, space.newarray(arg_types_w)])
-        self.setup(space, w_name)
+        self.setup(space, w_handle)
 
     def __del__(self):
         if self.cif_descr:
