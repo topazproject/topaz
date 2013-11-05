@@ -14,18 +14,18 @@ class W_VariadicInvokerObject(W_Object):
     def __init__(self, space):
         W_Object.__init__(self, space)
         self.w_info = None
-        self.w_name = None
+        self.w_handle = None
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
         return W_VariadicInvokerObject(space)
 
     @classdef.method('initialize')
-    def method_initialize(self, space, w_name, w_arg_types,
+    def method_initialize(self, space, w_handle, w_arg_types,
                           w_ret_type, w_options=None):
         self.w_info = space.send(space.getclassfor(W_FunctionTypeObject),
                                  'new', [w_ret_type, w_arg_types, w_options])
-        self.w_name = w_name
+        self.w_handle = w_handle
         space.send(self, 'init', [w_arg_types, space.newhash()])
 
     @classdef.method('invoke', arg_types_w='array', arg_values_w='array')
@@ -36,5 +36,5 @@ class W_VariadicInvokerObject(W_Object):
         # see
         # http://stackoverflow.com/questions/1255775/default-argument-promotions-in-c-function-calls
         w_ret_type = self.w_info.w_ret_type
-        w_function.initialize_variadic(space, self.w_name, w_ret_type, arg_types_w)
+        w_function.initialize_variadic(space, self.w_handle, w_ret_type, arg_types_w)
         return space.send(w_function, 'call', arg_values_w)
