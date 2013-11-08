@@ -74,9 +74,9 @@ class W_RandomObject(W_Object):
         last = space.send(range, "last")
         if space.is_true(space.send(range, "include?", [last])):
             last = space.send(last, "+", [space.newint(1)])
-        if (not space.respond_to(last, "-") or 
+        if (not space.respond_to(last, "-") or
             not space.respond_to(last, "+")):
-               raise space.error(space.w_ArgumentError, "invalid argument")
+                raise space.error(space.w_ArgumentError, "invalid argument")
         diff = space.send(last, "-", [first])
         offset = space.send(diff, "*", [space.newfloat(random)])
         choice = space.send(offset, "+", [first])
@@ -99,7 +99,7 @@ class W_RandomObject(W_Object):
             raise space.error(space.w_ArgumentError, "invalid argument")
         else:
             return space.newint(int(random * max))
-            
+
     def _rand_bignum(self, space, bignum):
         random = self.random.random()
         max = Coerce.float(space, bignum)
