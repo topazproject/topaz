@@ -221,10 +221,13 @@ class Kernel(object):
 
         if space.respond_to(args_w[0], "to_ary"):
             w_cmd = space.convert_type(args_w[0], space.w_array, "to_ary")
+            cmd_w = space.listview(w_cmd)
+            if len(cmd_w) != 2:
+                raise space.error(space.w_ArgumentError, "wrong first argument")
             cmd, argv0 = [
                 space.str0_w(space.convert_type(
                     w_e, space.w_string, "to_str"
-                )) for w_e in space.listview(w_cmd)
+                )) for w_e in cmd_w
             ]
         else:
             w_cmd = space.convert_type(args_w[0], space.w_string, "to_str")
