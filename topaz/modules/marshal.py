@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from topaz.module import Module, ModuleDef
+from topaz.module import ModuleDef
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.boolobject import W_TrueObject, W_FalseObject
 from topaz.objects.intobject import W_FixnumObject
@@ -14,8 +14,8 @@ import os
 import math
 
 
-class Marshal(Module):
-    moduledef = ModuleDef("Marshal", filepath=__file__)
+class Marshal(object):
+    moduledef = ModuleDef("Marshal")
 
     MAJOR_VERSION = 4
     MINOR_VERSION = 8
