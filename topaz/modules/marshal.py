@@ -94,10 +94,11 @@ class Marshal(object):
             bytes += Marshal.dump(space, space.w_true)
         elif isinstance(w_obj, W_HashObject):
             bytes.append(Marshal.HASH)
-            bytes += Marshal.integer2bytes(len(w_obj.contents))
-            for w_key in w_obj.contents.keys():
+            contents = w_obj.strategy.unerase(w_obj.dict_storage)
+            bytes += Marshal.integer2bytes(len(contents))
+            for w_key in contents.keys():
                 bytes += Marshal.dump(space, w_key)
-                bytes += Marshal.dump(space, w_obj.contents[w_key])
+                bytes += Marshal.dump(space, contents[w_key])
         else:
             raise NotImplementedError(type(w_obj))
 
@@ -164,7 +165,7 @@ class Marshal(object):
                 assert skip > 0
                 v, s = Marshal.load(space, bytes, offset + skip)
                 skip += s
-                w_hash.method_subscript_assign(k, v)
+                w_hash.method_subscript_assign(space, k, v)
             return w_hash, skip
         else:
             raise NotImplementedError(byte)
