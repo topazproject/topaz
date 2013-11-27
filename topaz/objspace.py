@@ -27,6 +27,7 @@ from topaz.lexer import LexerError, Lexer
 from topaz.module import ClassCache, ModuleCache
 from topaz.modules.comparable import Comparable
 from topaz.modules.enumerable import Enumerable
+from topaz.modules.marshal import Marshal
 from topaz.modules.math import Math
 from topaz.modules.kernel import Kernel
 from topaz.modules.ffi import FFI
@@ -194,6 +195,7 @@ class ObjectSpace(object):
 
             self.getmoduleobject(Comparable.moduledef),
             self.getmoduleobject(Enumerable.moduledef),
+            self.getmoduleobject(Marshal.moduledef),
             self.getmoduleobject(Math.moduledef),
             self.getmoduleobject(FFI.moduledef),
             self.getmoduleobject(Process.moduledef),
