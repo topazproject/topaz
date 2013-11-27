@@ -47,8 +47,8 @@ def test_invoke(space):
     data_diff_w = _callback.Data(space, w_proc_diff, w_callback_info)
     id_mul = compute_unique_id(data_mul_w)
     id_diff = compute_unique_id(data_diff_w)
-    _callback.registration[id_mul] = data_mul_w
-    _callback.registration[id_diff] = data_diff_w
+    _callback.registration[id_mul] = _callback.Closure(data_mul_w)
+    _callback.registration[id_diff] = _callback.Closure(data_diff_w)
     try:
         p_arg1[0] = rffi.cast(rffi.CHAR, 6)
         p_arg2[0] = rffi.cast(rffi.CHAR, 7)

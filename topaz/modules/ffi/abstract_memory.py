@@ -36,7 +36,7 @@ def new_put_method(typ):
     sizeof_type  = ffitype.lltype_sizes[typ]
     def put_method(self, space, offset, value):
         val = rffi.cast(ctype, value)
-        offset_ptr = rffi.ptradd(self.ptr, offset)
+        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
         casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
@@ -59,7 +59,7 @@ def new_get_method(typ):
     else:
         wrap = lambda space, val: space.newint(to_int(val))
     def get_method(self, space, offset):
-        offset_ptr = rffi.ptradd(self.ptr, offset)
+        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
         casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
@@ -129,7 +129,7 @@ class W_AbstractMemoryObject(W_Object):
         sizeof_type = lltype_sizes[UINT64]
         ctype = ffitype.lltypes[UINT64]
         val = rffi.cast(lltypes[UINT64], value.toulonglong())
-        offset_ptr = rffi.ptradd(self.ptr, offset)
+        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
         casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
@@ -141,7 +141,7 @@ class W_AbstractMemoryObject(W_Object):
     def method_get_uint64(self, space, offset):
         sizeof_type = lltype_sizes[UINT64]
         ctype = ffitype.lltypes[UINT64]
-        offset_ptr = rffi.ptradd(self.ptr, offset)
+        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
         casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
@@ -161,7 +161,7 @@ class W_AbstractMemoryObject(W_Object):
         sizeof_type = lltype_sizes[UINT64]
         ctype = ffitype.lltypes[UINT64]
         val = rffi.cast(lltypes[UINT64], value)
-        offset_ptr = rffi.ptradd(self.ptr, offset)
+        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
         casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:
@@ -173,7 +173,7 @@ class W_AbstractMemoryObject(W_Object):
     def method_get_pointer(self, space, offset):
         sizeof_type = lltype_sizes[UINT64]
         ctype = ffitype.lltypes[UINT64]
-        offset_ptr = rffi.ptradd(self.ptr, offset)
+        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
         casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
         try:

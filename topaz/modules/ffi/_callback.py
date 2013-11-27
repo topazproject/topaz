@@ -54,8 +54,9 @@ class Closure(object):
         space = self.callback_data.space
         self.cif_descr = w_callback_info.build_cif_descr(space)
         self.uid = compute_unique_id(self.callback_data)
-        registration[self.uid] = self.callback_data
-        res = clibffi.c_ffi_prep_closure(rffi.cast(clibffi.FFI_CLOSUREP, self.heap),
+        registration[self.uid] = self
+        cls_ptr = rffi.cast(clibffi.FFI_CLOSUREP, self.heap)
+        res = clibffi.c_ffi_prep_closure(cls_ptr,
                                          self.cif_descr.cif,
                                          invoke,
                                          rffi.cast(rffi.VOIDP, self.uid))
@@ -64,18 +65,18 @@ class Closure(object):
             raise space.error(space.w_RuntimeError,
                               "libffi failed to build this callback type")
 
+    def write(self, data):
+        misc.write_raw_unsigned_data(data, rffi.cast(rffi.CCHARP, self.heap),
+                                    rffi.sizeof(clibffi.FFI_CLOSUREP))
+
     def __del__(self):
         if self.heap:
             clibffi.closureHeap.free(self.heap)
         if self.cif_descr:
             lltype.free(self.cif_descr, flavor='raw')
 
-    def write(self, data):
-        misc.write_raw_unsigned_data(data, rffi.cast(rffi.CCHARP, self.heap),
-                                    rffi.sizeof(clibffi.FFI_CLOSUREP))
-
 @jit.jit_callback("CFFI")
 def invoke(ll_cif, ll_res, ll_args, ll_data):
     key = rffi.cast(lltype.Signed, ll_data)
-    w_data = registration[key]
-    w_data.invoke(ll_args, ll_res)
+    closure = registration[key]
+    closure.callback_data.invoke(ll_args, ll_res)

@@ -24,8 +24,6 @@ class FFI(object):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         # setup modules from other files
-        space.set_const(w_mod, 'TypeDefs', space.newhash())
-        space.set_const(w_mod, 'Types', space.newhash())
         w_Type = space.getclassfor(W_TypeObject)
         space.set_const(w_mod, 'Type', w_Type)
         space.set_const(w_Type, 'Builtin', space.getclassfor(W_BuiltinType))

@@ -35,6 +35,8 @@ class W_VariadicInvokerObject(W_Object):
         # XXX we are missing argument promotion for the variadic arguments here
         # see
         # http://stackoverflow.com/questions/1255775/default-argument-promotions-in-c-function-calls
-        w_ret_type = self.w_info.w_ret_type
+        w_info = self.w_info
+        assert isinstance(w_info, W_FunctionTypeObject)
+        w_ret_type = w_info.w_ret_type
         w_function.initialize_variadic(space, self.w_handle, w_ret_type, arg_types_w)
         return space.send(w_function, 'call', arg_values_w)

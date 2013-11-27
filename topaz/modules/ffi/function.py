@@ -125,8 +125,8 @@ class W_FFIFunctionObject(W_PointerObject):
     def _push_callback(self, space, data, w_func_type, w_proc):
         cif_descr = w_func_type.build_cif_descr(space)
         callback_data = _callback.Data(space, w_proc, w_func_type)
-        self.closure = _callback.Closure(callback_data)
-        self.closure.write(data)
+        closure = _callback.Closure(callback_data)
+        closure.write(data)
 
     def _push_mapped(self, space, data, w_mapped, w_obj):
         try:
