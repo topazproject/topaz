@@ -204,6 +204,20 @@ class W_PointerType(W_BuiltinType):
         else:
             return w_arg
 
+class W_BoolType(W_BuiltinType):
+    def __init__(self, space, klass=None):
+        W_TypeObject.__init__(self, space, BOOL)
+
+    def read(self, space, data):
+        typesize = lltype_sizes[self.typeindex]
+        result = bool(misc.read_raw_signed_data(data, typesize))
+        return space.newbool(result)
+
+    def write(self, space, data, w_arg):
+        typesize = lltype_sizes[self.typeindex]
+        arg = space.is_true(w_arg)
+        misc.write_raw_unsigned_data(data, arg, typesize)
+
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 

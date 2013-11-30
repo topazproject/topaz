@@ -107,6 +107,26 @@ class Test_W_PointerType(BaseFFITest):
         assert raw_res == 15
         lltype.free(data, flavor='raw')
 
+class Test_W_BoolType(BaseFFITest):
+    def test_it_reads_a_bool_from_buffer(self, space):
+        w_bool_type = ffitype.W_BoolType(space)
+        bool_size = ffitype.lltype_sizes[w_bool_type.typeindex]
+        data = lltype.malloc(rffi.CCHARP.TO, bool_size, flavor='raw')
+        misc.write_raw_unsigned_data(data, False, bool_size)
+        w_res = w_bool_type.read(space, data)
+        assert not space.is_true(w_res)
+        lltype.free(data, flavor='raw')
+
+    def test_it_writes_a_bool_to_buffer(self, space):
+        w_bool_type = ffitype.W_BoolType(space)
+        bool_size = ffitype.lltype_sizes[w_bool_type.typeindex]
+        data = lltype.malloc(rffi.CCHARP.TO, bool_size, flavor='raw')
+        w_true = space.execute("true")
+        w_bool_type.write(space, data, w_true)
+        raw_res = misc.read_raw_unsigned_data(data, bool_size)
+        assert bool(raw_res)
+        lltype.free(data, flavor='raw')
+
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
         assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")
