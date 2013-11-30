@@ -8,6 +8,9 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.unroll import unrolling_iterable
 
+# XXX maybe move to rlib/jit_libffi
+from pypy.module._cffi_backend import misc
+
 _native_types = [
     ('VOID',       clibffi.ffi_type_void,                     lltype.Void,     []),
     ('INT8',       clibffi.ffi_type_sint8,                    rffi.CHAR,       ['CHAR', 'SCHAR']),
@@ -149,6 +152,24 @@ def type_object(space, w_obj):
                            "return an FFI::Type object, but apparently it did"
                            "not in this case.")
     return w_type
+
+class W_StringType(W_BuiltinType):
+    def __init__(self, space, klass=None):
+        W_TypeObject.__init__(self, space, STRING)
+
+    def read(self, space, data):
+        typesize = lltype_sizes[self.typeindex]
+        result = misc.read_raw_unsigned_data(data, typesize)
+        result = rffi.cast(rffi.CCHARP, result)
+        result = rffi.charp2str(result)
+        return space.newstr_fromstr(result)
+
+    def write(self, space, data, w_arg):
+        typesize = lltype_sizes[self.typeindex]
+        arg = space.str_w(w_arg)
+        arg = rffi.str2charp(arg)
+        arg = rffi.cast(lltype.Unsigned, arg)
+        misc.write_raw_unsigned_data(data, arg, typesize)
 
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)

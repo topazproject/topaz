@@ -1,7 +1,12 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.type import type_names, W_TypeObject, VOID
+from topaz.modules.ffi import type as ffitype
 
 from rpython.rlib import clibffi
+from rpython.rtyper.lltypesystem import rffi, lltype
+
+# XXX maybe move to rlib/jit_libffi
+from pypy.module._cffi_backend import misc
 
 class TestType(BaseFFITest):
     def test_it_is_a_class(self, space):
@@ -55,6 +60,29 @@ class TestFFI__Type_eq(BaseFFITest):
         type2 = W_TypeObject(space, VOID)
         w_assertion = space.send(type1, '==', [type2])
         assert self.unwrap(space, w_assertion)
+
+class Test_W_StringType(BaseFFITest):
+    def test_it_reads_a_string_from_buffer(self, space):
+        w_string_type = ffitype.W_StringType(space)
+        charp_size = ffitype.lltype_sizes[w_string_type.typeindex]
+        data = lltype.malloc(rffi.CCHARP.TO, charp_size, flavor='raw')
+        raw_str = rffi.str2charp("test")
+        misc.write_raw_unsigned_data(data, raw_str, charp_size)
+        w_res = w_string_type.read(space, data)
+        assert space.is_kind_of(w_res, space.w_string)
+        assert self.unwrap(space, w_res) == "test"
+        lltype.free(data, flavor='raw')
+
+    def test_it_writes_a_string_to_buffer(self, space):
+        w_string_type = ffitype.W_StringType(space)
+        charp_size = ffitype.lltype_sizes[w_string_type.typeindex]
+        data = lltype.malloc(rffi.CCHARP.TO, charp_size, flavor='raw')
+        w_str = space.newstr_fromstr("test")
+        w_string_type.write(space, data, w_str)
+        raw_res = misc.read_raw_unsigned_data(data, charp_size)
+        raw_res = rffi.cast(rffi.CCHARP, raw_res)
+        assert rffi.charp2str(raw_res) == "test"
+        lltype.free(data, flavor='raw')
 
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
