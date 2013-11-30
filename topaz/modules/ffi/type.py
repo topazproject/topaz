@@ -158,14 +158,14 @@ class W_StringType(W_BuiltinType):
         W_TypeObject.__init__(self, space, STRING)
 
     def read(self, space, data):
-        typesize = lltype_sizes[self.typeindex]
+        typesize = space.int_w(self.method_size(space))
         result = misc.read_raw_unsigned_data(data, typesize)
         result = rffi.cast(rffi.CCHARP, result)
         result = rffi.charp2str(result)
         return space.newstr_fromstr(result)
 
     def write(self, space, data, w_arg):
-        typesize = lltype_sizes[self.typeindex]
+        typesize = space.int_w(self.method_size(space))
         arg = space.str_w(w_arg)
         arg = rffi.str2charp(arg)
         arg = rffi.cast(lltype.Unsigned, arg)
@@ -176,7 +176,7 @@ class W_PointerType(W_BuiltinType):
         W_TypeObject.__init__(self, space, POINTER)
 
     def read(self, space, data):
-        typesize = lltype_sizes[self.typeindex]
+        typesize = space.int_w(self.method_size(space))
         result = misc.read_raw_unsigned_data(data, typesize)
         result = rffi.cast(lltype.Signed, result)
         w_FFI = space.find_const(space.w_kernel, 'FFI')
@@ -185,7 +185,7 @@ class W_PointerType(W_BuiltinType):
                           [space.newint(result)])
 
     def write(self, space, data, w_arg):
-        typesize = lltype_sizes[self.typeindex]
+        typesize = space.int_w(self.method_size(space))
         w_arg = self._convert_to_NULL_if_nil(space, w_arg)
         # right now, coerce_pointer has to be imported here to avoid import
         # cycle. maybe after OOP approch is fully implemented and refactoring

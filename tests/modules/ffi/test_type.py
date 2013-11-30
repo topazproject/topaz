@@ -64,7 +64,7 @@ class TestFFI__Type_eq(BaseFFITest):
 class Test_W_StringType(BaseFFITest):
     def test_it_reads_a_string_from_buffer(self, space):
         w_string_type = ffitype.W_StringType(space)
-        charp_size = ffitype.lltype_sizes[w_string_type.typeindex]
+        charp_size = space.int_w(space.send(w_string_type, 'size'))
         data = lltype.malloc(rffi.CCHARP.TO, charp_size, flavor='raw')
         raw_str = rffi.str2charp("test")
         misc.write_raw_unsigned_data(data, raw_str, charp_size)
@@ -75,7 +75,7 @@ class Test_W_StringType(BaseFFITest):
 
     def test_it_writes_a_string_to_buffer(self, space):
         w_string_type = ffitype.W_StringType(space)
-        charp_size = ffitype.lltype_sizes[w_string_type.typeindex]
+        charp_size = space.int_w(space.send(w_string_type, 'size'))
         data = lltype.malloc(rffi.CCHARP.TO, charp_size, flavor='raw')
         w_str = space.newstr_fromstr("test")
         w_string_type.write(space, data, w_str)
@@ -87,7 +87,7 @@ class Test_W_StringType(BaseFFITest):
 class Test_W_PointerType(BaseFFITest):
     def test_it_reads_a_pointer_from_buffer(self, space):
         w_pointer_type = ffitype.W_PointerType(space)
-        ptr_size = ffitype.lltype_sizes[w_pointer_type.typeindex]
+        ptr_size = space.int_w(space.send(w_pointer_type, 'size'))
         data = lltype.malloc(rffi.CCHARP.TO, ptr_size, flavor='raw')
         raw_ptr = rffi.cast(lltype.Unsigned, 12)
         misc.write_raw_unsigned_data(data, raw_ptr, ptr_size)
@@ -98,7 +98,7 @@ class Test_W_PointerType(BaseFFITest):
 
     def test_it_writes_a_pointer_to_buffer(self, space):
         w_pointer_type = ffitype.W_PointerType(space)
-        ptr_size = ffitype.lltype_sizes[w_pointer_type.typeindex]
+        ptr_size = space.int_w(space.send(w_pointer_type, 'size'))
         data = lltype.malloc(rffi.CCHARP.TO, ptr_size, flavor='raw')
         w_ptr = space.execute("FFI::Pointer.new(15)")
         w_pointer_type.write(space, data, w_ptr)
@@ -110,7 +110,7 @@ class Test_W_PointerType(BaseFFITest):
 class Test_W_BoolType(BaseFFITest):
     def test_it_reads_a_bool_from_buffer(self, space):
         w_bool_type = ffitype.W_BoolType(space)
-        bool_size = ffitype.lltype_sizes[w_bool_type.typeindex]
+        bool_size = space.int_w(space.send(w_bool_type, 'size'))
         data = lltype.malloc(rffi.CCHARP.TO, bool_size, flavor='raw')
         misc.write_raw_unsigned_data(data, False, bool_size)
         w_res = w_bool_type.read(space, data)
@@ -119,7 +119,7 @@ class Test_W_BoolType(BaseFFITest):
 
     def test_it_writes_a_bool_to_buffer(self, space):
         w_bool_type = ffitype.W_BoolType(space)
-        bool_size = ffitype.lltype_sizes[w_bool_type.typeindex]
+        bool_size = space.int_w(space.send(w_bool_type, 'size'))
         data = lltype.malloc(rffi.CCHARP.TO, bool_size, flavor='raw')
         w_true = space.execute("true")
         w_bool_type.write(space, data, w_true)
