@@ -209,14 +209,28 @@ class W_BoolType(W_BuiltinType):
         W_TypeObject.__init__(self, space, BOOL)
 
     def read(self, space, data):
-        typesize = lltype_sizes[self.typeindex]
+        typesize = space.int_w(self.method_size(space))
         result = bool(misc.read_raw_signed_data(data, typesize))
         return space.newbool(result)
 
     def write(self, space, data, w_arg):
-        typesize = lltype_sizes[self.typeindex]
+        typesize = space.int_w(self.method_size(space))
         arg = space.is_true(w_arg)
         misc.write_raw_unsigned_data(data, arg, typesize)
+
+class W_FloatType(W_BuiltinType):
+    def __init__(self, space, typeindex, klass=None):
+        W_TypeObject.__init__(self, space, typeindex)
+
+    def read(self, space, data):
+        typesize = space.int_w(self.method_size(space))
+        result = misc.read_raw_float_data(data, typesize)
+        return space.newfloat(float(result))
+
+    def write(self, space, data, w_arg):
+        typesize = space.int_w(self.method_size(space))
+        arg = space.float_w(w_arg)
+        misc.write_raw_float_data(data, arg, typesize)
 
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)

@@ -127,6 +127,41 @@ class Test_W_BoolType(BaseFFITest):
         assert bool(raw_res)
         lltype.free(data, flavor='raw')
 
+class Test_W_FloatType(BaseFFITest):
+    def test_it_reads_a_float32_to_buffer(self, space):
+        w_float32_type = ffitype.W_FloatType(space, ffitype.FLOAT32)
+        data = lltype.malloc(rffi.CCHARP.TO, 4, flavor='raw')
+        misc.write_raw_float_data(data, 1.25, 4)
+        w_res = w_float32_type.read(space, data)
+        assert self.unwrap(space, w_res) == 1.25
+        lltype.free(data, flavor='raw')
+
+    def test_it_reads_a_float64_to_buffer(self, space):
+        w_float64_type = ffitype.W_FloatType(space, ffitype.FLOAT64)
+        data = lltype.malloc(rffi.CCHARP.TO, 8, flavor='raw')
+        misc.write_raw_float_data(data, 1e-10, 8)
+        w_res = w_float64_type.read(space, data)
+        assert self.unwrap(space, w_res) == 1e-10
+        lltype.free(data, flavor='raw')
+
+    def test_it_writes_a_float32_to_buffer(self, space):
+        w_float32_type = ffitype.W_FloatType(space, ffitype.FLOAT32)
+        data = lltype.malloc(rffi.CCHARP.TO, 4, flavor='raw')
+        w_f = space.newfloat(3.75)
+        w_float32_type.write(space, data, w_f)
+        raw_res = misc.read_raw_float_data(data, 4)
+        assert raw_res == 3.75
+        lltype.free(data, flavor='raw')
+
+    def test_it_writes_a_float64_to_buffer(self, space):
+        w_float64_type = ffitype.W_FloatType(space, ffitype.FLOAT64)
+        data = lltype.malloc(rffi.CCHARP.TO, 8, flavor='raw')
+        w_f = space.newfloat(1e-12)
+        w_float64_type.write(space, data, w_f)
+        raw_res = misc.read_raw_float_data(data, 8)
+        assert raw_res == 1e-12
+        lltype.free(data, flavor='raw')
+
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
         assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")
