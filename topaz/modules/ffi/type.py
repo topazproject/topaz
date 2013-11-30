@@ -171,6 +171,39 @@ class W_StringType(W_BuiltinType):
         arg = rffi.cast(lltype.Unsigned, arg)
         misc.write_raw_unsigned_data(data, arg, typesize)
 
+class W_PointerType(W_BuiltinType):
+    def __init__(self, space, klass=None):
+        W_TypeObject.__init__(self, space, POINTER)
+
+    def read(self, space, data):
+        typesize = lltype_sizes[self.typeindex]
+        result = misc.read_raw_unsigned_data(data, typesize)
+        result = rffi.cast(lltype.Signed, result)
+        w_FFI = space.find_const(space.w_kernel, 'FFI')
+        w_Pointer = space.find_const(w_FFI, 'Pointer')
+        return space.send(w_Pointer, 'new',
+                          [space.newint(result)])
+
+    def write(self, space, data, w_arg):
+        typesize = lltype_sizes[self.typeindex]
+        w_arg = self._convert_to_NULL_if_nil(space, w_arg)
+        # right now, coerce_pointer has to be imported here to avoid import
+        # cycle. maybe after OOP approch is fully implemented and refactoring
+        # done the import can be moved to begin of file
+        from topaz.modules.ffi.pointer import coerce_pointer
+        arg = coerce_pointer(space, w_arg)
+        arg = rffi.cast(lltype.Unsigned, arg)
+        misc.write_raw_unsigned_data(data, arg, typesize)
+
+    @staticmethod
+    def _convert_to_NULL_if_nil(space, w_arg):
+        if w_arg is space.w_nil:
+            w_FFI = space.find_const(space.w_kernel, 'FFI')
+            w_Pointer = space.find_const(w_FFI, 'Pointer')
+            return space.find_const(w_Pointer, 'NULL')
+        else:
+            return w_arg
+
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 

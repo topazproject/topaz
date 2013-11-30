@@ -84,6 +84,29 @@ class Test_W_StringType(BaseFFITest):
         assert rffi.charp2str(raw_res) == "test"
         lltype.free(data, flavor='raw')
 
+class Test_W_PointerType(BaseFFITest):
+    def test_it_reads_a_pointer_from_buffer(self, space):
+        w_pointer_type = ffitype.W_PointerType(space)
+        ptr_size = ffitype.lltype_sizes[w_pointer_type.typeindex]
+        data = lltype.malloc(rffi.CCHARP.TO, ptr_size, flavor='raw')
+        raw_ptr = rffi.cast(lltype.Unsigned, 12)
+        misc.write_raw_unsigned_data(data, raw_ptr, ptr_size)
+        w_res = w_pointer_type.read(space, data)
+        w_pointer_class = space.execute("FFI::Pointer")
+        assert space.is_kind_of(w_res, w_pointer_class)
+        assert self.unwrap(space, space.send(w_res, 'address')) == 12
+
+    def test_it_writes_a_pointer_to_buffer(self, space):
+        w_pointer_type = ffitype.W_PointerType(space)
+        ptr_size = ffitype.lltype_sizes[w_pointer_type.typeindex]
+        data = lltype.malloc(rffi.CCHARP.TO, ptr_size, flavor='raw')
+        w_ptr = space.execute("FFI::Pointer.new(15)")
+        w_pointer_type.write(space, data, w_ptr)
+        raw_res = misc.read_raw_unsigned_data(data, ptr_size)
+        raw_res = rffi.cast(lltype.Unsigned, raw_res)
+        assert raw_res == 15
+        lltype.free(data, flavor='raw')
+
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
         assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")
