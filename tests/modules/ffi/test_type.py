@@ -172,9 +172,9 @@ class Test_W_SignedType(BaseFFITest):
             size = space.int_w(space.send(w_signed_type, 'size'))
             # make new buffer for every t
             data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
-            misc.write_raw_signed_data(data, 42, size)
+            misc.write_raw_signed_data(data, -88, size)
             w_res = w_signed_type.read(space, data)
-            assert self.unwrap(space, w_res) == 42
+            assert self.unwrap(space, w_res) == -88
             lltype.free(data, flavor='raw')
 
     def test_it_writes_signed_types_to_buffer(self, space):
@@ -186,10 +186,10 @@ class Test_W_SignedType(BaseFFITest):
             size = space.int_w(space.send(w_signed_type, 'size'))
             # make new buffer for every t
             data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
-            w_i = space.newint(16)
+            w_i = space.newint(-18)
             w_signed_type.write(space, data, w_i)
             raw_res = misc.read_raw_signed_data(data, size)
-            assert raw_res == 16
+            assert raw_res == -18
             lltype.free(data, flavor='raw')
 
 class Test_W_Int8Type(BaseFFITest):
@@ -200,6 +200,36 @@ class Test_W_Int8Type(BaseFFITest):
         w_res = w_int8_type.read(space, data)
         assert self.unwrap(space, w_res) == -127
         lltype.free(data, flavor='raw')
+
+class Test_W_UnsignedType(BaseFFITest):
+    def test_it_reads_unsigned_types_to_buffer(self, space):
+        for t in [ffitype.UINT8,
+                  ffitype.UINT16,
+                  ffitype.UINT32,
+                  ffitype.UINT64]:
+            w_unsigned_type = ffitype.W_UnsignedType(space, t)
+            size = space.int_w(space.send(w_unsigned_type, 'size'))
+            # make new buffer for every t
+            data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+            misc.write_raw_unsigned_data(data, 42, size)
+            w_res = w_unsigned_type.read(space, data)
+            assert self.unwrap(space, w_res) == 42
+            lltype.free(data, flavor='raw')
+
+    def test_it_writes_unsigned_types_to_buffer(self, space):
+        for t in [ffitype.UINT8,
+                  ffitype.UINT16,
+                  ffitype.UINT32,
+                  ffitype.UINT64]:
+            w_unsigned_type = ffitype.W_UnsignedType(space, t)
+            size = space.int_w(space.send(w_unsigned_type, 'size'))
+            # make new buffer for every t
+            data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+            w_i = space.newint(16)
+            w_unsigned_type.write(space, data, w_i)
+            raw_res = misc.read_raw_unsigned_data(data, size)
+            assert raw_res == 16
+            lltype.free(data, flavor='raw')
 
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
