@@ -2,7 +2,7 @@ import sys
 
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
-from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
+from topaz.modules.ffi.type import W_BuiltinType, W_MappedObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
 from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
@@ -17,9 +17,6 @@ from rpython.rlib import jit
 from rpython.rlib.jit_libffi import CIF_DESCRIPTION
 from rpython.rlib.jit_libffi import FFI_TYPE_PP
 from rpython.rlib.jit_libffi import jit_ffi_call
-
-# XXX maybe move to rlib/jit_libffi
-from pypy.module._cffi_backend import misc
 
 for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
@@ -103,15 +100,8 @@ class W_FFIFunctionObject(W_PointerObject):
         w_info = self.w_info
         assert isinstance(w_info, W_FunctionTypeObject)
         w_ret_type = w_info.w_ret_type
-        assert isinstance(w_ret_type, W_TypeObject)
-
+        assert isinstance(w_ret_type, W_BuiltinType)
         return w_ret_type.rw_strategy.read(space, resultdata)
-
-        #typeindex = w_ret_type.typeindex
-        #for c in ffitype.unrolling_types:
-        #    if c == typeindex:
-        #        return read_and_wrap_from_address(space, resultdata, c,
-        #                                          out=True)
         assert 0
 
     def _put_arg(self, space, data, i, w_obj):
@@ -145,17 +135,12 @@ class W_FFIFunctionObject(W_PointerObject):
                               argument_error.w_value.msg)
 
     def _push_ordinary(self, space, data, w_argtype, w_obj):
-        assert isinstance(w_argtype, W_TypeObject)
+        assert isinstance(w_argtype, W_BuiltinType)
 
         if w_argtype.typeindex == VOID:
             raise space.error(space.w_ArgumentError,
                               "arguments cannot be of type void")
         w_argtype.rw_strategy.write(space, data, w_obj)
-
-        #typeindex = w_argtype.typeindex
-        #for c in ffitype.unrolling_types:
-        #    if c == typeindex:
-        #        unwrap_and_write_to_address(space, w_obj, data, c, out=False)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
