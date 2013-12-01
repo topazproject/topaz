@@ -162,6 +162,45 @@ class Test_W_FloatType(BaseFFITest):
         assert raw_res == 1e-12
         lltype.free(data, flavor='raw')
 
+class Test_W_SignedType(BaseFFITest):
+    def test_it_reads_signed_types_to_buffer(self, space):
+        for t in [ffitype.INT8,
+                  ffitype.INT16,
+                  ffitype.INT32,
+                  ffitype.INT64]:
+            w_signed_type = ffitype.W_SignedType(space, t)
+            size = space.int_w(space.send(w_signed_type, 'size'))
+            # make new buffer for every t
+            data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+            misc.write_raw_signed_data(data, 42, size)
+            w_res = w_signed_type.read(space, data)
+            assert self.unwrap(space, w_res) == 42
+            lltype.free(data, flavor='raw')
+
+    def test_it_writes_signed_types_to_buffer(self, space):
+        for t in [ffitype.INT8,
+                  ffitype.INT16,
+                  ffitype.INT32,
+                  ffitype.INT64]:
+            w_signed_type = ffitype.W_SignedType(space, t)
+            size = space.int_w(space.send(w_signed_type, 'size'))
+            # make new buffer for every t
+            data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+            w_i = space.newint(16)
+            w_signed_type.write(space, data, w_i)
+            raw_res = misc.read_raw_signed_data(data, size)
+            assert raw_res == 16
+            lltype.free(data, flavor='raw')
+
+class Test_W_Int8Type(BaseFFITest):
+    def test_it_reads_an_int8_to_buffer(self, space):
+        w_int8_type = ffitype.W_Int8Type(space)
+        data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
+        misc.write_raw_signed_data(data, -127, 1)
+        w_res = w_int8_type.read(space, data)
+        assert self.unwrap(space, w_res) == -127
+        lltype.free(data, flavor='raw')
+
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
         assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")

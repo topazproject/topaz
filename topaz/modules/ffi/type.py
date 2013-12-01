@@ -232,6 +232,31 @@ class W_FloatType(W_BuiltinType):
         arg = space.float_w(w_arg)
         misc.write_raw_float_data(data, arg, typesize)
 
+class W_SignedType(W_BuiltinType):
+    def __init__(self, space, typeindex, klass=None):
+        W_TypeObject.__init__(self, space, typeindex)
+
+    def read(self, space, data):
+        typesize = space.int_w(self.method_size(space))
+        result = misc.read_raw_signed_data(data, typesize)
+        return space.newint(intmask(result))
+
+    def write(self, space, data, w_arg):
+        typesize = space.int_w(self.method_size(space))
+        arg = space.int_w(w_arg)
+        misc.write_raw_signed_data(data, arg, typesize)
+
+class W_Int8Type(W_SignedType):
+    def __init__(self, space, klass=None):
+        W_SignedType.__init__(self, space, INT8)
+
+    def read(self, space, data):
+        typesize = space.int_w(self.method_size(space))
+        result = misc.read_raw_signed_data(data, typesize)
+        if result >= 128:
+            result -= 256
+        return space.newint(intmask(result))
+
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 
