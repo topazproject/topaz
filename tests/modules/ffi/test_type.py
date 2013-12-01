@@ -167,7 +167,8 @@ class Test_W_SignedType(BaseFFITest):
         for t in [ffitype.INT8,
                   ffitype.INT16,
                   ffitype.INT32,
-                  ffitype.INT64]:
+                  ffitype.INT64,
+                  ffitype.LONG]:
             w_signed_type = ffitype.W_SignedType(space, t)
             size = space.int_w(space.send(w_signed_type, 'size'))
             # make new buffer for every t
@@ -181,7 +182,8 @@ class Test_W_SignedType(BaseFFITest):
         for t in [ffitype.INT8,
                   ffitype.INT16,
                   ffitype.INT32,
-                  ffitype.INT64]:
+                  ffitype.INT64,
+                  ffitype.LONG]:
             w_signed_type = ffitype.W_SignedType(space, t)
             size = space.int_w(space.send(w_signed_type, 'size'))
             # make new buffer for every t
@@ -206,7 +208,8 @@ class Test_W_UnsignedType(BaseFFITest):
         for t in [ffitype.UINT8,
                   ffitype.UINT16,
                   ffitype.UINT32,
-                  ffitype.UINT64]:
+                  ffitype.UINT64,
+                  ffitype.ULONG]:
             w_unsigned_type = ffitype.W_UnsignedType(space, t)
             size = space.int_w(space.send(w_unsigned_type, 'size'))
             # make new buffer for every t
@@ -220,7 +223,8 @@ class Test_W_UnsignedType(BaseFFITest):
         for t in [ffitype.UINT8,
                   ffitype.UINT16,
                   ffitype.UINT32,
-                  ffitype.UINT64]:
+                  ffitype.UINT64,
+                  ffitype.ULONG]:
             w_unsigned_type = ffitype.W_UnsignedType(space, t)
             size = space.int_w(space.send(w_unsigned_type, 'size'))
             # make new buffer for every t
