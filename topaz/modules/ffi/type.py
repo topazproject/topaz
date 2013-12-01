@@ -271,6 +271,16 @@ class W_UnsignedType(W_BuiltinType):
         arg = space.int_w(w_arg)
         misc.write_raw_unsigned_data(data, arg, typesize)
 
+class W_VoidType(W_BuiltinType):
+    def __init__(self, space, klass=None):
+        W_TypeObject.__init__(self, space, VOID)
+
+    def read(self, space, data):
+        return space.w_nil;
+
+    def write(self, space, data, w_arg):
+        pass
+
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 

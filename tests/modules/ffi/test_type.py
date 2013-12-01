@@ -235,6 +235,23 @@ class Test_W_UnsignedType(BaseFFITest):
             assert raw_res == 16
             lltype.free(data, flavor='raw')
 
+class Test_W_VoidType(BaseFFITest):
+    def test_it_reads_nothing_and_returns_nil(self, space):
+        data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
+        w_void_type = ffitype.W_VoidType(space)
+        w_res = w_void_type.read(space, data)
+        assert self.unwrap(space, w_res) == None
+        lltype.free(data, flavor='raw')
+
+    def test_it_writes_nothing_and_returns_None(self, space):
+        data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
+        misc.write_raw_signed_data(data, 11, 1)
+        w_void_type = ffitype.W_VoidType(space)
+        res = w_void_type.write(space, data, 0)
+        assert misc.read_raw_signed_data(data, 1) == 11
+        assert res is None
+        lltype.free(data, flavor='raw')
+
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
         assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")
