@@ -104,11 +104,14 @@ class W_FFIFunctionObject(W_PointerObject):
         assert isinstance(w_info, W_FunctionTypeObject)
         w_ret_type = w_info.w_ret_type
         assert isinstance(w_ret_type, W_TypeObject)
-        typeindex = w_ret_type.typeindex
-        for c in ffitype.unrolling_types:
-            if c == typeindex:
-                return read_and_wrap_from_address(space, resultdata, c,
-                                                  out=True)
+
+        return w_ret_type.rw_strategy.read(space, resultdata)
+
+        #typeindex = w_ret_type.typeindex
+        #for c in ffitype.unrolling_types:
+        #    if c == typeindex:
+        #        return read_and_wrap_from_address(space, resultdata, c,
+        #                                          out=True)
         assert 0
 
     def _put_arg(self, space, data, i, w_obj):
@@ -143,10 +146,16 @@ class W_FFIFunctionObject(W_PointerObject):
 
     def _push_ordinary(self, space, data, w_argtype, w_obj):
         assert isinstance(w_argtype, W_TypeObject)
-        typeindex = w_argtype.typeindex
-        for c in ffitype.unrolling_types:
-            if c == typeindex:
-                unwrap_and_write_to_address(space, w_obj, data, c, out=False)
+
+        if w_argtype.typeindex == VOID:
+            raise space.error(space.w_ArgumentError,
+                              "arguments cannot be of type void")
+        w_argtype.rw_strategy.write(space, data, w_obj)
+
+        #typeindex = w_argtype.typeindex
+        #for c in ffitype.unrolling_types:
+        #    if c == typeindex:
+        #        unwrap_and_write_to_address(space, w_obj, data, c, out=False)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

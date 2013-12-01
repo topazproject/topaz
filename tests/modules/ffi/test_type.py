@@ -1,5 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.modules.ffi.type import type_names, W_TypeObject, VOID
+from topaz.modules.ffi.type import (type_names, rw_strategies,
+                                    W_TypeObject, VOID)
 from topaz.modules.ffi import type as ffitype
 
 from rpython.rlib import clibffi
@@ -26,19 +27,22 @@ class TestFFI__TestType(BaseFFITest):
         assert self.ask(space, "FFI::NativeType.is_a? Module")
 
     def test_it_contains_some_type_constants(self, space):
-        for typename in type_names:
+        for t in rw_strategies:
+            typename = type_names[t]
             assert self.ask(space, "FFI::NativeType::%s.is_a? FFI::Type"
                             %typename)
 
     def test_it_has_these_instances_defined_as_constants(self, space):
-        for typename in type_names:
+        for t in rw_strategies:
+            typename = type_names[t]
             assert self.ask(space, "FFI::Type::%s.is_a? FFI::Type"
                             % typename)
             assert self.ask(space, "FFI::Type::%s.is_a? FFI::Type::Builtin"
                             % typename)
 
     def test_its_instances_can_be_accessed_in_different_ways(self, space):
-        for typename in type_names:
+        for t in rw_strategies:
+            typename = type_names[t]
             w_t1 = space.execute('FFI::TYPE_%s' % typename)
             w_t2 = space.execute('FFI::Type::%s' % typename)
             w_t3 = space.execute('FFI::NativeType::%s' % typename)
@@ -61,75 +65,75 @@ class TestFFI__Type_eq(BaseFFITest):
         w_assertion = space.send(type1, '==', [type2])
         assert self.unwrap(space, w_assertion)
 
-class Test_W_StringType(BaseFFITest):
+class Test_StringRWStrategy(BaseFFITest):
     def test_it_reads_a_string_from_buffer(self, space):
-        w_string_type = ffitype.W_StringType(space)
-        charp_size = space.int_w(space.send(w_string_type, 'size'))
-        data = lltype.malloc(rffi.CCHARP.TO, charp_size, flavor='raw')
+        w_string_type = ffitype.StringRWStrategy()
+        size = w_string_type.typesize
+        data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
         raw_str = rffi.str2charp("test")
-        misc.write_raw_unsigned_data(data, raw_str, charp_size)
+        misc.write_raw_unsigned_data(data, raw_str, size)
         w_res = w_string_type.read(space, data)
         assert space.is_kind_of(w_res, space.w_string)
         assert self.unwrap(space, w_res) == "test"
         lltype.free(data, flavor='raw')
 
     def test_it_writes_a_string_to_buffer(self, space):
-        w_string_type = ffitype.W_StringType(space)
-        charp_size = space.int_w(space.send(w_string_type, 'size'))
-        data = lltype.malloc(rffi.CCHARP.TO, charp_size, flavor='raw')
+        w_string_type = ffitype.StringRWStrategy()
+        size = w_string_type.typesize
+        data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
         w_str = space.newstr_fromstr("test")
         w_string_type.write(space, data, w_str)
-        raw_res = misc.read_raw_unsigned_data(data, charp_size)
+        raw_res = misc.read_raw_unsigned_data(data, size)
         raw_res = rffi.cast(rffi.CCHARP, raw_res)
         assert rffi.charp2str(raw_res) == "test"
         lltype.free(data, flavor='raw')
 
-class Test_W_PointerType(BaseFFITest):
+class Test_PointerRWStrategy(BaseFFITest):
     def test_it_reads_a_pointer_from_buffer(self, space):
-        w_pointer_type = ffitype.W_PointerType(space)
-        ptr_size = space.int_w(space.send(w_pointer_type, 'size'))
-        data = lltype.malloc(rffi.CCHARP.TO, ptr_size, flavor='raw')
+        w_pointer_type = ffitype.PointerRWStrategy()
+        size = w_pointer_type.typesize
+        data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
         raw_ptr = rffi.cast(lltype.Unsigned, 12)
-        misc.write_raw_unsigned_data(data, raw_ptr, ptr_size)
+        misc.write_raw_unsigned_data(data, raw_ptr, size)
         w_res = w_pointer_type.read(space, data)
         w_pointer_class = space.execute("FFI::Pointer")
         assert space.is_kind_of(w_res, w_pointer_class)
         assert self.unwrap(space, space.send(w_res, 'address')) == 12
 
     def test_it_writes_a_pointer_to_buffer(self, space):
-        w_pointer_type = ffitype.W_PointerType(space)
-        ptr_size = space.int_w(space.send(w_pointer_type, 'size'))
-        data = lltype.malloc(rffi.CCHARP.TO, ptr_size, flavor='raw')
+        w_pointer_type = ffitype.PointerRWStrategy()
+        size = w_pointer_type.typesize
+        data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
         w_ptr = space.execute("FFI::Pointer.new(15)")
         w_pointer_type.write(space, data, w_ptr)
-        raw_res = misc.read_raw_unsigned_data(data, ptr_size)
+        raw_res = misc.read_raw_unsigned_data(data, size)
         raw_res = rffi.cast(lltype.Unsigned, raw_res)
         assert raw_res == 15
         lltype.free(data, flavor='raw')
 
-class Test_W_BoolType(BaseFFITest):
+class Test_BoolRWStrategy(BaseFFITest):
     def test_it_reads_a_bool_from_buffer(self, space):
-        w_bool_type = ffitype.W_BoolType(space)
-        bool_size = space.int_w(space.send(w_bool_type, 'size'))
-        data = lltype.malloc(rffi.CCHARP.TO, bool_size, flavor='raw')
-        misc.write_raw_unsigned_data(data, False, bool_size)
+        w_bool_type = ffitype.BoolRWStrategy()
+        size = w_bool_type.typesize
+        data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+        misc.write_raw_unsigned_data(data, False, size)
         w_res = w_bool_type.read(space, data)
         assert not space.is_true(w_res)
         lltype.free(data, flavor='raw')
 
     def test_it_writes_a_bool_to_buffer(self, space):
-        w_bool_type = ffitype.W_BoolType(space)
-        bool_size = space.int_w(space.send(w_bool_type, 'size'))
-        data = lltype.malloc(rffi.CCHARP.TO, bool_size, flavor='raw')
+        w_bool_type = ffitype.BoolRWStrategy()
+        size = w_bool_type.typesize
+        data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
         w_true = space.execute("true")
         w_bool_type.write(space, data, w_true)
-        raw_res = misc.read_raw_unsigned_data(data, bool_size)
+        raw_res = misc.read_raw_unsigned_data(data, size)
         assert bool(raw_res)
         lltype.free(data, flavor='raw')
 
-class Test_W_FloatType(BaseFFITest):
+class Test_FloatRWStrategy(BaseFFITest):
     def test_it_reads_a_float32_to_buffer(self, space):
-        w_float32_type = ffitype.W_FloatType(space, ffitype.FLOAT32)
+        w_float32_type = ffitype.FloatRWStrategy(ffitype.FLOAT32)
         data = lltype.malloc(rffi.CCHARP.TO, 4, flavor='raw')
         misc.write_raw_float_data(data, 1.25, 4)
         w_res = w_float32_type.read(space, data)
@@ -137,7 +141,7 @@ class Test_W_FloatType(BaseFFITest):
         lltype.free(data, flavor='raw')
 
     def test_it_reads_a_float64_to_buffer(self, space):
-        w_float64_type = ffitype.W_FloatType(space, ffitype.FLOAT64)
+        w_float64_type = ffitype.FloatRWStrategy(ffitype.FLOAT64)
         data = lltype.malloc(rffi.CCHARP.TO, 8, flavor='raw')
         misc.write_raw_float_data(data, 1e-10, 8)
         w_res = w_float64_type.read(space, data)
@@ -145,7 +149,7 @@ class Test_W_FloatType(BaseFFITest):
         lltype.free(data, flavor='raw')
 
     def test_it_writes_a_float32_to_buffer(self, space):
-        w_float32_type = ffitype.W_FloatType(space, ffitype.FLOAT32)
+        w_float32_type = ffitype.FloatRWStrategy(ffitype.FLOAT32)
         data = lltype.malloc(rffi.CCHARP.TO, 4, flavor='raw')
         w_f = space.newfloat(3.75)
         w_float32_type.write(space, data, w_f)
@@ -154,7 +158,7 @@ class Test_W_FloatType(BaseFFITest):
         lltype.free(data, flavor='raw')
 
     def test_it_writes_a_float64_to_buffer(self, space):
-        w_float64_type = ffitype.W_FloatType(space, ffitype.FLOAT64)
+        w_float64_type = ffitype.FloatRWStrategy(ffitype.FLOAT64)
         data = lltype.malloc(rffi.CCHARP.TO, 8, flavor='raw')
         w_f = space.newfloat(1e-12)
         w_float64_type.write(space, data, w_f)
@@ -162,15 +166,15 @@ class Test_W_FloatType(BaseFFITest):
         assert raw_res == 1e-12
         lltype.free(data, flavor='raw')
 
-class Test_W_SignedType(BaseFFITest):
+class Test_SignedRWStrategy(BaseFFITest):
     def test_it_reads_signed_types_to_buffer(self, space):
         for t in [ffitype.INT8,
                   ffitype.INT16,
                   ffitype.INT32,
                   ffitype.INT64,
                   ffitype.LONG]:
-            w_signed_type = ffitype.W_SignedType(space, t)
-            size = space.int_w(space.send(w_signed_type, 'size'))
+            w_signed_type = ffitype.SignedRWStrategy(t)
+            size = w_signed_type.typesize
             # make new buffer for every t
             data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
             misc.write_raw_signed_data(data, -88, size)
@@ -184,8 +188,8 @@ class Test_W_SignedType(BaseFFITest):
                   ffitype.INT32,
                   ffitype.INT64,
                   ffitype.LONG]:
-            w_signed_type = ffitype.W_SignedType(space, t)
-            size = space.int_w(space.send(w_signed_type, 'size'))
+            w_signed_type = ffitype.SignedRWStrategy(t)
+            size = w_signed_type.typesize
             # make new buffer for every t
             data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
             w_i = space.newint(-18)
@@ -194,24 +198,24 @@ class Test_W_SignedType(BaseFFITest):
             assert raw_res == -18
             lltype.free(data, flavor='raw')
 
-class Test_W_Int8Type(BaseFFITest):
+class Test_Int8RWStrategy(BaseFFITest):
     def test_it_reads_an_int8_to_buffer(self, space):
-        w_int8_type = ffitype.W_Int8Type(space)
+        w_int8_type = ffitype.Int8RWStrategy()
         data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
         misc.write_raw_signed_data(data, -127, 1)
         w_res = w_int8_type.read(space, data)
         assert self.unwrap(space, w_res) == -127
         lltype.free(data, flavor='raw')
 
-class Test_W_UnsignedType(BaseFFITest):
+class Test_UnsignedRWStrategy(BaseFFITest):
     def test_it_reads_unsigned_types_to_buffer(self, space):
         for t in [ffitype.UINT8,
                   ffitype.UINT16,
                   ffitype.UINT32,
                   ffitype.UINT64,
                   ffitype.ULONG]:
-            w_unsigned_type = ffitype.W_UnsignedType(space, t)
-            size = space.int_w(space.send(w_unsigned_type, 'size'))
+            w_unsigned_type = ffitype.UnsignedRWStrategy(t)
+            size = w_unsigned_type.typesize
             # make new buffer for every t
             data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
             misc.write_raw_unsigned_data(data, 42, size)
@@ -225,8 +229,8 @@ class Test_W_UnsignedType(BaseFFITest):
                   ffitype.UINT32,
                   ffitype.UINT64,
                   ffitype.ULONG]:
-            w_unsigned_type = ffitype.W_UnsignedType(space, t)
-            size = space.int_w(space.send(w_unsigned_type, 'size'))
+            w_unsigned_type = ffitype.UnsignedRWStrategy(t)
+            size = w_unsigned_type.typesize
             # make new buffer for every t
             data = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
             w_i = space.newint(16)
@@ -235,10 +239,10 @@ class Test_W_UnsignedType(BaseFFITest):
             assert raw_res == 16
             lltype.free(data, flavor='raw')
 
-class Test_W_VoidType(BaseFFITest):
+class Test_VoidRWStrategy(BaseFFITest):
     def test_it_reads_nothing_and_returns_nil(self, space):
         data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
-        w_void_type = ffitype.W_VoidType(space)
+        w_void_type = ffitype.VoidRWStrategy()
         w_res = w_void_type.read(space, data)
         assert self.unwrap(space, w_res) == None
         lltype.free(data, flavor='raw')
@@ -246,7 +250,7 @@ class Test_W_VoidType(BaseFFITest):
     def test_it_writes_nothing_and_returns_None(self, space):
         data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
         misc.write_raw_signed_data(data, 11, 1)
-        w_void_type = ffitype.W_VoidType(space)
+        w_void_type = ffitype.VoidRWStrategy()
         res = w_void_type.write(space, data, 0)
         assert misc.read_raw_signed_data(data, 1) == 11
         assert res is None
