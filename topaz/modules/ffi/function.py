@@ -5,8 +5,6 @@ from topaz.modules.ffi import type as ffitype
 from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
-from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
-                                              unwrap_and_write_to_address)
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi import _callback
 from topaz.error import RubyError

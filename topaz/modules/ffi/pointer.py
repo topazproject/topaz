@@ -131,11 +131,6 @@ class W_PointerObject(W_AbstractMemoryObject):
     def method_autorelease_p(self, space):
         return space.newbool(self.autorelease)
 
-    #@classdef.method('free')
-    #def method_free(self, space):
-    #    # TODO: Free stuff self is pointing at here
-    #    return self
-
     @classdef.method('type_size')
     def method_type_size(self, space):
         return space.newint(self.sizeof_type)

@@ -93,12 +93,6 @@ class W_TypeObject(W_Object):
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        #for i in range(len(ffi_types)):
-        #    typename = type_names[i]
-        #    w_new_type = W_BuiltinType(space, i)
-        #    space.set_const(w_cls, typename, w_new_type)
-        #    for alias in aliases[i]:
-        #        space.set_const(w_cls, alias, w_new_type)
         for t in rw_strategies:
             w_new_type = W_BuiltinType(space, t, rw_strategies[t])
             space.set_const(w_cls, type_names[t], w_new_type)
