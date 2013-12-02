@@ -124,11 +124,7 @@ class W_FFIFunctionObject(W_PointerObject):
     def _push_mapped(self, space, data, w_mapped, w_obj):
         try:
             w_lookup = space.send(w_mapped, 'to_native', [w_obj, space.w_nil])
-            enum_t = w_mapped.typeindex
-            for t in ffitype.unrolling_types:
-                if t == enum_t:
-                    unwrap_and_write_to_address(space, w_lookup, data, t,
-                                                out=False)
+            w_mapped.rw_strategy.write(space, data, w_lookup)
         except RubyError, argument_error:
             raise space.error(space.w_TypeError,
                               "`to_native': %s (ArgumentError)" %

@@ -83,12 +83,13 @@ class W_TypeObject(W_Object):
     classdef = ClassDef('Type', W_Object.classdef)
 
     typeindex = 0
-    _immutable_fields_ = ['typeindex']
+    _immutable_fields_ = ['typeindex', 'rw_strategy']
 
-    def __init__(self, space, typeindex=0, klass=None):
+    def __init__(self, space, typeindex=0, rw_strategy=None, klass=None):
         assert isinstance(typeindex, int)
         W_Object.__init__(self, space, klass)
         self.typeindex = typeindex
+        self.rw_strategy = rw_strategy
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
@@ -112,6 +113,7 @@ class W_TypeObject(W_Object):
     def __deepcopy__(self, memo):
         obj = super(W_TypeObject, self).__deepcopy__(memo)
         obj.typeindex = self.typeindex
+        obj.rw_strategy = self.rw_strategy
         return obj
 
     def __repr__(self):
@@ -137,16 +139,8 @@ class W_TypeObject(W_Object):
 class W_BuiltinType(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
 
-    _immutable_fields_ = ['rw_strategy']
-
     def __init__(self, space, typeindex, rw_strategy):
-        W_TypeObject.__init__(self, space, typeindex)
-        self.rw_strategy = rw_strategy
-
-    def __deepcopy__(self, memo):
-        obj = super(W_BuiltinType, self).__deepcopy__(memo)
-        obj.rw_strategy = self.rw_strategy
-        return obj
+        W_TypeObject.__init__(self, space, typeindex, rw_strategy)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -306,6 +300,7 @@ class W_MappedObject(W_TypeObject):
 
     def __init__(self, space, klass=None):
         W_TypeObject.__init__(self, space, NATIVE_MAPPED)
+        self.rw_strategy = None
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -321,6 +316,7 @@ class W_MappedObject(W_TypeObject):
         w_type = space.send(w_data_converter, 'native_type')
         if isinstance(w_type, W_TypeObject):
             self.typeindex = w_type.typeindex
+            self.rw_strategy = w_type.rw_strategy
         else:
             raise space.error(space.w_TypeError,
                               "native_type did not return instance of "
