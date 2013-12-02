@@ -98,6 +98,16 @@ class W_FFIFunctionObject(W_PointerObject):
         w_info = self.w_info
         assert isinstance(w_info, W_FunctionTypeObject)
         w_ret_type = w_info.w_ret_type
+        if isinstance(w_ret_type, W_MappedObject):
+            return self._get_mapped(space, w_ret_type, resultdata)
+        else:
+            return self._get_ordinary(space, w_ret_type, resultdata)
+
+    def _get_mapped(self, space, w_mapped, resultdata):
+        w_native = w_mapped.rw_strategy.read(space, resultdata)
+        return space.send(w_mapped, 'from_native', [w_native, space.w_nil])
+
+    def _get_ordinary(self, space, w_ret_type, resultdata):
         assert isinstance(w_ret_type, W_TypeObject)
         return w_ret_type.rw_strategy.read(space, resultdata)
 
