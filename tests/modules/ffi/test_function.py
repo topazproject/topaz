@@ -348,7 +348,7 @@ class TestFunction_attach(BaseFFITest):
         """))
         assert self.unwrap(ffis, w_res) == [3, 5]
 
-    def test_it_can_use_enums(self, ffis, libtest_so):
+    def test_it_can_take_enum_arguments(self, ffis, libtest_so):
         w_res = ffis.execute(typeformat("""
         %s
         color_enum = FFI::Enum.new([:black, 0,
@@ -368,6 +368,23 @@ class TestFunction_attach(BaseFFITest):
             ffis.execute("""
             LibraryMock.add_color(:gray, :red)
             """)
+
+    def test_it_can_return_enums(self, ffis, libtest_so):
+        w_res = ffis.execute(typeformat("""
+        %s
+        color_enum = FFI::Enum.new([:black, 0,
+                                     :white, 255,
+                                     :gray, 128])
+        Color = FFI::Type::Mapped.new(color_enum)
+        options = \{:type_map => \{color_enum => Color\}\}
+        FFI::Function.new(Color, [{uint8}, {uint8}],
+                          LibraryMock.find_function(:add_u8), options).
+                          attach(LibraryMock, 'add_color')
+        col1 = LibraryMock.add_color(120, 8)
+        """ % self.make_mock_library_code(libtest_so)))
+        assert self.unwrap(ffis, w_res) == 'gray'
+        # add code for unknown return value (!= 0 (black), 255 (white) or 128
+        # (gray))
 
     def test_it_raises_ArgumentError_calling_func_with_void_arg(self, space):
         with self.raises(space, 'ArgumentError',
