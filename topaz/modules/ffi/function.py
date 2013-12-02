@@ -2,7 +2,7 @@ import sys
 
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
-from topaz.modules.ffi.type import W_BuiltinType, W_MappedObject
+from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
 from topaz.modules.ffi._memory_access import (read_and_wrap_from_address,
@@ -100,9 +100,8 @@ class W_FFIFunctionObject(W_PointerObject):
         w_info = self.w_info
         assert isinstance(w_info, W_FunctionTypeObject)
         w_ret_type = w_info.w_ret_type
-        assert isinstance(w_ret_type, W_BuiltinType)
+        assert isinstance(w_ret_type, W_TypeObject)
         return w_ret_type.rw_strategy.read(space, resultdata)
-        assert 0
 
     def _put_arg(self, space, data, i, w_obj):
         w_info = self.w_info
@@ -131,8 +130,7 @@ class W_FFIFunctionObject(W_PointerObject):
                               argument_error.w_value.msg)
 
     def _push_ordinary(self, space, data, w_argtype, w_obj):
-        assert isinstance(w_argtype, W_BuiltinType)
-
+        assert isinstance(w_argtype, W_TypeObject)
         if w_argtype.typeindex == VOID:
             raise space.error(space.w_ArgumentError,
                               "arguments cannot be of type void")
