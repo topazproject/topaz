@@ -8,6 +8,9 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.unroll import unrolling_iterable
 
+# XXX maybe move to rlib/jit_libffi
+from pypy.module._cffi_backend import misc
+
 _native_types = [
     ('VOID',       clibffi.ffi_type_void,                     lltype.Void,     []),
     ('INT8',       clibffi.ffi_type_sint8,                    rffi.CHAR,       ['CHAR', 'SCHAR']),
@@ -80,20 +83,20 @@ class W_TypeObject(W_Object):
     classdef = ClassDef('Type', W_Object.classdef)
 
     typeindex = 0
-    _immutable_fields_ = ['typeindex']
+    _immutable_fields_ = ['typeindex', 'rw_strategy']
 
-    def __init__(self, space, typeindex=0, klass=None):
+    def __init__(self, space, typeindex=0, rw_strategy=None, klass=None):
         assert isinstance(typeindex, int)
         W_Object.__init__(self, space, klass)
         self.typeindex = typeindex
+        self.rw_strategy = rw_strategy
 
     @classdef.setup_class
     def setup_class(cls, space, w_cls):
-        for i in range(len(ffi_types)):
-            typename = type_names[i]
-            w_new_type = W_BuiltinType(space, i)
-            space.set_const(w_cls, typename, w_new_type)
-            for alias in aliases[i]:
+        for t in rw_strategies:
+            w_new_type = W_BuiltinType(space, t, rw_strategies[t])
+            space.set_const(w_cls, type_names[t], w_new_type)
+            for alias in aliases[t]:
                 space.set_const(w_cls, alias, w_new_type)
         space.set_const(w_cls, 'Mapped', space.getclassfor(W_MappedObject))
 
@@ -104,6 +107,7 @@ class W_TypeObject(W_Object):
     def __deepcopy__(self, memo):
         obj = super(W_TypeObject, self).__deepcopy__(memo)
         obj.typeindex = self.typeindex
+        obj.rw_strategy = self.rw_strategy
         return obj
 
     def __repr__(self):
@@ -129,12 +133,8 @@ class W_TypeObject(W_Object):
 class W_BuiltinType(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
 
-    def __init__(self, space, typeindex):
-        W_TypeObject.__init__(self, space, typeindex)
-
-    @classdef.singleton_method('allocate')
-    def singleton_method_allocate(self, space, args_w):
-        raise NotImplementedError
+    def __init__(self, space, typeindex, rw_strategy):
+        W_TypeObject.__init__(self, space, typeindex, rw_strategy)
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -150,11 +150,141 @@ def type_object(space, w_obj):
                            "not in this case.")
     return w_type
 
+class ReadWriteStrategy(object):
+    def __init__(self, typeindex):
+        self.typesize = lltype_sizes[typeindex]
+
+    def read(self, space, data):
+        raise NotImplementedError("abstract ReadWriteStrategy")
+
+    def write(self, space, data, w_arg):
+        raise NotImplementedError("abstract ReadWriteStrategy")
+
+class StringRWStrategy(ReadWriteStrategy):
+    def __init__(self):
+        ReadWriteStrategy.__init__(self, STRING)
+
+    def read(self, space, data):
+        result = misc.read_raw_unsigned_data(data, self.typesize)
+        result = rffi.cast(rffi.CCHARP, result)
+        result = rffi.charp2str(result)
+        return space.newstr_fromstr(result)
+
+    def write(self, space, data, w_arg):
+        arg = space.str_w(w_arg)
+        arg = rffi.str2charp(arg)
+        arg = rffi.cast(lltype.Unsigned, arg)
+        misc.write_raw_unsigned_data(data, arg, self.typesize)
+
+class PointerRWStrategy(ReadWriteStrategy):
+    def __init__(self):
+        ReadWriteStrategy.__init__(self, POINTER)
+
+    def read(self, space, data):
+        result = misc.read_raw_unsigned_data(data, self.typesize)
+        result = rffi.cast(lltype.Signed, result)
+        w_FFI = space.find_const(space.w_kernel, 'FFI')
+        w_Pointer = space.find_const(w_FFI, 'Pointer')
+        return space.send(w_Pointer, 'new',
+                          [space.newint(result)])
+
+    def write(self, space, data, w_arg):
+        w_arg = self._convert_to_NULL_if_nil(space, w_arg)
+        # right now, coerce_pointer has to be imported here to avoid import
+        # cycle. maybe after OOP approch is fully implemented and refactoring
+        # done the import can be moved to begin of file
+        from topaz.modules.ffi.pointer import coerce_pointer
+        arg = coerce_pointer(space, w_arg)
+        arg = rffi.cast(lltype.Unsigned, arg)
+        misc.write_raw_unsigned_data(data, arg, self.typesize)
+
+    @staticmethod
+    def _convert_to_NULL_if_nil(space, w_arg):
+        if w_arg is space.w_nil:
+            w_FFI = space.find_const(space.w_kernel, 'FFI')
+            w_Pointer = space.find_const(w_FFI, 'Pointer')
+            return space.find_const(w_Pointer, 'NULL')
+        else:
+            return w_arg
+
+class BoolRWStrategy(ReadWriteStrategy):
+    def __init__(self):
+        ReadWriteStrategy.__init__(self, BOOL)
+
+    def read(self, space, data):
+        result = bool(misc.read_raw_signed_data(data, self.typesize))
+        return space.newbool(result)
+
+    def write(self, space, data, w_arg):
+        arg = space.is_true(w_arg)
+        misc.write_raw_unsigned_data(data, arg, self.typesize)
+
+class FloatRWStrategy(ReadWriteStrategy):
+    def read(self, space, data):
+        result = misc.read_raw_float_data(data, self.typesize)
+        return space.newfloat(float(result))
+
+    def write(self, space, data, w_arg):
+        arg = space.float_w(w_arg)
+        misc.write_raw_float_data(data, arg, self.typesize)
+
+class SignedRWStrategy(ReadWriteStrategy):
+    def read(self, space, data):
+        result = misc.read_raw_signed_data(data, self.typesize)
+        return space.newint(intmask(result))
+
+    def write(self, space, data, w_arg):
+        arg = space.int_w(w_arg)
+        misc.write_raw_signed_data(data, arg, self.typesize)
+
+class UnsignedRWStrategy(ReadWriteStrategy):
+    def read(self, space, data):
+        result = misc.read_raw_unsigned_data(data, self.typesize)
+        return space.newint(intmask(result))
+
+    def write(self, space, data, w_arg):
+        arg = space.int_w(w_arg)
+        misc.write_raw_unsigned_data(data, arg, self.typesize)
+
+class VoidRWStrategy(ReadWriteStrategy):
+    def __init__(self):
+        ReadWriteStrategy.__init__(self, VOID)
+
+    def read(self, space, data):
+        return space.w_nil;
+
+    def write(self, space, data, w_arg):
+        pass
+
+rw_strategies = {}
+rw_strategies[VOID] = VoidRWStrategy()
+for ts, tu in [[INT8, UINT8],
+              [INT16, UINT16],
+              [INT32, UINT32],
+              [INT64, UINT64],
+              [LONG, ULONG]]:
+    rw_strategies[ts] = SignedRWStrategy(ts)
+    rw_strategies[tu] = UnsignedRWStrategy(tu)
+# LongdoubleRWStrategy is not implemented yet, give LONGDOUBLE a
+# FloatRWStrategy for now so the ruby part of ffi doesn't crash when it gets
+# loaded
+for t in [FLOAT32, FLOAT64, LONGDOUBLE]:
+    rw_strategies[t] = FloatRWStrategy(t)
+rw_strategies[POINTER] = PointerRWStrategy()
+rw_strategies[BOOL] = BoolRWStrategy()
+rw_strategies[STRING] = StringRWStrategy()
+# These three are not implemented yet, they just get a pointer strategy for now
+# to make the ruby part happy
+for t in [BUFFER_IN, BUFFER_OUT, BUFFER_INOUT]:
+    rw_strategies[t] = PointerRWStrategy()
+rw_strategies[VARARGS] = VoidRWStrategy()
+
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 
     def __init__(self, space, klass=None):
         W_TypeObject.__init__(self, space, NATIVE_MAPPED)
+        self.rw_strategy = None
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -170,6 +300,7 @@ class W_MappedObject(W_TypeObject):
         w_type = space.send(w_data_converter, 'native_type')
         if isinstance(w_type, W_TypeObject):
             self.typeindex = w_type.typeindex
+            self.rw_strategy = w_type.rw_strategy
         else:
             raise space.error(space.w_TypeError,
                               "native_type did not return instance of "

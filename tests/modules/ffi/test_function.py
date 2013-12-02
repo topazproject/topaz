@@ -370,7 +370,8 @@ class TestFunction_attach(BaseFFITest):
             """)
 
     def test_it_raises_ArgumentError_calling_func_with_void_arg(self, space):
-        with self.raises(space, 'ArgumentError', "Invalid parameter type: 0"):
+        with self.raises(space, 'ArgumentError',
+                         "arguments cannot be of type void"):
             w_res = space.execute(typeformat("""
             %s
             FFI::Function.new({uint32}, [{void}],

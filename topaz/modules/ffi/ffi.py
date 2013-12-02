@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from topaz.error import RubyError
 from topaz.module import ModuleDef, ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.exceptionobject import W_StandardError, new_exception_allocate
@@ -49,11 +50,13 @@ class FFI(object):
         w_native_type = space.newmodule('NativeType')
         # This assumes that FFI::Type and the type constants already exist
         for typename in type_names:
-            w_ffi_type = space.find_const(w_Type, typename)
-            # setup type constants
-            space.set_const(w_mod, 'TYPE_' + typename, w_ffi_type)
-            # setup NativeType
-            space.set_const(w_native_type, typename, w_ffi_type)
+            try:
+                w_ffi_type = space.find_const(w_Type, typename)
+                # setup type constants
+                space.set_const(w_mod, 'TYPE_' + typename, w_ffi_type)
+                # setup NativeType
+                space.set_const(w_native_type, typename, w_ffi_type)
+            except RubyError: pass
         space.set_const(w_mod, 'NativeType', w_native_type)
 
         # setup Platform
