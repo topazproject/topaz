@@ -237,16 +237,6 @@ class SignedRWStrategy(ReadWriteStrategy):
         arg = space.int_w(w_arg)
         misc.write_raw_signed_data(data, arg, self.typesize)
 
-class Int8RWStrategy(SignedRWStrategy):
-    def __init__(self):
-        SignedRWStrategy.__init__(self, INT8)
-
-    def read(self, space, data):
-        result = misc.read_raw_signed_data(data, self.typesize)
-        if result >= 128:
-            result -= 256
-        return space.newint(intmask(result))
-
 class UnsignedRWStrategy(ReadWriteStrategy):
     def read(self, space, data):
         result = misc.read_raw_unsigned_data(data, self.typesize)
