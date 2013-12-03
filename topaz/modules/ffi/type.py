@@ -1,5 +1,6 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
+from topaz.error import RubyError
 
 from rpython.rlib.jit_libffi import FFI_TYPE_P
 from rpython.rlib import clibffi
@@ -129,6 +130,12 @@ class W_TypeObject(W_Object):
         r_uint_size = lltype_sizes[self.typeindex]
         size = intmask(r_uint_size)
         return space.newint(size)
+
+    def read(self, space, data):
+        return self.rw_strategy.read(space, data)
+
+    def write(self, space, data, w_arg):
+        return self.rw_strategy.write(space, data, w_arg)
 
 class W_BuiltinType(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
@@ -311,5 +318,18 @@ class W_MappedObject(W_TypeObject):
         return space.send(self.w_data_converter, 'to_native', args_w)
 
     @classdef.method('from_native')
-    def method_to_native(self, space, args_w):
+    def method_from_native(self, space, args_w):
         return space.send(self.w_data_converter, 'from_native', args_w)
+
+    def read(self, space, data):
+        w_native = W_TypeObject.read(self, space, data)
+        return self.method_from_native(space, [w_native, space.w_nil])
+
+    def write(self, space, data, w_obj):
+        try:
+            w_lookup = self.method_to_native(space, [w_obj, space.w_nil])
+            W_TypeObject.write(self, space, data, w_lookup)
+        except RubyError, argument_error:
+            raise space.error(space.w_TypeError,
+                              "`to_native': %s (ArgumentError)" %
+                              argument_error.w_value.msg)
