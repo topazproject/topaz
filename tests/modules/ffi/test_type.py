@@ -198,15 +198,6 @@ class Test_SignedRWStrategy(BaseFFITest):
             assert raw_res == -18
             lltype.free(data, flavor='raw')
 
-class Test_Int8RWStrategy(BaseFFITest):
-    def test_it_reads_an_int8_to_buffer(self, space):
-        w_int8_type = ffitype.Int8RWStrategy()
-        data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
-        misc.write_raw_signed_data(data, -127, 1)
-        w_res = w_int8_type.read(space, data)
-        assert self.unwrap(space, w_res) == -127
-        lltype.free(data, flavor='raw')
-
 class Test_UnsignedRWStrategy(BaseFFITest):
     def test_it_reads_unsigned_types_to_buffer(self, space):
         for t in [ffitype.UINT8,
