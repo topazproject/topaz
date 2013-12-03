@@ -339,8 +339,8 @@ class TestFunction_attach(BaseFFITest):
         col1 = LibraryMock.add_color(120, 8)
         """ % self.make_mock_library_code(libtest_so)))
         assert self.unwrap(ffis, w_res) == 'gray'
-        # add code for unknown return value (!= 0 (black), 255 (white) or 128
-        # (gray))
+        w_res = ffis.execute("LibraryMock.add_color(1, 2)")
+        assert self.unwrap(ffis, w_res) == 3
 
     def test_it_raises_ArgumentError_calling_func_with_void_arg(self, space):
         with self.raises(space, 'ArgumentError',
