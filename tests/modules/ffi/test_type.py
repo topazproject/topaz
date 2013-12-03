@@ -22,6 +22,19 @@ class TestType(BaseFFITest):
         w_type = W_TypeObject(space, 123)
         assert w_type.typeindex == 123
 
+    def test_it_delegates_read_and_write_to_rw_strategy(self, space):
+        # only works in Python unit test because of dynamic typing
+        class RWStrategyMock(object):
+            def read(self, space, data):
+                return "read with data = %s" %data
+            def write(self, space, data, w_obj):
+                return "write with data = %s and w_obj = %s" %(data, w_obj)
+        w_type = W_TypeObject(space)
+        w_type.rw_strategy = RWStrategyMock()
+        assert w_type.read(space, "foo") == "read with data = foo"
+        assert (w_type.write(space, "bar", 5) ==
+                "write with data = bar and w_obj = 5")
+
 class TestFFI__TestType(BaseFFITest):
     def test_it_is_a_Module(self, space):
         assert self.ask(space, "FFI::NativeType.is_a? Module")
@@ -198,15 +211,6 @@ class Test_SignedRWStrategy(BaseFFITest):
             assert raw_res == -18
             lltype.free(data, flavor='raw')
 
-class Test_Int8RWStrategy(BaseFFITest):
-    def test_it_reads_an_int8_to_buffer(self, space):
-        w_int8_type = ffitype.Int8RWStrategy()
-        data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
-        misc.write_raw_signed_data(data, -127, 1)
-        w_res = w_int8_type.read(space, data)
-        assert self.unwrap(space, w_res) == -127
-        lltype.free(data, flavor='raw')
-
 class Test_UnsignedRWStrategy(BaseFFITest):
     def test_it_reads_unsigned_types_to_buffer(self, space):
         for t in [ffitype.UINT8,
@@ -340,3 +344,26 @@ class TestFFI__Type__MappedObject_from_native(BaseFFITest):
         mapped.from_native
         """)
         assert self.unwrap(space, w_res) == 'success'
+
+class TestFFI__Type_MappedObject(BaseFFITest):
+
+    def test_it_converts_after_reading_and_writing(self, space):
+        class RWStrategyMock(object):
+            def read(self, space, data):
+                return space.newsymbol(data)
+            def write(self, space, data, w_obj):
+                return data.append(space.str_w(w_obj))
+        w_mapped = space.execute("""
+        class DataConverter
+          def native_type; FFI::Type::VOID; end
+          def to_native(sym, _); sym.downcase; end
+          def from_native(sym, _); sym.upcase; end
+        end
+        mapped = FFI::Type::Mapped.new(DataConverter.new)
+        """)
+        w_mapped.rw_strategy = RWStrategyMock()
+        assert self.unwrap(space, w_mapped.read(space, "foo")) == "FOO"
+        data = []
+        w_mapped.write(space, data, space.newsymbol("BAR"))
+        assert data == ["bar"]
+

@@ -304,50 +304,6 @@ class TestFunction_attach(BaseFFITest):
         """ % self.make_mock_library_code(libc)))
         assert self.unwrap(ffis, w_res) == [3, 5]
 
-    # Problem: gc.collect is unpredictable so this test might pass when it
-    # should fail.
-    def test_it_can_use_multiple_procs_as_callbacks(self, ffis):
-        ffis.execute(typeformat("""
-        %s
-        comparator = FFI::CallbackInfo.new({int},
-                                           [{pointer},
-                                            {pointer}])
-        FFI::Function.new({int},
-                          [{pointer},
-                           {ulong},
-                           {ulong},
-                           comparator],
-                          LibraryMock.find_function(:qsort)).
-                          attach(LibraryMock, 'qsort')
-        module Globals
-          module Lt
-            Fn = proc do |p1, p2|
-              i1 = p1.get_int32(0)
-              i2 = p2.get_int32(0)
-              i1 < i2 ? -1 : (i1 > i2 ? 1 : 0)
-            end
-          end
-          module Gt
-            Fn = proc do |p1, p2|
-              i1 = p1.get_int32(0)
-              i2 = p2.get_int32(0)
-              i1 > i2 ? -1 : (i1 < i2 ? 1 : 0)
-            end
-          end
-          Arg = FFI::MemoryPointer.new(:int32, 2)
-          Arg.put_int32(0, 5)
-          Arg.put_int32(4, 3)
-        end
-        LibraryMock.qsort(Globals::Arg, 2, 4, &Globals::Lt::Fn)
-        LibraryMock.qsort(Globals::Arg, 2, 4, &Globals::Gt::Fn)
-        """ % self.make_mock_library_code(libc)))
-        import gc; gc.collect()
-        w_res = ffis.execute(typeformat("""
-        LibraryMock.qsort(Globals::Arg, 2, 4, &Globals::Lt::Fn)
-        [Globals::Arg.get_int32(0), Globals::Arg.get_int32(4)]
-        """))
-        assert self.unwrap(ffis, w_res) == [3, 5]
-
     def test_it_can_take_enum_arguments(self, ffis, libtest_so):
         w_res = ffis.execute(typeformat("""
         %s
@@ -383,8 +339,8 @@ class TestFunction_attach(BaseFFITest):
         col1 = LibraryMock.add_color(120, 8)
         """ % self.make_mock_library_code(libtest_so)))
         assert self.unwrap(ffis, w_res) == 'gray'
-        # add code for unknown return value (!= 0 (black), 255 (white) or 128
-        # (gray))
+        w_res = ffis.execute("LibraryMock.add_color(1, 2)")
+        assert self.unwrap(ffis, w_res) == 3
 
     def test_it_raises_ArgumentError_calling_func_with_void_arg(self, space):
         with self.raises(space, 'ArgumentError',

@@ -2,12 +2,10 @@ import sys
 
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
-from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
+from topaz.modules.ffi.type import W_TypeObject
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
 from topaz.modules.ffi.function_type import W_FunctionTypeObject
-from topaz.modules.ffi import _callback
-from topaz.error import RubyError
 from topaz.objects.moduleobject import W_FunctionObject
 
 from rpython.rtyper.lltypesystem import rffi, lltype
@@ -109,40 +107,17 @@ class W_FFIFunctionObject(W_PointerObject):
 
     def _get_ordinary(self, space, w_ret_type, resultdata):
         assert isinstance(w_ret_type, W_TypeObject)
-        return w_ret_type.rw_strategy.read(space, resultdata)
+        return w_ret_type.read(space, resultdata)
 
     def _put_arg(self, space, data, i, w_obj):
         w_info = self.w_info
         assert isinstance(w_info, W_FunctionTypeObject)
         w_argtype = w_info.arg_types_w[i]
-        if isinstance(w_argtype, W_FunctionTypeObject):
-            self._push_callback(space, data, w_argtype, w_obj)
-        elif isinstance(w_argtype, W_MappedObject):
-            self._push_mapped(space, data, w_argtype, w_obj)
-        else:
-            self._push_ordinary(space, data, w_argtype, w_obj)
-
-    def _push_callback(self, space, data, w_func_type, w_proc):
-        cif_descr = w_func_type.build_cif_descr(space)
-        callback_data = _callback.Data(space, w_proc, w_func_type)
-        closure = _callback.Closure(callback_data)
-        closure.write(data)
-
-    def _push_mapped(self, space, data, w_mapped, w_obj):
-        try:
-            w_lookup = space.send(w_mapped, 'to_native', [w_obj, space.w_nil])
-            w_mapped.rw_strategy.write(space, data, w_lookup)
-        except RubyError, argument_error:
-            raise space.error(space.w_TypeError,
-                              "`to_native': %s (ArgumentError)" %
-                              argument_error.w_value.msg)
-
-    def _push_ordinary(self, space, data, w_argtype, w_obj):
         assert isinstance(w_argtype, W_TypeObject)
         if w_argtype.typeindex == VOID:
             raise space.error(space.w_ArgumentError,
                               "arguments cannot be of type void")
-        w_argtype.rw_strategy.write(space, data, w_obj)
+        w_argtype.write(space, data, w_obj)
 
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):

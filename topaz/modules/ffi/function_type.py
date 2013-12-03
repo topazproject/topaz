@@ -1,6 +1,7 @@
 import sys
 from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
 from topaz.modules.ffi import type as ffitype
+from topaz.modules.ffi import _callback
 from topaz.module import ClassDef
 
 from rpython.rtyper.lltypesystem import rffi, llmemory, lltype
@@ -112,3 +113,9 @@ class W_FunctionTypeObject(W_TypeObject):
 
     def align_arg(self, n):
         return (n + 7) & ~7
+
+    def write(self, space, data, w_proc):
+        cif_descr = self.build_cif_descr(space)
+        callback_data = _callback.Data(space, w_proc, self)
+        closure = _callback.Closure(callback_data)
+        closure.write(data)
