@@ -318,9 +318,8 @@ class TestFunction_attach(BaseFFITest):
         col1 = LibraryMock.add_color(:black, :white)
         """ % self.make_mock_library_code(libtest_so)))
         assert self.unwrap(ffis, w_res) == 255
-        with self.raises(ffis, "TypeError",
-                         "`to_native': invalid enum value, :red "
-                         "(ArgumentError)"):
+        with self.raises(ffis, "ArgumentError",
+                         "invalid enum value, :red"):
             ffis.execute("""
             LibraryMock.add_color(:gray, :red)
             """)
