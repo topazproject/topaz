@@ -326,10 +326,5 @@ class W_MappedObject(W_TypeObject):
         return self.method_from_native(space, [w_native, space.w_nil])
 
     def write(self, space, data, w_obj):
-        try:
-            w_lookup = self.method_to_native(space, [w_obj, space.w_nil])
-            W_TypeObject.write(self, space, data, w_lookup)
-        except RubyError, argument_error:
-            raise space.error(space.w_TypeError,
-                              "`to_native': %s (ArgumentError)" %
-                              argument_error.w_value.msg)
+        w_lookup = self.method_to_native(space, [w_obj, space.w_nil])
+        W_TypeObject.write(self, space, data, w_lookup)

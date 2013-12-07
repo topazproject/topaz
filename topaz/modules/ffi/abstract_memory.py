@@ -12,20 +12,6 @@ from topaz.modules.ffi import type as ffitype
 
 import sys
 
-#def new_put_method(typ):
-#    ctype = ffitype.lltypes[typ]
-#    sizeof_type = ffitype.lltype_sizes[typ]
-#    def put_method(self, space, offset, value):
-#        val = rffi.cast(ctype, value)
-#        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
-#        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
-#        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
-#        try:
-#            casted_ptr[0] = val
-#        except IndexError:
-#            raise memory_index_error(space, offset, sizeof_type)
-#    return put_method
-
 def new_put_method(typeindex):
     rw_strategy = ffitype.rw_strategies[typeindex]
     sizeof_type = ffitype.lltype_sizes[typeindex]
