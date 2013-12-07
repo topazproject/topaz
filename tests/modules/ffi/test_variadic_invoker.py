@@ -7,8 +7,8 @@ else:
     libc = 'libc.so.6'
 
 class TestVariadicInvoker(BaseFFITest):
-    def test_it_is_not_a_function(self, ffis):
-        assert self.ask(ffis, "! FFI::VariadicInvoker.kind_of? FFI::Function")
+    def test_it_is_not_a_function(self, space):
+        assert self.ask(space, "! FFI::VariadicInvoker.kind_of? FFI::Function")
 
     def test_it_still_can_be_attached_and_called(self, ffis):
         assert self.ask(ffis, """
@@ -36,3 +36,9 @@ class TestVariadicInvoker(BaseFFITest):
         chars.inject('') { |str, c| str << c }
         """ % {'libname':libc})
         assert self.unwrap(ffis, w_res) == "1, 2.0"
+        w_res = ffis.execute("""
+        result = FFI::MemoryPointer.new(:int8, 14)
+        Lib.sprintf(result, "%%i, %%f", FFI::Type::INT32, 3,
+                                        FFI::Type::FLOAT64, 4.0)
+        """)
+        assert self.unwrap(ffis, w_res) == 6
