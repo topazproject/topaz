@@ -47,18 +47,11 @@ class W_FFIFunctionObject(W_PointerObject):
         self.cif_descr = self.w_info.build_cif_descr(space)
         self.atypes = self.cif_descr.atypes
 
-    def initialize_variadic(self, space, w_handle, w_ret_type, arg_types_w):
-        self.w_info = space.send(space.getclassfor(W_FunctionTypeObject),
-                                 'new',
-                                 [w_ret_type, space.newarray(arg_types_w)])
-        self.setup(space, w_handle)
-
     def __del__(self):
         if self.cif_descr:
             lltype.free(self.cif_descr, flavor='raw')
         if self.atypes:
             lltype.free(self.atypes, flavor='raw')
-
 
     #XXX eventually we need a dont look inside for vararg calls
     @classdef.method('call')
@@ -96,16 +89,6 @@ class W_FFIFunctionObject(W_PointerObject):
         w_info = self.w_info
         assert isinstance(w_info, W_FunctionTypeObject)
         w_ret_type = w_info.w_ret_type
-        if isinstance(w_ret_type, W_MappedObject):
-            return self._get_mapped(space, w_ret_type, resultdata)
-        else:
-            return self._get_ordinary(space, w_ret_type, resultdata)
-
-    def _get_mapped(self, space, w_mapped, resultdata):
-        w_native = w_mapped.rw_strategy.read(space, resultdata)
-        return space.send(w_mapped, 'from_native', [w_native, space.w_nil])
-
-    def _get_ordinary(self, space, w_ret_type, resultdata):
         assert isinstance(w_ret_type, W_TypeObject)
         return w_ret_type.read(space, resultdata)
 
