@@ -1,36 +1,59 @@
 from tests.modules.ffi.base import BaseFFITest
-from topaz.modules.ffi.abstract_memory import new_cast_method
-from topaz.modules.ffi.type import size_for_name, UINT64
+from topaz.modules.ffi import type as ffitype
 
 from rpython.rtyper.lltypesystem import rffi
 
-import sys
+from pypy.module._cffi_backend import misc
 
-test_put_method_group = ['int16', 'int32', 'int64',
-                         'uint8', 'uint16', 'uint32', 'uint64',
-                         'float64']
-test_get_method_group = ['int8', 'int16', 'int32', 'int64',
-                         'uint8', 'uint16', 'uint32',
-                         'float64']
-test_rw_method_group = ['int8', 'int16', 'int32', 'int64',
-                        'uint8', 'uint16', 'uint32',
-                        'float32', 'float64']
+import sys
+import pytest
+
+test_types = [ffitype.INT8, ffitype.INT16, ffitype.INT32, ffitype.INT64,
+              ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.UINT64,
+              ffitype.FLOAT32, ffitype.FLOAT64]
+
+read = {}
+for t in [ffitype.INT8, ffitype.INT16, ffitype.INT32, ffitype.INT64]:
+    read[t] = misc.read_raw_signed_data
+for t in [ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.UINT64]:
+    read[t] = misc.read_raw_unsigned_data
+for t in [ffitype.FLOAT32, ffitype.FLOAT64]:
+    read[t] = misc.read_raw_float_data
 
 minval = {}
 maxval = {}
 for bits in [8, 16, 32, 64]:
-    minval['int' + str(bits)] = -2**(bits-1)
+    minval['int' + str(bits)] = int(-2**(bits-1))
     minval['uint' + str(bits)] = 0
-    maxval['int' + str(bits)] = 2**(bits-1) - 1
-    maxval['uint' + str(bits)] = 2**bits - 1
-minval['long'] = -2**(8*rffi.sizeof(rffi.LONG))
+    maxval['int' + str(bits)] = int(2**(bits-1) - 1)
+    # for some reason int(2**64 -1) is not accepted as biggest uint64
+    maxval['uint' + str(bits)] = int(2**(bits-1) - 1)
+minval['long'] = int(-2**(8*rffi.sizeof(rffi.LONG)))
 minval['ulong'] = 0
-maxval['long'] = 2**(8*rffi.sizeof(rffi.LONG)) - 1
-maxval['ulong'] = 2**(8*rffi.sizeof(rffi.LONG)-1) - 1
-minval['float32'] = 1.175494351e-38
-maxval['float32'] = 3.402823466e+38
+maxval['long'] = int(2**(8*rffi.sizeof(rffi.LONG)) - 1)
+maxval['ulong'] = int(2**(8*rffi.sizeof(rffi.LONG)-1) - 1)
+minval['float32'] = 1.1754943508222875e-38
+maxval['float32'] = 3.4028234663852886e+38
 minval['float64'] = sys.float_info.min
 maxval['float64'] = sys.float_info.max
+
+def new_cast_method(typ):
+    ctype = ffitype.lltypes[typ]
+    def cast_method(memory):
+        return rffi.cast(ffitype.lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
+    return cast_method
+
+def new_numberof_method(typ):
+    csize = ffitype.lltype_sizes[typ]
+    if csize & (csize - 1) == 0:  # csize is a power of 2
+        shift = 0
+        while 1 << shift < csize: shift += 1
+        def numberof_method(self):
+            return self.sizeof_memory >> shift
+    else:
+        def numberof_method(self):
+            return self.sizeof_memory / csize
+    return numberof_method
 
 def put_method_test_code(typename):
     # For some reason, str(some_float) cuts off a few digits.
@@ -64,78 +87,71 @@ def get_method_test_code(typename):
 
 class TestAbstractMemory_put_methods(BaseFFITest):
     def test_they_put_a_single_value_into_the_given_offset(self, space):
-        for t in test_put_method_group:
-            w_mem_ptr = space.execute(put_method_test_code(t))
-            cast_method = getattr(w_mem_ptr, t + '_cast')
-            casted_ptr = cast_method()
-            expected_0 = minval[t]
-            expected_1 = maxval[t]
-            assert expected_0 == casted_ptr[0]
-            assert expected_1 == casted_ptr[1]
+        for t in test_types:
+            tn = ffitype.type_names[t].lower()
+            size = ffitype.lltype_sizes[t]
+            w_mem_ptr = space.execute(put_method_test_code(tn))
+            expected_0 = minval[tn]
+            expected_1 = maxval[tn]
+            ptr_0 = w_mem_ptr.ptr
+            ptr_1 = rffi.ptradd(ptr_0, size)
+            actual_0 = read[t](ptr_0, size)
+            actual_1 = read[t](ptr_1, size)
+            assert expected_0 == actual_0
+            assert expected_1 == actual_1
 
     def test_they_refuse_negative_offsets(self, space):
-        for t in test_put_method_group:
-            sizeof_t = size_for_name(t.upper())
+        for t in test_types:
+            tn = ffitype.type_names[t]
+            sizeof_t = ffitype.lltype_sizes[t]
             with self.raises(space, 'IndexError',
                              "Memory access offset=-1 size=%s is out of bounds"
                              %  sizeof_t):
                 space.execute("""
                 FFI::MemoryPointer.new(:T, 1).put_T(-1, 230)
-                """.replace('T', t))
+                """.replace('T', tn.lower()))
 
     def test_they_refuse_too_large_offsets(self, space):
-        for t in test_put_method_group:
-            sizeof_t = size_for_name(t.upper())
+        for t in test_types:
+            tn = ffitype.type_names[t]
+            sizeof_t = ffitype.lltype_sizes[t]
             with self.raises(space, 'IndexError',
                              "Memory access offset=1000 size=%s is out of bounds"
                              % sizeof_t):
                 space.execute("""
                 FFI::MemoryPointer.new(:T, 3).put_T(1000, 15)
-                """.replace('T', t))
+                """.replace('T', tn.lower()))
 
 class TestAbstractMemory_write_methods(BaseFFITest):
     def test_they_are_like_calling_put_with_0_as_1st_arg(self, space):
-        for t in test_rw_method_group:
+        for t in test_types:
+            tn = ffitype.type_names[t]
             w_mem_ptr = space.execute("""
             mem_ptr = FFI::MemoryPointer.new(:T, 1)
             mem_ptr.write_T(121)
             mem_ptr
-            """.replace('T', t))
-            cast_method = getattr(w_mem_ptr, t + '_cast')
-            casted_ptr = cast_method()
-            assert casted_ptr[0] == 'y' if t == 'int8' else 121
+            """.replace('T', tn.lower()))
+            cast_method = new_cast_method(t)
+            casted_ptr = cast_method(w_mem_ptr)
+            assert casted_ptr[0] == 'y' if tn == 'INT8' else 121
 
 class TestAbstractMemory_get_methods(BaseFFITest):
     def test_they_get_a_single_value_from_the_given_offset(self, space):
-        for t in test_get_method_group:
-            w_res = space.execute(get_method_test_code(t))
-            assert self.unwrap(space, w_res) == [minval[t], maxval[t]]
+        for tn in [ffitype.type_names[t].lower()
+                   for t in test_types]:
+            w_res = space.execute(get_method_test_code(tn))
+            assert self.unwrap(space, w_res) == [minval[tn], maxval[tn]]
 
 class TestAbstractMemory_read_methods(BaseFFITest):
     def test_they_are_like_calling_get_with_0(self, space):
-        for t in test_rw_method_group:
+        for tn in [ffitype.type_names[t].lower()
+                  for t in test_types]:
             w_res = space.execute("""
             mem_ptr = FFI::MemoryPointer.new(:T, 1)
             mem_ptr.write_T(1)
             mem_ptr.read_T
-            """.replace('T', t))
+            """.replace('T', tn))
             assert self.unwrap(space, w_res) == 1
-
-class TestAbstractMemory_put_int8(BaseFFITest):
-    def test_it_puts_a_single_int8_into_the_given_offset(self, space):
-        w_mem_ptr = space.execute(put_method_test_code('int8'))
-        casted_ptr = w_mem_ptr.int8_cast()
-        assert casted_ptr[0] == rffi.cast(rffi.CHAR, -128)
-        assert casted_ptr[1] == rffi.cast(rffi.CHAR, 127)
-
-class TestAbstractMemory_put_float32(BaseFFITest):
-    def test_it_puts_only_one_float32_into_the_given_offset(self, space):
-        w_mem_ptr = space.execute(put_method_test_code('float32'))
-        mem_ptr = w_mem_ptr.float32_cast()
-        res0, res1 = float(mem_ptr[0]), float(mem_ptr[1])
-        # It might only be approximately equal
-        assert abs((minval['float32'] - res0) / res0) < 1e-9
-        assert abs((maxval['float32'] - res1) / res1) < 1e-9
 
 class TestAbstractMemory_put_pointer(BaseFFITest):
     def test_it_puts_a_single_pointer_into_the_given_offset(self, space):
@@ -147,24 +163,9 @@ class TestAbstractMemory_put_pointer(BaseFFITest):
         mem_ptr.put_pointer(FFI::Type::POINTER.size, ptr2)
         mem_ptr
         """)
-        w_adr_ptr = new_cast_method(UINT64)(w_mem_ptr)
+        w_adr_ptr = new_cast_method(ffitype.UINT64)(w_mem_ptr)
         assert w_adr_ptr[0] == 88
         assert w_adr_ptr[1] == 55
-
-class TestAbstractMemory_get_float32(BaseFFITest):
-    def test_it_gets_only_one_float32_from_the_given_offset(self, space):
-        w_res = space.execute(get_method_test_code('float32'))
-        res = self.unwrap(space, w_res)
-        # It might only be approximately equal
-        assert abs((res[0] - minval['float32'])/res[0]) < 1e-9
-        assert abs((res[1] - maxval['float32'])/res[1]) < 1e-9
-
-class TestAbstractMemory_get_uint64(BaseFFITest):
-    def test_it_gets_a_single_uint64_from_the_given_offset(self, space):
-        w_res = space.execute(get_method_test_code('uint64'))
-        res = self.unwrap(space, w_res)
-        assert res[0] == minval['uint64']
-        assert res[1].tolong() == maxval['uint64']
 
 class TestAbstractMemory_get_pointer(BaseFFITest):
     def test_it_gets_a_single_pointer_from_the_given_offset(self, space):

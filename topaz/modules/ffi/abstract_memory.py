@@ -12,61 +12,22 @@ from topaz.modules.ffi import type as ffitype
 
 import sys
 
-# Check, whether this will be inlined
-def new_cast_method(typ):
-    ctype = ffitype.lltypes[typ]
-    def cast_method(memory):
-        return rffi.cast(lltype.Ptr(rffi.CArray(ctype)), memory.ptr)
-    return cast_method
-
-def new_numberof_method(typ):
-    csize = ffitype.lltype_sizes[typ]
-    if csize & (csize - 1) == 0:  # csize is a power of 2
-        shift = 0
-        while 1 << shift < csize: shift += 1
-        def numberof_method(self):
-            return self.sizeof_memory >> shift
-    else:
-        def numberof_method(self):
-            return self.sizeof_memory / csize
-    return numberof_method
-
-def new_put_method(typ):
-    ctype = ffitype.lltypes[typ]
-    sizeof_type  = ffitype.lltype_sizes[typ]
-    def put_method(self, space, offset, value):
-        val = rffi.cast(ctype, value)
+def new_put_method(typeindex):
+    rw_strategy = ffitype.rw_strategies[typeindex]
+    sizeof_type = ffitype.lltype_sizes[typeindex]
+    def put_method(self, space, offset, w_value):
         offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
-        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
-        try:
-            casted_ptr[0] = val
-        except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
+        rw_strategy.write(space, offset_ptr, w_value)
     return put_method
 
-def new_get_method(typ):
-    ctype = ffitype.lltypes[typ]
-    cast_method = new_cast_method(typ)
-    numberof_method = new_numberof_method(typ)
-    sizeof_type  = ffitype.lltype_sizes[typ]
-    if typ == ffitype.INT8:
-        to_int = lambda x: ord(x) - 256 if ord(x) >= 128 else ord(x)
-    else:
-        to_int = intmask
-    if typ in [ffitype.FLOAT32, ffitype.FLOAT64]:
-        wrap = lambda space, val: space.newfloat(float(val))
-    else:
-        wrap = lambda space, val: space.newint(to_int(val))
+def new_get_method(typeindex):
+    rw_strategy = ffitype.rw_strategies[typeindex]
+    sizeof_type = ffitype.lltype_sizes[typeindex]
     def get_method(self, space, offset):
         offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
-        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
         raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
-        try:
-            val = casted_ptr[0]
-            return wrap(space, val)
-        except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
+        return rw_strategy.read(space, offset_ptr)
     return get_method
 
 def new_write_method(type_str):
@@ -82,11 +43,8 @@ def new_read_method(type_str):
     return read_method
 
 def raise_if_out_of_bounds(space, offset, size, sizeof_type):
-    if offset < 0:
+    if offset < 0 or offset >= size:
         raise memory_index_error(space, offset, sizeof_type)
-    else:
-        if offset >= size:
-            raise memory_index_error(space, offset, sizeof_type)
 
 def memory_index_error(space, offset, size):
     return space.error(space.w_IndexError,
@@ -124,130 +82,21 @@ class W_AbstractMemoryObject(W_Object):
                            [space.newsymbol(prefix + alias),
                             space.newsymbol(prefix + orig)])
 
-    @classdef.method('put_uint64', offset='int', value='bigint')
-    def method_put_uint64(self, space, offset, value):
-        sizeof_type = lltype_sizes[UINT64]
-        ctype = ffitype.lltypes[UINT64]
-        val = rffi.cast(lltypes[UINT64], value.toulonglong())
-        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
-        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
-        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
-        try:
-            casted_ptr[0] = val
-        except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
-
-    @classdef.method('get_uint64', offset='int')
-    def method_get_uint64(self, space, offset):
-        sizeof_type = lltype_sizes[UINT64]
-        ctype = ffitype.lltypes[UINT64]
-        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
-        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
-        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
-        try:
-            val = casted_ptr[0]
-            return space.newint_or_bigint_fromunsigned(val)
-        except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
-
-    method_write_uint64 = classdef.method('write_uint64')(
-                           new_write_method('uint64'))
-
-    method_read_uint64 = classdef.method('read_uint64')(
-                          new_read_method('uint64'))
-
-    @classdef.method('put_pointer', offset='int', value='ffi_address')
-    def method_put_pointer(self, space, offset, value):
-        sizeof_type = lltype_sizes[UINT64]
-        ctype = ffitype.lltypes[UINT64]
-        val = rffi.cast(lltypes[UINT64], value)
-        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
-        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
-        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
-        try:
-            casted_ptr[0] = val
-        except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
-
-    @classdef.method('get_pointer', offset='int')
-    def method_get_pointer(self, space, offset):
-        sizeof_type = lltype_sizes[UINT64]
-        ctype = ffitype.lltypes[UINT64]
-        offset_ptr = rffi.ptradd(rffi.cast(rffi.CCHARP, self.ptr), offset)
-        casted_ptr = rffi.cast(lltype.Ptr(rffi.CArray(ctype)), offset_ptr)
-        raise_if_out_of_bounds(space, offset, self.sizeof_memory, sizeof_type)
-        try:
-            address = casted_ptr[0]
-            w_address = space.newint_or_bigint(intmask(address))
-            w_ffi = space.find_const(space.w_kernel, 'FFI')
-            w_pointer = space.find_const(w_ffi, 'Pointer')
-            return space.send(w_pointer, 'new', [w_address])
-        except IndexError:
-            raise memory_index_error(space, offset, sizeof_type)
-
-    method_write_pointer = classdef.method('write_pointer')(
-                           new_write_method('pointer'))
-
-    method_read_pointer = classdef.method('read_pointer')(
-                          new_read_method('pointer'))
-
-    #@classdef.method('put_array_of_int32', begin='int', arr_w='array')
-    #def method_put_array_of_int32(self, space, begin, arr_w):
-    #    if(begin < 0 or self.int_size() <= begin or
-    #       self.int_size() < begin + len(arr_w)):
-    #        raise memory_index_error(space, begin, 4*len(arr_w))
-    #    for i, w_obj in enumerate(arr_w):
-    #        try:
-    #            someint = Coerce.int(space, w_obj)
-    #            val = rffi.cast(rffi.SIGNED, someint)
-    #            int_ptr = self.int_cast()
-    #            int_ptr[begin + i] = val
-    #        except:
-    #            assert False
-
-    #@classdef.method('get_array_of_int32', begin='int', length='int')
-    #def method_get_array_of_int32(self, space, begin, length):
-    #    arr_w = []
-    #    for i in range(begin, begin + length):
-    #        int_ptr = self.int_cast()
-    #        val = int_ptr[i]
-    #        arr_w.append(space.newint(val))
-    #    return space.newarray(arr_w)
-
 W_AMO = W_AbstractMemoryObject
 for t in [ffitype.INT8, ffitype.INT16, ffitype.INT32, ffitype.INT64,
-         ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.UINT64,
-         ffitype.FLOAT32, ffitype.FLOAT64]:
-    tn = ffitype.type_names[t].lower()
-    setattr(W_AMO, tn + '_cast', new_cast_method(t))
-    setattr(W_AMO, tn + '_size', new_numberof_method(t))
-
-for t in [ffitype.INT8, ffitype.INT16, ffitype.INT32, ffitype.INT64,
-          ffitype.UINT8, ffitype.UINT16, ffitype.UINT32]:
+          ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.UINT64,
+          ffitype.FLOAT32, ffitype.FLOAT64,
+          ffitype.POINTER]:
     tn = ffitype.type_names[t].lower()
     setattr(W_AMO, 'method_put_' + tn,
-            W_AMO.classdef.method('put_' + tn, offset='int', value='int')(
+            W_AMO.classdef.method('put_' + tn, offset='int')(
             new_put_method(t)))
-    setattr(W_AMO, 'method_write_' + tn,
-            W_AMO.classdef.method('write_' + tn, value='int')(
-            new_write_method(tn)))
     setattr(W_AMO, 'method_get_' + tn,
             W_AMO.classdef.method('get_' + tn, offset='int')(
             new_get_method(t)))
-    setattr(W_AMO, 'method_read_' + tn,
-            W_AMO.classdef.method('read_' + tn)(
-            new_read_method(tn)))
-for t in [ffitype.FLOAT32, ffitype.FLOAT64]:
-    tn = ffitype.type_names[t].lower()
-    setattr(W_AMO, 'method_put_' + tn,
-            W_AMO.classdef.method('put_' + tn, offset='int', value='float')(
-            new_put_method(t)))
     setattr(W_AMO, 'method_write_' + tn,
-            W_AMO.classdef.method('write_' + tn, value='float')(
+            W_AMO.classdef.method('write_' + tn)(
             new_write_method(tn)))
-    setattr(W_AMO, 'method_get_' + tn,
-            W_AMO.classdef.method('get_' + tn, offset='int')(
-            new_get_method(t)))
     setattr(W_AMO, 'method_read_' + tn,
             W_AMO.classdef.method('read_' + tn)(
             new_read_method(tn)))

@@ -15,21 +15,6 @@ class TestMemoryPointer__new(BaseFFITest):
         w_mem_ptr = space.execute("FFI::MemoryPointer.new(:int32, 1)")
         assert w_mem_ptr.w_type == space.execute("FFI::Type::INT32")
 
-    def test_it_lets_you_cast_its_content(self, space):
-        w_ptr = space.execute("FFI::MemoryPointer.new(:int16, 4)")
-        for ptr, rffi_t in [
-                                (w_ptr.int8_cast(), rffi.CHAR),
-                                (w_ptr.int16_cast(), rffi.SHORT),
-                                (w_ptr.int32_cast(), rffi.INT)
-                                  ]:
-            assert ptr._TYPE.TO == rffi.CArray(rffi_t)
-
-    def test_it_lets_you_convert_its_size_into_different_units(self, space):
-        w_mem_ptr = space.execute("FFI::MemoryPointer.new(:int16, 4)")
-        assert w_mem_ptr.int8_size() == 8
-        assert w_mem_ptr.int16_size() == 4
-        assert w_mem_ptr.int32_size() == 2
-
     def test_its_size_argument_defaults_to_1(self, space):
         for t in ['char', 'short', 'int']:
             w_ptr1 = space.execute("FFI::MemoryPointer.new(:%s, 1)" % t)
