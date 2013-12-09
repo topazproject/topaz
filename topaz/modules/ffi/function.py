@@ -53,7 +53,6 @@ class W_FFIFunctionObject(W_PointerObject):
         if self.atypes:
             lltype.free(self.atypes, flavor='raw')
 
-    #XXX eventually we need a dont look inside for vararg calls
     @classdef.method('call')
     @jit.unroll_safe
     def method_call(self, space, args_w, block=None):
