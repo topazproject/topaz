@@ -18,20 +18,22 @@ class Data(object):
 
     def invoke(self, ll_args, ll_res):
         space = self.space
+        args_w = self._read_args(space, ll_args)
+        w_res = space.send(self.w_proc, 'call', args_w)
+        self._write_res(space, w_res, ll_res)
+
+    @jit.dont_look_inside
+    def _read_args(self, space, ll_adrs):
         args_w = []
         for i in range(len(self.w_callback_info.arg_types_w)):
             w_arg_type = self.w_callback_info.arg_types_w[i]
-            ll_arg = rffi.cast(rffi.CCHARP, ll_args[i])
-            w_arg = self._read_and_wrap_llpointer(space, ll_arg, w_arg_type)
+            ll_adr = rffi.cast(rffi.CCHARP, ll_adrs[i])
+            assert isinstance(w_arg_type, W_BuiltinType)
+            w_arg = w_arg_type.rw_strategy.read(space, ll_adr)
             args_w.append(w_arg)
-        w_res = space.send(self.w_proc, 'call', args_w)
-        self._unwrap_and_write_rubyobj(space, w_res, ll_res)
+        return args_w
 
-    def _read_and_wrap_llpointer(self, space, ll_adr, w_arg_type):
-        assert isinstance(w_arg_type, W_BuiltinType)
-        return w_arg_type.rw_strategy.read(space, ll_adr)
-
-    def _unwrap_and_write_rubyobj(self, space, w_obj, ll_adr):
+    def _write_res(self, space, w_obj, ll_adr):
         ll_adr = rffi.cast(rffi.CCHARP, ll_adr)
         w_ret_type = self.w_callback_info.w_ret_type
         assert isinstance(w_ret_type, W_BuiltinType)
