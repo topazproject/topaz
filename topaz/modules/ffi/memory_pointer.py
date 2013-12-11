@@ -28,5 +28,5 @@ class W_MemoryPointerObject(W_PointerObject):
         self.sizeof_memory = size * sizeof_type
         memory = lltype.malloc(rffi.CArray(rffi.CHAR),
                                self.sizeof_memory,
-                               flavor='raw')
+                               flavor='raw', zero=True)
         self.ptr = rffi.cast(rffi.VOIDP, memory)
