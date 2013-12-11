@@ -36,7 +36,7 @@ def coerce_address(space, w_addressable):
 setattr(Coerce, 'ffi_address', staticmethod(coerce_address))
 
 class W_PointerObject(W_AbstractMemoryObject):
-    classdef = ClassDef('Pointer', W_AbstractMemoryObject.classdef)
+    classdef = ClassDef('FFI::Pointer', W_AbstractMemoryObject.classdef)
 
     def __init__(self, space, klass=None):
         W_AbstractMemoryObject.__init__(self, space, klass)

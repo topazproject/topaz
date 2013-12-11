@@ -81,7 +81,7 @@ def size_for_name(name):
 
 
 class W_TypeObject(W_Object):
-    classdef = ClassDef('Type', W_Object.classdef)
+    classdef = ClassDef('FFI::Type', W_Object.classdef)
 
     typeindex = 0
     _immutable_fields_ = ['typeindex', 'rw_strategy']

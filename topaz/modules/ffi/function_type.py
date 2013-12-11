@@ -21,7 +21,7 @@ def raise_TypeError_if_not_TypeObject(space, w_candidate):
                           space.str_w(space.send(w_candidate, 'inspect')))
 
 class W_FunctionTypeObject(W_TypeObject):
-    classdef = ClassDef('FunctionType', W_TypeObject.classdef)
+    classdef = ClassDef('FFI::FunctionType', W_TypeObject.classdef)
     _immutable_fields_ = ['arg_types_w', 'w_ret_type']
 
     def __init__(self, space):
