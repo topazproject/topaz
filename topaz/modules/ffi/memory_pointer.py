@@ -6,7 +6,7 @@ from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
 
 class W_MemoryPointerObject(W_PointerObject):
-    classdef = ClassDef('MemoryPointer', W_PointerObject.classdef)
+    classdef = ClassDef('FFI::MemoryPointer', W_PointerObject.classdef)
 
     def __init__(self, space):
         W_PointerObject.__init__(self, space)

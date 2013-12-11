@@ -18,7 +18,7 @@ for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
 
 class W_FFIFunctionObject(W_PointerObject):
-    classdef = ClassDef('Function', W_PointerObject.classdef)
+    classdef = ClassDef('FFI::Function', W_PointerObject.classdef)
     _immutable_fields_ = ['cif_descr', 'atypes', 'ptr', 'arg_types_w', 'w_ret_type']
 
     @classdef.singleton_method('allocate')

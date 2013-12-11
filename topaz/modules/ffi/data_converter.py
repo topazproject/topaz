@@ -3,7 +3,7 @@ from topaz.modules.ffi.type import type_object
 
 # A rather abstract base class
 class DataConverter(object):
-    moduledef = ModuleDef('DataConverter')
+    moduledef = ModuleDef('FFI::DataConverter')
 
     @moduledef.method('native_type')
     def native_type(self, space, args_w):
