@@ -22,15 +22,15 @@ class Data(object):
         w_res = space.send(self.w_proc, 'call', args_w)
         self._write_res(space, w_res, ll_res)
 
-    @jit.dont_look_inside
     def _read_args(self, space, ll_adrs):
-        args_w = []
-        for i in range(len(self.w_callback_info.arg_types_w)):
+        length = len(self.w_callback_info.arg_types_w)
+        args_w = [None]*length
+        for i in range(length):
             w_arg_type = self.w_callback_info.arg_types_w[i]
             ll_adr = rffi.cast(rffi.CCHARP, ll_adrs[i])
             assert isinstance(w_arg_type, W_BuiltinType)
             w_arg = w_arg_type.rw_strategy.read(space, ll_adr)
-            args_w.append(w_arg)
+            args_w[i] = w_arg
         return args_w
 
     def _write_res(self, space, w_obj, ll_adr):
