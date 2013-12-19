@@ -90,3 +90,7 @@ class W_UnboundMethodObject(W_Object):
             return space.newbool(self.w_function is w_other.w_function)
         else:
             return space.w_false
+
+    @classdef.method("arity")
+    def method_arity(self, space):
+        return self.w_function.arity(space)
