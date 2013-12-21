@@ -7,7 +7,7 @@ from rpython.rlib import clibffi
 from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
-from rpython.rlib.unroll import unrolling_iterable
+from topaz.coerce import Coerce
 
 # XXX maybe move to rlib/jit_libffi
 from pypy.module._cffi_backend import misc
@@ -66,8 +66,6 @@ for i, typ in enumerate(_native_types):
         lltype_sizes.append(rffi.sizeof(lltypes[-1]))
 
 del _native_types
-
-unrolling_types = unrolling_iterable(range(len(type_names)))
 
 def lltype_for_name(name):
     """NOT_RPYTHON"""
@@ -197,11 +195,7 @@ class PointerRWStrategy(ReadWriteStrategy):
 
     def write(self, space, data, w_arg):
         w_arg = self._convert_to_NULL_if_nil(space, w_arg)
-        # right now, coerce_pointer has to be imported here to avoid import
-        # cycle. maybe after OOP approch is fully implemented and refactoring
-        # done the import can be moved to begin of file
-        from topaz.modules.ffi.pointer import coerce_pointer
-        arg = coerce_pointer(space, w_arg)
+        arg = Coerce.ffi_pointer(space, w_arg)
         arg = rffi.cast(lltype.Unsigned, arg)
         misc.write_raw_unsigned_data(data, arg, self.typesize)
 

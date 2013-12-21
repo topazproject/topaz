@@ -57,11 +57,11 @@ class W_PointerObject(W_AbstractMemoryObject):
     @classdef.method('initialize')
     def method_initialize(self, space, args_w):
         if len(args_w) == 1:
-            address = coerce_address(space, args_w[0])
+            address = Coerce.ffi_address(space, args_w[0])
             return self._initialize(space, address)
         elif len(args_w) == 2:
             sizeof_type = Coerce.int(space, args_w[0])
-            address = coerce_address(space, args_w[1])
+            address = Coerce.ffi_address(space, args_w[1])
             return self._initialize(space, address, sizeof_type)
 
     def _initialize(self, space, address, sizeof_type=1):
