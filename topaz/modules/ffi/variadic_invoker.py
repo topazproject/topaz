@@ -27,13 +27,19 @@ class W_VariadicInvokerObject(W_Object):
         self.w_ret_type = w_ret_type
         self.w_options = w_options
         self.w_handle = w_handle
-        space.send(self, 'init', [w_arg_types, space.newhash()])
+        if w_options is None:
+            w_type_map = space.newhash()
+        else:
+            w_key = space.newsymbol('type_map')
+            w_type_map = space.send(w_options, '[]', [w_key])
+        space.send(self, 'init', [w_arg_types, w_type_map])
 
     @classdef.method('invoke', arg_values_w='array')
     def method_invoke(self, space, w_arg_types, arg_values_w):
-        w_func = space.send(space.getclassfor(W_FFIFunctionObject),
-                                'new', [self.w_ret_type, w_arg_types,
-                                    self.w_handle, self.w_options])
+        w_func_cls = space.getclassfor(W_FFIFunctionObject)
+        w_func = space.send(w_func_cls, 'new',
+                            [self.w_ret_type, w_arg_types,
+                            self.w_handle, self.w_options])
         return self._dli_call(space, w_func, arg_values_w)
 
     @jit.dont_look_inside

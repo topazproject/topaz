@@ -42,3 +42,26 @@ class TestVariadicInvoker(BaseFFITest):
                                         FFI::Type::FLOAT64, 4.0)
         """)
         assert self.unwrap(ffis, w_res) == 6
+
+    def test_it_also_is_able_to_use_typedefs(self, ffis):
+        w_res = ffis.execute("""
+        module Lib
+            local = FFI::DynamicLibrary::RTLD_LOCAL
+            @ffi_libs = [FFI::DynamicLibrary.open('%(libname)s', local)]
+        end
+        libc = FFI::DynamicLibrary.new('%(libname)s')
+        sym_sprintf = libc.find_function(:sprintf)
+        options = {:type_map => {:name => FFI::Type::STRING}}
+        sprintf = FFI::VariadicInvoker.new(sym_sprintf,
+                                           [FFI::Type::POINTER,
+                                            FFI::Type::STRING],
+                                           FFI::Type::INT32,
+                                           options)
+        sprintf.attach(Lib, :sprintf)
+        result = FFI::MemoryPointer.new(:int8, 25)
+        Lib.sprintf(result, "%%s is father of %%s",
+                    :name, "bill", :name, "johanna")
+        chars = 0.upto(24).map { |x| result.get_int8(x).chr }
+        chars.inject('') { |str, c| str << c }
+        """ % {'libname':libc})
+        assert self.unwrap(ffis, w_res) == "bill is father of johanna"
