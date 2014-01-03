@@ -7,7 +7,7 @@ from topaz.module import ClassDef
 from rpython.rtyper.lltypesystem import rffi, llmemory, lltype
 from rpython.rlib.jit_libffi import (CIF_DESCRIPTION, CIF_DESCRIPTION_P,
                                      FFI_TYPE_P, FFI_TYPE_PP, SIZE_OF_FFI_ARG)
-from rpython.rlib.jit_libffi import jit_ffi_prep_cif
+from rpython.rlib.jit_libffi import jit_ffi_prep_cif, jit_ffi_call
 from rpython.rlib import jit
 from rpython.rlib.objectmodel import we_are_translated
 from rpython.rlib import clibffi
@@ -22,10 +22,15 @@ def raise_TypeError_if_not_TypeObject(space, w_candidate):
 
 class W_FunctionTypeObject(W_TypeObject):
     classdef = ClassDef('FFI::FunctionType', W_TypeObject.classdef)
-    _immutable_fields_ = ['arg_types_w', 'w_ret_type']
+    _immutable_fields_ = ['arg_types_w', 'w_ret_type', 'cif_descr']
 
     def __init__(self, space):
         W_TypeObject.__init__(self, space, ffitype.FUNCTION)
+        self.cif_descr = lltype.nullptr(CIF_DESCRIPTION)
+
+    def __del__(self):
+        if self.cif_descr:
+            lltype.free(self.cif_descr, flavor='raw')
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
@@ -44,6 +49,7 @@ class W_FunctionTypeObject(W_TypeObject):
 
         self.w_ret_type = w_ret_type
         self.arg_types_w = arg_types_w
+        self.cif_descr = self.build_cif_descr(space)
 
     @jit.dont_look_inside
     def build_cif_descr(self, space):
@@ -103,19 +109,60 @@ class W_FunctionTypeObject(W_TypeObject):
         # store the exchange data size
         cif_descr.exchange_size = exchange_offset
         #
-        res = jit_ffi_prep_cif(cif_descr)
+        status = jit_ffi_prep_cif(cif_descr)
         #
-        if res != clibffi.FFI_OK:
+        if status != clibffi.FFI_OK:
             raise space.error(space.w_RuntimeError,
                     "libffi failed to build this function type")
         #
         return cif_descr
 
+    @jit.unroll_safe
+    def invoke(self, space, ptr, args_w, block=None):
+        self = jit.promote(self)
+
+        if block is not None:
+            args_w.append(block)
+        nargs = len(args_w)
+        assert nargs == self.cif_descr.nargs
+        #
+        size = self.cif_descr.exchange_size
+        buffer = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
+        try:
+            for i in range(len(args_w)):
+                data = rffi.ptradd(buffer, self.cif_descr.exchange_args[i])
+                w_obj = args_w[i]
+                self._put_arg(space, data, i, w_obj)
+
+            #ec = cerrno.get_errno_container(space)
+            #cerrno.restore_errno_from(ec)
+            jit_ffi_call(self.cif_descr, rffi.cast(rffi.VOIDP, ptr), buffer)
+            #e = cerrno.get_real_errno()
+            #cerrno.save_errno_into(ec, e)
+
+            resultdata = rffi.ptradd(buffer, self.cif_descr.exchange_result)
+            w_res =  self._get_result(space, resultdata)
+        finally:
+            lltype.free(buffer, flavor='raw')
+        return w_res
+
+    def _get_result(self, space, resultdata):
+        w_ret_type = self.w_ret_type
+        assert isinstance(w_ret_type, W_TypeObject)
+        return w_ret_type.read(space, resultdata)
+
+    def _put_arg(self, space, data, i, w_obj):
+        w_argtype = self.arg_types_w[i]
+        assert isinstance(w_argtype, W_TypeObject)
+        if w_argtype.typeindex == ffitype.VOID:
+            raise space.error(space.w_ArgumentError,
+                              "arguments cannot be of type void")
+        w_argtype.write(space, data, w_obj)
+
     def align_arg(self, n):
         return (n + 7) & ~7
 
     def write(self, space, data, w_proc):
-        cif_descr = self.build_cif_descr(space)
         callback_data = _callback.Data(space, w_proc, self)
         closure = _callback.Closure(callback_data)
         closure.write(data)

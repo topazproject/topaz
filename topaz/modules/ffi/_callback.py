@@ -45,15 +45,14 @@ class Closure(object):
         self.callback_data = callback_data
         w_callback_info = self.callback_data.w_callback_info
         space = self.callback_data.space
-        self.cif_descr = w_callback_info.build_cif_descr(space)
-        self.uid = compute_unique_id(self.callback_data)
+        self.uid = compute_unique_id(self)
         registration[self.uid] = self
         cls_ptr = rffi.cast(clibffi.FFI_CLOSUREP, self.heap)
-        res = clibffi.c_ffi_prep_closure(cls_ptr,
-                                         self.cif_descr.cif,
-                                         invoke,
-                                         rffi.cast(rffi.VOIDP, self.uid))
-        if rffi.cast(lltype.Signed, res) != clibffi.FFI_OK:
+        status = clibffi.c_ffi_prep_closure(cls_ptr,
+                                            w_callback_info.cif_descr.cif,
+                                            invoke,
+                                            rffi.cast(rffi.VOIDP, self.uid))
+        if rffi.cast(lltype.Signed, status) != clibffi.FFI_OK:
             space = self.callback_data.space
             raise space.error(space.w_RuntimeError,
                               "libffi failed to build this callback type")
@@ -65,10 +64,8 @@ class Closure(object):
     def __del__(self):
         if self.heap:
             clibffi.closureHeap.free(self.heap)
-        if self.cif_descr:
-            lltype.free(self.cif_descr, flavor='raw')
 
-@jit.jit_callback("CFFI")
+@jit.jit_callback("block_callback")
 def invoke(ll_cif, ll_res, ll_args, ll_data):
     key = rffi.cast(lltype.Signed, ll_data)
     closure = registration[key]
