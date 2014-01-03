@@ -1,6 +1,5 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
-from topaz.coerce import Coerce
 from topaz.modules.ffi.type import lltype_for_name, lltypes, UINT64, lltype_sizes
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask, r_longlong, r_ulonglong
