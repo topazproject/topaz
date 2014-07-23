@@ -10,6 +10,7 @@ from rpython.rlib.rsre.rsre_core import (
     OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN,
     OPCODE_NEGATE
 )
+from rpython.rlib.rsre.rsre_char import MAXREPEAT as MAX_REPEAT
 
 
 IGNORE_CASE = 1 << 0
@@ -48,8 +49,6 @@ CHARACTER_ESCAPES = {
     "t": "\t",
     "v": "\v",
 }
-
-MAX_REPEAT = 65535
 
 AT_BEGINNING = 0
 AT_BEGINNING_LINE = 1
