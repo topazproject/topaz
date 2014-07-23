@@ -6,3 +6,11 @@ fails:Rational#round rounds to the given precision
 fails:Rational#round rounds to the given precision with a negative precision
 fails:Rational#round doesn't alter the value if the precision is too great
 fails:Rational#round doesn't fail when rounding to an absurdly large positive precision
+fails:Rational#round with no arguments (precision = 0) returns an integer
+fails:Rational#round with no arguments (precision = 0) returns the truncated value toward the nearest integer
+fails:Rational#round with a precision < 0 returns an integer
+fails:Rational#round with a precision < 0 moves the truncation point n decimal places left
+fails:Rational#round with a precision > 0 returns a Rational
+fails:Rational#round with a precision > 0 moves the truncation point n decimal places right
+fails:Rational#round with a precision > 0 doesn't alter the value if the precision is too great
+fails:Rational#round with a precision > 0 doesn't fail when rounding to an absurdly large positive precision

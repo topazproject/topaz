@@ -4,3 +4,8 @@ fails:File.basename return the basename for unix format
 fails:File.basename return the basename for edge cases
 fails:File.basename ignores a trailing directory separator
 fails:File.basename return the basename for unix suffix
+fails:File.basename returns the basename of a path (basic cases)
+fails:File.basename returns the last component of the filename
+fails:File.basename returns the basename for unix format
+fails:File.basename returns the basename for edge cases
+fails:File.basename returns the basename for unix suffix

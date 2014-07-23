@@ -1,2 +1,5 @@
 fails:String#<=> with String returns 0 if self and other contain identical ASCII-compatible bytes in different encodings
 fails:String#<=> with String does not return 0 if self and other contain identical non-ASCII-compatible bytes in different encodings
+fails:String#<=> with String ignores encoding difference
+fails:String#<=> with String returns 0 with identical ASCII-compatible bytes of different encodings
+fails:String#<=> with String compares the indices of the encodings when the strings have identical non-ASCII-compatible bytes

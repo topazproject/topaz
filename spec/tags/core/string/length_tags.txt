@@ -1,0 +1,2 @@
+fails:String#length returns the length of the new self after encoding is changed
+fails:String#length returns the length of a string in different encodings

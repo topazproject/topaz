@@ -35,6 +35,7 @@ fails:IO#read raises IOError on closed stream
 fails:IO#read with large data reads all the data at once
 fails:IO#read with large data reads only the requested number of bytes
 fails:IO#read in binary mode does not transcode file contents when Encoding.default_internal is set
+fails:IO#read in binary mode does not transcode file contents when an internal encoding is specified
 fails:IO#read in binary mode does transcode file contents when an internal encoding is specified
 fails:IO.read with BOM reads a file without a bom
 fails:IO.read with BOM reads a file with a utf-8 bom
@@ -44,6 +45,8 @@ fails:IO.read with BOM reads a file with a utf-32le bom
 fails:IO.read with BOM reads a file with a utf-32be bom
 fails:IO.read reads the contents of a file up to a certain size when specified
 fails:IO.read reads the contents of a file from an offset of a specific size when specified
+fails:IO.read uses the external encoding specified via the :external_encoding option
+fails:IO.read uses the external encoding specified via the :encoding option
 fails:IO#read with $KCODE set to UTF-8 ignores unicode encoding
 fails:IO#read when IO#external_encoding and IO#internal_encoding are nil sets the String encoding to Encoding.default_external
 fails:IO#read with internal encoding not specified does not transcode the String

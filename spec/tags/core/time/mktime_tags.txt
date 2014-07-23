@@ -44,3 +44,4 @@ fails:Time.mktime ignores fractional seconds if a passed whole number of microse
 fails:Time.mktime ignores fractional seconds if a passed fractional number of microseconds
 fails:Time.mktime creates the correct time just before dst change
 fails:Time.mktime creates the correct time just after dst change
+fails:Time.mktime handles years from 0 as such

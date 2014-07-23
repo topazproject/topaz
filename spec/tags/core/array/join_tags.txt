@@ -16,3 +16,4 @@ fails:Array#join fails for arrays with incompatibly-encoded strings
 fails:Array#join does not separate elements when the passed separator is nil
 fails:Array#join with a tainted separator taints the result if the array has two or more elements
 fails:Array#join with an untrusted separator untrusts the result if the array has two or more elements
+fails:Array#join with $, separates elements with default separator when the passed separator is nil

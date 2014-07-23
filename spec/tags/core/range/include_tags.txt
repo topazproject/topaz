@@ -1,1 +1,5 @@
 fails:Range#include? compares values using <=>
+fails:Range#include? on string elements returns false if other is not matched by element.succ
+fails:Range#include? with weird succ when included end value returns false if other is not matched by element.succ
+fails:Range#include? with weird succ when included end value returns false if other is equal as last element but not matched by element.succ
+fails:Range#include? with weird succ when excluded end value returns false if other is not matched by element.succ

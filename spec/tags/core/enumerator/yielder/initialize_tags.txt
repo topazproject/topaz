@@ -1,0 +1,1 @@
+fails:Enumerator::Yielder#initialize returns self when given a block

@@ -16,3 +16,5 @@ fails:Time#+ maintains precision
 fails:Time#+ maintains microseconds precision
 fails:Time#+ maintains nanoseconds precision
 fails:Time#+ maintains subseconds precision
+fails:Time#+ raises a TypeError if given argument is a coercible String
+fails:Time#+ does not return a subclass instance

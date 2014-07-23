@@ -42,3 +42,5 @@ fails:IO.new accepts any truthy option :autoclose
 fails:IO.new raises an Errno::EBADF if the file descriptor is not valid
 fails:IO.new raises an Errno::EINVAL if the new mode is not compatible with the descriptor's current mode
 fails:IO.new raises ArgumentError if passed an empty mode string
+fails:IO.new uses the :encoding option as the external encoding when only one is given
+fails:IO.new uses the :encoding options as the external encoding when it's an Encoding object

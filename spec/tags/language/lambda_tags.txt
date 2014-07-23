@@ -1,0 +1,1 @@
+fails:->(){} uses lambda's 'rigid' argument handling

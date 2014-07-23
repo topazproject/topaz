@@ -35,3 +35,6 @@ fails:Module#autoload raises a TypeError if not passed a String or object respod
 fails:Module#autoload calls #to_path on non-String filename arguments
 fails:Module#autoload (concurrently) blocks a second thread while a first is doing the autoload
 fails:Module#autoload does not call Kernel#require or Kernel#load dynamically
+fails:Module#autoload returns 'constant' on refering the constant with defined?()
+fails:Module#autoload on a frozen module raises a RuntimeError before setting the name
+fails:Module#autoload when changing $LOAD_PATH does not reload a file due to a different load path

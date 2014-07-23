@@ -10,7 +10,7 @@ fails:IO.pipe calls #to_str to convert the first argument to a String
 fails:IO.pipe calls #to_str to convert the second argument to a String
 fails:IO.pipe sets no external encoding for the write end
 fails:IO.pipe sets no internal encoding for the write end
-fails:IO.pipe sets the internal encoding to nil if the same as the external 
+fails:IO.pipe sets the internal encoding to nil if the same as the external
 fails:IO.pipe accepts 'bom|' prefix for external encoding
 fails:IO.pipe accepts 'bom|' prefix for external encoding when specifying 'external:internal'
 fails:IO.pipe accepts an options Hash with one String encoding argument

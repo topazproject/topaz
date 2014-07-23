@@ -44,3 +44,4 @@ fails:Time.local ignores fractional seconds if a passed whole number of microsec
 fails:Time.local ignores fractional seconds if a passed fractional number of microseconds
 fails:Time.local creates the correct time just before dst change
 fails:Time.local creates the correct time just after dst change
+fails:Time.local handles years from 0 as such

@@ -70,6 +70,7 @@ class MSpecScript
     "^#{Rubyspec}/library/erb/",
     "^#{Rubyspec}/library/etc/",
     "^#{Rubyspec}/library/expect/expect_spec.rb",
+    "^#{Rubyspec}/library/find/",
     "^#{Rubyspec}/library/getoptlong/",
     "^#{Rubyspec}/library/iconv/",
     "^#{Rubyspec}/library/ipaddr/",

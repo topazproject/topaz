@@ -8,3 +8,4 @@ fails:Thread#kill can be rescued by outer rescue clause when inner ensure clause
 fails:Thread#kill is deferred if ensure clause does Thread.stop
 fails:Thread#kill does not deadlock when called from within the thread while being joined from without
 fails:Thread.kill causes the given thread to exit
+fails:Thread#kill kills the entire thread when a fiber is active

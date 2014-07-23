@@ -4,3 +4,4 @@ fails:Kernel#taint on a Float taints the float
 fails:Kernel#taint raises RuntimeError on an untainted, frozen object
 fails:Kernel#taint has no effect on immediate values
 fails:Kernel#taint has no effect on immediate values
+fails:Kernel#taint on a Symbol has no effect

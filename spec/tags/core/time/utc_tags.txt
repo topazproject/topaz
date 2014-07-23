@@ -46,3 +46,4 @@ fails:Time#utc returns the utc representation of time
 fails:Time.utc interprets pre-Gregorian reform dates using Gregorian proleptic calendar
 fails:Time.utc interprets Julian-Gregorian gap dates using Gregorian proleptic calendar
 fails:Time.utc interprets post-Gregorian reform dates using Gregorian calendar
+fails:Time.utc handles years from 0 as such

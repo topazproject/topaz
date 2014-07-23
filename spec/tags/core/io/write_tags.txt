@@ -15,3 +15,10 @@ fails:IO.write uses an :open_args option
 fails:IO.write disregards other options if :open_args is given
 fails:IO#write checks if the file is writable if writing more than zero bytes
 fails:IO#write writes all of the string's bytes without buffering if mode is sync
+fails:IO.write uses the given encoding and returns the number of bytes written
+fails:IO.write writes binary data if no encoding is given
+fails:IO#write on a file writes binary data if no encoding is given
+fails:IO#write on a file raises a invalid byte sequence error if invalid bytes are being written
+fails:IO#write on a file uses the encoding from the given option for non-ascii encoding
+fails:IO#write on a file returns the number of bytes written
+fails:IO#write on a file returns a length of 0 when writing a blank string

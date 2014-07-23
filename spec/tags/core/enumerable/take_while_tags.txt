@@ -1,0 +1,1 @@
+fails:Enumerable#take_while calls the block with initial args when yielded with multiple arguments

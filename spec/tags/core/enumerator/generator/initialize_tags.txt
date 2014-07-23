@@ -1,0 +1,1 @@
+fails:Enumerator::Generator#initialize returns self when given a block

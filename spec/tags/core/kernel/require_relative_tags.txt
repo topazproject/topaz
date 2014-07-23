@@ -40,6 +40,7 @@ fails:Kernel#require_relative with a relative path ($LOAD_FEATURES) does not sto
 fails:Kernel#require_relative with a relative path ($LOAD_FEATURES) does not load an absolute path that is already stored
 fails:Kernel#require_relative with a relative path ($LOAD_FEATURES) adds the suffix of the resolved filename
 fails:Kernel#require_relative with a relative path ($LOAD_FEATURES) loads a path for a file already loaded with a relative path
+fails:Kernel#require_relative with a relative path when file is a symlink loads a path relative to current file
 fails:Kernel#require_relative with an absolute path loads a path relative to the current file
 fails:Kernel#require_relative with an absolute path loads a file defining many methods
 fails:Kernel#require_relative with an absolute path raises a LoadError if the file does not exist

@@ -1,0 +1,1 @@
+fails:String#clone does not modify the original string when changing cloned string
