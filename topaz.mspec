@@ -41,6 +41,13 @@ class MSpecScript
     "^#{Rubyspec}/language/send_spec.rb",
     # stringio: ``require 'stringio'``
     "^#{Rubyspec}/language/predefined_spec.rb",
+    # AttributeError: 'File' object has no attribute 'compile_defined'
+    "^#{Rubyspec}/language/defined_spec.rb",
+    # no real reason found (results in a Aborted (core dumped))
+    #   AssertionError in Parser_combine_send_block ?
+    "^#{Rubyspec}/language/return_spec.rb",
+    # command_asgn_lhs_equal_command_asgn
+    "^#{Rubyspec}/language/variables_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]

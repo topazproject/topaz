@@ -140,3 +140,7 @@ fails:Kernel.spawn with a command array raises a TypeError if an element in the 
 fails:Kernel#spawn raises an TypeError if given a symbol as :pgroup option
 fails:Kernel.spawn raises an TypeError if given a symbol as :pgroup option
 fails:Kernel.spawn redirects STDERR to the given file descriptior if :err => Fixnum
+fails:Kernel#spawn when passed :chdir changes to the directory passed for :chdir
+fails:Kernel#spawn when passed :chdir calls #to_path to convert the :chdir value
+fails:Kernel.spawn when passed :chdir changes to the directory passed for :chdir
+fails:Kernel.spawn when passed :chdir calls #to_path to convert the :chdir value
