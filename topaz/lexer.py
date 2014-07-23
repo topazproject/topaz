@@ -921,7 +921,7 @@ class Lexer(object):
             return self.read_utf_escape(brace_seen=brace_seen, character_escape=character_escape)
         elif c == "x":
             hex_escape = self.read()
-            if not hex_escape in string.hexdigits:
+            if hex_escape not in string.hexdigits:
                 self.error()
             if self.peek() in string.hexdigits:
                 hex_escape += self.read()
@@ -995,7 +995,7 @@ class Lexer(object):
             return self.encode_utf_escape(utf_escape)
         elif character_escape:
             ch = self.read()
-            if not ch in string.hexdigits:
+            if ch not in string.hexdigits:
                 self.error("invalid Unicode escape")
             res = self.read_delimited_utf_escape(ch)
             ch = self.read()
