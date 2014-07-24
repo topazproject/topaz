@@ -1,0 +1,1 @@
+fails:String#dup does not modify the original string when changing dupped string

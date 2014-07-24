@@ -1,1 +1,2 @@
 fails:raises a TypeError when passed a Float
+fails:Bignum#& raises a TypeError when passed a Float

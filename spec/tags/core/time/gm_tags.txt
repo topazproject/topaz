@@ -44,3 +44,4 @@ fails:Time.gm ignores fractional seconds if a passed fractional number of micros
 fails:Time.gm interprets pre-Gregorian reform dates using Gregorian proleptic calendar
 fails:Time.gm interprets Julian-Gregorian gap dates using Gregorian proleptic calendar
 fails:Time.gm interprets post-Gregorian reform dates using Gregorian calendar
+fails:Time.gm handles years from 0 as such

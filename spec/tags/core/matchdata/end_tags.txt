@@ -1,2 +1,3 @@
 fails:MatchData#end returns the offset for multi byte strings
 fails:MatchData#end returns the offset for multi byte strings with unicode regexp
+fails:MatchData#end returns nil when the nth match isn't found

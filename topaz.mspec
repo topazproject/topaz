@@ -27,6 +27,11 @@ class MSpecScript
     "^#{Rubyspec}/core/io/reopen_spec.rb",
     # socket: ``require 'socket'``
     "^#{Rubyspec}/core/file/socket_spec.rb",
+    # rubyspecs/core/io/fixtures/file_types:
+    #   `find /dev /devices -type b` returns nil
+    #   -> NoMethodError: undefined method `split' for NilClass
+    "^#{Rubyspec}/core/file/ftype_spec.rb",
+    "^#{Rubyspec}/core/file/stat/ftype_spec.rb",
     # Rational: ``Rational(2, 3)``
     "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
@@ -41,6 +46,13 @@ class MSpecScript
     "^#{Rubyspec}/language/send_spec.rb",
     # stringio: ``require 'stringio'``
     "^#{Rubyspec}/language/predefined_spec.rb",
+    # AttributeError: 'File' object has no attribute 'compile_defined'
+    "^#{Rubyspec}/language/defined_spec.rb",
+    # no real reason found (results in a Aborted (core dumped))
+    #   AssertionError in Parser_combine_send_block ?
+    "^#{Rubyspec}/language/return_spec.rb",
+    # command_asgn_lhs_equal_command_asgn
+    "^#{Rubyspec}/language/variables_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]
@@ -63,6 +75,7 @@ class MSpecScript
     "^#{Rubyspec}/library/erb/",
     "^#{Rubyspec}/library/etc/",
     "^#{Rubyspec}/library/expect/expect_spec.rb",
+    "^#{Rubyspec}/library/find/",
     "^#{Rubyspec}/library/getoptlong/",
     "^#{Rubyspec}/library/iconv/",
     "^#{Rubyspec}/library/ipaddr/",

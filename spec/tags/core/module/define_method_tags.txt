@@ -1,1 +1,2 @@
 fails:Module#define_method is private
+fails:Module#define_method method body is an UnboundMethod raises a TypeError when defining a method from a different object

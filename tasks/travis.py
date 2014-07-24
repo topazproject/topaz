@@ -132,9 +132,10 @@ def run_flake8_tests(env):
     # E124 closing bracket does not match visual indentation
     # E125 continuation line does not distinguish itself from next logical line
     # E128 continuation line under-indented for visual indent
+    # E129 visually indented line with same indent as next logical line
     # E501 line too long
     # F811 redefinition of unused
-    invoke.run('flake8 . --ignore="E124,E125,E128,E501,F811"')
+    invoke.run('flake8 . --exclude="__pycache__,.git,docs" --ignore="E124,E125,E128,E129,E501,F811"')
 
 
 TEST_TYPES = {

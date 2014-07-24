@@ -4,6 +4,7 @@ fails:String#split with String defaults to $; when string isn't given or nil
 fails:String#split with String ignores leading and continuous whitespace when string is a single space
 fails:splits between characters when its argument is an empty string
 fails:String#split with String tries converting its pattern argument to a string via to_str
+fails:String#split with String throws an ArgumentError if the pattern is not a valid string
 fails:returns subclass instances based on self
 fails:taints the resulting strings if self is tainted
 fails:String#split with Regexp treats negative limits as no limit
@@ -20,3 +21,4 @@ fails:String#split with Regexp taints an empty string if self is tainted
 fails:doesn't taints the resulting strings if the Regexp is tainted
 fails:String#split with Regexp retains the encoding of the source string
 fails:String#split with Regexp returns an ArgumentError if an invalid UTF-8 string is supplied
+fails:String#split with Regexp splits a string on each character for a multibyte encoding and empty split

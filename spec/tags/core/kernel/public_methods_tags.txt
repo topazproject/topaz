@@ -1,2 +1,4 @@
 fails:Kernel#public_methods returns a list of the names of publicly accessible methods in the object
 fails:Kernel#public_methods returns a list of the names of publicly accessible methods in the object and its ancestors and mixed-in modules
+fails:Kernel#public_methods when passed false returns a list of public methods in without its ancestors
+fails:Kernel#public_methods when passed nil returns a list of public methods in without its ancestors

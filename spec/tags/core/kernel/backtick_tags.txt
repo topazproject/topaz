@@ -1,1 +1,2 @@
 fails:Kernel#` sets $? to the exit status of the executed sub-process
+fails:Kernel#` produces a String in the default external encoding

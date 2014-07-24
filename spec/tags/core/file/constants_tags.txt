@@ -3,3 +3,11 @@ fails:File::Constants the separator constant
 fails:File::Constants the open mode constants
 fails:File::Constants lock mode constants
 fails:File::
+fails:File::Constants matches mode constants
+fails:File::Constants File::NOCTTY
+fails:File::Constants File::NONBLOCK
+fails:File::Constants File::LOCK_EX
+fails:File::Constants File::LOCK_NB
+fails:File::Constants File::LOCK_SH
+fails:File::Constants File::LOCK_UN
+fails:File::Constants File::Separator

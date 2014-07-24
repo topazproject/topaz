@@ -1,4 +1,5 @@
 fails:String#=~ behaves the same way as index() when given a regexp
+fails:String#=~ returns the character index of a found match
 fails:String#match matches the pattern against self
 fails:String#match matches the pattern against self starting at an optional index
 fails:String#match raises a TypeError if pattern is not a regexp or a string
@@ -7,3 +8,7 @@ fails:String#match sets $~ to MatchData of match or nil when there is none
 fails:String#match when passed a block yields the MatchData
 fails:String#match when passed a block returns the block result
 fails:String#match uses the start as a character offset
+fails:String#match with [pattern, position] when given a positive position matches the pattern against self starting at an optional index
+fails:String#match with [pattern, position] when given a positive position uses the start as a character offset
+fails:String#match with [pattern, position] when given a negative position matches the pattern against self starting at an optional index
+fails:String#match with [pattern, position] when given a negative position uses the start as a character offset

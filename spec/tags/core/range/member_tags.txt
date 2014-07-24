@@ -1,1 +1,5 @@
 fails:Range#member? compares values using <=>
+fails:Range#member? on string elements returns false if other is not matched by element.succ
+fails:Range#member? with weird succ when included end value returns false if other is not matched by element.succ
+fails:Range#member? with weird succ when included end value returns false if other is equal as last element but not matched by element.succ
+fails:Range#member? with weird succ when excluded end value returns false if other is not matched by element.succ

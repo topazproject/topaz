@@ -10,3 +10,4 @@ fails:Proc#parameters sets the first element of each sub-Array to :block for par
 fails:Proc#parameters sets the second element of each sub-Array to the name of the argument
 fails:Proc#parameters ignores unnamed rest args
 fails:Proc#parameters adds nameless rest arg for "star" argument
+fails:Proc#parameters does not add locals as block options with a block and splat

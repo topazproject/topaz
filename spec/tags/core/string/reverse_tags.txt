@@ -1,0 +1,2 @@
+fails:String#reverse! reverses a string with multi byte characters
+fails:String#reverse reverses a string with multi byte characters

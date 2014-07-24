@@ -1,0 +1,2 @@
+fails:Enumerable#entries returns a tainted array if self is tainted
+fails:Enumerable#entries returns an untrusted array if self is untrusted

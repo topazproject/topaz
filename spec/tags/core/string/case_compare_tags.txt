@@ -1,0 +1,3 @@
+fails:String#=== ignores encoding difference of compatible string
+fails:String#=== considers encoding difference of incompatible string
+fails:String#=== considers encoding compatibility

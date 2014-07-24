@@ -1,2 +1,3 @@
 fails:Module#public makes a private Object instance method public in a new module
 fails:Module#public makes a private Object instance method public in Kernel
+fails:Module#public is a private method

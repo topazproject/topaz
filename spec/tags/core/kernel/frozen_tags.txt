@@ -1,0 +1,2 @@
+fails:Kernel#frozen? on integers returns false
+fails:Kernel#frozen? on a Float returns false

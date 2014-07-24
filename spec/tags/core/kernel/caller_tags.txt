@@ -11,3 +11,4 @@ fails:Kernel#caller in a Proc or eval shows the current line in the calling bloc
 fails:Kernel#caller in a Proc or eval begins with the eval's sender's sender for caller(4) in eval
 fails:Kernel.caller returns one entry per call, even for recursive methods
 fails:Kernel#caller in a Proc or eval it returns one frame for new and one frame for initialize when creating objects
+fails:Kernel#caller in a Proc or eval returns one frame for new and one frame for initialize when creating objects

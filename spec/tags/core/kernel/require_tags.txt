@@ -6,6 +6,8 @@ fails:Kernel#require (path resolution) with an unreadable file raises a LoadErro
 fails:Kernel#require (path resolution) does not load a bare filename unless the current working directory is in $LOAD_PATH
 fails:Kernel#require (path resolution) does not load a relative path unless the current working directory is in $LOAD_PATH
 fails:Kernel#require (path resolution) loads a file that recursively requires itself
+fails:Kernel#require (path resolution) does not load file twice after $LOAD_PATH change
+fails:Kernel#require (path resolution) does not require file twice after $LOAD_PATH change
 fails:Kernel#require (file extensions) loads a .rb extensioned file when passed a non-extensioned path
 fails:Kernel#require (file extensions) loads a .rb extensioned file when a C-extension file of the same name is loaded
 fails:Kernel#require (file extensions) does not load a C-extension file if a .rb extensioned file is already loaded
@@ -31,6 +33,8 @@ fails:Kernel.require (path resolution) with an unreadable file raises a LoadErro
 fails:Kernel.require (path resolution) does not load a bare filename unless the current working directory is in $LOAD_PATH
 fails:Kernel.require (path resolution) does not load a relative path unless the current working directory is in $LOAD_PATH
 fails:Kernel.require (path resolution) loads a file that recursively requires itself
+fails:Kernel.require (path resolution) does not load file twice after $LOAD_PATH change
+fails:Kernel.require (path resolution) does not require file twice after $LOAD_PATH change
 fails:Kernel.require (file extensions) loads a .rb extensioned file when passed a non-extensioned path
 fails:Kernel.require (file extensions) loads a .rb extensioned file when a C-extension file of the same name is loaded
 fails:Kernel.require (file extensions) does not load a C-extension file if a .rb extensioned file is already loaded
@@ -49,5 +53,3 @@ fails:Kernel.require ($LOAD_FEATURES) when a non-extensioned file is in $LOADED_
 fails:Kernel.require ($LOAD_FEATURES) when a non-extensioned file is in $LOADED_FEATURES returns false when passed a path and the file is not found
 fails:Kernel.require (shell expansion) performs tilde expansion on a .rb file before storing paths in $LOADED_FEATURES
 fails:Kernel.require (shell expansion) performs tilde expansion on a non-extensioned file before storing paths in $LOADED_FEATURES
-fails:Kernel#require (path resolution) does not load file twice after $LOAD_PATH change
-fails:Kernel.require (path resolution) does not load file twice after $LOAD_PATH change

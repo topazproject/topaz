@@ -7,3 +7,4 @@ fails:Thread#terminate cannot be rescued
 fails:Thread#terminate can be rescued by outer rescue clause when inner ensure clause raises exception
 fails:Thread#terminate is deferred if ensure clause does Thread.stop
 fails:Thread#terminate does not deadlock when called from within the thread while being joined from without
+fails:Thread#terminate kills the entire thread when a fiber is active

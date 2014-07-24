@@ -1,1 +1,2 @@
 fails:Range#cover? uses the range element's <=> to make the comparison
+fails:Range#cover? compares values using <=>

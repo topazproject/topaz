@@ -24,6 +24,8 @@ fails:String#slice with Regexp, group raises an IndexError if there is no captur
 fails:String#slice with Regexp, group raises an IndexError when given the empty String as a group name
 fails:String#slice with Regexp, group returns subclass instances
 fails:String#slice with Regexp, group sets $~ to MatchData when there is a match and nil when there's none
+fails:String#slice with Regexp returns an untrusted string if the regexp is untrusted
+fails:String#slice with Regexp, index returns an untrusted string if the regexp is untrusted
 fails:String#slice with String returns other_str if it occurs in self
 fails:String#slice with String taints resulting strings when other is tainted
 fails:String#slice with String doesn't set $~

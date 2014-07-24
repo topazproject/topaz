@@ -13,3 +13,5 @@ fails:Time#- returns a UTC time if self is UTC
 fails:Time#- returns a non-UTC time if self is non-UTC
 fails:Time#- returns a time with the same fixed offset as self
 fails:Time#- does not returns a subclass instance
+fails:Time#- raises a TypeError if given argument is a coercible String
+fails:Time#- does not return a subclass instance

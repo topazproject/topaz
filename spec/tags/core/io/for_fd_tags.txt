@@ -42,3 +42,5 @@ fails:IO.for_fd accepts any truthy option :autoclose
 fails:IO.for_fd raises an Errno::EBADF if the file descriptor is not valid
 fails:IO.for_fd raises an Errno::EINVAL if the new mode is not compatible with the descriptor's current mode
 fails:IO.for_fd raises ArgumentError if passed an empty mode string
+fails:IO.for_fd uses the :encoding option as the external encoding when only one is given
+fails:IO.for_fd uses the :encoding options as the external encoding when it's an Encoding object

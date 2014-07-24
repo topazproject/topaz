@@ -1,3 +1,6 @@
 fails:Module#private makes the target method uncallable from other types
 fails:Module#private makes a public Object instance method private in a new module
 fails:Module#private makes a public Object instance method private in Kernel
+fails:Module#private is a private method
+fails:Module#private without arguments affects method definitions when itself is inside an eval and method definitions are outside
+fails:Module#private without arguments affects evaled method definitions when itself is outside the eval

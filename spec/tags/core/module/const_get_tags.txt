@@ -1,0 +1,1 @@
+fails:Module#const_get raises a NameError with the not found constant symbol

@@ -1,0 +1,2 @@
+fails:Hash#to_a returns a tainted array if self is tainted
+fails:Hash#to_a returns an untrusted array if self is untrusted

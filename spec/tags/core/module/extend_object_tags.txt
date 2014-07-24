@@ -1,0 +1,3 @@
+fails:Module#extend_object is a private method
+fails:Module#extend_object on Class raises a TypeError if calling after rebinded to Class
+fails:Module#extend_object when given a frozen object raises a RuntimeError before extending the object

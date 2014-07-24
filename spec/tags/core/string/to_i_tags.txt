@@ -1,1 +1,2 @@
 fails:String#to_i interprets leading characters as a number in the given base
+fails:String#to_i returns the correct Bignum for long strings

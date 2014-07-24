@@ -28,6 +28,11 @@ fails:String#sub with pattern and block doesn't raise a RuntimeError if the stri
 fails:String#sub with pattern and block doesn't interpolate special sequences like \1 for the block's return value
 fails:String#sub with pattern and block converts the block's return value to a string using to_s
 fails:String#sub with pattern and block taints the result if the original string or replacement is tainted
+fails:String#sub with pattern and Hash sets $~ to MatchData of first match and nil when there's none for access from outside
+fails:String#sub with pattern and Hash untrusts the result if the original string is untrusted
+fails:String#sub with pattern and Hash untrusts the result if a hash value is untrusted
+fails:String#sub with pattern and Hash taints the result if the original string is tainted
+fails:String#sub with pattern and Hash taints the result if a hash value is tainted
 fails:String#sub! with pattern, replacement modifies self in place and returns self
 fails:String#sub! with pattern, replacement taints self if replacement is tainted
 fails:String#sub! with pattern, replacement returns nil if no modifications were made
@@ -38,3 +43,16 @@ fails:String#sub! with pattern and block taints self if block's result is tainte
 fails:String#sub! with pattern and block returns nil if no modifications were made
 fails:String#sub! with pattern and block raises a RuntimeError if the string is modified while substituting
 fails:String#sub! with pattern and block raises a RuntimeError when self is frozen
+fails:String#sub! with pattern and Hash taints self if a hash value is tainted
+fails:String#sub! with pattern and Hash returns self with the first occurrence of pattern replaced with the value of the corresponding hash key
+fails:String#sub! with pattern and Hash removes keys that don't correspond to matches
+fails:String#sub! with pattern and Hash ignores non-String keys
+fails:String#sub! with pattern and Hash uses a key's value only a single time
+fails:String#sub! with pattern and Hash uses the hash's default value for missing keys
+fails:String#sub! with pattern and Hash coerces the hash values with #to_s
+fails:String#sub! with pattern and Hash uses the hash's value set from default_proc for missing keys
+fails:String#sub! with pattern and Hash sets $~ to MatchData of first match and nil when there's none for access from outside
+fails:String#sub! with pattern and Hash doesn't interpolate special sequences like \1 for the block's return value
+fails:String#sub! with pattern and Hash keeps untrusted state
+fails:String#sub! with pattern and Hash untrusts self if a hash value is untrusted
+fails:String#sub! with pattern and Hash keeps tainted state

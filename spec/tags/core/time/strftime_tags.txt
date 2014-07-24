@@ -39,3 +39,4 @@ fails:Time#strftime with %z formats a time with fixed negative offset as '-HHMM'
 fails:Time#strftime with %z formats a time with fixed offset as '+/-HH:MM' with ':' specifier
 fails:Time#strftime with %z formats a time with fixed offset as '+/-HH:MM:SS' with '::' specifier
 fails:Time#strftime with %z rounds fixed offset to the nearest second
+fails:Time#strftime passes the format string's encoding to the result string

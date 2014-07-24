@@ -12,3 +12,6 @@ fails:IO.popen with a leading Array parameter uses the Array as command plus arg
 fails:IO.popen with a leading Array parameter uses a leading Hash in the Array as additional environment variables
 fails:IO.popen does not throw an exception if child exited and has been waited for
 fails:IO.popen with a leading Array parameter uses a trailing Hash in the Array for spawn-like settings
+fails:IO.popen has the given external encoding
+fails:IO.popen has the given internal encoding
+fails:IO.popen sets the internal encoding to nil if it's the same as the external encoding
