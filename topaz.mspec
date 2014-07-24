@@ -27,6 +27,10 @@ class MSpecScript
     "^#{Rubyspec}/core/io/reopen_spec.rb",
     # socket: ``require 'socket'``
     "^#{Rubyspec}/core/file/socket_spec.rb",
+    # rubyspecs/core/io/fixtures/file_types:
+    #   `find /dev /devices -type b` returns nil
+    #   -> NoMethodError: undefined method `split' for NilClass
+    "^#{Rubyspec}/core/file/ftype_spec.rb",
     # Rational: ``Rational(2, 3)``
     "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]

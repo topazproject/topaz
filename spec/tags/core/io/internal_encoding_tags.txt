@@ -76,3 +76,4 @@ fails:IO#internal_encoding with 'a' mode when Encoding.default_internal != Encod
 fails:IO#internal_encoding with 'a' mode when Encoding.default_internal != Encoding.default_external returns nil when the external encoding is ASCII-8BIT and the internal encoding is not set
 fails:IO#internal_encoding with 'a+' mode when Encoding.default_internal != Encoding.default_external returns nil when Encoding.default_external is ASCII-8BIT and the internal encoding is not set
 fails:IO#internal_encoding with 'a+' mode when Encoding.default_internal != Encoding.default_external returns nil when the external encoding is ASCII-8BIT and the internal encoding is not set
+fails:IO#internal_encoding with 'a' mode when Encoding.default_internal != Encoding.default_external does not change when set and Encoding.default_internal is changed
