@@ -31,6 +31,7 @@ class MSpecScript
     #   `find /dev /devices -type b` returns nil
     #   -> NoMethodError: undefined method `split' for NilClass
     "^#{Rubyspec}/core/file/ftype_spec.rb",
+    "^#{Rubyspec}/core/file/stat/ftype_spec.rb",
     # Rational: ``Rational(2, 3)``
     "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
