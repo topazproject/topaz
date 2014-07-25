@@ -92,7 +92,7 @@ class Interpreter(object):
     def run_instr(self, space, name, num_args, bytecode, frame, pc):
         args = ()
         # Do not change these from * 256 to << 8, lshift has defined overflow
-        # semantics which cause it to not propogate the nonnegative-ness.
+        # semantics which cause it to not propagate the nonnegative-ness.
         if num_args >= 1:
             v = ord(bytecode.code[pc]) | (ord(bytecode.code[pc + 1]) * 256)
             check_nonneg(v)
