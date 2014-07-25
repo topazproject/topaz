@@ -4,7 +4,7 @@ from rpython.config.translationoption import get_combined_translation_config
 
 
 def pytest_funcarg__space(request):
-    # Inside the function so various intitialization stuff isn't seen until
+    # Inside the function so various initialization stuff isn't seen until
     # coverage is setup.
     import topaz
     from topaz.main import get_topaz_config_options

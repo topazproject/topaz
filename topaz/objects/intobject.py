@@ -230,7 +230,7 @@ class W_FixnumObject(W_RootObject):
             if y == 0:
                 raise space.error(
                     space.w_ZeroDivisionError,
-                    "devided by 0"
+                    "divided by 0"
                 )
             mod = space.int_w(self.method_mod_int_impl(space, y))
             div = (self.intvalue - mod) / y
@@ -262,7 +262,7 @@ class W_FixnumObject(W_RootObject):
 
     def method_mod_int_impl(self, space, other):
         if other == 0:
-            raise space.error(space.w_ZeroDivisionError, "devided by 0")
+            raise space.error(space.w_ZeroDivisionError, "divided by 0")
         return space.newint(self.intvalue % other)
 
     @classdef.method("<<", other="int")

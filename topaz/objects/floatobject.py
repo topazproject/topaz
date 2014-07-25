@@ -340,7 +340,7 @@ class W_FloatObject(W_RootObject):
 
     def method_mod_float_impl(self, space, other):
         if other == 0.0:
-            raise space.error(space.w_ZeroDivisionError, "devided by 0")
+            raise space.error(space.w_ZeroDivisionError, "divided by 0")
         elif self.floatvalue == -0.0:
             return space.newfloat(-0.0)
         elif math.isinf(other) and other < 0.0:

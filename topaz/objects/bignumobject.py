@@ -182,7 +182,7 @@ class W_BignumObject(W_IntegerObject):
              space.is_kind_of(w_other, space.w_fixnum)):
             other = space.bigint_w(w_other)
             if not other.tobool():
-                raise space.error(space.w_ZeroDivisionError, "devided by 0")
+                raise space.error(space.w_ZeroDivisionError, "divided by 0")
             div, mod = self.bigint.divmod(other)
             return space.newarray([space.newbigint_fromrbigint(div),
                                    space.newbigint_fromrbigint(mod)])
@@ -220,5 +220,5 @@ class W_BignumObject(W_IntegerObject):
 
     def method_mod_bigint_impl(self, space, other):
         if not other.tobool():
-            raise space.error(space.w_ZeroDivisionError, "devided by 0")
+            raise space.error(space.w_ZeroDivisionError, "divided by 0")
         return space.newbigint_fromrbigint(self.bigint.mod(other))
