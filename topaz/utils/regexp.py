@@ -495,8 +495,10 @@ class Branch(RegexpBase):
         prefix = alternatives[0]
         pos = 0
         end_pos = max_count
-        while (pos < end_pos and prefix[pos].can_be_affix() and
-            [None for a in alternatives if a[pos] == prefix[pos]]):
+        while (
+            pos < end_pos and prefix[pos].can_be_affix() and
+            [None for a in alternatives if a[pos] == prefix[pos]]
+        ):
             pos += 1
         if pos == 0:
             return [], branches
@@ -518,8 +520,10 @@ class Branch(RegexpBase):
         suffix = alternatives[0]
         pos = -1
         end_pos = -1 - max_count
-        while (pos > end_pos and suffix[pos].can_be_affix() and
-            [None for a in alternatives if a[pos] == suffix[pos]]):
+        while (
+            pos > end_pos and suffix[pos].can_be_affix() and
+            [None for a in alternatives if a[pos] == suffix[pos]]
+        ):
             pos -= 1
         count = -1 - pos
         if count == 0:
