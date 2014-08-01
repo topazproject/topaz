@@ -1,3 +1,5 @@
+from rpython.jit.metainterp.test.support import LLJitMixin
+from rpython.rlib.jit import JitDriver
 from rpython.rtyper.test.test_llinterp import interpret
 
 from topaz.utils.ordereddict import OrderedDict
@@ -328,3 +330,22 @@ class TestRPythonOrderedDict(BaseTestOrderedDict):
             else:
                 raise NotImplementedError(args)
             setattr(cls, func.__name__, make_caller(i))
+
+
+class TestOrderedDictJIT(LLJitMixin):
+    def test_dict_virtual(self):
+        jd = JitDriver(greens=[], reds='auto')
+
+        def f(n):
+            d = OrderedDict()
+            while n > 0:
+                jd.jit_merge_point()
+                if n % 10 == 0:
+                    n -= len(d)
+                d = OrderedDict()
+                d["a"] = n
+                n -= 1
+            return len(d)
+
+        self.meta_interp(f, [100])
+        self.check_simple_loop(call_may_force=0, call=0, new=0)
