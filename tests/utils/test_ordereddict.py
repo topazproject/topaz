@@ -333,7 +333,7 @@ class TestRPythonOrderedDict(BaseTestOrderedDict):
 
 
 class TestOrderedDictJIT(LLJitMixin):
-    def test_dict_virtual(self):
+    def test_setitem_on_virtual(self):
         jd = JitDriver(greens=[], reds='auto')
 
         def f(n):
