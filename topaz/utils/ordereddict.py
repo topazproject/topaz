@@ -3,6 +3,7 @@ from collections import OrderedDict as PyOrderedDict
 
 from rpython.annotator import model
 from rpython.annotator.bookkeeper import getbookkeeper
+from rpython.rlib import jit
 from rpython.rlib.objectmodel import hlinvoke
 from rpython.rlib.rarithmetic import r_uint, intmask, LONG_BIT
 from rpython.rtyper.extregistry import ExtRegistryEntry
@@ -480,6 +481,8 @@ class LLOrderedDict(object):
         return d.num_items
 
     @staticmethod
+    @jit.look_inside_iff(lambda d, key, hash:
+                         jit.isvirtual(d) and jit.isconstant(key))
     def ll_lookup(d, key, hash):
         entries = d.entries
         mask = len(entries) - 1
