@@ -1,7 +1,9 @@
 from topaz import consts
 
+from .base import BaseTopazTest
 
-class TestCompiler(object):
+
+class TestCompiler(BaseTopazTest):
     def assert_compiles(self, space, source, expected_bytecode_str):
         bc = space.compile(source, None)
         self.assert_compiled(bc, expected_bytecode_str)
@@ -207,7 +209,10 @@ class TestCompiler(object):
 
         RETURN
         """)
-        assert bc.consts_w == [space.w_false, space.w_true, space.w_nil]
+        assert len(bc.consts_w) == 3
+        assert self.unwrap(space, bc.consts_w[0]) is False
+        assert self.unwrap(space, bc.consts_w[1]) is True
+        assert self.unwrap(space, bc.consts_w[2]) is None
 
     def test_comparison(self, space):
         self.assert_compiles(space, "1 == 1", """

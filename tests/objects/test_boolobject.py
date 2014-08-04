@@ -22,9 +22,9 @@ class TestTrueObject(BaseTopazTest):
 
     def test_and(self, space):
         w_res = space.execute("return true & 3")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return true & false")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_or(self, space):
         w_res = space.execute("return true | 3")
@@ -33,14 +33,18 @@ class TestTrueObject(BaseTopazTest):
         assert w_res is space.w_true
 
     def test_xor(self, space):
-        assert space.execute("return true ^ nil") is space.w_true
-        assert space.execute("return true ^ false") is space.w_true
-        assert space.execute("return true ^ true") is space.w_false
-        assert space.execute("return true ^ 1") is space.w_false
+        w_res = space.execute("return true ^ nil")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return true ^ false")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return true ^ true")
+        assert self.unwrap(space, w_res) is False
+        w_res = space.execute("return true ^ 1")
+        assert self.unwrap(space, w_res) is False
 
     def test_singleton_class(self, space):
         w_res = space.execute("return true.singleton_class == TrueClass")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res)
 
 
 class TestFalseObject(BaseTopazTest):
@@ -64,22 +68,26 @@ class TestFalseObject(BaseTopazTest):
 
     def test_and(self, space):
         w_res = space.execute("return false & 3")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return false & false")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_or(self, space):
         w_res = space.execute("return false | 3")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return false | nil")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_xor(self, space):
-        assert space.execute("return false ^ nil") is space.w_false
-        assert space.execute("return false ^ false") is space.w_false
-        assert space.execute("return false ^ true") is space.w_true
-        assert space.execute("return false ^ 1") is space.w_true
+        w_res = space.execute("return false ^ nil")
+        assert self.unwrap(space, w_res) is False
+        w_res = space.execute("return false ^ false")
+        assert self.unwrap(space, w_res) is False
+        w_res = space.execute("return false ^ true")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return false ^ 1")
+        assert self.unwrap(space, w_res) is True
 
     def test_singleton_class(self, space):
         w_res = space.execute("return false.singleton_class == FalseClass")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True

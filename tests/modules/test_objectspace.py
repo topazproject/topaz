@@ -1,7 +1,9 @@
 from rpython.rlib import rgc
 
+from ..base import BaseTopazTest
 
-class TestObjectSpace(object):
+
+class TestObjectSpace(BaseTopazTest):
     def test_name(self, space):
         space.execute("ObjectSpace")
 
@@ -18,4 +20,4 @@ class TestObjectSpace(object):
         end
         return names.include? "X"
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True

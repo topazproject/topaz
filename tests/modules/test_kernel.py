@@ -29,7 +29,7 @@ class TestKernel(BaseTopazTest):
         """)
         w_cls, w_lambda = space.listview(w_res)
         assert w_cls is space.w_proc
-        assert w_lambda is space.w_true
+        assert self.unwrap(space, w_lambda) is True
 
     def test_proc(self, space):
         w_res = space.execute("""
@@ -38,7 +38,7 @@ class TestKernel(BaseTopazTest):
         """)
         w_cls, w_lambda = space.listview(w_res)
         assert w_cls is space.w_proc
-        assert w_lambda is space.w_false
+        assert self.unwrap(space, w_lambda) is False
 
     def test_singleton_methods(self, space):
         w_res = space.execute("""
@@ -137,9 +137,14 @@ class TestKernel(BaseTopazTest):
             space.execute("exit")
 
     def test_block_given_p(self, space):
-        assert space.execute("return block_given?") is space.w_false
-        assert space.execute("return iterator?") is space.w_false
-        assert space.execute("return (proc { block_given? })[]") is space.w_false
+        w_res = space.execute("return block_given?")
+        assert self.unwrap(space, w_res) is False
+
+        w_res = space.execute("return iterator?")
+        assert self.unwrap(space, w_res) is False
+
+        w_res = space.execute("return (proc { block_given? })[]")
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         def foo
           block_given?
@@ -304,7 +309,7 @@ class TestRequire(BaseTopazTest):
         assert space.int_w(w_res) == -9
 
     def test_load_path(self, space, tmpdir):
-        f = tmpdir.join("t.rb")
+        f = tmpdir.join("abc.rb")
         f.write("""
         def t(a, b)
           a - b
@@ -312,7 +317,7 @@ class TestRequire(BaseTopazTest):
         """)
         w_res = space.execute("""
         $LOAD_PATH[0..-1] = ['%s']
-        require 't.rb'
+        require 'abc.rb'
 
         return t(2, 5)
         """ % tmpdir)
@@ -322,7 +327,7 @@ class TestRequire(BaseTopazTest):
         w_res = space.execute("""
         return require 'prettyprint'
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_nonexistance(self, space):
         with self.raises(space, "LoadError"):
@@ -396,7 +401,7 @@ class TestRequire(BaseTopazTest):
         require 't'
         return $success
         """ % tmpdir)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_path_ambigious_directory_file(self, space, tmpdir):
         f = tmpdir.join("t.rb")
@@ -409,7 +414,7 @@ class TestRequire(BaseTopazTest):
         require '%s'
         return $success
         """ % (tmpdir, tmpdir.join("t")))
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
 
 class TestExec(BaseTopazTest):

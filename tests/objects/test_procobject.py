@@ -9,7 +9,7 @@ class TestProcObject(BaseTopazTest):
         """)
         w_cls, w_proc = space.listview(w_res)
         assert w_cls is space.w_proc
-        assert w_proc is space.w_false
+        assert self.unwrap(space, w_proc) is False
 
     def test_call(self, space):
         w_res = space.execute("""

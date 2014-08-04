@@ -41,7 +41,7 @@ class TestEnumberable(BaseTopazTest):
           word.length > 2
         end
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_all_false(self, space):
         w_res = space.execute("""
@@ -49,19 +49,19 @@ class TestEnumberable(BaseTopazTest):
           word.length > 3
         end
         """)
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_all_empty(self, space):
         w_res = space.execute("""
         return [].all?
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_all_no_block(self, space):
         w_res = space.execute("""
         return [1, 2, 3].all?
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_any(self, space):
         w_res = space.execute("""
@@ -69,13 +69,13 @@ class TestEnumberable(BaseTopazTest):
           word.length > 2
         end
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_any_false(self, space):
         w_res = space.execute("""
         return [nil, nil, nil].any?
         """)
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_select(self, space):
         w_res = space.execute("""
@@ -87,12 +87,12 @@ class TestEnumberable(BaseTopazTest):
         w_res = space.execute("""
         return (2..5).include? 12
         """)
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
         w_res = space.execute("""
         return (2..3).include? 2
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_drop(self, space):
         w_res = space.execute("""return [0, 1, 2, 3, 4, 5, 6, 7].drop 3""")

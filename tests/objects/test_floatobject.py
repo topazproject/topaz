@@ -45,19 +45,19 @@ class TestFloatObject(BaseTopazTest):
 
     def test_equal(self, space):
         w_res = space.execute("return 2.3 == 2.3")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return 2.4 == 2.3")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_equal_method(self, space):
         w_res = space.execute("return 2.3.equal?(2.3)")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return Float::NAN.equal?(Float::NAN)")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_hashability(self, space):
         w_res = space.execute("return 1.0.hash == 1.0.hash")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_to_s(self, space):
         w_res = space.execute("return 1.5.to_s")
@@ -80,28 +80,42 @@ class TestFloatObject(BaseTopazTest):
             space.execute("(-1.0 / 0.0).to_i")
 
     def test_lt(self, space):
-        assert space.execute("return 1.1 < 1.2") is space.w_true
-        assert space.execute("return 1.2 < 0") is space.w_false
+        w_res = space.execute("return 1.1 < 1.2")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1.2 < 0")
+        assert self.unwrap(space, w_res) is False
 
     def test_lte(self, space):
-        assert space.execute("return 1.1 <= 2") is space.w_true
-        assert space.execute("return 1.0 <= 1") is space.w_true
-        assert space.execute("return 1.1 <= 1.1") is space.w_true
-        assert space.execute("return 1.1 <= 0.9") is space.w_false
-        assert space.execute("return 1.0 <= '1.1'") is space.w_true
+        w_res = space.execute("return 1.1 <= 2")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1.0 <= 1")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1.1 <= 1.1")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1.1 <= 0.9")
+        assert self.unwrap(space, w_res) is False
+        w_res = space.execute("return 1.0 <= '1.1'")
+        assert self.unwrap(space, w_res) is True
         with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
             space.execute("1.0 <= 'a'")
 
     def test_gt(self, space):
-        assert space.execute("return 1.1 > 1.2") is space.w_false
-        assert space.execute("return 1.2 > 0") is space.w_true
+        w_res = space.execute("return 1.1 > 1.2")
+        assert self.unwrap(space, w_res) is False
+        w_res = space.execute("return 1.2 > 0")
+        assert self.unwrap(space, w_res) is True
 
     def test_gte(self, space):
-        assert space.execute("return 1.1 >= 2") is space.w_false
-        assert space.execute("return 1.0 >= 1") is space.w_true
-        assert space.execute("return 1.1 >= 1.1") is space.w_true
-        assert space.execute("return 1.1 >= 0.9") is space.w_true
-        assert space.execute("return 1.0 >= '1.1'") is space.w_false
+        w_res = space.execute("return 1.1 >= 2")
+        assert self.unwrap(space, w_res) is False
+        w_res = space.execute("return 1.0 >= 1")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1.1 >= 1.1")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1.1 >= 0.9")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1.0 >= '1.1'")
+        assert self.unwrap(space, w_res) is False
         with self.raises(space, "ArgumentError", "comparison of Float with String failed"):
             space.execute("1.0 >= 'a'")
 
@@ -210,6 +224,6 @@ class TestFloatObject(BaseTopazTest):
 
     def test_nan(self, space):
         w_res = space.execute("return 1.0.nan?")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return Float::NAN.nan?")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True

@@ -748,9 +748,9 @@ class TestInterpreter(BaseTopazTest):
 
     def test_not(self, space):
         w_res = space.execute("return !3")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return !!3")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_subscript_assignment(self, space):
         w_res = space.execute("""
@@ -794,7 +794,7 @@ class TestInterpreter(BaseTopazTest):
         a = *x
         return a == [x]
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("""
         *a = nil
         return a
@@ -1917,4 +1917,4 @@ class TestExceptions(BaseTopazTest):
         w_res = space.execute("""
         ! respond_to? :asdf
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True

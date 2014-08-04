@@ -83,13 +83,13 @@ class TestBaseObject(BaseTopazTest):
 
     def test_not(self, space):
         w_res = space.execute("return !BasicObject.new")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return !true")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return !false")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return !nil")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test___send__(self, space):
         w_res = space.execute("""
@@ -232,7 +232,7 @@ class TestObjectObject(BaseTopazTest):
         obj = Object.new
         return obj.to_s == obj.inspect
         """)
-        assert w_res == space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("""
         class A
           def to_s
@@ -242,7 +242,7 @@ class TestObjectObject(BaseTopazTest):
         obj = A.new
         return obj.to_s == obj.inspect
         """)
-        assert w_res == space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_send(self, space):
         w_res = space.execute("return [1.send(:to_s), 1.send('+', 2)]")
@@ -266,8 +266,8 @@ class TestObjectObject(BaseTopazTest):
         """)
         w_int, w_self_hash, w_other_hash = space.listview(w_res)
         assert isinstance(w_int, W_FixnumObject)
-        assert w_self_hash is space.w_true
-        assert w_other_hash is space.w_true
+        assert self.unwrap(space, w_self_hash) is True
+        assert self.unwrap(space, w_other_hash) is True
 
     def test_is_kind_ofp(self, space):
         w_res = space.execute("""

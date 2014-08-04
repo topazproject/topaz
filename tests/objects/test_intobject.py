@@ -106,7 +106,7 @@ class TestFixnumObject(BaseTopazTest):
 
     def test_equal(self, space):
         w_res = space.execute("return 1 == 1")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("""
         class A
           def ==(o); 'hi'; end
@@ -115,43 +115,48 @@ class TestFixnumObject(BaseTopazTest):
         """)
         assert space.str_w(w_res) == 'hi'
         w_res = space.execute("return 1 == '1'")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_not_equal(self, space):
         w_res = space.execute("return 1 != 1")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return 1 != '1'")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("""
         class A
           def ==(o); 'hi'; end
         end
         return 1 != A.new
         """)
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_less(self, space):
         w_res = space.execute("return 1 < 2")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return 1 < 1.2")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_less_equal(self, space):
-        assert space.execute("return 1 <= 2") is space.w_true
-        assert space.execute("return 1 <= 1") is space.w_true
-        assert space.execute("return 1 <= 1.1") is space.w_true
-        assert space.execute("return 1 <= 0.9") is space.w_false
-        assert space.execute("return 1 <= '1.1'") is space.w_true
+        w_res = space.execute("return 1 <= 2")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1 <= 1")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1 <= 1.1")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 1 <= 0.9")
+        assert self.unwrap(space, w_res) is False
+        w_res = space.execute("return 1 <= '1.1'")
+        assert self.unwrap(space, w_res) is True
         with self.raises(space, "ArgumentError", "comparison of Fixnum with String failed"):
             space.execute("1 <= 'a'")
 
     def test_greater(self, space):
         w_res = space.execute("return 1 > 2")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_greater_equal(self, space):
         w_res = space.execute("return 5 >= 4")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_times(self, space):
         w_res = space.execute("""
@@ -195,9 +200,9 @@ class TestFixnumObject(BaseTopazTest):
 
     def test_eqlp(self, space):
         w_res = space.execute("return 1.eql? 1.0")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return 1.eql? 1")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_to_i(self, space):
         w_res = space.execute("return [1.to_i, 1.to_int]")

@@ -46,9 +46,9 @@ class TestRangeObject(BaseTopazTest):
 
     def test_eqeqeq(self, space):
         w_res = space.execute("return (1..10) === 5")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return (1..10) === -1")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_begin(self, space):
         w_res = space.execute("return (1..10).begin")
@@ -83,4 +83,4 @@ class TestRangeObject(BaseTopazTest):
         r = (1...3)
         return r.each {}.equal?(r)
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
