@@ -82,9 +82,6 @@ class TestFloatObject(BaseTopazTest):
         assert space.str_w(w_res) == "0.0001"
         w_res = space.execute("return 0.00001.to_s")
         assert space.str_w(w_res) == "1.0e-05"
-        
-        
-        w_res = space.execute
 
     def test_to_i(self, space):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")

@@ -5,7 +5,7 @@ import sys
 from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
-from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
+from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0,
     NAN, INFINITY, isfinite, round_away)
 
 from topaz.error import RubyError
@@ -90,12 +90,12 @@ class W_FloatObject(W_RootObject):
                     if len(exponent_str) == 1:
                         exponent_str = "0" + exponent_str
 
-                    float_string = (number 
-                                    + "." + decimal_places 
+                    float_string = (number
+                                    + "." + decimal_places
                                     + "e-" + exponent_str)
                 elif exponent > 0:
-                    # We have to move the decimal separator 
-                    # exponent steps to the right 
+                    # We have to move the decimal separator
+                    # exponent steps to the right
                     if len(decimal_places) < exponent:
                         zeroes = "0" * (exponent - len(decimal_places))
                         decimal_places = (decimal_places + zeroes)
