@@ -24,7 +24,7 @@ class Test(BaseTest):
         invoke.run("pip install {}".format(" ".join(self.deps)))
 
     def download_rpython(self):
-        invoke.run("wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2 || wget https://bitbucket.org/pypy/pypy/get/default.tar.bz2 -O `pwd`/../pypy.tar.bz2")
+        invoke.run("wget https://bitbucket.org/pypy/pypy/get/release-2.4.0.tar.bz2 -O `pwd`/../pypy.tar.bz2 || wget https://bitbucket.org/pypy/pypy/get/release-2.4.0.tar.bz2 -O `pwd`/../pypy.tar.bz2")
         invoke.run("tar -xf `pwd`/../pypy.tar.bz2 -C `pwd`/../")
         [path_name] = glob.glob("../pypy-pypy*")
         path_name = os.path.abspath(path_name)
