@@ -10,7 +10,7 @@ using the RPython VM toolchain. Its goals are simplicity of implementation and
 performance.
 
 You'll need to have a few dependencies installed. You can get them with ``pip
-install -r requirements.txt``. Finally make sure you have a recent checkout of
+install -r requirements.txt``. Finally make sure you have checkout (use tag version `release-2.4.0`) of
 `PyPy`_ and have it on your ``PYTHONPATH``.
 
 To run the tests::
