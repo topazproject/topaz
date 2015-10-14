@@ -173,24 +173,24 @@ class TestHashObject(BaseTopazTest):
 
     def test_emptyp(self, space):
         w_res = space.execute("return {}.empty?")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return {1 => 2}.empty?")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_equal(self, space):
         w_res = space.execute("return {} == nil")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return {1 => 2, 2 => 3} == {2 => 3, 1 => 2}")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return {} == {}")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return {} == {1 => 2}")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         h = {}
         return h == h
         """)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_shift(self, space):
         w_res = space.execute("return {}.shift")

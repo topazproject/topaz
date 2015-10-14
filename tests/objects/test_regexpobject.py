@@ -136,7 +136,7 @@ class TestRegexpObject(BaseTopazTest):
 
     def test_new_regexp(self, space):
         w_res = space.execute("return Regexp.new('..abc..') == Regexp.compile('..abc..')")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return Regexp.new(/abc/).source")
         assert space.str_w(w_res) == "abc"
 
@@ -221,15 +221,15 @@ class TestRegexpObject(BaseTopazTest):
 
     def test_casefoldp(self, space):
         w_res = space.execute("return /a/.casefold?")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return /a/i.casefold?")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_eqeqeq(self, space):
         w_res = space.execute("return /abc/ === 'defabc'")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return /abc/ === 'ddddddd'")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_escape(self, space):
         w_res = space.execute("""

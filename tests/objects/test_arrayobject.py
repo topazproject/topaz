@@ -79,9 +79,9 @@ class TestArrayObject(BaseTopazTest):
 
     def test_emptyp(self, space):
         w_res = space.execute("return [].empty?")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return [1].empty?")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_plus(self, space):
         w_res = space.execute("return [1, 2] + [3]")
@@ -321,11 +321,11 @@ class TestArrayObject(BaseTopazTest):
 
     def test_eqlp(self, space):
         w_res = space.execute("return [].eql? 2")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return [0].eql? [0.0]")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return [0].eql? [0]")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_clear(self, space):
         w_res = space.execute("""

@@ -473,7 +473,12 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("attr")
     def method_attr(self, space, args_w):
-        if len(args_w) == 2 and (args_w[1] is space.w_true or args_w[1] is space.w_false):
+        if (
+            len(args_w) == 2 and (
+                space.is_true_object(args_w[1]) or
+                space.is_false_object(args_w[1])
+            )
+        ):
             [w_name, w_writable] = args_w
             if space.is_true(w_writable):
                 self.method_attr_accessor(space, [w_name])

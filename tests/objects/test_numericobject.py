@@ -31,13 +31,13 @@ class TestNumericObject(BaseTopazTest):
         class A < Numeric; end
         return A.new <= A.new
         """)
-        assert w_res == space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("""
         class A < Numeric; end
         a = A.new
         return a <= a
         """)
-        assert w_res == space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_coerce(self, space):
         w_res = space.execute("return 1.coerce(1)")

@@ -146,8 +146,8 @@ class Interpreter(object):
         unroller = ThrowValue(e.name, e.w_value)
         return block.handle(space, frame, unroller)
 
-    def jump(self, space, bytecode, frame, cur_pc, target_pc):
-        if target_pc < cur_pc:
+    def jump(self, space, bytecode, frame, cur_pc, target_pc, unroll=False):
+        if target_pc < cur_pc and not unroll:
             self.jitdriver.can_enter_jit(
                 self=self, bytecode=bytecode, frame=frame, pc=target_pc,
                 block_bytecode=self.get_block_bytecode(frame.block),
@@ -644,16 +644,24 @@ class Interpreter(object):
         return self.jump(space, bytecode, frame, pc, target_pc)
 
     def JUMP_IF_TRUE(self, space, bytecode, frame, pc, target_pc):
-        if space.is_true(frame.pop()):
-            return self.jump(space, bytecode, frame, pc, target_pc)
+        should_jump = space.is_true(frame.pop())
+        is_const = jit.isconstant(should_jump)
+        if should_jump:
+            return self.jump(
+                space, bytecode, frame, pc, target_pc, unroll=is_const
+            )
         else:
             return pc
 
     def JUMP_IF_FALSE(self, space, bytecode, frame, pc, target_pc):
-        if space.is_true(frame.pop()):
+        should_jump = space.is_true(frame.pop())
+        is_const = jit.isconstant(should_jump)
+        if should_jump:
             return pc
         else:
-            return self.jump(space, bytecode, frame, pc, target_pc)
+            return self.jump(
+                space, bytecode, frame, pc, target_pc, unroll=is_const
+            )
 
     def DISCARD_TOP(self, space, bytecode, frame, pc):
         frame.pop()

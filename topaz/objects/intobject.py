@@ -325,7 +325,9 @@ class W_FixnumObject(W_RootObject):
 
     @classdef.method("!=")
     def method_ne(self, space, w_other):
-        return space.newbool(space.send(self, "==", [w_other]) is space.w_false)
+        return space.newbool(
+            not space.is_true(space.send(self, "==", [w_other]))
+        )
 
     def new_bool_op(classdef, name, func):
         @classdef.method(name)

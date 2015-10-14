@@ -54,9 +54,9 @@ class TestStringObject(BaseTopazTest):
 
     def test_emptyp(self, space):
         w_res = space.execute("return ''.empty?")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return 'a'.empty?")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_subscript_constant(self, space):
         w_res = space.execute("""
@@ -118,9 +118,9 @@ class TestStringObject(BaseTopazTest):
 
     def test_eqlp(self, space):
         w_res = space.execute("return 'abc'.eql? 2")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return 'abc'.eql? 'abc'")
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_hash(self, space):
         w_res = space.execute("""
@@ -465,9 +465,12 @@ class TestStringObject(BaseTopazTest):
         assert self.unwrap(space, w_res) == ["desserts", "stressed"]
 
     def test_includep(self, space):
-        assert space.execute("return 'abc'.include? 'ab'") is space.w_true
-        assert space.execute("return 'abc'.include? 'bc'") is space.w_true
-        assert space.execute("return 'abc'.include? 'cd'") is space.w_false
+        w_res = space.execute("return 'abc'.include? 'ab'")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 'abc'.include? 'bc'")
+        assert self.unwrap(space, w_res) is True
+        w_res = space.execute("return 'abc'.include? 'cd'")
+        assert self.unwrap(space, w_res) is False
 
     def test_gsub(self, space):
         w_res = space.execute("""

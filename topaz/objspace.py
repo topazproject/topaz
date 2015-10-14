@@ -36,7 +36,9 @@ from topaz.modules.topaz import Topaz
 from topaz.objects.arrayobject import W_ArrayObject
 from topaz.objects.bignumobject import W_BignumObject
 from topaz.objects.bindingobject import W_BindingObject
-from topaz.objects.boolobject import W_TrueObject, W_FalseObject
+from topaz.objects.boolobject import (
+    W_BoolObject, true_classdef, false_classdef
+)
 from topaz.objects.classobject import W_ClassObject
 from topaz.objects.codeobject import W_CodeObject
 from topaz.objects.dirobject import W_DirObject
@@ -94,8 +96,8 @@ class ObjectSpace(object):
         self.bootstrap = True
         self.exit_handlers_w = []
 
-        self.w_true = W_TrueObject(self)
-        self.w_false = W_FalseObject(self)
+        self.w_true = W_BoolObject(self, True)
+        self.w_false = W_BoolObject(self, False)
         self.w_nil = W_NilObject(self)
 
         # Force the setup of a few key classes, we create a fake "Class" class
@@ -173,8 +175,8 @@ class ObjectSpace(object):
             self.w_kernel, self.w_topaz,
 
             self.getclassfor(W_NilObject),
-            self.getclassfor(W_TrueObject),
-            self.getclassfor(W_FalseObject),
+            self.getclassobject(true_classdef),
+            self.getclassobject(false_classdef),
             self.getclassfor(W_RangeObject),
             self.getclassfor(W_FileObject),
             self.getclassfor(W_DirObject),
@@ -344,10 +346,7 @@ class ObjectSpace(object):
 
     @signature(types.any(), types.bool(), returns=types.instance(W_Root))
     def newbool(self, boolvalue):
-        if boolvalue:
-            return self.w_true
-        else:
-            return self.w_false
+        return W_BoolObject(self, boolvalue)
 
     @signature(types.any(), types.int(), returns=types.instance(W_FixnumObject))
     def newint(self, intvalue):
@@ -488,6 +487,12 @@ class ObjectSpace(object):
 
     def is_true(self, w_obj):
         return w_obj.is_true(self)
+
+    def is_true_object(self, w_obj):
+        return isinstance(w_obj, W_BoolObject) and w_obj.is_true(self)
+
+    def is_false_object(self, w_obj):
+        return isinstance(w_obj, W_BoolObject) and not w_obj.is_true(self)
 
     def getclass(self, w_receiver):
         return w_receiver.getclass(self)

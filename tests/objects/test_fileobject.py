@@ -185,30 +185,30 @@ class TestFile(BaseTopazTest):
         f = tmpdir.join("test.rb")
         f.write("")
         w_res = space.execute("return File.exist?('%s')" % f)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return File.exist?('%s')" % tmpdir)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return File.exist?('no way this exists')")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_filep(self, space, tmpdir):
         f = tmpdir.join("test.rb")
         f.write("")
         w_res = space.execute("return File.file?('%s')" % f)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
         w_res = space.execute("return File.file?('%s')" % tmpdir)
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         w_res = space.execute("return File.file?('no way this exists')")
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
 
     def test_executablep(self, space, tmpdir):
         f = tmpdir.join("test.rb")
         f.write("")
         w_res = space.execute("return File.executable?('%s')" % f)
-        assert w_res is space.w_false
+        assert self.unwrap(space, w_res) is False
         os.chmod(str(f), stat.S_IEXEC)
         w_res = space.execute("return File.executable?('%s')" % f)
-        assert w_res is space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_directoryp(self, space, tmpdir):
         w_res = space.execute("return File.directory?('%s')" % tmpdir)

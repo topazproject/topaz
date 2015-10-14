@@ -244,7 +244,7 @@ class TestIO(BaseTopazTest):
         f = File.new '%s'
         return f.eql? f.to_io
         """ % f)
-        assert w_res == space.w_true
+        assert self.unwrap(space, w_res) is True
 
     def test_to_i(self, space, tmpdir):
         f1 = tmpdir.join("file1.txt")

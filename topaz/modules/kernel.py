@@ -314,9 +314,12 @@ class Kernel(object):
 
     @moduledef.method("dup")
     def method_dup(self, space):
-        if (self is space.w_nil or self is space.w_true or
-            self is space.w_false or space.is_kind_of(self, space.w_symbol) or
-            space.is_kind_of(self, space.w_fixnum)):
+        if (
+            self is space.w_nil or space.is_true_object(self) or
+            space.is_false_object(self) or
+            space.is_kind_of(self, space.w_symbol) or
+            space.is_kind_of(self, space.w_fixnum)
+        ):
             raise space.error(space.w_TypeError, "can't dup %s" % space.getclass(self).name)
         w_dup = space.send(space.getnonsingletonclass(self), "allocate")
         w_dup.copy_instance_vars(space, self)
@@ -326,9 +329,12 @@ class Kernel(object):
 
     @moduledef.method("clone")
     def method_clone(self, space):
-        if (self is space.w_nil or self is space.w_true or
-            self is space.w_false or space.is_kind_of(self, space.w_symbol) or
-            space.is_kind_of(self, space.w_fixnum)):
+        if (
+            self is space.w_nil or space.is_true_object(self) or
+            space.is_false_object(self) or
+            space.is_kind_of(self, space.w_symbol) or
+            space.is_kind_of(self, space.w_fixnum)
+        ):
             raise space.error(space.w_TypeError, "can't dup %s" % space.getclass(self).name)
         w_dup = space.send(space.getnonsingletonclass(self), "allocate")
         w_dup.copy_instance_vars(space, self)
