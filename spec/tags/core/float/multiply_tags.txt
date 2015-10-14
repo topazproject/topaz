@@ -1,0 +1,1 @@
+fails:Float#* raises a TypeError when given a non-Numeric

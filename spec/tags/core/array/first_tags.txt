@@ -1,0 +1,1 @@
+fails:Array#first raises a RangeError when count is a Bignum

@@ -11,3 +11,5 @@ fails:Kernel.abort sets the exception status code of of 1
 fails:Kernel.abort prints the specified message to STDERR
 fails:Kernel.abort coerces the argument with #to_str
 fails:Kernel.abort raises TypeError when given a non-String object
+fails:Kernel#abort sets the exception status code of 1
+fails:Kernel.abort sets the exception status code of 1

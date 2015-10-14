@@ -1,0 +1,1 @@
+fails:Float#< raises an ArgumentError when given a non-Numeric

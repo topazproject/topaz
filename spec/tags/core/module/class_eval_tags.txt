@@ -1,0 +1,2 @@
+fails:Module#class_eval resolves constants in the caller scope
+fails:Module#class_eval resolves constants in the caller scope ignoring send

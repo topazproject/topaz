@@ -1,1 +1,2 @@
 fails:File#reopen accepts an object that has a #to_path method
+fails:File#reopen calls #to_path to convern an Object

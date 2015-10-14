@@ -1,2 +1,4 @@
 fails:Math.gamma returns exactly 22! given 23
 fails:Math.gamma returns approximately 29! given 30
+fails:Math.gamma returns exactly (n-1)! given n for n between 2 and 23
+fails:Math.gamma returns approximately (n-1)! given n for n between 24 and 30

@@ -22,3 +22,5 @@ fails:IO#write on a file raises a invalid byte sequence error if invalid bytes a
 fails:IO#write on a file uses the encoding from the given option for non-ascii encoding
 fails:IO#write on a file returns the number of bytes written
 fails:IO#write on a file returns a length of 0 when writing a blank string
+fails:IO#write on a file uses an :open_args option
+fails:IO.write on a FIFO writes correctly

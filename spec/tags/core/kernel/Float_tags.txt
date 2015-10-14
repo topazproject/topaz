@@ -11,3 +11,7 @@ fails:Kernel.Float returns a value for a String with any leading whitespace
 fails:Kernel.Float returns a value for a String with any trailing whitespace
 fails:Kernel#Float returns a value for a String with any leading whitespace
 fails:Kernel#Float returns a value for a String with any trailing whitespace
+fails:Kernel.Float returns a Float for Complex with only a real part
+fails:Kernel.Float raises a RangeError when passed a Complex argument
+fails:Kernel#Float returns a Float for Complex with only a real part
+fails:Kernel#Float raises a RangeError when passed a Complex argument

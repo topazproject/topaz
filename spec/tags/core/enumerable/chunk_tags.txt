@@ -1,0 +1,1 @@
+fails:Enumerable#chunk returned Enumerator size returns nil

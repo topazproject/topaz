@@ -1,0 +1,2 @@
+fails:Kernel.chomp removes the final carriage return, newline from a multi-byte $_
+fails:Kernel#chomp removes the final carriage return, newline from a multi-byte $_

@@ -1,1 +1,3 @@
 fails:File includes File::Constants
+fails:File includes Enumerable
+fails:File.file? accepts an object that has a #to_path method

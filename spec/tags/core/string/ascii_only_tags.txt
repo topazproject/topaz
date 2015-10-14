@@ -8,3 +8,6 @@ fails:String#ascii_only? with ASCII only characters returns true for all single-
 fails:String#ascii_only? with non-ASCII only characters returns false if the encoding is ASCII-8BIT
 fails:String#ascii_only? with non-ASCII only characters returns false if the String contains any non-ASCII characters
 fails:String#ascii_only? with non-ASCII only characters returns false if the encoding is US-ASCII
+fails:String#ascii_only? returns false after appending non ASCII characters to an empty String
+fails:String#ascii_only? returns false when concatenating an ASCII and non-ASCII String
+fails:String#ascii_only? returns false when replacing an ASCII String with a non-ASCII String

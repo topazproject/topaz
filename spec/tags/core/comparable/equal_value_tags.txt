@@ -1,0 +1,4 @@
+fails:Comparable#== when #<=> is not defined returns true for identical objects
+fails:Comparable#== when #<=> is not defined returns false and does not recurse infinitely
+fails:Comparable#== when #<=> calls super returns true for identical objects
+fails:Comparable#== when #<=> calls super calls the defined #<=> only once for different objects

@@ -1,0 +1,2 @@
+fails:Enumerable#sort_by Enumerable with size when no block is given returned Enumerator size returns the enumerable size
+fails:Enumerable#sort_by Enumerable with no size when no block is given returned Enumerator size returns nil

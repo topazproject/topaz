@@ -1,1 +1,2 @@
 fails:Kernel.proc is a private method
+fails:Kernel#proc uses the implicit block from an enclosing method

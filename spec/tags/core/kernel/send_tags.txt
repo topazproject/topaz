@@ -1,1 +1,2 @@
 fails:Kernel#send has an arity of -1
+fails:Kernel#send has a negative arity

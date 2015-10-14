@@ -5,3 +5,4 @@ fails:String#count counts all chars in a sequence
 fails:String#count raises if the given sequences are invalid
 fails:String#count calls #to_str to convert each set arg to a String
 fails:String#count raises a TypeError when a set arg can't be converted to a string
+fails:String#count returns the number of occurrences of a multi-byte character
