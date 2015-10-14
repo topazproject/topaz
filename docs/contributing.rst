@@ -101,5 +101,5 @@ you've earned it!
 
 
 .. _`Invoke`: http://pyinvoke.org
-.. _`rubyspec`: https://github.com/rubyspec/rubyspec
-.. _`mspec`: https://github.com/rubyspec/mspec
+.. _`rubyspec`: https://github.com/ruby/rubyspec
+.. _`mspec`: https://github.com/ruby/mspec
