@@ -96,7 +96,10 @@ class W_BaseObject(W_Root):
                 lineno = 1
             return space.execute(string, self, StaticScope(space.getclass(self), None), filename, lineno)
         else:
-            return space.invoke_block(block.copy(space, w_self=self), [])
+            if block is not None:
+                return space.invoke_block(block.copy(space, w_self=self), [])
+            else:
+                raise space.error(space.w_ArgumentError, "block not supplied")
 
     @classdef.method("singleton_method_removed")
     def method_singleton_method_removed(self, space, w_name):
