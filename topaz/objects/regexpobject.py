@@ -51,6 +51,7 @@ class W_RegexpObject(W_Object):
 
     def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
+        self.source = None
         self.set_source(space, source, flags)
 
     @classdef.setup_class
@@ -130,7 +131,7 @@ class W_RegexpObject(W_Object):
             return space.send(w_match, "post_match")
 
     def _check_initialized(self, space):
-        if not hasattr(self, "source") or self.source is None:
+        if self.source is None:
             raise space.error(space.w_TypeError, "uninitialized Regexp")
 
     def set_source(self, space, source, flags):
