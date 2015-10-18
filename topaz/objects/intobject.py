@@ -74,6 +74,18 @@ class W_FixnumObject(W_RootObject):
         storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
         storage.set_instance_var(space, name, w_value)
 
+    def set_flag(self, space, name):
+        storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
+        storage.set_flag(space, name)
+
+    def unset_flag(self, space, name):
+        storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
+        storage.unset_flag(space, name)
+
+    def get_flag(self, space, name):
+        storage = space.fromcache(FixnumStorage).get_or_create(space, self.intvalue)
+        return storage.get_flag(space, name)
+
     @classdef.method("extend")
     @classdef.method("singleton_class")
     def method_singleton_class(self, space):
