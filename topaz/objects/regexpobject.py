@@ -130,7 +130,7 @@ class W_RegexpObject(W_Object):
             return space.send(w_match, "post_match")
 
     def _check_initialized(self, space):
-        if self.source is None:
+        if not hasattr(self, "source") or self.source is None:
             raise space.error(space.w_TypeError, "uninitialized Regexp")
 
     def set_source(self, space, source, flags):
@@ -219,6 +219,7 @@ class W_RegexpObject(W_Object):
 
     @classdef.method("match")
     def method_match(self, space, w_s, w_offset=None):
+        self._check_initialized(space)
         if w_s is space.w_nil:
             return space.w_nil
         s = Coerce.str(space, w_s)
