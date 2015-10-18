@@ -113,14 +113,14 @@ class Process(object):
 
         if sig < 0:
             for w_arg in args_w:
-                pid = space.int_w(w_arg)
+                pid = Coerce.int(space, w_arg)
                 try:
                     killpg(pid, -sig)
                 except OSError as e:
                     raise error_for_oserror(space, e)
         else:
             for w_arg in args_w:
-                pid = space.int_w(w_arg)
+                pid = Coerce.int(space, w_arg)
                 try:
                     kill(pid, sig)
                 except OSError as e:
