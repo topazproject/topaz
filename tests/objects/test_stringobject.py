@@ -538,6 +538,8 @@ class TestStringObject(BaseTopazTest):
         return 'helloo'.sub("l", Hash.new { |h, k| replacements.pop() })
         """)
         assert space.str_w(w_res) == "he2loo"
+        with self.raises(space, "ArgumentError"):
+            space.execute("'string'.sub(/regex/)")
 
     def test_succ(self, space):
         w_res = space.execute('return "abcd".succ')

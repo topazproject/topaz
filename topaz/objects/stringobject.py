@@ -1080,6 +1080,8 @@ class W_StringObject(W_Object):
 
     @classdef.method("sub")
     def method_sub(self, space, w_pattern, w_replacement=None, block=None):
+        if w_replacement is None and block is None:
+            raise space.error(space.w_ArgumentError, "wrong number of arguments")
         return self.gsub_main(space, w_pattern, w_replacement, block, first_only=True)
 
     def gsub_main(self, space, w_pattern, w_replacement, block, first_only):
