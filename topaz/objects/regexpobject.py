@@ -51,6 +51,7 @@ class W_RegexpObject(W_Object):
 
     def __init__(self, space, source, flags):
         W_Object.__init__(self, space)
+        self.source = None
         self.set_source(space, source, flags)
 
     @classdef.setup_class
@@ -219,6 +220,7 @@ class W_RegexpObject(W_Object):
 
     @classdef.method("match")
     def method_match(self, space, w_s, w_offset=None):
+        self._check_initialized(space)
         if w_s is space.w_nil:
             return space.w_nil
         s = Coerce.str(space, w_s)

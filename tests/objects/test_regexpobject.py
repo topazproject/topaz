@@ -140,6 +140,12 @@ class TestRegexpObject(BaseTopazTest):
         w_res = space.execute("return Regexp.new(/abc/).source")
         assert space.str_w(w_res) == "abc"
 
+    def test_allocate(self, space):
+        with self.raises(space, "TypeError", "uninitialized Regexp"):
+            space.execute("Regexp.allocate.source")
+        with self.raises(space, "TypeError", "uninitialized Regexp"):
+            space.execute("Regexp.allocate.match ''")
+
     def test_size(self, space):
         w_res = space.execute("""
         /(a)(b)(c)/ =~ "hey hey, abc, hey hey"
