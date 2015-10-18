@@ -230,6 +230,16 @@ class TestFixnumObject(BaseTopazTest):
         assert x == y == -1
         assert z is None
 
+    def test_freeze(self, space):
+        w_res = space.execute("""
+        res = [1.frozen?]
+        1.freeze
+        res << 1.frozen?
+        res << 2.frozen?
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [False, True, False]
+
     def test_succ(self, space):
         w_res = space.execute("return -1.succ")
         assert self.unwrap(space, w_res) == 0

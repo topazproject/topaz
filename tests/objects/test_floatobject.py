@@ -213,3 +213,29 @@ class TestFloatObject(BaseTopazTest):
         assert w_res is space.w_false
         w_res = space.execute("return Float::NAN.nan?")
         assert w_res is space.w_true
+
+    def test_ivar(self, space):
+        w_res = space.execute("""
+        class Float
+          def set; @foo = true; end
+          def get; @foo; end
+        end
+        float = 0.1
+        res = [float.get]
+        float.set
+        res << float.get
+        res << 0.2.get
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [None, True, None]
+
+    def test_freeze(self, space):
+        w_res = space.execute("""
+        float = 0.1
+        res = [float.frozen?]
+        float.freeze
+        res << float.frozen?
+        res << 0.2.frozen?
+        return res
+        """)
+        assert self.unwrap(space, w_res) == [False, True, False]
