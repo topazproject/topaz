@@ -15,6 +15,18 @@ from topaz.objects.objectobject import W_RootObject
 from topaz.objects.numericobject import W_NumericObject
 
 
+class FloatStorage(object):
+    def __init__(self, space):
+        self.storages = {}
+
+    def get_or_create(self, space, floatvalue):
+        try:
+            storage = self.storages[floatvalue]
+        except KeyError:
+            self.storages[floatvalue] = storage = space.send(space.w_object, "new")
+        return storage
+
+
 class W_FloatObject(W_RootObject):
     _immutable_fields_ = ["floatvalue"]
 
@@ -61,6 +73,26 @@ class W_FloatObject(W_RootObject):
         space.set_const(w_cls, "MAX_EXP", space.newint(sys.float_info.max_exp))
         space.set_const(w_cls, "MIN_EXP", space.newint(sys.float_info.min_exp))
         space.set_const(w_cls, "RADIX", space.newint(sys.float_info.radix))
+
+    def find_instance_var(self, space, name):
+        storage = space.fromcache(FloatStorage).get_or_create(space, self.floatvalue)
+        return storage.find_instance_var(space, name)
+
+    def set_instance_var(self, space, name, w_value):
+        storage = space.fromcache(FloatStorage).get_or_create(space, self.floatvalue)
+        storage.set_instance_var(space, name, w_value)
+
+    def set_flag(self, space, name):
+        storage = space.fromcache(FloatStorage).get_or_create(space, self.floatvalue)
+        storage.set_flag(space, name)
+
+    def unset_flag(self, space, name):
+        storage = space.fromcache(FloatStorage).get_or_create(space, self.floatvalue)
+        storage.unset_flag(space, name)
+
+    def get_flag(self, space, name):
+        storage = space.fromcache(FloatStorage).get_or_create(space, self.floatvalue)
+        return storage.get_flag(space, name)
 
     @classdef.method("inspect")
     @classdef.method("to_s")
