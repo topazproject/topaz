@@ -21,6 +21,9 @@ class BaseNode(object):
         else:
             raise NotImplementedError(type(self).__name__)
 
+    def compile_defined(self, ctx):
+        ConstantString("expression").compile(ctx)
+
 
 class Node(BaseNode):
     _attrs_ = ["lineno"]
