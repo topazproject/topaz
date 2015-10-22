@@ -1105,6 +1105,10 @@ class TestInterpreter(BaseTopazTest):
         """)
         assert space.str_w(w_res) == "expression"
         w_res = space.execute("""
+        return [defined?(while x do y end), defined?(return), defined?(__FILE__)]
+        """)
+        assert self.unwrap(space, w_res) == ["expression", "expression", "expression"]
+        w_res = space.execute("""
         $abc = 3
         return [defined?($abc), defined?($abd)]
         """)
