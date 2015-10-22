@@ -1,0 +1,1 @@
+fails:Thread::SizedQueue#new returns a new SizedQueue

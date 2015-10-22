@@ -1,0 +1,3 @@
+fails:ConditionVariable#signal returns self if nothing to signal
+fails:ConditionVariable#signal returns self if something is waiting for a signal
+fails:ConditionVariable#signal releases the first thread waiting in line for this resource

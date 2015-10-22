@@ -1,0 +1,5 @@
+fails:Logger::Application#log logs a message
+fails:Logger::Application#log receives a severity
+fails:Logger::Application#log uses app name for Application Name
+fails:Logger::Application#log receives a block and calls it if message is nil
+fails:Logger::Application#log= sets the log device

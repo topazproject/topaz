@@ -1,0 +1,1 @@
+fails:Module#class_exec does not add defined methods to other classes
