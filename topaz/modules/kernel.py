@@ -191,7 +191,7 @@ class Kernel(object):
         )
 
     @moduledef.function("abort")
-    def method_abort(self, space):
+    def method_abort(self, space, message):
         return space.send(self, "exit", [space.w_false])
 
     @moduledef.function("block_given?")
