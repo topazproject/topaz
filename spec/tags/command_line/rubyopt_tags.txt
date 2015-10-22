@@ -4,6 +4,10 @@ fails:Processing RUBYOPT prints the version number for '-v'
 fails:Processing RUBYOPT sets $VERBOSE to true for '-w'
 fails:Processing RUBYOPT sets $VERBOSE to true for '-W'
 fails:Processing RUBYOPT sets $VERBOSE to nil for '-W0'
+<<<<<<< Updated upstream
+=======
+fails:Processing RUBYOPT sets $VERBOSE to false for '-W1'
+>>>>>>> Stashed changes
 fails:Processing RUBYOPT sets $VERBOSE to true for '-W2'
 fails:Processing RUBYOPT requires the file for '-r'
 fails:Processing RUBYOPT raises a RuntimeError for '-a'
@@ -26,4 +30,7 @@ fails:Processing RUBYOPT raises a RuntimeError for '-0'
 fails:Processing RUBYOPT raises a RuntimeError for '--copyright'
 fails:Processing RUBYOPT raises a RuntimeError for '--version'
 fails:Processing RUBYOPT raises a RuntimeError for '--yydebug'
+<<<<<<< Updated upstream
 fails:Processing RUBYOPT sets $VERBOSE to false for '-W1'
+=======
+>>>>>>> Stashed changes
