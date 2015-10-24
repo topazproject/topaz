@@ -143,6 +143,10 @@ class W_ClassObject(W_ModuleObject):
                 raise space.error(space.w_TypeError,
                     "superclass must be a Class (%s given)" % space.obj_to_s(space.getclass(w_superclass))
                 )
+            if w_superclass is space.w_class:
+                raise space.error(space.w_TypeError,
+                    "can't make subclass of Class"
+                )
             if w_superclass.is_singleton:
                 raise space.error(space.w_TypeError,
                     "can't make subclass of singleton class"
