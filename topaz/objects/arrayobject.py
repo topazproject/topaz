@@ -26,7 +26,7 @@ class RubySorter(BaseRubySorter):
         if self.space.is_kind_of(w_cmp_res, self.space.w_bignum):
             return self.space.bigint_w(w_cmp_res).lt(rbigint.fromint(0))
         else:
-            return Coerce.int(self.space, w_cmp_res) < 0
+            return Coerce.bool(self.space, self.space.send(w_cmp_res, "<", [self.space.newint(0)]))
 
 
 class RubySortBy(BaseRubySortBy):
