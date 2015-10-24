@@ -368,6 +368,8 @@ class TestArrayObject(BaseTopazTest):
         return a.object_id == b.object_id, a, b
         """)
         assert self.unwrap(space, w_res) == [True, [3, 2, 1], [3, 2, 1]]
+        with self.raises(space, "NoMethodError"):
+            space.execute("[0, 1].sort{ |n, m| BasicObject.new }")
         with self.raises(space, "ArgumentError", "comparison of Array with Object failed"):
             space.execute("[Object.new, []].sort")
 
