@@ -435,6 +435,8 @@ class Kernel(object):
 
     @moduledef.method("catch", name="symbol")
     def method_catch(self, space, name, block):
+        if block is None:
+            raise space.error(space.w_LocalJumpError, "no block given")
         from topaz.interpreter import Throw
         with space.getexecutioncontext().catch_block(name):
             try:
