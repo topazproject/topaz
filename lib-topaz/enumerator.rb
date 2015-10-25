@@ -92,6 +92,8 @@ class Enumerator
   end
 
   class Generator
+    include Enumerable
+
     def initialize(&block)
       @block = block
       self
