@@ -94,6 +94,7 @@ class Enumerator
   class Generator
     def initialize(&block)
       @block = block
+      self
     end
 
     def each
@@ -105,6 +106,7 @@ class Enumerator
   class Yielder
     def initialize(&block)
       @block = block
+      self
     end
 
     def yield(*args)
