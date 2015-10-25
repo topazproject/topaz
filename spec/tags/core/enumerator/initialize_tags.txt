@@ -1,2 +1,0 @@
-fails:Enumerator#initialize returns self when given an object
-fails:Enumerator#initialize returns self when given a block

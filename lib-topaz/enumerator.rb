@@ -7,6 +7,7 @@ class Enumerator
     @object = obj
     @method = method.to_sym
     @args = args
+    self
   end
 
   def each(&block)
