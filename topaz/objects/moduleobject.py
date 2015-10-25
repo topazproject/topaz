@@ -626,6 +626,7 @@ class W_ModuleObject(W_RootObject):
         return w_res
 
     @classdef.method("const_set", const="symbol")
+    @check_frozen()
     def method_const_set(self, space, const, w_value):
         space.set_const(self, const, w_value)
         return w_value

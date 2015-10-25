@@ -1,1 +1,0 @@
-fails:Module#const_set on a frozen module raises a RuntimeError before setting the name
