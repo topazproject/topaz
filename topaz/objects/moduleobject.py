@@ -541,6 +541,8 @@ class W_ModuleObject(W_RootObject):
 
     @classdef.method("extend_object")
     def method_extend_object(self, space, w_obj):
+        if type(self) is not W_ModuleObject:
+            raise space.error(space.w_TypeError, "wrong argument type")
         self.extend_object(space, space.getsingletonclass(w_obj))
 
     @classdef.method("name")
