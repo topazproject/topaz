@@ -427,6 +427,8 @@ class W_ModuleObject(W_RootObject):
     def method_append_features(self, space, w_mod):
         if w_mod in self.ancestors():
             raise space.error(space.w_ArgumentError, "cyclic include detected")
+        if type(self) is not W_ModuleObject:
+            raise space.error(space.w_TypeError, "wrong argument type")
         for module in reversed(self.ancestors()):
             w_mod.include_module(space, module)
 
@@ -521,6 +523,7 @@ class W_ModuleObject(W_RootObject):
                 "undefined method `%s' for class `%s'" % (old_name, cls_name)
             )
         self.define_method(space, new_name, w_method)
+        return self
 
     @classdef.method("ancestors")
     def method_ancestors(self, space):

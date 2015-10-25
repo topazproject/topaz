@@ -1,3 +1,2 @@
 fails:Module#alias_method retains method visibility
 fails:Module#alias_method is a private method
-fails:Module#alias_method returns self
