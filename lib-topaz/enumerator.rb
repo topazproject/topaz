@@ -7,6 +7,7 @@ class Enumerator
     @object = obj
     @method = method.to_sym
     @args = args
+    self
   end
 
   def each(&block)
@@ -91,8 +92,11 @@ class Enumerator
   end
 
   class Generator
+    include Enumerable
+
     def initialize(&block)
       @block = block
+      self
     end
 
     def each
@@ -104,6 +108,7 @@ class Enumerator
   class Yielder
     def initialize(&block)
       @block = block
+      self
     end
 
     def yield(*args)
