@@ -217,6 +217,13 @@ class TestKernel(BaseTopazTest):
         assert space.int_w(w_res) == 0
         assert time.time() - now >= 0.002
 
+        with self.raises(space, "TypeError"):
+            space.execute("return sleep nil")
+        with self.raises(space, "TypeError"):
+            space.execute("return sleep '1'")
+        with self.raises(space, "TypeError"):
+            space.execute("return sleep Object.new")
+
     def test_trust(self, space):
         w_res = space.execute("return 'a'.untrusted?")
         assert self.unwrap(space, w_res) is False
