@@ -49,9 +49,8 @@ def expand_trans_str(source, res_len, inv=False):
     for i in range(res_len):
         if i < len(source):
             char = source[i]
-        if char == "-":
-            # expand the range
-            assert 0 < i < len(source) - 1
+        if char == "-" and 0 < i < len(source) - 1:
+            # Expand the range
             range_beg = ord(source[i - 1])
             range_end = ord(source[i + 1])
             for j in range(range_beg + 1, range_end - 1):
