@@ -486,11 +486,13 @@ class TestParser(BaseTopazTest):
         ]))
 
     def test_if_statement(self, space):
-        res = lambda lineno: ast.Main(ast.Block([
-            ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
-                ast.Statement(ast.Send(ast.Self(lineno), "puts", [ast.ConstantInt(2)], None, lineno))
-            ]), ast.Nil()))
-        ]))
+        def res(lineno):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.If(ast.ConstantInt(3), ast.Block([
+                    ast.Statement(ast.Send(ast.Self(lineno), "puts", [ast.ConstantInt(2)], None, lineno))
+                ]), ast.Nil()))
+            ]))
+
         assert space.parse("if 3 then puts 2 end") == res(1)
         assert space.parse("""
         if 3
@@ -1011,9 +1013,10 @@ class TestParser(BaseTopazTest):
         ]))
 
     def test_escape_character(self, space):
-        string = lambda content: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString(content))
-        ]))
+        def string(content):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantString(content))
+            ]))
 
         assert space.parse('?\\\\') == string("\\")
         assert space.parse('?\\n') == string("\n")
@@ -1073,12 +1076,16 @@ class TestParser(BaseTopazTest):
             space.parse('"\u{110000}"')
 
     def test_dynamic_string(self, space):
-        const_string = lambda strvalue: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString(strvalue))
-        ]))
-        dyn_string = lambda *components: ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString(list(components)))
-        ]))
+        def const_string(strvalue):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantString(strvalue))
+            ]))
+
+        def dyn_string(*components):
+            ast.Main(ast.Block([
+                ast.Statement(ast.DynamicString(list(components)))
+            ]))
+
         assert space.parse('"#{x}"') == dyn_string(ast.Block([ast.Statement(ast.Send(ast.Self(1), "x", [], None, 1))]))
         assert space.parse('"abc #{2} abc"') == dyn_string(ast.ConstantString("abc "), ast.Block([ast.Statement(ast.ConstantInt(2))]), ast.ConstantString(" abc"))
         assert space.parse('"#{"}"}"') == dyn_string(ast.Block([ast.Statement(ast.ConstantString("}"))]))
@@ -1098,12 +1105,16 @@ class TestParser(BaseTopazTest):
         assert space.parse('"#test"') == const_string("#test")
 
     def test_percent_terms(self, space):
-        const_string = lambda strvalue: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString(strvalue))
-        ]))
-        dyn_string = lambda *components: ast.Main(ast.Block([
-            ast.Statement(ast.DynamicString(list(components)))
-        ]))
+        def const_string(strvalue):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantString(strvalue))
+            ]))
+
+        def dyn_string(*components):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.DynamicString(list(components)))
+            ]))
+
         assert space.parse('%{1}') == const_string("1")
         assert space.parse('%Q{1}') == const_string("1")
         assert space.parse('%Q{#{2}}') == dyn_string(ast.Block([ast.Statement(ast.ConstantInt(2))]))
@@ -1170,9 +1181,10 @@ class TestParser(BaseTopazTest):
         ]))
 
     def test_heredoc(self, space):
-        const_heredoc = lambda s: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString(s))
-        ]))
+        def const_heredoc(s):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantString(s))
+            ]))
 
         r = space.parse("""
         <<HERE
@@ -1561,9 +1573,11 @@ HERE
         ]))
 
     def test_symbol(self, space):
-        sym = lambda s: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantSymbol(s))
-        ]))
+        def sym(s):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantSymbol(s))
+            ]))
+
         assert space.parse(":abc") == sym("abc")
         assert space.parse(":'abc'") == sym("abc")
         assert space.parse(":abc_abc") == sym("abc_abc")
@@ -1763,9 +1777,10 @@ HERE
             space.parse("__LINE__ = 2")
 
     def test_function_default_arguments(self, space):
-        function = lambda name, args: ast.Main(ast.Block([
-            ast.Statement(ast.Function(None, name, args, None, None, ast.Nil()))
-        ]))
+        def function(name, args):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.Function(None, name, args, None, None, ast.Nil()))
+            ]))
 
         r = space.parse("""
         def f(a, b=3)
@@ -2122,6 +2137,11 @@ HERE
         ]))
 
     def test_global_var(self, space):
+        def simple_global(s):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.Global(s))
+            ]))
+
         r = space.parse("""
         $abc_123 = 3
         $abc
@@ -2129,9 +2149,6 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.Assignment(ast.Global("$abc_123"), ast.ConstantInt(3))),
             ast.Statement(ast.Global("$abc")),
-        ]))
-        simple_global = lambda s: ast.Main(ast.Block([
-            ast.Statement(ast.Global(s))
         ]))
         assert space.parse("$>") == simple_global("$>")
         assert space.parse("$:") == simple_global("$:")
@@ -2208,12 +2225,16 @@ HERE
             space.parse("def f(*args, g=5)")
 
     def test_regexp(self, space):
-        re = lambda re: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantRegexp(re, 0, 1))
-        ]))
-        dyn_re = lambda re: ast.Main(ast.Block([
-            ast.Statement(ast.DynamicRegexp(re, 0))
-        ]))
+        def re(re):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantRegexp(re, 0, 1))
+            ]))
+
+        def dyn_re(re):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.DynamicRegexp(re, 0))
+            ]))
+
         assert space.parse("//") == re("")
         assert space.parse(r"/a/") == re("a")
         assert space.parse(r"/\w/") == re(r"\w")
@@ -2223,9 +2244,11 @@ HERE
         assert space.parse("%r!a!") == re("a")
 
     def test_regexp_flags(self, space):
-        re = lambda re, flags: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantRegexp(re, flags, 1))
-        ]))
+        def re(re, flags):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantRegexp(re, flags, 1))
+            ]))
+
         assert space.parse('/a/o') == re('a', regexp.ONCE)
 
     def test_unclosed_regexp(self, space):
@@ -2602,18 +2625,22 @@ HERE
         ]))
 
     def test_shellout(self, space):
-        shellout = lambda *components: ast.Main(ast.Block([
-            ast.Statement(ast.Send(ast.Self(1), "`", list(components), None, 1))
-        ]))
+        def shellout(*components):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.Send(ast.Self(1), "`", list(components), None, 1))
+            ]))
+
         assert space.parse("`ls`") == shellout(ast.ConstantString("ls"))
         assert space.parse('%x(ls)') == shellout(ast.ConstantString("ls"))
         assert space.parse("`#{2}`") == shellout(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
         assert space.parse("%x(#{2})") == shellout(ast.DynamicString([ast.Block([ast.Statement(ast.ConstantInt(2))])]))
 
     def test_strings(self, space):
-        cstr = lambda c: ast.Main(ast.Block([
-            ast.Statement(ast.ConstantString(c))
-        ]))
+        def cstr(c):
+            return ast.Main(ast.Block([
+                ast.Statement(ast.ConstantString(c))
+            ]))
+
         assert space.parse("'a' 'b' 'c'") == cstr("abc")
         assert space.parse("'a' \"b\"") == cstr("ab")
         assert space.parse('"a" "b"') == cstr("ab")

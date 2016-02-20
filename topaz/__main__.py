@@ -1,7 +1,8 @@
 import sys
 
 import py
-py.log.setconsumer("platform", None)
+# This must be run before we import from RPython, otherwise logs spew out
+py.log.setconsumer("platform", None)  # noqa
 
 from rpython.config.translationoption import get_combined_translation_config
 
