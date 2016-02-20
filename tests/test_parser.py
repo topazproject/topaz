@@ -1082,7 +1082,7 @@ class TestParser(BaseTopazTest):
             ]))
 
         def dyn_string(*components):
-            ast.Main(ast.Block([
+            return ast.Main(ast.Block([
                 ast.Statement(ast.DynamicString(list(components)))
             ]))
 
