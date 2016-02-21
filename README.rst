@@ -2,7 +2,7 @@ Topaz
 =====
 
 
-.. image:: https://travis-ci.org/topazproject/topaz.png?branch=master
+.. image:: https://travis-ci.org/topazproject/topaz.svg?branch=master
     :target: https://travis-ci.org/topazproject/topaz
 
 Topaz is an implementation of the Ruby programming language, written in Python,
