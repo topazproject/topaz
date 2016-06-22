@@ -46,19 +46,19 @@ else:
     def opendir(path):
         dirp = os_opendir(path)
         if not dirp:
-            raise OSError(rposix.get_errno(), "error in opendir")
+            raise OSError(rposix.get_saved_errno(), "error in opendir")
         return dirp
 
     def closedir(dirp):
         os_closedir(dirp)
 
     def readdir(dirp):
-        rposix.set_errno(0)
+        rposix.set_saved_errno(0)
         direntp = os_readdir(dirp)
         if not direntp:
-            if rposix.get_errno() == 0:
+            if rposix.get_saved_errno() == 0:
                 return None
             else:
-                raise OSError(rposix.get_errno(), "error in readdir")
+                raise OSError(rposix.get_saved_errno(), "error in readdir")
         namep = rffi.cast(rffi.CCHARP, direntp.c_d_name)
         return rffi.charp2str(namep)
