@@ -25,7 +25,8 @@ class Interpreter(object):
         reds=["self", "frame"],
         virtualizables=["frame"],
         get_printable_location=get_printable_location,
-        check_untranslated=False
+        check_untranslated=False,
+        is_recursive=True
     )
 
     def __init__(self):
