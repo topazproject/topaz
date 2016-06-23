@@ -40,6 +40,7 @@ else:
     os_closedir = rffi.llexternal("closedir",
         [DIRP], rffi.INT,
         compilation_info=eci,
+        releasegil=False,
         macro=True
     )
 
