@@ -1,4 +1,6 @@
-from rpython.rlib.objectmodel import r_dict
+from collections import OrderedDict
+
+from rpython.rlib.objectmodel import r_ordereddict
 from rpython.rlib.rerased import new_static_erasing_pair
 
 from topaz.module import ClassDef, check_frozen
@@ -62,7 +64,7 @@ class ObjectDictStrategy(BaseDictStrategy, TypedDictStrategyMixin):
     iter_erase, iter_unerase = new_static_erasing_pair("ObjectDictStrategyIterator")
 
     def get_empty_storage(self, space):
-        return self.erase(r_dict(space.eq_w, space.hash_w))
+        return self.erase(r_ordereddict(space.eq_w, space.hash_w))
 
     def wrap(self, w_key):
         return w_key
@@ -76,7 +78,7 @@ class IdentityDictStrategy(BaseDictStrategy, TypedDictStrategyMixin):
     iter_erase, iter_unerase = new_static_erasing_pair("IdentityDictStrategyIterator")
 
     def get_empty_storage(self, space):
-        return self.erase(r_dict)
+        return self.erase(OrderedDict())
 
     def wrap(self, w_key):
         return w_key
