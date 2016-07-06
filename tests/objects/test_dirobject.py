@@ -13,6 +13,20 @@ class TestDir(BaseTopazTest):
         w_res = space.execute("return Dir.getwd")
         assert space.str_w(w_res) == os.getcwd()
 
+    def test_read(self, space, tmpdir):
+        d = tmpdir.mkdir("sub_test_read")
+        f = d.join("content")
+        f.write("hello")
+        f = d.join("content2")
+        f.write("hello")
+        w_res = space.execute("""
+        d = Dir.new('%s')
+        return [d.read, d.read, d.read, d.read, d.read]
+        """ % d)
+        res = self.unwrap(space, w_res)
+        res.sort()
+        assert res == [None, ".", "..", "content", "content2"]
+
     def test_new(self, space, tmpdir):
         d = tmpdir.mkdir("sub")
         f = d.join("content")
@@ -112,20 +126,6 @@ class TestDir(BaseTopazTest):
         """ % tmpdir)
         res = self.unwrap(space, w_res)
         assert res == [["sub1"], ["sub1"]]
-
-    def test_read(self, space, tmpdir):
-        d = tmpdir.mkdir("sub")
-        f = d.join("content")
-        f.write("hello")
-        f = d.join("content2")
-        f.write("hello")
-        w_res = space.execute("""
-        d = Dir.new('%s')
-        return [d.read, d.read, d.read, d.read, d.read]
-        """ % d)
-        res = self.unwrap(space, w_res)
-        res.sort()
-        assert res == [None, ".", "..", "content", "content2"]
 
     def test_close(self, space, tmpdir):
         with self.raises(space, "IOError", "closed directory"):
