@@ -39,7 +39,14 @@ class TypedDictStrategyMixin(object):
         return bool(self.unerase(storage))
 
     def pop(self, storage, w_key, default):
-        return self.unerase(storage).pop(self.unwrap(w_key), default)
+        key = self.unwrap(w_key)
+        r_dict = self.unerase(storage)
+        w_return = r_dict.get(key, default)
+        try:
+            del r_dict[key]
+        except KeyError:
+            pass
+        return w_return
 
     def popitem(self, storage):
         key, value = self.unerase(storage).popitem()
