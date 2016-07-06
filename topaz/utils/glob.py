@@ -1,5 +1,7 @@
 import os
 
+from collections import OrderedDict
+
 from rpython.rlib.rsre import rsre_core
 from rpython.rlib.rstring import StringBuilder
 
@@ -37,7 +39,7 @@ def combine_segments(old_segments, suffix, new_segments=[""]):
 class Glob(object):
     def __init__(self, cache, matches=None):
         self.cache = cache
-        self._matches = {}
+        self._matches = OrderedDict()
         for match in (matches or []):
             self.append_match(match)
 
