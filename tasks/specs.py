@@ -26,7 +26,7 @@ class Rubyspecs(BaseTest):
 
 
 def generate_spectask(taskname):
-    def spectask(files="", options="", untranslated=False):
+    def spectask(ctx, files="", options="", untranslated=False):
         runner = Rubyspecs(files, options, untranslated=untranslated)
         getattr(runner, taskname)()
     spectask.__name__ = taskname
