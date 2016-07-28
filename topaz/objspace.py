@@ -746,7 +746,9 @@ class ObjectSpace(object):
 
         try:
             w_res = self.send(w_obj, method)
-        except RubyError:
+        except RubyError as e:
+            if not isinstance(e.w_value, W_NoMethodError):
+                raise
             if not raise_error:
                 return self.w_nil
             src_cls_name = self.obj_to_s(self.getclass(w_obj))

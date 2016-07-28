@@ -1,1 +1,0 @@
-fails:Hash.try_convert does not rescue exceptions raised by #to_hash
