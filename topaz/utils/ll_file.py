@@ -21,6 +21,11 @@ if IS_WINDOWS:
         compilation_info=eci,
     )
 
+    close_without_validation = rffi.llexternal('_close',
+        [rffi.INT], rffi.INT,
+        releasegil=False, compilation_info=eci
+    )
+
     def ftruncate(fd, size):
         _chsize(fd, size)
 
@@ -36,3 +41,4 @@ else:
     ftruncate = os.ftruncate
     isdir = os.path.isdir
     fchmod = os.fchmod
+    close_without_validation = os.close

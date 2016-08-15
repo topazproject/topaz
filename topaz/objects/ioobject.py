@@ -6,6 +6,7 @@ from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
 from topaz.utils.filemode import map_filemode
+from topaz.utils.ll_file import close_without_validation
 
 
 class W_IOObject(W_Object):
@@ -18,7 +19,7 @@ class W_IOObject(W_Object):
     def __del__(self):
         # Do not close standard file streams
         if self.fd > 3:
-            os.close(self.fd)
+            close_without_validation(self.fd)
 
     def __deepcopy__(self, memo):
         obj = super(W_IOObject, self).__deepcopy__(memo)
