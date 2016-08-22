@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import errno
 import os
 
+from rpython.rlib.rarithmetic import intmask
+
 from topaz.gateway import Coerce
 from topaz.module import ModuleDef
 from topaz.modules.signal import SIGNALS
@@ -39,7 +41,7 @@ class Process(object):
 
     @moduledef.function("euid")
     def method_euid(self, space):
-        return space.newint(geteuid())
+        return space.newint(intmask(geteuid()))
 
     @moduledef.function("pid")
     def method_pid(self, space):
