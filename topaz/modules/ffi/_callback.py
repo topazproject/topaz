@@ -5,7 +5,7 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.objectmodel import compute_unique_id
 from rpython.rlib import clibffi, jit
 
-from pypy.module._cffi_backend import misc
+from topaz.modules.ffi import misc
 
 # This will definitely leak memory
 registration = {}

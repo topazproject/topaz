@@ -5,8 +5,6 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask, r_longlong, r_ulonglong
 from rpython.rlib.rbigint import rbigint
 
-from pypy.module._cffi_backend import misc
-
 from topaz.modules.ffi import type as ffitype
 
 import sys

@@ -9,8 +9,8 @@ from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 from topaz.coerce import Coerce
 
-# XXX maybe move to rlib/jit_libffi
-from pypy.module._cffi_backend import misc
+from topaz.modules.ffi import misc
+
 
 _native_types = [
     ('VOID',       clibffi.ffi_type_void,                     lltype.Void,     []),
