@@ -25,7 +25,7 @@ class AttributeReader(W_FunctionObject):
         return obj
 
     def call(self, space, w_obj, args_w, block):
-        return space.find_instance_var(w_obj, self.varname)
+        return space.find_instance_var(w_obj, self.varname) or space.w_nil
 
 
 class AttributeWriter(W_FunctionObject):

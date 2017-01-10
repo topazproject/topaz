@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict
 
 from rpython.rlib.objectmodel import r_ordereddict
@@ -104,6 +105,14 @@ class W_HashObject(W_Object):
         self.dict_storage = self.strategy.get_empty_storage(space)
         self.w_default = space.w_nil
         self.default_proc = None
+
+    def __deepcopy__(self, memo):
+        obj = super(W_HashObject, self).__deepcopy__(memo)
+        obj.strategy = copy.deepcopy(self.strategy)
+        obj.dict_storage = self.strategy.copy(self.dict_storage)
+        obj.w_default = self.w_default
+        obj.default_proc = copy.deepcopy(self.default_proc)
+        return obj
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):

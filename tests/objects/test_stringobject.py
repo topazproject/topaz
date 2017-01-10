@@ -1,6 +1,7 @@
 from rpython.rlib.rbigint import rbigint
 
 from ..base import BaseTopazTest
+import pytest
 
 
 class TestStringObject(BaseTopazTest):
@@ -571,6 +572,20 @@ class TestStringObject(BaseTopazTest):
         return string
         """)
         assert space.str_w(w_res) == "thsa string"
+
+    @pytest.mark.xfail
+    def test_byte_representation(self, space):
+        w_res = space.execute('return "\x00".length')
+        assert space.int_w(w_res) == 1
+
+        w_res = space.execute("return '\x00'.length")
+        assert space.int_w(w_res) == 4
+
+        w_res = space.execute('return "\x04\bi\x00".length')
+        assert space.int_w(w_res) == 4
+
+        w_res = space.execute("return '\x04\bi\x00'.length")
+        assert space.int_w(w_res) == 11
 
 
 class TestStringMod(object):
