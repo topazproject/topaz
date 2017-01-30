@@ -89,7 +89,7 @@ class W_FunctionTypeObject(W_TypeObject):
         exchange_offset = rffi.sizeof(rffi.CCHARP) * nargs
         exchange_offset = self.align_arg(exchange_offset)
         cif_descr.exchange_result = exchange_offset
-        cif_descr.exchange_result_libffi = exchange_offset
+        # cif_descr.exchange_result_libffi = exchange_offset
         #
         if BIG_ENDIAN:
             assert 0, 'missing support'

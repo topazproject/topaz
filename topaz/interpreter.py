@@ -35,8 +35,8 @@ class Interpreter(object):
     def get_block_bytecode(self, block):
         return block.bytecode if block is not None else None
 
-    def interpret(self, space, frame, bytecode):
-        pc = 0
+    def interpret(self, space, frame, bytecode, startpc=0):
+        pc = startpc
         try:
             while True:
                 self.jitdriver.jit_merge_point(

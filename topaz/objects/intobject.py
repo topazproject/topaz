@@ -130,6 +130,11 @@ class W_FixnumObject(W_RootObject):
     method_add = new_binop(classdef, "+", operator.add)
     method_sub = new_binop(classdef, "-", operator.sub)
     method_mul = new_binop(classdef, "*", operator.mul)
+    method_pow = new_binop(classdef, "**", operator.pow)
+
+    @classdef.method("floor")
+    def method_floor(self, space):
+        return self
 
     def raise_zero_division_error(self, space):
         raise space.error(space.w_ZeroDivisionError, "divided by 0")

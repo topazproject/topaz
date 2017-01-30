@@ -208,6 +208,10 @@ class W_FloatObject(W_RootObject):
     def method_hash(self, space):
         return space.newint(compute_hash(self.floatvalue))
 
+    @classdef.method("floor")
+    def method_floor(self, space):
+        return space.newint(int(math.floor(self.floatvalue)))
+
     @classdef.method("coerce")
     def method_coerce(self, space, w_other):
         if space.getclass(w_other) is space.getclass(self):
