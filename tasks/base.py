@@ -10,5 +10,4 @@ class BaseTest(object):
 
     def download_rubyspec(self):
         if not os.path.isdir("../rubyspec"):
-            run("cd .. && git clone --depth=100  --quiet https://github.com/ruby/spec")
-            run("mv spec rubyspec")
+            run("cd .. && git clone --depth=100  --quiet https://github.com/ruby/spec rubyspec")
