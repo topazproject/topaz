@@ -38,6 +38,14 @@ class Coerce(object):
             return space.float_w(space.send(w_obj, "Float", [w_obj]))
 
     @staticmethod
+    def strictfloat(space, w_obj):
+        if not space.is_kind_of(w_obj, space.w_numeric):
+            clsname = w_obj.getclass(space).name
+            raise space.error(space.w_TypeError,
+                              "can't convert %s into Float" %clsname)
+        return Coerce.float(space, w_obj)
+
+    @staticmethod
     def str(space, w_obj):
         if space.is_kind_of(w_obj, space.w_string) or space.is_kind_of(w_obj, space.w_symbol):
             return space.str_w(w_obj)

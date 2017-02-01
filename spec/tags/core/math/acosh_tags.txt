@@ -1,3 +1,2 @@
 fails:Math.acosh it raises Errno::EDOM if the passed argument is less than -1.0 or greater than 1.0
-fails:Math.acosh raises a TypeError if the argument cannot be coerced with Float()
 fails:Math.acosh raises Errno::EDOM if the passed argument is less than -1.0 or greater than 1.0

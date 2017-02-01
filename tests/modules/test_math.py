@@ -135,6 +135,13 @@ class TestMath(BaseTopazTest):
         w_res = space.execute("return Math.ldexp(Math.frexp(1234)[0], 11)")
         assert self.unwrap(space, w_res) == 1234
 
+        with self.raises(space, "TypeError",
+                         "can't convert String into Float"):
+            space.execute("Math.ldexp('1', 2)")
+        with self.raises(space, "TypeError",
+                         "can't convert String into Integer"):
+            space.execute("Math.ldexp(1, '2')")
+
     def test_log(self, space):
         with self.raises(space, "Math::DomainError", 'Numerical argument is out of domain - "log"'):
             space.execute("Math.log(-1)")
@@ -212,4 +219,18 @@ class TestMath(BaseTopazTest):
 
     def test_erfc(self, space):
         w_res = space.execute("return [Math.erfc(-1), Math.erfc(0), Math.erfc(1.5)]")
-        assert self.unwrap(space, w_res) == [rfloat.erfc(-1), 1.0, rfloat.erfc(1.5)]
+        assert self.unwrap(space, w_res) == [math.erfc(-1), 1.0, math.erfc(1.5)]
+
+    def test_type_error(self, space):
+        for methodname in ['sin', 'cos', 'tan', 'asin', 'acos', 'atan',
+                           'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
+                           'sqrt', 'cbrt', 'erf', 'erfc', 'gamma', 'lgamma',
+                           'exp', 'frexp', 'log', 'log10', 'log2']:
+            with self.raises(space, "TypeError",
+                             "can't convert String into Float"):
+                space.execute("Math.%s('1.0')" %methodname)
+        for methodname in ['hypot', 'atan2']:
+            with self.raises(space, "TypeError",
+                             "can't convert String into Float"):
+                space.execute("Math.%s('1', 2)" %methodname)
+                space.execute("Math.%s(1, '2')" %methodname)
