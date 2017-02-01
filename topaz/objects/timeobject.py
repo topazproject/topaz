@@ -1,3 +1,4 @@
+import math
 import time
 
 from topaz.module import ClassDef
@@ -13,6 +14,7 @@ class W_TimeObject(W_Object):
     def __init__(self, space, klass):
         W_Object.__init__(self, space, klass)
         self._set_epoch_seconds(0.0)
+        self._set_offset(0)
 
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
@@ -34,11 +36,13 @@ class W_TimeObject(W_Object):
         timestamp = Coerce.float(space, w_time)
         w_time = space.send(self, "new")
         w_time._set_epoch_seconds(timestamp + microtime)
+        w_time._set_offset(self.offset)
         return w_time
 
     @classdef.method("initialize")
     def method_initialize(self, space):
         self._set_epoch_seconds(time.time())
+        self._set_offset(time.timezone)
 
     @classdef.method("to_f")
     def method_to_f(self, space):
@@ -48,10 +52,52 @@ class W_TimeObject(W_Object):
     def method_to_i(self, space):
         return space.newint(int(self.epoch_seconds))
 
+    @classdef.method("+")
+    def method_plus(self, space, w_other):
+        if isinstance(w_other, W_TimeObject):
+            raise space.error(space.w_TypeError, "time + time?")
+        w_time = space.send(space.getclassfor(W_TimeObject), "allocate")
+        w_time._set_epoch_seconds(self.epoch_seconds + Coerce.float(space, w_other))
+        w_time._set_offset(self.offset)
+        return w_time
+
     @classdef.method("-")
     def method_sub(self, space, w_other):
-        assert isinstance(w_other, W_TimeObject)
-        return space.newfloat(self.epoch_seconds - w_other.epoch_seconds)
+        if isinstance(w_other, W_TimeObject):
+            return space.newfloat(self.epoch_seconds - Coerce.float(space, w_other))
+        else:
+            w_time = space.send(space.getclassfor(W_TimeObject), "allocate")
+            w_time._set_epoch_seconds(self.epoch_seconds - Coerce.float(space, w_other))
+            w_time._set_offset(self.offset)
+            return w_time
+
+    @classdef.method("strftime")
+    def method_strftime(self, space, w_obj):
+        return space.newstr_fromstr(time.strftime(space.str_w(w_obj),
+                                                  time.gmtime(self.epoch_seconds)))
+
+    @classdef.method("inspect")
+    @classdef.method("to_s")
+    def method_inspect(self, space):
+        if self.offset == 0:
+            return space.send(self, "strftime",
+                              [space.newstr_fromstr("%Y-%m-%d %H:%M:%S UTC")])
+        else:
+            return space.send(self, "strftime",
+                              [space.newstr_fromstr("%Y-%m-%d %H:%M:%S %Z")])
+
+    @classdef.method("usec")
+    def method_usec(self, space):
+        usec = int(math.floor(math.modf(self.epoch_seconds)[0] * 100000))
+        return space.newint(usec)
+
+    @classdef.method("utc?")
+    @classdef.method("gmt?")
+    def method_utcp(self, space):
+        return space.newbool(self.offset == 0)
 
     def _set_epoch_seconds(self, timestamp):
         self.epoch_seconds = timestamp
+
+    def _set_offset(self, tzoffset):
+        self.offset = tzoffset
