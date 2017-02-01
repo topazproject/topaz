@@ -454,6 +454,14 @@ class Kernel(object):
         default = space.find_const(random_class, "DEFAULT")
         return default.srand(space, w_seed)
 
+    @moduledef.method("autoload")
+    def method_autoload(self, space, args_w):
+        return space.send(space.getclass(self), "autoload", args_w)
+
+    @moduledef.method("autoload?")
+    def method_autoload(self, space, args_w):
+        return space.send(space.getclass(self), "autoload?", args_w)
+
     @moduledef.method("object_id")
     def method_object_id(self, space):
         return space.send(self, "__id__")

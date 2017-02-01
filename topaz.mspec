@@ -19,8 +19,6 @@ class MSpecScript
     "^#{Rubyspec}/core/marshal/load_spec.rb",
     # openssl: ``require 'openssl'``
     "^#{Rubyspec}/core/marshal/restore_spec.rb",
-    # autoload: ``autoload :Class, "file.rb"``
-    "^#{Rubyspec}/core/kernel/autoload_spec.rb",
     # FileTest: ``FileTest``
     "^#{Rubyspec}/core/filetest",
     # fcntl: ``require 'fcntl'``

@@ -95,6 +95,19 @@ class DefineMethodMethod(W_FunctionObject):
         return space.send(w_bound_method, "call", args_w, block)
 
 
+class W_Autoload(W_RootObject):
+    def __init__(self, space, path):
+        self.space = space
+        self.path = path
+
+    def load(self):
+        self.space.send(
+            self.space.w_kernel,
+            "require",
+            [self.space.newstr_fromstr(self.path)]
+        )
+
+
 class W_ModuleObject(W_RootObject):
     _immutable_fields_ = ["version?", "included_modules?[*]", "klass?", "name?"]
 
@@ -197,19 +210,19 @@ class W_ModuleObject(W_RootObject):
         if isinstance(w_obj, W_ModuleObject) and w_obj.name is None and self.name is not None:
             w_obj.set_name_in_scope(space, name, self)
 
-    def find_const(self, space, name):
-        w_res = self.find_included_const(space, name)
+    def find_const(self, space, name, autoload=True):
+        w_res = self.find_included_const(space, name, autoload=autoload)
         if w_res is None:
-            return space.w_object.find_const(space, name)
+            return space.w_object.find_const(space, name, autoload=autoload)
         else:
             return w_res
 
     @jit.unroll_safe
-    def find_included_const(self, space, name):
-        w_res = self.find_local_const(space, name)
+    def find_included_const(self, space, name, autoload=True):
+        w_res = self.find_local_const(space, name, autoload=autoload)
         if w_res is None:
             for w_mod in self.included_modules:
-                w_res = w_mod.find_local_const(space, name)
+                w_res = w_mod.find_local_const(space, name, autoload=autoload)
                 if w_res is not None:
                     break
         return w_res
@@ -242,12 +255,24 @@ class W_ModuleObject(W_RootObject):
     def inherited_constants(self, space):
         return self.local_constants(space)
 
-    def find_local_const(self, space, name):
-        return self._find_const_pure(name, self.version)
+    def find_local_const(self, space, name, autoload=True):
+        return self._find_const_pure(name, self.version, autoload=autoload)
 
     @jit.elidable
-    def _find_const_pure(self, name, version):
-        return self.constants_w.get(name, None)
+    def _find_const_pure(self, name, version, autoload=True):
+        w_res = self.constants_w.get(name, None)
+        if autoload and isinstance(w_res, W_Autoload):
+            self.constants_w[name] = None
+            try:
+                w_res.load()
+            finally:
+                w_new_res = self.constants_w.get(name, None)
+                if not w_res:
+                    self.constants_w[name] = w_res
+                w_res = w_new_res
+            return w_res
+        else:
+            return w_res
 
     @jit.unroll_safe
     def set_class_var(self, space, name, w_obj):
@@ -615,9 +640,9 @@ class W_ModuleObject(W_RootObject):
     def method_const_definedp(self, space, const, inherit=True):
         space._check_const_name(const)
         if inherit:
-            return space.newbool(self.find_const(space, const) is not None)
+            return space.newbool(self.find_const(space, const, autoload=False) is not None)
         else:
-            return space.newbool(self.find_local_const(space, const) is not None)
+            return space.newbool(self.find_local_const(space, const, autoload=False) is not None)
 
     @classdef.method("const_get", const="symbol", inherit="bool")
     def method_const_get(self, space, const, inherit=True):
@@ -639,7 +664,7 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("remove_const", name="str")
     def method_remove_const(self, space, name):
         space._check_const_name(name)
-        w_res = self.find_local_const(space, name)
+        w_res = self.find_local_const(space, name, autoload=False)
         if w_res is None:
             self_name = space.obj_to_s(self)
             raise space.error(space.w_NameError,
@@ -791,6 +816,9 @@ class W_ModuleObject(W_RootObject):
         self.method_removed(space, space.newsymbol(name))
         return self
 
+    def method_removed(self, space, w_name):
+        space.send(self, "method_removed", [w_name])
+
     @classdef.method("method_added")
     def method_method_added(self, space, w_name):
         return space.w_nil
@@ -802,6 +830,22 @@ class W_ModuleObject(W_RootObject):
     @classdef.method("method_removed")
     def method_method_removed(self, space, w_name):
         return space.w_nil
+
+    @classdef.method("autoload", name="symbol", path="path")
+    def method_autoload(self, space, name, path):
+        if len(path) == 0:
+            raise space.error(space.w_ArgumentError, "empty file name")
+        if not self.find_const(space, name):
+            space.set_const(self, name, W_Autoload(space, path))
+        return space.w_nil
+
+    @classdef.method("autoload?", name="symbol")
+    def method_autoload(self, space, name):
+        w_autoload = self.constants_w.get(name, None)
+        if isinstance(w_autoload, W_Autoload):
+            return space.newstr_fromstr(w_autoload.path)
+        else:
+            return space.w_nil
 
     @classdef.method("class_exec")
     @classdef.method("module_exec")

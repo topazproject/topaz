@@ -46,10 +46,10 @@ class W_ClassObject(W_ModuleObject):
             )
         return self.klass
 
-    def find_const(self, space, name):
-        w_res = W_ModuleObject.find_included_const(self, space, name)
+    def find_const(self, space, name, autoload=True):
+        w_res = W_ModuleObject.find_included_const(self, space, name, autoload=autoload)
         if w_res is None and self.superclass is not None:
-            w_res = self.superclass.find_const(space, name)
+            w_res = self.superclass.find_const(space, name, autoload=autoload)
         return w_res
 
     def inherited_constants(self, space):

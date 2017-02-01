@@ -44,7 +44,7 @@ class W_BaseObject(W_Root):
     def is_true(self, space):
         return True
 
-    def find_const(self, space, name):
+    def find_const(self, space, name, autoload=False):
         raise space.error(space.w_TypeError,
             "%s is not a class/module" % space.str_w(space.send(self, "inspect"))
         )
