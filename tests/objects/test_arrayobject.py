@@ -305,6 +305,22 @@ class TestArrayObject(BaseTopazTest):
         w_res = space.execute("return [].push(2, 3)")
         assert self.unwrap(space, w_res) == [2, 3]
 
+    def test_insert(self, space):
+        w_res = space.execute("return [1,2,3].insert(0, 4, 5)")
+        assert self.unwrap(space, w_res) == [4, 5, 1, 2, 3]
+
+        w_res = space.execute("return [1,2,3].insert(-1, 4, 5)")
+        assert self.unwrap(space, w_res) == [1, 2, 3, 4, 5]
+
+        w_res = space.execute("return [1,2,3].insert(-2, 4, 5)")
+        assert self.unwrap(space, w_res) == [1, 2, 4, 5, 3]
+
+        w_res = space.execute("return [1,2,3].insert(5, 4, 5)")
+        assert self.unwrap(space, w_res) == [1, 2, 3, None, None, 4, 5]
+
+        with self.raises(space, "IndexError", "index -6 too small for array; minimum: -3"):
+            space.execute("return [1,2,3].insert(-7, 4, 5)")
+
     def test_eq(self, space):
         w_res = space.execute("""
         x = []

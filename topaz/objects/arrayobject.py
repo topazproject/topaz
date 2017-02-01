@@ -8,6 +8,7 @@ from topaz.coerce import Coerce
 from topaz.module import ClassDef, check_frozen
 from topaz.modules.enumerable import Enumerable
 from topaz.objects.objectobject import W_Object
+from topaz.objects.intobject import W_FixnumObject
 from topaz.utils.packing.pack import RPacker
 
 
@@ -98,11 +99,13 @@ class W_ArrayObject(W_Object):
         start, end, as_range, _ = space.subscript_access(self.length(), w_idx, w_count=w_count)
 
         if w_count and end < start:
-            raise space.error(space.w_IndexError,
+            raise space.error(
+                space.w_IndexError,
                 "negative length (%d)" % (end - start)
             )
         elif start < 0:
-            raise space.error(space.w_IndexError,
+            raise space.error(
+                space.w_IndexError,
                 "index %d too small for array; minimum: %d" % (
                     start - self.length(),
                     -self.length()
@@ -192,6 +195,48 @@ class W_ArrayObject(W_Object):
         space.infect(w_res, self, freeze=False)
         return w_res
 
+    @classdef.method("insert", w_idx="int")
+    @check_frozen()
+    def method_insert(self, space, w_idx, args_w):
+        if len(args_w) == 0:
+            return self
+
+        if isinstance(w_idx, W_FixnumObject):
+            idx = space.int_w(w_idx)
+        else:
+            idx = space.int_w(space.convert_type(w_idx, space.w_fixnum, "to_int"))
+
+        length = len(self.items_w)
+
+        if idx < -length - 1:
+            raise space.error(
+                space.w_IndexError,
+                "index %d too small for array; minimum: %d" % (
+                    idx + 1,
+                    -length
+                )
+            )
+        elif idx > length:
+            before = self.items_w
+            for i in range(idx - length):
+                before.append(space.w_nil)
+            after = []
+        elif idx == 0:
+            before = []
+            after = self.items_w
+        elif idx < 0:
+            split_idx = length + idx + 1
+            assert split_idx >= 0
+            before = self.items_w[:split_idx]
+            after = self.items_w[split_idx:]
+        else:
+            assert idx > 0
+            before = self.items_w[:idx]
+            after = self.items_w[idx:]
+
+        self.items_w = before + args_w + after
+        return self
+
     @classdef.method("push")
     @check_frozen()
     def method_push(self, space, args_w):
@@ -229,7 +274,8 @@ class W_ArrayObject(W_Object):
         elif space.respond_to(w_sep, "to_str"):
             separator = space.str_w(space.send(w_sep, "to_str"))
         else:
-            raise space.error(space.w_TypeError,
+            raise space.error(
+                space.w_TypeError,
                 "can't convert %s into String" % space.getclass(w_sep).name
             )
         return space.newstr_fromstr(separator.join([
