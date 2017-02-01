@@ -382,6 +382,8 @@ class TestStringObject(BaseTopazTest):
         return s
         """)
         assert space.str_w(w_res) == "hallo"
+        w_res = space.execute("return 'x'.tr('x', '-')")
+        assert space.str_w(w_res) == "-"
 
     def test_tr_s(self, space):
         w_res = space.execute("return 'hello'.tr_s('l', 'r')")
