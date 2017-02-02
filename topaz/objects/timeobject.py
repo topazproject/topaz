@@ -36,7 +36,6 @@ class W_TimeObject(W_Object):
         timestamp = Coerce.float(space, w_time)
         w_time = space.send(self, "new")
         w_time._set_epoch_seconds(timestamp + microtime)
-        w_time._set_offset(self.offset)
         return w_time
 
     @classdef.method("initialize")
