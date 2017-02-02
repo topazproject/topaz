@@ -114,4 +114,18 @@ module Kernel
     Random.rand(max)
   end
   private :rand
+
+  def caller
+    begin
+      raise "caller called"
+    rescue Exception => e
+      return e.backtrace[2..-1]
+    end
+  end
+
+  def require_relative(path)
+    caller[1] =~ /^(.*):\d+:/
+    caller_file = $1
+    require File.join(File.dirname(File.expand_path(caller_file)), path)
+  end
 end
