@@ -116,6 +116,8 @@ def run_translate_jit_tests(env):
     run_specs("`pwd`/bin/topaz")
     invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH py.test --topaz=bin/topaz tests/jit/".format(**env))
 
+def run_translate_jit(env):
+    invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch -Ojit targettopaz.py".format(**env))
 
 def run_specs(binary, prefix=""):
     invoke.run("{prefix}../mspec/bin/mspec -G fails -t {binary} --format=dotted --config=topaz.mspec".format(
@@ -137,6 +139,7 @@ TEST_TYPES = {
     "rubyspec_untranslated": Test(run_rubyspec_untranslated, deps=["-r requirements.txt"], needs_rubyspec=True),
     "translate": Test(run_translate_tests, deps=["-r requirements.txt"], needs_rubyspec=True),
     "translate-jit": Test(run_translate_jit_tests, deps=["-r requirements.txt"], needs_rubyspec=True, create_build=True),
+    "translate-jit-notest": Test(run_translate_jit, deps=["-r requirements.txt"], create_build=True),
     "docs": Test(run_docs_tests, deps=["sphinx"], needs_rpython=False),
     "flake8": Test(run_flake8_tests, deps=["flake8"], needs_rpython=False),
 }
