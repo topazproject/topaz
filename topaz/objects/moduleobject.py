@@ -256,11 +256,7 @@ class W_ModuleObject(W_RootObject):
         return self.local_constants(space)
 
     def find_local_const(self, space, name, autoload=True):
-        return self._find_const_pure(name, self.version, autoload=autoload)
-
-    @jit.elidable
-    def _find_const_pure(self, name, version, autoload=True):
-        w_res = self.constants_w.get(name, None)
+        w_res = self._find_const_pure(name, self.version)
         if autoload and isinstance(w_res, W_Autoload):
             self.constants_w[name] = None
             try:
@@ -273,6 +269,10 @@ class W_ModuleObject(W_RootObject):
             return w_res
         else:
             return w_res
+
+    @jit.elidable
+    def _find_const_pure(self, name, version):
+        return self.constants_w.get(name, None)
 
     @jit.unroll_safe
     def set_class_var(self, space, name, w_obj):
