@@ -73,9 +73,10 @@ class W_TimeObject(W_Object):
 
     @classdef.method("strftime")
     def method_strftime(self, space, w_obj):
-        return space.newstr_fromstr(time.strftime(space.str_w(w_obj),
-                                                  time.gmtime(self.epoch_seconds)))
+        return space.newstr_fromstr(strftime(space.str_w(w_obj),
+                                             self.epoch_seconds))
 
+    @classdef.method("gmtime")
     @classdef.method("inspect")
     @classdef.method("to_s")
     def method_inspect(self, space):
@@ -101,3 +102,26 @@ class W_TimeObject(W_Object):
 
     def _set_offset(self, tzoffset):
         self.offset = tzoffset
+
+
+from rpython.rtyper.lltypesystem import lltype, rffi
+from rpython.rlib.rarithmetic import intmask
+from pypy.module.time.interp_time import external, TM_P
+
+c_gmtime = external('gmtime', [rffi.TIME_TP], TM_P, save_err=rffi.RFFI_SAVE_ERRNO)
+c_strftime = external('strftime', [rffi.CCHARP, rffi.SIZE_T, rffi.CCHARP, TM_P], rffi.SIZE_T)
+
+def strftime(format, seconds):
+    i = 1024
+    while i < (256 * len(format)):
+        # if the buffer is 256 times as long as the format, we're not failing
+        # for lack of room (see pypy)
+        with lltype.scoped_alloc(rffi.TIME_TP.TO, 1) as t_ref:
+            t_ref[0] = int(seconds)
+            p = c_gmtime(t_ref)
+            with lltype.scoped_alloc(rffi.CCHARP.TO, i) as outbuf:
+                buflen = c_strftime(outbuf, i, format, p)
+                if buflen > 0:
+                    return rffi.charp2strn(outbuf, intmask(buflen))
+        i += i
+    return ""
