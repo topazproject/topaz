@@ -4,6 +4,8 @@ import errno
 import os
 
 from rpython.rlib.rarithmetic import intmask
+from rpython.rlib import rtime
+from rpython.rtyper.lltypesystem import rffi, lltype
 
 from topaz.gateway import Coerce
 from topaz.module import ModuleDef
@@ -36,8 +38,24 @@ else:
     WEXITSTATUS = os.WEXITSTATUS
 
 
+if not rtime.HAS_CLOCK_GETTIME:
+    CLOCK_PROCESS_CPUTIME_ID = 1
+
+
 class Process(object):
     moduledef = ModuleDef("Process")
+
+    @moduledef.setup_module
+    def setup_module(space, w_mod):
+        if rtime.HAS_CLOCK_GETTIME:
+            for name in rtime.ALL_DEFINED_CLOCKS:
+                space.set_const(w_mod, name, space.newint(getattr(rtime, name)))
+        else:
+            space.set_const(
+                w_mod,
+                "CLOCK_PROCESS_CPUTIME_ID",
+                CLOCK_PROCESS_CPUTIME_ID
+            )
 
     @moduledef.function("euid")
     def method_euid(self, space):
@@ -128,3 +146,49 @@ class Process(object):
                 except OSError as e:
                     raise error_for_oserror(space, e)
         return space.newint(len(args_w))
+
+    @moduledef.function("clock_gettime", clockid="int")
+    def method_clock_gettime(self, space, clockid, args_w):
+        if len(args_w) > 1:
+            raise space.error(space.w_ArgumentError,
+                "wrong number of arguments (given %d, expected 1..2)"
+            )
+        if len(args_w) == 1:
+            unit = Coerce.symbol(space, args_w[0])
+        else:
+            unit = "float_second"
+        if rtime.HAS_CLOCK_GETTIME:
+            with lltype.scoped_alloc(rtime.TIMESPEC) as a:
+                if rtime.c_clock_gettime(clockid, a) == 0:
+                    sec = rffi.getintfield(a, 'c_tv_sec')
+                    nsec = rffi.getintfield(a, 'c_tv_nsec')
+                else:
+                    raise error_for_oserror(space, OSError(
+                        errno.EINVAL, "clock_gettime")
+                    )
+        elif clockid == CLOCK_PROCESS_CPUTIME_ID:
+            r = rtime.clock()
+            sec = int(r)
+            nsec = r * 1000000000
+        else:
+            raise error_for_oserror(space, OSError(
+                errno.EINVAL, "clock_gettime")
+            )
+        if unit == "float_second":
+            return space.newfloat(sec + nsec * 0.000000001)
+        elif unit == "float_millisecond":
+            return space.newfloat(sec * 1000 + nsec * 0.000001)
+        elif unit == "float_microsecond":
+            return space.newfloat(sec * 1000000 + nsec * 0.001)
+        elif unit == "second":
+            return space.newint(int(sec))
+        elif unit == "millisecond":
+            return space.newint(int(sec) * 1000)
+        elif unit == "microsecond":
+            return space.newint(sec * 1000000)
+        elif unit == "nanosecond":
+            return space.newint(sec * 1000000000 + nsec)
+        else:
+            raise space.errno(space.w_ArgumentError,
+                "unexpected unit: %s" % unit
+            )
