@@ -1,6 +1,6 @@
 class MSpecScript
   Topaz = File.expand_path(File.dirname(__FILE__))
-  Rubyspec = File.expand_path("../../rubyspec", __FILE__)
+  Rubyspec = File.expand_path("../../spec", __FILE__)
 
   MSpec.enable_feature :fiber
   MSpec.enable_feature :fork
