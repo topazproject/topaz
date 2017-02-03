@@ -247,6 +247,40 @@ class TestCompiler(object):
         RETURN
         """)
 
+        self.assert_compiles(space, "puts 5 while true", """
+        SETUP_LOOP 26
+        LOAD_CONST 0
+        JUMP_IF_FALSE 22
+        LOAD_SELF
+        LOAD_CONST 1
+        SEND 2 1
+        DISCARD_TOP
+        JUMP 3
+        POP_BLOCK
+        LOAD_CONST 3
+
+        RETURN
+        """)
+
+        self.assert_compiles(space, "begin puts 5 end while true", """
+        LOAD_SELF
+        LOAD_CONST 0
+        SEND 1 1
+        DISCARD_TOP
+        SETUP_LOOP 36
+        LOAD_CONST 2
+        JUMP_IF_FALSE 32
+        LOAD_SELF
+        LOAD_CONST 3
+        SEND 1 1
+        DISCARD_TOP
+        JUMP 13
+        POP_BLOCK
+        LOAD_CONST 4
+
+        RETURN
+        """)
+
     def test_for_loop(self, space):
         bc = self.assert_compiles(space, "for a, *$b, @c in [] do end", """
         BUILD_ARRAY 0

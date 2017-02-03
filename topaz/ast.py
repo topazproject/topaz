@@ -95,15 +95,19 @@ class If(Node):
 
 
 class BaseLoop(Node):
-    def __init__(self, cond, body):
+    def __init__(self, cond, body, post_check=False):
         self.cond = cond
         self.body = body
+        self.post_check = post_check
 
     def compile(self, ctx):
         anchor = ctx.new_block()
         end = ctx.new_block()
         loop = ctx.new_block()
 
+        if self.post_check:
+            self.body.compile(ctx)
+            ctx.emit(consts.DISCARD_TOP)
         ctx.emit_jump(consts.SETUP_LOOP, end)
         with ctx.enter_frame_block(ctx.F_BLOCK_LOOP, loop):
             ctx.use_next_block(loop)

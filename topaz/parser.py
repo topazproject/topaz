@@ -542,11 +542,27 @@ class Parser(object):
             ast.Block([p[0].getast()]),
         ))
 
+    @pg.production("stmt : BEGIN bodystmt END WHILE_MOD expr_value")
+    def stmt_while_mod(self, p):
+        return self._new_stmt(ast.While(
+            p[4].getast(),
+            p[1].getast(),
+            post_check=True
+        ))
+
     @pg.production("stmt : stmt WHILE_MOD expr_value")
     def stmt_while_mod(self, p):
         return self._new_stmt(ast.While(
             p[2].getast(),
             ast.Block([p[0].getast()])
+        ))
+
+    @pg.production("stmt : BEGIN bodystmt END UNTIL_MOD expr_value")
+    def stmt_until_mod(self, p):
+        return self._new_stmt(ast.Until(
+            p[4].getast(),
+            p[1].getast(),
+            post_check=True
         ))
 
     @pg.production("stmt : stmt UNTIL_MOD expr_value")
