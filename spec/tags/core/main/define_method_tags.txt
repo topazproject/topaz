@@ -1,0 +1,2 @@
+fails:main#define_method creates a public method in TOPLEVEL_BINDING
+fails:main#define_method creates a public method in script binding

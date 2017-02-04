@@ -3,3 +3,4 @@ fails:Thread#priority maintain the priority of the current thread after death
 fails:Thread#priority returns an integer
 fails:Thread#priority= when set with an integer returns an integer
 fails:Thread#priority= when set with a non-integer raises a type error
+fails:Thread#priority= sets priority even when the thread has died

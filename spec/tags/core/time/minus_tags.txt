@@ -15,3 +15,4 @@ fails:Time#- returns a time with the same fixed offset as self
 fails:Time#- does not returns a subclass instance
 fails:Time#- raises a TypeError if given argument is a coercible String
 fails:Time#- does not return a subclass instance
+fails:Time#- returns a time with nanoseconds precision between two time objects

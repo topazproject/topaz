@@ -1,0 +1,6 @@
+<<<<<<< Updated upstream
+=======
+fails:Module#module_eval does not add defined methods to other classes
+>>>>>>> Stashed changes
+fails:Module#module_eval resolves constants in the caller scope
+fails:Module#module_eval resolves constants in the caller scope ignoring send

@@ -3,3 +3,4 @@ fails:Complex#* with Integer multiplies both parts of self by the given Integer
 fails:Complex#* with Object tries to coerce self into other
 fails:Complex#* with a Numeric which responds to #real? with true multiples both parts of self by other
 fails:Complex#* with a Numeric which responds to #real? with false coerces the passed argument to Complex and multiplies the resulting elements
+fails:Complex#* with a Numeric which responds to #real? with true with a Numeric which responds to #real? with false coerces the passed argument to Complex and multiplies the resulting elements

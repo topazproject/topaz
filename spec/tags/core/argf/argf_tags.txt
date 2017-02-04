@@ -1,1 +1,2 @@
 fails:ARGF is extended by the Enumerable module
+fails:ARGF is an instance of ARGF.class

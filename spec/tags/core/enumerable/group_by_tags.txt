@@ -1,2 +1,4 @@
 fails:Enumerable#group_by returns a tainted hash if self is tainted
 fails:Enumerable#group_by returns an untrusted hash if self is untrusted
+fails:Enumerable#group_by Enumerable with size when no block is given returned Enumerator size returns the enumerable size
+fails:Enumerable#group_by Enumerable with no size when no block is given returned Enumerator size returns nil

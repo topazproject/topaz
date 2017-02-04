@@ -1,0 +1,1 @@
+fails:Enumerable#first raises a RangeError when passed a Bignum

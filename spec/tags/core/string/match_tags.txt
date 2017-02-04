@@ -12,3 +12,4 @@ fails:String#match with [pattern, position] when given a positive position match
 fails:String#match with [pattern, position] when given a positive position uses the start as a character offset
 fails:String#match with [pattern, position] when given a negative position matches the pattern against self starting at an optional index
 fails:String#match with [pattern, position] when given a negative position uses the start as a character offset
+fails:String#match calls match on the regular expression

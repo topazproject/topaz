@@ -6,3 +6,4 @@ fails:Method#to_proc returns a proc that can receive a block
 fails:Method#to_proc can be called directly and not unwrap arguments like a block
 fails:Method#to_proc should correct handle arguments (unwrap)
 fails:Method#to_proc executes method with whole array (one argument)
+fails:Method#to_proc returns a Proc which does not depends on the value of self

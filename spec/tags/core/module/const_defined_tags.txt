@@ -1,0 +1,1 @@
+fails:Module#const_defined? returns true when passed a constant name with EUC-JP characters

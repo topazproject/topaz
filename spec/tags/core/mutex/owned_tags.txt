@@ -1,0 +1,3 @@
+fails:Mutex#owned? when unlocked returns false
+fails:Mutex#owned? when locked by the current thread returns true
+fails:Mutex#owned? when locked by another thread returns false

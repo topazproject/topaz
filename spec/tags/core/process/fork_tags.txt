@@ -1,0 +1,2 @@
+fails:Process.fork returns status non-zero
+fails:Process.fork marks threads from the parent as killed

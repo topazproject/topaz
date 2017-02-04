@@ -49,3 +49,4 @@ fails:IO.copy_stream from a pipe IO to an IO copies only length bytes when speci
 fails:IO.copy_stream with non-IO Objects calls #readpartial on the source Object if defined
 fails:IO.copy_stream with non-IO Objects calls #read on the source Object
 fails:IO.copy_stream with non-IO Objects calls #write on the destination Object
+fails:IO.copy_stream with non-IO Objects does not call #pos on the source if no offset is given

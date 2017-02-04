@@ -1,1 +1,2 @@
 fails:String#replace replaces the encoding of self with that of other
+fails:String#replace carries over the encoding invalidity

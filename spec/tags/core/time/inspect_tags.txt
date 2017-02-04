@@ -5,3 +5,4 @@ fails:Time#inspect formats the local time following the pattern 'yyyy-MM-dd HH:m
 fails:Time#inspect formats the UTC time following the pattern 'yyyy-MM-dd HH:mm:ss UTC'
 fails:Time#inspect formats the fixed offset time following the pattern 'yyyy-MM-dd HH:mm:ss +/-HHMM'
 fails:Time#inspect returns an ASCII-8BIT encoded string
+fails:Time#inspect returns a US-ASCII encoded string

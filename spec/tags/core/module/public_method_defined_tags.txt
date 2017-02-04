@@ -5,3 +5,8 @@ fails:Module#public_method_defined? accepts symbols for the method name
 fails:Module#public_method_defined? raises a TypeError if not passed a Symbol
 fails:Module#public_method_defined? raises a TypeError if passed an object that defines #to_sym
 fails:Module#public_method_defined? accepts any object that is a String type
+fails:Module#public_method_defined? raises a TypeError if passed a Fixnum
+fails:Module#public_method_defined? raises a TypeError if passed nil
+fails:Module#public_method_defined? raises a TypeError if passed false
+fails:Module#public_method_defined? raises a TypeError if passed an object that does not defined #to_str
+fails:Module#public_method_defined? calls #to_str to convert an Object

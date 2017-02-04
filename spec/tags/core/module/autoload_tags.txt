@@ -38,3 +38,4 @@ fails:Module#autoload does not call Kernel#require or Kernel#load dynamically
 fails:Module#autoload returns 'constant' on refering the constant with defined?()
 fails:Module#autoload on a frozen module raises a RuntimeError before setting the name
 fails:Module#autoload when changing $LOAD_PATH does not reload a file due to a different load path
+fails:Module#autoload (concurrently) blocks others threads while doing an autoload

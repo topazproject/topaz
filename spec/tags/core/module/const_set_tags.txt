@@ -1,0 +1,2 @@
+fails:Module#const_set on a frozen module raises a RuntimeError before setting the name
+fails:Module#const_set sets the name of contained modules when assigning a toplevel anonymous module

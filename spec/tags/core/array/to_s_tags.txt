@@ -8,3 +8,7 @@ fails:Array#to_s copies the ASCII-incompatible encoding of the result of inspect
 fails:Array#to_s raises if inspecting two elements produces incompatible encodings
 fails:Array#to_s use the default external encoding if it is ascii compatible
 fails:Array#to_s use US-ASCII encoding if the default external encoding is not ascii compatible
+fails:Array#to_s with encoding returns a US-ASCII string for an empty Array
+fails:Array#to_s with encoding use the default external encoding if it is ascii compatible
+fails:Array#to_s with encoding use US-ASCII encoding if the default external encoding is not ascii compatible
+fails:Array#to_s with encoding raises if inspected result is not default external encoding

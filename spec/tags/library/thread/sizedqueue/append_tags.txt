@@ -1,0 +1,1 @@
+fails:Thread::SizedQueue#<< blocks if queued elements exceed size

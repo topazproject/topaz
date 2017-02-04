@@ -1,1 +1,2 @@
 fails:Hash#each yields the key only to a block expecting |key,|
+fails:Hash#each when no block is given returned Enumerator size returns the enumerable size

@@ -7,3 +7,7 @@ fails:Kernel#public_send succeeds if passed an arbitrary number of arguments as 
 fails:Kernel#public_send succeeds when passing 1 or more arguments as a required and a splat parameter
 fails:Kernel#public_send succeeds when passing 0 arguments to a method with one parameter with a default
 fails:Kernel#public_send has an arity of -1
+fails:Kernel#public_send accepts a String method name
+fails:Kernel#public_send raises an ArgumentError if no arguments are given
+fails:Kernel#public_send raises an ArgumentError if called with more arguments than available parameters
+fails:Kernel#public_send has a negative arity

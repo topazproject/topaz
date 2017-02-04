@@ -1,0 +1,1 @@
+fails:Thread.exclusive returns the result of yielding
