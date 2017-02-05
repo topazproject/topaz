@@ -189,6 +189,6 @@ class Process(object):
         elif unit == "nanosecond":
             return space.newint(sec * 1000000000 + nsec)
         else:
-            raise space.errno(space.w_ArgumentError,
+            raise space.error(space.w_ArgumentError,
                 "unexpected unit: %s" % unit
             )
