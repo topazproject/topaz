@@ -2,6 +2,7 @@ from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi.dynamic_library import W_DL_SymbolObject
 
 from rpython.rlib import clibffi
+from rpython.rtyper.lltypesystem import rffi
 
 import sys
 
@@ -20,9 +21,9 @@ class TestDynamicLibrary(BaseFFITest):
 class TestDynamicLibrary__new(BaseFFITest):
     def test_it_opens_a_dynamic_library(self, space):
         w_res = space.execute("FFI::DynamicLibrary.new('%s', 1)" % libm)
-        assert w_res.cdll.lib == clibffi.dlopen(libm, 1)
+        assert w_res.cdll.lib == clibffi.dlopen(rffi.str2charp(libm), 1)
         w_res = space.execute("FFI::DynamicLibrary.new('%s', 0)" % libm)
-        assert w_res.cdll.lib == clibffi.dlopen(libm, 0)
+        assert w_res.cdll.lib == clibffi.dlopen(rffi.str2charp(libm), 0)
 
     def test_it_stores_the_name_of_the_opened_lib(self, space):
         w_res = space.execute("FFI::DynamicLibrary.new('%s', 1)" % libm)
@@ -72,4 +73,4 @@ class TestDynamicLibrary_find_variable(BaseFFITest):
         assert self.ask(space, """
         dl = FFI::DynamicLibrary.new('%s')
         dl.method(:find_function) == dl.method(:find_variable)
-        """ % libm) 
+        """ % libm)
