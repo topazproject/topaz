@@ -14,4 +14,10 @@ def jitpolicy(driver):
 
 
 def handle_config(config, translateconfig):
+    from rpython.translator.platform import host_factory
+    max_stack_size = 11 << 18 # 2.8 Megs
+    if host_factory.name == 'msvc':
+        host_factory.cflags += ('/DMAX_STACK_SIZE=%d' % max_stack_size,)
+    elif host_factory.name in ('linux', 'darwin'):
+        host_factory.cflags += ('-DMAX_STACK_SIZE=%d' % max_stack_size,)
     config.translation.suggest(check_str_without_nul=True)
