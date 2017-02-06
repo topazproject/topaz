@@ -97,7 +97,10 @@ class W_BignumObject(W_IntegerObject):
 
     @classdef.method("<<", other="int")
     def method_left_shift(self, space, other):
-        return space.newbigint_fromrbigint(self.bigint.lshift(other))
+        if other >= 0:
+            return space.newbigint_fromrbigint(self.bigint.lshift(other))
+        else:
+            return space.newbigint_fromrbigint(self.bigint.rshift(-other))
 
     @classdef.method("&", other="bigint")
     def method_and(self, space, other):
