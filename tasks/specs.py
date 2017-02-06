@@ -1,4 +1,5 @@
 import invoke
+import os
 
 from .base import BaseTest
 
@@ -24,6 +25,19 @@ class Rubyspecs(BaseTest):
     def untag(self):
         self.mspec("tag --del fails -g fails -f spec %s" % self.options)
 
+    def retag(self):
+        assert len(self.files) == 0, "retag task mustn't get a file list"
+        for d in ["core", "command_line", "language", "library"]:
+            for dirname, subdirlist, filelist in os.walk("../rubyspec/%s/" % d):
+                fs = []
+                for f in filelist:
+                    if f.endswith("_spec.rb"):
+                        fs.append("%s/%s" % (dirname, f))
+                if len(fs) > 0:
+                    self.files = " ".join(fs)
+                    self.untag()
+                    self.tag()
+
 
 def generate_spectask(taskname):
     def spectask(ctx, files="", options="", untranslated=False):
@@ -36,3 +50,4 @@ def generate_spectask(taskname):
 run = generate_spectask("run")
 tag = generate_spectask("tag")
 untag = generate_spectask("untag")
+retag = generate_spectask("retag")
