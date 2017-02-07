@@ -546,6 +546,21 @@ class W_StringObject(W_Object):
     @classdef.method("[]")
     @classdef.method("slice")
     def method_subscript(self, space, w_idx, w_count=None):
+        if space.is_kind_of(w_idx, space.w_string):
+            if space.send(self, "include?", [w_idx]):
+                return w_idx
+            else:
+                return space.w_nil
+
+        if space.is_kind_of(w_idx, space.w_regexp):
+            w_match = space.send(w_idx, "match", [self])
+            if w_match is space.w_nil:
+                return space.w_nil
+            elif not w_count:
+                return space.send(w_match, "[]", [space.newint(0)])
+            else:
+                return space.send(w_match, "[]", [w_count])
+
         start, end, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
         if nil:
             return space.w_nil
