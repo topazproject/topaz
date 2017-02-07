@@ -44,6 +44,10 @@ class File < IO
   def zero?
     self.size == 0
   end
+
+  class << self
+    alias_method :realpath, :expand_path
+  end
 end
 
 
