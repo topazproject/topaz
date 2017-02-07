@@ -129,7 +129,7 @@ module Kernel
   private :caller
 
   def require_relative(path)
-    caller[1] =~ /^(.*):\d+:/
+    caller[0] =~ /^(.*):\d+:/
     caller_file = $1
     require File.join(File.dirname(File.expand_path(caller_file)), path)
   end
