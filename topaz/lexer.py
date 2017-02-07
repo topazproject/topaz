@@ -649,6 +649,12 @@ class Lexer(object):
                 yield self.emit("OP_ASGN")
             else:
                 self.unread()
+                if self.is_arg() and space_seen and not ch3.isspace():
+                    tok_name = "DSTAR"
+                elif self.is_beg():
+                    tok_name = "DSTAR"
+                else:
+                    tok_name = "POW"
                 self.set_expression_state()
                 yield self.emit("POW")
         elif ch2 == "=":

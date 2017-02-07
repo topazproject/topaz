@@ -8,7 +8,8 @@ class BaseSymbolTable(object):
 
     NORMAL_ARG = 0
     SPLAT_ARG = 1
-    BLOCK_ARG = 2
+    KW_ARG = 2
+    BLOCK_ARG = 3
 
     def __init__(self, parent_symtable=None):
         self.parent_symtable = parent_symtable

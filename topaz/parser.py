@@ -146,12 +146,38 @@ class Parser(object):
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
-    def new_args(self, args=None, splat_arg=None, block_arg=None):
-        return BoxArgs(
-            args.getastlist() if args is not None else [],
-            splat_arg.getstr() if splat_arg is not None else None,
-            block_arg.getstr() if block_arg is not None else None,
-        )
+    def new_args(self, args=None, splat_arg=None, post_args=None, args_tail=None):
+        if args_tail:
+            kwargs = args_tail.getkwargs()
+            kwrest = args_tail.getkwrest()
+            block_arg = args_tail.getblockarg()
+        else:
+            kwargs = None
+            kwrest = None
+            block_arg = None
+
+        if post_args is not None and splat_arg:
+            self.lexer.symtable.declare_argument("2", self.lexer.symtable.SPLAT_ARG)
+            splat = ast.Splat(ast.Variable(splat_arg.getstr(), -1))
+            assignable = self._new_assignable_list([splat] + self.args_to_variables(post_args))
+            return BoxArgs(
+                (args.getastlist() if args is not None else []) + [assignable.getassignment()],
+                "2",
+                kwargs.getastlist() if kwargs is not None else [],
+                kwrest.getstr() if kwrest is not None else None,
+                block_arg.getstr() if block_arg is not None else None
+            )
+        else:
+            return BoxArgs(
+                args.getastlist() if args is not None else [],
+                splat_arg.getstr() if splat_arg is not None else None,
+                kwargs.getastlist() if kwargs is not None else [],
+                kwrest.getstr() if kwrest is not None else None,
+                block_arg.getstr() if block_arg is not None else None,
+            )
+
+    def new_argstail(self, keywords=None, kwrest=None, block_arg=None):
+        return BoxArgsTail(keywords, kwrest, block_arg)
 
     def new_call_args(self, box_arg=None, box_block=None):
         args = [box_arg.getast()] if box_arg else []
@@ -239,6 +265,12 @@ class Parser(object):
 
     def new_splat(self, box):
         return BoxAST(ast.Splat(box.getast()))
+
+    def new_kw_arg(self, box, default_value):
+        return BoxAST(ast.Argument(
+            box.getstr(),
+            default_value.getast() if default_value is not None else None
+        ))
 
     def new_colon2(self, box, constant):
         return BoxAST(ast.LookupConstant(box.getast(), constant.getstr(), constant.getsourcepos().lineno))
@@ -349,12 +381,12 @@ class Parser(object):
         "NEQ", "GEQ", "LEQ", "ANDOP", "OROP", "MATCH", "NMATCH", "DOT", "DOT2",
         "DOT3", "AREF", "ASET", "LSHFT", "RSHFT", "COLON2", "COLON3",
         "OP_ASGN", "ASSOC", "LPAREN", "LPAREN2", "RPAREN", "LPAREN_ARG",
-        "LBRACK", "RBRACK", "LBRACE", "LBRACE_ARG", "STAR", "STAR2", "AMPER",
-        "AMPER2", "TILDE", "PERCENT", "DIVIDE", "PLUS", "MINUS", "LT", "GT",
-        "PIPE", "BANG", "CARET", "LCURLY", "RCURLY", "BACK_REF2", "SYMBEG",
-        "STRING_BEG", "XSTRING_BEG", "REGEXP_BEG", "WORDS_BEG", "QWORDS_BEG",
-        "STRING_DBEG", "STRING_DVAR", "STRING_END", "LAMBDA", "LAMBEG",
-        "NTH_REF", "BACK_REF", "STRING_CONTENT", "INTEGER", "FLOAT",
+        "LBRACK", "RBRACK", "LBRACE", "LBRACE_ARG", "STAR", "STAR2", "DSTAR",
+        "AMPER", "AMPER2", "TILDE", "PERCENT", "DIVIDE", "PLUS", "MINUS",
+        "LT", "GT", "PIPE", "BANG", "CARET", "LCURLY", "RCURLY", "BACK_REF2",
+        "SYMBEG", "STRING_BEG", "XSTRING_BEG", "REGEXP_BEG", "WORDS_BEG",
+        "QWORDS_BEG", "STRING_DBEG", "STRING_DVAR", "STRING_END", "LAMBDA",
+        "LAMBEG", "NTH_REF", "BACK_REF", "STRING_CONTENT", "INTEGER", "FLOAT",
         "REGEXP_END",
 
         "LITERAL_EQUAL", "LITERAL_COLON", "LITERAL_COMMA", "LITERAL_LBRACKET",
@@ -475,7 +507,7 @@ class Parser(object):
     def stmts_none(self, p):
         return p[0]
 
-    @pg.production("stmts : stmt")
+    @pg.production("stmts : stmt_or_begin")
     def stmts_stmt(self, p):
         return self.new_list(p[0])
 
@@ -486,6 +518,14 @@ class Parser(object):
     @pg.production("stmts : error stmt")
     def stmts_error(self, p):
         return p[1]
+
+    @pg.production("stmt_or_begin : stmt")
+    def stmt_or_begin(self, p):
+        return p[0]
+
+    @pg.production("stmt_or_begin : lBEGIN LCURLY top_compstmt RCURLY")
+    def stmt_or_begin_curly(self, p):
+        raise NotImplementedError
 
     @pg.production("stmt : ALIAS fitem alias_after_fitem fitem")
     def stmt_alias_fitem(self, p):
@@ -1104,6 +1144,7 @@ class Parser(object):
     @pg.production("op : DIVIDE")
     @pg.production("op : PERCENT")
     @pg.production("op : POW")
+    @pg.production("op : DSTAR")
     @pg.production("op : BANG")
     @pg.production("op : TILDE")
     @pg.production("op : UPLUS")
@@ -1919,100 +1960,150 @@ class Parser(object):
             [self._arg_to_variable(node) for node in p[2].getastlist()]
         )
 
-    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    @pg.production("block_args_tail : f_block_kwarg LITERAL_COMMA f_kwrest opt_f_block_arg")
+    def block_args_tail_1(self, p):
+        return self.new_argstail(keywords=p[0], kwrest=p[2], block_arg=p[3])
+
+    @pg.production("block_args_tail : f_block_kwarg opt_f_block_arg")
+    def block_args_tail_2(self, p):
+        return self.new_argstail(keywords=p[0], block_arg=p[1])
+
+    @pg.production("block_args_tail : f_kwrest opt_f_block_arg")
+    def block_args_tail_3(self, p):
+        return self.new_argstail(kwrest=p[0], block_arg=p[1])
+
+    @pg.production("block_args_tail : f_block_arg")
+    def block_args_tail_4(self, p):
+        return self.new_argstail(block_arg=p[0])
+
+    @pg.production("opt_block_args_tail : LITERAL_COMMA block_args_tail")
+    def opt_block_args_tail(self, p):
+        return p[1]
+
+    @pg.production("opt_block_args_tail : ")
+    def opt_block_args_tail_empty(self, p):
+        return None
+
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_block_args_tail")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
         return self.new_args(
             args=self._new_list(p[0].getastlist() + p[2].getastlist()),
             splat_arg=p[4],
-            block_arg=p[5]
+            args_tail=p[5]
         )
 
-    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_block_args_tail")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         return self.new_args(
             args=self._new_list(p[0].getastlist() + p[2].getastlist()),
             splat_arg=p[4],
-            block_arg=p[5]
+            post_args=p[6],
+            args_tail=p[7]
         )
 
-    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg opt_f_block_arg")
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg opt_block_args_tail")
     def block_param_f_arg_comma_f_block_optarg_opt_f_block_arg(self, p):
-        return self.new_args(self._new_list(p[0].getastlist() + p[2].getastlist()), None, p[3])
+        return self.new_args(
+            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args_tail=p[3]
+        )
 
-    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_arg opt_block_args_tail")
     def block_param_f_arg_comma_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_arg ',' f_block_optarg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, $3, null, $5, $6);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            post_args=p[4],
+            args_tail=p[5]
+        )
 
-    @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg opt_block_args_tail")
     def block_param_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], splat_arg=p[2], block_arg=p[3])
+        return self.new_args(args=p[0], splat_arg=p[2], args_tail=p[3])
 
     @pg.production("block_param : f_arg LITERAL_COMMA")
     def block_param_f_arg_comma(self, p):
         self.lexer.symtable.declare_argument("*")
         tok = self.new_token(p[1], "IDENTIFIER", "*")
-        return self.new_args(p[0], splat_arg=tok)
+        return self.new_args(args=p[0], splat_arg=tok)
 
-    @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("block_param : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_block_args_tail")
     def block_param_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=p[0],
+            splat_arg=p[2],
+            post_args=p[4],
+            args_tail=p[5]
+        )
 
-    @pg.production("block_param : f_arg opt_f_block_arg")
+    @pg.production("block_param : f_arg opt_block_args_tail")
     def block_param_f_arg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], block_arg=p[1])
+        return self.new_args(args=p[0], args_tail=p[1])
 
-    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg opt_block_args_tail")
     def block_param_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], splat_arg=p[2], block_arg=p[3])
+        return self.new_args(args=p[0], splat_arg=p[2], args_tail=p[3])
 
-    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_block_args_tail")
     def block_param_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_block_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args(support.getPosition($1), null, $1, $3, $5, $6);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=p[0],
+            splat_arg=p[2],
+            post_args=p[4],
+            args_tail=p[5]
+        )
 
-    @pg.production("block_param : f_block_optarg opt_f_block_arg")
+    @pg.production("block_param : f_block_optarg opt_block_args_tail")
     def block_param_f_block_optarg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], None, p[1])
+        return self.new_args(args=p[0], args_tail=p[1])
 
-    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("block_param : f_block_optarg LITERAL_COMMA f_arg opt_block_args_tail")
     def block_param_f_block_optarg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_block_optarg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, $1, null, $3, $4);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=p[0],
+            post_args=p[2],
+            args_tail=p[3]
+        )
 
-    @pg.production("block_param : f_rest_arg opt_f_block_arg")
+    @pg.production("block_param : f_rest_arg opt_block_args_tail")
     def block_param_f_rest_arg_opt_f_block_arg(self, p):
-        return self.new_args(splat_arg=p[0], block_arg=p[1])
+        return self.new_args(splat_arg=p[0], args_tail=p[1])
 
-    @pg.production("block_param : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("block_param : f_rest_arg LITERAL_COMMA f_arg opt_block_args_tail")
     def block_param_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_rest_arg ',' f_arg opt_f_block_arg {
                     $$ = support.new_args($1.getPosition(), null, null, $1, $3, $4);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            splat_arg=p[0],
+            post_args=p[2],
+            args_tail=p[3]
+        )
 
-    @pg.production("block_param : f_block_arg")
+    @pg.production("block_param : block_args_tail")
     def block_param_f_block_arg(self, p):
-        return self.new_args(block_arg=p[0])
+        return self.new_args(args_tail=p[0])
 
     @pg.production("opt_block_param : none")
     def opt_block_param_none(self, p):
@@ -2562,15 +2653,39 @@ class Parser(object):
         self.lexer.command_start = True
         return p[0]
 
-    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    @pg.production("args_tail : f_kwarg LITERAL_COMMA f_kwrest opt_f_block_arg")
+    def args_tail_kwarg_kwrest_block(self, p):
+        return self.new_argstail(keywords=p[0], kwrest=p[2], block_arg=p[3])
+
+    @pg.production("args_tail : f_kwarg opt_f_block_arg")
+    def args_tail_kwarg_block(self, p):
+        return self.new_argstail(keywords=p[0], block_arg=p[1])
+
+    @pg.production("args_tail : f_kwrest opt_f_block_arg")
+    def args_tail_kwarg_block(self, p):
+        return self.new_argstail(kwrest=p[0], block_arg=p[1])
+
+    @pg.production("args_tail : f_block_arg")
+    def args_tail_kwarg_block(self, p):
+        return self.new_argstail(block_arg=p[0])
+
+    @pg.production("opt_args_tail : LITERAL_COMMA args_tail")
+    def opt_args_tail(self, p):
+        return p[1]
+
+    @pg.production("opt_args_tail : ")
+    def opt_args_tail(self, p):
+        return None
+
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
             splat_arg=p[4],
-            block_arg=p[5],
+            args_tail=p[5],
         )
 
-    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_arg ',' f_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
@@ -2579,29 +2694,29 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg opt_f_block_arg")
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_opt_f_block_arg(self, p):
         return self.new_args(
-            self._new_list(p[0].getastlist() + p[2].getastlist()),
-            block_arg=p[3],
+            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args_tail=p[3],
         )
 
-    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            self._new_list(p[0].getastlist() + p[2].getastlist() + p[4].getastlist()),
-            block_arg=p[5],
+            args=self._new_list(p[0].getastlist() + p[2].getastlist() + p[4].getastlist()),
+            args_tail=p[5],
         )
 
-    @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg opt_args_tail")
     def f_args_f_arg_comma_f_rest_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            p[0],
+            args=p[0],
             splat_arg=p[2],
-            block_arg=p[3],
+            args_tail=p[3],
         )
 
-    @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("f_args : f_arg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_arg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_arg ',' f_rest_arg ',' f_arg opt_f_block_arg {
@@ -2610,15 +2725,15 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("f_args : f_arg opt_f_block_arg")
+    @pg.production("f_args : f_arg opt_args_tail")
     def f_args_f_arg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], block_arg=p[1])
+        return self.new_args(args=p[0], args_tail=p[1])
 
-    @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg opt_f_block_arg")
+    @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg opt_args_tail")
     def f_args_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], splat_arg=p[2], block_arg=p[3])
+        return self.new_args(args=p[0], splat_arg=p[2], args_tail=p[3])
 
-    @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("f_args : f_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         """
         f_optarg ',' f_rest_arg ',' f_arg opt_f_block_arg {
@@ -2627,31 +2742,32 @@ class Parser(object):
         """
         raise NotImplementedError(p)
 
-    @pg.production("f_args : f_optarg opt_f_block_arg")
+    @pg.production("f_args : f_optarg opt_args_tail")
     def f_args_f_optarg_opt_f_block_arg(self, p):
-        return self.new_args(p[0], block_arg=p[1])
+        return self.new_args(args=p[0], args_tail=p[1])
 
-    @pg.production("f_args : f_optarg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("f_args : f_optarg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            self._new_list(p[0].getastlist() + p[2].getastlist()),
-            block_arg=p[3]
+            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args_tail=p[3]
         )
 
-    @pg.production("f_args : f_rest_arg opt_f_block_arg")
+    @pg.production("f_args : f_rest_arg opt_args_tail")
     def f_args_f_rest_arg_opt_f_block_arg(self, p):
-        return self.new_args(splat_arg=p[0], block_arg=p[1])
+        return self.new_args(splat_arg=p[0], args_tail=p[1])
 
-    @pg.production("f_args : f_rest_arg LITERAL_COMMA f_arg opt_f_block_arg")
+    @pg.production("f_args : f_rest_arg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
-        self.lexer.symtable.declare_argument("2", self.lexer.symtable.SPLAT_ARG)
-        splat = ast.Splat(ast.Variable(p[0].getstr(), -1))
-        assignable = self._new_assignable_list([splat] + self.args_to_variables(p[2]))
-        return BoxArgs([assignable.getassignment()], "2", p[3].getstr() if p[3] is not None else None)
+        return self.new_args(
+            splat_arg=p[0],
+            post_args=p[2],
+            args_tail=p[3]
+        )
 
-    @pg.production("f_args : f_block_arg")
+    @pg.production("f_args : args_tail")
     def f_args_f_block_arg(self, p):
-        return self.new_args(block_arg=p[0])
+        return self.new_args(args_tail=p[0])
 
     @pg.production("f_args : ")
     def f_args_none(self, p):
@@ -2698,6 +2814,47 @@ class Parser(object):
     @pg.production("f_arg : f_arg LITERAL_COMMA f_arg_item")
     def f_arg(self, p):
         return self.append_to_list(p[0], p[2])
+
+    @pg.production("f_label : LABEL")
+    def f_label(self, p):
+        return p[0]
+
+    @pg.production("f_kw : f_label arg_value")
+    @pg.production("f_block_kw : f_label primary_value")
+    def f_kw_label_value(self, p):
+        self.lexer.symtable.declare_argument(p[0].getstr())
+        return self.new_kw_arg(p[0], p[1])
+
+    @pg.production("f_kw : f_label")
+    @pg.production("f_block_kw : f_label")
+    def f_kw_label(self, p):
+        self.lexer.symtable.declare_argument(p[0].getstr())
+        return self.new_kw_arg(p[0], p[1])
+
+    @pg.production("f_block_kwarg : f_block_kw")
+    @pg.production("f_kwarg : f_kw")
+    def f_kwarg(self, p):
+        return self.new_list(p[0])
+
+    @pg.production("f_block_kwarg : f_block_kwarg LITERAL_COMMA f_block_kw")
+    @pg.production("f_kwarg : f_kwarg LITERAL_COMMA f_kw")
+    def f_kwarg_f_kw(self, p):
+        return self.append_to_list(p[0], p[2])
+
+    @pg.production("kwrest_mark : POW")
+    @pg.production("kwrest_mark : DSTAR")
+    def kwrest_mark(self, p):
+        return p[0]
+
+    @pg.production("f_kwrest : kwrest_mark IDENTIFIER")
+    def f_kwrest_ident(self, p):
+        self.lexer.symtable.declare_argument(p[1].getstr(), self.lexer.symtable.KW_ARG)
+        return p[1]
+
+    @pg.production("f_kwrest : kwrest_mark")
+    def f_kwrest(self, p):
+        self.lexer.symtable.declare_argument("**", self.lexer.symtable.KW_ARG)
+        return self.new_token(p[0], "IDENTIFIER", "**")
 
     @pg.production("f_opt : IDENTIFIER LITERAL_EQUAL arg_value")
     def f_opt(self, p):
@@ -2802,6 +2959,26 @@ class Parser(object):
     @pg.production("assoc : LABEL arg_value")
     def assoc_label(self, p):
         return self.append_to_list(self.new_list(self.new_symbol(p[0])), p[1])
+
+    # @pg.production("assoc : STRING_BEG string_contents LABEL_END arg_value")
+    # TODO
+
+    @pg.production("assoc : DSTAR arg_value")
+    def assoc_dstar(self, p):
+        """
+        {
+                    /*%%%*/
+                        if (nd_type($2) == NODE_HASH &&
+                            !($2->nd_head && $2->nd_head->nd_alen))
+                            $$ = 0;
+                        else
+                            $$ = list_append(NEW_LIST(0), $2);
+                    /*%
+                        $$ = dispatch1(assoc_splat, $2);
+                    %*/
+                    }
+        """
+        raise NotImplementedError
 
     @pg.production("operation : FID")
     @pg.production("operation : CONSTANT")
@@ -2942,9 +3119,11 @@ class BoxArgs(BaseBox):
     """
     A box for the arguments of a function/block definition.
     """
-    def __init__(self, args, splat_arg, block_arg):
+    def __init__(self, args, splat_arg, kwargs, kwrest_arg, block_arg):
         self.args = args
         self.splat_arg = splat_arg
+        self.kwargs = kwargs
+        self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
 
     def getargs(self, include_multi=False):
@@ -2973,6 +3152,22 @@ class BoxArgs(BaseBox):
                 raise SystemError
         else:
             return block
+
+
+class BoxArgsTail(BaseBox):
+    def __init__(self, kwargs, kwrest, block_arg):
+        self.kwargs = kwargs
+        self.kwrest = kwrest
+        self.block_arg = block_arg
+
+    def getkwargs(self):
+        return self.kwargs
+
+    def getkwrest(self):
+        return self.kwrest
+
+    def getblockarg(self):
+        return self.block_arg
 
 
 class BoxStrTerm(BaseBox):
