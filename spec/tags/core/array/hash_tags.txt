@@ -1,2 +1,3 @@
 fails:Array#hash returns the same hash for equal recursive arrays
 fails:Array#hash returns the same hash for equal recursive arrays through hashes
+fails:Array#hash produces different hashes for nested arrays with different values and empty terminator

@@ -1,0 +1,2 @@
+fails:File.zero? returns true for /dev/null
+fails:File.zero? returns false for a directory

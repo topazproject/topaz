@@ -2,4 +2,5 @@ fails:Module#autoload shares the autoload request across dup'ed copies of module
 fails:Module#autoload (concurrently) blocks a second thread while a first is doing the autoload
 fails:Module#autoload returns 'constant' on refering the constant with defined?()
 fails:Module#autoload on a frozen module raises a RuntimeError before setting the name
-fails:Module#autoload when changing $LOAD_PATH does not reload a file due to a different load path
+fails:Module#autoload loads the registered constant even if the constant was already loaded by another thread
+fails:Module#autoload (concurrently) blocks others threads while doing an autoload

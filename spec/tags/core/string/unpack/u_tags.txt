@@ -24,3 +24,5 @@ fails:String#unpack with format 'u' decodes the complete string ignoring newline
 fails:String#unpack with format 'u' appends empty string to the array for directives exceeding the input size
 fails:String#unpack with format 'u' ignores the count or '*' modifier and decodes the entire string
 fails:String#unpack with format 'u' decodes all ascii characters
+fails:String#unpack with format 'U' raises ArgumentError on a malformed byte sequence
+fails:String#unpack with format 'U' raises ArgumentError on a malformed byte sequence and doesn't continue when used with the * modifier

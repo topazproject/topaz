@@ -1,3 +1,2 @@
 fails:Array#[] raises a RangeError when the start index is out of range of Fixnum
 fails:Array#[] raises a RangeError when the length is out of range of Fixnum
-fails:Array.[] can unpack 2 or more nested referenced array

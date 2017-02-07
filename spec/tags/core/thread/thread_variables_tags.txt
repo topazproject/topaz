@@ -1,0 +1,2 @@
+fails:Thread#thread_variables returns the keys of all the values set
+fails:Thread#thread_variables sets a value private to self

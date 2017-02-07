@@ -1,0 +1,1 @@
+fails:GC::Profiler.disable disables the profiler

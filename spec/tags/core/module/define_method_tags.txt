@@ -1,2 +1,15 @@
 fails:Module#define_method is private
 fails:Module#define_method method body is an UnboundMethod raises a TypeError when defining a method from a different object
+fails:Module#define_method when given an UnboundMethod sets the new method's visibility to the current frame's visibility
+fails:Module#define_method when name is not a special private name given an UnboundMethod and called from the target module sets the visibility of the method to the current visibility
+fails:Module#define_method when name is not a special private name passed a block and called from the target module sets the visibility of the method to the current visibility
+fails:Module#define_method raises a TypeError when a Method from a singleton class is defined on another class
+fails:Module#define_method raises a TypeError when a Method from one class is defined on an unrelated class
+fails:Module#define_method accepts a proc from a method
+fails:Module#define_method returns its symbol
+fails:Module#define_method raises a TypeError when an UnboundMethod from a child class is defined on a parent class
+fails:Module#define_method raises a TypeError when an UnboundMethod from one class is defined on an unrelated class
+fails:Method#define_method when passed a Method object defines a method with the same #arity as the original
+fails:Method#define_method when passed a Method object defines a method with the same #parameters as the original
+fails:Method#define_method when passed an UnboundMethod object defines a method with the same #arity as the original
+fails:Method#define_method when passed an UnboundMethod object defines a method with the same #parameters as the original

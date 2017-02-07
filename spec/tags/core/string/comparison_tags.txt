@@ -3,3 +3,6 @@ fails:String#<=> with String does not return 0 if self and other contain identic
 fails:String#<=> with String ignores encoding difference
 fails:String#<=> with String returns 0 with identical ASCII-compatible bytes of different encodings
 fails:String#<=> with String compares the indices of the encodings when the strings have identical non-ASCII-compatible bytes
+fails:String#<=> uses the result of calling #to_str for comparison when #to_str is defined
+fails:String#<=> uses the result of calling #<=> on its argument when #<=> is defined but #to_str is not
+fails:String#<=> returns nil if argument also uses an inverse comparison for <=>

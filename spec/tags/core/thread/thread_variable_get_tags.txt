@@ -1,0 +1,3 @@
+fails:Thread#thread_variable_get returns nil if the variable is not set
+fails:Thread#thread_variable_get returns the value previously set by #[]=
+fails:Thread#thread_variable_get returns a value private to self

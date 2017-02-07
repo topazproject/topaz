@@ -1,0 +1,1 @@
+fails:Hash#compare_by_identity does not copy string keys

@@ -32,3 +32,7 @@ fails:File.open when passed a file descriptor opens a file when passed a block
 fails:File.open uses the second argument as an options Hash
 fails:File.open opens a file for binary read-write starting at the beginning of the file
 fails:File.open opens a file for binary read-write and truncate the file
+fails:File.open opens the file when call with fd
+fails:File.open opens a file with a file descriptor d and a block
+fails:File.open truncates the file when passed File::TRUNC mode
+fails:File.open with a block does not propagate IOError with 'closed stream' message produced by close

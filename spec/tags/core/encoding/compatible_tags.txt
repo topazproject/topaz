@@ -45,3 +45,12 @@ fails:Encoding.compatible? Object, Object returns nil for Object, Symbol
 fails:Encoding.compatible? Object, Object returns nil for String, Object
 fails:Encoding.compatible? Object, Object returns nil for Regexp, Object
 fails:Encoding.compatible? Object, Object returns nil for Symbol, Object
+fails:Encoding.compatible? String, String when the first String is empty and the second is not and the first's Encoding is ASCII compatible returns the first's encoding when the second String is ASCII only
+fails:Encoding.compatible? String, String when the first String is empty and the second is not and the first's Encoding is ASCII compatible returns the second's encoding when the second String is not ASCII only
+fails:Encoding.compatible? String, String when the first String is empty and the second is not when the first's Encoding is not ASCII compatible returns the second string's encoding
+fails:Encoding.compatible? String, String when the second String is empty returns the first Encoding
+fails:Encoding.compatible? String, Encoding returns nil if the String's encoding is not ASCII compatible
+fails:Encoding.compatible? String, Encoding returns nil if the Encoding is not ASCII compatible
+fails:Encoding.compatible? String, Encoding returns the String's encoding if the Encoding is US-ASCII
+fails:Encoding.compatible? String, Encoding returns the Encoding if the String's encoding is ASCII compatible and the String is ASCII only
+fails:Encoding.compatible? String, Encoding returns nil if the String's encoding is ASCII compatible but the string is not ASCII only

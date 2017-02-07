@@ -87,3 +87,5 @@ fails:IO#read with internal encoding specified by encoding: option does not chan
 fails:IO#read with internal encoding specified by encoding: option trucates the buffer but does not change the buffer's encoding when no data remains
 fails:IO#read with internal encoding specified by encoding: option when passed nil for limit sets the buffer to a transcoded String
 fails:IO#read with internal encoding specified by encoding: option when passed nil for limit sets the buffer's encoding to the internal encoding
+fails:IO#read raises IOError when stream is closed by another thread
+fails:IO#read in text mode reads data according to the internal encoding

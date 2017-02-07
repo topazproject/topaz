@@ -1,1 +1,2 @@
 fails:Time#yday returns an integer representing the day of the year, 1..366
+fails:Time#yday returns the correct value for each day of each month

@@ -1,0 +1,5 @@
+fails:Module#singleton_class? returns true for singleton classes
+fails:Module#singleton_class? returns false for other classes
+fails:Module#singleton_class? with singleton values returns false for nil's singleton class
+fails:Module#singleton_class? with singleton values returns false for true's singleton class
+fails:Module#singleton_class? with singleton values returns false for false's singleton class

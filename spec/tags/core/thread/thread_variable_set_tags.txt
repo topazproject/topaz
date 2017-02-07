@@ -1,0 +1,3 @@
+fails:Thread#thread_variable_set returns the value set
+fails:Thread#thread_variable_set sets a value that will be returned by #thread_variable_get
+fails:Thread#thread_variable_set sets a value private to self

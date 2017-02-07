@@ -1,0 +1,1 @@
+fails:Struct#each_pair with a block variable passes an array to the given block

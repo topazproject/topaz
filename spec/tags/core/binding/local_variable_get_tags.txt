@@ -1,0 +1,4 @@
+fails:Binding#local_variable_get reads local variables captured in the binding
+fails:Binding#local_variable_get reads variables added later to the binding
+fails:Binding#local_variable_get gets a local variable defined in a parent scope
+fails:Binding#local_variable_get gets a local variable defined using eval()

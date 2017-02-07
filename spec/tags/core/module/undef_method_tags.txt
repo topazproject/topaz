@@ -4,3 +4,4 @@ fails:Module#undef_method does not undef any instance methods when argument not 
 fails:Module#undef_method on frozen instance raises a RuntimeError when passed a name
 fails:Module#undef_method on frozen instance raises a RuntimeError when passed a missing name
 fails:Module#undef_method on frozen instance does not raise exceptions when no arguments given
+fails:Module#undef_method allows multiple methods to be removed at once

@@ -1,0 +1,2 @@
+fails:Thread#thread_variable? returns false if the thread variables do not contain 'key'
+fails:Thread#thread_variable? returns true if the thread variables contain 'key'

@@ -1,1 +1,1 @@
-fails:Enumerable#sort compare values returned by block with 0
+fails:Enumerable#sort doesn't raise an error if #to_a returns a frozen Array

@@ -3,3 +3,6 @@ fails:IO#sync= accepts non-boolean arguments
 fails:IO#sync= raises an IOError on closed stream
 fails:IO#sync returns the current sync mode
 fails:IO#sync raises an IOError on closed stream
+fails:IO#sync is false by default for STDIN
+fails:IO#sync is false by default for STDOUT
+fails:IO#sync is true by default for STDERR

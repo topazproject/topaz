@@ -5,3 +5,4 @@ fails:Thread#join accepts a floating point timeout length
 fails:Thread#join raises any exceptions encountered in the thread body
 fails:Thread#join returns the dead thread
 fails:Thread#join raises any uncaught exception encountered in ensure block
+fails:Thread#join coerces timeout to a Float if it is not nil

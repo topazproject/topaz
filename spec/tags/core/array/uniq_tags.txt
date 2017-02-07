@@ -1,0 +1,2 @@
+fails:Array#uniq properly handles an identical item even when its #eql? isn't reflexive
+fails:Array#uniq! properly handles an identical item even when its #eql? isn't reflexive

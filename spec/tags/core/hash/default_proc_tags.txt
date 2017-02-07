@@ -1,1 +1,3 @@
 fails:Hash#default_proc= raises a RuntimeError if self is frozen
+fails:Hash#default_proc= clears the default proc if passed nil
+fails:Hash#default_proc= returns nil if passed nil

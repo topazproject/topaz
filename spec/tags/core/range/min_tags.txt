@@ -1,3 +1,1 @@
 fails:Range#min given a block calls #> and #< on the return value of the block
-fails:Range#min returns start point when the range is Time..Time(included end point)
-fails:Range#min returns start point when the range is Time...Time(excluded end point)

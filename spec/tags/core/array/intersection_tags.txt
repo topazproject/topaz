@@ -1,0 +1,1 @@
+fails:Array#& properly handles an identical item even when its #eql? isn't reflexive

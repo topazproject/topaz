@@ -1,2 +1,6 @@
 fails:IO#puts writes just a newline when given just a newline
 fails:IO#puts writes [...] for a recursive array arg
+fails:IO#puts returns general object info if :to_s does not return a string
+fails:IO#puts writes crlf when IO is opened with newline: :crlf
+fails:IO#puts writes cr when IO is opened with newline: :cr
+fails:IO#puts writes lf when IO is opened with newline: :lf

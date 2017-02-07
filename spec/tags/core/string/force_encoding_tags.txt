@@ -14,3 +14,4 @@ fails:String#force_encoding raises a TypeError if passed nil
 fails:String#force_encoding returns self
 fails:String#force_encoding sets the encoding even if the String contents are invalid in that encoding
 fails:String#force_encoding does not transcode self
+fails:String#force_encoding raises a RuntimeError if self is frozen

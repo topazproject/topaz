@@ -1,1 +1,2 @@
 fails:Module#remove_const is a private method
+fails:Module#remove_const returns nil when removing autoloaded constant

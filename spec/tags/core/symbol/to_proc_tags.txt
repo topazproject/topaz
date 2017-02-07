@@ -1,1 +1,2 @@
 fails:Symbol#to_proc passes along the block passed to Proc#call
+fails:Symbol#to_proc produces a proc that always returns [[:rest]] for #parameters

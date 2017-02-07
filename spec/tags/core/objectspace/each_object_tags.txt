@@ -1,0 +1,4 @@
+fails:ObjectSpace.each_object finds an object stored in a local variable set in a binding manually
+fails:ObjectSpace.each_object finds an object stored in a thread local
+fails:ObjectSpace.each_object finds an object captured in finalizer
+fails:ObjectSpace.each_object on singleton classes does not walk singleton classes

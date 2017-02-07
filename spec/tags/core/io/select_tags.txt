@@ -11,3 +11,5 @@ fails:IO.select raises TypeError if the first three arguments are not Arrays
 fails:IO.select raises an ArgumentError when passed a negative timeout
 fails:IO.select when passed nil for timeout sleeps forever
 fails:IO.select when passed nil for timeout sets the thread's status to 'sleep'
+fails:IO.select blocks for duration of timeout and returns nil if there are no objects ready for I/O
+fails:IO.select when passed nil for timeout sleeps forever and sets the thread status to 'sleep'

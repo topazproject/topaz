@@ -1,0 +1,2 @@
+fails:Module#ancestors when called on a singleton class includes the singleton classes of ancestors
+fails:Module#ancestors when called on a singleton class for a standalone module includes its own singleton class

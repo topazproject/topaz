@@ -1,0 +1,3 @@
+fails:ConditionVariable#broadcast returns self if nothing to broadcast to
+fails:ConditionVariable#broadcast returns self if something is waiting for a broadcast
+fails:ConditionVariable#broadcast releases all threads waiting in line for this resource

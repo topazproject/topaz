@@ -7,3 +7,4 @@ fails:File.truncate accepts an object that has a #to_path method
 fails:File#truncate truncates a file
 fails:File#truncate truncates a file size to 0
 fails:File#truncate raises an IOError if file is not opened for writing
+fails:File.truncate raises an Errno::EINVAL if the length argument is not valid

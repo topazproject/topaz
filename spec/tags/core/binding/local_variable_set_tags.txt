@@ -1,0 +1,7 @@
+fails:Binding#local_variable_set adds nonexistent variables to the binding's eval scope
+fails:Binding#local_variable_set sets a new local variable
+fails:Binding#local_variable_set sets a local variable using a String as the variable name
+fails:Binding#local_variable_set sets a local variable using an object responding to #to_str as the variable name
+fails:Binding#local_variable_set scopes new local variables to the receiving Binding
+fails:Binding#local_variable_set overwrites an existing local variable defined before a Binding
+fails:Binding#local_variable_set overwrites a local variable defined using eval()

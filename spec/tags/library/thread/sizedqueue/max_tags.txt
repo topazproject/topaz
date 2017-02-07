@@ -1,0 +1,6 @@
+fails:Thread::SizedQueue#max returns the size of the queue
+fails:Thread::SizedQueue#max= sets the size of the queue
+fails:Thread::SizedQueue#max= does not remove items already in the queue beyond the maximum
+fails:Thread::SizedQueue#max= raises a TypeError when given a non-numeric value
+fails:Thread::SizedQueue#max= raises an argument error when set to zero
+fails:Thread::SizedQueue#max= raises an argument error when set to a negative number

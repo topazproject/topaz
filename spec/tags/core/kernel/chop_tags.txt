@@ -1,2 +1,3 @@
 fails:Kernel.chop removes the final multi-byte character from $_
 fails:Kernel#chop removes the final multi-byte character from $_
+fails:Kernel#chop is a private method

@@ -1,1 +1,2 @@
 fails:File includes File::Constants
+fails:File includes Enumerable

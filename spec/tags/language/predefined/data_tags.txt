@@ -3,3 +3,4 @@ fails:The DATA constant does not exist when an included file has a __END__
 fails:The DATA constant does not change when an included files also has a __END__
 fails:The DATA constant is included in an otherwise empty file
 fails:The DATA constant succeeds in locking the file DATA came from
+fails:The DATA constant rewinds to the head of the main script

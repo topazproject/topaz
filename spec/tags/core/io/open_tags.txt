@@ -50,3 +50,6 @@ fails:IO.open does not propagate a StandardError raised by #close
 fails:IO.open does not set last error when a StandardError raised by #close
 fails:IO.open uses the :encoding option as the external encoding when only one is given
 fails:IO.open uses the :encoding options as the external encoding when it's an Encoding object
+fails:IO.open propagates an exception raised by #close that is a StandardError
+fails:IO.open does not propagate a IOError with 'closed stream' message raised by #close
+fails:IO.open does not set last error when a IOError with 'closed stream' raised by #close

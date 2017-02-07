@@ -1,0 +1,3 @@
+fails:Interrupt is a subclass of SignalException
+fails:Interrupt.new returns an instance of interrupt with no message given
+fails:Interrupt.new takes an optional message argument
