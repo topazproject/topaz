@@ -115,13 +115,18 @@ module Kernel
   end
   private :rand
 
-  def caller
+  def caller(offset=0, limit=nil)
     begin
       raise "caller called"
     rescue Exception => e
-      return e.backtrace[2..-1]
+      if limit
+        return e.backtrace[(3 + offset), limit]
+      else
+        return e.backtrace[(3 + offset)..-1]
+      end
     end
   end
+  private :caller
 
   def require_relative(path)
     caller[1] =~ /^(.*):\d+:/
