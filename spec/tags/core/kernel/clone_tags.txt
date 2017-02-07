@@ -1,0 +1,1 @@
+fails:Kernel#clone replaces a singleton object's metaclass with a new copy with the same superclass

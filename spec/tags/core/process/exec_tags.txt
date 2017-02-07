@@ -1,2 +1,12 @@
-fails:Process.exec
+fails:Process.exec raises Errno::EACCES when the file does not have execute permissions
 fails:Process.exec raises Errno::ENOENT for a command which does not exist
+fails:Process.exec raises Errno::EACCES when passed a directory
+fails:Process.exec sets the current directory when given the :chdir option
+fails:Process.exec flushes STDOUT upon exit when it's not set to sync
+fails:Process.exec flushes STDERR upon exit when it's not set to sync
+fails:Process.exec with multiple arguments does not subject the arguments to shell expansion
+fails:Process.exec (environment variables) sets environment variables in the child environment
+fails:Process.exec (environment variables) unsets environment variables whose value is nil
+fails:Process.exec (environment variables) coerces environment argument using to_hash
+fails:Process.exec (environment variables) unsets other environment variables when given a true :unsetenv_others option
+fails:Process.exec with an options Hash with Integer option keys maps the key to a file descriptor in the child that inherits the file descriptor from the parent specified by the value

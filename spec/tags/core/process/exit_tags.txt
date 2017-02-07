@@ -1,2 +1,4 @@
 fails:Process.exit raises a SystemExit with the specified boolean status
 fails:Process.exit! exits immediately when called from a thread
+fails:Process.exit raises the SystemExit in the main thread if it reaches the top-level handler of another thread
+fails:Process.exit! exits when called from a thread
