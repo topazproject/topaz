@@ -1,3 +1,4 @@
+from rpython.rlib import jit
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rbigint import rbigint
 
@@ -146,7 +147,8 @@ class Parser(object):
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
-    def new_args(self, args=None, splat_arg=None, post_args=None, args_tail=None):
+    @jit.unroll_safe
+    def new_args(self, args=None, optargs=None, splat_arg=None, post_args=None, args_tail=None):
         if args_tail:
             kwargs = args_tail.getkwargs()
             kwrest = args_tail.getkwrest()
@@ -156,25 +158,30 @@ class Parser(object):
             kwrest = None
             block_arg = None
 
-        if post_args is not None and splat_arg:
-            self.lexer.symtable.declare_argument("2", self.lexer.symtable.SPLAT_ARG)
-            splat = ast.Splat(ast.Variable(splat_arg.getstr(), -1))
-            assignable = self._new_assignable_list([splat] + self.args_to_variables(post_args))
-            return BoxArgs(
-                (args.getastlist() if args is not None else []) + [assignable.getassignment()],
-                "2",
-                kwargs.getastlist() if kwargs is not None else [],
-                kwrest.getstr() if kwrest is not None else None,
-                block_arg.getstr() if block_arg is not None else None
-            )
-        else:
-            return BoxArgs(
-                args.getastlist() if args is not None else [],
-                splat_arg.getstr() if splat_arg is not None else None,
-                kwargs.getastlist() if kwargs is not None else [],
-                kwrest.getstr() if kwrest is not None else None,
-                block_arg.getstr() if block_arg is not None else None,
-            )
+        arglist = args.getastlist() if args is not None else []
+        extra_stmts = []
+        for idx, arg in enumerate(arglist):
+            if isinstance(arg, ast.MultiAssignable):
+                new_arg = ast.Argument(str(idx))
+                asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, -1))
+                arglist[idx] = new_arg
+                self.lexer.symtable.declare_argument(new_arg.name)
+                extra_stmts.append(ast.Statement(asgn))
+        extra_stmts.reverse()
+
+        arguments = (
+            arglist +
+            (optargs.getastlist() if optargs is not None else []) +
+            (post_args.getastlist() if post_args is not None else [])
+        )
+        return BoxArgs(
+            arguments,
+            splat_arg.getstr() if splat_arg is not None else None,
+            kwargs.getastlist() if kwargs is not None else [],
+            kwrest.getstr() if kwrest is not None else None,
+            block_arg.getstr() if block_arg is not None else None,
+            prebody=extra_stmts
+        )
 
     def new_argstail(self, keywords=None, kwrest=None, block_arg=None):
         return BoxArgsTail(keywords, kwrest, block_arg)
@@ -197,24 +204,22 @@ class Parser(object):
 
     def new_send_block(self, lineno, params, body):
         stmts = body.getastlist() if body is not None else []
-        args = params.getargs(include_multi=True) if params is not None else []
+        args = params.getargs() if params is not None else []
         splat = params.getsplatarg() if params is not None else None
+        kwargs = params.getkwargs() if params is not None else []
+        kwrest = params.getkwrestarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
-
-        extra_stmts = []
-        for idx, arg in enumerate(args):
-            if isinstance(arg, ast.MultiAssignable):
-                new_arg = ast.Argument(str(idx))
-                asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, lineno))
-                args[idx] = new_arg
-                self.lexer.symtable.declare_argument(new_arg.name)
-                extra_stmts.append(ast.Statement(asgn))
-
-        extra_stmts.reverse()
-        stmts = extra_stmts + stmts
-
         block = ast.Block(stmts) if stmts else ast.Nil()
-        return BoxAST(ast.SendBlock(args, splat, block_arg, block))
+
+        body = params.getfullbody(block)
+        return BoxAST(ast.SendBlock(
+            args,
+            splat,
+            kwargs,
+            kwrest,
+            block_arg,
+            body
+        ))
 
     def combine_send_block(self, send_box, block_box):
         send = send_box.getast(ast.BaseSend)
@@ -1790,6 +1795,8 @@ class Parser(object):
             p[1].getstr(),
             p[3].getargs(),
             p[3].getsplatarg(),
+            p[3].getkwargs(),
+            p[3].getkwrestarg(),
             p[3].getblockarg(),
             body
         )
@@ -1804,6 +1811,8 @@ class Parser(object):
             p[4].getstr(),
             p[7].getargs(),
             p[7].getsplatarg(),
+            p[7].getkwargs(),
+            p[7].getkwrestarg(),
             p[7].getblockarg(),
             body,
         )
@@ -1987,7 +1996,8 @@ class Parser(object):
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg opt_block_args_tail")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args=p[0],
+            optargs=p[2],
             splat_arg=p[4],
             args_tail=p[5]
         )
@@ -1995,7 +2005,8 @@ class Parser(object):
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg LITERAL_COMMA f_rest_arg LITERAL_COMMA f_arg opt_block_args_tail")
     def block_param_f_arg_comma_f_block_optarg_comma_f_rest_arg_comma_f_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args=p[0],
+            optargs=p[2],
             splat_arg=p[4],
             post_args=p[6],
             args_tail=p[7]
@@ -2004,7 +2015,8 @@ class Parser(object):
     @pg.production("block_param : f_arg LITERAL_COMMA f_block_optarg opt_block_args_tail")
     def block_param_f_arg_comma_f_block_optarg_opt_f_block_arg(self, p):
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args=p[0],
+            optargs=p[2],
             args_tail=p[3]
         )
 
@@ -2016,7 +2028,8 @@ class Parser(object):
                 }
         """
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args=p[0],
+            optargs=p[2],
             post_args=p[4],
             args_tail=p[5]
         )
@@ -2061,7 +2074,7 @@ class Parser(object):
                 }
         """
         return self.new_args(
-            args=p[0],
+            optargs=p[0],
             splat_arg=p[2],
             post_args=p[4],
             args_tail=p[5]
@@ -2153,11 +2166,16 @@ class Parser(object):
     @pg.production("lambda : PRE_LAMBDA f_larglist lambda_body")
     def lambda_prod(self, p):
         self.lexer.left_paren_begin = p[0].getint()
+        body = p[1].getfullbody(
+            ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
+        )
         node = ast.SendBlock(
             p[1].getargs(),
             p[1].getsplatarg(),
+            p[1].getkwargs(),
+            p[1].getkwrestarg(),
             p[1].getblockarg(),
-            ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
+            body
         )
         self.save_and_pop_scope(node)
         return BoxAST(ast.Lambda(node))
@@ -2680,7 +2698,8 @@ class Parser(object):
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_rest_arg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_comma_f_rest_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args=p[0],
+            optargs=p[2],
             splat_arg=p[4],
             args_tail=p[5],
         )
@@ -2697,14 +2716,17 @@ class Parser(object):
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_opt_f_block_arg(self, p):
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            args=p[0],
+            optargs=p[2],
             args_tail=p[3],
         )
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist() + p[4].getastlist()),
+            args=p[0],
+            optargs=p[2],
+            post_args=p[4],
             args_tail=p[5],
         )
 
@@ -2723,7 +2745,12 @@ class Parser(object):
                     $$ = support.new_args($1.getPosition(), $1, null, $3, $5, $6);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=p[0],
+            splat_arg=p[2],
+            post_args=p[4],
+            args_tail=p[5]
+        )
 
     @pg.production("f_args : f_arg opt_args_tail")
     def f_args_f_arg_opt_f_block_arg(self, p):
@@ -2740,7 +2767,12 @@ class Parser(object):
                     $$ = support.new_args($1.getPosition(), null, $1, $3, $5, $6);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=p[0],
+            splat_arg=p[2],
+            post_args=p[4],
+            args_tail=p[5]
+        )
 
     @pg.production("f_args : f_optarg opt_args_tail")
     def f_args_f_optarg_opt_f_block_arg(self, p):
@@ -2749,7 +2781,8 @@ class Parser(object):
     @pg.production("f_args : f_optarg LITERAL_COMMA f_arg opt_args_tail")
     def f_args_f_optarg_comma_f_arg_opt_f_block_arg(self, p):
         return self.new_args(
-            args=self._new_list(p[0].getastlist() + p[2].getastlist()),
+            optargs=p[0],
+            post_args=p[2],
             args_tail=p[3]
         )
 
@@ -2829,7 +2862,7 @@ class Parser(object):
     @pg.production("f_block_kw : f_label")
     def f_kw_label(self, p):
         self.lexer.symtable.declare_argument(p[0].getstr())
-        return self.new_kw_arg(p[0], p[1])
+        return self.new_kw_arg(p[0], None)
 
     @pg.production("f_block_kwarg : f_block_kw")
     @pg.production("f_kwarg : f_kw")
@@ -3119,39 +3152,38 @@ class BoxArgs(BaseBox):
     """
     A box for the arguments of a function/block definition.
     """
-    def __init__(self, args, splat_arg, kwargs, kwrest_arg, block_arg):
+    def __init__(self, args, splat_arg, kwargs, kwrest_arg, block_arg, prebody=None):
         self.args = args
         self.splat_arg = splat_arg
         self.kwargs = kwargs
         self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
+        self.prebody = prebody
 
-    def getargs(self, include_multi=False):
-        if self.is_multiassignment() and not include_multi:
-            return []
-        else:
-            return self.args
+    def getargs(self):
+        return self.args
 
     def getsplatarg(self):
         return self.splat_arg
 
+    def getkwargs(self):
+        return self.kwargs
+
+    def getkwrestarg(self):
+        return self.kwrest_arg
+
     def getblockarg(self):
         return self.block_arg
 
-    def is_multiassignment(self):
-        return len(self.args) == 1 and isinstance(self.args[0], ast.MultiAssignable)
-
     def getfullbody(self, block):
-        if self.is_multiassignment():
-            prebody = ast.Statement(ast.MultiAssignment(self.args[0], ast.Variable("2", -1)))
+        if self.prebody:
             if isinstance(block, ast.Nil):
-                return ast.Block([prebody])
+                return ast.Block(self.prebody)
             elif isinstance(block, ast.Block):
-                return ast.Block([prebody] + block.stmts)
+                return ast.Block(self.prebody + block.stmts)
             else:
                 raise SystemError
-        else:
-            return block
+        return block
 
 
 class BoxArgsTail(BaseBox):

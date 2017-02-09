@@ -17,3 +17,27 @@ fails:A block taking |(a, b), c| arguments calls #to_ary to convert a single yie
 fails:A block taking |(a, b), c| arguments raises an TypeError if #to_ary does not return an Array
 fails:A block arguments with _ assigns the first variable named
 fails:A block arguments with _ extracts arguments with _
+fails:A block yielded a single Array assigns the first element to a single argument with trailing comma
+fails:A block yielded a single Array assigns elements to required arguments when a keyword rest argument is present
+fails:A block yielded a single Array assigns elements to mixed argument types
+fails:A block yielded a single Array assigns symbol keys from a Hash to keyword arguments
+fails:A block yielded a single Array assigns symbol keys from a Hash returned by #to_hash to keyword arguments
+fails:A block yielded a single Array assigns non-symbol keys to non-keyword arguments
+fails:A block yielded a single Array does not treat hashes with string keys as keyword arguments
+fails:A block yielded a single Array calls #to_hash on the last element if keyword arguments are present
+fails:A block yielded a single Array assigns the last element to a non-keyword argument if #to_hash returns nil
+fails:A block yielded a single Array calls #to_hash on the last element when there are more arguments than parameters
+fails:A block yielded a single Array raises a TypeError if #to_hash does not return a Hash
+fails:A block yielded a single Array raises the error raised inside #to_hash
+fails:A block yielded a single Object calls #to_ary on the object when taking multiple arguments
+fails:A block yielded a single Object receives the object if #to_ary returns nil
+fails:A block yielded a single Object raises a TypeError if #to_ary does not return an Array
+fails:A block taking |a, b| arguments raises a TypeError if #to_ary does not return an Array
+fails:A block taking |a, b| arguments raises the original exception if #to_ary raises an exception
+fails:A block taking |a, *b| arguments raises a TypeError if #to_ary does not return an Array
+fails:A block taking |a, | arguments raises a TypeError if #to_ary does not return an Array
+fails:A block taking |(a, b)| arguments raises a TypeError if #to_ary does not return an Array
+fails:A block taking |(a, b), c| arguments raises a TypeError if #to_ary does not return an Array
+fails:A block taking identically-named arguments raises a SyntaxError for standard arguments
+fails:Block-local variables can not have the same name as one of the standard parameters
+fails:Post-args with required args gathers remaining args in the splat

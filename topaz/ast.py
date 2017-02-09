@@ -257,7 +257,7 @@ class BaseModule(Node):
         body_ctx = ctx.get_subctx(ctxname, self)
         self.body.compile(body_ctx)
         body_ctx.emit(consts.RETURN)
-        bytecode = body_ctx.create_bytecode([], [], None, None)
+        bytecode = body_ctx.create_bytecode()
 
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
         ctx.emit(consts.EVALUATE_MODULE)
@@ -307,17 +307,20 @@ class Module(BaseModule):
 
 
 class Function(Node):
-    def __init__(self, parent, name, args, splat_arg, block_arg, body):
+    def __init__(self, parent, name, args, splat_arg, kwargs, kwrest_arg, block_arg, body):
         self.parent = parent
         self.name = name
         self.args = args
         self.splat_arg = splat_arg
+        self.kwargs = kwargs
+        self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
         self.body = body
 
     def compile(self, ctx):
         function_ctx = ctx.get_subctx(self.name, self)
         defaults = []
+        first_default_arg = None
         arg_names = []
         for arg in self.args:
             assert isinstance(arg, Argument)
@@ -326,19 +329,26 @@ class Function(Node):
 
             arg_ctx = CompilerContext(ctx.space, self.name, function_ctx.symtable, ctx.filepath)
             if arg.defl is not None:
+                if first_default_arg is None:
+                    first_default_arg = arg.name
                 arg.defl.compile(arg_ctx)
                 arg_ctx.emit(consts.RETURN)
-                bc = arg_ctx.create_bytecode([], [], None, None)
+                bc = arg_ctx.create_bytecode()
                 defaults.append(bc)
         if self.splat_arg is not None:
             function_ctx.symtable.get_cell_num(self.splat_arg)
+        if self.kwrest_arg is not None:
+            function_ctx.symtable.get_cell_num(self.kwrest_arg)
         if self.block_arg is not None:
             function_ctx.symtable.get_cell_num(self.block_arg)
 
         self.body.compile(function_ctx)
         function_ctx.emit(consts.RETURN)
         bytecode = function_ctx.create_bytecode(
-            arg_names, defaults, self.splat_arg, self.block_arg
+            args=arg_names, defaults=defaults,
+            first_default_arg=first_default_arg,
+            splat_arg=self.splat_arg, block_arg=self.block_arg,
+            kwarg=self.kwrest_arg
         )
 
         if self.parent is None:
@@ -785,9 +795,11 @@ class Splat(Node):
 
 
 class SendBlock(Node):
-    def __init__(self, block_args, splat_arg, block_arg, block):
+    def __init__(self, block_args, splat_arg, kwargs, kwrest_arg, block_arg, block):
         self.block_args = block_args
         self.splat_arg = splat_arg
+        self.kwargs = kwargs
+        self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
         self.block = block
 
@@ -799,18 +811,23 @@ class SendBlock(Node):
                 block_ctx.symtable.get_cell_num(cellname)
         block_args = []
         defaults = []
+        first_default_arg = None
         for arg in self.block_args:
             assert isinstance(arg, Argument)
             block_args.append(arg.name)
             block_ctx.symtable.get_cell_num(arg.name)
             if arg.defl is not None:
+                if first_default_arg is None:
+                    first_default_arg = arg.name
                 arg_ctx = CompilerContext(ctx.space, blockname, block_ctx.symtable, ctx.filepath)
                 arg.defl.compile(arg_ctx)
                 arg_ctx.emit(consts.RETURN)
-                bc = arg_ctx.create_bytecode([], [], None, None)
+                bc = arg_ctx.create_bytecode()
                 defaults.append(bc)
         if self.splat_arg is not None:
             block_ctx.symtable.get_cell_num(self.splat_arg)
+        if self.kwrest_arg is not None:
+            block_ctx.symtable.get_cell_num(self.kwrest_arg)
         if self.block_arg is not None:
             block_ctx.symtable.get_cell_num(self.block_arg)
 
@@ -822,7 +839,14 @@ class SendBlock(Node):
 
         self.block.compile(block_ctx)
         block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(block_args, defaults, self.splat_arg, self.block_arg)
+        bc = block_ctx.create_bytecode(
+            args=block_args,
+            defaults=defaults,
+            first_default_arg=first_default_arg,
+            splat_arg=self.splat_arg,
+            block_arg=self.block_arg,
+            kwarg=self.kwrest_arg
+        )
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 
         cells = [None] * len(block_ctx.symtable.cell_numbers)

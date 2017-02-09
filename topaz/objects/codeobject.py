@@ -8,13 +8,14 @@ class W_CodeObject(W_BaseObject):
     _immutable_fields_ = [
         "code", "consts_w[*]", "max_stackdepth", "cellvars[*]", "freevars[*]",
         "arg_pos[*]", "defaults[*]", "block_arg_pos", "splat_arg_pos",
+        "kwarg_names[*]", "kwarg_pos[*]", "kwrest_pos", "default_arg_begin"
     ]
 
     classdef = ClassDef("Code", W_BaseObject.classdef)
 
     def __init__(self, name, filepath, code, max_stackdepth, consts, args,
-                 splat_arg, block_arg, defaults, cellvars, freevars,
-                 lineno_table):
+                 splat_arg, block_arg, kwrest_arg, defaults, first_default_arg,
+                 cellvars, freevars, lineno_table):
 
         self.name = name
         self.filepath = filepath
@@ -32,6 +33,11 @@ class W_CodeObject(W_BaseObject):
             arg_pos[idx] = cellvars.index(arg)
         self.arg_pos = arg_pos
 
+        default_arg_begin = -1
+        if first_default_arg:
+            default_arg_begin = cellvars.index(first_default_arg)
+        self.default_arg_begin = default_arg_begin
+
         block_arg_pos = -1
         if block_arg is not None:
             block_arg_pos = cellvars.index(block_arg)
@@ -41,6 +47,11 @@ class W_CodeObject(W_BaseObject):
         if splat_arg is not None:
             splat_arg_pos = cellvars.index(splat_arg)
         self.splat_arg_pos = splat_arg_pos
+
+        kwrest_pos = -1
+        if kwrest_arg is not None:
+            kwrest_pos = cellvars.index(kwrest_arg)
+        self.kwrest_pos = kwrest_pos
 
     def __deepcopy__(self, memo):
         obj = super(W_CodeObject, self).__deepcopy__(memo)
