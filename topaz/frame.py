@@ -73,8 +73,8 @@ class Frame(BaseFrame):
                 w_obj = args_w[-1]
                 if not space.is_kind_of(w_obj, space.w_hash):
                     w_obj = space.convert_type(w_obj, space.w_hash, "to_hash", reraise_error=True)
-                if isinstance(w_hash, W_HashObject):
-                    keywords_hash = space.send(w_hash, "clone")
+                if isinstance(w_obj, W_HashObject):
+                    keywords_hash = space.send(w_obj, "clone")
                     assert isinstance(keywords_hash, W_HashObject)
 
         if len(bytecode.kw_defaults) < len(bytecode.kwarg_names) and not keywords_hash:
@@ -138,6 +138,7 @@ class Frame(BaseFrame):
             self._set_arg(space, bytecode.splat_arg_pos, w_splat_args)
 
         for i, name in enumerate(bytecode.kwarg_names):
+            assert keywords_hash is not None
             w_key = space.newsymbol(name)
             try:
                 w_value = keywords_hash.getitem(w_key)

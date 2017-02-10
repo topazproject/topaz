@@ -354,13 +354,11 @@ class AbstractCallable(Node):
                 arg.defl.compile(arg_ctx)
                 arg_ctx.emit(consts.RETURN)
                 bc = arg_ctx.create_bytecode()
-                kw_arg_names.append(arg.name)
                 kw_defaults.append(bc)
         for arg in kwargs:
             assert isinstance(arg, Argument)
-            if arg.defl is None:
-                code_ctx.symtable.get_cell_num(arg.name)
-                kw_arg_names.append(arg.name)
+            code_ctx.symtable.get_cell_num(arg.name)
+            kw_arg_names.append(arg.name)
         if kwrest_arg is not None:
             code_ctx.symtable.get_cell_num(kwrest_arg)
         if block_arg is not None:
