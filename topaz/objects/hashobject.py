@@ -114,6 +114,18 @@ class W_HashObject(W_Object):
         obj.default_proc = copy.deepcopy(self.default_proc)
         return obj
 
+    def getitem(self, w_key):
+        return self.strategy.getitem(self.dict_storage, w_key)
+
+    def setitem(self, w_key, w_value):
+        return self.strategy.setitem(self.dict_storage, w_key, w_value)
+
+    def delete(self, w_key):
+        return self.strategy.pop(self.dict_storage, w_key, None)
+
+    def size(self):
+        return self.strategy.len(self.dict_storage)
+
     @classdef.singleton_method("allocate")
     def method_allocate(self, space):
         return W_HashObject(space, self)
@@ -198,14 +210,14 @@ class W_HashObject(W_Object):
     @classdef.method("[]")
     def method_subscript(self, space, w_key):
         try:
-            return self.strategy.getitem(self.dict_storage, w_key)
+            return self.getitem(w_key)
         except KeyError:
             return space.send(self, "default", [w_key])
 
     @classdef.method("fetch")
     def method_fetch(self, space, w_key, w_value=None, block=None):
         try:
-            return self.strategy.getitem(self.dict_storage, w_key)
+            return self.getitem(w_key)
         except KeyError:
             if block is not None:
                 return space.invoke_block(block, [w_key])
@@ -223,13 +235,13 @@ class W_HashObject(W_Object):
 
             w_key = space.send(w_key, "dup")
             w_key = space.send(w_key, "freeze")
-        self.strategy.setitem(self.dict_storage, w_key, w_value)
+        self.setitem(w_key, w_value)
         return w_value
 
     @classdef.method("length")
     @classdef.method("size")
     def method_size(self, space):
-        return space.newint(self.strategy.len(self.dict_storage))
+        return space.newint(self.size())
 
     @classdef.method("empty?")
     def method_emptyp(self, space):
@@ -238,7 +250,7 @@ class W_HashObject(W_Object):
     @classdef.method("delete")
     @check_frozen()
     def method_delete(self, space, w_key, block):
-        w_res = self.strategy.pop(self.dict_storage, w_key, None)
+        w_res = self.delete(w_key)
         if w_res is None:
             if block:
                 return space.invoke_block(block, [w_key])

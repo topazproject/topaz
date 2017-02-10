@@ -344,6 +344,8 @@ class AbstractCallable(Node):
             arg_names.append(arg.name)
             code_ctx.symtable.get_cell_num(arg.name)
             assert arg.defl is None
+        # this sorting of kwargs with defaults first is important for arg
+        # handling in frame.py
         for arg in kwargs:
             assert isinstance(arg, Argument)
             if arg.defl is not None:

@@ -69,8 +69,9 @@ class Frame(BaseFrame):
                 w_hash = Coerce.hash(space, args_w[-1])
                 if isinstance(w_hash, W_HashObject):
                     keywords_hash = space.send(w_hash, "clone")
+                    assert isinstance(keywords_hash, W_HashObject)
 
-        if len(bytecode.kw_defaults) < len(bytecode.kwarg_names) and not has_keywords_hash:
+        if len(bytecode.kw_defaults) < len(bytecode.kwarg_names) and not keywords_hash:
             raise space.error(space.w_ArgumentError,
                               "missing keywords: %s" % ",".join(bytecode.kwarg_names)
             )
@@ -130,11 +131,38 @@ class Frame(BaseFrame):
             w_splat_args = space.newarray(splat_args_w)
             self._set_arg(space, bytecode.splat_arg_pos, w_splat_args)
 
+        for i, name in enumerate(bytecode.kwarg_names):
+            w_key = space.newsymbol(name)
+            try:
+                w_value = keywords_hash.getitem(w_key)
+            except KeyError:
+                # kword arguments with defaults come first, so if we get an
+                # index error here, we're missing a required keyword argument
+                try:
+                    bc = bytecode.kw_defaults[i]
+                except IndexError:
+                    raise space.error(space.w_ArgumentError,
+                        "missing keyword: %s" % name
+                    )
+                self.bytecode = bc
+                w_value = Interpreter().interpret(space, self, bc)
+            keywords_hash.delete(w_key)
+            self._set_arg(space, bytecode.cellvars.index(name), w_value)
+
+        self.bytecode = bytecode
+
         if bytecode.kwrest_pos != -1:
             if keywords_hash is not None:
                 self._set_arg(space, bytecode.kwrest_pos, keywords_hash)
             else:
                 self._set_arg(space, bytecode.kwrest_pos, space.newhash())
+        elif keywords_hash is not None:
+            if keywords_hash.size() > 0:
+                raise space.error(space.w_ArgumentError,
+                    "unknown keywords: %s" % space.str_w(
+                        space.send(space.send(keywords_hash, "keys"), "to_s")
+                    )
+                )
 
         if bytecode.block_arg_pos != -1:
             if block is None:
