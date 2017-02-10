@@ -3,6 +3,7 @@ from rpython.rlib import jit
 from topaz.coerce import Coerce
 from topaz.closure import LocalCell
 from topaz.objects.arrayobject import W_ArrayObject
+from topaz.objects.hashobject import W_HashObject
 from topaz.objects.functionobject import W_FunctionObject
 
 
@@ -65,7 +66,7 @@ class Frame(BaseFrame):
         if len(bytecode.kwarg_names) > 0 or bytecode.kwrest_pos != -1:
             # we only take the hash if we have more than enough arguments
             if len(args_w) > 0 and len(args_w) > (len(bytecode.arg_pos) - len(bytecode.defaults)):
-                w_hash = Coerce.hash(args_w[-1])
+                w_hash = Coerce.hash(space, args_w[-1])
                 if isinstance(w_hash, W_HashObject):
                     keywords_hash = space.send(w_hash, "clone")
 
@@ -95,8 +96,9 @@ class Frame(BaseFrame):
         # pre                                                   post
 
         # fill post-arguments from back.
+        actual_args_len = post
         offset = len(bytecode.arg_pos) - post
-        for i in xrange(len(args_w) - 1, len(args_w) - len_post_arg - 1, -1):
+        for i in xrange(actual_args_len - 1, actual_args_len - len_post_arg - 1, -1):
             self._set_arg(space, bytecode.arg_pos[i + offset], args_w[i])
             post -= 1
         # [required args, optional args, splat arg, required args, keywords args, keyword rest, block]
