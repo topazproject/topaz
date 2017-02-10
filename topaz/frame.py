@@ -70,7 +70,9 @@ class Frame(BaseFrame):
         if len(bytecode.kwarg_names) > 0 or bytecode.kwrest_pos != -1:
             # we only take the hash if we have more than enough arguments
             if len(args_w) > 0 and len(args_w) > (len(bytecode.arg_pos) - len(bytecode.defaults)):
-                w_hash = Coerce.hash(space, args_w[-1])
+                w_obj = args_w[-1]
+                if not space.is_kind_of(w_obj, space.w_hash):
+                    w_obj = space.convert_type(w_obj, space.w_hash, "to_hash", reraise_error=True)
                 if isinstance(w_hash, W_HashObject):
                     keywords_hash = space.send(w_hash, "clone")
                     assert isinstance(keywords_hash, W_HashObject)

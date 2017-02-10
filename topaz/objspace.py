@@ -753,13 +753,15 @@ class ObjectSpace(object):
 
         return (start, end, as_range, nil)
 
-    def convert_type(self, w_obj, w_cls, method, raise_error=True):
+    def convert_type(self, w_obj, w_cls, method, raise_error=True, reraise_error=False):
         if self.is_kind_of(w_obj, w_cls):
             return w_obj
 
         try:
             w_res = self.send(w_obj, method)
-        except RubyError:
+        except RubyError as e:
+            if reraise_error:
+                raise e
             if not raise_error:
                 return self.w_nil
             src_cls_name = self.obj_to_s(self.getclass(w_obj))
