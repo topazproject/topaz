@@ -147,7 +147,6 @@ class Parser(object):
     def new_or(self, lhs, rhs):
         return BoxAST(ast.Or(lhs.getast(), rhs.getast()))
 
-    @jit.unroll_safe
     def new_args(self, args=None, optargs=None, splat_arg=None, post_args=None, args_tail=None):
         if args_tail:
             kwargs = args_tail.getkwargs()
@@ -157,20 +156,8 @@ class Parser(object):
             kwargs = None
             kwrest = None
             block_arg = None
-
-        arglist = args.getastlist() if args is not None else []
-        extra_stmts = []
-        for idx, arg in enumerate(arglist):
-            if isinstance(arg, ast.MultiAssignable):
-                new_arg = ast.Argument(str(idx))
-                asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, -1))
-                arglist[idx] = new_arg
-                self.lexer.symtable.declare_argument(new_arg.name)
-                extra_stmts.append(ast.Statement(asgn))
-        extra_stmts.reverse()
-
         arguments = (
-            arglist +
+            (args.getastlist() if args is not None else []) +
             (optargs.getastlist() if optargs is not None else []) +
             (post_args.getastlist() if post_args is not None else [])
         )
@@ -179,8 +166,7 @@ class Parser(object):
             splat_arg.getstr() if splat_arg is not None else None,
             kwargs.getastlist() if kwargs is not None else [],
             kwrest.getstr() if kwrest is not None else None,
-            block_arg.getstr() if block_arg is not None else None,
-            prebody=extra_stmts
+            block_arg.getstr() if block_arg is not None else None
         )
 
     def new_argstail(self, keywords=None, kwrest=None, block_arg=None):
@@ -209,16 +195,27 @@ class Parser(object):
         kwargs = params.getkwargs() if params is not None else []
         kwrest = params.getkwrestarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
+
+        extra_stmts = []
+        for idx, arg in enumerate(args):
+            if isinstance(arg, ast.MultiAssignable):
+                new_arg = ast.Argument(str(idx))
+                asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, lineno))
+                args[idx] = new_arg
+                self.lexer.symtable.declare_argument(new_arg.name)
+                extra_stmts.append(ast.Statement(asgn))
+        extra_stmts.reverse()
+
+        stmts = extra_stmts + stmts
         block = ast.Block(stmts) if stmts else ast.Nil()
 
-        body = params.getfullbody(block)
         return BoxAST(ast.SendBlock(
             args,
             splat,
             kwargs,
             kwrest,
             block_arg,
-            body
+            block
         ))
 
     def combine_send_block(self, send_box, block_box):
@@ -1789,7 +1786,7 @@ class Parser(object):
 
     @pg.production("primary : DEF fname push_local_scope f_arglist bodystmt END")
     def primary_def(self, p):
-        body = p[3].getfullbody(p[4].getast())
+        body = p[4].getast()
         node = ast.Function(
             None,
             p[1].getstr(),
@@ -1805,7 +1802,7 @@ class Parser(object):
 
     @pg.production("primary : DEF singleton dot_or_colon singleton_method_post_dot_colon fname push_local_scope singleton_method_post_fname f_arglist bodystmt END")
     def primary_def_singleton(self, p):
-        body = p[7].getfullbody(p[8].getast())
+        body = p[8].getast()
         node = ast.Function(
             p[1].getast(),
             p[4].getstr(),
@@ -2166,9 +2163,7 @@ class Parser(object):
     @pg.production("lambda : PRE_LAMBDA f_larglist lambda_body")
     def lambda_prod(self, p):
         self.lexer.left_paren_begin = p[0].getint()
-        body = p[1].getfullbody(
-            ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
-        )
+        body = ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
         node = ast.SendBlock(
             p[1].getargs(),
             p[1].getsplatarg(),
@@ -3152,13 +3147,12 @@ class BoxArgs(BaseBox):
     """
     A box for the arguments of a function/block definition.
     """
-    def __init__(self, args, splat_arg, kwargs, kwrest_arg, block_arg, prebody=None):
+    def __init__(self, args, splat_arg, kwargs, kwrest_arg, block_arg):
         self.args = args
         self.splat_arg = splat_arg
         self.kwargs = kwargs
         self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
-        self.prebody = prebody
 
     def getargs(self):
         return self.args
@@ -3174,16 +3168,6 @@ class BoxArgs(BaseBox):
 
     def getblockarg(self):
         return self.block_arg
-
-    def getfullbody(self, block):
-        if self.prebody:
-            if isinstance(block, ast.Nil):
-                return ast.Block(self.prebody)
-            elif isinstance(block, ast.Block):
-                return ast.Block(self.prebody + block.stmts)
-            else:
-                raise SystemError
-        return block
 
 
 class BoxArgsTail(BaseBox):
