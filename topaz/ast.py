@@ -322,9 +322,14 @@ class AbstractCallable(Node):
         first_default_arg = None
         for arg in args:
             assert isinstance(arg, Argument)
-            arg_names.append(arg.name)
-            code_ctx.symtable.get_cell_num(arg.name)
+            if arg.defl is None:
+                arg_names.append(arg.name)
+                code_ctx.symtable.get_cell_num(arg.name)
+        for arg in args:
+            assert isinstance(arg, Argument)
             if arg.defl is not None:
+                arg_names.append(arg.name)
+                code_ctx.symtable.get_cell_num(arg.name)
                 if first_default_arg is None:
                     first_default_arg = arg.name
                 arg_ctx = CompilerContext(ctx.space, ctxname, code_ctx.symtable, ctx.filepath)
