@@ -46,10 +46,14 @@ class Frame(BaseFrame):
         self.cells[pos].set(space, self, pos, w_value)
 
     def handle_block_args(self, space, bytecode, args_w, block):
-        if (len(args_w) == 1 and
-            isinstance(args_w[0], W_ArrayObject) and len(bytecode.arg_pos) >= 2):
+        if (len(args_w) == 1 and (
+                len(bytecode.arg_pos) >= 2 or (
+                    len(bytecode.arg_pos) > 0 and bytecode.splat_arg_pos != -1))):
             w_arg = args_w[0]
-            args_w = space.listview(w_arg)
+            if not space.is_kind_of(w_arg, space.w_array):
+                w_arg = space.convert_type(w_arg, space.w_array, "to_ary", raise_error=False)
+            if w_arg is not space.w_nil:
+                args_w = space.listview(w_arg)
         minargc = len(bytecode.arg_pos) - len(bytecode.defaults)
         if len(args_w) < minargc:
             args_w.extend([space.w_nil] * (minargc - len(args_w)))

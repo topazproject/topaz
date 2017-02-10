@@ -68,5 +68,5 @@ class Coerce(object):
     @staticmethod
     def hash(space, w_obj):
         if not space.is_kind_of(w_obj, space.w_hash):
-            return space.convert_type(w_obj, space.w_hash, "to_hash", raise_error=False)
+            return space.convert_type(w_obj, space.w_hash, "to_hash")
         return w_obj
