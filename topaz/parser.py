@@ -149,9 +149,10 @@ class Parser(object):
 
     def new_args(self, args=None, optargs=None, splat_arg=None, post_args=None, args_tail=None):
         if args_tail:
-            kwargs = args_tail.getkwargs()
-            kwrest = args_tail.getkwrest()
-            block_arg = args_tail.getblockarg()
+            assert isinstance(args_tail, BoxArgsTail)
+            kwargs = args_tail.getkwargsbox()
+            kwrest = args_tail.getkwrestbox()
+            block_arg = args_tail.getblockargbox()
         else:
             kwargs = None
             kwrest = None
@@ -3185,13 +3186,13 @@ class BoxArgsTail(BaseBox):
         self.kwrest = kwrest
         self.block_arg = block_arg
 
-    def getkwargs(self):
+    def getkwargsbox(self):
         return self.kwargs
 
-    def getkwrest(self):
+    def getkwrestbox(self):
         return self.kwrest
 
-    def getblockarg(self):
+    def getblockargbox(self):
         return self.block_arg
 
 
