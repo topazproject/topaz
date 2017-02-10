@@ -571,6 +571,46 @@ class W_StringObject(W_Object):
         else:
             return space.newstr_fromstr(self.strategy.getitem(self.str_storage, start))
 
+    @classdef.method("[]=")
+    def method_subscript(self, space, w_idx, w_count, w_other=None):
+        if w_other is None:
+            w_other = w_count
+            w_count = None
+
+        other = Coerce.str(space, w_other)
+        start_idx = -1
+        end_idx = -1
+        if space.is_kind_of(w_idx, space.w_string):
+            other_str = space.str_w(w_idx)
+            start_idx = space.str_w(self).find(other_str)
+            end_idx = start_idx + len(other_str)
+        elif space.is_kind_of(w_idx, space.w_regexp):
+            ctx = w_idx.make_ctx(space.str_w(self))
+            if self.search_context(space, ctx):
+                if w_count is None:
+                    start_idx = ctx.match_start
+                    end_idx = ctx.match_end
+                elif space.is_kind_of(w_count, space.w_string):
+                    raise NotImplementedError
+                else:
+                    groupnum = Coerce.int(space, w_count)
+                    try:
+                        start_idx, end_idx = ctx.span(groupnum)
+                    except IndexError:
+                        pass
+        else:
+            start_idx, end_idx, as_range, nil = space.subscript_access(self.length(), w_idx, w_count=w_count)
+            if not w_count:
+                end_idx = start_idx + 1
+
+        if start_idx < 0 or end_idx < 0:
+            raise space.error(space.w_IndexError, "cannot find substring in string to replace")
+
+        self.strategy.to_mutable(space, self)
+        self.strategy.delslice(space, self.str_storage, start_idx, end_idx)
+        self.strategy.insert(self.str_storage, start_idx, other)
+        return self
+
     @classdef.method("slice!")
     @check_frozen()
     def method_slice_i(self, space, w_idx, w_count=None):
