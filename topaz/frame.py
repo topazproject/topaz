@@ -61,58 +61,18 @@ class Frame(BaseFrame):
     def handle_args(self, space, bytecode, args_w, block):
         from topaz.interpreter import Interpreter
 
-        has_keywords_hash = False
-        # if len(bytecode.kwarg_pos) > 0 or bytecode.kwrest_pos != -1:
-        #     import pdb; pdb.set_trace()
-        #     # we only take the hash if we have more than enough arguments
-        #     if len(args_w) > 0 and len(args_w) > (len(bytecode.arg_pos) - len(bytecode.defaults)):
-        #         w_hash = Coerce.hash(args_w[-1])
-        #         if isinstance(w_hash, W_HashObject):
-        #             has_keywords_hash = True
-        #             w_rest_hash = space.send(w_hash, "clone")
+        keywords_hash = None
+        if len(bytecode.kwarg_names) > 0 or bytecode.kwrest_pos != -1:
+            # we only take the hash if we have more than enough arguments
+            if len(args_w) > 0 and len(args_w) > (len(bytecode.arg_pos) - len(bytecode.defaults)):
+                w_hash = Coerce.hash(args_w[-1])
+                if isinstance(w_hash, W_HashObject):
+                    keywords_hash = space.send(w_hash, "clone")
 
-        #             for i, name in enumerate(bytecode.kwarg_names):
-        #                 # go through and assign each keyword argument either
-        #                 # from the hash or its default value.
-        #                 w_value = None
-        #                 w_key = space.newsymbol(name)
-        #                 if space.send(w_hash, "has_key?", [w_key]):
-        #                     w_value = space.send(w_hash, "[]", [w_key])
-        #                 elif bytecode.kwarg_defaults[i] is not None:
-        #                     bc = bytecode.kwarg_defaults[i]
-        #                     self.bytecode = bc
-        #                     w_value = Interpreter().interpret(space, self, bc)
-        #                 else:
-        #                     raise space.error(space.w_ArgumentError,
-        #                         "missing keyword: %s" % name
-        #                     )
-        #                 # we keep the remaining hash
-        #                 space.send(w_rest_hash, "delete", [w_key])
-        #                 self._set_arg(space, bytecode.kwarg_pos[i], w_value)
-
-        #             if space.int_w(space.send(w_rest_hash, "size")) > 0:
-        #                 # if the remaining hash is not empty, check that it no
-        #                 # longer includes any symbols. If it does, this is an
-        #                 # unexpected keyword
-        #                 w_rest_kwords = None
-        #                 if bytecode.kwrest_pos != -1:
-        #                     w_rest_kwords = space.send(w_rest_hash, "clone")
-        #                 pairs = space.listview(space.send(w_rest_hash, "to_a"))
-        #                 for w_key, w_value in pairs:
-        #                     if space.is_kind_of(w_key, space.w_symbol):
-        #                         if w_rest_kwords:
-        #                             space.send(w_rest_hash, "delete", [w_key])
-        #                         else:
-        #                             raise space.error(space.w_ArgumentError,
-        #                                 "unknown keyword: %s" % keyword
-        #                             )
-        #                     elif w_rest_kwords:
-        #                         space.send(w_rest_kwords, "delete", [w_key])
-        #                 if space.int_w(space.send(w_rest_hash, "size")) > 0:
-        #                     args_w.append(w_rest_hash)
-        #                 if w_rest_kwords:
-        #                     self._set_arg(space, bytecode.kwrest_pos, w_rest_kwords)
-
+        if len(bytecode.kw_defaults) < len(bytecode.kwarg_names) and not has_keywords_hash:
+            raise space.error(space.w_ArgumentError,
+                              "missing keywords: %s" % ",".join(bytecode.kwarg_names)
+            )
 
         if (len(args_w) < (len(bytecode.arg_pos) - len(bytecode.defaults)) or
             (bytecode.splat_arg_pos == -1 and len(args_w) > len(bytecode.arg_pos))):
@@ -129,18 +89,10 @@ class Frame(BaseFrame):
         len_post_arg = len(bytecode.arg_pos) - len(bytecode.defaults) - len_pre_args
 
         pre = 0
-        post = len(args_w) if not has_keywords_hash else len(args_w) - 1
+        post = len(args_w) if keywords_hash is None else len(args_w) - 1
         # [required args, optional args, splat arg, required args, keywords args, keyword rest, block]
         #  ^                                                      ^
         # pre                                                   post
-
-        # fill arguments from start, leaving enough for the post-arguments
-        for i in xrange(len_pre_args):
-            self._set_arg(space, bytecode.arg_pos[i], args_w[i])
-            pre += 1
-        # [required args, optional args, splat arg, required args, keywords args, keyword rest, block]
-        #  --------------^                                        ^
-        #               pre                                     post
 
         # fill post-arguments from back.
         offset = len(bytecode.arg_pos) - post
@@ -148,21 +100,21 @@ class Frame(BaseFrame):
             self._set_arg(space, bytecode.arg_pos[i + offset], args_w[i])
             post -= 1
         # [required args, optional args, splat arg, required args, keywords args, keyword rest, block]
-        #  --------------^                          ^-------------
-        #               pre                        post
+        #  ^                                       ^-------------
+        # pre                                    post
 
-        given_default = 0
-        # fill in default arguments from passed arguments
-        for i in xrange(pre, min(post, pre + len(bytecode.defaults))):
+        # fill arguments from start as far as we can (until we hit post or the
+        # end of the default arguments + normal arguments
+        for i in xrange(min(post, len_pre_args + len(bytecode.defaults))):
             self._set_arg(space, bytecode.arg_pos[i], args_w[i])
-            given_default += 1
-        pre += given_default
+            pre += 1
         # [required args, optional args, splat arg, required args, keywords args, keyword rest, block]
-        #  -----------------------------^           ^-------------
-        #                              pre         post
+        #  ------------------------^               ^
+        #                         pre            post
 
+        given_defaults = pre - len_pre_args
         # fill up remaining default arguments with their default values
-        for i in xrange(given_default, len(bytecode.defaults)):
+        for i in xrange(given_defaults, len(bytecode.defaults)):
             bc = bytecode.defaults[i]
             self.bytecode = bc
             w_value = Interpreter().interpret(space, self, bc)
@@ -175,6 +127,12 @@ class Frame(BaseFrame):
                 splat_args_w = args_w[pre:post]
             w_splat_args = space.newarray(splat_args_w)
             self._set_arg(space, bytecode.splat_arg_pos, w_splat_args)
+
+        if bytecode.kwrest_pos != -1:
+            if keywords_hash is not None:
+                self._set_arg(space, bytecode.kwrest_pos, keywords_hash)
+            else:
+                self._set_arg(space, bytecode.kwrest_pos, space.newhash())
 
         if bytecode.block_arg_pos != -1:
             if block is None:

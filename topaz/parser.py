@@ -158,12 +158,12 @@ class Parser(object):
             block_arg = None
         arguments = (
             (args.getastlist() if args is not None else []) +
-            (optargs.getastlist() if optargs is not None else []) +
-            (post_args.getastlist() if post_args is not None else [])
+            (optargs.getastlist() if optargs is not None else [])
         )
         return BoxArgs(
             arguments,
             splat_arg.getstr() if splat_arg is not None else None,
+            post_args.getastlist() if post_args is not None else [],
             kwargs.getastlist() if kwargs is not None else [],
             kwrest.getstr() if kwrest is not None else None,
             block_arg.getstr() if block_arg is not None else None
@@ -192,6 +192,7 @@ class Parser(object):
         stmts = body.getastlist() if body is not None else []
         args = params.getargs() if params is not None else []
         splat = params.getsplatarg() if params is not None else None
+        postargs = params.getpostargs() if params is not None else []
         kwargs = params.getkwargs() if params is not None else []
         kwrest = params.getkwrestarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
@@ -212,6 +213,7 @@ class Parser(object):
         return BoxAST(ast.SendBlock(
             args,
             splat,
+            postargs,
             kwargs,
             kwrest,
             block_arg,
@@ -271,7 +273,7 @@ class Parser(object):
     def new_kw_arg(self, box, default_value):
         return BoxAST(ast.Argument(
             box.getstr(),
-            default_value.getast() if default_value is not None else None
+            default_value.getast() if default_value else None
         ))
 
     def new_colon2(self, box, constant):
@@ -1731,7 +1733,7 @@ class Parser(object):
 
         stmts = p[7].getastlist() if p[7] is not None else []
         stmts = [ast.Statement(asgn)] + stmts
-        block = ast.SendBlock([arg], None, None, ast.Block(stmts))
+        block = ast.SendBlock([arg], None, [], [], None, None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
         return BoxAST(ast.Send(p[4].getast(), "each", [], block, lineno))
@@ -1792,6 +1794,7 @@ class Parser(object):
             p[1].getstr(),
             p[3].getargs(),
             p[3].getsplatarg(),
+            p[3].getpostargs(),
             p[3].getkwargs(),
             p[3].getkwrestarg(),
             p[3].getblockarg(),
@@ -1808,6 +1811,7 @@ class Parser(object):
             p[4].getstr(),
             p[7].getargs(),
             p[7].getsplatarg(),
+            p[7].getpostargs(),
             p[7].getkwargs(),
             p[7].getkwrestarg(),
             p[7].getblockarg(),
@@ -2167,6 +2171,7 @@ class Parser(object):
         node = ast.SendBlock(
             p[1].getargs(),
             p[1].getsplatarg(),
+            p[1].getpostargs(),
             p[1].getkwargs(),
             p[1].getkwrestarg(),
             p[1].getblockarg(),
@@ -3147,15 +3152,19 @@ class BoxArgs(BaseBox):
     """
     A box for the arguments of a function/block definition.
     """
-    def __init__(self, args, splat_arg, kwargs, kwrest_arg, block_arg):
+    def __init__(self, args, splat_arg, post_args, kwargs, kwrest_arg, block_arg):
         self.args = args
         self.splat_arg = splat_arg
+        self.post_args = post_args
         self.kwargs = kwargs
         self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
 
     def getargs(self):
         return self.args
+
+    def getpostargs(self):
+        return self.post_args
 
     def getsplatarg(self):
         return self.splat_arg

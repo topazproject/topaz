@@ -306,58 +306,112 @@ class Module(BaseModule):
         self.compile_body(ctx, "<module:%s>" % self.name)
 
 
-class Function(Node):
-    def __init__(self, parent, name, args, splat_arg, kwargs, kwrest_arg, block_arg, body):
+class AbstractCallable(Node):
+    def get_code_name(self, ctx):
+        raise NotImplementedError("Abstract class")
+
+    def pre_process_ctx(self, ctx, code_ctx):
+        raise NotImplementedError("Abstract class")
+
+    def post_process_ctx(self, ctx, code_ctx):
+        raise NotImplementedError("Abstract class")
+
+    def compile_bytecode(self, ctx, code_ctx, args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, body):
+        ctxname = self.get_code_name(ctx)
+        self.pre_process_ctx(ctx, code_ctx)
+        arg_names = []
+        arg_defaults = []
+        kw_arg_names = []
+        kw_defaults = []
+        first_default_arg = None
+        for arg in args:
+            assert isinstance(arg, Argument)
+            arg_names.append(arg.name)
+            code_ctx.symtable.get_cell_num(arg.name)
+            if arg.defl is not None:
+                if first_default_arg is None:
+                    first_default_arg = arg.name
+                arg_ctx = CompilerContext(ctx.space, ctxname, code_ctx.symtable, ctx.filepath)
+                arg.defl.compile(arg_ctx)
+                arg_ctx.emit(consts.RETURN)
+                bc = arg_ctx.create_bytecode()
+                arg_defaults.append(bc)
+        if splat_arg is not None:
+            code_ctx.symtable.get_cell_num(splat_arg)
+        for arg in post_args:
+            assert isinstance(arg, Argument)
+            arg_names.append(arg.name)
+            code_ctx.symtable.get_cell_num(arg.name)
+            assert arg.defl is None
+        for arg in kwargs:
+            assert isinstance(arg, Argument)
+            if arg.defl is not None:
+                code_ctx.symtable.get_cell_num(arg.name)
+                arg_ctx = CompilerContext(ctx.space, ctxname, code_ctx.symtable, ctx.filepath)
+                arg.defl.compile(arg_ctx)
+                arg_ctx.emit(consts.RETURN)
+                bc = arg_ctx.create_bytecode()
+                kw_arg_names.append(arg.name)
+                kw_defaults.append(bc)
+        for arg in kwargs:
+            assert isinstance(arg, Argument)
+            if arg.defl is None:
+                code_ctx.symtable.get_cell_num(arg.name)
+                kw_arg_names.append(arg.name)
+        if kwrest_arg is not None:
+            code_ctx.symtable.get_cell_num(kwrest_arg)
+        if block_arg is not None:
+            code_ctx.symtable.get_cell_num(block_arg)
+        self.post_process_ctx(ctx, code_ctx)
+        body.compile(code_ctx)
+        code_ctx.emit(consts.RETURN)
+        return code_ctx.create_bytecode(
+            args=arg_names,
+            defaults=arg_defaults,
+            first_default_arg=first_default_arg,
+            splat_arg=splat_arg,
+            kwargs=kw_arg_names,
+            kw_defaults=kw_defaults,
+            kwrest_arg=kwrest_arg,
+            block_arg=block_arg,
+        )
+
+
+class Function(AbstractCallable):
+    def __init__(self, parent, name, args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, body):
         self.parent = parent
         self.name = name
         self.args = args
         self.splat_arg = splat_arg
+        self.post_args = post_args
         self.kwargs = kwargs
         self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
         self.body = body
 
+    def get_code_name(self, ctx):
+        return self.name
+
+    def pre_process_ctx(self, ctx, code_ctx):
+        pass
+
+    def post_process_ctx(self, ctx, code_ctx):
+        pass
+
     def compile(self, ctx):
-        function_ctx = ctx.get_subctx(self.name, self)
-        defaults = []
-        first_default_arg = None
-        arg_names = []
-        for arg in self.args:
-            assert isinstance(arg, Argument)
-            arg_names.append(arg.name)
-            function_ctx.symtable.get_cell_num(arg.name)
-
-            arg_ctx = CompilerContext(ctx.space, self.name, function_ctx.symtable, ctx.filepath)
-            if arg.defl is not None:
-                if first_default_arg is None:
-                    first_default_arg = arg.name
-                arg.defl.compile(arg_ctx)
-                arg_ctx.emit(consts.RETURN)
-                bc = arg_ctx.create_bytecode()
-                defaults.append(bc)
-        if self.splat_arg is not None:
-            function_ctx.symtable.get_cell_num(self.splat_arg)
-        if self.kwrest_arg is not None:
-            function_ctx.symtable.get_cell_num(self.kwrest_arg)
-        if self.block_arg is not None:
-            function_ctx.symtable.get_cell_num(self.block_arg)
-
-        self.body.compile(function_ctx)
-        function_ctx.emit(consts.RETURN)
-        bytecode = function_ctx.create_bytecode(
-            args=arg_names, defaults=defaults,
-            first_default_arg=first_default_arg,
-            splat_arg=self.splat_arg, block_arg=self.block_arg,
-            kwarg=self.kwrest_arg
+        code_ctx = ctx.get_subctx(self.name, self)
+        bc = self.compile_bytecode(
+            ctx, code_ctx,
+            self.args, self.splat_arg, self.post_args,
+            self.kwargs, self.kwrest_arg, self.block_arg, self.body
         )
-
         if self.parent is None:
             ctx.emit(consts.LOAD_SCOPE)
         else:
             self.parent.compile(ctx)
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
         ctx.emit(consts.LOAD_CONST, ctx.create_symbol_const(self.name))
-        ctx.emit(consts.LOAD_CONST, ctx.create_const(bytecode))
+        ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
         ctx.emit(consts.BUILD_FUNCTION)
         if self.parent is None:
             ctx.emit(consts.DEFINE_FUNCTION)
@@ -794,58 +848,36 @@ class Splat(Node):
         ctx.emit(consts.COERCE_ARRAY, 1)
 
 
-class SendBlock(Node):
-    def __init__(self, block_args, splat_arg, kwargs, kwrest_arg, block_arg, block):
+class SendBlock(AbstractCallable):
+    def __init__(self, block_args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, block):
         self.block_args = block_args
         self.splat_arg = splat_arg
+        self.post_args = post_args
         self.kwargs = kwargs
         self.kwrest_arg = kwrest_arg
         self.block_arg = block_arg
         self.block = block
 
-    def compile(self, ctx):
-        blockname = "block in %s" % ctx.code_name
-        block_ctx = ctx.get_subctx(blockname, self)
-        for cellname, kind in block_ctx.symtable.cells.iteritems():
-            if kind == block_ctx.symtable.CELLVAR:
-                block_ctx.symtable.get_cell_num(cellname)
-        block_args = []
-        defaults = []
-        first_default_arg = None
-        for arg in self.block_args:
-            assert isinstance(arg, Argument)
-            block_args.append(arg.name)
-            block_ctx.symtable.get_cell_num(arg.name)
-            if arg.defl is not None:
-                if first_default_arg is None:
-                    first_default_arg = arg.name
-                arg_ctx = CompilerContext(ctx.space, blockname, block_ctx.symtable, ctx.filepath)
-                arg.defl.compile(arg_ctx)
-                arg_ctx.emit(consts.RETURN)
-                bc = arg_ctx.create_bytecode()
-                defaults.append(bc)
-        if self.splat_arg is not None:
-            block_ctx.symtable.get_cell_num(self.splat_arg)
-        if self.kwrest_arg is not None:
-            block_ctx.symtable.get_cell_num(self.kwrest_arg)
-        if self.block_arg is not None:
-            block_ctx.symtable.get_cell_num(self.block_arg)
+    def get_code_name(self, ctx):
+        return "block in %s" % ctx.code_name
 
+    def pre_process_ctx(self, ctx, code_ctx):
+        for cellname, kind in code_ctx.symtable.cells.iteritems():
+            if kind == code_ctx.symtable.CELLVAR:
+                code_ctx.symtable.get_cell_num(cellname)
+
+    def post_process_ctx(self, ctx, code_ctx):
         for name in ctx.symtable.cells:
-            if (name not in block_ctx.symtable.cell_numbers and
-                name not in block_ctx.symtable.cells):
+            if (name not in code_ctx.symtable.cell_numbers and
+                name not in code_ctx.symtable.cells):
+                code_ctx.symtable.cells[name] = code_ctx.symtable.FREEVAR
 
-                block_ctx.symtable.cells[name] = block_ctx.symtable.FREEVAR
-
-        self.block.compile(block_ctx)
-        block_ctx.emit(consts.RETURN)
-        bc = block_ctx.create_bytecode(
-            args=block_args,
-            defaults=defaults,
-            first_default_arg=first_default_arg,
-            splat_arg=self.splat_arg,
-            block_arg=self.block_arg,
-            kwarg=self.kwrest_arg
+    def compile(self, ctx):
+        block_ctx = ctx.get_subctx(self.get_code_name(ctx), self)
+        bc = self.compile_bytecode(
+            ctx, block_ctx,
+            self.block_args, self.splat_arg, self.post_args,
+            self.kwargs, self.kwrest_arg, self.block_arg, self.block
         )
         ctx.emit(consts.LOAD_CONST, ctx.create_const(bc))
 

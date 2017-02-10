@@ -101,11 +101,16 @@ class CompilerContext(object):
         self.frame_blocks = []
 
     def create_bytecode(self, args=None, defaults=None, first_default_arg=None,
-                        splat_arg=None, block_arg=None, kwarg=None):
+                        splat_arg=None, kwargs=None, kw_defaults=None,
+                        kwrest_arg=None, block_arg=None):
         if args is None:
             args = []
         if defaults is None:
             defaults = []
+        if kwargs is None:
+            kwargs = []
+        if kw_defaults is None:
+            kw_defaults = []
 
         cellvars = []
         freevars = []
@@ -141,10 +146,12 @@ class CompilerContext(object):
             self.consts[:],
             args,
             splat_arg,
+            kwargs,
+            kwrest_arg,
             block_arg,
-            kwarg,
             defaults,
             first_default_arg,
+            kw_defaults,
             cellvars,
             freevars,
             lineno_table,
