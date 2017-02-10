@@ -310,15 +310,11 @@ class AbstractCallable(Node):
     def get_code_name(self, ctx):
         raise NotImplementedError("Abstract class")
 
-    def pre_process_ctx(self, ctx, code_ctx):
-        raise NotImplementedError("Abstract class")
-
     def post_process_ctx(self, ctx, code_ctx):
         raise NotImplementedError("Abstract class")
 
     def compile_bytecode(self, ctx, code_ctx, args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, body):
         ctxname = self.get_code_name(ctx)
-        self.pre_process_ctx(ctx, code_ctx)
         arg_names = []
         arg_defaults = []
         kw_arg_names = []
@@ -391,9 +387,6 @@ class Function(AbstractCallable):
 
     def get_code_name(self, ctx):
         return self.name
-
-    def pre_process_ctx(self, ctx, code_ctx):
-        pass
 
     def post_process_ctx(self, ctx, code_ctx):
         pass
@@ -861,12 +854,10 @@ class SendBlock(AbstractCallable):
     def get_code_name(self, ctx):
         return "block in %s" % ctx.code_name
 
-    def pre_process_ctx(self, ctx, code_ctx):
+    def post_process_ctx(self, ctx, code_ctx):
         for cellname, kind in code_ctx.symtable.cells.iteritems():
             if kind == code_ctx.symtable.CELLVAR:
                 code_ctx.symtable.get_cell_num(cellname)
-
-    def post_process_ctx(self, ctx, code_ctx):
         for name in ctx.symtable.cells:
             if (name not in code_ctx.symtable.cell_numbers and
                 name not in code_ctx.symtable.cells):
