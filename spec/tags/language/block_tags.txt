@@ -10,7 +10,6 @@ fails:A block yielded a single Array assigns symbol keys from a Hash returned by
 fails:A block yielded a single Array assigns non-symbol keys to non-keyword arguments
 fails:A block yielded a single Array does not treat hashes with string keys as keyword arguments
 fails:A block yielded a single Array calls #to_hash on the last element when there are more arguments than parameters
-fails:A block taking |a, b| arguments raises the original exception if #to_ary raises an exception
 fails:A block taking |(a, b)| arguments raises a TypeError if #to_ary does not return an Array
 fails:A block taking identically-named arguments raises a SyntaxError for standard arguments
 fails:Block-local variables can not have the same name as one of the standard parameters

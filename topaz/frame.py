@@ -50,8 +50,8 @@ class Frame(BaseFrame):
                 len(bytecode.arg_pos) >= 2 or (
                     len(bytecode.arg_pos) > 0 and bytecode.splat_arg_pos != -1))):
             w_arg = args_w[0]
-            if not space.is_kind_of(w_arg, space.w_array):
-                w_arg = space.convert_type(w_arg, space.w_array, "to_ary", raise_error=False)
+            if not space.is_kind_of(w_arg, space.w_array) and space.respond_to(w_arg, "to_ary"):
+                w_arg = space.convert_type(w_arg, space.w_array, "to_ary", raise_error=True, reraise_error=True)
             if w_arg is not space.w_nil:
                 args_w = space.listview(w_arg)
         minargc = len(bytecode.arg_pos) - len(bytecode.defaults)
