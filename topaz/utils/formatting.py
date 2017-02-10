@@ -2,6 +2,7 @@ from rpython.rlib import jit
 from rpython.rlib.rfloat import formatd
 from rpython.rlib.unroll import unrolling_iterable
 
+from topaz.coerce import Coerce
 
 FORMAT_CHARS = unrolling_iterable([
     ((c, c) if type(c) is str else c) for c in [
@@ -58,11 +59,11 @@ class StringFormatter(object):
         return space.send(self._next_item(), "to_s")
 
     def fmt_d(self, space, width):
-        num = space.int_w(self._next_item())
+        num = Coerce.int(space, self._next_item())
         return self._fmt_num(space, str(num), width)
 
     def fmt_f(self, space, width):
-        num = space.float_w(self._next_item())
+        num = Coerce.float(space, self._next_item())
         return self._fmt_num(space, formatd(num, "f", 6), width)
 
     def fmt_percent(self, space, width):
