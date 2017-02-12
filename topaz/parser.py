@@ -2218,6 +2218,7 @@ class Parser(object):
         self.lexer.left_paren_begin = self.lexer.paren_nest
         return BoxInt(left_paren_begin)
 
+    @pg.production("f_larglist : LPAREN_ARG f_args opt_bv_decl RPAREN")
     @pg.production("f_larglist : LPAREN2 f_args opt_bv_decl RPAREN")
     def f_larglist_parens(self, p):
         return p[1]
