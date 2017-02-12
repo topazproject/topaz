@@ -1,3 +1,2 @@
 fails:BasicObject#instance_exec has an arity of -1
-fails:BasicObject#instance_exec only binds the exec to the receiver
 fails:BasicObject#instance_exec sets class variables in the receiver

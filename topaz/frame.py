@@ -79,11 +79,14 @@ class Frame(BaseFrame):
 
         if len(bytecode.kw_defaults) < len(bytecode.kwarg_names) and not keywords_hash:
             raise space.error(space.w_ArgumentError,
-                              "missing keywords: %s" % ",".join(bytecode.kwarg_names)
+                "missing keywords: %s" % ",".join(bytecode.kwarg_names)
             )
 
-        if (len(args_w) < (len(bytecode.arg_pos) - len(bytecode.defaults)) or
-            (bytecode.splat_arg_pos == -1 and len(args_w) > len(bytecode.arg_pos))):
+        pre = 0
+        post = len(args_w) if keywords_hash is None else len(args_w) - 1
+
+        if (post < (len(bytecode.arg_pos) - len(bytecode.defaults)) or
+            (bytecode.splat_arg_pos == -1 and post > len(bytecode.arg_pos))):
             raise space.error(space.w_ArgumentError,
                 "wrong number of arguments (%d for %d)" % (len(args_w), len(bytecode.arg_pos) - len(bytecode.defaults))
             )
@@ -96,8 +99,6 @@ class Frame(BaseFrame):
             len_pre_args = len(bytecode.arg_pos)
         len_post_arg = len(bytecode.arg_pos) - len(bytecode.defaults) - len_pre_args
 
-        pre = 0
-        post = len(args_w) if keywords_hash is None else len(args_w) - 1
         # [required args, optional args, splat arg, required args, keywords args, keyword rest, block]
         #  ^                                                      ^
         # pre                                                   post

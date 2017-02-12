@@ -1,1 +1,0 @@
-fails:Array#sort compares values returned by block with 0

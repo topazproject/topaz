@@ -1,7 +1,5 @@
 fails:Array#inspect taints the result if the Array is non-empty and tainted
-fails:Array#inspect taints the result if an element is tainted
 fails:Array#inspect untrusts the result if the Array is untrusted
-fails:Array#inspect untrusts the result if an element is untrusted
 fails:Array#inspect returns a US-ASCII string for an empty Array
 fails:Array#inspect copies the ASCII-compatible encoding of the result of inspecting the first element
 fails:Array#inspect copies the ASCII-incompatible encoding of the result of inspecting the first element
