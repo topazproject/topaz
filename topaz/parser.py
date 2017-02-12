@@ -292,9 +292,38 @@ class Parser(object):
     def new_hash(self, box):
         items = []
         raw_items = box.getastlist()
-        for i in xrange(0, len(raw_items), 2):
-            items.append((raw_items[i], raw_items[i + 1]))
-        return BoxAST(ast.Hash(items))
+        i = 0
+        current_hash = None
+        while i < len(raw_items):
+            if isinstance(raw_items[i], ast.HashSplat):
+                # DSTAR element, its a `to_hash' send, we need to merge it at
+                # this position
+                send = raw_items[i]
+                if not current_hash:
+                    current_hash = ast.Hash(items)
+                current_hash = ast.Send(
+                    current_hash,
+                    "merge",
+                    [send],
+                    None,
+                    send.lineno
+                )
+                items = []
+                i += 1
+            else:
+                items.append((raw_items[i], raw_items[i + 1]))
+                i += 2
+        if current_hash and len(items) > 0:
+            current_hash = ast.Send(
+                current_hash,
+                "merge",
+                [ast.Hash(items)],
+                None,
+                current_hash.lineno
+            )
+        elif current_hash is None:
+            current_hash = ast.Hash(items)
+        return BoxAST(current_hash)
 
     def new_global(self, box):
         return BoxAST(ast.Global(box.getstr()))
@@ -2997,6 +3026,7 @@ class Parser(object):
     # @pg.production("assoc : STRING_BEG string_contents LABEL_END arg_value")
     # TODO
 
+    @pg.production("assoc : POW arg_value")
     @pg.production("assoc : DSTAR arg_value")
     def assoc_dstar(self, p):
         """
@@ -3012,7 +3042,19 @@ class Parser(object):
                     %*/
                     }
         """
-        raise NotImplementedError
+        if isinstance(p[1].getast(), ast.Hash):
+            items = p[1].getast().items
+            raw_items = []
+            for k, v in items:
+                raw_items.append(k)
+                raw_items.append(v)
+            return self._new_list(raw_items)
+        else:
+            # we need to later merge this dynamically
+            return self._new_list([ast.HashSplat(
+                p[1].getast(),
+                p[0].getsourcepos().lineno
+            )])
 
     @pg.production("operation : FID")
     @pg.production("operation : CONSTANT")

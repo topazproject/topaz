@@ -846,6 +846,11 @@ class Splat(Node):
         ctx.emit(consts.COERCE_ARRAY, 1)
 
 
+class HashSplat(Send):
+    def __init__(self, receiver, lineno):
+        Send.__init__(self, receiver, "to_hash", [], None, lineno)
+
+
 class SendBlock(AbstractCallable):
     def __init__(self, block_args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, block):
         self.block_args = block_args
