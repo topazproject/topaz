@@ -138,6 +138,8 @@ class CompilerContext(object):
         depth = self.count_stackdepth(blocks)
         for default in defaults:
             depth = max(depth, default.max_stackdepth)
+        for kw_default in kw_defaults:
+            depth = max(depth, kw_default.max_stackdepth)
         return W_CodeObject(
             self.code_name,
             self.filepath,
