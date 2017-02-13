@@ -1,0 +1,6 @@
+fails:Safe navigator allows assignment methods
+fails:Safe navigator allows assignment operators
+fails:Safe navigator does not call the operator method lazily with an assignment operator
+fails:Safe navigator when context is nil always returns nil
+fails:Safe navigator when context is nil can be chained
+fails:Safe navigator when context is nil doesn't evaluate arguments

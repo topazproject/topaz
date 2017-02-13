@@ -214,8 +214,8 @@ def _entry_point(space, argv):
         system, _, _, _, cpu = os.uname()
     platform = "%s-%s" % (cpu, system.lower())
     engine = "topaz"
-    version = "1.9.3"
-    patchlevel = 125
+    version = "2.4.0"
+    patchlevel = 0
     description = "%s (ruby-%sp%d) (git rev %s) [%s]" % (engine, version, patchlevel, RUBY_REVISION, platform)
     space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
     space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
