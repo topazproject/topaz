@@ -222,7 +222,13 @@ class Parser(object):
         ))
 
     def combine_send_block(self, send_box, block_box):
-        send = send_box.getast(ast.BaseSend)
+        sendast = send_box.getast()
+        if isinstance(sendast, ast.BaseSend):
+            send = send_box.getast(ast.BaseSend)
+        elif isinstance(sendast, ast.Break):
+            send = BoxAST(sendast.expr).getast(ast.BaseSend)
+        else:
+            raise SystemError
         block = block_box.getast()
         if send.block_arg is not None:
             raise self.error("Both block arg and actual block given.")
