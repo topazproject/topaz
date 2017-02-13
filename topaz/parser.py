@@ -189,15 +189,7 @@ class Parser(object):
     def append_call_arg(self, box_arg, box):
         return self._new_call_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
 
-    def new_send_block(self, lineno, params, body):
-        stmts = body.getastlist() if body is not None else []
-        args = params.getargs() if params is not None else []
-        splat = params.getsplatarg() if params is not None else None
-        postargs = params.getpostargs() if params is not None else []
-        kwargs = params.getkwargs() if params is not None else []
-        kwrest = params.getkwrestarg() if params is not None else None
-        block_arg = params.getblockarg() if params is not None else None
-
+    def _block_with_destructuring_arguments(self, lineno, args, postargs, stmts):
         # Multi-Assignables are destructuring arguments
         extra_stmts = []
         idx = 0
@@ -220,10 +212,47 @@ class Parser(object):
                 extra_stmts.append(ast.Statement(asgn))
             idx += 1
         extra_stmts.reverse()
-
         stmts = extra_stmts + stmts
         block = ast.Block(stmts) if stmts else ast.Nil()
+        return block
 
+    def new_function(self, lineno, parent, fname, params, body):
+        bodyblock = body.getast()
+        if isinstance(bodyblock, ast.Block):
+            stmts = bodyblock.stmts
+        elif isinstance(bodyblock, ast.Statement):
+            stmts = [bodyblock]
+        else:
+            stmts = [ast.Statement(bodyblock)]
+        args = params.getargs() if params is not None else []
+        splat = params.getsplatarg() if params is not None else None
+        postargs = params.getpostargs() if params is not None else []
+        kwargs = params.getkwargs() if params is not None else []
+        kwrest = params.getkwrestarg() if params is not None else None
+        block_arg = params.getblockarg() if params is not None else None
+        block = self._block_with_destructuring_arguments(lineno, args, postargs, stmts)
+
+        return BoxAST(ast.Function(
+            parent.getast() if parent is not None else None,
+            fname.getstr(),
+            args,
+            splat,
+            postargs,
+            kwargs,
+            kwrest,
+            block_arg,
+            block
+        ))
+
+    def new_send_block(self, lineno, params, body):
+        stmts = body.getastlist() if body is not None else []
+        args = params.getargs() if params is not None else []
+        splat = params.getsplatarg() if params is not None else None
+        postargs = params.getpostargs() if params is not None else []
+        kwargs = params.getkwargs() if params is not None else []
+        kwrest = params.getkwrestarg() if params is not None else None
+        block_arg = params.getblockarg() if params is not None else None
+        block = self._block_with_destructuring_arguments(lineno, args, postargs, stmts)
         return BoxAST(ast.SendBlock(
             args,
             splat,
@@ -1786,37 +1815,27 @@ class Parser(object):
 
     @pg.production("primary : DEF fname push_local_scope f_arglist bodystmt END")
     def primary_def(self, p):
-        body = p[4].getast()
-        node = ast.Function(
+        node = self.new_function(
+            p[0].getsourcepos().lineno,
             None,
-            p[1].getstr(),
-            p[3].getargs(),
-            p[3].getsplatarg(),
-            p[3].getpostargs(),
-            p[3].getkwargs(),
-            p[3].getkwrestarg(),
-            p[3].getblockarg(),
-            body
+            p[1],
+            p[3],
+            p[4]
         )
-        self.save_and_pop_scope(node)
-        return BoxAST(node)
+        self.save_and_pop_scope(node.getast())
+        return node
 
     @pg.production("primary : DEF singleton dot_or_colon singleton_method_post_dot_colon fname push_local_scope singleton_method_post_fname f_arglist bodystmt END")
     def primary_def_singleton(self, p):
-        body = p[8].getast()
-        node = ast.Function(
-            p[1].getast(),
-            p[4].getstr(),
-            p[7].getargs(),
-            p[7].getsplatarg(),
-            p[7].getpostargs(),
-            p[7].getkwargs(),
-            p[7].getkwrestarg(),
-            p[7].getblockarg(),
-            body,
+        node = self.new_function(
+            p[0].getsourcepos().lineno,
+            p[1],
+            p[4],
+            p[7],
+            p[8]
         )
-        self.save_and_pop_scope(node)
-        return BoxAST(node)
+        self.save_and_pop_scope(node.getast())
+        return node
 
     @pg.production("singleton_method_post_dot_colon : ")
     def singleton_method_post_dot_colon(self, p):
