@@ -447,6 +447,12 @@ class Lexer(object):
                 self.add(ch.upper())
                 if self.peek() in "-+":
                     self.add(self.read())
+            elif ch == "i":
+                symbol = "IMAGINARY"
+                self.add(ch)
+            elif ch == "r":
+                symbol = "RATIONAL"
+                self.add(ch)
             else:
                 yield self.emit(symbol)
                 self.unread()
@@ -733,6 +739,10 @@ class Lexer(object):
             self.add(ch2)
             self.state = self.EXPR_BEG
             yield self.emit("OP_ASGN")
+        elif ch2 == ".":
+            self.add(ch2)
+            self.state = self.EXPR_DOT
+            yield self.emit("ANDDOT")
         else:
             self.unread()
             if self.is_arg() and space_seen and not ch2.isspace():
@@ -1232,6 +1242,22 @@ class Lexer(object):
                     break
             self.unread()
             yield self.emit("QWORDS_BEG")
+        elif ch == "I":
+            self.str_term = StringTerm(self, begin, end, expand=True, is_qwords=True)
+            while True:
+                ch = self.read()
+                if not ch.isspace():
+                    break
+            self.unread()
+            yield self.emit("SYMBOLS_BEG")
+        elif ch == "i":
+            self.str_term = StringTerm(self, begin, end, expand=False, is_qwords=True)
+            while True:
+                ch = self.read()
+                if not ch.isspace():
+                    break
+            self.unread()
+            yield self.emit("QSYMBOLS_BEG")
         elif ch == "r":
             self.str_term = StringTerm(self, begin, end, is_regexp=True)
             yield self.emit("REGEXP_BEG")

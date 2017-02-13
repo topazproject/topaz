@@ -1197,6 +1197,9 @@ class ConstantFloat(ConstantNode):
     def __init__(self, floatvalue):
         self.floatvalue = floatvalue
 
+    def negate(self):
+        return ConstantFloat(-self.floatvalue)
+
     def create_const(self, ctx):
         return ctx.create_float_const(self.floatvalue)
 

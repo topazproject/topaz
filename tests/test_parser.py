@@ -2696,9 +2696,9 @@ HERE
         ]))
 
     def test_custom_lineno(self, space):
-        with self.raises(space, "SyntaxError", "line 1"):
+        with self.raises(space, "SyntaxError", "line 1 (unexpected Token('LBRACE_ARG', '{'))"):
             assert space.parse("[]{}[]")
-        with self.raises(space, "SyntaxError", "line 10"):
+        with self.raises(space, "SyntaxError", "line 10 (unexpected Token('LBRACE_ARG', '{'))"):
             assert space.parse("[]{}[]", 10)
 
     def test_lineno(self, space):

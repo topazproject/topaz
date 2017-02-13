@@ -296,8 +296,9 @@ class ObjectSpace(object):
             return parser.parse().getast()
         except ParsingError as e:
             source_pos = e.getsourcepos()
+            token = e.message
             if source_pos is not None:
-                msg = "line %d" % source_pos.lineno
+                msg = "line %d (unexpected %s)" % (source_pos.lineno, token)
             else:
                 msg = ""
             raise self.error(self.w_SyntaxError, msg)
