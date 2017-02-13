@@ -228,11 +228,11 @@ class Parser(object):
             if isinstance(body, ast.Nil):
                 body = ast.Block(extra_stmts)
             elif isinstance(body, ast.Block):
-                body = ast.Block(extra_stmts + bodyblock.stmts)
+                body = ast.Block(extra_stmts + body.stmts)
             elif isinstance(body, ast.BaseStatement):
-                body = ast.Block(extra_stmts + [bodyblock])
+                body = ast.Block(extra_stmts + [body])
             else:
-                body = ast.Block(extra_stmts + ast.Statement([bodyblock]))
+                body = ast.Block(extra_stmts + [ast.Statement(body)])
 
         return BoxAST(ast.Function(
             parent.getast() if parent is not None else None,
@@ -358,23 +358,23 @@ class Parser(object):
         i = 0
         current_hash = None
         while i < len(raw_items):
-            if isinstance(raw_items[i], ast.HashSplat):
+            node = raw_items[i]
+            if isinstance(node, ast.HashSplat):
                 # DSTAR element, its a `to_hash' send, we need to merge it at
                 # this position
-                send = raw_items[i]
                 if not current_hash:
                     current_hash = ast.Hash(items)
                 current_hash = ast.Send(
                     current_hash,
                     "merge",
-                    [send],
+                    [node],
                     None,
-                    send.lineno
+                    node.lineno
                 )
                 items = []
                 i += 1
             else:
-                items.append((raw_items[i], raw_items[i + 1]))
+                items.append((node, raw_items[i + 1]))
                 i += 2
         if current_hash and len(items) > 0:
             current_hash = ast.Send(
@@ -919,7 +919,7 @@ class Parser(object):
 
     @pg.production("command : primary_value COLON2 operation2 command_args cmd_brace_block")
     def command_colon_call_args_brace_block(self, p):
-        return self.combine_send_block(self.new_call(p[0], p[2], p[3], p[4]))
+        return self.combine_send_block(self.new_call(p[0], p[2], p[3]), p[4])
 
     @pg.production("command : SUPER command_args")
     def command_super(self, p):
@@ -1600,8 +1600,9 @@ class Parser(object):
 
     @pg.production("primary : LPAREN_ARG stmt paren_post_expr rparen")
     def primary_paren_arg(self, p):
-        if isinstance(p[1].getast().expr, ast.ConstantNode):
-            return BoxAST(p[1].getast().expr)
+        stmt = p[1].getast()
+        if isinstance(stmt, ast.Statement): # simplify here for posterity
+            return BoxAST(stmt.expr)
         else:
             return p[1]
 
@@ -2233,11 +2234,11 @@ class Parser(object):
 
     @pg.production("block_call : block_call call_op2 operation2 opt_paren_args brace_block")
     def block_call_op2_operation_opt_paren_args_brace_block(self, p):
-        return self.new_call(p[0], p[2], p[3], p[4])
+        return self.combine_send_block(self.new_call(p[0], p[2], p[3]), p[4])
 
     @pg.production("block_call : block_call call_op2 operation2 command_args do_block")
     def block_call_op2_operation_command_args_do_block(self, p):
-        return self.new_call(p[0], p[2], p[3], p[4])
+        return self.combine_send_block(self.new_call(p[0], p[2], p[3]), p[4])
 
     @pg.production("method_call : fcall paren_args")
     def method_call_operation_paren_args(self, p):
@@ -3076,8 +3077,9 @@ class Parser(object):
     @pg.production("assoc : POW arg_value")
     @pg.production("assoc : DSTAR arg_value")
     def assoc_dstar(self, p):
-        if isinstance(p[1].getast(), ast.Hash):
-            items = p[1].getast().items
+        node = p[1].getast()
+        if isinstance(node, ast.Hash):
+            items = node.items
             raw_items = []
             for k, v in items:
                 raw_items.append(k)
@@ -3086,7 +3088,7 @@ class Parser(object):
         else:
             # we need to later merge this dynamically
             return self._new_list([ast.HashSplat(
-                p[1].getast(),
+                node,
                 p[0].getsourcepos().lineno
             )])
 
