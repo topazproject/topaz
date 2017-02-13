@@ -846,17 +846,19 @@ CHARSET_ESCAPES = {
     "w": Property(CATEGORY_WORD),
 }
 PROPERTIES = {
-    "alpha": CATEGORY_WORD,
+    "alnum": CATEGORY_WORD,
     "digit": CATEGORY_DIGIT,
-    "blank": CATEGORY_SPACE,
+    "space": CATEGORY_SPACE,
+    "graph": CATEGORY_WORD,
 
 }
 EXTRA_POSIX_PROPERTIES = {
+    "print": [Range(32, 255)], # space - ASCII-end
+    "blank": [Character(ord(c)) for c in " \t"],
+    "punct": [Character(ord(c)) for c in '~!@#$%^&*()+-\|{}[]:";\'<>?,./'],
     "alpha": [Range(ord("a"), ord("z")), Range(ord("A"), ord("Z"))],
     "lower": [Range(ord("a"), ord("z"))],
     "upper": [Range(ord("A"), ord("Z"))],
-    "print": [Range(32, 255)], # space - ASCII-end
-    "punct": [Character("."), Character(","), Character("!"), Character("?")],
     "xdigit": [Range(ord("0"), ord("9")), Range(ord("a"), ord("f")), Range(ord("A"), ord("F"))],
 }
 
