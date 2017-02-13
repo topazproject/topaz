@@ -1,0 +1,3 @@
+fails:Module#class_eval resolves constants in the caller scope
+fails:Module#class_eval resolves constants in the caller scope ignoring send
+fails:Module#class_eval passes the module as the first argument of the block

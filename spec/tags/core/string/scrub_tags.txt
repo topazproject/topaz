@@ -1,0 +1,14 @@
+fails:String#scrub with a default replacement returns self for valid strings
+fails:String#scrub with a default replacement replaces invalid byte sequences
+fails:String#scrub with a default replacement returns a copy of self when the input encoding is BINARY
+fails:String#scrub with a default replacement replaces invalid byte sequences when using ASCII as the input encoding
+fails:String#scrub with a custom replacement returns self for valid strings
+fails:String#scrub with a custom replacement replaces invalid byte sequences
+fails:String#scrub with a custom replacement replaces an incomplete character at the end with a single replacement
+fails:String#scrub with a custom replacement raises ArgumentError for replacements with an invalid encoding
+fails:String#scrub with a custom replacement raises TypeError when a non String replacement is given
+fails:String#scrub with a block returns self for valid strings
+fails:String#scrub with a block replaces invalid byte sequences
+fails:String#scrub with a block replaces invalid byte sequences using a custom encoding
+fails:String#scrub! modifies self for valid strings
+fails:String#scrub! accepts blocks

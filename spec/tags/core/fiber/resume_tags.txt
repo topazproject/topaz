@@ -1,0 +1,1 @@
+fails:Fiber#resume raises a FiberError if invoked from a different Thread

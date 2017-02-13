@@ -1,0 +1,4 @@
+fails:Enumerator#each requires multiple arguments
+fails:Enumerator#each appends given arguments to receiver.each
+fails:Enumerator#each returns the same value from receiver.each if block and arguments are given
+fails:Enumerator#each returns new Enumerator if given arguments but not given a block
