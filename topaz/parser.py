@@ -2459,7 +2459,14 @@ class Parser(object):
 
     @pg.production("symbol_list : symbol_list word LITERAL_SPACE")
     def symbol_list_word(self, p):
-        return self.append_to_list(p[0], self.newsymbol(p[1]))
+        word = p[1].getast()
+        if word is None:
+            sym = ast.ConstantSymbol("")
+        elif isinstance(word, ast.ConstantString):
+            sym = ast.ConstantSymbol(word.strvalue)
+        else:
+            sym = ast.Symbol(word, p[2].getsourcepos().lineno)
+        return self.append_to_list(p[0], BoxAST(sym))
 
     @pg.production("qwords : QWORDS_BEG LITERAL_SPACE STRING_END")
     def qwords_space(self, p):
@@ -2475,7 +2482,7 @@ class Parser(object):
 
     @pg.production("qsymbols : QSYMBOLS_BEG qsym_list STRING_END")
     def qsymbols_space(self, p):
-        return p[1]
+        return BoxAST(ast.Array(p[1].getastlist()))
 
     @pg.production("qword_list : ")
     def qword_list_empty(self, p):
