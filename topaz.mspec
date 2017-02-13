@@ -36,21 +36,8 @@ class MSpecScript
 
   language = [
     "#{Rubyspec}/language",
-    # Required block arg after *args: ``f {|*a, b| }``
-    "^#{Rubyspec}/language/block_spec.rb",
     # Posix character class: ``/[[:alnum:]]/``
     "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
-    # Required arg after *arg: ``def f(a, *b, c); end``
-    "^#{Rubyspec}/language/send_spec.rb",
-    # stringio: ``require 'stringio'``
-    "^#{Rubyspec}/language/predefined_spec.rb",
-    # AttributeError: 'File' object has no attribute 'compile_defined'
-    "^#{Rubyspec}/language/defined_spec.rb",
-    # no real reason found (results in an Aborted (core dumped))
-    #   AssertionError in Parser_combine_send_block ?
-    "^#{Rubyspec}/language/return_spec.rb",
-    # command_asgn_lhs_equal_command_asgn
-    "^#{Rubyspec}/language/variables_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]
