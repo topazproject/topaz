@@ -846,8 +846,18 @@ CHARSET_ESCAPES = {
     "w": Property(CATEGORY_WORD),
 }
 PROPERTIES = {
+    "alpha": CATEGORY_WORD,
     "digit": CATEGORY_DIGIT,
-    "alnum": CATEGORY_WORD,
+    "blank": CATEGORY_SPACE,
+
+}
+EXTRA_POSIX_PROPERTIES = {
+    "alpha": [Range(ord("a"), ord("z")), Range(ord("A"), ord("Z"))],
+    "lower": [Range(ord("a"), ord("z"))],
+    "upper": [Range(ord("A"), ord("Z"))],
+    "print": [Range(32, 255)], # space - ASCII-end
+    "punct": [Character("."), Character(","), Character("!"), Character("?")],
+    "xdigit": [Range(ord("0"), ord("9")), Range(ord("a"), ord("f")), Range(ord("A"), ord("F"))],
 }
 
 
@@ -1290,7 +1300,20 @@ def _parse_posix_class(source, info):
     prop_name, name = _parse_property_name(source)
     if not source.match(":]"):
         raise ParseError
-    return Property(PROPERTIES[name], negate)
+    try:
+        return Property(PROPERTIES[name], negate)
+    except KeyError:
+        try:
+            return _posix_class_as_set(name, negate, info)
+        except KeyError:
+            raise ParseError
+
+
+def _posix_class_as_set(name, negate, info):
+    item = SetUnion(info, EXTRA_POSIX_PROPERTIES[name])
+    if negate:
+        item = item.with_flags(positive=not item.positive)
+    return item
 
 
 def _compile_no_cache(pattern, flags):
