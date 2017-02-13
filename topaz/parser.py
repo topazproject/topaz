@@ -248,7 +248,10 @@ class Parser(object):
             )
         else:
             raise SystemError
-        return BoxAST(node)
+        if isinstance(sendast, ast.Break):
+            return BoxAST(ast.Break(node))
+        else:
+            return BoxAST(node)
 
     def _array_or_node(self, box):
         args = box.getcallargs()
