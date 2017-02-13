@@ -198,14 +198,27 @@ class Parser(object):
         kwrest = params.getkwrestarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
 
+        # Multi-Assignables are destructuring arguments
         extra_stmts = []
-        for idx, arg in enumerate(args):
+        idx = 0
+        for arg in args:
             if isinstance(arg, ast.MultiAssignable):
                 new_arg = ast.Argument(str(idx))
                 asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, lineno))
                 args[idx] = new_arg
                 self.lexer.symtable.declare_argument(new_arg.name)
                 extra_stmts.append(ast.Statement(asgn))
+            idx += 1
+        offset = idx
+        idx = 0
+        for arg in postargs:
+            if isinstance(arg, ast.MultiAssignable):
+                new_arg = ast.Argument(str(idx + offset))
+                asgn = ast.MultiAssignment(arg, ast.Variable(new_arg.name, lineno))
+                postargs[idx] = new_arg
+                self.lexer.symtable.declare_argument(new_arg.name)
+                extra_stmts.append(ast.Statement(asgn))
+            idx += 1
         extra_stmts.reverse()
 
         stmts = extra_stmts + stmts
@@ -2717,7 +2730,13 @@ class Parser(object):
                     $$ = support.new_args($1.getPosition(), $1, $3, $5, $7, $8);
                 }
         """
-        raise NotImplementedError(p)
+        return self.new_args(
+            args=p[0],
+            optargs=p[2],
+            splat_arg=p[4],
+            post_args=p[6],
+            args_tail=p[7]
+        )
 
     @pg.production("f_args : f_arg LITERAL_COMMA f_optarg opt_args_tail")
     def f_args_f_arg_comma_f_optarg_opt_f_block_arg(self, p):
