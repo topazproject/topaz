@@ -75,10 +75,19 @@ class Kernel(object):
 
     @moduledef.method("lambda")
     def function_lambda(self, space, block):
-        return block.copy(space, is_lambda=True)
+        if block is None:
+            block = space.getexecutioncontext().gettoprubyframe().block
+        if block is None:
+            raise space.error(space.w_ArgumentError,
+                "tried to create lambda object without a block"
+            )
+        else:
+            return block.copy(space, is_lambda=True)
 
     @moduledef.method("proc")
     def function_proc(self, space, block):
+        if block is None:
+            block = space.getexecutioncontext().gettoprubyframe().block
         if block is None:
             raise space.error(space.w_ArgumentError,
                 "tried to create Proc object without a block"

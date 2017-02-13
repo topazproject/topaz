@@ -139,13 +139,17 @@ class Frame(BaseFrame):
             self._set_arg(space, bytecode.splat_arg_pos, w_splat_args)
 
         for i, name in enumerate(bytecode.kwarg_names):
-            assert keywords_hash is not None
             w_key = space.newsymbol(name)
-            try:
-                w_value = keywords_hash.getitem(w_key)
-            except KeyError:
-                # kword arguments with defaults come first, so if we get an
-                # index error here, we're missing a required keyword argument
+            w_value = None
+            if keywords_hash is not None:
+                try:
+                    w_value = keywords_hash.getitem(w_key)
+                    keywords_hash.delete(w_key)
+                except KeyError:
+                    pass
+            # kword arguments with defaults come first, so if we get an
+            # index error here, we're missing a required keyword argument
+            if w_value is None:
                 try:
                     bc = bytecode.kw_defaults[i]
                 except IndexError:
@@ -154,7 +158,6 @@ class Frame(BaseFrame):
                     )
                 self.bytecode = bc
                 w_value = Interpreter().interpret(space, self, bc)
-            keywords_hash.delete(w_key)
             self._set_arg(space, bytecode.cellvars.index(name), w_value)
 
         self.bytecode = bytecode

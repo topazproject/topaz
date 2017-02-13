@@ -32,6 +32,8 @@ class W_ProcObject(W_Object):
     @classdef.singleton_method("new")
     def method_new(self, space, block):
         if block is None:
+            block = space.getexecutioncontext().gettoprubyframe().block
+        if block is None:
             raise space.error(space.w_ArgumentError, "tried to create Proc object without a block")
         return block.copy(space)
 

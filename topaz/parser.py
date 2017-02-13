@@ -2133,16 +2133,7 @@ class Parser(object):
     @pg.production("lambda : PRE_LAMBDA f_larglist lambda_body")
     def lambda_prod(self, p):
         self.lexer.left_paren_begin = p[0].getint()
-        body = ast.Block(p[2].getastlist()) if p[2] is not None else ast.Nil()
-        node = ast.SendBlock(
-            p[1].getargs(),
-            p[1].getsplatarg(),
-            p[1].getpostargs(),
-            p[1].getkwargs(),
-            p[1].getkwrestarg(),
-            p[1].getblockarg(),
-            body
-        )
+        node = self.new_send_block(self.lexer.lineno, p[1], p[2]).getast()
         self.save_and_pop_scope(node)
         return BoxAST(ast.Lambda(node))
 
