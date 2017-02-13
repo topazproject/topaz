@@ -1,3 +1,5 @@
 fails:The redo statement restarts block execution if used within block
 fails:The redo statement re-executes the closest loop
 fails:The redo statement re-executes the last step in enumeration
+fails:The redo statement triggers ensure block when re-executing a block
+fails:The redo statement in a method is invalid and raises a SyntaxError

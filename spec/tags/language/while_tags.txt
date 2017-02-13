@@ -1,3 +1,5 @@
 fails:The while expression restarts the current iteration without reevaluating condition with redo
 fails:The while modifier restarts the current iteration without reevaluating condition with redo
 fails:The while modifier with begin .. end block restarts the current iteration without reevaluting condition with redo
+fails:The while modifier with begin .. end block returns value passed to break if interrupted by break
+fails:The while modifier with begin .. end block returns nil if interrupted by break with no arguments

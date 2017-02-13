@@ -17,3 +17,5 @@ fails:Module#public_constant marked constants in a class can be accessed from ou
 fails:Module#public_constant marked constants in a class is defined? with A::B form
 fails:Module#public_constant marked constants in Object can be accessed using ::Const form
 fails:Module#public_constant marked constants in Object is defined? using ::Const form
+fails:Module#private_constant marked constants in a module cannot be reopened as a module from scope where constant would be private
+fails:Module#private_constant marked constants in a module cannot be reopened as a class from scope where constant would be private

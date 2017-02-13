@@ -46,3 +46,11 @@ fails:The defined? keyword for super for a method taking no arguments returns 's
 fails:The defined? keyword for super for a method taking arguments returns 'super' from a block when a superclass method exists
 fails:The defined? keyword for super for a method taking arguments returns 'super' from a #define_method when a superclass method exists
 fails:The defined? keyword for super for a method taking arguments returns 'super' from a block in a #define_method when a superclass method exists
+fails:The defined? keyword for literals for a literal Array returns nil if one element is not defined
+fails:The defined? keyword for literals for a literal Array returns nil if all elements are not defined
+fails:The defined? keyword for a scoped constant returns nil when a constant is scoped to an undefined constant
+fails:The defined? keyword for a scoped constant returns nil when a constant is defined on top-level but not on the module
+fails:The defined? keyword for pseudo-variables returns 'expression' for __ENCODING__
+fails:The defined? keyword for loop expressions returns 'expression' for a 'for' expression
+fails:The defined? keyword for loop expressions returns 'expression' for a 'redo' expression
+fails:The defined? keyword for loop expressions returns 'expression' for a 'retry' expression

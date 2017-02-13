@@ -3,3 +3,14 @@ fails:A method definition inside a metaclass scope raises RuntimeError if frozen
 fails:A method definition inside an instance_eval creates a singleton method
 fails:A method definition inside an instance_eval creates a class method when the receiver is a class
 fails:The def keyword within a closure looks outside the closure for the visibility
+fails:Defining a method at the top-level defines it on Object with private visibility by default
+fails:Defining an 'initialize_dup' method sets the method's visibility to private
+fails:Defining an 'initialize_clone' method sets the method's visibility to private
+fails:Defining a 'respond_to_missing?' method sets the method's visibility to private
+fails:Defining a method returns a symbol of the method name
+fails:An instance method with a default argument shadows an existing method with the same name as the local
+fails:A nested method definition inside an instance_eval creates a singleton method
+fails:A method definition inside an instance_eval creates a class method when the receiver is an anonymous class
+fails:A method definition inside an instance_eval creates a class method when instance_eval is within class
+fails:A method definition inside an instance_exec creates a class method when the receiver is an anonymous class
+fails:A method definition inside an instance_exec creates a class method when instance_exec is within class

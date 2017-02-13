@@ -1289,11 +1289,21 @@ class Parser(object):
 
     @pg.production("arg : primary_value COLON2 CONSTANT OP_ASGN arg_rhs")
     def arg_constant_op_asgn_arg(self, p):
-        raise self.error("constant re-assignment")
+        # self.warning("constant re-assignment")
+        return self.new_augmented_assignment(
+            p[3],
+            self.new_colon2(p[0], p[2]),
+            p[4]
+        )
 
     @pg.production("arg : COLON3 CONSTANT OP_ASGN arg_rhs")
     def arg_unbound_constant_op_asgn_arg(self, p):
-        raise self.error("constant re-assignment")
+        # self.warning("constant re-assignment")
+        return self.new_augmented_assignment(
+            p[2],
+            self.new_colon3(p[1]),
+            p[3]
+        )
 
     @pg.production("arg : backref OP_ASGN arg_rhs")
     def arg_backref_op_asgn_arg(self, p):

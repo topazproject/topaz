@@ -1,0 +1,74 @@
+fails:Predefined global $~ is set at the method-scoped level rather than block-scoped
+fails:Predefined global $& sets the encoding to the encoding of the source String
+fails:Predefined global $` sets the encoding to the encoding of the source String
+fails:Predefined global $` sets an empty result to the encoding of the source String
+fails:Predefined global $' sets the encoding to the encoding of the source String
+fails:Predefined global $' sets an empty result to the encoding of the source String
+fails:Predefined global $+ captures the last non nil capture
+fails:Predefined global $+ sets the encoding to the encoding of the source String
+fails:Predefined globals $1..N sets the encoding to the encoding of the source String
+fails:Predefined global $stdout raises TypeError error if assigned to nil
+fails:Predefined global $stdout raises TypeError error if assigned to object that doesn't respond to #write
+fails:Predefined global $! should be set to the value of $! before the begin after a successful rescue
+fails:Predefined global $! should be set to the value of $! before the begin after a rescue which returns
+fails:Predefined global $! should be set to the value of $! before the begin after a successful rescue within an ensure
+fails:Predefined global $! should be set to the new exception after a throwing rescue
+fails:Predefined global $! in bodies without ensure should be cleared when an exception is rescued
+fails:Predefined global $! in bodies without ensure should be cleared when an exception is rescued even when a non-local return is present
+fails:Predefined global $! in bodies without ensure should not be cleared when an exception is not rescued
+fails:Predefined global $! in bodies without ensure should not be cleared when an exception is rescued and rethrown
+fails:Predefined global $! in ensure-protected bodies should be cleared when an exception is rescued
+fails:Predefined global $! in ensure-protected bodies should not be cleared when an exception is not rescued
+fails:Predefined global $! in ensure-protected bodies should not be cleared when an exception is rescued and rethrown
+fails:Predefined global $/ changes $-0
+fails:Predefined global $/ does not call #to_str to convert the object to a String
+fails:Predefined global $/ raises a TypeError if assigned a Fixnum
+fails:Predefined global $/ raises a TypeError if assigned a boolean
+fails:Predefined global $-0 changes $/
+fails:Predefined global $-0 does not call #to_str to convert the object to a String
+fails:Predefined global $-0 raises a TypeError if assigned a Fixnum
+fails:Predefined global $-0 raises a TypeError if assigned a boolean
+fails:Predefined global $, raises TypeError if assigned a non-String
+fails:Predefined global $_ is set to the last line read by e.g. StringIO#gets
+fails:Predefined global $_ is set at the method-scoped level rather than block-scoped
+fails:Predefined global $_ is Thread-local
+fails:Execution variable $: is the same object as $LOAD_PATH and $-I
+fails:Execution variable $: is read-only
+fails:Global variable $< is read-only
+fails:Global variable $FILENAME is read-only
+fails:Global variable $? is read-only
+fails:Global variable $? is thread-local
+fails:Global variable $-a is read-only
+fails:Global variable $-l is read-only
+fails:Global variable $-p is read-only
+fails:Global variable $-d is an alias of $DEBUG
+fails:Global variable $-v is an alias of $VERBOSE
+fails:Global variable $-w is an alias of $VERBOSE
+fails:Global variable $0 actually sets the program name
+fails:Global variable $0 raises a TypeError when not given an object that can be coerced to a String
+fails:The predefined standard objects includes ARGF
+fails:The predefined standard object nil raises a SyntaxError if assigned to
+fails:The predefined standard object true raises a SyntaxError if assigned to
+fails:The predefined standard object false raises a SyntaxError if assigned to
+fails:The self pseudo-variable raises a SyntaxError if assigned to
+fails:The predefined global constants includes TRUE
+fails:The predefined global constants includes FALSE
+fails:The predefined global constants includes NIL
+fails:The predefined global constants includes RUBY_RELEASE_DATE
+fails:The predefined global constant STDIN has the same external encoding as Encoding.default_external
+fails:The predefined global constant STDIN has the same external encoding as Encoding.default_external when that encoding is changed
+fails:The predefined global constant STDIN has the encodings set by #set_encoding
+fails:The predefined global constant STDIN retains the encoding set by #set_encoding when Encoding.default_external is changed
+fails:The predefined global constant STDIN has nil for the internal encoding
+fails:The predefined global constant STDIN has nil for the internal encoding despite Encoding.default_internal being changed
+fails:The predefined global constant STDOUT has nil for the external encoding
+fails:The predefined global constant STDOUT has nil for the external encoding despite Encoding.default_external being changed
+fails:The predefined global constant STDOUT has the encodings set by #set_encoding
+fails:The predefined global constant STDOUT has nil for the internal encoding
+fails:The predefined global constant STDOUT has nil for the internal encoding despite Encoding.default_internal being changed
+fails:The predefined global constant STDERR has nil for the external encoding
+fails:The predefined global constant STDERR has nil for the external encoding despite Encoding.default_external being changed
+fails:The predefined global constant STDERR has the encodings set by #set_encoding
+fails:The predefined global constant STDERR has nil for the internal encoding
+fails:The predefined global constant STDERR has nil for the internal encoding despite Encoding.default_internal being changed
+fails:The predefined global constant ARGV contains Strings encoded in locale Encoding

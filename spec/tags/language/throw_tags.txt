@@ -1,3 +1,4 @@
 fails:The throw keyword only any object as its argument
 fails:The throw keyword does not convert strings to a symbol
 fails:The throw keyword raises an ArgumentError if used to exit a thread
+fails:The throw keyword allows any object as its argument

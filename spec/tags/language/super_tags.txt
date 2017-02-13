@@ -7,3 +7,8 @@ fails:The super keyword can call through a define_method multiple times (caching
 fails:The super keyword supers up appropriate name even if used for multiple method names
 fails:The super keyword can't be used with implicit arguments from a method defined with define_method
 fails:The super keyword sees the included version of a module a method is alias from
+fails:The super keyword can resolve to different methods in an included module method
+fails:The super keyword searches class methods including modules
+fails:The super keyword searches BasicObject from a module for methods defined there
+fails:The super keyword searches BasicObject through another module for methods defined there
+fails:The super keyword raises a RuntimeError when called with implicit arguments from a method defined with define_method

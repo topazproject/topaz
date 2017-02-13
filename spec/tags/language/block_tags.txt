@@ -14,3 +14,6 @@ fails:A block taking |(a, b)| arguments raises a TypeError if #to_ary does not r
 fails:A block taking identically-named arguments raises a SyntaxError for standard arguments
 fails:Block-local variables can not have the same name as one of the standard parameters
 fails:A block yielded a single Array assigns the last element to a non-keyword argument if #to_hash returns nil
+fails:A block yielded a single Array calls #to_hash on the argument but does not use the result when no keywords are present
+fails:A block yielded a single Object receives the object if #to_ary returns nil
+fails:Post-args with optional args with a circular argument reference shadows an existing method with the same name as the argument

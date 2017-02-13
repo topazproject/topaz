@@ -1,0 +1,1 @@
+fails:The undef keyword allows undefining multiple methods at a time

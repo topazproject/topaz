@@ -1,3 +1,12 @@
 fails:The rescue keyword can rescue a splatted list of exceptions
 fails:The rescue keyword will execute an else block only if no exceptions were raised
 fails:The rescue keyword will not rescue errors raised in an else block in the rescue block above it
+fails:The rescue keyword can combine a splatted list of exceptions with a literal list of exceptions
+fails:The rescue keyword will execute an else block with ensure only if no exceptions were raised
+fails:The rescue keyword will execute an else block only if no exceptions were raised in a method
+fails:The rescue keyword will execute an else block with ensure only if no exceptions were raised in a method
+fails:The rescue keyword will execute an else block but use the outer scope return value in a method
+fails:The rescue keyword will execute an else block with ensure but use the outer scope return value in a method
+fails:The rescue keyword without classes will not rescue Exception
+fails:The rescue keyword only accepts Module or Class in rescue clauses
+fails:The rescue keyword only accepts Module or Class in splatted rescue clauses

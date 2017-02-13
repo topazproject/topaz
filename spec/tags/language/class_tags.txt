@@ -1,1 +1,5 @@
 fails:A class definition extending an object (sclass) can use return to cause the enclosing method to return
+fails:A class definition allows the definition of class-level instance variables in a class method
+fails:A class definition within a block creates a new class in the lexical scope for named classes at the toplevel
+fails:A class definition within a block creates a new class in the lexical scope for named classes in a module
+fails:A class definition within a block creates a new class in the lexical scope for anonymous classes assigned to a constant

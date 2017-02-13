@@ -20,3 +20,47 @@ fails:Invoking a method with manditory and optional arguments raises an Argument
 fails:Invoking a method with a rest argument is an empty array if there are no additional arguments
 fails:Invoking a method with a rest argument gathers unused arguments
 fails:Invoking a private getter method does not permit self as a receiver
+fails:Invoking a method with only mandatory arguments requires exactly the same number of passed values
+fails:Invoking a method with only mandatory arguments raises ArgumentError if the methods arity doesn't match
+fails:Invoking a method with mandatory and optional arguments uses the passed values in left to right order
+fails:Invoking a method with mandatory and optional arguments raises an ArgumentError if there are no values for the mandatory args
+fails:Invoking a method with mandatory and optional arguments raises an ArgumentError if too many values are passed
+fails:Invoking a method allows []= with *args in the [] expanded to individual arguments
+fails:Invoking a method allows []= with multiple *args
+fails:Invoking a method allows []= with multiple *args and does not unwrap the last splat
+fails:Invoking a method allows []= with a *args and multiple rhs args
+fails:Invoking a public setter method returns the set value
+fails:Invoking []= methods returns the set value
+fails:Invoking a method allows a vestigial trailing ',' in the arguments
+fails:Invoking a method with splat operator attempts to coerce it to an Array if the object respond_to?(:to_a)
+fails:Invoking a method with splat operator * and non-Array value uses value unchanged if it does not respond_to?(:to_ary)
+fails:Invoking a method accepts additional arguments after splat expansion
+fails:Invoking a method does not expand final array arguments after a splat expansion
+fails:Invoking a method accepts final explicit literal Hash arguments after the splat
+fails:Invoking a method accepts final implicit literal Hash arguments after the splat
+fails:Invoking a method accepts final Hash arguments after the splat
+fails:Invoking a method accepts mandatory and explicit literal Hash arguments after the splat
+fails:Invoking a method accepts mandatory and implicit literal Hash arguments after the splat
+fails:Invoking a method accepts mandatory and Hash arguments after the splat
+fails:Invoking a method converts a final splatted explicit Hash to an Array
+fails:Invoking a method calls #to_a to convert a final splatted Hash object to an Array
+fails:Invoking a method accepts multiple splat expansions in the same argument list
+fails:Invoking a method expands an array to arguments grouped in parentheses
+fails:Invoking a method expands an array to arguments grouped in parentheses and ignores any rest arguments in the array
+fails:Invoking a method expands an array to arguments grouped in parentheses and sets not specified arguments to nil
+fails:Invoking a method expands an array to arguments grouped in parentheses which in turn takes rest arguments
+fails:Invoking a method with optional argument(s), expands an array to arguments grouped in parentheses
+fails:Invoking a method with required args after the rest arguments binds the required arguments first
+fails:Invoking a method with mandatory arguments after optional arguments binds the required arguments first
+fails:Invoking a method new-style hash arguments as the only parameter passes without curly braces
+fails:Invoking a method new-style hash arguments as the only parameter passes without curly braces or parens
+fails:Invoking a method new-style hash arguments as the only parameter handles a hanging comma without curly braces
+fails:Invoking a method new-style hash arguments as the last parameter passes without curly braces
+fails:Invoking a method new-style hash arguments as the last parameter passes without curly braces or parens
+fails:Invoking a method new-style hash arguments as the last parameter handles a hanging comma without curly braces
+fails:Invoking a method mixed new- and old-style hash arguments as the only parameter passes without curly braces
+fails:Invoking a method mixed new- and old-style hash arguments as the only parameter passes without curly braces or parens
+fails:Invoking a method mixed new- and old-style hash arguments as the only parameter handles a hanging comma without curly braces
+fails:Invoking a method mixed new- and old-style hash arguments as the last parameter passes without curly braces
+fails:Invoking a method mixed new- and old-style hash arguments as the last parameter passes without curly braces or parens
+fails:Invoking a method mixed new- and old-style hash arguments as the last parameter handles a hanging comma without curly braces

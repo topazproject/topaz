@@ -1,0 +1,1 @@
+fails:Optional variable assignments using compunded constants with ||= assignments
