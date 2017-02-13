@@ -372,3 +372,8 @@ class EnterFrameBlockContextManager(object):
         block_type, block = self.ctx.frame_blocks.pop()
         assert block_type == self.block_type
         assert block is self.block
+
+
+class CompilerError(Exception):
+    def __init__(self, msg=None):
+        self.msg = "" if msg is None else msg

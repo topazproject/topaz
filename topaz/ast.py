@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from rpython.rlib.objectmodel import we_are_translated
 
 from topaz import consts
-from topaz.astcompiler import CompilerContext, BlockSymbolTable
+from topaz.astcompiler import CompilerContext, BlockSymbolTable, CompilerError
 from topaz.utils.regexp import RegexpError
 
 
@@ -144,7 +144,7 @@ class Next(BaseStatement):
         elif isinstance(ctx.symtable, BlockSymbolTable):
             ctx.emit(consts.RETURN)
         else:
-            raise SystemError
+            raise CompilerError("void value expression")
 
 
 class Break(BaseStatement):
@@ -158,7 +158,7 @@ class Break(BaseStatement):
         elif isinstance(ctx.symtable, BlockSymbolTable):
             ctx.emit(consts.RAISE_BREAK)
         else:
-            raise SystemError
+            raise CompilerError("void value expression")
 
 
 class TryExcept(Node):

@@ -16,7 +16,7 @@ from rpython.rtyper.lltypesystem import llmemory, rffi
 from rply.errors import ParsingError
 
 from topaz import system
-from topaz.astcompiler import CompilerContext, SymbolTable
+from topaz.astcompiler import CompilerContext, SymbolTable, CompilerError
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
 from topaz.error import RubyError, print_traceback
@@ -311,7 +311,10 @@ class ObjectSpace(object):
         astnode = self.parse(source, initial_lineno=initial_lineno, symtable=symtable)
         ctx = CompilerContext(self, "<main>", symtable, filepath)
         with ctx.set_lineno(initial_lineno):
-            astnode.compile(ctx)
+            try:
+                astnode.compile(ctx)
+            except CompilerError as e:
+                raise self.error(self.w_SyntaxError, "%s" % e.msg)
         return ctx.create_bytecode([], [], None, None)
 
     def execute(self, source, w_self=None, lexical_scope=None, filepath="-e",
