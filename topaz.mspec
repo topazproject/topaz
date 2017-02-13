@@ -35,9 +35,9 @@ class MSpecScript
   ]
 
   language = [
-    "#{Rubyspec}/language",
-    # Posix character class: ``/[[:alnum:]]/``
-    "^#{Rubyspec}/language/regexp/character_classes_spec.rb",
+      "#{Rubyspec}/language",
+      # look-around doesn't work for us with non-constant sequences
+    "^#{Rubyspec}/language/regexp/anchors_spec.rb",
   ]
 
   command_line = ["#{Rubyspec}/command_line"]

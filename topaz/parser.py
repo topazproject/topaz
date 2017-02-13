@@ -189,7 +189,7 @@ class Parser(object):
     def append_call_arg(self, box_arg, box):
         return self._new_call_args(box_arg.getcallargs() + [box.getast()], box_arg.getcallblock())
 
-    def _block_with_destructuring_arguments(self, lineno, args, postargs, stmts):
+    def _block_with_destructuring_arguments(self, lineno, args, postargs):
         # Multi-Assignables are destructuring arguments
         extra_stmts = []
         idx = 0
@@ -212,25 +212,27 @@ class Parser(object):
                 extra_stmts.append(ast.Statement(asgn))
             idx += 1
         extra_stmts.reverse()
-        stmts = extra_stmts + stmts
-        block = ast.Block(stmts) if stmts else ast.Nil()
-        return block
+        return extra_stmts
 
-    def new_function(self, lineno, parent, fname, params, body):
-        bodyblock = body.getast()
-        if isinstance(bodyblock, ast.Block):
-            stmts = bodyblock.stmts
-        elif isinstance(bodyblock, ast.Statement):
-            stmts = [bodyblock]
-        else:
-            stmts = [ast.Statement(bodyblock)]
+    def new_function(self, lineno, parent, fname, params, bodybox):
         args = params.getargs() if params is not None else []
         splat = params.getsplatarg() if params is not None else None
         postargs = params.getpostargs() if params is not None else []
         kwargs = params.getkwargs() if params is not None else []
         kwrest = params.getkwrestarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
-        block = self._block_with_destructuring_arguments(lineno, args, postargs, stmts)
+        extra_stmts = self._block_with_destructuring_arguments(lineno, args, postargs)
+
+        body = bodybox.getast()
+        if extra_stmts:
+            if isinstance(body, ast.Nil):
+                body = ast.Block(extra_stmts)
+            elif isinstance(body, ast.Block):
+                body = ast.Block(extra_stmts + bodyblock.stmts)
+            elif isinstance(body, ast.BaseStatement):
+                body = ast.Block(extra_stmts + [bodyblock])
+            else:
+                body = ast.Block(extra_stmts + ast.Statement([bodyblock]))
 
         return BoxAST(ast.Function(
             parent.getast() if parent is not None else None,
@@ -241,7 +243,7 @@ class Parser(object):
             kwargs,
             kwrest,
             block_arg,
-            block
+            body
         ))
 
     def new_send_block(self, lineno, params, body):
@@ -252,7 +254,9 @@ class Parser(object):
         kwargs = params.getkwargs() if params is not None else []
         kwrest = params.getkwrestarg() if params is not None else None
         block_arg = params.getblockarg() if params is not None else None
-        block = self._block_with_destructuring_arguments(lineno, args, postargs, stmts)
+        extra_stmts = self._block_with_destructuring_arguments(lineno, args, postargs)
+        stmts = extra_stmts + stmts
+        block = ast.Block(stmts) if stmts else ast.Nil()
         return BoxAST(ast.SendBlock(
             args,
             splat,

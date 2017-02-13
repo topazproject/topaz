@@ -60,7 +60,7 @@ class TestMain(object):
         out, err = capfd.readouterr()
         [version, out] = out.splitlines()
         assert version.startswith("topaz")
-        assert "1.9.3" in version
+        assert "2.4.0" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
         assert subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip() in version
@@ -118,7 +118,7 @@ class TestMain(object):
         out, _ = capfd.readouterr()
         [version] = out.splitlines()
         assert version.startswith("topaz")
-        assert "1.9.3" in version
+        assert "2.4.0" in version
         assert os.uname()[4] in version
         assert platform.system().lower() in version
         assert subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).rstrip() in version
@@ -233,7 +233,7 @@ class TestMain(object):
         self.assert_traceback(space, tmpdir, capfd, """
         while do
         """, [
-            "{}: line 2 (SyntaxError)",
+            "{}: line 2 (unexpected Token('DO_COND', 'do')) (SyntaxError)",
         ])
 
     def test_traceback_load_const(self, space, tmpdir, capfd):
