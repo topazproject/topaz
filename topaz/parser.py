@@ -396,8 +396,19 @@ class Parser(object):
             node = ast.ConstantString(const_str)
         return BoxAST(node)
 
-    def _parse_int(self, box):
-        s = box.getstr()
+    def _parse_rational(self, s):
+        ls = list(s)
+        ls.pop()
+        s = "".join(ls)
+        if ("X" in s) or ("O" in s) or ("B" in s):
+            return self._parse_int(s)
+        else:
+            return ast.ConstantFloat(float(s))
+
+    def _parse_imaginary(self, s):
+        return self._parse_rational(s)
+
+    def _parse_int(self, s):
         if "X" in s:
             base = 16
         elif "O" in s:
@@ -2576,19 +2587,19 @@ class Parser(object):
 
     @pg.production("simple_numeric : INTEGER")
     def simple_numeric_integer(self, p):
-        return BoxNumericAST(self._parse_int(p[0]))
+        return BoxNumericAST(self._parse_int(p[0].getstr()))
 
     @pg.production("simple_numeric : FLOAT")
     def simple_numeric_float(self, p):
         return BoxNumericAST(ast.ConstantFloat(float(p[0].getstr())))
 
     @pg.production("simple_numeric : RATIONAL")
-    def simple_numeric_float(self, p):
-        raise NotImplementedError
+    def simple_numeric_rational(self, p):
+        return BoxNumericAST(self._parse_rational(p[0].getstr()))
 
     @pg.production("simple_numeric : IMAGINARY")
-    def simple_numeric_float(self, p):
-        raise NotImplementedError
+    def simple_numeric_imaginary(self, p):
+        return BoxNumericAST(self._parse_imaginary(p[0].getstr()))
 
     @pg.production("user_variable : IDENTIFIER")
     def variable_identifier(self, p):
