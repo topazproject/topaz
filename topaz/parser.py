@@ -240,6 +240,10 @@ class Parser(object):
             send = send_box.getast(ast.BaseSend)
         elif isinstance(sendast, ast.Break):
             send = BoxAST(sendast.expr).getast(ast.BaseSend)
+        elif isinstance(sendast, ast.Next):
+            send = BoxAST(sendast.expr).getast(ast.BaseSend)
+        elif isinstance(sendast, ast.Return):
+            send = BoxAST(sendast.expr).getast(ast.BaseSend)
         else:
             raise SystemError
         block = block_box.getast()
@@ -263,6 +267,10 @@ class Parser(object):
             raise SystemError
         if isinstance(sendast, ast.Break):
             return BoxAST(ast.Break(node))
+        elif isinstance(sendast, ast.Next):
+            return BoxAST(ast.Next(node))
+        elif isinstance(sendast, ast.Return):
+            return BoxAST(ast.Return(node))
         else:
             return BoxAST(node)
 

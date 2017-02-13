@@ -1,5 +1,4 @@
 fails:Hash literal expands an '**{}' element with containing Hash literal keys taking precedence
-fails:Hash literal merges multiple nested '**obj' in Hash literals
 fails:Hash literal raises a TypeError if any splatted elements keys are not symbols
 fails:Hash literal raises a TypeError if #to_hash does not return a Hash
 fails:Hash literal does not change encoding of literal string keys during creation

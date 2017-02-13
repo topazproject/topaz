@@ -1,5 +1,4 @@
 fails:->(){} uses lambda's 'rigid' argument handling
-fails:A lambda expression 'lambda { ... }' with an implicit block can be created
 fails:"A lambda literal -> () { } assigns variables from parameters for definition \n    @a = -> (**) {  }\n"
 fails:"A lambda literal -> () { } assigns variables from parameters for definition \n    @a = -> (*, &b) { b }\n"
 fails:"A lambda literal -> () { } assigns variables from parameters for definition \n    @a = -> (a:, b: 1) { [a, b] }\n"
