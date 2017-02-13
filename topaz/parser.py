@@ -526,7 +526,10 @@ class Parser(object):
     ], cache_id="topaz")
 
     def error_handler(state, token):
-        raise ParsingError(repr(token), token.getsourcepos())
+        raise ParsingError(
+            "Token(%s, %s)" % (token.gettokentype(), token.getstr()),
+            token.getsourcepos()
+        )
     pg.error(error_handler)
 
     @pg.production("program : top_compstmt")
