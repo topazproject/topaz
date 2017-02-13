@@ -545,6 +545,7 @@ class W_StringObject(W_Object):
 
     @classdef.method("[]")
     @classdef.method("slice")
+    @classdef.method("byteslice")
     def method_subscript(self, space, w_idx, w_count=None):
         if space.is_kind_of(w_idx, space.w_string):
             if space.send(self, "include?", [w_idx]):
@@ -698,6 +699,7 @@ class W_StringObject(W_Object):
         except rsre_core.Error, e:
             raise space.error(space.w_RuntimeError, e.msg)
 
+    @classdef.method("find_string", offset="int")
     @classdef.method("index", offset="int")
     def method_index(self, space, w_sub, offset=0):
         if offset < 0 or offset >= self.length():

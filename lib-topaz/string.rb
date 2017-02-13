@@ -159,6 +159,93 @@ class String
     duplicate
   end
 
+  def rstrip
+    duplicate = self.dup
+    duplicate.rstrip!
+    duplicate
+  end
+
+  def rstrip!
+    self[/\s*$/] = ""
+    self
+  end
+
+  def each_line(sep=$/)
+    return to_enum(:each_line, sep) unless block_given?
+
+    # weird edge case.
+    if sep.nil?
+      yield self
+      return self
+    end
+
+    sep = sep.to_s
+
+    pos = 0
+
+    size = self.size
+    orig_data = self.dup
+
+    # If the separator is empty, we're actually in paragraph mode. This
+    # is used so infrequently, we'll handle it completely separately from
+    # normal line breaking.
+    if sep.empty?
+      sep = "\n\n"
+      pat_size = 2
+
+      while pos < size
+        nxt = find_string(sep, pos)
+        break unless nxt
+
+        while self[nxt] == 10 and nxt < size
+          nxt += 1
+        end
+
+        match_size = nxt - pos
+
+        # string ends with \n's
+        break if pos == size
+
+        str = byteslice pos, match_size
+        yield str unless str.empty?
+
+        # detect mutation within the block
+        if !self.equal?(orig_data) or self.size != size
+          raise RuntimeError, "string modified while iterating"
+        end
+
+        pos = nxt
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = byteslice pos, self.size - pos
+      yield fin if fin and !fin.empty?
+
+    else
+
+      # This is the normal case.
+      pat_size = sep.size
+      unmodified_self = clone
+
+      while pos < size
+        nxt = unmodified_self.find_string(sep, pos)
+        break unless nxt
+
+        match_size = nxt - pos
+        str = unmodified_self.byteslice pos, match_size + pat_size
+        yield str unless str.empty?
+
+        pos = nxt + pat_size
+      end
+
+      # No more separates, but we need to grab the last part still.
+      fin = unmodified_self.byteslice pos, self.size - pos
+      yield fin unless fin.empty?
+    end
+
+    self
+  end
+
   def chr
     self.dup[0] || self.dup
   end
