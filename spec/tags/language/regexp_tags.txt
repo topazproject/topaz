@@ -3,3 +3,4 @@ fails:Literal Regexps disallows alphabets as non-paired delimiter with %r
 fails:Literal Regexps allows unescaped / to be used with %r
 fails:Literal Regexps supports g (named backreference)
 fails:Literal Regexps supports character class composition
+fails:Literal Regexps supports \g (named backreference)

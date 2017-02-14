@@ -8,7 +8,7 @@ from rpython.rlib.rsre.rsre_core import (
     OPCODE_MARK, OPCODE_REPEAT, OPCODE_ANY, OPCODE_ANY_ALL, OPCODE_MAX_UNTIL,
     OPCODE_MIN_UNTIL, OPCODE_GROUPREF, OPCODE_AT, OPCODE_BRANCH, OPCODE_RANGE,
     OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN,
-    OPCODE_NEGATE
+    OPCODE_NEGATE, OPCODE_GROUPREF_EXISTS
 )
 from rpython.rlib.rsre.rsre_char import MAXREPEAT as MAX_REPEAT
 
@@ -741,11 +741,49 @@ class Group(RegexpBase):
         ctx.emit((self.group - 1) * 2 + 1)
 
 
+class GroupExistsBranch(RegexpBase):
+    def __init__(self, info, group, codeyes, codeno):
+        RegexpBase.__init__(self)
+        self.info = info
+        self.group = group
+        self.codeyes = codeyes
+        self.codeno = codeno
+
+    def can_be_affix(self):
+        return False
+
+    def fix_groups(self):
+        if not 1 <= self.group <= self.info.group_count:
+            raise RegexpError("unknown group")
+
+    def optimize(self, info, in_set=False):
+        return self
+
+    def compile(self, ctx):
+        ctx.emit(OPCODE_GROUPREF_EXISTS)
+        skipno = ctx.tell()
+        ctx.emit(self.group - 1)
+        ctx.emit(0)
+        self.codeyes.compile(ctx)
+        ctx.emit(OPCODE_JUMP)
+        skipyes = ctx.tell()
+        ctx.emit(0)
+        ctx.patch(skipno + 1, ctx.tell() - skipno)
+        if self.codeno:
+            self.codeno.compile(ctx)
+        else:
+            ctx.emit(OPCODE_FAILURE)
+        ctx.patch(skipyes, ctx.tell() - skipyes)
+
+
 class RefGroup(RegexpBase):
     def __init__(self, info, group, case_insensitive=False):
         RegexpBase.__init__(self, case_insensitive=case_insensitive)
         self.info = info
         self.group = group
+
+    def can_be_affix(self):
+        return False
 
     def fix_groups(self):
         if not 1 <= self.group <= self.info.group_count:
@@ -1028,6 +1066,25 @@ def _parse_paren(source, info):
             subpattern = _parse_pattern(source, info)
             source.expect(")")
             return subpattern
+        elif source.match("("):
+            if source.match("<"):
+                groupref = _parse_name(source)
+                source.expect(">")
+            else:
+                groupref = _parse_name(source)
+            source.expect(")")
+            groupidx = info.normalize_group(groupref)
+            subpattern = _parse_pattern(source, info)
+            source.expect(")")
+            if not isinstance(subpattern, Branch):
+                codeyes = subpattern
+                codeno = None
+            elif len(subpattern.branches) > 2:
+                raise RegexpError("invalid conditional pattern")
+            else:
+                codeyes = subpattern.branches[0]
+                codeno = subpattern.branches[1]
+            return GroupExistsBranch(info, groupidx, codeyes, codeno)
         elif source.match("-") or source.match("m") or source.match("i") or source.match("x"):
             # TODO: parse plain here flags = _parse_plain_flags(source)
             subpattern = _parse_pattern(source, info)
