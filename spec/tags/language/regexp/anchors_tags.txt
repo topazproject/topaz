@@ -2,6 +2,10 @@ fails:Regexps with anchors supports Z (string end anchor, including before trail
 fails:Regexps with anchors supports A (string start anchor)
 fails:Regexps with anchors supports $ (line end anchor)
 fails:Regexps with anchors supports ^ (line start anchor)
-fails:Regexps with anchors does not match ^ after trailing \n
 fails:"Regexps with anchors supports Z (string end anchor, including before trailing n)"
 fails:Regexps with anchors supports  (word boundary)
+fails:Regexps with anchors supports \Z (string end anchor, including before trailing \n)
+fails:Regexps with anchors supports \b (word boundary)
+fails:Regexps with anchors supports (?<=\b) (positive lookbehind with word boundary)
+fails:Regexps with anchors supports (?!<\b) (negative lookbehind with word boundary)
+fails:Regexps with anchors does not match ^ after trailing \n

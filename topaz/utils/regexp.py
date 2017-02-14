@@ -10,6 +10,11 @@ from rpython.rlib.rsre.rsre_core import (
     OPCODE_JUMP, OPCODE_ASSERT_NOT, OPCODE_CATEGORY, OPCODE_FAILURE, OPCODE_IN,
     OPCODE_NEGATE, OPCODE_GROUPREF_EXISTS
 )
+from rpython.rlib.rsre.rsre_core import (
+    AT_BEGINNING, AT_BEGINNING_LINE, AT_BEGINNING_STRING, AT_BOUNDARY,
+    AT_NON_BOUNDARY, AT_END, AT_END_LINE, AT_END_STRING, AT_LOC_BOUNDARY,
+    AT_LOC_NON_BOUNDARY, AT_UNI_BOUNDARY, AT_UNI_NON_BOUNDARY
+)
 from rpython.rlib.rsre.rsre_char import MAXREPEAT as MAX_REPEAT
 
 
@@ -49,19 +54,6 @@ CHARACTER_ESCAPES = {
     "t": "\t",
     "v": "\v",
 }
-
-AT_BEGINNING = 0
-AT_BEGINNING_LINE = 1
-AT_BEGINNING_STRING = 2
-AT_BOUNDARY = 3
-AT_NON_BOUNDARY = 4
-AT_END = 5
-AT_END_LINE = 6
-AT_END_STRING = 7
-AT_LOC_BOUNDARY = 8
-AT_LOC_NON_BOUNDARY = 9
-AT_UNI_BOUNDARY = 10
-AT_UNI_NON_BOUNDARY = 11
 
 CATEGORY_DIGIT = 0
 CATEGORY_NOT_DIGIT = 1
@@ -431,6 +423,14 @@ class Sequence(RegexpBase):
     def __init__(self, items):
         RegexpBase.__init__(self)
         self.items = items
+
+    def getwidth(self):
+        lo, hi = 0, 0
+        for item in self.items:
+            itemlo, itemhi = item.getwidth()
+            lo += itemlo
+            hi += itemhi
+        return lo, hi
 
     def is_empty(self):
         for item in self.items:
@@ -875,6 +875,7 @@ class SetIntersection(SetBase):
 POSITION_ESCAPES = {
     "A": AtPosition(AT_BEGINNING_STRING),
     "z": AtPosition(AT_END_STRING),
+    "Z": AtPosition(AT_END_STRING),
 
     "b": AtPosition(AT_BOUNDARY),
     "B": AtPosition(AT_NON_BOUNDARY),
@@ -993,9 +994,9 @@ def _parse_element(source, info):
         elif ch == "[":
             return _parse_set(source, info)
         elif ch == "^":
-            return AtPosition(AT_BEGINNING_STRING)
+            return AtPosition(AT_BEGINNING_LINE)
         elif ch == "$":
-            return AtPosition(AT_END_STRING)
+            return AtPosition(AT_END_LINE)
         elif ch == "{":
             here2 = source.pos
             counts = _parse_quantifier(source, info)
