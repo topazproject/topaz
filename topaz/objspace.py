@@ -315,7 +315,7 @@ class ObjectSpace(object):
                 astnode.compile(ctx)
             except CompilerError as e:
                 raise self.error(self.w_SyntaxError, "%s" % e.msg)
-        return ctx.create_bytecode([], [], None, None)
+        return ctx.create_bytecode(initial_lineno, [], [], None, None)
 
     def execute(self, source, w_self=None, lexical_scope=None, filepath="-e",
                 initial_lineno=1):

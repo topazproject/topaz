@@ -366,6 +366,7 @@ class AbstractCallable(Node):
         self.post_process_ctx(ctx, code_ctx)
         body.compile(code_ctx)
         code_ctx.emit(consts.RETURN)
+
         return code_ctx.create_bytecode(
             lineno=self.lineno,
             args=arg_names,
@@ -381,7 +382,7 @@ class AbstractCallable(Node):
 
 class Function(AbstractCallable):
     def __init__(self, lineno, parent, name, args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, body):
-        self.lineno = lineno
+        Node.__init__(self, lineno)
         self.parent = parent
         self.name = name
         self.args = args
@@ -828,6 +829,9 @@ class Super(BaseSend):
         else:
             return ctx.create_symbol_const(ctx.code_name)
 
+    def compile_receiver(self, ctx):
+        raise CompilerError("can't assign to self")
+
 
 class Splat(Node):
     def __init__(self, value):
@@ -855,7 +859,7 @@ class HashSplat(Send):
 
 class SendBlock(AbstractCallable):
     def __init__(self, lineno, block_args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, block):
-        self.lineno = lineno
+        Node.__init__(self, lineno)
         self.block_args = block_args
         self.splat_arg = splat_arg
         self.post_args = post_args
@@ -1009,6 +1013,9 @@ class Self(Node):
 
     def compile_defined(self, ctx):
         ConstantString("self").compile(ctx)
+
+    def compile_receiver(self, ctx):
+        raise CompilerError("can't assign to self")
 
 
 class Scope(Node):
@@ -1251,6 +1258,9 @@ class ConstantBool(ConstantNode):
     def compile_defined(self, ctx):
         ConstantString("true" if self.boolval else "false").compile(ctx)
 
+    def compile_receiver(self, ctx):
+        raise CompilerError("can't assign to %s" % ("true" if self.boolval else "false"))
+
 
 class DynamicString(Node):
     def __init__(self, strvalues):
@@ -1298,13 +1308,22 @@ class Nil(BaseNode):
     def compile_defined(self, ctx):
         ConstantString("nil").compile(ctx)
 
+    def compile_receiver(self, ctx):
+        raise CompilerError("can't assign to nil")
+
 
 class File(BaseNode):
     def compile(self, ctx):
         ctx.emit(consts.LOAD_CODE)
         ctx.emit(consts.SEND, ctx.create_symbol_const("filepath"), 0)
 
+    def compile_receiver(self, ctx):
+        raise CompilerError("can't assign to __FILE__")
+
 
 class Line(Node):
     def compile(self, ctx):
         ConstantInt(self.lineno).compile(ctx)
+
+    def compile_receiver(self, ctx):
+        raise CompilerError("can't assign to __LINE__")

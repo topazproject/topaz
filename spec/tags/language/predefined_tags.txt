@@ -47,10 +47,6 @@ fails:Global variable $-w is an alias of $VERBOSE
 fails:Global variable $0 actually sets the program name
 fails:Global variable $0 raises a TypeError when not given an object that can be coerced to a String
 fails:The predefined standard objects includes ARGF
-fails:The predefined standard object nil raises a SyntaxError if assigned to
-fails:The predefined standard object true raises a SyntaxError if assigned to
-fails:The predefined standard object false raises a SyntaxError if assigned to
-fails:The self pseudo-variable raises a SyntaxError if assigned to
 fails:The predefined global constants includes TRUE
 fails:The predefined global constants includes FALSE
 fails:The predefined global constants includes NIL
@@ -72,4 +68,3 @@ fails:The predefined global constant STDERR has the encodings set by #set_encodi
 fails:The predefined global constant STDERR has nil for the internal encoding
 fails:The predefined global constant STDERR has nil for the internal encoding despite Encoding.default_internal being changed
 fails:The predefined global constant ARGV contains Strings encoded in locale Encoding
-fails:Global variable $0 is the path given as the main script and the same as __FILE__
