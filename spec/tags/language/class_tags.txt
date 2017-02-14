@@ -3,3 +3,4 @@ fails:A class definition allows the definition of class-level instance variables
 fails:A class definition within a block creates a new class in the lexical scope for named classes at the toplevel
 fails:A class definition within a block creates a new class in the lexical scope for named classes in a module
 fails:A class definition within a block creates a new class in the lexical scope for anonymous classes assigned to a constant
+fails:Reopening a class adds new methods to subclasses

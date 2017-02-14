@@ -5,6 +5,7 @@ class MSpecScript
   MSpec.enable_feature :fiber
   MSpec.enable_feature :fork
   MSpec.enable_feature :encoding
+
   core = [
     "#{Rubyspec}/core/",
     # Struct: ``Struct.new(:field)``
@@ -34,11 +35,7 @@ class MSpecScript
     "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
 
-  language = [
-      "#{Rubyspec}/language",
-      # look-around doesn't work for us with non-constant sequences
-    "^#{Rubyspec}/language/regexp/anchors_spec.rb",
-  ]
+  language = ["#{Rubyspec}/language"]
 
   command_line = ["#{Rubyspec}/command_line"]
 

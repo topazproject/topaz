@@ -16,3 +16,4 @@ fails:The super keyword invokes methods from a chain of anonymous modules
 fails:The super keyword without explicit arguments that are '_'
 fails:The super keyword without explicit arguments that are '_' including any modifications
 fails:The super keyword when using keyword arguments passes any given keyword arguments including optional and required ones to the parent
+fails:The super keyword find super from a singleton class
