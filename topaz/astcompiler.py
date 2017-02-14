@@ -100,9 +100,9 @@ class CompilerContext(object):
         self.current_block = self.first_block = self.new_block()
         self.frame_blocks = []
 
-    def create_bytecode(self, args=None, defaults=None, first_default_arg=None,
-                        splat_arg=None, kwargs=None, kw_defaults=None,
-                        kwrest_arg=None, block_arg=None):
+    def create_bytecode(self, lineno=-1, args=None, defaults=None,
+                        first_default_arg=None, splat_arg=None, kwargs=None,
+                        kw_defaults=None, kwrest_arg=None, block_arg=None):
         if args is None:
             args = []
         if defaults is None:
@@ -143,6 +143,7 @@ class CompilerContext(object):
         return W_CodeObject(
             self.code_name,
             self.filepath,
+            lineno,
             code,
             depth,
             self.consts[:],

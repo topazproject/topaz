@@ -8,18 +8,20 @@ class W_CodeObject(W_BaseObject):
     _immutable_fields_ = [
         "code", "consts_w[*]", "max_stackdepth", "cellvars[*]", "freevars[*]",
         "arg_pos[*]", "defaults[*]", "block_arg_pos", "splat_arg_pos",
-        "kwarg_names[*]", "kwrest_pos", "kw_defaults[*]", "default_arg_begin"
+        "kwarg_names[*]", "kwrest_pos", "kw_defaults[*]", "default_arg_begin",
+        "filepath", "lineno",
     ]
 
     classdef = ClassDef("Code", W_BaseObject.classdef)
 
-    def __init__(self, name, filepath, code, max_stackdepth, consts, args,
+    def __init__(self, name, filepath, line, code, max_stackdepth, consts, args,
                  splat_arg, kwargs, kwrest_arg, block_arg,
                  defaults, first_default_arg, kw_defaults,
                  cellvars, freevars, lineno_table):
 
         self.name = name
         self.filepath = filepath
+        self.lineno = line
         self.code = code
         self.max_stackdepth = max_stackdepth
         self.consts_w = consts
@@ -60,6 +62,7 @@ class W_CodeObject(W_BaseObject):
         obj = super(W_CodeObject, self).__deepcopy__(memo)
         obj.name = self.name
         obj.filepath = self.filepath
+        obj.lineno = self.lineno
         obj.code = self.code
         obj.max_stackdepth = self.max_stackdepth
         obj.consts_w = copy.deepcopy(self.consts_w, memo)

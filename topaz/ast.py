@@ -367,6 +367,7 @@ class AbstractCallable(Node):
         body.compile(code_ctx)
         code_ctx.emit(consts.RETURN)
         return code_ctx.create_bytecode(
+            lineno=self.lineno,
             args=arg_names,
             defaults=arg_defaults,
             first_default_arg=first_default_arg,
@@ -379,7 +380,8 @@ class AbstractCallable(Node):
 
 
 class Function(AbstractCallable):
-    def __init__(self, parent, name, args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, body):
+    def __init__(self, lineno, parent, name, args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, body):
+        self.lineno = lineno
         self.parent = parent
         self.name = name
         self.args = args
@@ -852,7 +854,8 @@ class HashSplat(Send):
 
 
 class SendBlock(AbstractCallable):
-    def __init__(self, block_args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, block):
+    def __init__(self, lineno, block_args, splat_arg, post_args, kwargs, kwrest_arg, block_arg, block):
+        self.lineno = lineno
         self.block_args = block_args
         self.splat_arg = splat_arg
         self.post_args = post_args

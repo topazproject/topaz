@@ -29,6 +29,9 @@ class W_FunctionObject(W_BaseObject):
     def arity(self, space):
         return space.newint(0)
 
+    def source_location(self, space):
+        return space.w_nil
+
 
 class W_UserFunction(W_FunctionObject):
     _immutable_fields_ = ["bytecode", "lexical_scope"]
@@ -57,6 +60,12 @@ class W_UserFunction(W_FunctionObject):
 
     def arity(self, space):
         return space.newint(self.bytecode.arity(negative_defaults=True))
+
+    def source_location(self, space):
+        return space.newarray([
+            space.newstr_fromstr(self.bytecode.filepath),
+            space.newint(self.bytecode.lineno)
+        ])
 
 
 class W_BuiltinFunction(W_FunctionObject):

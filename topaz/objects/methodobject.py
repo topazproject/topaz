@@ -18,6 +18,12 @@ def create_to_s(classdef):
     return method_to_s
 
 
+def create_source_location(classdef):
+    @classdef.method("source_location")
+    def method_source_location(self, space):
+        return self.w_function.source_location(space)
+
+
 class W_MethodObject(W_Object):
     classdef = ClassDef("Method", W_Object.classdef)
 
@@ -30,6 +36,7 @@ class W_MethodObject(W_Object):
     method_allocate = classdef.undefine_allocator()
     method_owner = create_owner(classdef)
     method_to_s = create_to_s(classdef)
+    method_source_location = create_source_location(classdef)
 
     @classdef.method("[]")
     @classdef.method("call")
@@ -74,6 +81,7 @@ class W_UnboundMethodObject(W_Object):
     method_allocator = classdef.undefine_allocator()
     method_owner = create_owner(classdef)
     method_to_s = create_to_s(classdef)
+    method_source_location = create_source_location(classdef)
 
     @classdef.method("bind")
     def method_bind(self, space, w_receiver):

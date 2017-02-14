@@ -235,6 +235,7 @@ class Parser(object):
                 body = ast.Block(extra_stmts + [ast.Statement(body)])
 
         return BoxAST(ast.Function(
+            lineno,
             parent.getast() if parent is not None else None,
             fname.getstr(),
             args,
@@ -258,6 +259,7 @@ class Parser(object):
         stmts = extra_stmts + stmts
         block = ast.Block(stmts) if stmts else ast.Nil()
         return BoxAST(ast.SendBlock(
+            lineno,
             args,
             splat,
             postargs,

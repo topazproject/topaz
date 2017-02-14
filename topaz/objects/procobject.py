@@ -70,3 +70,10 @@ class W_ProcObject(W_Object):
     @classdef.method("binding")
     def method_binding(self, space):
         return space.newbinding_fromblock(self)
+
+    @classdef.method("source_location")
+    def method_source_location(self, space):
+        return space.newarray([
+            space.newstr_fromstr(self.bytecode.filepath),
+            space.newint(self.bytecode.lineno)
+        ])
