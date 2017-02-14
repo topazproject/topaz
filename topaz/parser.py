@@ -1780,7 +1780,7 @@ class Parser(object):
 
         stmts = p[7].getastlist() if p[7] is not None else []
         stmts = [ast.Statement(asgn)] + stmts
-        block = ast.SendBlock([arg], None, [], [], None, None, ast.Block(stmts))
+        block = ast.SendBlock(lineno, [arg], None, [], [], None, None, ast.Block(stmts))
 
         self.save_and_pop_scope(block)
         return BoxAST(ast.Send(p[4].getast(), "each", [], block, lineno))
