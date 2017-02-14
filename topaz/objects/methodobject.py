@@ -18,10 +18,18 @@ def create_to_s(classdef):
     return method_to_s
 
 
+def create_name(classdef):
+    @classdef.method("name")
+    def method_name(self, space):
+        return space.newsymbol(self.w_function.name)
+    return method_name
+
+
 def create_source_location(classdef):
     @classdef.method("source_location")
     def method_source_location(self, space):
         return self.w_function.source_location(space)
+    return method_source_location
 
 
 class W_MethodObject(W_Object):
@@ -37,6 +45,7 @@ class W_MethodObject(W_Object):
     method_owner = create_owner(classdef)
     method_to_s = create_to_s(classdef)
     method_source_location = create_source_location(classdef)
+    method_name = create_name(classdef)
 
     @classdef.method("[]")
     @classdef.method("call")
@@ -82,6 +91,7 @@ class W_UnboundMethodObject(W_Object):
     method_owner = create_owner(classdef)
     method_to_s = create_to_s(classdef)
     method_source_location = create_source_location(classdef)
+    method_name = create_name(classdef)
 
     @classdef.method("bind")
     def method_bind(self, space, w_receiver):
