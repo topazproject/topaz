@@ -229,6 +229,10 @@ class W_FileObject(W_IOObject):
     def method_executablep(self, space, filename):
         return space.newbool(os.path.isfile(filename) and os.access(filename, os.X_OK))
 
+    @classdef.singleton_method("readable?", filename="path")
+    def method_executablep(self, space, filename):
+        return space.newbool(os.path.isfile(filename) and os.access(filename, os.R_OK))
+
     @classdef.singleton_method("identical?", file="path", other="path")
     def method_identicalp(self, space, file, other):
         try:
