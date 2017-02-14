@@ -19,6 +19,7 @@ from topaz.objects.moduleobject import W_ModuleObject
 from topaz.objects.procobject import W_ProcObject
 from topaz.objects.randomobject import W_RandomObject
 from topaz.objects.stringobject import W_StringObject
+from topaz.scope import StaticScope
 
 
 class Kernel(object):
@@ -113,7 +114,7 @@ class Kernel(object):
         return path
 
     @staticmethod
-    def load_feature(space, path, orig_path):
+    def load_feature(space, path, orig_path, wrap=False):
         if not os.path.exists(path):
             raise space.error(space.w_LoadError, orig_path)
 
@@ -126,7 +127,11 @@ class Kernel(object):
         except OSError as e:
             raise error_for_oserror(space, e)
 
-        space.execute(contents, filepath=path)
+        if wrap:
+            lexical_scope = StaticScope(space.newmodule("Anonymous"), None)
+        else:
+            lexical_scope = None
+        space.execute(contents, filepath=path, lexical_scope=lexical_scope)
 
     @moduledef.function("require", path="path")
     def function_require(self, space, path):
@@ -145,12 +150,12 @@ class Kernel(object):
         w_loaded_features.method_lshift(space, space.newstr_fromstr(path))
         return space.w_true
 
-    @moduledef.function("load", path="path")
-    def function_load(self, space, path):
+    @moduledef.function("load", path="path", wrap="bool")
+    def function_load(self, space, path, wrap=False):
         assert path is not None
         orig_path = path
         path = Kernel.find_feature(space, path)
-        Kernel.load_feature(space, path, orig_path)
+        Kernel.load_feature(space, path, orig_path, wrap=wrap)
         return space.w_true
 
     @moduledef.method("fail")
