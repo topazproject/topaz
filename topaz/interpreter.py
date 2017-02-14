@@ -589,7 +589,11 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
+        if frame.lexical_scope is not None:
+            w_cls = frame.lexical_scope.w_mod
+        else:
+            w_cls = space.getclass(w_receiver)
+        w_res = space.send_super(w_cls, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
         frame.push(w_res)
 
     @jit.unroll_safe
@@ -605,7 +609,11 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send_super(frame.lexical_scope.w_mod, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
+        if frame.lexical_scope is not None:
+            w_cls = frame.lexical_scope.w_mod
+        else:
+            w_cls = space.getclass(w_receiver)
+        w_res = space.send_super(w_cls, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
         frame.push(w_res)
 
     def DEFINED_SUPER(self, space, bytecode, frame, pc, meth_idx):

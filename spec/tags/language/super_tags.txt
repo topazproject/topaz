@@ -12,3 +12,7 @@ fails:The super keyword searches class methods including modules
 fails:The super keyword searches BasicObject from a module for methods defined there
 fails:The super keyword searches BasicObject through another module for methods defined there
 fails:The super keyword raises a RuntimeError when called with implicit arguments from a method defined with define_method
+fails:The super keyword invokes methods from a chain of anonymous modules
+fails:The super keyword without explicit arguments that are '_'
+fails:The super keyword without explicit arguments that are '_' including any modifications
+fails:The super keyword when using keyword arguments passes any given keyword arguments including optional and required ones to the parent
