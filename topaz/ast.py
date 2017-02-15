@@ -829,9 +829,6 @@ class Super(BaseSend):
         else:
             return ctx.create_symbol_const(ctx.code_name)
 
-    def compile_receiver(self, ctx):
-        raise CompilerError("can't assign to self")
-
 
 class Splat(Node):
     def __init__(self, value):
