@@ -4,6 +4,10 @@ from topaz.objects.objectobject import W_Object
 
 class W_ProcObject(W_Object):
     classdef = ClassDef("Proc", W_Object.classdef)
+    _immutable_fields_ = [
+        "bytecode", "w_self", "lexical_scope", "cells[*]",
+        "block", "parent_interp", "top_parent_interp",
+        "regexp_match_cell", "is_lambda"]
 
     def __init__(self, space, bytecode, w_self, lexical_scope, cells, block,
                  parent_interp, top_parent_interp, regexp_match_cell,
