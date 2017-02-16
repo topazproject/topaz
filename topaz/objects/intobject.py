@@ -412,3 +412,11 @@ class W_FixnumObject(W_RootObject):
         if not 0 <= idx < LONG_BIT:
             return space.newint(0)
         return space.newint(int(bool(self.intvalue & (1 << idx))))
+
+
+class W_MutableFixnumObject(W_FixnumObject):
+    _immutable_fields_ = []
+
+    def set_intvalue(self, intvalue):
+        check_regular_int(intvalue)
+        self.intvalue = intvalue
