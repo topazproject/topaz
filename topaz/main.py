@@ -38,6 +38,7 @@ USAGE = "\n".join([
     # """  -x[directory]   strip off text before #!ruby line and perhaps cd to directory""",
     """  --copyright     print the copyright""",
     """  --version       print the version""",
+    """  --jit args      set JIT arguments for Topaz""",
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
@@ -111,12 +112,16 @@ def _parse_argv(space, argv):
     exprs = []
     reqs = []
     load_path_entries = []
+    jit_params = None
     argv_w = []
     idx = 1
     while idx < len(argv):
         arg = argv[idx]
         if arg == "-h" or arg == "--help":
             raise ShortCircuitError(USAGE)
+        elif arg == "--jit":
+            idx += 1
+            jit_params = argv[idx]
         elif arg == "--copyright":
             raise ShortCircuitError(COPYRIGHT)
         elif arg == "--version":
@@ -202,6 +207,7 @@ def _parse_argv(space, argv):
         exprs,
         reqs,
         load_path_entries,
+        jit_params,
         argv_w
     )
 
@@ -234,6 +240,7 @@ def _entry_point(space, argv):
             exprs,
             reqs,
             load_path_entries,
+            jit_params,
             argv_w
         ) = _parse_argv(space, argv)
     except ShortCircuitError as e:
@@ -309,6 +316,8 @@ def _entry_point(space, argv):
     w_exit_error = None
     explicit_status = False
     jit.set_param(None, "trace_limit", 10000)
+    if jit_params:
+        jit.set_user_param(None, jit_params)
     try:
         if do_loop:
             print_after = space.is_true(flag_globals_w["$-p"])
