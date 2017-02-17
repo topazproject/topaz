@@ -9,6 +9,7 @@ from topaz.objects.numericobject import W_NumericObject
 
 class W_BignumObject(W_IntegerObject):
     classdef = ClassDef("Bignum", W_IntegerObject.classdef)
+    _immutable_fields_ = ["bigint"]
 
     def __init__(self, space, bigint):
         W_IntegerObject.__init__(self, space)
