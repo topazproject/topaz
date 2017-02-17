@@ -6,6 +6,7 @@ from topaz.objects.objectobject import W_Object
 class W_RangeObject(W_Object):
     classdef = ClassDef("Range", W_Object.classdef)
     classdef.include_module(Enumerable)
+    _immutable_fields_ = ["w_start", "w_end", "exclusive"]
 
     def __init__(self, space, w_start, w_end, exclusive):
         W_Object.__init__(self, space)
