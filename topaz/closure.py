@@ -1,5 +1,5 @@
 from topaz.objects.objectobject import W_Root
-from topaz.objects.intobject import W_FixnumObject
+from topaz.objects.intobject import W_FixnumObject, W_MutableFixnumObject
 
 
 class BaseCell(W_Root):
@@ -38,10 +38,10 @@ class ClosureCell(BaseCell):
 
 class IntCell(ClosureCell):
     def __init__(self, intvalue):
-        ClosureCell.__init__(self, W_MutableFixnumObject(intvalue))
+        ClosureCell.__init__(self, W_MutableFixnumObject(None, intvalue))
 
     def set(self, space, frame, pos, w_value):
         if isinstance(w_value, W_FixnumObject):
-            self.w_value.set_value(w_value.intvalue)
+            self.w_value.set_intvalue(w_value.intvalue)
         else:
             ClosureCell.set(self, space, frame, pos, w_value)
