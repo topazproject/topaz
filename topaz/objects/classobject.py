@@ -8,7 +8,7 @@ from topaz.objects.objectobject import W_Object
 
 
 class W_ClassObject(W_ModuleObject):
-    _immutable_fields_ = ["superclass?"]
+    _immutable_fields_ = ["superclass?", "is_singleton"]
 
     classdef = ClassDef("Class", W_ModuleObject.classdef)
 
