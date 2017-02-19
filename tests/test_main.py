@@ -233,7 +233,7 @@ class TestMain(object):
         self.assert_traceback(space, tmpdir, capfd, """
         while do
         """, [
-            "{}: line 2 (unexpected Token('DO_COND', 'do')) (SyntaxError)",
+            "{}: line 2 (unexpected Token(DO_COND, do)) (SyntaxError)",
         ])
 
     def test_traceback_load_const(self, space, tmpdir, capfd):

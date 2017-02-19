@@ -45,3 +45,10 @@ class IntCell(ClosureCell):
             self.w_value.set_intvalue(w_value.intvalue)
         else:
             ClosureCell.set(self, space, frame, pos, w_value)
+
+    def get(self, space, frame, pos):
+        w_value = self.w_value
+        if isinstance(w_value, W_MutableFixnumObject):
+            return space.newint(space.int_w(w_value))
+        else:
+            return w_value
