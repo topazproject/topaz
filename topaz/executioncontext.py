@@ -118,11 +118,13 @@ class _VisitFrameContextManager(object):
         self.ec.enter(self.frame)
 
     def __exit__(self, exc_type, exc_value, tb):
+        ruby_exception = False
         if exc_value is not None and isinstance(exc_value, RubyError):
+            ruby_exception = True
             if exc_value.w_value.frame is None:
                 exc_value.w_value.frame = self.frame
 
-        self.ec.leave(self.frame, exc_value is not None)
+        self.ec.leave(self.frame, ruby_exception)
 
 
 class _RecursionGuardContextManager(object):
