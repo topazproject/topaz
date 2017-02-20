@@ -19,7 +19,7 @@ class Array
   end
 
   def self.[](*args)
-    args.inject(allocate) { |array, arg| array << arg}
+    allocate.concat(args)
   end
 
   def inspect
