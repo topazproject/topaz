@@ -21,6 +21,7 @@ class W_NumericObject(W_Object):
         except RubyError as e:
             if not space.is_kind_of(e.w_value, space.w_StandardError):
                 raise
+            e.mark_not_escaped()
             if raise_error:
                 raise space.error(space.w_ArgumentError,
                     "comparison of %s with %s failed" % (

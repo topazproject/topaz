@@ -766,6 +766,7 @@ class ObjectSpace(object):
         except RubyError as e:
             if reraise_error:
                 raise e
+            e.mark_not_escaped()
             if not raise_error:
                 return self.w_nil
             src_cls_name = self.obj_to_s(self.getclass(w_obj))
