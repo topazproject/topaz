@@ -1,10 +1,13 @@
 import subprocess
+import re
 
 from rpython.jit.metainterp.resoperation import opname
 from rpython.jit.tool import oparser
 from rpython.tool import logparser
 from rpython.tool.jitlogparser.parser import SimpleParser, Op
 from rpython.tool.jitlogparser.storage import LoopStorage
+
+from .conftest import JitTestUpdater
 
 
 class BaseJITTest(object):
@@ -30,12 +33,15 @@ class BaseJITTest(object):
             for line in expected.splitlines()
             if line and not line.isspace()
         ]
-        parser = Parser(None, None, {}, "lltype", None, invent_fail_descr=None, nonstrict=True)
+        parser = Parser(None, None, {}, "lltype", invent_fail_descr=None, nonstrict=True)
         expected_ops = [parser.parse_next_op(l) for l in expected_lines]
         aliases = {}
-        assert len(trace) == len(expected_ops)
         for op, expected in zip(trace, expected_ops):
-            self._assert_ops_equal(aliases, op, expected)
+            try:
+                assert len(trace) == len(expected_ops)
+                self._assert_ops_equal(aliases, op, expected)
+            except Exception as e:
+                JitTestUpdater(trace, expected_ops, e).ask_to_update_or_raise()
 
     def _assert_ops_equal(self, aliases, op, expected):
         assert op.name == expected.name
@@ -54,16 +60,26 @@ class Parser(oparser.OpParser):
             return poss_descr
         return super(Parser, self).get_descr(poss_descr, allow_invent)
 
+    def update_vector(self, resop, res):
+        return res
+
     def getvar(self, arg):
         return arg
 
-    def create_op(self, opnum, args, res, descr):
+    def create_op(self, opnum, args, res, descr, fail_args):
         return Op(opname[opnum].lower(), args, res, descr)
 
 
 class Trace(object):
     def __init__(self, trace):
-        self.trace = trace
+        self.trace = self.strip_debug_paths(trace)
+
+    def strip_debug_paths(self, trace):
+        for op in trace.operations:
+            if op.name == "debug_merge_point":
+                # strip the file info in the debug_merge_points
+                op.args[-1] = re.sub(r"[^'].*:in ", "", op.args[-1])
+        return trace
 
     @property
     def loop(self):
