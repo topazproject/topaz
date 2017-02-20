@@ -11,22 +11,6 @@ class RubyError(Exception):
     def __str__(self):
         return "<RubyError: %s>" % self.w_value
 
-    @jit.unroll_safe
-    def mark_not_escaped(self):
-        # This is supposed to be used when we catch a RubyError on the RPython
-        # level. It's a hack to not force frames if we have caught the exception
-        # and don't plan to re-raise it back into Ruby. TODO: find a better
-        # overall architecture to make the whole escaping logic go away (see
-        # also frame.py `unrollstack', interpreter.py `handle_ruby_error', and
-        # executioncontext.py `leave')
-        frame = self.w_value.frame
-        while frame is not None:
-            frame.escaped = False
-            if frame.backref.virtual:
-                frame = None
-            else:
-                frame = frame.backref()
-
 
 def format_traceback(space, exc, top_filepath):
     w_bt = space.send(exc, "backtrace")

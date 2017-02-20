@@ -169,7 +169,7 @@ class W_FloatObject(W_RootObject):
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "==")
         except RubyError as e:
             if isinstance(e.w_value, W_ArgumentError):
-                e.mark_not_escaped()
+                space.mark_topframe_not_escaped()
                 return space.send(w_other, "==", [self])
             else:
                 raise
@@ -187,7 +187,7 @@ class W_FloatObject(W_RootObject):
             return W_NumericObject.retry_binop_coercing(space, self, w_other, "equal?")
         except RubyError as e:
             if isinstance(e.w_value, W_ArgumentError):
-                e.mark_not_escaped()
+                space.mark_topframe_not_escaped()
                 return space.send(w_other, "equal?", [self])
             else:
                 raise

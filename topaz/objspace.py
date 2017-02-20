@@ -766,7 +766,7 @@ class ObjectSpace(object):
         except RubyError as e:
             if reraise_error:
                 raise e
-            e.mark_not_escaped()
+            self.mark_topframe_not_escaped()
             if not raise_error:
                 return self.w_nil
             src_cls_name = self.obj_to_s(self.getclass(w_obj))
@@ -788,6 +788,9 @@ class ObjectSpace(object):
             )
         else:
             return w_res
+
+    def mark_topframe_not_escaped(self):
+        self.getexecutioncontext().gettopframe().escaped = False
 
     def infect(self, w_dest, w_src, taint=True, untrust=True, freeze=False):
         """
