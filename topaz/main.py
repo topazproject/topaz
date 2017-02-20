@@ -315,7 +315,7 @@ def _entry_point(space, argv):
     status = 0
     w_exit_error = None
     explicit_status = False
-    jit.set_param(None, "trace_limit", 10000)
+    jit.set_param(None, "trace_limit", 16000)
     if jit_params:
         jit.set_user_param(None, jit_params)
     try:
