@@ -16,7 +16,17 @@ from topaz.utils.regexp import RegexpError
 
 
 def get_printable_location(pc, bytecode, block_bytecode, w_trace_proc):
-    return "%s at %s" % (bytecode.name, consts.BYTECODE_NAMES[ord(bytecode.code[pc])])
+    try:
+        pcline = bytecode.lineno_table[pc]
+    except IndexError:
+        pcline = -1
+    return "%s:%d(%d):in %s at %s" % (
+        bytecode.filepath,
+        bytecode.lineno,
+        pcline,
+        bytecode.name,
+        consts.BYTECODE_NAMES[ord(bytecode.code[pc])]
+    )
 
 
 class Interpreter(object):
