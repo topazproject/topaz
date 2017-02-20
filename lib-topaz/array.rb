@@ -13,7 +13,7 @@ class Array
       # TODO: Emit "block supersedes default value argument" warning
       length.times { |i| self << yield(i) }
     else
-      length.times { self << obj }
+      self.concat([obj] * length)
     end
     return self
   end
