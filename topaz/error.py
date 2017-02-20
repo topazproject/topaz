@@ -1,6 +1,8 @@
 import os
 import errno
 
+from rpython.rlib import jit
+
 
 class RubyError(Exception):
     def __init__(self, w_value):
