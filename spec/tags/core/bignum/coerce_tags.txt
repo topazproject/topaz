@@ -1,0 +1,3 @@
+fails:Bignum#coerce coerces both values to Floats and returns [other, self] when passed a Float
+fails:Bignum#coerce coerces both values to Floats and returns [other, self] when passed a String
+fails:Bignum#coerce calls #to_f to coerce other to a Float

@@ -7,18 +7,14 @@ class MSpecScript
   MSpec.enable_feature :encoding
 
   core = [ "#{Rubyspec}/core/",
-    # openssl: ``require 'openssl'``
-    "^#{Rubyspec}/core/marshal/dump_spec.rb",
-    # openssl: ``require 'openssl'``
-    "^#{Rubyspec}/core/marshal/load_spec.rb",
-    # openssl: ``require 'openssl'``
-    "^#{Rubyspec}/core/marshal/restore_spec.rb",
     # FileTest: ``FileTest``
     "^#{Rubyspec}/core/filetest",
-    # fcntl: ``require 'fcntl'``
-    "^#{Rubyspec}/core/io/reopen_spec.rb",
     # socket: ``require 'socket'``
     "^#{Rubyspec}/core/file/socket_spec.rb",
+    # ``require 'etc'``
+    "^#{Rubyspec}/core/io/advise_spec.rb",
+    # fcntl: ``require 'fcntl'``
+    "^#{Rubyspec}/core/io/reopen_spec.rb",
     # Rational: ``Rational(2, 3)``
     "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]

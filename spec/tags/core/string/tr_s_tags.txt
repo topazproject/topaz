@@ -2,9 +2,10 @@ fails:String#tr_s accepts c1-c2 notation to denote ranges of characters
 fails:String#tr_s translates chars not in from_string when it starts with a ^
 fails:String#tr_s returns subclass instances when called on a subclass
 fails:String#tr_s taints the result when self is tainted
-fails:String#tr_s!
 fails:String#tr_s can replace a 7-bit ASCII character with a multibyte one
 fails:String#tr_s can replace multiple 7-bit ASCII characters with a multibyte one
 fails:String#tr_s can replace a multibyte character with a single byte one
 fails:String#tr_s can replace multiple multibyte characters with a single byte one
 fails:String#tr_s does not replace a multibyte character where part of the bytes match the tr string
+fails:String#tr_s! returns nil if no modification was made
+fails:String#tr_s! does not modify self if from_str is empty

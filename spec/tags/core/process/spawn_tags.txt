@@ -96,3 +96,4 @@ fails:Process.spawn when passed close_others: false does not close STDIN
 fails:Process.spawn when passed close_others: false does not close STDOUT
 fails:Process.spawn when passed close_others: false does not close STDERR
 fails:Process.spawn with Integer option keys maps the key to a file descriptor in the child that inherits the file descriptor from the parent specified by the value
+fails:Process.spawn with Integer option keys maps the key to a file descriptor in the child that inherits the file descriptor from the parent specified by the value
