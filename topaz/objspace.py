@@ -30,6 +30,7 @@ from topaz.modules.enumerable import Enumerable
 from topaz.modules.marshal import Marshal
 from topaz.modules.math import Math
 from topaz.modules.kernel import Kernel
+from topaz.modules.fcntl import Fcntl
 from topaz.modules.ffi import FFI
 from topaz.modules.objectspace import ObjectSpace as ObjectSpaceModule
 from topaz.modules.process import Process
@@ -197,6 +198,7 @@ class ObjectSpace(object):
             self.getmoduleobject(Enumerable.moduledef),
             self.getmoduleobject(Marshal.moduledef),
             self.getmoduleobject(Math.moduledef),
+            self.getmoduleobject(Fcntl.moduledef),
             self.getmoduleobject(FFI.moduledef),
             self.getmoduleobject(Process.moduledef),
             self.getmoduleobject(Signal.moduledef),
