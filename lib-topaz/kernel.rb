@@ -91,7 +91,7 @@ module Kernel
       res = r.read
       Process.waitpid(r.pid)
     end
-    res
+    res.to_s
   end
   private :`
 
