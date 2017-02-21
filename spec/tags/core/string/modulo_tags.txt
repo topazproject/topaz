@@ -92,3 +92,4 @@ fails:String#% when format string contains %{} sections should raise ArgumentErr
 fails:String#% when format string contains %<> formats uses the named argument for the format's value
 fails:String#% when format string contains %<> formats raises KeyError if key is missing from passed-in hash
 fails:String#% when format string contains %<> formats should raise ArgumentError if no hash given
+fails:String#% raises an ArgumentError when there are less arguments than format specifiers

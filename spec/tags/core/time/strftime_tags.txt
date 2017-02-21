@@ -39,3 +39,53 @@ fails:Time#strftime with %z formats a time with fixed offset as '+/-HH:MM' with 
 fails:Time#strftime with %z formats a time with fixed offset as '+/-HH:MM:SS' with '::' specifier
 fails:Time#strftime with %z rounds fixed offset to the nearest second
 fails:Time#strftime passes the format string's encoding to the result string
+fails:Time#strftime should be able to print the full day name
+fails:Time#strftime should be able to print the short day name
+fails:Time#strftime should be able to print the full month name
+fails:Time#strftime should be able to print the short month name
+fails:Time#strftime should be able to print the century
+fails:Time#strftime should be able to print the month day with leading zeroes
+fails:Time#strftime should be able to print the month day with leading spaces
+fails:Time#strftime should be able to print the commercial year with leading zeroes
+fails:Time#strftime should be able to print the commercial year with only two digits
+fails:Time#strftime should be able to print the hour with leading zeroes (hour is always 00)
+fails:Time#strftime should be able to print the hour in 12 hour notation with leading zeroes
+fails:Time#strftime should be able to print the julian day with leading zeroes
+fails:Time#strftime should be able to print the hour in 24 hour notation with leading spaces
+fails:Time#strftime should be able to print the hour in 12 hour notation with leading spaces
+fails:Time#strftime should be able to print the minutes with leading zeroes
+fails:Time#strftime should be able to print the month with leading zeroes
+fails:Time#strftime should be able to add a newline
+fails:Time#strftime should be able to show AM/PM
+fails:Time#strftime should be able to show am/pm
+fails:Time#strftime should be able to show the number of seconds with leading zeroes
+fails:Time#strftime should be able to show the number of seconds since the unix epoch
+fails:Time#strftime should be able to add a tab
+fails:Time#strftime should be able to show the week number with the week starting on Sunday (%U) and Monday (%W)
+fails:Time#strftime should be able to show the commercial week day
+fails:Time#strftime should be able to show the commercial week
+fails:Time#strftime should be able to show the week day
+fails:Time#strftime should be able to show the year in YYYY format
+fails:Time#strftime should be able to show the year in YY format
+fails:Time#strftime should be able to show the timezone of the date with a : separator
+fails:Time#strftime should be able to escape the % character
+fails:Time#strftime should be able to print the date in full
+fails:Time#strftime should be able to print the date with slashes
+fails:Time#strftime should be able to print the date as YYYY-MM-DD
+fails:Time#strftime should be able to show HH:MM
+fails:Time#strftime should be able to show HH:MM:SS AM/PM
+fails:Time#strftime should be able to show HH:MM:SS
+fails:Time#strftime should be able to show MM/DD/YY
+fails:Time#strftime supports 24-hr formatting with %l
+fails:Time#strftime supports am/pm formatting with %P
+fails:Time#strftime should be able to print the time in full
+fails:Time#strftime supports HH:MM:SS formatting with %T
+fails:Time#strftime supports HH:MM:SS formatting with %X
+fails:Time#strftime should be able to show the timezone if available
+fails:Time#strftime rounds an offset to the nearest second when formatting with %z
+fails:Time#strftime with %L formats the milliseconds of the second
+fails:Time#strftime with %N formats the nanoseconds of the second with %N
+fails:Time#strftime with %N formats the milliseconds of the second with %3N
+fails:Time#strftime with %N formats the microseconds of the second with %6N
+fails:Time#strftime with %N formats the nanoseconds of the second with %9N
+fails:Time#strftime with %N formats the picoseconds of the second with %12N

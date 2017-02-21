@@ -7,16 +7,8 @@ class MSpecScript
   MSpec.enable_feature :encoding
 
   core = [ "#{Rubyspec}/core/",
-    # FileTest: ``FileTest``
-    "^#{Rubyspec}/core/filetest",
     # socket: ``require 'socket'``
     "^#{Rubyspec}/core/file/socket_spec.rb",
-    # ``require 'etc'``
-    "^#{Rubyspec}/core/io/advise_spec.rb",
-    # fcntl: ``require 'fcntl'``
-    "^#{Rubyspec}/core/io/reopen_spec.rb",
-    # Rational: ``Rational(2, 3)``
-    "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
 
   language = ["#{Rubyspec}/language"]

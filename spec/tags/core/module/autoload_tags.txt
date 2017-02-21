@@ -4,3 +4,4 @@ fails:Module#autoload returns 'constant' on refering the constant with defined?(
 fails:Module#autoload on a frozen module raises a RuntimeError before setting the name
 fails:Module#autoload loads the registered constant even if the constant was already loaded by another thread
 fails:Module#autoload (concurrently) blocks others threads while doing an autoload
+fails:Module#autoload sets the autoload constant in the constants table
