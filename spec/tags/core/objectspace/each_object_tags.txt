@@ -2,3 +2,5 @@ fails:ObjectSpace.each_object finds an object stored in a local variable set in 
 fails:ObjectSpace.each_object finds an object stored in a thread local
 fails:ObjectSpace.each_object finds an object captured in finalizer
 fails:ObjectSpace.each_object on singleton classes does not walk singleton classes
+fails:ObjectSpace.each_object walks a class and its normal descendants when passed the class's singleton class
+fails:ObjectSpace.each_object on singleton classes walks singleton classes

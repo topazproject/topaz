@@ -1,3 +1,6 @@
 fails:Dir.getwd returns the current working directory
 fails:Dir.getwd returns a String with Encoding.default_external encoding
 fails:Dir.getwd does not transcode to Encoding.default_internal
+fails:Dir.getwd returns an absolute path
+fails:Dir.getwd returns an absolute path even when chdir to a relative path
+fails:Dir.getwd returns a String with the filesystem encoding

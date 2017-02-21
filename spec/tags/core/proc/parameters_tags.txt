@@ -11,3 +11,6 @@ fails:Proc#parameters sets the second element of each sub-Array to the name of t
 fails:Proc#parameters ignores unnamed rest args
 fails:Proc#parameters adds nameless rest arg for "star" argument
 fails:Proc#parameters does not add locals as block options with a block and splat
+fails:Proc#parameters regards optional keyword parameters in procs as optional
+fails:Proc#parameters regards keyword parameters in lambdas as required
+fails:Proc#parameters sets the first element of each sub-Array to :keyrest for parameters prefixed with double asterisks

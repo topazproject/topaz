@@ -1,1 +1,2 @@
 fails:Dir#close closes the stream and fd and returns nil
+fails:Dir#close does not raise an IOError even if the Dir instance is closed

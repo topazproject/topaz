@@ -10,3 +10,4 @@ fails:ARGF.readpartial reads maximum number of bytes from one file at a time
 fails:ARGF.readpartial clears output buffer even if EOFError is raised because @argf is at end
 fails:ARGF.readpartial returns an empty string if EOFError is raised while reading any but the last file
 fails:ARGF.readpartial raises an EOFError if the exception was raised while reading STDIN
+fails:ARGF.readpartial raises an EOFError if the exception was raised while reading the last file

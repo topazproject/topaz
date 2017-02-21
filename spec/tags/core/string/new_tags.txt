@@ -1,1 +1,2 @@
 fails:String.new returns a binary String
+fails:String.new accepts an encoding argument

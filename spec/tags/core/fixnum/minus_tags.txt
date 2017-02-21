@@ -1,1 +1,2 @@
 fails:Fixnum#- raises a TypeError when given a non-Integer
+fails:Fixnum#- returns a Bignum only if the result is too large to be a Fixnum

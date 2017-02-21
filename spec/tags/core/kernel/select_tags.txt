@@ -1,1 +1,2 @@
 fails:Kernel#select is a private method
+fails:Kernel.select does not block when timeout is 0

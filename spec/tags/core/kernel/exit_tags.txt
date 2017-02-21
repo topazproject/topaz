@@ -4,3 +4,7 @@ fails:Kernel#exit! is a private method
 fails:Kernel#exit! exits immediately when called from a thread
 fails:Kernel.exit raises a SystemExit with the specified boolean status
 fails:Kernel.exit! exits immediately when called from a thread
+fails:Kernel#exit raises the SystemExit in the main thread if it reaches the top-level handler of another thread
+fails:Kernel#exit! exits when called from a thread
+fails:Kernel.exit raises the SystemExit in the main thread if it reaches the top-level handler of another thread
+fails:Kernel.exit! exits when called from a thread

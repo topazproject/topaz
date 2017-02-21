@@ -44,3 +44,5 @@ fails:IO.for_fd raises an Errno::EINVAL if the new mode is not compatible with t
 fails:IO.for_fd raises ArgumentError if passed an empty mode string
 fails:IO.for_fd uses the :encoding option as the external encoding when only one is given
 fails:IO.for_fd uses the :encoding options as the external encoding when it's an Encoding object
+fails:IO.for_fd raises an error if passed matching binary/text mode two ways
+fails:IO.for_fd raises an error if passed conflicting binary/text mode two ways

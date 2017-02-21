@@ -12,3 +12,7 @@ fails:String#match with [pattern, position] when given a positive position match
 fails:String#match with [pattern, position] when given a positive position uses the start as a character offset
 fails:String#match with [pattern, position] when given a negative position matches the pattern against self starting at an optional index
 fails:String#match with [pattern, position] when given a negative position uses the start as a character offset
+fails:String#match calls match on the regular expression
+fails:String#match? returns false when does not match the given regex
+fails:String#match? takes matching position as the 2nd argument
+fails:String#match? when matches the given regex returns true but does not set Regexp.last_match

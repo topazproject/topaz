@@ -40,3 +40,5 @@ fails:Time.new with a utc_offset argument with an argument that responds to #to_
 fails:Time.new with a utc_offset argument with an argument that responds to #to_str coerces using #to_str
 fails:Time.new handles years from 0 as such
 fails:Time.new with a utc_offset argument adds one hour if the minute value is greater than 59
+fails:Time.new creates a subclass instance if called on a subclass
+fails:Time.new timezone changes correctly adjusts the timezone change to 'CEST' on 'Europe/Amsterdam'

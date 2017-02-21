@@ -7,3 +7,9 @@ fails:Regexp#match with [string, position] when given a positive position raises
 fails:Regexp#match with [string, position] when given a negative position matches the input at a given position
 fails:Regexp#match with [string, position] when given a negative position uses the start as a character offset
 fails:Regexp#match with [string, position] when given a negative position raises an ArgumentError for an invalid encoding
+fails:Regexp#match with [string, position] when passed a block yields the MatchData
+fails:Regexp#match with [string, position] when passed a block returns the block result
+fails:Regexp#match? returns false when does not match the given value
+fails:Regexp#match? takes matching position as the 2nd argument
+fails:Regexp#match? returns false when given nil
+fails:Regexp#match? when matches the given value returns true but does not set Regexp.last_match

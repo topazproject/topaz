@@ -1,2 +1,6 @@
 fails:Kernel#frozen? on integers returns false
 fails:Kernel#frozen? on a Float returns false
+fails:Kernel#frozen? on true, false and nil returns true
+fails:Kernel#frozen? on integers returns true
+fails:Kernel#frozen? on a Float returns true
+fails:Kernel#frozen? on a Symbol returns true

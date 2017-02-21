@@ -56,3 +56,7 @@ fails:String#sub! with pattern and Hash doesn't interpolate special sequences li
 fails:String#sub! with pattern and Hash keeps untrusted state
 fails:String#sub! with pattern and Hash untrusts self if a hash value is untrusted
 fails:String#sub! with pattern and Hash keeps tainted state
+fails:String#sub with pattern, replacement replaces \\\1 with \1
+fails:String#sub with pattern, replacement replaces \\\\1 with \1
+fails:String#sub with pattern, replacement replaces \\\\\1 with \
+fails:String#sub! with pattern and without replacement and block raises a ArgumentError

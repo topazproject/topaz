@@ -1,2 +1,3 @@
 fails:Module#include preserves ancestor order
 fails:Module#include is a private method
+fails:Module#include doesn't accept no-arguments

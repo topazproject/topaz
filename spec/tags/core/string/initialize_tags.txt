@@ -2,3 +2,4 @@ fails:String#initialize with an argument taints self if other is tainted
 fails:String#initialize with an argument untrusts self if other is untrusted
 fails:String#initialize with an argument replaces the encoding of self with that of other
 fails:String#initialize with no arguments does not raise an exception when frozen
+fails:String#initialize with an argument carries over the encoding invalidity

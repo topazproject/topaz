@@ -7,3 +7,8 @@ fails:BasicObject#method_missing for a Class with #method_missing defined is cal
 fails:BasicObject#method_missing for a Class with #method_missing defined is called when an private method is called
 fails:BasicObject#method_missing for an instance with #method_missing defined is called when an protected method is called
 fails:BasicObject#method_missing for an instance with #method_missing defined is called when an private method is called
+fails:BasicObject#method_missing for an instance sets the receiver of the raised NoMethodError
+fails:BasicObject#method_missing for a Class raises a NoMethodError when a protected method is called
+fails:BasicObject#method_missing for a Class raises a NoMethodError when a private method is called
+fails:BasicObject#method_missing for an instance raises a NoMethodError when a protected method is called
+fails:BasicObject#method_missing for an instance raises a NoMethodError when a private method is called

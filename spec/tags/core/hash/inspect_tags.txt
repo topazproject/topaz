@@ -1,3 +1,4 @@
 fails:Hash#inspect returns a tainted string if self is tainted and not empty
 fails:Hash#inspect returns an untrusted string if self is untrusted and not empty
 fails:Hash#inspect raises if inspected result is not default external encoding
+fails:Hash#inspect does not raise if inspected result is not default external encoding

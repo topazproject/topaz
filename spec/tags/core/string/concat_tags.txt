@@ -15,3 +15,6 @@ fails:String#concat when self and the argument are in different ASCII-compatible
 fails:String#concat when self and the argument are in different ASCII-compatible encodings uses the argument's encoding if self is ASCII-only
 fails:String#concat when self and the argument are in different ASCII-compatible encodings raises Encoding::CompatibilityError if neither are ASCII-only
 fails:String#concat when self is ASCII-8BIT and argument is US-ASCII uses ASCII-8BIT encoding
+fails:String#concat takes multiple arguments
+fails:String#concat concatenates the initial value when given arguments contain 2 self
+fails:String#concat returns self when given no arguments

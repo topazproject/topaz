@@ -1,2 +1,6 @@
 fails:Symbol#=~ sets the last match pseudo-variables
 fails:Symbol#match sets the last match pseudo-variables
+fails:Symbol#match returns the MatchData
+fails:Symbol#match? returns false when does not match the given regex
+fails:Symbol#match? takes matching position as the 2nd argument
+fails:Symbol#match? when matches the given regex returns true but does not set Regexp.last_match

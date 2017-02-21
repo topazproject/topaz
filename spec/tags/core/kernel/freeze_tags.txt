@@ -1,2 +1,6 @@
 fails:Kernel#freeze freezes immediate values
 fails:Kernel#freeze causes mutative calls to raise RuntimeError
+fails:Kernel#freeze on integers has no effect since they are already frozen
+fails:Kernel#freeze on a Float has no effect since it is already frozen
+fails:Kernel#freeze on a Symbol has no effect since it is already frozen
+fails:Kernel#freeze on true, false and nil has no effect since they are already frozen

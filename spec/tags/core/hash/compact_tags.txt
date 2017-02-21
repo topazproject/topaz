@@ -1,0 +1,6 @@
+fails:Hash#compact returns new object that rejects pair has nil value
+fails:Hash#compact keeps own pairs
+fails:Hash#compact! returns self
+fails:Hash#compact! rejects own pair has nil value
+fails:Hash#compact! when each pair does not have nil value returns nil
+fails:Hash#compact! on frozen instance keeps pairs and raises a RuntimeError

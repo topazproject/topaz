@@ -1,1 +1,2 @@
 fails:Time.now creates a time based on the current system time
+fails:Time.now creates a subclass instance if called on a subclass

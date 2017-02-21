@@ -32,3 +32,17 @@ fails:Kernel.exec with a single argument creates an argument array with shell pa
 fails:Kernel.exec with multiple arguments does not subject the arguments to shell expansion
 fails:Kernel.exec with a command array uses the first element as the command name and the second as the argv[0] value
 fails:Kernel.exec with a command array coerces the argument using to_ary
+fails:Kernel.exec with an options Hash with Integer option keys maps the key to a file descriptor in the child that inherits the file descriptor from the parent specified by the value
+fails:Kernel#exec with an options Hash with Integer option keys maps the key to a file descriptor in the child that inherits the file descriptor from the parent specified by the value
+fails:Kernel#exec flushes STDOUT upon exit when it's not set to sync
+fails:Kernel#exec flushes STDERR upon exit when it's not set to sync
+fails:Kernel#exec (environment variables) sets environment variables in the child environment
+fails:Kernel#exec (environment variables) unsets environment variables whose value is nil
+fails:Kernel#exec (environment variables) coerces environment argument using to_hash
+fails:Kernel#exec (environment variables) unsets other environment variables when given a true :unsetenv_others option
+fails:Kernel.exec flushes STDOUT upon exit when it's not set to sync
+fails:Kernel.exec flushes STDERR upon exit when it's not set to sync
+fails:Kernel.exec (environment variables) sets environment variables in the child environment
+fails:Kernel.exec (environment variables) unsets environment variables whose value is nil
+fails:Kernel.exec (environment variables) unsets other environment variables when given a true :unsetenv_others option
+fails:Kernel.exec (environment variables) coerces environment argument using to_hash

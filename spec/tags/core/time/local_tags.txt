@@ -45,3 +45,4 @@ fails:Time.local ignores fractional seconds if a passed fractional number of mic
 fails:Time.local creates the correct time just before dst change
 fails:Time.local creates the correct time just after dst change
 fails:Time.local handles years from 0 as such
+fails:Time.local timezone changes correctly adjusts the timezone change to 'CEST' on 'Europe/Amsterdam'

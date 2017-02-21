@@ -2,3 +2,4 @@ fails:Integer#round returns itself rounded if passed a negative value
 fails:Integer#round raises a RangeError when passed Float::INFINITY
 fails:Integer#round raises a RangeError when passed a beyond signed int
 fails:Integer#round raises a RangeError when passed a big negative value
+fails:Integer#round returns itself rounded to nearest if passed a negative value

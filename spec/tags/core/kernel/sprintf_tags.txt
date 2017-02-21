@@ -16,3 +16,5 @@ fails:Kernel#sprintf with negative values with format %b or %B precedes the numb
 fails:Kernel#sprintf passes some tests for positive %d
 fails:Kernel#sprintf returns a String in the same encoding as the format String
 fails:Kernel#sprintf returns a String in the argument encoding if format encoding is more restrictive
+fails:Kernel#sprintf passes some tests for infinite and nan
+fails:Kernel#sprintf returns a String in the same encoding as the format String if compatible

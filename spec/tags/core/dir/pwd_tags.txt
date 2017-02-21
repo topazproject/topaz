@@ -3,3 +3,6 @@ fails:Dir.pwd returns the current working directory
 fails:Dir.pwd returns a String with Encoding.default_external encoding
 fails:Dir.pwd does not transcode to Encoding.default_internal
 fails:Dir.pwd correctly handles dirs with unicode characters in them
+fails:Dir.pwd returns an absolute path
+fails:Dir.pwd returns an absolute path even when chdir to a relative path
+fails:Dir.pwd returns a String with the filesystem encoding

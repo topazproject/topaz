@@ -45,3 +45,4 @@ fails:Time.mktime ignores fractional seconds if a passed fractional number of mi
 fails:Time.mktime creates the correct time just before dst change
 fails:Time.mktime creates the correct time just after dst change
 fails:Time.mktime handles years from 0 as such
+fails:Time.mktime timezone changes correctly adjusts the timezone change to 'CEST' on 'Europe/Amsterdam'

@@ -59,3 +59,8 @@ fails:String#slice! with index, length returns the substring given by the charac
 fails:String#slice! Range returns the substring given by the character offsets of the range
 fails:String#slice! with Regexp returns the matching portion of self with a multi byte character
 fails:String#slice! with Regexp, index returns the encoding aware capture for the given index
+fails:String#slice with index, length raises a TypeError when idx or length can't be converted to an integer
+fails:String#slice! with index calls to_int on index
+fails:String#slice! with index, length treats invalid bytes as single bytes
+fails:String#slice! with Regexp, index accepts a Float for capture index
+fails:String#slice! with Regexp, index calls #to_int to convert an Object to capture index

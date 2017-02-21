@@ -36,3 +36,5 @@ fails:File.open opens the file when call with fd
 fails:File.open opens a file with a file descriptor d and a block
 fails:File.open truncates the file when passed File::TRUNC mode
 fails:File.open with a block does not propagate IOError with 'closed stream' message produced by close
+fails:File.open accepts extra flags as a keyword argument and combine with a string mode
+fails:File.open accepts extra flags as a keyword argument and combine with an integer mode

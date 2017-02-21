@@ -2,3 +2,6 @@ fails:Comparable#== when #<=> is not defined returns true for identical objects
 fails:Comparable#== when #<=> is not defined returns false and does not recurse infinitely
 fails:Comparable#== when #<=> calls super returns true for identical objects
 fails:Comparable#== when #<=> calls super calls the defined #<=> only once for different objects
+fails:Comparable#== when #<=> returns nor nil neither an Integer raises an ArgumentError
+fails:Comparable#== when #<=> raises an exception if it is a StandardError lets it go through
+fails:Comparable#== when #<=> raises an exception if it is a subclass of StandardError lets it go through

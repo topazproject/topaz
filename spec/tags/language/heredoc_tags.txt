@@ -3,3 +3,5 @@ fails:Heredoc string trims trailing newline character for blank HEREDOC with <<~
 fails:Heredoc string allows HEREDOC with <<~identifier, interpolated
 fails:Heredoc string allows HEREDOC with <<"identifier", interpolated
 fails:Heredoc string selects the least-indented line and removes its indentation from all the lines
+fails:Heredoc string allows HEREDOC with <<'identifier', no interpolation
+

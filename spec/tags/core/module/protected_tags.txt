@@ -4,3 +4,4 @@ fails:Module#protected makes a public Object instance method protected in Kernel
 fails:Module#protected is a private method
 fails:Module#protected without arguments affects method definitions when itself is inside an eval and method definitions are outside
 fails:Module#protected without arguments affects evaled method definitions when itself is outside the eval
+fails:Module#protected without arguments within a closure sets the visibility outside the closure

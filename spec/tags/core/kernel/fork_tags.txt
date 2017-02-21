@@ -1,1 +1,7 @@
 fails:Kernel#fork is a private method
+fails:Kernel#fork returns status zero
+fails:Kernel#fork returns status non-zero
+fails:Kernel#fork marks threads from the parent as killed
+fails:Kernel.fork returns status zero
+fails:Kernel.fork returns status non-zero
+fails:Kernel.fork marks threads from the parent as killed

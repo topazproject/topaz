@@ -1,1 +1,6 @@
 fails:Kernel#clone replaces a singleton object's metaclass with a new copy with the same superclass
+fails:Kernel#clone returns nil for NilClass
+fails:Kernel#clone returns true for TrueClass
+fails:Kernel#clone returns false for FalseClass
+fails:Kernel#clone returns the same Integer for Integer
+fails:Kernel#clone returns the same Symbol for Symbol

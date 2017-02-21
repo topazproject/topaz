@@ -1,2 +1,3 @@
 fails:Kernel#inspect returns a tainted string if self is tainted
 fails:Kernel#inspect returns an untrusted string if self is untrusted
+fails:Kernel#inspect does not call #to_s if it is defined

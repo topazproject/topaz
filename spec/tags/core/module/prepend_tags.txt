@@ -29,3 +29,4 @@ fails:Module#prepend clears any caches
 fails:Module#prepend supports super when the module is prepended into a singleton class
 fails:Module#prepend supports super when the module is prepended into a singleton class with a class super
 fails:Module#prepend does not interfere with a define_method super in the original class
+fails:Module#prepend doesn't accept no-arguments

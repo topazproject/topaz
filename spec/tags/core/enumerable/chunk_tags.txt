@@ -1,1 +1,3 @@
 fails:Enumerable#chunk returned Enumerator size returns nil
+fails:Enumerable#chunk returns an Enumerator if called without a block
+fails:Enumerable#chunk does not accept arguments

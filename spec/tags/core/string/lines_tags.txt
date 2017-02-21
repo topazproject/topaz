@@ -12,3 +12,4 @@ fails:String#lines raises a TypeError when the separator can't be converted to a
 fails:String#lines accepts a string separator
 fails:String#lines raises a TypeError when the separator is a symbol
 fails:String#lines returns an enumerator when no block given
+fails:String#lines returns an array when no block given

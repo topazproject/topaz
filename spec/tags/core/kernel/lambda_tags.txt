@@ -6,3 +6,4 @@ fails:Kernel.lambda checks the arity when 1 arg is specified
 fails:Kernel.lambda accepts 0 arguments when used with ||
 fails:Kernel.lambda strictly checks the arity when 0 or 2..inf args are specified
 fails:Kernel.lambda does not check the arity when passing a Proc with &
+fails:Kernel.lambda returned the passed Proc if given an existing Proc
