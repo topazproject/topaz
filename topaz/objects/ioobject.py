@@ -3,6 +3,7 @@ import os
 from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
+from topaz.modules.fcntl import fcntl
 from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
 from topaz.utils.filemode import map_filemode
@@ -268,3 +269,8 @@ class W_IOObject(W_Object):
     def method_isatty(self, space):
         self.ensure_not_closed(space)
         return space.newbool(os.isatty(self.fd))
+
+    @classdef.method("fcntl", cmd="int", arg="int")
+    def method_fcntl(self, space, cmd, arg=0):
+        fcntl(self.fd, cmd, arg)
+        return self
