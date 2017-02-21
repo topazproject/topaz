@@ -440,7 +440,7 @@ class Parser(object):
         else:
             return ast.ConstantFloat(float(s))
 
-    def _parse_rational(self, s):
+    def _parse_rational(self, s, lineno):
         return ast.Send(
             ast.LookupConstant(None, "Kernel", lineno),
             "Rational"
