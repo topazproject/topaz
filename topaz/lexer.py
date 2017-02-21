@@ -169,14 +169,24 @@ class Lexer(object):
             elif ch in "\r\n":
                 space_seen = newline_seen = True
                 self.newline(ch)
-                if self.state not in [self.EXPR_BEG, self.EXPR_DOT,
+
+                if (self.state not in [self.EXPR_BEG, self.EXPR_DOT,
                                       self.EXPR_VALUE, self.EXPR_FNAME,
-                                      self.EXPR_CLASS]:
-                    self.add("\n")
-                    while self.peek() in "\r\n ":
+                                      self.EXPR_CLASS] and self.label_state != self.EXPR_LABELED):
+                    while self.peek() in "\r\n \t\f\v":
                         ch = self.read()
                         if ch in "\r\n":
                             self.newline(ch)
+                    if self.peek() in "&.":
+                        space_seen = newline_seen = False
+                        ch = self.read()
+                        ch2 = self.peek()
+                        self.unread()
+                        if ch == "&" and ch2 != ".":
+                            pass
+                        else:
+                            continue
+                    self.add("\n")
                     self.command_start = True
                     self.state = self.EXPR_BEG
                     yield self.emit("LITERAL_NEWLINE")

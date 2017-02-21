@@ -2589,6 +2589,14 @@ HERE
             ast.Statement(ast.Send(ast.Send(ast.Self(2), "f", [], None, 2), "m", [], None, 3))
         ]))
 
+        r = space.parse("""
+        self.f
+            .m()
+        """)
+        assert r == ast.Main(ast.Block([
+            ast.Statement(ast.Send(ast.Send(ast.Self(2), "f", [], None, 2), "m", [], None, 3))
+        ]))
+
     def test_or_equal(self, space):
         r = space.parse("@a ||= 5")
         assert r == ast.Main(ast.Block([
