@@ -17,7 +17,7 @@ USAGE = "\n".join([
     """Usage: topaz [switches] [--] [programfile] [arguments]""",
     # """  -0[octal]       specify record separator (\0, if no argument)""",
     # """  -a              autosplit mode with -n or -p (splits $_ into $F)""",
-    # """  -c              check syntax only""",
+    """  -c              check syntax only""",
     # """  -Cdirectory     cd to directory, before executing your script""",
     """  -d              set debugging flags (set $DEBUG to true)""",
     """  -e 'command'    one line of script. Several -e's allowed. Omit [programfile]""",
@@ -113,6 +113,7 @@ def _parse_argv(space, argv):
     reqs = []
     load_path_entries = []
     jit_params = None
+    syntax_check = False
     argv_w = []
     idx = 1
     while idx < len(argv):
@@ -170,6 +171,8 @@ def _parse_argv(space, argv):
         elif arg == "-p":
             do_loop = True
             flag_globals_w["$-p"] = space.w_true
+        elif arg == "-c":
+            syntax_check = True
         elif arg == "--":
             idx += 1
             break
@@ -208,6 +211,7 @@ def _parse_argv(space, argv):
         reqs,
         load_path_entries,
         jit_params,
+        syntax_check,
         argv_w
     )
 
@@ -241,6 +245,7 @@ def _entry_point(space, argv):
             reqs,
             load_path_entries,
             jit_params,
+            syntax_check,
             argv_w
         ) = _parse_argv(space, argv)
     except ShortCircuitError as e:
@@ -331,6 +336,8 @@ def _entry_point(space, argv):
                     w_res = space.execute_frame(frame, bc)
                     if print_after:
                         space.send(space.w_kernel, "print", [w_res])
+        elif syntax_check:
+            space.compile(source, path)
         else:
             space.execute(source, filepath=path)
     except RubyError as e:
