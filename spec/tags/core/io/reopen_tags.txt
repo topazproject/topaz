@@ -1,0 +1,9 @@
+fails:IO#reopen changes the class of the instance to the class of the object returned by #to_io
+fails:IO#reopen with a String does not raise an exception when called on a closed stream with a path
+fails:IO#reopen with a String passes all mode flags through
+fails:IO#reopen with a String affects exec/system/fork performed after it
+fails:IO#reopen with a String opens a path after writing to the original file descriptor
+fails:IO#reopen with a String creates the file if it doesn't exist if the IO is opened in write mode
+fails:IO#reopen with an IO at EOF resets the EOF status to false
+fails:IO#reopen with an IO may change the class of the instance
+fails:IO#reopen with an IO sets path equals to the other IO's path if other IO is File

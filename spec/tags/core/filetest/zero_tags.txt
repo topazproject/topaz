@@ -1,0 +1,1 @@
+fails:FileTest.zero? returns false for a directory
