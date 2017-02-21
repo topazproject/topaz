@@ -6,14 +6,7 @@ class MSpecScript
   MSpec.enable_feature :fork
   MSpec.enable_feature :encoding
 
-  core = [
-    "#{Rubyspec}/core/",
-    # Struct: ``Struct.new(:field)``
-    "^#{Rubyspec}/core/string/chomp_spec.rb",
-    # timeout: ``require 'timeout'``
-    "^#{Rubyspec}/core/process/detach_spec.rb",
-    # GC: ``GC``
-    "^#{Rubyspec}/core/gc/profiler/",
+  core = [ "#{Rubyspec}/core/",
     # openssl: ``require 'openssl'``
     "^#{Rubyspec}/core/marshal/dump_spec.rb",
     # openssl: ``require 'openssl'``
@@ -26,11 +19,6 @@ class MSpecScript
     "^#{Rubyspec}/core/io/reopen_spec.rb",
     # socket: ``require 'socket'``
     "^#{Rubyspec}/core/file/socket_spec.rb",
-    # rubyspecs/core/io/fixtures/file_types:
-    #   `find /dev /devices -type b` returns nil
-    #   -> NoMethodError: undefined method `split' for NilClass
-    "^#{Rubyspec}/core/file/ftype_spec.rb",
-    "^#{Rubyspec}/core/file/stat/ftype_spec.rb",
     # Rational: ``Rational(2, 3)``
     "^#{Rubyspec}/core/numeric/to_c_spec.rb",
   ]
