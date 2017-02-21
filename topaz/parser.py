@@ -431,7 +431,7 @@ class Parser(object):
             node = ast.ConstantString(const_str)
         return BoxAST(node)
 
-    def _parse_rational(self, s):
+    def _parse_numeric_string(self, s):
         ls = list(s)
         ls.pop()
         s = "".join(ls)
@@ -440,8 +440,23 @@ class Parser(object):
         else:
             return ast.ConstantFloat(float(s))
 
-    def _parse_imaginary(self, s):
-        return self._parse_rational(s)
+    def _parse_rational(self, s):
+        return ast.Send(
+            ast.LookupConstant(None, "Kernel", lineno),
+            "Rational"
+            [self._parse_numeric_string(s)],
+            None,
+            lineno
+        )
+
+    def _parse_imaginary(self, s, lineno):
+        return ast.Send(
+            ast.LookupConstant(None, "Kernel", lineno),
+            "Complex"
+            [self._parse_numeric_string(s)],
+            None,
+            lineno
+        )
 
     def _parse_int(self, s):
         if "X" in s:
@@ -2643,11 +2658,17 @@ class Parser(object):
 
     @pg.production("simple_numeric : RATIONAL")
     def simple_numeric_rational(self, p):
-        return BoxNumericAST(self._parse_rational(p[0].getstr()))
+        return BoxNumericAST(self._parse_rational(
+            p[0].getstr(),
+            p[0].getsourcepos().lineno
+        ))
 
     @pg.production("simple_numeric : IMAGINARY")
     def simple_numeric_imaginary(self, p):
-        return BoxNumericAST(self._parse_imaginary(p[0].getstr()))
+        return BoxNumericAST(self._parse_imaginary(
+            p[0].getstr(),
+            p[0].getsourcepos().lineno
+        ))
 
     @pg.production("user_variable : IDENTIFIER")
     def variable_identifier(self, p):
