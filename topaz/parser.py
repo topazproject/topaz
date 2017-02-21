@@ -443,7 +443,7 @@ class Parser(object):
     def _parse_rational(self, s, lineno):
         return ast.Send(
             ast.LookupConstant(None, "Kernel", lineno),
-            "Rational"
+            "Rational",
             [self._parse_numeric_string(s)],
             None,
             lineno
@@ -452,7 +452,7 @@ class Parser(object):
     def _parse_imaginary(self, s, lineno):
         return ast.Send(
             ast.LookupConstant(None, "Kernel", lineno),
-            "Complex"
+            "Complex",
             [self._parse_numeric_string(s)],
             None,
             lineno

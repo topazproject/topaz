@@ -144,7 +144,8 @@ class Lexer(object):
                 if toktype == "STRING_END":
                     if (((self.state in [self.EXPR_BEG, self.EXPR_ENDFN] and self.condition_state.is_in_state()) or self.is_arg()) and
                         self.is_label_suffix()):
-                        tok = "LABEL_END"
+                        tok = self.emit("LABEL_END")
+                toktype = tok.gettokentype()
                 if toktype in ["STRING_END", "REGEXP_END", "LABEL_END"]:
                     self.str_term = None
                     if toktype == "LABEL_END":
