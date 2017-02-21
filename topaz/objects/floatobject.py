@@ -242,7 +242,10 @@ class W_FloatObject(W_RootObject):
                 if x == 1.0:
                     return space.newfloat(1.0)
                 elif x < 0.0:
-                    raise NotImplementedError("Complex numbers as results")
+                    raise space.error(
+                        space.w_NotImplementedError,
+                        "Complex numbers as results"
+                    )
                 else:
                     return space.newfloat(y)
             elif math.isinf(y):

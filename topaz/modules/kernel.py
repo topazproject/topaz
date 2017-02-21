@@ -183,7 +183,10 @@ class Kernel(object):
             w_exc = space.send(w_exception, "exception")
 
         if w_array is not None:
-            raise NotImplementedError("custom backtrace for Kernel#raise")
+            raise space.error(
+                space.w_NotImplementedError,
+                "custom backtrace for Kernel#raise"
+            )
 
         if not isinstance(w_exc, W_ExceptionObject):
             raise space.error(space.w_TypeError,

@@ -33,6 +33,7 @@ load_bootstrap.call("thread.rb")
 load_bootstrap.call("time.rb")
 load_bootstrap.call("top_self.rb")
 load_bootstrap.call("method.rb")
+load_bootstrap.call("rational.rb")
 
 # ffi
 load_bootstrap.call("ffitopaz/pointer.rb")

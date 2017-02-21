@@ -592,7 +592,10 @@ class W_StringObject(W_Object):
                     start_idx = ctx.match_start
                     end_idx = ctx.match_end
                 elif space.is_kind_of(w_count, space.w_string):
-                    raise NotImplementedError
+                    raise space.error(
+                        space.w_NotImplementedError,
+                        "string subscript replace with regexp and named group"
+                    )
                 else:
                     groupnum = Coerce.int(space, w_count)
                     try:
@@ -808,9 +811,8 @@ class W_StringObject(W_Object):
                         begin, end = w_match.get_span(num)
                         begin += last
                         end += last
-                        assert begin >= 0
-                        assert end >= 0
-                        results_w.append(space.newstr_fromstr(string[begin:end]))
+                        if begin >= 0 and end >= 0:
+                            results_w.append(space.newstr_fromstr(string[begin:end]))
                     last = ctx.match_end
                 n += 1
                 ctx.reset(last)
@@ -1022,10 +1024,13 @@ class W_StringObject(W_Object):
 
     @classdef.method("%")
     def method_mod(self, space, w_arg):
-        if space.is_kind_of(w_arg, space.w_array):
-            args_w = space.listview(w_arg)
-        else:
+        w_listarg = space.convert_type(
+            w_arg, space.w_array, "to_ary", raise_error=False
+        )
+        if w_listarg is space.w_nil:
             args_w = [w_arg]
+        else:
+            args_w = space.listview(w_listarg)
         elements_w = StringFormatter(space.str_w(self), args_w).format(space)
         return space.newstr_fromstrs(elements_w)
 
@@ -1142,7 +1147,10 @@ class W_StringObject(W_Object):
 
     def gsub_main(self, space, w_pattern, w_replacement, block, first_only):
         if w_replacement is None and block is None:
-            raise NotImplementedError("gsub enumerator")
+            raise space.error(
+                space.w_NotImplementedError,
+                "gsub enumerator"
+            )
 
         w_hash = None
         replacement = None

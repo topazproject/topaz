@@ -40,11 +40,17 @@ class StringFormatter(object):
             i += 1
             for c, postfix in FORMAT_CHARS:
                 if c == format_char:
-                    w_res = getattr(self, "fmt_" + postfix)(space, width)
+                    try:
+                        w_res = getattr(self, "fmt_" + postfix)(space, width)
+                    except IndexError:
+                        raise space.error(
+                            space.w_ArgumentError,
+                            "too many format specifiers"
+                        )
                     result_w.append(w_res)
                     break
             else:
-                raise NotImplementedError(format_char)
+                raise space.error(space.w_NotImplementedError)
         return result_w
 
     def _next_item(self):
