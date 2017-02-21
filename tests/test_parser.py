@@ -2541,6 +2541,16 @@ HERE
         assert r == ast.Main(ast.Block([
             ast.Statement(ast.OrEqual(ast.Variable("x", 2), ast.Hash([])))
         ]))
+        assert space.parse("{begin: 1, end: 2, self: 3, nil: 4, true: 5, false: 6}") == ast.Main(ast.Block([
+            ast.Statement(ast.Hash([
+                (ast.ConstantSymbol("begin"), ast.ConstantInt(1)),
+                (ast.ConstantSymbol("end"), ast.ConstantInt(2)),
+                (ast.ConstantSymbol("self"), ast.ConstantInt(3)),
+                (ast.ConstantSymbol("nil"), ast.ConstantInt(4)),
+                (ast.ConstantSymbol("true"), ast.ConstantInt(5)),
+                (ast.ConstantSymbol("false"), ast.ConstantInt(6)),
+            ]))
+        ]))
 
     def test_new_hash(self, space):
         r = space.parse("{a: 2, :b => 3, c: 4}")
