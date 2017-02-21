@@ -498,6 +498,7 @@ class Parser(object):
         "QWORDS_BEG", "STRING_DBEG", "STRING_DVAR", "STRING_END", "LAMBDA",
         "LAMBEG", "NTH_REF", "BACK_REF", "STRING_CONTENT", "INTEGER", "FLOAT",
         "REGEXP_END", "SYMBOLS_BEG", "QSYMBOLS_BEG", "RATIONAL", "IMAGINARY",
+        "LABEL_END",
 
         "LITERAL_EQUAL", "LITERAL_COLON", "LITERAL_COMMA", "LITERAL_LBRACKET",
         "LITERAL_SEMICOLON", "LITERAL_QUESTION_MARK", "LITERAL_SPACE",
@@ -1864,6 +1865,7 @@ class Parser(object):
     @pg.production("singleton_method_post_fname : ")
     def singleton_method_post_fname(self, p):
         self.lexer.state = self.lexer.EXPR_ENDFN
+        self.lexer.label_state = self.lexer.EXPR_LABEL
 
     @pg.production("primary : BREAK")
     def primary_break(self, p):
@@ -2749,11 +2751,15 @@ class Parser(object):
         self.lexer.command_start = True
         return p[1]
 
-    @pg.production("f_arglist : f_args term")
+    @pg.production("f_arglist : PRE_F_ARGLIST_LABEL_STATE f_args term")
     def f_arglist(self, p):
         self.lexer.state = self.lexer.EXPR_BEG
         self.lexer.command_start = True
-        return p[0]
+        return p[1]
+
+    @pg.production("PRE_F_ARGLIST_LABEL_STATE : ")
+    def pre_args_arglist_fargs_term(self, p):
+        self.lexer.label_state = self.lexer.EXPR_LABEL
 
     @pg.production("args_tail : f_kwarg LITERAL_COMMA f_kwrest opt_f_block_arg")
     def args_tail_kwarg_kwrest_block(self, p):
@@ -3048,6 +3054,7 @@ class Parser(object):
     def singleton_var_ref(self, p):
         return p[0]
 
+    @pg.production("singleton : LPAREN2 SINGLETON_SET_LEX_STATE expr rparen")
     @pg.production("singleton : LPAREN SINGLETON_SET_LEX_STATE expr rparen")
     def singleton_paren(self, p):
         if p[2] is None:
@@ -3085,7 +3092,7 @@ class Parser(object):
     def assoc_label(self, p):
         return self.append_to_list(self.new_list(self.new_symbol(p[0])), p[1])
 
-    @pg.production("assoc : STRING_BEG string_contents STRING_END arg_value")
+    @pg.production("assoc : STRING_BEG string_contents LABEL_END arg_value")
     def assoc_string_contents(self, p):
         return self.append_to_list(self.new_list(self.new_symbol(p[1])), p[1])
 
