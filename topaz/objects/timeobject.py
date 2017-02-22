@@ -54,8 +54,9 @@ class W_TimeObject(W_Object):
             minute = Coerce.int(space, args_w[1])
             hour = Coerce.int(space, args_w[2])
             day = Coerce.int(space, args_w[3])
-            W_TimeObject.month_arg_to_month(space, args_w[4])
+            month = W_TimeObject.month_arg_to_month(space, args_w[4])
             year = Coerce.int(space, args_w[5])
+            usecfrac = 0.0
         else:
             month = day = 1
             hour = minute = sec = 0
@@ -89,6 +90,7 @@ class W_TimeObject(W_Object):
             raise space.error(space.w_ArgumentError, "argument out of range")
 
         w_time = space.send(space.getclassfor(W_TimeObject), "new")
+        sec = sec + time.timezone
         w_time._set_epoch_seconds(mktime(year, month, day, hour, minute, sec) + usecfrac)
         return w_time
 
@@ -99,7 +101,7 @@ class W_TimeObject(W_Object):
             month = Coerce.int(space, w_arg)
         else:
             try:
-                month = MONTHNAMES.index(space.str_w(w_month))
+                month = MONTHNAMES.index(space.str_w(w_month)) + 1
             except IndexError:
                 raise space.error(
                     space.w_ArgumentError,
@@ -164,7 +166,10 @@ class W_TimeObject(W_Object):
     def method_to_a(self, space):
         tp = gmtime(int(self.epoch_seconds))
         tp_w = [space.newint(f) for f in tp]
-        tp_w.append(space.newstr_fromstr("UNKNOWN"))
+        if self.offset == 0:
+            tp_w.append(space.newstr_fromstr("UTC"))
+        else:
+            tp_w.append(space.newstr_fromstr(strftime("%Z", self.epoch_seconds)))
         return space.newarray(tp_w)
 
     @classdef.method("utc?")
