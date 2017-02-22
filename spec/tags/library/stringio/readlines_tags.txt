@@ -1,0 +1,13 @@
+fails:StringIO#readlines when passed [separator] returns an Array containing lines based on the passed separator
+fails:StringIO#readlines when passed [separator] updates self's position based on the number of read bytes
+fails:StringIO#readlines when passed [separator] updates self's lineno based on the number of read lines
+fails:StringIO#readlines when passed [separator] does not change $_
+fails:StringIO#readlines when passed [separator] returns an Array containing all paragraphs when the passed separator is an empty String
+fails:StringIO#readlines when passed [separator] returns the remaining content as one line starting at the current position when passed nil
+fails:StringIO#readlines when passed [separator] tries to convert the passed separator to a String using #to_str
+fails:StringIO#readlines when passed no argument returns an Array containing lines based on $/
+fails:StringIO#readlines when passed no argument updates self's position based on the number of read bytes
+fails:StringIO#readlines when passed no argument updates self's lineno based on the number of read lines
+fails:StringIO#readlines when passed no argument does not change $_
+fails:StringIO#readlines when passed no argument returns an empty Array when self is at the end
+fails:StringIO#readlines when in write-only mode raises an IOError

@@ -1,0 +1,2 @@
+fails:StringIO#lineno returns the number of lines read
+fails:StringIO#lineno= sets the current line number, but has no impact on the position

@@ -1,0 +1,1 @@
+fails:StringIO#binmode returns self

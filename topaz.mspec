@@ -6,9 +6,12 @@ class MSpecScript
   MSpec.enable_feature :fork
   MSpec.enable_feature :encoding
 
-  core = [ "#{Rubyspec}/core/",
-    # socket: ``require 'socket'``
-    "^#{Rubyspec}/core/file/socket_spec.rb",
+  core = [
+      "#{Rubyspec}/core/",
+      # socket: ``require 'socket'``
+      "^#{Rubyspec}/core/file/socket_spec.rb",
+      # socket: ``require 'etc'``
+      "^#{Rubyspec}/core/io/advise_spec.rb",
   ]
 
   language = ["#{Rubyspec}/language"]

@@ -1,0 +1,4 @@
+fails:StringIO#readchar correctly updates the current position
+fails:StringIO#readchar raises an EOFError when self is at the end
+fails:StringIO#readchar reads the next 8-bit byte from self's current position
+fails:StringIO#readchar when self is not readable raises an IOError

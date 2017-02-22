@@ -1,0 +1,3 @@
+fails:Thread::SizedQueue#push adds an element to the Queue
+fails:Thread::SizedQueue#push blocks if queued elements exceed size
+fails:Thread::SizedQueue#push raises a ThreadError if queued elements exceed size when not blocking

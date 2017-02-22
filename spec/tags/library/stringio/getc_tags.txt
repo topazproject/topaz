@@ -1,0 +1,5 @@
+fails:StringIO#getc increases self's position by one
+fails:StringIO#getc returns nil when called at the end of self
+fails:StringIO#getc does not increase self's position when called at the end of file
+fails:StringIO#getc returns the charactor at the current position
+fails:StringIO#getc when self is not readable raises an IOError

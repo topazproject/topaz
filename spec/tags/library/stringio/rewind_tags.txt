@@ -1,0 +1,3 @@
+fails:StringIO#rewind returns 0
+fails:StringIO#rewind resets the position
+fails:StringIO#rewind resets the line number

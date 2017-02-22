@@ -1,0 +1,7 @@
+fails:StringIO#string returns the underlying string
+fails:StringIO#string= returns the passed String
+fails:StringIO#string= changes the underlying string
+fails:StringIO#string= resets the position
+fails:StringIO#string= resets the line number
+fails:StringIO#string= tries to convert the passed Object to a String using #to_str
+fails:StringIO#string= raises a TypeError when the passed Object can't be converted to an Integer

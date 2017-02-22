@@ -1,0 +1,7 @@
+fails:StringIO#sysread when passed no arguments reads the whole content starting from the current position
+fails:StringIO#sysread when passed no arguments correctly updates the current position
+fails:StringIO#sysread when passed no arguments returns an empty String if at EOF
+fails:StringIO#sysread when self is not readable raises an IOError
+fails:StringIO#sysread when passed nil returns an empty String if at EOF
+fails:StringIO#sysread when passed [length] raises an EOFError when self's position is at the end
+fails:StringIO#sysread when passed [length] returns an empty String when length is 0

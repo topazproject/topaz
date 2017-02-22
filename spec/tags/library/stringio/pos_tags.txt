@@ -1,0 +1,4 @@
+fails:StringIO#pos returns the current byte offset
+fails:StringIO#pos= updates the current byte offset
+fails:StringIO#pos= raises an EINVAL if given a negative argument
+fails:StringIO#pos= updates the current byte offset after reaching EOF

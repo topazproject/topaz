@@ -1,0 +1,2 @@
+fails:StringIO#eof? returns true when self's position is greater than or equal to self's size
+fails:StringIO#eof? returns false when self's position is less than self's size

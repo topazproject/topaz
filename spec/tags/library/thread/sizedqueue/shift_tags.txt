@@ -1,0 +1,4 @@
+fails:Thread::SizedQueue#shift removes an item from the Queue
+fails:Thread::SizedQueue#shift returns items in the order they were added
+fails:Thread::SizedQueue#shift blocks the thread until there are items in the queue
+fails:Thread::SizedQueue#shift raises a ThreadError if Queue is empty

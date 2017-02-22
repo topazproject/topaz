@@ -1,0 +1,4 @@
+fails:Thread::Queue#deq removes an item from the Queue
+fails:Thread::Queue#deq returns items in the order they were added
+fails:Thread::Queue#deq blocks the thread until there are items in the queue
+fails:Thread::Queue#deq raises a ThreadError if Queue is empty

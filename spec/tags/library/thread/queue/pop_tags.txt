@@ -1,0 +1,4 @@
+fails:Thread::Queue#pop removes an item from the Queue
+fails:Thread::Queue#pop returns items in the order they were added
+fails:Thread::Queue#pop blocks the thread until there are items in the queue
+fails:Thread::Queue#pop raises a ThreadError if Queue is empty

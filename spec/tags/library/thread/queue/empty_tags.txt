@@ -1,0 +1,2 @@
+fails:Thread::Queue#empty? returns true on an empty Queue
+fails:Thread::Queue#empty? returns false when Queue is not empty

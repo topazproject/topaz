@@ -1,0 +1,16 @@
+fails:StringIO#read_nonblock when passed length, buffer returns the passed buffer String
+fails:StringIO#read_nonblock when passed length, buffer reads length bytes and writes them to the buffer String
+fails:StringIO#read_nonblock when passed length, buffer tries to convert the passed buffer Object to a String using #to_str
+fails:StringIO#read_nonblock when passed length, buffer raises a TypeError when the passed buffer Object can't be converted to a String
+fails:StringIO#read_nonblock when passed length, buffer raises an error when passed a frozen String as buffer
+fails:StringIO#read_nonblock when passed length reads length bytes from the current position and returns them
+fails:StringIO#read_nonblock when passed length reads at most the whole content
+fails:StringIO#read_nonblock when passed length correctly updates the position
+fails:StringIO#read_nonblock when passed length tries to convert the passed length to an Integer using #to_int
+fails:StringIO#read_nonblock when passed length raises a TypeError when the passed length can't be converted to an Integer
+fails:StringIO#read_nonblock when passed length raises a TypeError when the passed length is negative
+fails:StringIO#read_nonblock when passed length returns a binary String
+fails:StringIO#read_nonblock when passed nil returns the remaining content from the current position
+fails:StringIO#read_nonblock when passed nil updates the current position
+fails:StringIO#read_nonblock when passed length returns an empty String when passed 0 and no data remains
+fails:StringIO#read_nonblock when passed length raises an EOFError when passed length > 0 and no data remains
