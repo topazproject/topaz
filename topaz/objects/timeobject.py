@@ -27,6 +27,25 @@ class W_TimeObject(W_Object):
     def method_now(self, space):
         return space.send(self, "new")
 
+    @classdef.singleton_method("new")
+    def method_now(self, space, args_w):
+        if len(args_w) > 7:
+            raise space.error(
+                space.w_ArgumentError,
+                "wrong number of arguments (given %d, expected 0..7)" % len(args_w)
+            )
+        if len(args_w) > 6:
+            utc_offset = Coerce.int(space, args_w.pop())
+            w_time = space.send(self, "gm", args_w)
+            w_time._set_offset(utc_offset)
+            return w_time
+        elif len(args_w) > 1:
+            return space.send(self, "gm", args_w)
+        else:
+            w_time = space.send(self, "allocate")
+            space.send(w_time, "initialize")
+            return w_time
+
     @classdef.singleton_method("at")
     def method_at(self, space, w_time, w_microtime=None):
         if not (w_time.is_kind_of(space, space.w_numeric) or
@@ -62,20 +81,20 @@ class W_TimeObject(W_Object):
             hour = minute = sec = 0
             usecfrac = 0.0
             year = Coerce.int(space, args_w[0])
-            if len(args_w) > 2:
+            if len(args_w) > 1:
                 month = W_TimeObject.month_arg_to_month(space, args_w[1])
-            if len(args_w) > 3:
+            if len(args_w) > 2:
                 day = Coerce.int(space, args_w[2])
-            if len(args_w) > 4:
+            if len(args_w) > 3:
                 hour = Coerce.int(space, args_w[3])
-            if len(args_w) > 5:
+            if len(args_w) > 4:
                 minute = Coerce.int(space, args_w[4])
-            if len(args_w) > 7:
+            if len(args_w) > 6:
                 sec = Coerce.int(space, args_w[5])
                 usecfrac = Coerce.float(space, args_w[6]) / 1000000
-            if len(args_w) > 6:
+            if len(args_w) > 5:
                 fsec = Coerce.float(space, args_w[5])
-                sec = math.floor(fsec)
+                sec = int(math.floor(fsec))
                 usecfrac = fsec - sec
 
         if not (1 <= month < 12):
@@ -90,7 +109,6 @@ class W_TimeObject(W_Object):
             raise space.error(space.w_ArgumentError, "argument out of range")
 
         w_time = space.send(space.getclassfor(W_TimeObject), "new")
-        sec = sec + time.timezone
         w_time._set_epoch_seconds(mktime(year, month, day, hour, minute, sec) + usecfrac)
         return w_time
 
@@ -102,7 +120,7 @@ class W_TimeObject(W_Object):
         else:
             try:
                 month = MONTHNAMES.index(space.str_w(w_month)) + 1
-            except IndexError:
+            except ValueError:
                 raise space.error(
                     space.w_ArgumentError,
                     "mon out of range"
