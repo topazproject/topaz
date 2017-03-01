@@ -70,6 +70,7 @@ def getspace(config):
 def get_topaz_config_options():
     return {
         "translation.continuation": True,
+        "translation.jit_opencoder_model": "big",
     }
 
 
@@ -322,7 +323,18 @@ def _entry_point(space, argv):
     explicit_status = False
     jit.set_param(None, "trace_limit", 16000)
     if jit_params:
-        jit.set_user_param(None, jit_params)
+        # Work around TraceLimitTooHigh by setting any trace_limit explicitly
+        parts = jit_params.split(",")
+        limitidx = -1
+        for i, s in enumerate(parts):
+            if "trace_limit" in s:
+                limitidx = i
+                break
+        if limitidx >= 0:
+            limit = parts.pop(limitidx)
+            jit.set_param(None, "trace_limit", int(limit.split("=")[1]))
+        if len(parts) > 0:
+            jit.set_user_param(None, ",".join(parts))
     try:
         if do_loop:
             print_after = space.is_true(flag_globals_w["$-p"])
