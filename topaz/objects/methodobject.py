@@ -1,3 +1,5 @@
+from rpython.rlib import jit
+
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
 
@@ -33,6 +35,7 @@ def create_source_location(classdef):
 
 
 class W_MethodObject(W_Object):
+    _immutable_fields_ = ["w_owner", "w_function", "w_receiver"]
     classdef = ClassDef("Method", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function, w_receiver):
@@ -50,6 +53,7 @@ class W_MethodObject(W_Object):
     @classdef.method("[]")
     @classdef.method("call")
     def method_call(self, space, args_w, block):
+        self = jit.promote(self)
         return space.invoke_function(
             self.w_function,
             self.w_receiver,
@@ -80,6 +84,7 @@ class W_MethodObject(W_Object):
 
 
 class W_UnboundMethodObject(W_Object):
+    _immutable_fields_ = ["w_owner", "w_function"]
     classdef = ClassDef("UnboundMethod", W_Object.classdef)
 
     def __init__(self, space, w_owner, w_function):
