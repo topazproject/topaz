@@ -118,7 +118,7 @@ class IO
 
   def self.popen(cmd, mode = 'r', opts = {}, &block)
     r, w = IO.pipe
-    if mode != 'r' && mode != 'w'
+    if mode != 'r' && mode != 'w' && mode != 'rb' && mode != 'wb'
       raise NotImplementedError.new("mode #{mode} for IO.popen")
     end
 
