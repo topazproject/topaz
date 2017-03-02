@@ -1,6 +1,6 @@
 import os
 
-from rpython.rlib.rpoll import POLLIN
+from rpython.rlib.rpoll import POLLIN, PollError
 
 from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
@@ -288,7 +288,7 @@ class W_IOObject(W_Object):
     def method_ready(self, space):
         retval = None
         try:
-            retval = poll({self.fd: POLLIN})
+            retval = poll({self.fd: POLLIN}, 0)
         except PollError:
             return space.w_nil
         return space.newbool(len(retval) > 0)
