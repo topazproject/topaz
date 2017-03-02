@@ -13,5 +13,9 @@ module FFI
       end
       raise NoMethodError.new("undefined method `#{meth_name}' for #{self}")
     end
+
+    def write_array_of_uint32(ary)
+      write_string(ary.pack("L#{ary.size}"))
+    end
   end
 end
