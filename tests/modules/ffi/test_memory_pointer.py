@@ -30,3 +30,15 @@ class TestMemoryPointer__new(BaseFFITest):
         expected = adr2int(ptr2adr(w_mem_ptr.ptr))
         actual = self.unwrap(space, w_address)
         assert expected == actual
+
+    def test_it_lets_you_read_and_write(self, space):
+        w_results = space.execute("""
+        str = "hel\\0lo"
+        sz = str.size
+        mem_ptr = FFI::MemoryPointer.new(:int8, sz)
+        mem_ptr.put_bytes(0, str, 0, sz)
+        [mem_ptr.get_bytes(0, sz), mem_ptr.get_string(0)]
+        """)
+        w_allbytes, w_firstbytes = space.listview(w_results)
+        assert self.unwrap(space, w_allbytes) == "hel\0lo"
+        assert self.unwrap(space, w_firstbytes) == "hel"

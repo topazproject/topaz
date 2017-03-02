@@ -30,3 +30,27 @@ class W_MemoryPointerObject(W_PointerObject):
                                self.sizeof_memory,
                                flavor='raw', zero=True)
         self.ptr = rffi.cast(rffi.VOIDP, memory)
+
+    @classdef.method("put_bytes", start='int', string='str', str_offset='int', nbytes='int')
+    def method_put_bytes(self, space, start, string, str_offset, nbytes):
+        with rffi.scoped_view_charp(string) as cstring:
+            rffi.c_memcpy(
+                rffi.ptradd(self.ptr, start),
+                rffi.cast(rffi.VOIDP, rffi.ptradd(cstring, str_offset)),
+                nbytes
+            )
+
+    @classdef.method("get_bytes", start='int', nbytes='int')
+    def method_get_bytes(self, space, start, nbytes):
+        return space.newstr_fromstr(
+            rffi.charpsize2str(
+                rffi.cast(rffi.CCHARP, rffi.ptradd(self.ptr, start)),
+                nbytes
+            )
+        )
+
+    @classdef.method("get_string", start='int')
+    def method_get_string(self, space, start):
+        return space.newstr_fromstr(
+            rffi.charp2str(rffi.cast(rffi.CCHARP, rffi.ptradd(self.ptr, start)))
+        )
