@@ -4,6 +4,7 @@ import sys
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rtermios import tcsetattr, tcgetattr, all_constants
 
+from topaz.error import error_for_oserror
 from topaz.module import ModuleDef
 from topaz.objects.classobject import W_ClassObject
 
@@ -14,8 +15,9 @@ class Topaz(object):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         space.set_const(w_mod, "FIXNUM_MAX", space.newint(sys.maxint))
-        w_termioconsts = space.newclass("TermIOConstants", None)
-        for name, value in all_constants:
+        w_termioconsts = space.newmodule("TermIOConstants", None)
+        space.set_const(w_mod, "TermIOConstants", w_termioconsts)
+        for name, value in all_constants.iteritems():
             space.set_const(w_termioconsts, name, space.newint(value))
 
     @moduledef.function("intmask")
@@ -62,7 +64,7 @@ class Topaz(object):
         try:
             tcsetattr(fd, when, mode)
         except OSError as e:
-            raise space.error_for_oserror(e)
+            raise error_for_oserror(space, e)
         return self
 
     @moduledef.function("tcgetattr", fd="int")
@@ -70,7 +72,7 @@ class Topaz(object):
         try:
             mode = tcgetattr(fd)
         except OSError as e:
-            raise space.error_for_oserror(e)
+            raise error_for_oserror(space, e)
         mode_w = [
             space.newint(mode[0]), # iflag
             space.newint(mode[1]), # oflag
@@ -78,6 +80,6 @@ class Topaz(object):
             space.newint(mode[3]), # lflag
             space.newint(mode[4]), # ispeed
             space.newint(mode[5]), # ospeed
-            space.newarray([space.newstr_fromstr(cc) in mode[6]])
+            space.newarray([space.newstr_fromstr(cc) for cc in mode[6]])
         ]
         return space.newarray(mode_w)
