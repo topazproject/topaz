@@ -50,7 +50,7 @@ class StringFormatter(object):
                     result_w.append(w_res)
                     break
             else:
-                raise space.error(space.w_NotImplementedError)
+                raise space.error(space.w_NotImplementedError, "%%%s" % format_char)
         return result_w
 
     def _next_item(self):
