@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import sys
 
 from rpython.rlib.rarithmetic import intmask
+from rpython.rlib.rtermios import tcsetattr, tcgetattr, all_constants
 
 from topaz.module import ModuleDef
 from topaz.objects.classobject import W_ClassObject
@@ -13,6 +14,9 @@ class Topaz(object):
     @moduledef.setup_module
     def setup_module(space, w_mod):
         space.set_const(w_mod, "FIXNUM_MAX", space.newint(sys.maxint))
+        w_termioconsts = space.newclass("TermIOConstants", None)
+        for name, value in all_constants:
+            space.set_const(w_termioconsts, name, space.newint(value))
 
     @moduledef.function("intmask")
     def method_intmask(self, space, w_int):
@@ -42,3 +46,38 @@ class Topaz(object):
     def method_infect(self, space, w_dest, w_src, taint=True, untrust=True, freeze=False):
         space.infect(w_dest, w_src, taint=taint, untrust=untrust, freeze=freeze)
         return self
+
+    @moduledef.function("tcsetattr", fd="int", when="int", mode_w="array")
+    def method_tcsetattr(self, space, fd, when, mode_w):
+        cc = [space.str_w(w_char) for w_char in space.listview(mode_w[6])]
+        mode = (
+            space.int_w(mode_w[0]), # iflag
+            space.int_w(mode_w[1]), # oflag
+            space.int_w(mode_w[2]), # cflag
+            space.int_w(mode_w[3]), # lflag
+            space.int_w(mode_w[4]), # ispeed
+            space.int_w(mode_w[5]), # ospeed
+            cc
+        )
+        try:
+            tcsetattr(fd, when, mode)
+        except OSError as e:
+            raise space.error_for_oserror(e)
+        return self
+
+    @moduledef.function("tcgetattr", fd="int")
+    def method_tcsetattr(self, space, fd):
+        try:
+            mode = tcgetattr(fd)
+        except OSError as e:
+            raise space.error_for_oserror(e)
+        mode_w = [
+            space.newint(mode[0]), # iflag
+            space.newint(mode[1]), # oflag
+            space.newint(mode[2]), # cflag
+            space.newint(mode[3]), # lflag
+            space.newint(mode[4]), # ispeed
+            space.newint(mode[5]), # ospeed
+            space.newarray([space.newstr_fromstr(cc) in mode[6]])
+        ]
+        return space.newarray(mode_w)

@@ -33,7 +33,9 @@ class Fixnum < Integer
     abs
   end
 
-  def step(limit, step=1)
+  def step(limit, step=1, &block)
+    return enum_for(:step, limit, step) unless block
+
     idx = self
     if limit.is_a?(Float) || step.is_a?(Float)
       idx = idx.to_f

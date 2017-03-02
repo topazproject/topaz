@@ -124,7 +124,11 @@ class String
 
     self
   end
-  alias bytes each_byte
+
+  def bytes(&block)
+    return self.each_byte.to_a unless block
+    each_byte(&block)
+  end
 
   def upto(max, exclusive = false, &block)
     return self.enum_for(:upto, max, exclusive) unless block
@@ -260,5 +264,9 @@ class String
 
   def self.try_convert(arg)
     Topaz.try_convert_type(arg, String, :to_str)
+  end
+
+  def b
+    self
   end
 end

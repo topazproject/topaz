@@ -254,6 +254,15 @@ class W_FileObject(W_IOObject):
             filename = filename[:end]
         return space.newstr_fromstr(filename)
 
+    @classdef.singleton_method("extname", filename="path")
+    def method_extname(self, space, filename):
+        i = filename.rfind(".")
+        if i < 0:
+            return space.newstr_fromstr("")
+        else:
+            extname = filename[i + 1:]
+            return space.newstr_fromstr(extname)
+
     @classdef.singleton_method("umask", mask="int")
     def method_umask(self, space, mask=-1):
         if mask >= 0:

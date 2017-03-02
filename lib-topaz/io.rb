@@ -145,11 +145,30 @@ class IO
     block ? yield(res) : res
   end
 
+  def self.binread(filename, length=nil, offset=0)
+    File.open(filename, "rb") do |f|
+      f.seek(offset)
+      if length.nil?
+        f.read
+      else
+        f.read(length)
+      end
+    end
+  end
+
   def pid
     @pid
   end
 
   def self.try_convert(arg)
     Topaz.try_convert_type(arg, IO, :to_io)
+  end
+
+  def getbyte
+    if ch = getc
+      return ch.ord
+    else
+      return nil
+    end
   end
 end

@@ -133,4 +133,10 @@ module Kernel
     caller_file = $1
     require File.join(File.dirname(File.expand_path(caller_file)), path)
   end
+
+  def __dir__
+    caller[0] =~ /^(.*):\d+:/
+    caller_file = $1
+    File.dirname(File.expand_path(caller_file))
+  end
 end

@@ -1,5 +1,8 @@
 import os
 
+from rpython.rlib.rpoll import POLLIN
+from rpython.rlib.rtermios import tcsetattr
+
 from topaz.coerce import Coerce
 from topaz.error import error_for_oserror
 from topaz.module import ClassDef
@@ -8,6 +11,13 @@ from topaz.objects.objectobject import W_Object
 from topaz.objects.stringobject import W_StringObject
 from topaz.utils.filemode import map_filemode
 from topaz.utils.ll_file import close_without_validation
+from topaz.system import IS_WINDOWS
+
+
+if IS_WINDOWS:
+    from rpython.rlib.rpoll import _poll as poll
+else:
+    from rpython.rlib.rpoll import poll
 
 
 class W_IOObject(W_Object):
@@ -274,3 +284,15 @@ class W_IOObject(W_Object):
     def method_fcntl(self, space, cmd, arg=0):
         fcntl(self.fd, cmd, arg)
         return self
+
+    @classdef.method("ready?")
+    def method_ready(self, space):
+        retval = None
+        try:
+            retval = poll({self.fd: POLLIN})
+        except PollError:
+            return space.w_nil
+        return space.newbool(len(retval) > 0)
+
+    @classdef.method("raw!")
+    def method_raw_bang(self, space):

@@ -80,4 +80,8 @@ class Integer < Numeric
     end
     return n
   end
+
+  def bit_length
+    Math.log(self < 0 ? -self : self + 1, 2).ceil
+  end
 end

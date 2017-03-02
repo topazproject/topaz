@@ -77,7 +77,8 @@ class FFI(object):
 
         # setup StructLayout
         w_struct_layout = space.newclass('StructLayout', None)
-        space.set_const(w_struct_layout, 'Field', space.w_nil)
+        w_struct_layout_field = space.newclass('Field', None)
+        space.set_const(w_struct_layout, 'Field', w_struct_layout_field)
         space.set_const(w_mod, 'StructLayout', w_struct_layout)
 
         # setup StructByReference
