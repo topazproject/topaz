@@ -14,9 +14,11 @@ env:
 matrix:
     allow_failures:
         # This times out because untranslated is so slow :/
-        - TEST_TYPE=rubyspec_untranslated
+        - python: pypy-5.3.1
+          env: TEST_TYPE=rubyspec_untranslated
         # We're tracking this, but not failing for it right now :(
-        - TEST_TYPE=flake8
+        - python: pypy-5.3.1
+          env: TEST_TYPE=flake8
 install:
     - pip install requests invoke
     - invoke travis.install_requirements
