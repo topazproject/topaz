@@ -131,7 +131,7 @@ class W_IOObject(W_Object):
             read_bytes += len(current_read)
             read_chunks += current_read
         # Return nil on EOF if length is given
-        if read_bytes == 0 and length > 0:
+        if read_bytes == 0:
             return space.w_nil
         w_read_str = space.newstr_fromchars(read_chunks)
         if w_str is not None:
