@@ -207,8 +207,10 @@ class Kernel(object):
             space.getmoduleobject(Process.moduledef), "exit!", args_w
         )
 
-    @moduledef.function("abort")
-    def method_abort(self, space):
+    @moduledef.function("abort", msg="str")
+    def method_abort(self, space, msg=None):
+        if msg:
+            os.write(2, msg)
         return space.send(self, "exit", [space.w_false])
 
     @moduledef.function("block_given?")
