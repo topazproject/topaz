@@ -6,6 +6,8 @@ fails:The defined? keyword when called with a method name having a local variabl
 fails:The defined? keyword when called with a method name having a local variable as receiver calls #respond_to_missing?
 fails:The defined? keyword when called with a method name having a class variable as receiver returns nil if the variable does not exist
 fails:The defined? keyword when called with a method name having a method call as a receiver returns nil if evaluating the receiver raises an exception
+fails:The defined? keyword when called with a method name having an instance variable as receiver returns nil if the variable does not exist
+fails:The defined? keyword when called with a method name having a global variable as receiver returns nil if the variable does not exist
 fails:The defined? keyword for an expression returns nil for an expression with == and an undefined method
 fails:The defined? keyword for an expression returns nil for an expression with != and an undefined method
 fails:The defined? keyword for an expression returns nil for an expression with !~ and an undefined method
@@ -33,7 +35,9 @@ fails:The defined? keyword for variables when a Regexp does not match a String r
 fails:The defined? keyword for variables when a Regexp does not match a String returns nil for $1-$9
 fails:The defined? keyword for variables when a Regexp matches a String returns nil for non-captures
 fails:The defined? keyword for a scoped constant returns nil when the undefined constant is scoped to an undefined constant
+fails:The defined? keyword for a scoped constant returns nil when an undefined constant is scoped to a defined constant
 fails:The defined? keyword for a top-level scoped constant returns nil when the undefined constant is scoped to an undefined constant
+fails:The defined? keyword for a top-level scoped constant returns nil when an undefined constant is scoped to a defined constant
 fails:The defined? keyword for a self-send method call scoped constant returns nil if the middle constant is not defined in the scope chain
 fails:The defined? keyword for a receiver method call scoped constant returns nil if the middle constant is not defined in the scope chain
 fails:The defined? keyword for a module method call scoped constant returns nil if the middle constant in the scope chain is not defined

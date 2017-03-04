@@ -1,5 +1,6 @@
 fails:Time.at passed Numeric returns a Time object representing the given number of Integer seconds since 1970-01-01 00:00:00 UTC
 fails:Time.at passed Time returns a UTC time if the argument is UTC
+fails:Time.at passed Time returns a non-UTC time if the argument is non-UTC
 fails:Time.at passed non-Time, non-Numeric with an argument that responds to #to_int coerces using #to_int
 fails:Time.at passed non-Time, non-Numeric with an argument that responds to #to_r coerces using #to_r
 fails:Time.at passed [Integer, Numeric] returns a Time object representing the given number of seconds and Float microseconds since 1970-01-01 00:00:00 UTC
@@ -7,6 +8,7 @@ fails:Time.at with a second argument that responds to #to_int coerces using #to_
 fails:Time.at with a second argument that responds to #to_r coerces using #to_r
 fails:Time.at passed [Time, Integer] returns a Time object equal to the specified time plus the number of microseconds
 fails:Time.at passed [Time, Integer] raises a TypeError
+fails:Time.at passed Numeric returns a non-UTC Time
 fails:Time.at passed Numeric roundtrips a Rational produced by #to_r
 fails:Time.at passed Numeric passed BigDecimal doesn't round input value
 fails:Time.at passed [Integer, String] raises a TypeError
