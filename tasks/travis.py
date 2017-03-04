@@ -82,12 +82,12 @@ def run_tests(ctx):
 
 
 @invoke.task
-def tag_specs(ctx, files="../rubyspec"):
+def tag_specs(ctx, files=""):
     invoke.run("../mspec/bin/mspec tag -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
 
 
 @invoke.task
-def untag_specs(ctx, files="../rubyspec"):
+def untag_specs(ctx, files=""):
     invoke.run("../mspec/bin/mspec tag --del fails -t {} -f spec --config=topaz.mspec {}".format("`pwd`/bin/topaz", files))
 
 
@@ -120,7 +120,7 @@ def run_translate_jit(env):
     invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch -Ojit targettopaz.py".format(**env))
 
 def run_specs(binary, prefix=""):
-    invoke.run("{prefix}../mspec/bin/mspec run -G fails -t {binary} --config=topaz.mspec ../rubyspec/".format(
+    invoke.run("{prefix}../mspec/bin/mspec run -G fails -t {binary} --config=topaz.mspec".format(
         prefix=prefix,
         binary=binary
     ))
