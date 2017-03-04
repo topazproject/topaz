@@ -49,7 +49,6 @@ class MSpecScript
     "^#{Rubyspec}/library/openstruct/",
     "^#{Rubyspec}/library/pathname/",
     "^#{Rubyspec}/library/prime/",
-    "^#{Rubyspec}/library/queue/",
     "^#{Rubyspec}/library/resolv/",
     "^#{Rubyspec}/library/rexml/",
     "^#{Rubyspec}/library/scanf/",

@@ -1,9 +1,14 @@
+import os
+import py
+
 from topaz.modules.ffi import _callback
 
 from rpython.rtyper.lltypesystem import lltype, rffi, llmemory
 from rpython.rlib.jit_libffi import CIF_DESCRIPTION, CIF_DESCRIPTION_P
 from rpython.rlib.objectmodel import compute_unique_id
 
+
+@py.test.mark.skipif('os.environ.get("TRAVIS", None) is not None')
 def test_Data_invoke(space):
     w_func_type = space.execute("""
     int32 = FFI::Type::INT32
@@ -29,6 +34,8 @@ def test_Data_invoke(space):
         lltype.free(p_args, flavor='raw')
         lltype.free(p_res, flavor='raw')
 
+
+@py.test.mark.skipif('os.environ.get("TRAVIS", None) is not None')
 def test_invoke(space):
     size = llmemory.raw_malloc_usage(llmemory.sizeof(CIF_DESCRIPTION, 2))
     cif_descr = lltype.malloc(CIF_DESCRIPTION_P.TO, size, flavor='raw')
