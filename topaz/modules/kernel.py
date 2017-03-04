@@ -211,7 +211,7 @@ class Kernel(object):
     def method_abort(self, space, msg=None):
         if msg:
             os.write(2, msg)
-        return space.send(self, "exit", [space.w_false])
+        return space.send(self, "exit", [space.newint(1)])
 
     @moduledef.function("block_given?")
     @moduledef.function("iterator?")
