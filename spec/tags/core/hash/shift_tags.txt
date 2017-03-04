@@ -1,1 +1,2 @@
 fails:Hash#shift preserves Hash invariants when removing the last item
+fails:Hash#shift allows shifting entries while iterating

@@ -22,3 +22,4 @@ fails:Proc#curry with arity argument raises an ArgumentError if passed more than
 fails:Proc#curry with arity argument returns Procs with arities of -1 regardless of the value of _arity_
 fails:Proc#curry produces Procs that can be passed as the block for instance_exec
 fails:Proc#curry combines arguments and calculates incoming arity accurately for successively currying
+fails:Proc#curry with arity argument returns a Proc if called on a lambda that requires fewer than _arity_ arguments but may take more

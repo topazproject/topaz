@@ -8,3 +8,4 @@ fails:Kernel.Complex() when passed Numerics n1 and n2 and at least one responds 
 fails:Kernel.Complex() when passed two Numerics and both respond to #real? with true returns a Complex with the passed arguments as real and imaginary components respectively
 fails:Kernel.Complex() when passed a single non-Numeric coerces the passed argument using #to_c
 fails:Kernel.Complex() when passed a non-Numeric second argument raises TypeError
+fails:Kernel.Complex() when passed an Objectc which responds to #to_c returns the passed argument

@@ -31,3 +31,5 @@ fails:String#unpack with format 'a' decodes past whitespace bytes when passed th
 fails:String#unpack with format 'a' decodes the number of bytes specified by the count modifier including NULL bytes
 fails:String#unpack with format 'a' decodes past NULL bytes when passed the '*' modifier
 fails:String#unpack with format 'a' does not remove trailing whitespace or NULL bytes from the decoded string
+fails:String#unpack with format 'A' decodes into raw (ascii) string values
+fails:String#unpack with format 'a' decodes into raw (ascii) string values

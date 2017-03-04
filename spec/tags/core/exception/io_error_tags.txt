@@ -1,0 +1,6 @@
+fails:IO::EAGAINWaitReadable combines Errno::EAGAIN and IO::WaitReadable
+fails:IO::EAGAINWaitReadable is the same as IO::EWOULDBLOCKWaitReadable if Errno::EAGAIN is the same as Errno::EWOULDBLOCK
+fails:IO::EWOULDBLOCKWaitReadable combines Errno::EWOULDBLOCK and IO::WaitReadable
+fails:IO::EAGAINWaitWritable combines Errno::EAGAIN and IO::WaitWritable
+fails:IO::EAGAINWaitWritable is the same as IO::EWOULDBLOCKWaitWritable if Errno::EAGAIN is the same as Errno::EWOULDBLOCK
+fails:IO::EWOULDBLOCKWaitWritable combines Errno::EWOULDBLOCK and IO::WaitWritable
