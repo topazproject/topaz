@@ -19,6 +19,10 @@ matrix:
         # We're tracking this, but not failing for it right now :(
         - python: pypy-5.3.1
           env: TEST_TYPE=flake8
+    include:
+      - os: osx
+        language: python
+        env: TEST_TYPE=translate-jit
 install:
     - pip install requests invoke
     - invoke travis.install_requirements
