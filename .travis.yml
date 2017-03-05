@@ -21,10 +21,15 @@ matrix:
           env: TEST_TYPE=flake8
     include:
       - os: osx
-        language: python
-        python: 2.7
+        language: generic
         env: TEST_TYPE=translate-jit
 install:
+    - export PYTHONUSERBASE="~/.local"
+    - export PATH="$PYTHONUSERBASE/bin:$PATH"
+    - "if [ $TRAVIS_OS_NAME == osx ]; then \
+          curl -sLO https://bootstrap.pypa.io/get-pip.py; \
+          python get-pip.py --user; \
+      fi"
     - pip install requests invoke
     - invoke travis.install_requirements
 script: invoke travis.run_tests
