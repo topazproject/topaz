@@ -24,7 +24,6 @@ matrix:
         language: generic
         env: TEST_TYPE=translate-jit
 install:
-    - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install wget; fi
     - pip install requests invoke
     - invoke travis.install_requirements
 script: invoke travis.run_tests
