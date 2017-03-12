@@ -21,8 +21,10 @@ matrix:
           env: TEST_TYPE=flake8
     include:
       - os: osx
-        language: python
-        python: 2.7
+        language: generic
+        before_install:
+            # Use Pypy v5.4.0
+            - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/c5a201f49c9da47d4771ebc544d10b3f9c579021/Formula/pypy.rb
         env: TEST_TYPE=translate-jit
 install:
     - pip install requests invoke

@@ -54,7 +54,7 @@ class Process(object):
             space.set_const(
                 w_mod,
                 "CLOCK_PROCESS_CPUTIME_ID",
-                CLOCK_PROCESS_CPUTIME_ID
+                space.newint(CLOCK_PROCESS_CPUTIME_ID)
             )
 
     @moduledef.function("euid")
@@ -187,7 +187,7 @@ class Process(object):
         elif unit == "microsecond":
             return space.newint(sec * 1000000)
         elif unit == "nanosecond":
-            return space.newint(sec * 1000000000 + nsec)
+            return space.newint(sec * 1000000000 + int(nsec))
         else:
             raise space.error(space.w_ArgumentError,
                 "unexpected unit: %s" % unit
