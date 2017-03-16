@@ -8,14 +8,16 @@ class Coerce(object):
         if space.is_kind_of(w_obj, space.w_symbol):
             return space.symbol_w(w_obj)
         else:
-            w_str = space.convert_type(w_obj, space.w_string, "to_str", raise_error=False)
+            w_str = space.convert_type(w_obj, space.w_string, "to_str",
+                                       raise_error=False)
             if w_str is space.w_nil:
                 w_inspect_str = space.send(w_obj, "inspect")
                 if not space.is_kind_of(w_inspect_str, space.w_string):
                     inspect_str = space.any_to_s(w_obj)
                 else:
                     inspect_str = space.str_w(w_inspect_str)
-                raise space.error(space.w_TypeError, "%s is not a symbol" % inspect_str)
+                raise space.error(space.w_TypeError,
+                                  "%s is not a symbol" % inspect_str)
             else:
                 return space.str_w(w_str)
 
@@ -24,11 +26,13 @@ class Coerce(object):
         if space.is_kind_of(w_obj, space.w_fixnum):
             return space.int_w(w_obj)
         else:
-            return space.int_w(space.convert_type(w_obj, space.w_integer, "to_int"))
+            return space.int_w(
+                space.convert_type(w_obj, space.w_integer, "to_int"))
 
     @staticmethod
     def bigint(space, w_obj):
-        return space.bigint_w(space.convert_type(w_obj, space.w_integer, "to_int"))
+        return space.bigint_w(
+            space.convert_type(w_obj, space.w_integer, "to_int"))
 
     @staticmethod
     def float(space, w_obj):
@@ -42,19 +46,22 @@ class Coerce(object):
         if not space.is_kind_of(w_obj, space.w_numeric):
             clsname = w_obj.getclass(space).name
             raise space.error(space.w_TypeError,
-                              "can't convert %s into Float" %clsname)
+                              "can't convert %s into Float" % clsname)
         return Coerce.float(space, w_obj)
 
     @staticmethod
     def str(space, w_obj):
-        if space.is_kind_of(w_obj, space.w_string) or space.is_kind_of(w_obj, space.w_symbol):
+        if (space.is_kind_of(w_obj, space.w_string) or
+                space.is_kind_of(w_obj, space.w_symbol)):
             return space.str_w(w_obj)
         else:
-            return space.str_w(space.convert_type(w_obj, space.w_string, "to_str"))
+            return space.str_w(
+                space.convert_type(w_obj, space.w_string, "to_str"))
 
     @staticmethod
     def path(space, w_obj):
-        w_string = space.convert_type(w_obj, space.w_string, "to_path", raise_error=False)
+        w_string = space.convert_type(w_obj, space.w_string, "to_path",
+                                      raise_error=False)
         if w_string is space.w_nil:
             w_string = space.convert_type(w_obj, space.w_string, "to_str")
         return space.str0_w(w_string)

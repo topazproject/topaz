@@ -51,7 +51,8 @@ class ClassDef(object):
     def undefine_allocator(self):
         @self.singleton_method("allocate")
         def method_allocate(self, space):
-            raise space.error(space.w_TypeError, "allocator undefined for %s" % self.name)
+            raise space.error(
+                space.w_TypeError, "allocator undefined for %s" % self.name)
         return method_allocate
 
     def notimplemented(self, name):
@@ -111,7 +112,9 @@ def check_frozen(param="self"):
             w_obj = args[obj_idx]
             if space.is_true(w_obj.get_flag(space, "frozen?")):
                 klass = space.getclass(w_obj)
-                raise space.error(space.w_RuntimeError, "can't modify frozen %s" % klass.name)
+                raise space.error(
+                    space.w_RuntimeError,
+                    "can't modify frozen %s" % klass.name)
             return func(*args)
         wrapper.__wraps__ = func
         return wrapper
@@ -133,12 +136,16 @@ class ClassCache(Cache):
         w_class = self.space.newclass(classdef.name, superclass)
         yield w_class
         for name, (method, argspec) in classdef.methods.iteritems():
-            func = WrapperGenerator(name, method, argspec, classdef.cls).generate_wrapper()
-            w_class.define_method(self.space, name, W_BuiltinFunction(name, w_class, func))
+            func = WrapperGenerator(
+                name, method, argspec, classdef.cls).generate_wrapper()
+            w_class.define_method(
+                self.space, name, W_BuiltinFunction(name, w_class, func))
 
         for name, (method, argspec) in classdef.singleton_methods.iteritems():
-            func = WrapperGenerator(name, method, argspec, W_ClassObject).generate_wrapper()
-            w_class.attach_method(self.space, name, W_BuiltinFunction(name, w_class, func))
+            func = WrapperGenerator(
+                name, method, argspec, W_ClassObject).generate_wrapper()
+            w_class.attach_method(
+                self.space, name, W_BuiltinFunction(name, w_class, func))
 
         for mod in reversed(classdef.includes):
             w_mod = self.space.getmoduleobject(mod.moduledef)
@@ -156,11 +163,15 @@ class ModuleCache(Cache):
 
         w_mod = self.space.newmodule(moduledef.name)
         for name, (method, argspec) in moduledef.methods.iteritems():
-            func = WrapperGenerator(name, method, argspec, W_BaseObject).generate_wrapper()
-            w_mod.define_method(self.space, name, W_BuiltinFunction(name, w_mod, func))
+            func = WrapperGenerator(
+                name, method, argspec, W_BaseObject).generate_wrapper()
+            w_mod.define_method(
+                self.space, name, W_BuiltinFunction(name, w_mod, func))
         for name, (method, argspec) in moduledef.singleton_methods.iteritems():
-            func = WrapperGenerator(name, method, argspec, W_ModuleObject).generate_wrapper()
-            w_mod.attach_method(self.space, name, W_BuiltinFunction(name, w_mod, func))
+            func = WrapperGenerator(
+                name, method, argspec, W_ModuleObject).generate_wrapper()
+            w_mod.attach_method(
+                self.space, name, W_BuiltinFunction(name, w_mod, func))
 
         if moduledef.setup_module_func is not None:
             moduledef.setup_module_func(self.space, w_mod)

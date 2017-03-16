@@ -57,10 +57,13 @@ class ExecutionContext(object):
                 space.send(self.w_trace_proc, "call", [
                     space.newstr_fromstr(event),
                     space.newstr_fromstr(frame.bytecode.filepath),
-                    space.newint(frame.bytecode.lineno_table[frame.last_instr]),
-                    space.newstr_fromstr(scope_id) if scope_id is not None else space.w_nil,
+                    space.newint(
+                        frame.bytecode.lineno_table[frame.last_instr]),
+                    (space.newstr_fromstr(scope_id)
+                        if scope_id is not None else space.w_nil),
                     space.newbinding_fromframe(frame),
-                    space.newstr_fromstr(classname) if classname is not None else space.w_nil,
+                    (space.newstr_fromstr(classname)
+                        if classname is not None else space.w_nil),
                 ])
             finally:
                 self.in_trace_proc = False

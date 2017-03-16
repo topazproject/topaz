@@ -65,11 +65,12 @@ class Interpreter(object):
             self.finished = True
 
     def _interpret(self, space, pc, frame, bytecode):
-        prev_instr = frame.last_instr
+        prev_pc = frame.last_instr
         frame.last_instr = pc
         if (space.getexecutioncontext().hastraceproc() and
-            bytecode.lineno_table[pc] != bytecode.lineno_table[prev_instr]):
-            space.getexecutioncontext().invoke_trace_proc(space, "line", None, None, frame=frame)
+                bytecode.lineno_table[pc] != bytecode.lineno_table[prev_pc]):
+            space.getexecutioncontext().invoke_trace_proc(
+                space, "line", None, None, frame=frame)
         try:
             pc = self.handle_bytecode(space, pc, frame, bytecode)
         except RubyError as e:
@@ -82,7 +83,9 @@ class Interpreter(object):
             pc = self.handle_throw(space, pc, frame, bytecode, e)
         except rstackovf.StackOverflow:
             rstackovf.check_stack_overflow()
-            pc = self.handle_ruby_error(space, pc, frame, bytecode, space.error(space.w_SystemStackError, "stack level too deep"))
+            pc = self.handle_ruby_error(
+                space, pc, frame, bytecode,
+                space.error(space.w_SystemStackError, "stack level too deep"))
         return pc
 
     def handle_bytecode(self, space, pc, frame, bytecode):
@@ -91,12 +94,16 @@ class Interpreter(object):
         if we_are_translated():
             for i, name in consts.UNROLLING_BYTECODES:
                 if i == instr:
-                    pc = self.run_instr(space, name, consts.BYTECODE_NUM_ARGS[i], bytecode, frame, pc)
+                    pc = self.run_instr(
+                        space, name, consts.BYTECODE_NUM_ARGS[i],
+                        bytecode, frame, pc)
                     break
             else:
                 raise SystemError
         else:
-            pc = self.run_instr(space, consts.BYTECODE_NAMES[instr], consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
+            pc = self.run_instr(
+                space, consts.BYTECODE_NAMES[instr],
+                consts.BYTECODE_NUM_ARGS[instr], bytecode, frame, pc)
         return pc
 
     @specialize.arg(2, 3)
@@ -226,7 +233,8 @@ class Interpreter(object):
         frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
-        frame.push(space.find_lexical_const(jit.promote(frame.lexical_scope), name))
+        frame.push(space.find_lexical_const(
+            jit.promote(frame.lexical_scope), name))
 
     @jit.unroll_safe
     def DEFINED_LOCAL_CONSTANT(self, space, bytecode, frame, pc, idx):
@@ -234,7 +242,8 @@ class Interpreter(object):
         frame.pop()
         w_name = bytecode.consts_w[idx]
         name = space.symbol_w(w_name)
-        w_res = space._find_lexical_const(jit.promote(frame.lexical_scope), name, autoload=False)
+        w_res = space._find_lexical_const(
+            jit.promote(frame.lexical_scope), name, autoload=False)
         if w_res is None:
             frame.push(space.w_nil)
         else:
@@ -258,7 +267,8 @@ class Interpreter(object):
         space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
-        if space.is_true(space.send(w_obj, "instance_variable_defined?", [w_name])):
+        if space.is_true(space.send(
+                w_obj, "instance_variable_defined?", [w_name])):
             frame.push(space.newstr_fromstr("instance-variable"))
         else:
             frame.push(space.w_nil)
@@ -282,7 +292,8 @@ class Interpreter(object):
         space.getexecutioncontext().last_instr = pc
         w_name = bytecode.consts_w[idx]
         w_obj = frame.pop()
-        if space.is_true(space.send(w_obj, "class_variable_defined?", [w_name])):
+        if space.is_true(space.send(
+                w_obj, "class_variable_defined?", [w_name])):
             frame.push(space.newstr_fromstr("class variable"))
         else:
             frame.push(space.w_nil)
@@ -340,7 +351,8 @@ class Interpreter(object):
     def BUILD_FUNCTION(self, space, bytecode, frame, pc):
         w_code = frame.pop()
         w_name = frame.pop()
-        w_func = space.newfunction(w_name, w_code, frame.lexical_scope, frame.visibility)
+        w_func = space.newfunction(
+            w_name, w_code, frame.lexical_scope, frame.visibility)
         frame.push(w_func)
 
     @jit.unroll_safe
@@ -371,22 +383,25 @@ class Interpreter(object):
                 superclass = space.w_object
             if not space.is_kind_of(superclass, space.w_class):
                 cls_name = space.obj_to_s(space.getclass(superclass))
-                raise space.error(space.w_TypeError,
-                    "wrong argument type %s (expected Class)" % cls_name
-                )
+                raise space.error(
+                    space.w_TypeError,
+                    "wrong argument type %s (expected Class)" % cls_name)
             assert isinstance(superclass, W_ClassObject)
             if superclass.is_singleton:
-                raise space.error(space.w_TypeError, "can't make subclass of singleton class")
+                raise space.error(
+                    space.w_TypeError,
+                    "can't make subclass of singleton class")
             w_cls = space.newclass(name, superclass, w_scope=w_scope)
             space.set_const(w_scope, name, w_cls)
         elif not space.is_kind_of(w_cls, space.w_class):
             raise space.error(space.w_TypeError, "%s is not a class" % name)
         else:
             assert isinstance(w_cls, W_ClassObject)
-            if superclass is not space.w_nil and w_cls.superclass is not superclass:
-                raise space.error(space.w_TypeError,
-                    "superclass mismatch for class %s" % w_cls.name
-                )
+            if (superclass is not space.w_nil and
+                    w_cls.superclass is not superclass):
+                raise space.error(
+                    space.w_TypeError,
+                    "superclass mismatch for class %s" % w_cls.name)
 
         frame.push(w_cls)
 
@@ -401,7 +416,8 @@ class Interpreter(object):
         if w_mod is None:
             w_mod = space.newmodule(name, w_scope=w_scope)
             space.set_const(w_scope, name, w_mod)
-        elif not space.is_kind_of(w_mod, space.w_module) or space.is_kind_of(w_mod, space.w_class):
+        elif (not space.is_kind_of(w_mod, space.w_module) or
+                space.is_kind_of(w_mod, space.w_class)):
             raise space.error(space.w_TypeError, "%s is not a module" % name)
 
         frame.push(w_mod)
@@ -410,7 +426,8 @@ class Interpreter(object):
         w_flags = frame.pop()
         w_string = frame.pop()
         try:
-            w_regexp = space.newregexp(space.str_w(w_string), space.int_w(w_flags))
+            w_regexp = space.newregexp(
+                space.str_w(w_string), space.int_w(w_flags))
         except RegexpError as e:
             raise space.error(space.w_RegexpError, str(e))
         frame.push(w_regexp)
@@ -467,7 +484,8 @@ class Interpreter(object):
             frame.push(w_obj)
 
     @jit.unroll_safe
-    def UNPACK_SEQUENCE_SPLAT(self, space, bytecode, frame, pc, n_targets, n_pre):
+    def UNPACK_SEQUENCE_SPLAT(
+            self, space, bytecode, frame, pc, n_targets, n_pre):
         w_obj = frame.pop()
         items_w = space.listview(w_obj)
         n_items = len(items_w)
@@ -491,11 +509,10 @@ class Interpreter(object):
         # None is special case. It means that we are trying to define
         # a method on Symbol or Numeric.
         if w_scope is None:
-            raise space.error(space.w_TypeError,
+            raise space.error(
+                space.w_TypeError,
                 """can't define singleton method "%s" for %s""" % (
-                    space.symbol_w(w_name), space.getclass(frame.w_self).name
-                )
-            )
+                    space.symbol_w(w_name), space.getclass(frame.w_self).name))
         w_scope.define_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
 
@@ -503,8 +520,10 @@ class Interpreter(object):
         w_func = frame.pop()
         w_name = frame.pop()
         w_obj = frame.pop()
-        if space.is_kind_of(w_obj, space.w_symbol) or space.is_kind_of(w_obj, space.w_numeric):
-            raise space.error(space.w_TypeError, "no class/module to add method")
+        if (space.is_kind_of(w_obj, space.w_symbol) or
+                space.is_kind_of(w_obj, space.w_numeric)):
+            raise space.error(
+                space.w_TypeError, "no class/module to add method")
         assert isinstance(w_func, W_FunctionObject)
         w_obj.attach_method(space, space.symbol_w(w_name), w_func)
         frame.push(space.w_nil)
@@ -516,17 +535,22 @@ class Interpreter(object):
         assert isinstance(w_bytecode, W_CodeObject)
 
         event = "class" if space.is_kind_of(w_mod, space.w_class) else "module"
-        space.getexecutioncontext().invoke_trace_proc(space, event, None, None, frame=frame)
-        sub_frame = space.create_frame(w_bytecode, w_mod, StaticScope(w_mod, frame.lexical_scope), block=frame.block)
+        space.getexecutioncontext().invoke_trace_proc(
+            space, event, None, None, frame=frame)
+        sub_frame = space.create_frame(
+            w_bytecode, w_mod, StaticScope(w_mod, frame.lexical_scope),
+            block=frame.block)
         with space.getexecutioncontext().visit_frame(sub_frame):
             w_res = space.execute_frame(sub_frame, w_bytecode)
 
-        space.getexecutioncontext().invoke_trace_proc(space, "end", None, None, frame=frame)
+        space.getexecutioncontext().invoke_trace_proc(
+            space, "end", None, None, frame=frame)
         frame.push(w_res)
 
     def LOAD_SINGLETON_CLASS(self, space, bytecode, frame, pc):
         w_obj = frame.pop()
-        if space.is_kind_of(w_obj, space.w_symbol) or space.is_kind_of(w_obj, space.w_fixnum):
+        if (space.is_kind_of(w_obj, space.w_symbol) or
+                space.is_kind_of(w_obj, space.w_fixnum)):
             raise space.error(space.w_TypeError, "can't define singleton")
         frame.push(space.getsingletonclass(w_obj))
 
@@ -534,7 +558,8 @@ class Interpreter(object):
         space.getexecutioncontext().last_instr = pc
         args_w = frame.popitemsreverse(num_args)
         w_receiver = frame.pop()
-        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w)
+        w_res = space.send(
+            w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w)
         frame.push(w_res)
 
     def SEND_BLOCK(self, space, bytecode, frame, pc, meth_idx, num_args):
@@ -546,7 +571,9 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
+        w_res = space.send(
+            w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w,
+            block=w_block)
         frame.push(w_res)
 
     @jit.unroll_safe
@@ -563,7 +590,8 @@ class Interpreter(object):
             args_w[pos:pos + len(array_w)] = array_w
             pos += len(array_w)
         w_receiver = frame.pop()
-        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w)
+        w_res = space.send(
+            w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w)
         frame.push(w_res)
 
     @jit.unroll_safe
@@ -579,13 +607,16 @@ class Interpreter(object):
             w_block = None
         else:
             assert isinstance(w_block, W_ProcObject)
-        w_res = space.send(w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
+        w_res = space.send(
+            w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w,
+            block=w_block)
         frame.push(w_res)
 
     def DEFINED_METHOD(self, space, bytecode, frame, pc, meth_idx):
         space.getexecutioncontext().last_instr = pc
         w_obj = frame.pop()
-        if space.respond_to(w_obj, space.symbol_w(bytecode.consts_w[meth_idx])):
+        if space.respond_to(
+                w_obj, space.symbol_w(bytecode.consts_w[meth_idx])):
             frame.push(space.newstr_fromstr("method"))
         else:
             frame.push(space.w_nil)
@@ -603,11 +634,14 @@ class Interpreter(object):
             w_cls = frame.lexical_scope.w_mod
         else:
             w_cls = space.getclass(w_receiver)
-        w_res = space.send_super(w_cls, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
+        w_res = space.send_super(
+            w_cls, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]),
+            args_w, block=w_block)
         frame.push(w_res)
 
     @jit.unroll_safe
-    def SEND_SUPER_BLOCK_SPLAT(self, space, bytecode, frame, pc, meth_idx, num_args):
+    def SEND_SUPER_BLOCK_SPLAT(
+            self, space, bytecode, frame, pc, meth_idx, num_args):
         space.getexecutioncontext().last_instr = pc
         w_block = frame.pop()
         arrays_w = frame.popitemsreverse(num_args - 1)
@@ -623,7 +657,9 @@ class Interpreter(object):
             w_cls = frame.lexical_scope.w_mod
         else:
             w_cls = space.getclass(w_receiver)
-        w_res = space.send_super(w_cls, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]), args_w, block=w_block)
+        w_res = space.send_super(
+            w_cls, w_receiver, space.symbol_w(bytecode.consts_w[meth_idx]),
+            args_w, block=w_block)
         frame.push(w_res)
 
     def DEFINED_SUPER(self, space, bytecode, frame, pc, meth_idx):
@@ -639,10 +675,12 @@ class Interpreter(object):
         frame.lastblock = LoopBlock(target_pc, frame.lastblock, frame.stackpos)
 
     def SETUP_EXCEPT(self, space, bytecode, frame, pc, target_pc):
-        frame.lastblock = ExceptBlock(target_pc, frame.lastblock, frame.stackpos)
+        frame.lastblock = ExceptBlock(
+            target_pc, frame.lastblock, frame.stackpos)
 
     def SETUP_FINALLY(self, space, bytecode, frame, pc, target_pc):
-        frame.lastblock = FinallyBlock(target_pc, frame.lastblock, frame.stackpos)
+        frame.lastblock = FinallyBlock(
+            target_pc, frame.lastblock, frame.stackpos)
 
     def END_FINALLY(self, space, bytecode, frame, pc):
         frame.pop()
@@ -754,7 +792,8 @@ class Interpreter(object):
 
     def RAISE_BREAK(self, space, bytecode, frame, pc):
         if frame.parent_interp.finished:
-            raise space.error(space.w_LocalJumpError, "break from proc-closure")
+            raise space.error(
+                space.w_LocalJumpError, "break from proc-closure")
         w_value = frame.pop()
         block = frame.unrollstack(RaiseBreakValue.kind)
         if block is None:

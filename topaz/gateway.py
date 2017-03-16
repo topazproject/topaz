@@ -42,10 +42,11 @@ class WrapperGenerator(object):
         @functools.wraps(self.func)
         def wrapper(self, space, args_w, block):
             if (len(args_w) < min_args or
-                (not takes_args_w and len(args_w) > argcount)):
-                raise space.error(space.w_ArgumentError,
-                    "wrong number of arguments (%d for %d)" % (len(args_w), min_args)
-                )
+                    (not takes_args_w and len(args_w) > argcount)):
+                raise space.error(
+                    space.w_ArgumentError,
+                    "wrong number of arguments (%d for %d)" % (
+                        len(args_w), min_args))
             args = ()
             arg_count = 0
             args_w_seen = False
@@ -64,12 +65,14 @@ class WrapperGenerator(object):
                     args += (space,)
                 elif argname.startswith("w_") or argname in argspec:
                     if args_w_seen:
-                        raise SystemError("args_w must be the last argument accepted")
+                        raise SystemError(
+                            "args_w must be the last argument accepted")
                     if len(args_w) > arg_count:
                         if argname.startswith("w_"):
                             args += (args_w[arg_count],)
                         elif argname in argspec:
-                            args += (getattr(Coerce, argspec[argname])(space, args_w[arg_count]),)
+                            args += (getattr(Coerce, argspec[argname])(
+                                space, args_w[arg_count]),)
                     elif default_start is not None and i >= default_start:
                         args += (defaults[i - default_start],)
                     else:

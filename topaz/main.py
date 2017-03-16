@@ -62,6 +62,7 @@ if IS_WINDOWS:
                 bufsize <<= 1
         return ''.join(result)
 
+
 @specialize.memo()
 def getspace(config):
     return ObjectSpace(config)
@@ -147,7 +148,8 @@ def _parse_argv(space, argv):
         elif arg == "-e":
             idx += 1
             if idx == len(argv):
-                raise CommandLineError("no code specified for -e (RuntimeError)\n")
+                raise CommandLineError(
+                    "no code specified for -e (RuntimeError)\n")
             exprs.append(argv[idx])
         elif arg.startswith("-e"):
             exprs.append(arg[2:])
@@ -192,7 +194,8 @@ def _parse_argv(space, argv):
         idx += 1
 
     if warning_level is not None:
-        warning_level_num = 2 if not warning_level.isdigit() else int(warning_level)
+        warning_level_num = (
+            2 if not warning_level.isdigit() else int(warning_level))
         if warning_level_num == 0:
             flag_globals_w["$VERBOSE"] = space.w_nil
         elif warning_level_num == 1:

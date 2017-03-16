@@ -22,7 +22,8 @@ class MapTransitionCache(object):
 
     @jit.elidable
     def get_transition(self, prev, node_cls, name):
-        return self.transitions.setdefault((prev, node_cls, name), node_cls(prev, name))
+        return self.transitions.setdefault(
+            (prev, node_cls, name), node_cls(prev, name))
 
 
 class BaseNode(object):
@@ -41,7 +42,8 @@ class BaseNode(object):
         return isinstance(self, node_cls)
 
     def add(self, space, node_cls, name, w_obj):
-        new_node = space.fromcache(MapTransitionCache).get_transition(self, node_cls, name)
+        new_node = space.fromcache(MapTransitionCache).get_transition(
+            self, node_cls, name)
         new_node.update_storage_size(w_obj, self)
         return new_node
 
@@ -84,7 +86,8 @@ class StorageNode(BaseNode):
 
     def change_class(self, space, w_cls):
         new_prev = self.prev.change_class(space, w_cls)
-        return space.fromcache(MapTransitionCache).get_transition(new_prev, self.__class__, self.name)
+        return space.fromcache(MapTransitionCache).get_transition(
+            new_prev, self.__class__, self.name)
 
     def matches(self, node_cls, name):
         return BaseNode.matches(self, node_cls, name) and name == self.name
@@ -108,7 +111,9 @@ class AttributeNode(StorageNode):
     def write(self, space, w_obj, w_value):
         if not self.correct_type(space, w_value):
             w_obj.map = w_obj.map.remove_attr(space, self, w_obj)
-            w_obj.map = node = w_obj.map.add(space, AttributeNode.select_type(space, w_value), self.name, w_obj)
+            w_obj.map = node = w_obj.map.add(
+                space, AttributeNode.select_type(space, w_value),
+                self.name, w_obj)
             node.write(space, w_obj, w_value)
         else:
             self._store(space, w_obj, w_value)
@@ -118,7 +123,9 @@ class AttributeNode(StorageNode):
             return self.prev
         w_cur_val = self.read(space, w_obj)
         new_prev = self.prev.remove_attr(space, node, w_obj)
-        node = new_prev.add(space, AttributeNode.select_type(space, w_cur_val), self.name, w_obj)
+        node = new_prev.add(
+            space, AttributeNode.select_type(space, w_cur_val), self.name,
+            w_obj)
         node.write(space, w_obj, w_cur_val)
         return node
 
@@ -148,10 +155,12 @@ class IntAttributeNode(UnboxedAttributeNode):
         return space.is_kind_of(w_value, space.w_fixnum)
 
     def _store(self, space, w_obj, w_value):
-        w_obj.unboxed_storage[self.pos] = longlong2float.longlong2float(rffi.cast(lltype.SignedLongLong, space.int_w(w_value)))
+        w_obj.unboxed_storage[self.pos] = longlong2float.longlong2float(
+            rffi.cast(lltype.SignedLongLong, space.int_w(w_value)))
 
     def read(self, space, w_obj):
-        return space.newint(intmask(longlong2float.float2longlong(w_obj.unboxed_storage[self.pos])))
+        return space.newint(intmask(longlong2float.float2longlong(
+            w_obj.unboxed_storage[self.pos])))
 
 
 class FloatAttributeNode(UnboxedAttributeNode):
@@ -235,7 +244,8 @@ ATTRIBUTE_CLASSES = unrolling_iterable([
 def update_storage(node, w_obj, storage_name, empty_value):
     storage = getattr(w_obj, storage_name + "_storage")
     if storage is None or node.length() >= len(storage):
-        new_storage = [empty_value] * getattr(node.size_estimate, storage_name + "_size_estimate")()
+        new_storage = [empty_value] * getattr(
+            node.size_estimate, storage_name + "_size_estimate")()
         if storage is not None:
             for i, value in enumerate(storage):
                 new_storage[i] = value
@@ -267,5 +277,9 @@ class SizeEstimate(object):
         return self._unboxed_size_estimate >> NUM_DIGITS
 
     def update_from(self, other):
-        self._object_size_estimate = self._object_size_estimate + other.object_size_estimate() - self.object_size_estimate()
-        self._unboxed_size_estimate = self._unboxed_size_estimate + other.unboxed_size_estimate() - self.unboxed_size_estimate()
+        self._object_size_estimate = (self._object_size_estimate +
+                                      other.object_size_estimate() -
+                                      self.object_size_estimate())
+        self._unboxed_size_estimate = (self._unboxed_size_estimate +
+                                       other.unboxed_size_estimate() -
+                                       self.unboxed_size_estimate())
