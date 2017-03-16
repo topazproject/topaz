@@ -45,7 +45,8 @@ from topaz.objects.codeobject import W_CodeObject
 from topaz.objects.dirobject import W_DirObject
 from topaz.objects.encodingobject import W_EncodingObject
 from topaz.objects.envobject import W_EnvObject
-from topaz.objects.exceptionobject import (W_ExceptionObject, W_NoMethodError,
+from topaz.objects.exceptionobject import (
+    W_ExceptionObject, W_NoMethodError,
     W_ZeroDivisionError, W_SyntaxError, W_LoadError, W_TypeError,
     W_ArgumentError, W_RuntimeError, W_StandardError, W_SystemExit,
     W_SystemCallError, W_NameError, W_IndexError, W_KeyError, W_StopIteration,
@@ -227,19 +228,24 @@ class ObjectSpace(object):
         self.bootstrap = False
 
         self.w_load_path = self.newarray([])
-        self.globals.define_virtual("$LOAD_PATH", lambda space: space.w_load_path)
+        self.globals.define_virtual(
+            "$LOAD_PATH", lambda space: space.w_load_path)
         self.globals.define_virtual("$:", lambda space: space.w_load_path)
 
-        self.globals.define_virtual("$$", lambda space: space.send(space.getmoduleobject(Process.moduledef), "pid"))
+        self.globals.define_virtual(
+            "$$", lambda space: space.send(space.getmoduleobject(Process.moduledef), "pid"))
 
         self.w_loaded_features = self.newarray([])
-        self.globals.define_virtual("$LOADED_FEATURES", lambda space: space.w_loaded_features)
-        self.globals.define_virtual('$"', lambda space: space.w_loaded_features)
+        self.globals.define_virtual(
+            "$LOADED_FEATURES", lambda space: space.w_loaded_features)
+        self.globals.define_virtual(
+            '$"', lambda space: space.w_loaded_features)
 
         self.w_main_thread = W_ThreadObject(self)
 
         self.w_load_path = self.newarray([])
-        self.base_lib_path = os.path.abspath(os.path.join(os.path.join(os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
+        self.base_lib_path = os.path.abspath(os.path.join(os.path.join(
+            os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
 
     def _freeze_(self):
         self._executioncontexts.clear()
@@ -264,7 +270,8 @@ class ObjectSpace(object):
         path = rpath.rabspath(self.find_executable(executable))
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
-        kernel_path = os.path.join(os.path.join(lib_path, os.path.pardir), "lib-topaz")
+        kernel_path = os.path.join(
+            os.path.join(lib_path, os.path.pardir), "lib-topaz")
         while True:
             par_path = rpath.rabspath(os.path.join(path, os.path.pardir))
             if par_path == path:
@@ -293,7 +300,8 @@ class ObjectSpace(object):
     def parse(self, source, initial_lineno=1, symtable=None):
         if symtable is None:
             symtable = SymbolTable()
-        parser = Parser(Lexer(source, initial_lineno=initial_lineno, symtable=symtable))
+        parser = Parser(Lexer(
+            source, initial_lineno=initial_lineno, symtable=symtable))
         try:
             return parser.parse().getast()
         except ParsingError as e:
@@ -305,12 +313,14 @@ class ObjectSpace(object):
                 msg = ""
             raise self.error(self.w_SyntaxError, msg)
         except LexerError as e:
-            raise self.error(self.w_SyntaxError, "line %d (%s)" % (e.pos.lineno, e.msg))
+            raise self.error(
+                self.w_SyntaxError, "line %d (%s)" % (e.pos.lineno, e.msg))
 
     def compile(self, source, filepath, initial_lineno=1, symtable=None):
         if symtable is None:
             symtable = SymbolTable()
-        astnode = self.parse(source, initial_lineno=initial_lineno, symtable=symtable)
+        astnode = self.parse(
+            source, initial_lineno=initial_lineno, symtable=symtable)
         ctx = CompilerContext(self, "<main>", symtable, filepath)
         with ctx.set_lineno(initial_lineno):
             try:
@@ -322,7 +332,8 @@ class ObjectSpace(object):
     def execute(self, source, w_self=None, lexical_scope=None, filepath="-e",
                 initial_lineno=1):
         bc = self.compile(source, filepath, initial_lineno=initial_lineno)
-        frame = self.create_frame(bc, w_self=w_self, lexical_scope=lexical_scope)
+        frame = self.create_frame(
+            bc, w_self=w_self, lexical_scope=lexical_scope)
         with self.getexecutioncontext().visit_frame(frame):
             return self.execute_frame(frame, bc)
 
@@ -359,7 +370,8 @@ class ObjectSpace(object):
         else:
             return self.w_false
 
-    @signature(types.any(), types.int(), returns=types.instance(W_FixnumObject))
+    @signature(types.any(), types.int(),
+               returns=types.instance(W_FixnumObject))
     def newint(self, intvalue):
         return W_FixnumObject(self, intvalue)
 
@@ -379,16 +391,17 @@ class ObjectSpace(object):
             # because parsing gives a Bignum in that case
             return self.newint(intmask(someinteger))
         else:
-            return self.newbigint_fromrbigint(rbigint.fromrarith_int(someinteger))
+            return self.newbigint_fromrbigint(
+                rbigint.fromrarith_int(someinteger))
 
     @specialize.argtype(1)
     def newint_or_bigint_fromunsigned(self, someunsigned):
-        #XXX somehow combine with above
+        # XXX somehow combine with above
         if 0 <= someunsigned <= sys.maxint:
             return self.newint(intmask(someunsigned))
         else:
             return self.newbigint_fromrbigint(
-                        rbigint.fromrarith_int(someunsigned))
+                rbigint.fromrarith_int(someunsigned))
 
     def newfloat(self, floatvalue):
         return W_FloatObject(self, floatvalue)
@@ -427,9 +440,12 @@ class ObjectSpace(object):
         complete_name = self.buildname(name, w_scope)
         return W_ModuleObject(self, complete_name)
 
-    def newclass(self, name, superclass, is_singleton=False, w_scope=None, attached=None):
+    def newclass(self, name, superclass, is_singleton=False, w_scope=None,
+                 attached=None):
         complete_name = self.buildname(name, w_scope)
-        return W_ClassObject(self, complete_name, superclass, is_singleton=is_singleton, attached=attached)
+        return W_ClassObject(
+            self, complete_name, superclass,
+            is_singleton=is_singleton, attached=attached)
 
     def newfunction(self, w_name, w_code, lexical_scope, visibility):
         name = self.symbol_w(w_name)
@@ -441,9 +457,8 @@ class ObjectSpace(object):
         if w_function is None:
             raise self.error(
                 self.w_NameError,
-                "undefined method `%s' for class `%s'" % (name,
-                                                          self.obj_to_s(w_cls))
-            )
+                "undefined method `%s' for class `%s'" % (
+                    name, self.obj_to_s(w_cls)))
         else:
             return W_UnboundMethodObject(self, w_cls, w_function)
 
@@ -461,13 +476,15 @@ class ObjectSpace(object):
         cells = [None] * len(frame.cells)
         for i in xrange(len(frame.cells)):
             cells[i] = frame.cells[i].upgrade_to_closure(self, frame, i)
-        return W_BindingObject(self, names, cells, frame.w_self, frame.lexical_scope)
+        return W_BindingObject(
+            self, names, cells, frame.w_self, frame.lexical_scope)
 
     @jit.unroll_safe
     def newbinding_fromblock(self, block):
         names = block.bytecode.cellvars + block.bytecode.freevars
         cells = block.cells[:]
-        return W_BindingObject(self, names, cells, block.w_self, block.lexical_scope)
+        return W_BindingObject(
+            self, names, cells, block.w_self, block.lexical_scope)
 
     def buildname(self, name, w_scope):
         complete_name = name
@@ -539,7 +556,8 @@ class ObjectSpace(object):
     def find_const(self, w_module, name):
         w_res = w_module.find_const(self, name, autoload=True)
         if w_res is None:
-            w_res = self.send(w_module, "const_missing", [self.newsymbol(name)])
+            w_res = self.send(
+                w_module, "const_missing", [self.newsymbol(name)])
         return w_res
 
     @jit.elidable
@@ -554,9 +572,7 @@ class ObjectSpace(object):
 
     def _check_const_name(self, name):
         if not self._valid_const_name(name):
-            raise self.error(self.w_NameError,
-                "wrong constant name %s" % name
-            )
+            raise self.error(self.w_NameError, "wrong constant name %s" % name)
 
     def set_const(self, module, name, w_value):
         self._check_const_name(name)
@@ -621,9 +637,9 @@ class ObjectSpace(object):
         w_res = w_module.find_class_var(self, name)
         if w_res is None:
             module_name = self.obj_to_s(w_module)
-            raise self.error(self.w_NameError,
-                "uninitialized class variable %s in %s" % (name, module_name)
-            )
+            raise self.error(
+                self.w_NameError,
+                "uninitialized class variable %s in %s" % (name, module_name))
         return w_res
 
     def set_class_var(self, w_module, name, w_value):
@@ -635,20 +651,22 @@ class ObjectSpace(object):
 
         w_cls = self.getclass(w_receiver)
         raw_method = w_cls.find_method(self, name)
-        return self._send_raw(name, raw_method, w_receiver, w_cls, args_w, block)
+        return self._send_raw(
+            name, raw_method, w_receiver, w_cls, args_w, block)
 
     def send_super(self, w_cls, w_receiver, name, args_w, block=None):
         raw_method = w_cls.find_method_super(self, name)
-        return self._send_raw(name, raw_method, w_receiver, w_cls, args_w, block)
+        return self._send_raw(
+            name, raw_method, w_receiver, w_cls, args_w, block)
 
     def _send_raw(self, name, raw_method, w_receiver, w_cls, args_w, block):
         if raw_method is None:
             method_missing = w_cls.find_method(self, "method_missing")
             if method_missing is None:
                 class_name = self.str_w(self.send(w_cls, "to_s"))
-                raise self.error(self.w_NoMethodError,
-                    "undefined method `%s' for %s" % (name, class_name)
-                )
+                raise self.error(
+                    self.w_NoMethodError,
+                    "undefined method `%s' for %s" % (name, class_name))
             else:
                 args_w = [self.newsymbol(name)] + args_w
                 return method_missing.call(self, w_receiver, args_w, block)
@@ -674,7 +692,8 @@ class ObjectSpace(object):
         if block.is_lambda:
             frame.handle_args(self, bc, args_w, block_arg)
         else:
-            if len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or bc.block_arg_pos != -1:
+            if (len(bc.arg_pos) != 0 or bc.splat_arg_pos != -1 or
+                    bc.block_arg_pos != -1):
                 frame.handle_block_args(self, bc, args_w, block_arg)
         assert len(block.cells) == len(bc.freevars)
         for i in xrange(len(bc.freevars)):
@@ -684,7 +703,9 @@ class ObjectSpace(object):
             return self.execute_frame(frame, bc)
 
     def invoke_function(self, w_function, w_receiver, args_w, block):
-        return self._send_raw(w_function.name, w_function, w_receiver, self.getclass(w_receiver), args_w, block)
+        return self._send_raw(
+            w_function.name, w_function, w_receiver, self.getclass(w_receiver),
+            args_w, block)
 
     def error(self, w_type, msg="", optargs=None):
         if not optargs:
@@ -724,14 +745,18 @@ class ObjectSpace(object):
         nil = False
 
         if isinstance(w_idx, W_RangeObject) and not w_count:
-            start = self.int_w(self.convert_type(w_idx.w_start, self.w_fixnum, "to_int"))
-            end = self.int_w(self.convert_type(w_idx.w_end, self.w_fixnum, "to_int"))
+            start = self.int_w(self.convert_type(
+                w_idx.w_start, self.w_fixnum, "to_int"))
+            end = self.int_w(self.convert_type(
+                w_idx.w_end, self.w_fixnum, "to_int"))
             inclusive = not w_idx.exclusive
             as_range = True
         else:
-            start = self.int_w(self.convert_type(w_idx, self.w_fixnum, "to_int"))
+            start = self.int_w(self.convert_type(
+                w_idx, self.w_fixnum, "to_int"))
             if w_count:
-                end = self.int_w(self.convert_type(w_count, self.w_fixnum, "to_int"))
+                end = self.int_w(self.convert_type(
+                    w_count, self.w_fixnum, "to_int"))
                 if end >= 0:
                     as_range = True
                 else:
@@ -759,7 +784,8 @@ class ObjectSpace(object):
 
         return (start, end, as_range, nil)
 
-    def convert_type(self, w_obj, w_cls, method, raise_error=True, reraise_error=False):
+    def convert_type(self, w_obj, w_cls, method, raise_error=True,
+                     reraise_error=False):
         if self.is_kind_of(w_obj, w_cls):
             return w_obj
 
@@ -774,8 +800,8 @@ class ObjectSpace(object):
             src_cls_name = self.obj_to_s(self.getclass(w_obj))
             w_cls_name = self.obj_to_s(w_cls)
             raise self.error(
-                self.w_TypeError, "can't convert %s into %s" % (src_cls_name, w_cls_name)
-            )
+                self.w_TypeError,
+                "can't convert %s into %s" % (src_cls_name, w_cls_name))
 
         if not w_res or w_res is self.w_nil and not raise_error:
             return self.w_nil
@@ -783,11 +809,10 @@ class ObjectSpace(object):
             src_cls = self.obj_to_s(self.getclass(w_obj))
             res_cls = self.obj_to_s(self.getclass(w_res))
             w_cls_name = self.obj_to_s(w_cls)
-            raise self.error(self.w_TypeError,
+            raise self.error(
+                self.w_TypeError,
                 "can't convert %s to %s (%s#%s gives %s)" % (
-                    src_cls, w_cls_name, src_cls, method, res_cls
-                )
-            )
+                    src_cls, w_cls_name, src_cls, method, res_cls))
         else:
             return w_res
 
@@ -839,7 +864,8 @@ class ObjectSpace(object):
         else:
             w_cmp_res = self.invoke_block(block, [w_a, w_b])
         if w_cmp_res is self.w_nil:
-            raise self.error(self.w_ArgumentError,
+            raise self.error(
+                self.w_ArgumentError,
                 "comparison of %s with %s failed" % (
                     self.obj_to_s(self.getclass(w_a)),
                     self.obj_to_s(self.getclass(w_b)),

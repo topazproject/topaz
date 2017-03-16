@@ -50,8 +50,7 @@ class GetterSetterCell(BaseCell):
     def setvalue(self, space, name, w_value):
         if self.setter is None:
             raise space.error(space.w_NameError,
-                "%s is a read-only variable" % name
-            )
+                              "%s is a read-only variable" % name)
         self.setter(space, w_value)
 
 

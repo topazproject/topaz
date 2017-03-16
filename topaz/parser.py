@@ -1,4 +1,3 @@
-from rpython.rlib import jit
 from rpython.rlib.objectmodel import specialize
 from rpython.rlib.rbigint import rbigint
 
@@ -6,7 +5,8 @@ from rply import ParserGenerator, Token, ParsingError
 from rply.token import BaseBox, SourcePosition
 
 from topaz import ast
-from topaz.astcompiler import SymbolTable, BlockSymbolTable, SharedScopeSymbolTable
+from topaz.astcompiler import (
+    SymbolTable, BlockSymbolTable, SharedScopeSymbolTable)
 from topaz.utils import regexp
 
 
@@ -3359,6 +3359,7 @@ class BoxForVars(BaseBox):
 class BoxNumericAST(BoxAST):
     def negate(self):
         return BoxNumericAST(self.node.negate())
+
 
 class BoxBraceBody(BaseBox):
     def __init__(self, block_param, compstmt):

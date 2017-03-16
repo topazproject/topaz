@@ -9,4 +9,6 @@ class StaticScope(object):
         self.backscope = backscope
 
     def __deepcopy__(self, memo):
-        return StaticScope(copy.deepcopy(self.w_mod, memo), copy.deepcopy(self.backscope, memo))
+        return StaticScope(
+            copy.deepcopy(self.w_mod, memo),
+            copy.deepcopy(self.backscope, memo))
