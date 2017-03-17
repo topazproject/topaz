@@ -813,7 +813,6 @@ class Parser(object):
     def command_asgn_subscript_op_asgn_command_call(self, p):
         raise NotImplementedError(p)
 
-
     @pg.production("command_asgn : primary_value call_op IDENTIFIER OP_ASGN command_rhs")
     def command_asgn_method_op_asgn_command_call(self, p):
         raise NotImplementedError(p)
@@ -1632,7 +1631,7 @@ class Parser(object):
     @pg.production("primary : LPAREN_ARG stmt paren_post_expr rparen")
     def primary_paren_arg(self, p):
         stmt = p[1].getast()
-        if isinstance(stmt, ast.Statement): # simplify here for posterity
+        if isinstance(stmt, ast.Statement):  # simplify here for posterity
             return BoxAST(stmt.expr)
         else:
             return p[1]

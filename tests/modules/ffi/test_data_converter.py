@@ -1,6 +1,7 @@
 import pytest
 from tests.modules.ffi.base import BaseFFITest
 
+
 class TestDataConverter(BaseFFITest):
     def test_it_is_a_Module(self, space):
         assert self.ask(space, "FFI::DataConverter.is_a? Module")
@@ -30,6 +31,7 @@ class DataConverterImplementation
 end
 """
 
+
 class TestDataConverter__native_type(BaseFFITest):
 
     @pytest.mark.xfail
@@ -41,7 +43,6 @@ class TestDataConverter__native_type(BaseFFITest):
             space.execute("""
             DataConverterImplementation.new.impl_native_type
             """)
-
 
     def test_it_calls_find_type_if_one_arg_was_given(self, space):
         space.execute(code_DataConverterImplementation)
@@ -78,23 +79,26 @@ class TestDataConverter__native_type(BaseFFITest):
             DataConverterImplementation.new.impl_native_type(:int8, :more)
             """)
 
+
 def check_it_takes_two_args_and_returns_the_first(ffitest, space, funcname):
     space.execute(code_DataConverterImplementation)
-    w_res = space.execute("%s(1, 2)" %funcname)
+    w_res = space.execute("%s(1, 2)" % funcname)
     assert ffitest.unwrap(space, w_res) == 1
     with ffitest.raises(space, "ArgumentError"):
         space.execute(funcname)
     with ffitest.raises(space, "ArgumentError"):
-        space.execute("%s(1)" %funcname)
+        space.execute("%s(1)" % funcname)
     with ffitest.raises(space, "ArgumentError"):
-        space.execute("%s(1, 2, 3)" %funcname)
+        space.execute("%s(1, 2, 3)" % funcname)
+
 
 class TestDataConverter__to_native(BaseFFITest):
     def test_it_takes_two_arguments_and_returns_the_first_one(self, space):
-        check_it_takes_two_args_and_returns_the_first(self, space,
-                                                      "DataConverterImplementation.new.impl_to_native")
+        check_it_takes_two_args_and_returns_the_first(
+            self, space, "DataConverterImplementation.new.impl_to_native")
+
 
 class TestDataConverter__from_native(BaseFFITest):
     def test_it_returns_nil_for_now(self, space):
-        check_it_takes_two_args_and_returns_the_first(self, space,
-                                                      "DataConverterImplementation.new.impl_from_native")
+        check_it_takes_two_args_and_returns_the_first(
+            self, space, "DataConverterImplementation.new.impl_from_native")

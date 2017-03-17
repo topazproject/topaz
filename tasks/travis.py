@@ -116,8 +116,10 @@ def run_translate_jit_tests(env):
     run_specs("`pwd`/bin/topaz")
     invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH py.test --topaz=bin/topaz tests/jit/".format(**env))
 
+
 def run_translate_jit(env):
     invoke.run("PYTHONPATH={rpython_path}:$PYTHONPATH python {rpython_path}/rpython/bin/rpython --batch -Ojit targettopaz.py".format(**env))
+
 
 def run_specs(binary, prefix=""):
     invoke.run("{prefix}../mspec/bin/mspec run -G fails -t {binary} --config=topaz.mspec".format(

@@ -9,6 +9,7 @@ import sys
 
 NULLPTR = lltype.nullptr(rffi.VOIDP.TO)
 
+
 def coerce_pointer(space, w_pointer):
     if isinstance(w_pointer, W_PointerObject):
         return w_pointer.ptr
@@ -18,6 +19,7 @@ def coerce_pointer(space, w_pointer):
                           space.str_w(space.send(w_pointer, 'inspect')))
 
 setattr(Coerce, 'ffi_pointer', staticmethod(coerce_pointer))
+
 
 def coerce_address(space, w_addressable):
     if space.is_kind_of(w_addressable, space.w_bignum):
@@ -34,6 +36,7 @@ def coerce_address(space, w_addressable):
         raise space.error(space.w_TypeError, errmsg)
 
 setattr(Coerce, 'ffi_address', staticmethod(coerce_address))
+
 
 class W_PointerObject(W_AbstractMemoryObject):
     classdef = ClassDef('FFI::Pointer', W_AbstractMemoryObject.classdef)

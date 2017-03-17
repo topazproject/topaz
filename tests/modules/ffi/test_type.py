@@ -3,11 +3,11 @@ from topaz.modules.ffi.type import (type_names, rw_strategies,
                                     W_TypeObject, VOID)
 from topaz.modules.ffi import type as ffitype
 
-from rpython.rlib import clibffi
 from rpython.rtyper.lltypesystem import rffi, lltype
 
 # XXX maybe move to rlib/jit_libffi
 from pypy.module._cffi_backend import misc
+
 
 class TestType(BaseFFITest):
     def test_it_is_a_class(self, space):
@@ -26,14 +26,16 @@ class TestType(BaseFFITest):
         # only works in Python unit test because of dynamic typing
         class RWStrategyMock(object):
             def read(self, space, data):
-                return "read with data = %s" %data
+                return "read with data = %s" % data
+
             def write(self, space, data, w_obj):
-                return "write with data = %s and w_obj = %s" %(data, w_obj)
+                return "write with data = %s and w_obj = %s" % (data, w_obj)
         w_type = W_TypeObject(space)
         w_type.rw_strategy = RWStrategyMock()
         assert w_type.read(space, "foo") == "read with data = foo"
         assert (w_type.write(space, "bar", 5) ==
                 "write with data = bar and w_obj = 5")
+
 
 class TestFFI__TestType(BaseFFITest):
     def test_it_is_a_Module(self, space):
@@ -43,7 +45,7 @@ class TestFFI__TestType(BaseFFITest):
         for t in rw_strategies:
             typename = type_names[t]
             assert self.ask(space, "FFI::NativeType::%s.is_a? FFI::Type"
-                            %typename)
+                            % typename)
 
     def test_it_has_these_instances_defined_as_constants(self, space):
         for t in rw_strategies:
@@ -62,6 +64,7 @@ class TestFFI__TestType(BaseFFITest):
             assert w_t1 == w_t2
             assert w_t2 == w_t3
 
+
 class TestFFI__Type_size(BaseFFITest):
     def test_it_returns_the_size_type(self, space):
         w_res = space.execute("FFI::Type::INT8.size")
@@ -71,12 +74,14 @@ class TestFFI__Type_size(BaseFFITest):
         w_res = space.execute("FFI::Type::INT32.size")
         assert self.unwrap(space, w_res) == 4
 
+
 class TestFFI__Type_eq(BaseFFITest):
     def test_it_compares_the_names(self, space):
         type1 = W_TypeObject(space, VOID)
         type2 = W_TypeObject(space, VOID)
         w_assertion = space.send(type1, '==', [type2])
         assert self.unwrap(space, w_assertion)
+
 
 class Test_StringRWStrategy(BaseFFITest):
     def test_it_reads_a_string_from_buffer(self, space):
@@ -101,6 +106,7 @@ class Test_StringRWStrategy(BaseFFITest):
         assert rffi.charp2str(raw_res) == "test"
         lltype.free(data, flavor='raw')
 
+
 class Test_PointerRWStrategy(BaseFFITest):
     def test_it_reads_a_pointer_from_buffer(self, space):
         w_pointer_type = ffitype.PointerRWStrategy()
@@ -124,6 +130,7 @@ class Test_PointerRWStrategy(BaseFFITest):
         assert raw_res == 15
         lltype.free(data, flavor='raw')
 
+
 class Test_BoolRWStrategy(BaseFFITest):
     def test_it_reads_a_bool_from_buffer(self, space):
         w_bool_type = ffitype.BoolRWStrategy()
@@ -143,6 +150,7 @@ class Test_BoolRWStrategy(BaseFFITest):
         raw_res = misc.read_raw_unsigned_data(data, size)
         assert bool(raw_res)
         lltype.free(data, flavor='raw')
+
 
 class Test_FloatRWStrategy(BaseFFITest):
     def test_it_reads_a_float32_to_buffer(self, space):
@@ -179,6 +187,7 @@ class Test_FloatRWStrategy(BaseFFITest):
         assert raw_res == 1e-12
         lltype.free(data, flavor='raw')
 
+
 class Test_SignedRWStrategy(BaseFFITest):
     def test_it_reads_signed_types_to_buffer(self, space):
         for t in [ffitype.INT8,
@@ -210,6 +219,7 @@ class Test_SignedRWStrategy(BaseFFITest):
             raw_res = misc.read_raw_signed_data(data, size)
             assert raw_res == -18
             lltype.free(data, flavor='raw')
+
 
 class Test_UnsignedRWStrategy(BaseFFITest):
     def test_it_reads_unsigned_types_to_buffer(self, space):
@@ -243,12 +253,13 @@ class Test_UnsignedRWStrategy(BaseFFITest):
             assert raw_res == 16
             lltype.free(data, flavor='raw')
 
+
 class Test_VoidRWStrategy(BaseFFITest):
     def test_it_reads_nothing_and_returns_nil(self, space):
         data = lltype.malloc(rffi.CCHARP.TO, 1, flavor='raw')
         w_void_type = ffitype.VoidRWStrategy()
         w_res = w_void_type.read(space, data)
-        assert self.unwrap(space, w_res) == None
+        assert self.unwrap(space, w_res) is None
         lltype.free(data, flavor='raw')
 
     def test_it_writes_nothing_and_returns_None(self, space):
@@ -260,9 +271,11 @@ class Test_VoidRWStrategy(BaseFFITest):
         assert res is None
         lltype.free(data, flavor='raw')
 
+
 class TestFFI__Type__MappedObject(BaseFFITest):
     def test_its_superclass_is_Type(self, space):
         assert self.ask(space, "FFI::Type::Mapped.superclass.equal? FFI::Type")
+
 
 class TestFFI__Type__MappedObject__new(BaseFFITest):
     def test_it_takes_a_data_converter_as_argument(self, space):
@@ -319,6 +332,7 @@ class TestFFI__Type__MappedObject__new(BaseFFITest):
             FFI::Type::Mapped.new(DataConverter.new)
             """)
 
+
 class TestFFI__Type__MappedObject_to_native(BaseFFITest):
     def test_it_delegates_to_the_data_converter(self, space):
         w_res = space.execute("""
@@ -331,6 +345,7 @@ class TestFFI__Type__MappedObject_to_native(BaseFFITest):
         mapped.to_native
         """)
         assert self.unwrap(space, w_res) == 'success'
+
 
 class TestFFI__Type__MappedObject_from_native(BaseFFITest):
     def test_it_delegates_from_the_data_converter(self, space):
@@ -345,12 +360,14 @@ class TestFFI__Type__MappedObject_from_native(BaseFFITest):
         """)
         assert self.unwrap(space, w_res) == 'success'
 
+
 class TestFFI__Type_MappedObject(BaseFFITest):
 
     def test_it_converts_after_reading_and_writing(self, space):
         class RWStrategyMock(object):
             def read(self, space, data):
                 return space.newsymbol(data)
+
             def write(self, space, data, w_obj):
                 return data.append(space.str_w(w_obj))
         w_mapped = space.execute("""
@@ -366,4 +383,3 @@ class TestFFI__Type_MappedObject(BaseFFITest):
         data = []
         w_mapped.write(space, data, space.newsymbol("BAR"))
         assert data == ["bar"]
-
