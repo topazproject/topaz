@@ -1,27 +1,85 @@
-from rpython.rlib import jit
+from rpython.rlib import jit, rthread
+from rpython.rlib.objectmodel import not_rpython, we_are_translated
 
 from topaz.error import RubyError
 from topaz.frame import Frame
 from topaz.objects.fiberobject import W_FiberObject
 
 
-class ExecutionContextHolder(object):
-    # TODO: convert to be a threadlocal store once we have threads.
+class ThreadLocals(object):
+    # Inspired by Pypy's OSThreadLocals (but without weaklist optimization)
+
+    @not_rpython
     def __init__(self):
-        self._ec = None
+        self._valuedict = {}
+        self._cleanup_()
+        self.raw_thread_local = rthread.ThreadLocalReference(
+            ExecutionContext, loop_invariant=True)
 
-    def get(self):
-        return self._ec
+    def get_ec(self):
+        ec = self.raw_thread_local.get()
+        if not we_are_translated():
+            assert ec is self._valuedict.get(rthread.get_ident(), None)
+        return ec
 
-    def set(self, ec):
-        self._ec = ec
+    def _cleanup_(self):
+        self._valuedict.clear()
+        self._mainthreadident = 0
 
-    def clear(self):
-        self._ec = None
+    def enter_thread(self):
+        "Notification that the current thread is about to start running."
+        self._set_ec(ExecutionContext())
+
+    def try_enter_thread(self):
+        # common case: the thread-local has already got a value
+        if self.raw_thread_local.get() is not None:
+            return False
+
+        # Else, make and attach a new ExecutionContext
+        ec = ExecutionContext()
+        self._set_ec(ec)
+        return True
+
+    def _set_ec(self, ec, register_in_valuedict=True):
+        ident = rthread.get_ident()
+        if self._mainthreadident == 0 or self._mainthreadident == ident:
+            ec._signals_enabled = 1    # the main thread is enabled
+            self._mainthreadident = ident
+        if register_in_valuedict:
+            self._valuedict[ident] = ec
+        self.raw_thread_local.set(ec)
+
+    def leave_thread(self):
+        "Notification that the current thread is about to stop."
+        ec = self.get_ec()
+        if ec is not None:
+            try:
+                self.thread_is_stopping(ec)
+            finally:
+                self.raw_thread_local.set(None)
+                ident = rthread.get_ident()
+                try:
+                    del self._valuedict[ident]
+                except KeyError:
+                    pass
+
+    @staticmethod
+    def thread_is_stopping(ec):
+        tlobjs = ec._thread_local_objs
+        if tlobjs is None:
+            return
+        ec._thread_local_objs = None
+        for wref in tlobjs.items():
+            local = wref()
+            if local is not None:
+                del local.dicts[ec]
+                local.last_dict = None
+                local.last_ec = None
 
 
 class ExecutionContext(object):
     _immutable_fields_ = ["w_trace_proc?"]
+    _thread_local_objs = None
 
     def __init__(self):
         self.topframeref = jit.vref_None
