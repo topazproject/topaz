@@ -268,6 +268,7 @@ class VoidRWStrategy(ReadWriteStrategy):
     def write(self, space, data, w_arg):
         pass
 
+
 rw_strategies = {}
 rw_strategies[VOID] = VoidRWStrategy()  # noqa: F821
 for ts, tu in [

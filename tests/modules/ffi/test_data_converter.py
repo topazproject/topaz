@@ -13,6 +13,7 @@ class TestDataConverter(BaseFFITest):
         assert 'to_native' in instance_methods
         assert 'from_native' in instance_methods
 
+
 code_DataConverterImplementation = """
 class DataConverterImplementation
   include FFI::DataConverter

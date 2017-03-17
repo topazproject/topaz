@@ -84,6 +84,7 @@ class W_AbstractMemoryObject(W_Object):
                            [space.newsymbol(prefix + alias),
                             space.newsymbol(prefix + orig)])
 
+
 W_AMO = W_AbstractMemoryObject
 for t in [ffitype.INT8, ffitype.INT16, ffitype.INT32, ffitype.INT64,
           ffitype.UINT8, ffitype.UINT16, ffitype.UINT32, ffitype.UINT64,
