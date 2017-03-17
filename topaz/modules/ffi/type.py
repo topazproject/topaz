@@ -1,15 +1,13 @@
-from topaz.objects.objectobject import W_Object
-from topaz.module import ClassDef
-from topaz.error import RubyError
-
-from rpython.rlib.jit_libffi import FFI_TYPE_P
 from rpython.rlib import clibffi
-from rpython.rlib.rbigint import rbigint
-from rpython.rtyper.lltypesystem import rffi, lltype
+from rpython.rlib.jit_libffi import FFI_TYPE_P
+from rpython.rlib.objectmodel import not_rpython
 from rpython.rlib.rarithmetic import intmask
-from topaz.coerce import Coerce
+from rpython.rtyper.lltypesystem import rffi, lltype
 
+from topaz.coerce import Coerce
+from topaz.module import ClassDef
 from topaz.modules.ffi import misc
+from topaz.objects.objectobject import W_Object
 
 
 _native_types = [
@@ -67,13 +65,15 @@ for i, typ in enumerate(_native_types):
 
 del _native_types
 
+
+@not_rpython
 def lltype_for_name(name):
-    """NOT_RPYTHON"""
     # XXX maybe use a dictionary
     return lltypes[type_names.index(name)]
 
+
+@not_rpython
 def size_for_name(name):
-    """NOT_RPYTHON"""
     # XXX maybe use a dictionary
     return lltype_sizes[type_names.index(name)]
 
