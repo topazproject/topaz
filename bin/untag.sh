@@ -3,13 +3,13 @@
 top="`cd $(dirname "$0"); cd ..; pwd`"
 
 ### Check prerequesites
-if [ ! -d "$top/../rubyspec" ]; then
-    echo "You need to checkout rubyspec in $top/../rubyspec"
+if [ ! -d "$top/spec/rubyspec" ]; then
+    echo "You need to checkout rubyspec in $top/spec/rubyspec"
     exit 1
 fi
 
-if [ ! -f "$top/../mspec/bin/mspec" ]; then
-    echo "You need to checkout mspec in $top/../mspec"
+if [ ! -f "$top/spec/mspec/bin/mspec" ]; then
+    echo "You need to checkout mspec in $top/spec/mspec"
     exit 1
 fi
 
@@ -56,16 +56,16 @@ for i in `find spec/tags/ -name "*_tags.txt"`; do
     FILE="$i"
     SPECNAME="${FILE%_tags.txt}"_spec.rb
     SPECPATH="`echo "$SPECNAME" | sed 's#spec/tags/rubyspec/tags/#spec/rubyspec/#'`"
-    SPECPATH="`echo "$SPECNAME" | sed 's#spec/tags/#../rubyspec/#'`"
-    $TIMEOUT 15 bin/topaz ../mspec/bin/mspec tag -t "${top}/bin/topaz" --config="${top}/topaz.mspec" --del fails "$SPECPATH"
+    SPECPATH="`echo "$SPECNAME" | sed 's#spec/tags/#spec/rubyspec/#'`"
+    $TIMEOUT 15 bin/topaz spec/mspec/bin/mspec tag -t "${top}/bin/topaz" --config="${top}/topaz.mspec" --del fails "$SPECPATH"
 done
 
 FAILING_FILES=""
 echo "Tagging failing specs"
 sleep 1
-for i in `find ../rubyspec/core ../rubyspec/command_line ../rubyspec/language -name "*_spec.rb"`; do
+for i in `find spec/rubyspec/core spec/rubyspec/command_line spec/rubyspec/language -name "*_spec.rb"`; do
     FILE="$i"
-    $TIMEOUT 15 bin/topaz ../mspec/bin/mspec tag -t "${top}/bin/topaz" --config="${top}/topaz.mspec" --add fails "$FILE" | tee output.txt
+    $TIMEOUT 15 bin/topaz spec/mspec/bin/mspec tag -t "${top}/bin/topaz" --config="${top}/topaz.mspec" --add fails "$FILE" | tee output.txt
     grep "1 file, 0 examples, 0 expectations, 0 failures, 1 error" output.txt
     if [ $? -eq 0 ]; then
         # Specfile had an error during load
