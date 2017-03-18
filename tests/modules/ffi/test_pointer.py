@@ -6,6 +6,7 @@ from topaz.modules.ffi.pointer import coerce_address
 from rpython.rtyper.lltypesystem import rffi, lltype, llmemory
 from rpython.rtyper.lltypesystem.ll2ctypes import ALLOCATED
 
+
 class TestPointer__NULL(BaseFFITest):
     def test_it_is_null(self, space):
         self.ask(space, "FFI::Pointer::NULL.null?")
@@ -20,6 +21,7 @@ class TestPointer__NULL(BaseFFITest):
         with self.raises(space, 'FFI::NullPointerError',
                          'read attempt on NULL pointer'):
             space.execute("FFI::Pointer::NULL.read_something")
+
 
 class TestPointer__new(BaseFFITest):
     def test_it_returns_an_object_eq_to_NULL_when_given_0(self, space):
@@ -40,7 +42,7 @@ class TestPointer__new(BaseFFITest):
         adr = llmemory.cast_ptr_to_adr(w_ptr_obj.ptr)
         assert llmemory.cast_adr_to_int(adr, mode='forced') == aint
         lltype.free(int8_ptr, flavor='raw')
-        assert not aint in ALLOCATED
+        assert aint not in ALLOCATED
 
     def test_it_also_accepts_negative_values(self, space):
         for x in range(1, 100):
@@ -62,13 +64,15 @@ class TestPointer__new(BaseFFITest):
         adr = llmemory.cast_ptr_to_adr(ptr_obj.ptr)
         assert llmemory.cast_adr_to_int(adr, mode='forced') == aint
         lltype.free(int16_ptr, flavor='raw')
-        assert not aint in ALLOCATED
+        assert aint not in ALLOCATED
+
 
 class TestPointer_size(BaseFFITest):
     def test_it_is_always_2_pow_63(self, space):
         for adr in range(100):
             w_res = space.execute("FFI::Pointer.new(%s).size" % adr)
             assert self.unwrap(space, w_res) == sys.maxint
+
 
 class TestPointer_autorelease(BaseFFITest):
     def test_it(self, space):
@@ -86,6 +90,7 @@ class TestPointer_autorelease(BaseFFITest):
                          """]:
             assert self.ask(space, question)
 
+
 class TestPointer_address(BaseFFITest):
     def test_it_returns_the_address(self, space):
         w_res = space.execute("FFI::Pointer.new(42).address")
@@ -97,6 +102,7 @@ class TestPointer_address(BaseFFITest):
         FFI::Pointer::instance_method(:address)
         """)
 
+
 class TestPointer_plus(BaseFFITest):
     def test_it_increases_the_address_by_the_2nd_arg(self, space):
         w_res = space.execute("(FFI::Pointer.new(3) + 2).address")
@@ -107,6 +113,7 @@ class TestPointer_plus(BaseFFITest):
         FFI::Pointer.instance_method(:[]) ==
         FFI::Pointer.instance_method(:+)
         """)
+
 
 class TestPointer_slice(BaseFFITest):
     def test_its_1st_arg_is_the_offset(self, space):
@@ -125,18 +132,20 @@ class TestPointer_slice(BaseFFITest):
                          "can't convert Symbol into Integer"):
             space.execute("FFI::Pointer.new(0).slice(0, :bar)")
 
+
 class TestPointer_free(BaseFFITest):
     def test_it_frees_whatever_the_Pointer_is_referencing(self, space):
         int16_ptr = lltype.malloc(rffi.CArray(rffi.SHORT), 1, flavor='raw')
         adr = llmemory.cast_ptr_to_adr(int16_ptr)
         aint = llmemory.cast_adr_to_int(adr, mode='forced')
         space.execute("FFI::Pointer.new(%s).free" % aint)
-        assert not aint in ALLOCATED
+        assert aint not in ALLOCATED
+
 
 class TestPointer(BaseFFITest):
     def test_its_superclass_is_AbstractMemory(self, space):
-        assert self.ask(space,
-        "FFI::Pointer.superclass.equal?(FFI::AbstractMemory)")
+        assert self.ask(
+            space, "FFI::Pointer.superclass.equal?(FFI::AbstractMemory)")
 
     def test_it_has_these_methods(self, space):
         # but they don't do anything yet...
@@ -148,6 +157,7 @@ class TestPointer(BaseFFITest):
         space.execute("FFI::Pointer.new(0).order(:big)")
         with self.raises(space, "TypeError", "42 is not a symbol"):
             space.execute("FFI::Pointer.new(0).order(42)")
+
 
 class Test_coerce_address(BaseFFITest):
     def test_it_accepts_ruby_Fixnum_as_address(self, space):

@@ -145,6 +145,8 @@ class GlobalState(object):
         self.w_result = None
         self.propagate_exception = None
         self.space = None
+
+
 # This makes me sad.
 global_state = GlobalState()
 

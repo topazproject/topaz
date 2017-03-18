@@ -1,5 +1,3 @@
-import sys
-
 from topaz.module import ClassDef
 from topaz.modules.ffi import type as ffitype
 from topaz.modules.ffi.pointer import W_PointerObject
@@ -8,12 +6,10 @@ from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.objects.moduleobject import W_FunctionObject
 
 from rpython.rtyper.lltypesystem import rffi, lltype
-from rpython.rlib import jit
-from rpython.rlib.jit_libffi import CIF_DESCRIPTION
-from rpython.rlib.jit_libffi import FFI_TYPE_PP
 
 for i, name in enumerate(ffitype.type_names):
     globals()[name] = i
+
 
 class W_FFIFunctionObject(W_PointerObject):
     classdef = ClassDef('FFI::Function', W_PointerObject.classdef)
@@ -45,6 +41,7 @@ class W_FFIFunctionObject(W_PointerObject):
     @classdef.method('attach', name='str')
     def method_attach(self, space, w_lib, name):
         w_lib.attach_method(space, name, W_MethodAdapter(name, self))
+
 
 class W_MethodAdapter(W_FunctionObject):
     _immutable_fields_ = ['name', 'w_ffi_func']

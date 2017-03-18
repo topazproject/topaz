@@ -2,8 +2,8 @@ import os
 
 import invoke
 
-
-invoke.run = os.system
+if os.environ.get('TRAVIS_OS_NAME') == 'osx':
+    invoke.run = os.system
 
 
 class BaseTest(object):

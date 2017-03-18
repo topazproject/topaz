@@ -1,13 +1,9 @@
 from topaz.module import ClassDef
 from topaz.objects.objectobject import W_Object
-from topaz.modules.ffi.type import type_object, ffi_types, W_TypeObject, VOID
-from topaz.modules.ffi.dynamic_library import coerce_dl_symbol
-from topaz.modules.ffi.function_type import W_FunctionTypeObject
 from topaz.modules.ffi.function import W_FFIFunctionObject
 
-from rpython.rlib import clibffi
 from rpython.rlib import jit
-from rpython.rtyper.lltypesystem import lltype, rffi
+
 
 class W_VariadicInvokerObject(W_Object):
     classdef = ClassDef('VariadicInvoker', W_Object.classdef)
@@ -37,9 +33,9 @@ class W_VariadicInvokerObject(W_Object):
     @classdef.method('invoke', arg_values_w='array')
     def method_invoke(self, space, w_arg_types, arg_values_w):
         w_func_cls = space.getclassfor(W_FFIFunctionObject)
-        w_func = space.send(w_func_cls, 'new',
-                            [self.w_ret_type, w_arg_types,
-                            self.w_handle, self.w_options])
+        w_func = space.send(
+            w_func_cls, 'new',
+            [self.w_ret_type, w_arg_types, self.w_handle, self.w_options])
         return self._dli_call(space, w_func, arg_values_w)
 
     @jit.dont_look_inside

@@ -12,8 +12,7 @@ from rpython.rlib.rsre.rsre_core import (
 )
 from rpython.rlib.rsre.rsre_core import (
     AT_BEGINNING, AT_BEGINNING_LINE, AT_BEGINNING_STRING, AT_BOUNDARY,
-    AT_NON_BOUNDARY, AT_END, AT_END_LINE, AT_END_STRING, AT_LOC_BOUNDARY,
-    AT_LOC_NON_BOUNDARY, AT_UNI_BOUNDARY, AT_UNI_NON_BOUNDARY
+    AT_NON_BOUNDARY, AT_END_LINE, AT_END_STRING,
 )
 from rpython.rlib.rsre.rsre_char import MAXREPEAT as MAX_REPEAT
 
@@ -283,7 +282,7 @@ class RegexpBase(object):
         zerowidth = zerowidth if zerowidth is not None else self.zerowidth
         if (positive == self.positive and
             case_insensitive == self.case_insensitive and
-            zerowidth == self.zerowidth):
+                zerowidth == self.zerowidth):
             return self
         return self.rebuild(positive, case_insensitive, zerowidth)
 
@@ -892,7 +891,7 @@ PROPERTIES = {
 
 }
 EXTRA_POSIX_PROPERTIES = {
-    "print": [Range(32, 255)], # space - ASCII-end
+    "print": [Range(32, 255)],  # space - ASCII-end
     "blank": [Character(ord(c)) for c in " \t"],
     "punct": [Character(ord(c)) for c in '~!@#$%^&*()+-\|{}[]:";\'<>?,./'],
     "alpha": [Range(ord("a"), ord("z")), Range(ord("A"), ord("Z"))],
@@ -1159,7 +1158,7 @@ def _parse_set_implicit_union(source, info):
 def _parse_set_member(source, info):
     start = _parse_set_item(source, info)
     if (not isinstance(start, Character) or not start.positive or
-        not source.match("-")):
+            not source.match("-")):
         return start
 
     here = source.pos

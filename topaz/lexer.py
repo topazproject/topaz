@@ -1159,7 +1159,7 @@ class Lexer(object):
 
     def left_bracket(self, ch, space_seen):
         self.paren_nest += 1
-        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]: # IS_AFTER_OPERATOR
+        if self.state in [self.EXPR_FNAME, self.EXPR_DOT]:  # IS_AFTER_OPERATOR
             self.state = self.EXPR_ARG
 
             ch2 = self.read()

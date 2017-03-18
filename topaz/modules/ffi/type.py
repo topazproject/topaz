@@ -1,46 +1,44 @@
 from topaz.objects.objectobject import W_Object
 from topaz.module import ClassDef
-from topaz.error import RubyError
 
 from rpython.rlib.jit_libffi import FFI_TYPE_P
 from rpython.rlib import clibffi
-from rpython.rlib.rbigint import rbigint
 from rpython.rtyper.lltypesystem import rffi, lltype
 from rpython.rlib.rarithmetic import intmask
 from topaz.coerce import Coerce
 
 from topaz.modules.ffi import misc
 
-
 _native_types = [
-    ('VOID',       clibffi.ffi_type_void,                     lltype.Void,     []),
-    ('INT8',       clibffi.ffi_type_sint8,                    rffi.CHAR,       ['CHAR', 'SCHAR']),
-    ('UINT8',      clibffi.ffi_type_uint8,                    rffi.UCHAR,      ['UCHAR']),
-    ('INT16',      clibffi.ffi_type_sint16,                   rffi.SHORT,      ['SHORT', 'SSHORT']),
-    ('UINT16',     clibffi.ffi_type_uint16,                   rffi.USHORT,     ['USHORT']),
-    ('INT32',      clibffi.ffi_type_sint32,                   rffi.INT,        ['INT', 'SINT']),
-    ('UINT32',     clibffi.ffi_type_uint32,                   rffi.UINT,       ['UINT']),
-    ('INT64',      clibffi.ffi_type_sint64,                   rffi.LONGLONG,   ['LONG_LONG', 'SLONG_LONG']),
-    ('UINT64',     clibffi.ffi_type_uint64,                   rffi.ULONGLONG,  ['ULONG_LONG']),
-    ('LONG',       clibffi.cast_type_to_ffitype(rffi.LONG),   rffi.LONG,       ['SLONG']),
-    ('ULONG',      clibffi.cast_type_to_ffitype(rffi.ULONG),  rffi.ULONG,      []),
-    ('FLOAT32',    clibffi.ffi_type_float,                    rffi.FLOAT,      ['FLOAT']),
-    ('FLOAT64',    clibffi.ffi_type_double,                   rffi.DOUBLE,     ['DOUBLE']),
-    ('LONGDOUBLE', clibffi.ffi_type_longdouble,               rffi.LONGDOUBLE, []),
-    ('POINTER',    clibffi.ffi_type_pointer,                  rffi.VOIDP,      []),
-    ('CALLBACK',   clibffi.ffi_type_pointer,                  rffi.VOIDP,      []),
-    ('FUNCTION',   clibffi.ffi_type_pointer,                  rffi.VOIDP,      []),
+    ('VOID', clibffi.ffi_type_void, lltype.Void, []),
+    ('INT8', clibffi.ffi_type_sint8, rffi.CHAR, ['CHAR', 'SCHAR']),
+    ('UINT8', clibffi.ffi_type_uint8, rffi.UCHAR, ['UCHAR']),
+    ('INT16', clibffi.ffi_type_sint16, rffi.SHORT, ['SHORT', 'SSHORT']),
+    ('UINT16', clibffi.ffi_type_uint16, rffi.USHORT, ['USHORT']),
+    ('INT32', clibffi.ffi_type_sint32, rffi.INT, ['INT', 'SINT']),
+    ('UINT32', clibffi.ffi_type_uint32, rffi.UINT, ['UINT']),
+    ('INT64', clibffi.ffi_type_sint64, rffi.LONGLONG,
+        ['LONG_LONG', 'SLONG_LONG']),
+    ('UINT64', clibffi.ffi_type_uint64, rffi.ULONGLONG, ['ULONG_LONG']),
+    ('LONG', clibffi.cast_type_to_ffitype(rffi.LONG), rffi.LONG, ['SLONG']),
+    ('ULONG', clibffi.cast_type_to_ffitype(rffi.ULONG), rffi.ULONG, []),
+    ('FLOAT32', clibffi.ffi_type_float, rffi.FLOAT, ['FLOAT']),
+    ('FLOAT64', clibffi.ffi_type_double, rffi.DOUBLE, ['DOUBLE']),
+    ('LONGDOUBLE', clibffi.ffi_type_longdouble, rffi.LONGDOUBLE, []),
+    ('POINTER', clibffi.ffi_type_pointer, rffi.VOIDP, []),
+    ('CALLBACK', clibffi.ffi_type_pointer, rffi.VOIDP, []),
+    ('FUNCTION', clibffi.ffi_type_pointer, rffi.VOIDP, []),
     ('BUFFER_IN',),
     ('BUFFER_OUT',),
     ('BUFFER_INOUT',),
     ('CHAR_ARRAY',),
-    ('BOOL',       clibffi.cast_type_to_ffitype(lltype.Bool), lltype.Bool,     []),
-    ('STRING',     clibffi.ffi_type_pointer,                  rffi.CCHARP,     []),
-    ('VARARGS',    clibffi.ffi_type_void,                     rffi.CHAR,       []),
+    ('BOOL', clibffi.cast_type_to_ffitype(lltype.Bool), lltype.Bool, []),
+    ('STRING', clibffi.ffi_type_pointer, rffi.CCHARP, []),
+    ('VARARGS', clibffi.ffi_type_void, rffi.CHAR, []),
     ('NATIVE_VARARGS',),
     ('NATIVE_STRUCT',),
     ('NATIVE_ARRAY',),
-    ('NATIVE_MAPPED', clibffi.ffi_type_void,                  rffi.CCHARP,     []),
+    ('NATIVE_MAPPED', clibffi.ffi_type_void, rffi.CCHARP, []),
 ]
 
 ffi_types = []
@@ -67,10 +65,12 @@ for i, typ in enumerate(_native_types):
 
 del _native_types
 
+
 def lltype_for_name(name):
     """NOT_RPYTHON"""
     # XXX maybe use a dictionary
     return lltypes[type_names.index(name)]
+
 
 def size_for_name(name):
     """NOT_RPYTHON"""
@@ -101,7 +101,7 @@ class W_TypeObject(W_Object):
 
     @classdef.singleton_method('allocate')
     def singleton_method_allocate(self, space, args_w):
-        return W_TypeObject(space, VOID)
+        return W_TypeObject(space, VOID)  # noqa: F821
 
     def __deepcopy__(self, memo):
         obj = super(W_TypeObject, self).__deepcopy__(memo)
@@ -110,7 +110,8 @@ class W_TypeObject(W_Object):
         return obj
 
     def __repr__(self):
-        return '<W_TypeObject %s(%s)>' % (type_names[self.typeindex], lltype_sizes[self.typeindex])
+        return '<W_TypeObject %s(%s)>' % (
+            type_names[self.typeindex], lltype_sizes[self.typeindex])
 
     def eq(self, w_other):
         if not isinstance(w_other, W_TypeObject):
@@ -135,6 +136,7 @@ class W_TypeObject(W_Object):
     def write(self, space, data, w_arg):
         return self.rw_strategy.write(space, data, w_arg)
 
+
 class W_BuiltinType(W_TypeObject):
     classdef = ClassDef('Builtin', W_TypeObject.classdef)
 
@@ -145,15 +147,17 @@ class W_BuiltinType(W_TypeObject):
     def singleton_method_allocate(self, space, args_w):
         raise NotImplementedError
 
+
 def type_object(space, w_obj):
     w_ffi_mod = space.find_const(space.w_kernel, 'FFI')
     w_type = space.send(w_ffi_mod, 'find_type', [w_obj])
     if not isinstance(w_type, W_TypeObject):
-        raise space.error(space.w_TypeError,
-                          "This seems to be a bug. find_type should always"
-                           "return an FFI::Type object, but apparently it did"
-                           "not in this case.")
+        raise space.error(
+            space.w_TypeError,
+            "This seems to be a bug. find_type should always return an"
+            "FFI::Type object, but apparently it did not in this case.")
     return w_type
+
 
 class ReadWriteStrategy(object):
     def __init__(self, typeindex):
@@ -165,9 +169,10 @@ class ReadWriteStrategy(object):
     def write(self, space, data, w_arg):
         raise NotImplementedError("abstract ReadWriteStrategy")
 
+
 class StringRWStrategy(ReadWriteStrategy):
     def __init__(self):
-        ReadWriteStrategy.__init__(self, STRING)
+        ReadWriteStrategy.__init__(self, STRING)  # noqa: F821
 
     def read(self, space, data):
         result = misc.read_raw_unsigned_data(data, self.typesize)
@@ -181,9 +186,10 @@ class StringRWStrategy(ReadWriteStrategy):
         arg = rffi.cast(lltype.Unsigned, arg)
         misc.write_raw_unsigned_data(data, arg, self.typesize)
 
+
 class PointerRWStrategy(ReadWriteStrategy):
     def __init__(self):
-        ReadWriteStrategy.__init__(self, POINTER)
+        ReadWriteStrategy.__init__(self, POINTER)  # noqa: F821
 
     def read(self, space, data):
         result = misc.read_raw_unsigned_data(data, self.typesize)
@@ -208,9 +214,10 @@ class PointerRWStrategy(ReadWriteStrategy):
         else:
             return w_arg
 
+
 class BoolRWStrategy(ReadWriteStrategy):
     def __init__(self):
-        ReadWriteStrategy.__init__(self, BOOL)
+        ReadWriteStrategy.__init__(self, BOOL)  # noqa: F821
 
     def read(self, space, data):
         result = bool(misc.read_raw_signed_data(data, self.typesize))
@@ -219,6 +226,7 @@ class BoolRWStrategy(ReadWriteStrategy):
     def write(self, space, data, w_arg):
         arg = space.is_true(w_arg)
         misc.write_raw_unsigned_data(data, arg, self.typesize)
+
 
 class FloatRWStrategy(ReadWriteStrategy):
     def read(self, space, data):
@@ -229,6 +237,7 @@ class FloatRWStrategy(ReadWriteStrategy):
         arg = space.float_w(w_arg)
         misc.write_raw_float_data(data, arg, self.typesize)
 
+
 class SignedRWStrategy(ReadWriteStrategy):
     def read(self, space, data):
         result = misc.read_raw_signed_data(data, self.typesize)
@@ -237,6 +246,7 @@ class SignedRWStrategy(ReadWriteStrategy):
     def write(self, space, data, w_arg):
         arg = space.int_w(w_arg)
         misc.write_raw_signed_data(data, arg, self.typesize)
+
 
 class UnsignedRWStrategy(ReadWriteStrategy):
     def read(self, space, data):
@@ -247,44 +257,45 @@ class UnsignedRWStrategy(ReadWriteStrategy):
         arg = space.int_w(w_arg)
         misc.write_raw_unsigned_data(data, arg, self.typesize)
 
+
 class VoidRWStrategy(ReadWriteStrategy):
     def __init__(self):
-        ReadWriteStrategy.__init__(self, VOID)
+        ReadWriteStrategy.__init__(self, VOID)  # noqa: F821
 
     def read(self, space, data):
-        return space.w_nil;
+        return space.w_nil
 
     def write(self, space, data, w_arg):
         pass
 
+
 rw_strategies = {}
-rw_strategies[VOID] = VoidRWStrategy()
-for ts, tu in [[INT8, UINT8],
-              [INT16, UINT16],
-              [INT32, UINT32],
-              [INT64, UINT64],
-              [LONG, ULONG]]:
+rw_strategies[VOID] = VoidRWStrategy()  # noqa: F821
+for ts, tu in [
+    [INT8, UINT8], [INT16, UINT16], [INT32, UINT32],  # noqa: F821
+        [INT64, UINT64], [LONG, ULONG]]:  # noqa: F821
     rw_strategies[ts] = SignedRWStrategy(ts)
     rw_strategies[tu] = UnsignedRWStrategy(tu)
 # LongdoubleRWStrategy is not implemented yet, give LONGDOUBLE a
 # FloatRWStrategy for now so the ruby part of ffi doesn't crash when it gets
 # loaded
-for t in [FLOAT32, FLOAT64, LONGDOUBLE]:
+for t in [FLOAT32, FLOAT64, LONGDOUBLE]:  # noqa: F821
     rw_strategies[t] = FloatRWStrategy(t)
-rw_strategies[POINTER] = PointerRWStrategy()
-rw_strategies[BOOL] = BoolRWStrategy()
-rw_strategies[STRING] = StringRWStrategy()
+rw_strategies[POINTER] = PointerRWStrategy()  # noqa: F821
+rw_strategies[BOOL] = BoolRWStrategy()  # noqa: F821
+rw_strategies[STRING] = StringRWStrategy()  # noqa: F821
 # These three are not implemented yet, they just get a pointer strategy for now
 # to make the ruby part happy
-for t in [BUFFER_IN, BUFFER_OUT, BUFFER_INOUT]:
+for t in [BUFFER_IN, BUFFER_OUT, BUFFER_INOUT]:  # noqa: F821
     rw_strategies[t] = PointerRWStrategy()
-rw_strategies[VARARGS] = VoidRWStrategy()
+rw_strategies[VARARGS] = VoidRWStrategy()  # noqa: F821
+
 
 class W_MappedObject(W_TypeObject):
     classdef = ClassDef('MappedObject', W_TypeObject.classdef)
 
     def __init__(self, space, klass=None):
-        W_TypeObject.__init__(self, space, NATIVE_MAPPED)
+        W_TypeObject.__init__(self, space, NATIVE_MAPPED)  # noqa: F821
         self.rw_strategy = None
 
     @classdef.singleton_method('allocate')

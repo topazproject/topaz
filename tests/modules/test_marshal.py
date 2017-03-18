@@ -71,7 +71,7 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.load('\x04\bii')")
         assert space.int_w(w_res) == 100
 
-        #w_res = space.execute('return Marshal.load("\x04\bi\x00")')
+        # w_res = space.execute('return Marshal.load("\x04\bi\x00")')
         w_res = space.execute('return Marshal.load(Marshal.dump(0))')
         assert space.int_w(w_res) == 0
 
@@ -104,7 +104,7 @@ class TestMarshal(BaseTopazTest):
         assert space.str_w(w_res) == "\x04\b[\a:\bfoo:\bbar"
 
     def test_load_array(self, space):
-        #w_res = space.execute("return Marshal.load('\x04\b[\x00')")
+        # w_res = space.execute("return Marshal.load('\x04\b[\x00')")
         w_res = space.execute("return Marshal.load(Marshal.dump([]))")
         assert self.unwrap(space, w_res) == []
 
@@ -154,7 +154,7 @@ class TestMarshal(BaseTopazTest):
         assert self.unwrap(space, w_res) == "\x04\b{\ai\x02\xD2\x04{\x06i\x02\xA0[i\x03\x15\xBF4i\ti\n"
 
     def test_load_hash(self, space):
-        #w_res = space.execute("return Marshal.load('\x04\b{\x00')")
+        # w_res = space.execute("return Marshal.load('\x04\b{\x00')")
         w_res = space.execute("return Marshal.load(Marshal.dump({}))")
         assert self.unwrap(space, w_res) == {}
 
@@ -201,7 +201,7 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.load('\x04\bi\x01\xFF')")
         assert space.int_w(w_res) == 255
 
-        #w_res = space.execute("return Marshal.load('\x04\bi\x02\x00\x01')")
+        # w_res = space.execute("return Marshal.load('\x04\bi\x02\x00\x01')")
         w_res = space.execute("return Marshal.load(Marshal.dump(256))")
         assert space.int_w(w_res) == 256
 
@@ -211,11 +211,11 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.load('\x04\bi\x02\xFF\xFF')")
         assert space.int_w(w_res) == 2 ** 16 - 1
 
-        #w_res = space.execute("return Marshal.load('\x04\bi\x03\x00\x00\x01')")
+        # w_res = space.execute("return Marshal.load('\x04\bi\x03\x00\x00\x01')")
         w_res = space.execute("return Marshal.load(Marshal.dump(2 ** 16))")
         assert space.int_w(w_res) == 2 ** 16
 
-        #w_res = space.execute("return Marshal.load('\x04\bi\x03\x01\x00\x01')")
+        # w_res = space.execute("return Marshal.load('\x04\bi\x03\x01\x00\x01')")
         w_res = space.execute("return Marshal.load(Marshal.dump(2 ** 16 + 1))")
         assert space.int_w(w_res) == 2 ** 16 + 1
 
@@ -251,28 +251,28 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.load('\x04\bi\xFF\x84')")
         assert space.int_w(w_res) == -124
 
-        #w_res = space.execute("return Marshal.load('\x04\bi\xFF\x00')")
+        # w_res = space.execute("return Marshal.load('\x04\bi\xFF\x00')")
         w_res = space.execute("return Marshal.load(Marshal.dump(-256))")
         assert space.int_w(w_res) == -256
 
         w_res = space.execute("return Marshal.load('\x04\bi\xFE\xFF\xFE')")
         assert space.int_w(w_res) == -257
 
-        #w_res = space.execute("return Marshal.load('\x04\bi\xFE\x00\x00')")
+        # w_res = space.execute("return Marshal.load('\x04\bi\xFE\x00\x00')")
         w_res = space.execute("return Marshal.load(Marshal.dump(-(2 ** 16)))")
         assert space.int_w(w_res) == -(2 ** 16)
 
         w_res = space.execute("return Marshal.load('\x04\bi\xFD\xFF\xFF\xFE')")
         assert space.int_w(w_res) == -(2 ** 16 + 1)
 
-        #w_res = space.execute("return Marshal.load('\x04\bi\xFC\x00\x00\x00')")
+        # w_res = space.execute("return Marshal.load('\x04\bi\xFC\x00\x00\x00')")
         w_res = space.execute("return Marshal.load(Marshal.dump(-(2 ** 24)))")
         assert space.int_w(w_res) == -(2 ** 24)
 
         w_res = space.execute("return Marshal.load('\x04\bi\xFC\xFF\xFF\xFF\xFE')")
         assert space.int_w(w_res) == -(2 ** 24 + 1)
 
-        #w_res = space.execute("return Marshal.load('\x04\bi\xFC\x00\x00\x00\xC0')")
+        # w_res = space.execute("return Marshal.load('\x04\bi\xFC\x00\x00\x00\xC0')")
         w_res = space.execute("return Marshal.load(Marshal.dump(-(2 ** 30)))")
         assert space.int_w(w_res) == -(2 ** 30)
 
@@ -292,14 +292,14 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.dump(1.001)")
         assert space.str_w(w_res) == "\x04\bf\n1.001"
 
-        #w_res = space.execute("return Marshal.dump(123456789.123456789)")
-        #assert space.str_w(w_res) == "\x04\bf\x17123456789.12345679"
+        # w_res = space.execute("return Marshal.dump(123456789.123456789)")
+        # assert space.str_w(w_res) == "\x04\bf\x17123456789.12345679"
 
-        #w_res = space.execute("return Marshal.dump(-123456789.123456789)")
-        #assert space.str_w(w_res) == "\x04\bf\x18-123456789.12345679"
+        # w_res = space.execute("return Marshal.dump(-123456789.123456789)")
+        # assert space.str_w(w_res) == "\x04\bf\x18-123456789.12345679"
 
-        #w_res = space.execute("return Marshal.dump(-0.0)")
-        #assert space.str_w(w_res) == "\x04\bf\a-0"
+        # w_res = space.execute("return Marshal.dump(-0.0)")
+        # assert space.str_w(w_res) == "\x04\bf\a-0"
 
     def test_load_float(self, space):
         w_res = space.execute("return Marshal.load('\x04\bf\x060')")
@@ -317,14 +317,14 @@ class TestMarshal(BaseTopazTest):
         w_res = space.execute("return Marshal.load('\x04\bf\n1.001')")
         assert space.float_w(w_res) == 1.001
 
-        #w_res = space.execute("return Marshal.load('\x04\bf\x17123456789.12345679')")
-        #assert space.float_w(w_res) == 123456789.123456789
+        # w_res = space.execute("return Marshal.load('\x04\bf\x17123456789.12345679')")
+        # assert space.float_w(w_res) == 123456789.123456789
 
-        #w_res = space.execute("return Marshal.load('\x04\bf\x18-123456789.12345679')")
-        #assert space.float_w(w_res) == -123456789.123456789
+        # w_res = space.execute("return Marshal.load('\x04\bf\x18-123456789.12345679')")
+        # assert space.float_w(w_res) == -123456789.123456789
 
-        #w_res = space.execute("return Marshal.load('\x04\bf\a-0')")
-        #assert repr(space.float_w(w_res)) == repr(-0.0)
+        # w_res = space.execute("return Marshal.load('\x04\bf\a-0')")
+        # assert repr(space.float_w(w_res)) == repr(-0.0)
 
     def test_dump_string(self, space):
         w_res = space.execute("return Marshal.dump('')")
@@ -337,7 +337,7 @@ class TestMarshal(BaseTopazTest):
         assert space.str_w(w_res) == "\x04\bI\"\x19i am a longer string\x06:\x06ET"
 
     def test_load_string(self, space):
-        #w_res = space.execute("return Marshal.load('\x04\bI\"\x00\x06:\x06ET')")
+        # w_res = space.execute("return Marshal.load('\x04\bI\"\x00\x06:\x06ET')")
         w_res = space.execute("return Marshal.load(Marshal.dump(''))")
         assert space.str_w(w_res) == ""
 

@@ -1,7 +1,5 @@
 import math
 
-from rpython.rlib import rfloat
-
 from ..base import BaseTopazTest
 
 
@@ -228,9 +226,9 @@ class TestMath(BaseTopazTest):
                            'exp', 'frexp', 'log', 'log10', 'log2']:
             with self.raises(space, "TypeError",
                              "can't convert String into Float"):
-                space.execute("Math.%s('1.0')" %methodname)
+                space.execute("Math.%s('1.0')" % methodname)
         for methodname in ['hypot', 'atan2']:
             with self.raises(space, "TypeError",
                              "can't convert String into Float"):
-                space.execute("Math.%s('1', 2)" %methodname)
-                space.execute("Math.%s(1, '2')" %methodname)
+                space.execute("Math.%s('1', 2)" % methodname)
+                space.execute("Math.%s(1, '2')" % methodname)

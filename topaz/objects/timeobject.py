@@ -1,13 +1,18 @@
 import math
 import time
 
+from rpython.rtyper.lltypesystem import lltype, rffi
+from rpython.rlib.rarithmetic import intmask
+from pypy.module.time.interp_time import external, TM_P, glob_buf
+
 from topaz.module import ClassDef
 from topaz.coerce import Coerce
 from topaz.objects.objectobject import W_Object
 from topaz.modules.comparable import Comparable
 
 
-MONTHNAMES = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+MONTHNAMES = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep",
+              "oct", "nov", "dec"]
 
 
 class W_TimeObject(W_Object):
@@ -28,12 +33,12 @@ class W_TimeObject(W_Object):
         return space.send(self, "new")
 
     @classdef.singleton_method("new")
-    def method_now(self, space, args_w):
+    def method_new(self, space, args_w):
         if len(args_w) > 7:
             raise space.error(
                 space.w_ArgumentError,
-                "wrong number of arguments (given %d, expected 0..7)" % len(args_w)
-            )
+                ("wrong number of arguments (given %d, expected 0..7)" %
+                    len(args_w)))
         if len(args_w) > 6:
             utc_offset = Coerce.int(space, args_w.pop())
             w_time = space.send(self, "gm", args_w)
@@ -109,12 +114,14 @@ class W_TimeObject(W_Object):
             raise space.error(space.w_ArgumentError, "argument out of range")
 
         w_time = space.send(space.getclassfor(W_TimeObject), "new")
-        w_time._set_epoch_seconds(mktime(year, month, day, hour, minute, sec) + usecfrac)
+        w_time._set_epoch_seconds(
+            mktime(year, month, day, hour, minute, sec) + usecfrac)
         return w_time
 
     @staticmethod
     def month_arg_to_month(space, w_arg):
-        w_month = space.convert_type(w_arg, space.w_string, "to_str", raise_error=False)
+        w_month = space.convert_type(w_arg, space.w_string, "to_str",
+                                     raise_error=False)
         if w_month is space.w_nil:
             month = Coerce.int(space, w_arg)
         else:
@@ -145,17 +152,20 @@ class W_TimeObject(W_Object):
         if isinstance(w_other, W_TimeObject):
             raise space.error(space.w_TypeError, "time + time?")
         w_time = space.send(space.getclassfor(W_TimeObject), "allocate")
-        w_time._set_epoch_seconds(self.epoch_seconds + Coerce.float(space, w_other))
+        w_time._set_epoch_seconds(
+            self.epoch_seconds + Coerce.float(space, w_other))
         w_time._set_offset(self.offset)
         return w_time
 
     @classdef.method("-")
     def method_sub(self, space, w_other):
         if isinstance(w_other, W_TimeObject):
-            return space.newfloat(self.epoch_seconds - Coerce.float(space, w_other))
+            return space.newfloat(
+                self.epoch_seconds - Coerce.float(space, w_other))
         else:
             w_time = space.send(space.getclassfor(W_TimeObject), "allocate")
-            w_time._set_epoch_seconds(self.epoch_seconds - Coerce.float(space, w_other))
+            w_time._set_epoch_seconds(
+                self.epoch_seconds - Coerce.float(space, w_other))
             w_time._set_offset(self.offset)
             return w_time
 
@@ -187,7 +197,8 @@ class W_TimeObject(W_Object):
         if self.offset == 0:
             tp_w.append(space.newstr_fromstr("UTC"))
         else:
-            tp_w.append(space.newstr_fromstr(strftime("%Z", self.epoch_seconds)))
+            tp_w.append(space.newstr_fromstr(
+                strftime("%Z", self.epoch_seconds)))
         return space.newarray(tp_w)
 
     @classdef.method("utc?")
@@ -202,13 +213,12 @@ class W_TimeObject(W_Object):
         self.offset = tzoffset
 
 
-from rpython.rtyper.lltypesystem import lltype, rffi
-from rpython.rlib.rarithmetic import intmask
-from pypy.module.time.interp_time import external, TM_P, glob_buf
-
-c_gmtime = external('gmtime', [rffi.TIME_TP], TM_P, save_err=rffi.RFFI_SAVE_ERRNO)
-c_strftime = external('strftime', [rffi.CCHARP, rffi.SIZE_T, rffi.CCHARP, TM_P], rffi.SIZE_T)
+c_gmtime = external(
+    'gmtime', [rffi.TIME_TP], TM_P, save_err=rffi.RFFI_SAVE_ERRNO)
+c_strftime = external(
+    'strftime', [rffi.CCHARP, rffi.SIZE_T, rffi.CCHARP, TM_P], rffi.SIZE_T)
 c_mktime = external('mktime', [TM_P], rffi.TIME_T)
+
 
 def strftime(format, seconds):
     i = 1024
@@ -235,10 +245,10 @@ def gmtime(seconds):
             rffi.getintfield(t, 'c_tm_min'),
             rffi.getintfield(t, 'c_tm_hour'),
             rffi.getintfield(t, 'c_tm_mday'),
-            rffi.getintfield(t, 'c_tm_mon') + 1, # want january == 1
+            rffi.getintfield(t, 'c_tm_mon') + 1,  # want january == 1
             rffi.getintfield(t, 'c_tm_year') + 1900,
-            (rffi.getintfield(t, 'c_tm_wday') + 6) % 7, # want monday == 0
-            rffi.getintfield(t, 'c_tm_yday') + 1, # want january, 1 == 1
+            (rffi.getintfield(t, 'c_tm_wday') + 6) % 7,  # want monday == 0
+            rffi.getintfield(t, 'c_tm_yday') + 1,  # want january, 1 == 1
             rffi.getintfield(t, 'c_tm_isdst')]
 
 

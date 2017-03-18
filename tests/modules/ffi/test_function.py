@@ -19,6 +19,7 @@ flat_aliases = reduce(lambda x, y: x + y, aliases)
 for tn in type_names + flat_aliases:
     substitutions[tn.lower()] = code_ffi_type + tn
 
+
 def typeformat(rubycode):
     return (rubycode.replace('\{', 'BRACE_OPEN').
             replace('\}', 'BRACE_CLOSE').
@@ -26,23 +27,27 @@ def typeformat(rubycode):
             replace('BRACE_OPEN', '{').
             replace('BRACE_CLOSE', '}'))
 
+
 class TestFunction(BaseFFITest):
 
     def test_it_has_FFI_Pointer_as_ancestor(self, space):
         assert self.ask(space, "FFI::Function.ancestors.include? FFI::Pointer")
 
+
 class TestFunction__new(BaseFFITest):
 
     def test_it_needs_at_least_a_type_signature(self, space):
-        space.execute(typeformat("FFI::Function.new({void}, [{int8}, {int16}])"))
+        space.execute(
+            typeformat("FFI::Function.new({void}, [{int8}, {int16}])"))
 
     def test_it_takes_a_DynamicLibrabry__Symbol_as_3rd_argument(self, space):
         space.execute(typeformat("""
         dlsym = FFI::DynamicLibrary.open('%s').find_function(:sin)
         FFI::Function.new({void}, [{int8}, {int16}], dlsym)
         """ % libm))
-        with self.raises(space, "TypeError",
-                      "can't convert Fixnum into FFI::DynamicLibrary::Symbol"):
+        with self.raises(
+                space, "TypeError",
+                "can't convert Fixnum into FFI::DynamicLibrary::Symbol"):
             space.execute(typeformat("""
             FFI::Function.new({void}, [{uint8}], 500)"""))
 
@@ -53,7 +58,7 @@ class TestFunction__new(BaseFFITest):
                           \{\})
         """ % libm))
 
-    #def test_it_reacts_to_messy_signature_with_TypeError(self, space):
+    # def test_it_reacts_to_messy_signature_with_TypeError(self, space):
     #    with self.raises(space, "TypeError", "unable to resolve type '1'"):
     #        space.execute("FFI::Function.new(1, [])")
     #    with self.raises(space, "TypeError", "unable to resolve type '2'"):
@@ -73,10 +78,10 @@ class TestFunction__new(BaseFFITest):
         w_float64 = space.execute("FFI::Type::FLOAT64")
         assert w_function.w_info.arg_types_w == [w_float64]
         assert w_function.w_info.w_ret_type == w_float64
-        tan = clibffi.CDLL(libm).getpointer('tan',
-                                            [clibffi.ffi_type_double],
-                                             clibffi.ffi_type_double)
+        tan = clibffi.CDLL(libm).getpointer(
+            'tan', [clibffi.ffi_type_double], clibffi.ffi_type_double)
         assert w_function.ptr == tan.funcsym
+
 
 class TestFunction_attach(BaseFFITest):
 
@@ -139,9 +144,9 @@ class TestFunction_attach(BaseFFITest):
 
     def make_question_code(self, signchar, size, left=1, right=2,
                            with_name=None):
-        default_T = '%sint%s' %('' if signchar == 's' else 'u', size)
+        default_T = '%sint%s' % ('' if signchar == 's' else 'u', size)
         T = default_T if with_name is None else with_name
-        fn = 'add_%s%s' %(signchar, size)
+        fn = 'add_%s%s' % (signchar, size)
         plus_or_minus = '-' if signchar == 's' else '+'
         return ("""
         FFI::Function.new({T}, [{T}, {T}],
@@ -149,7 +154,7 @@ class TestFunction_attach(BaseFFITest):
                           attach(LibraryMock, 'fn')
         LibraryMock.fn(+|-%s, +|-%s) == +|-%s
         """.replace('T', T).replace('fn', fn).replace('+|-', plus_or_minus) %
-        (left, right, left+right))
+                (left, right, left + right))
 
     def type_works(self, space, libtest_so, typechar, size, left=1, right=2,
                    with_name=None):
@@ -344,7 +349,7 @@ class TestFunction_attach(BaseFFITest):
     def test_it_raises_ArgumentError_calling_func_with_void_arg(self, space):
         with self.raises(space, 'ArgumentError',
                          "arguments cannot be of type void"):
-            w_res = space.execute(typeformat("""
+            space.execute(typeformat("""
             %s
             FFI::Function.new({uint32}, [{void}],
                               LibraryMock.find_function(:abs)).

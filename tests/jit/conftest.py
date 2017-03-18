@@ -1,4 +1,3 @@
-import os
 import py
 import sys
 
@@ -12,7 +11,8 @@ class JitTestUpdater(object):
         self.exception = exception
 
     def find_test_file(self):
-        import traceback, re
+        import re
+        import traceback
         stk = traceback.extract_stack()
         stk.reverse()
         for filename, lineno, funcname, text in stk:
@@ -21,7 +21,7 @@ class JitTestUpdater(object):
         return None, None
 
     def get_updated_contents(self, filename, lineno):
-        lno = lineno - 10 # heuristic ;)
+        lno = lineno - 10  # heuristic ;)
         with open(filename) as f:
             contents = f.readlines()
         newline = "\r\n" if contents[0].endswith("\r\n") else "\n"

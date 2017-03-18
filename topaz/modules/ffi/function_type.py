@@ -1,5 +1,5 @@
 import sys
-from topaz.modules.ffi.type import W_TypeObject, W_MappedObject
+from topaz.modules.ffi.type import W_TypeObject
 from topaz.modules.ffi import type as ffitype
 from topaz.modules.ffi import _callback
 from topaz.module import ClassDef
@@ -14,11 +14,13 @@ from rpython.rlib import clibffi
 
 BIG_ENDIAN = sys.byteorder == 'big'
 
+
 def raise_TypeError_if_not_TypeObject(space, w_candidate):
     if not isinstance(w_candidate, W_TypeObject):
         raise space.error(space.w_TypeError,
                           "Invalid parameter type (%s)" %
                           space.str_w(space.send(w_candidate, 'inspect')))
+
 
 class W_FunctionTypeObject(W_TypeObject):
     classdef = ClassDef('FFI::FunctionType', W_TypeObject.classdef)
@@ -37,7 +39,8 @@ class W_FunctionTypeObject(W_TypeObject):
         return W_FunctionTypeObject(space)
 
     @classdef.method('initialize', arg_types_w='array')
-    def method_initialize(self, space, w_ret_type, arg_types_w, w_options=None):
+    def method_initialize(self, space, w_ret_type, arg_types_w,
+                          w_options=None):
         if w_options is None:
             w_options = space.newhash()
         self.w_options = w_options
@@ -66,7 +69,8 @@ class W_FunctionTypeObject(W_TypeObject):
 
         nargs = len(ffi_arg_types)
         # XXX combine both mallocs with alignment
-        size = llmemory.raw_malloc_usage(llmemory.sizeof(CIF_DESCRIPTION, nargs))
+        size = llmemory.raw_malloc_usage(
+            llmemory.sizeof(CIF_DESCRIPTION, nargs))
         if we_are_translated():
             cif_descr = lltype.malloc(rffi.CCHARP.TO, size, flavor='raw')
             cif_descr = rffi.cast(CIF_DESCRIPTION_P, cif_descr)
@@ -112,8 +116,9 @@ class W_FunctionTypeObject(W_TypeObject):
         status = jit_ffi_prep_cif(cif_descr)
         #
         if status != clibffi.FFI_OK:
-            raise space.error(space.w_RuntimeError,
-                    "libffi failed to build this function type")
+            raise space.error(
+                space.w_RuntimeError,
+                "libffi failed to build this function type")
         #
         return cif_descr
 
@@ -134,14 +139,14 @@ class W_FunctionTypeObject(W_TypeObject):
                 w_obj = args_w[i]
                 self._put_arg(space, data, i, w_obj)
 
-            #ec = cerrno.get_errno_container(space)
-            #cerrno.restore_errno_from(ec)
+            # ec = cerrno.get_errno_container(space)
+            # cerrno.restore_errno_from(ec)
             jit_ffi_call(self.cif_descr, rffi.cast(rffi.VOIDP, ptr), buffer)
-            #e = cerrno.get_real_errno()
-            #cerrno.save_errno_into(ec, e)
+            # e = cerrno.get_real_errno()
+            # cerrno.save_errno_into(ec, e)
 
             resultdata = rffi.ptradd(buffer, self.cif_descr.exchange_result)
-            w_res =  self._get_result(space, resultdata)
+            w_res = self._get_result(space, resultdata)
         finally:
             lltype.free(buffer, flavor='raw')
         return w_res

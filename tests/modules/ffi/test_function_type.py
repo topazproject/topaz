@@ -1,7 +1,6 @@
 from tests.modules.ffi.base import BaseFFITest
 from topaz.modules.ffi import type as ffitype
 
-from rpython.rtyper.lltypesystem import rffi, lltype
 
 class TestFunctionType(BaseFFITest):
     def test_it_has_Type_as_a_superclass(self, space):
@@ -12,6 +11,7 @@ class TestFunctionType(BaseFFITest):
 
     def test_it_is_also_known_as_CallbackInfo(self, space):
         self.ask(space, "FFI::FunctionType.equal? FFI::CallbackInfo")
+
 
 class TestFunctionType__new(BaseFFITest):
     def test_it_saves_the_args_and_the_ret_types(self, space):
