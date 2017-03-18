@@ -16,9 +16,6 @@ matrix:
         # This times out because untranslated is so slow :/
         - python: pypy-5.3.1
           env: TEST_TYPE=rubyspec_untranslated
-        # We're tracking this, but not failing for it right now :(
-        - python: pypy-5.3.1
-          env: TEST_TYPE=flake8
     include:
       - os: osx
         language: generic

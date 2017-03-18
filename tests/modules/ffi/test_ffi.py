@@ -5,13 +5,17 @@ from rpython.rtyper.lltypesystem import rffi
 # Most of the stuff is still very vague.
 # This is because lots of the constants had to be set to something in order to
 # run some specs but the specs weren't about them.
+
+
 class TestTypeDefs(BaseFFITest):
     def test_it_is_kind_of_a_Hash(self, space):
         assert self.ask(space, 'FFI::TypeDefs.kind_of? Hash')
 
+
 class TestTypes(BaseFFITest):
     def test_it_is_kind_of_a_Hash(self, space):
         assert self.ask(space, 'FFI::Types.kind_of? Hash')
+
 
 class TestPlatform(BaseFFITest):
     def test_it_is_a_Module(self, space):
@@ -35,6 +39,7 @@ class TestPlatform(BaseFFITest):
         w_res = space.execute('FFI::Platform::ADDRESS_SIZE')
         assert space.int_w(w_res) == rffi.sizeof(rffi.VOIDP)
 
+
 class TestStructLayout(BaseFFITest):
     def test_it_is_a_class(self, space):
         assert self.ask(space, "FFI::StructLayout.is_a? Class")
@@ -42,11 +47,13 @@ class TestStructLayout(BaseFFITest):
     def test_has_a_Field_constant(self, space):
         assert self.ask(space, "defined? FFI::StructLayout::Field")
 
+
 class TestStructByReference(BaseFFITest):
     def test_it_is_a_class(self, space):
         assert self.ask(space, "FFI::StructByReference.is_a? Class")
 
+
 class TestNullPointerError(BaseFFITest):
     def test_it_inherits_from_Exception(self, space):
-        assert self.ask(space,
-        "FFI::NullPointerError.ancestors.include? Exception")
+        assert self.ask(
+            space, "FFI::NullPointerError.ancestors.include? Exception")

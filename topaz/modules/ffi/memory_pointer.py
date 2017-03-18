@@ -1,9 +1,9 @@
 from topaz.modules.ffi.pointer import W_PointerObject
 from topaz.module import ClassDef
-from topaz.modules.ffi.type import W_TypeObject
 
 from rpython.rtyper.lltypesystem import rffi
 from rpython.rtyper.lltypesystem import lltype
+
 
 class W_MemoryPointerObject(W_PointerObject):
     classdef = ClassDef('FFI::MemoryPointer', W_PointerObject.classdef)
@@ -31,7 +31,8 @@ class W_MemoryPointerObject(W_PointerObject):
                                flavor='raw', zero=True)
         self.ptr = rffi.cast(rffi.VOIDP, memory)
 
-    @classdef.method("put_bytes", start='int', string='str', str_offset='int', nbytes='int')
+    @classdef.method("put_bytes", start='int', string='str', str_offset='int',
+                     nbytes='int')
     def method_put_bytes(self, space, start, string, str_offset, nbytes):
         with rffi.scoped_view_charp(string) as cstring:
             rffi.c_memcpy(
@@ -52,5 +53,5 @@ class W_MemoryPointerObject(W_PointerObject):
     @classdef.method("get_string", start='int')
     def method_get_string(self, space, start):
         return space.newstr_fromstr(
-            rffi.charp2str(rffi.cast(rffi.CCHARP, rffi.ptradd(self.ptr, start)))
-        )
+            rffi.charp2str(rffi.cast(
+                rffi.CCHARP, rffi.ptradd(self.ptr, start))))

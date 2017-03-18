@@ -1,4 +1,3 @@
-import os
 import py
 
 from topaz.modules.ffi import _callback

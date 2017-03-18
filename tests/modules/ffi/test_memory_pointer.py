@@ -1,14 +1,15 @@
 from tests.modules.ffi.base import BaseFFITest
 
-from rpython.rtyper.lltypesystem import rffi
-from rpython.rtyper.lltypesystem.llmemory import (cast_ptr_to_adr as ptr2adr,
-                                                  cast_adr_to_int as adr2int)
+from rpython.rtyper.lltypesystem.llmemory import (
+    cast_ptr_to_adr as ptr2adr, cast_adr_to_int as adr2int)
+
 
 class TestMemoryPointer(BaseFFITest):
 
     def test_its_superclass_is_Pointer(self, space):
-        assert self.ask(space,
-        "FFI::MemoryPointer.superclass.equal?(FFI::Pointer)")
+        assert self.ask(
+            space, "FFI::MemoryPointer.superclass.equal?(FFI::Pointer)")
+
 
 class TestMemoryPointer__new(BaseFFITest):
     def test_it_sets_up_a_wrapped_type_object(self, space):

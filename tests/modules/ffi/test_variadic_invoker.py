@@ -6,6 +6,7 @@ if sys.platform == 'darwin':
 else:
     libc = 'libc.so.6'
 
+
 class TestVariadicInvoker(BaseFFITest):
     def test_it_is_not_a_function(self, space):
         assert self.ask(space, "! FFI::VariadicInvoker.kind_of? FFI::Function")
@@ -34,7 +35,7 @@ class TestVariadicInvoker(BaseFFITest):
                                         FFI::Type::FLOAT64, 2.0)
         chars = 0.upto(5).map { |x| result.get_int8(x).chr }
         chars.inject('') { |str, c| str << c }
-        """ % {'libname':libc})
+        """ % {'libname': libc})
         assert self.unwrap(ffis, w_res) == "1, 2.0"
         w_res = ffis.execute("""
         result = FFI::MemoryPointer.new(:int8, 14)
@@ -63,5 +64,5 @@ class TestVariadicInvoker(BaseFFITest):
                     :name, "bill", :name, "johanna")
         chars = 0.upto(24).map { |x| result.get_int8(x).chr }
         chars.inject('') { |str, c| str << c }
-        """ % {'libname':libc})
+        """ % {'libname': libc})
         assert self.unwrap(ffis, w_res) == "bill is father of johanna"

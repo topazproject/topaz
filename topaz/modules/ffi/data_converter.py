@@ -1,13 +1,15 @@
 from topaz.module import ModuleDef
 from topaz.modules.ffi.type import type_object
 
-# A rather abstract base class
+
 class DataConverter(object):
+    # A rather abstract base class
+
     moduledef = ModuleDef('FFI::DataConverter')
 
     @moduledef.method('native_type')
     def native_type(self, space, args_w):
-        #if len(args_w) == 0:
+        # if len(args_w) == 0:
         #    raise space.error(space.w_NotImplementedError,
         #                      "native_type method not overridden and no "
         #                      "native_type set")

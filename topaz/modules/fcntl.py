@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 
-import os
-
-from rpython.rlib import jit, rbigint, unroll, rgc, _rsocket_rffi
+from rpython.rlib import _rsocket_rffi
 from rpython.translator.tool.cbuild import ExternalCompilationInfo
 from rpython.rtyper.tool import rffi_platform
 
@@ -23,6 +21,7 @@ if not IS_WINDOWS:
     fcntl = _rsocket_rffi.fcntl
 else:
     fcntl_constants = {}
+
     def fcntl(fdtype, cmd, arg):
         raise NotImplementedError
 
