@@ -21,7 +21,7 @@ from topaz.astcompiler import CompilerContext, SymbolTable, CompilerError
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
 from topaz.error import RubyError, print_traceback
-from topaz.executioncontext import ExecutionContext, ThreadLocals
+from topaz.executioncontext import ActionFlag, ExecutionContext
 from topaz.frame import Frame
 from topaz.interpreter import Interpreter
 from topaz.lexer import LexerError, Lexer
@@ -77,6 +77,7 @@ from topaz.objects.threadobject import W_ThreadObject
 from topaz.objects.timeobject import W_TimeObject
 from topaz.parser import Parser
 from topaz.utils.ll_file import isdir
+from topaz.utils.threadlocals import ThreadLocals
 
 
 class SpaceCache(Cache):
@@ -94,7 +95,8 @@ class ObjectSpace(object):
 
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        self.threadlocals = ThreadLocals()
+        self.actionflag = ActionFlag()
+        self.threadlocals = ThreadLocals(self)
         self.globals = GlobalsDict()
         self.bootstrap = True
         self.exit_handlers_w = []
@@ -287,6 +289,8 @@ class ObjectSpace(object):
                 break
         self.send(self.w_load_path, "unshift", [self.newstr_fromstr(lib_path)])
         self.load_kernel(kernel_path)
+
+        self.threadlocals.setup_threads(self)
 
     def load_kernel(self, kernel_path):
         self.send(
