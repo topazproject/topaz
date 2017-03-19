@@ -12,7 +12,6 @@ TICK_COUNTER_STEP = 100
 
 class ExecutionContext(object):
     _immutable_fields_ = ["w_trace_proc?"]
-    _thread_local_objs = None
 
     def __init__(self):
         self.topframeref = jit.vref_None
@@ -24,6 +23,16 @@ class ExecutionContext(object):
 
         self.fiber_thread = None
         self.w_main_fiber = None
+
+    @staticmethod
+    def _mark_thread_disappeared(space):
+        # Called in the child process after os.fork() by interp_posix.py.
+        # Marks all ExecutionContexts except the current one
+        # with 'thread_disappeared = True'.
+        me = space.getexecutioncontext()
+        for ec in space.threadlocals.getallvalues().values():
+            if ec is not me:
+                ec.thread_disappeared = True
 
     def getmainfiber(self, space):
         if self.w_main_fiber is None:

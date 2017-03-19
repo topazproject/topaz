@@ -271,6 +271,7 @@ class ObjectSpace(object):
         """
 
         # To be called before using the space
+        self.threadlocals.setup_threads(self)
         self.threadlocals.enter_thread()
 
         path = rpath.rabspath(self.find_executable(executable))
@@ -289,8 +290,6 @@ class ObjectSpace(object):
                 break
         self.send(self.w_load_path, "unshift", [self.newstr_fromstr(lib_path)])
         self.load_kernel(kernel_path)
-
-        self.threadlocals.setup_threads(self)
 
     def load_kernel(self, kernel_path):
         self.send(

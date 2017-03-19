@@ -6,6 +6,8 @@ from rpython.rlib.objectmodel import not_rpython, we_are_translated
 
 from topaz.executioncontext import ExecutionContext, PeriodicAsyncAction
 
+ExecutionContext._thread_local_objs = None
+
 
 class ThreadLocals(object):
     # Inspired by Pypy's GILThreadLocals/OSThreadLocals
@@ -36,6 +38,7 @@ class ThreadLocals(object):
 
     def _cleanup_(self):
         self._valuedict.clear()
+        self._weaklist = None
         self._mainthreadident = 0
 
     def enter_thread(self):
@@ -68,7 +71,6 @@ class ThreadLocals(object):
     def _set_ec(self, ec, register_in_valuedict=True):
         ident = rthread.get_ident()
         if self._mainthreadident == 0 or self._mainthreadident == ident:
-            ec._signals_enabled = 1    # the main thread is enabled
             self._mainthreadident = ident
         if register_in_valuedict:
             self._valuedict[ident] = ec
@@ -102,6 +104,41 @@ class ThreadLocals(object):
 
     def threads_initialized(self):
         return self.gil_ready
+
+    def getallvalues(self):
+        if self._weaklist is None:
+            return self._valuedict
+        # This logic walks the 'self._weaklist' list and adds the
+        # ExecutionContexts to 'result'.  We are careful in case there
+        # are two AutoFreeECWrappers in the list which have the same
+        # 'ident'; in this case we must keep the most recent one (the
+        # older one should be deleted soon).  Moreover, entries in
+        # self._valuedict have priority because they are never
+        # outdated.
+        result = {}
+        for h in self._weaklist.items():
+            wrapper = h()
+            if wrapper is not None and not wrapper.deleted:
+                result[wrapper.ident] = wrapper.ec
+                # ^^ this possibly overwrites an older ec
+        result.update(self._valuedict)
+        return result
+
+    def reinit_threads(self, space):
+        "Called in the child process after a fork()"
+        ident = rthread.get_ident()
+        ec = self.get_ec()
+        assert ec is not None
+        self._cleanup_()      # clears self._valuedict
+        self._mainthreadident = ident
+        self._set_ec(ec)
+
+
+def reinit_threads(space):
+    "Called in the child process after a fork()"
+    space.threadlocals.reinit_threads(space)
+    # bootstrapper.reinit()
+    rthread.thread_after_fork()
 
 
 def thread_is_stopping(ec):
@@ -142,8 +179,8 @@ class ListECWrappers(rshrinklist.AbstractShrinkList):
 
 
 class GILReleaseAction(PeriodicAsyncAction):
-    """An action called every TICK_COUNTER_STEP bytecodes.  It releases
-    the GIL to give some other thread a chance to run.
+    """An action called every TICK_COUNTER_STEP bytecodes. It releases the GIL
+    to give some other thread a chance to run.
     """
 
     def perform(self, executioncontext, frame):

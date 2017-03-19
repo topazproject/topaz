@@ -87,4 +87,5 @@ class Local():
             ec._thread_local_objs = WRefShrinkList()
         ec._thread_local_objs.append(weakref.ref(self))
 
+
 storage = Local()
