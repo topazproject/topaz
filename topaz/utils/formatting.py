@@ -6,7 +6,7 @@ from topaz.coerce import Coerce
 
 FORMAT_CHARS = unrolling_iterable([
     ((c, c) if type(c) is str else c) for c in [
-        "s", "d", "f", ("%", "percent")
+        "s", "d", "f", ("%", "percent"), ("\0", "percent"), ("\n", "percent"),
     ]
 ])
 
@@ -32,6 +32,9 @@ class StringFormatter(object):
                 break
             result_w.append(space.newstr_fromstr(self.fmt[start:i]))
             i += 1
+            if i >= len(self.fmt):
+                result_w.append(self.fmt_percent(space, 0, " "))
+                return result_w
             width = 0
             while self.fmt[i].isdigit():
                 width = width * 10 + (ord(self.fmt[i]) - ord("0"))
@@ -41,7 +44,7 @@ class StringFormatter(object):
             for c, postfix in FORMAT_CHARS:
                 if c == format_char:
                     try:
-                        w_res = getattr(self, "fmt_" + postfix)(space, width)
+                        w_res = getattr(self, "fmt_" + postfix)(space, width, format_char)
                     except IndexError:
                         raise space.error(
                             space.w_ArgumentError,
@@ -61,16 +64,19 @@ class StringFormatter(object):
     def _fmt_num(self, space, num, width):
         return space.newstr_fromstr((width - len(num)) * "0" + num)
 
-    def fmt_s(self, space, width):
+    def fmt_s(self, space, width, format_char):
         return space.send(self._next_item(), "to_s")
 
-    def fmt_d(self, space, width):
+    def fmt_d(self, space, width, format_char):
         num = Coerce.int(space, self._next_item())
         return self._fmt_num(space, str(num), width)
 
-    def fmt_f(self, space, width):
+    def fmt_f(self, space, width, format_char):
         num = Coerce.float(space, self._next_item())
         return self._fmt_num(space, formatd(num, "f", 6), width)
 
-    def fmt_percent(self, space, width):
-        return space.newstr_fromstr("%")
+    def fmt_percent(self, space, width, format_char):
+        if format_char in "\0\n":
+            return space.newstr_fromchars(["%", format_char])
+        else:
+            return space.newstr_fromstr("%")
