@@ -159,6 +159,15 @@ class W_NameError(W_StandardError):
     classdef = ClassDef("NameError", W_StandardError.classdef)
     method_allocate = new_exception_allocate(classdef)
 
+    @classdef.method("initialize")
+    def method_initialize(self, space, w_msg=None, w_name=None):
+        W_ExceptionObject.method_initialize(self, space, w_msg)
+        self.w_name = w_name or space.w_nil
+
+    @classdef.method("name")
+    def method_name(self, space):
+        return self.w_name
+
 
 class W_NoMethodError(W_NameError):
     classdef = ClassDef("NoMethodError", W_NameError.classdef)

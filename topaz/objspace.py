@@ -291,6 +291,25 @@ class ObjectSpace(object):
         self.send(self.w_load_path, "unshift", [self.newstr_fromstr(lib_path)])
         self.load_kernel(kernel_path)
 
+        self.set_const(
+            self.w_object,
+            "RUBY_ENGINE", self.newstr_fromstr(system.RUBY_ENGINE))
+        self.set_const(
+            self.w_object,
+            "RUBY_VERSION", self.newstr_fromstr(system.RUBY_VERSION))
+        self.set_const(
+            self.w_object,
+            "RUBY_PATCHLEVEL", self.newint(system.RUBY_PATCHLEVEL))
+        self.set_const(
+            self.w_object,
+            "RUBY_PLATFORM", self.newstr_fromstr(system.RUBY_PLATFORM))
+        self.set_const(
+            self.w_object,
+            "RUBY_DESCRIPTION", self.newstr_fromstr(system.RUBY_DESCRIPTION))
+        self.set_const(
+            self.w_object,
+            "RUBY_REVISION", self.newstr_fromstr(system.RUBY_REVISION))
+
     def load_kernel(self, kernel_path):
         self.send(
             self.w_kernel,

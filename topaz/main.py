@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import os
-import subprocess
 
 from rpython.rlib import jit
 from rpython.rlib.objectmodel import specialize
@@ -10,7 +9,7 @@ from rpython.rlib.streamio import open_file_as_stream, fdopen_as_stream
 from topaz.error import RubyError, print_traceback
 from topaz.objects.exceptionobject import W_SystemExit
 from topaz.objspace import ObjectSpace
-from topaz.system import IS_WINDOWS, IS_64BIT
+from topaz.system import IS_WINDOWS, RUBY_DESCRIPTION
 
 
 USAGE = "\n".join([
@@ -42,16 +41,6 @@ USAGE = "\n".join([
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
-
-try:
-    RUBY_REVISION = subprocess.check_output([
-        "git",
-        "--git-dir", os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), os.pardir, ".git"),
-        "rev-parse", "--short", "HEAD"
-    ]).rstrip()
-except subprocess.CalledProcessError:
-    RUBY_REVISION = "unknown"
 
 if IS_WINDOWS:
     def WinStdinStream():
@@ -134,13 +123,7 @@ def _parse_argv(space, argv):
         elif arg == "--copyright":
             raise ShortCircuitError(COPYRIGHT)
         elif arg == "--version":
-            raise ShortCircuitError("%s\n" % space.str_w(
-                space.send(
-                    space.w_object,
-                    "const_get",
-                    [space.newstr_fromstr("RUBY_DESCRIPTION")]
-                )
-            ))
+            raise ShortCircuitError("%s\n" % RUBY_DESCRIPTION)
         elif arg == "-v":
             flag_globals_w["$-v"] = space.w_true
             flag_globals_w["$VERBOSE"] = space.w_true
@@ -227,23 +210,6 @@ def _parse_argv(space, argv):
 
 
 def _entry_point(space, argv):
-    if IS_WINDOWS:
-        system = "Windows"
-        cpu = "x86_64" if IS_64BIT else "i686"
-    else:
-        system, _, _, _, cpu = os.uname()
-    platform = "%s-%s" % (cpu, system.lower())
-    engine = "topaz"
-    version = "2.4.0"
-    patchlevel = 0
-    description = "%s (ruby-%sp%d) (git rev %s) [%s]" % (engine, version, patchlevel, RUBY_REVISION, platform)
-    space.set_const(space.w_object, "RUBY_ENGINE", space.newstr_fromstr(engine))
-    space.set_const(space.w_object, "RUBY_VERSION", space.newstr_fromstr(version))
-    space.set_const(space.w_object, "RUBY_PATCHLEVEL", space.newint(patchlevel))
-    space.set_const(space.w_object, "RUBY_PLATFORM", space.newstr_fromstr(platform))
-    space.set_const(space.w_object, "RUBY_DESCRIPTION", space.newstr_fromstr(description))
-    space.set_const(space.w_object, "RUBY_REVISION", space.newstr_fromstr(RUBY_REVISION))
-
     try:
         (
             flag_globals_w,
@@ -281,7 +247,7 @@ def _entry_point(space, argv):
     space.set_const(space.w_object, "ARGV", space.newarray(argv_w))
     explicitly_verbose = space.is_true(flag_globals_w["$-v"])
     if explicitly_verbose:
-        os.write(1, "%s\n" % description)
+        os.write(1, "%s\n" % RUBY_DESCRIPTION)
     for varname, w_value in flag_globals_w.iteritems():
         space.globals.set(space, varname, w_value)
 
