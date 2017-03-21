@@ -42,11 +42,16 @@ USAGE = "\n".join([
     ""
 ])
 COPYRIGHT = "topaz - Copyright (c) Alex Gaynor and individual contributors\n"
-RUBY_REVISION = subprocess.check_output([
-    "git",
-    "--git-dir", os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".git"),
-    "rev-parse", "--short", "HEAD"
-]).rstrip()
+
+try:
+    RUBY_REVISION = subprocess.check_output([
+        "git",
+        "--git-dir", os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), os.pardir, ".git"),
+        "rev-parse", "--short", "HEAD"
+    ]).rstrip()
+except subprocess.CalledProcessError:
+    RUBY_REVISION = "unknown"
 
 if IS_WINDOWS:
     def WinStdinStream():
