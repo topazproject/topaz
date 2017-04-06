@@ -617,7 +617,7 @@ class ObjectSpace(object):
         if lexical_scope is not None:
             w_mod = lexical_scope.w_mod
             while w_mod is not None:
-                object_seen = w_mod is self.w_object
+                object_seen = object_seen or w_mod is self.w_object
                 # BasicObject was our starting point, do not use Object
                 # as fallback
                 if w_mod is self.w_basicobject and not object_seen:
