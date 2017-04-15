@@ -13,6 +13,10 @@ class Symbol
 
   alias id2name to_s
 
+  def empty?
+    self.equal?(:'')
+  end
+
   def succ
     self.to_s.succ.to_sym
   end
