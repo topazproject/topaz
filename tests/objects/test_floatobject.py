@@ -60,6 +60,8 @@ class TestFloatObject(BaseTopazTest):
         assert w_res is space.w_true
 
     def test_to_s(self, space):
+        w_res = space.execute("return 0.0.to_s")
+        assert space.str_w(w_res) == "0.0"
         w_res = space.execute("return 1.5.to_s")
         assert space.str_w(w_res) == "1.5"
         w_res = space.execute("return (0.0 / 0.0).to_s")
@@ -68,6 +70,18 @@ class TestFloatObject(BaseTopazTest):
         assert space.str_w(w_res) == "Infinity"
         w_res = space.execute("return (-1.0 / 0.0).to_s")
         assert space.str_w(w_res) == "-Infinity"
+        w_res = space.execute("return 2585201673888528.0.to_s")
+        assert space.str_w(w_res) == "2585201673888528.0"
+        w_res = space.execute("return 25852016738885287.0.to_s")
+        assert space.str_w(w_res) == "25852016738885290.0"
+        w_res = space.execute("return -25852016738885287.0.to_s")
+        assert space.str_w(w_res) == "-25852016738885290.0"
+        w_res = space.execute("return 100000000000000111.0.to_s")
+        assert space.str_w(w_res) == "100000000000000110.0"
+        w_res = space.execute("return 0.0001.to_s")
+        assert space.str_w(w_res) == "0.0001"
+        w_res = space.execute("return 0.00001.to_s")
+        assert space.str_w(w_res) == "1.0e-05"
 
     def test_to_i(self, space):
         w_res = space.execute("return [1.1.to_i, 1.1.to_int]")

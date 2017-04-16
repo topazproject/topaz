@@ -5,7 +5,7 @@ import sys
 from rpython.rlib.objectmodel import compute_hash
 from rpython.rlib.rarithmetic import ovfcheck_float_to_int
 from rpython.rlib.rbigint import rbigint
-from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0, DTSF_STR_PRECISION,
+from rpython.rlib.rfloat import (formatd, DTSF_ADD_DOT_0,
     NAN, INFINITY, isfinite, round_away)
 
 from topaz.error import RubyError
@@ -105,7 +105,36 @@ class W_FloatObject(W_RootObject):
         elif math.isnan(self.floatvalue):
             return space.newstr_fromstr("NaN")
         else:
-            return space.newstr_fromstr(formatd(self.floatvalue, "g", DTSF_STR_PRECISION, DTSF_ADD_DOT_0))
+            # Uses the fact, that formatd mode "r" rounds as Ruby 1.9.3 does
+            float_string = formatd(self.floatvalue, "r", 0, DTSF_ADD_DOT_0)
+            if "e" in float_string:
+                number, exponent = float_string.split("e")
+                exponent = int(exponent)
+
+                decimal_places = ""
+                if "." in number:
+                    number, decimal_places = number.split(".")
+
+                if exponent < 0:
+                    if decimal_places == "":
+                        decimal_places = "0"
+                    exponent_str = str(abs(exponent))
+                    if len(exponent_str) == 1:
+                        exponent_str = "0" + exponent_str
+
+                    float_string = (number
+                                    + "." + decimal_places
+                                    + "e-" + exponent_str)
+                elif exponent > 0:
+                    # We have to move the decimal separator
+                    # exponent steps to the right
+                    if len(decimal_places) < exponent:
+                        zeroes = "0" * (exponent - len(decimal_places))
+                        decimal_places = (decimal_places + zeroes)
+
+                    float_string = number + decimal_places + ".0"
+
+            return space.newstr_fromstr(float_string)
 
     @classdef.method("to_f")
     def method_to_f(self, space):
