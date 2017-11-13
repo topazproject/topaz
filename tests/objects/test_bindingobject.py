@@ -33,3 +33,41 @@ class TestBindingObject(object):
         return binding.eval('12')
         """)
         assert space.int_w(w_res) == 12
+
+    def test_local_variable_definedp(self, space):
+        w_res = space.execute("""
+        a = 5
+        return binding.local_variable_defined?('a')
+        """)
+        assert w_res == space.w_true
+
+    def test_local_variable_get(self, space):
+        w_res = space.execute("""
+        a = 5
+        return binding.local_variable_get('a')
+        """)
+        assert space.int_w(w_res) == 5
+
+    def test_local_variable_set(self, space):
+        w_res = space.execute("""
+        a = 5
+        binding.local_variable_set('a', 42)
+        return a
+        """)
+        assert space.int_w(w_res) == 42
+
+    def test_local_variables(self, space):
+        w_res = space.execute("""
+        a = 5
+        x = 'foo'
+        return binding.local_variables
+        """)
+        res_w = space.listview(w_res)
+        assert space.str_w(res_w[0]) == 'a'
+        assert space.str_w(res_w[1]) == 'x'
+
+    def test_receiver(self, space):
+        w_res = space.execute("""
+        return binding.receiver == self
+        """)
+        assert w_res == space.w_true
