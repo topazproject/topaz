@@ -222,7 +222,7 @@ class TestIO(BaseTopazTest):
         """)
         w_read, w_write = space.listview(w_res)
         assert isinstance(w_read, W_IOObject)
-        assert isinstance(w_read, W_IOObject)
+        assert isinstance(w_write, W_IOObject)
         w_res = space.execute("""
         r, w, r_c, w_c = IO.pipe do |r, w|
           r.close
