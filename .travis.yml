@@ -24,7 +24,7 @@ matrix:
             - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/c5a201f49c9da47d4771ebc544d10b3f9c579021/Formula/pypy.rb
         env: TEST_TYPE=translate-jit
 install:
-    - pip install requests invoke
+    - pip install requests invoke==0.15.0
     - invoke travis.install_requirements
 script: invoke travis.run_tests
 after_success: invoke travis.upload_build
