@@ -1,23 +1,13 @@
-from rpython.rlib import jit
+import sys
+
+from rpython.rlib import jit, objectmodel
+from rpython.rlib.unroll import unrolling_iterable
 
 from topaz.error import RubyError
 from topaz.frame import Frame
 from topaz.objects.fiberobject import W_FiberObject
 
-
-class ExecutionContextHolder(object):
-    # TODO: convert to be a threadlocal store once we have threads.
-    def __init__(self):
-        self._ec = None
-
-    def get(self):
-        return self._ec
-
-    def set(self, ec):
-        self._ec = ec
-
-    def clear(self):
-        self._ec = None
+TICK_COUNTER_STEP = 100
 
 
 class ExecutionContext(object):
@@ -34,6 +24,16 @@ class ExecutionContext(object):
         self.fiber_thread = None
         self.w_main_fiber = None
 
+    @staticmethod
+    def _mark_thread_disappeared(space):
+        # Called in the child process after os.fork() by interp_posix.py.
+        # Marks all ExecutionContexts except the current one
+        # with 'thread_disappeared = True'.
+        me = space.getexecutioncontext()
+        for ec in space.threadlocals.getallvalues().values():
+            if ec is not me:
+                ec.thread_disappeared = True
+
     def getmainfiber(self, space):
         if self.w_main_fiber is None:
             self.w_main_fiber = W_FiberObject.build_main_fiber(space, self)
@@ -48,7 +48,8 @@ class ExecutionContext(object):
     def hastraceproc(self):
         return self.w_trace_proc is not None and not self.in_trace_proc
 
-    def invoke_trace_proc(self, space, event, scope_id, classname, frame=None):
+    def invoke_only_trace_proc(self, space, event, scope_id, classname,
+                               frame=None):
         if self.hastraceproc():
             self.in_trace_proc = True
             try:
@@ -67,6 +68,13 @@ class ExecutionContext(object):
                 ])
             finally:
                 self.in_trace_proc = False
+
+    def invoke_trace_proc(self, space, event, scope_id, classname, frame=None,
+                          decr_by=TICK_COUNTER_STEP):
+        self.invoke_only_trace_proc(space, event, scope_id, classname, frame)
+        actionflag = space.actionflag
+        if actionflag.decrement_ticker(decr_by) < 0:
+            actionflag.action_dispatcher(self, frame)
 
     def enter(self, frame):
         frame.backref = self.topframeref
@@ -174,3 +182,142 @@ class _CatchContextManager(object):
     def __exit__(self, exc_type, exc_value, tb):
         if self.added:
             del self.ec.catch_names[self.catch_name]
+
+
+class AbstractActionFlag(object):
+    """This holds in an integer the 'ticker'.  If threads are enabled,
+    it is decremented at each bytecode; when it reaches zero, we release
+    the GIL.  And whether we have threads or not, it is forced to zero
+    whenever we fire any of the asynchronous actions.
+    """
+
+    _immutable_fields_ = ["checkinterval_scaled?"]
+
+    def __init__(self):
+        self._periodic_actions = []
+        self._nonperiodic_actions = []
+        self.has_bytecode_counter = False
+        self.fired_actions = None
+        # the default value is not 100, unlike CPython 2.7, but a much
+        # larger value, because we use a technique that not only allows
+        # but actually *forces* another thread to run whenever the counter
+        # reaches zero.
+        self.checkinterval_scaled = 10000 * TICK_COUNTER_STEP
+        self._rebuild_action_dispatcher()
+
+    def fire(self, action):
+        """Request for the action to be run before the next opcode."""
+        if not action._fired:
+            action._fired = True
+            if self.fired_actions is None:
+                self.fired_actions = []
+            self.fired_actions.append(action)
+            # set the ticker to -1 in order to force action_dispatcher()
+            # to run at the next possible bytecode
+            self.reset_ticker(-1)
+
+    def register_periodic_action(self, action, use_bytecode_counter):
+        """NOT_RPYTHON:
+        Register the PeriodicAsyncAction action to be called whenever the
+        tick counter becomes smaller than 0.  If 'use_bytecode_counter' is
+        True, make sure that we decrease the tick counter at every bytecode.
+        This is needed for threads.  Note that 'use_bytecode_counter' can be
+        False for signal handling, because whenever the process receives a
+        signal, the tick counter is set to -1 by C code in signals.h.
+        """
+        assert isinstance(action, PeriodicAsyncAction)
+        # hack to put the release-the-GIL one at the end of the list,
+        # and the report-the-signals one at the start of the list.
+        if use_bytecode_counter:
+            self._periodic_actions.append(action)
+            self.has_bytecode_counter = True
+        else:
+            self._periodic_actions.insert(0, action)
+        self._rebuild_action_dispatcher()
+
+    def getcheckinterval(self):
+        return self.checkinterval_scaled // TICK_COUNTER_STEP
+
+    def setcheckinterval(self, interval):
+        MAX = sys.maxint // TICK_COUNTER_STEP
+        if interval < 1:
+            interval = 1
+        elif interval > MAX:
+            interval = MAX
+        self.checkinterval_scaled = interval * TICK_COUNTER_STEP
+        self.reset_ticker(-1)
+
+    def _rebuild_action_dispatcher(self):
+        periodic_actions = unrolling_iterable(self._periodic_actions)
+
+        @jit.unroll_safe
+        @objectmodel.dont_inline
+        def action_dispatcher(ec, frame):
+            # periodic actions (first reset the bytecode counter)
+            self.reset_ticker(self.checkinterval_scaled)
+            for action in periodic_actions:
+                action.perform(ec, frame)
+
+            # nonperiodic actions
+            actions = self.fired_actions
+            if actions is not None:
+                self.fired_actions = None
+                # NB. in case there are several actions, we reset each
+                # 'action._fired' to false only when we're about to call
+                # 'action.perform()'.  This means that if
+                # 'action.fire()' happens to be called any time before
+                # the corresponding perform(), the fire() has no
+                # effect---which is the effect we want, because
+                # perform() will be called anyway.
+                for action in actions:
+                    action._fired = False
+                    action.perform(ec, frame)
+
+        self.action_dispatcher = action_dispatcher
+
+
+class ActionFlag(AbstractActionFlag):
+    """The normal class for space.actionflag.  The signal module provides
+    a different one."""
+    _ticker = 0
+
+    def get_ticker(self):
+        return self._ticker
+
+    def reset_ticker(self, value):
+        self._ticker = value
+
+    def decrement_ticker(self, by):
+        value = self._ticker
+        if self.has_bytecode_counter:    # this 'if' is constant-folded
+            if jit.isconstant(by) and by == 0:
+                pass     # normally constant-folded too
+            else:
+                value -= by
+                self._ticker = value
+        return value
+
+
+class AsyncAction(object):
+    """Abstract base class for actions that must be performed
+    asynchronously with regular bytecode execution, but that still need
+    to occur between two opcodes, not at a completely random time.
+    """
+    _fired = False
+
+    def __init__(self, space):
+        self.space = space
+
+    def fire(self):
+        """Request for the action to be run before the next opcode.
+        The action must have been registered at space initalization time."""
+        self.space.actionflag.fire(self)
+
+    def perform(self, executioncontext, frame):
+        """To be overridden."""
+
+
+class PeriodicAsyncAction(AsyncAction):
+    """Abstract base class for actions that occur automatically
+    every TICK_COUNTER_STEP bytecodes.
+    """

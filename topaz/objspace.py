@@ -7,7 +7,8 @@ import weakref
 
 from rpython.rlib import jit, rpath, types
 from rpython.rlib.cache import Cache
-from rpython.rlib.objectmodel import specialize, compute_unique_id
+from rpython.rlib.objectmodel import (
+    specialize, compute_unique_id, we_are_translated)
 from rpython.rlib.signature import signature
 from rpython.rlib.rarithmetic import intmask
 from rpython.rlib.rbigint import rbigint
@@ -20,7 +21,7 @@ from topaz.astcompiler import CompilerContext, SymbolTable, CompilerError
 from topaz.celldict import GlobalsDict
 from topaz.closure import ClosureCell
 from topaz.error import RubyError, print_traceback
-from topaz.executioncontext import ExecutionContext, ExecutionContextHolder
+from topaz.executioncontext import ActionFlag, ExecutionContext
 from topaz.frame import Frame
 from topaz.interpreter import Interpreter
 from topaz.lexer import LexerError, Lexer
@@ -76,6 +77,7 @@ from topaz.objects.threadobject import W_ThreadObject
 from topaz.objects.timeobject import W_TimeObject
 from topaz.parser import Parser
 from topaz.utils.ll_file import isdir
+from topaz.utils.threadlocals import ThreadLocals
 
 
 class SpaceCache(Cache):
@@ -93,7 +95,8 @@ class ObjectSpace(object):
 
         self.cache = SpaceCache(self)
         self.symbol_cache = {}
-        self._executioncontexts = ExecutionContextHolder()
+        self.actionflag = ActionFlag()
+        self.threadlocals = ThreadLocals(self)
         self.globals = GlobalsDict()
         self.bootstrap = True
         self.exit_handlers_w = []
@@ -248,7 +251,6 @@ class ObjectSpace(object):
             os.path.dirname(__file__), os.path.pardir), "lib-ruby"))
 
     def _freeze_(self):
-        self._executioncontexts.clear()
         return True
 
     def find_executable(self, executable):
@@ -267,6 +269,11 @@ class ObjectSpace(object):
         """
         Performs runtime setup.
         """
+
+        # To be called before using the space
+        self.threadlocals.setup_threads(self)
+        self.threadlocals.enter_thread()
+
         path = rpath.rabspath(self.find_executable(executable))
         # Fallback to a path relative to the compiled location.
         lib_path = self.base_lib_path
@@ -358,11 +365,29 @@ class ObjectSpace(object):
 
     @jit.loop_invariant
     def getexecutioncontext(self):
-        ec = self._executioncontexts.get()
-        if ec is None:
-            ec = ExecutionContext()
-            self._executioncontexts.set(ec)
-        return ec
+        if not we_are_translated():
+            if self.config.translating:
+                assert self.threadlocals.get_ec() is None, (
+                    "threadlocals got an ExecutionContext during translation!")
+                try:
+                    return self._ec_during_translation
+                except AttributeError:
+                    ec = ExecutionContext()
+                    self._ec_during_translation = ec
+                    return ec
+            else:
+                ec = self.threadlocals.get_ec()
+                if ec is None:
+                    self.threadlocals.enter_thread()
+                    ec = self.threadlocals.get_ec()
+                return ec
+        else:
+            # translated case follows.
+            # the result is assumed to be non-null: enter_thread() was called
+            # by space.setup().
+            ec = self.threadlocals.get_ec()
+            assert ec is not None
+            return ec
 
     def create_frame(self, bc, w_self=None, lexical_scope=None, block=None,
                      parent_interp=None, top_parent_interp=None,

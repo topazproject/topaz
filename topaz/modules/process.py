@@ -12,6 +12,8 @@ from topaz.module import ModuleDef
 from topaz.modules.signal import SIGNALS
 from topaz.system import IS_WINDOWS
 from topaz.error import error_for_oserror
+from topaz.executioncontext import ExecutionContext
+from topaz.utils import threadlocals
 
 
 if IS_WINDOWS:
@@ -92,6 +94,9 @@ class Process(object):
     def method_fork(self, space, block):
         pid = fork()
         if pid == 0:
+            ExecutionContext._mark_thread_disappeared(space)
+            threadlocals.reinit_threads(space)
+
             if block is not None:
                 space.invoke_block(block, [])
                 space.send(self, "exit")

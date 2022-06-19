@@ -69,8 +69,12 @@ class Interpreter(object):
         frame.last_instr = pc
         if (space.getexecutioncontext().hastraceproc() and
                 bytecode.lineno_table[pc] != bytecode.lineno_table[prev_pc]):
-            space.getexecutioncontext().invoke_trace_proc(
-                space, "line", None, None, frame=frame)
+            if jit.we_are_jitted():
+                space.getexecutioncontext().invoke_only_trace_proc(
+                    space, "line", None, None, frame=frame)
+            else:
+                space.getexecutioncontext().invoke_trace_proc(
+                    space, "line", None, None, frame=frame)
         try:
             pc = self.handle_bytecode(space, pc, frame, bytecode)
         except RubyError as e:

@@ -66,6 +66,7 @@ def get_topaz_config_options():
     return {
         "translation.continuation": True,
         "translation.jit_opencoder_model": "big",
+        "translation.rweakref": True,
     }
 
 

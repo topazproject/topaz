@@ -21,3 +21,4 @@ def handle_config(config, translateconfig):
     elif host_factory.name in ('linux', 'darwin'):
         host_factory.cflags += ('-DMAX_STACK_SIZE=%d' % max_stack_size,)
     config.translation.suggest(check_str_without_nul=True)
+    config.translating = True
